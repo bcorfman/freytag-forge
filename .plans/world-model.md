@@ -771,7 +771,11 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   in this task, not S3, because it asks for a phrase and W1 asks for a name.
   Container-shaped replies land. Unresolved place names join the existing
   match call's NEW NAMES. A given open container brings its visible contents
-  (W9). A new variation drops the drawer-contents setting fact.
+  (W9). A new variation drops the drawer-contents setting fact. Two
+  corrections to task C's section of `docs/markdown-story-authoring.md` ride
+  along: the protagonist's own placement replaces where she starts, not the
+  scene's `location_id`; and the companion and protagonist roles are
+  written without gendered pronouns, like the rest of the guide.
 - **Task C: W8's front matter.** `companions` and `character_placements`,
   in the loader and in `apply_scene_placements`, plus the decided
   `together()` rule in `worldkeeper`. It is independent of A and B.
