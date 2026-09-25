@@ -1,7 +1,9 @@
 # World model: plan
 
 Status (2026-09-25): decisions W1-W10 settled; S1 merged (PR 480). S2
-started on branch `world-model-s2`; its task split is in section 11. Written at Brandon's request
+tasks A and C merged (PR 481); task B is on branch `world-model-s2b`. Next:
+the smoke replicate of `item-facts-world-two-scene`, then the v36
+comparison. The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
 separate small decisions. This plan replaces decision 1e. It also gives
@@ -782,6 +784,18 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   along: the protagonist's own placement replaces where she starts, not the
   scene's `location_id`; and the companion and protagonist roles are
   written without gendered pronouns, like the rest of the guide.
+  Done as 17437be on branch `world-model-s2b` (two Ringer rounds
+  squashed). Choices the plan left open: a character named at furniture
+  (Kristin "at the workstation") lands in the furniture's area, since a
+  character cannot be on a supporter; the match call lists nearby areas
+  and placed characters only when it carries a place name, and
+  `_MATCH_SYSTEM` gained one sentence mapping a spot in a room to the
+  room. Review found what the check missed: the echo test guessed the
+  relation from the parent's kind, which refused an echo of the fixed
+  drawer (`part_of`); three owner tests had been weakened to expect match
+  calls; and required repository tests were missing because the check
+  grepped for words, not test names. Lesson for later checks: require
+  named tests and run them.
 - **Task C: W8's front matter.** `companions` and `character_placements`,
   in the loader and in `apply_scene_placements`, plus the decided
   `together()` rule in `worldkeeper`. It is independent of A and B. Done as
