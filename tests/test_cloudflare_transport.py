@@ -889,6 +889,8 @@ def test_authored_handoff_prompt_hides_candidate_contract(monkeypatch) -> None:
     assert "must_convey" not in prompt
     assert "selected_knowledge_ids" not in captured[0]["user"]
     assert "grounding_ids" not in captured[0]["user"]
+    assert "The game will tell what Kristin finds or learns this turn." in prompt
+    assert "Do not show Kristin finding or learning anything." in prompt
 
 
 def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) -> None:
@@ -923,6 +925,26 @@ def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) 
     assert "grounding_ids" not in recovery_system
     assert "Put" not in recovery_system
     assert "Do not select a fact." in recovery_system
+    assert "The game will tell what Kristin finds or learns this turn." in recovery_system
+    assert "Do not show Kristin finding or learning anything." in recovery_system
+
+
+def test_normal_turn_prompt_omits_authored_handoff_rules(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    captured: dict[str, object] = {}
+
+    def open_request(request, timeout):
+        captured["payload"] = json.loads(request.data)
+        return _Response({"segments": [{"kind": "narration", "text": "The room settles."}]})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    provider("Search the kitchen for signs of a struggle.")
+
+    prompt = f"{captured['payload']['system']}\n{captured['payload']['user']}"
+    assert "The game will tell what Kristin finds or learns this turn." not in prompt
+    assert "Do not show Kristin finding or learning anything." not in prompt
 
 
 def test_authored_handoff_with_positive_selection_example_uses_the_default_example() -> None:

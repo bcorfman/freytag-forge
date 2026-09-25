@@ -435,6 +435,13 @@ class CloudflareTurnProvider:
     def _system_rules(self, opening: bool) -> list[str]:
         return []
 
+    def _authored_handoff_rules(self) -> list[str]:
+        protagonist = self._protagonist_name()
+        return [
+            f"The game will tell what {protagonist} finds or learns this turn.",
+            f"Do not show {protagonist} finding or learning anything.",
+        ]
+
     def _turn_rules(self) -> list[str]:
         """State the rules that apply to this turn.
 
@@ -484,6 +491,7 @@ class CloudflareTurnProvider:
         complication_rule = f"This happens now. Show it in the scene: {complication_text}" if complication_text else ""
         default_rules = [
             *self._turn_rules_before_grounding(),
+            *(self._authored_handoff_rules() if handoff_turn else ()),
             *(
                 (
                     "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
@@ -879,7 +887,8 @@ class CloudflareTurnProvider:
         if handoff_turn:
             instruction = (
                 "Your last answer was not valid. Send back only JSON. It must have segments with text in them. "
-                "Do not select a fact. Do not add markdown. Do not explain. Do not repeat the request's labels."
+                "Do not select a fact. Do not add markdown. Do not explain. Do not repeat the request's labels.\n"
+                + "\n".join(self._authored_handoff_rules())
             )
         else:
             instruction = (
