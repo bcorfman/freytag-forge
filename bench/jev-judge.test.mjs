@@ -243,9 +243,9 @@ test("judgeInput uses the protagonist location question only for the protagonist
     fetchImpl: stubFetch(seen),
   });
   const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
-  assert.equal(requests[0].questions.moved.instructions, "Does `narration` show `Kristin` changing locations during this turn?");
-  assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn in a different location than `before_place`, such as another room, a vehicle, or another part of the area.");
-  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` stays in the same location. Small steps within the same room or area, like walking over to a desk or turning to someone, are not a change of location.");
+  assert.equal(requests[0].questions.moved.instructions, "Does `narration` show `Kristin` leaving the room `Kristin` was in during this turn?");
+  assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn outside the room or area where `Kristin` started, for example in another room, in a vehicle, or somewhere else outdoors.");
+  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` stays in the same room or area. Small steps inside it, like walking over to a desk or turning to someone, do not count as leaving it.");
   assert.equal(requests[1].questions.moved.instructions, "Does `narration` show `desk` moving to a new place or into someone else's hands during this turn?");
   await rm(dir, { recursive: true, force: true });
 });
