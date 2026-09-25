@@ -1,6 +1,6 @@
 # World model: plan
 
-Status (2026-09-25): decisions W1-W9 settled with Brandon (section 12);
+Status (2026-09-25): decisions W1-W10 settled with Brandon (section 12);
 nothing built. Next: S1 (section 11). Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -306,8 +306,66 @@ At runtime the tree and state are facts in `FactStore`, keyed by entity ID:
 saved, cloned for candidate turns and restored exactly like every other fact.
 No second store of truth.
 
-The bench keeps its own harness, but it uses the same model module with the
-same operations, so the bench measures the thing the runtime will run.
+The model lives in the `worldkeeper` library (section 4.8), which never owns
+state. It reads and writes facts through a small backend interface that
+`FactStore` already satisfies, so `FactStore` stays the only truth.
+
+The bench keeps its own harness, but it uses the same library with the same
+operations, so the bench measures the thing the runtime will run.
+
+### 4.8 The `worldkeeper` library
+
+Decided by Brandon, 2026-09-25 (W10): the model is its own self-contained,
+reusable library named `worldkeeper`, designed so it could be published to
+PyPI later even if it never is. Existing libraries were considered first and
+rejected: Microsoft's TextWorld (`textworld.logic`) is closest, with a type
+hierarchy, typed facts and rules, but its rules model player commands rather
+than narrated end states, its `State` would be a second store of truth, it has
+no parent chain, hidden things, owners or companions, and it pulls in a native
+Z-machine emulator (`jericho`) and a pinned `tatsu`. Evennia is a whole MUD
+server; Tale, IntFicPy, textadv and adventurelib are unmaintained or too
+small. TextWorld's kind declarations remain a useful reference for the
+`world.yaml` schema.
+
+**Storage through a backend interface.** The library never imports
+`FactStore` and never keeps its own state:
+
+```python
+class FactBackend(Protocol):
+    def matching(self, predicate: str, subject: str | None = None) -> tuple[FactLike, ...]: ...
+    def assert_fact(self, fact: FactLike) -> None: ...
+    def retract_fact(self, fact: FactLike) -> None: ...
+```
+
+`FactStore` already has these three methods, so freytag-forge passes its store
+in directly; another user could pass a dict-backed store. Cloning, rollback and
+saves are unchanged.
+
+**What goes where:**
+
+| In `worldkeeper` (story-agnostic, no LLM) | Stays in freytag-forge |
+|---|---|
+| Base kinds, inheritance, story sub-kinds | Reading YAML and `plot.md`; the library takes plain data |
+| Entities, the tree, the invariants | The narrator's reply format and prompt text |
+| Operations and derived effects (W3, W8 rules) | The match call; the library accepts an optional resolver callback for names it cannot find |
+| Minting IDs; name and alias lookup | Deciding when a story fact's world effects apply (W7); the library applies an effect list |
+| Visibility (hidden, closed containers); what is given with an open container (W9) | Formatting THINGS lines |
+| The place label: authored text while still true, else the parent's name (W4) | The bench, judges and saves |
+
+**Structure and rules:**
+
+- A uv workspace member in this repository (`packages/worldkeeper/`) with its
+  own `pyproject.toml`; storygame depends on it as it would on a published
+  package. Publishing later is only a release step.
+- Standard library only: no pydantic or other runtime dependency.
+- It never imports `storygame`. A test enforces this, and another enforces
+  the standard-library-only rule.
+- Its own tests use synthetic worlds only; continuity-initiative tests stay in
+  storygame. Principle 8 (any story package) is then part of how the library
+  is built, not a check afterwards.
+- `worldkeeper` was free on PyPI on 2026-09-25 (the JSON API returned 404).
+  PyPI can still refuse a name too close to an existing one; only registering
+  proves it. Reserving it early is a public action and needs Brandon's go.
 
 ## 5. Operations and rules
 
@@ -515,7 +573,11 @@ live worker and no story names in the module:
 - an open container's visible contents are given with it; hidden things never
   are;
 - every case runs against a second, synthetic package as well as
-  continuity-initiative (principle 8).
+  continuity-initiative (principle 8);
+- `worldkeeper` never imports `storygame` and has no runtime dependency
+  outside the standard library;
+- `FactStore` satisfies the `FactBackend` interface, and a dict-backed
+  backend passes the same library tests.
 
 **Live (integration and quality).** The bench scores capture per operation
 type (`move`, `set_axis`, `set_conditions`, `create`) against the 92% bar,
@@ -527,17 +589,21 @@ test asserts the phone's parent is Kristin, not merely that a scene exists.
 
 Each phase is Ringer tasks on Luna; Claude writes the spec and check, and
 reviews the patch. Phases are numbered S0-S4 so they are not confused with
-decisions W1-W9. Scope decided by Brandon, 2026-09-25 (W6).
+decisions W1-W10. Scope decided by Brandon, 2026-09-25 (W6).
 
 **S0 - Decisions.** Brandon settles section 12. Nothing is built before.
 
 **S1 - The model and the package schema.** No billed runs.
 
-- A pure, story-agnostic model module (`storygame/world/` or similar): kinds
-  and inheritance, the tree, axes, invariants, operations, the W3
-  closed-container rule, the W4 authored-text rule, and THINGS labels. It
-  stores into `FactStore` facts from the start, so the bench exercises the
-  runtime's storage, not a second dict.
+- Task 1: the `worldkeeper` library (section 4.8) in
+  `packages/worldkeeper/`: kinds and inheritance, the tree, axes, invariants,
+  operations, ID minting, the W3 closed-container rule, the W8 companion rule,
+  W9 contents, and the W4 place label, all through the `FactBackend`
+  interface. Synthetic-world tests only, plus the no-`storygame`-import and
+  standard-library-only tests.
+- Task 2: wire it into storygame: `FactStore` passed as the backend, the
+  package data handed to it as plain data, W7 effects applied when a story
+  fact is set. This task and the ones below depend on task 1.
 - Package schema and loader: `kind` on items, `parent` on locations, an
   optional `kinds` list, placements as `{parent, text, under}`. Loading
   rejects unknown IDs and parents a kind does not allow. String placements
@@ -705,3 +771,10 @@ the round 7 USB drive in the drawer, was already removed in round 8 by fix A
 hidden-card leak is closed by the `hidden` axis. The list would also need
 text matching of narrated names against authored ones, which W1 rejected,
 and it overrides 1c. Also rejected: contents left as setting text only.
+
+W10. **A self-contained library. Decided (Brandon, 2026-09-25).** The model is
+a separate, reusable library named `worldkeeper`, designed to be publishable
+to PyPI later: a uv workspace member, standard library only, no `storygame`
+imports, state kept in the host's store through a backend interface (section
+4.8). Names considered: `kindtree`, `worldkeeper`, `fictree`, `worldstate`;
+Brandon chose `worldkeeper`.
