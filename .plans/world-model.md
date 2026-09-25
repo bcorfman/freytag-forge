@@ -1,13 +1,107 @@
 # World model: plan
 
-Status (2026-09-25): decisions W1-W10 settled with Brandon (section 12);
-nothing built. Next: S1 (section 11). Written at Brandon's request
+Status (2026-09-25): decisions W1-W10 settled; S1 tasks 1-2 done. See "Resume here";
+next: S1 task 3 (section 11). Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
 separate small decisions. This plan replaces decision 1e. It also gives
 decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
+
+## Resume here (2026-09-25)
+
+Branch `world-model-s1`, created from main after PR 479, holds S1 task 2:
+commits bd8c46b and 529b6a0, plus plan commits. The full suite is green
+(729 tests, 92.95% coverage), and ruff is clean. The branch has not been
+pushed and has no PR. The next step is **S1 task 3**, and its manifest was
+never run.
+
+Materials in [world-model-s1/](world-model-s1/):
+
+- `prompt_capture.py` stubs the network and records the shipped narrator's
+  1A payloads: the opening plus the turn "Search the kitchen for signs of a
+  struggle.", each with and without the card custody fact. To run it from
+  the repository root: `uv run python .plans/world-model-s1/prompt_capture.py
+  OUT.json [custody_fact_id]`.
+- `narrator-1a-baseline.json` is its output from before S1. It was stable
+  across runs. Every S1 check must diff a fresh capture against it (through
+  `json.tool`), and any difference fails. After the W7 rename, pass
+  `memory_card_recovered` as the second argument.
+- `s1t3_acceptance_draft.py` is the drafted task 3 acceptance test. It was
+  checked against the real files, and its import of `placement_text` fails,
+  as expected before the task. Copy it into the next session's scratchpad.
+  It is not a repository test.
+- `s1t2_check_example.sh` is the task 2 check. Reuse its structure:
+  ownership, library boundary, acceptance, full suite, mutation checks,
+  ruff, patch export.
+
+**S1 task 3 design** (one Ringer task on Luna, `worktrees: true`, run_name
+`world-model-s1`, `check_timeout_s: 900`; the check takes about 3 minutes
+with mutations):
+
+- Allowed paths: `packages/worldkeeper/`, `storygame/`, `tests/`, `bench/`,
+  `docs/markdown-story-authoring.md`. No `data/` edits; the 1A conversion is
+  task 4.
+- Models: `Location(Entity)` gets `kind="area"` and `parent`. `Item` gets
+  `kind="thing"`, `openable`, `open`, `hidden`, `contents` and `owner` (an
+  NPC ID). `WorldSource.kinds` holds `{id, is: [...]}`.
+- `ItemPlacement` accepts either the old form `{placement,
+  while_fact_*}` or the new form `{parent, text?, under?, part_of?}`, never
+  both. The new form takes no guards, and `under` and `part_of` exclude each
+  other. Add `placement_text(p) -> str | None`.
+- `storygame/story_package/world_schema.py` emits kinds, the location kind
+  and parent, and the item kind and properties.
+- Library fix: a story kind that descends from `furniture` must default to
+  `fixed`. Today `from_data` checks `kind == "furniture"`, so a `desk` that
+  is furniture plus supporter can move. Add a regression test.
+- New `apply_scene_placements(package, facts, scene_id)` in
+  `storygame/runtime/world_model.py`. It calls `world.place(...)` for each
+  new-form placement, and returns and logs refusals. Call it in
+  `RuntimeState.bootstrap` (after `seed()`, before the effects sweep) and on
+  a scene change in `apply_proposal` (before the sweep).
+- The loader raises `StoryPackageError` for:
+  - an unknown placement parent;
+  - an unknown kind, or an item kind that is not a thing;
+  - a location parent that is not a location;
+  - `text` on a hidden item;
+  - a placement `World.place` refuses (simulate each scene on a
+    `MemoryBackend`).
+- Shipped narrator: `_placement_rules` uses `placement_text` and emits no
+  line when the text is None.
+- Bench readers (`bench/item_facts.py` in two places, and
+  `bench/judge_input.py`): use the text first, else the parent's display
+  name (W5), and skip hidden things.
+- The docs describe `parent`, `under`, `part_of`, `hidden`, `kinds`,
+  `contents` and `on_assert`.
+- The check adds:
+  - the narrator baseline diff;
+  - mutation checks that blank out the `apply_scene_placements(` call in
+    `bootstrap` and in `apply_proposal`, each of which must make `tests/`
+    fail;
+  - a docs grep for those terms.
+
+After task 3 comes task 4. It converts 1A and does the W7 rename (see S1
+below). The truck and workstation join 1A `item_ids`, so run the baseline
+diff there too; if they change the owner rules, that must be solved before
+landing. Task 5 is folded into task 3 (docs).
+
+Lessons from task 2, for writing the next checks:
+
+- Enforce the required tests in the check. Round 1 skipped them because only
+  the spec asked for them. Mutation checks work.
+- Scope a layering rule to the new code. A blanket rule ("story_package
+  never imports runtime") pushed the worker to rewrite
+  `_validate_narration_term_traps`, and that rewrite was dropped at
+  integration.
+- `uv sync` makes `packages/worldkeeper/src/worldkeeper.egg-info/`, which is
+  now ignored. Run `uv lock` and `uv sync` yourself after a pyproject change;
+  workers have no network.
+
+Open question for S2, not yet raised with Brandon: `World.area()` returns
+the nearest area. So once the kitchen is nested in the house, a phone in the
+kitchen and Kristin in the house are not `together()`. Decide whether
+`together` should compare the top-level area.
 
 This plan is self-contained so it can be picked up in a new chat with no
 other context. The continuity plan's principles (its section 2) and working
