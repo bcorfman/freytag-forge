@@ -193,7 +193,7 @@ The records suggest that the mass disappearance was preceded by years of secret 
 
 ### Scene 1B.2 — The Man Following Her
 
-**Details:** watching man; abandoned service tunnels; emergency patrol; Brandon Corfman; Michelle photograph; Continuity Initiative
+**Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; Michelle photograph; Continuity Initiative
 
 Kristin notices a man watching her from across the park. Believing the man works for the government, Kristin attempts to escape through abandoned service tunnels beneath the park.
 
