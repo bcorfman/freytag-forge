@@ -160,25 +160,25 @@ def package_seed(package, state, scene_id):
 
 _SINGLE_CALL_RULES = (
     "Every time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts. Use where it is when the story ends.",
-    'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is {"place": "on the floor", "condition": ["cracked in two"]}.',
-    'When a place is part of something bigger, name both, like "on the passenger seat of the truck".',
+    'Give only what changed. For "place", give the name of the person, thing, or place that has it now. Use "condition" for up to two short phrases.',
+    'Example: if {protagonist} picks up a lantern and lights it, the lantern is {{"place": "{protagonist}", "condition": ["lit"]}}.',
+    'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
 )
 
 
 def _single_call_rules(protagonist_name):
-    return (
-        _SINGLE_CALL_RULES
-        if protagonist_name is None
-        else (
-            _SINGLE_CALL_RULES[0],
+    protagonist = protagonist_name or "Sam"
+    rules = tuple(rule.format(protagonist=protagonist) for rule in _SINGLE_CALL_RULES)
+    if protagonist_name:
+        return rules[:1] + (
             f"When {protagonist_name} goes to a new place, add {protagonist_name} to item_facts with the place where {protagonist_name} is when the story ends.",
-            *_SINGLE_CALL_RULES[1:],
+            *rules[1:],
         )
-    )
+    return rules
 
 
-_MATCH_SYSTEM = 'You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {"refers": ["name"], "same_as": {"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "the old lamp" for "Grandma\'s lamp". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For "Ask the cook who took the key." list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or "new" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. Copy names from THINGS exactly.'
-_SECOND_CALL_SYSTEM = 'You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like {"item_facts": {"thing": {"place": "place", "condition": ["phrase"]}}}. List only the things in THINGS that STORY changed. For each one, give the place it is now and up to two short condition phrases. Example: if she picks up the lantern from the table, the lantern is {"place": "in her hand", "condition": ["lit"]}. If STORY changed nothing, return {"item_facts": {}}.'
+_MATCH_SYSTEM = 'You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {"refers": ["name"], "same_as": {"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "the old lamp" for "Grandma\'s lamp". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For "Ask the cook who took the key." list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or "new" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like "the corner of the kitchen" for kitchen, give that place. Copy names from THINGS exactly.'
+_SECOND_CALL_SYSTEM = 'You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like {"item_facts": {"thing": {"place": "name", "condition": ["phrase"]}}}. List only the things in THINGS that STORY changed. For each one, give the name of who or what has it now and up to two short condition phrases. Example: if Sam picks up the lantern from the table and lights it, the lantern is {"place": "Sam", "condition": ["lit"]}. If STORY changed nothing, return {"item_facts": {}}.'
 
 
 class ItemFactsProvider(CloudflareTurnProvider):
@@ -210,7 +210,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.item_facts_match_calls = 0
         self.item_facts_axis_fixes = 0
         self.item_facts_lifted = 0
-        self.item_facts_reply_keys = {"place": 0}
+        self.item_facts_reply_keys = {"place": 0, "contents": 0, "under": 0}
         self._ensure_hand_seeds(item_facts)
         self._ensure_scene_seeded()
 
@@ -369,6 +369,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
         protagonist = _protagonist_name(self.state.package)
         if protagonist in self.item_facts and protagonist not in names:
             names.append(protagonist)
+        world = self._world()
+        index = 0
+        while index < len(names):
+            entity_id = world.resolve(names[index])
+            if entity_id:
+                for child_id in world.given_with(entity_id):
+                    child_name = self._entity_label(world, child_id)
+                    if child_name not in names and child_name in self.item_facts:
+                        names.insert(index + 1, child_name)
+            index += 1
         return names
 
     def _select_protagonist(self):
@@ -382,7 +392,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if not lines or "scene_setting" not in user:
             return lines
         return [
-            f"{name} is {self.item_facts[name]['place'].strip()}."
+            f"{name}. Place: {self.item_facts[name]['place'].strip()}."
             for name in self._thing_names()
             if self.item_facts[name]["place"]
         ] + lines
@@ -435,7 +445,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     if name not in self.allowed_reply_keys
                     and (not isinstance(item_facts, dict) or name not in item_facts)
                     and isinstance(entry, dict)
-                    and ({"place", "condition"} & entry.keys())
+                    and ({"place", "condition", "contents"} & entry.keys())
                 }
                 if lifted:
                     response["item_facts"] = {**lifted, **(item_facts if isinstance(item_facts, dict) else {})}
@@ -446,8 +456,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
             self._pending_item_facts_present = "item_facts" in response
             self._pending_item_facts = copy.deepcopy(response.get("item_facts"))
             for entry in (response.get("item_facts") or {}).values():
-                if isinstance(entry, dict) and "place" in entry:
-                    self.item_facts_reply_keys["place"] += 1
+                if isinstance(entry, dict):
+                    for key in self.item_facts_reply_keys:
+                        if key in entry:
+                            self.item_facts_reply_keys[key] += 1
             cleaned = dict(response)
             cleaned.pop("item_facts", None)
             return cleaned
@@ -490,17 +502,18 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     @staticmethod
     def _valid_entry(value):
-        return (
-            isinstance(value, dict)
-            and bool(value)
-            and (
-                ("place" in value and isinstance(value["place"], str) and bool(value["place"].strip()))
-                or (
-                    "condition" in value
-                    and isinstance(value["condition"], list)
-                    and all(isinstance(item, str) and item.strip() for item in value["condition"])
-                )
+        if not isinstance(value, dict) or not value:
+            return False
+        if "contents" in value:
+            return (
+                isinstance(value["contents"], list)
+                and bool(value["contents"])
+                and all(isinstance(item, str) and item.strip() for item in value["contents"])
             )
+        return ("place" in value and isinstance(value["place"], str) and bool(value["place"].strip())) or (
+            "condition" in value
+            and isinstance(value["condition"], list)
+            and all(isinstance(item, str) and item.strip() for item in value["condition"])
         )
 
     def _resolve_name(self, world, key):
@@ -517,7 +530,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 return min((npc.name, *npc.aliases), key=len)
         return world.name(entity_id)
 
-    def _match_payload(self, player_input, new_names):
+    def _match_payload(self, player_input, new_names, *, include_places=False):
         lines = []
         for name, facts in self.item_facts.items():
             line = f"- {name}."
@@ -526,6 +539,37 @@ class ItemFactsProvider(CloudflareTurnProvider):
             elif facts.get("condition"):
                 line += f" Condition: {', '.join(facts['condition'])}."
             lines.append(line)
+        if include_places:
+            world = self._world()
+            extra_ids = []
+            roots = [world.resolve(_protagonist_name(self.state.package))]
+            roots.extend(world.resolve(name) for name in self.item_facts)
+            for root in roots:
+                if root is not None:
+                    extra_ids.extend(entity for entity in world.chain(root) if world.is_a(entity, "area"))
+            protagonist = roots[0] if roots else None
+            area_chain = (
+                [entity for entity in world.chain(protagonist) if world.is_a(entity, "area")] if protagonist else []
+            )
+            top_area = (
+                area_chain[-1]
+                if area_chain
+                else (protagonist if protagonist and world.is_a(protagonist, "area") else None)
+            )
+            if top_area:
+                extra_ids.extend(
+                    entity
+                    for entity in world.entity_ids()
+                    if world.is_a(entity, "area") and top_area in world.chain(entity)
+                )
+            extra_ids.extend(
+                entity for entity in world.entity_ids() if world.is_a(entity, "character") and world.parent(entity)
+            )
+            existing = set(self.item_facts)
+            for entity_id in extra_ids:
+                label = self._entity_label(world, entity_id)
+                if label not in existing and f"- {label}." not in lines:
+                    lines.append(f"- {label}.")
         return {
             "system": _MATCH_SYSTEM,
             "user": (
@@ -536,31 +580,32 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "response_format": {"type": "json_object"},
         }
 
-    def _apply_entry(self, world, entity_id, name, value, issues):
-        before = self.item_facts.get(name)
+    def _apply_move(self, world, entity_id, name, value, place_parent, issues):
+        if place_parent is None or "place" not in value:
+            return
+        place = value["place"].strip()
+        under = value.get("under") is True
+        current_parent = world.parent(entity_id)
+        current_relation = world.relation(entity_id)
+        if current_parent == place_parent and (current_relation == "under") == under:
+            return
+        result = world.move(entity_id, place_parent, under=under)
+        if (
+            not result.ok
+            and world.is_a(entity_id, "character")
+            and result.reason.startswith("characters can only be in")
+        ):
+            area = world.area(place_parent)
+            if area:
+                result = world.move(entity_id, area)
+        if not result.ok and "cannot hold" in result.reason:
+            result = world.set_unplaced(entity_id, place[:80])
+        if not result.ok:
+            issues.append(f"item_facts for {name!r} refused place {place!r}: {result.reason}")
+
+    def _apply_state(self, world, entity_id, name, value, place_pole, issues):
         current_poles = list(world.axis_values(entity_id).values())
         before_pole = current_poles[0] if current_poles else None
-        place_pole = None
-        if "place" in value:
-            place = value["place"].strip()
-            place_pole = self._axis_match_id(world, entity_id, place)
-            if place_pole:
-                self.item_facts_axis_fixes += 1
-            elif not (world.place_label(entity_id) and world.place_label(entity_id).casefold() == place.casefold()):
-                parent = self._resolve_name(world, place)
-                if parent:
-                    result = world.move(entity_id, parent)
-                    if not result.ok and "cannot hold" in result.reason:
-                        result = world.set_unplaced(entity_id, place[:80])
-                    if not result.ok:
-                        issues.append(f"item_facts for {name!r} refused place {place!r}: {result.reason}")
-                else:
-                    if world.schema.is_fixed(entity_id):
-                        issues.append(f"item_facts for {name!r} refused place {place!r}: fixed things cannot move")
-                    else:
-                        result = world.set_unplaced(entity_id, place[:80])
-                        if result.ok:
-                            self._last_item_facts_unplaced.append({"name": name, "place": place[:80]})
         condition_poles = []
         if "condition" in value and value["condition"]:
             conditions = value["condition"]
@@ -579,6 +624,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
         effective_pole = place_pole or changed_pole
         if effective_pole is not None:
             world.set_axis(entity_id, effective_pole)
+
+    def _apply_entry(self, world, entity_id, name, value, issues, *, place_parent=None, place_pole=None):
+        before = self.item_facts.get(name)
+        self._apply_move(world, entity_id, name, value, place_parent, issues)
+        self._apply_state(world, entity_id, name, value, place_pole, issues)
         return before != self.item_facts.get(name)
 
     def apply_item_facts(self, raw, *, player_input="(none)"):
@@ -597,12 +647,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
             )
             return previous, issues
         world = self._world()
-        unresolved = []
-        match_called = False
-        match_raw = None
-        match_issues = []
-        resolutions = {}
-        engine_resolutions = {}
+        entries = []
+        explicit_keys = set(raw)
+        explicit_ids = {
+            resolved_id
+            for explicit_key in explicit_keys
+            if (resolved_id := self._resolve_name(world, explicit_key)) is not None
+        }
         for key, value in raw.items():
             if isinstance(value, str) and value.strip():
                 value = {"place": value.strip()}
@@ -610,12 +661,112 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 issues.append(f"item_facts for {key!r} has an empty item_facts entry")
                 continue
             if not self._valid_entry(value):
-                issues.append(f"item_facts for {key!r} has no valid place or condition")
+                if isinstance(value, dict) and "contents" in value:
+                    issues.append(f"item_facts for {key!r} has invalid contents")
+                else:
+                    issues.append(f"item_facts for {key!r} has no valid place or condition")
                 continue
+            entries.append((key, value))
+            contents = value.get("contents", [])
+            for child in contents:
+                child_id = self._resolve_name(world, child)
+                if child not in explicit_keys and child_id not in explicit_ids:
+                    entries.append((child, {"place": key}))
+        match_called = False
+        match_raw = None
+        match_issues = []
+        resolutions = {}
+        engine_resolutions = {}
+        unresolved = []
+        resolved = []
+        for key, value in entries:
             entity_id = self._resolve_name(world, key)
             if entity_id is None:
                 unresolved.append((key, value))
                 continue
+            resolved.append((key, value, entity_id))
+
+        prepared = []
+        for key, value in unresolved:
+            owner = value.get("owner") if isinstance(value, dict) else None
+            owner_id = self._resolve_name(world, owner) if isinstance(owner, str) else None
+            candidate = f"{owner}'s {key}" if isinstance(owner, str) else None
+            entity_id = self._resolve_name(world, candidate) if candidate else None
+            prepared.append({"key": key, "value": value, "owner_id": owner_id, "candidate": candidate, "id": entity_id})
+
+        place_names = []
+        for _key, value, _entity_id in resolved:
+            if isinstance(value.get("place"), str):
+                place = value["place"].strip()
+                if (
+                    not self._axis_match_id(world, _entity_id, place)
+                    and not (
+                        world.place_label(_entity_id) and world.place_label(_entity_id).casefold() == place.casefold()
+                    )
+                    and self._resolve_name(world, place) is None
+                ):
+                    place_names.append(place)
+        for item in prepared:
+            if isinstance(item["value"].get("place"), str):
+                place = item["value"]["place"].strip()
+                if self._resolve_name(world, place) is None:
+                    place_names.append(place)
+        match_names = []
+        for item in prepared:
+            if item["id"] is None and item["owner_id"] is None:
+                match_names.append(item["key"])
+        match_names.extend(place_names)
+        match_names = list(dict.fromkeys(match_names))
+
+        match_reply = None
+        if match_names:
+            match_called = True
+            self.item_facts_match_calls += 1
+            try:
+                match_reply = CloudflareTurnProvider._request(
+                    self, self._match_payload(player_input, match_names, include_places=bool(place_names))
+                )
+            except Exception as error:
+                match_issues.append(f"item_facts match failed: {error}")
+                issues.append(match_issues[-1])
+            match_raw = copy.deepcopy(match_reply)
+            if not isinstance(match_reply, dict) or not isinstance(match_reply.get("same_as"), dict):
+                match_issues.append("invalid item_facts match reply")
+
+        same_as = match_reply.get("same_as", {}) if isinstance(match_reply, dict) else {}
+        place_ids = {}
+        for place in place_names:
+            target = same_as.get(place) if isinstance(same_as, dict) else None
+            if isinstance(target, str) and target != "new":
+                place_ids[place] = self._resolve_name(world, target)
+
+        for item in prepared:
+            key, value = item["key"], item["value"]
+            entity_id = item["id"]
+            if entity_id is None and item["owner_id"] is None and isinstance(same_as, dict):
+                target = same_as.get(key)
+                if isinstance(target, str) and target != "new":
+                    entity_id = self._resolve_name(world, target)
+                    if entity_id is not None:
+                        resolutions[key] = world.name(entity_id)
+                        if target != world.name(entity_id):
+                            engine_resolutions[target] = world.name(entity_id)
+            if entity_id is None:
+                created = world.create(key, owner=item["owner_id"])
+                if not created.ok:
+                    issues.append(f"item_facts for {key!r} could not be created: {created.reason}")
+                    continue
+                entity_id = created.id
+                resolutions[key] = "new"
+            elif item["candidate"] and key not in resolutions:
+                resolutions[key] = world.name(entity_id)
+                if key != world.name(entity_id):
+                    engine_resolutions[key] = world.name(entity_id)
+            resolved.append((key, value, entity_id))
+
+        moves = []
+        states = []
+        for key, value, entity_id in resolved:
             name = self._entity_label(world, entity_id)
             if world.is_a(entity_id, "area"):
                 issues.append(f"item_facts name {key!r} resolved to an area")
@@ -627,59 +778,32 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 short_name = _protagonist_name(self.state.package)
                 issues.append(f"item_facts condition for {short_name} ignored")
                 value = {k: v for k, v in value.items() if k != "condition"}
-            if self._apply_entry(world, entity_id, name, value, issues):
-                changed.add(name)
-        prepared = []
-        match_names = []
-        for key, value in unresolved:
-            owner = value.get("owner") if isinstance(value, dict) else None
-            owner_id = self._resolve_name(world, owner) if isinstance(owner, str) else None
-            candidate = f"{owner}'s {key}" if isinstance(owner, str) else None
-            entity_id = self._resolve_name(world, candidate) if candidate else None
-            prepared.append((key, value, owner_id, candidate, entity_id))
-            if entity_id is None and owner_id is None:
-                match_names.append(key)
-
-        match_reply = None
-        if match_names:
-            match_called = True
-            self.item_facts_match_calls += 1
-            try:
-                match_reply = CloudflareTurnProvider._request(self, self._match_payload(player_input, match_names))
-            except Exception as error:
-                match_issues.append(f"item_facts match failed: {error}")
-                issues.append(match_issues[-1])
-            match_raw = copy.deepcopy(match_reply)
-            if not isinstance(match_reply, dict) or not isinstance(match_reply.get("same_as"), dict):
-                match_issues.append("invalid item_facts match reply")
-
-        same_as = match_reply.get("same_as", {}) if isinstance(match_reply, dict) else {}
-        for key, value, owner_id, candidate, entity_id in prepared:
-            if entity_id is None and owner_id is None and isinstance(same_as, dict):
-                target = same_as.get(key)
-                if isinstance(target, str) and target != "new":
-                    resolved_target = self._resolve_name(world, target)
-                    if resolved_target is not None:
-                        entity_id = resolved_target
-                        resolutions[key] = world.name(resolved_target)
-                        if target != world.name(resolved_target):
-                            engine_resolutions[target] = world.name(resolved_target)
-            if entity_id is None:
-                created = world.create(key, owner=owner_id)
-                if not created.ok:
-                    issues.append(f"item_facts for {key!r} could not be created: {created.reason}")
-                    continue
-                entity_id = created.id
-                resolutions[key] = "new"
-            name = self._entity_label(world, entity_id)
-            if candidate and entity_id is not None and key not in resolutions:
-                resolutions[key] = world.name(entity_id)
-                if key != world.name(entity_id):
-                    engine_resolutions[key] = world.name(entity_id)
-            if world.is_hidden(entity_id):
-                issues.append(f"item_facts for {key!r} refused because it is hidden")
-                continue
-            if self._apply_entry(world, entity_id, name, value, issues):
+            place = value.get("place").strip() if isinstance(value.get("place"), str) else None
+            place_pole = self._axis_match_id(world, entity_id, place) if place else None
+            if place_pole:
+                self.item_facts_axis_fixes += 1
+            place_parent = place_ids.get(place) if place and not place_pole else None
+            if place and not place_pole and place not in place_ids:
+                place_parent = self._resolve_name(world, place)
+            unresolved_place = (
+                place
+                and not place_pole
+                and place_parent is None
+                and not (world.place_label(entity_id) and world.place_label(entity_id).casefold() == place.casefold())
+            )
+            if unresolved_place:
+                if world.schema.is_fixed(entity_id):
+                    issues.append(f"item_facts for {name!r} refused place {place!r}: fixed things cannot move")
+                else:
+                    world.set_unplaced(entity_id, place[:80])
+                    self._last_item_facts_unplaced.append({"name": name, "place": place[:80]})
+            moves.append((entity_id, name, value, place_parent, place_pole))
+            states.append((entity_id, name, value, place_pole))
+        for entity_id, name, value, place_parent, _place_pole in moves:
+            self._apply_move(world, entity_id, name, value, place_parent, issues)
+        for entity_id, name, value, place_pole in states:
+            self._apply_state(world, entity_id, name, value, place_pole, issues)
+            if name in self.item_facts and previous.get(name) != self.item_facts.get(name):
                 changed.add(name)
         self._changed_last_turn = changed
         self._last_item_facts_match = {
