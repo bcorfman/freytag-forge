@@ -763,7 +763,13 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   names no entity lands as an unplaced name, and each turn records these as
   `item_facts_unplaced`. Characters are shown by their short name
   (`Kristin`). Variation state axes become world axes; the drawer's axis must
-  use the world's `open`/`closed` poles. Scripts: scratchpad `s2a/`.
+  use the world's `open`/`closed` poles. Done as 7e32ab1 (five Ringer
+  rounds squashed). Review found what the checks missed: a move out of a
+  closed container was refused, match calls ran once per name, and view
+  reads re-seeded the store. The last was a worldkeeper bug: `seed()`
+  re-hid revealed things. Lesson for B's check: guard the patterns a
+  review found, and read the whole diff, since one round added a
+  `seed_defaults()` alias only to pass a grep.
 - **Task B: the reply names the parent.** THINGS and PLAYER lines follow
   W4 and W5. The place rule and the output example are replaced: the lantern
   becomes `{"place": "Kristin"}`, with an optional `"under": true`. The
@@ -778,7 +784,8 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   written without gendered pronouns, like the rest of the guide.
 - **Task C: W8's front matter.** `companions` and `character_placements`,
   in the loader and in `apply_scene_placements`, plus the decided
-  `together()` rule in `worldkeeper`. It is independent of A and B.
+  `together()` rule in `worldkeeper`. It is independent of A and B. Done as
+  1ab6d22.
 - Then the smoke replicate and the v36 comparison below.
 
 - Capture produces operations; THINGS follows W4 and W5; the reply names the
