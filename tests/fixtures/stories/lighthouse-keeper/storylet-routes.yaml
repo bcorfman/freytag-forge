@@ -1,0 +1,20 @@
+story_id: lighthouse_keeper
+contract:
+  canonical_scene_chain: [1A, 1B]
+  sole_ending_scene_id: 1B
+storylets:
+- id: SL-1A-A
+  scene_id: 1A
+  title: Find the Key
+  activation: {conditions: [] , pacing: {earliest_turn: 0, target_turn: 1, latest_turn: 2}}
+  pressure_role: search
+  realization_options:
+  - id: r0
+    dramatic_intent: Find the key.
+    operations: [{op: assert, fact_id: brass_key_found, value: true}]
+canonical_bridge_events:
+- id: bridge_to_lamp_room
+  scene_id: 1A
+  activation: {all_facts_true: [brass_key_found]}
+  produces: [{op: assert, fact_id: scene_1b_entry_known, value: true}]
+  realization_storylets: [SL-1A-A]

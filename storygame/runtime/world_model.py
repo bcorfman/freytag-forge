@@ -82,6 +82,7 @@ def apply_scene_placements(package: StoryPackage, facts: FactStore, scene_id: st
     world = world_for(package, facts)
     scene = next(scene for scene in package.scenes if scene.metadata.scene_id == scene_id)
     refusals = []
+    world.place(package.world.protagonist_id, scene.metadata.location_id)
     for item_id, placement in scene.metadata.item_placements.items():
         if not isinstance(placement, ItemPlacement) or placement.parent is None:
             continue

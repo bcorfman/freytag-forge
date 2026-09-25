@@ -866,6 +866,7 @@ def _validate_transition_trigger_sources(package: StoryPackage) -> None:
             effect.fact_id for effect in event.effects if effect.equals is True
         )
     for delivery in package.deliveries:
+        asserted_by_scene.setdefault(delivery.scene_id, set()).add(delivery.fact_id)
         asserted_by_scene.setdefault(delivery.scene_id, set()).update(_asserted_true_route_operations(delivery.costs))
 
     for transition in package.pacing.transitions:
