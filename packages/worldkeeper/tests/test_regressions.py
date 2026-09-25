@@ -72,6 +72,21 @@ def test_seed_is_additive_after_play():
     assert world.unplaced_name("coin") == "far beyond the old stone gate"
 
 
+def test_story_kind_inherits_furniture_fixed_default():
+    schema = WorldSchema.from_data(
+        {
+            "kinds": [{"id": "desk", "is": ["furniture", "supporter"]}],
+            "entities": [
+                {"id": "room", "name": "room", "kind": "area"},
+                {"id": "desk", "name": "desk", "kind": "desk"},
+            ],
+        }
+    )
+    world = World(schema, MemoryBackend())
+    assert world.seed().ok
+    assert not world.move("desk", "room").ok
+
+
 class StrictFact:
     def __init__(self, *, predicate, subject, object=None, value=None):
         assert re.fullmatch(r"wk_[a-z][a-z0-9_]*", predicate)

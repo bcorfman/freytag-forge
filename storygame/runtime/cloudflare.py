@@ -40,6 +40,7 @@ from storygame.story_package.models import (
     SceneBeat,
     SceneMetadata,
     item_placement_is_visible,
+    placement_text,
 )
 
 logger = logging.getLogger(__name__)
@@ -581,8 +582,9 @@ class CloudflareTurnProvider:
     def _placement_rules(self) -> list[str]:
         rules = []
         for item, placement in self._visible_placed_items().values():
-            placement_text = placement if isinstance(placement, str) else placement.placement
-            rules.append(f"{item.name} is {placement_text}.")
+            text = placement_text(placement)
+            if text is not None:
+                rules.append(f"{item.name} is {text}.")
         return rules
 
     def _setting_fact_rules(self) -> list[str]:

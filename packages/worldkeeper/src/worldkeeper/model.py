@@ -161,7 +161,7 @@ class WorldSchema:
                 tuple(entity_data.get("aliases", [])),
                 entity_data.get("owner"),
                 entity_data.get("parent"),
-                entity_data.get("fixed", kind == "furniture"),
+                entity_data.get("fixed", "furniture" in _ancestors(kinds, kind)),
                 entity_data.get("openable", False),
                 entity_data.get("open", False),
                 entity_data.get("captive", False),

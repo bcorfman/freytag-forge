@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from storygame.runtime.contracts import FactOperation, GameBreakWarning, ResolvedTurnProposal
 from storygame.runtime.facts import Fact, FactStore
-from storygame.runtime.world_model import apply_world_effects, world_for
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.models import StoryPackage
 
 SNAPSHOT_VERSION = 3
@@ -101,6 +101,7 @@ class RuntimeState(BaseModel):
         state = cls(package=package, current_scene_id=first.scene_id, phase=first.freytag_phase)
         state._assert_scene_entry_fact(first.scene_id)
         world_for(package, state.facts).seed()
+        apply_scene_placements(package, state.facts, first.scene_id)
         apply_world_effects(package, state.facts)
         return state
 
@@ -217,6 +218,8 @@ class RuntimeState(BaseModel):
             self.active_event_ids.clear()
             self._assert_scene_entry_fact(next_scene_id)
         if apply_world:
+            if changed_scene:
+                apply_scene_placements(self.package, self.facts, next_scene_id)
             apply_world_effects(self.package, self.facts)
 
     def _assert_scene_entry_fact(self, scene_id: str) -> None:

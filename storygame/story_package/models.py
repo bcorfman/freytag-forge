@@ -167,9 +167,19 @@ class Entity(_Model):
     narrator_bio: str | None = None
 
 
+class Location(Entity):
+    parent: str | None = Field(default=None, pattern=_ID)
+
+
 class Item(Entity):
     # A fixed thing is furniture or part of the scene, so the engine keeps its authored place.
     fixed: bool = False
+    kind: str = Field(default="thing", pattern=_ID)
+    openable: bool = False
+    open: bool = False
+    hidden: bool = False
+    contents: list[str] = Field(default_factory=list)
+    owner: str | None = Field(default=None, pattern=_ID)
 
 
 class WorldEffect(_Model):
@@ -232,15 +242,35 @@ def entity_surface_forms(entity: Entity) -> tuple[str, ...]:
 
 
 class ItemPlacement(_Model):
-    placement: str = Field(min_length=1)
+    placement: str | None = Field(default=None, min_length=1)
     while_fact_false: str | None = Field(default=None, pattern=_ID)
     while_fact_true: str | None = Field(default=None, pattern=_ID)
+    parent: str | None = Field(default=None, pattern=_ID)
+    text: str | None = Field(default=None, min_length=1)
+    under: bool = False
+    part_of: bool = False
 
     @model_validator(mode="after")
     def one_visibility_guard(self) -> ItemPlacement:
+        old_form = self.placement is not None
+        new_form = self.parent is not None
+        if old_form == new_form:
+            raise ValueError("item placement must use exactly one of placement or parent")
+        if old_form and (self.text is not None or self.under or self.part_of):
+            raise ValueError("old-form item placement cannot use text, under, or part_of")
+        if new_form and (self.while_fact_false is not None or self.while_fact_true is not None):
+            raise ValueError("new-form item placement cannot use visibility guards")
+        if self.under and self.part_of:
+            raise ValueError("item placement cannot be both under and part_of")
         if self.while_fact_false is not None and self.while_fact_true is not None:
             raise ValueError("item placement may have at most one visibility guard")
         return self
+
+
+def placement_text(placement: str | ItemPlacement) -> str | None:
+    if isinstance(placement, str):
+        return placement
+    return placement.placement if placement.placement is not None else placement.text
 
 
 def item_placement_is_visible(placement: str | ItemPlacement, facts) -> bool:
@@ -269,9 +299,10 @@ class Character(_Model):
 class WorldSource(_Model):
     story_id: str = Field(pattern=_ID)
     protagonist_id: str = Field(pattern=_ID)
-    locations: tuple[Entity, ...]
+    locations: tuple[Location, ...]
     npcs: tuple[Entity, ...]
     items: tuple[Item, ...]
+    kinds: list[dict] = Field(default_factory=list)
     facts: tuple[str, ...] = ()
     fact_effects: Mapping[str, tuple[WorldEffect, ...]] = {}
     protected_knowledge: tuple[str, ...] = ()
@@ -279,7 +310,7 @@ class WorldSource(_Model):
     @model_validator(mode="before")
     @classmethod
     def split_fact_effects(cls, data):
-        if not isinstance(data, Mapping) or "facts" not in data:
+        if not isinstance(data, Mapping):
             return data
         values = dict(data)
         facts = []
@@ -295,6 +326,21 @@ class WorldSource(_Model):
                 facts.append(entry)
         values["facts"] = facts
         values["fact_effects"] = effects
+        kinds = {entry.get("id"): tuple(entry.get("is", ())) for entry in values.get("kinds", ())}
+
+        def ancestors(kind: str) -> set[str]:
+            result = {kind}
+            for parent in kinds.get(kind, ()):
+                result |= ancestors(parent)
+            return result
+
+        normalized_items = []
+        for item in values.get("items", ()):
+            if isinstance(item, Mapping) and "fixed" not in item:
+                item = dict(item)
+                item["fixed"] = "furniture" in ancestors(item.get("kind", "thing"))
+            normalized_items.append(item)
+        values["items"] = normalized_items
         return values
 
 

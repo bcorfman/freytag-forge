@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from worldkeeper import World, WorldSchema
 
 from storygame.runtime.facts import Fact, FactStore
-from storygame.story_package.models import StoryPackage, WorldEffect
+from storygame.story_package.models import ItemPlacement, StoryPackage, WorldEffect
 from storygame.story_package.world_schema import world_source_schema_data
 
 WORLD_EFFECTS_APPLIED = "world_effects_applied"
@@ -16,6 +16,14 @@ WORLD_EFFECTS_APPLIED = "world_effects_applied"
 class WorldEffectRefusal:
     fact_id: str
     effect: dict
+    reason: str
+
+
+@dataclass(frozen=True)
+class ScenePlacementRefusal:
+    scene_id: str
+    item_id: str
+    parent_id: str
     reason: str
 
 
@@ -67,4 +75,25 @@ def apply_world_effects(package: StoryPackage, facts: FactStore) -> tuple[WorldE
                 refusals.append(refusal)
                 logging.getLogger(__name__).warning("world effect refused: %s", refusal)
         facts.assert_fact(Fact(predicate=WORLD_EFFECTS_APPLIED, subject="story", object=fact_id, value=None))
+    return tuple(refusals)
+
+
+def apply_scene_placements(package: StoryPackage, facts: FactStore, scene_id: str) -> tuple[ScenePlacementRefusal, ...]:
+    world = world_for(package, facts)
+    scene = next(scene for scene in package.scenes if scene.metadata.scene_id == scene_id)
+    refusals = []
+    for item_id, placement in scene.metadata.item_placements.items():
+        if not isinstance(placement, ItemPlacement) or placement.parent is None:
+            continue
+        result = world.place(
+            item_id,
+            placement.parent,
+            text=placement.text,
+            under=placement.under,
+            part_of=placement.part_of,
+        )
+        if not result.ok:
+            refusal = ScenePlacementRefusal(scene_id, item_id, placement.parent, result.reason)
+            refusals.append(refusal)
+            logging.getLogger(__name__).warning("scene placement refused: %s", refusal)
     return tuple(refusals)

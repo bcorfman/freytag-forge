@@ -8,7 +8,7 @@ from urllib.error import HTTPError, URLError
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.validation import ProgressionValidator
-from storygame.story_package.models import ItemPlacement, item_placement_is_visible
+from storygame.story_package.models import ItemPlacement, item_placement_is_visible, placement_text
 
 
 def _resolve_refer(name: str, tracked) -> str | None:
@@ -73,9 +73,24 @@ def _package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[
         if item is None:
             issues.append(f"scene {scene_id} placement references unknown item {item_id!r}")
             continue
+        if item.hidden:
+            continue
         if not item_placement_is_visible(placement, state.facts):
             continue
-        place = placement if isinstance(placement, str) else placement.placement
+        place = placement_text(placement)
+        if place is None and isinstance(placement, ItemPlacement):
+            parent = next(
+                (
+                    entity
+                    for group in (package.world.locations, package.world.items)
+                    for entity in group
+                    if entity.id == placement.parent
+                ),
+                None,
+            )
+            place = parent.name if parent is not None else None
+        if place is None:
+            continue
         if len(place) > 80:
             issues.append(f"placement for {item.name!r} is longer than 80 characters")
             continue
@@ -187,13 +202,27 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if (
                 item is None
                 or item.name in self.item_facts
+                or item.hidden
                 or not isinstance(placement, ItemPlacement)
                 or (placement.while_fact_false is None and placement.while_fact_true is None)
             ):
                 continue
             if not item_placement_is_visible(placement, self._placement_facts()):
                 continue
-            place = placement if isinstance(placement, str) else placement.placement
+            place = placement_text(placement)
+            if place is None:
+                parent = next(
+                    (
+                        entity
+                        for group in (package.world.locations, package.world.items)
+                        for entity in group
+                        if entity.id == placement.parent
+                    ),
+                    None,
+                )
+                place = parent.name if parent is not None else None
+            if place is None:
+                continue
             self.item_facts[item.name] = {"place": place, "condition": []}
             self.item_facts_seed_names = (*self.item_facts_seed_names, item.name)
             if self._selected_names is None:

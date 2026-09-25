@@ -56,10 +56,14 @@ def _revealed_item_names(turn: dict[str, Any], package: StoryPackage) -> set[str
     if scene is None:
         return set()
     item_names = {item.id: item.name for item in package.world.items}
+    hidden = {item.id for item in package.world.items if item.hidden}
     return {
         item_names[item_id]
         for item_id, placement in scene.metadata.item_placements.items()
-        if isinstance(placement, ItemPlacement) and placement.while_fact_true in facts and item_id in item_names
+        if isinstance(placement, ItemPlacement)
+        and placement.while_fact_true in facts
+        and item_id in item_names
+        and item_id not in hidden
     }
 
 
