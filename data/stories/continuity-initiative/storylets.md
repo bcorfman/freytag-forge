@@ -144,6 +144,7 @@ Each entry below is authoring data, not a player action menu.
 - The recording can emotionally sharpen the danger without adding facts beyond Michelle’s authored warning.
 
 **Effects**
+- May set `memory_card_recovered` when Kristin secures the card.
 - May set `continuity_initiative_known`.
 - May establish Kristin's distrust of the emergency broadcasts as part of the warning's emotional force.
 - May deepen the context for Michelle's investigation.

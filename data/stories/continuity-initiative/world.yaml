@@ -97,8 +97,9 @@ items:
   kind: vehicle
   owner: kristin
 - id: michelle_workstation
-  name: Michelle's workstation
+  name: workstation
   kind: desk
+  owner: michelle
 - id: workstation_chair
   name: workstation chair
 - id: transit_card

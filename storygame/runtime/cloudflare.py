@@ -535,24 +535,25 @@ class CloudflareTurnProvider:
         rules.extend(self._setting_fact_rules())
         return rules
 
-    def _visible_placed_items(self) -> dict[str, tuple[Item, str | ItemPlacement]]:
+    def _visible_placed_items(self, world=None) -> dict[str, tuple[Item, str | ItemPlacement]]:
         scene_items = {item.id: item for item in self.state.package.world.items}
-        world = self._placement_world()
+        if world is None:
+            world = self._placement_world()
+        facts = self._placement_facts()
         visible: dict[str, tuple[Item, str | ItemPlacement]] = {}
         for item_id, placement in self._current_scene().item_placements.items():
             item = scene_items.get(item_id)
             if item is None:
                 continue
-            if not item_placement_is_visible(placement, self._placement_facts()) or world.is_hidden(item_id):
+            if not item_placement_is_visible(placement, facts) or world.is_hidden(item_id):
                 continue
             visible[item_id] = (item, placement)
         return visible
 
-    def _placement_text(self, item_id: str, placement: str | ItemPlacement) -> str | None:
+    def _placement_text(self, item_id: str, placement: str | ItemPlacement, world) -> str | None:
         if isinstance(placement, str) or placement.placement is not None:
             return placement_text(placement)
-        place_text = getattr(self._placement_world(), "place_text", None)
-        return place_text(item_id) if place_text is not None else None
+        return world.place_text(item_id)
 
     def _revealed_details(self, details: tuple[str, ...] | list[str]) -> list[str]:
         visible_ids = set(self._visible_placed_items())
@@ -574,12 +575,13 @@ class CloudflareTurnProvider:
         return revealed_details
 
     def _owner_rules(self) -> list[str]:
-        visible_items = self._visible_placed_items()
+        world = self._placement_world()
+        visible_items = self._visible_placed_items(world)
         possessive_items = [
             visible_items[item_id][0].name
             for item_id in self._current_scene().item_ids
             if item_id in visible_items
-            and self._placement_text(item_id, visible_items[item_id][1]) is not None
+            and self._placement_text(item_id, visible_items[item_id][1], world) is not None
             and re.fullmatch(r".+['’]s\s+.+", visible_items[item_id][0].name)
         ]
         if not possessive_items:
@@ -595,9 +597,10 @@ class CloudflareTurnProvider:
         ]
 
     def _placement_rules(self) -> list[str]:
+        world = self._placement_world()
         rules = []
-        for item_id, (item, placement) in self._visible_placed_items().items():
-            text = self._placement_text(item_id, placement)
+        for item_id, (item, placement) in self._visible_placed_items(world).items():
+            text = self._placement_text(item_id, placement, world)
             if text is not None:
                 rules.append(f"{item.name} is {text}.")
         return rules
