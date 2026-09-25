@@ -132,6 +132,7 @@ _SINGLE_CALL_RULES = (
     'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
     'Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is {"place": "on the floor", '
     '"condition": ["cracked in two"]}.',
+    'When a place is part of something bigger, name both, like "on the passenger seat of the truck".',
 )
 
 
@@ -142,7 +143,7 @@ def _single_call_rules(protagonist_name: str | None) -> tuple[str, ...]:
         f"When {protagonist_name} goes to a new place, add {protagonist_name} to item_facts "
         f"with the place where {protagonist_name} is when the story ends."
     )
-    return (_SINGLE_CALL_RULES[0], protagonist_rule, _SINGLE_CALL_RULES[1])
+    return (_SINGLE_CALL_RULES[0], protagonist_rule, _SINGLE_CALL_RULES[1], _SINGLE_CALL_RULES[2])
 
 
 _MATCH_SYSTEM = (

@@ -150,11 +150,20 @@ def test_single_call_rules_require_facts_for_every_change():
         'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
         "Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is "
         '{"place": "on the floor", '
-        '"condition": ["cracked in two"]}.'
+        '"condition": ["cracked in two"]}.\n'
+        'When a place is part of something bigger, name both, like "on the passenger seat of the truck".'
     )
     assert 'falls, so the cup is {"place": "on the floor"' in system
     assert '"condition": ["cracked in two"]' in system
     assert "Also return item_facts" not in system
+
+
+def test_item_facts_place_context_rule_is_on_opening_and_turn_prompts():
+    provider = _provider()
+    rule = 'When a place is part of something bigger, name both, like "on the passenger seat of the truck".'
+
+    assert rule in provider._system_prompt(opening=False)
+    assert rule in provider._system_prompt(opening=True)
 
 
 def test_single_call_start_place_rule_is_turn_only_and_neutral(monkeypatch):
