@@ -173,7 +173,7 @@ class Location(Entity):
 
 class Item(Entity):
     # A fixed thing is furniture or part of the scene, so the engine keeps its authored place.
-    fixed: bool = False
+    fixed: bool | None = None
     kind: str = Field(default="thing", pattern=_ID)
     openable: bool = False
     open: bool = False
@@ -296,13 +296,20 @@ class Character(_Model):
     bio: str = Field(min_length=1)
 
 
+class KindDeclaration(_Model):
+    id: str = Field(pattern=_ID)
+    is_: tuple[str, ...] = Field(default=(), alias="is")
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+
+
 class WorldSource(_Model):
     story_id: str = Field(pattern=_ID)
     protagonist_id: str = Field(pattern=_ID)
     locations: tuple[Location, ...]
     npcs: tuple[Entity, ...]
     items: tuple[Item, ...]
-    kinds: list[dict] = Field(default_factory=list)
+    kinds: tuple[KindDeclaration, ...] = ()
     facts: tuple[str, ...] = ()
     fact_effects: Mapping[str, tuple[WorldEffect, ...]] = {}
     protected_knowledge: tuple[str, ...] = ()
@@ -313,6 +320,8 @@ class WorldSource(_Model):
         if not isinstance(data, Mapping):
             return data
         values = dict(data)
+        if "facts" not in values:
+            return values
         facts = []
         effects = dict(values.get("fact_effects", {}))
         for entry in values.get("facts", ()):
@@ -326,21 +335,6 @@ class WorldSource(_Model):
                 facts.append(entry)
         values["facts"] = facts
         values["fact_effects"] = effects
-        kinds = {entry.get("id"): tuple(entry.get("is", ())) for entry in values.get("kinds", ())}
-
-        def ancestors(kind: str) -> set[str]:
-            result = {kind}
-            for parent in kinds.get(kind, ()):
-                result |= ancestors(parent)
-            return result
-
-        normalized_items = []
-        for item in values.get("items", ()):
-            if isinstance(item, Mapping) and "fixed" not in item:
-                item = dict(item)
-                item["fixed"] = "furniture" in ancestors(item.get("kind", "thing"))
-            normalized_items.append(item)
-        values["items"] = normalized_items
         return values
 
 

@@ -6,9 +6,12 @@ import copy
 from collections.abc import Mapping
 from urllib.error import HTTPError, URLError
 
+from worldkeeper import WorldSchema
+
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.validation import ProgressionValidator
 from storygame.story_package.models import ItemPlacement, item_placement_is_visible, placement_text
+from storygame.story_package.world_schema import world_source_schema_data
 
 
 def _resolve_refer(name: str, tracked) -> str | None:
@@ -67,6 +70,11 @@ def _package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[
     things: dict[str, dict] = {}
     issues: list[str] = []
     unconsumed_setting_facts: list[str] = []
+    entities_by_id = {
+        entity.id: entity
+        for group in (package.world.locations, package.world.npcs, package.world.items)
+        for entity in group
+    }
     _seed_protagonist(package, scene, things, issues)
     for item_id, placement in scene.metadata.item_placements.items():
         item = items.get(item_id)
@@ -79,15 +87,7 @@ def _package_seed(package, state, scene_id: str) -> tuple[dict[str, dict], list[
             continue
         place = placement_text(placement)
         if place is None and isinstance(placement, ItemPlacement):
-            parent = next(
-                (
-                    entity
-                    for group in (package.world.locations, package.world.items)
-                    for entity in group
-                    if entity.id == placement.parent
-                ),
-                None,
-            )
+            parent = entities_by_id.get(placement.parent)
             place = parent.name if parent is not None else None
         if place is None:
             continue
@@ -211,17 +211,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 continue
             place = placement_text(placement)
             if place is None:
-                parent = next(
-                    (
-                        entity
-                        for group in (package.world.locations, package.world.items)
-                        for entity in group
-                        if entity.id == placement.parent
-                    ),
-                    None,
-                )
-                place = parent.name if parent is not None else None
-            if place is None:
                 continue
             self.item_facts[item.name] = {"place": place, "condition": []}
             self.item_facts_seed_names = (*self.item_facts_seed_names, item.name)
@@ -264,9 +253,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.item_facts_lifted = 0
         self._item_facts_issues: list[str] = []
         package = getattr(self.state, "package", None)
-        self._fixed_item_names = {
-            item.name for item in getattr(getattr(package, "world", None), "items", ()) if getattr(item, "fixed", False)
-        }
+        if package is None:
+            self._fixed_item_names = set()
+        else:
+            schema = WorldSchema.from_data(world_source_schema_data(package.world))
+            self._fixed_item_names = {item.name for item in package.world.items if schema.is_fixed(item.id)}
         package_names, _ = (
             package_seed(package, self.state, self.state.current_scene_id) if package is not None else ({}, [])
         )

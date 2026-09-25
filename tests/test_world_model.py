@@ -60,7 +60,10 @@ def test_world_schema_data_is_plain_and_covers_authored_entities() -> None:
         assert entities[entity.id]["kind"] == "character"
     for item in PACKAGE.world.items:
         assert entities[item.id]["kind"] == "thing"
-        assert entities[item.id]["fixed"] is item.fixed
+        if item.fixed is None:
+            assert "fixed" not in entities[item.id]
+        else:
+            assert entities[item.id]["fixed"] is item.fixed
 
 
 @pytest.mark.component

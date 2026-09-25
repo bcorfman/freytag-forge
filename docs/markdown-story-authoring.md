@@ -16,8 +16,9 @@ The optional `item_placements` mapping gives the narrator a positive placement
 sentence for authored items whose location matters in a scene. String values and
 the old `{placement: ...}` form still load. The new form also changes the world:
 `{parent: item_or_location_id, text: ..., under: true, part_of: true}`. `under`
-and `part_of` are mutually exclusive. `text` is optional; without it, the bench
-uses the parent's name. A hidden item may have a declared place because it never
+and `part_of` are mutually exclusive; use `part_of` when an item is a component
+of its parent. `text` is optional; without it, the bench uses the parent's name.
+A hidden item may have a declared place because it never
 reaches the narrator, but it must not carry `text`.
 
 Locations may declare a `parent` location ID. `world.yaml` may declare story
@@ -25,8 +26,9 @@ sub-kinds with `kinds: [{id: desk, is: [furniture, supporter]}]`. Items may set
 `kind`, `openable`, `hidden`, `contents`, and `owner`; furniture descendants are
 fixed unless `fixed: false` is explicit.
 
-World facts may already declare `on_assert` effects. Supported effects include
-`move`, `reveal`, `accompany`, and `set_axis`.
+World facts may already declare `on_assert` effects. These effects run when the
+fact becomes true. Supported effects include `move`, `reveal`, `accompany`, and
+`set_axis`.
 
 The optional `setting_facts` list contains true, visible-state sentences. Each
 sentence is rendered verbatim as its own narrator rule after the placement

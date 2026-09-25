@@ -87,6 +87,27 @@ def test_story_kind_inherits_furniture_fixed_default():
     assert not world.move("desk", "room").ok
 
 
+def test_schema_kind_queries_and_effective_fixed_flags():
+    schema = WorldSchema.from_data(
+        {
+            "kinds": [{"id": "desk", "is": ["furniture", "supporter"]}],
+            "entities": [
+                {"id": "room", "name": "room", "kind": "area"},
+                {"id": "desk", "name": "desk", "kind": "desk"},
+                {"id": "drawer", "name": "drawer", "kind": "thing", "fixed": True},
+                {"id": "truck", "name": "truck", "kind": "vehicle"},
+            ],
+        }
+    )
+
+    assert schema.kind_is("desk", "furniture")
+    assert not schema.kind_is("vehicle", "furniture")
+    assert schema.kind_is("missing", "thing") is False
+    assert schema.is_fixed("desk")
+    assert schema.is_fixed("drawer")
+    assert not schema.is_fixed("truck")
+
+
 class StrictFact:
     def __init__(self, *, predicate, subject, object=None, value=None):
         assert re.fullmatch(r"wk_[a-z][a-z0-9_]*", predicate)

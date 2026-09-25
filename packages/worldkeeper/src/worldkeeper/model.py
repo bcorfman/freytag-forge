@@ -113,6 +113,15 @@ class WorldSchema:
     def __init__(self, kinds, entities):
         self.kinds, self.entities = kinds, entities
 
+    def kind_is(self, kind: str, ancestor: str) -> bool:
+        """Return whether a known kind is or descends from an ancestor kind."""
+        return kind in self.kinds and ancestor in _ancestors(self.kinds, kind)
+
+    def is_fixed(self, entity_id: str) -> bool:
+        """Return an entity's effective fixed flag."""
+        entity = self.entities.get(entity_id)
+        return bool(entity and entity.fixed)
+
     @classmethod
     def from_data(cls, data: Mapping):
         """Validate mappings and return a schema, or raise :class:`SchemaError`."""

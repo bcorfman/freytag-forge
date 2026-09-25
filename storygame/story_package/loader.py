@@ -85,19 +85,8 @@ def _validate_scene_placements(world_source: WorldSource, scenes: tuple[Scene, .
     entity_ids = {
         entity.id for group in (world_source.locations, world_source.npcs, world_source.items) for entity in group
     }
-    location_ids = {location.id for location in world_source.locations}
-    kinds = schema.kinds
-
-    def is_a(kind: str, target: str) -> bool:
-        return target in _ancestors(kinds, kind)
-
-    for location in world_source.locations:
-        if location.parent is not None and location.parent not in location_ids:
-            raise StoryPackageError(f"location '{location.id}' has unknown location parent '{location.parent}'")
     for item in world_source.items:
-        if item.kind not in kinds:
-            raise StoryPackageError(f"item '{item.id}' has unknown kind '{item.kind}'")
-        if not is_a(item.kind, "thing"):
+        if not schema.kind_is(item.kind, "thing"):
             raise StoryPackageError(f"item '{item.id}' kind '{item.kind}' does not descend from thing")
     for scene in scenes:
         backend = MemoryBackend()
@@ -128,13 +117,6 @@ def _validate_scene_placements(world_source: WorldSource, scenes: tuple[Scene, .
                 raise StoryPackageError(
                     f"scene {scene.metadata.scene_id} placement for '{item_id}' was refused: {result.reason}"
                 )
-
-
-def _ancestors(kinds: dict[str, tuple[str, ...]], kind: str) -> set[str]:
-    result = {kind}
-    for parent in kinds[kind]:
-        result |= _ancestors(kinds, parent)
-    return result
 
 
 def _parse_scenes(text: str) -> tuple[Scene, ...]:
@@ -1062,7 +1044,7 @@ def load_story_package(root: Path) -> StoryPackage:
                     raise StoryPackageError(
                         f"world fact '{fact_id}' effect references unknown entity(s): {sorted(unknown)}"
                     )
-        known_kind_ids = set(BASE_KINDS) | {kind.get("id") for kind in world.kinds}
+        known_kind_ids = set(BASE_KINDS) | {kind.id for kind in world.kinds}
         for item in world.items:
             if item.kind not in known_kind_ids:
                 raise StoryPackageError(f"item '{item.id}' has unknown kind '{item.kind}'")
