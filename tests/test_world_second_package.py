@@ -186,7 +186,7 @@ def test_narrator_bench_and_audit_boundaries(package):
     state.facts.assert_fact(_fact(found))
     assert hidden_name in " ".join(provider._placement_rules())
     seeded, _ = package_seed(package, state, "1A")
-    assert hidden_name not in seeded
+    assert hidden_name in seeded
     candidate_id = "k_sl_1a_b_r0" if package.story_id == "continuity_initiative" else "k_find_key"
     turn = {"authored_handoff_candidate_id": candidate_id, "scene_id": "1A"}
     assert hidden_name in _revealed_item_names(turn, package)

@@ -6,12 +6,7 @@
   "fact_tracking_judge": true,
   "item_facts": {
     "mode": "single_call",
-    "seed": {
-      "Michelle's phone": {"place": "on the kitchen floor", "condition": ["not damaged"]},
-      "drawer": {"place": "in Michelle's workstation", "condition": ["shut"]},
-      "the back door": {"place": "at the back of the kitchen", "condition": ["forced open", "frame splintered"]},
-      "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": []}
-    }
+    "seed_from_package": true
   },
   "system_prompt": {
     "rules": [

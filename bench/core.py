@@ -31,6 +31,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
+from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
 
 CRITERIA = (
@@ -179,6 +180,11 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     if item_facts is not None:
         package = load_story_package(Path(variation["_package_path"]))
         known_names = set(item_facts[1])
+        known_names.update(
+            entity.name
+            for group in (package.world.locations, package.world.npcs, package.world.items)
+            for entity in group
+        )
         if variation.get("item_facts", {}).get("seed_from_package", False):
             for scene in package.scenes:
                 state = RuntimeState(
@@ -190,21 +196,6 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
                 known_names.update(package_seed(package, state, scene.metadata.scene_id)[0])
         item_facts = validate_item_facts(variation["item_facts"], known_names=known_names)
         variation["_item_facts"] = item_facts
-    if item_facts is not None and variation.get("item_facts", {}).get("seed_from_package", False):
-        package = load_story_package(Path(variation["_package_path"]))
-        hand_seed = item_facts[1]
-        package_names: set[str] = set()
-        for scene in package.scenes:
-            state = RuntimeState(
-                package=package,
-                current_scene_id=scene.metadata.scene_id,
-                phase=scene.metadata.freytag_phase,
-            )
-            state._assert_scene_entry_fact(scene.metadata.scene_id)
-            package_names.update(package_seed(package, state, scene.metadata.scene_id)[0])
-        clashes = package_names & set(hand_seed)
-        if clashes:
-            raise ValueError(f"item_facts seed names clash with package things: {sorted(clashes)!r}")
     continue_to = variation.get("continue_to")
     if continue_to is not None:
         if fixed_turns is None:
@@ -475,12 +466,6 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
     if item_facts is not None:
         mode, seed, state_axes = item_facts
         seed_issues: list[str] = []
-        if variation.get("item_facts", {}).get("seed_from_package", False):
-            package_things, seed_issues = package_seed(state.package, state, state.current_scene_id)
-            clashes = set(package_things) & set(seed)
-            if clashes:
-                raise ValueError(f"item_facts seed names clash with package things: {sorted(clashes)!r}")
-            seed = {**package_things, **seed}
         return ItemFactsProvider.from_environment(
             state,
             prompt_variant=variation["_prompt_variant"],
@@ -488,6 +473,7 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
             mode=mode,
             state_axes=state_axes,
             seed_issues=seed_issues,
+            seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
         )
     return CloudflareTurnProvider.from_environment(state, prompt_variant=variation["_prompt_variant"])
 
@@ -596,14 +582,8 @@ def prompt_for(
             item_facts=seed,
             mode=mode,
             state_axes=state_axes,
+            seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
         )
-        if variation.get("item_facts", {}).get("seed_from_package", False):
-            package_things, seed_issues = package_seed(package, state, state.current_scene_id)
-            if set(package_things) & set(seed):
-                raise ValueError("item_facts seed names clash with package things")
-            provider.item_facts = {**package_things, **provider.item_facts}
-            provider.item_facts_seed_names = tuple(provider.item_facts)
-            provider.item_facts_seed_issues = seed_issues
     else:
         provider = CloudflareTurnProvider(
             worker_url="", token="", state=state, prompt_variant=variation["_prompt_variant"]
@@ -787,6 +767,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "item_facts_after": facts_after,
                     "item_facts_raw": raw_item_facts,
                     "item_facts_issues": fact_issues,
+                    "item_facts_unplaced": provider.last_item_facts_unplaced(),
                     "item_facts_source": provider.item_facts_mode,
                     "item_facts_held": list(provider._held_item_facts),
                     "match_call": match_info["match_call"],
@@ -795,6 +776,12 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "item_facts_resolutions": match_info["resolutions"],
                     "item_facts_engine_resolutions": match_info["engine_resolutions"],
                 }
+                if entered:
+                    refusals = apply_scene_placements(package, state.facts, state.current_scene_id)
+                    provider.item_facts_seed_issues.extend(
+                        f"scene placement for {refusal.item_id!r} in {refusal.scene_id!r} refused: {refusal.reason}"
+                        for refusal in refusals
+                    )
             if narration or isinstance(provider, ItemFactsProvider):
                 delivery = state.last_turn_delivery
                 cue_fact_id = delivery.cue_fact_id
@@ -868,18 +855,6 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         "advanced_offline": True,
                     }
                 )
-            if isinstance(provider, ItemFactsProvider) and variation.get("item_facts", {}).get(
-                "seed_from_package", False
-            ):
-                additions, issues = package_seed(package, state, target_scene)
-                target_protagonist = additions.get(_protagonist_name(package))
-                additions = {name: facts for name, facts in additions.items() if name not in provider.item_facts}
-                provider.item_facts.update(additions)
-                protagonist_name = _protagonist_name(package)
-                if protagonist_name in provider.item_facts and target_protagonist is not None:
-                    provider.item_facts[protagonist_name] = target_protagonist
-                provider.item_facts_seed_names = tuple(provider.item_facts)
-                provider.item_facts_seed_issues.extend(issues)
             continuation_script = next(
                 item for item in scripts_for(variation, target_scene) if item["name"] == continue_to["script"]
             )
