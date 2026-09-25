@@ -349,6 +349,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
             return self._constant_opening_rules() if opening else self._constant_turn_rules()
         return []
 
+    def _output_example(self) -> str | None:
+        example = super()._output_example()
+        protagonist_name = _protagonist_name(self.state.package)
+        if example is not None and protagonist_name is not None:
+            return example.replace("{protagonist}", protagonist_name)
+        return example
+
     def _system_prompt(self, opening: bool = False) -> str:
         system = super()._system_prompt(opening=opening)
         if self.item_facts_mode == "single_call":
@@ -660,6 +667,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._item_facts_issues = issues
         changed: set[str] = set()
         for name, value in raw.items():
+            if isinstance(value, str) and value.strip():
+                value = {"place": value.strip()}
             if name not in self.item_facts:
                 if isinstance(value, dict) and not value:
                     continue

@@ -210,6 +210,39 @@ def test_protagonist_reply_moves_place_and_ignores_condition():
     assert issues == ["item_facts condition for Kristin ignored"]
 
 
+@pytest.mark.parametrize("name", ["the lantern", "Kristin", "new thing"])
+def test_apply_item_facts_accepts_bare_string_places(name, monkeypatch):
+    provider = _seeded_provider()
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"oops": 1})
+
+    facts, issues = provider.apply_item_facts({name: "  on the porch  "})
+
+    assert facts[name] == {"place": "on the porch", "condition": []}
+    assert issues == []
+
+
+def test_apply_item_facts_rejects_blank_string_place():
+    provider = _provider()
+
+    facts, issues = provider.apply_item_facts({"the lantern": "  "})
+
+    assert facts["the lantern"] == {"place": "on the table", "condition": ["lit"]}
+    assert issues == ["item_facts for 'the lantern' has no valid place or condition"]
+
+
+def test_item_facts_output_example_substitutes_protagonist_on_turn_and_opening():
+    provider = _seeded_provider()
+    provider.prompt_variant = {
+        "include_output_example": True,
+        "output_example": '{"item_facts":{"{protagonist}":{"place":"on the porch"}}}',
+    }
+
+    for opening in (False, True):
+        prompt = provider._system_prompt(opening=opening)
+        assert '"Kristin":{"place":"on the porch"}' in prompt
+        assert "{protagonist}" not in prompt
+
+
 def test_two_scene_variation_output_example_shows_two_step_action():
     variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
     prompt = core.prompt_for(variation, "1A", "Pick up the lantern and carry it out to the porch.")
@@ -218,6 +251,8 @@ def test_two_scene_variation_output_example_shows_two_step_action():
     assert "She hands it to her neighbor, who takes it with a nod." in prompt["system"]
     assert '"place":"in the neighbor\'s hand"' in prompt["system"]
     assert '"condition":["lit"]' in prompt["system"]
+    assert '"Kristin":{"place":"on the porch"}' in prompt["system"]
+    assert "{protagonist}" not in prompt["system"]
     assert "She sets it on the rail" not in prompt["system"]
     assert "Its light has gone out." not in prompt["system"]
 
