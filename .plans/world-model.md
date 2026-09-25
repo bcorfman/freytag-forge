@@ -604,16 +604,16 @@ decisions W1-W10. Scope decided by Brandon, 2026-09-25 (W6).
 - Task 2: wire it into storygame: `FactStore` passed as the backend, the
   package data handed to it as plain data, W7 effects applied when a story
   fact is set. This task and the ones below depend on task 1.
-  Task 1 is done (branch `worldkeeper`, commits 9ae8f8f and 35989af). Its
-  review left two small library fixes for this task, each with a
-  regression test in `packages/worldkeeper/tests/`:
-  - A story-effect move (`apply_effects` with `{"move": ..., "parent":
-    ...}`) of a character must carry its companions, as `move()` does.
-    Today `_effect_move` skips them, so a story fact that moves the
-    protagonist leaves a companion behind.
-  - `World.create()` has an undocumented extra keyword `parent_id`
-    alongside `parent`. Remove it so the signature matches the documented
-    `create(name, parent=None, *, kind="thing", under=False, owner=None)`.
+  Task 1 is done (PR 479). Task 2 is done (branch `world-model-s1`,
+  commits bd8c46b and 529b6a0). worldkeeper is a uv workspace dependency.
+  `storygame/runtime/world_model.py` is the adapter. `world.yaml` facts may
+  declare `on_assert` effects, which apply once per fact through a sweep
+  after every commit point, leaving a `world_effects_applied` marker.
+  Bootstrap seeds the world, and the provider cannot write `wk_` facts. The
+  two library fixes from task 1's review landed with it: story-effect moves
+  carry companions, and `create()` lost `parent_id`. So did a third: a
+  companion with no place never follows. The schema data is built in
+  `storygame/story_package/world_schema.py`, and the next task extends it.
 - Package schema and loader: `kind` on items, `parent` on locations, an
   optional `kinds` list, placements as `{parent, text, under}`. Loading
   rejects unknown IDs and parents a kind does not allow. String placements
@@ -626,7 +626,14 @@ decisions W1-W10. Scope decided by Brandon, 2026-09-25 (W6).
   other placement readers.
 - Convert continuity-initiative scene 1A only: the kitchen and
   outside-the-house areas, the truck, the workstation, the card's hidden place.
-  Structured YAML edits in a Ringer task; no story prose.
+  Structured YAML edits in a Ringer task; no story prose. Keep the setting
+  fact "The drawer holds pens, binder clips, a stapler, and spare
+  batteries." through S1, because the shipped narrator does not read the
+  tree yet. Removing it now would change what the player sees. It goes when
+  THINGS gives an open container's contents (S2 on the bench, S4 at runtime).
+  The shipped narrator's 1A payloads must stay byte-identical to the
+  baseline captured before S1 (opening and one turn, with and without the
+  card custody fact).
 - Update `docs/markdown-story-authoring.md` for hidden places and the new
   placement form.
 - Exit: the section 10 unit tests pass on continuity-initiative and a
