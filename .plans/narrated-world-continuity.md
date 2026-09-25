@@ -1,7 +1,7 @@
 # Narrated world continuity: implementation plan
 
 Status (2026-09-24): Phase 0 bench work is through round 9 and
-single-mechanism runs v11-v34 on branch `round9`; v11-v33 merged to `main` in PR #473. A new
+single-mechanism runs v11-v35 on branch `round9`; v11-v33 merged to `main` in PR #473. A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
 Phase 0. It lists what changed in v21-v26, the next steps in order, the
 story-package authoring rules any ChatGPT story prompt must state, and how
@@ -1525,6 +1525,20 @@ records:
   own prose. The drawer paper put in the card's hidden spot is
   reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
   No flag cites the bridge or the reveal text any more.
+
+*v35 (2026-09-24, `bench/results/item-facts-v35-leadin-two-scene-1a` plus
+smoke `item-facts-v35-smoke-two-scene-1a`).* `50bb6bb`, with Brandon's
+approval: on the turn that delivers an authored reveal, the narrator sees
+that reveal's own delivery text ("Right after your story, the game will add
+this: ..."). It is asked to write only the lead-up ("Write only what leads
+up to it. Do not have Kristin find anything else."). The v34 lines are
+removed. The PRD bullet now reads "It sees delivery text only on the turn
+that delivers it."
+- t2 invented paper: 0/3 (v34 3/3; every run since v26). The narration
+  builds up to the drawer and the authored find follows once.
+- t13: 2/3 read at the truck. r2 walks back into the house (t13 is left as
+  it is, by Brandon's decision). A mild echo: the narrator sometimes names
+  the file contents just before the authored text does.
 
 *v34 (2026-09-24, `bench/results/item-facts-v34-nofind-two-scene-1a` plus
 smoke `item-facts-v34-smoke-two-scene-1a`).* Round 9 was merged to `main`
