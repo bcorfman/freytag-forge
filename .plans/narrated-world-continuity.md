@@ -1,7 +1,7 @@
 # Narrated world continuity: implementation plan
 
 Status (2026-09-24): Phase 0 bench work is through round 9 and
-single-mechanism runs v11-v30, all on branch `round9`, not merged. A new
+single-mechanism runs v11-v31, all on branch `round9`, not merged. A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
 Phase 0. It lists what changed in v21-v26, the next steps in order, the
 story-package authoring rules any ChatGPT story prompt must state, and how
@@ -1525,6 +1525,26 @@ records:
   own prose. The drawer paper put in the card's hidden spot is
   reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
   No flag cites the bridge or the reveal text any more.
+
+*v31 (2026-09-24, `bench/results/item-facts-v31-startrule-two-scene-1a` plus
+smoke `item-facts-v31-smoke-two-scene-1a`).* `89b1c68` adds, on turns only,
+"Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk
+there again." The protagonist sentence is now gender-neutral. The Jev fact
+judge asks the protagonist "changing locations", not "moving". Read by hand
+over 3 replicates:
+- t13 walk back into the house: 0/3 (v30 1/3, v28 1/2). But 2/3 instead
+  invent a drive "to a nearby parking lot" before reading, which is not a
+  restart.
+- 1B t19 "approaches the watching man": 3/3, and t18 "approaches" 3/3. The
+  rule does not reach it. A likely mechanism: the 1B beat detail "watching
+  man" is sent every turn, and her tracked place reads "near the watching
+  man". The narration copies that exact phrase, "approaches the watching
+  man". This is authored story text, so a rename is a ChatGPT story task.
+- Her place capture still misses real moves: t4 (out to the truck and back),
+  t9 (carries the laptop to the truck) and t13 (drives off), 3/3 each.
+- Jev's location question no longer fires on small steps inside a room (the
+  v30 t6 false alarms are gone). Its remaining Kristin flags match those
+  real misses.
 
 *v30 (2026-09-24, `bench/results/item-facts-v30-kristin-two-scene-1a` plus
 smoke `item-facts-v30-smoke-two-scene-1a`).* `22a057b`: the bench now tracks
