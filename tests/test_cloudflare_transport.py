@@ -885,10 +885,11 @@ def test_authored_handoff_prompt_hides_candidate_contract(monkeypatch) -> None:
     candidate = next(item for item in package.knowledge.knowledge if item.id == "k_sl_1a_b_r2")
     assert candidate.id not in prompt
     assert candidate.statement not in prompt
-    assert AUTHORED_DELIVERY not in prompt
     assert "must_convey" not in prompt
     assert "selected_knowledge_ids" not in captured[0]["user"]
     assert "grounding_ids" not in captured[0]["user"]
+    assert f"Right after your story, the game will add this: {AUTHORED_DELIVERY}" in prompt
+    assert "Write only what leads up to it. Do not have Kristin find anything else." in prompt
 
 
 def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) -> None:
@@ -919,10 +920,30 @@ def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) 
     candidate = next(item for item in package.knowledge.knowledge if item.id == "k_sl_1a_b_r2")
     assert candidate.id not in recovery_system
     assert candidate.statement not in recovery_system
-    assert AUTHORED_DELIVERY not in recovery_system
     assert "grounding_ids" not in recovery_system
     assert "Put" not in recovery_system
     assert "Do not select a fact." in recovery_system
+    assert f"Right after your story, the game will add this: {AUTHORED_DELIVERY}" in recovery_system
+    assert "Write only what leads up to it. Do not have Kristin find anything else." in recovery_system
+
+
+def test_normal_turn_prompt_omits_authored_handoff_rules(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    captured: dict[str, object] = {}
+
+    def open_request(request, timeout):
+        captured["payload"] = json.loads(request.data)
+        return _Response({"segments": [{"kind": "narration", "text": "The room settles."}]})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    provider("Search the kitchen for signs of a struggle.")
+
+    prompt = f"{captured['payload']['system']}\n{captured['payload']['user']}"
+    assert AUTHORED_DELIVERY not in prompt
+    assert "Right after your story, the game will add this: " not in prompt
+    assert "Write only what leads up to it. Do not have Kristin find anything else." not in prompt
 
 
 def test_authored_handoff_with_positive_selection_example_uses_the_default_example() -> None:

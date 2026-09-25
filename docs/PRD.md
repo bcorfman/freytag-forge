@@ -16,8 +16,8 @@ gameplay code stays story-agnostic. Commands are in [README.md](../README.md).
 - The player types in-world commands. Declarative storylets and pacing make
   delay a player choice; prose never picks a branch.
 - Facts are the only durable truth. The narrator sees bounded scene-local
-  material only: never protected reveals, delivery text, routes, source IDs,
-  future effects or transcript memory.
+  material only: never protected reveals, routes, source IDs, future effects
+  or transcript memory. It sees delivery text only on the turn that delivers it.
 - Each turn parses the narrator's untrusted JSON and validates the prose
   against a cloned fact store. It rejects unearned knowledge, ungiven facts,
   misattributed speech and plot running ahead. A projected beat's prose
