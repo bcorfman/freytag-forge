@@ -1,0 +1,17 @@
+[project]
+name = "worldkeeper"
+version = "0.1.0"
+description = "A reusable fact-backed world model for narrated games"
+requires-python = ">=3.12"
+dependencies = []
+license = {text = "MIT"}
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
