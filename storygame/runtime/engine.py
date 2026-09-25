@@ -27,6 +27,7 @@ from storygame.runtime.validation import (
     predicate_matches,
     unconveyed_terms,
 )
+from storygame.runtime.world_model import apply_world_effects
 from storygame.story_package.models import FactDelivery
 from storygame.story_package.obligations import required_storylet_ids
 
@@ -92,7 +93,7 @@ class RuntimeEngine(CanonicalEventMixin):
             )
             self.validator.validate_effects(self.state, proposal)
             candidate_state = deepcopy(self.state)
-            candidate_state.apply_proposal(proposal)
+            candidate_state.apply_proposal(proposal, apply_world=False)
             self.narration_validator.validate(self.state, candidate_state, proposal, self.projector, command_text)
         except (ProposalValidationError, RuntimeContractError):
             self.state.restore_snapshot(before)
@@ -283,6 +284,7 @@ class RuntimeEngine(CanonicalEventMixin):
                             transition={"transition_id": event.transition_id},
                         )
                     )
+        apply_world_effects(self.state.package, self.state.facts)
         windows = {window.scene_id: window for window in self.state.package.pacing.scenes}
         window = windows[self.state.current_scene_id]
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn

@@ -32,8 +32,14 @@ def build_knowledge_audit(
         "resolved_source_ids": sorted(
             f"{event.event_id}/{event.realization_id}" for event in proposal.events if event.realization_id
         ),
-        "fact_keys_before": sorted(set(fact_keys_before)),
-        "fact_keys_after": sorted({fact.predicate for fact in engine.state.facts.asserted}),
+        "fact_keys_before": sorted(
+            key for key in set(fact_keys_before) if not key.startswith("wk_") and key != "world_effects_applied"
+        ),
+        "fact_keys_after": sorted(
+            fact.predicate
+            for fact in engine.state.facts.asserted
+            if not fact.predicate.startswith("wk_") and fact.predicate != "world_effects_applied"
+        ),
         "accepted_segments": segments,
         "result": "committed",
         "rejection_code": None,

@@ -245,7 +245,11 @@ def create_demo_app(
     def turn(body: TurnRequest, request: Request) -> dict[str, object]:
         require_rate_limit(request)
         state = load_state(body.session_id)
-        fact_keys_before = {fact.predicate for fact in state.facts.asserted}
+        fact_keys_before = {
+            fact.predicate
+            for fact in state.facts.asserted
+            if not fact.predicate.startswith("wk_") and fact.predicate != "world_effects_applied"
+        }
         try:
             provider = provider_for(state)
             test_clock = _test_clock_seconds(body, request)

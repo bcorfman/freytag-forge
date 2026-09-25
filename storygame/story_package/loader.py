@@ -974,6 +974,8 @@ def _parse_characters(plot_text: str, world: WorldSource) -> tuple[Character, ..
 
 def load_story_package(root: Path) -> StoryPackage:
     """Load one package directory without accepting prose as runtime truth."""
+    from storygame.runtime.world_model import validate_world_schema
+
     try:
         plot_text = (root / "plot.md").read_text(encoding="utf-8")
         scenes = _parse_scenes(plot_text)
@@ -983,6 +985,30 @@ def load_story_package(root: Path) -> StoryPackage:
             (root / "storylets.md").read_text(encoding="utf-8"), plot_beat_anchors, plot_scene_ids
         )
         world = WorldSource.model_validate(_yaml(root / "world.yaml"))
+        declared_ids = {entity.id for entity in (*world.locations, *world.npcs, *world.items)}
+        for fact_id, effects in world.fact_effects.items():
+            for effect in effects:
+                referenced = {
+                    value
+                    for value in (
+                        effect.move,
+                        effect.parent,
+                        effect.reveal,
+                        effect.accompany,
+                        effect.with_,
+                        effect.set_axis,
+                    )
+                    if value is not None
+                }
+                unknown = referenced - declared_ids
+                if unknown:
+                    raise StoryPackageError(
+                        f"world fact '{fact_id}' effect references unknown entity(s): {sorted(unknown)}"
+                    )
+        try:
+            validate_world_schema(type("PackageWorld", (), {"world": world})())
+        except ValueError as exc:
+            raise StoryPackageError(f"invalid world schema: {exc}") from exc
         pacing = PacingSource.model_validate(_yaml(root / "pacing.yaml"))
         routes_raw = _yaml(root / "storylet-routes.yaml")
         knowledge = KnowledgeCatalog.model_validate(_yaml(root / "knowledge.yaml"))

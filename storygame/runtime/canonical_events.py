@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from storygame.runtime.contracts import FactOperation, NarrationSegment
 from storygame.runtime.facts import Fact
+from storygame.runtime.world_model import apply_world_effects
 
 
 class CanonicalEventMixin:
@@ -28,6 +29,7 @@ class CanonicalEventMixin:
                 self._commit_canonical_event(event)
                 break
             else:
+                apply_world_effects(self.state.package, self.state.facts)
                 return
 
     def _commit_canonical_event(self, event) -> None:
@@ -69,6 +71,7 @@ class CanonicalEventMixin:
                 segments.append(NarrationSegment(kind="narration", text=event.fallback_text or ""))
                 break
             else:
+                apply_world_effects(self.state.package, self.state.facts)
                 return tuple(segments)
 
     @staticmethod

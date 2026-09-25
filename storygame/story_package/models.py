@@ -172,6 +172,36 @@ class Item(Entity):
     fixed: bool = False
 
 
+class WorldEffect(_Model):
+    move: str | None = Field(default=None, pattern=_ID)
+    parent: str | None = Field(default=None, pattern=_ID)
+    under: bool = False
+    reveal: str | None = Field(default=None, pattern=_ID)
+    accompany: str | None = Field(default=None, pattern=_ID)
+    with_: str | None = Field(default=None, alias="with", pattern=_ID)
+    set_axis: str | None = Field(default=None, pattern=_ID)
+    value: str | None = None
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+
+    @model_validator(mode="after")
+    def one_shape(self) -> WorldEffect:
+        values = self.model_dump(exclude_none=True, exclude_defaults=True, by_alias=True)
+        if self.move is not None:
+            valid = set(values) <= {"move", "parent", "under"} and self.parent is not None
+        elif self.reveal is not None:
+            valid = set(values) == {"reveal"}
+        elif self.accompany is not None:
+            valid = set(values) == {"accompany", "with"} and self.with_ is not None
+        elif self.set_axis is not None:
+            valid = set(values) == {"set_axis", "value"} and self.value is not None
+        else:
+            valid = False
+        if not valid:
+            raise ValueError("world effect must use exactly one supported shape")
+        return self
+
+
 _LEADING_DETERMINERS = frozenset({"the", "a", "an", "this", "that", "her", "his", "their", "its"})
 
 
@@ -243,7 +273,29 @@ class WorldSource(_Model):
     npcs: tuple[Entity, ...]
     items: tuple[Item, ...]
     facts: tuple[str, ...] = ()
+    fact_effects: Mapping[str, tuple[WorldEffect, ...]] = {}
     protected_knowledge: tuple[str, ...] = ()
+
+    @model_validator(mode="before")
+    @classmethod
+    def split_fact_effects(cls, data):
+        if not isinstance(data, Mapping) or "facts" not in data:
+            return data
+        values = dict(data)
+        facts = []
+        effects = dict(values.get("fact_effects", {}))
+        for entry in values.get("facts", ()):
+            if isinstance(entry, str):
+                facts.append(entry)
+            elif isinstance(entry, Mapping):
+                fact_id = entry.get("id")
+                facts.append(fact_id)
+                effects[fact_id] = entry.get("on_assert", ())
+            else:
+                facts.append(entry)
+        values["facts"] = facts
+        values["fact_effects"] = effects
+        return values
 
 
 class SceneMetadata(_Model):

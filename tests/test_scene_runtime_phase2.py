@@ -78,7 +78,7 @@ def test_fact_store_helpers_round_trip() -> None:
 
     assert Fact(predicate="located", subject="kristin", object="mcgehee_home") in state.facts.asserted
     assert state.facts.matching("located", "kristin") == (fact,)
-    assert state.facts.asserted == {fact, entry_fact}
+    assert {item for item in state.facts.asserted if not item.predicate.startswith("wk_")} == {fact, entry_fact}
     state.facts.retract_fact(fact)
     assert Fact(predicate="located", subject="kristin", object="mcgehee_home") not in state.facts.asserted
 

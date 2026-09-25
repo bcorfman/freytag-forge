@@ -21,6 +21,7 @@ KNOWN_REJECTION_CODES = frozenset(
         "missing_knowledge_content",
         "protected_knowledge_mutation",
         "canonical_fact_mutation",
+        "world_fact_mutation",
         "inactive_storylet_event",
         "unavailable_storylet",
         "invalid_storylet_realization",

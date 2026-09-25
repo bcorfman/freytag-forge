@@ -493,10 +493,13 @@ class World:
         new_relation = self._relation(parent_id, under)
         self._write_placement(entity_id, parent_id, new_relation)
         self._transfer_open(old_parent, parent_id, old_relation, new_relation)
+        self._move_companions(entity_id, old_parent, parent_id)
+        return OpResult(True, id=entity_id)
+
+    def _move_companions(self, entity_id, old_parent, parent_id):
         for companion_id in self.companions(entity_id):
             if self.parent(companion_id) == old_parent:
                 self._write_placement(companion_id, parent_id, self._relation(parent_id))
-        return OpResult(True, id=entity_id)
 
     def place(self, entity_id, parent_id, *, text=None, under=False, part_of=False):
         """Place setup content, permitting fixed and hidden entities."""
@@ -527,11 +530,8 @@ class World:
         self._replace("wk_moved", entity_id, "true")
         return OpResult(True, id=entity_id)
 
-    def create(self, name, parent=None, *, kind="thing", under=False, owner=None, parent_id=None):
+    def create(self, name, parent=None, *, kind="thing", under=False, owner=None):
         """Create a thing, refusing invalid names, kinds, owners, and parents."""
-        if parent is not None and parent_id is not None:
-            return self._bad("parent was supplied twice")
-        parent = parent if parent is not None else parent_id
         if not name or len(name) > 80:
             return self._bad("name must be 1 to 80 characters")
         if self.resolve(name):
@@ -649,4 +649,5 @@ class World:
         new_relation = self._relation(parent_id, under)
         self._write_placement(entity_id, parent_id, new_relation)
         self._transfer_open(old_parent, parent_id, old_relation, new_relation)
+        self._move_companions(entity_id, old_parent, parent_id)
         return OpResult(True, id=entity_id)
