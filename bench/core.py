@@ -18,7 +18,7 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import Any
 
-from bench.item_facts import ItemFactsProvider, package_seed, validate_item_facts
+from bench.item_facts import ItemFactsProvider, _protagonist_name, package_seed, validate_item_facts
 from bench.judge_input import judge_turns
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
@@ -872,8 +872,12 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 "seed_from_package", False
             ):
                 additions, issues = package_seed(package, state, target_scene)
+                target_protagonist = additions.get(_protagonist_name(package))
                 additions = {name: facts for name, facts in additions.items() if name not in provider.item_facts}
                 provider.item_facts.update(additions)
+                protagonist_name = _protagonist_name(package)
+                if protagonist_name in provider.item_facts and target_protagonist is not None:
+                    provider.item_facts[protagonist_name] = target_protagonist
                 provider.item_facts_seed_names = tuple(provider.item_facts)
                 provider.item_facts_seed_issues.extend(issues)
             continuation_script = next(
@@ -1408,18 +1412,51 @@ def run_continuity_judges(input_path: Path, output_path: Path) -> dict[str, Any]
 
 
 def run_fact_tracking_judges(input_path: Path, output_path: Path) -> dict[str, Any]:
-    command = [
-        "node",
-        str(Path(__file__).with_name("fact-tracking-judge.mjs")),
-        "--input",
-        str(input_path),
-        "--output",
-        str(output_path),
-    ]
-    result = _run_with_judge_input(command, input_path)
-    if result.returncode:
-        raise RuntimeError(result.stderr.strip() or "fact-tracking judge CLI failed")
-    return read_json(output_path)
+    backend = os.environ.get("BENCH_FACT_JUDGE", "").strip() or "jev"
+    if backend not in {"jev", "luna"}:
+        raise ValueError(f"unknown fact judge backend: {backend}")
+    if backend == "luna":
+        command = [
+            "node",
+            str(Path(__file__).with_name("fact-tracking-judge.mjs")),
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ]
+        result = _run_with_judge_input(command, input_path)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or "fact-tracking judge CLI failed")
+        judged = read_json(output_path)
+        judged["judge_backend"] = "luna"
+        return judged
+
+    package_path = read_json(input_path)["package_path"]
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        command = [
+            "node",
+            str(Path(__file__).with_name("jev-judge.mjs")),
+            "--input",
+            str(input_path),
+            "--package",
+            package_path,
+            "--out",
+            temp_dir,
+            "--judges",
+            "fact",
+        ]
+        protagonist_name = _protagonist_name(load_story_package(Path(package_path)))
+        if protagonist_name is not None:
+            command.extend(["--protagonist", protagonist_name])
+        result = _run_with_judge_input(command, input_path)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or "Jev fact-tracking judge CLI failed")
+        shutil.copyfile(temp_path / "fact-tracking-judgments.json", output_path)
+        shutil.copyfile(temp_path / "jev-raw.json", output_path.parent / "fact-tracking-jev-raw.json")
+    judged = read_json(output_path)
+    judged["judge_backend"] = "jev"
+    return judged
 
 
 def _run_with_judge_input(command: list[str], input_path: Path) -> subprocess.CompletedProcess[str]:

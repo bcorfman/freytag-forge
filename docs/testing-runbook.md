@@ -94,9 +94,11 @@ an authored-handoff turn it contains no candidate ID, candidate statement,
 Cloudflare narrator without deploying. Quality and integration evidence only;
 section 1 remains authoritative.
 
-**Cost:** Workers AI neurons (about 11 per narration request; 10,000 free per
-day, reset at 00:00 UTC) plus one OpenAI judge call per judged scene. Every run
-appends to the tracked, append-only `bench/results/ledger.jsonl`.
+**Cost:** The continuity judge makes OpenAI judge calls, while the fact judge
+makes Cloudflare Jev requests. Jev is paid from AI Gateway credit, not the
+Workers AI allowance, and needs `CLOUDFLARE_ACCOUNT_ID` and
+`CLOUDFLARE_AI_TOKEN` in `.env`. Set `BENCH_FACT_JUDGE=luna` to switch the fact
+judge back to OpenAI.
 
 **Run:** Live runs go through Ringer, because a sandboxed worker cannot reach
 the network or write `bench/results/`:
@@ -169,7 +171,7 @@ source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --gr
 | `@smoke` | Session, opening, one turn; writes `artifacts/e2e-smoke-loaded.png` | Narration calls |
 | `@spine` | Scripted traversal toward 3C; delivery telemetry in `artifacts/e2e-spine.json` | Long run; use the 90 s timeout |
 | `@storylets`, `@npc`, `@world-state`, `@safety` | Category policies | Narration calls |
-| `@llm-judge` | Two free-text turns judged for responsiveness | `OPENAI_API_KEY`; `E2E_JUDGE_MODEL` defaults to `gpt-5.4` |
+| `@llm-judge` | Two free-text turns judged for responsiveness | `OPENAI_API_KEY`; `E2E_JUDGE_MODEL` defaults to `gpt-5.6-luna` |
 | `@timed-events` | Pressure event fires via the test clock | See section 8 |
 | `@knowledge-timeline` | Reveal timeline and payload IDs | See section 9 |
 | `@llm-canon` | Nine-scene canon judge | See section 7 |

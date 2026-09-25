@@ -1,7 +1,7 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-23, end of day): Phase 0 bench work is through round 9 and
-single-mechanism runs v11-v26, all on branch `round9`, not merged. A new
+Status (2026-09-24): Phase 0 bench work is through round 9 and
+single-mechanism runs v11-v33, all on branch `round9`, not merged. A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
 Phase 0. It lists what changed in v21-v26, the next steps in order, the
 story-package authoring rules any ChatGPT story prompt must state, and how
@@ -1222,6 +1222,19 @@ first:
    v27: the narrator re-enters the house or re-walks to the truck on the
    reveal turns (restarts_scene 7 cells), and once invents Michelle's
    laptop open with a "Confidential" folder at t13.
+3a. PARTLY DONE in `d09db55`, measured as v28 (the "v28" entry below):
+   the 1A scene frame described an arrival ("has reached the house ...
+   not been searched yet") and is sent every turn; it now describes only
+   the place. The t1/t2 re-approach is gone. Still open, with one cause:
+   the narrator never learns where Kristin is or what the last turn did.
+   So t13 still walks back into the house from the truck (1/2), and 1B
+   t19 re-approaches "the watching man" (2/2). The candidate fix is to
+   give the narrator the player character's place, or last turn's
+   command, in PLAYER. That is a shipped runtime change and needs
+   Brandon's go-ahead.
+3b. DONE in `9eb2b1e`: the judges default to `gpt-5.6-luna`, for cost
+   (see "Luna judge calibration" below). Tallies up to v27 are gpt-5.4's
+   and are not comparable with v28 onward.
 4. Phase 0's exit gate (92% per change type) is still unmet. Decide
    whether `round9` is merged to `main` before Phase 1's decisions.
 5. Small review nits, none urgent. `_candidate_beats` reads
@@ -1512,6 +1525,161 @@ records:
   own prose. The drawer paper put in the card's hidden spot is
   reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
   No flag cites the bridge or the reveal text any more.
+
+*v33 (2026-09-24, `bench/results/item-facts-v33-t13t19-two-scene-1a` plus
+smoke `item-facts-v33-smoke-two-scene-1a`).* Three changes:
+- `b0f0413` (runtime): a public scene-entry statement is never offered as a
+  character's dialogue.
+- `55191f3` (bench): the narrator is asked to name the bigger place too,
+  e.g. "on the passenger seat of the truck".
+- `a4ea52e` (story, ChatGPT-drafted, Brandon-approved): a plot.md sentence
+  and a brandon-only scene-entry line for 1B, "I won't tell you that. Keep
+  your voice down; patrols are nearby."
+
+Read by hand over 3 replicates:
+- t13: the laptop's place names the truck 3/3. She reads at the truck 2/3.
+  r1 "drives back to her own house, where her laptop is waiting in the
+  passenger seat" (1/3).
+- t19: the smoke has no approach, and he answers with the new line. Both
+  replicates "approach" him again, and he gives no answer (2/3; v32 3/3).
+  The line was offered on every 1B turn but spoken only once.
+- Her place again misses t16's walk over to him in r1, which is left "in the
+  Los Angeles park".
+
+Three rounds of material and rule fixes (v31-v33) have moved each restart by
+about one replicate in three, which is within noise. By Brandon's ranking the
+next lever is an LLM semantic check of the narrated turn, if these still
+count as failures.
+
+*v32 (2026-09-24, `bench/results/item-facts-v32-stranger-two-scene-1a` plus
+smoke `item-facts-v32-smoke-two-scene-1a`).* Two changes:
+- `144caf5` renames the 1B beat detail "watching man" to "stranger in the
+  park".
+- `d2dd943` has Jev ask the protagonist "leaving the room <Name> was in"
+  (Brandon's wording, with the name for "she").
+
+Read by hand over 3 replicates:
+- 1B t19 "approaches the stranger": 3/3, and t18 3/3. The rename hypothesis
+  is falsified. The narrator copies whatever the man is called and still
+  opens with "approaches", even when her tracked place is "near the
+  stranger". Neither a rule nor a rename reaches it.
+- t13: no walk back into the house, 3/3. The smoke invents a drive to a
+  coffee shop (1/3); both replicates read the card where she is.
+- Her place capture still misses t4, t9 and t13 in nearly every replicate.
+- Smoke t17 ("Check who has Michelle's phone now.") narrates only the
+  pacing line "The pursuers are closing in through the park." That is
+  unrelated to this change; watch for it.
+
+*v31 (2026-09-24, `bench/results/item-facts-v31-startrule-two-scene-1a` plus
+smoke `item-facts-v31-smoke-two-scene-1a`).* `89b1c68` adds, on turns only,
+"Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk
+there again." The protagonist sentence is now gender-neutral. The Jev fact
+judge asks the protagonist "changing locations", not "moving". Read by hand
+over 3 replicates:
+- t13 walk back into the house: 0/3 (v30 1/3, v28 1/2). But 2/3 instead
+  invent a drive "to a nearby parking lot" before reading, which is not a
+  restart.
+- 1B t19 "approaches the watching man": 3/3, and t18 "approaches" 3/3. The
+  rule does not reach it. A likely mechanism: the 1B beat detail "watching
+  man" is sent every turn, and her tracked place reads "near the watching
+  man". The narration copies that exact phrase, "approaches the watching
+  man". This is authored story text, so a rename is a ChatGPT story task.
+- Her place capture still misses real moves: t4 (out to the truck and back),
+  t9 (carries the laptop to the truck) and t13 (drives off), 3/3 each.
+- Jev's location question no longer fires on small steps inside a room (the
+  v30 t6 false alarms are gone). Its remaining Kristin flags match those
+  real misses.
+
+*v30 (2026-09-24, `bench/results/item-facts-v30-kristin-two-scene-1a` plus
+smoke `item-facts-v30-smoke-two-scene-1a`).* `22a057b`: the bench now tracks
+the protagonist like a thing. She is seeded at "in <scene location>", given
+in THINGS and PLAYER every turn (Brandon approved this one exception to the
+refers-only rule), moved by the narrator's own item_facts reply, and reset at
+the scene change. One rule sentence asks the narrator to report her new
+place. Judge spend: 4 OpenAI calls and 97 Jev requests. Read by hand over
+all 3 replicates:
+- t13 walk back into the house: 1/3 (r1). Its prompt said "Kristin is in
+  the truck" and the laptop was "on the passenger seat", and it still walked
+  her into the house. v28: 1/2. The given place alone does not stop it.
+- 1B t19 "approaches the man": 2/3 (both v30 replicates; the smoke said
+  "stands near"), even with "Kristin is near the man watching her" given.
+  t18 opens with "approaches" 3/3.
+- Capture of her place works but misses real moves. She walks into the
+  kitchen (smoke t3), carries the laptop to the truck but is left "in
+  Michelle's house" or "in the kitchen" (t9, 3/3), and drives off (smoke
+  t13). A stale place then fails later turns under the whole-state bar.
+- Jev's `moved` answer for Kristin sits at 0.51-0.55 on small steps inside
+  a room, which adds missed_change false alarms.
+- Follow-up: the rule sentence says "the place she is". That assumes a
+  female protagonist; make it gender-neutral before any runtime version.
+
+Next, by Brandon's ranking (a rule first, then an LLM check):
+- a plain rule that she starts the turn where PLAYER says, so she is not
+  walked there again;
+- check whether beat details sent on t13 ("someone entering house") pull
+  her back inside.
+
+*v29 (2026-09-24, `bench/results/item-facts-v29-jevfacts-two-scene-1a` plus
+smoke `item-facts-v29-smoke-two-scene-1a`).* This is the first run with the
+fact judge on Jev (`35f2de9`; see `.plans/jev-judge-trial.md`); continuity
+is still judged by Luna. The narration code is the same as v28. Judge
+spend: 4 OpenAI calls and 58 Jev requests. Read by hand:
+- t13: both replicates read the card at the truck. Neither walks back into
+  the house (v28: 1/2). The same code gave a different sample, so this is
+  noise, not a fix.
+- 1B t19: "approaches the watching man" 2/2 again. Luna did not flag it,
+  the same miss it made in v28.
+- t2: the invented paper under the drawer, 3/3 including the smoke.
+- Luna's continuity flags include r1 t4 restarts_scene, where "bring my
+  laptop inside" was the command. Luna made the same false alarm in v28.
+- Jev's fact flags: t9 "closed" was invented 2/2 (context only). t6
+  `narration_contradicts_given_facts` fired 2/2 on "walks over to Michelle's
+  workstation and opens her laptop" (before_conflict 0.68-0.70). That looks
+  like a Jev false alarm near threshold. r1 t13 missed the laptop being
+  opened. That one is correct.
+
+*v28 (2026-09-24, `bench/results/item-facts-v28-frame-two-scene-1a` plus
+smoke `item-facts-v28-smoke-two-scene-1a`, first run judged by Luna).*
+`d09db55` replaces the 1A frame with "Michelle's home is otherwise
+untouched, but its back door frame shows recent damage. Michelle is
+missing, and her tablet and work bag are gone. A drawer on Michelle's
+workstation has Kristin's initials, KMS, newly carved into it."
+(ChatGPT-authored, Brandon-approved; "forced entry" is a guarded phrase
+of `k_sl_1a_a_r1` and cannot appear in a frame). Six variations lost a
+dead replacement that patched the old frame's phone sentence. Read by
+hand, since the judge changed:
+- t2: no re-approach and no re-opened drawer, 3/3 including the smoke
+  (v27: r2 t1 and t2 re-walked to the desk).
+- t13: walks back into the house from the truck 1/2 (r1) and reads the
+  card at the workstation; the prompt carries no arrival text, and
+  nothing in it says Kristin is at the truck. r2 reads it in the truck.
+- 1B t19: "approaches the watching man" 2/2 after two turns of talking.
+- The invented paper under the drawer is back at t2, 3/3 including
+  the smoke (v26 and v27: 0/3). An invented password prompt appears at
+  t6, 3/3.
+- Luna judge: 13/38 turns with a failed cell. It flagged r1 t4
+  (commanded "bring my laptop inside") as restarts_scene and let the t2
+  paper through.
+
+*Luna judge calibration (2026-09-24,
+`bench/results/probes/luna-calibration/r7`-`r9`).* `rejudge.py` plus
+`check_calib.py` on HEAD `d09db55`, against the round 7-9 labels:
+
+| Round | Continuity | Fact |
+|---|---|---|
+| r7 | 111/114 = 97.4% | 91/105 = 86.7% |
+| r8 | 184/192 = 95.8% | 315/336 = 93.8% |
+| r9 | 132/142 = 93.0% | 236/251 = 94.0% |
+| total | 427/448 = 95.3% | 642/692 = 92.8% |
+
+The closest gpt-5.4 scores are `probes/take-attempt-regrade/new`: 96.9%
+continuity and 96.4% fact overall, on an older rubric (before `3c99b23`
+and `3253adb`), so this is not a same-rubric control. Luna's repeated
+misses: `narration_contradicts_given_facts` on the t3 pocket turn (every
+replicate of r7, plus r8 and r9); a "crumpled" receipt condition called
+invented in r7 t10 (4 replicates); and restarts_scene misses in r9 1B.
+Brandon chose Luna for cost, so these are fixed through the rubric and
+the labels, not by changing the model.
 
 *v27 (2026-09-23, `bench/results/item-facts-v27-drawer-two-scene-1a` plus
 smoke `item-facts-v27-smoke-two-scene-1a`).* `1b45b71` (ChatGPT-authored,

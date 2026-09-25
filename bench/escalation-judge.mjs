@@ -42,7 +42,7 @@ function outputText(response) {
 function judgeConfiguration(environment) {
   const apiKey = environment.OPENAI_API_KEY;
   if (!apiKey) throw new Error("E2E escalation judge requires OPENAI_API_KEY.");
-  return { apiKey, model: environment.E2E_JUDGE_MODEL || "gpt-5.4" };
+  return { apiKey, model: environment.E2E_JUDGE_MODEL || "gpt-5.6-luna" };
 }
 
 const SYSTEM_MESSAGE =

@@ -32,6 +32,18 @@ def _provider(mode="single_call"):
     )
 
 
+def _seeded_provider(mode="single_call"):
+    state = RuntimeState.bootstrap(PACKAGE)
+    things, _ = package_seed(PACKAGE, state, "1A")
+    return ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts=things,
+        mode=mode,
+    )
+
+
 class _Response:
     def __init__(self, body):
         self.body = body
@@ -126,19 +138,76 @@ def test_player_block_places_come_before_the_command():
 
 
 def test_single_call_rules_require_facts_for_every_change():
-    system = _provider()._system_prompt()
+    provider = _provider()
+    system = provider._system_prompt()
 
     assert system.endswith(
         "Every time your story moves or changes a thing, or puts a new thing in a place, "
         "add that thing to item_facts. Use where it is when the story ends.\n"
+        "When Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is "
+        "when the story ends.\n"
+        "Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.\n"
         'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
         "Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is "
         '{"place": "on the floor", '
-        '"condition": ["cracked in two"]}.'
+        '"condition": ["cracked in two"]}.\n'
+        'When a place is part of something bigger, name both, like "on the passenger seat of the truck".'
     )
     assert 'falls, so the cup is {"place": "on the floor"' in system
     assert '"condition": ["cracked in two"]' in system
     assert "Also return item_facts" not in system
+
+
+def test_item_facts_place_context_rule_is_on_opening_and_turn_prompts():
+    provider = _provider()
+    rule = 'When a place is part of something bigger, name both, like "on the passenger seat of the truck".'
+
+    assert rule in provider._system_prompt(opening=False)
+    assert rule in provider._system_prompt(opening=True)
+
+
+def test_single_call_start_place_rule_is_turn_only_and_neutral(monkeypatch):
+    provider = _provider()
+    start_rule = "Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again."
+
+    turn_system = provider._system_prompt(opening=False)
+    assert start_rule in turn_system
+    assert turn_system.index(start_rule) > turn_system.index(
+        "When Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is "
+        "when the story ends."
+    )
+    assert "the place she is" not in turn_system
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda request, **kwargs: _Response({"segments": [{"kind": "narration", "text": "The room is quiet."}]}),
+    )
+    provider.opening()
+    opening_system = provider.last_prompt["system"]
+    assert start_rule not in opening_system
+    assert "the place she is" not in opening_system
+
+
+def test_protagonist_is_always_selected_and_given(monkeypatch):
+    provider = _seeded_provider()
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": [], "same_as": {}})
+
+    provider.prepare_turn("Search the drawer.")
+
+    assert provider._selected_names == ["Kristin"]
+    assert "- Kristin. Place: in Kristin and Michelle's shared house." in provider._things_block()
+    assert "Kristin is in Kristin and Michelle's shared house." in provider._player_lines(
+        {"scene_setting": "The house is quiet.", "player_input": "Search the drawer."}
+    )
+
+
+def test_protagonist_reply_moves_place_and_ignores_condition():
+    provider = _seeded_provider()
+
+    facts, issues = provider.apply_item_facts({"Kristin": {"place": "in the park", "condition": ["tired"]}})
+
+    assert facts["Kristin"] == {"place": "in the park", "condition": []}
+    assert issues == ["item_facts condition for Kristin ignored"]
 
 
 def test_two_scene_variation_output_example_shows_two_step_action():
@@ -843,6 +912,7 @@ def test_package_seed_scene_1a_matches_authored_things():
     state._assert_scene_entry_fact("1A")
     things, issues = package_seed(PACKAGE, state, "1A")
     assert things == {
+        "Kristin": {"place": "in Kristin and Michelle's shared house", "condition": []},
         "Michelle's phone": {"place": "on the kitchen floor", "condition": ["not damaged"]},
         "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": ["closed"]},
         "drawer": {
@@ -857,6 +927,16 @@ def test_package_seed_scene_1a_matches_authored_things():
     assert issues == [
         "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
     ]
+
+
+def test_package_seed_tracks_protagonist_at_each_scene_location():
+    state = RuntimeState.bootstrap(PACKAGE)
+
+    things_1a, _ = package_seed(PACKAGE, state, "1A")
+    things_1b, _ = package_seed(PACKAGE, state, "1B")
+
+    assert things_1a["Kristin"] == {"place": "in Kristin and Michelle's shared house", "condition": []}
+    assert things_1b["Kristin"] == {"place": "in Los Angeles park", "condition": []}
 
 
 def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
@@ -1373,6 +1453,10 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
     assert result["rejected_turns"] == []
     assert "Michelle's phone" not in result["turns"][12]["item_facts_after"]
     assert "Kristin's laptop" not in result["turns"][13]["item_facts_before"]
+    assert result["turns"][13]["item_facts_before"]["Kristin"] == {
+        "place": "in Los Angeles park",
+        "condition": [],
+    }
     assert len(calls) == 39
 
 
@@ -1478,7 +1562,11 @@ def test_fact_tracking_is_wired_into_cli_summary_and_ledger(monkeypatch, tmp_pat
             "judge_calls": 1,
         },
     )
-    monkeypatch.setattr(bench_cli, "run_fact_tracking_judges", lambda *_: {"judgments": [judgment], "judge_calls": 1})
+    monkeypatch.setattr(
+        bench_cli,
+        "run_fact_tracking_judges",
+        lambda *_: {"judgments": [judgment], "judge_calls": 1, "judge_backend": "jev"},
+    )
     monkeypatch.setattr(bench_cli, "LEDGER_PATH", tmp_path / "ledger.jsonl")
     args = bench_cli.parser().parse_args(
         ["run", "--variation", str(SINGLE), "--scene", "1A", "--replicates", "1", "--out", str(tmp_path)]
@@ -1486,6 +1574,8 @@ def test_fact_tracking_is_wired_into_cli_summary_and_ledger(monkeypatch, tmp_pat
     assert bench_cli._run(args) == 0
     summary = json.loads((tmp_path / "summary.json").read_text())
     assert summary["fact_tracking"]["judge_calls"] == 1
+    assert summary["budget"]["actual_openai_judge_calls"] == 2
+    assert summary["budget"]["actual_jev_judge_requests"] == 1
     ledger = json.loads((tmp_path / "ledger.jsonl").read_text())
     assert ledger["fact_tracking"]["changes_by_cause"] == {"command": 0, "narrator": 0}
-    assert ledger["spend"]["judge_calls"] == 3
+    assert ledger["spend"]["judge_calls"] == 2

@@ -61,7 +61,7 @@ function judgeConfiguration(environment) {
   if (!apiKey) {
     throw new Error("E2E judge requires OPENAI_API_KEY.");
   }
-  return { apiKey, model: environment.E2E_JUDGE_MODEL || "gpt-5.4" };
+  return { apiKey, model: environment.E2E_JUDGE_MODEL || "gpt-5.6-luna" };
 }
 
 export async function judgeRoleplayTurn({ opening, playerInput, narration }, { environment = process.env, fetchImpl = fetch } = {}) {

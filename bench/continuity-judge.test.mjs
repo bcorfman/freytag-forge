@@ -49,7 +49,7 @@ test("continuity judge uses a strict schema and sends scene and given fields onl
   );
 
   assert.deepEqual(result, verdict);
-  assert.equal(request.model, "gpt-5.4");
+  assert.equal(request.model, "gpt-5.6-luna");
   assert.equal(request.store, false);
   assert.equal(request.text.format.type, "json_schema");
   assert.equal(request.text.format.strict, true);

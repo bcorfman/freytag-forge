@@ -92,6 +92,46 @@ def test_resolved_variation_hashes_are_stable_and_distinguish_prompt_configs() -
     assert example["_package_hash"] == no_example["_package_hash"]
 
 
+def test_fact_judge_backend_selection_and_jev_artifacts(monkeypatch, tmp_path) -> None:
+    input_path = tmp_path / "input.json"
+    output_path = tmp_path / "fact.json"
+    input_path.write_text(json.dumps({"package_path": str(PACKAGE), "runs": []}), encoding="utf-8")
+    calls = []
+
+    def fake_run(command, **_kwargs):
+        calls.append(command)
+        if "jev-judge.mjs" in command[1]:
+            out = Path(command[command.index("--out") + 1])
+            (out / "fact-tracking-judgments.json").write_text(
+                json.dumps({"judgments": [{"turns": []}], "judge_calls": 4}), encoding="utf-8"
+            )
+            (out / "jev-raw.json").write_text(json.dumps([{"model": "jev"}]), encoding="utf-8")
+        else:
+            output = Path(command[command.index("--output") + 1])
+            output.write_text(json.dumps({"judgments": [], "judge_calls": 2}), encoding="utf-8")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(core.subprocess, "run", fake_run)
+    result = core.run_fact_tracking_judges(input_path, output_path)
+    assert result == {"judgments": [{"turns": []}], "judge_calls": 4, "judge_backend": "jev"}
+    assert calls[0][0:2] == ["node", str(ROOT / "bench" / "jev-judge.mjs")]
+    assert calls[0][calls[0].index("--judges") + 1] == "fact"
+    assert calls[0][calls[0].index("--package") + 1] == str(PACKAGE)
+    assert calls[0][calls[0].index("--protagonist") + 1] == "Kristin"
+    assert output_path.exists()
+    assert (tmp_path / "fact-tracking-jev-raw.json").exists()
+
+    monkeypatch.setenv("BENCH_FACT_JUDGE", "luna")
+    result = core.run_fact_tracking_judges(input_path, tmp_path / "luna.json")
+    assert result == {"judgments": [], "judge_calls": 2, "judge_backend": "luna"}
+    assert calls[-1][1].endswith("fact-tracking-judge.mjs")
+
+    monkeypatch.setenv("BENCH_FACT_JUDGE", "other")
+    with pytest.raises(ValueError):
+        core.run_fact_tracking_judges(input_path, tmp_path / "invalid.json")
+    assert len(calls) == 2
+
+
 def test_example_leakage_counts_only_distinctive_contiguous_spans() -> None:
     example = "The model should narrate the concrete immediate consequence in this scene."
     leaked = "A response should narrate the concrete immediate consequence in this scene."

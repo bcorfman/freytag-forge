@@ -57,7 +57,7 @@ test("escalation judge sends the transcript with the strict schema", async () =>
   );
 
   assert.deepEqual(result, verdict);
-  assert.equal(request.model, "gpt-5.4");
+  assert.equal(request.model, "gpt-5.6-luna");
   assert.equal(request.store, false);
   assert.equal(request.input[0].role, "system");
   assert.match(request.input[0].content, /not_applicable/);
