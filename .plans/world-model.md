@@ -1,7 +1,7 @@
 # World model: plan
 
-Status (2026-09-25): decisions W1-W10 settled; S1 tasks 1-3 done. See "Resume here";
-next: S1 task 4 (section 11). Written at Brandon's request
+Status (2026-09-25): decisions W1-W10 settled; S1 tasks 1-4 done. See "Resume here";
+next: confirm the S1 exit, then S2 (section 11). Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
 separate small decisions. This plan replaces decision 1e. It also gives
@@ -11,67 +11,77 @@ continuity plan; this plan defines the world they write into.
 
 ## Resume here (2026-09-25)
 
-Branch `world-model-s1` holds S1 tasks 2 and 3 on top of main after PR 479.
-Task 2 is commits bd8c46b and 529b6a0. Task 3 is commits 515201e and
-cf31bd2, and d498b9d made the `.plans/` scripts ruff-clean. The full suite
-is green (735 tests, 92.74% coverage), and ruff is clean across the whole
-repository. The branch has not been pushed and has no PR. The next step is
-**S1 task 4**, and it has no manifest yet.
+Branch `world-model-s1` holds all of S1's build tasks on top of main after
+PR 479:
 
-What task 3 added, for the next task to build on:
+- task 2: bd8c46b and 529b6a0;
+- task 3: 515201e and cf31bd2;
+- task 4: 89b1eea and 54541e9;
+- d498b9d: ruff formatting of the `.plans/` scripts.
 
-- `world.yaml` may declare `kinds` (typed `KindDeclaration`, `{id, is}`), a
-  location `parent`, and on an item `kind`, `openable`, `open`, `hidden`,
-  `contents` and `owner`. `Item.fixed` is `None` unless declared, and the
-  library decides it (`WorldSchema.is_fixed`, `WorldSchema.kind_is`).
-- `item_placements` accept `{parent, text?, under?, part_of?}` besides the
-  old forms. `placement_text()` is the one reader of the narrator text.
-  `apply_scene_placements` runs at bootstrap and on a scene change.
-- The loader simulates each scene's new-form placements on a
-  `MemoryBackend` and rejects bad parents, kinds and hidden-item text.
-- The bench seed uses the text, else the parent's name, including a
-  character's, and skips hidden items. Its fixed names come from the schema.
+The full suite is green (735 tests, 92.75% coverage), and ruff is clean across
+the whole repository. The shipped narrator's 1A payloads are still
+byte-identical to the pre-S1 baseline. The branch has not been pushed and has
+no PR.
+
+**Next:** check the S1 exit (section 11) before opening a PR. The section 10
+cases were built against continuity-initiative, and the library tests use
+synthetic worlds. No storygame test yet runs against a second, synthetic
+story package, and save and load of the tree is only partly covered. Decide
+whether those gaps block the exit or move to S2.
+
+What S1 left in place, for S2 to build on:
+
+- **Package fields.** `world.yaml` declares `kinds` (typed `KindDeclaration`), a
+  location `parent`, and item `kind`, `openable`, `open`, `hidden`,
+  `contents` and `owner`. `Item.fixed` is `None` unless declared, and
+  `WorldSchema.is_fixed` and `WorldSchema.kind_is` decide it.
+- **Placements.** Scene 1A uses only the `{parent, text?, under?,
+  part_of?}` form. The other scenes still use strings. `apply_scene_placements`
+  runs at bootstrap and on a scene change. The loader simulates every scene's
+  new-form placements and rejects bad ones.
+- **The found card.** `memory_card_in_kristins_custody` is now
+  `memory_card_recovered` everywhere outside `.plans/`. Its `on_assert` is
+  `{move: memory_card, parent: kristin, text: with Kristin}` plus
+  `{reveal: memory_card}`. The card starts hidden `under` the drawer.
+- **Text on a move effect.** A move effect may carry `text`, which becomes the
+  thing's authored place text until it or its holder moves
+  (`World.place_text`). This was added in task 4 so the narrator still says
+  "Michelle's memory card is with Kristin." once the card is found.
+- **The shipped narrator reads a world view.**
+  `CloudflareTurnProvider._placement_world()` clones `_placement_facts()`,
+  applies world effects and wraps the result in a world. It is built once
+  per rule call. The narrator leaves out things the world says are hidden.
+  A new-form placement's line comes from `place_text`. Owner and placement
+  rules cover only things with narrator text, so the truck and the
+  workstation get no line.
+- **The workstation's name.** The item is named `workstation` with `owner:
+  michelle`, in the same way as the `drawer`. As `Michelle's workstation` it
+  made the audit flag the beat detail "overturned workstation chair"
+  (`test_real_package_has_no_ambiguous_owned_item`).
+- **Bench and judge.** The bench seed skips hidden things and seeds the card
+  (`with Kristin`) once the world reveals it. The judge treats a thing that a
+  handoff's fact reveals through `on_assert` as revealed.
 
 Materials in [world-model-s1/](world-model-s1/):
 
-- `prompt_capture.py` stubs the network and records the shipped narrator's
-  1A payloads: the opening plus the turn "Search the kitchen for signs of a
-  struggle.", each with and without the card custody fact. To run it from
-  the repository root: `uv run python .plans/world-model-s1/prompt_capture.py
-  OUT.json [custody_fact_id]`.
-- `narrator-1a-baseline.json` is its output from before S1. It still matched
-  after task 3. Every S1 check must diff a fresh capture against it
-  (through `json.tool`), and any difference fails. After the W7 rename, pass
-  `memory_card_recovered` as the second argument.
-- `s1t3_acceptance_draft.py` is task 3's acceptance test. Its `_converted()`
-  fixture is exactly the 1A conversion task 4 must make in `data/`, so it is
-  the starting point for task 4's acceptance.
+- `prompt_capture.py` records the shipped narrator's 1A payloads with the
+  network stubbed: the opening plus the turn "Search the kitchen for signs of
+  a struggle.", each with and without the found fact. It applies world effects
+  after setting the fact, as every commit point does. Its default fact is
+  `memory_card_recovered`. Run it from the repository root: `uv run python
+  .plans/world-model-s1/prompt_capture.py OUT.json`.
+- `narrator-1a-baseline.json` is its output from before S1, and the capture
+  still matches it after task 4. S2 changes the narrator on the bench only,
+  so the shipped narrator must keep matching it until S4.
+- `s1t3_acceptance_draft.py` is task 3's acceptance test, which built the 1A
+  conversion in a temp copy.
 - `s1t2_check_example.sh` is the task 2 check. Reuse its structure:
   ownership, library boundary, acceptance, full suite, mutation checks,
-  ruff, patch export. Grep only `*.py` files (`--include="*.py"`), because
-  a bare `grep -r` matches `__pycache__` and failed task 3's first check.
-  Run acceptance tests with `PYTHONPATH=packages/worldkeeper/src:.` plus
-  the acceptance directory, or `bench` does not import.
-
-**S1 task 4 design** (one Ringer task on Luna, `worktrees: true`, run_name
-`world-model-s1`, `check_timeout_s: 900`):
-
-- Convert scene 1A in `data/stories/continuity-initiative/` to the new form:
-  - the house, kitchen and outside-the-house areas;
-  - the truck and the workstation;
-  - the drawer's kind and contents;
-  - the card, hidden and `under` the drawer.
-
-  Use the structure in `s1t3_acceptance_draft.py`. Keep the drawer setting
-  fact through S1.
-- The W7 rename: `memory_card_in_kristins_custody` becomes
-  `memory_card_recovered` in the files listed under W7. Give it the
-  `on_assert` move and reveal, drop "and is carrying it" from its purpose,
-  and remove the card's `while_fact_true` guard.
-- The truck and workstation join 1A `item_ids`. Run the narrator baseline
-  diff with `memory_card_recovered`. If the new items change the owner
-  rules, that must be solved before landing.
-- Task 5 was folded into task 3 (docs).
+  ruff, patch export. Grep only `*.py` files (`--include="*.py"`), because a
+  bare `grep -r` matches `__pycache__`. Run acceptance tests with
+  `PYTHONPATH=packages/worldkeeper/src:.` plus the acceptance directory, or
+  `bench` does not import.
 
 Lessons from task 2, for writing the next checks:
 
@@ -719,6 +729,9 @@ decisions W1-W10. Scope decided by Brandon, 2026-09-25 (W6).
   card custody fact).
 - Update `docs/markdown-story-authoring.md` for hidden places and the new
   placement form.
+- The 1A conversion and the W7 rename are done as task 4 (commits 89b1eea
+  and 54541e9). See "Resume here" for the move-effect `text`, the narrator's
+  world view and the workstation's name.
 - Exit: the section 10 unit tests pass on continuity-initiative and a
   synthetic second package; full suite green.
 

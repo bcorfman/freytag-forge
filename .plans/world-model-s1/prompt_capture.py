@@ -1,4 +1,7 @@
-"""Capture the shipped narrator's 1A payloads (no network). Usage: prompt_capture.py OUT.json [custody_fact]"""
+"""Capture the shipped narrator's 1A payloads (no network). Usage: prompt_capture.py OUT.json [custody_fact]
+
+After setting the custody fact it applies world effects, as every runtime commit point does.
+"""
 
 import json
 import sys
@@ -7,9 +10,10 @@ from pathlib import Path
 import storygame.runtime.cloudflare as cf
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import apply_world_effects
 from storygame.story_package.loader import load_story_package
 
-out, custody = sys.argv[1], (sys.argv[2] if len(sys.argv) > 2 else "memory_card_in_kristins_custody")
+out, custody = sys.argv[1], (sys.argv[2] if len(sys.argv) > 2 else "memory_card_recovered")
 captured = []
 
 
@@ -39,6 +43,7 @@ for label, set_custody in (("plain", False), ("custody", True)):
     state = RuntimeState.bootstrap(package)
     if set_custody:
         state.facts.assert_fact(Fact(predicate=custody, subject="story", value="true"))
+        apply_world_effects(package, state.facts)
     provider = cf.CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     captured.clear()
     provider.opening()
