@@ -185,6 +185,7 @@ class Item(Entity):
 class WorldEffect(_Model):
     move: str | None = Field(default=None, pattern=_ID)
     parent: str | None = Field(default=None, pattern=_ID)
+    text: str | None = Field(default=None, min_length=1)
     under: bool = False
     reveal: str | None = Field(default=None, pattern=_ID)
     accompany: str | None = Field(default=None, pattern=_ID)
@@ -198,7 +199,7 @@ class WorldEffect(_Model):
     def one_shape(self) -> WorldEffect:
         values = self.model_dump(exclude_none=True, exclude_defaults=True, by_alias=True)
         if self.move is not None:
-            valid = set(values) <= {"move", "parent", "under"} and self.parent is not None
+            valid = set(values) <= {"move", "parent", "text", "under"} and self.parent is not None
         elif self.reveal is not None:
             valid = set(values) == {"reveal"}
         elif self.accompany is not None:

@@ -66,6 +66,16 @@ def test_refusals_and_place_effects():
     assert w.set_unplaced("lamp", "the lane").ok and w.parent("lamp") is None and w.unplaced_name("lamp") == "the lane"
 
 
+def test_move_effect_text_lasts_until_holder_moves():
+    w = make()
+    assert w.apply_effects([{"move": "key", "parent": "ada", "text": "in Ada's pocket"}, {"reveal": "key"}])[0].ok
+    assert w.place_text("key") == "in Ada's pocket"
+    assert w.place_label("key") == "in Ada's pocket"
+    assert w.move("ada", "parlour").ok
+    assert w.place_text("key") is None
+    assert w.place_label("key") == "Ada Lovell"
+
+
 def test_closed_companion_create_resolution_effects_and_backend_rebuild():
     w = make()
     assert w.move("ada", "village").ok

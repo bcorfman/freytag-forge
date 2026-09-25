@@ -43,7 +43,7 @@ def _seed_bench_custody(monkeypatch) -> None:
 
     def package_and_state_with_custody(variation, scene_id=None):
         package, state = original_package_and_state(variation, scene_id)
-        state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+        state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
         return package, state
 
     monkeypatch.setattr(core, "package_and_state", package_and_state_with_custody)
@@ -603,7 +603,7 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
     }
 
     def provider_for_with_active_storylet(state, _variation):
-        state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+        state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
         state.active_event_ids.add("SL-1A-B")
         return provider
 
@@ -1390,7 +1390,7 @@ def test_a_beat_carries_the_progress_of_the_beats_before_it(monkeypatch) -> None
     assert earlier in scene, "beat 1A.1's reveal must be established knowledge by beat 1A.4"
     assert "k_sl_1a_a_r1" not in constraints, "an established reveal must not still be offered"
     assert "k_sl_1a_c_r2 in selected_knowledge_ids" in constraints, "1A.4's own reveal stays on offer"
-    # SL-1A-D is optional and gated on memory_card_in_kristins_custody, which is
+    # SL-1A-D is optional and gated on memory_card_recovered, which is
     # not established by naming beat 1A.4 alone.
     assert "Taped beneath a drawer" not in scene
 

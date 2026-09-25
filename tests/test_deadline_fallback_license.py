@@ -61,7 +61,7 @@ def test_scene_1a_deadline_fallback_is_accepted_and_exits_scene(monkeypatch) -> 
 
     assert state.current_scene_id == "1B"
     assert Fact(predicate="continuity_initiative_known", subject="story", value="true") in state.facts.asserted
-    assert Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="memory_card_recovered", subject="story", value="true") in state.facts.asserted
 
 
 def test_card_is_still_unavailable_before_a_staged_handoff() -> None:

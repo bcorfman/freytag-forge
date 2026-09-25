@@ -21,8 +21,8 @@ facts:
     secret contracts tied to the Continuity Initiative.
 - id: michelle_warning_known
   purpose: Kristin has recovered Michelle’s warning not to trust emergency broadcasts.
-- id: memory_card_in_kristins_custody
-  purpose: Kristin has recovered Michelle’s memory card and is carrying it.
+- id: memory_card_recovered
+  purpose: Kristin has recovered Michelle’s memory card.
 - id: official_interest_in_michelle_known
   purpose: Kristin knows the welfare patrol was specifically interested in Michelle’s
     research and findings.
@@ -303,7 +303,7 @@ knowledge:
   - [drawer, KMS, workstation]
   entity_ids: [kristin, michelle, memory_card, michelle_drawer]
   aliases:
-  - memory card in kristins custody
+  - memory card recovered
   audience:
     kind: public
     player_visible: true
@@ -312,7 +312,7 @@ knowledge:
   requires: []
   establishes:
   - op: assert
-    fact_id: memory_card_in_kristins_custody
+    fact_id: memory_card_recovered
     value: true
   source:
     kind: storylet_realization
@@ -347,7 +347,7 @@ knowledge:
   available_in_scenes:
   - 1A
   requires:
-  - fact_id: memory_card_in_kristins_custody
+  - fact_id: memory_card_recovered
     equals: true
   establishes:
   - op: assert
@@ -397,7 +397,7 @@ knowledge:
   available_in_scenes:
   - 1A
   requires:
-  - fact_id: memory_card_in_kristins_custody
+  - fact_id: memory_card_recovered
     equals: true
   establishes:
   - op: assert
@@ -432,7 +432,7 @@ knowledge:
   available_in_scenes:
   - 1A
   requires:
-  - fact_id: memory_card_in_kristins_custody
+  - fact_id: memory_card_recovered
     equals: true
   establishes:
   - op: assert

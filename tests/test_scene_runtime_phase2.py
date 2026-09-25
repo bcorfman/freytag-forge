@@ -253,7 +253,7 @@ def test_internal_validator_accepts_a_satisfied_transition_and_false_predicates(
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
     state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     validator = ProgressionValidator(PACKAGE)
     proposal = ResolvedTurnProposal(
         segments=(NarrationSegment(kind="narration", text="The route out is ready."),),

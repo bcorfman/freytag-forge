@@ -23,17 +23,23 @@ def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
     world_path = root / "world.yaml"
     world = yaml.safe_load(world_path.read_text())
     world["kinds"] = [{"id": "desk", "is": ["furniture", "supporter"]}]
+    location_ids = {location["id"] for location in world["locations"]}
     world["locations"].extend(
-        [
+        location
+        for location in [
             {"id": "kitchen", "name": "kitchen", "parent": "mcgehee_home"},
             {"id": "outside_house", "name": "outside the house"},
         ]
+        if location["id"] not in location_ids
     )
+    item_ids = {item["id"] for item in world["items"]}
     world["items"].extend(
-        [
+        item
+        for item in [
             {"id": "kristin_truck", "name": "Kristin's truck", "kind": "vehicle", "owner": "kristin"},
             {"id": "michelle_workstation", "name": "Michelle's workstation", "kind": "desk"},
         ]
+        if item["id"] not in item_ids
     )
     for item in world["items"]:
         if item["id"] == "michelle_drawer":
@@ -138,6 +144,7 @@ def test_cyclic_story_kinds_are_story_package_errors(tmp_path):
     world_path = root / "world.yaml"
     world = yaml.safe_load(world_path.read_text())
     world["kinds"] = [{"id": "a", "is": ["b"]}, {"id": "b", "is": ["a"]}]
+    next(item for item in world["items"] if item["id"] == "michelle_workstation")["kind"] = "thing"
     world_path.write_text(yaml.safe_dump(world, sort_keys=False))
 
     with pytest.raises(StoryPackageError, match="cycle among kinds"):

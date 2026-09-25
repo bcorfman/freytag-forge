@@ -18,7 +18,7 @@
       {"old": ", \"Michelle's phone is not damaged.\"]", "new": "]"}
     ]},
     "pacing.yaml": {"replacements": [
-      {"old": "- id: t_1a_1b\n  source_scene_id: 1A\n  target_scene_id: 1B\n  priority: 10\n  triggers:\n  - fact_id: michelle_lead_actionable\n    equals: true\n  - fact_id: patrol_return_pressure\n    equals: true\n  - fact_id: memory_card_in_kristins_custody\n    equals: true", "new": "- id: t_1a_1b\n  source_scene_id: 1A\n  target_scene_id: 1B\n  priority: 10\n  triggers:\n  - fact_id: michelle_lead_actionable\n    equals: true\n  - fact_id: patrol_return_pressure\n    equals: true\n  - fact_id: memory_card_in_kristins_custody\n    equals: true\n  - fact_id: transport_route_departure_ready\n    equals: true"},
+      {"old": "- id: t_1a_1b\n  source_scene_id: 1A\n  target_scene_id: 1B\n  priority: 10\n  triggers:\n  - fact_id: michelle_lead_actionable\n    equals: true\n  - fact_id: patrol_return_pressure\n    equals: true\n  - fact_id: memory_card_recovered\n    equals: true", "new": "- id: t_1a_1b\n  source_scene_id: 1A\n  target_scene_id: 1B\n  priority: 10\n  triggers:\n  - fact_id: michelle_lead_actionable\n    equals: true\n  - fact_id: patrol_return_pressure\n    equals: true\n  - fact_id: memory_card_recovered\n    equals: true\n  - fact_id: transport_route_departure_ready\n    equals: true"},
       {"old": "scenes:\n", "new": "- id: long_variation_validation_guard\n  scene_id: 1A\n  at_turn: 1\n  when:\n  - fact_id: facility_infiltration_needed\n    equals: true\n  effects:\n  - fact_id: transport_route_departure_ready\n    equals: true\nscenes:\n"}
     ]}
   },

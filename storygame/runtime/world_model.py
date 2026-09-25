@@ -53,7 +53,7 @@ def pending_world_effects(package: StoryPackage, facts: FactStore) -> tuple[str,
 
 def _effect_dict(effect: WorldEffect) -> dict:
     if effect.move is not None:
-        result = {"move": effect.move, "parent": effect.parent, "under": effect.under}
+        result = {"move": effect.move, "parent": effect.parent, "under": effect.under, "text": effect.text}
     elif effect.reveal is not None:
         result = {"reveal": effect.reveal}
     elif effect.accompany is not None:

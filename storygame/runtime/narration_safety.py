@@ -85,6 +85,11 @@ class NarrationSafetyValidator:
             item for item in state.package.scenes if item.metadata.scene_id == candidate_state.current_scene_id
         )
         allowed_entities.update((scene.metadata.location_id, *scene.metadata.participant_ids, *scene.metadata.item_ids))
+        allowed_entities.update(
+            placement.parent
+            for placement in scene.metadata.item_placements.values()
+            if hasattr(placement, "parent") and placement.parent is not None
+        )
         npc_ids = {npc.id for npc in state.package.world.npcs}
         known_terms = {
             term.casefold()

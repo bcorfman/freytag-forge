@@ -1,8 +1,16 @@
 story_id: continuity_initiative
 protagonist_id: kristin
+kinds:
+- id: desk
+  is: [furniture, supporter]
 locations:
 - id: mcgehee_home
   name: Kristin and Michelle's shared house
+- id: kitchen
+  name: kitchen
+  parent: mcgehee_home
+- id: outside_house
+  name: outside the house
 - id: los_angeles_park
   name: Los Angeles park
 - id: regional_facility
@@ -73,6 +81,7 @@ items:
   - memory card
   fallback_ids:
   - michelle_phone
+  hidden: true
 - id: michelle_phone
   name: Michelle's phone
 - id: kristin_laptop
@@ -80,6 +89,16 @@ items:
 - id: michelle_drawer
   name: drawer
   fixed: true
+  kind: container
+  openable: true
+  contents: [pens, binder clips, stapler, spare batteries]
+- id: kristin_truck
+  name: Kristin's truck
+  kind: vehicle
+  owner: kristin
+- id: michelle_workstation
+  name: Michelle's workstation
+  kind: desk
 - id: workstation_chair
   name: workstation chair
 - id: transit_card
@@ -110,7 +129,10 @@ facts:
 - broadcast_started
 - continuity_initiative_known
 - michelle_warning_known
-- memory_card_in_kristins_custody
+- id: memory_card_recovered
+  on_assert:
+  - {move: memory_card, parent: kristin, text: with Kristin}
+  - {reveal: memory_card}
 - official_interest_in_michelle_known
 - house_marked_for_return
 - transport_route_identified

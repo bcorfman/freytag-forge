@@ -45,11 +45,13 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
-        "memory_card": ItemPlacement(placement="with Kristin", while_fact_true="memory_card_in_kristins_custody"),
-        "michelle_phone": "on the kitchen floor",
-        "kristin_laptop": "in Kristin's truck outside the house",
-        "michelle_drawer": "in Michelle's workstation",
-        "workstation_chair": "at Michelle's workstation",
+        "memory_card": ItemPlacement(parent="michelle_drawer", under=True),
+        "michelle_phone": ItemPlacement(parent="kitchen", text="on the kitchen floor"),
+        "kristin_laptop": ItemPlacement(parent="kristin_truck", text="in Kristin's truck outside the house"),
+        "kristin_truck": ItemPlacement(parent="outside_house"),
+        "michelle_workstation": ItemPlacement(parent="kitchen"),
+        "michelle_drawer": ItemPlacement(parent="michelle_workstation", part_of=True, text="in Michelle's workstation"),
+        "workstation_chair": ItemPlacement(parent="kitchen", text="at Michelle's workstation"),
     }
     assert package.scenes[0].metadata.setting_facts == (
         "The drawer is shut.",
@@ -112,7 +114,11 @@ def test_loader_rejects_item_placement_for_an_item_not_in_the_scene(tmp_path: Pa
     package = copied_package(tmp_path)
     plot = package / "plot.md"
     contents = plot.read_text(encoding="utf-8")
-    contents = contents.replace("  michelle_phone: on the kitchen floor\n", "  transit_card: on the table\n", 1)
+    contents = contents.replace(
+        "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n",
+        "  transit_card: {parent: kitchen, text: on the table}\n",
+        1,
+    )
     plot.write_text(contents, encoding="utf-8")
 
     with pytest.raises(StoryPackageError, match="scene 1A.*transit_card"):
@@ -130,13 +136,15 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8")
     contents = contents.replace(
-        "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair]\n",
-        "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, test_item]\n",
+        "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
+        "workstation_chair, kristin_truck, michelle_workstation]\n",
+        "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
+        "workstation_chair, kristin_truck, michelle_workstation, test_item]\n",
         1,
     )
     contents = contents.replace(
-        "  michelle_phone: on the kitchen floor\n",
-        "  michelle_phone: on the kitchen floor\n"
+        "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n",
+        "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n"
         "  test_item:\n"
         "    placement: beneath the test desk\n"
         "    while_fact_false: michelle_abduction_suspicion\n",
@@ -155,14 +163,14 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
 
 
 def test_item_placement_accepts_true_guard_and_rejects_two_guards() -> None:
-    placement = ItemPlacement(placement="under the drawer", while_fact_true="memory_card_in_kristins_custody")
+    placement = ItemPlacement(placement="under the drawer", while_fact_true="memory_card_recovered")
 
-    assert placement.while_fact_true == "memory_card_in_kristins_custody"
+    assert placement.while_fact_true == "memory_card_recovered"
     with pytest.raises(ValidationError, match="at most one"):
         ItemPlacement(
             placement="under the drawer",
-            while_fact_false="memory_card_in_kristins_custody",
-            while_fact_true="memory_card_in_kristins_custody",
+            while_fact_false="memory_card_recovered",
+            while_fact_true="memory_card_recovered",
         )
 
 
@@ -197,13 +205,13 @@ def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: 
             id="loader_rejects_empty_setting_fact",
         ),
         pytest.param(
-            "  michelle_phone: on the kitchen floor\n",
+            "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n",
             "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_false: undeclared_fact\n",
             "scene 1A.*michelle_phone.*undeclared_fact",
             id="loader_rejects_item_placement_guard_for_an_unknown_fact",
         ),
         pytest.param(
-            "  michelle_phone: on the kitchen floor\n",
+            "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n",
             "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_true: undeclared_fact\n",
             "scene 1A.*michelle_phone.*undeclared_fact",
             id="loader_rejects_true_item_placement_guard_for_an_unknown_fact",
@@ -444,7 +452,7 @@ def test_legacy_evidence_without_delivery_text_still_loads(tmp_path: Path) -> No
 def test_scene_1a_recording_warning_handoff_matches_one_exact_action() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     projection = KnowledgeProjector().project(
         state,
@@ -475,7 +483,7 @@ def test_1a_deadline_fallback_names_the_kms_drawer() -> None:
 def test_scene_1a_files_evidence_requires_reading_saved_files() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     candidates = (
         KnowledgeProjector()
@@ -510,7 +518,7 @@ def test_scene_1a_recording_warning_handoff_rejects_unsafe_partial_actions(
 ) -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
     candidates = KnowledgeProjector().project(state, "player", player_input).candidates
 
@@ -655,7 +663,7 @@ def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str,
     [
         ("plot.md", "scene_id: 1A", "scene_id: 9Z", "heading and frontmatter"),
         ("plot.md", "---\nscene_id: 1A", "scene_id: 1A", "lacks YAML frontmatter"),
-        ("world.yaml", "mcgehee_home", "unknown_home", "unknown entities"),
+        ("world.yaml", "mcgehee_home", "unknown_home", "unknown location parent"),
         (
             "pacing.yaml",
             "min_turns: 8\n  nudge_after_turns: 10",
@@ -715,7 +723,7 @@ def test_loader_rejects_a_pacing_event_scheduled_past_its_scene_minimum(tmp_path
             "- {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
             "triggers: [{fact_id: michelle_lead_actionable, equals: true}, "
             "{fact_id: patrol_return_pressure, equals: true}, "
-            "{fact_id: memory_card_in_kristins_custody, equals: true}]}\n",
+            "{fact_id: memory_card_recovered, equals: true}]}\n",
             "ambiguous priority",
             id="loader_rejects_ambiguous_transition_priority",
         ),

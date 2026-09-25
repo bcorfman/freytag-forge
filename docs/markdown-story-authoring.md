@@ -28,7 +28,9 @@ fixed unless `fixed: false` is explicit.
 
 World facts may already declare `on_assert` effects. These effects run when the
 fact becomes true. Supported effects include `move`, `reveal`, `accompany`, and
-`set_axis`.
+`set_axis`. A `move` effect may include optional `text`, which becomes the
+narrator's place text after the move. It lasts until the thing or its holder
+moves again.
 
 The optional `setting_facts` list contains true, visible-state sentences. Each
 sentence is rendered verbatim as its own narrator rule after the placement

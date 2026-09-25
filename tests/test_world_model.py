@@ -53,13 +53,20 @@ def test_world_schema_data_is_plain_and_covers_authored_entities() -> None:
 
     plain(data)
     entities = {entity["id"]: entity for entity in data["entities"]}
-    assert {entity["kind"] for entity in entities.values()} == {"area", "character", "thing"}
+    assert {entity["kind"] for entity in entities.values()} == {
+        "area",
+        "character",
+        "thing",
+        "container",
+        "vehicle",
+        "desk",
+    }
     for entity in PACKAGE.world.locations:
         assert entities[entity.id]["kind"] == "area"
     for entity in PACKAGE.world.npcs:
         assert entities[entity.id]["kind"] == "character"
     for item in PACKAGE.world.items:
-        assert entities[item.id]["kind"] == "thing"
+        assert entities[item.id]["kind"] == item.kind
         if item.fixed is None:
             assert "fixed" not in entities[item.id]
         else:
@@ -116,7 +123,8 @@ def test_world_effects_apply_once_and_mark_the_fact() -> None:
     assert state_world.parent("memory_card") == "los_angeles_park"
     assert Fact(predicate=WORLD_EFFECTS_APPLIED, subject="story", object="facility_proof") in state.facts.asserted
 
-    state_world.move("memory_card", "regional_facility")
+    state_world.reveal("memory_card")
+    assert state_world.move("memory_card", "regional_facility").ok
     assert apply_world_effects(package, state.facts) == ()
     assert world_for(package, state.facts).parent("memory_card") == "regional_facility"
 
@@ -262,4 +270,4 @@ def test_loader_reads_on_assert_effects_and_rejects_bad_world_effects(tmp_path) 
 
 @pytest.mark.component
 def test_shipped_package_declares_no_world_effects() -> None:
-    assert not PACKAGE.world.fact_effects
+    assert set(PACKAGE.world.fact_effects) == {"memory_card_recovered"}

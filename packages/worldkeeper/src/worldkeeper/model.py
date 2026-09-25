@@ -404,10 +404,17 @@ class World:
         """Return authored placement text, parent name, or unplaced name."""
         if not self.exists(entity_id):
             return None
-        moved = any(self._facts("wk_moved", ancestor) for ancestor in (entity_id,) + self.chain(entity_id))
-        if not moved and self._value("wk_place_text", entity_id):
-            return self._value("wk_place_text", entity_id)
+        text = self.place_text(entity_id)
+        if text is not None:
+            return text
         return self.name(self.parent(entity_id)) if self.parent(entity_id) else self.unplaced_name(entity_id)
+
+    def place_text(self, entity_id) -> str | None:
+        """Return authored placement text while the entity's holder is unmoved."""
+        if not self.exists(entity_id):
+            return None
+        moved = any(self._facts("wk_moved", ancestor) for ancestor in (entity_id,) + self.chain(entity_id))
+        return self._value("wk_place_text", entity_id) if not moved else None
 
     def resolve(self, name):
         """Resolve names, aliases, part forms, or a resolver-selected ambiguity."""
@@ -661,4 +668,8 @@ class World:
         self._write_placement(entity_id, parent_id, new_relation)
         self._transfer_open(old_parent, parent_id, old_relation, new_relation)
         self._move_companions(entity_id, old_parent, parent_id)
+        if effect.get("text") is not None:
+            self._replace("wk_place_text", entity_id, value=effect["text"])
+            for fact in self._facts("wk_moved", entity_id):
+                self.backend.retract_fact(fact)
         return OpResult(True, id=entity_id)

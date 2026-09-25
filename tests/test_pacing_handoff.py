@@ -106,11 +106,11 @@ def _synthetic_pacing_package(realizations: tuple[PacingRealization, ...], when:
 def test_pacing_realization_selects_first_matching_entry_and_default_fallback() -> None:
     realizations = (
         PacingRealization(
-            when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+            when=(FactPredicate(fact_id="memory_card_recovered", equals=True),),
             text="The first pressure is visible.",
         ),
         PacingRealization(
-            when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+            when=(FactPredicate(fact_id="memory_card_recovered", equals=True),),
             text="The second pressure is visible.",
         ),
         PacingRealization(text="The default pressure is visible."),
@@ -118,7 +118,7 @@ def test_pacing_realization_selects_first_matching_entry_and_default_fallback() 
 
     matching_package = _synthetic_pacing_package(realizations)
     matching_state = RuntimeState.bootstrap(matching_package)
-    matching_state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    matching_state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     RuntimeEngine(
         matching_state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]}
     ).turn("Search the kitchen.")
@@ -134,7 +134,7 @@ def test_pacing_realization_selects_first_matching_entry_and_default_fallback() 
 def test_guarded_pacing_event_waits_for_its_predicates_even_after_at_turn() -> None:
     package = _synthetic_pacing_package(
         (PacingRealization(text="The guarded pressure is visible."),),
-        when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+        when=(FactPredicate(fact_id="memory_card_recovered", equals=True),),
     )
     state = RuntimeState.bootstrap(package)
     state.turn_index = 2
@@ -146,7 +146,7 @@ def test_guarded_pacing_event_waits_for_its_predicates_even_after_at_turn() -> N
     assert Fact(predicate="patrol_return_pressure", subject="story", value="true") not in state.facts.asserted
     assert state.last_turn_delivery.complication_text is None
 
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     engine._activate_pacing(realize_complications=True)
 
     assert "synthetic_pressure" in state.fired_event_ids
@@ -157,10 +157,10 @@ def test_guarded_pacing_event_waits_for_its_predicates_even_after_at_turn() -> N
 def test_guarded_pacing_event_never_fires_before_at_turn() -> None:
     package = _synthetic_pacing_package(
         (PacingRealization(text="The guarded pressure is visible."),),
-        when=(FactPredicate(fact_id="memory_card_in_kristins_custody", equals=True),),
+        when=(FactPredicate(fact_id="memory_card_recovered", equals=True),),
     )
     state = RuntimeState.bootstrap(package)
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     engine = RuntimeEngine(state, lambda _input: {"segments": []})
 
     engine._activate_pacing(realize_complications=True)
@@ -178,10 +178,10 @@ def test_guarded_pacing_event_never_fires_before_at_turn() -> None:
     ("facts", "expected_index"),
     [
         ((), 0),
-        ((("memory_card_in_kristins_custody", True),), 2),
+        ((("memory_card_recovered", True),), 2),
         (
             (
-                ("memory_card_in_kristins_custody", True),
+                ("memory_card_recovered", True),
                 ("michelle_lead_actionable", True),
             ),
             1,
@@ -224,7 +224,7 @@ def test_pressure_1a_prompt_carries_one_matching_realization_for_one_turn(
 
 def test_pressure_1a_lead_actionable_realization_precedes_custody() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
     engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]})
 

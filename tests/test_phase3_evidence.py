@@ -45,7 +45,7 @@ def _run_case(tmp_path: Path, case: str, player_input: str, provider: _EvidenceP
     store_path = tmp_path / f"{case}.sqlite"
 
     def provider_factory(state):
-        state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+        state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
         state.active_event_ids.add("SL-1A-B")
         provider.state = state
         return provider

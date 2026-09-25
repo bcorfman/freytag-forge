@@ -154,6 +154,8 @@ def _owned_items(world: dict[str, Any]) -> list[tuple[str, str]]:
     """Return owner/thing pairs; this heuristic only considers named items."""
     owned: list[tuple[str, str]] = []
     for item in world.get("items", []):
+        if item.get("kind") == "desk":
+            continue
         match = _OWNED_ITEM_NAME.fullmatch(str(item.get("name", "")))
         if match:
             owned.append((match.group(1), match.group(2)))

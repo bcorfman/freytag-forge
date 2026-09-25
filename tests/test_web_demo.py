@@ -337,7 +337,7 @@ def test_api_returns_authored_handoff_as_ordinary_narration(tmp_path) -> None:
             }
 
     def provider_factory(state):
-        state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+        state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
         state.active_event_ids.add("SL-1A-B")
         return _AuthoredProvider(authored_text)
 
@@ -432,7 +432,7 @@ def test_phase3_api_timeline_resolves_only_an_eligible_recording_selection(tmp_p
             return next(responses)
 
     def provider_factory(state):
-        state.facts.assert_fact(Fact(predicate="memory_card_in_kristins_custody", subject="story", value="true"))
+        state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
         state.active_event_ids.add("SL-1A-B")
         return _SequencedProvider()
 

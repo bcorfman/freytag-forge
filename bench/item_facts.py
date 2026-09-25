@@ -10,6 +10,7 @@ from worldkeeper import WorldSchema
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.validation import ProgressionValidator
+from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.models import ItemPlacement, item_placement_is_visible, placement_text
 from storygame.story_package.world_schema import world_source_schema_data
 
@@ -197,19 +198,25 @@ class ItemFactsProvider(CloudflareTurnProvider):
         super()._prepare_turn_visibility()
         package = self.state.package
         items = {item.id: item for item in package.world.items}
+        placement_facts = self._placement_facts()
+        apply_world_effects(package, placement_facts)
+        world = world_for(package, placement_facts)
         for item_id, placement in self._current_scene().item_placements.items():
             item = items.get(item_id)
-            if (
-                item is None
-                or item.name in self.item_facts
-                or item.hidden
-                or not isinstance(placement, ItemPlacement)
-                or (placement.while_fact_false is None and placement.while_fact_true is None)
-            ):
+            if item is None or item.name in self.item_facts or world.is_hidden(item_id):
                 continue
-            if not item_placement_is_visible(placement, self._placement_facts()):
+            if not isinstance(placement, ItemPlacement):
                 continue
-            place = placement_text(placement)
+            if placement.parent is not None:
+                if not item.hidden:
+                    continue
+                place = world.place_label(item_id)
+            else:
+                if placement.while_fact_false is None and placement.while_fact_true is None:
+                    continue
+                if not item_placement_is_visible(placement, placement_facts):
+                    continue
+                place = placement_text(placement)
             if place is None:
                 continue
             self.item_facts[item.name] = {"place": place, "condition": []}
