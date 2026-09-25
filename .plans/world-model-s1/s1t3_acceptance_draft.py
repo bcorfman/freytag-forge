@@ -27,7 +27,9 @@ OLD_1A_PLACEMENTS = """item_placements:
   michelle_drawer: in Michelle's workstation
   workstation_chair: at Michelle's workstation
 """
-NEW_1A = """item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, kristin_truck, michelle_workstation]
+NEW_1A = (
+    """item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, """
+    """kristin_truck, michelle_workstation]
 item_placements:
   memory_card: {parent: michelle_drawer, under: true}
   michelle_phone: {parent: kitchen, text: on the kitchen floor}
@@ -37,6 +39,7 @@ item_placements:
   michelle_drawer: {parent: michelle_workstation, part_of: true, text: in Michelle's workstation}
   workstation_chair: {parent: kitchen, text: at Michelle's workstation}
 """
+)
 WORLD_LOCATIONS = """locations:
 - id: kitchen
   name: kitchen
@@ -96,7 +99,10 @@ def _converted(tmp_path: Path, *, extra_world=(), extra_plot=()) -> Path:
 
 def test_placement_forms_and_text():
     assert placement_text("on the floor") == "on the floor"
-    assert placement_text(ItemPlacement.model_validate({"placement": "with her", "while_fact_true": "x_fact"})) == "with her"
+    assert (
+        placement_text(ItemPlacement.model_validate({"placement": "with her", "while_fact_true": "x_fact"}))
+        == "with her"
+    )
     new = ItemPlacement.model_validate({"parent": "kitchen", "text": "on the kitchen floor"})
     assert placement_text(new) == "on the kitchen floor"
     assert placement_text(ItemPlacement.model_validate({"parent": "kitchen"})) is None
@@ -162,11 +168,13 @@ def test_converted_package_builds_the_tree_at_bootstrap(tmp_path):
 
 
 def test_a_scene_change_applies_the_new_scenes_placements(tmp_path):
-    plot = [(
-        "item_ids: [memory_card, transit_card]\n",
-        "item_ids: [memory_card, transit_card, michelle_phone]\nitem_placements:\n"
-        "  michelle_phone: {parent: los_angeles_park, text: on the park bench}\n",
-    )]
+    plot = [
+        (
+            "item_ids: [memory_card, transit_card]\n",
+            "item_ids: [memory_card, transit_card, michelle_phone]\nitem_placements:\n"
+            "  michelle_phone: {parent: los_angeles_park, text: on the park bench}\n",
+        )
+    ]
     package = load_story_package(_converted(tmp_path, extra_plot=plot))
     state = RuntimeState.bootstrap(package)
     assert world_for(package, state.facts).parent("michelle_phone") == "kitchen"
@@ -208,13 +216,49 @@ def test_bench_seed_uses_text_then_parent_name_and_skips_hidden(tmp_path):
 @pytest.mark.parametrize(
     "world_extra, plot_extra, why",
     [
-        ((), [("michelle_phone: {parent: kitchen, text: on the kitchen floor}", "michelle_phone: {parent: no_such_place}")], "unknown parent"),
+        (
+            (),
+            [
+                (
+                    "michelle_phone: {parent: kitchen, text: on the kitchen floor}",
+                    "michelle_phone: {parent: no_such_place}",
+                )
+            ],
+            "unknown parent",
+        ),
         ((("  kind: vehicle\n", "  kind: spaceship\n"),), (), "unknown kind"),
         ((("  kind: vehicle\n", "  kind: area\n"),), (), "an item kind that is not a thing"),
         ((("  parent: mcgehee_home\n", "  parent: kristin_laptop\n"),), (), "a location parent that is not a location"),
-        ((), [("memory_card: {parent: michelle_drawer, under: true}", "memory_card: {parent: michelle_drawer, under: true, text: under the drawer}")], "text on a hidden thing"),
-        ((), [("michelle_phone: {parent: kitchen, text: on the kitchen floor}", "michelle_phone: {parent: kitchen, under: true}")], "under an area"),
-        ((), [("michelle_phone: {parent: kitchen, text: on the kitchen floor}", "michelle_phone: {parent: kristin_laptop}")], "a parent that cannot hold things"),
+        (
+            (),
+            [
+                (
+                    "memory_card: {parent: michelle_drawer, under: true}",
+                    "memory_card: {parent: michelle_drawer, under: true, text: under the drawer}",
+                )
+            ],
+            "text on a hidden thing",
+        ),
+        (
+            (),
+            [
+                (
+                    "michelle_phone: {parent: kitchen, text: on the kitchen floor}",
+                    "michelle_phone: {parent: kitchen, under: true}",
+                )
+            ],
+            "under an area",
+        ),
+        (
+            (),
+            [
+                (
+                    "michelle_phone: {parent: kitchen, text: on the kitchen floor}",
+                    "michelle_phone: {parent: kristin_laptop}",
+                )
+            ],
+            "a parent that cannot hold things",
+        ),
     ],
 )
 def test_loader_rejects_bad_world_declarations(tmp_path, world_extra, plot_extra, why):
