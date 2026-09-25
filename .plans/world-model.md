@@ -1,7 +1,7 @@
 # World model: plan
 
-Status (2026-09-25): decisions W1-W10 settled; S1 tasks 1-2 done. See "Resume here";
-next: S1 task 3 (section 11). Written at Brandon's request
+Status (2026-09-25): decisions W1-W10 settled; S1 tasks 1-3 done. See "Resume here";
+next: S1 task 4 (section 11). Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
 separate small decisions. This plan replaces decision 1e. It also gives
@@ -11,11 +11,26 @@ continuity plan; this plan defines the world they write into.
 
 ## Resume here (2026-09-25)
 
-Branch `world-model-s1`, created from main after PR 479, holds S1 task 2:
-commits bd8c46b and 529b6a0, plus plan commits. The full suite is green
-(729 tests, 92.95% coverage), and ruff is clean. The branch has not been
-pushed and has no PR. The next step is **S1 task 3**, and its manifest was
-never run.
+Branch `world-model-s1` holds S1 tasks 2 and 3 on top of main after PR 479.
+Task 2 is commits bd8c46b and 529b6a0. Task 3 is commits 515201e and
+cf31bd2, and d498b9d made the `.plans/` scripts ruff-clean. The full suite
+is green (735 tests, 92.74% coverage), and ruff is clean across the whole
+repository. The branch has not been pushed and has no PR. The next step is
+**S1 task 4**, and it has no manifest yet.
+
+What task 3 added, for the next task to build on:
+
+- `world.yaml` may declare `kinds` (typed `KindDeclaration`, `{id, is}`), a
+  location `parent`, and on an item `kind`, `openable`, `open`, `hidden`,
+  `contents` and `owner`. `Item.fixed` is `None` unless declared, and the
+  library decides it (`WorldSchema.is_fixed`, `WorldSchema.kind_is`).
+- `item_placements` accept `{parent, text?, under?, part_of?}` besides the
+  old forms. `placement_text()` is the one reader of the narrator text.
+  `apply_scene_placements` runs at bootstrap and on a scene change.
+- The loader simulates each scene's new-form placements on a
+  `MemoryBackend` and rejects bad parents, kinds and hidden-item text.
+- The bench seed uses the text, else the parent's name, including a
+  character's, and skips hidden items. Its fixed names come from the schema.
 
 Materials in [world-model-s1/](world-model-s1/):
 
@@ -24,67 +39,39 @@ Materials in [world-model-s1/](world-model-s1/):
   struggle.", each with and without the card custody fact. To run it from
   the repository root: `uv run python .plans/world-model-s1/prompt_capture.py
   OUT.json [custody_fact_id]`.
-- `narrator-1a-baseline.json` is its output from before S1. It was stable
-  across runs. Every S1 check must diff a fresh capture against it (through
-  `json.tool`), and any difference fails. After the W7 rename, pass
+- `narrator-1a-baseline.json` is its output from before S1. It still matched
+  after task 3. Every S1 check must diff a fresh capture against it
+  (through `json.tool`), and any difference fails. After the W7 rename, pass
   `memory_card_recovered` as the second argument.
-- `s1t3_acceptance_draft.py` is the drafted task 3 acceptance test. It was
-  checked against the real files, and its import of `placement_text` fails,
-  as expected before the task. Copy it into the next session's scratchpad.
-  It is not a repository test.
+- `s1t3_acceptance_draft.py` is task 3's acceptance test. Its `_converted()`
+  fixture is exactly the 1A conversion task 4 must make in `data/`, so it is
+  the starting point for task 4's acceptance.
 - `s1t2_check_example.sh` is the task 2 check. Reuse its structure:
   ownership, library boundary, acceptance, full suite, mutation checks,
-  ruff, patch export.
+  ruff, patch export. Grep only `*.py` files (`--include="*.py"`), because
+  a bare `grep -r` matches `__pycache__` and failed task 3's first check.
+  Run acceptance tests with `PYTHONPATH=packages/worldkeeper/src:.` plus
+  the acceptance directory, or `bench` does not import.
 
-**S1 task 3 design** (one Ringer task on Luna, `worktrees: true`, run_name
-`world-model-s1`, `check_timeout_s: 900`; the check takes about 3 minutes
-with mutations):
+**S1 task 4 design** (one Ringer task on Luna, `worktrees: true`, run_name
+`world-model-s1`, `check_timeout_s: 900`):
 
-- Allowed paths: `packages/worldkeeper/`, `storygame/`, `tests/`, `bench/`,
-  `docs/markdown-story-authoring.md`. No `data/` edits; the 1A conversion is
-  task 4.
-- Models: `Location(Entity)` gets `kind="area"` and `parent`. `Item` gets
-  `kind="thing"`, `openable`, `open`, `hidden`, `contents` and `owner` (an
-  NPC ID). `WorldSource.kinds` holds `{id, is: [...]}`.
-- `ItemPlacement` accepts either the old form `{placement,
-  while_fact_*}` or the new form `{parent, text?, under?, part_of?}`, never
-  both. The new form takes no guards, and `under` and `part_of` exclude each
-  other. Add `placement_text(p) -> str | None`.
-- `storygame/story_package/world_schema.py` emits kinds, the location kind
-  and parent, and the item kind and properties.
-- Library fix: a story kind that descends from `furniture` must default to
-  `fixed`. Today `from_data` checks `kind == "furniture"`, so a `desk` that
-  is furniture plus supporter can move. Add a regression test.
-- New `apply_scene_placements(package, facts, scene_id)` in
-  `storygame/runtime/world_model.py`. It calls `world.place(...)` for each
-  new-form placement, and returns and logs refusals. Call it in
-  `RuntimeState.bootstrap` (after `seed()`, before the effects sweep) and on
-  a scene change in `apply_proposal` (before the sweep).
-- The loader raises `StoryPackageError` for:
-  - an unknown placement parent;
-  - an unknown kind, or an item kind that is not a thing;
-  - a location parent that is not a location;
-  - `text` on a hidden item;
-  - a placement `World.place` refuses (simulate each scene on a
-    `MemoryBackend`).
-- Shipped narrator: `_placement_rules` uses `placement_text` and emits no
-  line when the text is None.
-- Bench readers (`bench/item_facts.py` in two places, and
-  `bench/judge_input.py`): use the text first, else the parent's display
-  name (W5), and skip hidden things.
-- The docs describe `parent`, `under`, `part_of`, `hidden`, `kinds`,
-  `contents` and `on_assert`.
-- The check adds:
-  - the narrator baseline diff;
-  - mutation checks that blank out the `apply_scene_placements(` call in
-    `bootstrap` and in `apply_proposal`, each of which must make `tests/`
-    fail;
-  - a docs grep for those terms.
+- Convert scene 1A in `data/stories/continuity-initiative/` to the new form:
+  - the house, kitchen and outside-the-house areas;
+  - the truck and the workstation;
+  - the drawer's kind and contents;
+  - the card, hidden and `under` the drawer.
 
-After task 3 comes task 4. It converts 1A and does the W7 rename (see S1
-below). The truck and workstation join 1A `item_ids`, so run the baseline
-diff there too; if they change the owner rules, that must be solved before
-landing. Task 5 is folded into task 3 (docs).
+  Use the structure in `s1t3_acceptance_draft.py`. Keep the drawer setting
+  fact through S1.
+- The W7 rename: `memory_card_in_kristins_custody` becomes
+  `memory_card_recovered` in the files listed under W7. Give it the
+  `on_assert` move and reveal, drop "and is carrying it" from its purpose,
+  and remove the card's `while_fact_true` guard.
+- The truck and workstation join 1A `item_ids`. Run the narrator baseline
+  diff with `memory_card_recovered`. If the new items change the owner
+  rules, that must be solved before landing.
+- Task 5 was folded into task 3 (docs).
 
 Lessons from task 2, for writing the next checks:
 
@@ -712,6 +699,8 @@ decisions W1-W10. Scope decided by Brandon, 2026-09-25 (W6).
   optional `kinds` list, placements as `{parent, text, under}`. Loading
   rejects unknown IDs and parents a kind does not allow. String placements
   still load, so nothing breaks before it is converted.
+  Done as task 3 (commits 515201e and cf31bd2), together with the narrator,
+  bench and docs bullets below.
 - The shipped narrator: `_placement_rules`
   (`storygame/runtime/cloudflare.py`) reads `text` and says exactly what it
   says today. This is the only change to shipped behaviour, and it must change
