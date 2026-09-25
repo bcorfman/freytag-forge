@@ -1,7 +1,7 @@
 # Narrated world continuity: implementation plan
 
 Status (2026-09-24): Phase 0 bench work is through round 9 and
-single-mechanism runs v11-v33, all on branch `round9`, not merged. A new
+single-mechanism runs v11-v34 on branch `round9`; v11-v33 merged to `main` in PR #473. A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
 Phase 0. It lists what changed in v21-v26, the next steps in order, the
 story-package authoring rules any ChatGPT story prompt must state, and how
@@ -1525,6 +1525,25 @@ records:
   own prose. The drawer paper put in the card's hidden spot is
   reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
   No flag cites the bridge or the reveal text any more.
+
+*v34 (2026-09-24, `bench/results/item-facts-v34-nofind-two-scene-1a` plus
+smoke `item-facts-v34-smoke-two-scene-1a`).* Round 9 was merged to `main`
+first (PR #473, `51ca14d`; the staging deploy succeeded). `cb47e8e` then
+adds two lines on authored-reveal turns only: "The game will tell what
+Kristin finds or learns this turn." and "Do not show Kristin finding or
+learning anything." No delivery text reaches the narrator; the PRD rule
+"never ... delivery text" and its tests stand. Brandon chose this over
+showing the narrator its own reveal sentence. That patch is kept at
+scratchpad `r32/out/reveal.patch`.
+- t2 invented paper: 3/3. The lines were in the prompt, and the rule does
+  not hold. The t2 prompt also says "Michelle's memory card is with Kristin"
+  before she has looked (the reveal is judged as already applied).
+- t13: the smoke reads at the truck; both replicates drive home to read
+  (2/2). Brandon has said t13 is not being changed.
+
+By Brandon's ranking, the next options for the paper are: showing the
+narrator its own reveal sentence on that turn (material; needs the PRD rule
+relaxed), or an LLM check of the narrated turn.
 
 *v33 (2026-09-24, `bench/results/item-facts-v33-t13t19-two-scene-1a` plus
 smoke `item-facts-v33-smoke-two-scene-1a`).* Three changes:
