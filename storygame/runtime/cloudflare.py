@@ -437,9 +437,12 @@ class CloudflareTurnProvider:
 
     def _authored_handoff_rules(self) -> list[str]:
         protagonist = self._protagonist_name()
+        handoff = self.authored_handoff
+        if handoff is None:
+            return []
         return [
-            f"The game will tell what {protagonist} finds or learns this turn.",
-            f"Do not show {protagonist} finding or learning anything.",
+            f"Right after your story, the game will add this: {handoff.delivery_text.strip()}",
+            f"Write only what leads up to it. Do not have {protagonist} find anything else.",
         ]
 
     def _turn_rules(self) -> list[str]:
