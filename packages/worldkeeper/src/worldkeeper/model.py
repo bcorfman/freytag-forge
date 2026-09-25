@@ -1,4 +1,4 @@
-"""Schema and fact-backed operations for worldkeeper."""
+"""Fact-backed schema and world operations."""
 
 import re
 from collections.abc import Callable, Mapping
@@ -35,7 +35,7 @@ class FactLike(Protocol):
 
 
 class FactBackend(Protocol):
-    """Storage required by World."""
+    """Storage interface used by :class:`World`."""
 
     def matching(self, predicate: str, subject: str | None = None) -> tuple[FactLike, ...]: ...
     def assert_fact(self, fact) -> None: ...
@@ -43,31 +43,37 @@ class FactBackend(Protocol):
 
 
 class MemoryBackend:
-    """Simple set-backed storage."""
+    """Store facts in a process-local set."""
 
     def __init__(self):
         self._facts: set[Fact] = set()
 
     def matching(self, predicate, subject=None):
-        return tuple(f for f in self._facts if f.predicate == predicate and (subject is None or f.subject == subject))
+        """Return facts matching predicate and optional subject."""
+        return tuple(
+            fact for fact in self._facts if fact.predicate == predicate and (subject is None or fact.subject == subject)
+        )
 
     def matching_all(self):
+        """Return all stored facts."""
         return tuple(self._facts)
 
     def assert_fact(self, fact):
+        """Store a fact."""
         self._facts.add(fact)
 
     def retract_fact(self, fact):
+        """Remove a fact when present."""
         self._facts.discard(fact)
 
 
 class SchemaError(ValueError):
-    """Invalid schema declaration."""
+    """An invalid schema declaration."""
 
 
 @dataclass
 class OpResult:
-    """Result of an operation."""
+    """The success, refusal reason, and optional ID of an operation."""
 
     ok: bool
     reason: str = ""
@@ -90,452 +96,557 @@ class _Entity:
     axes: tuple[dict[str, Any], ...] = ()
 
 
-def _slug(s):
-    return re.sub(r"[^a-z0-9]+", "_", s.lower()).strip("_")
+def _slug(text):
+    return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
 
 
-def _anc(kinds, kind):
-    out = {kind}
-    for p in kinds[kind]:
-        out |= _anc(kinds, p)
-    return out
+def _ancestors(kinds, kind):
+    result = {kind}
+    for parent_kind in kinds[kind]:
+        result |= _ancestors(kinds, parent_kind)
+    return result
 
 
 class WorldSchema:
-    """Static kinds and declared entities."""
+    """Hold static kinds and declared entities."""
 
     def __init__(self, kinds, entities):
         self.kinds, self.entities = kinds, entities
 
     @classmethod
     def from_data(cls, data: Mapping):
+        """Validate mappings and return a schema, or raise :class:`SchemaError`."""
         kinds = dict(BASE_KINDS)
-        rawk = list(data.get("kinds", []))
-        ids = set()
-        for x in rawk:
-            i = x.get("id")
-            if not i or i in kinds or i in ids:
+        kind_ids = set()
+        for kind_data in data.get("kinds", []):
+            kind_id = kind_data.get("id")
+            if not kind_id or kind_id in kinds or kind_id in kind_ids:
                 raise SchemaError("invalid or duplicate story kind")
-            ids.add(i)
-            kinds[i] = tuple(x.get("is", []))
-        for ps in kinds.values():
-            if any(p not in kinds for p in ps):
-                raise SchemaError("unknown kind parent")
+            kind_ids.add(kind_id)
+            kinds[kind_id] = tuple(kind_data.get("is", []))
+        if any(parent not in kinds for parents in kinds.values() for parent in parents):
+            raise SchemaError("unknown kind parent")
 
-        def visit(k, path=()):
-            if k in path:
+        def visit(kind, path=()):
+            if kind in path:
                 raise SchemaError("cycle among kinds")
-            for p in kinds[k]:
-                visit(p, path + (k,))
+            for parent_kind in kinds[kind]:
+                visit(parent_kind, path + (kind,))
 
-        for k in kinds:
-            visit(k)
-        ents = {}
-        raw = list(data.get("entities", []))
-        for x in raw:
-            i, k = x.get("id"), x.get("kind")
-            if not i or i in ents or k not in kinds:
+        for kind in kinds:
+            visit(kind)
+        entities = {}
+        raw_entities = list(data.get("entities", []))
+        for entity_data in raw_entities:
+            entity_id, kind = entity_data.get("id"), entity_data.get("kind")
+            if not entity_id or entity_id in entities or kind not in kinds:
                 raise SchemaError("invalid entity declaration")
             axes = []
-            for a in x.get("axes", []):
-                poles = a.get("poles", [])
+            for axis_data in entity_data.get("axes", []):
+                poles = axis_data.get("poles", [])
                 if len(poles) != 2 or poles[0] == poles[1]:
                     raise SchemaError("axis needs two distinct poles")
                 axes.append(
                     {
                         "name": poles[0],
                         "poles": tuple(poles),
-                        "aliases": dict(a.get("aliases", {})),
-                        "initial": a.get("initial", poles[0]),
+                        "aliases": dict(axis_data.get("aliases", {})),
+                        "initial": axis_data.get("initial", poles[0]),
                     }
                 )
-            ents[i] = _Entity(
-                i,
-                x.get("name", ""),
-                k,
-                tuple(x.get("aliases", [])),
-                x.get("owner"),
-                x.get("parent"),
-                x.get("fixed", k == "furniture"),
-                x.get("openable", False),
-                x.get("open", False),
-                x.get("captive", False),
-                x.get("hidden", False),
+            entities[entity_id] = _Entity(
+                entity_id,
+                entity_data.get("name", ""),
+                kind,
+                tuple(entity_data.get("aliases", [])),
+                entity_data.get("owner"),
+                entity_data.get("parent"),
+                entity_data.get("fixed", kind == "furniture"),
+                entity_data.get("openable", False),
+                entity_data.get("open", False),
+                entity_data.get("captive", False),
+                entity_data.get("hidden", False),
                 tuple(axes),
             )
-        for e in list(ents.values()):
-            if e.parent and (
-                "area" not in _anc(kinds, e.kind)
-                or e.parent not in ents
-                or "area" not in _anc(kinds, ents[e.parent].kind)
+        for entity in list(entities.values()):
+            if entity.parent and (
+                "area" not in _ancestors(kinds, entity.kind)
+                or entity.parent not in entities
+                or "area" not in _ancestors(kinds, entities[entity.parent].kind)
             ):
                 raise SchemaError("area parent is not an area")
-            if e.owner and (e.owner not in ents or "character" not in _anc(kinds, ents[e.owner].kind)):
+            if entity.owner and (
+                entity.owner not in entities or "character" not in _ancestors(kinds, entities[entity.owner].kind)
+            ):
                 raise SchemaError("unknown owner")
-            item = next(x for x in raw if x.get("id") == e.id)
-            for n in item.get("contents", []):
-                i = f"{e.id}_{_slug(n)}"
-                if i in ents:
+            source = next(item for item in raw_entities if item.get("id") == entity.id)
+            for content_name in source.get("contents", []):
+                content_id = f"{entity.id}_{_slug(content_name)}"
+                if content_id in entities:
                     raise SchemaError("duplicate expanded content")
-                ents[i] = _Entity(i, n, "thing", parent=e.id)
-        return cls(kinds, ents)
+                entities[content_id] = _Entity(content_id, content_name, "thing", parent=entity.id)
+        return cls(kinds, entities)
 
 
 class World:
-    """Schema view whose mutable state lives in the supplied backend."""
+    """Read and mutate a world whose only mutable state is in its backend."""
 
     def __init__(self, schema, backend, *, make_fact=Fact, resolver: Callable | None = None):
         self.schema, self.backend, self.make_fact, self.resolver = schema, backend, make_fact, resolver
-        self._dynamic = set()
 
-    def _f(self, p, s, o, v=None):
-        return self.make_fact(predicate=p, subject=s, object=o, value=v)
+    # Encoding: identity and free text are values; short keys are objects.
+    def _fact(self, predicate, subject, object_value=None, value=None):
+        return self.make_fact(predicate=predicate, subject=subject, object=object_value, value=value)
 
-    def _fs(self, p, s=None):
-        return tuple(f for f in self.backend.matching(p, s) if f.predicate.startswith("wk_"))
+    def _facts(self, predicate, subject=None):
+        return tuple(fact for fact in self.backend.matching(predicate, subject) if fact.predicate.startswith("wk_"))
 
-    def _one(self, p, s):
-        f = self._fs(p, s)
-        return f[0].object if f else None
+    def _value(self, predicate, subject):
+        facts = self._facts(predicate, subject)
+        return facts[0].value if facts else None
 
-    def _set(self, p, s, o, v=None):
-        for f in self._fs(p, s):
-            self.backend.retract_fact(f)
-        self.backend.assert_fact(self._f(p, s, o, v))
+    def _replace(self, predicate, subject, object_value=None, value=None):
+        for fact in self._facts(predicate, subject):
+            self.backend.retract_fact(fact)
+        self.backend.assert_fact(self._fact(predicate, subject, object_value, value))
 
-    def _add(self, p, s, o, v=None):
-        if not any(f.object == o and f.value == v for f in self._fs(p, s)):
-            self.backend.assert_fact(self._f(p, s, o, v))
+    def _replace_if_absent(self, predicate, subject, object_value=None, value=None):
+        if not self._facts(predicate, subject):
+            self.backend.assert_fact(self._fact(predicate, subject, object_value, value))
 
-    def _e(self, i):
-        if i in self.schema.entities:
-            return self.schema.entities[i]
-        if i in self._ids():
+    def _replace_axis(self, entity_id, axis_name, pole):
+        for fact in self._facts("wk_axis", entity_id):
+            if fact.object == axis_name:
+                self.backend.retract_fact(fact)
+        self.backend.assert_fact(self._fact("wk_axis", entity_id, axis_name, pole))
+
+    def _add(self, predicate, subject, object_value=None, value=None):
+        if not any(fact.object == object_value and fact.value == value for fact in self._facts(predicate, subject)):
+            self.backend.assert_fact(self._fact(predicate, subject, object_value, value))
+
+    def _entity(self, entity_id):
+        if entity_id in self.schema.entities:
+            return self.schema.entities[entity_id]
+        if entity_id in self._fact_ids():
             return _Entity(
-                i, self._one("wk_name", i) or "", self._one("wk_kind", i) or "thing", owner=self._one("wk_owner", i)
+                entity_id,
+                self._value("wk_name", entity_id) or "",
+                self._value("wk_kind", entity_id) or "thing",
+                owner=self._value("wk_owner", entity_id),
             )
         return None
 
-    def _isa(self, i, k):
-        return bool(self._e(i) and k in _anc(self.schema.kinds, self._e(i).kind))
+    def _is_a(self, entity_id, kind):
+        entity = self._entity(entity_id)
+        return bool(entity and kind in _ancestors(self.schema.kinds, entity.kind))
+
+    def _fact_ids(self):
+        return {fact.subject for fact in self._facts("wk_kind")}
 
     def _ids(self):
-        dynamic = {f.subject for f in self._fs("wk_kind")}
-        return set(self.schema.entities) | self._dynamic | dynamic
+        return set(self.schema.entities) | self._fact_ids()
+
+    def _axes(self, entity_id):
+        entity = self._entity(entity_id)
+        if not entity:
+            return ()
+        axes = []
+        if entity.openable:
+            axes.append({"name": "open", "poles": ("open", "closed"), "aliases": {}})
+        if self._is_a(entity_id, "character"):
+            axes.append({"name": "captive", "poles": ("captive", "free"), "aliases": {}})
+        axes.extend(entity.axes)
+        return tuple(axes)
 
     def seed(self):
-        for e in self.schema.entities.values():
-            if e.hidden:
-                self._add("wk_hidden", e.id, "true")
-            if e.parent:
-                self._set("wk_parent", e.id, e.parent)
-                self._set("wk_relation", e.id, "in")
-            if e.openable:
-                self._set("wk_axis", e.id, "open" if e.open else "closed", "open")
-            if self._isa(e.id, "character"):
-                self._set("wk_axis", e.id, "captive" if e.captive else "free", "captive")
-            for a in e.axes:
-                self._set("wk_axis", e.id, a["initial"], a["name"])
+        """Write missing initial facts without overwriting played state."""
+        for entity in self.schema.entities.values():
+            if entity.hidden:
+                self._replace_if_absent("wk_hidden", entity.id, "true")
+            if entity.parent:
+                self._replace_if_absent("wk_parent", entity.id, value=entity.parent)
+                self._replace_if_absent("wk_relation", entity.id, value="in")
+            if entity.openable:
+                self._seed_axis(entity.id, "open", "open" if entity.open else "closed")
+            if self._is_a(entity.id, "character"):
+                self._seed_axis(entity.id, "captive", "captive" if entity.captive else "free")
+            for axis in entity.axes:
+                self._seed_axis(entity.id, axis["name"], axis["initial"])
         return OpResult(True)
 
-    def exists(self, i):
-        return self._e(i) is not None
+    def _seed_axis(self, entity_id, axis_name, initial):
+        if not any(fact.object == axis_name for fact in self._facts("wk_axis", entity_id)):
+            self._replace_axis(entity_id, axis_name, initial)
 
-    def kind(self, i):
-        return self._e(i).kind if self._e(i) else ""
+    def exists(self, entity_id):
+        """Return whether an entity is declared or backed by a creation fact."""
+        return self._entity(entity_id) is not None
 
-    def is_a(self, i, k):
-        return self._isa(i, k)
+    def kind(self, entity_id):
+        """Return an entity kind, or empty text for an unknown ID."""
+        entity = self._entity(entity_id)
+        return entity.kind if entity else ""
 
-    def name(self, i):
-        return self._e(i).name if self._e(i) else ""
+    def is_a(self, entity_id, kind):
+        """Return whether an entity is of a kind or its ancestor."""
+        return self._is_a(entity_id, kind)
 
-    def owner(self, i):
-        return self._e(i).owner if self._e(i) else None
+    def name(self, entity_id):
+        """Return an entity name, or empty text for an unknown ID."""
+        entity = self._entity(entity_id)
+        return entity.name if entity else ""
 
-    def parent(self, i):
-        return self._e(i).parent if self._isa(i, "area") else self._one("wk_parent", i)
+    def owner(self, entity_id):
+        """Return an entity owner, if recorded."""
+        entity = self._entity(entity_id)
+        return entity.owner if entity else None
 
-    def relation(self, i):
-        return "in" if self._isa(i, "area") and self.parent(i) else self._one("wk_relation", i)
+    def parent(self, entity_id):
+        """Return an entity parent, or no parent."""
+        return self._entity(entity_id).parent if self._is_a(entity_id, "area") else self._value("wk_parent", entity_id)
 
-    def chain(self, i):
-        out = []
-        seen = set()
-        p = self.parent(i)
-        while p and p not in seen:
-            out.append(p)
-            seen.add(p)
-            p = self.parent(p)
-        return tuple(out)
-
-    def area(self, i):
-        return i if self._isa(i, "area") else next((x for x in self.chain(i) if self._isa(x, "area")), None)
-
-    def holder(self, i):
-        return next((x for x in self.chain(i) if self._isa(x, "character")), None)
-
-    def together(self, a, b):
-        return self.area(a) is not None and self.area(a) == self.area(b)
-
-    def contents(self, i):
-        return tuple(sorted(x for x in self._ids() if self.parent(x) == i))
-
-    def is_hidden(self, i):
-        return bool(self._fs("wk_hidden", i))
-
-    def status(self, i):
-        return self._one("wk_status", i)
-
-    def axis_values(self, i):
-        return {f.value: f.object for f in self._fs("wk_axis", i)}
-
-    def is_visible(self, i):
-        if not self.exists(i) or self.is_hidden(i) or self.status(i) == "missing":
-            return False
-        return not any(
-            self.relation(x) == "in"
-            and self.parent(x)
-            and self._e(self.parent(x)).openable
-            and self.axis_values(self.parent(x)).get("open") == "closed"
-            for x in (i,) + self.chain(i)
-        )
-
-    def given_with(self, i):
+    def relation(self, entity_id):
+        """Return an entity's relation to its parent."""
         return (
-            tuple(x for x in self.contents(i) if self.relation(x) == "in" and self.is_visible(x))
-            if self._isa(i, "container") and (not self._e(i).openable or self.axis_values(i).get("open") != "closed")
-            else ()
+            "in" if self._is_a(entity_id, "area") and self.parent(entity_id) else self._value("wk_relation", entity_id)
         )
 
-    def conditions(self, i):
-        return tuple(sorted(f.object for f in self._fs("wk_condition", i)))
+    def chain(self, entity_id):
+        """Return parent IDs from nearest to farthest."""
+        chain, seen_ids, current_parent = [], set(), self.parent(entity_id)
+        while current_parent and current_parent not in seen_ids:
+            chain.append(current_parent)
+            seen_ids.add(current_parent)
+            current_parent = self.parent(current_parent)
+        return tuple(chain)
 
-    def unplaced_name(self, i):
-        return self._one("wk_unplaced", i)
+    def area(self, entity_id):
+        """Return the containing area, if placed."""
+        return (
+            entity_id
+            if self._is_a(entity_id, "area")
+            else next((ancestor for ancestor in self.chain(entity_id) if self._is_a(ancestor, "area")), None)
+        )
 
-    def companions(self, i):
-        return tuple(sorted(f.subject for f in self._fs("wk_companion") if f.object == i))
+    def holder(self, entity_id):
+        """Return the containing character, if held."""
+        return next((ancestor for ancestor in self.chain(entity_id) if self._is_a(ancestor, "character")), None)
 
-    def place_label(self, i):
-        if not self.exists(i):
+    def together(self, first_id, second_id):
+        """Return whether two entities share an area."""
+        return self.area(first_id) is not None and self.area(first_id) == self.area(second_id)
+
+    def contents(self, entity_id):
+        """Return direct child IDs in sorted order."""
+        return tuple(sorted(candidate for candidate in self._ids() if self.parent(candidate) == entity_id))
+
+    def is_hidden(self, entity_id):
+        """Return whether an entity is hidden."""
+        return bool(self._facts("wk_hidden", entity_id))
+
+    def status(self, entity_id):
+        """Return an entity status, if set."""
+        return self._value("wk_status", entity_id)
+
+    def axis_values(self, entity_id):
+        """Return axis names mapped to their poles."""
+        return {fact.object: fact.value for fact in self._facts("wk_axis", entity_id)}
+
+    def is_visible(self, entity_id):
+        """Return whether an entity is currently visible."""
+        if not self.exists(entity_id) or self.is_hidden(entity_id) or self.status(entity_id) == "missing":
+            return False
+        return not any(self._closed_in(entity) for entity in (entity_id,) + self.chain(entity_id))
+
+    def _closed_in(self, entity_id):
+        parent_id = self.parent(entity_id)
+        return bool(
+            self.relation(entity_id) == "in"
+            and parent_id
+            and self._entity(parent_id).openable
+            and self.axis_values(parent_id).get("open") == "closed"
+        )
+
+    def given_with(self, entity_id):
+        """Return visible direct contents of an open or non-openable container."""
+        if not self._is_a(entity_id, "container"):
+            return ()
+        container = self._entity(entity_id)
+        if container.openable and self.axis_values(entity_id).get("open") == "closed":
+            return ()
+        return tuple(
+            child for child in self.contents(entity_id) if self.relation(child) == "in" and self.is_visible(child)
+        )
+
+    def conditions(self, entity_id):
+        """Return conditions in the order supplied to :meth:`set_conditions`."""
+        facts = sorted(self._facts("wk_condition", entity_id), key=lambda fact: int(fact.object or 0))
+        return tuple(fact.value for fact in facts)
+
+    def unplaced_name(self, entity_id):
+        """Return an entity's unplaced free-text location."""
+        return self._value("wk_unplaced", entity_id)
+
+    def companions(self, entity_id):
+        """Return companions following an entity."""
+        return tuple(sorted(fact.subject for fact in self._facts("wk_companion") if fact.object == entity_id))
+
+    def place_label(self, entity_id):
+        """Return authored placement text, parent name, or unplaced name."""
+        if not self.exists(entity_id):
             return None
-        if not any(self._fs("wk_moved", x) for x in (i,) + self.chain(i)) and self._one("wk_place_text", i):
-            return self._one("wk_place_text", i)
-        return self.name(self.parent(i)) if self.parent(i) else self.unplaced_name(i)
+        moved = any(self._facts("wk_moved", ancestor) for ancestor in (entity_id,) + self.chain(entity_id))
+        if not moved and self._value("wk_place_text", entity_id):
+            return self._value("wk_place_text", entity_id)
+        return self.name(self.parent(entity_id)) if self.parent(entity_id) else self.unplaced_name(entity_id)
 
     def resolve(self, name):
-        norm = lambda s: re.sub(r"^(the|a|an) ", "", s.strip().lower())
-        q = norm(name)
-        c = []
-        for i in self._ids():
-            e = self._e(i)
-            forms = (e.name,) + e.aliases
-            if any(norm(x) == q for x in forms):
-                c.append(i)
-            if self._isa(i, "area") and any(q in (norm(x) + " floor", "floor of " + norm(x)) for x in forms):
-                c.append(i)
-            if self._isa(i, "character") and any(q in (norm(x) + "'s hand", norm(x) + "'s hands") for x in forms):
-                c.append(i)
-        c = list(dict.fromkeys(c))
-        if len(c) == 1:
-            return c[0]
+        """Resolve names, aliases, part forms, or a resolver-selected ambiguity."""
+        query = self._normalize(name)
+        matches = []
+        for entity_id in self._ids():
+            entity = self._entity(entity_id)
+            names = (entity.name,) + entity.aliases
+            if any(self._normalize(candidate) == query for candidate in names):
+                matches.append(entity_id)
+            if self._is_a(entity_id, "area") and any(
+                query in (self._normalize(candidate) + " floor", "floor of " + self._normalize(candidate))
+                for candidate in names
+            ):
+                matches.append(entity_id)
+            if self._is_a(entity_id, "character") and any(
+                query in (self._normalize(candidate) + "'s hand", self._normalize(candidate) + "'s hands")
+                for candidate in names
+            ):
+                matches.append(entity_id)
+        unique_matches = list(dict.fromkeys(matches))
+        if len(unique_matches) == 1:
+            return unique_matches[0]
         if self.resolver:
-            r = self.resolver(name, tuple(c) if c else tuple(self._ids()))
-            return r if r in self._ids() else None
+            selected = self.resolver(name, tuple(unique_matches) if unique_matches else tuple(self._ids()))
+            return selected if selected in self._ids() else None
         return None
 
-    def _bad(self, s):
-        return OpResult(False, s)
+    @staticmethod
+    def _normalize(text):
+        return re.sub(r"^(the|a|an)\s+", "", text.strip().lower())
 
-    def _check(self, e, p, under=False, auth=False):
-        if not self.exists(e) or not self.exists(p):
+    def _bad(self, reason):
+        return OpResult(False, reason)
+
+    def _check(self, entity_id, parent_id, under=False, authorized=False):
+        if not self.exists(entity_id) or not self.exists(parent_id):
             return "unknown entity"
-        if e == p or e in self.chain(p):
+        if entity_id == parent_id or entity_id in self.chain(parent_id):
             return "that would create a cycle"
-        if self._isa(e, "area"):
+        if self._is_a(entity_id, "area"):
             return "areas cannot be moved"
-        if not auth and self._e(e).fixed:
+        entity = self._entity(entity_id)
+        if not authorized and entity.fixed:
             return "fixed things cannot move"
-        if not auth and self.is_hidden(e):
+        if not authorized and self.is_hidden(entity_id):
             return "hidden things cannot move"
-        if under and (not self._isa(p, "thing") or self._isa(p, "character") or self._isa(p, "area")):
+        if under and (
+            not self._is_a(parent_id, "thing") or self._is_a(parent_id, "character") or self._is_a(parent_id, "area")
+        ):
             return "under needs a thing parent"
-        if self._isa(e, "character") and not (self._isa(p, "area") or self._isa(p, "container")):
+        if self._is_a(entity_id, "character") and not (
+            self._is_a(parent_id, "area") or self._is_a(parent_id, "container")
+        ):
             return "characters can only be in areas or containers"
-        if not self._isa(e, "character") and not any(
-            self._isa(p, k) for k in ("area", "container", "supporter", "character")
+        if not self._is_a(entity_id, "character") and not any(
+            self._is_a(parent_id, candidate) for candidate in ("area", "container", "supporter", "character")
         ):
             return "that parent cannot hold things"
+        return None
 
-    def _rel(self, p, under=False):
-        return (
-            "under"
-            if under
-            else ("carried_by" if self._isa(p, "character") else "on" if self._isa(p, "supporter") else "in")
-        )
+    def _relation(self, parent_id, under=False):
+        if under:
+            return "under"
+        if self._is_a(parent_id, "character"):
+            return "carried_by"
+        if self._is_a(parent_id, "supporter"):
+            return "on"
+        return "in"
 
-    def _write(self, e, p, r):
-        self._set("wk_parent", e, p)
-        self._set("wk_relation", e, r)
-        self._set("wk_moved", e, "true")
+    def _write_placement(self, entity_id, parent_id, relation):
+        self._replace("wk_parent", entity_id, value=parent_id)
+        self._replace("wk_relation", entity_id, value=relation)
+        self._replace("wk_moved", entity_id, "true")
 
-    def _transfer_open(self, old, new):
-        for p in (old, new):
-            if p and self._e(p).openable and self.axis_values(p).get("open") == "closed":
-                self._set("wk_axis", p, "open", "open")
+    def _transfer_open(self, old_parent, new_parent, old_relation, new_relation):
+        for parent_id, relation in ((old_parent, old_relation), (new_parent, new_relation)):
+            if (
+                relation == "in"
+                and parent_id
+                and self._entity(parent_id).openable
+                and self.axis_values(parent_id).get("open") == "closed"
+            ):
+                self._replace_axis(parent_id, "open", "open")
 
-    def move(self, e, p, *, under=False):
-        reason = self._check(e, p, under)
+    def move(self, entity_id, parent_id, *, under=False):
+        """Move a normal entity, refusing invalid, hidden, fixed, or cyclic moves."""
+        reason = self._check(entity_id, parent_id, under)
         if reason:
             return self._bad(reason)
-        old = self.parent(e)
-        self._write(e, p, self._rel(p, under))
-        self._transfer_open(old, p)
-        for c in self.companions(e):
-            if self.parent(c) == old:
-                self._write(c, p, self._rel(p))
-        return OpResult(True, id=e)
+        old_parent, old_relation = self.parent(entity_id), self.relation(entity_id)
+        new_relation = self._relation(parent_id, under)
+        self._write_placement(entity_id, parent_id, new_relation)
+        self._transfer_open(old_parent, parent_id, old_relation, new_relation)
+        for companion_id in self.companions(entity_id):
+            if self.parent(companion_id) == old_parent:
+                self._write_placement(companion_id, parent_id, self._relation(parent_id))
+        return OpResult(True, id=entity_id)
 
-    def place(self, e, p, *, text=None, under=False, part_of=False):
-        if not self.exists(e) or not self.exists(p):
+    def place(self, entity_id, parent_id, *, text=None, under=False, part_of=False):
+        """Place setup content, permitting fixed and hidden entities."""
+        if not self.exists(entity_id) or not self.exists(parent_id):
             return self._bad("unknown entity")
-        if self._isa(e, "area"):
+        if self._is_a(entity_id, "area"):
             return self._bad("areas cannot be placed")
-        if part_of and not self._isa(p, "thing"):
+        if part_of and not self._is_a(parent_id, "thing"):
             return self._bad("part_of needs a thing parent")
-        if e == p or e in self.chain(p):
-            return self._bad("that would create a cycle")
-        reason = self._check(e, p, under, True)
+        reason = self._check(entity_id, parent_id, under, True)
         if reason:
             return self._bad(reason)
-        self._write(e, p, "part_of" if part_of else self._rel(p, under))
+        self._write_placement(entity_id, parent_id, "part_of" if part_of else self._relation(parent_id, under))
         if text is not None:
-            self._set("wk_place_text", e, text)
-        for f in self._fs("wk_moved", e):
-            self.backend.retract_fact(f)
-        return OpResult(True, id=e)
+            self._replace("wk_place_text", entity_id, value=text)
+        for fact in self._facts("wk_moved", entity_id):
+            self.backend.retract_fact(fact)
+        return OpResult(True, id=entity_id)
 
-    def set_unplaced(self, e, place_name):
-        if not self.exists(e):
+    def set_unplaced(self, entity_id, place_name):
+        """Remove an entity's parent and record a free-text location."""
+        if not self.exists(entity_id):
             return self._bad("unknown entity")
-        for p in ("wk_parent", "wk_relation"):
-            for f in self._fs(p, e):
-                self.backend.retract_fact(f)
-        self._set("wk_unplaced", e, place_name)
-        self._set("wk_moved", e, "true")
-        return OpResult(True, id=e)
+        for predicate in ("wk_parent", "wk_relation"):
+            for fact in self._facts(predicate, entity_id):
+                self.backend.retract_fact(fact)
+        self._replace("wk_unplaced", entity_id, value=place_name)
+        self._replace("wk_moved", entity_id, "true")
+        return OpResult(True, id=entity_id)
 
-    def create(self, name, parent_id=None, *, kind="thing", under=False, owner=None):
+    def create(self, name, parent=None, *, kind="thing", under=False, owner=None, parent_id=None):
+        """Create a thing, refusing invalid names, kinds, owners, and parents."""
+        if parent is not None and parent_id is not None:
+            return self._bad("parent was supplied twice")
+        parent = parent if parent is not None else parent_id
         if not name or len(name) > 80:
             return self._bad("name must be 1 to 80 characters")
         if self.resolve(name):
             return self._bad("an entity already has that name")
-        if kind not in self.schema.kinds or "thing" not in _anc(self.schema.kinds, kind):
+        if kind not in self.schema.kinds or "thing" not in _ancestors(self.schema.kinds, kind):
             return self._bad("kind must be a kind of thing")
-        if owner is not None and (not self._isa(owner, "character")):
+        if owner is not None and not self._is_a(owner, "character"):
             return self._bad("owner must be a character")
-        if parent_id is not None:
-            if not self.exists(parent_id):
+        if parent is not None:
+            if not self.exists(parent):
                 return self._bad("unknown entity")
-            if not any(self._isa(parent_id, k) for k in ("area", "container", "supporter", "character")):
+            if not any(self._is_a(parent, candidate) for candidate in ("area", "container", "supporter", "character")):
                 return self._bad("that parent cannot hold things")
-            if under and not self._isa(parent_id, "thing"):
+            if under and not self._is_a(parent, "thing"):
                 return self._bad("under needs a thing parent")
-        base = f"n_{_slug(name)}_"
-        k = 1
-        while f"{base}{k}" in self._ids():
-            k += 1
-        i = f"{base}{k}"
-        self._dynamic.add(i)
-        self._set("wk_name", i, name)
-        self._set("wk_kind", i, kind)
+        base_id, suffix = f"n_{_slug(name)}_", 1
+        while f"{base_id}{suffix}" in self._ids():
+            suffix += 1
+        entity_id = f"{base_id}{suffix}"
+        self._replace("wk_name", entity_id, value=name)
+        self._replace("wk_kind", entity_id, value=kind)
         if owner:
-            self._set("wk_owner", i, owner)
-        if parent_id:
-            self._write(i, parent_id, self._rel(parent_id, under))
-        return OpResult(True, id=i)
+            self._replace("wk_owner", entity_id, value=owner)
+        if parent:
+            self._write_placement(entity_id, parent, self._relation(parent, under))
+        return OpResult(True, id=entity_id)
 
-    def set_axis(self, e, value):
-        if not self.exists(e):
+    def set_axis(self, entity_id, value):
+        """Set one axis pole while preserving all other axes."""
+        if not self.exists(entity_id):
             return self._bad("unknown entity")
-        axes = []
-        if self._e(e).openable:
-            axes.append({"name": "open", "poles": ("open", "closed"), "aliases": {}})
-        if self._isa(e, "character"):
-            axes.append({"name": "captive", "poles": ("captive", "free"), "aliases": {}})
-        axes += list(self._e(e).axes)
-        q = value.strip().lower()
-        for a in axes:
-            v = next((p for p in a["poles"] if p.lower() == q), None) or next(
-                (x for p, x in a["aliases"].items() if p.lower() == q), None
+        query = value.strip().lower()
+        for axis in self._axes(entity_id):
+            pole = next((candidate for candidate in axis["poles"] if candidate.lower() == query), None) or next(
+                (mapped for alias, mapped in axis["aliases"].items() if alias.lower() == query), None
             )
-            if v:
-                self._set("wk_axis", e, v, a["name"])
-                return OpResult(True, id=e)
+            if pole:
+                self._replace_axis(entity_id, axis["name"], pole)
+                return OpResult(True, id=entity_id)
         return self._bad("value does not match an axis")
 
-    def set_conditions(self, e, phrases):
-        if not self.exists(e):
+    def set_conditions(self, entity_id, phrases):
+        """Set at most two short ordered conditions, refusing invalid phrases."""
+        if not self.exists(entity_id):
             return self._bad("unknown entity")
-        p = [str(x).strip() for x in phrases]
-        if len(p) > 2 or any(not x or len(x) > 40 for x in p):
+        cleaned = [str(phrase).strip() for phrase in phrases]
+        if len(cleaned) > 2 or any(not phrase or len(phrase) > 40 for phrase in cleaned):
             return self._bad("at most two short conditions are allowed")
-        for f in self._fs("wk_condition", e):
-            self.backend.retract_fact(f)
-        for x in p:
-            self._add("wk_condition", e, x)
-        return OpResult(True, id=e)
+        for fact in self._facts("wk_condition", entity_id):
+            self.backend.retract_fact(fact)
+        for index, phrase in enumerate(cleaned):
+            self._add("wk_condition", entity_id, str(index), phrase)
+        return OpResult(True, id=entity_id)
 
-    def set_status(self, e, status):
-        if not self.exists(e):
+    def set_status(self, entity_id, status):
+        """Set a supported status, refusing unknown status values."""
+        if not self.exists(entity_id):
             return self._bad("unknown entity")
         if status not in {"missing", "destroyed", "incapacitated"}:
             return self._bad("unknown status")
-        self._set("wk_status", e, status)
+        self._replace("wk_status", entity_id, value=status)
         if status == "missing":
-            self.set_unplaced(e, self.unplaced_name(e) or "")
-        return OpResult(True, id=e)
+            self.set_unplaced(entity_id, self.unplaced_name(entity_id) or "")
+        return OpResult(True, id=entity_id)
 
-    def reveal(self, e):
-        if not self.exists(e):
+    def reveal(self, entity_id):
+        """Reveal an entity, refusing unknown IDs."""
+        if not self.exists(entity_id):
             return self._bad("unknown entity")
-        for f in self._fs("wk_hidden", e):
-            self.backend.retract_fact(f)
-        return OpResult(True, id=e)
+        for fact in self._facts("wk_hidden", entity_id):
+            self.backend.retract_fact(fact)
+        return OpResult(True, id=entity_id)
 
-    def set_companion(self, c, l):
-        if not self._isa(c, "character") or not self._isa(l, "character") or c == l:
+    def set_companion(self, companion_id, leader_id):
+        """Set a companion's leader, refusing non-character pairs."""
+        if (
+            not self._is_a(companion_id, "character")
+            or not self._is_a(leader_id, "character")
+            or companion_id == leader_id
+        ):
             return self._bad("companions must be different characters")
-        self._set("wk_companion", c, l)
-        return OpResult(True, id=c)
+        self._replace("wk_companion", companion_id, leader_id)
+        return OpResult(True, id=companion_id)
 
-    def clear_companion(self, c):
-        if not self._isa(c, "character"):
+    def clear_companion(self, companion_id):
+        """Clear a companion's leader, refusing non-characters."""
+        if not self._is_a(companion_id, "character"):
             return self._bad("companion must be a character")
-        for f in self._fs("wk_companion", c):
-            self.backend.retract_fact(f)
-        return OpResult(True, id=c)
+        for fact in self._facts("wk_companion", companion_id):
+            self.backend.retract_fact(fact)
+        return OpResult(True, id=companion_id)
 
     def apply_effects(self, effects):
-        out = []
-        for x in effects:
-            if "move" in x and "parent" in x:
-                out.append(self._effect_move(x))
-            elif "reveal" in x:
-                out.append(self.reveal(x["reveal"]))
-            elif "accompany" in x and "with" in x:
-                out.append(self.set_companion(x["accompany"], x["with"]))
-            elif "set_axis" in x and "value" in x:
-                out.append(self.set_axis(x["set_axis"], x["value"]))
+        """Apply supported move, reveal, companion, and axis effects."""
+        results = []
+        for effect in effects:
+            if "move" in effect and "parent" in effect:
+                results.append(self._effect_move(effect))
+            elif "reveal" in effect:
+                results.append(self.reveal(effect["reveal"]))
+            elif "accompany" in effect and "with" in effect:
+                results.append(self.set_companion(effect["accompany"], effect["with"]))
+            elif "set_axis" in effect and "value" in effect:
+                results.append(self.set_axis(effect["set_axis"], effect["value"]))
             else:
-                out.append(self._bad("unknown story effect"))
-        return out
+                results.append(self._bad("unknown story effect"))
+        return results
 
-    def _effect_move(self, x):
-        e, p = x["move"], x["parent"]
-        reason = self._check(e, p, x.get("under", False), True)
+    def _effect_move(self, effect):
+        entity_id, parent_id, under = effect["move"], effect["parent"], effect.get("under", False)
+        reason = self._check(entity_id, parent_id, under, True)
         if reason:
             return self._bad(reason)
-        self._write(e, p, self._rel(p, x.get("under", False)))
-        return OpResult(True, id=e)
+        old_parent, old_relation = self.parent(entity_id), self.relation(entity_id)
+        new_relation = self._relation(parent_id, under)
+        self._write_placement(entity_id, parent_id, new_relation)
+        self._transfer_open(old_parent, parent_id, old_relation, new_relation)
+        return OpResult(True, id=entity_id)
