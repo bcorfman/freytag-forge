@@ -497,6 +497,8 @@ class World:
         return OpResult(True, id=entity_id)
 
     def _move_companions(self, entity_id, old_parent, parent_id):
+        if old_parent is None:
+            return
         for companion_id in self.companions(entity_id):
             if self.parent(companion_id) == old_parent:
                 self._write_placement(companion_id, parent_id, self._relation(parent_id))

@@ -1,17 +1,13 @@
 """The storygame adapter for the story-agnostic worldkeeper library."""
 
 import logging
-import sys
 from dataclasses import dataclass
-from pathlib import Path
 
-_workspace_src = Path(__file__).resolve().parents[2] / "packages" / "worldkeeper" / "src"
-if str(_workspace_src) not in sys.path:
-    sys.path.insert(0, str(_workspace_src))
-from worldkeeper import World, WorldSchema  # noqa: E402
+from worldkeeper import World, WorldSchema
 
-from storygame.runtime.facts import Fact, FactStore  # noqa: E402
-from storygame.story_package.models import StoryPackage, WorldEffect  # noqa: E402
+from storygame.runtime.facts import Fact, FactStore
+from storygame.story_package.models import StoryPackage, WorldEffect
+from storygame.story_package.world_schema import world_source_schema_data
 
 WORLD_EFFECTS_APPLIED = "world_effects_applied"
 
@@ -24,30 +20,11 @@ class WorldEffectRefusal:
 
 
 def world_schema_data(package: StoryPackage) -> dict:
-    entities = []
-    for entity in package.world.locations:
-        entities.append({"id": entity.id, "name": entity.name, "aliases": list(entity.aliases), "kind": "area"})
-    for entity in package.world.npcs:
-        entities.append({"id": entity.id, "name": entity.name, "aliases": list(entity.aliases), "kind": "character"})
-    for item in package.world.items:
-        entities.append(
-            {
-                "id": item.id,
-                "name": item.name,
-                "aliases": list(item.aliases),
-                "kind": "thing",
-                "fixed": item.fixed,
-            }
-        )
-    return {"entities": entities}
+    return world_source_schema_data(package.world)
 
 
 def world_for(package: StoryPackage, facts: FactStore) -> World:
     return World(WorldSchema.from_data(world_schema_data(package)), facts, make_fact=Fact)
-
-
-def validate_world_schema(package: StoryPackage | object) -> None:
-    WorldSchema.from_data(world_schema_data(package))
 
 
 def _true(facts: FactStore, fact_id: str) -> bool:

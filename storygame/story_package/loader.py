@@ -10,6 +10,7 @@ from typing import Any
 
 import yaml
 from pydantic import ValidationError
+from worldkeeper import SchemaError, WorldSchema
 
 from storygame.story_package.models import (
     Character,
@@ -32,6 +33,7 @@ from storygame.story_package.models import (
     term_lookup_forms,
 )
 from storygame.story_package.obligations import required_storylet_ids
+from storygame.story_package.world_schema import world_source_schema_data
 
 
 class StoryPackageError(ValueError):
@@ -974,8 +976,6 @@ def _parse_characters(plot_text: str, world: WorldSource) -> tuple[Character, ..
 
 def load_story_package(root: Path) -> StoryPackage:
     """Load one package directory without accepting prose as runtime truth."""
-    from storygame.runtime.world_model import validate_world_schema
-
     try:
         plot_text = (root / "plot.md").read_text(encoding="utf-8")
         scenes = _parse_scenes(plot_text)
@@ -1006,8 +1006,8 @@ def load_story_package(root: Path) -> StoryPackage:
                         f"world fact '{fact_id}' effect references unknown entity(s): {sorted(unknown)}"
                     )
         try:
-            validate_world_schema(type("PackageWorld", (), {"world": world})())
-        except ValueError as exc:
+            WorldSchema.from_data(world_source_schema_data(world))
+        except SchemaError as exc:
             raise StoryPackageError(f"invalid world schema: {exc}") from exc
         pacing = PacingSource.model_validate(_yaml(root / "pacing.yaml"))
         routes_raw = _yaml(root / "storylet-routes.yaml")
