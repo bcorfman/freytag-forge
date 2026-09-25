@@ -1,7 +1,7 @@
 # World model: plan
 
-Status (2026-09-25): decisions W1-W10 settled; S1 tasks 1-4 done. See "Resume here";
-next: confirm the S1 exit, then S2 (section 11). Written at Brandon's request
+Status (2026-09-25): decisions W1-W10 settled; S1 done, exit gaps closed. See "Resume here";
+next: the S1 PR, then S2 (section 11). Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
 separate small decisions. This plan replaces decision 1e. It also gives
@@ -11,24 +11,37 @@ continuity plan; this plan defines the world they write into.
 
 ## Resume here (2026-09-25)
 
-Branch `world-model-s1` holds all of S1's build tasks on top of main after
-PR 479:
+Branch `world-model-s1` holds all of S1 on top of main after PR 479:
 
 - task 2: bd8c46b and 529b6a0;
 - task 3: 515201e and cf31bd2;
 - task 4: 89b1eea and 54541e9;
+- the exit gaps: 2c546cb and the round 2 commit after it;
 - d498b9d: ruff formatting of the `.plans/` scripts.
 
-The full suite is green (735 tests, 92.75% coverage), and ruff is clean across
+The full suite is green (747 tests, 92.84% coverage), and ruff is clean across
 the whole repository. The shipped narrator's 1A payloads are still
 byte-identical to the pre-S1 baseline. The branch has not been pushed and has
-no PR.
+no PR. **Next:** open the S1 PR, then start S2.
 
-**Next:** check the S1 exit (section 11) before opening a PR. The section 10
-cases were built against continuity-initiative, and the library tests use
-synthetic worlds. No storygame test yet runs against a second, synthetic
-story package, and save and load of the tree is only partly covered. Decide
-whether those gaps block the exit or move to S2.
+The S1 exit is met:
+
+- `tests/test_world_second_package.py` runs the section 10 storygame checks
+  over continuity-initiative and a synthetic second package,
+  `tests/fixtures/stories/lighthouse-keeper/`. The second package loaded
+  zero-shot apart from one general loader fix: a delivery's own fact now
+  counts as set in its scene, as the engine sets it.
+- The whole tree survives SQLite save and load, snapshot and restore, and a
+  `FactStore` clone. A created thing keeps its minted ID and is still found by
+  name.
+- `MemoryBackend` and `FactStore` give the same world.
+- The protagonist starts each scene in the scene's `location_id`, and a scene
+  change carries what she holds. A refusal is logged like any other
+  placement.
+
+Left for S2: W8's `companions` and `character_placements` front-matter
+fields. S1's task list never scheduled them. Also left for S2 is the
+`together()` question below.
 
 What S1 left in place, for S2 to build on:
 
