@@ -1,7 +1,7 @@
 # Narrated world continuity: implementation plan
 
 Status (2026-09-24): Phase 0 bench work is through round 9 and
-single-mechanism runs v11-v32, all on branch `round9`, not merged. A new
+single-mechanism runs v11-v33, all on branch `round9`, not merged. A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
 Phase 0. It lists what changed in v21-v26, the next steps in order, the
 story-package authoring rules any ChatGPT story prompt must state, and how
@@ -1525,6 +1525,31 @@ records:
   own prose. The drawer paper put in the card's hidden spot is
   reveals_hidden_canon 2/2. The re-walk to the truck is r1 t13 restart.
   No flag cites the bridge or the reveal text any more.
+
+*v33 (2026-09-24, `bench/results/item-facts-v33-t13t19-two-scene-1a` plus
+smoke `item-facts-v33-smoke-two-scene-1a`).* Three changes:
+- `b0f0413` (runtime): a public scene-entry statement is never offered as a
+  character's dialogue.
+- `55191f3` (bench): the narrator is asked to name the bigger place too,
+  e.g. "on the passenger seat of the truck".
+- `a4ea52e` (story, ChatGPT-drafted, Brandon-approved): a plot.md sentence
+  and a brandon-only scene-entry line for 1B, "I won't tell you that. Keep
+  your voice down; patrols are nearby."
+
+Read by hand over 3 replicates:
+- t13: the laptop's place names the truck 3/3. She reads at the truck 2/3.
+  r1 "drives back to her own house, where her laptop is waiting in the
+  passenger seat" (1/3).
+- t19: the smoke has no approach, and he answers with the new line. Both
+  replicates "approach" him again, and he gives no answer (2/3; v32 3/3).
+  The line was offered on every 1B turn but spoken only once.
+- Her place again misses t16's walk over to him in r1, which is left "in the
+  Los Angeles park".
+
+Three rounds of material and rule fixes (v31-v33) have moved each restart by
+about one replicate in three, which is within noise. By Brandon's ranking the
+next lever is an LLM semantic check of the narrated turn, if these still
+count as failures.
 
 *v32 (2026-09-24, `bench/results/item-facts-v32-stranger-two-scene-1a` plus
 smoke `item-facts-v32-smoke-two-scene-1a`).* Two changes:
