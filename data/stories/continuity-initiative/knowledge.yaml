@@ -2259,6 +2259,15 @@ knowledge:
   available_in_scenes: [1B]
   establishes: [{op: assert, fact_id: scene_1b_entry_known, value: true}]
   source: {kind: scene_entry}
+- id: k_1b_stranger_evasion
+  statement: I won't tell you that. Keep your voice down; patrols are nearby.
+  entity_ids: []
+  aliases:
+  - stranger
+  audience: {kind: characters, character_ids: [brandon], player_visible: false}
+  available_in_scenes: [1B]
+  establishes: [{op: assert, fact_id: scene_1b_entry_known, value: true}]
+  source: {kind: scene_entry}
 - id: k_scene_1c_entry
   statement: The regional facility is the immediate, dangerous destination.
   entity_ids: [kristin, regional_facility]
