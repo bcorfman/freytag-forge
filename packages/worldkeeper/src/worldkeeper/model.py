@@ -267,10 +267,31 @@ class World:
         axes.extend(entity.axes)
         return tuple(axes)
 
+    def entity_ids(self):
+        """Return all declared and dynamically created entity IDs in order."""
+        return tuple(sorted(self._ids()))
+
+    def axis_definitions(self, entity_id):
+        """Return the named axes, poles, and aliases declared for an entity."""
+        return tuple(
+            {
+                "name": axis["name"],
+                "poles": tuple(axis["poles"]),
+                "aliases": dict(axis["aliases"]),
+            }
+            for axis in self._axes(entity_id)
+        )
+
+    def is_openable(self, entity_id):
+        """Return whether an entity can be opened and closed."""
+        entity = self._entity(entity_id)
+        return bool(entity and entity.openable)
+
     def seed(self):
         """Write missing initial facts without overwriting played state."""
+        first_seed = not self._facts("wk_seeded", "__world__")
         for entity in self.schema.entities.values():
-            if entity.hidden:
+            if first_seed and entity.hidden:
                 self._replace_if_absent("wk_hidden", entity.id, "true")
             if entity.parent:
                 self._replace_if_absent("wk_parent", entity.id, value=entity.parent)
@@ -281,6 +302,7 @@ class World:
                 self._seed_axis(entity.id, "captive", "captive" if entity.captive else "free")
             for axis in entity.axes:
                 self._seed_axis(entity.id, axis["name"], axis["initial"])
+        self._replace_if_absent("wk_seeded", "__world__", value="true")
         return OpResult(True)
 
     def _seed_axis(self, entity_id, axis_name, initial):
@@ -342,8 +364,13 @@ class World:
         return next((ancestor for ancestor in self.chain(entity_id) if self._is_a(ancestor, "character")), None)
 
     def together(self, first_id, second_id):
-        """Return whether two entities share an area."""
-        return self.area(first_id) is not None and self.area(first_id) == self.area(second_id)
+        """Return whether two entities are in the same area or nested areas."""
+        first_area, second_area = self.area(first_id), self.area(second_id)
+        if first_area is None or second_area is None:
+            return False
+        return (
+            first_area == second_area or first_area in self.chain(second_area) or second_area in self.chain(first_area)
+        )
 
     def contents(self, entity_id):
         """Return direct child IDs in sorted order."""

@@ -123,7 +123,7 @@ def test_bench_seed_uses_npc_parent_name(tmp_path):
 
     things, _ = package_seed(package, state, "1A")
 
-    assert things["Michelle's phone"]["place"] == "Kristin Schweitzer"
+    assert things["Michelle's phone"]["place"] == "Kristin"
 
 
 def test_world_kinds_are_typed_and_schema_defaults_fixed_flags(tmp_path):

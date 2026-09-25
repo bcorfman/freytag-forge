@@ -4,7 +4,7 @@
   "fixed_turns": 13,
   "continuity_judge": true,
   "fact_tracking_judge": true,
-  "item_facts": {"mode": "single_call", "seed_from_package": true, "state_axes": {"drawer": {"shut": ["closed"], "open": []}, "Kristin's laptop": {"closed": ["shut"], "open": []}, "workstation chair": {"overturned": [], "upright": ["standing"]}}},
+  "item_facts": {"mode": "single_call", "seed_from_package": true, "state_axes": {"drawer": {"closed": ["shut"], "open": []}, "Kristin's laptop": {"closed": ["shut"], "open": []}, "workstation chair": {"overturned": [], "upright": ["standing"]}}},
   "continue_to": {"scene": "1B", "fixed_turns": 6, "script": "carry-and-hand-off"},
   "system_prompt": {
     "constant_rules_in_system": true,

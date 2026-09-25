@@ -72,6 +72,28 @@ def test_seed_is_additive_after_play():
     assert world.unplaced_name("coin") == "far beyond the old stone gate"
 
 
+def test_seed_does_not_rehide_revealed_entities():
+    schema = WorldSchema.from_data({"entities": [{"id": "card", "name": "card", "kind": "thing", "hidden": True}]})
+    world = World(schema, MemoryBackend())
+
+    world.seed()
+    assert world.is_hidden("card")
+    assert world.reveal("card").ok
+    world.seed()
+
+    assert not world.is_hidden("card")
+
+
+def test_public_entity_and_axis_inspection_is_sorted_and_detached():
+    world = World(regression_schema(), MemoryBackend())
+
+    assert world.entity_ids() == ("box", "cleo", "coin", "room", "table")
+    axes = world.axis_definitions("box")
+    assert axes[0]["name"] == "open"
+    axes[0]["aliases"]["changed"] = "open"
+    assert "changed" not in world.axis_definitions("box")[0]["aliases"]
+
+
 def test_story_kind_inherits_furniture_fixed_default():
     schema = WorldSchema.from_data(
         {

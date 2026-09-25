@@ -48,6 +48,29 @@ def test_queries_and_state():
     assert w.set_status("ada", "incapacitated").ok and w.status("ada") == "incapacitated"
 
 
+def test_together_includes_nested_areas_but_not_siblings_or_unplaced():
+    w = make()
+    w.schema = WorldSchema.from_data(
+        {
+            "entities": [
+                {"id": "house", "name": "house", "kind": "area"},
+                {"id": "kitchen", "name": "kitchen", "kind": "area", "parent": "house"},
+                {"id": "bedroom", "name": "bedroom", "kind": "area", "parent": "house"},
+                {"id": "phone", "name": "phone", "kind": "thing"},
+                {"id": "lamp", "name": "lamp", "kind": "thing"},
+                {"id": "ada", "name": "Ada", "kind": "character"},
+            ]
+        }
+    )
+    w = World(w.schema, MemoryBackend())
+    assert w.seed().ok
+    assert w.place("phone", "kitchen").ok and w.place("lamp", "bedroom").ok and w.place("ada", "house").ok
+    assert w.together("ada", "phone")
+    assert w.together("phone", "ada")
+    assert not w.together("phone", "lamp")
+    assert not w.together("phone", "missing")
+
+
 def test_refusals_and_place_effects():
     w = make()
     assert not w.move("key", "village").ok
