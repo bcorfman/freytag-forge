@@ -1,7 +1,7 @@
 # World model: plan
 
-Status (2026-09-25): decisions W1-W10 settled; S1 done, exit gaps closed. See "Resume here";
-next: the S1 PR, then S2 (section 11). Written at Brandon's request
+Status (2026-09-25): decisions W1-W10 settled; S1 merged (PR 480). S2
+started on branch `world-model-s2`; its task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
 separate small decisions. This plan replaces decision 1e. It also gives
@@ -108,10 +108,13 @@ Lessons from task 2, for writing the next checks:
   now ignored. Run `uv lock` and `uv sync` yourself after a pyproject change;
   workers have no network.
 
-Open question for S2, not yet raised with Brandon: `World.area()` returns
-the nearest area. So once the kitchen is nested in the house, a phone in the
-kitchen and Kristin in the house are not `together()`. Decide whether
-`together` should compare the top-level area.
+`together()` (decided by Brandon, 2026-09-25): `World.area()` returns the
+nearest area, so a phone in the kitchen and Kristin in the house were not
+`together()`. Two entities are now together when one's area is the other's
+area or contains it: Kristin in the house is together with the phone in the
+kitchen, but two sibling rooms of the house are not together. Rejected:
+comparing the top-level area, which would make every room of the house one
+place. This library change rides with S2 task C.
 
 This plan is self-contained so it can be picked up in a new chat with no
 other context. The continuity plan's principles (its section 2) and working
@@ -749,6 +752,30 @@ decisions W1-W10. Scope decided by Brandon, 2026-09-25 (W6).
   synthetic second package; full suite green.
 
 **S2 - The bench uses the model.** Billed.
+
+S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
+480):
+
+- **Task A: the bench store is the world.** `ItemFactsProvider` keeps no dict
+  of places. Every tracked place, axis pole and condition is a `wk_*` fact in
+  `state.facts`, and `item_facts` becomes a read-only view rendered from the
+  world. The reply format and prompt wording do not change. A phrase that
+  names no entity lands as an unplaced name, and each turn records these as
+  `item_facts_unplaced`. Characters are shown by their short name
+  (`Kristin`). Variation state axes become world axes; the drawer's axis must
+  use the world's `open`/`closed` poles. Scripts: scratchpad `s2a/`.
+- **Task B: the reply names the parent.** THINGS and PLAYER lines follow
+  W4 and W5. The place rule and the output example are replaced: the lantern
+  becomes `{"place": "Kristin"}`, with an optional `"under": true`. The
+  bigger-place rule ("name both, like the passenger seat of the truck") goes
+  in this task, not S3, because it asks for a phrase and W1 asks for a name.
+  Container-shaped replies land. Unresolved place names join the existing
+  match call's NEW NAMES. A given open container brings its visible contents
+  (W9). A new variation drops the drawer-contents setting fact.
+- **Task C: W8's front matter.** `companions` and `character_placements`,
+  in the loader and in `apply_scene_placements`, plus the decided
+  `together()` rule in `worldkeeper`. It is independent of A and B.
+- Then the smoke replicate and the v36 comparison below.
 
 - Capture produces operations; THINGS follows W4 and W5; the reply names the
   parent; the system prompt's place example is replaced.
