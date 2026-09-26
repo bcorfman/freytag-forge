@@ -922,6 +922,22 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   in task E). Live Jev: the old "use" question answered "Open my laptop."
   as use; the new one answered all 8 "use" cases and all 6 "stand" cases
   right. Next: a seat smoke with a stand-up case.
+  W13 stand smoke (2026-09-26, `stand-overturned` and `stand-upright`, 3
+  replicates each, variation in the session scratchpad, laptop on the
+  workstation): Jev answered every seating and standing question right,
+  and every added step was narrated, in order (8 stand steps, 9 sit
+  steps). The movable chair was carried to the truck 2 of 3 times, and
+  held by Kristin once. Faults found, none in the engine's steps:
+  1. With two added steps (right the chair, sit), the narration stopped
+     after them and never read the files, and the reply omitted
+     item_facts (3 of 3). With one step it finished the command.
+  2. "Open the drawer." while seated: Jev said stay seated, but the
+     narration stood her up 3 of 3, and the reply kept her in the chair.
+  3. A reply giving the chair's place as the workstation put the chair on
+     the desk (3 of 3 in `stand-upright`), since the chair is no longer
+     fixed.
+  4. The narration called the righted chair "overturned" twice. The 1A
+     Details line "overturned workstation chair" still reaches the prompt.
 - Then the smoke replicate and the v36 comparison below.
 
 - Capture produces operations; THINGS follows W4 and W5; the reply names the
