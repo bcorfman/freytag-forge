@@ -127,6 +127,7 @@ cython_debug/
 # Demo/replay artifacts
 runs/
 artifacts/
+worker/.wrangler/
 bench-report.md
 bench/results/
 frontend/test-results/

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -81,6 +82,12 @@ class RuntimeState(BaseModel):
     staged_cue_fact_id: str | None = None
     staged_handoff_fact_ids: tuple[str, ...] = ()
     last_turn_delivery: TurnDelivery = TurnDelivery()
+
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> RuntimeState:
+        memo = {} if memo is None else memo
+        # Story packages are immutable input, so every state copy can share one.
+        memo[id(self.package)] = self.package
+        return super().__deepcopy__(memo)
 
     @model_validator(mode="after")
     def scene_and_phase_match_package(self) -> RuntimeState:
