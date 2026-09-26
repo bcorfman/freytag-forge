@@ -50,11 +50,19 @@ current guards found these gaps:
 
 - The turn limit is keyed on `session_id`, not on the IP.
 - `POST /api/v1/session` gets the per-IP limit of 20 a day.
-- The client IP comes from Railway's `X-Forwarded-For`, but only if the app
-  can be reached solely through Railway's proxy. If the service can be reached
-  directly, the header can be forged and the per-IP limit is worthless.
-  Verify this against Railway's documentation and the service's networking
-  settings before building on it.
+- The client IP is the rightmost `X-Forwarded-For` entry, and only when
+  `FREYTAG_TRUST_PROXY_HEADER=1`, which is set on Railway. Railway's own
+  docs say nothing about client IP headers (checked 2026-09-26). In
+  Railway's forum, a Railway staff member said the rightmost entry is the
+  trustworthy one, because the edge appends the address it saw; anything to
+  its left can be forged. `X-Real-IP` was rejected: staff reported it is set
+  to the CDN's address when traffic passes through Railway's CDN.
+- **Check after deploy.** If the rightmost entry turns out to be a proxy's
+  address, every player shares one bucket, and 20 sessions a day stops the
+  demo for everyone. After deploying to staging, send 21 session requests
+  from one machine without the token and expect the 21st to get 429. Then
+  create a session from another network, such as a phone off Wi-Fi, and
+  expect 200.
 - Both limits return 429 with a plain message. The existing
   `FREYTAG_RATE_LIMIT_PER_MINUTE` setting becomes the per-session turn limit
   (default 10), and a new `FREYTAG_SESSIONS_PER_IP_PER_DAY` holds the session
