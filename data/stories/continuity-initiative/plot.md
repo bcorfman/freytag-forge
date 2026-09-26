@@ -12,7 +12,7 @@
 
 ## Premise
 
-The sudden disappearance of millions of people across the United States throws Kristin Schweitzer’s life into turmoil when her best friend and longtime roommate, molecular biology and biotechnology researcher and author Dr. Michelle McGehee, vanishes. Her search leads her through a fractured, post-disappearance America and into a conspiracy involving government officials, private corporations, secret detention facilities, and a plan to reshape the country through fear and controlled reconstruction.
+The sudden disappearance of millions of people across the United States throws Kristin Schweitzer’s life into turmoil when her best friend, molecular biology and biotechnology researcher and author Dr. Michelle McGehee, vanishes. Her search leads her through a fractured, post-disappearance America and into a conspiracy involving government officials, private corporations, secret detention facilities, and a plan to reshape the country through fear and controlled reconstruction.
 
 ## Overall Setting
 
@@ -26,7 +26,7 @@ Beyond public view, a network of government and corporate facilities operates be
 
 ### Kristin Schweitzer
 
-A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who initially wants only to find her best friend and longtime roommate. She is practical, persistent, and reluctant to trust conspiracy theories. Her knowledge of infrastructure and operations eventually makes her essential to infiltrating the conspirators’ underground facilities.
+A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who initially wants only to find her best friend. She is practical, persistent, and reluctant to trust conspiracy theories. Her knowledge of infrastructure and operations eventually makes her essential to infiltrating the conspirators’ underground facilities.
 
 ### Dr. Michelle McGehee
 
@@ -52,7 +52,7 @@ The story is built for a maximum of 120 accepted player turns. A scene should no
 
 | Scene | Turn ceiling | Player-facing dramatic rhythm |
 |---|---:|---|
-| 1A | 13 | Search the shared home; form a theory; recover and interpret the card; evade a widening patrol search. |
+| 1A | 13 | Search Michelle's house; form a theory; recover and interpret the card; evade a widening patrol search. |
 | 1B | 13 | Work the dead drop; decide what Brandon is; test the route; escape a closing park. |
 | 1C | 11 | Read the terminal as infrastructure; watch the captives; investigate the network; withdraw before the sweep. |
 | 2A | 11 | Build a cover; rehearse it under scrutiny; exploit facility weaknesses; survive a second credential review. |
@@ -81,31 +81,32 @@ location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
-item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, kristin_truck, michelle_workstation]
+item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, kristin_truck, michelle_workstation, back_door]
 item_placements:
   memory_card: {parent: michelle_drawer, under: true}
   michelle_phone: {parent: kitchen, text: on the kitchen floor}
   kristin_laptop: {parent: kristin_truck, text: in Kristin's truck outside the house}
   kristin_truck: {parent: outside_house}
   michelle_workstation: {parent: kitchen}
+  back_door: {parent: kitchen}
   michelle_drawer: {parent: michelle_workstation, part_of: true, text: in Michelle's workstation}
   workstation_chair: {parent: kitchen, text: at Michelle's workstation}
 setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and spare batteries.", "Kristin's laptop is closed.", "Michelle's phone is not damaged."]
-entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
+entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:
   t_1a_1b: >-
     Kristin starts the truck and heads for the park, avoiding checkpoints and emergency patrols.
 ---
 
-**Setting:** Kristin and Michelle’s shared home
+**Setting:** Michelle’s house
 
 **Characters:**
 
 * Kristin Schweitzer
 * Dr. Michelle McGehee
 
-**Plot:** Kristin returns to the home she shares with Michelle shortly after the mass disappearance and discovers that Michelle is missing. Evidence inside the house suggests that she could have been taken rather than simply vanishing with the others.
+**Plot:** Kristin returns to Michelle's house shortly after the mass disappearance and discovers that Michelle is missing. Evidence inside the house suggests that she could have been taken rather than simply vanishing with the others.
 
 **Hidden canon:** Michelle hid a memory card for Kristin, taped beneath the workstation drawer carved with Kristin's initials, KMS. It stays hidden until Kristin finds it.
 
@@ -152,7 +153,7 @@ This becomes the story’s **inciting incident**. Kristin realizes Michelle’s 
 
 **Details:** federal emergency patrol; welfare-check officers; Michelle’s office search; Michelle's memory card; marked front gate; reflective tape
 
-An emergency patrol arrives at Kristin and Michelle's shared house unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open the drawer, so the card remains undiscovered; they discover and confiscate nothing.
+An emergency patrol arrives at Michelle's home unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open the drawer, so the card remains undiscovered; they discover and confiscate nothing.
 
 Kristin conceals the memory card and pretends to know nothing. After the patrol leaves, she notices that one officer has quietly marked the front gate with a strip of reflective tape.
 
@@ -220,7 +221,7 @@ Brandon claims the missing are still alive, but he refuses to explain how he kno
 
 **Details:** tactical team; storm-drain system; specialized codes; secured maintenance gate; government systems; Brandon’s hidden involvement
 
-A tactical team arrives, proving Kristin was tracked from her house. Kristin and Brandon escape through a storm-drain system, but Brandon is forced to use specialized codes to unlock a secured maintenance gate.
+A tactical team arrives, proving Kristin was tracked from Michelle's house. Kristin and Brandon escape through a storm-drain system, but Brandon is forced to use specialized codes to unlock a secured maintenance gate.
 
 Kristin realizes Brandon retains access to government systems and may be more deeply involved than he admits.
 

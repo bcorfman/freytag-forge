@@ -469,8 +469,8 @@ def test_protagonist_is_always_selected_and_given(monkeypatch):
     provider.prepare_turn("Search the drawer.")
 
     assert provider._selected_names == ["Kristin"]
-    assert "- Kristin. Place: Kristin and Michelle's shared house." in provider._things_block()
-    assert "Kristin. Place: Kristin and Michelle's shared house." in provider._player_lines(
+    assert "- Kristin. Place: Michelle's house." in provider._things_block()
+    assert "Kristin. Place: Michelle's house." in provider._player_lines(
         {"scene_setting": "The house is quiet.", "player_input": "Search the drawer."}
     )
 
@@ -1423,7 +1423,7 @@ def test_package_seed_scene_1a_matches_authored_things():
     state._assert_scene_entry_fact("1A")
     things, issues = package_seed(PACKAGE, state, "1A")
     assert things == {
-        "Kristin": {"place": "Kristin and Michelle's shared house", "condition": []},
+        "Kristin": {"place": "Michelle's house", "condition": []},
         "Michelle's phone": {"place": "on the kitchen floor", "condition": ["not damaged"]},
         "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": ["closed"]},
         "drawer": {
@@ -1436,6 +1436,7 @@ def test_package_seed_scene_1a_matches_authored_things():
         },
         "Kristin's truck": {"place": "outside the house", "condition": []},
         "workstation": {"place": "kitchen", "condition": []},
+        "back door": {"place": "kitchen", "condition": []},
     }
     assert issues == [
         "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
@@ -1448,7 +1449,7 @@ def test_package_seed_tracks_protagonist_at_each_scene_location():
     things_1a, _ = package_seed(PACKAGE, state, "1A")
     things_1b, _ = package_seed(PACKAGE, state, "1B")
 
-    assert things_1a["Kristin"] == {"place": "Kristin and Michelle's shared house", "condition": []}
+    assert things_1a["Kristin"] == {"place": "Michelle's house", "condition": []}
     assert things_1b["Kristin"] == {"place": "Los Angeles park", "condition": []}
 
 
@@ -1485,7 +1486,7 @@ def test_prompt_preview_places_the_protagonist():
     variation = load_variation(WORLD_TWO_SCENE)
     prompt = core.prompt_for(variation, "1A", "Look around the kitchen.")
 
-    assert "- Kristin. Place: Kristin and Michelle's shared house." in prompt["user"]
+    assert "- Kristin. Place: Michelle's house." in prompt["user"]
 
 
 def test_sitting_in_the_chair_rights_it():

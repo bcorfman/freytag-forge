@@ -52,6 +52,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "michelle_workstation": ItemPlacement(parent="kitchen"),
         "michelle_drawer": ItemPlacement(parent="michelle_workstation", part_of=True, text="in Michelle's workstation"),
         "workstation_chair": ItemPlacement(parent="kitchen", text="at Michelle's workstation"),
+        "back_door": ItemPlacement(parent="kitchen"),
     }
     assert package.scenes[0].metadata.setting_facts == (
         "The drawer is shut.",
@@ -136,9 +137,9 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
     contents = plot.read_text(encoding="utf-8")
     contents = contents.replace(
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
-        "workstation_chair, kristin_truck, michelle_workstation]\n",
+        "workstation_chair, kristin_truck, michelle_workstation, back_door]\n",
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
-        "workstation_chair, kristin_truck, michelle_workstation, test_item]\n",
+        "workstation_chair, kristin_truck, michelle_workstation, back_door, test_item]\n",
         1,
     )
     contents = contents.replace(

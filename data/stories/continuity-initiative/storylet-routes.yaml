@@ -70,7 +70,7 @@ pacing_event_review:
   at_turn: 8
   effect: {op: assert, fact_id: home_search_window_narrowing, value: true}
   status: approved
-  reason: Makes the patrol's widening search visible without forcing Kristin to leave before she has investigated her home.
+  reason: Makes the patrol's widening search visible without forcing Kristin to leave before she has investigated Michelle's house.
 - event_id: park_lockdown_1b
   scene_id: 1B
   at_turn: 8
@@ -144,7 +144,7 @@ new_fact_ids:
   - SL-1A-C
   used_by_transitions: []
 - id: house_marked_for_return
-  definition: Kristin and Michelle’s home has been marked by the patrol for a likely return.
+  definition: Michelle’s home has been marked by the patrol for a likely return.
   used_by_storylets:
   - SL-1A-C
   used_by_transitions: []
@@ -492,7 +492,7 @@ new_fact_ids:
   - SL-3C-D
   used_by_transitions: []
 - id: home_search_window_narrowing
-  definition: The patrol's widening search makes continued investigation at Kristin and Michelle's home increasingly dangerous.
+  definition: The patrol's widening search makes continued investigation at Michelle's home increasingly dangerous.
   used_by_storylets: [SL-1A-B, SL-1A-C, SL-1A-D]
   used_by_transitions: []
 - id: park_lockdown_spreading
