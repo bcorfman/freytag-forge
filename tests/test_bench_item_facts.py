@@ -279,6 +279,79 @@ def test_upright_rule_is_two_lines():
     assert rules == _single_call_rules(None)[-2:]
 
 
+def test_single_call_rules_drop_keeps_the_sam_fallback():
+    dropped = frozenset(
+        {
+            "If a thing is overturned, show someone set it upright.",
+            "Only then show them sit on it or use it.",
+        }
+    )
+
+    rules = _single_call_rules(None, drop_rules=dropped)
+
+    assert any("Sam" in rule for rule in rules)
+    assert all("None" not in rule for rule in rules)
+    assert all(rule not in rules for rule in dropped)
+
+
+def test_drop_rules_removes_exact_rule_lines():
+    dropped = [
+        "If a thing is overturned, show someone set it upright.",
+        "Only then show them sit on it or use it.",
+    ]
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=RuntimeState.bootstrap(PACKAGE),
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+        drop_rules=tuple(dropped),
+    )
+
+    for opening in (False, True):
+        system = provider._system_prompt(opening=opening)
+        assert all(rule not in system for rule in dropped)
+        assert all(rule in system for rule in _single_call_rules("Kristin")[:-2])
+
+
+def test_single_call_prompt_has_each_rule_once():
+    dropped = [
+        "If a thing is overturned, show someone set it upright.",
+        "Only then show them sit on it or use it.",
+    ]
+    provider = _provider()
+    dropped_provider = _provider()
+    dropped_provider.drop_rules = frozenset(dropped)
+
+    for opening in (False, True):
+        system = provider._system_prompt(opening=opening)
+        dropped_system = dropped_provider._system_prompt(opening=opening)
+        rule_lines = list(_single_call_rules("Kristin"))
+        if not opening:
+            rule_lines.insert(
+                2,
+                "Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.",
+            )
+
+        assert all(system.splitlines().count(rule) == 1 for rule in rule_lines)
+        expected = system
+        for rule in dropped:
+            expected = expected.replace(f"\n{rule}", "", 1)
+        assert dropped_system == expected
+
+
+def test_drop_rules_rejects_unknown_text():
+    with pytest.raises(ValueError, match=r"drop_rules.*not a narrator rule"):
+        validate_item_facts(
+            {
+                "mode": "single_call",
+                "seed": {"thing": {"place": "on the table", "condition": []}},
+                "drop_rules": ["not a narrator rule"],
+            }
+        )
+
+
 def test_owner_possessive_name_resolves(monkeypatch):
     provider = _seeded_provider()
     world = world_for(PACKAGE, provider.state.facts)

@@ -185,9 +185,9 @@ _SINGLE_CALL_RULES = (
 )
 
 
-def _single_call_rules(protagonist_name):
+def _single_call_rules(protagonist_name, *, drop_rules=frozenset()):
     protagonist = protagonist_name or "Sam"
-    rules = tuple(rule.format(protagonist=protagonist) for rule in _SINGLE_CALL_RULES)
+    rules = tuple(rule.format(protagonist=protagonist) for rule in _SINGLE_CALL_RULES if rule not in drop_rules)
     if protagonist_name:
         return rules[:1] + (
             f"When {protagonist_name} goes to a new place, add {protagonist_name} to item_facts with the place where {protagonist_name} is when the story ends.",
@@ -203,13 +203,16 @@ _SECOND_CALL_SYSTEM = 'You keep track of things in a story. Read THINGS, PLAYER 
 class ItemFactsProvider(CloudflareTurnProvider):
     allowed_reply_keys = CloudflareTurnProvider.allowed_reply_keys | {"item_facts"}
 
-    def __init__(self, *, item_facts, mode, state_axes=None, seed_issues=None, seed_from_package=False, **kwargs):
+    def __init__(
+        self, *, item_facts, mode, state_axes=None, seed_issues=None, seed_from_package=False, drop_rules=(), **kwargs
+    ):
         super().__init__(**kwargs)
         self.item_facts_seed_names = tuple(item_facts)
         self.item_facts_mode = mode
         self.item_facts_seed_issues = list(seed_issues or [])
         self.state_axes = copy.deepcopy(state_axes or {})
         self.seed_from_package = seed_from_package
+        self.drop_rules = frozenset(drop_rules)
         self._pending_item_facts = None
         self._pending_item_facts_present = False
         self._held_item_facts = {}
@@ -240,7 +243,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     @classmethod
     def from_environment(
-        cls, state, *, prompt_variant=None, item_facts, mode, state_axes=None, seed_issues=None, seed_from_package=False
+        cls,
+        state,
+        *,
+        prompt_variant=None,
+        item_facts,
+        mode,
+        state_axes=None,
+        seed_issues=None,
+        seed_from_package=False,
+        drop_rules=(),
     ):
         base = CloudflareTurnProvider.from_environment(state, prompt_variant=prompt_variant)
         return cls(
@@ -254,6 +266,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             state_axes=state_axes,
             seed_issues=seed_issues,
             seed_from_package=seed_from_package,
+            drop_rules=drop_rules,
         )
 
     def _world(self, *, axes=None):
@@ -449,7 +462,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if self.item_facts_mode != "single_call":
             return system
         protagonist = _protagonist_name(self.state.package)
-        rules = list(_single_call_rules(protagonist))
+        rules = list(_single_call_rules(protagonist, drop_rules=self.drop_rules))
         if not opening and protagonist:
             rules.insert(
                 2,
@@ -921,6 +934,12 @@ def validate_item_facts(value, *, known_names=None):
     seed_from_package = value.get("seed_from_package", False)
     if not isinstance(seed_from_package, bool):
         raise ValueError("item_facts seed_from_package must be a boolean")
+    drop_rules = value.get("drop_rules", [])
+    if not isinstance(drop_rules, list) or not all(isinstance(rule, str) for rule in drop_rules):
+        raise ValueError(f"item_facts drop_rules must be a list of strings; got {drop_rules!r}")
+    for rule in drop_rules:
+        if rule not in _SINGLE_CALL_RULES:
+            raise ValueError(f"item_facts drop_rules contains unknown rule {rule!r}")
     seed = value.get("seed", {})
     if not isinstance(seed, dict) or (not seed and not seed_from_package):
         raise ValueError("item_facts must have a non-empty seed unless seed_from_package is enabled")

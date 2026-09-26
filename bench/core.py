@@ -282,20 +282,22 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     }
     variation["_resolved_rules"] = list(rules) if rules is not None else None
     variation["_resolved_output_example"] = resolved_output_example
-    variation["_variation_hash"] = stable_hash(
-        {
-            "rules": variation["_resolved_rules"],
-            "include_output_example": include_output_example,
-            "output_example": resolved_output_example,
-            "use_runtime_output_example": use_runtime_output_example,
-            "beat_delivery": beat_delivery,
-            "auto_select_unambiguous_candidates": auto_select_unambiguous_candidates,
-            "positive_selection_example": positive_selection_example,
-            "model_grounding": model_grounding,
-            "narrow_to_shadow_match": narrow_to_shadow_match,
-            "constant_rules_in_system": constant_rules_in_system,
-        }
-    )
+    hash_payload = {
+        "rules": variation["_resolved_rules"],
+        "include_output_example": include_output_example,
+        "output_example": resolved_output_example,
+        "use_runtime_output_example": use_runtime_output_example,
+        "beat_delivery": beat_delivery,
+        "auto_select_unambiguous_candidates": auto_select_unambiguous_candidates,
+        "positive_selection_example": positive_selection_example,
+        "model_grounding": model_grounding,
+        "narrow_to_shadow_match": narrow_to_shadow_match,
+        "constant_rules_in_system": constant_rules_in_system,
+    }
+    drop_rules = variation.get("item_facts", {}).get("drop_rules", [])
+    if drop_rules:
+        hash_payload["item_facts_drop_rules"] = sorted(drop_rules)
+    variation["_variation_hash"] = stable_hash(hash_payload)
     variation["_story_package_value"] = package_value
     return variation
 
@@ -479,6 +481,7 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
             state_axes=state_axes,
             seed_issues=seed_issues,
             seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
+            drop_rules=tuple(variation.get("item_facts", {}).get("drop_rules", [])),
         )
     return CloudflareTurnProvider.from_environment(state, prompt_variant=variation["_prompt_variant"])
 
@@ -588,6 +591,7 @@ def prompt_for(
             mode=mode,
             state_axes=state_axes,
             seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
+            drop_rules=tuple(variation.get("item_facts", {}).get("drop_rules", [])),
         )
     else:
         provider = CloudflareTurnProvider(
