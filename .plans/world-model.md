@@ -1,9 +1,10 @@
 # World model: plan
 
-Status (2026-09-25): decisions W1-W10 settled; S1 merged (PR 480). S2
-tasks A and C merged (PR 481); task B is on branch `world-model-s2b`. Next:
-the smoke replicate of `item-facts-world-two-scene`, then the v36
-comparison. The task split is in section 11. Written at Brandon's request
+Status (2026-09-26): decisions W1-W12 settled; S1 merged (PR 480). S2
+tasks A and C merged (PR 481); tasks B and D are on branch
+`world-model-s2b`, not yet pushed. Next: task E (W12, seating before use), then the
+smoke replicate of `item-facts-world-two-scene`, then the v36 comparison.
+The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
 separate small decisions. This plan replaces decision 1e. It also gives
@@ -11,9 +12,44 @@ decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
 
-## Resume here (2026-09-25)
+## Resume here (2026-09-26)
 
-Branch `world-model-s1` holds all of S1 on top of main after PR 479:
+Branch `world-model-s2b` holds S2 tasks B and D on top of main after PR
+481. It has not been pushed and has no PR.
+
+- 17437be: task B, the reply names the parent.
+- 77c0240: task D, seats (W11).
+- c06ee38: the bench's live-run state is seeded and placed. The bench
+  built its state without seeding the world or applying placements, so
+  every live run started with nothing placed. The seat smoke found it.
+- 7989583: fixes from seat smoke 1. An owned thing answers to
+  "<owner>'s <name>". A thing named as its own place is a quiet no-op.
+  The bench narrator got an upright rule. The shipped narrator did not.
+- c7705b8: fixes from seat smoke 2. The upright rule is now two one-idea
+  lines. A reply with `"under": true` whose place is an area or a
+  character keeps the move without the flag.
+
+Seat smoke results (`bench/variations/item-facts-seat-smoke.json`, three
+replicates each):
+
+- Smoke 1: 0 of 6 sit turns showed Kristin setting the overturned chair
+  upright first.
+- Smoke 2: 2 of 5 sit turns set the chair upright first; two others set
+  it upright after sitting.
+- The two-line rule in c7705b8 has not been measured.
+
+**Next:**
+
+1. S2 task E: seating before use (W12). The engine sets the chair
+   upright and seats Kristin before a command that uses the laptop, so
+   seat smoke 3 of the prompt rule is no longer needed.
+2. The smoke replicate of `item-facts-world-two-scene`, answering W5's
+   two questions (section 12).
+3. The v36 comparison, then the PR for `world-model-s2b`.
+
+### S1 record
+
+Branch `world-model-s1` held all of S1 on top of main after PR 479:
 
 - task 2: bd8c46b and 529b6a0;
 - task 3: 515201e and cf31bd2;
@@ -23,8 +59,7 @@ Branch `world-model-s1` holds all of S1 on top of main after PR 479:
 
 The full suite is green (747 tests, 92.84% coverage), and ruff is clean across
 the whole repository. The shipped narrator's 1A payloads are still
-byte-identical to the pre-S1 baseline. The branch has not been pushed and has
-no PR. **Next:** open the S1 PR, then start S2.
+byte-identical to the pre-S1 baseline. S1 merged as PR 480.
 
 The S1 exit is met:
 
@@ -806,6 +841,21 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   The shipped narrator's 1A payloads must stay byte-identical. Then a
   small smoke with "Sit in the workstation chair." on an overturned chair,
   separate from the v36 script.
+  Done as 77c0240 (two Ringer rounds). Round 2 removed two library
+  changes nobody asked for and added the seat tests round 1 skipped. The
+  smoke runs led to three follow-ups: c06ee38, 7989583 and c7705b8 (see
+  "Resume here"). W12 replaces seat smoke 3 as the next step.
+- **Task E: seating before use (W12).** `use_seated` on items and
+  `right_text`/`enter_text` on seats in `world.yaml` and the loader, with the
+  loader rejecting a seat that lacks either line. A Python Jev client and
+  the yes/no question. The two checks and the added sentences on the bench
+  turn path. The shipped narrator's 1A payloads must stay byte-identical.
+  Unit tests stub Jev and cover: overturned and unseated (both lines),
+  upright and unseated (enter line only), already seated (nothing), in the
+  truck (nothing), no seat nearby (nothing), and a "no" answer (nothing).
+  Then a seat smoke with "Read the files on my laptop." in the kitchen, on
+  an overturned chair and again on an upright one, and a run without the
+  two-line upright rule to decide whether it goes.
 - Then the smoke replicate and the v36 comparison below.
 
 - Capture produces operations; THINGS follows W4 and W5; the reply names the
@@ -975,6 +1025,66 @@ change the prose never showed. Whether the narration shows her righting
 the chair before sitting is measured in its own smoke run first; a short
 prompt rule follows only if it fails most of the time (the narration fix
 ranking).
+
+W12. **Seating before using a thing. Decided (Brandon, 2026-09-26).** Seat
+smokes 1 and 2 showed the narrator seating Kristin before it righted the
+overturned chair (0 of 6, then 2 of 5 turns in the right order). A prompt
+rule asks the narrator to get the order right. Instead, the engine does the
+steps itself, before narration, as Inform 7 does with implicit actions
+("(first taking the lamp)"). Brandon limited it to the one case that
+matters: sitting is needed only to use a computer. No other command seats
+her.
+
+- **Data, not branches.** An item may declare `use_seated: true` in
+  `world.yaml`; in continuity-initiative, only `kristin_laptop` does. A seat
+  declares its two authored lines, `right_text` ("Set the workstation chair
+  upright.") and `enter_text` ("Sit in the workstation chair."). The engine
+  never builds these sentences itself (W4). Runtime code names no story
+  thing.
+- **The trigger.** On a turn whose input names a `use_seated` thing, one
+  short yes/no question goes to Jev (`typesafe/jev` on Cloudflare, chosen by
+  Brandon as cheap and fast): does this command use that thing? "Read the
+  files on my laptop." is yes; "Take my laptop to the truck." is no. No
+  other turn pays for the call. Jev reads only the player's input, never
+  narration. Today only `bench/jev-judge.mjs` calls Jev, so the engine
+  needs a small Python client for it.
+- **Auth guard (Brandon, 2026-09-26).** No one outside the game may call
+  Jev, for their own use or to run up the Cloudflare bill. The question
+  goes through the existing narration Worker as a new route, never straight
+  from Railway to the Cloudflare API, so the Cloudflare credentials stay in
+  the Worker only. The Worker sends a fixed yes/no question and takes only
+  the player's input and the thing's name; it never forwards a
+  caller-supplied prompt or model. The Worker's shared bearer token
+  becomes required: today `.plans/cloudflare.js` checks it only when
+  `DEMO_SHARED_TOKEN` is set, so the Worker fails open. With no token set,
+  both routes must refuse every request. This covers the narration route
+  too. Rate limits and the $5 daily model budget, which the Jev route
+  shares, are in [rate-limits.md](rate-limits.md).
+- **The two checks, on a yes.** First, the seat to use is a seat in
+  Kristin's area. If her parent is already enterable (the truck), or no
+  seat is nearby, nothing is added. Otherwise:
+  1. if the seat is not at its `enter_pole` (the chair is overturned), set
+     that pole and add the seat's `right_text`;
+  2. if Kristin's parent is not the seat, move her into it and add the
+     seat's `enter_text`.
+  An upright chair gets only step 2; a seated Kristin gets neither.
+- **The narrator is told.** The added lines go before the player's command
+  as separate sentences, in the same way the command splitter
+  (`storygame/runtime/command_split.py`) hands the narrator a compound
+  command. The world changes are committed before narration, so no fact
+  changes after rendering. The narrator narrates the steps as material,
+  not as a rule to obey.
+- **What it does not cover.** The narrator seating her on its own
+  initiative, when the command never asked, is left to `enter_pole` for
+  state. The two-line upright rule (c7705b8) is a candidate for removal once
+  W12 lands; remove it only if a seat smoke shows the order still holds
+  without it (principle 5).
+
+Rejected: seating her before any command that names the workstation
+("Search under the workstation." does not need a seat); a list of "use"
+verbs (a fixed action table, forbidden by AGENTS.md); asking before any
+command that names the laptop with no judgement ("Take my laptop to the
+truck." would seat her first).
 
 W10. **A self-contained library. Decided (Brandon, 2026-09-25).** The model is
 a separate, reusable library named `worldkeeper`, designed to be publishable
