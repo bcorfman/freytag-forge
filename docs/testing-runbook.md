@@ -133,8 +133,8 @@ uv run python -m bench.candidate_selection_report --in /tmp/bench-1a/all-turn-re
   so a mid-story scene can fail safety checks a real playthrough would not.
 
 **Stop conditions:** HTTP 429 with `X-Narration-Error-Code: AI_QUOTA_EXCEEDED`
-is the daily quota; stop. `{"detail":"rate limit exceeded"}` is the app limiter
-and is retried automatically.
+or `AI_DAILY_BUDGET_EXCEEDED` is a daily model limit; stop until 00:00 UTC.
+`{"detail":"rate limit exceeded"}` is the app limiter and is retried automatically.
 
 **Cleanup:** Outputs under `/tmp` are disposable. Never rewrite or delete
 ledger lines.
@@ -298,12 +298,12 @@ changed. Delete the artifacts when no longer needed.
 
 ## 10. Cloudflare Worker source check
 
-**Purpose:** Check the portal copy of the Worker against the adapter's request
-and typed-error contract. `.plans/cloudflare.js` is that copy; editing it does
-not deploy anything.
+**Purpose:** Check the Worker source against the adapter's request and
+typed-error contract. `worker/src/index.js` is the source; this check does not
+deploy anything.
 
 ```bash
-node --check .plans/cloudflare.js
+node --check worker/src/index.js
 ```
 
 **Pass:** no output, exit 0. Confirm the Worker accepts `system`, `user`,
@@ -320,6 +320,7 @@ real player or protected story data, and never print
 | Symptom | Meaning | Response |
 | --- | --- | --- |
 | 429, header `X-Narration-Error-Code: AI_QUOTA_EXCEEDED`, body `narration service is at capacity` | Workers AI daily quota spent | Stop until 00:00 UTC |
+| 429, header `X-Narration-Error-Code: AI_DAILY_BUDGET_EXCEEDED` | The $5 daily model budget is spent | Stop until 00:00 UTC |
 | 429, body `{"detail": "rate limit exceeded"}` | App limiters (`FREYTAG_RATE_LIMIT_PER_MINUTE` turns per session per minute; `FREYTAG_SESSIONS_PER_IP_PER_DAY` new sessions per IP per day) | Slow down and retry |
 | 409 `uncited_knowledge`, `narration_known_term_leak`, `ineligible_selection` | Narration safety or selection rejected the turn before commit; no state changed | A real finding. The turn is lost, not retried. Reproduce locally with `bench` before spending more hosted runs |
 | 403, plain text `error code: 1010`, no Worker headers | Cloudflare Browser Integrity Check rejected the client | Keep the adapter's browser `User-Agent`; do not disable the check |
