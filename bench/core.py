@@ -922,8 +922,13 @@ def _failed_scene_record(
     error_code = getattr(error, "error_code", "") or getattr(error, "code", "")
     reason = f"{error_code}: {error}" if error_code else str(error)
     quota = None
-    if error_code == "AI_QUOTA_EXCEEDED":
-        quota = {"error": error_code, "message": "Workers AI quota is exhausted until 00:00 UTC."}
+    if error_code in {"AI_QUOTA_EXCEEDED", "AI_DAILY_BUDGET_EXCEEDED"}:
+        message = (
+            "The daily model budget is spent until 00:00 UTC."
+            if error_code == "AI_DAILY_BUDGET_EXCEEDED"
+            else "Workers AI quota is exhausted until 00:00 UTC."
+        )
+        quota = {"error": error_code, "message": message}
         reason = quota["message"]
     record = {
         "status": "failed",

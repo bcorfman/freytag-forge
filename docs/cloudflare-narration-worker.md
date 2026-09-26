@@ -16,9 +16,15 @@ SQLite, and exposes typed game-break resolution separately at
 | --- | --- | --- |
 | `CF_ACCOUNT_ID`, `CF_API_TOKEN` | — | Workers AI credentials |
 | `CF_AI_MODEL` | — | Optional Worker model override |
-| `DEMO_SHARED_TOKEN` | `CLOUDFLARE_WORKER_TOKEN` | Optional shared bearer token |
+| `DEMO_SHARED_TOKEN` | `CLOUDFLARE_WORKER_TOKEN` | Required shared bearer token; the Worker refuses every request without it |
+| `DAILY_BUDGET_USD` | — | Daily model spend cap; default 5; dashboard variable |
+| `MODEL_PRICES_JSON` | — | Optional JSON of per-model USD prices per million tokens; an unpriced model is refused |
+| `DAILY_BUDGET` | — | Durable Object binding for the per-UTC-day budget counter |
 | — | `CLOUDFLARE_WORKER_URL` | Worker URL |
 | — | `CLOUDFLARE_TIMEOUT` | Bounded request timeout |
+| — | `FREYTAG_RATE_LIMIT_PER_MINUTE` | Turns per session per minute; default 10 |
+| — | `FREYTAG_SESSIONS_PER_IP_PER_DAY` | New sessions per IP per day; default 20 |
+| — | `FREYTAG_TRUST_PROXY_HEADER` | Set to `1` on Railway to read the client IP from the rightmost `X-Forwarded-For` entry |
 
 Without `CLOUDFLARE_WORKER_URL`, session creation and freeform turns both fail
 closed as `service_unavailable`, because the scene opening continues the
@@ -42,6 +48,8 @@ safe optional upstream fields. Preserve these classifications:
 | Worker code | API behavior |
 | --- | --- |
 | `AI_QUOTA_EXCEEDED` | 429; no automatic retry |
+| `AI_DAILY_BUDGET_EXCEEDED` | 429; no automatic retry; resets at 00:00 UTC |
+| `BUDGET_UNAVAILABLE` | 503 |
 | `AI_CAPACITY_EXCEEDED` | 429; bounded retry only, honoring `Retry-After` |
 | `AI_REQUEST_REJECTED` | Preserve upstream 4xx |
 | `AI_UPSTREAM_ERROR` | Gateway/server failure for upstream 5xx |
@@ -65,3 +73,5 @@ mapping, required response headers, and hosted E2E. Use
 `npx wrangler deployments list --name <worker> --json` and
 `npx wrangler versions list --name <worker> --json` only to diagnose the active
 Worker revision.
+
+The Worker's source is in `worker/`; deploy it with `cd worker && npx wrangler deploy`.

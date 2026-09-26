@@ -799,6 +799,41 @@ def test_quota_header_and_app_rate_limit_are_distinguished() -> None:
     assert CloudflareTurnProvider._worker_error_code(rate_limit) == "RATE_LIMITED"
 
 
+def test_daily_budget_refusal_is_a_429_with_its_own_code() -> None:
+    error = HTTPError(
+        "https://worker.example",
+        429,
+        "budget",
+        {"X-Narration-Error-Code": "AI_DAILY_BUDGET_EXCEEDED"},
+        io.BytesIO(b'{"code":"AI_DAILY_BUDGET_EXCEEDED"}'),
+    )
+    mapped = CloudflareTurnProvider._narration_error(error)
+    assert mapped.status_code == 429
+    assert mapped.error_code == "AI_DAILY_BUDGET_EXCEEDED"
+    assert mapped.message == "the game has reached its daily limit; try again after 00:00 UTC"
+
+
+def test_bench_stops_on_the_daily_budget() -> None:
+    error = NarrationProviderError(
+        "the game has reached its daily limit; try again after 00:00 UTC",
+        429,
+        "AI_DAILY_BUDGET_EXCEEDED",
+    )
+    provider = SimpleNamespace(request_count=1, recovery_count=0, reply_keys_dropped={})
+    record = core._failed_scene_record(
+        {"_package_path": PACKAGE},
+        "1A",
+        {"name": "budget"},
+        provider,
+        error,
+    )
+    assert record["quota"] == {
+        "error": "AI_DAILY_BUDGET_EXCEEDED",
+        "message": "The daily model budget is spent until 00:00 UTC.",
+    }
+    assert record["failure_reason"] == record["quota"]["message"]
+
+
 def test_welch_report_says_when_difference_is_inside_noise() -> None:
     result = welch_t_test([13, 14, 13, 15], [12, 13, 12, 14])
     assert result["test"] == "two-sided Welch t-test"

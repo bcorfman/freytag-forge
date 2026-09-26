@@ -135,12 +135,28 @@ def _contract_error_detail(error: RuntimeContractError) -> str:
     return f"provider response violates the turn contract ({summary})" if summary else str(error)
 
 
+def _test_clock_token_matches(supplied_secret: str) -> bool:
+    configured_secret = getenv("FREYTAG_TEST_CLOCK_TOKEN", "")
+    if getenv("FREYTAG_ALLOW_TEST_CLOCK", "") != "1" or not configured_secret:
+        return False
+    return hmac.compare_digest(supplied_secret.encode("utf-8"), configured_secret.encode("utf-8"))
+
+
+def _client_ip(request: Request) -> str:
+    if getenv("FREYTAG_TRUST_PROXY_HEADER", "") == "1":
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded is not None:
+            return forwarded.rsplit(",", 1)[-1].strip()
+    return request.client.host if request.client else "unknown"
+
+
 def create_demo_app(
     *,
     channel: str | None = None,
     package_roots: tuple[Path, ...] | None = None,
     store_path: Path | None = None,
     provider_factory: Callable[[RuntimeState], Callable[[str], object]] | None = None,
+    clock: Callable[[], float] | None = None,
 ) -> FastAPI:
     """Build the single hosted surface without introducing gameplay policy."""
     resolved_channel = channel or getenv("FREYTAG_DEPLOYMENT_CHANNEL", "unknown").strip() or "unknown"
@@ -152,14 +168,17 @@ def create_demo_app(
     if not packages:
         raise RuntimeError("at least one story package is required")
     store = RuntimeStateSqliteStore(store_path or Path(getenv("FREYTAG_SESSION_DB", "/tmp/freytag-forge.sqlite")))
-    rate_limit = int(getenv("FREYTAG_RATE_LIMIT_PER_MINUTE", "60"))
-    request_times: dict[str, deque[float]] = {}
+    turn_rate_limit = int(getenv("FREYTAG_RATE_LIMIT_PER_MINUTE", "10"))
+    session_rate_limit = int(getenv("FREYTAG_SESSIONS_PER_IP_PER_DAY", "20"))
+    turn_times: dict[str, deque[float]] = {}
+    session_times: dict[str, deque[float]] = {}
     request_times_lock = Lock()
+    now = clock or monotonic
     app = FastAPI(title="Freytag Forge", version="3")
     allowed_headers = ["Content-Type", "Authorization"]
+    allowed_headers.append("X-Freytag-Test-Clock-Token")
     if getenv("FREYTAG_ALLOW_TEST_CLOCK", "") == "1":
         allowed_headers.append("X-Freytag-Test-Clock-Seconds")
-        allowed_headers.append("X-Freytag-Test-Clock-Token")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[item for item in getenv("FREYTAG_CORS_ORIGINS", "*").split(",") if item],
@@ -185,18 +204,30 @@ def create_demo_app(
             return ScriptedTurnProvider.from_environment(state)
         return CloudflareTurnProvider.from_environment(state)
 
-    def require_rate_limit(request: Request) -> None:
-        if rate_limit <= 0:
+    def require_turn_rate_limit(body: TurnRequest, request: Request) -> None:
+        if turn_rate_limit <= 0 or _test_clock_token_matches(request.headers.get("X-Freytag-Test-Clock-Token", "")):
             return
-        client = request.client.host if request.client else "unknown"
-        now = monotonic()
+        current = now()
         with request_times_lock:
-            times = request_times.setdefault(client, deque())
-            while times and times[0] <= now - 60:
+            times = turn_times.setdefault(body.session_id, deque())
+            while times and times[0] <= current - 60:
                 times.popleft()
-            if len(times) >= rate_limit:
+            if len(times) >= turn_rate_limit:
                 raise HTTPException(status_code=429, detail="rate limit exceeded")
-            times.append(now)
+            times.append(current)
+
+    def require_session_rate_limit(request: Request) -> None:
+        if session_rate_limit <= 0 or _test_clock_token_matches(request.headers.get("X-Freytag-Test-Clock-Token", "")):
+            return
+        current = now()
+        client = _client_ip(request)
+        with request_times_lock:
+            times = session_times.setdefault(client, deque())
+            while times and times[0] <= current - 86400:
+                times.popleft()
+            if len(times) >= session_rate_limit:
+                raise HTTPException(status_code=429, detail="rate limit exceeded")
+            times.append(current)
 
     @app.get("/api/v1/health")
     def health() -> dict[str, str]:
@@ -207,7 +238,8 @@ def create_demo_app(
         return {"api": "v1", "runtime": "scene-v1", "channel": resolved_channel, "sha": _deployment_sha()}
 
     @app.post("/api/v1/session")
-    def create_session(body: SessionRequest) -> dict[str, object]:
+    def create_session(body: SessionRequest, request: Request) -> dict[str, object]:
+        require_session_rate_limit(request)
         package = packages.get(body.story_id)
         if package is None:
             raise HTTPException(status_code=404, detail="story does not exist")
@@ -243,8 +275,8 @@ def create_demo_app(
 
     @app.post("/api/v1/turn")
     def turn(body: TurnRequest, request: Request) -> dict[str, object]:
-        require_rate_limit(request)
         state = load_state(body.session_id)
+        require_turn_rate_limit(body, request)
         fact_keys_before = {
             fact.predicate
             for fact in state.facts.asserted
@@ -299,15 +331,14 @@ def _test_clock_seconds(body: TurnRequest, request: Request) -> int | None:
         value = request.headers.get("X-Freytag-Test-Clock-Seconds")
     if value is None:
         return None
-    configured_secret = getenv("FREYTAG_TEST_CLOCK_TOKEN", "")
-    if not configured_secret:
-        raise HTTPException(status_code=503, detail="test clock is enabled but no shared secret is configured")
     supplied_secret = body.test_clock_token
     if supplied_secret is None:
         supplied_secret = request.headers.get("X-Freytag-Test-Clock-Token")
     if supplied_secret is None:
         supplied_secret = ""
-    if not hmac.compare_digest(supplied_secret.encode("utf-8"), configured_secret.encode("utf-8")):
+    if not getenv("FREYTAG_TEST_CLOCK_TOKEN", ""):
+        raise HTTPException(status_code=503, detail="test clock is enabled but no shared secret is configured")
+    if not _test_clock_token_matches(supplied_secret):
         raise HTTPException(status_code=403, detail="test clock token is invalid")
     try:
         seconds = int(value)

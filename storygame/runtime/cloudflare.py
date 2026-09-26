@@ -1752,6 +1752,14 @@ class CloudflareTurnProvider:
         code = cls._worker_error_code(error) or "UNKNOWN"
         trace_id = cls._error_header(error, "X-Trace-ID")
         worker_revision = cls._error_header(error, "X-Worker-Revision")
+        if code == "AI_DAILY_BUDGET_EXCEEDED":
+            return NarrationProviderError(
+                "the game has reached its daily limit; try again after 00:00 UTC",
+                429,
+                code,
+                trace_id,
+                worker_revision,
+            )
         if code in {"AI_QUOTA_EXCEEDED", "AI_CAPACITY_EXCEEDED"}:
             return NarrationProviderError("narration service is at capacity", 429, code, trace_id, worker_revision)
         if code and 400 <= error.code < 500:

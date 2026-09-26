@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import test from "node:test";
+import { resolve } from "node:path";
 
 import { judgeRoleplayTurn, judgeSceneNarration, sceneCanon } from "./roleplay-judge.js";
 
@@ -70,18 +73,18 @@ test("scene canon judge sends only the current scene canon and parses its verdic
 
 test("sceneCanon returns only revealed knowledge for the current scene", () => {
   const canon = sceneCanon("1A", ["k_sl_1a_a_r1", "k_sl_1a_b_r1", "k_sl_1b_a_r1", "scene:1A"]);
+  const require = createRequire(import.meta.url);
+  const YAML = require("yaml");
+  const knowledgePackage = YAML.parse(
+    readFileSync(resolve(import.meta.dirname, "../../data/stories/continuity-initiative/knowledge.yaml"), "utf8"),
+  );
+  const expectedIds = ["k_sl_1a_a_r1", "k_sl_1a_b_r1"];
+  const expectedKnowledge = expectedIds.map((id) => {
+    const entry = knowledgePackage.knowledge.find((knowledge) => knowledge.id === id);
+    return { id, statement: entry.statement };
+  });
 
-  assert.deepEqual(canon.revealed_knowledge, [
-    {
-      id: "k_sl_1a_a_r1",
-      statement:
-        "Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle’s undamaged phone to a removal too deliberate to be looting.",
-    },
-    {
-      id: "k_sl_1a_b_r1",
-      statement:
-        "Kristin finds and secures Michelle's memory card, then reads its damaged recording and files; the card points to a dead drop at a bench in the park.",
-    },
-  ]);
+  assert.deepEqual(canon.revealed_knowledge, expectedKnowledge);
+  assert.deepEqual(canon.revealed_knowledge.map((entry) => entry.id), ["k_sl_1a_a_r1", "k_sl_1a_b_r1"]);
   assert.deepEqual(Object.keys(canon).sort(), ["pressure", "revealed_knowledge", "scene_id", "situation"]);
 });
