@@ -59,7 +59,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Run fast feedback tests
-        run: TMPDIR=/tmp uv run pytest -q --no-cov -m "(unit or component) and not authoring_quality"
+        run: TMPDIR=/tmp uv run pytest -q --no-cov -n 4 -m "(unit or component) and not authoring_quality"
 
   test:
     name: Required coverage gate
@@ -88,7 +88,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Run tests
-        run: TMPDIR=/tmp uv run pytest -q --cov -n 2 --tier-report=artifacts/test-suite-health.json
+        run: TMPDIR=/tmp uv run pytest -q --cov -n 4 --tier-report=artifacts/test-suite-health.json
       - name: Upload test-suite health report
         if: always()
         uses: actions/upload-artifact@v7
