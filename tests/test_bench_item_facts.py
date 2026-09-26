@@ -260,6 +260,41 @@ def test_item_facts_place_context_rule_is_on_opening_and_turn_prompts():
     assert rule in provider._system_prompt(opening=True)
 
 
+def test_upright_rule_on_turn_and_opening():
+    provider = _provider()
+    rule = "Before someone sits on or uses a thing that is overturned, show them set it upright first."
+
+    assert rule in provider._system_prompt(opening=False)
+    assert rule in provider._system_prompt(opening=True)
+
+
+def test_owner_possessive_name_resolves(monkeypatch):
+    provider = _seeded_provider()
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.resolve("Michelle's workstation") == "michelle_workstation"
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: pytest.fail("unexpected match"))
+
+    facts, issues = provider.apply_item_facts({"Kristin": {"place": "Michelle's workstation"}})
+
+    assert issues == []
+    assert facts["Kristin"]["place"] == "kitchen"
+    assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "kitchen"
+    assert provider.item_facts_match_calls == 0
+
+
+def test_self_named_place_is_a_no_op():
+    provider = _seeded_provider(state_axes={"workstation chair": {"overturned": [], "upright": ["standing"]}})
+    before = provider.item_facts["workstation chair"]
+
+    facts, issues = provider.apply_item_facts(
+        {"workstation chair": {"place": "workstation chair", "condition": ["upright"]}}
+    )
+
+    assert issues == []
+    assert facts["workstation chair"]["place"] == before["place"]
+    assert facts["workstation chair"]["condition"] == ["upright"]
+
+
 def test_single_call_start_place_rule_is_turn_only_and_neutral(monkeypatch):
     provider = _provider()
     start_rule = "Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again."

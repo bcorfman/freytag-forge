@@ -121,6 +121,21 @@ def test_closed_companion_create_resolution_effects_and_backend_rebuild():
     assert w2.parent("n_silver_coin_1") == "parlour" and w2.status("chest") is None
 
 
+def test_owner_possessive_names_resolve_from_names_and_aliases():
+    schema = WorldSchema.from_data(
+        {
+            "entities": [
+                {"id": "owner", "name": "keeper", "kind": "character", "aliases": ["K"]},
+                {"id": "thing", "name": "tool", "kind": "thing", "aliases": ["implement"], "owner": "owner"},
+            ]
+        }
+    )
+    w = World(schema, MemoryBackend())
+    assert w.seed().ok
+    assert w.resolve("keeper's tool") == "thing"
+    assert w.resolve("the k's implement") == "thing"
+
+
 def test_schema_errors_and_resolver():
     for data in ({"kinds": [{"id": "x", "is": ["x"]}]}, {"entities": [{"id": "a", "name": "a", "kind": "missing"}]}):
         try:

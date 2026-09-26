@@ -503,6 +503,16 @@ class World:
             names = (entity.name,) + entity.aliases
             if any(self._normalize(candidate) == query for candidate in names):
                 matches.append(entity_id)
+            owner_id = self.owner(entity_id)
+            if owner_id:
+                owner = self._entity(owner_id)
+                owner_names = (owner.name,) + owner.aliases
+                if any(
+                    self._normalize(f"{owner_name}'s {candidate}") == query
+                    for owner_name in owner_names
+                    for candidate in names
+                ):
+                    matches.append(entity_id)
             if self._is_a(entity_id, "area") and any(
                 query in (self._normalize(candidate) + " floor", "floor of " + self._normalize(candidate))
                 for candidate in names
