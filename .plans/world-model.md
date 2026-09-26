@@ -938,6 +938,21 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
      fixed.
   4. The narration called the righted chair "overturned" twice. The 1A
      Details line "overturned workstation chair" still reaches the prompt.
+  Brandon (2026-09-26): fix 1, 3 and 4, and add a rule for 2. Task G:
+  1. The engine's steps reach the narrator as a separate PLAYER line,
+     "Just before this: ...", not as commands in front of the player's
+     command. The seat's authored lines become past-tense statements
+     ("Kristin set the workstation chair upright."). The turn record and
+     the judges still get the steps with the command.
+  2. While Kristin is seated when the prompt is built, the bench narrator
+     gets one rule: "Kristin stays sitting in the workstation chair."
+     She is only seated then when Jev said she need not stand.
+  3. A reply giving a seat's place as the furniture it is `seat_for` is a
+     quiet no-op, like a thing named as its own place.
+  4. "overturned workstation chair" leaves the 1A Details line. The
+     bullet "The chair at Shelly's workstation has been overturned." stays:
+     it never reaches the narrator, and knowledge and storylets cite the
+     overturned chair as evidence.
 - Then the smoke replicate and the v36 comparison below.
 
 - Capture produces operations; THINGS follows W4 and W5; the reply names the
