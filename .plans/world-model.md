@@ -889,8 +889,12 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   still have the narrator call the chair "overturned" after it was righted,
   which looks like the authored setting fact "The workstation chair is
   overturned." still reaching the prompt (W9's stale-sentence problem), and
-  one reply captured that description as the chair's state. Decision
-  pending: remove the two lines from `_SINGLE_CALL_RULES` (principle 5).
+  one reply captured that description as the chair's state. Brandon
+  (2026-09-26): remove both. The two lines are gone from
+  `_SINGLE_CALL_RULES`, and "The workstation chair is overturned." is gone
+  from the 1A setting facts; the chair's axis already starts it overturned.
+  The shipped narrator's 1A baseline was regenerated, and it differs only
+  by that sentence.
   Then a seat smoke with "Read the files on my laptop." in the kitchen, on
   an overturned chair and again on an upright one, and a run without the
   two-line upright rule to decide whether it goes.

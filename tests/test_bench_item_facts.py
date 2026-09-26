@@ -274,16 +274,15 @@ def test_upright_rule_is_two_lines():
         "Only then show them sit on it or use it.",
     )
 
-    assert all(rule in provider._system_prompt(opening=False) for rule in rules)
-    assert all(rule in provider._system_prompt(opening=True) for rule in rules)
-    assert rules == _single_call_rules(None)[-2:]
+    assert all(rule not in provider._system_prompt(opening=False) for rule in rules)
+    assert all(rule not in provider._system_prompt(opening=True) for rule in rules)
+    assert all(rule not in _single_call_rules(None) for rule in rules)
 
 
 def test_single_call_rules_drop_keeps_the_sam_fallback():
     dropped = frozenset(
         {
-            "If a thing is overturned, show someone set it upright.",
-            "Only then show them sit on it or use it.",
+            'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
         }
     )
 
@@ -296,8 +295,7 @@ def test_single_call_rules_drop_keeps_the_sam_fallback():
 
 def test_drop_rules_removes_exact_rule_lines():
     dropped = [
-        "If a thing is overturned, show someone set it upright.",
-        "Only then show them sit on it or use it.",
+        'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
     ]
     provider = ItemFactsProvider(
         worker_url="https://worker.example/turn",
@@ -308,17 +306,17 @@ def test_drop_rules_removes_exact_rule_lines():
         seed_from_package=True,
         drop_rules=tuple(dropped),
     )
+    rendered_dropped = [rule.format(protagonist="Kristin") for rule in dropped]
 
     for opening in (False, True):
         system = provider._system_prompt(opening=opening)
-        assert all(rule not in system for rule in dropped)
-        assert all(rule in system for rule in _single_call_rules("Kristin")[:-2])
+        assert all(rule not in system for rule in rendered_dropped)
+        assert all(rule in system for rule in _single_call_rules("Kristin") if rule not in rendered_dropped)
 
 
 def test_single_call_prompt_has_each_rule_once():
     dropped = [
-        "If a thing is overturned, show someone set it upright.",
-        "Only then show them sit on it or use it.",
+        'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
     ]
     provider = _provider()
     dropped_provider = _provider()
@@ -337,7 +335,7 @@ def test_single_call_prompt_has_each_rule_once():
         assert all(system.splitlines().count(rule) == 1 for rule in rule_lines)
         expected = system
         for rule in dropped:
-            expected = expected.replace(f"\n{rule}", "", 1)
+            expected = expected.replace(f"\n{rule.format(protagonist='Kristin')}", "", 1)
         assert dropped_system == expected
 
 

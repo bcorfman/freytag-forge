@@ -57,7 +57,6 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "The drawer is shut.",
         "The drawer holds pens, binder clips, a stapler, and spare batteries.",
         "Kristin's laptop is closed.",
-        "The workstation chair is overturned.",
         "Michelle's phone is not damaged.",
     )
     pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
@@ -180,7 +179,7 @@ def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: 
     contents = plot.read_text(encoding="utf-8").replace(
         'setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and '
         'spare batteries.", '
-        '"Kristin\'s laptop is closed.", "The workstation chair is overturned.", '
+        '"Kristin\'s laptop is closed.", '
         '"Michelle\'s phone is not damaged."]',
         'setting_facts: ["The test shutters are closed.", "The test lamp is on."]',
         1,
@@ -198,7 +197,7 @@ def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: 
         pytest.param(
             'setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and '
             'spare batteries.", '
-            '"Kristin\'s laptop is closed.", "The workstation chair is overturned.", '
+            '"Kristin\'s laptop is closed.", '
             '"Michelle\'s phone is not damaged."]',
             'setting_facts: ["  "]',
             "setting_facts",
@@ -238,7 +237,7 @@ def test_loader_uses_empty_setting_facts_when_unset(tmp_path: Path) -> None:
     contents = plot.read_text(encoding="utf-8").replace(
         'setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and '
         'spare batteries.", '
-        '"Kristin\'s laptop is closed.", "The workstation chair is overturned.", '
+        '"Kristin\'s laptop is closed.", '
         '"Michelle\'s phone is not damaged."]\n',
         "",
         1,
