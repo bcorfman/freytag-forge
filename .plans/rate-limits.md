@@ -1,7 +1,12 @@
 # Rate limits and a daily model budget: plan
 
-Status (2026-09-26): decided by Brandon; nothing built. Every code change is a
-Ringer task on GPT-5.6 Luna, as in the other plans.
+Status (2026-09-26): tasks 1 and 2 are built on branch `rate-limits` (4ae3780,
+5af72ef), which is not yet merged. The Worker with the budget is deployed
+(revision 08bbb897): with the token, a request narrates, which needs a budget
+reservation to succeed; without it, the request gets 401. Next: merge, deploy the API to
+Railway, set `FREYTAG_TRUST_PROXY_HEADER=1` there, and run the per-IP check
+below. Then the follow-up. Every code change is a Ringer task on GPT-5.6 Luna,
+as in the other plans.
 
 ## Why
 
