@@ -853,6 +853,12 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   Unit tests stub Jev and cover: overturned and unseated (both lines),
   upright and unseated (enter line only), already seated (nothing), in the
   truck (nothing), no seat nearby (nothing), and a "no" answer (nothing).
+  The seating logic is `storygame/runtime/seating.py`, story-agnostic and
+  handed the question as a callable, so S4 can reuse it with the Worker
+  route. The bench turn record's `player_input` is the command the narrator
+  received, including the added steps, so the judges do not count the
+  sitting as beyond the command. The typed input is kept as
+  `typed_input`, and the added steps as `seating_steps`.
   Then a seat smoke with "Read the files on my laptop." in the kitchen, on
   an overturned chair and again on an upright one, and a run without the
   two-line upright rule to decide whether it goes.
@@ -1041,13 +1047,26 @@ her.
   upright.") and `enter_text` ("Sit in the workstation chair."). The engine
   never builds these sentences itself (W4). Runtime code names no story
   thing.
-- **The trigger.** On a turn whose input names a `use_seated` thing, one
-  short yes/no question goes to Jev (`typesafe/jev` on Cloudflare, chosen by
-  Brandon as cheap and fast): does this command use that thing? "Read the
-  files on my laptop." is yes; "Take my laptop to the truck." is no. No
-  other turn pays for the call. Jev reads only the player's input, never
-  narration. Today only `bench/jev-judge.mjs` calls Jev, so the engine
-  needs a small Python client for it.
+- **The trigger.** One short yes/no question goes to Jev (`typesafe/jev` on
+  Cloudflare, chosen by Brandon as cheap and fast): does this command use
+  that thing? "Read the files on my laptop." is yes; "Take my laptop to the
+  truck." is no. Jev reads only the player's input and the thing's name,
+  never narration.
+- **When the question is asked (task E, 2026-09-26).** Only on a turn where
+  the steps could apply: a `use_seated` thing is `together()` with Kristin
+  (held by her, or in her area), a seat is `together()` with her, and her
+  parent is not already enterable. The world decides this, with no reading
+  of the input. The earlier wording, "a turn whose input names the thing",
+  would have needed name matching over the player's words, and the bench's
+  only reference detection is an 8b match call. "Near" is `together()`,
+  not the same area: Kristin starts 1A in the house, and the chair is in
+  the kitchen.
+- **Bench first, Worker later.** On the bench (task E), a Python client
+  calls Jev on the Cloudflare API directly with the local
+  `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AI_TOKEN`, as
+  `bench/jev-judge.mjs` already does. The bench runs only on a developer's
+  machine and exposes no endpoint. The Worker route below is for the
+  runtime turn, in S4.
 - **Auth guard (Brandon, 2026-09-26).** No one outside the game may call
   Jev, for their own use or to run up the Cloudflare bill. The question
   goes through the existing narration Worker as a new route, never straight
@@ -1060,9 +1079,9 @@ her.
   both routes must refuse every request. This covers the narration route
   too. Rate limits and the $5 daily model budget, which the Jev route
   shares, are in [rate-limits.md](rate-limits.md).
-- **The two checks, on a yes.** First, the seat to use is a seat in
-  Kristin's area. If her parent is already enterable (the truck), or no
-  seat is nearby, nothing is added. Otherwise:
+- **The two checks, on a yes.** The seat to use is the first seat, by ID,
+  that is `together()` with Kristin. On a no, or with no answer, nothing is
+  added, and no answer is recorded as an issue. Otherwise:
   1. if the seat is not at its `enter_pole` (the chair is overturned), set
      that pole and add the seat's `right_text`;
   2. if Kristin's parent is not the seat, move her into it and add the
