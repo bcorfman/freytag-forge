@@ -1,9 +1,11 @@
 # World model: plan
 
-Status (2026-09-26): decisions W1-W12 settled; S1 merged (PR 480). S2
-tasks A and C merged (PR 481); tasks B, D and E are on branch
-`world-model-s2b`, not yet pushed; task F is done too (b2a827f). Next: a
-seat smoke with a stand-up case, then the smoke replicate of `item-facts-world-two-scene`, then the v36 comparison.
+Status (2026-09-26, end of session): decisions W1-W13 settled; S1 merged
+(PR 480). S2 tasks A and C merged (PR 481). Tasks B, D, E, F and G are on
+branch `world-model-s2b`, which is not pushed and has no PR. Next: task H
+(Kristin and Michelle become friends, not roommates; the house is
+"Michelle's house"), then the two-scene smoke replicate, then the v36
+comparison. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -12,52 +14,136 @@ decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
 
-## Resume here (2026-09-26)
+## Resume here (2026-09-26, end of session)
 
-Branch `world-model-s2b` holds S2 tasks B and D on top of main after PR
-481. It has not been pushed and has no PR.
+Start from branch `world-model-s2b` (in the main repository; check it out
+in a fresh worktree). It holds everything since PR 481, oldest first:
 
 - 17437be: task B, the reply names the parent.
-- 77c0240: task D, seats (W11).
-- c06ee38: the bench's live-run state is seeded and placed. The bench
-  built its state without seeding the world or applying placements, so
-  every live run started with nothing placed. The seat smoke found it.
-- 7989583: fixes from seat smoke 1. An owned thing answers to
-  "<owner>'s <name>". A thing named as its own place is a quiet no-op.
-  The bench narrator got an upright rule. The shipped narrator did not.
-- c7705b8: fixes from seat smoke 2. The upright rule is now two one-idea
-  lines. A reply with `"under": true` whose place is an area or a
-  character keeps the move without the flag.
+- 77c0240: task D, seats (W11). c06ee38, 7989583, c7705b8: fixes from
+  the first seat smokes.
+- ea59876: task E, seating before use (W12). 795580d: Jev answers a
+  probability; a yes is `noul > 0.5`.
+- d08defa: bench `item_facts.drop_rules`. 09e1d98: the two upright
+  narrator rules and the 1A setting fact "The workstation chair is
+  overturned." removed.
+- b2a827f: task F. The new "use" question, standing up before leaving a
+  seat (W13), a kind may declare `fixed`, and `seat` is movable
+  furniture.
+- 9210622: task G. The engine's steps reach the narrator as "Just before
+  this: ..."; the stay-seated rule; a seat placed at its own furniture
+  does not move; "overturned workstation chair" out of the 1A Details
+  line.
 
-Seat smoke results (`bench/variations/item-facts-seat-smoke.json`, three
-replicates each):
+The full suite passes and ruff is clean at 9210622. The shipped
+narrator's 1A baseline (`.plans/world-model-s1/narrator-1a-baseline.json`)
+matches the code. The results of every smoke are recorded under tasks E,
+F and G in section 11.
 
-- Smoke 1: 0 of 6 sit turns showed Kristin setting the overturned chair
-  upright first.
-- Smoke 2: 2 of 5 sit turns set the chair upright first; two others set
-  it upright after sitting.
-- The two-line rule in c7705b8 has not been measured.
+The Ringer manifests, checks and smoke variations lived in a session
+scratchpad and are gone. To rebuild the W13 stand smoke: take
+`item-facts-world-two-scene`'s item_facts and overrides, place the laptop
+`{parent: michelle_workstation, text: on Michelle's workstation}`, set
+`fixed_turns: 6`, turn both judges off, and use two 1A scripts:
 
-**Next (2026-09-26, after task E):**
+- `stand-overturned`: "Read the files on my laptop.", "Open the
+  drawer.", "Go out to the truck.", "Go back into the kitchen.", "Read
+  the files on my laptop.", "Pick up Michelle's phone from the kitchen
+  floor."
+- `stand-upright`: "Set the workstation chair upright.", "Type a note on
+  my laptop.", "Close my laptop.", "Walk to the back door.", "Search my
+  laptop for Michelle's notes.", "Pick up the workstation chair and carry
+  it out to the truck."
 
-1. S2 task F: the new "use" question (W12), standing up before leaving a
-   seat (W13), and seats as movable furniture. Then a seat smoke with a
-   stand-up case.
-2. The two-scene smoke replicate. W5's two questions pass at the 92% bar
-   (Brandon, 2026-09-26): at least 92% of turns where a thing's place is
-   Kristin are judged consistent, and at least 92% of reported places
-   resolve. One replicate near the bar means another replicate, not a
-   decision.
-3. The v36 comparison, then the PR for `world-model-s2b`.
+### Next 1: task H, friends not roommates (Brandon, 2026-09-26)
 
-Done before task F:
+Why: the stand smoke's replies named the house "Michelle's home" and
+"inside the house", and the match call shortened its name to "Kristin's
+shared house". None resolved, so Kristin was left outside every area and
+the next laptop command asked no seating question. Brandon chose to
+simplify the fiction so names resolve. Kristin and Michelle are longtime
+friends, not roommates. Kristin does not live in the house. The house is
+"Michelle's house", and on the night of the story Kristin drives there.
+CHARACTERS must say they are longtime friends. The scene prose must not
+say she returns to a home she shares; only that she goes to Michelle's
+house.
 
-1. S2 task E: seating before use (W12). The engine sets the chair
-   upright and seats Kristin before a command that uses the laptop, so
-   seat smoke 3 of the prompt rule is no longer needed.
-2. The smoke replicate of `item-facts-world-two-scene`, answering W5's
-   two questions (section 12).
-3. The v36 comparison, then the PR for `world-model-s2b`.
+Step 1, the prose (Brandon, in ChatGPT Desktop). Story rewording goes to
+ChatGPT Desktop. Paste this prompt there, then bring back its
+replacement lines:
+
+```text
+I'm editing an interactive-fiction story package. One fact is changing: Kristin Schweitzer and Dr. Michelle McGehee are longtime friends, NOT roommates, and Kristin does NOT live in the house. The house is Michelle's house. On the night of the story, Kristin drives to Michelle's house.
+
+Rewrite each line below to match that fact. Change only the words that say or imply they live together or share a home; keep every other word, the punctuation style (including curly apostrophes where they appear), the YAML/Markdown formatting, and the leading spaces exactly as given. Say "longtime friend(s)" where the old text said "longtime roommate". Where a line names the place, call it "Michelle's house". Keep the lines plain and short; do not add new details.
+
+Return exactly one replacement per line, in this form, and nothing else:
+[<id>] <full replacement line>
+
+[plot.md:15] The sudden disappearance of millions of people across the United States throws Kristin Schweitzer’s life into turmoil when her best friend and longtime roommate, molecular biology and biotechnology researcher and author Dr. Michelle McGehee, vanishes. Her search leads her through a fractured, post-disappearance America and into a conspiracy involving government officials, private corporations, secret detention facilities, and a plan to reshape the country through fear and controlled reconstruction.
+[plot.md:29] A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who initially wants only to find her best friend and longtime roommate. She is practical, persistent, and reluctant to trust conspiracy theories. Her knowledge of infrastructure and operations eventually makes her essential to infiltrating the conspirators’ underground facilities.
+[plot.md:55] | 1A | 13 | Search the shared home; form a theory; recover and interpret the card; evade a widening patrol search. |
+[plot.md:94] entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
+[plot.md:101] **Setting:** Kristin and Michelle’s shared home
+[plot.md:108] **Plot:** Kristin returns to the home she shares with Michelle shortly after the mass disappearance and discovers that Michelle is missing. Evidence inside the house suggests that she could have been taken rather than simply vanishing with the others.
+[plot.md:155] An emergency patrol arrives at Kristin and Michelle's shared house unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open the drawer, so the card remains undiscovered; they discover and confiscate nothing.
+[world.yaml:42]   narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend and longtime roommate, Michelle.
+[world.yaml:52]   narrator_bio: A 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend and longtime roommate; Kristin alone calls her "Shelly", while everyone else addresses her as Dr. McGehee.
+[storylets.md:137] - Provide a compact investigative situation in which Michelle’s own preparation gives her best friend and longtime roommate Kristin direction.
+[knowledge.yaml:30]   purpose: Kristin and Michelle's shared home has been marked by the patrol for a likely return.
+[knowledge.yaml:133-134]   purpose: Observable signs indicate the federal patrol is likely to return or intensify
+    scrutiny at Kristin and Michelle's shared home.
+[knowledge.yaml:201]   purpose: The returning patrol is widening its search around Kristin and Michelle's shared house, making a careful exit urgent.
+```
+
+Check what comes back: the entry text (`plot.md` line 94) is the first
+thing players read, and it must say Kristin drove to Michelle's house.
+
+Step 2, one Ringer task on Luna (worktree on `world-model-s2b`):
+
+1. Apply the returned lines exactly, each to its file and line.
+2. `world.yaml` `mcgehee_home`: `name: Michelle's house`, and
+   `aliases: [Michelle's home, the house]`.
+3. Declare the back door as a fixed item in the kitchen, in the same way
+   the drawer is part of the workstation (the plot's Details call it
+   "forced back door"), with its placement in the 1A `item_placements`.
+   Then "Kristin: back door" leaves her in the kitchen, not outside.
+4. Regenerate the shipped 1A baseline with `prompt_capture.py`. The
+   check allows only these differences: the scene's place line ("The
+   scene takes place at Michelle's house."), the two narrator bios, and
+   the entry text. Aliases never reach the prompt.
+5. Update the 5 assertions in `tests/test_bench_item_facts.py` that pin
+   "Kristin and Michelle's shared house" (lines 472, 473, 1426, 1451 and
+   1488). The full suite and ruff pass.
+
+### Next 2: the two-scene smoke replicate
+
+One replicate of `bench/variations/item-facts-world-two-scene.json` with
+the fact and continuity judges, for a few cents. It answers W5's two
+questions at the 92% bar (Brandon, 2026-09-26):
+
+- at least 92% of turns where a thing's place is Kristin are judged
+  consistent;
+- at least 92% of reported places resolve (`item_facts_unplaced`).
+
+One replicate near the bar means another replicate, not a decision.
+Seating stays on: opening the laptop is not use, so turn 6 ("Open my
+laptop.") adds nothing, and turn 13 happens at the truck, where there is
+no seat.
+
+Also watch the empty condition. After "Set the workstation chair
+upright.", the reply gave the chair an empty condition in 2 of 3 runs of
+the task G stand smoke (0 of 3 before it), so the chair stayed
+overturned. Turn 7 ("Stand the overturned chair back up.") and the
+drawer turns test it. If it recurs, the fix is a rule that replaces the
+existing condition sentence rather than adding one: `For "condition",
+give the new state in one or two words, like "open" or "upright".`
+
+Accepted, not fixed (Brandon, 2026-09-26): the narrator may stand
+Kristin up for "Open the drawer." despite the stay-seated rule (3 of 3).
+The reply now records it, so the world and the story agree.
+
+### Next 3: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
 
