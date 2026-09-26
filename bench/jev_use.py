@@ -6,6 +6,8 @@ import json
 import os
 import urllib.request
 
+THRESHOLD = 0.5  # Matches the threshold in bench/jev-judge.mjs.
+
 
 def ask_uses_thing(command: str, thing_name: str, *, environment=None, opener=None) -> bool | None:
     environment = os.environ if environment is None else environment
@@ -44,12 +46,10 @@ def ask_uses_thing(command: str, thing_name: str, *, environment=None, opener=No
         with opener(request, timeout=30) as response:
             payload = json.loads(response.read())
         answer = payload.get("result", {}).get("result", {}).get("answers", {}).get("uses_thing")
-        if (
-            payload.get("success") is True
-            and payload.get("result", {}).get("state") == "Completed"
-            and isinstance(answer, bool)
-        ):
-            return answer
+        if payload.get("success") is True and payload.get("result", {}).get("state") == "Completed":
+            noul = answer.get("noul") if isinstance(answer, dict) else None
+            if isinstance(noul, (int, float)) and not isinstance(noul, bool):
+                return noul > THRESHOLD
     except Exception:
         return None
     return None

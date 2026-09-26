@@ -9,7 +9,10 @@ from bench.jev_use import ask_uses_thing
 def test_jev_use_request_and_answers():
     response = {
         "success": True,
-        "result": {"state": "Completed", "result": {"answers": {"uses_thing": True}}},
+        "result": {
+            "state": "Completed",
+            "result": {"answers": {"uses_thing": {"type": "noul", "noul": 0.78}}},
+        },
     }
     calls = []
 
@@ -55,7 +58,13 @@ def test_jev_use_failures_give_none():
     for payload in (
         {"success": False},
         {"success": True, "result": {"state": "Running"}},
-        {"success": True, "result": {"state": "Completed", "result": {"answers": {"uses_thing": "yes"}}}},
+        {
+            "success": True,
+            "result": {
+                "state": "Completed",
+                "result": {"answers": {"uses_thing": {"type": "noul", "noul": "yes"}}},
+            },
+        },
     ):
 
         def opener(*_args, payload=payload, **_kwargs):
@@ -69,4 +78,29 @@ def test_jev_use_failures_give_none():
                 opener=opener,
             )
             is None
+        )
+
+    for noul in (0.5, 0.2):
+
+        def opener(*_args, noul=noul, **_kwargs):
+            return io.BytesIO(
+                json.dumps(
+                    {
+                        "success": True,
+                        "result": {
+                            "state": "Completed",
+                            "result": {"answers": {"uses_thing": {"type": "noul", "noul": noul}}},
+                        },
+                    }
+                ).encode()
+            )
+
+        assert (
+            ask_uses_thing(
+                "Carry the laptop to the truck.",
+                "Kristin's laptop",
+                environment=environment,
+                opener=opener,
+            )
+            is False
         )
