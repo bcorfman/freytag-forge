@@ -879,8 +879,18 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   so Kristin stayed "in" the chair and no question was asked; "Set the
   workstation chair upright." captured as Kristin sitting in it (2 of 3);
   and one reply putting the chair's place as Kristin, after which seating
-  was refused as a cycle. Next: the arm without the two-line upright rule,
-  which needs a bench option to drop those lines.
+  was refused as a cycle.
+  Without the two-line upright rule (d08defa added `item_facts.drop_rules`;
+  same scripts and replicates, every prompt confirmed without the lines):
+  the added steps were narrated in order 12 of 12 times (both steps 7 of 7,
+  sit alone 5 of 5), against 6 of 8 with the rule; no turn seated Kristin
+  before righting the chair; Jev answered every question correctly. The
+  "set upright" command was no longer captured as Kristin sitting. Both arms
+  still have the narrator call the chair "overturned" after it was righted,
+  which looks like the authored setting fact "The workstation chair is
+  overturned." still reaching the prompt (W9's stale-sentence problem), and
+  one reply captured that description as the chair's state. Decision
+  pending: remove the two lines from `_SINGLE_CALL_RULES` (principle 5).
   Then a seat smoke with "Read the files on my laptop." in the kitchen, on
   an overturned chair and again on an upright one, and a run without the
   two-line upright rule to decide whether it goes.
