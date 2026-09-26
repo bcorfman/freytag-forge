@@ -953,6 +953,23 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
      bullet "The chair at Shelly's workstation has been overturned." stays:
      it never reaches the narrator, and knowledge and storylets cite the
      overturned chair as evidence.
+  Done as 9210622 (one Ringer round). Stand smoke rerun on it (same
+  scripts, `item-facts-w13g-stand-smoke-*`): Jev and the engine's steps
+  were right on every turn.
+  1. Fixed: with two added steps, the command was carried out 5 of 5
+     times (was 0 of 3). The narration now shows the command, not the
+     steps.
+  2. Not fixed by the rule: the rule was in every prompt, and "Open the
+     drawer." still stood her up 3 of 3. "Close my laptop." kept her
+     seated 3 of 3. The replies now record her standing, so world and
+     story agree.
+  3. Fixed: the chair stayed off the desk 3 of 3.
+  4. Fixed: no narration called the chair overturned.
+  Capture faults left, for the two-scene run to measure: "Set the
+  workstation chair upright." captured with an empty condition, so the
+  chair stayed overturned (2 of 3); and places the engine did not resolve
+  ("Michelle's home", "inside the house") left Kristin outside every area,
+  so no seating question was asked on the next laptop command.
 - Then the smoke replicate and the v36 comparison below.
 
 - Capture produces operations; THINGS follows W4 and W5; the reply names the
