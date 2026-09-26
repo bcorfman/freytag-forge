@@ -863,7 +863,24 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   named tests). Known gap for S4: the bench applies the seating before the
   turn, so a rejected turn keeps Kristin seated with no narration. The
   runtime version should run inside the turn's snapshot so a rejection
-  undoes it. Next: the seat smoke above.
+  undoes it.
+  Jev answers a probability (`{"type": "noul", "noul": 0.78}`), not a
+  boolean, so the first smoke asked but never seated anyone; 795580d reads
+  `noul > 0.5`, as `bench/jev-judge.mjs` does.
+  W12 seat smoke (2026-09-26, 3 replicates each of `laptop-overturned` and
+  `laptop-upright`, variation in the session scratchpad): Jev answered all
+  questions correctly (yes for reading files; no for setting upright,
+  knocking over, standing up and carrying the laptop). The engine added the
+  right steps every time it was asked, and the narration never seated
+  Kristin before righting the chair. Both steps narrated in order 4 of 5
+  times (one reply dropped the sit sentence); the sit step alone narrated 2
+  of 3 times (one reply righted the already upright chair instead). The
+  remaining faults are capture, not W12: a narrated stand-up not captured,
+  so Kristin stayed "in" the chair and no question was asked; "Set the
+  workstation chair upright." captured as Kristin sitting in it (2 of 3);
+  and one reply putting the chair's place as Kristin, after which seating
+  was refused as a cycle. Next: the arm without the two-line upright rule,
+  which needs a bench option to drop those lines.
   Then a seat smoke with "Read the files on my laptop." in the kitchen, on
   an overturned chair and again on an upright one, and a run without the
   two-line upright rule to decide whether it goes.
