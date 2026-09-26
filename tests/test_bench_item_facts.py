@@ -392,6 +392,54 @@ def test_self_named_place_is_a_no_op():
     assert facts["workstation chair"]["condition"] == ["upright"]
 
 
+def test_prior_steps_are_a_separate_player_line():
+    provider = _seeded_provider()
+    provider.prior_steps = (
+        "Kristin set the workstation chair upright.",
+        "Kristin sat down in the workstation chair.",
+    )
+
+    lines = provider._player_lines({"player_input": "Read the files on my laptop."})
+
+    assert lines == [
+        "Just before this: Kristin set the workstation chair upright. Kristin sat down in the workstation chair.",
+        "Read the files on my laptop.",
+    ]
+
+
+def test_seated_protagonist_gets_the_stay_seated_rule():
+    provider = _seeded_provider()
+    world = provider._world()
+    assert world.move("kristin", "workstation_chair").ok
+    rule = "Kristin stays sitting in the workstation chair."
+
+    assert rule in provider._system_prompt(opening=False)
+    assert rule not in provider._system_prompt(opening=True)
+
+    assert world.move("kristin", "kitchen").ok
+    assert rule not in provider._system_prompt(opening=False)
+
+
+def test_seat_place_named_as_its_furniture_is_a_quiet_no_op():
+    provider = _seeded_provider(state_axes={"workstation chair": {"overturned": [], "upright": ["standing"]}})
+    world = provider._world()
+    before = world.parent("workstation_chair")
+
+    facts, issues = provider.apply_item_facts(
+        {"workstation chair": {"place": "Michelle's workstation", "condition": ["upright"]}}
+    )
+
+    assert issues == []
+    assert world.parent("workstation_chair") == before
+    assert facts["workstation chair"]["condition"] == ["upright"]
+
+    facts, issues = provider.apply_item_facts({"workstation chair": {"place": "Kristin's truck"}})
+
+    assert issues == []
+    assert facts["workstation chair"]["place"] == "Kristin's truck"
+    assert world.parent("workstation_chair") == "kristin_truck"
+
+
 def test_single_call_start_place_rule_is_turn_only_and_neutral(monkeypatch):
     provider = _provider()
     start_rule = "Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again."

@@ -741,10 +741,11 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     seating_steps = seating.steps
                     seating_asked = seating.asked
                     seating_issues = seating.issues
+                provider.prior_steps = standing_steps or seating_steps
             if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
-                match_info = provider.prepare_turn(player_input)
+                match_info = provider.prepare_turn(typed_input)
             try:
-                proposal = _turn_with_rate_limit_retry(engine, player_input)
+                proposal = _turn_with_rate_limit_retry(engine, typed_input)
                 last_prompt = getattr(provider, "last_prompt", None)
                 turn_prompt = dict(last_prompt) if last_prompt is not None else None
             except NarrationProviderError as error:
@@ -752,6 +753,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     raise
                 if isinstance(provider, ItemFactsProvider):
                     provider.discard_pending_item_facts()
+                    provider.prior_steps = ()
                 rejected_turns.append(
                     {
                         "turn_number": turn_number,
@@ -771,6 +773,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             except (ProposalValidationError, RuntimeContractError) as error:
                 if isinstance(provider, ItemFactsProvider):
                     provider.discard_pending_item_facts()
+                    provider.prior_steps = ()
                 if fixed_turns is None:
                     raise
                 rejected_turns.append(
@@ -798,8 +801,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 facts_before = provider.facts_for_names(things_given)
                 raw_item_facts = provider.pending_item_facts()
                 if provider.item_facts_mode == "second_call":
-                    raw_item_facts = provider.second_call_update(player_input, narration)
-                _, fact_issues = provider.apply_item_facts(raw_item_facts, player_input=player_input)
+                    raw_item_facts = provider.second_call_update(typed_input, narration)
+                _, fact_issues = provider.apply_item_facts(raw_item_facts, player_input=typed_input)
                 match_info = provider.last_item_facts_match()
                 after_names = set(things_given) | provider._changed_last_turn
                 facts_after = provider.facts_for_names(after_names)
@@ -824,6 +827,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         f"scene placement for {refusal.item_id!r} in {refusal.scene_id!r} refused: {refusal.reason}"
                         for refusal in refusals
                     )
+                provider.prior_steps = ()
             if narration or isinstance(provider, ItemFactsProvider):
                 delivery = state.last_turn_delivery
                 cue_fact_id = delivery.cue_fact_id

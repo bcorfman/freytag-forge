@@ -545,12 +545,13 @@ def test_run_scene_fixed_turns_provider_outage_still_fails(monkeypatch) -> None:
     assert "PROVIDER_DOWN" in result["failure_reason"]
 
 
-def test_bench_turn_sends_and_records_seating_steps(monkeypatch) -> None:
+def test_bench_turn_passes_engine_steps_as_prior_steps(monkeypatch) -> None:
     variation = load_variation(ROOT / "bench" / "variations" / "item-facts-single.json")
     variation["_fixed_turns"] = 1
     typed_input = "Read the files on my laptop."
     requests = []
     received = []
+    providers = []
 
     original_package_and_state = core.package_and_state
 
@@ -567,9 +568,11 @@ def test_bench_turn_sends_and_records_seating_steps(monkeypatch) -> None:
             return super().__call__(player_input)
 
     def provider_for_with_item_facts(state, _variation):
-        return RecordingItemFactsProvider(
+        provider = RecordingItemFactsProvider(
             worker_url="", token="", state=state, item_facts={}, mode="single_call", seed_from_package=True
         )
+        providers.append(provider)
+        return provider
 
     def request(provider, payload):
         requests.append(payload)
@@ -589,12 +592,23 @@ def test_bench_turn_sends_and_records_seating_steps(monkeypatch) -> None:
 
     assert result["status"] == "ok"
     turn = result["turns"][0]
-    combined = "Set the workstation chair upright. Sit in the workstation chair. Read the files on my laptop."
-    assert received == ["Set the workstation chair upright. Sit in the workstation chair. Read the files on my laptop."]
+    combined = (
+        "Kristin set the workstation chair upright. Kristin sat down in the workstation chair. "
+        "Read the files on my laptop."
+    )
+    assert received == [typed_input]
+    assert (
+        "Just before this: Kristin set the workstation chair upright. Kristin sat down in the workstation chair."
+        in requests[-1]["user"]
+    )
     assert turn["typed_input"] == typed_input
-    assert turn["seating_steps"] == ["Set the workstation chair upright.", "Sit in the workstation chair."]
+    assert turn["seating_steps"] == [
+        "Kristin set the workstation chair upright.",
+        "Kristin sat down in the workstation chair.",
+    ]
     assert turn["seating_asked"] is True
     assert turn["player_input"] == combined
+    assert providers[0].prior_steps == ()
 
 
 def test_bench_turn_stands_before_leaving_and_skips_seating(monkeypatch) -> None:
@@ -636,8 +650,8 @@ def test_bench_turn_stands_before_leaving_and_skips_seating(monkeypatch) -> None
     result = core.run_scene(variation, "1A", {"name": "leave", "inputs": [typed_input]})
 
     assert result["status"] == "ok"
-    assert received == ["Stand up from the workstation chair. Go out to the truck."]
-    assert result["turns"][0]["standing_steps"] == ["Stand up from the workstation chair."]
+    assert received == [typed_input]
+    assert result["turns"][0]["standing_steps"] == ["Kristin stood up from the workstation chair."]
 
 
 @pytest.mark.parametrize("fixed_turns", [True, 0, -1, "12"])

@@ -66,8 +66,10 @@ items:
 
 An item with `use_seated: true` needs the engine to seat the protagonist before
 it is used. A seat may provide `right_text` for making its `enter_pole` state
-ready and `enter_text` for entering it. The engine uses these lines only when
-the player command uses a visible nearby seated-use item.
+ready, `enter_text` for entering it, and `leave_text` for leaving it. These
+must be short past-tense statements of what happened. The engine shows these
+lines to the narrator as `Just before this` when the player command uses a
+visible nearby seated-use item or leaves a seat.
 
 `enterable: false` on an item overrides an enterable kind. The two poles and
 all aliases in one axis must not overlap, ignoring case. Furniture descendants

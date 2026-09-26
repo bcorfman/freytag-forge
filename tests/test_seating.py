@@ -33,11 +33,12 @@ def test_overturned_chair_is_righted_then_kristin_sits():
     result = seat_before_use(world, PACKAGE, "Read the files on my laptop.", lambda *_: True)
 
     assert result.steps == (
-        "Set the workstation chair upright.",
-        "Sit in the workstation chair.",
+        "Kristin set the workstation chair upright.",
+        "Kristin sat down in the workstation chair.",
     )
     assert result.command == (
-        "Set the workstation chair upright. Sit in the workstation chair. Read the files on my laptop."
+        "Kristin set the workstation chair upright. Kristin sat down in the workstation chair. "
+        "Read the files on my laptop."
     )
     assert "upright" in world.axis_values("workstation_chair").values()
     assert world.parent("kristin") == "workstation_chair"
@@ -50,7 +51,7 @@ def test_upright_chair_only_seats_kristin():
 
     result = seat_before_use(world, PACKAGE, "Read the files on my laptop.", lambda *_: True)
 
-    assert result.steps == ("Sit in the workstation chair.",)
+    assert result.steps == ("Kristin sat down in the workstation chair.",)
     assert world.parent("kristin") == "workstation_chair"
 
 
@@ -146,8 +147,8 @@ def test_seated_kristin_stands_before_leaving():
 
     result = stand_before_leave(world, PACKAGE, "Go out to the truck.", answer)
 
-    assert result.command == "Stand up from the workstation chair. Go out to the truck."
-    assert result.steps == ("Stand up from the workstation chair.",)
+    assert result.command == "Kristin stood up from the workstation chair. Go out to the truck."
+    assert result.steps == ("Kristin stood up from the workstation chair.",)
     assert result.asked is True
     assert result.issues == ()
     assert world.parent("kristin") == "kitchen"

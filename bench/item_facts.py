@@ -219,6 +219,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._selected_names = None
         self._last_scene_seeded = None
         self._schema_cache = {}
+        self.prior_steps: tuple[str, ...] = ()
         self._last_item_facts_unplaced = []
         self._last_item_facts_match = {
             "match_call": False,
@@ -423,6 +424,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _player_lines(self, user):
         lines = super()._player_lines(user)
+        if self.prior_steps and lines:
+            lines.insert(0, f"Just before this: {' '.join(self.prior_steps)}")
         if not lines or "scene_setting" not in user:
             return lines
         return [
@@ -466,6 +469,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 2,
                 f"{protagonist} starts this turn at the place PLAYER gives. Do not have {protagonist} walk there again.",
             )
+            world = self._world()
+            seat = world.parent(self.state.package.protagonist_id)
+            if seat and world.schema.entities.get(seat) and world.schema.entities[seat].seat_for:
+                rules.insert(3, f"{protagonist} stays sitting in the {world.name(seat)}.")
         return f"{system}\n{'\n'.join(rules)}"
 
     def _request(self, payload):
@@ -824,10 +831,15 @@ class ItemFactsProvider(CloudflareTurnProvider):
             place_parent = place_ids.get(place) if place and not place_pole else None
             if place and not place_pole and place not in place_ids:
                 place_parent = self._resolve_name(world, place)
+            entity = world.schema.entities.get(entity_id)
+            own_seat_place = bool(entity and entity.seat_for and place_parent == entity.seat_for)
+            if own_seat_place:
+                place_parent = None
             unresolved_place = (
                 place
                 and not place_pole
                 and place_parent is None
+                and not own_seat_place
                 and not (world.place_label(entity_id) and world.place_label(entity_id).casefold() == place.casefold())
             )
             if unresolved_place:

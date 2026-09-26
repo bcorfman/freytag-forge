@@ -112,9 +112,9 @@ items:
   - {overturned: [], upright: [standing]}
   enter_pole: upright
   seat_for: michelle_workstation
-  right_text: Set the workstation chair upright.
-  enter_text: Sit in the workstation chair.
-  leave_text: Stand up from the workstation chair.
+  right_text: Kristin set the workstation chair upright.
+  enter_text: Kristin sat down in the workstation chair.
+  leave_text: Kristin stood up from the workstation chair.
 - id: transit_card
   name: Transit token
 - id: override_codes
