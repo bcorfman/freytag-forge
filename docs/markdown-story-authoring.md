@@ -23,9 +23,9 @@ reaches the narrator, but it must not carry `text`.
 
 The optional `character_placements` mapping places a participant at scene
 start. Each value has a required `parent` ID and optional non-empty `text`.
-The parent must be a known area or container. Characters cannot start on a
-supporter. The protagonist may be listed; this replaces where the protagonist
-starts. The scene's `location_id` does not change.
+The parent must be a known area or an enterable container or supporter. The
+protagonist may be listed; this replaces where the protagonist starts. The
+scene's `location_id` does not change.
 
 The optional `companions` list names NPC participants who start with the
 protagonist. A companion cannot be the protagonist. Each scene resets the
@@ -44,9 +44,28 @@ in the same place as the protagonist. A narrated split leaves the companion
 behind. A narrated rejoin makes the companion follow again.
 
 Locations may declare a `parent` location ID. `world.yaml` may declare story
-sub-kinds with `kinds: [{id: desk, is: [furniture, supporter]}]`. Items may set
-`kind`, `openable`, `hidden`, `contents`, and `owner`; furniture descendants are
-fixed unless `fixed: false` is explicit.
+sub-kinds with `kinds: [{id: desk, is: [furniture, supporter]}]`. A kind may
+set `enterable: true` when it descends from `container` or `supporter`. Items
+may set `kind`, `openable`, `hidden`, `contents`, `owner`, and `enterable`.
+An item may also set `enter_pole` to an axis pole that is selected when a
+character enters it, `seat_for` to the furniture it seats, and `axes` for a
+two-pole state axis. For example:
+
+```yaml
+kinds:
+- {id: seat, is: [supporter], enterable: true}
+items:
+- id: workstation_chair
+  name: workstation chair
+  kind: seat
+  axes: [{overturned: [], upright: [standing]}]
+  enter_pole: upright
+  seat_for: michelle_workstation
+```
+
+`enterable: false` on an item overrides an enterable kind. The two poles and
+all aliases in one axis must not overlap, ignoring case. Furniture descendants
+are fixed unless `fixed: false` is explicit.
 
 World facts may already declare `on_assert` effects. These effects run when the
 fact becomes true. Supported effects include `move`, `reveal`, `accompany`, and

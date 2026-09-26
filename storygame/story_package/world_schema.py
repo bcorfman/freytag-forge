@@ -5,7 +5,7 @@ from storygame.story_package.models import WorldSource
 
 def world_source_schema_data(world: WorldSource) -> dict:
     entities = []
-    kinds = [{"id": kind.id, "is": list(kind.is_)} for kind in world.kinds]
+    kinds = [{"id": kind.id, "is": list(kind.is_), "enterable": kind.enterable} for kind in world.kinds]
     for entity in world.locations:
         entities.append(
             {
@@ -30,6 +30,21 @@ def world_source_schema_data(world: WorldSource) -> dict:
             "contents": list(item.contents),
             "owner": item.owner,
         }
+        if item.enterable is not None:
+            item_data["enterable"] = item.enterable
+        if item.enter_pole is not None:
+            item_data["enter_pole"] = item.enter_pole
+        if item.seat_for is not None:
+            item_data["seat_for"] = item.seat_for
+        if item.axes:
+            item_data["axes"] = [
+                {
+                    "poles": list(axis),
+                    "aliases": {alias: pole for pole, aliases in axis.items() for alias in aliases},
+                    "initial": next(iter(axis)),
+                }
+                for axis in item.axes
+            ]
         if item.fixed is not None:
             item_data["fixed"] = item.fixed
         entities.append(item_data)

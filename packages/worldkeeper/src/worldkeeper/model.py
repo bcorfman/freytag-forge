@@ -94,6 +94,9 @@ class _Entity:
     captive: bool = False
     hidden: bool = False
     axes: tuple[dict[str, Any], ...] = ()
+    enterable: bool | None = None
+    enter_pole: str | None = None
+    seat_for: str | None = None
 
 
 def _slug(text):
@@ -110,8 +113,9 @@ def _ancestors(kinds, kind):
 class WorldSchema:
     """Hold static kinds and declared entities."""
 
-    def __init__(self, kinds, entities):
+    def __init__(self, kinds, entities, kind_enterable=None):
         self.kinds, self.entities = kinds, entities
+        self.kind_enterable = dict(kind_enterable or {})
 
     def kind_is(self, kind: str, ancestor: str) -> bool:
         """Return whether a known kind is or descends from an ancestor kind."""
@@ -126,6 +130,7 @@ class WorldSchema:
     def from_data(cls, data: Mapping):
         """Validate mappings and return a schema, or raise :class:`SchemaError`."""
         kinds = dict(BASE_KINDS)
+        kind_enterable = {"vehicle": True}
         kind_ids = set()
         for kind_data in data.get("kinds", []):
             kind_id = kind_data.get("id")
@@ -133,6 +138,7 @@ class WorldSchema:
                 raise SchemaError("invalid or duplicate story kind")
             kind_ids.add(kind_id)
             kinds[kind_id] = tuple(kind_data.get("is", []))
+            kind_enterable[kind_id] = bool(kind_data.get("enterable", False))
         if any(parent not in kinds for parents in kinds.values() for parent in parents):
             raise SchemaError("unknown kind parent")
 
@@ -144,6 +150,9 @@ class WorldSchema:
 
         for kind in kinds:
             visit(kind)
+        for kind, enterable in kind_enterable.items():
+            if enterable and not any(ancestor in _ancestors(kinds, kind) for ancestor in ("container", "supporter")):
+                raise SchemaError("enterable kinds must be containers or supporters")
         entities = {}
         raw_entities = list(data.get("entities", []))
         for entity_data in raw_entities:
@@ -176,6 +185,9 @@ class WorldSchema:
                 entity_data.get("captive", False),
                 entity_data.get("hidden", False),
                 tuple(axes),
+                entity_data.get("enterable"),
+                entity_data.get("enter_pole"),
+                entity_data.get("seat_for"),
             )
         for entity in list(entities.values()):
             if entity.parent and (
@@ -189,12 +201,34 @@ class WorldSchema:
             ):
                 raise SchemaError("unknown owner")
             source = next(item for item in raw_entities if item.get("id") == entity.id)
+            if entity.enterable is True and not any(
+                entity_kind in _ancestors(kinds, entity.kind) for entity_kind in ("container", "supporter")
+            ):
+                raise SchemaError("enterable entities must be containers or supporters")
+            if entity.enter_pole is not None:
+                if not (
+                    entity.enterable
+                    if entity.enterable is not None
+                    else any(kind_enterable.get(ancestor, False) for ancestor in _ancestors(kinds, entity.kind))
+                ):
+                    raise SchemaError("enter_pole requires an enterable entity")
+                if entity.enter_pole not in {pole for axis in entity.axes for pole in axis["poles"]}:
+                    raise SchemaError("enter_pole must name a pole of an entity axis")
+            if entity.seat_for is not None:
+                if entity.seat_for not in entities:
+                    raise SchemaError("seat_for names an unknown entity")
+                if not (
+                    entity.enterable
+                    if entity.enterable is not None
+                    else any(kind_enterable.get(ancestor, False) for ancestor in _ancestors(kinds, entity.kind))
+                ):
+                    raise SchemaError("seat_for requires an enterable entity")
             for content_name in source.get("contents", []):
                 content_id = f"{entity.id}_{_slug(content_name)}"
                 if content_id in entities:
                     raise SchemaError("duplicate expanded content")
                 entities[content_id] = _Entity(content_id, content_name, "thing", parent=entity.id)
-        return cls(kinds, entities)
+        return cls(kinds, entities, kind_enterable)
 
 
 class World:
@@ -321,6 +355,23 @@ class World:
     def is_a(self, entity_id, kind):
         """Return whether an entity is of a kind or its ancestor."""
         return self._is_a(entity_id, kind)
+
+    def is_enterable(self, entity_id):
+        """Return whether an entity can contain a character."""
+        entity = self._entity(entity_id)
+        if not entity or not self._is_a(entity_id, "thing"):
+            return False
+        if entity.enterable is not None:
+            return entity.enterable
+        return any(self.schema.kind_enterable.get(kind, False) for kind in _ancestors(self.schema.kinds, entity.kind))
+
+    def seats(self, entity_id):
+        """Return visible enterable entities declared as seats for an entity."""
+        return tuple(
+            candidate.id
+            for candidate in self.schema.entities.values()
+            if candidate.seat_for == entity_id and self.is_visible(candidate.id)
+        )
 
     def name(self, entity_id):
         """Return an entity name, or empty text for an unknown ID."""
@@ -493,10 +544,8 @@ class World:
             not self._is_a(parent_id, "thing") or self._is_a(parent_id, "character") or self._is_a(parent_id, "area")
         ):
             return "under needs a thing parent"
-        if self._is_a(entity_id, "character") and not (
-            self._is_a(parent_id, "area") or self._is_a(parent_id, "container")
-        ):
-            return "characters can only be in areas or containers"
+        if self._is_a(entity_id, "character") and not (self._is_a(parent_id, "area") or self.is_enterable(parent_id)):
+            return "characters can only be in areas or enterable things"
         if not self._is_a(entity_id, "character") and not any(
             self._is_a(parent_id, candidate) for candidate in ("area", "container", "supporter", "character")
         ):
@@ -536,6 +585,8 @@ class World:
         new_relation = self._relation(parent_id, under)
         self._write_placement(entity_id, parent_id, new_relation)
         self._transfer_open(old_parent, parent_id, old_relation, new_relation)
+        if self._is_a(entity_id, "character"):
+            self._enter(parent_id)
         self._move_companions(entity_id, old_parent, parent_id)
         return OpResult(True, id=entity_id)
 
@@ -557,12 +608,21 @@ class World:
         reason = self._check(entity_id, parent_id, under, True)
         if reason:
             return self._bad(reason)
-        self._write_placement(entity_id, parent_id, "part_of" if part_of else self._relation(parent_id, under))
+        self._write_placement(
+            entity_id,
+            parent_id,
+            "part_of" if part_of else self._relation(parent_id, under),
+        )
         if text is not None:
             self._replace("wk_place_text", entity_id, value=text)
         for fact in self._facts("wk_moved", entity_id):
             self.backend.retract_fact(fact)
         return OpResult(True, id=entity_id)
+
+    def _enter(self, parent_id):
+        parent = self._entity(parent_id)
+        if parent and parent.enter_pole:
+            self.set_axis(parent_id, parent.enter_pole)
 
     def set_unplaced(self, entity_id, place_name):
         """Remove an entity's parent and record a free-text location."""
@@ -694,6 +754,8 @@ class World:
         new_relation = self._relation(parent_id, under)
         self._write_placement(entity_id, parent_id, new_relation)
         self._transfer_open(old_parent, parent_id, old_relation, new_relation)
+        if self._is_a(entity_id, "character"):
+            self._enter(parent_id)
         self._move_companions(entity_id, old_parent, parent_id)
         if effect.get("text") is not None:
             self._replace("wk_place_text", entity_id, value=effect["text"])

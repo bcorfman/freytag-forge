@@ -22,7 +22,10 @@ def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
     shutil.copytree(ROOT / "data/stories/continuity-initiative", root)
     world_path = root / "world.yaml"
     world = yaml.safe_load(world_path.read_text())
-    world["kinds"] = [{"id": "desk", "is": ["furniture", "supporter"]}]
+    world["kinds"] = [
+        {"id": "desk", "is": ["furniture", "supporter"]},
+        {"id": "seat", "is": ["supporter"], "enterable": True},
+    ]
     location_ids = {location["id"] for location in world["locations"]}
     world["locations"].extend(
         location
@@ -145,7 +148,8 @@ def test_cyclic_story_kinds_are_story_package_errors(tmp_path):
     world = yaml.safe_load(world_path.read_text())
     world["kinds"] = [{"id": "a", "is": ["b"]}, {"id": "b", "is": ["a"]}]
     next(item for item in world["items"] if item["id"] == "michelle_workstation")["kind"] = "thing"
+    chair = next(item for item in world["items"] if item["id"] == "workstation_chair")
+    chair.update(kind="thing", enter_pole=None, seat_for=None, axes=[])
     world_path.write_text(yaml.safe_dump(world, sort_keys=False))
-
     with pytest.raises(StoryPackageError, match="cycle among kinds"):
         load_story_package(root)

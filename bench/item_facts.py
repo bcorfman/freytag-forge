@@ -58,13 +58,30 @@ def _schema_for(package, axes=None, facts=None):
                 if {pole.casefold() for pole in pole_names} != {"open", "closed"}:
                     raise ValueError(f"item_facts axis for {name!r} must use open and closed")
             else:
-                entity.setdefault("axes", []).append(
-                    {
-                        "poles": pole_names,
-                        "aliases": {alias: pole for pole, aliases in poles.items() for alias in aliases},
-                        "initial": pole_names[0],
-                    }
+                package_axes = entity.setdefault("axes", [])
+                matching = next(
+                    (
+                        axis
+                        for axis in package_axes
+                        if {pole.casefold() for pole in axis["poles"]} == {pole.casefold() for pole in pole_names}
+                    ),
+                    None,
                 )
+                if matching is None and package_axes:
+                    raise ValueError(f"item_facts axis for {name!r} conflicts with its package axis")
+                aliases = (
+                    {
+                        alias: next(pole for pole in matching["poles"] if pole.casefold() == pole_name.casefold())
+                        for pole_name, alias_list in poles.items()
+                        for alias in alias_list
+                    }
+                    if matching
+                    else {alias: pole for pole, aliases in poles.items() for alias in aliases}
+                )
+                if matching:
+                    matching["aliases"].update(aliases)
+                else:
+                    package_axes.append({"poles": pole_names, "aliases": aliases, "initial": pole_names[0]})
     return WorldSchema.from_data(data)
 
 
@@ -378,6 +395,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     child_name = self._entity_label(world, child_id)
                     if child_name not in names and child_name in self.item_facts:
                         names.insert(index + 1, child_name)
+                for seat_id in world.seats(entity_id):
+                    seat_name = self._entity_label(world, seat_id)
+                    if seat_name not in names and seat_name in self.item_facts:
+                        names.insert(index + 1, seat_name)
             index += 1
         return names
 

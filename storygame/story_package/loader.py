@@ -1082,6 +1082,13 @@ def load_story_package(root: Path) -> StoryPackage:
         for item in world.items:
             if item.kind not in known_kind_ids:
                 raise StoryPackageError(f"item '{item.id}' has unknown kind '{item.kind}'")
+        declared_item_ids = {item.id for item in world.items}
+        for item in world.items:
+            if item.seat_for is not None and item.seat_for not in declared_item_ids:
+                raise StoryPackageError(f"item '{item.id}' seat_for names unknown item '{item.seat_for}'")
+            axis_poles = {pole for axis in item.axes for pole in axis}
+            if item.enter_pole is not None and item.enter_pole not in axis_poles:
+                raise StoryPackageError(f"item '{item.id}' enter_pole is not a pole of its axes")
         location_ids = {location.id for location in world.locations}
         for location in world.locations:
             if location.parent is not None and location.parent not in location_ids:
@@ -1090,6 +1097,11 @@ def load_story_package(root: Path) -> StoryPackage:
             schema = WorldSchema.from_data(world_source_schema_data(world))
         except SchemaError as exc:
             raise StoryPackageError(f"invalid world schema: {exc}") from exc
+        for item in world.items:
+            if item.enterable is True and not (
+                schema.kind_is(item.kind, "container") or schema.kind_is(item.kind, "supporter")
+            ):
+                raise StoryPackageError(f"item '{item.id}' enterable requires a container or supporter kind")
         _validate_scene_placements(world, scenes, schema)
         pacing = PacingSource.model_validate(_yaml(root / "pacing.yaml"))
         routes_raw = _yaml(root / "storylet-routes.yaml")

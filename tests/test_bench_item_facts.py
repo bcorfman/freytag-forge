@@ -1277,6 +1277,52 @@ def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
     ]
 
 
+def test_sitting_in_the_chair_rights_it():
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "workstation chair"}}, player_input="Sit in the workstation chair."
+    )
+    assert not issues
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.parent("kristin") == "workstation_chair"
+    assert world.relation("kristin") == "on"
+    assert facts["workstation chair"]["condition"] == ["upright"]
+
+
+def test_workstation_brings_its_chair_into_things():
+    provider = _seeded_provider()
+    provider._selected_names = ["workstation"]
+    block = provider._things_block()
+    assert block.index("- workstation.") < block.index("- workstation chair.")
+    assert "Condition: upright (or overturned)." in block or "Condition: overturned (or upright)." in block
+
+
+def test_kristin_at_the_workstation_is_not_seated():
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "workstation"}}, player_input="Go to the workstation."
+    )
+    assert not issues
+    assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "kitchen"
+    assert facts["workstation chair"]["condition"] == ["overturned"]
+
+
+def test_variation_axis_merges_with_package_axis():
+    provider = _seeded_provider(state_axes={"workstation chair": {"overturned": [], "upright": ["standing"]}})
+    world = world_for(PACKAGE, provider.state.facts)
+    assert len(world.axis_definitions("workstation_chair")) == 1
+    facts, issues = provider.apply_item_facts(
+        {"workstation chair": {"condition": ["standing"]}}, player_input="Stand in the workstation chair."
+    )
+    assert not issues
+    assert facts["workstation chair"]["condition"] == ["upright"]
+
+
+def test_conflicting_variation_axis_is_rejected():
+    with pytest.raises(ValueError, match="conflicts with its package axis"):
+        _seeded_provider(state_axes={"workstation chair": {"broken": [], "whole": []}})
+
+
 def test_package_seed_accepts_the_prefix_case_insensitively():
     scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "1A")
     replacement = scene.model_copy(
