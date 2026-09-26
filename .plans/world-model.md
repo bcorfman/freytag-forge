@@ -63,9 +63,9 @@ live in the house. The stand smoke's replies had named the house
 "Michelle's home" or "inside the house". None of those names resolved, so
 Kristin ended up outside every area.
 
-- The story lines came from ChatGPT Desktop and were applied verbatim, with
-  one exception. ChatGPT also changed "overnight assessment shift" to
-  "late-night shift" without being asked, and that change was not kept.
+- The story lines came from ChatGPT Desktop and were applied verbatim.
+  Brandon then kept ChatGPT's "late-night shift" in the entry text and had
+  the 1A plot line say that Kristin "arrives at" Michelle's house.
 - The saved prompt missed four lines, which were found by a sweep and
   included: `storylet-routes.yaml` 73, 147 and 495, and `plot.md` 223
   ("tracked from her house").

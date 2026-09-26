@@ -92,7 +92,7 @@ item_placements:
   michelle_drawer: {parent: michelle_workstation, part_of: true, text: in Michelle's workstation}
   workstation_chair: {parent: kitchen, text: at Michelle's workstation}
 setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and spare batteries.", "Kristin's laptop is closed.", "Michelle's phone is not damaged."]
-entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
+entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:
   t_1a_1b: >-
@@ -106,7 +106,7 @@ bridge_text:
 * Kristin Schweitzer
 * Dr. Michelle McGehee
 
-**Plot:** Kristin returns to Michelle's house shortly after the mass disappearance and discovers that Michelle is missing. Evidence inside the house suggests that she could have been taken rather than simply vanishing with the others.
+**Plot:** Kristin arrives at Michelle's house shortly after the mass disappearance and discovers that Michelle is missing. Evidence inside the house suggests that she could have been taken rather than simply vanishing with the others.
 
 **Hidden canon:** Michelle hid a memory card for Kristin, taped beneath the workstation drawer carved with Kristin's initials, KMS. It stays hidden until Kristin finds it.
 
