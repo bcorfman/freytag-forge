@@ -2,8 +2,8 @@
 
 Status (2026-09-26): decisions W1-W12 settled; S1 merged (PR 480). S2
 tasks A and C merged (PR 481); tasks B, D and E are on branch
-`world-model-s2b`, not yet pushed. Next: task F (W12's "use" question, W13
-standing up, movable seats), then the smoke replicate of `item-facts-world-two-scene`, then the v36 comparison.
+`world-model-s2b`, not yet pushed; task F is done too (b2a827f). Next: a
+seat smoke with a stand-up case, then the smoke replicate of `item-facts-world-two-scene`, then the v36 comparison.
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -918,6 +918,10 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   with `fixed: false`. The check calls Jev live on eight "use" cases and six
   "stand" cases; the old question is asked the same "use" cases for the
   record. The shipped narrator's 1A payloads stay byte-identical.
+  Done as b2a827f (two Ringer rounds; round 1 skipped the named tests, as
+  in task E). Live Jev: the old "use" question answered "Open my laptop."
+  as use; the new one answered all 8 "use" cases and all 6 "stand" cases
+  right. Next: a seat smoke with a stand-up case.
 - Then the smoke replicate and the v36 comparison below.
 
 - Capture produces operations; THINGS follows W4 and W5; the reply names the
