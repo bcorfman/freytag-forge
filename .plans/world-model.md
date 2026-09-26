@@ -105,6 +105,30 @@ Accepted, not fixed (Brandon, 2026-09-26): the narrator may stand
 Kristin up for "Open the drawer." despite the stay-seated rule (3 of 3).
 The reply now records it, so the world and the story agree.
 
+Result, first replicate (2026-09-26, at 35d490f): the run completed with
+19 accepted turns and no failed replicate.
+
+- **Places resolve: 41 of 43 (95%), which meets the bar.** Both misses
+  are from turn 16 of 1B, "Walk over to the man watching me and hand him
+  Michelle's phone.". The reply put Kristin and the phone at "stranger",
+  and the match call mapped "stranger" to "man". Brandon has no name
+  Kristin could know him by yet, so neither name resolved.
+- **Held things: 11 or 12 of 15 turns (73-80%), below the bar.** Every
+  place probe the fact judge ran on a held thing agreed with the tracked
+  place, 14 of 14. The failures come from two causes that are not the
+  label:
+  - Turn 10 of the script, "Take Michelle's phone out and throw it hard
+    against the kitchen wall.", runs after turn 9 has sent Kristin out to
+    the truck. The narration threw the phone from outside. The reply kept
+    the phone with Kristin, and turns 10 and 11 conflict.
+  - Turn 18 follows on from the turn 16 miss. The handed-over phone was
+    left unplaced, and turn 17's reply put it back with Kristin.
+  A per-turn "all facts right" measure scored 6 of 15. It counts faults
+  in other things, so it does not measure this question.
+- **Empty condition: no repeat.** Turn 7's chair reply was `["upright"]`.
+- Seen, but not measured: at turn 13 the narrator drove Kristin "back to
+  her house, where her laptop is", which is the old shared-home idea.
+
 ### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
