@@ -180,7 +180,8 @@ _SINGLE_CALL_RULES = (
     'Give only what changed. For "place", give the name of the person, thing, or place that has it now. Use "condition" for up to two short phrases.',
     'Example: if {protagonist} picks up a lantern and lights it, the lantern is {{"place": "{protagonist}", "condition": ["lit"]}}.',
     'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
-    "Before someone sits on or uses a thing that is overturned, show them set it upright first.",
+    "If a thing is overturned, show someone set it upright.",
+    "Only then show them sit on it or use it.",
 )
 
 
@@ -607,6 +608,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             return
         place = value["place"].strip()
         under = value.get("under") is True
+        dropped_under = under and (world.is_a(place_parent, "area") or world.is_a(place_parent, "character"))
+        if dropped_under:
+            under = False
         if entity_id == place_parent:
             return
         current_parent = world.parent(entity_id)

@@ -6,7 +6,14 @@ import pytest
 import bench.cli as bench_cli
 import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments
-from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider, _resolve_refer, package_seed, validate_item_facts
+from bench.item_facts import (
+    _MATCH_SYSTEM,
+    ItemFactsProvider,
+    _resolve_refer,
+    _single_call_rules,
+    package_seed,
+    validate_item_facts,
+)
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
@@ -260,12 +267,16 @@ def test_item_facts_place_context_rule_is_on_opening_and_turn_prompts():
     assert rule in provider._system_prompt(opening=True)
 
 
-def test_upright_rule_on_turn_and_opening():
+def test_upright_rule_is_two_lines():
     provider = _provider()
-    rule = "Before someone sits on or uses a thing that is overturned, show them set it upright first."
+    rules = (
+        "If a thing is overturned, show someone set it upright.",
+        "Only then show them sit on it or use it.",
+    )
 
-    assert rule in provider._system_prompt(opening=False)
-    assert rule in provider._system_prompt(opening=True)
+    assert all(rule in provider._system_prompt(opening=False) for rule in rules)
+    assert all(rule in provider._system_prompt(opening=True) for rule in rules)
+    assert rules == _single_call_rules(None)[-2:]
 
 
 def test_owner_possessive_name_resolves(monkeypatch):
@@ -466,6 +477,19 @@ def test_under_flag_moves_under():
     world = world_for(PACKAGE, provider.state.facts)
     assert world.parent("michelle_phone") == "michelle_workstation"
     assert world.relation("michelle_phone") == "under"
+
+
+def test_under_an_area_keeps_the_move():
+    provider = _seeded_provider()
+    _, issues = provider.apply_item_facts(
+        {"workstation chair": {"place": "kitchen", "under": True}},
+        player_input="Move the workstation chair to the kitchen.",
+    )
+
+    assert not issues
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.parent("workstation_chair") == "kitchen"
+    assert world.relation("workstation_chair") != "under"
 
 
 def test_protagonist_at_furniture_lands_in_its_area():
