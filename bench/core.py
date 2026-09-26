@@ -19,6 +19,7 @@ from statistics import mean, stdev
 from typing import Any
 
 from bench.item_facts import ItemFactsProvider, _protagonist_name, package_seed, validate_item_facts
+from bench.jev_use import ask_uses_thing
 from bench.judge_input import judge_turns
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
@@ -29,6 +30,7 @@ from storygame.runtime.contracts import RuntimeContractError, join_narration
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
+from storygame.runtime.seating import seat_before_use
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
@@ -708,7 +710,11 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
     def play_turns(turn_limit: int, turn_inputs: list[str], *, stop_on_exit: bool) -> bool:
         for turn_index in range(turn_limit):
             turn_number = len(turns) + len(rejected_turns) + 1
-            player_input = turn_inputs[turn_index % len(turn_inputs)]
+            typed_input = turn_inputs[turn_index % len(turn_inputs)]
+            player_input = typed_input
+            seating_steps: tuple[str, ...] = ()
+            seating_asked = False
+            seating_issues: tuple[str, ...] = ()
             prior_scene = state.current_scene_id
             match_info = {
                 "match_call": False,
@@ -716,6 +722,12 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 "match_issues": [],
                 "resolutions": {},
             }
+            if isinstance(provider, ItemFactsProvider):
+                seating = seat_before_use(provider._world(), package, typed_input, ask_uses_thing)
+                player_input = seating.command
+                seating_steps = seating.steps
+                seating_asked = seating.asked
+                seating_issues = seating.issues
             if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
                 match_info = provider.prepare_turn(player_input)
             try:
@@ -731,6 +743,10 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     {
                         "turn_number": turn_number,
                         "player_input": player_input,
+                        "typed_input": typed_input,
+                        "seating_steps": list(seating_steps),
+                        "seating_asked": seating_asked,
+                        "seating_issues": list(seating_issues),
                         "rejection_code": "INVALID_PROPOSAL",
                         "rejection_reason": str(error),
                     }
@@ -745,6 +761,10 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     {
                         "turn_number": turn_number,
                         "player_input": player_input,
+                        "typed_input": typed_input,
+                        "seating_steps": list(seating_steps),
+                        "seating_asked": seating_asked,
+                        "seating_issues": list(seating_issues),
                         "rejection_code": getattr(error, "code", None) or getattr(error, "error_code", ""),
                         "rejection_reason": str(error),
                     }
@@ -802,6 +822,10 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     narrated_command = player_input
                 turn_record = {
                     "player_input": player_input,
+                    "typed_input": typed_input,
+                    "seating_steps": list(seating_steps),
+                    "seating_asked": seating_asked,
+                    "seating_issues": list(seating_issues),
                     "narrated_command": narrated_command,
                     "prompt_system": turn_prompt["system"] if turn_prompt is not None else None,
                     "prompt_user": turn_prompt["user"] if turn_prompt is not None else None,

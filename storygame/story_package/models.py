@@ -183,6 +183,9 @@ class Item(Entity):
     enterable: bool | None = None
     enter_pole: str | None = Field(default=None, pattern=_ID)
     seat_for: str | None = Field(default=None, pattern=_ID)
+    use_seated: bool = False
+    right_text: str | None = None
+    enter_text: str | None = None
     axes: list[dict[str, list[str]]] = Field(default_factory=list)
 
     @field_validator("axes", mode="before")

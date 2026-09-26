@@ -22,10 +22,11 @@ from bench.core import (
     score_judgments,
     welch_t_test,
 )
-from bench.item_facts import _MATCH_SYSTEM
+from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
+from storygame.runtime.world_model import world_for
 from tests._legacy_package import legacy_package
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -542,6 +543,58 @@ def test_run_scene_fixed_turns_provider_outage_still_fails(monkeypatch) -> None:
     assert result["status"] == "failed"
     assert result["fixed_turns"] == 3
     assert "PROVIDER_DOWN" in result["failure_reason"]
+
+
+def test_bench_turn_sends_and_records_seating_steps(monkeypatch) -> None:
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-single.json")
+    variation["_fixed_turns"] = 1
+    typed_input = "Read the files on my laptop."
+    requests = []
+    received = []
+
+    original_package_and_state = core.package_and_state
+
+    def package_and_state_with_laptop(variation, scene_id=None):
+        package, state = original_package_and_state(variation, scene_id)
+        world = world_for(package, state.facts)
+        assert world.move("kristin", "kitchen").ok
+        assert world.move("kristin_laptop", "kitchen").ok
+        return package, state
+
+    class RecordingItemFactsProvider(ItemFactsProvider):
+        def __call__(self, player_input):
+            received.append(player_input)
+            return super().__call__(player_input)
+
+    def provider_for_with_item_facts(state, _variation):
+        return RecordingItemFactsProvider(
+            worker_url="", token="", state=state, item_facts={}, mode="single_call", seed_from_package=True
+        )
+
+    def request(provider, payload):
+        requests.append(payload)
+        if payload["system"] == _MATCH_SYSTEM:
+            return {"refers": ["Kristin's laptop"], "same_as": {}}
+        return {
+            "segments": [{"kind": "narration", "text": "Kristin reads the files.", "grounding_ids": []}],
+            "selected_knowledge_ids": [],
+        }
+
+    monkeypatch.setattr(core, "package_and_state", package_and_state_with_laptop)
+    monkeypatch.setattr(core, "provider_for", provider_for_with_item_facts)
+    monkeypatch.setattr(core, "ask_uses_thing", lambda *_args: True)
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+
+    result = core.run_scene(variation, "1A", {"name": "laptop", "inputs": [typed_input]})
+
+    assert result["status"] == "ok"
+    turn = result["turns"][0]
+    combined = "Set the workstation chair upright. Sit in the workstation chair. Read the files on my laptop."
+    assert received == ["Set the workstation chair upright. Sit in the workstation chair. Read the files on my laptop."]
+    assert turn["typed_input"] == typed_input
+    assert turn["seating_steps"] == ["Set the workstation chair upright.", "Sit in the workstation chair."]
+    assert turn["seating_asked"] is True
+    assert turn["player_input"] == combined
 
 
 @pytest.mark.parametrize("fixed_turns", [True, 0, -1, "12"])

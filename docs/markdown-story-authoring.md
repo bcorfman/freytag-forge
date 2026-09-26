@@ -63,6 +63,11 @@ items:
   seat_for: michelle_workstation
 ```
 
+An item with `use_seated: true` needs the engine to seat the protagonist before
+it is used. A seat may provide `right_text` for making its `enter_pole` state
+ready and `enter_text` for entering it. The engine uses these lines only when
+the player command uses a visible nearby seated-use item.
+
 `enterable: false` on an item overrides an enterable kind. The two poles and
 all aliases in one axis must not overlap, ignoring case. Furniture descendants
 are fixed unless `fixed: false` is explicit.

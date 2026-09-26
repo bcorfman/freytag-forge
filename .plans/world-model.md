@@ -859,6 +859,11 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   received, including the added steps, so the judges do not count the
   sitting as beyond the command. The typed input is kept as
   `typed_input`, and the added steps as `seating_steps`.
+  Done as the commit after ac07f03 (two Ringer rounds; round 1 skipped the
+  named tests). Known gap for S4: the bench applies the seating before the
+  turn, so a rejected turn keeps Kristin seated with no narration. The
+  runtime version should run inside the turn's snapshot so a rejection
+  undoes it. Next: the seat smoke above.
   Then a seat smoke with "Read the files on my laptop." in the kitchen, on
   an overturned chair and again on an upright one, and a run without the
   two-line upright rule to decide whether it goes.

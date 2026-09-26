@@ -89,6 +89,7 @@ items:
   name: Michelle's phone
 - id: kristin_laptop
   name: Kristin's laptop
+  use_seated: true
 - id: michelle_drawer
   name: drawer
   fixed: true
@@ -110,6 +111,8 @@ items:
   - {overturned: [], upright: [standing]}
   enter_pole: upright
   seat_for: michelle_workstation
+  right_text: Set the workstation chair upright.
+  enter_text: Sit in the workstation chair.
 - id: transit_card
   name: Transit token
 - id: override_codes
