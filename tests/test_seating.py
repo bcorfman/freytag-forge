@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from storygame.runtime.seating import seat_before_use
+from storygame.runtime.seating import seat_before_use, stand_before_leave
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package import StoryPackageError, load_story_package
@@ -131,4 +131,62 @@ def test_loader_rejects_a_seat_without_its_lines(tmp_path):
     path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 
     with pytest.raises(StoryPackageError, match="enter_text"):
+        load_story_package(root)
+
+
+def test_seated_kristin_stands_before_leaving():
+    _, world = _world()
+    _put_player_and_laptop_in_kitchen(world)
+    assert world.move("kristin", "workstation_chair").ok
+    asked = []
+
+    def answer(command, seat_name, within_reach):
+        asked.append((command, seat_name, within_reach))
+        return True
+
+    result = stand_before_leave(world, PACKAGE, "Go out to the truck.", answer)
+
+    assert result.command == "Stand up from the workstation chair. Go out to the truck."
+    assert result.steps == ("Stand up from the workstation chair.",)
+    assert result.asked is True
+    assert result.issues == ()
+    assert world.parent("kristin") == "kitchen"
+    assert asked == [("Go out to the truck.", "workstation chair", tuple(sorted(asked[0][2])))]
+
+
+def test_seated_kristin_stays_on_a_no():
+    _, world = _world()
+    _put_player_and_laptop_in_kitchen(world)
+    assert world.move("kristin", "workstation_chair").ok
+
+    result = stand_before_leave(world, PACKAGE, "Read the files on my laptop.", lambda *_: False)
+
+    assert result.command == "Read the files on my laptop."
+    assert result.steps == ()
+    assert result.asked is True
+    assert world.parent("kristin") == "workstation_chair"
+
+
+def test_standing_kristin_is_not_asked_to_stand():
+    _, world = _world()
+    _put_player_and_laptop_in_kitchen(world)
+    asked = []
+
+    result = stand_before_leave(world, PACKAGE, "Go out to the truck.", lambda *args: asked.append(args) or True)
+
+    assert result.steps == ()
+    assert result.asked is False
+    assert asked == []
+
+
+def test_loader_rejects_a_seat_without_its_leave_line(tmp_path):
+    root = tmp_path / "story"
+    shutil.copytree(PACKAGE_ROOT, root)
+    path = root / "world.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    chair = next(item for item in data["items"] if item["id"] == "workstation_chair")
+    chair.pop("leave_text")
+    path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(StoryPackageError, match="leave_text"):
         load_story_package(root)

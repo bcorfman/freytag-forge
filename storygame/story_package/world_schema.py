@@ -5,7 +5,15 @@ from storygame.story_package.models import WorldSource
 
 def world_source_schema_data(world: WorldSource) -> dict:
     entities = []
-    kinds = [{"id": kind.id, "is": list(kind.is_), "enterable": kind.enterable} for kind in world.kinds]
+    kinds = [
+        {
+            "id": kind.id,
+            "is": list(kind.is_),
+            "enterable": kind.enterable,
+            **({"fixed": kind.fixed} if kind.fixed is not None else {}),
+        }
+        for kind in world.kinds
+    ]
     for entity in world.locations:
         entities.append(
             {

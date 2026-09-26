@@ -104,3 +104,26 @@ def test_seat_for_unknown_entity_is_rejected():
         WorldSchema.from_data(
             {"entities": [{"id": "x", "name": "x", "kind": "container", "enterable": True, "seat_for": "missing"}]}
         )
+
+
+def test_kind_declares_fixed_nearest_wins():
+    schema = WorldSchema.from_data(
+        {
+            "kinds": [
+                {"id": "movable_furniture", "is": ["furniture"], "fixed": False},
+                {"id": "inherited", "is": ["movable_furniture"]},
+                {"id": "deep_fixed", "is": ["inherited"], "fixed": True},
+            ],
+            "entities": [
+                {"id": "movable", "name": "movable", "kind": "movable_furniture"},
+                {"id": "inherited_item", "name": "inherited item", "kind": "inherited"},
+                {"id": "deep", "name": "deep", "kind": "deep_fixed"},
+                {"id": "own", "name": "own", "kind": "deep_fixed", "fixed": False},
+            ],
+        }
+    )
+
+    assert schema.is_fixed("movable") is False
+    assert schema.is_fixed("inherited_item") is False
+    assert schema.is_fixed("deep") is True
+    assert schema.is_fixed("own") is False

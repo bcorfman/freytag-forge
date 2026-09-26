@@ -59,3 +59,32 @@ def seat_before_use(world, package, player_input: str, uses_thing: Callable[[str
                     steps.append(items[seat].enter_text)
             return SeatingResult(" ".join((*steps, player_input)), tuple(steps), asked, tuple(issues))
     return SeatingResult(player_input, (), asked, tuple(issues))
+
+
+def stand_before_leave(
+    world, package, player_input: str, needs_to_stand: Callable[[str, str, tuple[str, ...]], bool | None]
+) -> SeatingResult:
+    protagonist = package.protagonist_id
+    seat = world.parent(protagonist)
+    if not seat or not world.schema.entities.get(seat) or not world.schema.entities[seat].seat_for:
+        return SeatingResult(player_input, (), False, ())
+    seat_for = world.schema.entities[seat].seat_for
+    within_reach = tuple(
+        world.name(entity_id)
+        for entity_id in world.entity_ids()
+        if entity_id in {seat, seat_for}
+        or (
+            world.is_visible(entity_id)
+            and (seat_for in world.chain(entity_id) or world.holder(entity_id) == protagonist)
+        )
+    )
+    answer = needs_to_stand(player_input, world.name(seat), within_reach)
+    if answer is None:
+        return SeatingResult(player_input, (), True, (f"standing question unanswered for '{world.name(seat)}'",))
+    if answer is False:
+        return SeatingResult(player_input, (), True, ())
+    result = world.move(protagonist, world.area(seat))
+    if not result.ok:
+        return SeatingResult(player_input, (), True, (result.reason,))
+    step = next(item.leave_text for item in package.world.items if item.id == seat)
+    return SeatingResult(f"{step} {player_input}", (step,), True, ())

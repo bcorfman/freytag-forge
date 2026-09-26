@@ -45,7 +45,8 @@ behind. A narrated rejoin makes the companion follow again.
 
 Locations may declare a `parent` location ID. `world.yaml` may declare story
 sub-kinds with `kinds: [{id: desk, is: [furniture, supporter]}]`. A kind may
-set `enterable: true` when it descends from `container` or `supporter`. Items
+set `fixed: true` or `fixed: false` to control whether its entities can move.
+It may also set `enterable: true` when it descends from `container` or `supporter`. Items
 may set `kind`, `openable`, `hidden`, `contents`, `owner`, and `enterable`.
 An item may also set `enter_pole` to an axis pole that is selected when a
 character enters it, `seat_for` to the furniture it seats, and `axes` for a
@@ -70,7 +71,7 @@ the player command uses a visible nearby seated-use item.
 
 `enterable: false` on an item overrides an enterable kind. The two poles and
 all aliases in one axis must not overlap, ignoring case. Furniture descendants
-are fixed unless `fixed: false` is explicit.
+are fixed unless the nearest kind or the item explicitly sets `fixed: false`.
 
 World facts may already declare `on_assert` effects. These effects run when the
 fact becomes true. Supported effects include `move`, `reveal`, `accompany`, and

@@ -186,6 +186,7 @@ class Item(Entity):
     use_seated: bool = False
     right_text: str | None = None
     enter_text: str | None = None
+    leave_text: str | None = None
     axes: list[dict[str, list[str]]] = Field(default_factory=list)
 
     @field_validator("axes", mode="before")
@@ -336,6 +337,7 @@ class KindDeclaration(_Model):
     id: str = Field(pattern=_ID)
     is_: tuple[str, ...] = Field(default=(), alias="is")
     enterable: bool = False
+    fixed: bool | None = None
 
     model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
 

@@ -4,7 +4,8 @@ kinds:
 - id: desk
   is: [furniture, supporter]
 - id: seat
-  is: [supporter]
+  is: [furniture, supporter]
+  fixed: false
   enterable: true
 locations:
 - id: mcgehee_home
@@ -113,6 +114,7 @@ items:
   seat_for: michelle_workstation
   right_text: Set the workstation chair upright.
   enter_text: Sit in the workstation chair.
+  leave_text: Stand up from the workstation chair.
 - id: transit_card
   name: Transit token
 - id: override_codes

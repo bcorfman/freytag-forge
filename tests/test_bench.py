@@ -597,6 +597,49 @@ def test_bench_turn_sends_and_records_seating_steps(monkeypatch) -> None:
     assert turn["player_input"] == combined
 
 
+def test_bench_turn_stands_before_leaving_and_skips_seating(monkeypatch) -> None:
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-single.json")
+    variation["_fixed_turns"] = 1
+    typed_input = "Go out to the truck."
+    received = []
+    original_package_and_state = core.package_and_state
+
+    def package_and_state_with_seated_player(variation, scene_id=None):
+        package, state = original_package_and_state(variation, scene_id)
+        world = world_for(package, state.facts)
+        assert world.move("kristin", "kitchen").ok
+        assert world.move("kristin", "workstation_chair").ok
+        return package, state
+
+    class RecordingItemFactsProvider(ItemFactsProvider):
+        def __call__(self, player_input):
+            received.append(player_input)
+            return super().__call__(player_input)
+
+    def provider_for_with_item_facts(state, _variation):
+        return RecordingItemFactsProvider(
+            worker_url="", token="", state=state, item_facts={}, mode="single_call", seed_from_package=True
+        )
+
+    def request(_provider, _payload):
+        return {
+            "segments": [{"kind": "narration", "text": "Kristin leaves.", "grounding_ids": []}],
+            "selected_knowledge_ids": [],
+        }
+
+    monkeypatch.setattr(core, "package_and_state", package_and_state_with_seated_player)
+    monkeypatch.setattr(core, "provider_for", provider_for_with_item_facts)
+    monkeypatch.setattr(core, "ask_needs_to_stand", lambda *_args: True)
+    monkeypatch.setattr(core, "ask_uses_thing", lambda *_args: pytest.fail("seating question was asked"))
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+
+    result = core.run_scene(variation, "1A", {"name": "leave", "inputs": [typed_input]})
+
+    assert result["status"] == "ok"
+    assert received == ["Stand up from the workstation chair. Go out to the truck."]
+    assert result["turns"][0]["standing_steps"] == ["Stand up from the workstation chair."]
+
+
 @pytest.mark.parametrize("fixed_turns", [True, 0, -1, "12"])
 def test_invalid_fixed_turns_are_rejected(tmp_path, fixed_turns) -> None:
     source = json.loads(VARIATION.read_text(encoding="utf-8"))

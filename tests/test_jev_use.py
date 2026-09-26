@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import json
 
-from bench.jev_use import ask_uses_thing
+from bench.jev_use import ask_needs_to_stand, ask_uses_thing
 
 
 def test_jev_use_request_and_answers():
@@ -104,3 +104,66 @@ def test_jev_use_failures_give_none():
             )
             is False
         )
+
+
+def test_jev_stand_request_and_answers():
+    environment = {"CLOUDFLARE_ACCOUNT_ID": "account", "CLOUDFLARE_AI_TOKEN": "token"}
+    calls = []
+
+    def opener(request, timeout):
+        calls.append((request, timeout))
+        return io.BytesIO(
+            json.dumps(
+                {
+                    "success": True,
+                    "result": {
+                        "state": "Completed",
+                        "result": {"answers": {"needs_to_stand": {"type": "noul", "noul": 0.8}}},
+                    },
+                }
+            ).encode()
+        )
+
+    assert (
+        ask_needs_to_stand(
+            "Go out to the truck.",
+            "workstation chair",
+            ("workstation chair", "workstation", "Kristin's laptop"),
+            environment=environment,
+            opener=opener,
+        )
+        is True
+    )
+    request, timeout = calls[0]
+    body = json.loads(request.data)
+    assert body["input"]["state"] == {
+        "command": "Go out to the truck.",
+        "seat": "workstation chair",
+        "within_reach": ["workstation chair", "workstation", "Kristin's laptop"],
+    }
+    assert timeout == 30
+
+    def below_threshold(*_args, **_kwargs):
+        return io.BytesIO(
+            json.dumps(
+                {
+                    "success": True,
+                    "result": {
+                        "state": "Completed",
+                        "result": {"answers": {"needs_to_stand": {"type": "noul", "noul": 0.2}}},
+                    },
+                }
+            ).encode()
+        )
+
+    assert (
+        ask_needs_to_stand(
+            "Read the files on my laptop.",
+            "workstation chair",
+            (),
+            environment=environment,
+            opener=below_threshold,
+        )
+        is False
+    )
+    assert ask_needs_to_stand("Go out to the truck.", "workstation chair", (), environment={}) is None

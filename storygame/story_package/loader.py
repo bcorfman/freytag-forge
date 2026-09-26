@@ -1100,6 +1100,8 @@ def load_story_package(root: Path) -> StoryPackage:
         for item in world.items:
             if item.seat_for is not None and (item.enter_text is None or not item.enter_text.strip()):
                 raise StoryPackageError(f"item '{item.id}' seat_for requires enter_text")
+            if item.seat_for is not None and (item.leave_text is None or not item.leave_text.strip()):
+                raise StoryPackageError(f"item '{item.id}' seat_for requires leave_text")
             if (
                 item.seat_for is not None
                 and item.enter_pole is not None
@@ -1108,6 +1110,8 @@ def load_story_package(root: Path) -> StoryPackage:
                 raise StoryPackageError(f"item '{item.id}' enter_pole requires right_text")
             if item.seat_for is None and item.enter_text is not None:
                 raise StoryPackageError(f"item '{item.id}' enter_text requires seat_for")
+            if item.seat_for is None and item.leave_text is not None:
+                raise StoryPackageError(f"item '{item.id}' leave_text requires seat_for")
             if item.seat_for is None and item.right_text is not None:
                 raise StoryPackageError(f"item '{item.id}' right_text requires seat_for")
             if item.enterable is True and not (

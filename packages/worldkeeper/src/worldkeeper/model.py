@@ -131,6 +131,7 @@ class WorldSchema:
         """Validate mappings and return a schema, or raise :class:`SchemaError`."""
         kinds = dict(BASE_KINDS)
         kind_enterable = {"vehicle": True}
+        kind_fixed = {}
         kind_ids = set()
         for kind_data in data.get("kinds", []):
             kind_id = kind_data.get("id")
@@ -139,6 +140,10 @@ class WorldSchema:
             kind_ids.add(kind_id)
             kinds[kind_id] = tuple(kind_data.get("is", []))
             kind_enterable[kind_id] = bool(kind_data.get("enterable", False))
+            if "fixed" in kind_data:
+                if not isinstance(kind_data["fixed"], bool):
+                    raise SchemaError("kind fixed must be boolean")
+                kind_fixed[kind_id] = kind_data["fixed"]
         if any(parent not in kinds for parents in kinds.values() for parent in parents):
             raise SchemaError("unknown kind parent")
 
@@ -172,6 +177,23 @@ class WorldSchema:
                         "initial": axis_data.get("initial", poles[0]),
                     }
                 )
+            fixed = entity_data.get("fixed")
+            if fixed is None:
+
+                def declared_fixed(current, seen=()):
+                    if current in seen:
+                        return None
+                    if current in kind_fixed:
+                        return kind_fixed[current]
+                    for parent in kinds[current]:
+                        value = declared_fixed(parent, (*seen, current))
+                        if value is not None:
+                            return value
+                    return None
+
+                fixed = declared_fixed(kind)
+            if fixed is None:
+                fixed = "furniture" in _ancestors(kinds, kind)
             entities[entity_id] = _Entity(
                 entity_id,
                 entity_data.get("name", ""),
@@ -179,7 +201,7 @@ class WorldSchema:
                 tuple(entity_data.get("aliases", [])),
                 entity_data.get("owner"),
                 entity_data.get("parent"),
-                entity_data.get("fixed", "furniture" in _ancestors(kinds, kind)),
+                fixed,
                 entity_data.get("openable", False),
                 entity_data.get("open", False),
                 entity_data.get("captive", False),

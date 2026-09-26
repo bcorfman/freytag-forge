@@ -19,7 +19,7 @@ from statistics import mean, stdev
 from typing import Any
 
 from bench.item_facts import ItemFactsProvider, _protagonist_name, package_seed, validate_item_facts
-from bench.jev_use import ask_uses_thing
+from bench.jev_use import ask_needs_to_stand, ask_uses_thing
 from bench.judge_input import judge_turns
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
@@ -30,7 +30,7 @@ from storygame.runtime.contracts import RuntimeContractError, join_narration
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
-from storygame.runtime.seating import seat_before_use
+from storygame.runtime.seating import seat_before_use, stand_before_leave
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
@@ -719,6 +719,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             seating_steps: tuple[str, ...] = ()
             seating_asked = False
             seating_issues: tuple[str, ...] = ()
+            standing_steps: tuple[str, ...] = ()
+            standing_asked = False
+            standing_issues: tuple[str, ...] = ()
             prior_scene = state.current_scene_id
             match_info = {
                 "match_call": False,
@@ -727,11 +730,17 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 "resolutions": {},
             }
             if isinstance(provider, ItemFactsProvider):
-                seating = seat_before_use(provider._world(), package, typed_input, ask_uses_thing)
-                player_input = seating.command
-                seating_steps = seating.steps
-                seating_asked = seating.asked
-                seating_issues = seating.issues
+                standing = stand_before_leave(provider._world(), package, typed_input, ask_needs_to_stand)
+                player_input = standing.command
+                standing_steps = standing.steps
+                standing_asked = standing.asked
+                standing_issues = standing.issues
+                if not standing_steps:
+                    seating = seat_before_use(provider._world(), package, typed_input, ask_uses_thing)
+                    player_input = seating.command
+                    seating_steps = seating.steps
+                    seating_asked = seating.asked
+                    seating_issues = seating.issues
             if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
                 match_info = provider.prepare_turn(player_input)
             try:
@@ -751,6 +760,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         "seating_steps": list(seating_steps),
                         "seating_asked": seating_asked,
                         "seating_issues": list(seating_issues),
+                        "standing_steps": list(standing_steps),
+                        "standing_asked": standing_asked,
+                        "standing_issues": list(standing_issues),
                         "rejection_code": "INVALID_PROPOSAL",
                         "rejection_reason": str(error),
                     }
@@ -769,6 +781,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         "seating_steps": list(seating_steps),
                         "seating_asked": seating_asked,
                         "seating_issues": list(seating_issues),
+                        "standing_steps": list(standing_steps),
+                        "standing_asked": standing_asked,
+                        "standing_issues": list(standing_issues),
                         "rejection_code": getattr(error, "code", None) or getattr(error, "error_code", ""),
                         "rejection_reason": str(error),
                     }
@@ -830,6 +845,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "seating_steps": list(seating_steps),
                     "seating_asked": seating_asked,
                     "seating_issues": list(seating_issues),
+                    "standing_steps": list(standing_steps),
+                    "standing_asked": standing_asked,
+                    "standing_issues": list(standing_issues),
                     "narrated_command": narrated_command,
                     "prompt_system": turn_prompt["system"] if turn_prompt is not None else None,
                     "prompt_user": turn_prompt["user"] if turn_prompt is not None else None,
