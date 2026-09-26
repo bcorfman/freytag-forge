@@ -253,7 +253,7 @@ def test_session_opening_rejection_returns_409_and_does_not_save_session(monkeyp
     assert saves == []
 
 
-def test_adapter_fails_closed_without_worker_rejects_unknown_story_and_rate_limits(monkeypatch, tmp_path) -> None:
+def test_adapter_fails_closed_without_worker_and_rejects_unknown_story_and_session(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("FREYTAG_RATE_LIMIT_PER_MINUTE", "1")
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
     app = create_demo_app(store_path=tmp_path / "sessions.sqlite")
@@ -266,7 +266,276 @@ def test_adapter_fails_closed_without_worker_rejects_unknown_story_and_rate_limi
     assert missing_story.status_code == 404
     assert unavailable.status_code == 503
     assert allowed.status_code == 404
+    assert limited.status_code == 404
+
+
+def test_unknown_sessions_are_not_counted(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_RATE_LIMIT_PER_MINUTE", "1")
+    monkeypatch.setenv("FREYTAG_SESSIONS_PER_IP_PER_DAY", "0")
+    current_time = [0.0]
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _StubProvider("The lead sharpens."),
+        clock=lambda: current_time[0],
+    )
+    with TestClient(app) as client:
+        absent = [
+            client.post(
+                "/api/v1/turn",
+                json={"session_id": "absent", "player_input": "Search the kitchen for signs of a struggle."},
+            )
+            for _ in range(3)
+        ]
+        made_up = [
+            client.post(
+                "/api/v1/turn",
+                json={
+                    "session_id": f"made-up-{index}",
+                    "player_input": "Search the kitchen for signs of a struggle.",
+                },
+            )
+            for index in range(3)
+        ]
+        session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        first_turn = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "Search the kitchen for signs of a struggle."},
+        )
+        limited_turn = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "Search the kitchen for signs of a struggle."},
+        )
+
+    assert all(response.status_code == 404 for response in absent)
+    assert all(response.status_code == 404 for response in made_up)
+    assert first_turn.status_code == 200
+    assert limited_turn.status_code == 429
+
+
+def test_turn_limit_is_per_session(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_SESSIONS_PER_IP_PER_DAY", "0")
+    current_time = [0.0]
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _StubProvider("The lead sharpens."),
+        clock=lambda: current_time[0],
+    )
+    with TestClient(app) as client:
+        first = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        second = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
+        first_turns = [
+            client.post(
+                "/api/v1/turn",
+                json={"session_id": first, "player_input": "Search the kitchen for signs of a struggle."},
+            )
+            for _ in range(10)
+        ]
+        limited = client.post(
+            "/api/v1/turn",
+            json={"session_id": first, "player_input": "Search the kitchen for signs of a struggle."},
+        )
+        other_session = client.post(
+            "/api/v1/turn",
+            json={"session_id": second, "player_input": "Search the kitchen for signs of a struggle."},
+        )
+        current_time[0] += 61
+        after_window = client.post(
+            "/api/v1/turn",
+            json={"session_id": first, "player_input": "Search the kitchen for signs of a struggle."},
+        )
+
+    assert all(response.status_code == 200 for response in first_turns)
     assert limited.status_code == 429
+    assert other_session.status_code == 200
+    assert after_window.status_code == 200
+
+
+def test_session_limit_is_per_ip_per_day(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_TRUST_PROXY_HEADER", "1")
+    current_time = [0.0]
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _StubProvider("The lead sharpens."),
+        clock=lambda: current_time[0],
+    )
+    with TestClient(app) as client:
+        shared_headers = {"X-Forwarded-For": "198.51.100.9"}
+        shared = [
+            client.post("/api/v1/session", json={"story_id": "continuity_initiative"}, headers=shared_headers)
+            for _ in range(20)
+        ]
+        limited = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}, headers=shared_headers)
+        other = client.post(
+            "/api/v1/session",
+            json={"story_id": "continuity_initiative"},
+            headers={"X-Forwarded-For": "198.51.100.10"},
+        )
+        current_time[0] += 86401
+        after_window = client.post(
+            "/api/v1/session", json={"story_id": "continuity_initiative"}, headers=shared_headers
+        )
+
+    assert all(response.status_code == 200 for response in shared)
+    assert limited.status_code == 429
+    assert other.status_code == 200
+    assert after_window.status_code == 200
+
+
+def test_forwarded_ip_is_trusted_only_when_enabled(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_SESSIONS_PER_IP_PER_DAY", "1")
+    monkeypatch.setenv("FREYTAG_TRUST_PROXY_HEADER", "1")
+    app = create_demo_app(
+        store_path=tmp_path / "trusted.sqlite",
+        provider_factory=lambda _state: _StubProvider("The lead sharpens."),
+        clock=lambda: 0.0,
+    )
+    with TestClient(app) as client:
+        trusted_first = client.post(
+            "/api/v1/session",
+            json={"story_id": "continuity_initiative"},
+            headers={"X-Forwarded-For": "10.0.0.1, 203.0.113.5"},
+        )
+        trusted_limited = client.post(
+            "/api/v1/session",
+            json={"story_id": "continuity_initiative"},
+            headers={"X-Forwarded-For": "10.0.0.2, 203.0.113.5"},
+        )
+
+    monkeypatch.delenv("FREYTAG_TRUST_PROXY_HEADER")
+    app = create_demo_app(
+        store_path=tmp_path / "untrusted.sqlite",
+        provider_factory=lambda _state: _StubProvider("The lead sharpens."),
+        clock=lambda: 0.0,
+    )
+    with TestClient(app) as client:
+        untrusted_first = client.post(
+            "/api/v1/session",
+            json={"story_id": "continuity_initiative"},
+            headers={"X-Forwarded-For": "10.0.0.1, 203.0.113.5"},
+        )
+        untrusted_limited = client.post(
+            "/api/v1/session",
+            json={"story_id": "continuity_initiative"},
+            headers={"X-Forwarded-For": "10.0.0.2, 203.0.113.6"},
+        )
+
+    assert trusted_first.status_code == 200
+    assert trusted_limited.status_code == 429
+    assert untrusted_first.status_code == 200
+    assert untrusted_limited.status_code == 429
+
+
+def test_rate_limits_can_be_turned_off(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_RATE_LIMIT_PER_MINUTE", "0")
+    monkeypatch.setenv("FREYTAG_SESSIONS_PER_IP_PER_DAY", "0")
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _StubProvider("The lead sharpens."),
+        clock=lambda: 0.0,
+    )
+    with TestClient(app) as client:
+        sessions = [client.post("/api/v1/session", json={"story_id": "continuity_initiative"}) for _ in range(22)]
+        session_id = sessions[0].json()["session_id"]
+        turns = [
+            client.post(
+                "/api/v1/turn",
+                json={"session_id": session_id, "player_input": "Search the kitchen for signs of a struggle."},
+            )
+            for _ in range(12)
+        ]
+
+    assert all(response.status_code == 200 for response in sessions)
+    assert all(response.status_code == 200 for response in turns)
+
+
+def test_test_clock_token_exempts_rate_limits(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_RATE_LIMIT_PER_MINUTE", "1")
+    monkeypatch.setenv("FREYTAG_SESSIONS_PER_IP_PER_DAY", "1")
+    monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    monkeypatch.setenv("FREYTAG_TEST_CLOCK_TOKEN", "shared-test-token")
+    headers = {"X-Freytag-Test-Clock-Token": "shared-test-token"}
+    app = create_demo_app(
+        store_path=tmp_path / "exempt.sqlite",
+        provider_factory=lambda _state: _StubProvider("The lead sharpens."),
+        clock=lambda: 0.0,
+    )
+    with TestClient(app) as client:
+        sessions = [
+            client.post("/api/v1/session", json={"story_id": "continuity_initiative"}, headers=headers)
+            for _ in range(22)
+        ]
+        session_id = sessions[0].json()["session_id"]
+        turns = [
+            client.post(
+                "/api/v1/turn",
+                json={
+                    "session_id": session_id,
+                    "player_input": "Search the kitchen for signs of a struggle.",
+                },
+                headers=headers,
+            )
+            for _ in range(12)
+        ]
+
+    monkeypatch.delenv("FREYTAG_ALLOW_TEST_CLOCK")
+    app = create_demo_app(
+        store_path=tmp_path / "not-exempt.sqlite",
+        provider_factory=lambda _state: _StubProvider("The lead sharpens."),
+        clock=lambda: 0.0,
+    )
+    with TestClient(app) as client:
+        first_session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}, headers=headers)
+        limited_session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}, headers=headers)
+        session_id = first_session.json()["session_id"]
+        first_turn = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "Search the kitchen for signs of a struggle."},
+            headers=headers,
+        )
+        limited_turn = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "Search the kitchen for signs of a struggle."},
+            headers=headers,
+        )
+
+    assert all(response.status_code == 200 for response in sessions)
+    assert all(response.status_code == 200 for response in turns)
+    assert first_session.status_code == 200
+    assert limited_session.status_code == 429
+    assert first_turn.status_code == 200
+    assert limited_turn.status_code == 429
+
+
+def test_wrong_test_clock_token_is_counted(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("FREYTAG_RATE_LIMIT_PER_MINUTE", "1")
+    monkeypatch.setenv("FREYTAG_SESSIONS_PER_IP_PER_DAY", "1")
+    monkeypatch.setenv("FREYTAG_ALLOW_TEST_CLOCK", "1")
+    monkeypatch.setenv("FREYTAG_TEST_CLOCK_TOKEN", "shared-test-token")
+    headers = {"X-Freytag-Test-Clock-Token": "wrong-token"}
+    app = create_demo_app(
+        store_path=tmp_path / "sessions.sqlite",
+        provider_factory=lambda _state: _StubProvider("The lead sharpens."),
+        clock=lambda: 0.0,
+    )
+    with TestClient(app) as client:
+        first_session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}, headers=headers)
+        limited_session = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}, headers=headers)
+        session_id = first_session.json()["session_id"]
+        first_turn = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "Search the kitchen for signs of a struggle."},
+            headers=headers,
+        )
+        limited_turn = client.post(
+            "/api/v1/turn",
+            json={"session_id": session_id, "player_input": "Search the kitchen for signs of a struggle."},
+            headers=headers,
+        )
+
+    assert first_session.status_code == 200
+    assert limited_session.status_code == 429
+    assert first_turn.status_code == 200
+    assert limited_turn.status_code == 429
 
 
 def test_adapter_exposes_a_safe_worker_error_code_header(tmp_path) -> None:

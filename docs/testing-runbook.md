@@ -255,8 +255,13 @@ Staging sets `FREYTAG_ALLOW_TEST_CLOCK=1` and `FREYTAG_TEST_CLOCK_TOKEN`;
 production sets neither. Never write the token value anywhere.
 
 ```bash
-source .env && cd frontend && E2E_TEST_CLOCK_SECONDS=120 npm run test:e2e -- --grep @timed-events
+source .env && cd frontend && npm run test:e2e -- --grep @timed-events
 ```
+
+When `FREYTAG_TEST_CLOCK_TOKEN` is set in the environment, as `source .env`
+does, the E2E harness sends it as `X-Freytag-Test-Clock-Token` to the API only.
+On staging, that exempts the run from the app's rate limits. Production sets no
+token, so nothing is exempt there.
 
 `E2E_PACKAGE_CLOCK=1` instead drives milestones from `pacing.yaml` (used by
 `@llm-canon`). The harness refuses both opt-ins at once.
@@ -315,7 +320,7 @@ real player or protected story data, and never print
 | Symptom | Meaning | Response |
 | --- | --- | --- |
 | 429, header `X-Narration-Error-Code: AI_QUOTA_EXCEEDED`, body `narration service is at capacity` | Workers AI daily quota spent | Stop until 00:00 UTC |
-| 429, body `{"detail": "rate limit exceeded"}` | App limiter (`FREYTAG_RATE_LIMIT_PER_MINUTE`) | Slow down and retry |
+| 429, body `{"detail": "rate limit exceeded"}` | App limiters (`FREYTAG_RATE_LIMIT_PER_MINUTE` turns per session per minute; `FREYTAG_SESSIONS_PER_IP_PER_DAY` new sessions per IP per day) | Slow down and retry |
 | 409 `uncited_knowledge`, `narration_known_term_leak`, `ineligible_selection` | Narration safety or selection rejected the turn before commit; no state changed | A real finding. The turn is lost, not retried. Reproduce locally with `bench` before spending more hosted runs |
 | 403, plain text `error code: 1010`, no Worker headers | Cloudflare Browser Integrity Check rejected the client | Keep the adapter's browser `User-Agent`; do not disable the check |
 | Single 503, or a browser CORS/`Failed to fetch` error | Worker or API briefly unavailable | Rerun once; check `/api/v1/version` before changing CORS |

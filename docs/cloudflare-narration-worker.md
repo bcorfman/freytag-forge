@@ -19,6 +19,9 @@ SQLite, and exposes typed game-break resolution separately at
 | `DEMO_SHARED_TOKEN` | `CLOUDFLARE_WORKER_TOKEN` | Optional shared bearer token |
 | — | `CLOUDFLARE_WORKER_URL` | Worker URL |
 | — | `CLOUDFLARE_TIMEOUT` | Bounded request timeout |
+| — | `FREYTAG_RATE_LIMIT_PER_MINUTE` | Turns per session per minute; default 10 |
+| — | `FREYTAG_SESSIONS_PER_IP_PER_DAY` | New sessions per IP per day; default 20 |
+| — | `FREYTAG_TRUST_PROXY_HEADER` | Set to `1` on Railway to read the client IP from the rightmost `X-Forwarded-For` entry |
 
 Without `CLOUDFLARE_WORKER_URL`, session creation and freeform turns both fail
 closed as `service_unavailable`, because the scene opening continues the

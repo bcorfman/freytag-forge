@@ -4,6 +4,7 @@ import { dirname, resolve } from "node:path";
 
 import { isTurnRequest } from "./package-clock-request.js";
 import { createPackageClockController } from "./package-clock-controller.js";
+import { installApiToken } from "./api-token.js";
 
 const TURN_TIMEOUT_MS = Number.parseInt(process.env.E2E_TURN_TIMEOUT_MS || "30000", 10);
 const packageClockControllers = new WeakMap();
@@ -87,6 +88,10 @@ export async function installPackageClock(page, { controller } = {}) {
 }
 
 export async function startSceneSession(page) {
+  await installApiToken(page, {
+    apiBaseUrl: process.env.E2E_API_BASE_URL,
+    token: process.env.FREYTAG_TEST_CLOCK_TOKEN,
+  });
   await page.goto("/");
   const controller = packageClockControllers.get(page);
   const sessionState = controller ? sessionResponseFor(page, controller) : null;
