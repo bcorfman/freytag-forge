@@ -1277,6 +1277,24 @@ def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
     ]
 
 
+def test_live_run_state_is_seeded_and_placed():
+    variation = load_variation(WORLD_TWO_SCENE)
+    _, state = core.package_and_state(variation, "1A")
+    world = world_for(state.package, state.facts)
+
+    assert world.parent("kristin") == "mcgehee_home"
+    assert world.parent("michelle_workstation") == "kitchen"
+    things, _ = package_seed(state.package, state, "1A")
+    assert things["workstation chair"]["condition"] == ["overturned"]
+
+
+def test_prompt_preview_places_the_protagonist():
+    variation = load_variation(WORLD_TWO_SCENE)
+    prompt = core.prompt_for(variation, "1A", "Look around the kitchen.")
+
+    assert "- Kristin. Place: Kristin and Michelle's shared house." in prompt["user"]
+
+
 def test_sitting_in_the_chair_rights_it():
     provider = _seeded_provider()
     facts, issues = provider.apply_item_facts(
@@ -1857,15 +1875,15 @@ def test_scene_exit_reply_does_not_override_next_scene_placements(monkeypatch):
 def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):
     calls = []
 
-    def request(_provider, _payload):
-        calls.append(True)
+    def request(_provider, payload):
+        calls.append(payload)
         response = {
             "segments": [{"kind": "narration", "text": "Kristin looks around the room."}],
             "selected_knowledge_ids": [],
             "item_facts": {},
         }
-        if len(calls) in (4, 5):
-            response["things"] = []
+        if len(calls) in (3, 4):
+            return None
         return response
 
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")

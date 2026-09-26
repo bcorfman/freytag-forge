@@ -31,7 +31,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
-from storygame.runtime.world_model import apply_scene_placements
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 
 CRITERIA = (
@@ -386,6 +386,9 @@ def package_and_state(variation: dict[str, Any], scene_id: str | None = None) ->
         raise ValueError(f"scene {target_scene} is not in package {package.story_id}")
     state = RuntimeState(package=package, current_scene_id=target_scene, phase=scene.metadata.freytag_phase)
     state._assert_scene_entry_fact(target_scene)
+    world_for(package, state.facts).seed()
+    apply_scene_placements(package, state.facts, target_scene)
+    apply_world_effects(package, state.facts)
     return package, state
 
 
