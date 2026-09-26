@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 from copy import deepcopy
 from functools import cache
@@ -64,6 +65,8 @@ _REQUIRED_STORYLET_SECTIONS = {
     "Protected boundary",
     "Pacing window",
 }
+
+_STORY_PACKAGE_CACHE: dict[tuple[Path, str], StoryPackage] = {}
 
 
 @cache
@@ -1047,7 +1050,7 @@ def _parse_characters(plot_text: str, world: WorldSource) -> tuple[Character, ..
     return tuple(characters)
 
 
-def load_story_package(root: Path) -> StoryPackage:
+def _load_story_package_uncached(root: Path) -> StoryPackage:
     """Load one package directory without accepting prose as runtime truth."""
     try:
         plot_text = (root / "plot.md").read_text(encoding="utf-8")
@@ -1181,4 +1184,36 @@ def load_story_package(root: Path) -> StoryPackage:
     _validate_transition_trigger_sources(package)
     _validate_resolution_entry_guarantees(package)
     _validate_required_reveal_prerequisites(package)
+    return package
+
+
+def _story_package_fingerprint(root: Path) -> str:
+    digest = hashlib.sha256()
+    list(root.iterdir())
+    files = sorted(path for path in root.rglob("*") if path.is_file())
+    for path in files:
+        digest.update(path.relative_to(root).as_posix().encode("utf-8"))
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def load_story_package(root: Path) -> StoryPackage:
+    """Load one package directory without accepting prose as runtime truth."""
+    resolved_root = root.resolve()
+    try:
+        if not resolved_root.is_dir():
+            return _load_story_package_uncached(root)
+        fingerprint = _story_package_fingerprint(resolved_root)
+    except OSError:
+        return _load_story_package_uncached(root)
+    key = (resolved_root, fingerprint)
+    cached = _STORY_PACKAGE_CACHE.get(key)
+    if cached is not None:
+        return cached
+    package = _load_story_package_uncached(root)
+    # The cache is safe because packages are frozen.
+    if len(_STORY_PACKAGE_CACHE) >= 32:
+        oldest_key = next(iter(_STORY_PACKAGE_CACHE))
+        _STORY_PACKAGE_CACHE.pop(oldest_key)
+    _STORY_PACKAGE_CACHE[key] = package
     return package
