@@ -1,9 +1,9 @@
 # World model: plan
 
 Status (2026-09-26): decisions W1-W12 settled; S1 merged (PR 480). S2
-tasks A and C merged (PR 481); tasks B and D are on branch
-`world-model-s2b`, not yet pushed. Next: task E (W12, seating before use), then the
-smoke replicate of `item-facts-world-two-scene`, then the v36 comparison.
+tasks A and C merged (PR 481); tasks B, D and E are on branch
+`world-model-s2b`, not yet pushed. Next: task F (W12's "use" question, W13
+standing up, movable seats), then the smoke replicate of `item-facts-world-two-scene`, then the v36 comparison.
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -38,7 +38,19 @@ replicates each):
   it upright after sitting.
 - The two-line rule in c7705b8 has not been measured.
 
-**Next:**
+**Next (2026-09-26, after task E):**
+
+1. S2 task F: the new "use" question (W12), standing up before leaving a
+   seat (W13), and seats as movable furniture. Then a seat smoke with a
+   stand-up case.
+2. The two-scene smoke replicate. W5's two questions pass at the 92% bar
+   (Brandon, 2026-09-26): at least 92% of turns where a thing's place is
+   Kristin are judged consistent, and at least 92% of reported places
+   resolve. One replicate near the bar means another replicate, not a
+   decision.
+3. The v36 comparison, then the PR for `world-model-s2b`.
+
+Done before task F:
 
 1. S2 task E: seating before use (W12). The engine sets the chair
    upright and seats Kristin before a command that uses the laptop, so
@@ -898,6 +910,14 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   Then a seat smoke with "Read the files on my laptop." in the kitchen, on
   an overturned chair and again on an upright one, and a run without the
   two-line upright rule to decide whether it goes.
+- **Task F: the "use" question, standing up, movable seats (W12, W13).**
+  The Jev "use" question is rewritten so opening, closing and turning the
+  laptop on or off are not use. A second Jev question and `leave_text`
+  stand a seated Kristin up before a command that needs it. `worldkeeper`
+  kinds may declare `fixed`, and `seat` becomes `[furniture, supporter]`
+  with `fixed: false`. The check calls Jev live on eight "use" cases and six
+  "stand" cases; the old question is asked the same "use" cases for the
+  record. The shipped narrator's 1A payloads stay byte-identical.
 - Then the smoke replicate and the v36 comparison below.
 
 - Capture produces operations; THINGS follows W4 and W5; the reply names the
@@ -1088,6 +1108,13 @@ her.
   that thing? "Read the files on my laptop." is yes; "Take my laptop to the
   truck." is no. Jev reads only the player's input and the thing's name,
   never narration.
+- **What "use" means (Brandon, 2026-09-26).** Using the laptop means
+  working on it: reading, typing, or searching its files. Opening or
+  closing it, turning it on or off, moving it, carrying it, picking it up
+  and putting it down are not using it. The first question named only the
+  moving verbs as "no", so "Open my laptop." (turn 6 of the two-scene
+  script) would probably have seated Kristin. Task F rewrites the question
+  and checks it live.
 - **When the question is asked (task E, 2026-09-26).** Only on a turn where
   the steps could apply: a `use_seated` thing is `together()` with Kristin
   (held by her, or in her area), a seat is `together()` with her, and her
@@ -1140,6 +1167,42 @@ Rejected: seating her before any command that names the workstation
 verbs (a fixed action table, forbidden by AGENTS.md); asking before any
 command that names the laptop with no judgement ("Take my laptop to the
 truck." would seat her first).
+
+W13. **Standing up before leaving a seat. Decided (Brandon, 2026-09-26).**
+The counterpart of W12. The engine tracks whether a character is seated or
+standing, and a seated character can move only once she stands. The seat
+smokes found the gap: the narration showed Kristin standing up, the reply
+left the change out, and the world kept her in the chair.
+
+- **Posture is the tree.** Kristin is seated when her parent is a seat, a
+  thing with `seat_for`. Otherwise she is standing. A vehicle is not a seat:
+  sitting in the truck is not covered.
+- **Data, not branches.** A seat declares a third authored line,
+  `leave_text` ("Stand up from the workstation chair."), next to
+  `right_text` and `enter_text`. A seat without it fails to load.
+- **The trigger.** Only while Kristin is seated, one Jev question: does
+  she need to get up to carry out this command? The state holds the
+  command, the seat's name, and the names of the things within reach of the
+  seat. Within reach means the seat, the furniture it is `seat_for`,
+  everything inside or on that furniture, and everything Kristin holds. It
+  is yes when the command sends her somewhere else, or acts on a thing that
+  is not within reach. While she is standing, the question is not asked.
+- **The step, on a yes.** The engine moves her from the seat to the seat's
+  area and adds the seat's `leave_text` before the command, as W12 does. On
+  a no, or with no answer, nothing is added, and no answer is recorded as
+  an issue. A turn that stands her up does not also ask the W12 question.
+- **A reply that moves a seated Kristin elsewhere** without the step is
+  accepted as standing up and then moving. Refusing it would drop a
+  narrated change, which is a severe failure. The step before the turn
+  should make this rare.
+
+**Seats are furniture, but the chair can move (Brandon, 2026-09-26).** The
+`seat` kind becomes `[furniture, supporter]`. Furniture is fixed by default,
+so a kind may now declare `fixed`, and `seat` declares `fixed: false`. A
+chair is light enough to carry to another room, and `fixed` would refuse
+every move of it. The desk kind stays fixed. A reply that records the
+chair's place as Kristin is a capture error, and W5's held-by question
+measures it.
 
 W10. **A self-contained library. Decided (Brandon, 2026-09-25).** The model is
 a separate, reusable library named `worldkeeper`, designed to be publishable
