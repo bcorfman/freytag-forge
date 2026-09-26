@@ -1,11 +1,9 @@
 # World model: plan
 
 Status (2026-09-26, end of session): decisions W1-W13 settled; S1 merged
-(PR 480). S2 tasks A and C merged (PR 481). Tasks B, D, E, F and G are on
-branch `world-model-s2b`, which is not pushed and has no PR. Next: task H
-(Kristin and Michelle become friends, not roommates; the house is
-"Michelle's house"), then the two-scene smoke replicate, then the v36
-comparison. See "Resume here".
+(PR 480). S2 tasks A and C merged (PR 481). Tasks B and D-H are on
+branch `world-model-s2b`, which is not pushed and has no PR. Next: the
+two-scene smoke replicate, then the v36 comparison. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -34,8 +32,10 @@ in a fresh worktree). It holds everything since PR 481, oldest first:
   this: ..."; the stay-seated rule; a seat placed at its own furniture
   does not move; "overturned workstation chair" out of the 1A Details
   line.
+- c29c2f7: task H. Kristin and Michelle are friends; the house is
+  "Michelle's house"; a fixed back door in the kitchen.
 
-The full suite passes and ruff is clean at 9210622. The shipped
+The full suite passes and ruff is clean at c29c2f7. The shipped
 narrator's 1A baseline (`.plans/world-model-s1/narrator-1a-baseline.json`)
 matches the code. The results of every smoke are recorded under tasks E,
 F and G in section 11.
@@ -55,68 +55,30 @@ scratchpad and are gone. To rebuild the W13 stand smoke: take
   laptop for Michelle's notes.", "Pick up the workstation chair and carry
   it out to the truck."
 
-### Next 1: task H, friends not roommates (Brandon, 2026-09-26)
+### Task H done: friends, not roommates (c29c2f7)
 
-Why: the stand smoke's replies named the house "Michelle's home" and
-"inside the house", and the match call shortened its name to "Kristin's
-shared house". None resolved, so Kristin was left outside every area and
-the next laptop command asked no seating question. Brandon chose to
-simplify the fiction so names resolve. Kristin and Michelle are longtime
-friends, not roommates. Kristin does not live in the house. The house is
-"Michelle's house", and on the night of the story Kristin drives there.
-CHARACTERS must say they are longtime friends. The scene prose must not
-say she returns to a home she shares; only that she goes to Michelle's
-house.
+Brandon decided on 2026-09-26 to simplify the fiction so that place names
+resolve. Kristin and Michelle are longtime friends, and Kristin does not
+live in the house. The stand smoke's replies had named the house
+"Michelle's home" or "inside the house". None of those names resolved, so
+Kristin ended up outside every area.
 
-Step 1, the prose (Brandon, in ChatGPT Desktop). Story rewording goes to
-ChatGPT Desktop. Paste this prompt there, then bring back its
-replacement lines:
+- The story lines came from ChatGPT Desktop and were applied verbatim, with
+  one exception. ChatGPT also changed "overnight assessment shift" to
+  "late-night shift" without being asked, and that change was not kept.
+- The saved prompt missed four lines, which were found by a sweep and
+  included: `storylet-routes.yaml` 73, 147 and 495, and `plot.md` 223
+  ("tracked from her house").
+- `mcgehee_home` is now named `Michelle's house`, with the aliases
+  `Michelle's home` and `the house`.
+- The back door is a fixed item in the kitchen, placed in 1A with no text.
+  A reply that puts Kristin at the back door leaves her in the kitchen.
+- The shipped 1A baseline changed only in the scene line, the two bios and
+  the entry text's drive clause.
+- Ringer passed on the first attempt on Luna. The full suite passes, and
+  ruff is clean.
 
-```text
-I'm editing an interactive-fiction story package. One fact is changing: Kristin Schweitzer and Dr. Michelle McGehee are longtime friends, NOT roommates, and Kristin does NOT live in the house. The house is Michelle's house. On the night of the story, Kristin drives to Michelle's house.
-
-Rewrite each line below to match that fact. Change only the words that say or imply they live together or share a home; keep every other word, the punctuation style (including curly apostrophes where they appear), the YAML/Markdown formatting, and the leading spaces exactly as given. Say "longtime friend(s)" where the old text said "longtime roommate". Where a line names the place, call it "Michelle's house". Keep the lines plain and short; do not add new details.
-
-Return exactly one replacement per line, in this form, and nothing else:
-[<id>] <full replacement line>
-
-[plot.md:15] The sudden disappearance of millions of people across the United States throws Kristin Schweitzer’s life into turmoil when her best friend and longtime roommate, molecular biology and biotechnology researcher and author Dr. Michelle McGehee, vanishes. Her search leads her through a fractured, post-disappearance America and into a conspiracy involving government officials, private corporations, secret detention facilities, and a plan to reshape the country through fear and controlled reconstruction.
-[plot.md:29] A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who initially wants only to find her best friend and longtime roommate. She is practical, persistent, and reluctant to trust conspiracy theories. Her knowledge of infrastructure and operations eventually makes her essential to infiltrating the conspirators’ underground facilities.
-[plot.md:55] | 1A | 13 | Search the shared home; form a theory; recover and interpret the card; evade a widening patrol search. |
-[plot.md:94] entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing an overnight assessment shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to get back to the house she shared with her best friend, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
-[plot.md:101] **Setting:** Kristin and Michelle’s shared home
-[plot.md:108] **Plot:** Kristin returns to the home she shares with Michelle shortly after the mass disappearance and discovers that Michelle is missing. Evidence inside the house suggests that she could have been taken rather than simply vanishing with the others.
-[plot.md:155] An emergency patrol arrives at Kristin and Michelle's shared house unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open the drawer, so the card remains undiscovered; they discover and confiscate nothing.
-[world.yaml:42]   narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend and longtime roommate, Michelle.
-[world.yaml:52]   narrator_bio: A 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend and longtime roommate; Kristin alone calls her "Shelly", while everyone else addresses her as Dr. McGehee.
-[storylets.md:137] - Provide a compact investigative situation in which Michelle’s own preparation gives her best friend and longtime roommate Kristin direction.
-[knowledge.yaml:30]   purpose: Kristin and Michelle's shared home has been marked by the patrol for a likely return.
-[knowledge.yaml:133-134]   purpose: Observable signs indicate the federal patrol is likely to return or intensify
-    scrutiny at Kristin and Michelle's shared home.
-[knowledge.yaml:201]   purpose: The returning patrol is widening its search around Kristin and Michelle's shared house, making a careful exit urgent.
-```
-
-Check what comes back: the entry text (`plot.md` line 94) is the first
-thing players read, and it must say Kristin drove to Michelle's house.
-
-Step 2, one Ringer task on Luna (worktree on `world-model-s2b`):
-
-1. Apply the returned lines exactly, each to its file and line.
-2. `world.yaml` `mcgehee_home`: `name: Michelle's house`, and
-   `aliases: [Michelle's home, the house]`.
-3. Declare the back door as a fixed item in the kitchen, in the same way
-   the drawer is part of the workstation (the plot's Details call it
-   "forced back door"), with its placement in the 1A `item_placements`.
-   Then "Kristin: back door" leaves her in the kitchen, not outside.
-4. Regenerate the shipped 1A baseline with `prompt_capture.py`. The
-   check allows only these differences: the scene's place line ("The
-   scene takes place at Michelle's house."), the two narrator bios, and
-   the entry text. Aliases never reach the prompt.
-5. Update the 5 assertions in `tests/test_bench_item_facts.py` that pin
-   "Kristin and Michelle's shared house" (lines 472, 473, 1426, 1451 and
-   1488). The full suite and ruff pass.
-
-### Next 2: the two-scene smoke replicate
+### Next 1: the two-scene smoke replicate
 
 One replicate of `bench/variations/item-facts-world-two-scene.json` with
 the fact and continuity judges, for a few cents. It answers W5's two
@@ -143,7 +105,7 @@ Accepted, not fixed (Brandon, 2026-09-26): the narrator may stand
 Kristin up for "Open the drawer." despite the stay-seated rule (3 of 3).
 The reply now records it, so the world and the story agree.
 
-### Next 3: the v36 comparison, then the PR for `world-model-s2b`
+### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
 
