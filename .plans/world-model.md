@@ -2,8 +2,8 @@
 
 Status (2026-09-27): decisions W1-W13 settled. S1 merged (PR 480), and S2
 merged (PRs 481 and 485). Scene grounding is under way on branch
-`world-model-scenes` (not pushed): 1B (44a99eb) and 1C (f1b8d5b, 969d2d7) are built
-and tested, and 2A is next. Then 2B-3C, S3 and S4. See "Resume here".
+`world-model-scenes` (not pushed): 1B (44a99eb), 1C (f1b8d5b, 969d2d7) and
+2A (6aad57e) are built and tested, and 2B is next. Then 2B-3C, S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -16,7 +16,8 @@ continuity plan; this plan defines the world they write into.
 
 Everything through S2 is on `main` (PR 485, merge 28ad27d). Branch
 `world-model-scenes` adds `world-model-scenes/capture_scenes.py`, the 1B
-grounding (44a99eb), the 1C grounding (f1b8d5b) and plan updates. It has not been pushed and has no PR.
+grounding (44a99eb), the 1C grounding (f1b8d5b, 969d2d7), the 2A grounding
+(6aad57e) and plan updates. It has not been pushed and has no PR.
 Continue the scene work on it.
 
 ### Where things stand
@@ -42,7 +43,9 @@ Continue the scene work on it.
   yet, so no live run has confirmed its names resolve. 1C in full as a
   package (f1b8d5b): the facility area tree, the freight terminal and its
   sub-areas, and Brandon as companion. It has no bench script either.
-  Scenes 2A-3C have no placements at all. **Next: 2A.**
+  2A in full as a package (6aad57e): Brandon's hideout, the servers and
+  the move to the facility. No bench script either. Scenes 2B-3C have no
+  placements at all. **Next: 2B.**
 - **How to ground a scene:** `docs/world-model-grounding.md`, which
   `AGENTS.md` points to. Read it before any package or prompt work.
 
@@ -104,11 +107,41 @@ is in "Story survey" below, and Brandon's six decisions on it are settled
    A leftover worktree from the first, correctly stopped attempt is at
    the session scratchpad's `scene-1c-service/run/scene-1c-service-level`;
    remove it with `git worktree remove --force` when convenient.
-3. **2A-2C.** The `brandon_hideout` area and 2A's start there, with the
-   entering fact's `on_assert` move to `facility_perimeter`. Brandon is a
-   companion in 2B and 2C. Fix the areas whose text happens elsewhere (2C,
-   and 2A's second half).
-4. **3A-3C.** Michelle is a captive in `detention_level`, and
+3. **2A. Done as 6aad57e** (Ringer, Luna, one attempt).
+   `brandon_hideout` is a new top-level area ("Brandon's hideout", aliases
+   "hideout" and "communications center"). Kristin and Brandon start there
+   through `character_placements`; `location_id` stays
+   `facility_perimeter`. `hideout_servers` ("servers") is a fixed thing in
+   the hideout. 2A declares `companions: [brandon]`.
+   Two decisions by Brandon (2026-09-27), made after checking what reads
+   `location_id`:
+   - **The move fact is `false_identities_ready`, not
+     `restricted_corridor_access`.** The latter is the `t_2a_2b` trigger,
+     so a move on it would be replaced at once by 2B's placement. The cover
+     being ready is the last fact before the facility half. Its `on_assert`
+     moves Kristin to `facility_perimeter`, and Brandon follows as her
+     companion.
+   - **The opening names the protagonist's placement.** `_scene_entry` in
+     `cloudflare.py` read `location_id`, so 2A's opening said "The scene
+     takes place at Facility perimeter." before the hideout entry text. When
+     a scene gives the protagonist a `character_placements` entry, the
+     opening now names that parent: "...at Brandon's hideout."
+   Narration safety now builds a scene's allowed entities in one helper,
+   `NarrationSafetyValidator._scene_entity_ids`. It adds character
+   placement parents and their related areas, and the leakage matrix calls
+   the same helper, so the two cannot drift. `k_sl_2a_a_r1` lists the
+   hideout and the servers in its `entity_ids`.
+   Verified: the full suite (870) passes, ruff is clean, and payloads for
+   1A, 1B, 1C and 3A are byte-identical. 2A changes only by its opening
+   location line. Not yet measured live: no 2A bench script exists.
+   Not grounded, left for when a problem surfaces: the restricted
+   infrastructure corridors and the corridor inspection console (2A.3),
+   which later storylets use again. Known pacing gap, not fixed: the
+   `scrutiny_2a` event ("Facility staff are visibly scrutinizing...") fires
+   at turn 3 whether or not Kristin has left the hideout.
+4. **2B-2C.** Brandon is a companion in 2B and 2C. Fix the areas whose
+   text happens elsewhere (2C).
+5. **3A-3C.** Michelle is a captive in `detention_level`, and
    `michelle_reached` sets her free. 3B declares `companions: [brandon,
    michelle]`. Rebecca is placed in her office, and `rebecca_captured` sets
    her captive. The senior official is in `detention_level`. Brandon moves
