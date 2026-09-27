@@ -377,10 +377,16 @@ and 4 the reply put Kristin at "bench" in the 1B park, the park has no
 bench entity, and the name resolved to the 1A workstation chair (by the
 match call in replicate 3, by a learned name in replicate 4). The match
 call should not resolve to a thing in another scene's area, and 1B may
-need the bench declared. Being fixed (Brandon chose both, 2026-09-27): the bench is declared as a
-fixed seat placed in the 1B park, and the match call lists only things in
-play (the scene's `item_ids`, things in the protagonist's top-level area,
-and things she carries).
+need the bench declared. Fixed as b1a1a35 (Brandon chose both, 2026-09-27): the bench is declared
+as a fixed seat placed in the 1B park, and the match call lists only things
+in play (the scene's `item_ids`, things in the protagonist's top-level area,
+and things she carries). The 1A card knowledge that names "a bench in the
+park" lists the bench, or the leakage matrix counts "bench" as a future term
+in 1A. One live replicate (`bench/results/item-facts-s2-t15-verify`, 19
+turns) kept Kristin in the Los Angeles park through all of 1B. That reply
+tracked the park bench as a thing in the park rather than placing Kristin at
+it, so the "bench as her place" path is covered only by the deterministic
+test that "bench" resolves to the park bench.
 
 ### Story survey: places, things and NPCs (2026-09-27)
 
