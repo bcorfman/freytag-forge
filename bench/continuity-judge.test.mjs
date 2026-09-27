@@ -21,7 +21,7 @@ const verdict = {
   ],
 };
 
-test("continuity judge uses a strict schema and sends scene and given fields only", async () => {
+test("continuity judge sends also_called and explains its meaning", async () => {
   let request;
   const turns = [
     {
@@ -32,6 +32,7 @@ test("continuity judge uses a strict schema and sends scene and given fields onl
       scene_id: "1A",
       item_facts_before: { phone: { place: "her hands" } },
       item_facts_after: { phone: { place: "floor" } },
+      item_facts_names: { phone: ["the handset"] },
       candidates_offered: ["must not leak"],
       selected_knowledge_ids: ["must not leak"],
     },
@@ -65,9 +66,11 @@ test("continuity judge uses a strict schema and sends scene and given fields onl
       player_input: "Look at the phone.",
       narration: "The phone lies on the floor.",
       given_facts: { phone: { place: "her hands" } },
+      also_called: { phone: ["the handset"] },
       story_text: ["The story adds this sentence."],
     },
   ]);
+  assert.match(request.input[0].content, /A name listed in `also_called` is another name for the same person or thing\./);
   assert.doesNotMatch(request.input[0].content, /when no player command moved it/);
   assert.match(request.input[0].content, /story_text lists sentences the story itself wrote at the end of this turn\. They are not part of narration\. They are canon\./);
   assert.match(request.input[0].content, /A command to look at, examine, search or check a thing is finished when the narration shows her attending to that thing/);

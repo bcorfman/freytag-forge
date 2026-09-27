@@ -21,6 +21,7 @@
 
 - Start with [the PRD](docs/PRD.md); use the focused runbook and [contributor guide](docs/contributor-guide.md) for the change.
 - Facts are the sole mutable truth; shared runtime stays story-agnostic and LLM-proposal-first.
+- Before declaring or placing any story thing, place or NPC, or writing any narrator, match-call or judge prompt line about places, read [the world-model grounding guide](docs/world-model-grounding.md).
 ## Writing Player Input
 
 Player input is what a person types at the game. Every test, probe, bench

@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const THRESHOLD = 0.5;
+const ALSO_CALLED_SENTENCE = "A name listed in `also_called` is another name for the same person or thing.";
 
 const CONTINUITY_NAMES = [
   "given_conflict", "given_start_conflict", "earlier_conflict", "beyond_command",
@@ -125,13 +126,13 @@ const CONTINUITY_GROUPS = {
     state: ["command"], questions: ["needs_other", "take_from_other", "names_place"],
   },
   turn: {
-    state: ["command", "narration", "story_text", "given_facts"],
+    state: ["command", "narration", "story_text", "given_facts", "also_called"],
     questions: [
       "given_conflict", "given_start_conflict", "beyond_command", "own_part_done", "other_responds", "reaches_place",
     ],
   },
   history: {
-    state: ["command", "narration", "opening", "earlier_narration", "hidden_canon", "given_facts"],
+    state: ["command", "narration", "opening", "earlier_narration", "hidden_canon", "given_facts", "also_called"],
     questions: ["earlier_conflict", "arrives", "rediscovers", "repeats_trip", "hidden_shown", "hidden_lookalike"],
   },
 };
@@ -403,33 +404,44 @@ function continuityQuestions(state, hasHidden) {
     "`narration` puts an object like the hidden one (for example another storage device when a memory card is hidden) in or near the hidden spot early.",
     "`narration` shows nothing like the hidden thing near its hidden spot, or `command` has reached the spot.",
   );
+  for (const name of ["given_conflict", "given_start_conflict", "earlier_conflict"]) {
+    q[name] = {
+      ...q[name],
+      criteria: Object.fromEntries(
+        Object.entries(q[name].criteria).map(([side, text]) => [side, `${text} ${ALSO_CALLED_SENTENCE}`]),
+      ),
+    };
+  }
   return q;
 }
 
 function factQuestions(thing, item, phrasesForThing, protagonist) {
   const t = `\`${thing}\``;
+  const axes = item.axes || [];
   const q = {
     moved: thing === protagonist
       ? nounl(
-        `Does \`narration\` show ${t} leaving the room ${t} was in during this turn?`,
-        `${t} ends the turn outside the room or area where ${t} started, for example in another room, in a vehicle, or somewhere else outdoors.`,
-        `${t} stays in the same room or area. Small steps inside it, like walking over to a desk or turning to someone, do not count as leaving it.`,
+        `At the end of this turn, is ${t} in a different room or area from the one ${t} started in? Answer from \`narrator_narration\` only.`,
+        `${t} ends the turn in another room, in a vehicle, or somewhere else outdoors.`,
+        `${t} ends the turn in the room or area where ${t} started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move.`,
       )
       : nounl(
-        `Does \`narration\` show ${t} moving to a new place or into someone else's hands during this turn?`,
-        "It moves or changes hands.",
-        "It stays put. An attempt that fails, or a hand-over that nobody takes, is not a move.",
+        `At the end of this turn, is ${t} held by a different person, or in a different place, than at the start of this turn? Answer from \`narrator_narration\` only.`,
+        "It ends the turn with a different holder or in a different place.",
+        "It ends where it started. When `before_place` is a person, anywhere on that person or in something that person carries is the same place, such as a hand, a pocket or a bag. A thing that stays with that person has not moved, even when that person carries it somewhere else. An attempt that fails, or a hand-over that nobody takes, is not a move.",
       ),
-    condition_changed: nounl(
-      `Does \`narration\` show a condition of ${t} changing during this turn, such as opening, closing, cracking or switching on?`,
-      "A condition changes.",
-      "No condition changes.",
-    ),
   };
+  if (axes.length) {
+    q.condition_changed = nounl(
+      `Does \`narration\` show ${t} changing from one state in \`states\` to the other during this turn?`,
+      "A state changes.",
+      "No state changes. If `before_conditions` already has the state the narration shows, it did not change.",
+    );
+  }
   if (item.trackedAfter) {
     q.after_place_right = nounl(
       `Is \`after_place\` where \`narration\` leaves ${t} at the end of this turn?`,
-      "Yes. If `narration` never moves it, its earlier place is still right. A more specific or more general place that fits is right.",
+      "Yes. If `narration` never moves it, its earlier place is still right. A more specific or more general place that fits is right. A thing listed in `after_place_contains` is inside `after_place`, so leaving it at one of those things leaves it in `after_place`.",
       "No, `narration` leaves it somewhere else, or never shows it there.",
     );
     q.place_is_condition = nounl(
@@ -444,32 +456,40 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
       "`narration` conflicts with the given facts.",
       "No conflict. A more specific place or state that fits inside the given one is not a conflict.",
     );
-    q.start_conflict = nounl(
-      `Does \`narration\` say or imply that ${t} was somewhere else at the start of this turn than \`before_place\`?`,
-      "`narration` shows it taken from, found in, or used from a place or holder that differs from `before_place`, for example picked up from a table while `before_place` says in her hands.",
-      "`narration` takes it from `before_place`, or does not say where it was. A more specific place inside `before_place` agrees.",
-    );
+    q.start_conflict = thing === protagonist
+      ? nounl(
+        `Does \`narration\` show ${t} starting this turn outside \`before_place\`?`,
+        `\`narration\` shows ${t} starting the turn somewhere that is not inside \`before_place\`.`,
+        `${t} starts inside \`before_place\`, or \`narration\` does not say. Walking over to something inside \`before_place\` does not mean ${t} started somewhere else. A more specific place inside \`before_place\` agrees.`,
+      )
+      : nounl(
+        `Does \`narration\` say or imply that ${t} was somewhere else at the start of this turn than \`before_place\`?`,
+        "`narration` shows it taken from, found in, or used from a place or holder that differs from `before_place`, for example picked up from a table while `before_place` says in her hands.",
+        "`narration` takes it from `before_place`, or does not say where it was. A more specific place inside `before_place` agrees.",
+      );
   }
-  for (let i = 0; i < phrasesForThing.newConditions.length; i++) {
-    q[`new_condition_${i}`] = nounl(
-      `Does \`narration\` show ${t} being ${phrasesForThing.newConditions[i]}?`,
-      "`narration` shows it.",
-      "`narration` never shows it. A likely or ordinary state that is not shown does not count.",
-    );
-  }
-  for (let i = 0; i < phrasesForThing.goneConditions.length; i++) {
-    q[`gone_condition_${i}`] = nounl(
-      `Does \`narration\` show ${t} stop being ${phrasesForThing.goneConditions[i]}, or does \`after_conditions\` list a phrase with the same meaning or the opposite meaning?`,
-      "The condition ended in `narration`, or `after_conditions` still covers it.",
-      "`after_conditions` dropped it without cause.",
-    );
-  }
-  for (let i = 0; i < phrasesForThing.keptConditions.length; i++) {
-    q[`kept_condition_${i}`] = nounl(
-      `Does \`narration\` show ${t} stop being ${phrasesForThing.keptConditions[i]} during this turn?`,
-      "`narration` ends that condition.",
-      "It still holds.",
-    );
+  if (axes.length) {
+    for (let i = 0; i < phrasesForThing.newConditions.length; i++) {
+      q[`new_condition_${i}`] = nounl(
+        `Does \`narration\` show ${t} being ${phrasesForThing.newConditions[i]}?`,
+        "`narration` shows it.",
+        "`narration` never shows it. A likely or ordinary state that is not shown does not count.",
+      );
+    }
+    for (let i = 0; i < phrasesForThing.goneConditions.length; i++) {
+      q[`gone_condition_${i}`] = nounl(
+        `Does \`narration\` show ${t} stop being ${phrasesForThing.goneConditions[i]}, or does \`after_conditions\` list a phrase with the same meaning or the opposite meaning?`,
+        "The condition ended in `narration`, or `after_conditions` still covers it.",
+        "`after_conditions` dropped it without cause.",
+      );
+    }
+    for (let i = 0; i < phrasesForThing.keptConditions.length; i++) {
+      q[`kept_condition_${i}`] = nounl(
+        `Does \`narration\` show ${t} stop being ${phrasesForThing.keptConditions[i]} during this turn?`,
+        "`narration` ends that condition.",
+        "It still holds.",
+      );
+    }
   }
   q.command_asks = nounl(
     `Does \`command\` itself ask for a change to ${t}?`,
@@ -482,6 +502,16 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
       "It is the same object as a thing in `other_things`, for example `laptop` and `Kristin's laptop` for the one laptop the story has.",
       "It is a different object from every thing in `other_things`, or `other_things` is empty.",
     );
+  }
+  for (const name of ["before_conflict", "start_conflict"]) {
+    if (q[name]) {
+      q[name] = {
+        ...q[name],
+        criteria: Object.fromEntries(
+          Object.entries(q[name].criteria).map(([side, text]) => [side, `${text} ${ALSO_CALLED_SENTENCE}`]),
+        ),
+      };
+    }
   }
   return q;
 }
@@ -548,6 +578,7 @@ export async function judgeInput(
         narration: narrationOf(turn),
         story_text: story(turn),
         given_facts: turn.item_facts_before || {},
+        also_called: turn.item_facts_names || {},
         opening: sceneId === firstSceneId ? run.opening : "",
         earlier_narration: earlier,
         hidden_canon: hc,
@@ -597,18 +628,28 @@ export async function judgeInput(
         };
         const otherThings = things.filter((otherThing) => otherThing !== thing);
         const fs = {
-          command: turn.player_input,
+          command: turn.command_typed ?? turn.player_input,
+          just_before: turn.just_before ?? "",
           narration: turn.narration,
+          narrator_narration: narrationOf(turn),
           story_text: story(turn),
           thing,
           other_things: otherThings,
           before_place: b?.place || "",
           before_conditions: b?.condition || [],
           after_place: a?.place || "",
+          after_place_contains: (() => {
+            const contents = turn.place_contents || {};
+            if (Object.hasOwn(contents, a?.place || "")) return contents[a?.place || ""];
+            const key = Object.keys(contents).find((name) => name.toLowerCase() === String(a?.place || "").toLowerCase());
+            return key ? contents[key] : [];
+          })(),
           after_conditions: a?.condition || [],
+          states: (turn.item_facts_axes?.[thing] || []).flat(),
           tracked_before: trackedBefore,
           tracked_after: trackedAfter,
         };
+        item.axes = turn.item_facts_axes?.[thing] || [];
         const fq = factQuestions(thing, item, pf, protagonist);
         const fa = await request("fact", replicate, number, thing, fs, fq);
         fact.judge_calls++;

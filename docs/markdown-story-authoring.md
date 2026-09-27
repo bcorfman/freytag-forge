@@ -23,8 +23,9 @@ reaches the narrator, but it must not carry `text`.
 
 The optional `character_placements` mapping places a participant at scene
 start. Each value has a required `parent` ID and optional non-empty `text`.
-The parent must be a known area or container. Characters cannot start on a
-supporter. The protagonist may be listed; this replaces `location_id`.
+The parent must be a known area or an enterable container or supporter. The
+protagonist may be listed; this replaces where the protagonist starts. The
+scene's `location_id` does not change.
 
 The optional `companions` list names NPC participants who start with the
 protagonist. A companion cannot be the protagonist. Each scene resets the
@@ -38,14 +39,44 @@ character_placements:
   tom: {parent: shore, text: mending nets on the shore}
 ```
 
-The loader checks all IDs and placements. A companion follows only while he is
-in the same place as her. A narrated split leaves him behind. A narrated rejoin
-makes him follow again.
+The loader checks all IDs and placements. A companion follows only while it is
+in the same place as the protagonist. A narrated split leaves the companion
+behind. A narrated rejoin makes the companion follow again.
 
 Locations may declare a `parent` location ID. `world.yaml` may declare story
-sub-kinds with `kinds: [{id: desk, is: [furniture, supporter]}]`. Items may set
-`kind`, `openable`, `hidden`, `contents`, and `owner`; furniture descendants are
-fixed unless `fixed: false` is explicit.
+sub-kinds with `kinds: [{id: desk, is: [furniture, supporter]}]`. A kind may
+set `fixed: true` or `fixed: false` to control whether its entities can move.
+It may also set `enterable: true` when it descends from `container` or `supporter`. Items
+may set `kind`, `openable`, `hidden`, `contents`, `owner`, and `enterable`.
+An item may also set `enter_pole` to an axis pole that is selected when a
+character enters it, `seat_for` to the furniture it seats, and `axes` for a
+two-pole state axis. For example:
+
+```yaml
+kinds:
+- {id: seat, is: [supporter], enterable: true}
+items:
+- id: workstation_chair
+  name: workstation chair
+  kind: seat
+  axes: [{overturned: [], upright: [standing]}]
+  enter_pole: upright
+  seat_for: michelle_workstation
+```
+
+An item with `use_seated: true` needs the engine to seat the protagonist before
+it is used. A seat may provide `right_text` for making its `enter_pole` state
+ready, `enter_text` for entering it, and `leave_text` for leaving it. An item
+may provide `take_text`; the engine says it just before the player uses a
+seated-use thing that is not already in the protagonist's hands, unless the thing
+rests on the supporter that the chosen seat serves. These
+must be short past-tense statements of what happened. The engine shows these
+lines to the narrator as `Just before this` when the player command uses a
+visible nearby seated-use item or leaves a seat.
+
+`enterable: false` on an item overrides an enterable kind. The two poles and
+all aliases in one axis must not overlap, ignoring case. Furniture descendants
+are fixed unless the nearest kind or the item explicitly sets `fixed: false`.
 
 World facts may already declare `on_assert` effects. These effects run when the
 fact becomes true. Supported effects include `move`, `reveal`, `accompany`, and
@@ -171,4 +202,6 @@ Load a package with `storygame.story_package.load_story_package(path)`. It is a
 validated immutable authoring input; it does not interpret player text or add a
 story-specific runtime branch.
 
-The protagonist starts each scene in that scene's location. Things the protagonist carries therefore move with the protagonist when the scene changes.
+The protagonist starts in the scene's location unless the scene gives the
+protagonist a character placement. Things the protagonist carries therefore
+move with the protagonist when the scene changes.

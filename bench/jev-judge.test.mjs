@@ -77,7 +77,7 @@ test("combineContinuity applies all rules", () => {
   assert.equal(combineContinuity(yes(["hidden_shown"]), { firstTurnInScene: false, hasHiddenCanon: true }).reveals_hidden_canon, "yes");
 });
 
-test("judgeInput supports continuity variants and judge selection", async () => {
+test("judgeInput supports continuity variants and judge selection with also_called", async () => {
   const dir = await packageDir("## Scene 1A\n**Hidden canon:** card under rug.");
   const turn = {
     scene_id: "1A",
@@ -85,6 +85,7 @@ test("judgeInput supports continuity variants and judge selection", async () => 
     narration: "She looks at the desk.",
     item_facts_before: {},
     item_facts_after: {},
+    item_facts_names: { phone: ["the handset"] },
   };
   const input = { runs: [{ opening: "", turns: [turn] }] };
   const options = {
@@ -97,7 +98,9 @@ test("judgeInput supports continuity variants and judge selection", async () => 
   const preamble = await judgeInput(input, { ...options, variant: "preamble", fetchImpl: stubFetch(preambleSeen) });
   const preambleInput = JSON.parse(preambleSeen[0].options.body).input;
   assert.equal(preambleInput.state.task, "You are a continuity editor for an interactive story. A player types a command, and a narrator writes what happens next. You check one turn at a time: did the narrator carry out the command, keep the story consistent with what is already true, and continue from where the story left off?");
-  assert.deepEqual(Object.keys(preambleInput.state), ["task", "command", "narration", "story_text", "given_facts", "opening", "earlier_narration", "hidden_canon"]);
+  assert.deepEqual(preambleInput.state.also_called, { phone: ["the handset"] });
+  assert.match(JSON.stringify(preambleInput.questions), /A name listed in `also_called` is another name for the same person or thing\./);
+  assert.deepEqual(Object.keys(preambleInput.state), ["task", "command", "narration", "story_text", "given_facts", "also_called", "opening", "earlier_narration", "hidden_canon"]);
 
   const preambleRequest = JSON.parse(preambleSeen[0].options.body).input;
   const newVariants = ["preamble-rubric", "preamble-holistic", "preamble-rubric-holistic"];
@@ -144,8 +147,8 @@ test("judgeInput supports continuity variants and judge selection", async () => 
     assert.equal(requests.length, 3);
     assert.deepEqual(requests.map((request) => Object.keys(request.state)), [
       ["command"],
-      ["command", "narration", "story_text", "given_facts"],
-      ["command", "narration", "opening", "earlier_narration", "hidden_canon", "given_facts"],
+      ["command", "narration", "story_text", "given_facts", "also_called"],
+      ["command", "narration", "opening", "earlier_narration", "hidden_canon", "given_facts", "also_called"],
     ].map((keys) => variant === "split-examples" ? [...keys, "examples"] : keys));
     assert.deepEqual(requests.map((request) => Object.keys(request.questions)), [
       ["needs_other", "take_from_other", "names_place"],
@@ -223,7 +226,10 @@ test("judgeInput uses the protagonist location question only for the protagonist
   const input = {
     runs: [{ turns: [{
       scene_id: "1A",
-      player_input: "Search the room.",
+      player_input: "Engine moves Kristin. Search the room.",
+      typed_input: "Search the room.",
+      command_typed: "Search the room.",
+      just_before: "Engine moves Kristin.",
       narration: "Kristin walks over to the desk.",
       item_facts_before: {
         Kristin: { place: "in the room", condition: [] },
@@ -233,6 +239,7 @@ test("judgeInput uses the protagonist location question only for the protagonist
         Kristin: { place: "in the room", condition: [] },
         desk: { place: "in the room", condition: [] },
       },
+      place_contents: { "in the room": ["desk"] },
     }]}],
   };
   await judgeInput(input, {
@@ -243,10 +250,15 @@ test("judgeInput uses the protagonist location question only for the protagonist
     fetchImpl: stubFetch(seen),
   });
   const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
-  assert.equal(requests[0].questions.moved.instructions, "Does `narration` show `Kristin` leaving the room `Kristin` was in during this turn?");
-  assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn outside the room or area where `Kristin` started, for example in another room, in a vehicle, or somewhere else outdoors.");
-  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` stays in the same room or area. Small steps inside it, like walking over to a desk or turning to someone, do not count as leaving it.");
-  assert.equal(requests[1].questions.moved.instructions, "Does `narration` show `desk` moving to a new place or into someone else's hands during this turn?");
+  assert.equal(requests[0].questions.moved.instructions, "At the end of this turn, is `Kristin` in a different room or area from the one `Kristin` started in? Answer from `narrator_narration` only.");
+  assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn in another room, in a vehicle, or somewhere else outdoors.");
+  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` ends the turn in the room or area where `Kristin` started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move.");
+  assert.equal(requests[1].questions.moved.instructions, "At the end of this turn, is `desk` held by a different person, or in a different place, than at the start of this turn? Answer from `narrator_narration` only.");
+  assert.equal(requests[0].state.command, "Search the room.");
+  assert.equal(requests[0].state.just_before, "Engine moves Kristin.");
+  assert.equal(requests[0].state.narrator_narration, "Kristin walks over to the desk.");
+  assert.deepEqual(requests[0].state.after_place_contains, ["desk"]);
+  assert.match(requests[1].questions.moved.criteria.false, /pocket or a bag/);
   await rm(dir, { recursive: true, force: true });
 });
 
@@ -340,6 +352,40 @@ test("judgeInput sends start and duplicate-name fact questions", async () => {
   assert.deepEqual(newThing.state.other_things, ["Kristin's laptop"]);
   assert.ok(Object.hasOwn(existingThing.questions, "start_conflict"));
   assert.ok(Object.hasOwn(newThing.questions, "same_as_other"));
+  await rm(dir, { recursive: true, force: true });
+});
+
+test("declared_axes limits condition questions and passes states", async () => {
+  const dir = await packageDir();
+  const seen = [];
+  await judgeInput({ runs: [{ turns: [{
+    scene_id: "1A",
+    player_input: "Open the drawer and check the phone.",
+    narration: "She opens the drawer and checks the phone.",
+    item_facts_axes: { drawer: [["open", "closed"]], phone: [] },
+    item_facts_before: {
+      drawer: { place: "kitchen", condition: ["closed"] },
+      phone: { place: "table", condition: ["unlocked"] },
+    },
+    item_facts_after: {
+      drawer: { place: "kitchen", condition: ["open"] },
+      phone: { place: "table", condition: ["unlocked"] },
+    },
+  }] }] }, {
+    packagePath: dir,
+    judges: "fact",
+    environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+    fetchImpl: stubFetch(seen),
+  });
+  const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
+  const drawer = requests.find((request) => request.state.thing === "drawer");
+  const phone = requests.find((request) => request.state.thing === "phone");
+  assert.deepEqual(drawer.state.states, ["open", "closed"]);
+  assert.equal(drawer.questions.condition_changed.instructions, "Does `narration` show `drawer` changing from one state in `states` to the other during this turn?");
+  assert.match(drawer.questions.condition_changed.criteria.false, /If `before_conditions` already has the state the narration shows, it did not change\./);
+  assert.ok(Object.hasOwn(drawer.questions, "condition_changed"));
+  assert.ok(!Object.hasOwn(phone.questions, "condition_changed"));
+  assert.ok(!Object.keys(phone.questions).some((name) => /^(condition_changed|new_condition_|gone_condition_|kept_condition_)/.test(name)));
   await rm(dir, { recursive: true, force: true });
 });
 

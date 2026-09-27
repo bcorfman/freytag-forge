@@ -1,7 +1,11 @@
 # World model: plan
 
-Status (2026-09-25): decisions W1-W10 settled; S1 merged (PR 480). S2
-started on branch `world-model-s2`; its task split is in section 11. Written at Brandon's request
+Status (2026-09-27): decisions W1-W13 settled; S1 merged (PR 480). S2
+tasks A and C merged (PR 481). Tasks B and D-I and the five judge fixes
+(2302ef6) are on branch `world-model-s2b`, which is not pushed and has no
+PR. The v36 comparison passes on the fixed judge. Next: the PR. See
+"Resume here".
+The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
 separate small decisions. This plan replaces decision 1e. It also gives
@@ -9,9 +13,521 @@ decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
 
-## Resume here (2026-09-25)
+## Resume here (2026-09-26, end of session)
 
-Branch `world-model-s1` holds all of S1 on top of main after PR 479:
+Start from branch `world-model-s2b` (in the main repository; check it out
+in a fresh worktree). It holds everything since PR 481, oldest first:
+
+- 17437be: task B, the reply names the parent.
+- 77c0240: task D, seats (W11). c06ee38, 7989583, c7705b8: fixes from
+  the first seat smokes.
+- ea59876: task E, seating before use (W12). 795580d: Jev answers a
+  probability; a yes is `noul > 0.5`.
+- d08defa: bench `item_facts.drop_rules`. 09e1d98: the two upright
+  narrator rules and the 1A setting fact "The workstation chair is
+  overturned." removed.
+- b2a827f: task F. The new "use" question, standing up before leaving a
+  seat (W13), a kind may declare `fixed`, and `seat` is movable
+  furniture.
+- 9210622: task G. The engine's steps reach the narrator as "Just before
+  this: ..."; the stay-seated rule; a seat placed at its own furniture
+  does not move; "overturned workstation chair" out of the 1A Details
+  line.
+- c29c2f7: task H. Kristin and Michelle are friends; the house is
+  "Michelle's house"; a fixed back door in the kitchen. 35d490f: the
+  entry text says "late-night shift", and Kristin "arrives at" the house.
+- 7ea8c2b: Brandon is placed in the 1B park; script turn 10 fixed.
+  79eeaa9: learned names (`add_alias`). 82b9c22 and d22a221: task I, the
+  driver's seat and the pick-up step.
+
+The full suite passes and ruff is clean at d22a221. The shipped
+narrator's 1A baseline (`.plans/world-model-s1/narrator-1a-baseline.json`)
+matches the code. The results of every smoke are recorded under tasks E,
+F and G in section 11.
+
+The Ringer manifests, checks and smoke variations lived in a session
+scratchpad and are gone. To rebuild the W13 stand smoke: take
+`item-facts-world-two-scene`'s item_facts and overrides, place the laptop
+`{parent: michelle_workstation, text: on Michelle's workstation}`, set
+`fixed_turns: 6`, turn both judges off, and use two 1A scripts:
+
+- `stand-overturned`: "Read the files on my laptop.", "Open the
+  drawer.", "Go out to the truck.", "Go back into the kitchen.", "Read
+  the files on my laptop.", "Pick up Michelle's phone from the kitchen
+  floor."
+- `stand-upright`: "Set the workstation chair upright.", "Type a note on
+  my laptop.", "Close my laptop.", "Walk to the back door.", "Search my
+  laptop for Michelle's notes.", "Pick up the workstation chair and carry
+  it out to the truck."
+
+### Task H done: friends, not roommates (c29c2f7)
+
+Brandon decided on 2026-09-26 to simplify the fiction so that place names
+resolve. Kristin and Michelle are longtime friends, and Kristin does not
+live in the house. The stand smoke's replies had named the house
+"Michelle's home" or "inside the house". None of those names resolved, so
+Kristin ended up outside every area.
+
+- The story lines came from ChatGPT Desktop and were applied verbatim.
+  Brandon then kept ChatGPT's "late-night shift" in the entry text and had
+  the 1A plot line say that Kristin "arrives at" Michelle's house.
+- The saved prompt missed four lines, which were found by a sweep and
+  included: `storylet-routes.yaml` 73, 147 and 495, and `plot.md` 223
+  ("tracked from her house").
+- `mcgehee_home` is now named `Michelle's house`, with the aliases
+  `Michelle's home` and `the house`.
+- The back door is a fixed item in the kitchen, placed in 1A with no text.
+  A reply that puts Kristin at the back door leaves her in the kitchen.
+- The shipped 1A baseline changed only in the scene line, the two bios and
+  the entry text's drive clause.
+- Ringer passed on the first attempt on Luna. The full suite passes, and
+  ruff is clean.
+
+### Next 1: the two-scene smoke replicate
+
+One replicate of `bench/variations/item-facts-world-two-scene.json` with
+the fact and continuity judges, for a few cents. It answers W5's two
+questions at the 92% bar (Brandon, 2026-09-26):
+
+- at least 92% of turns where a thing's place is Kristin are judged
+  consistent;
+- at least 92% of reported places resolve (`item_facts_unplaced`).
+
+One replicate near the bar means another replicate, not a decision.
+Seating stays on: opening the laptop is not use, so turn 6 ("Open my
+laptop.") adds nothing, and turn 13 happens at the truck, where there is
+no seat.
+
+Also watch the empty condition. After "Set the workstation chair
+upright.", the reply gave the chair an empty condition in 2 of 3 runs of
+the task G stand smoke (0 of 3 before it), so the chair stayed
+overturned. Turn 7 ("Stand the overturned chair back up.") and the
+drawer turns test it. If it recurs, the fix is a rule that replaces the
+existing condition sentence rather than adding one: `For "condition",
+give the new state in one or two words, like "open" or "upright".`
+
+Accepted, not fixed (Brandon, 2026-09-26): the narrator may stand
+Kristin up for "Open the drawer." despite the stay-seated rule (3 of 3).
+The reply now records it, so the world and the story agree.
+
+Result, first replicate (2026-09-26, at 35d490f): the run completed with
+19 accepted turns and no failed replicate.
+
+- **Places resolve: 41 of 43 (95%), which meets the bar.** Both misses
+  are from turn 16 of 1B, "Walk over to the man watching me and hand him
+  Michelle's phone.". The reply put Kristin and the phone at "stranger",
+  and the match call mapped "stranger" to "man". Brandon has no name
+  Kristin could know him by yet, so neither name resolved.
+- **Held things: 11 or 12 of 15 turns (73-80%), below the bar.** Every
+  place probe the fact judge ran on a held thing agreed with the tracked
+  place, 14 of 14. The failures come from two causes that are not the
+  label:
+  - Turn 10 of the script, "Take Michelle's phone out and throw it hard
+    against the kitchen wall.", runs after turn 9 has sent Kristin out to
+    the truck. The narration threw the phone from outside. The reply kept
+    the phone with Kristin, and turns 10 and 11 conflict.
+  - Turn 18 follows on from the turn 16 miss. The handed-over phone was
+    left unplaced, and turn 17's reply put it back with Kristin.
+  A per-turn "all facts right" measure scored 6 of 15. It counts faults
+  in other things, so it does not measure this question.
+- **Empty condition: no repeat.** Turn 7's chair reply was `["upright"]`.
+- Seen, but not measured: at turn 13 the narrator drove Kristin "back to
+  her house, where her laptop is", which is the old shared-home idea.
+
+Fixes after replicate 1 (7ea8c2b), both approved by Brandon: script turn
+10 now reads "Go back into the kitchen and throw Michelle's phone hard
+against the wall.". Scene 1B places Brandon "across the park from
+Kristin", and the bench match call shows a placed character's place. No
+alias was added, because narration safety scans aliases, so a "stranger"
+alias would reject narration in scenes where Brandon is not allowed. A
+"known as" label was considered and dropped, because the 1B narrator
+prompt already names Brandon.
+
+Result, second replicate (2026-09-26, at 7ea8c2b): the run completed with
+19 accepted turns.
+
+- **Places resolve: 50 of 52 (96%).** The two misses: at turn 7 Kristin
+  was placed "at Michelle's workstation", which copies the chair's
+  authored text and is a phrase, not a name. At turn 13 the truck was
+  placed at "driveway", which is not in the world.
+- **Held things: 15 of 15 place probes agree.** Every per-thing place
+  probe on a held thing agreed with the tracked place (lowest 0.53). The
+  handoff now lands: at turn 16 the match call mapped "stranger in the
+  park" to Brandon, the phone was tracked with Brandon through turn 17,
+  and it came back to Kristin at turn 18. The one held-thing conflict, at
+  turn 18, is the judge reading the place "Brandon" against narration
+  that calls him "the stranger". The judge does not know they are the
+  same person.
+- **The per-turn "all facts right" measure: 11 of 19.** This is the
+  capture accuracy that the v36 comparison measures, not W5.
+- **Empty condition: no repeat** (the turn 7 chair reply was `["upright"]`).
+- Seen in both replicates: at turn 13 ("Read the files on Michelle's
+  memory card with my laptop.") the narrator drives Kristin "back to her
+  house". At turn 17 the reply listed 1B Details nouns as things, which
+  created "stranger in the park" as a second entity alongside Brandon.
+
+Verdict on W5: both questions pass. The bare parent name reads as held,
+and replies use names, not phrases. No `Held by:` fallback is needed.
+
+Follow-ups on the two issues above (Brandon, 2026-09-26):
+
+- **Duplicate entity: fixed (79eeaa9).** The engine did not remember a
+  name the match call had resolved. worldkeeper's `add_alias` now stores a
+  learned name as a `wk_alias` fact, and the bench learns every name the
+  match call maps to a thing or character. It never learns a name mapped
+  to an area, so "floor" does not become a name for the kitchen. Replaying
+  live turns 16 and 17 now resolves "stranger in the park" to Brandon.
+- **Turn 13's drive: probed live, 10 calls per version, on the
+  replicate 2 prompt.**
+
+  | Version | Drives off | "Her house" | Reads at once |
+  |---|---|---|---|
+  | A: as recorded | 10 | 10 | 0 |
+  | B: without "Write only what leads up to it." | 10 | 10 | 0 |
+  | C: B, also without the reveal line | 10 | 3 | 0 |
+  | D: engine step, seated in the driver's seat | 1 | 1 | about 3 |
+  | E: D without the reveal line | 2 | 0 | about 1 |
+  | F: D, and the engine hands her the laptop | 0 | 0 | 10 |
+
+  The two prompt lines are not the cause. The narrator ignores where
+  Kristin already is and invents a trip home. In D, 6 of 10 narrations had
+  Kristin walk round to fetch the laptop before reading. Engine steps fix
+  the turn, in line with the rule that the engine performs a command's
+  prerequisite steps. The build is task I.
+- **Task I (Brandon approved, 2026-09-26):**
+  - The truck gets a fixed `driver's seat`.
+  - Items may declare an authored `take_text`, and the laptop's is
+    "Kristin picked up her laptop."
+  - The seating step treats "already seated" as having a seat as parent,
+    not merely an enterable parent, so being inside the truck no longer
+    counts.
+  - It prefers the seat next to the thing being used.
+  - It hands the protagonist the thing, saying its `take_text`, unless she
+    already holds it or it rests on a supporter.
+  - The task also fixes `add_alias`, which called the host's resolver
+    callback when checking for a conflicting name.
+
+Task I was built as 82b9c22. The third replicate found a hole: the
+narrator had left the laptop on the driver's seat, and a seat is a
+supporter, so the engine skipped the pick-up. d22a221 fixes it. A thing
+is now used in place only when it rests on the furniture its seat serves
+(`seat_for`).
+
+Results of replicates 3 and 4 (2026-09-26), each with 19 accepted turns:
+
+- **Places resolve: 40 of 40, then 41 of 41.**
+- **Turn 13, in replicate 4:** the engine seated Kristin and handed her
+  the laptop. The narration reads the card at once, with no drive and no
+  "her house".
+- **The phone handoff:** "stranger" resolves to Brandon, and the phone
+  stays tracked with him through turn 18.
+- **Fact judge, per turn, all facts right:** 10, 11, 13 and then 14 of 19
+  over replicates 1 to 4.
+- **Continuity judge, replicate 4:** 0 contradictions and 0 scene
+  restarts.
+- **Judge noise left over:**
+  - At turn 13 the judge counts the engine's seating move as a start
+    conflict, because the narration does not show her sitting down.
+  - At turn 18 it scores "Brandon" against narration that says "the
+    stranger".
+
+The v36 comparison, first pass (2026-09-26):
+
+- **Before comparing, the bench's measurement was fixed (f0f58a4).**
+  - The before-state is now read after the engine's seating steps and
+    before the turn. It used to be read after the turn, so a
+    scene-leaving turn was scored with Kristin already in 1B.
+  - Both judges now receive `also_called`, each thing's other names.
+  - `rejudge.py` re-scores any saved results folder.
+- **v36's 2 saved replicates, re-scored with the current judges:** almost
+  unchanged, 28 of 38 turns with every fact right.
+- **Current branch at f0f58a4:** 4 single-replicate Ringer tasks.
+- **Script turn 10 is left out of both arms,** because the script changed
+  there.
+
+| Measure (per-thing judge answers) | v36 (n=2) | Branch (n=4) |
+|---|---|---|
+| Place changes captured | 18/25 (72%) | 42/48 (88%) |
+| Condition changes captured | 6/10 (60%) | 16/31 (52%) |
+| Turns with every fact right | 26/36 (72%) | 43/69 (62%) |
+
+- **Turns 4, 6, 12 and 13 fail in all 4 replicates.**
+  - **Turns 4 and 12 are real capture misses.** The narrator unlocks the
+    truck or starts its engine on its own, and the reply does not
+    report it.
+  - **Turn 6 is a measurement artifact.** The card's place label changes
+    from the authored "with Kristin" to the bare "Kristin" when Kristin
+    moves, and the judge scores that as an invented change. v36's store
+    never changed labels, so this hurts only the branch arm. It cost 3
+    turns.
+  - **Turn 13:** the narrator reopens a laptop that is already open.
+
+Why condition changes are missed (2026-09-27, the 4 comparison
+replicates): 16 of 31 condition changes the judge saw were captured. The
+engine lost no condition that a reply reported; every miss is a reply
+that never reported the change.
+
+- **8 misses: the truck.** The narrator itself unlocked the truck (turn
+  4) or started its engine (turn 12). The truck has no declared state, so
+  nothing in THINGS asks for it.
+- **4 misses: turn 13.** The narrator re-opens a laptop that is already
+  open. The hypothesis is that `open (or closed)` reads as "either" to the
+  8b model; a probe is running.
+- **3 misses: other small cases.**
+- **An engine gap, found in replicate 3.** When the narrator had already
+  seated Kristin, the seating step returned early and skipped the laptop
+  pick-up. The fix is running as a Ringer task.
+
+**Bookmarked (Brandon, 2026-09-27, "for now").** Capture is scored only
+on places and declared state axes. Changes to undeclared conditions that
+the narrator makes on its own, such as the truck unlocked or its engine
+running, do not count as misses. Brandon is not convinced this will stay
+unimportant, so revisit it before S4 (runtime capture). The alternative
+is declaring more axes so that THINGS gives the narrator something to
+report against.
+
+Built after that analysis (2026-09-27):
+
+- **7815dd3: judge records use structural parents.** The narrator keeps
+  its authored labels, so "with Kristin" becoming "Kristin" is no longer
+  scored as a change.
+- **b82761f: the pick-up also runs when Kristin is already seated.**
+- **The turn 13 condition-hint probe:** the narrator writes "opens her
+  laptop" 10 of 10 times with both `open (or closed)` and `open`. The
+  rendering is not the cause, so it was not changed.
+- **e7873af: condition capture is scored only on declared axes** (the
+  bookmark above). Records carry `item_facts_axes`, and old records get
+  theirs from the package through `rejudge --variation`. The fact judge
+  asks no condition question for a thing without axes. It names `states`
+  for a thing with axes, and it says that a state the thing already has
+  did not change.
+
+**Next:**
+- Re-score v36 with `rejudge` (judge calls only).
+- Run fresh replicates of the branch. The four comparison replicates
+  predate these fixes, so they cannot be re-scored.
+
+The v36 comparison, second pass (2026-09-27): v36 re-scored with the
+fixed judges; 4 fresh replicates of the branch at dd01cdf. Turn 10 is left
+out of both arms.
+
+| Measure | v36 (n=2) | Branch (n=4) |
+|---|---|---|
+| Place changes captured | 17/26 (65%) | 40/46 (87%) |
+| Condition changes captured (declared axes) | 6/8 (75%) | 15/16 (94%) |
+| Turns with every fact right | 26/36 (72%) | 47/68 (69%) |
+
+Both capture categories beat v36, which meets the S2 exit criterion. The
+turn-level measure is held down by judge logic faults that the
+per-change-type counts are not exposed to:
+
+- **Turn 4, a round trip.** Kristin goes out to the truck and comes
+  back, so her end place equals her start place. The judge's "moved"
+  answer then scores it as a missed change.
+- **Turn 6, a refinement.** "Michelle's house" becomes "kitchen" when she
+  walks to the workstation. The judge scores the kitchen as the wrong
+  after-place, although it is a more specific place inside the given one.
+- **Turn 13, engine steps in the command.** The judge receives the
+  command with the engine's steps glued on ("Kristin sat down in the
+  driver's seat. …"), so it thinks she moved.
+- **Turn 12, pocket to hand.** Taking the phone out of her pocket counts
+  as a move, although its holder does not change.
+- **Turn 8, a walk inside the room.** Crossing the kitchen to the
+  workstation is scored as a start conflict.
+
+One real narrator fault: in replicate 1 at turn 12 the narrator never
+walked Kristin to the truck, and turn 13 derailed after it.
+
+**Decided (Brandon, 2026-09-27): fix the five judge faults first, then
+open the PR.** The faults were poorly phrased questions: they asked about
+events during the turn, while scoring needs where a thing started and
+where it ended. Built as 2302ef6 (three Ringer rounds on Luna):
+
+- Round trip: the protagonist's move question asks whether she ends the
+  turn in a different room or area from where she started.
+- Refinement: `judge_input` builds `place_contents` from the package and
+  the tracked places, at any depth, and the judge gets
+  `after_place_contains`. The plan's first idea, skipping "moved" when
+  the tracked end place equals the start, was dropped: it grades the
+  tracked places with themselves.
+- Command text: the judge gets the typed command, the engine's steps as
+  `just_before`, and `narrator_narration`. Move questions are answered
+  from the narrator's own text. A probe on turn 13 (replicates 2-4) found
+  the cause was the story's ending sentence ("heads for the park"), not
+  the steps: "moved" was 0.69 as recorded, 0.07 without the story text,
+  and 0.90 without the steps.
+- Holder unchanged: anywhere on the holder, such as a hand, a pocket or
+  a bag, is the same place. No pocket part was added to the world model;
+  the judge reads prose, so the question had to change.
+- In-room walk: the protagonist's start question asks whether she
+  started outside `before_place`.
+
+Re-scored with the fixed fact judge only (the continuity judge did not
+change), turn 10 excluded:
+
+| Measure | v36 (n=2) | Branch (n=4) |
+|---|---|---|
+| Place changes captured | 18/24 (75%) | 38/40 (95%) |
+| Condition changes captured (declared axes) | 6/10 (60%) | 15/16 (94%) |
+| Turns with every fact right | 26/36 (72%) | 61/68 (90%) |
+
+Turns 4, 8, 12 and 13 now pass in every replicate. Of the 7 remaining
+failed turns, 2 are one real engine fault: at turn 15 in replicates 3
+and 4 the reply put Kristin at "bench" in the 1B park, the park has no
+bench entity, and the name resolved to the 1A workstation chair (by the
+match call in replicate 3, by a learned name in replicate 4). The match
+call should not resolve to a thing in another scene's area, and 1B may
+need the bench declared. Fixed as b1a1a35 (Brandon chose both, 2026-09-27): the bench is declared
+as a fixed seat placed in the 1B park, and the match call lists only things
+in play (the scene's `item_ids`, things in the protagonist's top-level area,
+and things she carries). The 1A card knowledge that names "a bench in the
+park" lists the bench, or the leakage matrix counts "bench" as a future term
+in 1A. One live replicate (`bench/results/item-facts-s2-t15-verify`, 19
+turns) kept Kristin in the Los Angeles park through all of 1B. That reply
+tracked the park bench as a thing in the park rather than placing Kristin at
+it, so the "bench as her place" path is covered only by the deterministic
+test that "bench" resolves to the park bench.
+
+### Story survey: places, things and NPCs (2026-09-27)
+
+Brandon asked for a survey of the whole story for concerns like turn 15's,
+with NPCs placed the way 1B places Brandon (`character_placements`, which
+works live: "stranger in the park" resolved to Brandon and the phone handoff
+landed). The general rule and checklist are now in
+`docs/world-model-grounding.md`. Only 1A and 1B are converted today. Every
+later scene has no placements at all, so every item below is a gap, not a
+regression. Story changes start in `plot.md` and follow Brandon's decisions;
+prose goes to ChatGPT Desktop.
+
+**Places: the scene's area is not where its text happens.**
+
+- 2A: `location_id` is `facility_perimeter`, but the entry text, Setting and
+  beats are in Brandon's hideout, a dead communications center. There is no
+  hideout area.
+- 2C: `purge_chamber`, but the Setting is "command levels and detention
+  sectors", and no text mentions a purge chamber.
+- 3C: `facility_escape`, but the entry text is in the broadcast chamber, and
+  the Setting starts in Rebecca's office.
+- 1C: `regional_facility`, but the text is a freight terminal with loading
+  docks and an observation shaft.
+- Named sub-places with no area: Rebecca's executive office (3B, 3C), the
+  relay chamber (3B), the medical level (2B, 3A), the records archive's
+  terminals (2B), the service entrance and maintenance routes (1C, 3C).
+- No shared parent: the seven facility areas are all top-level. The match
+  call's scope and `together()` treat them as unrelated worlds. Proposed: one
+  facility area as their parent, which is a plot.md decision.
+
+**Things: named by the story, never declared or placed.**
+
+- 1B dead drop: the handoff cue has "a transit token and a handwritten number
+  sequence ... beside Michelle's photograph". `transit_card` is in 1B-2A
+  `item_ids` but is never placed. The number sequence and the photograph are
+  not entities. The drop should get the card's treatment: hidden at the bench,
+  then moved to Kristin and revealed by the fact that records finding it. In
+  replicate 3 the narrator already invented "tape under the bench".
+- The truck and laptop are left at Michelle's house forever. The 1A bridge
+  drives Kristin to the park, but the truck is never placed in 1B. "Get in my
+  truck" in 1B would resolve to the truck at the house. The laptop has the
+  same problem wherever the story expects Kristin to have it.
+- `override_codes` (3A) and `portable_archive` (3C) have no new-form
+  placement. The archive still uses the old string placement "with Rebecca in
+  her hands", so it has no world parent.
+- 1A: the tablet and work bag are "missing" (section 4.3) but are not tracked.
+  The drawer's contents are still a setting-fact sentence (W9 asks for
+  `contents:`).
+
+**NPCs: presence, companions and captivity.**
+
+- Brandon is the only placed NPC (1B). From 1C on he travels with Kristin (1B
+  bridge: "Kristin and Brandon headed for the freight terminal"). W8's
+  `companions: [brandon]` and the `brandon_identified` `accompany` effect were
+  never declared, so from 1C Brandon stays tracked in the park.
+- 2B: the Setting says "Brandon's hideout through a remote connection".
+  Decide whether Brandon is in the archive with Kristin or remote. If remote,
+  he is not placed, and he is not a companion in 2B.
+- 3C: Brandon holds the relay open ("Brandon's relay held open") and is not a
+  participant. He should be placed at the relay, not travel with Kristin.
+- Michelle is a participant in 1A-2C while missing or captive, which is
+  correct because presence is not participation. She needs a placement from
+  3A in the detention level, as a captive. `michelle_reached` should declare
+  her `free` and, if the plot says so, `accompany` Kristin.
+- Senior official (3A): a participant with no placement. He is a prisoner in
+  the detention level.
+- Rebecca: a participant in 3B and 3C with no placement (her office).
+  `rebecca_captured` should `set_axis` her captive (W7 already names this
+  effect). She is also the parent the portable archive needs.
+- Charles is never a participant. He is only heard (1C "recorded conference",
+  3A "Charles's broadcast"), except 3B's Details "Charles appears". Decide
+  whether 3B has him in person. If so, he needs participation and a
+  placement.
+- Characters listed in a scene's **Characters** section but not in
+  `participant_ids`: Charles and Rebecca in 1C, 2B, 2C and 3B, and Brandon in
+  3C. Most are heard, not present. Each one is a plot.md decision.
+
+**Decided (Brandon, 2026-09-27), after checking each question against the
+text:**
+
+1. **The facility is one area tree.** `regional_facility` becomes the parent
+   of `facility_perimeter`, `janus_archive`, `purge_chamber`,
+   `detention_level`, `broadcast_relay` and `facility_escape`. A new
+   `freight_terminal` area inside it is 1C's location. The knowledge entries
+   that already reference `regional_facility` then mean the whole
+   installation. No "the facility" alias is added until a leakage check shows
+   it is safe, because 1A and 1B narration may use the word first.
+2. **2A starts in Brandon's hideout.** Add a `brandon_hideout` area, "Brandon's
+   hideout". Kristin and Brandon get 2A `character_placements` there. The
+   story fact set on entering the facility (2A.3) declares an `on_assert`
+   move of Kristin to `facility_perimeter`, and Brandon follows as her
+   companion. `location_id` stays `facility_perimeter`. The 2A task must first
+   check what else reads `location_id`.
+3. **Brandon is present in 2B** and travels as Kristin's companion. The
+   Setting line's "remote connection" is his network, not his location.
+4. **Charles is never placed.** Every appearance is remote: surveillance
+   footage in 1C, orders in 2C, "appears remotely" in 3B, and a remote command
+   site in 3C.
+5. **Michelle** is placed in `detention_level` in 3A as a captive.
+   `michelle_reached` sets her free. She travels with Kristin **from 3B on**,
+   not from the moment she is reached: 3B declares
+   `companions: [brandon, michelle]`, and no `accompany` effect is added in 3A.
+6. **Characters listed but not participants:** Charles and Rebecca stay
+   unplaced in 1C, 2B and 2C (footage, private contact, orders). In 3C,
+   Brandon joins `participant_ids` and is placed at the relay, not as a
+   companion. In 3B his move to the relay is a fact's `on_assert` move.
+
+**Proposed order.** Scene by scene, as each one enters a bench script:
+
+1. 1B: the dead drop and the truck's 1B place.
+2. 1C: Brandon as a companion, and the terminal areas.
+3. 2A-2C: the hideout, the areas' shared parent, and Brandon in 2B.
+4. 3A-3C: the NPC placements, captivity effects, the offices and the relay,
+   and the archive's new-form placement.
+
+Each scene is one Ringer task of structured YAML edits. The shipped
+narrator's payloads for converted scenes are guarded by a stubbed capture, as
+1A and 1B are.
+
+The saved second-pass runs are in the main checkout's `bench/results/`,
+which is gitignored and so exists only on this machine:
+
+- `item-facts-s2-world-two-scene-rep1` to `-rep4`: the branch replicates.
+- `item-facts-v36-rescore-s2`: v36 re-scored with the fixed judges.
+- `item-facts-s2-rescore-judgefix-rep1` to `-rep4` and
+  `item-facts-v36-rescore-judgefix`: fact judge re-scored at 2302ef6.
+- `item-facts-s2-comparison-tools`: the scripts. `compare.py` computes
+  capture per change type, with turn 10 excluded:
+  `compare.py V36_RAW -- REP_RAW... --exclude-turns 10`. The raw inputs
+  are each folder's `jev-raw.json` or `fact-tracking-jev-raw.json`.
+  `analyze.py` computes the W5 metrics for one results folder, and
+  `score.py` aggregates re-scored judgments.
+
+To re-score a folder: `uv run python bench/calibration/rejudge.py
+--results bench/results/<folder> --out <new folder>`.
+
+### Next 2: the v36 comparison, then the PR for `world-model-s2b`
+
+### S1 record
+
+Branch `world-model-s1` held all of S1 on top of main after PR 479:
 
 - task 2: bd8c46b and 529b6a0;
 - task 3: 515201e and cf31bd2;
@@ -21,8 +537,7 @@ Branch `world-model-s1` holds all of S1 on top of main after PR 479:
 
 The full suite is green (747 tests, 92.84% coverage), and ruff is clean across
 the whole repository. The shipped narrator's 1A payloads are still
-byte-identical to the pre-S1 baseline. The branch has not been pushed and has
-no PR. **Next:** open the S1 PR, then start S2.
+byte-identical to the pre-S1 baseline. S1 merged as PR 480.
 
 The S1 exit is met:
 
@@ -782,10 +1297,145 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
   along: the protagonist's own placement replaces where she starts, not the
   scene's `location_id`; and the companion and protagonist roles are
   written without gendered pronouns, like the rest of the guide.
+  Done as 17437be on branch `world-model-s2b` (two Ringer rounds
+  squashed). Choices the plan left open: a character named at furniture
+  (Kristin "at the workstation") lands in the furniture's area, since a
+  character cannot be on a supporter; the match call lists nearby areas
+  and placed characters only when it carries a place name, and
+  `_MATCH_SYSTEM` gained one sentence mapping a spot in a room to the
+  room. Review found what the check missed: the echo test guessed the
+  relation from the parent's kind, which refused an echo of the fixed
+  drawer (`part_of`); three owner tests had been weakened to expect match
+  calls; and required repository tests were missing because the check
+  grepped for words, not test names. Lesson for later checks: require
+  named tests and run them.
 - **Task C: W8's front matter.** `companions` and `character_placements`,
   in the loader and in `apply_scene_placements`, plus the decided
   `together()` rule in `worldkeeper`. It is independent of A and B. Done as
   1ab6d22.
+- **Task D: seats (W11).** `enterable` and `enter_pole` in `worldkeeper`,
+  item axes and `seat_for` in `world.yaml` and the loader, the workstation
+  chair declared as a seat, and THINGS giving a furniture's seat with it.
+  The shipped narrator's 1A payloads must stay byte-identical. Then a
+  small smoke with "Sit in the workstation chair." on an overturned chair,
+  separate from the v36 script.
+  Done as 77c0240 (two Ringer rounds). Round 2 removed two library
+  changes nobody asked for and added the seat tests round 1 skipped. The
+  smoke runs led to three follow-ups: c06ee38, 7989583 and c7705b8 (see
+  "Resume here"). W12 replaces seat smoke 3 as the next step.
+- **Task E: seating before use (W12).** `use_seated` on items and
+  `right_text`/`enter_text` on seats in `world.yaml` and the loader, with the
+  loader rejecting a seat that lacks either line. A Python Jev client and
+  the yes/no question. The two checks and the added sentences on the bench
+  turn path. The shipped narrator's 1A payloads must stay byte-identical.
+  Unit tests stub Jev and cover: overturned and unseated (both lines),
+  upright and unseated (enter line only), already seated (nothing), in the
+  truck (nothing), no seat nearby (nothing), and a "no" answer (nothing).
+  The seating logic is `storygame/runtime/seating.py`, story-agnostic and
+  handed the question as a callable, so S4 can reuse it with the Worker
+  route. The bench turn record's `player_input` is the command the narrator
+  received, including the added steps, so the judges do not count the
+  sitting as beyond the command. The typed input is kept as
+  `typed_input`, and the added steps as `seating_steps`.
+  Done as the commit after ac07f03 (two Ringer rounds; round 1 skipped the
+  named tests). Known gap for S4: the bench applies the seating before the
+  turn, so a rejected turn keeps Kristin seated with no narration. The
+  runtime version should run inside the turn's snapshot so a rejection
+  undoes it.
+  Jev answers a probability (`{"type": "noul", "noul": 0.78}`), not a
+  boolean, so the first smoke asked but never seated anyone; 795580d reads
+  `noul > 0.5`, as `bench/jev-judge.mjs` does.
+  W12 seat smoke (2026-09-26, 3 replicates each of `laptop-overturned` and
+  `laptop-upright`, variation in the session scratchpad): Jev answered all
+  questions correctly (yes for reading files; no for setting upright,
+  knocking over, standing up and carrying the laptop). The engine added the
+  right steps every time it was asked, and the narration never seated
+  Kristin before righting the chair. Both steps narrated in order 4 of 5
+  times (one reply dropped the sit sentence); the sit step alone narrated 2
+  of 3 times (one reply righted the already upright chair instead). The
+  remaining faults are capture, not W12: a narrated stand-up not captured,
+  so Kristin stayed "in" the chair and no question was asked; "Set the
+  workstation chair upright." captured as Kristin sitting in it (2 of 3);
+  and one reply putting the chair's place as Kristin, after which seating
+  was refused as a cycle.
+  Without the two-line upright rule (d08defa added `item_facts.drop_rules`;
+  same scripts and replicates, every prompt confirmed without the lines):
+  the added steps were narrated in order 12 of 12 times (both steps 7 of 7,
+  sit alone 5 of 5), against 6 of 8 with the rule; no turn seated Kristin
+  before righting the chair; Jev answered every question correctly. The
+  "set upright" command was no longer captured as Kristin sitting. Both arms
+  still have the narrator call the chair "overturned" after it was righted,
+  which looks like the authored setting fact "The workstation chair is
+  overturned." still reaching the prompt (W9's stale-sentence problem), and
+  one reply captured that description as the chair's state. Brandon
+  (2026-09-26): remove both. The two lines are gone from
+  `_SINGLE_CALL_RULES`, and "The workstation chair is overturned." is gone
+  from the 1A setting facts; the chair's axis already starts it overturned.
+  The shipped narrator's 1A baseline was regenerated, and it differs only
+  by that sentence.
+  Then a seat smoke with "Read the files on my laptop." in the kitchen, on
+  an overturned chair and again on an upright one, and a run without the
+  two-line upright rule to decide whether it goes.
+- **Task F: the "use" question, standing up, movable seats (W12, W13).**
+  The Jev "use" question is rewritten so opening, closing and turning the
+  laptop on or off are not use. A second Jev question and `leave_text`
+  stand a seated Kristin up before a command that needs it. `worldkeeper`
+  kinds may declare `fixed`, and `seat` becomes `[furniture, supporter]`
+  with `fixed: false`. The check calls Jev live on eight "use" cases and six
+  "stand" cases; the old question is asked the same "use" cases for the
+  record. The shipped narrator's 1A payloads stay byte-identical.
+  Done as b2a827f (two Ringer rounds; round 1 skipped the named tests, as
+  in task E). Live Jev: the old "use" question answered "Open my laptop."
+  as use; the new one answered all 8 "use" cases and all 6 "stand" cases
+  right. Next: a seat smoke with a stand-up case.
+  W13 stand smoke (2026-09-26, `stand-overturned` and `stand-upright`, 3
+  replicates each, variation in the session scratchpad, laptop on the
+  workstation): Jev answered every seating and standing question right,
+  and every added step was narrated, in order (8 stand steps, 9 sit
+  steps). The movable chair was carried to the truck 2 of 3 times, and
+  held by Kristin once. Faults found, none in the engine's steps:
+  1. With two added steps (right the chair, sit), the narration stopped
+     after them and never read the files, and the reply omitted
+     item_facts (3 of 3). With one step it finished the command.
+  2. "Open the drawer." while seated: Jev said stay seated, but the
+     narration stood her up 3 of 3, and the reply kept her in the chair.
+  3. A reply giving the chair's place as the workstation put the chair on
+     the desk (3 of 3 in `stand-upright`), since the chair is no longer
+     fixed.
+  4. The narration called the righted chair "overturned" twice. The 1A
+     Details line "overturned workstation chair" still reaches the prompt.
+  Brandon (2026-09-26): fix 1, 3 and 4, and add a rule for 2. Task G:
+  1. The engine's steps reach the narrator as a separate PLAYER line,
+     "Just before this: ...", not as commands in front of the player's
+     command. The seat's authored lines become past-tense statements
+     ("Kristin set the workstation chair upright."). The turn record and
+     the judges still get the steps with the command.
+  2. While Kristin is seated when the prompt is built, the bench narrator
+     gets one rule: "Kristin stays sitting in the workstation chair."
+     She is only seated then when Jev said she need not stand.
+  3. A reply giving a seat's place as the furniture it is `seat_for` is a
+     quiet no-op, like a thing named as its own place.
+  4. "overturned workstation chair" leaves the 1A Details line. The
+     bullet "The chair at Shelly's workstation has been overturned." stays:
+     it never reaches the narrator, and knowledge and storylets cite the
+     overturned chair as evidence.
+  Done as 9210622 (one Ringer round). Stand smoke rerun on it (same
+  scripts, `item-facts-w13g-stand-smoke-*`): Jev and the engine's steps
+  were right on every turn.
+  1. Fixed: with two added steps, the command was carried out 5 of 5
+     times (was 0 of 3). The narration now shows the command, not the
+     steps.
+  2. Not fixed by the rule: the rule was in every prompt, and "Open the
+     drawer." still stood her up 3 of 3. "Close my laptop." kept her
+     seated 3 of 3. The replies now record her standing, so world and
+     story agree.
+  3. Fixed: the chair stayed off the desk 3 of 3.
+  4. Fixed: no narration called the chair overturned.
+  Capture faults left, for the two-scene run to measure: "Set the
+  workstation chair upright." captured with an empty condition, so the
+  chair stayed overturned (2 of 3); and places the engine did not resolve
+  ("Michelle's home", "inside the house") left Kristin outside every area,
+  so no seating question was asked on the next laptop command.
 - Then the smoke replicate and the v36 comparison below.
 
 - Capture produces operations; THINGS follows W4 and W5; the reply names the
@@ -935,6 +1585,142 @@ the round 7 USB drive in the drawer, was already removed in round 8 by fix A
 hidden-card leak is closed by the `hidden` axis. The list would also need
 text matching of narrated names against authored ones, which W1 rejected,
 and it overrides 1c. Also rejected: contents left as setting text only.
+
+W11. **Seats. Decided (Brandon, 2026-09-25).** When the narration has
+Kristin sit down, the reply names the chair, and the world must hold her
+there. Following Inform 7, a container or supporter may be `enterable`, and
+a character's parent is an area or an enterable container or supporter
+(invariant 6). `vehicle` is enterable by kind; a story kind or an item may
+declare `enterable: true`. An enterable thing may declare an `enter_pole`:
+a character entering it sets that pole, as taking a thing from a closed
+container opens it (W3). So the workstation chair is an enterable
+supporter with an `overturned|upright` axis declared in `world.yaml` and
+`enter_pole: upright`: Kristin can never sit in an overturned chair. A
+seat may declare `seat_for` a piece of furniture; when that furniture is
+given in THINGS, its seat is given with it, so the narrator has the chair's
+name and state when it seats her by its own initiative. A reply that puts
+Kristin "at" furniture that is not enterable still lands her in its area:
+that reply does not say she sat, and seating her anyway would narrate a
+change the prose never showed. Whether the narration shows her righting
+the chair before sitting is measured in its own smoke run first; a short
+prompt rule follows only if it fails most of the time (the narration fix
+ranking).
+
+W12. **Seating before using a thing. Decided (Brandon, 2026-09-26).** Seat
+smokes 1 and 2 showed the narrator seating Kristin before it righted the
+overturned chair (0 of 6, then 2 of 5 turns in the right order). A prompt
+rule asks the narrator to get the order right. Instead, the engine does the
+steps itself, before narration, as Inform 7 does with implicit actions
+("(first taking the lamp)"). Brandon limited it to the one case that
+matters: sitting is needed only to use a computer. No other command seats
+her.
+
+- **Data, not branches.** An item may declare `use_seated: true` in
+  `world.yaml`; in continuity-initiative, only `kristin_laptop` does. A seat
+  declares its two authored lines, `right_text` ("Set the workstation chair
+  upright.") and `enter_text` ("Sit in the workstation chair."). The engine
+  never builds these sentences itself (W4). Runtime code names no story
+  thing.
+- **The trigger.** One short yes/no question goes to Jev (`typesafe/jev` on
+  Cloudflare, chosen by Brandon as cheap and fast): does this command use
+  that thing? "Read the files on my laptop." is yes; "Take my laptop to the
+  truck." is no. Jev reads only the player's input and the thing's name,
+  never narration.
+- **What "use" means (Brandon, 2026-09-26).** Using the laptop means
+  working on it: reading, typing, or searching its files. Opening or
+  closing it, turning it on or off, moving it, carrying it, picking it up
+  and putting it down are not using it. The first question named only the
+  moving verbs as "no", so "Open my laptop." (turn 6 of the two-scene
+  script) would probably have seated Kristin. Task F rewrites the question
+  and checks it live.
+- **When the question is asked (task E, 2026-09-26).** Only on a turn where
+  the steps could apply: a `use_seated` thing is `together()` with Kristin
+  (held by her, or in her area), a seat is `together()` with her, and her
+  parent is not already enterable. The world decides this, with no reading
+  of the input. The earlier wording, "a turn whose input names the thing",
+  would have needed name matching over the player's words, and the bench's
+  only reference detection is an 8b match call. "Near" is `together()`,
+  not the same area: Kristin starts 1A in the house, and the chair is in
+  the kitchen.
+- **Bench first, Worker later.** On the bench (task E), a Python client
+  calls Jev on the Cloudflare API directly with the local
+  `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AI_TOKEN`, as
+  `bench/jev-judge.mjs` already does. The bench runs only on a developer's
+  machine and exposes no endpoint. The Worker route below is for the
+  runtime turn, in S4.
+- **Auth guard (Brandon, 2026-09-26).** No one outside the game may call
+  Jev, for their own use or to run up the Cloudflare bill. The question
+  goes through the existing narration Worker as a new route, never straight
+  from Railway to the Cloudflare API, so the Cloudflare credentials stay in
+  the Worker only. The Worker sends a fixed yes/no question and takes only
+  the player's input and the thing's name; it never forwards a
+  caller-supplied prompt or model. The Worker's shared bearer token
+  becomes required: today `.plans/cloudflare.js` checks it only when
+  `DEMO_SHARED_TOKEN` is set, so the Worker fails open. With no token set,
+  both routes must refuse every request. This covers the narration route
+  too. Rate limits and the $5 daily model budget, which the Jev route
+  shares, are in [rate-limits.md](rate-limits.md).
+- **The two checks, on a yes.** The seat to use is the first seat, by ID,
+  that is `together()` with Kristin. On a no, or with no answer, nothing is
+  added, and no answer is recorded as an issue. Otherwise:
+  1. if the seat is not at its `enter_pole` (the chair is overturned), set
+     that pole and add the seat's `right_text`;
+  2. if Kristin's parent is not the seat, move her into it and add the
+     seat's `enter_text`.
+  An upright chair gets only step 2; a seated Kristin gets neither.
+- **The narrator is told.** The added lines go before the player's command
+  as separate sentences, in the same way the command splitter
+  (`storygame/runtime/command_split.py`) hands the narrator a compound
+  command. The world changes are committed before narration, so no fact
+  changes after rendering. The narrator narrates the steps as material,
+  not as a rule to obey.
+- **What it does not cover.** The narrator seating her on its own
+  initiative, when the command never asked, is left to `enter_pole` for
+  state. The two-line upright rule (c7705b8) is a candidate for removal once
+  W12 lands; remove it only if a seat smoke shows the order still holds
+  without it (principle 5).
+
+Rejected: seating her before any command that names the workstation
+("Search under the workstation." does not need a seat); a list of "use"
+verbs (a fixed action table, forbidden by AGENTS.md); asking before any
+command that names the laptop with no judgement ("Take my laptop to the
+truck." would seat her first).
+
+W13. **Standing up before leaving a seat. Decided (Brandon, 2026-09-26).**
+The counterpart of W12. The engine tracks whether a character is seated or
+standing, and a seated character can move only once she stands. The seat
+smokes found the gap: the narration showed Kristin standing up, the reply
+left the change out, and the world kept her in the chair.
+
+- **Posture is the tree.** Kristin is seated when her parent is a seat, a
+  thing with `seat_for`. Otherwise she is standing. A vehicle is not a seat:
+  sitting in the truck is not covered.
+- **Data, not branches.** A seat declares a third authored line,
+  `leave_text` ("Stand up from the workstation chair."), next to
+  `right_text` and `enter_text`. A seat without it fails to load.
+- **The trigger.** Only while Kristin is seated, one Jev question: does
+  she need to get up to carry out this command? The state holds the
+  command, the seat's name, and the names of the things within reach of the
+  seat. Within reach means the seat, the furniture it is `seat_for`,
+  everything inside or on that furniture, and everything Kristin holds. It
+  is yes when the command sends her somewhere else, or acts on a thing that
+  is not within reach. While she is standing, the question is not asked.
+- **The step, on a yes.** The engine moves her from the seat to the seat's
+  area and adds the seat's `leave_text` before the command, as W12 does. On
+  a no, or with no answer, nothing is added, and no answer is recorded as
+  an issue. A turn that stands her up does not also ask the W12 question.
+- **A reply that moves a seated Kristin elsewhere** without the step is
+  accepted as standing up and then moving. Refusing it would drop a
+  narrated change, which is a severe failure. The step before the turn
+  should make this rare.
+
+**Seats are furniture, but the chair can move (Brandon, 2026-09-26).** The
+`seat` kind becomes `[furniture, supporter]`. Furniture is fixed by default,
+so a kind may now declare `fixed`, and `seat` declares `fixed: false`. A
+chair is light enough to carry to another room, and `fixed` would refuse
+every move of it. The desk kind stays fixed. A reply that records the
+chair's place as Kristin is a capture error, and W5's held-by question
+measures it.
 
 W10. **A self-contained library. Decided (Brandon, 2026-09-25).** The model is
 a separate, reusable library named `worldkeeper`, designed to be publishable

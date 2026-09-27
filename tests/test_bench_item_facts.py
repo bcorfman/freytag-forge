@@ -6,10 +6,17 @@ import pytest
 import bench.cli as bench_cli
 import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments
-from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider, _resolve_refer, package_seed, validate_item_facts
+from bench.item_facts import (
+    _MATCH_SYSTEM,
+    ItemFactsProvider,
+    _resolve_refer,
+    _single_call_rules,
+    package_seed,
+    validate_item_facts,
+)
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import world_for
+from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
 
@@ -17,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = load_story_package(ROOT / "data" / "stories" / "continuity-initiative")
 SINGLE = ROOT / "bench" / "variations" / "item-facts-single.json"
 SECOND = ROOT / "bench" / "variations" / "item-facts-second.json"
+WORLD_TWO_SCENE = ROOT / "bench" / "variations" / "item-facts-world-two-scene.json"
 
 
 def _provider(mode="single_call"):
@@ -97,6 +105,35 @@ def test_item_facts_view_and_things_block_do_not_write_facts():
     provider._things_block()
 
     assert provider.state.facts.asserted == before
+
+
+def test_structural_place_stays_with_carried_thing_when_holder_moves():
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"Kristin's laptop": {"place": "Kristin"}}, player_input="Pick up my laptop."
+    )
+    assert not issues
+    assert facts["Kristin's laptop"]["place"] == "Kristin"
+
+    before = provider.facts_for_names(["Kristin's laptop"], structural=True)
+    assert before["Kristin's laptop"]["place"] == "Kristin"
+
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.move("kristin", "kitchen").ok
+
+    after = provider.facts_for_names(["Kristin's laptop"], structural=True)
+    assert after["Kristin's laptop"] == before["Kristin's laptop"]
+
+
+def test_structural_facts_do_not_change_narrator_view():
+    provider = _seeded_provider()
+    structural = provider.facts_for_names(["Kristin's laptop"], structural=True)
+
+    assert structural["Kristin's laptop"]["place"] == "Kristin's truck"
+    assert (
+        provider.facts_for_names(["Kristin's laptop"])["Kristin's laptop"]["place"]
+        == "in Kristin's truck outside the house"
+    )
 
 
 def test_revealed_hidden_thing_can_move_without_being_hidden_again():
@@ -236,7 +273,7 @@ def test_player_block_places_come_before_the_command():
     user = provider._section_user_prompt(prompt["context"])
 
     assert user.split("PLAYER:\n", 1)[1].startswith(
-        "- the notebook is in Michelle's hand.\n- the lantern is on the table.\n"
+        "- the notebook. Place: in Michelle's hand.\n- the lantern. Place: on the table.\n"
     )
     assert user.split("PLAYER:\n", 1)[1].endswith("- Pick up the notebook.")
 
@@ -245,29 +282,191 @@ def test_single_call_rules_require_facts_for_every_change():
     provider = _provider()
     system = provider._system_prompt()
 
-    assert system.endswith(
-        "Every time your story moves or changes a thing, or puts a new thing in a place, "
-        "add that thing to item_facts. Use where it is when the story ends.\n"
-        "When Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is "
-        "when the story ends.\n"
-        "Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.\n"
-        'Give only what changed. Use "place" for its current location and "condition" for up to two short phrases. '
-        "Example: if she throws a cup at the wall, it cracks in two and falls, so the cup is "
-        '{"place": "on the floor", '
-        '"condition": ["cracked in two"]}.\n'
-        'When a place is part of something bigger, name both, like "on the passenger seat of the truck".'
-    )
-    assert 'falls, so the cup is {"place": "on the floor"' in system
-    assert '"condition": ["cracked in two"]' in system
+    assert 'Give only what changed. For "place", give the name' in system
+    assert 'Example: if Kristin picks up a lantern and lights it, the lantern is {"place": "Kristin"' in system
+    assert 'If a thing is under something, add "under": true' in system
     assert "Also return item_facts" not in system
 
 
 def test_item_facts_place_context_rule_is_on_opening_and_turn_prompts():
     provider = _provider()
-    rule = 'When a place is part of something bigger, name both, like "on the passenger seat of the truck".'
+    rule = 'If a thing is under something, add "under": true, like {"place": "table", "under": true}.'
 
     assert rule in provider._system_prompt(opening=False)
     assert rule in provider._system_prompt(opening=True)
+
+
+def test_upright_rule_is_two_lines():
+    provider = _provider()
+    rules = (
+        "If a thing is overturned, show someone set it upright.",
+        "Only then show them sit on it or use it.",
+    )
+
+    assert all(rule not in provider._system_prompt(opening=False) for rule in rules)
+    assert all(rule not in provider._system_prompt(opening=True) for rule in rules)
+    assert all(rule not in _single_call_rules(None) for rule in rules)
+
+
+def test_single_call_rules_drop_keeps_the_sam_fallback():
+    dropped = frozenset(
+        {
+            'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
+        }
+    )
+
+    rules = _single_call_rules(None, drop_rules=dropped)
+
+    assert any("Sam" in rule for rule in rules)
+    assert all("None" not in rule for rule in rules)
+    assert all(rule not in rules for rule in dropped)
+
+
+def test_drop_rules_removes_exact_rule_lines():
+    dropped = [
+        'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
+    ]
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=RuntimeState.bootstrap(PACKAGE),
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+        drop_rules=tuple(dropped),
+    )
+    rendered_dropped = [rule.format(protagonist="Kristin") for rule in dropped]
+
+    for opening in (False, True):
+        system = provider._system_prompt(opening=opening)
+        assert all(rule not in system for rule in rendered_dropped)
+        assert all(rule in system for rule in _single_call_rules("Kristin") if rule not in rendered_dropped)
+
+
+def test_single_call_prompt_has_each_rule_once():
+    dropped = [
+        'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
+    ]
+    provider = _provider()
+    dropped_provider = _provider()
+    dropped_provider.drop_rules = frozenset(dropped)
+
+    for opening in (False, True):
+        system = provider._system_prompt(opening=opening)
+        dropped_system = dropped_provider._system_prompt(opening=opening)
+        rule_lines = list(_single_call_rules("Kristin"))
+        if not opening:
+            rule_lines.insert(
+                2,
+                "Kristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.",
+            )
+
+        assert all(system.splitlines().count(rule) == 1 for rule in rule_lines)
+        expected = system
+        for rule in dropped:
+            expected = expected.replace(f"\n{rule.format(protagonist='Kristin')}", "", 1)
+        assert dropped_system == expected
+
+
+def test_drop_rules_rejects_unknown_text():
+    with pytest.raises(ValueError, match=r"drop_rules.*not a narrator rule"):
+        validate_item_facts(
+            {
+                "mode": "single_call",
+                "seed": {"thing": {"place": "on the table", "condition": []}},
+                "drop_rules": ["not a narrator rule"],
+            }
+        )
+
+
+def test_owner_possessive_name_resolves(monkeypatch):
+    provider = _seeded_provider()
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.resolve("Michelle's workstation") == "michelle_workstation"
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: pytest.fail("unexpected match"))
+
+    facts, issues = provider.apply_item_facts({"Kristin": {"place": "Michelle's workstation"}})
+
+    assert issues == []
+    assert facts["Kristin"]["place"] == "kitchen"
+    assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "kitchen"
+    assert provider.item_facts_match_calls == 0
+
+
+def test_reply_moving_a_seated_kristin_is_kept():
+    provider = _seeded_provider()
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.move("kristin", "kitchen").ok
+    assert world.move("kristin", "workstation_chair").ok
+
+    facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "Kristin's truck"}}, player_input="Go out to the truck."
+    )
+
+    assert issues == []
+    assert facts["Kristin"]["place"] == "Kristin's truck"
+    assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "kristin_truck"
+
+
+def test_self_named_place_is_a_no_op():
+    provider = _seeded_provider(state_axes={"workstation chair": {"overturned": [], "upright": ["standing"]}})
+    before = provider.item_facts["workstation chair"]
+
+    facts, issues = provider.apply_item_facts(
+        {"workstation chair": {"place": "workstation chair", "condition": ["upright"]}}
+    )
+
+    assert issues == []
+    assert facts["workstation chair"]["place"] == before["place"]
+    assert facts["workstation chair"]["condition"] == ["upright"]
+
+
+def test_prior_steps_are_a_separate_player_line():
+    provider = _seeded_provider()
+    provider.prior_steps = (
+        "Kristin set the workstation chair upright.",
+        "Kristin sat down in the workstation chair.",
+    )
+
+    lines = provider._player_lines({"player_input": "Read the files on my laptop."})
+
+    assert lines == [
+        "Just before this: Kristin set the workstation chair upright. Kristin sat down in the workstation chair.",
+        "Read the files on my laptop.",
+    ]
+
+
+def test_seated_protagonist_gets_the_stay_seated_rule():
+    provider = _seeded_provider()
+    world = provider._world()
+    assert world.move("kristin", "workstation_chair").ok
+    rule = "Kristin stays sitting in the workstation chair."
+
+    assert rule in provider._system_prompt(opening=False)
+    assert rule not in provider._system_prompt(opening=True)
+
+    assert world.move("kristin", "kitchen").ok
+    assert rule not in provider._system_prompt(opening=False)
+
+
+def test_seat_place_named_as_its_furniture_is_a_quiet_no_op():
+    provider = _seeded_provider(state_axes={"workstation chair": {"overturned": [], "upright": ["standing"]}})
+    world = provider._world()
+    before = world.parent("workstation_chair")
+
+    facts, issues = provider.apply_item_facts(
+        {"workstation chair": {"place": "Michelle's workstation", "condition": ["upright"]}}
+    )
+
+    assert issues == []
+    assert world.parent("workstation_chair") == before
+    assert facts["workstation chair"]["condition"] == ["upright"]
+
+    facts, issues = provider.apply_item_facts({"workstation chair": {"place": "Kristin's truck"}})
+
+    assert issues == []
+    assert facts["workstation chair"]["place"] == "Kristin's truck"
+    assert world.parent("workstation_chair") == "kristin_truck"
 
 
 def test_single_call_start_place_rule_is_turn_only_and_neutral(monkeypatch):
@@ -299,14 +498,86 @@ def test_protagonist_is_always_selected_and_given(monkeypatch):
     provider.prepare_turn("Search the drawer.")
 
     assert provider._selected_names == ["Kristin"]
-    assert "- Kristin. Place: Kristin and Michelle's shared house." in provider._things_block()
-    assert "Kristin is Kristin and Michelle's shared house." in provider._player_lines(
+    assert "- Kristin. Place: Michelle's house." in provider._things_block()
+    assert "Kristin. Place: Michelle's house." in provider._player_lines(
         {"scene_setting": "The house is quiet.", "player_input": "Search the drawer."}
     )
 
 
-def test_protagonist_reply_moves_place_and_ignores_condition():
+def test_match_payload_gives_placed_character_place_from_real_package():
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "1B"
+    apply_scene_placements(PACKAGE, state.facts, "1B")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+
+    payload = provider._match_payload(
+        "Walk over to the man watching me and hand him Michelle's phone.",
+        ["stranger"],
+        include_places=True,
+    )
+
+    assert "- Brandon. Place: across the park from Kristin." in payload["user"].splitlines()
+
+
+def test_match_payload_only_lists_things_in_play_for_each_scene():
+    def provider_for(scene_id):
+        state = RuntimeState.bootstrap(PACKAGE)
+        state.current_scene_id = scene_id
+        apply_scene_placements(PACKAGE, state.facts, scene_id)
+        provider = ItemFactsProvider(
+            worker_url="https://worker.example/turn",
+            token="",
+            state=state,
+            item_facts={},
+            mode="single_call",
+            seed_from_package=True,
+        )
+        provider.apply_item_facts({"Michelle's phone": {"place": "Kristin", "condition": []}})
+        return provider
+
+    command = "Look around the bench for anything Michelle left."
+    provider = provider_for("1B")
+    for payload in (
+        provider._match_payload(command, []),
+        provider._match_payload(command, ["bench"], include_places=True),
+    ):
+        things = payload["user"].split("THINGS:\n", 1)[1].split("\n\nNEW NAMES:", 1)[0]
+        assert "- workstation chair." not in things
+        assert "- park bench." in things
+        assert "- Kristin." in things
+        assert "- Michelle's phone." in things
+
+    provider = provider_for("1A")
+    things = (
+        provider._match_payload("Search the kitchen.", [])["user"]
+        .split("THINGS:\n", 1)[1]
+        .split("\n\nNEW NAMES:", 1)[0]
+    )
+    assert "- Kristin's truck." in things
+    assert "- Kristin's laptop." in things
+    assert "- workstation chair." in things
+    assert "- Michelle's phone." in things
+
+
+def test_park_bench_resolves_and_is_placed_in_scene_1b():
+    state = RuntimeState.bootstrap(PACKAGE)
+    apply_scene_placements(PACKAGE, state.facts, "1B")
+    world = world_for(PACKAGE, state.facts)
+
+    assert world.resolve("bench") == "park_bench"
+    assert world.parent("park_bench") == "los_angeles_park"
+
+
+def test_protagonist_reply_moves_place_and_ignores_condition(monkeypatch):
     provider = _seeded_provider()
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"same_as": {}})
 
     facts, issues = provider.apply_item_facts({"Kristin": {"place": "in the park", "condition": ["tired"]}})
 
@@ -359,6 +630,230 @@ def test_two_scene_variation_output_example_shows_two_step_action():
     assert "{protagonist}" not in prompt["system"]
     assert "She sets it on the rail" not in prompt["system"]
     assert "Its light has gone out." not in prompt["system"]
+
+
+def test_world_two_scene_variation_drops_the_drawer_sentence():
+    variation = load_variation(WORLD_TWO_SCENE)
+    prompt = core.prompt_for(variation, "1A", "Pick up the lantern and carry it out to the porch.")
+
+    assert variation["name"] == "item-facts-world-two-scene"
+    assert "The drawer holds pens, binder clips, a stapler, and spare batteries." not in prompt["user"]
+    assert variation["system_prompt"]["output_example"]
+    assert json.loads(variation["system_prompt"]["output_example"])["item_facts"]["lantern"] == {
+        "place": "{protagonist}",
+        "condition": ["lit"],
+    }
+
+
+def test_rules_ask_for_parent_names_on_turn_and_opening():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+    rules = (
+        'Give only what changed. For "place", give the name of the person, thing, or place that has it now. '
+        'Use "condition" for up to two short phrases.',
+        "Example: if Kristin picks up a lantern and lights it, the lantern is "
+        '{"place": "Kristin", "condition": ["lit"]}.',
+        'If a thing is under something, add "under": true, like {"place": "table", "under": true}.',
+    )
+    for opening in (False, True):
+        prompt = provider._system_prompt(opening=opening)
+        assert all(rule in prompt for rule in rules)
+
+
+def test_bigger_place_rule_is_gone():
+    provider = _seeded_provider()
+    for opening in (False, True):
+        prompt = provider._system_prompt(opening=opening)
+        assert "name both" not in prompt
+        assert "passenger seat" not in prompt
+
+
+def test_player_lines_use_place_labels():
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"Michelle's phone": {"place": "Kristin"}}, player_input="Pick up Michelle's phone."
+    )
+    assert not issues
+    assert facts["Michelle's phone"]["place"] == "Kristin"
+    provider._selected_names = ["Michelle's phone"]
+    user = provider._section_user_prompt(provider.assemble_turn_prompt("Look at Michelle's phone.")["context"])
+    player = user.split("PLAYER:\n", 1)[1]
+    assert "- Michelle's phone. Place: Kristin." in player
+    assert " is Kristin." not in player
+
+
+def test_echo_keeps_authored_place_text(monkeypatch):
+    calls = []
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda _provider, payload: calls.append(payload))
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"Kristin's laptop": {"place": "Kristin's truck"}}, player_input="Look at my laptop."
+    )
+    assert not issues
+    assert facts["Kristin's laptop"]["place"] == "in Kristin's truck outside the house"
+    assert calls == []
+
+
+def test_echo_of_fixed_part_is_not_a_refusal():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+    facts, issues = provider.apply_item_facts({"drawer": {"place": "workstation"}}, player_input="Look at the drawer.")
+    assert issues == []
+    assert facts["drawer"]["place"] == "in Michelle's workstation"
+    assert world_for(PACKAGE, provider.state.facts).relation("michelle_drawer") == "part_of"
+
+
+def test_under_flag_moves_under():
+    provider = _seeded_provider()
+    _, issues = provider.apply_item_facts(
+        {"Michelle's phone": {"place": "workstation", "under": True}},
+        player_input="Slide Michelle's phone under the workstation.",
+    )
+    assert not issues
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.parent("michelle_phone") == "michelle_workstation"
+    assert world.relation("michelle_phone") == "under"
+
+
+def test_under_an_area_keeps_the_move():
+    provider = _seeded_provider()
+    _, issues = provider.apply_item_facts(
+        {"workstation chair": {"place": "kitchen", "under": True}},
+        player_input="Move the workstation chair to the kitchen.",
+    )
+
+    assert not issues
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.parent("workstation_chair") == "kitchen"
+    assert world.relation("workstation_chair") != "under"
+
+
+def test_protagonist_at_furniture_lands_in_its_area():
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "workstation"}}, player_input="Walk over to Michelle's workstation."
+    )
+    assert not any("refused" in issue for issue in issues)
+    assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "kitchen"
+    assert facts["Kristin"]["place"] == "kitchen"
+
+
+def test_unresolved_place_joins_the_single_match_call(monkeypatch):
+    payloads = []
+
+    def match(_provider, payload):
+        payloads.append(payload)
+        return {"same_as": {"strange coin": "new", "the counter by the sink": "kitchen"}}
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", match)
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {
+            "Michelle's phone": {"place": "the counter by the sink"},
+            "strange coin": {"place": "workstation"},
+        },
+        player_input="Look around the kitchen.",
+    )
+    assert not issues
+    assert len(payloads) == 1
+    assert "- the counter by the sink" in payloads[0]["user"]
+    assert "- strange coin" in payloads[0]["user"]
+    assert world_for(PACKAGE, provider.state.facts).parent("michelle_phone") == "kitchen"
+    assert facts["strange coin"]["place"] == "workstation"
+
+
+def test_unresolved_place_is_never_created(monkeypatch):
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"same_as": {"old porch": "new"}})
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"Michelle's phone": {"place": "old porch"}}, player_input="Carry Michelle's phone outside."
+    )
+    assert not issues
+    assert facts["Michelle's phone"]["place"] == "old porch"
+    assert provider.last_item_facts_unplaced() == [{"name": "Michelle's phone", "place": "old porch"}]
+    assert world_for(PACKAGE, provider.state.facts).resolve("old porch") is None
+
+
+def test_contents_reply_moves_each_thing():
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"workstation": {"contents": ["Michelle's phone", "Kristin's laptop"]}},
+        player_input="Look at the workstation.",
+    )
+    assert not issues
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.parent("michelle_phone") == "michelle_workstation"
+    assert world.parent("kristin_laptop") == "michelle_workstation"
+    assert facts["Michelle's phone"]["place"] == "workstation"
+
+
+def test_explicit_entry_beats_contents():
+    provider = _seeded_provider()
+    _, issues = provider.apply_item_facts(
+        {"workstation": {"contents": ["Michelle's phone"]}, "Michelle's phone": {"place": "Kristin"}},
+        player_input="Pick up Michelle's phone.",
+    )
+    assert not issues
+    assert world_for(PACKAGE, provider.state.facts).parent("michelle_phone") == "kristin"
+
+
+def test_invalid_contents_is_reported():
+    provider = _seeded_provider()
+    before = provider.item_facts
+    facts, issues = provider.apply_item_facts(
+        {"workstation": {"contents": []}}, player_input="Inspect the workstation."
+    )
+    facts, second_issues = provider.apply_item_facts(
+        {"workstation": {"contents": [3]}}, player_input="Inspect the workstation."
+    )
+    assert facts == before
+    assert all("has invalid contents" in issue for issue in (*issues, *second_issues))
+
+
+def test_contents_entry_is_lifted(monkeypatch):
+    provider = _seeded_provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda _provider, _payload: {
+            "segments": [{"kind": "narration", "text": "She sets the phone down."}],
+            "workstation": {"contents": ["Michelle's phone"]},
+        },
+    )
+    cleaned = provider._request({"system": "", "user": ""})
+    assert "workstation" not in cleaned
+    assert provider.pending_item_facts() == {"workstation": {"contents": ["Michelle's phone"]}}
+
+
+def test_moves_apply_before_states():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+    facts, issues = provider.apply_item_facts(
+        {"drawer": {"condition": ["closed"]}, "stapler": {"place": "Kristin"}},
+        player_input="Take the stapler out of the drawer and shut it.",
+    )
+    world = world_for(PACKAGE, provider.state.facts)
+    assert not issues and world.parent("michelle_drawer_stapler") == "kristin"
+    assert world.axis_values("michelle_drawer")["open"] == "closed"
+    other = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+    other.apply_item_facts({"stapler": {"place": "Kristin"}}, player_input="Take the stapler out of the drawer.")
+    assert world_for(PACKAGE, other.state.facts).axis_values("michelle_drawer")["open"] == "open"
+    assert facts["stapler"]["place"] == "Kristin"
+
+
+def test_open_drawer_gives_its_contents():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+    provider.apply_item_facts({"drawer": {"condition": ["open"]}}, player_input="Open the drawer.")
+    provider._selected_names = ["drawer"]
+    things = provider._things_block()
+    assert things.index("- pens. Place: drawer.") > things.index("- drawer.")
+    assert all(f"- {name}. Place: drawer." in things for name in ("pens", "binder clips", "stapler", "spare batteries"))
+    assert "memory card" not in things
+
+
+def test_closed_drawer_gives_no_contents():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+    provider._selected_names = ["drawer"]
+    things = provider._things_block()
+    assert "- drawer." in things
+    assert "pens" not in things
 
 
 def test_item_facts_uses_things_place_rule_on_turn_and_opening(monkeypatch):
@@ -574,8 +1069,9 @@ def test_item_facts_keeps_empty_side_channel_and_match_reply(monkeypatch):
     assert CloudflareTurnProvider._request(provider, {"system": "", "user": ""}) == {"refers": [], "same_as": {}}
 
 
-def test_apply_item_facts_replaces_valid_entry_and_leaves_omitted_things_unchanged():
+def test_apply_item_facts_replaces_valid_entry_and_leaves_omitted_things_unchanged(monkeypatch):
     provider = _provider()
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"same_as": {}})
     facts, issues = provider.apply_item_facts(
         {"the lantern": {"place": "  in her hand  ", "condition": ["  warm  ", "held"]}}
     )
@@ -894,11 +1390,12 @@ def test_second_call_uses_only_things_player_and_story_and_counts_request(monkey
     assert requests[0]["user"].endswith("PLAYER:\n- Look at the lantern.\n\nSTORY:\nThe lantern feels warm.")
     assert requests[0]["system"] == (
         "You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like "
-        '{"item_facts": {"thing": {"place": "place", "condition": ["phrase"]}}}. '
-        "List only the things in THINGS that STORY changed. For each one, give the place it is now and up to "
+        '{"item_facts": {"thing": {"place": "name", "condition": ["phrase"]}}}. '
+        "List only the things in THINGS that STORY changed. For each one, give the name of who or what has it now and "
+        "up to "
         "two short condition phrases. "
-        "Example: if she picks up the lantern from the table, the lantern is "
-        '{"place": "in her hand", "condition": ["lit"]}. '
+        "Example: if Sam picks up the lantern from the table and lights it, the lantern is "
+        '{"place": "Sam", "condition": ["lit"]}. '
         'If STORY changed nothing, return {"item_facts": {}}.'
     )
 
@@ -1026,7 +1523,7 @@ def test_package_seed_scene_1a_matches_authored_things():
     state._assert_scene_entry_fact("1A")
     things, issues = package_seed(PACKAGE, state, "1A")
     assert things == {
-        "Kristin": {"place": "Kristin and Michelle's shared house", "condition": []},
+        "Kristin": {"place": "Michelle's house", "condition": []},
         "Michelle's phone": {"place": "on the kitchen floor", "condition": ["not damaged"]},
         "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": ["closed"]},
         "drawer": {
@@ -1037,8 +1534,10 @@ def test_package_seed_scene_1a_matches_authored_things():
             "place": "at Michelle's workstation",
             "condition": ["overturned"],
         },
+        "driver's seat": {"place": "Kristin's truck", "condition": []},
         "Kristin's truck": {"place": "outside the house", "condition": []},
         "workstation": {"place": "kitchen", "condition": []},
+        "back door": {"place": "kitchen", "condition": []},
     }
     assert issues == [
         "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
@@ -1051,7 +1550,7 @@ def test_package_seed_tracks_protagonist_at_each_scene_location():
     things_1a, _ = package_seed(PACKAGE, state, "1A")
     things_1b, _ = package_seed(PACKAGE, state, "1B")
 
-    assert things_1a["Kristin"] == {"place": "Kristin and Michelle's shared house", "condition": []}
+    assert things_1a["Kristin"] == {"place": "Michelle's house", "condition": []}
     assert things_1b["Kristin"] == {"place": "Los Angeles park", "condition": []}
 
 
@@ -1071,6 +1570,70 @@ def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
     assert issues == [
         "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
     ]
+
+
+def test_live_run_state_is_seeded_and_placed():
+    variation = load_variation(WORLD_TWO_SCENE)
+    _, state = core.package_and_state(variation, "1A")
+    world = world_for(state.package, state.facts)
+
+    assert world.parent("kristin") == "mcgehee_home"
+    assert world.parent("michelle_workstation") == "kitchen"
+    things, _ = package_seed(state.package, state, "1A")
+    assert things["workstation chair"]["condition"] == ["overturned"]
+
+
+def test_prompt_preview_places_the_protagonist():
+    variation = load_variation(WORLD_TWO_SCENE)
+    prompt = core.prompt_for(variation, "1A", "Look around the kitchen.")
+
+    assert "- Kristin. Place: Michelle's house." in prompt["user"]
+
+
+def test_sitting_in_the_chair_rights_it():
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "workstation chair"}}, player_input="Sit in the workstation chair."
+    )
+    assert not issues
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.parent("kristin") == "workstation_chair"
+    assert world.relation("kristin") == "on"
+    assert facts["workstation chair"]["condition"] == ["upright"]
+
+
+def test_workstation_brings_its_chair_into_things():
+    provider = _seeded_provider()
+    provider._selected_names = ["workstation"]
+    block = provider._things_block()
+    assert block.index("- workstation.") < block.index("- workstation chair.")
+    assert "Condition: upright (or overturned)." in block or "Condition: overturned (or upright)." in block
+
+
+def test_kristin_at_the_workstation_is_not_seated():
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "workstation"}}, player_input="Go to the workstation."
+    )
+    assert not issues
+    assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "kitchen"
+    assert facts["workstation chair"]["condition"] == ["overturned"]
+
+
+def test_variation_axis_merges_with_package_axis():
+    provider = _seeded_provider(state_axes={"workstation chair": {"overturned": [], "upright": ["standing"]}})
+    world = world_for(PACKAGE, provider.state.facts)
+    assert len(world.axis_definitions("workstation_chair")) == 1
+    facts, issues = provider.apply_item_facts(
+        {"workstation chair": {"condition": ["standing"]}}, player_input="Stand in the workstation chair."
+    )
+    assert not issues
+    assert facts["workstation chair"]["condition"] == ["upright"]
+
+
+def test_conflicting_variation_axis_is_rejected():
+    with pytest.raises(ValueError, match="conflicts with its package axis"):
+        _seeded_provider(state_axes={"workstation chair": {"broken": [], "whole": []}})
 
 
 def test_package_seed_accepts_the_prefix_case_insensitively():
@@ -1253,7 +1816,7 @@ def test_reply_location_key_counts_prefer_place(monkeypatch):
         ),
     )
     provider._request({"system": "test", "user": "test"})
-    assert provider.item_facts_reply_keys == {"place": 2}
+    assert provider.item_facts_reply_keys == {"place": 2, "contents": 0, "under": 0}
 
 
 def test_condition_only_entry_keeps_existing_place():
@@ -1280,13 +1843,13 @@ def test_valid_untracked_name_is_resolved_same_turn(monkeypatch):
 
 def test_owner_resolves_untracked_name_without_match_call(monkeypatch):
     provider = _provider()
-    _apply(provider, "Kristin's laptop", place="in the truck", condition=[])
+    _apply(provider, "Kristin's laptop", place="workstation", condition=[])
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: pytest.fail("unexpected match"))
 
-    provider.apply_item_facts({"laptop": {"owner": "Kristin", "place": "on the desk"}})
+    provider.apply_item_facts({"laptop": {"owner": "Kristin", "place": "workstation"}})
 
     result = provider.last_item_facts_match()
-    assert provider.item_facts["Kristin's laptop"]["place"] == "on the desk"
+    assert provider.item_facts["Kristin's laptop"]["place"] == "workstation"
     assert provider.item_facts_match_calls == 0
     assert result["match_call"] is False
     assert result["match_raw"] is None
@@ -1297,7 +1860,7 @@ def test_owner_resolves_untracked_name_without_match_call(monkeypatch):
 
 def test_bare_name_still_reaches_match_call(monkeypatch):
     provider = _provider()
-    _apply(provider, "Kristin's laptop", place="in the truck", condition=[])
+    _apply(provider, "Kristin's laptop", place="workstation", condition=[])
     payloads = []
     monkeypatch.setattr(
         CloudflareTurnProvider,
@@ -1305,7 +1868,7 @@ def test_bare_name_still_reaches_match_call(monkeypatch):
         lambda _provider, payload: payloads.append(payload) or {"refers": [], "same_as": {}},
     )
 
-    provider.apply_item_facts({"laptop": {"place": "on the desk"}})
+    provider.apply_item_facts({"laptop": {"place": "workstation"}})
 
     assert provider.item_facts_match_calls == 0
     assert not payloads
@@ -1319,9 +1882,12 @@ def test_owner_naming_untracked_person_still_reaches_match_call(monkeypatch):
         lambda _provider, payload: {"refers": [], "same_as": {}},
     )
 
-    provider.apply_item_facts({"laptop": {"owner": "Morgan", "place": "on the desk"}})
+    provider.apply_item_facts({"laptop": {"owner": "Morgan", "place": "workstation"}})
 
     assert provider.item_facts_match_calls == 0
+    assert provider.last_item_facts_match()["match_call"] is False
+    assert provider.last_item_facts_match()["match_raw"] is None
+    assert provider.last_item_facts_match()["match_issues"] == []
     assert provider.last_item_facts_match()["engine_resolutions"] == {}
 
 
@@ -1411,6 +1977,31 @@ def test_same_as_tracked_name_merges_new_entry_same_turn(monkeypatch):
     assert result["resolutions"] == {"the old lamp": "the lantern"}
     assert provider.item_facts["the lantern"] == {"place": "by the door", "condition": ["warm"]}
     assert "the old lamp" not in provider.item_facts
+
+
+def test_same_as_learns_item_and_place_names_but_not_area_names(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    area_id = next(entity_id for entity_id in world.entity_ids() if world.is_a(entity_id, "area"))
+    area_name = world.name(area_id)
+
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "refers": [],
+            "same_as": {"the stranger": "Kristin", "the corner": area_name},
+        },
+    )
+    provider.apply_item_facts(
+        {
+            "the stranger": {"place": "the corner"},
+        },
+        player_input="Move the stranger to the corner.",
+    )
+
+    assert world.resolve("stranger") == world.resolve("Kristin")
+    assert world.resolve("corner") is None
 
 
 def test_omitted_same_as_adds_condition_only_thing_without_place(monkeypatch):
@@ -1538,7 +2129,7 @@ def test_stubbed_run_records_new_change_on_same_turn(monkeypatch):
     }
 
 
-def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch):
+def test_before_state_scene_leaving_records_pre_turn_place(monkeypatch):
     calls = []
 
     def request(_provider, payload):
@@ -1570,6 +2161,24 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
         "condition": [],
     }
     assert calls
+
+
+def test_also_called_record_carries_learned_name() -> None:
+    from bench.judge_input import judge_turns
+
+    learned = {"phone": ["the handset", "the stranger's phone"]}
+    turn = {
+        "turn_number": 1,
+        "narration": "Kristin picks up the phone.",
+        "player_input": "Pick up the phone.",
+        "item_facts_before": {"phone": {"place": "Brandon", "condition": []}},
+        "item_facts_after": {"phone": {"place": "Kristin", "condition": []}},
+        "item_facts_names": learned,
+    }
+
+    judged = judge_turns([turn], [], PACKAGE)[0]
+
+    assert judged["item_facts_names"] == learned
 
 
 def test_scene_exit_reply_does_not_override_next_scene_placements(monkeypatch):
@@ -1604,15 +2213,15 @@ def test_scene_exit_reply_does_not_override_next_scene_placements(monkeypatch):
 def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):
     calls = []
 
-    def request(_provider, _payload):
-        calls.append(True)
+    def request(_provider, payload):
+        calls.append(payload)
         response = {
             "segments": [{"kind": "narration", "text": "Kristin looks around the room."}],
             "selected_knowledge_ids": [],
             "item_facts": {},
         }
-        if len(calls) in (4, 5):
-            response["things"] = []
+        if len(calls) in (3, 4):
+            return None
         return response
 
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")

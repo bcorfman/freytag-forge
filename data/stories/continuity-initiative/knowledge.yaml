@@ -27,7 +27,7 @@ facts:
   purpose: Kristin knows the welfare patrol was specifically interested in Michelle’s
     research and findings.
 - id: house_marked_for_return
-  purpose: Kristin and Michelle's shared home has been marked by the patrol for a likely return.
+  purpose: Michelle's house has been marked by the patrol for a likely return.
 - id: transport_route_identified
   purpose: Kristin and Brandon have enough evidence to follow the removal operation’s
     physical transport route toward a specific industrial/freight destination.
@@ -131,7 +131,7 @@ facts:
     can be followed away from the house.
 - id: patrol_return_pressure
   purpose: Observable signs indicate the federal patrol is likely to return or intensify
-    scrutiny at Kristin and Michelle's shared home.
+    scrutiny at Michelle's house.
 - id: pursuit_closing_in
   purpose: The pursuit team is visibly closing in on Kristin and Brandon in the park.
 - id: terminal_security_escalating
@@ -198,7 +198,7 @@ facts:
 - id: rebecca_office_required_for_broadcast
   purpose: Rebecca's secured office is the required manual activation point to broadcast the evidence and release the sealed detention sectors.
 - id: home_search_window_narrowing
-  purpose: The returning patrol is widening its search around Kristin and Michelle's shared house, making a careful exit urgent.
+  purpose: The returning patrol is widening its search around Michelle's house, making a careful exit urgent.
 - id: park_lockdown_spreading
   purpose: Emergency teams are closing the park's paths and service exits around Kristin and Brandon.
 - id: terminal_sweep_closing
@@ -335,7 +335,7 @@ knowledge:
   - [read, inspect, open, check, review, plug, insert, connect]
   - [memory card, card]
   - [file, files, saved file, saved files, card file, card files, laptop]
-  entity_ids: [kristin, michelle, memory_card, kristin_laptop]
+  entity_ids: [kristin, michelle, memory_card, kristin_laptop, park_bench]
   aliases:
   - continuity initiative known
   - michelle warning known

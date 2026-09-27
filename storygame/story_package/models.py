@@ -180,6 +180,38 @@ class Item(Entity):
     hidden: bool = False
     contents: list[str] = Field(default_factory=list)
     owner: str | None = Field(default=None, pattern=_ID)
+    enterable: bool | None = None
+    enter_pole: str | None = Field(default=None, pattern=_ID)
+    seat_for: str | None = Field(default=None, pattern=_ID)
+    use_seated: bool = False
+    right_text: str | None = None
+    enter_text: str | None = None
+    leave_text: str | None = None
+    take_text: str | None = Field(default=None, min_length=1)
+    axes: list[dict[str, list[str]]] = Field(default_factory=list)
+
+    @field_validator("axes", mode="before")
+    @classmethod
+    def validate_axes(cls, value):
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            raise ValueError("axes must be a list")
+        result = []
+        for axis in value:
+            if not isinstance(axis, Mapping) or len(axis) != 2:
+                raise ValueError("each axis must map exactly two poles to alias lists")
+            poles = list(axis)
+            if any(not isinstance(pole, str) or not pole.strip() for pole in poles):
+                raise ValueError("axis poles must be non-empty")
+            if any(not isinstance(aliases, list) for aliases in axis.values()):
+                raise ValueError("axis aliases must be lists")
+            first_words = {poles[0].casefold(), *(str(alias).casefold() for alias in axis[poles[0]])}
+            second_words = {poles[1].casefold(), *(str(alias).casefold() for alias in axis[poles[1]])}
+            if first_words & second_words:
+                raise ValueError("axis poles and aliases must not overlap")
+            result.append({pole: list(aliases) for pole, aliases in axis.items()})
+        return result
 
 
 class WorldEffect(_Model):
@@ -305,6 +337,8 @@ class Character(_Model):
 class KindDeclaration(_Model):
     id: str = Field(pattern=_ID)
     is_: tuple[str, ...] = Field(default=(), alias="is")
+    enterable: bool = False
+    fixed: bool | None = None
 
     model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
 

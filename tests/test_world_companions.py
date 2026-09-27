@@ -100,7 +100,7 @@ def test_companion_with_own_placement_stays_there_until_leader_moves(tmp_path: P
         ({"character_placements": {"tom": {"parent": "missing"}}, "participant_ids": ["ada", "tom"]}, "unknown parent"),
         (
             {"character_placements": {"tom": {"parent": "keeper_bench"}}, "participant_ids": ["ada", "tom"]},
-            "characters can only be in areas or containers",
+            "characters can only be in",
         ),
     ],
 )

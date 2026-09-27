@@ -121,6 +121,65 @@ def test_closed_companion_create_resolution_effects_and_backend_rebuild():
     assert w2.parent("n_silver_coin_1") == "parlour" and w2.status("chest") is None
 
 
+def test_owner_possessive_names_resolve_from_names_and_aliases():
+    schema = WorldSchema.from_data(
+        {
+            "entities": [
+                {"id": "owner", "name": "keeper", "kind": "character", "aliases": ["K"]},
+                {"id": "thing", "name": "tool", "kind": "thing", "aliases": ["implement"], "owner": "owner"},
+            ]
+        }
+    )
+    w = World(schema, MemoryBackend())
+    assert w.seed().ok
+    assert w.resolve("keeper's tool") == "thing"
+    assert w.resolve("the k's implement") == "thing"
+
+
+def test_learned_aliases_are_fact_backed_and_refuse_conflicts():
+    w = make()
+    before = set(w.backend.matching_all())
+
+    assert w.add_alias("lamp", "the glowing lamp").ok
+    assert w.resolve("glowing lamp") == "lamp"
+    assert w.add_alias("lamp", "the glowing lamp").ok
+    assert set(w.backend.matching_all()) == before | {
+        next(fact for fact in w.backend.matching_all() if fact.predicate == "wk_alias")
+    }
+
+    after_alias = set(w.backend.matching_all())
+    unknown = w.add_alias("missing", "unknown name")
+    assert not unknown.ok and unknown.reason == "unknown entity"
+    empty = w.add_alias("lamp", "")
+    assert not empty.ok and empty.reason == "alias name must not be empty"
+    non_text = w.add_alias("lamp", None)
+    assert not non_text.ok and non_text.reason == "alias name must not be empty"
+    conflict = w.add_alias("lamp", "Ada")
+    assert not conflict.ok and conflict.reason == "alias already resolves to a different entity"
+    assert set(w.backend.matching_all()) == after_alias
+
+    rebuilt = World(w.schema, w.backend)
+    assert rebuilt.resolve("the glowing lamp") == "lamp"
+
+
+def test_add_alias_does_not_call_resolver():
+    calls = []
+    w = World(make().schema, MemoryBackend(), resolver=lambda name, ids: calls.append((name, ids)) or "lamp")
+
+    assert w.add_alias("lamp", "new name").ok
+    assert calls == []
+
+
+def test_also_called_names_include_declared_and_learned_names_in_order():
+    w = make()
+    w.schema.entities["lamp"].aliases = ("light", "lamp")
+
+    assert w.names("lamp") == ("lamp", "light")
+    assert w.add_alias("lamp", "glowing lamp").ok
+    assert w.names("lamp") == ("lamp", "light", "glowing lamp")
+    assert w.names("missing") == ()
+
+
 def test_schema_errors_and_resolver():
     for data in ({"kinds": [{"id": "x", "is": ["x"]}]}, {"entities": [{"id": "a", "name": "a", "kind": "missing"}]}):
         try:

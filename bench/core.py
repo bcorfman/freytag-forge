@@ -18,7 +18,14 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import Any
 
-from bench.item_facts import ItemFactsProvider, _protagonist_name, package_seed, validate_item_facts
+from bench.item_facts import (
+    ItemFactsProvider,
+    _protagonist_name,
+    declared_axes_for_world,
+    package_seed,
+    validate_item_facts,
+)
+from bench.jev_use import ask_needs_to_stand, ask_uses_thing
 from bench.judge_input import judge_turns
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
@@ -29,9 +36,10 @@ from storygame.runtime.contracts import RuntimeContractError, join_narration
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
+from storygame.runtime.seating import seat_before_use, stand_before_leave
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
-from storygame.runtime.world_model import apply_scene_placements
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 
 CRITERIA = (
@@ -280,20 +288,22 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     }
     variation["_resolved_rules"] = list(rules) if rules is not None else None
     variation["_resolved_output_example"] = resolved_output_example
-    variation["_variation_hash"] = stable_hash(
-        {
-            "rules": variation["_resolved_rules"],
-            "include_output_example": include_output_example,
-            "output_example": resolved_output_example,
-            "use_runtime_output_example": use_runtime_output_example,
-            "beat_delivery": beat_delivery,
-            "auto_select_unambiguous_candidates": auto_select_unambiguous_candidates,
-            "positive_selection_example": positive_selection_example,
-            "model_grounding": model_grounding,
-            "narrow_to_shadow_match": narrow_to_shadow_match,
-            "constant_rules_in_system": constant_rules_in_system,
-        }
-    )
+    hash_payload = {
+        "rules": variation["_resolved_rules"],
+        "include_output_example": include_output_example,
+        "output_example": resolved_output_example,
+        "use_runtime_output_example": use_runtime_output_example,
+        "beat_delivery": beat_delivery,
+        "auto_select_unambiguous_candidates": auto_select_unambiguous_candidates,
+        "positive_selection_example": positive_selection_example,
+        "model_grounding": model_grounding,
+        "narrow_to_shadow_match": narrow_to_shadow_match,
+        "constant_rules_in_system": constant_rules_in_system,
+    }
+    drop_rules = variation.get("item_facts", {}).get("drop_rules", [])
+    if drop_rules:
+        hash_payload["item_facts_drop_rules"] = sorted(drop_rules)
+    variation["_variation_hash"] = stable_hash(hash_payload)
     variation["_story_package_value"] = package_value
     return variation
 
@@ -386,6 +396,9 @@ def package_and_state(variation: dict[str, Any], scene_id: str | None = None) ->
         raise ValueError(f"scene {target_scene} is not in package {package.story_id}")
     state = RuntimeState(package=package, current_scene_id=target_scene, phase=scene.metadata.freytag_phase)
     state._assert_scene_entry_fact(target_scene)
+    world_for(package, state.facts).seed()
+    apply_scene_placements(package, state.facts, target_scene)
+    apply_world_effects(package, state.facts)
     return package, state
 
 
@@ -474,6 +487,7 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
             state_axes=state_axes,
             seed_issues=seed_issues,
             seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
+            drop_rules=tuple(variation.get("item_facts", {}).get("drop_rules", [])),
         )
     return CloudflareTurnProvider.from_environment(state, prompt_variant=variation["_prompt_variant"])
 
@@ -583,6 +597,7 @@ def prompt_for(
             mode=mode,
             state_axes=state_axes,
             seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
+            drop_rules=tuple(variation.get("item_facts", {}).get("drop_rules", [])),
         )
     else:
         provider = CloudflareTurnProvider(
@@ -705,7 +720,14 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
     def play_turns(turn_limit: int, turn_inputs: list[str], *, stop_on_exit: bool) -> bool:
         for turn_index in range(turn_limit):
             turn_number = len(turns) + len(rejected_turns) + 1
-            player_input = turn_inputs[turn_index % len(turn_inputs)]
+            typed_input = turn_inputs[turn_index % len(turn_inputs)]
+            player_input = typed_input
+            seating_steps: tuple[str, ...] = ()
+            seating_asked = False
+            seating_issues: tuple[str, ...] = ()
+            standing_steps: tuple[str, ...] = ()
+            standing_asked = False
+            standing_issues: tuple[str, ...] = ()
             prior_scene = state.current_scene_id
             match_info = {
                 "match_call": False,
@@ -713,10 +735,28 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 "match_issues": [],
                 "resolutions": {},
             }
+            if isinstance(provider, ItemFactsProvider):
+                standing = stand_before_leave(provider._world(), package, typed_input, ask_needs_to_stand)
+                player_input = standing.command
+                standing_steps = standing.steps
+                standing_asked = standing.asked
+                standing_issues = standing.issues
+                if not standing_steps:
+                    seating = seat_before_use(provider._world(), package, typed_input, ask_uses_thing)
+                    player_input = seating.command
+                    seating_steps = seating.steps
+                    seating_asked = seating.asked
+                    seating_issues = seating.issues
+                provider.prior_steps = standing_steps or seating_steps
             if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
-                match_info = provider.prepare_turn(player_input)
+                match_info = provider.prepare_turn(typed_input)
+            things_given: list[str] = []
+            facts_before: dict[str, Any] = {}
+            if isinstance(provider, ItemFactsProvider):
+                things_given = list(provider._selected_names) if provider._selected_names is not None else []
+                facts_before = provider.facts_for_names(things_given, structural=True)
             try:
-                proposal = _turn_with_rate_limit_retry(engine, player_input)
+                proposal = _turn_with_rate_limit_retry(engine, typed_input)
                 last_prompt = getattr(provider, "last_prompt", None)
                 turn_prompt = dict(last_prompt) if last_prompt is not None else None
             except NarrationProviderError as error:
@@ -724,10 +764,18 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     raise
                 if isinstance(provider, ItemFactsProvider):
                     provider.discard_pending_item_facts()
+                    provider.prior_steps = ()
                 rejected_turns.append(
                     {
                         "turn_number": turn_number,
                         "player_input": player_input,
+                        "typed_input": typed_input,
+                        "seating_steps": list(seating_steps),
+                        "seating_asked": seating_asked,
+                        "seating_issues": list(seating_issues),
+                        "standing_steps": list(standing_steps),
+                        "standing_asked": standing_asked,
+                        "standing_issues": list(standing_issues),
                         "rejection_code": "INVALID_PROPOSAL",
                         "rejection_reason": str(error),
                     }
@@ -736,12 +784,20 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             except (ProposalValidationError, RuntimeContractError) as error:
                 if isinstance(provider, ItemFactsProvider):
                     provider.discard_pending_item_facts()
+                    provider.prior_steps = ()
                 if fixed_turns is None:
                     raise
                 rejected_turns.append(
                     {
                         "turn_number": turn_number,
                         "player_input": player_input,
+                        "typed_input": typed_input,
+                        "seating_steps": list(seating_steps),
+                        "seating_asked": seating_asked,
+                        "seating_issues": list(seating_issues),
+                        "standing_steps": list(standing_steps),
+                        "standing_asked": standing_asked,
+                        "standing_issues": list(standing_issues),
                         "rejection_code": getattr(error, "code", None) or getattr(error, "error_code", ""),
                         "rejection_reason": str(error),
                     }
@@ -752,19 +808,33 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             narration = join_narration(tuple(segments)) if segments else ""
             item_facts_record: dict[str, Any] | None = None
             if isinstance(provider, ItemFactsProvider):
-                things_given = list(provider._selected_names) if provider._selected_names is not None else []
-                facts_before = provider.facts_for_names(things_given)
                 raw_item_facts = provider.pending_item_facts()
                 if provider.item_facts_mode == "second_call":
-                    raw_item_facts = provider.second_call_update(player_input, narration)
-                _, fact_issues = provider.apply_item_facts(raw_item_facts, player_input=player_input)
+                    raw_item_facts = provider.second_call_update(typed_input, narration)
+                _, fact_issues = provider.apply_item_facts(raw_item_facts, player_input=typed_input)
                 match_info = provider.last_item_facts_match()
                 after_names = set(things_given) | provider._changed_last_turn
-                facts_after = provider.facts_for_names(after_names)
+                facts_after = provider.facts_for_names(after_names, structural=True)
+                item_facts_names: dict[str, list[str]] = {}
+                world = provider._world()
+                for facts in (facts_before, facts_after):
+                    for display_name, entry in facts.items():
+                        place = entry.get("place") if isinstance(entry, dict) else None
+                        for display in (display_name, place):
+                            if not isinstance(display, str):
+                                continue
+                            entity_id = world.resolve(display)
+                            if entity_id:
+                                other_names = [name for name in world.names(entity_id) if name != display]
+                                if other_names:
+                                    item_facts_names[display] = other_names
+                item_facts_axes = declared_axes_for_world(world, {*facts_before, *facts_after})
                 item_facts_record = {
                     "things_given": things_given,
                     "item_facts_before": facts_before,
                     "item_facts_after": facts_after,
+                    "item_facts_names": item_facts_names,
+                    "item_facts_axes": item_facts_axes,
                     "item_facts_raw": raw_item_facts,
                     "item_facts_issues": fact_issues,
                     "item_facts_unplaced": provider.last_item_facts_unplaced(),
@@ -782,6 +852,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         f"scene placement for {refusal.item_id!r} in {refusal.scene_id!r} refused: {refusal.reason}"
                         for refusal in refusals
                     )
+                provider.prior_steps = ()
             if narration or isinstance(provider, ItemFactsProvider):
                 delivery = state.last_turn_delivery
                 cue_fact_id = delivery.cue_fact_id
@@ -799,6 +870,13 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     narrated_command = player_input
                 turn_record = {
                     "player_input": player_input,
+                    "typed_input": typed_input,
+                    "seating_steps": list(seating_steps),
+                    "seating_asked": seating_asked,
+                    "seating_issues": list(seating_issues),
+                    "standing_steps": list(standing_steps),
+                    "standing_asked": standing_asked,
+                    "standing_issues": list(standing_issues),
                     "narrated_command": narrated_command,
                     "prompt_system": turn_prompt["system"] if turn_prompt is not None else None,
                     "prompt_user": turn_prompt["user"] if turn_prompt is not None else None,

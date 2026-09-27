@@ -134,7 +134,7 @@ Each entry below is authoring data, not a player action menu.
 - Damaged voice recording
 
 **Dramatic purpose**
-- Provide a compact investigative situation in which Michelle’s own preparation gives her best friend and longtime roommate Kristin direction.
+- Provide a compact investigative situation in which Michelle’s own preparation gives her best friend Kristin direction.
 - Reinforce Michelle as an active researcher rather than merely a missing objective.
 
 **Possible realizations**

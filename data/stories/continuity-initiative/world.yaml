@@ -3,9 +3,14 @@ protagonist_id: kristin
 kinds:
 - id: desk
   is: [furniture, supporter]
+- id: seat
+  is: [furniture, supporter]
+  fixed: false
+  enterable: true
 locations:
 - id: mcgehee_home
-  name: Kristin and Michelle's shared house
+  name: Michelle's house
+  aliases: [Michelle's home, the house]
 - id: kitchen
   name: kitchen
   parent: mcgehee_home
@@ -35,7 +40,7 @@ npcs:
   - Kristin Schweitzer
   # plot.md gives Kristin's expertise a future role in the conspiracy's facilities.
   # This narrator-safe bio preserves her characterisation and immediate goal without previewing that role.
-  narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend and longtime roommate, Michelle.
+  narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.
 - id: michelle
   name: Dr. Michelle McGehee
   aliases:
@@ -45,7 +50,7 @@ npcs:
   - Shelly
   # plot.md gives Michelle's concealed discoveries and captivity to the narrator before the player earns them.
   # This narrator-safe bio preserves her characterisation while keeping those revelations in plot.md alone.
-  narrator_bio: A 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend and longtime roommate; Kristin alone calls her "Shelly", while everyone else addresses her as Dr. McGehee.
+  narrator_bio: A 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her "Shelly", while everyone else addresses her as Dr. McGehee.
 - id: brandon
   name: Brandon Corfman
   aliases:
@@ -86,12 +91,17 @@ items:
   name: Michelle's phone
 - id: kristin_laptop
   name: Kristin's laptop
+  use_seated: true
+  take_text: Kristin picked up her laptop.
 - id: michelle_drawer
   name: drawer
   fixed: true
   kind: container
   openable: true
   contents: [pens, binder clips, stapler, spare batteries]
+- id: back_door
+  name: back door
+  fixed: true
 - id: kristin_truck
   name: Kristin's truck
   kind: vehicle
@@ -102,6 +112,26 @@ items:
   owner: michelle
 - id: workstation_chair
   name: workstation chair
+  kind: seat
+  axes:
+  - {overturned: [], upright: [standing]}
+  enter_pole: upright
+  seat_for: michelle_workstation
+  right_text: Kristin set the workstation chair upright.
+  enter_text: Kristin sat down in the workstation chair.
+  leave_text: Kristin stood up from the workstation chair.
+- id: park_bench
+  name: park bench
+  aliases: [bench]
+  kind: seat
+  fixed: true
+- id: truck_driver_seat
+  name: driver's seat
+  kind: seat
+  fixed: true
+  seat_for: kristin_truck
+  enter_text: Kristin sat down in the driver's seat.
+  leave_text: Kristin got out of the truck.
 - id: transit_card
   name: Transit token
 - id: override_codes

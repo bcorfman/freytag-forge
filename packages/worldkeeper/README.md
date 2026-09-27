@@ -22,6 +22,10 @@ assert w.area("ada") == "cottage"
 
 Facts use `wk_` predicates. The fact encoding is:
 
+Kinds may declare `fixed: true` or `fixed: false`. When an entity does not
+declare its own flag, the nearest kind declaration supplies it; otherwise a
+descendant of `furniture` is fixed by default.
+
 - `wk_kind`, `wk_name`, `wk_owner`, `wk_parent`, `wk_relation`, `wk_status`,
   `wk_place_text`, and `wk_unplaced` store their ID or free text in `value`;
   their `object` is `None`.

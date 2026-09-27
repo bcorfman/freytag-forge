@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from worldkeeper import WorldSchema
+from worldkeeper import BASE_KINDS, WorldSchema
 
 from bench.item_facts import package_seed
 from storygame.runtime.contracts import ResolvedTurnProposal, SceneTransitionProposal
@@ -22,7 +22,10 @@ def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
     shutil.copytree(ROOT / "data/stories/continuity-initiative", root)
     world_path = root / "world.yaml"
     world = yaml.safe_load(world_path.read_text())
-    world["kinds"] = [{"id": "desk", "is": ["furniture", "supporter"]}]
+    world["kinds"] = [
+        {"id": "desk", "is": ["furniture", "supporter"]},
+        {"id": "seat", "is": ["supporter"], "enterable": True},
+    ]
     location_ids = {location["id"] for location in world["locations"]}
     world["locations"].extend(
         location
@@ -64,11 +67,18 @@ def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
   workstation_chair: {{parent: kitchen}}
 """
     plot = re.sub(r"item_placements:\n(?:  .*\n)+setting_facts:", replacement + "setting_facts:", plot, count=1)
+    scene_1b = """item_ids: [memory_card, transit_card, park_bench]
+item_placements:
+  park_bench: {parent: los_angeles_park}
+"""
+    assert plot.count(scene_1b) == 1
     plot = plot.replace(
-        "item_ids: [memory_card, transit_card]\n",
-        "item_ids: [memory_card, transit_card, michelle_phone]\n"
-        "item_placements:\n"
-        "  michelle_phone: {parent: los_angeles_park, text: beside the park bench}\n",
+        scene_1b,
+        """item_ids: [memory_card, transit_card, park_bench, michelle_phone]
+item_placements:
+  park_bench: {parent: los_angeles_park}
+  michelle_phone: {parent: los_angeles_park, text: beside the park bench}
+""",
         1,
     )
     plot_path.write_text(plot)
@@ -144,8 +154,9 @@ def test_cyclic_story_kinds_are_story_package_errors(tmp_path):
     world_path = root / "world.yaml"
     world = yaml.safe_load(world_path.read_text())
     world["kinds"] = [{"id": "a", "is": ["b"]}, {"id": "b", "is": ["a"]}]
-    next(item for item in world["items"] if item["id"] == "michelle_workstation")["kind"] = "thing"
+    for item in world["items"]:
+        if item.get("kind") not in BASE_KINDS:
+            item.update(kind="thing", enter_pole=None, seat_for=None, axes=[])
     world_path.write_text(yaml.safe_dump(world, sort_keys=False))
-
     with pytest.raises(StoryPackageError, match="cycle among kinds"):
         load_story_package(root)
