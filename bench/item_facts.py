@@ -610,7 +610,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
             for entity_id in extra_ids:
                 label = self._entity_label(world, entity_id)
                 if label not in existing and f"- {label}." not in lines:
-                    lines.append(f"- {label}.")
+                    line = f"- {label}."
+                    if world.is_a(entity_id, "character"):
+                        place = world.place_label(entity_id)
+                        if place:
+                            line += f" Place: {place.strip()[:80]}."
+                    lines.append(line)
         return {
             "system": _MATCH_SYSTEM,
             "user": (

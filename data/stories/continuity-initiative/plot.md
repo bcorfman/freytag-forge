@@ -166,6 +166,8 @@ location_id: los_angeles_park
 freytag_phase: rising_action
 objective: Follow Michelles lead and survive the park
 participant_ids: [kristin, brandon, michelle]
+character_placements:
+  brandon: {parent: los_angeles_park, text: across the park from Kristin}
 item_ids: [memory_card, transit_card]
 entry_text: "The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.\n\n"
 transition_ids: [t_1b_1c]

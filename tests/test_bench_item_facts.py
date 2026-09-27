@@ -16,7 +16,7 @@ from bench.item_facts import (
 )
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import world_for
+from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
 
@@ -473,6 +473,28 @@ def test_protagonist_is_always_selected_and_given(monkeypatch):
     assert "Kristin. Place: Michelle's house." in provider._player_lines(
         {"scene_setting": "The house is quiet.", "player_input": "Search the drawer."}
     )
+
+
+def test_match_payload_gives_placed_character_place_from_real_package():
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "1B"
+    apply_scene_placements(PACKAGE, state.facts, "1B")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+
+    payload = provider._match_payload(
+        "Walk over to the man watching me and hand him Michelle's phone.",
+        ["stranger"],
+        include_places=True,
+    )
+
+    assert "- Brandon. Place: across the park from Kristin." in payload["user"].splitlines()
 
 
 def test_protagonist_reply_moves_place_and_ignores_condition(monkeypatch):
