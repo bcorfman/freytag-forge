@@ -2008,7 +2008,8 @@ def test_same_as_learns_item_and_place_names_but_not_area_names(monkeypatch):
         player_input="Move the stranger to the corner.",
     )
 
-    assert world.resolve("stranger") == world.resolve("Kristin")
+    assert world.resolve("stranger") != world.resolve("Kristin")
+    assert provider.last_item_facts_match()["resolutions"]["the stranger"] == "new"
     assert world.resolve("corner") is None
     assert provider.last_item_facts_match()["place_resolutions"] == {"the corner": area_name}
 
@@ -2028,6 +2029,83 @@ def test_same_as_new_place_is_recorded_and_left_unplaced(monkeypatch):
 
     assert provider.last_item_facts_match()["place_resolutions"] == {"the checkpoint": "new"}
     assert provider.last_item_facts_unplaced() == [{"name": "the stranger", "place": "the checkpoint"}]
+
+
+def test_new_name_mapped_to_player_character_stays_new(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "refers": [],
+            "same_as": {"stranger in the park": "Kristin", "service path": "new"},
+        },
+    )
+
+    _facts, issues = provider.apply_item_facts(
+        {
+            "handwritten number sequence": {"place": "stranger in the park"},
+            "stranger in the park": {"place": "service path"},
+        },
+        player_input="Inspect the handwritten number sequence and the stranger in the park.",
+    )
+
+    world = provider._world()
+    stranger_id = world.resolve("stranger in the park")
+    assert stranger_id is not None
+    assert stranger_id != world.resolve("Kristin")
+    assert world.unplaced_name(world.resolve("handwritten number sequence")) == "stranger in the park"
+    assert provider.last_item_facts_match()["resolutions"]["stranger in the park"] == "new"
+    assert "item_facts match mapped 'stranger in the park' to the player character; kept as new" in issues
+
+
+def test_new_name_mapped_to_other_character_still_resolves_player_character_guard(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"the stranger": "Michelle"}},
+    )
+
+    provider.apply_item_facts({"the stranger": {"place": "kitchen"}}, player_input="Search for the stranger.")
+
+    world = provider._world()
+    assert world.resolve("the stranger") == world.resolve("Michelle")
+    assert provider.last_item_facts_match()["resolutions"] == {"the stranger": world.name(world.resolve("Michelle"))}
+
+
+def test_character_inside_character_place_is_left_unplaced(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"service path": "Kristin"}},
+    )
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "service path"}}, player_input="Go to the service path."
+    )
+
+    assert provider.last_item_facts_unplaced() == [{"name": "Kristin", "place": "service path"}]
+    assert "item_facts match mapped place 'service path' to a character; Kristin left unplaced" in issues
+
+
+def test_thing_at_place_mapped_to_character_is_allowed_character_inside(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"Kristin's pocket": "Kristin"}},
+    )
+
+    provider.apply_item_facts(
+        {"the lantern": {"place": "Kristin's pocket"}},
+        player_input="Put the lantern in Kristin's pocket.",
+    )
+
+    world = provider._world()
+    assert world.parent(world.resolve("the lantern")) == world.resolve("Kristin")
+    assert provider.last_item_facts_unplaced() == []
 
 
 def test_omitted_same_as_adds_condition_only_thing_without_place(monkeypatch):

@@ -839,13 +839,26 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 match_issues.append("invalid item_facts match reply")
 
         same_as = match_reply.get("same_as", {}) if isinstance(match_reply, dict) else {}
+        protagonist_id = self.state.package.world.protagonist_id
+        player_character_names = {
+            item["key"]
+            for item in prepared
+            if isinstance(same_as, dict)
+            and isinstance(same_as.get(item["key"]), str)
+            and same_as[item["key"]] != "new"
+            and self._resolve_name(world, same_as[item["key"]]) == protagonist_id
+        }
         place_ids = {}
         place_resolutions = {}
         for place in place_names:
             target = same_as.get(place) if isinstance(same_as, dict) else None
             if isinstance(target, str) and target != "new":
                 place_ids[place] = self._resolve_name(world, target)
-                if place_ids[place] is not None and not world.is_a(place_ids[place], "area"):
+                if (
+                    place_ids[place] is not None
+                    and place not in player_character_names
+                    and not world.is_a(place_ids[place], "area")
+                ):
                     world.add_alias(place_ids[place], place)
             place_id = place_ids.get(place)
             place_resolutions[place] = world.name(place_id) if place_id is not None else "new"
@@ -857,7 +870,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 target = same_as.get(key)
                 if isinstance(target, str) and target != "new":
                     entity_id = self._resolve_name(world, target)
-                    if entity_id is not None:
+                    if entity_id == protagonist_id:
+                        issues.append(f"item_facts match mapped {key!r} to the player character; kept as new")
+                        entity_id = None
+                    elif entity_id is not None:
                         if not world.is_a(entity_id, "area"):
                             world.add_alias(entity_id, key)
                         resolutions[key] = world.name(entity_id)
@@ -870,6 +886,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     continue
                 entity_id = created.id
                 resolutions[key] = "new"
+                if key in player_character_names:
+                    place_ids[key] = entity_id
             elif item["candidate"] and key not in resolutions:
                 resolutions[key] = world.name(entity_id)
                 if key != world.name(entity_id):
@@ -895,6 +913,17 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if place_pole:
                 self.item_facts_axis_fixes += 1
             place_parent = place_ids.get(place) if place and not place_pole else None
+            character_inside_character = (
+                place
+                and not place_pole
+                and place in place_ids
+                and world.is_a(entity_id, "character")
+                and place_parent is not None
+                and world.is_a(place_parent, "character")
+            )
+            if character_inside_character:
+                place_parent = None
+                issues.append(f"item_facts match mapped place {place!r} to a character; {name} left unplaced")
             if place and not place_pole and place not in place_ids:
                 place_parent = self._resolve_name(world, place)
             entity = world.schema.entities.get(entity_id)

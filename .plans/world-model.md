@@ -45,7 +45,7 @@ Continue the scene work on it.
   sub-areas, and Brandon as companion. It has no bench script either.
   2A in full as a package (6aad57e): Brandon's hideout, the servers and
   the move to the facility. Scenes 2B-3C have no placements at all.
-  **Next: one live replicate of each new bench variation, then 2B.**
+  **Next: the match-call Jev question (A), then 2B.**
 - **Bench scripts for 1B, 1C and 2A (written, not yet run live).**
   `bench/variations/item-facts-world-1b-1c.json` plays 1B's `dead-drop`
   (10 turns) and continues into 1C's `terminal-descent` (10 turns). The
@@ -102,7 +102,17 @@ Continue the scene work on it.
   held: "stranger" to Brandon in 1B turn 6 (3 of 3), "server console" to
   the servers (3 of 3), "park entrance" to the park, "corridors" to the
   infrastructure corridors. Per the fix ranking, a rule that fails this
-  often calls for step 2, an LLM check. Brandon has not yet chosen.
+  often calls for step 2, an LLM check. Brandon chose both an engine kind
+  guard (B) and a per-mapping Jev question (A), B first.
+  **B done (Ringer, Luna, two attempts; suite 880 passed).** Two guards in
+  `apply_item_facts`, using only the world's kinds: a new name that the
+  match maps to the player character stays new (issue "...mapped ... to
+  the player character; kept as new"), and a character whose place the
+  match mapped to a character is left unplaced (issue "...mapped place
+  ... to a character; ... left unplaced"). A thing placed at a place
+  mapped to a character is still allowed ("Kristin's pocket"). Unit tests
+  replay the recorded live replies. Not measured live on its own; it is
+  measured together with A. **Next: A.**
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"
