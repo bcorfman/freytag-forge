@@ -522,7 +522,11 @@ class World:
         matches = []
         for entity_id in self._ids():
             entity = self._entity(entity_id)
-            names = (entity.name,) + entity.aliases
+            names = (
+                (entity.name,)
+                + entity.aliases
+                + tuple(fact.value for fact in self._facts("wk_alias", entity_id) if fact.value)
+            )
             if any(self._normalize(candidate) == query for candidate in names):
                 matches.append(entity_id)
             owner_id = self.owner(entity_id)
@@ -552,6 +556,21 @@ class World:
             selected = self.resolver(name, tuple(unique_matches) if unique_matches else tuple(self._ids()))
             return selected if selected in self._ids() else None
         return None
+
+    def add_alias(self, entity_id, name):
+        """Record a learned name for an entity, refusing conflicting names."""
+        if not self.exists(entity_id):
+            return self._bad("unknown entity")
+        if not isinstance(name, str) or not name.strip():
+            return self._bad("alias name must not be empty")
+        alias = name.strip()
+        resolved = self.resolve(alias)
+        if resolved is not None and resolved != entity_id:
+            return self._bad("alias already resolves to a different entity")
+        if resolved == entity_id:
+            return OpResult(True, id=entity_id)
+        self._add("wk_alias", entity_id, value=alias)
+        return OpResult(True, id=entity_id)
 
     @staticmethod
     def _normalize(text):

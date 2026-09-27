@@ -136,6 +136,32 @@ def test_owner_possessive_names_resolve_from_names_and_aliases():
     assert w.resolve("the k's implement") == "thing"
 
 
+def test_learned_aliases_are_fact_backed_and_refuse_conflicts():
+    w = make()
+    before = set(w.backend.matching_all())
+
+    assert w.add_alias("lamp", "the glowing lamp").ok
+    assert w.resolve("glowing lamp") == "lamp"
+    assert w.add_alias("lamp", "the glowing lamp").ok
+    assert set(w.backend.matching_all()) == before | {
+        next(fact for fact in w.backend.matching_all() if fact.predicate == "wk_alias")
+    }
+
+    after_alias = set(w.backend.matching_all())
+    unknown = w.add_alias("missing", "unknown name")
+    assert not unknown.ok and unknown.reason == "unknown entity"
+    empty = w.add_alias("lamp", "")
+    assert not empty.ok and empty.reason == "alias name must not be empty"
+    non_text = w.add_alias("lamp", None)
+    assert not non_text.ok and non_text.reason == "alias name must not be empty"
+    conflict = w.add_alias("lamp", "Ada")
+    assert not conflict.ok and conflict.reason == "alias already resolves to a different entity"
+    assert set(w.backend.matching_all()) == after_alias
+
+    rebuilt = World(w.schema, w.backend)
+    assert rebuilt.resolve("the glowing lamp") == "lamp"
+
+
 def test_schema_errors_and_resolver():
     for data in ({"kinds": [{"id": "x", "is": ["x"]}]}, {"entities": [{"id": "a", "name": "a", "kind": "missing"}]}):
         try:

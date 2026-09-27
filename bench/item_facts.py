@@ -790,6 +790,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
             target = same_as.get(place) if isinstance(same_as, dict) else None
             if isinstance(target, str) and target != "new":
                 place_ids[place] = self._resolve_name(world, target)
+                if place_ids[place] is not None and not world.is_a(place_ids[place], "area"):
+                    world.add_alias(place_ids[place], place)
 
         for item in prepared:
             key, value = item["key"], item["value"]
@@ -799,6 +801,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 if isinstance(target, str) and target != "new":
                     entity_id = self._resolve_name(world, target)
                     if entity_id is not None:
+                        if not world.is_a(entity_id, "area"):
+                            world.add_alias(entity_id, key)
                         resolutions[key] = world.name(entity_id)
                         if target != world.name(entity_id):
                             engine_resolutions[target] = world.name(entity_id)

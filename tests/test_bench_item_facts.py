@@ -1900,6 +1900,31 @@ def test_same_as_tracked_name_merges_new_entry_same_turn(monkeypatch):
     assert "the old lamp" not in provider.item_facts
 
 
+def test_same_as_learns_item_and_place_names_but_not_area_names(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    area_id = next(entity_id for entity_id in world.entity_ids() if world.is_a(entity_id, "area"))
+    area_name = world.name(area_id)
+
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "refers": [],
+            "same_as": {"the stranger": "Kristin", "the corner": area_name},
+        },
+    )
+    provider.apply_item_facts(
+        {
+            "the stranger": {"place": "the corner"},
+        },
+        player_input="Move the stranger to the corner.",
+    )
+
+    assert world.resolve("stranger") == world.resolve("Kristin")
+    assert world.resolve("corner") is None
+
+
 def test_omitted_same_as_adds_condition_only_thing_without_place(monkeypatch):
     provider = _provider()
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": [], "same_as": {}})
