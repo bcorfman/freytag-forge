@@ -90,6 +90,19 @@ Continue the scene work on it.
   "stranger in the park" became Kristin (1B turn 6) and "door" became the
   inspection console (2A turn 10). One replicate cannot tell the rules'
   effect from sampling noise; more replicates are needed before judging.
+  **Three more replicates each (2026-09-27, at 1d342c1; Ringer, all six
+  completed, no rejected turns).** The two rules do not hold most of the
+  time. Across the four post-fix replicates: "checkpoint" became Brandon's
+  hideout in 2 of 3 (it was "new" once, in the first rerun); "stranger in
+  the park" became Kristin in 2 of 4; "prisoners" became Brandon in 1 of 3.
+  Other wrong mappings seen once each: "service path" to Kristin, "heavy
+  electrical service" to the service level, "below" to the prisoners and to
+  the loading docks, "in front of metal door" to the inspection console,
+  and "stairway" in 2A's corridors to 1C's service level. Right mappings
+  held: "stranger" to Brandon in 1B turn 6 (3 of 3), "server console" to
+  the servers (3 of 3), "park entrance" to the park, "corridors" to the
+  infrastructure corridors. Per the fix ranking, a rule that fails this
+  often calls for step 2, an LLM check. Brandon has not yet chosen.
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"
