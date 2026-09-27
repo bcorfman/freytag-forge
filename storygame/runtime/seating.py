@@ -66,11 +66,8 @@ def seat_before_use(world, package, player_input: str, uses_thing: Callable[[str
                     steps.append(items[seat].enter_text)
             item = items[item_id]
             parent = world.parent(item_id)
-            if (
-                item.take_text
-                and world.holder(item_id) != protagonist
-                and not (parent and world.is_a(parent, "supporter"))
-            ):
+            used_in_place = parent and parent == items[seat].seat_for and world.is_a(parent, "supporter")
+            if item.take_text and world.holder(item_id) != protagonist and not used_in_place:
                 result = world.move(item_id, protagonist)
                 if not result.ok:
                     issues.append(f"could not move '{world.name(item_id)}' to protagonist: {result.reason}")

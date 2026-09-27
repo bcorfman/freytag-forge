@@ -60,6 +60,40 @@ def test_upright_chair_only_seats_kristin():
     assert world.parent("kristin") == "workstation_chair"
 
 
+def test_laptop_on_chosen_seat_is_picked_up():
+    _, world = _world()
+    _put_player_and_laptop_in_kitchen(world)
+    assert world.move("kristin_laptop", "workstation_chair").ok
+    world.set_axis("workstation_chair", "upright")
+
+    result = seat_before_use(world, PACKAGE, "Read the files on my laptop.", lambda *_: True)
+
+    assert result.steps == (
+        "Kristin sat down in the workstation chair.",
+        "Kristin picked up her laptop.",
+    )
+    assert world.holder("kristin_laptop") == "kristin"
+
+
+def test_laptop_on_a_seat_for_another_furniture_is_picked_up():
+    _, world = _world()
+    assert world.move("kristin", "outside_house").ok
+    assert world.move("kristin_laptop", "truck_driver_seat").ok
+
+    result = seat_before_use(
+        world,
+        PACKAGE,
+        "Read the files on Michelle's memory card with my laptop.",
+        lambda *_: True,
+    )
+
+    assert result.steps == (
+        "Kristin sat down in the driver's seat.",
+        "Kristin picked up her laptop.",
+    )
+    assert world.holder("kristin_laptop") == "kristin"
+
+
 def test_seated_kristin_gets_no_steps():
     _, world = _world()
     _put_player_and_laptop_in_kitchen(world)
