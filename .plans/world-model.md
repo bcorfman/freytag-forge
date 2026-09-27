@@ -458,6 +458,36 @@ prose goes to ChatGPT Desktop.
   `participant_ids`: Charles and Rebecca in 1C, 2B, 2C and 3B, and Brandon in
   3C. Most are heard, not present. Each one is a plot.md decision.
 
+**Decided (Brandon, 2026-09-27), after checking each question against the
+text:**
+
+1. **The facility is one area tree.** `regional_facility` becomes the parent
+   of `facility_perimeter`, `janus_archive`, `purge_chamber`,
+   `detention_level`, `broadcast_relay` and `facility_escape`. A new
+   `freight_terminal` area inside it is 1C's location. The knowledge entries
+   that already reference `regional_facility` then mean the whole
+   installation. No "the facility" alias is added until a leakage check shows
+   it is safe, because 1A and 1B narration may use the word first.
+2. **2A starts in Brandon's hideout.** Add a `brandon_hideout` area, "Brandon's
+   hideout". Kristin and Brandon get 2A `character_placements` there. The
+   story fact set on entering the facility (2A.3) declares an `on_assert`
+   move of Kristin to `facility_perimeter`, and Brandon follows as her
+   companion. `location_id` stays `facility_perimeter`. The 2A task must first
+   check what else reads `location_id`.
+3. **Brandon is present in 2B** and travels as Kristin's companion. The
+   Setting line's "remote connection" is his network, not his location.
+4. **Charles is never placed.** Every appearance is remote: surveillance
+   footage in 1C, orders in 2C, "appears remotely" in 3B, and a remote command
+   site in 3C.
+5. **Michelle** is placed in `detention_level` in 3A as a captive.
+   `michelle_reached` sets her free. She travels with Kristin **from 3B on**,
+   not from the moment she is reached: 3B declares
+   `companions: [brandon, michelle]`, and no `accompany` effect is added in 3A.
+6. **Characters listed but not participants:** Charles and Rebecca stay
+   unplaced in 1C, 2B and 2C (footage, private contact, orders). In 3C,
+   Brandon joins `participant_ids` and is placed at the relay, not as a
+   companion. In 3B his move to the relay is a fact's `on_assert` move.
+
 **Proposed order.** Scene by scene, as each one enters a bench script:
 
 1. 1B: the dead drop and the truck's 1B place.
