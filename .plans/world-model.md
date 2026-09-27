@@ -129,6 +129,41 @@ Result, first replicate (2026-09-26, at 35d490f): the run completed with
 - Seen, but not measured: at turn 13 the narrator drove Kristin "back to
   her house, where her laptop is", which is the old shared-home idea.
 
+Fixes after replicate 1 (7ea8c2b), both approved by Brandon: script turn
+10 now reads "Go back into the kitchen and throw Michelle's phone hard
+against the wall.". Scene 1B places Brandon "across the park from
+Kristin", and the bench match call shows a placed character's place. No
+alias was added, because narration safety scans aliases, so a "stranger"
+alias would reject narration in scenes where Brandon is not allowed. A
+"known as" label was considered and dropped, because the 1B narrator
+prompt already names Brandon.
+
+Result, second replicate (2026-09-26, at 7ea8c2b): the run completed with
+19 accepted turns.
+
+- **Places resolve: 50 of 52 (96%).** The two misses: at turn 7 Kristin
+  was placed "at Michelle's workstation", which copies the chair's
+  authored text and is a phrase, not a name. At turn 13 the truck was
+  placed at "driveway", which is not in the world.
+- **Held things: 15 of 15 place probes agree.** Every per-thing place
+  probe on a held thing agreed with the tracked place (lowest 0.53). The
+  handoff now lands: at turn 16 the match call mapped "stranger in the
+  park" to Brandon, the phone was tracked with Brandon through turn 17,
+  and it came back to Kristin at turn 18. The one held-thing conflict, at
+  turn 18, is the judge reading the place "Brandon" against narration
+  that calls him "the stranger". The judge does not know they are the
+  same person.
+- **The per-turn "all facts right" measure: 11 of 19.** This is the
+  capture accuracy that the v36 comparison measures, not W5.
+- **Empty condition: no repeat** (the turn 7 chair reply was `["upright"]`).
+- Seen in both replicates: at turn 13 ("Read the files on Michelle's
+  memory card with my laptop.") the narrator drives Kristin "back to her
+  house". At turn 17 the reply listed 1B Details nouns as things, which
+  created "stranger in the park" as a second entity alongside Brandon.
+
+Verdict on W5: both questions pass. The bare parent name reads as held,
+and replies use names, not phrases. No `Held by:` fallback is needed.
+
 ### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
