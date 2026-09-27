@@ -252,7 +252,7 @@ class NarrationSafetyValidator:
 
     @staticmethod
     def _related_area_ids(package: object, location_id: str) -> set[str]:
-        """Allow the scene area and the areas directly above or below it."""
+        """Allow the scene area and every area above or below it in the area tree."""
 
         locations = {location.id: location for location in package.world.locations}
         related = {location_id}
