@@ -2,6 +2,7 @@
   "name": "item-facts-world-2a",
   "story_package": "data/stories/continuity-initiative",
   "fixed_turns": 10,
+  "entry_state": "thorough",
   "continuity_judge": true,
   "fact_tracking_judge": true,
   "item_facts": {"mode": "single_call", "seed_from_package": true},
