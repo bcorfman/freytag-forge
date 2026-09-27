@@ -1,9 +1,10 @@
 # World model: plan
 
-Status (2026-09-26, end of session): decisions W1-W13 settled; S1 merged
-(PR 480). S2 tasks A and C merged (PR 481). Tasks B and D-I are on
-branch `world-model-s2b`, which is not pushed and has no PR. Next: the v36
-comparison, then the PR. See "Resume here".
+Status (2026-09-27): decisions W1-W13 settled; S1 merged (PR 480). S2
+tasks A and C merged (PR 481). Tasks B and D-I and the five judge fixes
+(2302ef6) are on branch `world-model-s2b`, which is not pushed and has no
+PR. The v36 comparison passes on the fixed judge. Next: the PR. See
+"Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -337,35 +338,54 @@ per-change-type counts are not exposed to:
 One real narrator fault: in replicate 1 at turn 12 the narrator never
 walked Kristin to the truck, and turn 13 derailed after it.
 
-**Open decision (Brandon): what comes before the PR for
-`world-model-s2b`.**
+**Decided (Brandon, 2026-09-27): fix the five judge faults first, then
+open the PR.** The faults were poorly phrased questions: they asked about
+events during the turn, while scoring needs where a thing started and
+where it ended. Built as 2302ef6 (three Ringer rounds on Luna):
 
-1. **Open the PR now.** The decision metric, capture per change type,
-   beats v36 in both categories. The five judge logic faults above
-   become the first task of S3, fixed before any S3 measurement relies
-   on the turn-level score.
-2. **Fix the five judge faults first, then open the PR.**
-   - Round trip: the judge's "moved" answer does not count as a miss
-     when the end place equals the start place.
-   - Refinement: a more specific place inside the given one is the right
-     after-place (the judge's own criteria already say so, but it does
-     not hold).
-   - Command text: the judge gets the typed command and the engine's
-     steps separately, as what happened just before.
-   - Holder unchanged: a thing that stays with the same holder has not
-     moved.
-   - In-room walk: a walk inside the start area is not a start conflict.
+- Round trip: the protagonist's move question asks whether she ends the
+  turn in a different room or area from where she started.
+- Refinement: `judge_input` builds `place_contents` from the package and
+  the tracked places, at any depth, and the judge gets
+  `after_place_contains`. The plan's first idea, skipping "moved" when
+  the tracked end place equals the start, was dropped: it grades the
+  tracked places with themselves.
+- Command text: the judge gets the typed command, the engine's steps as
+  `just_before`, and `narrator_narration`. Move questions are answered
+  from the narrator's own text. A probe on turn 13 (replicates 2-4) found
+  the cause was the story's ending sentence ("heads for the park"), not
+  the steps: "moved" was 0.69 as recorded, 0.07 without the story text,
+  and 0.90 without the steps.
+- Holder unchanged: anywhere on the holder, such as a hand, a pocket or
+  a bag, is the same place. No pocket part was added to the world model;
+  the judge reads prose, so the question had to change.
+- In-room walk: the protagonist's start question asks whether she
+  started outside `before_place`.
 
-   Then re-score the saved second-pass runs, judge calls only.
+Re-scored with the fixed fact judge only (the continuity judge did not
+change), turn 10 excluded:
 
-   Recommended, because re-scoring is now cheap and it keeps the rule to
-   fix known judge faults before relying on a measure.
+| Measure | v36 (n=2) | Branch (n=4) |
+|---|---|---|
+| Place changes captured | 18/24 (75%) | 38/40 (95%) |
+| Condition changes captured (declared axes) | 6/10 (60%) | 15/16 (94%) |
+| Turns with every fact right | 26/36 (72%) | 61/68 (90%) |
+
+Turns 4, 8, 12 and 13 now pass in every replicate. Of the 7 remaining
+failed turns, 2 are one real engine fault: at turn 15 in replicates 3
+and 4 the reply put Kristin at "bench" in the 1B park, the park has no
+bench entity, and the name resolved to the 1A workstation chair (by the
+match call in replicate 3, by a learned name in replicate 4). The match
+call should not resolve to a thing in another scene's area, and 1B may
+need the bench declared. Not fixed yet.
 
 The saved second-pass runs are in the main checkout's `bench/results/`,
 which is gitignored and so exists only on this machine:
 
 - `item-facts-s2-world-two-scene-rep1` to `-rep4`: the branch replicates.
 - `item-facts-v36-rescore-s2`: v36 re-scored with the fixed judges.
+- `item-facts-s2-rescore-judgefix-rep1` to `-rep4` and
+  `item-facts-v36-rescore-judgefix`: fact judge re-scored at 2302ef6.
 - `item-facts-s2-comparison-tools`: the scripts. `compare.py` computes
   capture per change type, with turn 10 excluded:
   `compare.py V36_RAW -- REP_RAW... --exclude-turns 10`. The raw inputs
