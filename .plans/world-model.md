@@ -306,6 +306,37 @@ Built after that analysis (2026-09-27):
 - Run fresh replicates of the branch. The four comparison replicates
   predate these fixes, so they cannot be re-scored.
 
+The v36 comparison, second pass (2026-09-27): v36 re-scored with the
+fixed judges; 4 fresh replicates of the branch at dd01cdf. Turn 10 is left
+out of both arms.
+
+| Measure | v36 (n=2) | Branch (n=4) |
+|---|---|---|
+| Place changes captured | 17/26 (65%) | 40/46 (87%) |
+| Condition changes captured (declared axes) | 6/8 (75%) | 15/16 (94%) |
+| Turns with every fact right | 26/36 (72%) | 47/68 (69%) |
+
+Both capture categories beat v36, which meets the S2 exit criterion. The
+turn-level measure is held down by judge logic faults that the
+per-change-type counts are not exposed to:
+
+- **Turn 4, a round trip.** Kristin goes out to the truck and comes
+  back, so her end place equals her start place. The judge's "moved"
+  answer then scores it as a missed change.
+- **Turn 6, a refinement.** "Michelle's house" becomes "kitchen" when she
+  walks to the workstation. The judge scores the kitchen as the wrong
+  after-place, although it is a more specific place inside the given one.
+- **Turn 13, engine steps in the command.** The judge receives the
+  command with the engine's steps glued on ("Kristin sat down in the
+  driver's seat. …"), so it thinks she moved.
+- **Turn 12, pocket to hand.** Taking the phone out of her pocket counts
+  as a move, although its holder does not change.
+- **Turn 8, a walk inside the room.** Crossing the kitchen to the
+  workstation is scored as a start conflict.
+
+One real narrator fault: in replicate 1 at turn 12 the narrator never
+walked Kristin to the truck, and turn 13 derailed after it.
+
 ### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
