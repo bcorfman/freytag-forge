@@ -17,15 +17,20 @@ class SeatingResult:
 def seat_before_use(world, package, player_input: str, uses_thing: Callable[[str, str], bool | None]) -> SeatingResult:
     protagonist = package.protagonist_id
     items = {item.id: item for item in package.world.items}
-    if world.parent(protagonist) and world.schema.entities[world.parent(protagonist)].seat_for:
-        return SeatingResult(player_input, (), False, ())
+    current_seat = world.parent(protagonist)
+    if (
+        not current_seat
+        or not world.schema.entities.get(current_seat)
+        or not world.schema.entities[current_seat].seat_for
+    ):
+        current_seat = None
 
     seats = sorted(
         item.id
         for item in package.world.items
         if item.seat_for and world.is_visible(item.id) and world.together(protagonist, item.id)
     )
-    if not seats:
+    if not seats and not current_seat:
         return SeatingResult(player_input, (), False, ())
     candidates = sorted(
         item.id
@@ -46,24 +51,27 @@ def seat_before_use(world, package, player_input: str, uses_thing: Callable[[str
             issues.append(f"seating question unanswered for '{world.name(item_id)}'")
         if answer is True:
             steps: list[str] = []
-            item_place = world.parent(item_id)
-            protagonist_place = world.parent(protagonist)
-            preferred_places = set()
-            for place in (item_place, protagonist_place):
-                if place:
-                    preferred_places.update((place, *world.chain(place)))
-            preferred = [candidate for candidate in seats if items[candidate].seat_for in preferred_places]
-            seat = (preferred or seats)[0]
-            enter_pole = world.schema.entities[seat].enter_pole
-            if enter_pole and enter_pole not in world.axis_values(seat).values():
-                world.set_axis(seat, enter_pole)
-                steps.append(items[seat].right_text)
-            if world.parent(protagonist) != seat:
-                result = world.move(protagonist, seat)
-                if not result.ok:
-                    issues.append(f"could not move protagonist into '{world.name(seat)}': {result.reason}")
-                else:
-                    steps.append(items[seat].enter_text)
+            if current_seat:
+                seat = current_seat
+            else:
+                item_place = world.parent(item_id)
+                protagonist_place = world.parent(protagonist)
+                preferred_places = set()
+                for place in (item_place, protagonist_place):
+                    if place:
+                        preferred_places.update((place, *world.chain(place)))
+                preferred = [candidate for candidate in seats if items[candidate].seat_for in preferred_places]
+                seat = (preferred or seats)[0]
+                enter_pole = world.schema.entities[seat].enter_pole
+                if enter_pole and enter_pole not in world.axis_values(seat).values():
+                    world.set_axis(seat, enter_pole)
+                    steps.append(items[seat].right_text)
+                if world.parent(protagonist) != seat:
+                    result = world.move(protagonist, seat)
+                    if not result.ok:
+                        issues.append(f"could not move protagonist into '{world.name(seat)}': {result.reason}")
+                    else:
+                        steps.append(items[seat].enter_text)
             item = items[item_id]
             parent = world.parent(item_id)
             used_in_place = parent and parent == items[seat].seat_for and world.is_a(parent, "supporter")

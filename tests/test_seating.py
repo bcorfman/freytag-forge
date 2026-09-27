@@ -97,12 +97,57 @@ def test_laptop_on_a_seat_for_another_furniture_is_picked_up():
 def test_seated_kristin_gets_no_steps():
     _, world = _world()
     _put_player_and_laptop_in_kitchen(world)
+    assert world.move("kristin_laptop", "michelle_workstation").ok
     assert world.move("kristin", "workstation_chair").ok
 
     result = seat_before_use(world, PACKAGE, "Read the files on my laptop.", lambda *_: True)
 
     assert result.steps == ()
-    assert result.asked is False
+    assert result.asked is True
+
+
+def test_already_seated_picks_up_thing_loose_in_vehicle():
+    _, world = _world()
+    assert world.move("kristin", "outside_house").ok
+    assert world.move("kristin_laptop", "kristin_truck").ok
+    assert world.move("kristin", "truck_driver_seat").ok
+
+    result = seat_before_use(
+        world,
+        PACKAGE,
+        "Read the files on Michelle's memory card with my laptop.",
+        lambda *_: True,
+    )
+
+    assert result.steps == ("Kristin picked up her laptop.",)
+    assert world.holder("kristin_laptop") == "kristin"
+    assert world.parent("kristin") == "truck_driver_seat"
+
+
+def test_already_seated_at_desk_leaves_thing_on_desk():
+    _, world = _world()
+    _put_player_and_laptop_in_kitchen(world)
+    assert world.move("kristin_laptop", "michelle_workstation").ok
+    assert world.move("kristin", "workstation_chair").ok
+
+    result = seat_before_use(world, PACKAGE, "Read the files on my laptop.", lambda *_: True)
+
+    assert result.steps == ()
+    assert world.parent("kristin_laptop") == "michelle_workstation"
+    assert world.parent("kristin") == "workstation_chair"
+
+
+def test_already_seated_holding_thing_needs_no_pickup():
+    _, world = _world()
+    _put_player_and_laptop_in_kitchen(world)
+    assert world.move("kristin_laptop", "kristin").ok
+    assert world.move("kristin", "workstation_chair").ok
+
+    result = seat_before_use(world, PACKAGE, "Read the files on my laptop.", lambda *_: True)
+
+    assert result.steps == ()
+    assert world.holder("kristin_laptop") == "kristin"
+    assert world.parent("kristin") == "workstation_chair"
 
 
 def test_kristin_in_an_enterable_thing_gets_no_steps():
@@ -110,7 +155,7 @@ def test_kristin_in_an_enterable_thing_gets_no_steps():
     _put_player_and_laptop_in_kitchen(world)
     assert world.move("kristin", "workstation_chair").ok
 
-    result = seat_before_use(world, PACKAGE, "Look at the workstation chair.", lambda *_: True)
+    result = seat_before_use(world, PACKAGE, "Look at the workstation chair.", lambda *_: False)
 
     assert result.steps == ()
     assert result.command == "Look at the workstation chair."
