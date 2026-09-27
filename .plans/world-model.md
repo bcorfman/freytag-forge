@@ -285,6 +285,27 @@ unimportant, so revisit it before S4 (runtime capture). The alternative
 is declaring more axes so that THINGS gives the narrator something to
 report against.
 
+Built after that analysis (2026-09-27):
+
+- **7815dd3: judge records use structural parents.** The narrator keeps
+  its authored labels, so "with Kristin" becoming "Kristin" is no longer
+  scored as a change.
+- **b82761f: the pick-up also runs when Kristin is already seated.**
+- **The turn 13 condition-hint probe:** the narrator writes "opens her
+  laptop" 10 of 10 times with both `open (or closed)` and `open`. The
+  rendering is not the cause, so it was not changed.
+- **e7873af: condition capture is scored only on declared axes** (the
+  bookmark above). Records carry `item_facts_axes`, and old records get
+  theirs from the package through `rejudge --variation`. The fact judge
+  asks no condition question for a thing without axes. It names `states`
+  for a thing with axes, and it says that a state the thing already has
+  did not change.
+
+**Next:**
+- Re-score v36 with `rejudge` (judge calls only).
+- Run fresh replicates of the branch. The four comparison replicates
+  predate these fixes, so they cannot be re-scored.
+
 ### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
