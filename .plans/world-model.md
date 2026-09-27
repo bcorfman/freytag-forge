@@ -113,6 +113,24 @@ Continue the scene work on it.
   mapped to a character is still allowed ("Kristin's pocket"). Unit tests
   replay the recorded live replies. Not measured live on its own; it is
   measured together with A. **Next: A.**
+  Correction (Brandon): "B first" meant measure B live before building A.
+  A's first task was stopped before any live run, and B was measured
+  alone. **B alone, three replicates each at d98cbd5** (all six completed;
+  2A replicate 2 had one rejected turn): the guard fired 4 times, all
+  "new name to the player character": "stranger" or "stranger in the park"
+  at 1B turn 6 in 3 of 3, and "prisoners" in 1C once. The later turns then
+  mapped "stranger in the park" and "man in the park" to that new
+  stranger, consistently. The place guard never fired. At 1B turn 6 the
+  match now gave Kristin in 3 of 3, where the pre-B replicates gave
+  Brandon in 3 of 3; B does not touch the match call, so this is the
+  model's sampling, not B. Wrong mappings B leaves, out of 46: "prisoners"
+  and "guard" to Brandon (once each), "checkpoint" to "checkpoint guard"
+  and to the infrastructure corridors, "security checkpoint" to the
+  corridors, "credentials" to the inspection console, "identification
+  numbers" to the handwritten number sequence. "checkpoint" to the hideout
+  did not recur. Right: the parking lot, the truck, the servers, the
+  corridors, the stairway, the loading dock, "below" to the observation
+  shaft. So A is still needed, for people, things and places alike.
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"
