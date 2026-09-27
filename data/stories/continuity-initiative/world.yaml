@@ -45,9 +45,12 @@ locations:
 - id: loading_docks
   name: loading docks
   parent: freight_terminal
+- id: service_level
+  name: service level
+  parent: freight_terminal
 - id: observation_shaft
   name: observation shaft
-  parent: freight_terminal
+  parent: service_level
 npcs:
 - id: kristin
   name: Kristin Schweitzer

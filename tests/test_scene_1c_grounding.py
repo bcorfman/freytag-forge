@@ -45,6 +45,22 @@ def test_scene_1c_places_the_facility_arrival() -> None:
         assert locations[location_id].parent == "regional_facility"
 
 
+def test_scene_1c_declares_the_service_level_area_hierarchy() -> None:
+    locations = {location.id: location for location in PACKAGE.world.locations}
+
+    assert locations["service_level"].parent == "freight_terminal"
+    assert locations["observation_shaft"].parent == "service_level"
+
+
+def test_scene_1c_can_move_into_the_service_level() -> None:
+    state = _scene_1c_state()
+    world = world_for(PACKAGE, state.facts)
+
+    assert world.move("kristin", "service_level").ok
+    assert world.parent("brandon") == "service_level"
+    assert "freight_terminal" in world.chain("kristin")
+
+
 def test_scene_1c_narration_allows_related_facility_areas() -> None:
     state = _scene_1c_state()
     proposal = RuntimeEngine(
@@ -61,6 +77,24 @@ def test_scene_1c_narration_allows_related_facility_areas() -> None:
     ).turn("Search the loading docks for a way into the service level.")
 
     assert proposal.segments[0].text == "Kristin and Brandon cross the loading docks toward the observation shaft."
+
+
+def test_scene_1c_narration_allows_entering_the_service_level() -> None:
+    state = _scene_1c_state()
+    proposal = RuntimeEngine(
+        state,
+        lambda _command: {
+            "segments": [
+                {
+                    "kind": "narration",
+                    "text": "Kristin and Brandon climb down into the service level.",
+                }
+            ],
+            "selected_knowledge_ids": [],
+        },
+    ).turn("Search the loading docks for a way into the service level.")
+
+    assert proposal.segments[0].text == "Kristin and Brandon climb down into the service level."
 
 
 def test_scene_1c_narration_rejects_a_sibling_facility_area() -> None:
