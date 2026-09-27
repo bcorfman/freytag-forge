@@ -2,8 +2,8 @@
 
 Status (2026-09-26, end of session): decisions W1-W13 settled; S1 merged
 (PR 480). S2 tasks A and C merged (PR 481). Tasks B and D-H are on
-branch `world-model-s2b`, which is not pushed and has no PR. Next: the
-two-scene smoke replicate, then the v36 comparison. See "Resume here".
+branch `world-model-s2b`, which is not pushed and has no PR. Next: the v36
+comparison, then the PR. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -33,9 +33,13 @@ in a fresh worktree). It holds everything since PR 481, oldest first:
   does not move; "overturned workstation chair" out of the 1A Details
   line.
 - c29c2f7: task H. Kristin and Michelle are friends; the house is
-  "Michelle's house"; a fixed back door in the kitchen.
+  "Michelle's house"; a fixed back door in the kitchen. 35d490f: the
+  entry text says "late-night shift", and Kristin "arrives at" the house.
+- 7ea8c2b: Brandon is placed in the 1B park; script turn 10 fixed.
+  79eeaa9: learned names (`add_alias`). 82b9c22 and d22a221: task I, the
+  driver's seat and the pick-up step.
 
-The full suite passes and ruff is clean at c29c2f7. The shipped
+The full suite passes and ruff is clean at d22a221. The shipped
 narrator's 1A baseline (`.plans/world-model-s1/narrator-1a-baseline.json`)
 matches the code. The results of every smoke are recorded under tasks E,
 F and G in section 11.
@@ -201,6 +205,30 @@ Follow-ups on the two issues above (Brandon, 2026-09-26):
     already holds it or it rests on a supporter.
   - The task also fixes `add_alias`, which called the host's resolver
     callback when checking for a conflicting name.
+
+Task I was built as 82b9c22. The third replicate found a hole: the
+narrator had left the laptop on the driver's seat, and a seat is a
+supporter, so the engine skipped the pick-up. d22a221 fixes it. A thing
+is now used in place only when it rests on the furniture its seat serves
+(`seat_for`).
+
+Results of replicates 3 and 4 (2026-09-26), each with 19 accepted turns:
+
+- **Places resolve: 40 of 40, then 41 of 41.**
+- **Turn 13, in replicate 4:** the engine seated Kristin and handed her
+  the laptop. The narration reads the card at once, with no drive and no
+  "her house".
+- **The phone handoff:** "stranger" resolves to Brandon, and the phone
+  stays tracked with him through turn 18.
+- **Fact judge, per turn, all facts right:** 10, 11, 13 and then 14 of 19
+  over replicates 1 to 4.
+- **Continuity judge, replicate 4:** 0 contradictions and 0 scene
+  restarts.
+- **Judge noise left over:**
+  - At turn 13 the judge counts the engine's seating move as a start
+    conflict, because the narration does not show her sitting down.
+  - At turn 18 it scores "Brandon" against narration that says "the
+    stranger".
 
 ### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
