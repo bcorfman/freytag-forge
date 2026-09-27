@@ -3,7 +3,7 @@
 Status (2026-09-27): decisions W1-W13 settled. S1 merged (PR 480), and S2
 merged (PRs 481 and 485). Scene grounding is under way on branch
 `world-model-scenes` (not pushed): 1B (44a99eb), 1C (f1b8d5b, 969d2d7) and
-2A (6aad57e) are built and tested, and 2B is next. Then 2B-3C, S3 and S4. See "Resume here".
+2A (6aad57e, 88ed193) are built and tested, and 2B is next. Then 2B-3C, S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -17,7 +17,7 @@ continuity plan; this plan defines the world they write into.
 Everything through S2 is on `main` (PR 485, merge 28ad27d). Branch
 `world-model-scenes` adds `world-model-scenes/capture_scenes.py`, the 1B
 grounding (44a99eb), the 1C grounding (f1b8d5b, 969d2d7), the 2A grounding
-(6aad57e) and plan updates. It has not been pushed and has no PR.
+(6aad57e, 88ed193) and plan updates. It has not been pushed and has no PR.
 Continue the scene work on it.
 
 ### Where things stand
@@ -134,11 +134,16 @@ is in "Story survey" below, and Brandon's six decisions on it are settled
    Verified: the full suite (870) passes, ruff is clean, and payloads for
    1A, 1B, 1C and 3A are byte-identical. 2A changes only by its opening
    location line. Not yet measured live: no 2A bench script exists.
-   Not grounded, left for when a problem surfaces: the restricted
-   infrastructure corridors and the corridor inspection console (2A.3),
-   which later storylets use again. Known pacing gap, not fixed: the
-   `scrutiny_2a` event ("Facility staff are visibly scrutinizing...") fires
-   at turn 3 whether or not Kristin has left the hideout.
+   **Follow-up, 88ed193** (Ringer, Luna, one attempt; Brandon asked for
+   both). `infrastructure_corridors` is an area in `regional_facility`, and
+   `inspection_console` is a fixed thing in it. The console is placed in
+   2A, 3B and 3C with no text, because 3B.1's Details line names it, and a
+   declared item that is not placed would be dropped from the narrator's
+   input. `scrutiny_2a` and `cover_review_2a` now also require
+   `false_identities_ready`, so they no longer fire in the hideout. A
+   runtime test shows scrutiny stays unset for three turns without the
+   cover, and is set with it. Verified: the full suite (875) passes, and
+   payloads for 1A-3C, 3B and 3C included, are byte-identical.
 4. **2B-2C.** Brandon is a companion in 2B and 2C. Fix the areas whose
    text happens elsewhere (2C).
 5. **3A-3C.** Michelle is a captive in `detention_level`, and
