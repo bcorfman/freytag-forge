@@ -85,6 +85,7 @@ class NarrationSafetyValidator:
             item for item in state.package.scenes if item.metadata.scene_id == candidate_state.current_scene_id
         )
         allowed_entities.update((scene.metadata.location_id, *scene.metadata.participant_ids, *scene.metadata.item_ids))
+        allowed_entities.update(self._related_area_ids(state.package, scene.metadata.location_id))
         allowed_entities.update(
             placement.parent
             for placement in scene.metadata.item_placements.values()
@@ -248,3 +249,25 @@ class NarrationSafetyValidator:
             for anchor, beat in scene.beats.items()
             if anchor in projected
         )
+
+    @staticmethod
+    def _related_area_ids(package: object, location_id: str) -> set[str]:
+        """Allow the scene area and the areas directly above or below it."""
+
+        locations = {location.id: location for location in package.world.locations}
+        related = {location_id}
+        current = locations.get(location_id)
+        while current is not None and current.parent is not None:
+            related.add(current.parent)
+            current = locations.get(current.parent)
+
+        descendants = {location_id}
+        changed = True
+        while changed:
+            changed = False
+            for location in locations.values():
+                if location.parent in descendants and location.id not in descendants:
+                    descendants.add(location.id)
+                    changed = True
+        related.update(descendants)
+        return related

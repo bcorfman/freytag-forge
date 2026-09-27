@@ -237,11 +237,15 @@ Kristin realizes Brandon retains access to government systems and may be more de
 ## Scene 1C — Discovery of the Facility
 ---
 scene_id: 1C
-location_id: regional_facility
+location_id: freight_terminal
 freytag_phase: rising_action
 objective: Confirm the facility and its purpose
 participant_ids: [kristin, brandon, michelle]
-item_ids: [transit_card]
+companions: [brandon]
+item_ids: [transit_card, kristin_truck, logistics_terminal]
+item_placements:
+  kristin_truck: {parent: freight_terminal}
+  logistics_terminal: {parent: freight_terminal}
 entry_text: "Michelle's lead brought Kristin and Brandon to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. They kept to the shadow of the loading docks, looking for a way into whatever lay below.\n\n"
 transition_ids: [t_1c_2a]
 bridge_text:
