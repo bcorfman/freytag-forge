@@ -147,6 +147,21 @@ Continue the scene work on it.
   names, and the "the" rule garbles phrases ("the below"). 2A turn 5 was
   rejected in 3 of 3 by the narration leak check (1 of 3 without A);
   that check runs before capture, so A does not cause it.
+  **A, grammar round (not applied).** Brandon judged the questions sound
+  and the glued-together grammar the problem. Names are now quoted with no
+  article ('Are "guard" and "Brandon Corfman" the same person?') and the
+  facts are structured `player` and `known` fields (name, place, held_by,
+  can_move, place_text). Wording otherwise unchanged. Three replicates
+  each (2A replicate 3 failed at its opening on a narration leak,
+  "workstation", unrelated to A): 25 checks, all answered, about 12 wrong
+  "no"s, so no better. Fixed: "park" to Los Angeles park (yes 2 of 2).
+  Still wrong: "parking lot" and "park entrance" to the park, "loading
+  dock" to the loading docks, "stranger" to Brandon (2 of 3). Newly wrong:
+  "server console" to the servers (no in 4 of 4, was yes). Right: every
+  person and thing that truly differs ("prisoners" to Brandon, "keycard"
+  to the credentials, "ladder" to the service entrance). Jev says no
+  whenever the story does not literally show two names are one, which
+  points at the evidence-only wording.
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"
