@@ -535,7 +535,7 @@ knowledge:
   delivery_text: "After the patrol leaves, Kristin finds a strip of reflective tape on the front gate. The officers marked the house. They plan to come back."
 - id: k_sl_1b_a_r1
   statement: 'Kristin matches the transit token and number sequence to a freight route leading out of the city.'
-  entity_ids: []
+  entity_ids: [transit_card, number_sequence]
   aliases:
   - transport route identified
   audience:
@@ -557,7 +557,7 @@ knowledge:
     priority: 0
 - id: k_sl_1b_a_r2
   statement: 'A photograph hidden in Michelle’s dead drop gives Kristin the face of the man who has been following her.'
-  entity_ids: []
+  entity_ids: [michelle_photograph]
   aliases:
   - brandon face known
   audience:

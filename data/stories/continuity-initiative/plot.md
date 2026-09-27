@@ -169,9 +169,13 @@ objective: Follow Michelles lead and survive the park
 participant_ids: [kristin, brandon, michelle]
 character_placements:
   brandon: {parent: los_angeles_park, text: across the park from Kristin}
-item_ids: [memory_card, transit_card, park_bench]
+item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, kristin_truck]
 item_placements:
   park_bench: {parent: los_angeles_park}
+  transit_card: {parent: park_bench, under: true}
+  number_sequence: {parent: park_bench, under: true}
+  michelle_photograph: {parent: park_bench, under: true}
+  kristin_truck: {parent: los_angeles_park}
 entry_text: "The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.\n\n"
 transition_ids: [t_1b_1c]
 bridge_text:

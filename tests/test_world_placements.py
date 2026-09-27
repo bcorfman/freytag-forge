@@ -67,18 +67,24 @@ def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
   workstation_chair: {{parent: kitchen}}
 """
     plot = re.sub(r"item_placements:\n(?:  .*\n)+setting_facts:", replacement + "setting_facts:", plot, count=1)
-    scene_1b = """item_ids: [memory_card, transit_card, park_bench]
-item_placements:
-  park_bench: {parent: los_angeles_park}
-"""
+    scene_1b = (
+        "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
+        "park_bench, kristin_truck]\n"
+        "item_placements:\n"
+        "  park_bench: {parent: los_angeles_park}\n"
+        "  transit_card: {parent: park_bench, under: true}\n"
+        "  number_sequence: {parent: park_bench, under: true}\n"
+        "  michelle_photograph: {parent: park_bench, under: true}\n"
+        "  kristin_truck: {parent: los_angeles_park}\n"
+    )
     assert plot.count(scene_1b) == 1
     plot = plot.replace(
         scene_1b,
-        """item_ids: [memory_card, transit_card, park_bench, michelle_phone]
-item_placements:
-  park_bench: {parent: los_angeles_park}
-  michelle_phone: {parent: los_angeles_park, text: beside the park bench}
-""",
+        "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
+        "park_bench, kristin_truck, michelle_phone]\n"
+        "item_placements:\n"
+        "  park_bench: {parent: los_angeles_park}\n"
+        "  michelle_phone: {parent: los_angeles_park, text: beside the park bench}\n",
         1,
     )
     plot_path.write_text(plot)

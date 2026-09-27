@@ -1,7 +1,8 @@
 """Capture the shipped narrator's payloads for chosen scenes, with the network stubbed.
 
 Usage, from the repository root:
-    uv run python .plans/world-model-scenes/capture_scenes.py OUT.json 1A:"Search the kitchen for signs of a struggle." 1B:"Look around the bench for anything Michelle left."
+    uv run python .plans/world-model-scenes/capture_scenes.py OUT.json \
+        1A:"Search the kitchen for signs of a struggle." 1B:"Look around the bench for anything Michelle left."
 
 Each argument is SCENE:COMMAND. For each scene it bootstraps the package, enters the scene
 (applying its placements), and records the opening and one turn. Capture before and after a

@@ -134,6 +134,12 @@ items:
   leave_text: Kristin got out of the truck.
 - id: transit_card
   name: Transit token
+- id: michelle_photograph
+  name: Michelle's photograph
+  aliases: [photograph, photo]
+- id: number_sequence
+  name: handwritten number sequence
+  aliases: [number sequence, handwritten sequence]
 - id: override_codes
   name: Emergency override codes
 - id: portable_archive
@@ -168,7 +174,9 @@ facts:
 - house_marked_for_return
 - transport_route_identified
 - brandon_face_known
-- brandon_identified
+- id: brandon_identified
+  on_assert:
+  - {accompany: brandon, with: kristin}
 - missing_may_be_alive
 - brandon_retains_system_access
 - service_level_access_known
