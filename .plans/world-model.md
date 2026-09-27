@@ -1,8 +1,9 @@
 # World model: plan
 
-Status (2026-09-27, end of session): decisions W1-W13 settled. S1 merged
-(PR 480), and S2 merged (PRs 481 and 485). Next: ground scenes 1B-3C in the
-world model, then S3 and S4. See "Resume here".
+Status (2026-09-27): decisions W1-W13 settled. S1 merged (PR 480), and S2
+merged (PRs 481 and 485). Scene grounding is under way on branch
+`world-model-scenes` (not pushed): 1B is built and tested (44a99eb), and 1C
+is being specified. Then 2A-3C, S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -13,10 +14,10 @@ continuity plan; this plan defines the world they write into.
 
 ## Resume here (2026-09-27)
 
-Everything built so far is on `main` (PR 485, merge 28ad27d). Branch
-`world-model-scenes` holds only this plan update and
-`world-model-scenes/capture_scenes.py`. Start the next work from it, in a
-fresh worktree.
+Everything through S2 is on `main` (PR 485, merge 28ad27d). Branch
+`world-model-scenes` adds `world-model-scenes/capture_scenes.py`, the 1B
+grounding (44a99eb) and plan updates. It has not been pushed and has no PR.
+Continue the scene work on it.
 
 ### Where things stand
 
@@ -36,8 +37,10 @@ fresh worktree.
 - **Measured.** On the v36 comparison with the fixed judge, the branch beat
   v36 in every category: place changes 38/40 against 18/24, conditions 15/16
   against 6/10, and turns with every fact right 61/68 against 26/36.
-- **Converted scenes.** 1A in full. 1B has only Brandon's placement and the
-  park bench. Scenes 1C-3C have no placements at all.
+- **Converted scenes.** 1A in full. 1B in full as a package: the dead drop,
+  the truck and Brandon's companion effect (44a99eb). It has no bench script
+  yet, so no live run has confirmed its names resolve. Scenes 1C-3C have no
+  placements at all. **In progress: 1C**, specified next.
 - **How to ground a scene:** `docs/world-model-grounding.md`, which
   `AGENTS.md` points to. Read it before any package or prompt work.
 
