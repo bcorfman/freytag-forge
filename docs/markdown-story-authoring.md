@@ -66,7 +66,10 @@ items:
 
 An item with `use_seated: true` needs the engine to seat the protagonist before
 it is used. A seat may provide `right_text` for making its `enter_pole` state
-ready, `enter_text` for entering it, and `leave_text` for leaving it. These
+ready, `enter_text` for entering it, and `leave_text` for leaving it. An item
+may provide `take_text`; the engine says it just before the player uses a
+seated-use thing that is not already in the protagonist's hands and does not
+rest on a supporter. These
 must be short past-tense statements of what happened. The engine shows these
 lines to the narrator as `Just before this` when the player command uses a
 visible nearby seated-use item or leaves a seat.

@@ -35,9 +35,11 @@ def test_overturned_chair_is_righted_then_kristin_sits():
     assert result.steps == (
         "Kristin set the workstation chair upright.",
         "Kristin sat down in the workstation chair.",
+        "Kristin picked up her laptop.",
     )
     assert result.command == (
         "Kristin set the workstation chair upright. Kristin sat down in the workstation chair. "
+        "Kristin picked up her laptop. "
         "Read the files on my laptop."
     )
     assert "upright" in world.axis_values("workstation_chair").values()
@@ -51,7 +53,10 @@ def test_upright_chair_only_seats_kristin():
 
     result = seat_before_use(world, PACKAGE, "Read the files on my laptop.", lambda *_: True)
 
-    assert result.steps == ("Kristin sat down in the workstation chair.",)
+    assert result.steps == (
+        "Kristin sat down in the workstation chair.",
+        "Kristin picked up her laptop.",
+    )
     assert world.parent("kristin") == "workstation_chair"
 
 
@@ -80,12 +85,44 @@ def test_kristin_in_an_enterable_thing_gets_no_steps():
 def test_no_seat_nearby_gets_no_steps():
     _, world = _world()
     assert world.move("kristin", "outside_house").ok
-    assert world.move("kristin_laptop", "outside_house").ok
+    assert world.move("kristin_laptop", "kitchen").ok
 
-    result = seat_before_use(world, PACKAGE, "Carry my laptop out to the truck.", lambda *_: True)
+    result = seat_before_use(world, PACKAGE, "Inspect Michelle's phone.", lambda *_: True)
 
     assert result.steps == ()
     assert result.asked is False
+
+
+def test_truck_laptop_uses_driver_seat_and_is_picked_up():
+    _, world = _world()
+    assert world.move("kristin", "outside_house").ok
+    assert world.move("kristin_laptop", "kristin_truck").ok
+
+    result = seat_before_use(
+        world,
+        PACKAGE,
+        "Read the files on Michelle's memory card with my laptop.",
+        lambda *_: True,
+    )
+
+    assert result.steps == (
+        "Kristin sat down in the driver's seat.",
+        "Kristin picked up her laptop.",
+    )
+    assert world.parent("kristin") == "truck_driver_seat"
+    assert world.holder("kristin_laptop") == "kristin"
+
+
+def test_laptop_on_workstation_is_not_picked_up():
+    _, world = _world()
+    assert world.move("kristin", "kitchen").ok
+    assert world.move("kristin_laptop", "michelle_workstation").ok
+    world.set_axis("workstation_chair", "upright")
+
+    result = seat_before_use(world, PACKAGE, "Read the files on my laptop.", lambda *_: True)
+
+    assert result.steps == ("Kristin sat down in the workstation chair.",)
+    assert world.parent("kristin_laptop") == "michelle_workstation"
 
 
 def test_a_no_answer_gets_no_steps():

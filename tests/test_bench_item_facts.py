@@ -1456,6 +1456,7 @@ def test_package_seed_scene_1a_matches_authored_things():
             "place": "at Michelle's workstation",
             "condition": ["overturned"],
         },
+        "driver's seat": {"place": "Kristin's truck", "condition": []},
         "Kristin's truck": {"place": "outside the house", "condition": []},
         "workstation": {"place": "kitchen", "condition": []},
         "back door": {"place": "kitchen", "condition": []},

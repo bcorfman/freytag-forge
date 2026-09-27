@@ -594,6 +594,7 @@ def test_bench_turn_passes_engine_steps_as_prior_steps(monkeypatch) -> None:
     turn = result["turns"][0]
     combined = (
         "Kristin set the workstation chair upright. Kristin sat down in the workstation chair. "
+        "Kristin picked up her laptop. "
         "Read the files on my laptop."
     )
     assert received == [typed_input]
@@ -605,6 +606,7 @@ def test_bench_turn_passes_engine_steps_as_prior_steps(monkeypatch) -> None:
     assert turn["seating_steps"] == [
         "Kristin set the workstation chair upright.",
         "Kristin sat down in the workstation chair.",
+        "Kristin picked up her laptop.",
     ]
     assert turn["seating_asked"] is True
     assert turn["player_input"] == combined

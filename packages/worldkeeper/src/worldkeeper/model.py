@@ -564,10 +564,21 @@ class World:
         if not isinstance(name, str) or not name.strip():
             return self._bad("alias name must not be empty")
         alias = name.strip()
-        resolved = self.resolve(alias)
-        if resolved is not None and resolved != entity_id:
+        normalized = self._normalize(alias)
+        declared_matches = []
+        for candidate_id in self._ids():
+            entity = self._entity(candidate_id)
+            names = (
+                (entity.name,)
+                + entity.aliases
+                + tuple(fact.value for fact in self._facts("wk_alias", candidate_id) if fact.value)
+            )
+            if any(self._normalize(candidate) == normalized for candidate in names):
+                declared_matches.append(candidate_id)
+        unique_matches = list(dict.fromkeys(declared_matches))
+        if unique_matches and any(candidate_id != entity_id for candidate_id in unique_matches):
             return self._bad("alias already resolves to a different entity")
-        if resolved == entity_id:
+        if entity_id in unique_matches:
             return OpResult(True, id=entity_id)
         self._add("wk_alias", entity_id, value=alias)
         return OpResult(True, id=entity_id)

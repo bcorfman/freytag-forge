@@ -162,6 +162,14 @@ def test_learned_aliases_are_fact_backed_and_refuse_conflicts():
     assert rebuilt.resolve("the glowing lamp") == "lamp"
 
 
+def test_add_alias_does_not_call_resolver():
+    calls = []
+    w = World(make().schema, MemoryBackend(), resolver=lambda name, ids: calls.append((name, ids)) or "lamp")
+
+    assert w.add_alias("lamp", "new name").ok
+    assert calls == []
+
+
 def test_schema_errors_and_resolver():
     for data in ({"kinds": [{"id": "x", "is": ["x"]}]}, {"entities": [{"id": "a", "name": "a", "kind": "missing"}]}):
         try:

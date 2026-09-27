@@ -150,6 +150,7 @@ def test_cyclic_story_kinds_are_story_package_errors(tmp_path):
     next(item for item in world["items"] if item["id"] == "michelle_workstation")["kind"] = "thing"
     chair = next(item for item in world["items"] if item["id"] == "workstation_chair")
     chair.update(kind="thing", enter_pole=None, seat_for=None, axes=[])
+    next(item for item in world["items"] if item["id"] == "truck_driver_seat")["kind"] = "thing"
     world_path.write_text(yaml.safe_dump(world, sort_keys=False))
     with pytest.raises(StoryPackageError, match="cycle among kinds"):
         load_story_package(root)

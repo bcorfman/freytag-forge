@@ -187,6 +187,7 @@ class Item(Entity):
     right_text: str | None = None
     enter_text: str | None = None
     leave_text: str | None = None
+    take_text: str | None = Field(default=None, min_length=1)
     axes: list[dict[str, list[str]]] = Field(default_factory=list)
 
     @field_validator("axes", mode="before")
