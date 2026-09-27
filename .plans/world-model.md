@@ -131,6 +131,22 @@ Continue the scene work on it.
   did not recur. Right: the parking lot, the truck, the servers, the
   corridors, the stairway, the loading dock, "below" to the observation
   shaft. So A is still needed, for people, things and places alike.
+  **A, first live run (not applied).** Brandon asked for concrete
+  questions: five templates by kind ("Are the guard and Brandon Corfman
+  the same person?", "Is the place called the checkpoint the same place
+  as Brandon's hideout, or inside it?"), fact lines from the world, and
+  "Answer yes only if the story shows it." Luna passed on the second
+  round (suite 892). Three replicates each: Jev answered all 24 checks,
+  but about 11 were wrong "no"s, mostly places in 1B and 1C ("park",
+  "parking lot", "park entrance", "loading dock", "service levels",
+  "service entrance", "server" twice, and "stranger in the park" to
+  Brandon). Right: "checkpoint" to the hideout rejected twice, the
+  corridors, the server console, the door. Unplaced entries rose from 8
+  to 23. Causes: the fact lines lack "in" ("Kristin Schweitzer is Los
+  Angeles park."), the evidence-only wording is too strict for place
+  names, and the "the" rule garbles phrases ("the below"). 2A turn 5 was
+  rejected in 3 of 3 by the narration leak check (1 of 3 without A);
+  that check runs before capture, so A does not cause it.
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"
