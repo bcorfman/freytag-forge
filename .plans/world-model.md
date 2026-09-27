@@ -45,7 +45,7 @@ Continue the scene work on it.
   sub-areas, and Brandon as companion. It has no bench script either.
   2A in full as a package (6aad57e): Brandon's hideout, the servers and
   the move to the facility. Scenes 2B-3C have no placements at all.
-  **Next: settle the 2A checkpoint case, then 2B.**
+  **Next: diagnose why the narrator never selects knowledge in 1B-2A, then 2B.**
 - **Bench scripts for 1B, 1C and 2A (written, not yet run live).**
   `bench/variations/item-facts-world-1b-1c.json` plays 1B's `dead-drop`
   (10 turns) and continues into 1C's `terminal-descent` (10 turns). The
@@ -177,6 +177,19 @@ Continue the scene work on it.
   fell to 4 (8 with B alone). Next: decide whether the checkpoint case is
   a script problem (turn 4 runs before the cover is ready) or a check
   problem; then 2B.
+  **Settled: a bench setup problem (6be66c7).** A bare 2A start lacks
+  `facility_infiltration_needed` (set by 1C), so SL-2A-B, the cover, was
+  never offered. The 2A variation now uses `"entry_state": "thorough"`.
+  Three replicates confirm the cover candidates are offered from turn 1,
+  and "checkpoint" no longer maps to the hideout (Kristin is unplaced at
+  "checkpoint" at turn 4). But `false_identities_ready` still arrives
+  only by the pacing cue at turn 9, because **the narrator selected no
+  knowledge candidate in any 1B, 1C or 2A turn: 0 of 147 turns with
+  candidates offered**, across the B-only, A and thorough runs. Even 1B
+  turn 5, "Compare the number sequence with the transit token.", which
+  is exactly k_sl_1b_a_r1, narrated a match and selected nothing. The
+  saved 1A run did select (2 of 6 offered turns). Not yet diagnosed; it
+  blocks every storylet outcome from being earned by play in these scenes.
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"
