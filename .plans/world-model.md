@@ -377,7 +377,98 @@ and 4 the reply put Kristin at "bench" in the 1B park, the park has no
 bench entity, and the name resolved to the 1A workstation chair (by the
 match call in replicate 3, by a learned name in replicate 4). The match
 call should not resolve to a thing in another scene's area, and 1B may
-need the bench declared. Not fixed yet.
+need the bench declared. Being fixed (Brandon chose both, 2026-09-27): the bench is declared as a
+fixed seat placed in the 1B park, and the match call lists only things in
+play (the scene's `item_ids`, things in the protagonist's top-level area,
+and things she carries).
+
+### Story survey: places, things and NPCs (2026-09-27)
+
+Brandon asked for a survey of the whole story for concerns like turn 15's,
+with NPCs placed the way 1B places Brandon (`character_placements`, which
+works live: "stranger in the park" resolved to Brandon and the phone handoff
+landed). The general rule and checklist are now in
+`docs/world-model-grounding.md`. Only 1A and 1B are converted today. Every
+later scene has no placements at all, so every item below is a gap, not a
+regression. Story changes start in `plot.md` and follow Brandon's decisions;
+prose goes to ChatGPT Desktop.
+
+**Places: the scene's area is not where its text happens.**
+
+- 2A: `location_id` is `facility_perimeter`, but the entry text, Setting and
+  beats are in Brandon's hideout, a dead communications center. There is no
+  hideout area.
+- 2C: `purge_chamber`, but the Setting is "command levels and detention
+  sectors", and no text mentions a purge chamber.
+- 3C: `facility_escape`, but the entry text is in the broadcast chamber, and
+  the Setting starts in Rebecca's office.
+- 1C: `regional_facility`, but the text is a freight terminal with loading
+  docks and an observation shaft.
+- Named sub-places with no area: Rebecca's executive office (3B, 3C), the
+  relay chamber (3B), the medical level (2B, 3A), the records archive's
+  terminals (2B), the service entrance and maintenance routes (1C, 3C).
+- No shared parent: the seven facility areas are all top-level. The match
+  call's scope and `together()` treat them as unrelated worlds. Proposed: one
+  facility area as their parent, which is a plot.md decision.
+
+**Things: named by the story, never declared or placed.**
+
+- 1B dead drop: the handoff cue has "a transit token and a handwritten number
+  sequence ... beside Michelle's photograph". `transit_card` is in 1B-2A
+  `item_ids` but is never placed. The number sequence and the photograph are
+  not entities. The drop should get the card's treatment: hidden at the bench,
+  then moved to Kristin and revealed by the fact that records finding it. In
+  replicate 3 the narrator already invented "tape under the bench".
+- The truck and laptop are left at Michelle's house forever. The 1A bridge
+  drives Kristin to the park, but the truck is never placed in 1B. "Get in my
+  truck" in 1B would resolve to the truck at the house. The laptop has the
+  same problem wherever the story expects Kristin to have it.
+- `override_codes` (3A) and `portable_archive` (3C) have no new-form
+  placement. The archive still uses the old string placement "with Rebecca in
+  her hands", so it has no world parent.
+- 1A: the tablet and work bag are "missing" (section 4.3) but are not tracked.
+  The drawer's contents are still a setting-fact sentence (W9 asks for
+  `contents:`).
+
+**NPCs: presence, companions and captivity.**
+
+- Brandon is the only placed NPC (1B). From 1C on he travels with Kristin (1B
+  bridge: "Kristin and Brandon headed for the freight terminal"). W8's
+  `companions: [brandon]` and the `brandon_identified` `accompany` effect were
+  never declared, so from 1C Brandon stays tracked in the park.
+- 2B: the Setting says "Brandon's hideout through a remote connection".
+  Decide whether Brandon is in the archive with Kristin or remote. If remote,
+  he is not placed, and he is not a companion in 2B.
+- 3C: Brandon holds the relay open ("Brandon's relay held open") and is not a
+  participant. He should be placed at the relay, not travel with Kristin.
+- Michelle is a participant in 1A-2C while missing or captive, which is
+  correct because presence is not participation. She needs a placement from
+  3A in the detention level, as a captive. `michelle_reached` should declare
+  her `free` and, if the plot says so, `accompany` Kristin.
+- Senior official (3A): a participant with no placement. He is a prisoner in
+  the detention level.
+- Rebecca: a participant in 3B and 3C with no placement (her office).
+  `rebecca_captured` should `set_axis` her captive (W7 already names this
+  effect). She is also the parent the portable archive needs.
+- Charles is never a participant. He is only heard (1C "recorded conference",
+  3A "Charles's broadcast"), except 3B's Details "Charles appears". Decide
+  whether 3B has him in person. If so, he needs participation and a
+  placement.
+- Characters listed in a scene's **Characters** section but not in
+  `participant_ids`: Charles and Rebecca in 1C, 2B, 2C and 3B, and Brandon in
+  3C. Most are heard, not present. Each one is a plot.md decision.
+
+**Proposed order.** Scene by scene, as each one enters a bench script:
+
+1. 1B: the dead drop and the truck's 1B place.
+2. 1C: Brandon as a companion, and the terminal areas.
+3. 2A-2C: the hideout, the areas' shared parent, and Brandon in 2B.
+4. 3A-3C: the NPC placements, captivity effects, the offices and the relay,
+   and the archive's new-form placement.
+
+Each scene is one Ringer task of structured YAML edits. The shipped
+narrator's payloads for converted scenes are guarded by a stubbed capture, as
+1A and 1B are.
 
 The saved second-pass runs are in the main checkout's `bench/results/`,
 which is gitignored and so exists only on this machine:
