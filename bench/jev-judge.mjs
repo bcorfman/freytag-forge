@@ -421,14 +421,14 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
   const q = {
     moved: thing === protagonist
       ? nounl(
-        `Does \`narration\` show ${t} leaving the room ${t} was in during this turn?`,
-        `${t} ends the turn outside the room or area where ${t} started, for example in another room, in a vehicle, or somewhere else outdoors.`,
-        `${t} stays in the same room or area. Small steps inside it, like walking over to a desk or turning to someone, do not count as leaving it.`,
+        `At the end of this turn, is ${t} in a different room or area from the one ${t} started in? Answer from \`narrator_narration\` only.`,
+        `${t} ends the turn in another room, in a vehicle, or somewhere else outdoors.`,
+        `${t} ends the turn in the room or area where ${t} started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move.`,
       )
       : nounl(
-        `Does \`narration\` show ${t} moving to a new place or into someone else's hands during this turn?`,
-        "It moves or changes hands.",
-        "It stays put. An attempt that fails, or a hand-over that nobody takes, is not a move.",
+        `At the end of this turn, is ${t} held by a different person, or in a different place, than at the start of this turn? Answer from \`narrator_narration\` only.`,
+        "It ends the turn with a different holder or in a different place.",
+        "It ends where it started. When `before_place` is a person, anywhere on that person or in something that person carries is the same place, such as a hand, a pocket or a bag. A thing that stays with that person has not moved, even when that person carries it somewhere else. An attempt that fails, or a hand-over that nobody takes, is not a move.",
       ),
   };
   if (axes.length) {
@@ -441,7 +441,7 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
   if (item.trackedAfter) {
     q.after_place_right = nounl(
       `Is \`after_place\` where \`narration\` leaves ${t} at the end of this turn?`,
-      "Yes. If `narration` never moves it, its earlier place is still right. A more specific or more general place that fits is right.",
+      "Yes. If `narration` never moves it, its earlier place is still right. A more specific or more general place that fits is right. A thing listed in `after_place_contains` is inside `after_place`, so leaving it at one of those things leaves it in `after_place`.",
       "No, `narration` leaves it somewhere else, or never shows it there.",
     );
     q.place_is_condition = nounl(
@@ -456,11 +456,17 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
       "`narration` conflicts with the given facts.",
       "No conflict. A more specific place or state that fits inside the given one is not a conflict.",
     );
-    q.start_conflict = nounl(
-      `Does \`narration\` say or imply that ${t} was somewhere else at the start of this turn than \`before_place\`?`,
-      "`narration` shows it taken from, found in, or used from a place or holder that differs from `before_place`, for example picked up from a table while `before_place` says in her hands.",
-      "`narration` takes it from `before_place`, or does not say where it was. A more specific place inside `before_place` agrees.",
-    );
+    q.start_conflict = thing === protagonist
+      ? nounl(
+        `Does \`narration\` show ${t} starting this turn outside \`before_place\`?`,
+        `\`narration\` shows ${t} starting the turn somewhere that is not inside \`before_place\`.`,
+        `${t} starts inside \`before_place\`, or \`narration\` does not say. Walking over to something inside \`before_place\` does not mean ${t} started somewhere else. A more specific place inside \`before_place\` agrees.`,
+      )
+      : nounl(
+        `Does \`narration\` say or imply that ${t} was somewhere else at the start of this turn than \`before_place\`?`,
+        "`narration` shows it taken from, found in, or used from a place or holder that differs from `before_place`, for example picked up from a table while `before_place` says in her hands.",
+        "`narration` takes it from `before_place`, or does not say where it was. A more specific place inside `before_place` agrees.",
+      );
   }
   if (axes.length) {
     for (let i = 0; i < phrasesForThing.newConditions.length; i++) {
@@ -622,14 +628,22 @@ export async function judgeInput(
         };
         const otherThings = things.filter((otherThing) => otherThing !== thing);
         const fs = {
-          command: turn.player_input,
+          command: turn.command_typed ?? turn.player_input,
+          just_before: turn.just_before ?? "",
           narration: turn.narration,
+          narrator_narration: narrationOf(turn),
           story_text: story(turn),
           thing,
           other_things: otherThings,
           before_place: b?.place || "",
           before_conditions: b?.condition || [],
           after_place: a?.place || "",
+          after_place_contains: (() => {
+            const contents = turn.place_contents || {};
+            if (Object.hasOwn(contents, a?.place || "")) return contents[a?.place || ""];
+            const key = Object.keys(contents).find((name) => name.toLowerCase() === String(a?.place || "").toLowerCase());
+            return key ? contents[key] : [];
+          })(),
           after_conditions: a?.condition || [],
           states: (turn.item_facts_axes?.[thing] || []).flat(),
           tracked_before: trackedBefore,

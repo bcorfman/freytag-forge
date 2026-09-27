@@ -136,3 +136,81 @@ def test_judge_turns_keeps_narration_when_authored_text_is_not_a_suffix() -> Non
     )
 
     assert judged[0]["narrator_narration"] == narration
+
+
+def test_judge_turns_projects_typed_command_and_engine_prefix() -> None:
+    turns = [
+        {
+            "player_input": "The engine walks to the kitchen. Search the workstation.",
+            "typed_input": "Search the workstation.",
+            "narration": "Kristin searches the workstation.",
+        },
+        {"player_input": "Search the workstation.", "narration": "Kristin searches it."},
+    ]
+
+    judged = judge_turns(turns, [], PACKAGE)
+
+    assert judged[0]["command_typed"] == "Search the workstation."
+    assert judged[0]["just_before"] == "The engine walks to the kitchen."
+    assert judged[1]["command_typed"] == "Search the workstation."
+    assert judged[1]["just_before"] == ""
+    assert "command_typed" not in turns[0]
+
+
+def test_judge_turns_projects_nested_place_contents_and_recorded_override() -> None:
+    turn = {
+        "scene_id": "1A",
+        "narration": "Kristin records the workstation.",
+        "item_facts_after": {"workstation": {"place": "outside the house"}},
+    }
+
+    contents = judge_turns([turn], [], PACKAGE)[0]["place_contents"]
+
+    assert "workstation" not in contents["kitchen"]
+    assert "back door" in contents["kitchen"]
+    assert "drawer" not in contents["kitchen"]
+    assert "workstation" in contents["outside the house"]
+    assert "drawer" in contents["outside the house"]
+    assert "Michelle's memory card" not in contents["kitchen"]
+    assert turn["item_facts_after"]["workstation"]["place"] == "outside the house"
+
+
+def test_place_contents_resolves_tracked_names_and_nested_recorded_places() -> None:
+    turn = {
+        "scene_id": "1A",
+        "narration": "Kristin checks the phone and moves the truck.",
+        "item_facts_names": {"Kristin": ["Kristin Schweitzer", "Kristin's pocket"]},
+        "item_facts_after": {
+            "Michelle's phone": {"place": "Kristin"},
+            "Kristin": {"place": "kitchen"},
+            "note": {"place": "drawer"},
+            "Kristin's truck": {"place": "Los Angeles park"},
+        },
+    }
+
+    contents = judge_turns([turn], [], PACKAGE)[0]["place_contents"]
+
+    assert "Michelle's phone" in contents["Kristin"]
+    assert "Michelle's phone" in contents["kitchen"]
+    assert "Michelle's phone" in contents["Michelle's house"]
+    assert "Kristin" in contents["kitchen"]
+    assert "Kristin" in contents["Michelle's house"]
+    assert "Kristin Schweitzer" not in contents["kitchen"]
+    assert "note" in contents["kitchen"]
+    assert "Kristin's laptop" in contents["Los Angeles park"]
+
+
+def test_place_contents_tracked_character_place_overrides_authored_item_place() -> None:
+    turn = {
+        "scene_id": "1A",
+        "narration": "Kristin checks Michelle's phone.",
+        "item_facts_after": {
+            "Kristin": {"place": "Kristin's truck"},
+            "Michelle's phone": {"place": "Kristin"},
+        },
+    }
+
+    contents = judge_turns([turn], [], PACKAGE)[0]["place_contents"]
+
+    assert "Michelle's phone" in contents["Kristin's truck"]
+    assert "Michelle's phone" not in contents["kitchen"]
