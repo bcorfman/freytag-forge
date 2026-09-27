@@ -930,6 +930,14 @@ def test_match_system_lists_only_named_things():
     assert "Do not list a thing because someone holds it." in _MATCH_SYSTEM
     assert 'For "Ask the cook who took the key." list only the cook and the key.' in _MATCH_SYSTEM
     assert "Copy names from THINGS exactly." in _MATCH_SYSTEM
+    assert (
+        'If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give "new".'
+        in _MATCH_SYSTEM
+    )
+    assert (
+        "Give a person the name of someone in THINGS only when it is that same person. "
+        'A guard or a prisoner who is not in THINGS is "new".' in _MATCH_SYSTEM
+    )
 
 
 def test_things_omit_condition_for_empty_condition_list():
@@ -2002,6 +2010,24 @@ def test_same_as_learns_item_and_place_names_but_not_area_names(monkeypatch):
 
     assert world.resolve("stranger") == world.resolve("Kristin")
     assert world.resolve("corner") is None
+    assert provider.last_item_facts_match()["place_resolutions"] == {"the corner": area_name}
+
+
+def test_same_as_new_place_is_recorded_and_left_unplaced(monkeypatch):
+    provider = _provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"the checkpoint": "new"}},
+    )
+
+    provider.apply_item_facts(
+        {"the stranger": {"place": "the checkpoint"}},
+        player_input="Move the stranger to the checkpoint.",
+    )
+
+    assert provider.last_item_facts_match()["place_resolutions"] == {"the checkpoint": "new"}
+    assert provider.last_item_facts_unplaced() == [{"name": "the stranger", "place": "the checkpoint"}]
 
 
 def test_omitted_same_as_adds_condition_only_thing_without_place(monkeypatch):
@@ -2123,6 +2149,7 @@ def test_stubbed_run_records_new_change_on_same_turn(monkeypatch):
     result = core.run_scene(variation, "1A", core.scripts_for(variation, "1A")[0])
     turn_record = result["turns"][0]
     assert turn_record["item_facts_resolutions"] == {"new notebook": "new"}
+    assert turn_record["item_facts_place_resolutions"] == {"on the desk": "new"}
     assert turn_record["item_facts_after"]["new notebook"] == {
         "place": "on the desk",
         "condition": ["open"],

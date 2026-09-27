@@ -223,7 +223,7 @@ def _single_call_rules(protagonist_name, *, drop_rules=frozenset()):
     return rules
 
 
-_MATCH_SYSTEM = 'You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {"refers": ["name"], "same_as": {"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "the old lamp" for "Grandma\'s lamp". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For "Ask the cook who took the key." list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or "new" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like "the corner of the kitchen" for kitchen, give that place. Copy names from THINGS exactly.'
+_MATCH_SYSTEM = 'You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {"refers": ["name"], "same_as": {"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "the old lamp" for "Grandma\'s lamp". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For "Ask the cook who took the key." list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or "new" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like "the corner of the kitchen" for kitchen, give that place. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give "new". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is "new". Copy names from THINGS exactly.'
 _SECOND_CALL_SYSTEM = 'You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like {"item_facts": {"thing": {"place": "name", "condition": ["phrase"]}}}. List only the things in THINGS that STORY changed. For each one, give the name of who or what has it now and up to two short condition phrases. Example: if Sam picks up the lantern from the table and lights it, the lantern is {"place": "Sam", "condition": ["lit"]}. If STORY changed nothing, return {"item_facts": {}}.'
 
 
@@ -255,6 +255,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": None,
             "match_issues": [],
             "resolutions": {},
+            "place_resolutions": {},
             "engine_resolutions": {},
         }
         self.item_facts_match_calls = 0
@@ -839,12 +840,15 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
         same_as = match_reply.get("same_as", {}) if isinstance(match_reply, dict) else {}
         place_ids = {}
+        place_resolutions = {}
         for place in place_names:
             target = same_as.get(place) if isinstance(same_as, dict) else None
             if isinstance(target, str) and target != "new":
                 place_ids[place] = self._resolve_name(world, target)
                 if place_ids[place] is not None and not world.is_a(place_ids[place], "area"):
                     world.add_alias(place_ids[place], place)
+            place_id = place_ids.get(place)
+            place_resolutions[place] = world.name(place_id) if place_id is not None else "new"
 
         for item in prepared:
             key, value = item["key"], item["value"]
@@ -924,6 +928,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": match_raw,
             "match_issues": match_issues,
             "resolutions": resolutions,
+            "place_resolutions": place_resolutions,
             "engine_resolutions": engine_resolutions,
         }
         return self.item_facts, issues
@@ -939,6 +944,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 "match_raw": None,
                 "match_issues": [],
                 "resolutions": {},
+                "place_resolutions": {},
                 "engine_resolutions": {},
             }
             self._last_item_facts_match = copy.deepcopy(result)
@@ -975,6 +981,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": copy.deepcopy(reply),
             "match_issues": issues if not valid else [],
             "resolutions": {},
+            "place_resolutions": {},
             "engine_resolutions": engine_resolutions if valid else {},
         }
         self._last_item_facts_match = copy.deepcopy(result)

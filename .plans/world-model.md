@@ -78,6 +78,18 @@ Continue the scene work on it.
     "stranger in the park" in 1B (right, since he is the man), and also
     "prisoners" in 1C and "guard" in 2A. It mapped "ID" to the inspection
     console. The call seems to prefer any listed name over "new".
+  **Match fix (Ringer, Luna, one attempt; suite 876 passed).** Two rules
+  follow the spot rule in `_MATCH_SYSTEM`: a place not in THINGS and not a
+  spot in one is "new", and a person maps to someone in THINGS only when
+  it is that same person ("A guard or a prisoner who is not in THINGS is
+  \"new\"."). Each turn record now has `item_facts_place_resolutions`
+  (place name to world name, or "new"). One rerun replicate of each
+  variation, with no rejected turns: "checkpoint" was "new" and recorded
+  as unplaced, "prisoners" and "guard" no longer became Brandon, and
+  "below" went to the observation shaft. New misses in the same run:
+  "stranger in the park" became Kristin (1B turn 6) and "door" became the
+  inspection console (2A turn 10). One replicate cannot tell the rules'
+  effect from sampling noise; more replicates are needed before judging.
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"
