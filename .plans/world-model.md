@@ -1,7 +1,7 @@
 # World model: plan
 
 Status (2026-09-26, end of session): decisions W1-W13 settled; S1 merged
-(PR 480). S2 tasks A and C merged (PR 481). Tasks B and D-H are on
+(PR 480). S2 tasks A and C merged (PR 481). Tasks B and D-I are on
 branch `world-model-s2b`, which is not pushed and has no PR. Next: the v36
 comparison, then the PR. See "Resume here".
 The task split is in section 11. Written at Brandon's request
