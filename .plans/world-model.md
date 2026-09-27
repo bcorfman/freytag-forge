@@ -1,10 +1,8 @@
 # World model: plan
 
-Status (2026-09-27): decisions W1-W13 settled; S1 merged (PR 480). S2
-tasks A and C merged (PR 481). Tasks B and D-I and the five judge fixes
-(2302ef6) are on branch `world-model-s2b`, which is not pushed and has no
-PR. The v36 comparison passes on the fixed judge. Next: the PR. See
-"Resume here".
+Status (2026-09-27, end of session): decisions W1-W13 settled. S1 merged
+(PR 480), and S2 merged (PRs 481 and 485). Next: ground scenes 1B-3C in the
+world model, then S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -13,10 +11,119 @@ decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
 
-## Resume here (2026-09-26, end of session)
+## Resume here (2026-09-27)
 
-Start from branch `world-model-s2b` (in the main repository; check it out
-in a fresh worktree). It holds everything since PR 481, oldest first:
+Everything built so far is on `main` (PR 485, merge 28ad27d). Branch
+`world-model-scenes` holds only this plan update and
+`world-model-scenes/capture_scenes.py`. Start the next work from it, in a
+fresh worktree.
+
+### Where things stand
+
+- **The model.** The `worldkeeper` library and its storygame adapter, the
+  package schema (kinds, area parents, new-form placements, character
+  placements, companions, `on_assert` effects), seats and the engine's
+  prerequisite steps (W11-W13). Sections 4-9 describe the model, and
+  section 11 records how each part was built.
+- **The bench uses it (S2).** Replies name the parent. THINGS shows the
+  authored text or the parent's name. Things are captured into the world. The
+  match call lists only things in play: the scene's `item_ids`, things in the
+  protagonist's top-level area, and things she carries.
+- **The shipped narrator still reads authored placement text only.** The
+  runtime turn does not capture into the world until S4. Every package change
+  must leave the shipped payloads of converted scenes byte-identical, unless
+  a change is intended and approved.
+- **Measured.** On the v36 comparison with the fixed judge, the branch beat
+  v36 in every category: place changes 38/40 against 18/24, conditions 15/16
+  against 6/10, and turns with every fact right 61/68 against 26/36.
+- **Converted scenes.** 1A in full. 1B has only Brandon's placement and the
+  park bench. Scenes 1C-3C have no placements at all.
+- **How to ground a scene:** `docs/world-model-grounding.md`, which
+  `AGENTS.md` points to. Read it before any package or prompt work.
+
+### Next steps, in order
+
+**1. Ground scenes 1B-3C, one Ringer task per scene.** Use structured YAML
+edits in `world.yaml`, `plot.md` and, where needed, `knowledge.yaml`.
+New prose goes to ChatGPT Desktop, never to a worker. What each scene needs
+is in "Story survey" below, and Brandon's six decisions on it are settled
+(listed there). Order:
+
+1. **1B.** The dead drop is the transit token, the handwritten number
+   sequence and Michelle's photograph. The token is hidden at the bench and
+   moved to Kristin and revealed by the fact that records finding it. Decide
+   whether the sequence and the photograph become entities. The truck is
+   placed in the park, and the laptop wherever the story has it.
+2. **1C.** The area tree: `regional_facility` parents the six interior
+   facility areas, and a new `freight_terminal` inside it is 1C's location.
+   Brandon becomes a companion (`companions: [brandon]`).
+3. **2A-2C.** The `brandon_hideout` area and 2A's start there, with the
+   entering fact's `on_assert` move to `facility_perimeter`. Brandon is a
+   companion in 2B and 2C. Fix the areas whose text happens elsewhere (2C,
+   and 2A's second half).
+4. **3A-3C.** Michelle is a captive in `detention_level`, and
+   `michelle_reached` sets her free. 3B declares `companions: [brandon,
+   michelle]`. Rebecca is placed in her office, and `rebecca_captured` sets
+   her captive. The senior official is in `detention_level`. Brandon moves
+   to the relay by a fact's `on_assert`, and joins 3C's participants there.
+   The portable archive gets a new-form placement.
+
+For each scene:
+
+- Before the task, capture the shipped payloads:
+  `uv run python .plans/world-model-scenes/capture_scenes.py BEFORE.json
+  1A:"Search the kitchen for signs of a struggle." 1B:"Look around the bench
+  for anything Michelle left." <scene>:"<a command>"`
+- The check re-captures after the change and diffs. A difference fails
+  unless it was intended and approved.
+- The check runs the whole suite without `-x`, so every failure shows in one
+  round. The brief names the tests the change is expected to break. The
+  1B-bench task broke the leakage matrix (a new item's name counts as a
+  future term until knowledge available earlier lists the item) and two
+  fixtures that edited the old front matter.
+- Add a script for the scene to a bench variation only when the scene is
+  ready to be measured. One live replicate per converted scene confirms that
+  its names resolve (read `item_facts_unplaced` and the match-call
+  resolutions).
+
+**2. S3: remove what the model makes redundant.** The bigger-place rule
+already went in task B. What is left is the start-place rule: one run
+without it, and keep the removal only if the numbers hold.
+
+**3. Revisit the bookmark before S4.** Capture is scored only on places and
+declared axes. Brandon was not sure undeclared conditions stay unimportant,
+such as the truck unlocked or its engine running (see "Bookmarked" in the
+S2 record).
+
+**4. S4: runtime.** Capture during play, the tree in saves (a schema bump),
+and cause routing, handed to the continuity plan's Phases 4-6. Known gap: the
+bench applies seating before the turn, so the runtime must seat inside the
+turn's snapshot, so that a rejected turn undoes it.
+
+### Working rules that bit this project
+
+- Every code change is a Ringer task on GPT-5.6 Luna (`"engine": "codex",
+  "model": "gpt-5.6-luna"`). Claude writes the brief and the check, and
+  reviews the patch.
+- `worktrees: true` detaches each task at the repository's HEAD. Commit
+  earlier rounds to a work branch before the next round. The check exports a
+  cumulative patch (`git diff --cached <base>`), because a passing
+  worktree is deleted.
+- A check that runs the full suite needs `"check_timeout_s": 900`.
+- Write manifests from a quoted heredoc (`<<'EOF'`). An unquoted one runs
+  the backticks in a brief as shell commands.
+- A worker may call failures "pre-existing". Verify that against the base
+  commit before accepting it.
+- Live bench and judge runs go through Ringer too. The check sources
+  `.env`, because a worker has no network. Re-score with
+  `bench/calibration/rejudge.py`. The saved S2 runs and comparison scripts
+  are in the main checkout's gitignored `bench/results/` (listed in the S2
+  record).
+
+## S2 record (2026-09-26 to 2026-09-27)
+
+Branch `world-model-s2b` (merged as PR 485) held everything after PR 481,
+oldest first:
 
 - 17437be: task B, the reply names the parent.
 - 77c0240: task D, seats (W11). c06ee38, 7989583, c7705b8: fixes from
@@ -83,7 +190,7 @@ Kristin ended up outside every area.
 - Ringer passed on the first attempt on Luna. The full suite passes, and
   ruff is clean.
 
-### Next 1: the two-scene smoke replicate
+### S2: the two-scene smoke replicate
 
 One replicate of `bench/variations/item-facts-world-two-scene.json` with
 the fact and continuity judges, for a few cents. It answers W5's two
@@ -522,8 +629,6 @@ which is gitignored and so exists only on this machine:
 
 To re-score a folder: `uv run python bench/calibration/rejudge.py
 --results bench/results/<folder> --out <new folder>`.
-
-### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
 
@@ -1447,9 +1552,16 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
 - The continuity plan's Phase 0 bar (92% per change type) restarts on the new
   reply format from here, with v36 as the baseline.
 
-**S3 - Remove what the model makes redundant.** One run per removal: the
-start-place rule, the bigger-place rule. Keep a removal only if the numbers
-hold.
+S2 is done: merged as PRs 481 and 485, with the exit met (see the S2
+record).
+
+**Scene grounding (after S2).** Declare and place the things, areas and
+NPCs of scenes 1B-3C, one Ringer task per scene. The order and the settled
+decisions are in "Resume here".
+
+**S3 - Remove what the model makes redundant.** One run per removal. The
+bigger-place rule already went in task B, so only the start-place rule is
+left. Keep a removal only if the numbers hold.
 
 **S4 - Runtime.** Capture during play, the tree in saves (schema bump), cause
 routing: hand over to the continuity plan's Phases 4-6, which build on this
