@@ -858,7 +858,7 @@ knowledge:
     priority: 0
 - id: k_sl_2a_a_r1
   statement: 'Kristin finds years of leaked code, emergency supplies, and Continuity files in Brandon’s fortified hideout.'
-  entity_ids: []
+  entity_ids: [brandon_hideout, hideout_servers]
   aliases:
   - brandon prepared before event
   audience:

@@ -338,7 +338,13 @@ location_id: facility_perimeter
 freytag_phase: rising_action
 objective: Enter the facility under false identities
 participant_ids: [kristin, brandon]
-item_ids: [transit_card]
+companions: [brandon]
+item_ids: [transit_card, hideout_servers]
+item_placements:
+  hideout_servers: {parent: brandon_hideout}
+character_placements:
+  kristin: {parent: brandon_hideout}
+  brandon: {parent: brandon_hideout}
 entry_text: "Brandon's hideout was buried inside a dead communications center: servers, salvaged hardware, and years of leaked Continuity Initiative documents. Somewhere beneath the city the facility waited, and its unstable cooling-water and ventilation readings were exactly the kind of flaw a pair of outside inspectors might be sent to examine.\n\n"
 transition_ids: [t_2a_2b]
 bridge_text:

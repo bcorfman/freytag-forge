@@ -843,6 +843,13 @@ class CloudflareTurnProvider:
         beat = self._current_beat()
         world = self.state.package.world
         location = next(item for item in world.locations if item.id == scene.location_id)
+        protagonist_placement = scene.character_placements.get(world.protagonist_id)
+        if protagonist_placement is not None:
+            parent_id = protagonist_placement.parent
+            location = next(
+                (item for item in (*world.locations, *world.items) if item.id == parent_id),
+                location,
+            )
         protagonist = next((item.name for item in world.npcs if item.id == world.protagonist_id), world.protagonist_id)
         return {
             "protagonist": protagonist,
