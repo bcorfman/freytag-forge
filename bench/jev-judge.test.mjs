@@ -77,7 +77,7 @@ test("combineContinuity applies all rules", () => {
   assert.equal(combineContinuity(yes(["hidden_shown"]), { firstTurnInScene: false, hasHiddenCanon: true }).reveals_hidden_canon, "yes");
 });
 
-test("judgeInput supports continuity variants and judge selection", async () => {
+test("judgeInput supports continuity variants and judge selection with also_called", async () => {
   const dir = await packageDir("## Scene 1A\n**Hidden canon:** card under rug.");
   const turn = {
     scene_id: "1A",
@@ -85,6 +85,7 @@ test("judgeInput supports continuity variants and judge selection", async () => 
     narration: "She looks at the desk.",
     item_facts_before: {},
     item_facts_after: {},
+    item_facts_names: { phone: ["the handset"] },
   };
   const input = { runs: [{ opening: "", turns: [turn] }] };
   const options = {
@@ -97,7 +98,9 @@ test("judgeInput supports continuity variants and judge selection", async () => 
   const preamble = await judgeInput(input, { ...options, variant: "preamble", fetchImpl: stubFetch(preambleSeen) });
   const preambleInput = JSON.parse(preambleSeen[0].options.body).input;
   assert.equal(preambleInput.state.task, "You are a continuity editor for an interactive story. A player types a command, and a narrator writes what happens next. You check one turn at a time: did the narrator carry out the command, keep the story consistent with what is already true, and continue from where the story left off?");
-  assert.deepEqual(Object.keys(preambleInput.state), ["task", "command", "narration", "story_text", "given_facts", "opening", "earlier_narration", "hidden_canon"]);
+  assert.deepEqual(preambleInput.state.also_called, { phone: ["the handset"] });
+  assert.match(JSON.stringify(preambleInput.questions), /A name listed in `also_called` is another name for the same person or thing\./);
+  assert.deepEqual(Object.keys(preambleInput.state), ["task", "command", "narration", "story_text", "given_facts", "also_called", "opening", "earlier_narration", "hidden_canon"]);
 
   const preambleRequest = JSON.parse(preambleSeen[0].options.body).input;
   const newVariants = ["preamble-rubric", "preamble-holistic", "preamble-rubric-holistic"];
@@ -144,8 +147,8 @@ test("judgeInput supports continuity variants and judge selection", async () => 
     assert.equal(requests.length, 3);
     assert.deepEqual(requests.map((request) => Object.keys(request.state)), [
       ["command"],
-      ["command", "narration", "story_text", "given_facts"],
-      ["command", "narration", "opening", "earlier_narration", "hidden_canon", "given_facts"],
+      ["command", "narration", "story_text", "given_facts", "also_called"],
+      ["command", "narration", "opening", "earlier_narration", "hidden_canon", "given_facts", "also_called"],
     ].map((keys) => variant === "split-examples" ? [...keys, "examples"] : keys));
     assert.deepEqual(requests.map((request) => Object.keys(request.questions)), [
       ["needs_other", "take_from_other", "names_place"],

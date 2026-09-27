@@ -545,7 +545,7 @@ def test_run_scene_fixed_turns_provider_outage_still_fails(monkeypatch) -> None:
     assert "PROVIDER_DOWN" in result["failure_reason"]
 
 
-def test_bench_turn_passes_engine_steps_as_prior_steps(monkeypatch) -> None:
+def test_before_state_seating_records_post_step_place(monkeypatch) -> None:
     variation = load_variation(ROOT / "bench" / "variations" / "item-facts-single.json")
     variation["_fixed_turns"] = 1
     typed_input = "Read the files on my laptop."
@@ -610,7 +610,61 @@ def test_bench_turn_passes_engine_steps_as_prior_steps(monkeypatch) -> None:
     ]
     assert turn["seating_asked"] is True
     assert turn["player_input"] == combined
+    assert turn["item_facts_before"]["Kristin"]["place"] == "workstation chair"
+    assert turn["item_facts_before"]["Kristin's laptop"]["place"] == "Kristin"
     assert providers[0].prior_steps == ()
+
+
+def test_before_state_scene_leaving_turn_records_pre_turn_place(monkeypatch) -> None:
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
+    variation["_fixed_turns"] = 1
+    variation.pop("_continue_to", None)
+    typed_input = "Go out to the truck."
+    original_package_and_state = core.package_and_state
+
+    def package_and_state_with_player(variation, scene_id=None):
+        package, state = original_package_and_state(variation, scene_id)
+        world = world_for(package, state.facts)
+        assert world.move("kristin", "kitchen").ok
+        return package, state
+
+    def provider_for_with_item_facts(state, _variation):
+        return ItemFactsProvider(
+            worker_url="", token="", state=state, item_facts={}, mode="single_call", seed_from_package=True
+        )
+
+    def request(_provider, payload):
+        if payload["system"] == _MATCH_SYSTEM:
+            return {"refers": ["Kristin"], "same_as": {}}
+        return {
+            "segments": [{"kind": "narration", "text": "Kristin leaves.", "grounding_ids": []}],
+            "selected_knowledge_ids": [],
+        }
+
+    original_turn = core.RuntimeEngine.turn
+
+    def turn_and_leave(engine, player_input):
+        proposal = original_turn(engine, player_input)
+        engine.state.current_scene_id = "1B"
+        assert world_for(engine.state.package, engine.state.facts).move("kristin", "los_angeles_park").ok
+        return proposal
+
+    monkeypatch.setattr(core, "package_and_state", package_and_state_with_player)
+    monkeypatch.setattr(core, "provider_for", provider_for_with_item_facts)
+    monkeypatch.setattr(core, "ask_needs_to_stand", lambda *_args: False)
+    monkeypatch.setattr(core, "ask_uses_thing", lambda *_args: False)
+    monkeypatch.setattr(core.RuntimeEngine, "turn", turn_and_leave)
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+
+    result = core.run_scene(variation, "1A", {"name": "leave", "inputs": [typed_input]})
+
+    assert result["status"] == "ok"
+    assert result["turns"][0]["left_scene"] is True
+    assert result["turns"][0]["item_facts_before"]["Kristin"] == {
+        "place": "kitchen",
+        "condition": [],
+    }
+    assert result["turns"][0]["item_facts_before"]["Kristin"]["place"] != "Los Angeles park"
 
 
 def test_bench_turn_stands_before_leaving_and_skips_seating(monkeypatch) -> None:

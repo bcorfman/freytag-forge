@@ -744,6 +744,11 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 provider.prior_steps = standing_steps or seating_steps
             if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
                 match_info = provider.prepare_turn(typed_input)
+            things_given: list[str] = []
+            facts_before: dict[str, Any] = {}
+            if isinstance(provider, ItemFactsProvider):
+                things_given = list(provider._selected_names) if provider._selected_names is not None else []
+                facts_before = provider.facts_for_names(things_given)
             try:
                 proposal = _turn_with_rate_limit_retry(engine, typed_input)
                 last_prompt = getattr(provider, "last_prompt", None)
@@ -797,8 +802,6 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             narration = join_narration(tuple(segments)) if segments else ""
             item_facts_record: dict[str, Any] | None = None
             if isinstance(provider, ItemFactsProvider):
-                things_given = list(provider._selected_names) if provider._selected_names is not None else []
-                facts_before = provider.facts_for_names(things_given)
                 raw_item_facts = provider.pending_item_facts()
                 if provider.item_facts_mode == "second_call":
                     raw_item_facts = provider.second_call_update(typed_input, narration)
@@ -806,10 +809,24 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 match_info = provider.last_item_facts_match()
                 after_names = set(things_given) | provider._changed_last_turn
                 facts_after = provider.facts_for_names(after_names)
+                item_facts_names: dict[str, list[str]] = {}
+                world = provider._world()
+                for facts in (facts_before, facts_after):
+                    for display_name, entry in facts.items():
+                        place = entry.get("place") if isinstance(entry, dict) else None
+                        for display in (display_name, place):
+                            if not isinstance(display, str):
+                                continue
+                            entity_id = world.resolve(display)
+                            if entity_id:
+                                other_names = [name for name in world.names(entity_id) if name != display]
+                                if other_names:
+                                    item_facts_names[display] = other_names
                 item_facts_record = {
                     "things_given": things_given,
                     "item_facts_before": facts_before,
                     "item_facts_after": facts_after,
+                    "item_facts_names": item_facts_names,
                     "item_facts_raw": raw_item_facts,
                     "item_facts_issues": fact_issues,
                     "item_facts_unplaced": provider.last_item_facts_unplaced(),

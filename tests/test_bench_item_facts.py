@@ -2051,7 +2051,7 @@ def test_stubbed_run_records_new_change_on_same_turn(monkeypatch):
     }
 
 
-def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch):
+def test_before_state_scene_leaving_records_pre_turn_place(monkeypatch):
     calls = []
 
     def request(_provider, payload):
@@ -2083,6 +2083,24 @@ def test_stubbed_two_scene_run_carries_facts_and_records_transition(monkeypatch)
         "condition": [],
     }
     assert calls
+
+
+def test_also_called_record_carries_learned_name() -> None:
+    from bench.judge_input import judge_turns
+
+    learned = {"phone": ["the handset", "the stranger's phone"]}
+    turn = {
+        "turn_number": 1,
+        "narration": "Kristin picks up the phone.",
+        "player_input": "Pick up the phone.",
+        "item_facts_before": {"phone": {"place": "Brandon", "condition": []}},
+        "item_facts_after": {"phone": {"place": "Kristin", "condition": []}},
+        "item_facts_names": learned,
+    }
+
+    judged = judge_turns([turn], [], PACKAGE)[0]
+
+    assert judged["item_facts_names"] == learned
 
 
 def test_scene_exit_reply_does_not_override_next_scene_placements(monkeypatch):

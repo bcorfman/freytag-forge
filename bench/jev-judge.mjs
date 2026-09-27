@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const THRESHOLD = 0.5;
+const ALSO_CALLED_SENTENCE = "A name listed in `also_called` is another name for the same person or thing.";
 
 const CONTINUITY_NAMES = [
   "given_conflict", "given_start_conflict", "earlier_conflict", "beyond_command",
@@ -125,13 +126,13 @@ const CONTINUITY_GROUPS = {
     state: ["command"], questions: ["needs_other", "take_from_other", "names_place"],
   },
   turn: {
-    state: ["command", "narration", "story_text", "given_facts"],
+    state: ["command", "narration", "story_text", "given_facts", "also_called"],
     questions: [
       "given_conflict", "given_start_conflict", "beyond_command", "own_part_done", "other_responds", "reaches_place",
     ],
   },
   history: {
-    state: ["command", "narration", "opening", "earlier_narration", "hidden_canon", "given_facts"],
+    state: ["command", "narration", "opening", "earlier_narration", "hidden_canon", "given_facts", "also_called"],
     questions: ["earlier_conflict", "arrives", "rediscovers", "repeats_trip", "hidden_shown", "hidden_lookalike"],
   },
 };
@@ -403,6 +404,14 @@ function continuityQuestions(state, hasHidden) {
     "`narration` puts an object like the hidden one (for example another storage device when a memory card is hidden) in or near the hidden spot early.",
     "`narration` shows nothing like the hidden thing near its hidden spot, or `command` has reached the spot.",
   );
+  for (const name of ["given_conflict", "given_start_conflict", "earlier_conflict"]) {
+    q[name] = {
+      ...q[name],
+      criteria: Object.fromEntries(
+        Object.entries(q[name].criteria).map(([side, text]) => [side, `${text} ${ALSO_CALLED_SENTENCE}`]),
+      ),
+    };
+  }
   return q;
 }
 
@@ -483,6 +492,16 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
       "It is a different object from every thing in `other_things`, or `other_things` is empty.",
     );
   }
+  for (const name of ["before_conflict", "start_conflict"]) {
+    if (q[name]) {
+      q[name] = {
+        ...q[name],
+        criteria: Object.fromEntries(
+          Object.entries(q[name].criteria).map(([side, text]) => [side, `${text} ${ALSO_CALLED_SENTENCE}`]),
+        ),
+      };
+    }
+  }
   return q;
 }
 
@@ -548,6 +567,7 @@ export async function judgeInput(
         narration: narrationOf(turn),
         story_text: story(turn),
         given_facts: turn.item_facts_before || {},
+        also_called: turn.item_facts_names || {},
         opening: sceneId === firstSceneId ? run.opening : "",
         earlier_narration: earlier,
         hidden_canon: hc,

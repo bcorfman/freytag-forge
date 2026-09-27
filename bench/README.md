@@ -204,6 +204,8 @@ Empty unknown reply fields are dropped, while misplaced item changes are moved i
 
 ## Fact-tracking judge
 
+To re-run judges over saved records, use `uv run python bench/calibration/rejudge.py --results /path/to/results --out /tmp/rejudge`; add `--dry-run` to write only the transformed `input.json` without calling a judge. The package path comes from `all-turn-records.json`, with the continuity-initiative package as the fallback.
+
 Set `fact_tracking_judge` to `true` to judge each turn's `item_facts_before`, narration, and `item_facts_after`. The judge checks whether facts after the turn are correct, whether a narrated change was missed, whether a change was invented, whether narration conflicts with the facts it received, and whether a true condition was dropped. It also records shown changes by `command` or `narrator` cause.
 
 The `fact_tracking` block in `summary.json` and the ledger contains yes/no counts for those five checks, `changes_by_cause`, `turns_judged`, and `judge_calls`. The judge is opt-in and adds its calls to spend.

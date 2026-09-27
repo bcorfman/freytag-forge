@@ -61,7 +61,8 @@ function playerVisibleTurn(turn, index, sceneId) {
     player_input: turn.player_input,
     narration: turn.narrator_narration ?? turn.narration,
     story_text: turn.story_text ?? [],
-    given_facts: turn.item_facts_before ?? {},
+  given_facts: turn.item_facts_before ?? {},
+  also_called: turn.item_facts_names ?? {},
   };
 }
 
@@ -115,7 +116,7 @@ export async function judgeContinuity(
     model,
     store: false,
     input: [
-      { role: "system", content: `${SYSTEM_MESSAGE} Copy each turn's turn_number into turn.` },
+      { role: "system", content: `${SYSTEM_MESSAGE} A name listed in \`also_called\` is another name for the same person or thing. Copy each turn's turn_number into turn.` },
       {
         role: "user",
         content: JSON.stringify({

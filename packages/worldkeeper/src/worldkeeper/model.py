@@ -400,6 +400,19 @@ class World:
         entity = self._entity(entity_id)
         return entity.name if entity else ""
 
+    def names(self, entity_id) -> tuple[str, ...]:
+        """Return the declared and learned names for an entity."""
+        entity = self._entity(entity_id)
+        if not entity:
+            return ()
+        return tuple(
+            dict.fromkeys(
+                (entity.name,)
+                + entity.aliases
+                + tuple(fact.value for fact in self._facts("wk_alias", entity_id) if fact.value)
+            )
+        )
+
     def owner(self, entity_id):
         """Return an entity owner, if recorded."""
         entity = self._entity(entity_id)

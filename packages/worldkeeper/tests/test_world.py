@@ -170,6 +170,16 @@ def test_add_alias_does_not_call_resolver():
     assert calls == []
 
 
+def test_also_called_names_include_declared_and_learned_names_in_order():
+    w = make()
+    w.schema.entities["lamp"].aliases = ("light", "lamp")
+
+    assert w.names("lamp") == ("lamp", "light")
+    assert w.add_alias("lamp", "glowing lamp").ok
+    assert w.names("lamp") == ("lamp", "light", "glowing lamp")
+    assert w.names("missing") == ()
+
+
 def test_schema_errors_and_resolver():
     for data in ({"kinds": [{"id": "x", "is": ["x"]}]}, {"entities": [{"id": "a", "name": "a", "kind": "missing"}]}):
         try:

@@ -93,6 +93,7 @@ def judge_turns(
         copy = dict(turn)
         copy["story_text"] = _story_text(turn, scene_transitions, package)
         copy["narrator_narration"] = _narrator_narration(copy["narration"], copy["story_text"])
+        copy["item_facts_names"] = turn.get("item_facts_names", {})
         before = dict(turn.get("item_facts_before", {}))
         for item_name in _revealed_item_names(turn, package):
             before.pop(item_name, None)
