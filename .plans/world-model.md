@@ -45,7 +45,7 @@ Continue the scene work on it.
   sub-areas, and Brandon as companion. It has no bench script either.
   2A in full as a package (6aad57e): Brandon's hideout, the servers and
   the move to the facility. Scenes 2B-3C have no placements at all.
-  **Next: diagnose why the narrator never selects knowledge in 1B-2A, then 2B.**
+  **Next: author reveal handoffs for the 1B, 1C and 2A candidates (prose via ChatGPT Desktop), then 2B.**
 - **Bench scripts for 1B, 1C and 2A (written, not yet run live).**
   `bench/variations/item-facts-world-1b-1c.json` plays 1B's `dead-drop`
   (10 turns) and continues into 1C's `terminal-descent` (10 turns). The
@@ -188,8 +188,16 @@ Continue the scene work on it.
   candidates offered**, across the B-only, A and thorough runs. Even 1B
   turn 5, "Compare the number sequence with the transit token.", which
   is exactly k_sl_1b_a_r1, narrated a match and selected nothing. The
-  saved 1A run did select (2 of 6 offered turns). Not yet diagnosed; it
-  blocks every storylet outcome from being earned by play in these scenes.
+  saved 1A run's two "selections" were authored reveals, not candidate
+  picks. **Diagnosis:** the narrator has never picked an offered candidate
+  in any saved item-facts run (40 runs, 0 picks). Knowledge is earned by
+  the authored reveal handoff (PRD: opt-in per candidate, needs
+  `action_evidence` and `delivery_text`; the runtime's exact matcher
+  decides). Only the seven 1A candidates have them; every candidate from
+  1B to 3C has neither, so it falls back to narrator selection, which
+  never happens. In 1B-2A, facts arrive only by pacing cues. The fix is
+  authoring: `earn_when`, `action_evidence` and `delivery_text` for each
+  1B, 1C and 2A candidate, with the prose from ChatGPT Desktop.
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"
