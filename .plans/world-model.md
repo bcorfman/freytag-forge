@@ -261,6 +261,30 @@ The v36 comparison, first pass (2026-09-26):
     turns.
   - **Turn 13:** the narrator reopens a laptop that is already open.
 
+Why condition changes are missed (2026-09-27, the 4 comparison
+replicates): 16 of 31 condition changes the judge saw were captured. The
+engine lost no condition that a reply reported; every miss is a reply
+that never reported the change.
+
+- **8 misses: the truck.** The narrator itself unlocked the truck (turn
+  4) or started its engine (turn 12). The truck has no declared state, so
+  nothing in THINGS asks for it.
+- **4 misses: turn 13.** The narrator re-opens a laptop that is already
+  open. The hypothesis is that `open (or closed)` reads as "either" to the
+  8b model; a probe is running.
+- **3 misses: other small cases.**
+- **An engine gap, found in replicate 3.** When the narrator had already
+  seated Kristin, the seating step returned early and skipped the laptop
+  pick-up. The fix is running as a Ringer task.
+
+**Bookmarked (Brandon, 2026-09-27, "for now").** Capture is scored only
+on places and declared state axes. Changes to undeclared conditions that
+the narrator makes on its own, such as the truck unlocked or its engine
+running, do not count as misses. Brandon is not convinced this will stay
+unimportant, so revisit it before S4 (runtime capture). The alternative
+is declaring more axes so that THINGS gives the narrator something to
+report against.
+
 ### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
