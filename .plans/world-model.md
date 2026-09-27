@@ -50,10 +50,21 @@ is in "Story survey" below, and Brandon's six decisions on it are settled
 (listed there). Order:
 
 1. **1B.** The dead drop is the transit token, the handwritten number
-   sequence and Michelle's photograph. The token is hidden at the bench and
-   moved to Kristin and revealed by the fact that records finding it. Decide
-   whether the sequence and the photograph become entities. The truck is
-   placed in the park, and the laptop wherever the story has it.
+   sequence and Michelle's photograph. Decided by Brandon, 2026-09-27:
+   all three are entities (`transit_card`, `number_sequence`,
+   `michelle_photograph`), and they are **visible**, placed `under` the
+   park bench with no text. They are not hidden. The survey's hidden-plus-reveal
+   proposal was rejected because the `transport_route_identified` cue tells
+   the narrator the drop "lie[s] beside Michelle's photograph" as something
+   Kristin notices. worldkeeper refuses a narrated move of a hidden thing,
+   so a narrated pickup would have been dropped. No single fact records the
+   find either: SL-1B-A sets either `transport_route_identified` or
+   `brandon_face_known`. The truck is placed in the park, and the laptop
+   and driver's seat ride in it. `brandon_identified` declares W8's
+   `{accompany: brandon, with: kristin}`. **Done as 44a99eb.** The 1A and
+   1B payloads are byte-identical, and the leakage matrix raised no flag.
+   Not yet measured live: add a 1B script to a bench variation and run one
+   replicate to confirm the new names resolve.
 2. **1C.** The area tree: `regional_facility` parents the six interior
    facility areas, and a new `freight_terminal` inside it is 1C's location.
    Brandon becomes a companion (`companions: [brandon]`).
