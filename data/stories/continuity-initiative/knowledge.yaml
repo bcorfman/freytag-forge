@@ -982,7 +982,7 @@ knowledge:
   - [supervisor, security supervisor, facility supervisor, the supervisor, security officer, inspection supervisor]
 - id: k_sl_2a_c_r2
   statement: Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility and its limited inspection console.
-  entity_ids: [kristin, brandon, regional_facility]
+  entity_ids: [kristin, brandon, regional_facility, infrastructure_corridors, inspection_console]
   aliases:
   - infrastructure corridor
   audience:

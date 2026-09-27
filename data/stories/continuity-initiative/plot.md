@@ -339,9 +339,10 @@ freytag_phase: rising_action
 objective: Enter the facility under false identities
 participant_ids: [kristin, brandon]
 companions: [brandon]
-item_ids: [transit_card, hideout_servers]
+item_ids: [transit_card, hideout_servers, inspection_console]
 item_placements:
   hideout_servers: {parent: brandon_hideout}
+  inspection_console: {parent: infrastructure_corridors}
 character_placements:
   kristin: {parent: brandon_hideout}
   brandon: {parent: brandon_hideout}
@@ -678,7 +679,9 @@ location_id: broadcast_relay
 freytag_phase: climax
 objective: Overload JANUS and seize the broadcast
 participant_ids: [kristin, michelle, brandon, rebecca]
-item_ids: []
+item_ids: [inspection_console]
+item_placements:
+  inspection_console: {parent: infrastructure_corridors}
 entry_text: "Alarms layered over alarms as the facility fought to predict its attackers. Above the fighting, Rebecca's executive office and the external broadcast relay waited at the end of corridors that JANUS watched move by move.\n\n"
 transition_ids: [t_3b_3c]
 bridge_text:
@@ -752,8 +755,9 @@ location_id: facility_escape
 freytag_phase: resolution
 objective: Expose the network and escape
 participant_ids: [kristin, michelle, rebecca]
-item_ids: [portable_archive]
+item_ids: [portable_archive, inspection_console]
 item_placements:
+  inspection_console: {parent: infrastructure_corridors}
   portable_archive:
     placement: with Rebecca in her hands
     while_fact_false: portable_archive_secured

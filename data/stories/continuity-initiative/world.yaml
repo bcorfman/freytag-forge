@@ -41,6 +41,10 @@ locations:
 - id: facility_escape
   name: Facility escape route
   parent: regional_facility
+- id: infrastructure_corridors
+  name: infrastructure corridors
+  aliases: [restricted infrastructure corridors, infrastructure corridor]
+  parent: regional_facility
 - id: freight_terminal
   name: freight terminal
   aliases: [abandoned freight terminal]
@@ -173,6 +177,10 @@ items:
   fixed: true
 - id: hideout_servers
   name: servers
+  fixed: true
+- id: inspection_console
+  name: inspection console
+  aliases: [corridor inspection console, diagnostic console]
   fixed: true
 facts:
 - scene_1a_entry_known
