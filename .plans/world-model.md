@@ -337,6 +337,33 @@ per-change-type counts are not exposed to:
 One real narrator fault: in replicate 1 at turn 12 the narrator never
 walked Kristin to the truck, and turn 13 derailed after it.
 
+**Open decision (Brandon): what comes before the PR for
+`world-model-s2b`.**
+
+1. **Open the PR now.** The decision metric, capture per change type,
+   beats v36 in both categories. The five judge logic faults above
+   become the first task of S3, fixed before any S3 measurement relies
+   on the turn-level score.
+2. **Fix the five judge faults first, then open the PR.**
+   - Round trip: the judge's "moved" answer does not count as a miss
+     when the end place equals the start place.
+   - Refinement: a more specific place inside the given one is the right
+     after-place (the judge's own criteria already say so, but it does
+     not hold).
+   - Command text: the judge gets the typed command and the engine's
+     steps separately, as what happened just before.
+   - Holder unchanged: a thing that stays with the same holder has not
+     moved.
+   - In-room walk: a walk inside the start area is not a start conflict.
+
+   Then re-score the saved second-pass runs, judge calls only: v36 in
+   `v36-rescore2`, and the branch runs in `compare2`.
+
+   Recommended, because re-scoring is now cheap and it keeps the rule to
+   fix known judge faults before relying on a measure. The saved runs
+   live in the session scratchpad, so re-scoring must happen before
+   that is cleared, or the runs must be copied under `bench/results/`.
+
 ### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
