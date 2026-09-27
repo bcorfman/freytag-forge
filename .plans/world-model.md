@@ -230,6 +230,37 @@ Results of replicates 3 and 4 (2026-09-26), each with 19 accepted turns:
   - At turn 18 it scores "Brandon" against narration that says "the
     stranger".
 
+The v36 comparison, first pass (2026-09-26):
+
+- **Before comparing, the bench's measurement was fixed (f0f58a4).**
+  - The before-state is now read after the engine's seating steps and
+    before the turn. It used to be read after the turn, so a
+    scene-leaving turn was scored with Kristin already in 1B.
+  - Both judges now receive `also_called`, each thing's other names.
+  - `rejudge.py` re-scores any saved results folder.
+- **v36's 2 saved replicates, re-scored with the current judges:** almost
+  unchanged, 28 of 38 turns with every fact right.
+- **Current branch at f0f58a4:** 4 single-replicate Ringer tasks.
+- **Script turn 10 is left out of both arms,** because the script changed
+  there.
+
+| Measure (per-thing judge answers) | v36 (n=2) | Branch (n=4) |
+|---|---|---|
+| Place changes captured | 18/25 (72%) | 42/48 (88%) |
+| Condition changes captured | 6/10 (60%) | 16/31 (52%) |
+| Turns with every fact right | 26/36 (72%) | 43/69 (62%) |
+
+- **Turns 4, 6, 12 and 13 fail in all 4 replicates.**
+  - **Turns 4 and 12 are real capture misses.** The narrator unlocks the
+    truck or starts its engine on its own, and the reply does not
+    report it.
+  - **Turn 6 is a measurement artifact.** The card's place label changes
+    from the authored "with Kristin" to the bare "Kristin" when Kristin
+    moves, and the judge scores that as an invented change. v36's store
+    never changed labels, so this hurts only the branch arm. It cost 3
+    turns.
+  - **Turn 13:** the narrator reopens a laptop that is already open.
+
 ### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
