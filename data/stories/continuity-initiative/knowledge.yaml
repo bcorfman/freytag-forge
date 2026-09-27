@@ -335,7 +335,7 @@ knowledge:
   - [read, inspect, open, check, review, plug, insert, connect]
   - [memory card, card]
   - [file, files, saved file, saved files, card file, card files, laptop]
-  entity_ids: [kristin, michelle, memory_card, kristin_laptop]
+  entity_ids: [kristin, michelle, memory_card, kristin_laptop, park_bench]
   aliases:
   - continuity initiative known
   - michelle warning known

@@ -526,6 +526,55 @@ def test_match_payload_gives_placed_character_place_from_real_package():
     assert "- Brandon. Place: across the park from Kristin." in payload["user"].splitlines()
 
 
+def test_match_payload_only_lists_things_in_play_for_each_scene():
+    def provider_for(scene_id):
+        state = RuntimeState.bootstrap(PACKAGE)
+        state.current_scene_id = scene_id
+        apply_scene_placements(PACKAGE, state.facts, scene_id)
+        provider = ItemFactsProvider(
+            worker_url="https://worker.example/turn",
+            token="",
+            state=state,
+            item_facts={},
+            mode="single_call",
+            seed_from_package=True,
+        )
+        provider.apply_item_facts({"Michelle's phone": {"place": "Kristin", "condition": []}})
+        return provider
+
+    command = "Look around the bench for anything Michelle left."
+    provider = provider_for("1B")
+    for payload in (
+        provider._match_payload(command, []),
+        provider._match_payload(command, ["bench"], include_places=True),
+    ):
+        things = payload["user"].split("THINGS:\n", 1)[1].split("\n\nNEW NAMES:", 1)[0]
+        assert "- workstation chair." not in things
+        assert "- park bench." in things
+        assert "- Kristin." in things
+        assert "- Michelle's phone." in things
+
+    provider = provider_for("1A")
+    things = (
+        provider._match_payload("Search the kitchen.", [])["user"]
+        .split("THINGS:\n", 1)[1]
+        .split("\n\nNEW NAMES:", 1)[0]
+    )
+    assert "- Kristin's truck." in things
+    assert "- Kristin's laptop." in things
+    assert "- workstation chair." in things
+    assert "- Michelle's phone." in things
+
+
+def test_park_bench_resolves_and_is_placed_in_scene_1b():
+    state = RuntimeState.bootstrap(PACKAGE)
+    apply_scene_placements(PACKAGE, state.facts, "1B")
+    world = world_for(PACKAGE, state.facts)
+
+    assert world.resolve("bench") == "park_bench"
+    assert world.parent("park_bench") == "los_angeles_park"
+
+
 def test_protagonist_reply_moves_place_and_ignores_condition(monkeypatch):
     provider = _seeded_provider()
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"same_as": {}})

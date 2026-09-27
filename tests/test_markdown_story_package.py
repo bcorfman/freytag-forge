@@ -126,8 +126,21 @@ def test_loader_rejects_item_placement_for_an_item_not_in_the_scene(tmp_path: Pa
         load_story_package(package)
 
 
-def test_scene_without_item_placements_loads_with_an_empty_mapping() -> None:
-    package = load_story_package(PACKAGE)
+def test_scene_without_item_placements_loads_with_an_empty_mapping(tmp_path: Path) -> None:
+    root = copied_package(tmp_path)
+    plot = root / "plot.md"
+    contents = plot.read_text(encoding="utf-8")
+    item_ids = "item_ids: [memory_card, transit_card, park_bench]\n"
+    placement_block = "item_placements:\n  park_bench: {parent: los_angeles_park}\n"
+    assert contents.count(item_ids) == 1
+    assert contents.count(placement_block) == 1
+    contents = contents.replace(item_ids, "item_ids: [memory_card, transit_card]\n", 1)
+    plot.write_text(contents.replace(placement_block, "", 1), encoding="utf-8")
+
+    copied_contents = plot.read_text(encoding="utf-8")
+    assert placement_block not in copied_contents
+
+    package = load_story_package(root)
 
     assert package.scenes[1].metadata.item_placements == {}
 

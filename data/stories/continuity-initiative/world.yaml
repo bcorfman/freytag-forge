@@ -120,6 +120,11 @@ items:
   right_text: Kristin set the workstation chair upright.
   enter_text: Kristin sat down in the workstation chair.
   leave_text: Kristin stood up from the workstation chair.
+- id: park_bench
+  name: park bench
+  aliases: [bench]
+  kind: seat
+  fixed: true
 - id: truck_driver_seat
   name: driver's seat
   kind: seat

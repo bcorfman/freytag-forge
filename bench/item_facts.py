@@ -602,8 +602,32 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return world.name(entity_id)
 
     def _match_payload(self, player_input, new_names, *, include_places=False):
+        world = self._world()
+        protagonist = world.resolve(_protagonist_name(self.state.package))
+        scene = next(
+            scene for scene in self.state.package.scenes if scene.metadata.scene_id == self.state.current_scene_id
+        )
+        scene_item_ids = set(scene.metadata.item_ids)
+
+        def top_area(entity_id):
+            areas = [entity for entity in world.chain(entity_id) if world.is_a(entity, "area")]
+            return areas[-1] if areas else None
+
+        protagonist_area = top_area(protagonist) if protagonist else None
+
         lines = []
         for name, facts in self.item_facts.items():
+            entity_id = world.resolve(name)
+            in_play = (
+                entity_id is None
+                or entity_id == protagonist
+                or entity_id in scene_item_ids
+                or (protagonist_area is not None and top_area(entity_id) == protagonist_area)
+                or (protagonist is not None and protagonist in world.chain(entity_id))
+                or top_area(entity_id) is None
+            )
+            if not in_play:
+                continue
             line = f"- {name}."
             if facts.get("place"):
                 line += f" Place: {facts['place'].strip()[:80]}."
@@ -611,7 +635,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 line += f" Condition: {', '.join(facts['condition'])}."
             lines.append(line)
         if include_places:
-            world = self._world()
             extra_ids = []
             roots = [world.resolve(_protagonist_name(self.state.package))]
             roots.extend(world.resolve(name) for name in self.item_facts)
