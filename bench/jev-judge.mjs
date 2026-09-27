@@ -417,6 +417,7 @@ function continuityQuestions(state, hasHidden) {
 
 function factQuestions(thing, item, phrasesForThing, protagonist) {
   const t = `\`${thing}\``;
+  const axes = item.axes || [];
   const q = {
     moved: thing === protagonist
       ? nounl(
@@ -429,12 +430,14 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
         "It moves or changes hands.",
         "It stays put. An attempt that fails, or a hand-over that nobody takes, is not a move.",
       ),
-    condition_changed: nounl(
-      `Does \`narration\` show a condition of ${t} changing during this turn, such as opening, closing, cracking or switching on?`,
-      "A condition changes.",
-      "No condition changes.",
-    ),
   };
+  if (axes.length) {
+    q.condition_changed = nounl(
+      `Does \`narration\` show ${t} changing from one state in \`states\` to the other during this turn?`,
+      "A state changes.",
+      "No state changes. If `before_conditions` already has the state the narration shows, it did not change.",
+    );
+  }
   if (item.trackedAfter) {
     q.after_place_right = nounl(
       `Is \`after_place\` where \`narration\` leaves ${t} at the end of this turn?`,
@@ -459,26 +462,28 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
       "`narration` takes it from `before_place`, or does not say where it was. A more specific place inside `before_place` agrees.",
     );
   }
-  for (let i = 0; i < phrasesForThing.newConditions.length; i++) {
-    q[`new_condition_${i}`] = nounl(
-      `Does \`narration\` show ${t} being ${phrasesForThing.newConditions[i]}?`,
-      "`narration` shows it.",
-      "`narration` never shows it. A likely or ordinary state that is not shown does not count.",
-    );
-  }
-  for (let i = 0; i < phrasesForThing.goneConditions.length; i++) {
-    q[`gone_condition_${i}`] = nounl(
-      `Does \`narration\` show ${t} stop being ${phrasesForThing.goneConditions[i]}, or does \`after_conditions\` list a phrase with the same meaning or the opposite meaning?`,
-      "The condition ended in `narration`, or `after_conditions` still covers it.",
-      "`after_conditions` dropped it without cause.",
-    );
-  }
-  for (let i = 0; i < phrasesForThing.keptConditions.length; i++) {
-    q[`kept_condition_${i}`] = nounl(
-      `Does \`narration\` show ${t} stop being ${phrasesForThing.keptConditions[i]} during this turn?`,
-      "`narration` ends that condition.",
-      "It still holds.",
-    );
+  if (axes.length) {
+    for (let i = 0; i < phrasesForThing.newConditions.length; i++) {
+      q[`new_condition_${i}`] = nounl(
+        `Does \`narration\` show ${t} being ${phrasesForThing.newConditions[i]}?`,
+        "`narration` shows it.",
+        "`narration` never shows it. A likely or ordinary state that is not shown does not count.",
+      );
+    }
+    for (let i = 0; i < phrasesForThing.goneConditions.length; i++) {
+      q[`gone_condition_${i}`] = nounl(
+        `Does \`narration\` show ${t} stop being ${phrasesForThing.goneConditions[i]}, or does \`after_conditions\` list a phrase with the same meaning or the opposite meaning?`,
+        "The condition ended in `narration`, or `after_conditions` still covers it.",
+        "`after_conditions` dropped it without cause.",
+      );
+    }
+    for (let i = 0; i < phrasesForThing.keptConditions.length; i++) {
+      q[`kept_condition_${i}`] = nounl(
+        `Does \`narration\` show ${t} stop being ${phrasesForThing.keptConditions[i]} during this turn?`,
+        "`narration` ends that condition.",
+        "It still holds.",
+      );
+    }
   }
   q.command_asks = nounl(
     `Does \`command\` itself ask for a change to ${t}?`,
@@ -626,9 +631,11 @@ export async function judgeInput(
           before_conditions: b?.condition || [],
           after_place: a?.place || "",
           after_conditions: a?.condition || [],
+          states: (turn.item_facts_axes?.[thing] || []).flat(),
           tracked_before: trackedBefore,
           tracked_after: trackedAfter,
         };
+        item.axes = turn.item_facts_axes?.[thing] || [];
         const fq = factQuestions(thing, item, pf, protagonist);
         const fa = await request("fact", replicate, number, thing, fs, fq);
         fact.judge_calls++;

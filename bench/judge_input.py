@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from bench.item_facts import declared_axes_for_package
 from storygame.story_package.models import ItemPlacement, StoryPackage
 
 
@@ -84,7 +85,11 @@ def _narrator_narration(narration: str, story_text: list[str]) -> str:
 
 
 def judge_turns(
-    turns: list[dict[str, Any]], scene_transitions: list[dict[str, Any]], package: StoryPackage
+    turns: list[dict[str, Any]],
+    scene_transitions: list[dict[str, Any]],
+    package: StoryPackage,
+    *,
+    state_axes: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Return judge views without changing the saved turn records."""
 
@@ -95,8 +100,40 @@ def judge_turns(
         copy["narrator_narration"] = _narrator_narration(copy["narration"], copy["story_text"])
         copy["item_facts_names"] = turn.get("item_facts_names", {})
         before = dict(turn.get("item_facts_before", {}))
+        after = dict(turn.get("item_facts_after", {}))
+        names = {*before, *after}
+        item_facts_axes = turn.get("item_facts_axes")
+        if item_facts_axes is None:
+            item_facts_axes = declared_axes_for_package(package, names, state_axes)
+        else:
+            item_facts_axes = {
+                name: [list(poles) for poles in axes] for name, axes in item_facts_axes.items() if name in names
+            }
+        declared_poles = {
+            name: {pole.casefold() for axis in axes for pole in axis} for name, axes in item_facts_axes.items()
+        }
+
+        def judge_facts(facts, *, poles=declared_poles):
+            result = {}
+            for name, entry in facts.items():
+                if not isinstance(entry, dict):
+                    result[name] = entry
+                    continue
+                judged_entry = dict(entry)
+                conditions = entry.get("condition")
+                if isinstance(conditions, list):
+                    judged_entry["condition"] = [
+                        condition
+                        for condition in conditions
+                        if isinstance(condition, str) and condition.casefold() in poles.get(name, set())
+                    ]
+                result[name] = judged_entry
+            return result
+
         for item_name in _revealed_item_names(turn, package):
             before.pop(item_name, None)
-        copy["item_facts_before"] = before
+        copy["item_facts_axes"] = item_facts_axes
+        copy["item_facts_before"] = judge_facts(before)
+        copy["item_facts_after"] = judge_facts(after)
         judged.append(copy)
     return judged

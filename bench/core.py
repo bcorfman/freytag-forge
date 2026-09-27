@@ -18,7 +18,13 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import Any
 
-from bench.item_facts import ItemFactsProvider, _protagonist_name, package_seed, validate_item_facts
+from bench.item_facts import (
+    ItemFactsProvider,
+    _protagonist_name,
+    declared_axes_for_world,
+    package_seed,
+    validate_item_facts,
+)
 from bench.jev_use import ask_needs_to_stand, ask_uses_thing
 from bench.judge_input import judge_turns
 from storygame.runtime.cloudflare import (
@@ -822,11 +828,13 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                                 other_names = [name for name in world.names(entity_id) if name != display]
                                 if other_names:
                                     item_facts_names[display] = other_names
+                item_facts_axes = declared_axes_for_world(world, {*facts_before, *facts_after})
                 item_facts_record = {
                     "things_given": things_given,
                     "item_facts_before": facts_before,
                     "item_facts_after": facts_after,
                     "item_facts_names": item_facts_names,
+                    "item_facts_axes": item_facts_axes,
                     "item_facts_raw": raw_item_facts,
                     "item_facts_issues": fact_issues,
                     "item_facts_unplaced": provider.last_item_facts_unplaced(),

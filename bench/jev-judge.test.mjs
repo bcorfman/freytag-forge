@@ -346,6 +346,40 @@ test("judgeInput sends start and duplicate-name fact questions", async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
+test("declared_axes limits condition questions and passes states", async () => {
+  const dir = await packageDir();
+  const seen = [];
+  await judgeInput({ runs: [{ turns: [{
+    scene_id: "1A",
+    player_input: "Open the drawer and check the phone.",
+    narration: "She opens the drawer and checks the phone.",
+    item_facts_axes: { drawer: [["open", "closed"]], phone: [] },
+    item_facts_before: {
+      drawer: { place: "kitchen", condition: ["closed"] },
+      phone: { place: "table", condition: ["unlocked"] },
+    },
+    item_facts_after: {
+      drawer: { place: "kitchen", condition: ["open"] },
+      phone: { place: "table", condition: ["unlocked"] },
+    },
+  }] }] }, {
+    packagePath: dir,
+    judges: "fact",
+    environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+    fetchImpl: stubFetch(seen),
+  });
+  const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
+  const drawer = requests.find((request) => request.state.thing === "drawer");
+  const phone = requests.find((request) => request.state.thing === "phone");
+  assert.deepEqual(drawer.state.states, ["open", "closed"]);
+  assert.equal(drawer.questions.condition_changed.instructions, "Does `narration` show `drawer` changing from one state in `states` to the other during this turn?");
+  assert.match(drawer.questions.condition_changed.criteria.false, /If `before_conditions` already has the state the narration shows, it did not change\./);
+  assert.ok(Object.hasOwn(drawer.questions, "condition_changed"));
+  assert.ok(!Object.hasOwn(phone.questions, "condition_changed"));
+  assert.ok(!Object.keys(phone.questions).some((name) => /^(condition_changed|new_condition_|gone_condition_|kept_condition_)/.test(name)));
+  await rm(dir, { recursive: true, force: true });
+});
+
 test("hidden look-alike only reveals hidden canon when canon exists", async () => {
   const withCanon = await packageDir("## Scene 1A\n**Hidden canon:** card under rug.");
   const withoutCanon = await packageDir();

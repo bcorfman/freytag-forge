@@ -41,6 +41,27 @@ def _protagonist_name(package) -> str | None:
     return min((*npc.aliases, npc.name), key=len) if npc else None
 
 
+def declared_axes_for_world(world, names):
+    """Return declared pole pairs for the named things that have axes."""
+
+    axes = {}
+    for name in names:
+        entity_id = world.resolve(name)
+        if entity_id is None:
+            continue
+        definitions = world.axis_definitions(entity_id)
+        if definitions:
+            axes[name] = [list(definition["poles"]) for definition in definitions]
+    return axes
+
+
+def declared_axes_for_package(package, names, state_axes=None):
+    """Resolve old record names against package and variation axis definitions."""
+
+    world = World(_schema_for(package, state_axes or {}), MemoryBackend(), make_fact=Fact)
+    return declared_axes_for_world(world, names)
+
+
 def _schema_for(package, axes=None, facts=None):
     data = copy.deepcopy(world_source_schema_data(package.world))
     if axes:
