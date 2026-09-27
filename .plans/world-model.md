@@ -2,7 +2,7 @@
 
 Status (2026-09-27): decisions W1-W13 settled. S1 merged (PR 480), and S2
 merged (PRs 481 and 485). Scene grounding is under way on branch
-`world-model-scenes` (not pushed): 1B (44a99eb) and 1C (f1b8d5b) are built
+`world-model-scenes` (not pushed): 1B (44a99eb) and 1C (f1b8d5b, 969d2d7) are built
 and tested, and 2A is next. Then 2B-3C, S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -90,9 +90,20 @@ is in "Story survey" below, and Brandon's six decisions on it are settled
    Verified: the full suite (862) passes, ruff is clean, and the 1A, 1B,
    2A and 3A payloads are byte-identical. 1C's opening changes in one line:
    "The scene takes place at freight terminal." Not yet measured live: no
-   1C bench script exists. Not yet examined: 1C's Setting line says Kristin
-   and Brandon are "in its lower service level", but the beats say they
-   are still looking for a way in. That is a plot.md question.
+   1C bench script exists.
+   **Follow-up, 969d2d7.** 1C's `scene_frames` situation line said Kristin
+   and Brandon start "in its lower service level", which spoiled SL-1C-A.
+   Brandon chose to start them above ground. ChatGPT Desktop's sentence
+   ("...at its loading docks above ground, looking for a way down into its
+   service level.") was applied verbatim. `service_level` is a new area in
+   the terminal, and `observation_shaft` is inside it. The leakage
+   matrix's `_scene_entity_ids` now calls the runtime's
+   `_related_area_ids`. Its copy of the allowed set had predated
+   f1b8d5b, and flagged "loading docks" in 1C. Verified: the full suite
+   (865) passes, and payloads change only by the situation sentence.
+   A leftover worktree from the first, correctly stopped attempt is at
+   the session scratchpad's `scene-1c-service/run/scene-1c-service-level`;
+   remove it with `git worktree remove --force` when convenient.
 3. **2A-2C.** The `brandon_hideout` area and 2A's start there, with the
    entering fact's `on_assert` move to `facility_perimeter`. Brandon is a
    companion in 2B and 2C. Fix the areas whose text happens elsewhere (2C,
