@@ -2,8 +2,8 @@
 
 Status (2026-09-27): decisions W1-W13 settled. S1 merged (PR 480), and S2
 merged (PRs 481 and 485). Scene grounding is under way on branch
-`world-model-scenes` (not pushed): 1B is built and tested (44a99eb), and 1C
-is being specified. Then 2A-3C, S3 and S4. See "Resume here".
+`world-model-scenes` (not pushed): 1B (44a99eb) and 1C (f1b8d5b) are built
+and tested, and 2A is next. Then 2B-3C, S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -16,7 +16,7 @@ continuity plan; this plan defines the world they write into.
 
 Everything through S2 is on `main` (PR 485, merge 28ad27d). Branch
 `world-model-scenes` adds `world-model-scenes/capture_scenes.py`, the 1B
-grounding (44a99eb) and plan updates. It has not been pushed and has no PR.
+grounding (44a99eb), the 1C grounding (f1b8d5b) and plan updates. It has not been pushed and has no PR.
 Continue the scene work on it.
 
 ### Where things stand
@@ -39,8 +39,10 @@ Continue the scene work on it.
   against 6/10, and turns with every fact right 61/68 against 26/36.
 - **Converted scenes.** 1A in full. 1B in full as a package: the dead drop,
   the truck and Brandon's companion effect (44a99eb). It has no bench script
-  yet, so no live run has confirmed its names resolve. Scenes 1C-3C have no
-  placements at all. **In progress: 1C**, specified next.
+  yet, so no live run has confirmed its names resolve. 1C in full as a
+  package (f1b8d5b): the facility area tree, the freight terminal and its
+  sub-areas, and Brandon as companion. It has no bench script either.
+  Scenes 2A-3C have no placements at all. **Next: 2A.**
 - **How to ground a scene:** `docs/world-model-grounding.md`, which
   `AGENTS.md` points to. Read it before any package or prompt work.
 
@@ -68,9 +70,29 @@ is in "Story survey" below, and Brandon's six decisions on it are settled
    1B payloads are byte-identical, and the leakage matrix raised no flag.
    Not yet measured live: add a 1B script to a bench variation and run one
    replicate to confirm the new names resolve.
-2. **1C.** The area tree: `regional_facility` parents the six interior
-   facility areas, and a new `freight_terminal` inside it is 1C's location.
-   Brandon becomes a companion (`companions: [brandon]`).
+2. **1C. Done as f1b8d5b** (Ringer, Luna, one attempt).
+   `regional_facility` parents the six facility areas and a new
+   `freight_terminal` ("freight terminal", alias "abandoned freight
+   terminal"), which is 1C's location. `loading_docks` and
+   `observation_shaft` are areas inside the terminal, because the entry
+   text and 1C.2 put Kristin there, and a character can only be in an area
+   or an enterable thing. `logistics_terminal` is a fixed item in the
+   terminal, with no bare "terminal" alias. 1C declares
+   `companions: [brandon]`. Brandon decided (2026-09-27) that the truck
+   drove them there, so `kristin_truck` is placed at the terminal and the
+   laptop rides in it. The transit token is not placed, so it stays where
+   Kristin left it in 1B.
+   One engine change was needed. Narration safety allowed only the scene's
+   `location_id`, participants, item_ids and placement parents, so 1C
+   narration naming "loading docks" would have been rejected as a leak. It
+   now also allows every area above or below the scene's location
+   (`_related_area_ids`). The detention level is still rejected in 1C.
+   Verified: the full suite (862) passes, ruff is clean, and the 1A, 1B,
+   2A and 3A payloads are byte-identical. 1C's opening changes in one line:
+   "The scene takes place at freight terminal." Not yet measured live: no
+   1C bench script exists. Not yet examined: 1C's Setting line says Kristin
+   and Brandon are "in its lower service level", but the beats say they
+   are still looking for a way in. That is a plot.md question.
 3. **2A-2C.** The `brandon_hideout` area and 2A's start there, with the
    entering fact's `on_assert` move to `facility_perimeter`. Brandon is a
    companion in 2B and 2C. Fix the areas whose text happens elsewhere (2C,
