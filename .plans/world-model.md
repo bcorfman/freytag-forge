@@ -59,6 +59,27 @@ Continue the scene work on it.
   overrides. Run each with `--replicates 1` (`--scene 1B` and
   `--scene 2A`) through Ringer, then read `item_facts_unplaced` and the
   match-call resolutions.
+  **First replicate (2026-09-27, at 3a907ba):** both completed, with no
+  rejected turns and no failed replicate. Every new name resolved:
+  the transit token, the number sequence, the photograph, the bench, the
+  truck, the loading docks, the freight terminal, the logistics terminal,
+  the hideout, the servers, the corridors and the console. The token rode
+  in the truck from 1B to 1C. The run shows four problems:
+  - `item_facts_unplaced` read 0 of 77, but that number is wrong. Places
+    the protagonist was given that did not resolve ("checkpoint",
+    "security desk", "stairway", "parking lot") and "prisoners" placed at
+    "below" left no unplaced entry and no issue. The world did not
+    change, and nothing recorded that the change was dropped.
+  - The match call maps strangers to Brandon: "stranger" and "stranger in
+    the park" in 1B (acceptable, since he is the man), and also "prisoners"
+    in 1C and "guard" in 2A. It also mapped "ID" to the inspection console.
+  - In 1C the narrator never took Kristin below ground. The reply put her
+    at the loading docks for "Climb down into the service level.", and put
+    the observation shaft in the loading-dock wall. "service entrance"
+    resolved to the service level area, which moved Kristin there on turn
+    13 while the narration kept her at the door.
+  - The narrator gave fixed things (the servers, the logistics terminal,
+    the console) to a person. The world refused each one, as it should.
 - **How to ground a scene:** `docs/world-model-grounding.md`, which
   `AGENTS.md` points to. Read it before any package or prompt work.
 
