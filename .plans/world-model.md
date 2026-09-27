@@ -65,14 +65,19 @@ Continue the scene work on it.
   truck, the loading docks, the freight terminal, the logistics terminal,
   the hideout, the servers, the corridors and the console. The token rode
   in the truck from 1B to 1C. The run shows four problems:
-  - `item_facts_unplaced` read 0 of 77, but that number is wrong. Places
-    the protagonist was given that did not resolve ("checkpoint",
-    "security desk", "stairway", "parking lot") and "prisoners" placed at
-    "below" left no unplaced entry and no issue. The world did not
-    change, and nothing recorded that the change was dropped.
-  - The match call maps strangers to Brandon: "stranger" and "stranger in
-    the park" in 1B (acceptable, since he is the man), and also "prisoners"
-    in 1C and "guard" in 2A. It also mapped "ID" to the inspection console.
+  - `item_facts_unplaced` read 0 of 77, and that is true: no reply change
+    was dropped. Every place that did not resolve by name went to the
+    match call, which mapped it to a known name. The turn record keeps
+    those place mappings only inside `match_raw`; `item_facts_resolutions`
+    lists thing names only. Some mappings are right ("parking lot" to the
+    park, "stairway" to the corridors). Three are wrong: "below" to the
+    loading docks (1C), "checkpoint" to Brandon's hideout (2A turn 4, so
+    Kristin stayed in the hideout) and "security desk" to the inspection
+    console (2A turn 5, so Kristin moved to the console's corridors).
+  - The match call also maps strangers to Brandon: "stranger" and
+    "stranger in the park" in 1B (right, since he is the man), and also
+    "prisoners" in 1C and "guard" in 2A. It mapped "ID" to the inspection
+    console. The call seems to prefer any listed name over "new".
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"
