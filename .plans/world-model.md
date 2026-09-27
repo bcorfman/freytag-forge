@@ -164,6 +164,44 @@ Result, second replicate (2026-09-26, at 7ea8c2b): the run completed with
 Verdict on W5: both questions pass. The bare parent name reads as held,
 and replies use names, not phrases. No `Held by:` fallback is needed.
 
+Follow-ups on the two issues above (Brandon, 2026-09-26):
+
+- **Duplicate entity: fixed (79eeaa9).** The engine did not remember a
+  name the match call had resolved. worldkeeper's `add_alias` now stores a
+  learned name as a `wk_alias` fact, and the bench learns every name the
+  match call maps to a thing or character. It never learns a name mapped
+  to an area, so "floor" does not become a name for the kitchen. Replaying
+  live turns 16 and 17 now resolves "stranger in the park" to Brandon.
+- **Turn 13's drive: probed live, 10 calls per version, on the
+  replicate 2 prompt.**
+
+  | Version | Drives off | "Her house" | Reads at once |
+  |---|---|---|---|
+  | A: as recorded | 10 | 10 | 0 |
+  | B: without "Write only what leads up to it." | 10 | 10 | 0 |
+  | C: B, also without the reveal line | 10 | 3 | 0 |
+  | D: engine step, seated in the driver's seat | 1 | 1 | about 3 |
+  | E: D without the reveal line | 2 | 0 | about 1 |
+  | F: D, and the engine hands her the laptop | 0 | 0 | 10 |
+
+  The two prompt lines are not the cause. The narrator ignores where
+  Kristin already is and invents a trip home. In D, 6 of 10 narrations had
+  Kristin walk round to fetch the laptop before reading. Engine steps fix
+  the turn, in line with the rule that the engine performs a command's
+  prerequisite steps. The build is task I.
+- **Task I (Brandon approved, 2026-09-26):**
+  - The truck gets a fixed `driver's seat`.
+  - Items may declare an authored `take_text`, and the laptop's is
+    "Kristin picked up her laptop."
+  - The seating step treats "already seated" as having a seat as parent,
+    not merely an enterable parent, so being inside the truck no longer
+    counts.
+  - It prefers the seat next to the thing being used.
+  - It hands the protagonist the thing, saying its `take_text`, unless she
+    already holds it or it rests on a supporter.
+  - The task also fixes `add_alias`, which called the host's resolver
+    callback when checking for a conflicting name.
+
 ### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
