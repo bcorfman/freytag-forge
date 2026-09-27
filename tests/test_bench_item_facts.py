@@ -107,6 +107,35 @@ def test_item_facts_view_and_things_block_do_not_write_facts():
     assert provider.state.facts.asserted == before
 
 
+def test_structural_place_stays_with_carried_thing_when_holder_moves():
+    provider = _seeded_provider()
+    facts, issues = provider.apply_item_facts(
+        {"Kristin's laptop": {"place": "Kristin"}}, player_input="Pick up my laptop."
+    )
+    assert not issues
+    assert facts["Kristin's laptop"]["place"] == "Kristin"
+
+    before = provider.facts_for_names(["Kristin's laptop"], structural=True)
+    assert before["Kristin's laptop"]["place"] == "Kristin"
+
+    world = world_for(PACKAGE, provider.state.facts)
+    assert world.move("kristin", "kitchen").ok
+
+    after = provider.facts_for_names(["Kristin's laptop"], structural=True)
+    assert after["Kristin's laptop"] == before["Kristin's laptop"]
+
+
+def test_structural_facts_do_not_change_narrator_view():
+    provider = _seeded_provider()
+    structural = provider.facts_for_names(["Kristin's laptop"], structural=True)
+
+    assert structural["Kristin's laptop"]["place"] == "Kristin's truck"
+    assert (
+        provider.facts_for_names(["Kristin's laptop"])["Kristin's laptop"]["place"]
+        == "in Kristin's truck outside the house"
+    )
+
+
 def test_revealed_hidden_thing_can_move_without_being_hidden_again():
     provider = _seeded_provider()
     world = world_for(PACKAGE, provider.state.facts)

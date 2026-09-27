@@ -748,7 +748,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             facts_before: dict[str, Any] = {}
             if isinstance(provider, ItemFactsProvider):
                 things_given = list(provider._selected_names) if provider._selected_names is not None else []
-                facts_before = provider.facts_for_names(things_given)
+                facts_before = provider.facts_for_names(things_given, structural=True)
             try:
                 proposal = _turn_with_rate_limit_retry(engine, typed_input)
                 last_prompt = getattr(provider, "last_prompt", None)
@@ -808,7 +808,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 _, fact_issues = provider.apply_item_facts(raw_item_facts, player_input=typed_input)
                 match_info = provider.last_item_facts_match()
                 after_names = set(things_given) | provider._changed_last_turn
-                facts_after = provider.facts_for_names(after_names)
+                facts_after = provider.facts_for_names(after_names, structural=True)
                 item_facts_names: dict[str, list[str]] = {}
                 world = provider._world()
                 for facts in (facts_before, facts_after):

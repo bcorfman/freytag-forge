@@ -85,7 +85,7 @@ def _schema_for(package, axes=None, facts=None):
     return WorldSchema.from_data(data)
 
 
-def _view(package, facts, axes=None, schema=None):
+def _view(package, facts, axes=None, schema=None, *, structural=False):
     world = World(schema or _schema_for(package, axes), facts, make_fact=Fact)
     ids = []
     for entity_id in world.entity_ids():
@@ -103,11 +103,19 @@ def _view(package, facts, axes=None, schema=None):
         if world.is_a(entity_id, "character"):
             npc = next((e for e in package.world.npcs if e.id == entity_id), None)
             name = min((name, *(npc.aliases if npc else ())), key=len)
-        place = world.place_label(entity_id)
         parent = world.parent(entity_id)
-        if parent and world.is_a(parent, "character") and place == world.name(parent):
-            npc = next((e for e in package.world.npcs if e.id == parent), None)
-            place = min((world.name(parent), *(npc.aliases if npc else ())), key=len)
+        if structural:
+            place = world.unplaced_name(entity_id)
+            if parent:
+                place = world.name(parent)
+                if world.is_a(parent, "character"):
+                    npc = next((e for e in package.world.npcs if e.id == parent), None)
+                    place = min((place, *(npc.aliases if npc else ())), key=len)
+        else:
+            place = world.place_label(entity_id)
+            if parent and world.is_a(parent, "character") and place == world.name(parent):
+                npc = next((e for e in package.world.npcs if e.id == parent), None)
+                place = min((world.name(parent), *(npc.aliases if npc else ())), key=len)
         conditions = (
             []
             if entity_id == package.world.protagonist_id
@@ -536,8 +544,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if world.resolve(name) in ids or name == _protagonist_name(self.state.package)
         ]
 
-    def facts_for_names(self, names):
-        view = self.item_facts
+    def facts_for_names(self, names, *, structural=False):
+        self._ensure_scene_seeded()
+        view = _view(self.state.package, self.state.facts, schema=self._schema(), structural=structural)
         wanted = set(names)
         return {name: copy.deepcopy(facts) for name, facts in view.items() if name in wanted}
 
