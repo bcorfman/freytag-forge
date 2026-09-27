@@ -44,8 +44,21 @@ Continue the scene work on it.
   package (f1b8d5b): the facility area tree, the freight terminal and its
   sub-areas, and Brandon as companion. It has no bench script either.
   2A in full as a package (6aad57e): Brandon's hideout, the servers and
-  the move to the facility. No bench script either. Scenes 2B-3C have no
-  placements at all. **Next: 2B.**
+  the move to the facility. Scenes 2B-3C have no placements at all.
+  **Next: one live replicate of each new bench variation, then 2B.**
+- **Bench scripts for 1B, 1C and 2A (written, not yet run live).**
+  `bench/variations/item-facts-world-1b-1c.json` plays 1B's `dead-drop`
+  (10 turns) and continues into 1C's `terminal-descent` (10 turns). The
+  two scenes are chained because a bare 1C start has no transit token;
+  1B's last turn puts it in the truck, and an offline check confirmed the
+  1B-to-1C advance keeps it there at the freight terminal.
+  `bench/variations/item-facts-world-2a.json` plays 2A's
+  `hideout-to-corridors` (10 turns): the servers, the cover (the
+  `false_identities_ready` move), the corridors and the console. Both use
+  the two-scene variation's item_facts and system prompt, with no 1A
+  overrides. Run each with `--replicates 1` (`--scene 1B` and
+  `--scene 2A`) through Ringer, then read `item_facts_unplaced` and the
+  match-call resolutions.
 - **How to ground a scene:** `docs/world-model-grounding.md`, which
   `AGENTS.md` points to. Read it before any package or prompt work.
 
