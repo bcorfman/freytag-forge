@@ -356,13 +356,25 @@ walked Kristin to the truck, and turn 13 derailed after it.
      moved.
    - In-room walk: a walk inside the start area is not a start conflict.
 
-   Then re-score the saved second-pass runs, judge calls only: v36 in
-   `v36-rescore2`, and the branch runs in `compare2`.
+   Then re-score the saved second-pass runs, judge calls only.
 
    Recommended, because re-scoring is now cheap and it keeps the rule to
-   fix known judge faults before relying on a measure. The saved runs
-   live in the session scratchpad, so re-scoring must happen before
-   that is cleared, or the runs must be copied under `bench/results/`.
+   fix known judge faults before relying on a measure.
+
+The saved second-pass runs are in the main checkout's `bench/results/`,
+which is gitignored and so exists only on this machine:
+
+- `item-facts-s2-world-two-scene-rep1` to `-rep4`: the branch replicates.
+- `item-facts-v36-rescore-s2`: v36 re-scored with the fixed judges.
+- `item-facts-s2-comparison-tools`: the scripts. `compare.py` computes
+  capture per change type, with turn 10 excluded:
+  `compare.py V36_RAW -- REP_RAW... --exclude-turns 10`. The raw inputs
+  are each folder's `jev-raw.json` or `fact-tracking-jev-raw.json`.
+  `analyze.py` computes the W5 metrics for one results folder, and
+  `score.py` aggregates re-scored judgments.
+
+To re-score a folder: `uv run python bench/calibration/rejudge.py
+--results bench/results/<folder> --out <new folder>`.
 
 ### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
