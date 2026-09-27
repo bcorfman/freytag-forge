@@ -45,7 +45,7 @@ Continue the scene work on it.
   sub-areas, and Brandon as companion. It has no bench script either.
   2A in full as a package (6aad57e): Brandon's hideout, the servers and
   the move to the facility. Scenes 2B-3C have no placements at all.
-  **Next: the match-call Jev question (A), then 2B.**
+  **Next: settle the 2A checkpoint case, then 2B.**
 - **Bench scripts for 1B, 1C and 2A (written, not yet run live).**
   `bench/variations/item-facts-world-1b-1c.json` plays 1B's `dead-drop`
   (10 turns) and continues into 1C's `terminal-descent` (10 turns). The
@@ -162,6 +162,21 @@ Continue the scene work on it.
   to the credentials, "ladder" to the service entrance). Jev says no
   whenever the story does not literally show two names are one, which
   points at the evidence-only wording.
+  **A, most-likely round (applied).** Only the Jev wording changed:
+  "{question} Use story, player and known to decide what is most likely.",
+  yes "Most likely, {statement}.", no "Most likely, this is not so:
+  {statement}.". Luna, one attempt; suite 892 passed. Three replicates
+  each, no failed replicate: 26 checks, all answered, about 22 right.
+  Right yes: "park" and "parking lot" to the park, "stranger" to Brandon
+  (2 of 2), "loading dock" to the loading docks, "server console" to the
+  servers (3 of 3), the corridors, the facility. Right no: "prisoners" to
+  Brandon, "below" on Kristin. Wrong: "checkpoint" to Brandon's hideout
+  accepted in 2 of 2 (the tracked Kristin was still in the hideout, since
+  the cover move had not fired), "below" to the loading docks, and
+  "stranger in the park" at the stranger rejected once. Unplaced entries
+  fell to 4 (8 with B alone). Next: decide whether the checkpoint case is
+  a script problem (turn 4 runs before the cover is ready) or a check
+  problem; then 2B.
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"

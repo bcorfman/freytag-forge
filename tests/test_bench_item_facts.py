@@ -2205,6 +2205,7 @@ def test_apply_skips_match_when_all_reply_names_are_tracked(monkeypatch):
 def test_stubbed_run_records_new_change_on_same_turn(monkeypatch):
     """A new item appears in the bench turn record on the same turn."""
     calls = []
+    monkeypatch.setattr(core, "ask_same_or_part", lambda *_args: True)
 
     def request(_provider, payload):
         calls.append(payload)
@@ -2228,10 +2229,175 @@ def test_stubbed_run_records_new_change_on_same_turn(monkeypatch):
     turn_record = result["turns"][0]
     assert turn_record["item_facts_resolutions"] == {"new notebook": "new"}
     assert turn_record["item_facts_place_resolutions"] == {"on the desk": "new"}
+    assert turn_record["item_facts_mapping_checks"] == []
     assert turn_record["item_facts_after"]["new notebook"] == {
         "place": "on the desk",
         "condition": ["open"],
     }
+
+
+@pytest.mark.parametrize(
+    ("kind", "expected_question"),
+    [
+        ("thing_character", 'Are "guard" and "Brandon Corfman" the same person?'),
+        ("thing_other", 'Are "Artifact" and "back door" the same thing?'),
+        (
+            "place_area",
+            'Is the place called "checkpoint" the same place as "Brandon\'s hideout", or inside it?',
+        ),
+        ("place_character", 'Is the place called "checkpoint" on "Brandon Corfman"?'),
+        ("place_other", 'Is the place called "in front of metal door" at "back door"?'),
+    ],
+)
+def test_mapping_check_templates_and_facts(monkeypatch, kind, expected_question):
+    provider = _provider()
+    world = provider._world()
+    protagonist_id = provider.state.package.world.protagonist_id
+    protagonist = world.name(protagonist_id)
+    target_id = {
+        "thing_character": world.resolve("Brandon Corfman"),
+        "thing_other": world.resolve("back door"),
+        "place_area": world.resolve("Brandon's hideout"),
+        "place_character": world.resolve("Brandon Corfman"),
+        "place_other": world.resolve("back door"),
+    }[kind]
+    target = world.name(target_id)
+    name = (
+        "guard"
+        if kind == "thing_character"
+        else "Artifact"
+        if kind == "thing_other"
+        else "in front of metal door"
+        if kind == "place_other"
+        else "checkpoint"
+    )
+    is_place = kind.startswith("place")
+    raw = {"the lantern": {"place": name}} if is_place else {name: {"place": "on the table"}}
+    mapping_name = name if is_place else name
+    calls = []
+
+    def confirm(*args):
+        calls.append(args)
+        return True
+
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {mapping_name: target}},
+    )
+    provider.apply_item_facts(
+        raw,
+        player_input="Inspect the evidence.",
+        story="The scene shows the evidence.",
+        confirm=confirm,
+    )
+
+    check = provider.last_item_facts_match()["mapping_checks"][0]
+    assert check["question"] == expected_question
+    assert check["player"]["name"] == protagonist
+    assert check["known"]["name"] == target
+    assert calls[0][2] == check["question"]
+    assert calls[0][4] == check["player"]
+    assert calls[0][5] == check["known"]
+    if kind == "thing_other":
+        assert check["known"]["can_move"] is False
+
+
+def test_mapping_check_rejected_place_is_unplaced(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    area_id = next(entity_id for entity_id in world.entity_ids() if world.is_a(entity_id, "area"))
+    target = world.name(area_id)
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"checkpoint": target}},
+    )
+    provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: False)
+    result = provider.last_item_facts_match()
+    assert result["place_resolutions"] == {"checkpoint": "new"}
+    assert provider.last_item_facts_unplaced() == [{"name": "the lantern", "place": "checkpoint"}]
+    assert result["mapping_checks"][0]["answer"] is False
+
+
+def test_mapping_check_accepted_place_keeps_mapping(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    area_id = next(entity_id for entity_id in world.entity_ids() if world.is_a(entity_id, "area"))
+    target = world.name(area_id)
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"checkpoint": target}},
+    )
+    provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: True)
+    result = provider.last_item_facts_match()
+    assert result["place_resolutions"] == {"checkpoint": target}
+    assert provider.last_item_facts_unplaced() == []
+    assert result["mapping_checks"][0]["answer"] is True
+
+
+def test_mapping_check_rejected_thing_becomes_new_without_alias(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    character_id = next(
+        entity_id
+        for entity_id in world.entity_ids()
+        if world.is_a(entity_id, "character") and entity_id != provider.state.package.world.protagonist_id
+    )
+    target = world.name(character_id)
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"guard": target}},
+    )
+    provider.apply_item_facts({"guard": {"place": "on the table"}}, confirm=lambda *_args: False)
+    result = provider.last_item_facts_match()
+    assert result["resolutions"] == {"guard": "new"}
+    assert world.resolve("guard") != character_id
+    assert result["mapping_checks"][0]["answer"] is False
+
+
+def test_mapping_check_none_keeps_mapping_and_reports_unavailable(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    area_id = next(entity_id for entity_id in world.entity_ids() if world.is_a(entity_id, "area"))
+    target = world.name(area_id)
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"checkpoint": target}},
+    )
+    _facts, issues = provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: None)
+    assert provider.last_item_facts_match()["place_resolutions"] == {"checkpoint": target}
+    assert provider.last_item_facts_match()["mapping_checks"][0]["answer"] is None
+    assert "item_facts mapping check for 'checkpoint' unavailable" in issues
+
+
+def test_mapping_check_exact_place_skips_confirm(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    area_id = next(entity_id for entity_id in world.entity_ids() if world.is_a(entity_id, "area"))
+    target = world.name(area_id)
+    calls = []
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": [], "same_as": {target: target}})
+    provider.apply_item_facts({"the lantern": {"place": target}}, confirm=lambda *args: calls.append(args))
+    assert calls == []
+    assert provider.last_item_facts_match()["mapping_checks"] == []
+
+
+def test_mapping_check_confirm_none_does_not_call_confirmation(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    area_id = next(entity_id for entity_id in world.entity_ids() if world.is_a(entity_id, "area"))
+    target = world.name(area_id)
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"checkpoint": target}},
+    )
+    provider.apply_item_facts({"the lantern": {"place": "checkpoint"}})
+    assert provider.last_item_facts_match()["mapping_checks"] == []
 
 
 def test_before_state_scene_leaving_records_pre_turn_place(monkeypatch):

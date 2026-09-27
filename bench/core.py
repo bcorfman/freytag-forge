@@ -25,7 +25,7 @@ from bench.item_facts import (
     package_seed,
     validate_item_facts,
 )
-from bench.jev_use import ask_needs_to_stand, ask_uses_thing
+from bench.jev_use import ask_needs_to_stand, ask_same_or_part, ask_uses_thing
 from bench.judge_input import judge_turns
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
@@ -734,6 +734,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 "match_raw": None,
                 "match_issues": [],
                 "resolutions": {},
+                "mapping_checks": [],
             }
             if isinstance(provider, ItemFactsProvider):
                 standing = stand_before_leave(provider._world(), package, typed_input, ask_needs_to_stand)
@@ -811,7 +812,12 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 raw_item_facts = provider.pending_item_facts()
                 if provider.item_facts_mode == "second_call":
                     raw_item_facts = provider.second_call_update(typed_input, narration)
-                _, fact_issues = provider.apply_item_facts(raw_item_facts, player_input=typed_input)
+                _, fact_issues = provider.apply_item_facts(
+                    raw_item_facts,
+                    player_input=typed_input,
+                    story=narration,
+                    confirm=ask_same_or_part,
+                )
                 match_info = provider.last_item_facts_match()
                 after_names = set(things_given) | provider._changed_last_turn
                 facts_after = provider.facts_for_names(after_names, structural=True)
@@ -845,6 +851,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "match_issues": match_info["match_issues"],
                     "item_facts_resolutions": match_info["resolutions"],
                     "item_facts_place_resolutions": match_info.get("place_resolutions", {}),
+                    "item_facts_mapping_checks": match_info.get("mapping_checks", []),
                     "item_facts_engine_resolutions": match_info["engine_resolutions"],
                 }
                 if entered:

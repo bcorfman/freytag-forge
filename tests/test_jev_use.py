@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import json
 
-from bench.jev_use import ask_needs_to_stand, ask_uses_thing
+from bench.jev_use import ask_needs_to_stand, ask_same_or_part, ask_uses_thing
 
 
 def test_jev_use_request_and_answers():
@@ -167,3 +167,110 @@ def test_jev_stand_request_and_answers():
         is False
     )
     assert ask_needs_to_stand("Go out to the truck.", "workstation chair", (), environment={}) is None
+
+
+def test_same_or_part_request_and_answers():
+    environment = {"CLOUDFLARE_ACCOUNT_ID": "account", "CLOUDFLARE_AI_TOKEN": "token"}
+    calls = []
+
+    def opener(request, timeout):
+        calls.append((request, timeout))
+        return io.BytesIO(
+            json.dumps(
+                {
+                    "success": True,
+                    "result": {
+                        "state": "Completed",
+                        "result": {"answers": {"same_or_part": {"type": "noul", "noul": 0.8}}},
+                    },
+                }
+            ).encode()
+        )
+
+    assert (
+        ask_same_or_part(
+            "Search the guard's desk.",
+            "The guard points to the desk.",
+            "Are the desk and the console the same thing?",
+            "the desk and the console are the same thing",
+            {"name": "Kristin", "place": "office", "held_by": None},
+            {"name": "console", "place": "office", "held_by": None, "can_move": True},
+            environment=environment,
+            opener=opener,
+        )
+        is True
+    )
+    request, timeout = calls[0]
+    body = json.loads(request.data)
+    assert body["input"]["state"] == {
+        "command": "Search the guard's desk.",
+        "story": "The guard points to the desk.",
+        "player": {"name": "Kristin", "place": "office", "held_by": None},
+        "known": {"name": "console", "place": "office", "held_by": None, "can_move": True},
+    }
+    question = body["input"]["questions"]["same_or_part"]
+    assert question["type"] == "noul"
+    assert question["instructions"] == (
+        "Are the desk and the console the same thing? Use story, player and known to decide what is most likely."
+    )
+    assert question["criteria"] == {
+        "true": "Most likely, the desk and the console are the same thing.",
+        "false": "Most likely, this is not so: the desk and the console are the same thing.",
+    }
+    assert timeout == 30
+
+    def below_threshold(*_args, **_kwargs):
+        return io.BytesIO(
+            json.dumps(
+                {
+                    "success": True,
+                    "result": {
+                        "state": "Completed",
+                        "result": {"answers": {"same_or_part": {"type": "noul", "noul": 0.2}}},
+                    },
+                }
+            ).encode()
+        )
+
+    assert (
+        ask_same_or_part(
+            "Search the desk.",
+            "",
+            "Are they the same?",
+            "they are the same",
+            {"name": "Kristin", "place": None, "held_by": None},
+            {"name": "desk", "place": None, "held_by": None, "can_move": True},
+            environment=environment,
+            opener=below_threshold,
+        )
+        is False
+    )
+    assert (
+        ask_same_or_part(
+            "Search the desk.",
+            "",
+            "Are they the same?",
+            "they are the same",
+            {},
+            {},
+            environment={},
+        )
+        is None
+    )
+
+    def bad_opener(*_args, **_kwargs):
+        raise OSError("offline")
+
+    assert (
+        ask_same_or_part(
+            "Search the desk.",
+            "",
+            "Are they the same?",
+            "they are the same",
+            {},
+            {},
+            environment=environment,
+            opener=bad_opener,
+        )
+        is None
+    )
