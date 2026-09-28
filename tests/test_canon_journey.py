@@ -40,7 +40,7 @@ UNCLOCKED_JOURNEY = [
     (None, "1C"),
     ("k_sl_1c_a_r1", "1C"),
     ("k_sl_1c_b_r1", "1C"),
-    (None, "1C"),
+    ("k_sl_1c_c_r1", "1C"),
     (None, "1C"),
     (None, "1C"),
     (None, "1C"),

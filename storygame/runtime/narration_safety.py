@@ -85,6 +85,7 @@ class NarrationSafetyValidator:
             item for item in state.package.scenes if item.metadata.scene_id == candidate_state.current_scene_id
         )
         allowed_entities.update(self._scene_entity_ids(state.package, scene))
+        allowed_entities.update(self._entered_scene_entity_ids(state.package, candidate_state))
         npc_ids = {npc.id for npc in state.package.world.npcs}
         known_terms = {
             term.casefold()
@@ -243,6 +244,21 @@ class NarrationSafetyValidator:
             for anchor, beat in scene.beats.items()
             if anchor in projected
         )
+
+    @staticmethod
+    def _entered_scene_entity_ids(package: object, state: RuntimeState) -> set[str]:
+        """Allow what earlier scenes could name, once the player has entered them.
+
+        A thing the player has already met is not a spoiler. The scene-entry
+        fact is the runtime's record that a scene was entered.
+        """
+
+        entity_ids: set[str] = set()
+        for scene in package.scenes:
+            entry_fact = f"scene_{scene.metadata.scene_id.lower()}_entry_known"
+            if any(str(fact.value).lower() == "true" for fact in state.facts.matching(entry_fact)):
+                entity_ids.update(NarrationSafetyValidator._scene_entity_ids(package, scene))
+        return entity_ids
 
     @staticmethod
     def _scene_entity_ids(package: object, scene: object) -> set[str]:

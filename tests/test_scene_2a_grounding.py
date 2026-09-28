@@ -76,6 +76,31 @@ def test_scene_2a_narration_rejects_a_sibling_facility_area() -> None:
     assert caught.value.code == "narration_known_term_leak"
 
 
+def _scene_2a_narration(state: RuntimeState, text: str) -> None:
+    RuntimeEngine(
+        state,
+        lambda _command: {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []},
+    ).turn("Search the servers for the leaked files.")
+
+
+def test_scene_2a_narration_allows_things_from_entered_scenes() -> None:
+    state = _scene_2a_state()
+    assert state.facts.matching("scene_1a_entry_known")
+
+    _scene_2a_narration(state, "Kristin sits down at a workstation beside the servers.")
+
+
+def test_scene_2a_narration_needs_the_earlier_scene_to_be_entered() -> None:
+    state = _scene_2a_state()
+    with pytest.raises(ProposalValidationError) as caught:
+        _scene_2a_narration(state, "Kristin thinks about the logistics terminal.")
+    assert caught.value.code == "narration_known_term_leak"
+
+    state = _scene_2a_state()
+    state.facts.assert_fact(Fact(predicate="scene_1c_entry_known", subject="story", value="true"))
+    _scene_2a_narration(state, "Kristin thinks about the logistics terminal.")
+
+
 def test_scene_entry_uses_protagonist_placement_parent() -> None:
     state = _scene_2a_state()
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)

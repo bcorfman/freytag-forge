@@ -81,6 +81,15 @@ deliveries:
     From the observation shaft, Kristin sees sedated prisoners moving through the processing area. The captives are alive,
     even if the view is too brief to confirm whether Michelle is among them.
   cue_text: The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.
+- fact_id: national_detention_network_known
+  scene_id: 1C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [logistics terminal]
+  - [regional hub, detention network]
+  fallback_text: >-
+    The logistics terminal shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
 - fact_id: false_identities_ready
   scene_id: 2A
   source_kind: npc

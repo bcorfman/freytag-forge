@@ -2,10 +2,10 @@
 
 Status (2026-09-28): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
-486). The narration leak rejections are diagnosed offline: the 2A
-supervisor case is fixed in the package, and the 1C logistics-terminal
-and 2A "workstation" cases wait on Brandon's decisions. Next: those two
-decisions, then 2B-3C, S3 and S4. See "Resume here".
+486). The three narration leak cases are diagnosed and fixed offline on
+`claude/magical-wozniak-tvkj5x`, but not yet measured live. Next: one
+live replicate of each variation, then 2B-3C, S3 and S4. See "Resume
+here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -17,13 +17,14 @@ continuity plan; this plan defines the world they write into.
 ## Resume here (2026-09-28)
 
 Everything through the 1B-2A handoffs is on `main` (PR 486, merge
-5ecc30a). Branch `claude/magical-wozniak-tvkj5x` holds the supervisor fix
+5ecc30a). Branch `claude/magical-wozniak-tvkj5x` holds the three leak fixes
 below. It was made in a cloud session with no Ringer, no `.env` and no
 saved `bench/results`, so it was diagnosed and checked offline only.
 
-**Next:** Brandon decides the two open leak cases (see "Narration leak
-diagnosis" just below), then one live replicate of each variation to
-measure the supervisor fix. Then 2B.
+**Next:** one live replicate each of `item-facts-world-1b-1c` and
+`item-facts-world-2a` through Ringer, to measure the three fixes below.
+Check that 1C turn 8 earns `k_sl_1c_c_r1` and that no turn is rejected
+for "the supervisor", "logistics terminal" or "workstation". Then 2B.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
@@ -59,30 +60,54 @@ to see which scene each turn runs in. Three separate causes:
   name the console. Expect leak rejections there until 2B is grounded
   or the script is cut. Not decided: whether R1 should list
   `infrastructure_corridors` in its `entity_ids`.
-- **"logistics terminal" (1C "Go up to the logistics terminal."). Needs
-  a decision.** The turn runs in 2A, where the terminal is not
-  available. The captives handoff (1C script turn 6) sets
-  `captives_confirmed_alive`. `bridge_1c_infiltration_needed` needs only
-  that and `facility_proof`, so it fires on the same turn. At min_turns
-  (7) the scene moves to 2A, and script turns 7-10 play in Brandon's
-  hideout. SL-1C-C (the logistics terminal and the recording) needs
-  both facts too, so a player who finds the captives first never gets a
+- **"logistics terminal" (1C "Go up to the logistics terminal.").
+  Fixed (Brandon chose a).** The turn ran in 2A, where the terminal
+  was not available. The captives handoff (1C script turn 6) sets
+  `captives_confirmed_alive`. `bridge_1c_infiltration_needed` needed
+  only that and `facility_proof`, so it fired on the same turn, and at
+  min_turns (7) the scene moved to 2A. SL-1C-C (the terminal) needs
+  both facts too, so a player who found the captives first never got a
   turn to reach it. The bridge's own `fallback_realization` says it
-  follows "the facility, living captives, national scope, and
-  architects' strategy". Options: (a) add
-  `national_detention_network_known` to the bridge's activation, so
-  SL-1C-C must happen first (the deadline backstop at
-  handoff_after_turns still ends the scene); (b) keep the story and
-  cut the 1C script to the six turns that fit; (c) both.
-- **"workstation" (a 2A opening).** `michelle_workstation`'s name is the
-  bare word "workstation". Outside 1A the entity is not available, so
-  any narration that calls a hideout desk a workstation is rejected.
-  Options: (a) the leak check allows entities of scenes the player has
-  already entered (a past thing is not a spoiler; this also passes "the
-  logistics terminal" in 2A); (b) rename the entity "Michelle's
-  workstation", which changes 1A payloads and input matching for "Look
-  under the workstation."; (c) leave it, since it failed only one
-  opening in all the 2A runs recorded here.
+  follows "national scope". The bridge now also requires
+  `national_detention_network_known`. The loader requires a
+  FactDelivery for every fact a bridge needs, so `handoffs.yaml` has one
+  for it. Its `fallback_text` is `k_sl_1c_c_r1`'s authored
+  `delivery_text`, word for word, and its `must_convey` phrases come
+  from that text. It has no `cue_text`. No new prose was written. If
+  better phrasing is wanted, get it from ChatGPT Desktop. SL-1C-C is now
+  a required storylet (28, was 27), and the canon journey selects
+  `k_sl_1c_c_r1` in a 1C slot that was empty. Offline, the 1B-1C script
+  now earns the terminal on 1C turn 8 and moves to 2A on turn 9. A
+  player who never reads the terminal still reaches 2A at
+  handoff_after_turns (11), through the new delivery.
+- **"workstation" (a 2A opening). Fixed (Brandon chose a).**
+  `michelle_workstation`'s name is the bare word "workstation", so any
+  narration outside 1A that called a desk a workstation was rejected.
+  The leak check now also allows the things of every scene the player
+  has entered (`NarrationSafetyValidator._entered_scene_entity_ids`,
+  read from the `scene_<id>_entry_known` facts). A thing the player
+  has already met is not a spoiler. This also allows "logistics
+  terminal" after 1C. Future places are still rejected: the detention
+  level stays unavailable in 2A and 2B. The leakage matrix is
+  unchanged, because it checks future terms only.
+- **The supervisor fix's side effect is covered by the workstation
+  fix.** On the supervisor path, R2 never fires, so the corridors and
+  the console never enter the earned entities. They are 2A scene
+  things, though, so once 2A is entered they stay available in 2B.
+  Offline probes from the thorough 2B state pass "inspection console",
+  "infrastructure corridors" and "the supervisor". Proposed, not
+  applied: give `k_sl_2a_c_r1` `entity_ids: [kristin, brandon,
+  regional_facility, infrastructure_corridors]` and `relevance.entity_ids:
+  [infrastructure_corridors]`. Its statement already says "gaining
+  corridor access", so the knowledge would name what it grants, like R2
+  does. That is a structured edit with no prose, and it changes no
+  payload a capture covers.
+
+Verified for all three: the full suite passes (896), ruff is clean, and
+the 1A, 1B, 1C, 2A and 3A payload capture is byte-identical. New tests
+fail on the old code: the supervisor handoff, the 1C bridge waiting for
+the terminal, and 2A narration allowing things from entered scenes.
+Not yet measured live.
 
 ### Where things stand
 
@@ -109,7 +134,7 @@ to see which scene each turn runs in. Three separate causes:
   Brandon's hideout, the servers and the move to the facility. All three
   have bench scripts, live-measured, and reveal handoffs (2a806db).
   Scenes 2B-3C have no placements and no handoffs at all.
-  **Next: Brandon's leak decisions, then 2B.**
+  **Next: measure the leak fixes live, then 2B.**
 - **Bench scripts for 1B, 1C and 2A, and what their runs found.**
   `bench/variations/item-facts-world-1b-1c.json` plays 1B's `dead-drop`
   (10 turns) and continues into 1C's `terminal-descent` (10 turns). The

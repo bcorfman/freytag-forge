@@ -103,7 +103,7 @@ def _assert_reaction_window_contract(package) -> frozenset[str]:
 def test_optional_storylets_and_pacing_events_leave_two_turns_to_react() -> None:
     required_storylet_ids = _assert_reaction_window_contract(PACKAGE)
 
-    assert len(required_storylet_ids) == 27
+    assert len(required_storylet_ids) == 28
 
 
 def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:

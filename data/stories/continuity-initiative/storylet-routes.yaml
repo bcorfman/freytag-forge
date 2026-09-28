@@ -2470,6 +2470,7 @@ canonical_bridge_events:
     all_facts_true:
     - facility_proof
     - captives_confirmed_alive
+    - national_detention_network_known
   produces:
   - op: assert
     fact_id: facility_infiltration_needed
