@@ -2,10 +2,10 @@
 
 Status (2026-09-28): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
-486). The three narration leak cases are diagnosed and fixed offline on
-`claude/magical-wozniak-tvkj5x`, but not yet measured live. Next: one
-live replicate of each variation, then 2B-3C, S3 and S4. See "Resume
-here".
+486). The three narration leak fixes on `claude/magical-wozniak-tvkj5x`
+held in one live replicate each. The run found a fourth leak, a bench
+setup gap, fixed since. Next: rerun the 1B-1C replicate, then 2B-3C,
+S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -21,13 +21,35 @@ Everything through the 1B-2A handoffs is on `main` (PR 486, merge
 below. It was made in a cloud session with no Ringer, no `.env` and no
 saved `bench/results`, so it was diagnosed and checked offline only.
 
-**Next:** one live replicate each of `item-facts-world-1b-1c` and
-`item-facts-world-2a` through Ringer, to measure the three fixes below.
-Check that 1C turn 8 earns `k_sl_1c_c_r1` and that no turn is rejected
-for "the supervisor", "logistics terminal" or "workstation". The
-manifest is `.plans/world-model-scenes/leak-fix-live.json`; its check runs
-both replicates once and then `leak_fix_check.py`, which prints each
-turn and fails on a rejected fixed term or a missing handoff. Then 2B.
+**Live result (2026-09-28, Ringer, one replicate each, check passed).**
+Both replicates completed. The three fixes held. 1C turn 16 ("Search the
+logistics terminal for transfer records.") earned `k_sl_1c_c_r1` in 1C,
+and the scene moved to 2A after it. 2A turn 5 ("Warn the supervisor
+about the cooling-water fault.") earned `k_sl_2a_c_r1`, and the scene
+moved to 2B after turn 7. No turn was rejected for "the supervisor",
+"logistics terminal" or "workstation". Every other handoff fired as
+before: 1B turn 5, 1C turns 9 and 13, and 2A turns 1 and 2. The 2A
+variation stops when the scene is left, so no 2B turn ran, and the
+side-effect case in 2B is still unmeasured live.
+
+**A fourth leak, found by the run:** 1B turns 6, 7 and 8 ("Walk across
+the park to the man watching me.", "Show the man Michelle's
+photograph.", "Hand the man the number sequence.") were rejected for
+"park bench". That phrase is a `must_convey` of the 1A memory-card
+reveal `k_sl_1a_b_r1`. The 1B-1C variation started 1B bare, so the 1A
+reveal was never earned. This is the same setup gap 6be66c7 fixed for
+2A, and it likely explains the earlier "Brandon's name 2 of 3" in 1B.
+Offline, a thorough 1B start passes "park bench", "dead drop" and
+"memory card", and a bare one rejects all three. The 1B-1C variation
+now has `"entry_state": "thorough"`. Offline, the whole 20-turn script
+still plays with the same handoffs and moves to 2A after 1C turn 9.
+`leak_fix_check.py` now fails on any leak rejection, not only the three
+terms. It missed this one.
+
+**Next:** rerun only the 1B-1C replicate:
+`.plans/world-model-scenes/leak-fix-live.json` (now run
+`freytag-world-leakfix-live-2`) writes `bench/results/world-leakfix2-1b-1c`
+and checks it together with the saved `world-leakfix-2a`. Then 2B.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 

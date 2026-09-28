@@ -6,7 +6,7 @@ Usage, from the repository root, after the two bench runs:
 
 It never calls a model. It prints every turn (scene, typed input, handoff) and
 every rejected turn, then fails if a replicate did not complete, if a turn was
-rejected for one of the three fixed terms, or if either target handoff did not
+rejected by a narration leak check, or if either target handoff did not
 fire in its own scene.
 """
 
@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-FIXED_TERMS = ("the supervisor", "logistics terminal", "workstation")
+LEAK_CODES = ("narration_known_term_leak", "uncited_knowledge", "protected_narration_leak")
 # (typed input, handoff that must fire, scene it must fire in)
 EXPECTED_HANDOFFS = (
     ("Search the logistics terminal for transfer records.", "k_sl_1c_c_r1", "1C"),
@@ -61,8 +61,8 @@ def main(run_dirs: list[str]) -> int:
                 is_target = rejected.get("typed_input") in {item[0] for item in EXPECTED_HANDOFFS}
                 if is_target:
                     seen_inputs.add(rejected["typed_input"])
-                if any(f"'{term}'" in reason for term in FIXED_TERMS):
-                    failures.append(f"{label}: turn {rejected.get('turn_number')} still rejected: {reason}")
+                if rejected.get("rejection_code") in LEAK_CODES:
+                    failures.append(f"{label}: turn {rejected.get('turn_number')} leak rejection: {reason}")
                 elif is_target:
                     failures.append(f"{label}: target turn {rejected['typed_input']!r} was rejected: {reason}")
     for expected_input, _expected_id, _scene in EXPECTED_HANDOFFS:
