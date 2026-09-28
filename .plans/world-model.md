@@ -45,7 +45,7 @@ Continue the scene work on it.
   sub-areas, and Brandon as companion. It has no bench script either.
   2A in full as a package (6aad57e): Brandon's hideout, the servers and
   the move to the facility. Scenes 2B-3C have no placements at all.
-  **Next: author reveal handoffs for the 1B, 1C and 2A candidates (prose via ChatGPT Desktop), then 2B.**
+  **Next: look at the narration leak rejections, then 2B.**
 - **Bench scripts for 1B, 1C and 2A (written, not yet run live).**
   `bench/variations/item-facts-world-1b-1c.json` plays 1B's `dead-drop`
   (10 turns) and continues into 1C's `terminal-descent` (10 turns). The
@@ -198,6 +198,23 @@ Continue the scene work on it.
   never happens. In 1B-2A, facts arrive only by pacing cues. The fix is
   authoring: `earn_when`, `action_evidence` and `delivery_text` for each
   1B, 1C and 2A candidate, with the prose from ChatGPT Desktop.
+  **Done.** ChatGPT Desktop wrote `earn_when`, `action_evidence` and
+  `delivery_text` for the 18 candidates (`k_sl_2a_c_r2_rebecca_observes`
+  left out: Kristin does not know Rebecca is watching). Brandon approved
+  eight evidence edits found by running the real matcher: added verbs
+  (study, open, read, pull, build), plurals (infrastructure corridors),
+  identification numbers, tire tracks, one merged cooling/ventilation
+  group, and `open` removed from 1c_c_r1 to avoid a tie with the
+  recording. Ringer, Luna, one attempt; suite 892 passed; the 1A, 1B, 1C,
+  2A and 3A payloads are byte-identical. Three replicates each: 1B turn 5
+  earned the freight route 3 of 3, turn 7 Brandon's name 2 of 3 (the third
+  was rejected by the leak check); 1C turn 12 facility proof and turn 16
+  captives alive 3 of 3; 2A turn 1 the hideout files, turn 2 the cover and
+  turn 6 corridor access 3 of 3. By 1C's last turns the story has already
+  moved to 2A, so the logistics-terminal turn runs in 2A.
+  **Open:** the narration leak check (`narration_known_term_leak`) rejects
+  turns often: 1C "Go up to the logistics terminal." 3 of 3, 2A "Warn the
+  supervisor..." in every earlier run, and a 2A opening once ("workstation").
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"

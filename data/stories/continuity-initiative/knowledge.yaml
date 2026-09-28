@@ -535,6 +535,11 @@ knowledge:
   delivery_text: "After the patrol leaves, Kristin finds a strip of reflective tape on the front gate. The officers marked the house. They plan to come back."
 - id: k_sl_1b_a_r1
   statement: 'Kristin matches the transit token and number sequence to a freight route leading out of the city.'
+  earn_when: matches the transit token to the handwritten number sequence
+  action_evidence:
+  - [match, compare, line up, check]
+  - [transit token, token]
+  - [handwritten number sequence, number sequence, numbers]
   entity_ids: [transit_card, number_sequence]
   aliases:
   - transport route identified
@@ -555,8 +560,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Kristin matches the transit token and handwritten number sequence to a freight route out of the city.
 - id: k_sl_1b_a_r2
   statement: 'A photograph hidden in Michelle’s dead drop gives Kristin the face of the man who has been following her.'
+  earn_when: examines Michelle's photograph beneath the park bench
+  action_evidence:
+  - [look at, inspect, examine, study, check]
+  - [Michelle's photograph, Michelle's photo, photograph, photo, picture]
   entity_ids: [michelle_photograph]
   aliases:
   - brandon face known
@@ -577,8 +588,15 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Michelle's photograph shows Kristin the face of the man who has been following her.
 - id: k_sl_1b_b_r1
   statement: 'Confronted with Michelle’s photograph, Brandon identifies himself and says the missing are being moved alive.'
+  earn_when: confronts the man with Michelle's photograph
+  action_evidence:
+  - [show, confront, hold up, present]
+  - [Michelle's photograph, Michelle's photo, photograph, photo, picture]
+  - [man, watcher, Brandon]
   entity_ids: []
   aliases:
   - brandon identified
@@ -610,8 +628,15 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    The man says his name is Brandon Corfman. He says the missing people are being moved alive.
 - id: k_sl_1b_b_r2
   statement: 'Brandon admits he knew Michelle and insists the missing may still be alive, but his evasions leave Kristin unsure whether he came to help or watch her.'
+  earn_when: questions Brandon about Michelle
+  action_evidence:
+  - [ask, question, press]
+  - [Brandon, man, watcher]
+  - [Michelle, knew Michelle, know Michelle]
   entity_ids: []
   aliases:
   - brandon identified
@@ -636,8 +661,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Brandon says he knew Michelle. He insists the missing people may still be alive. His vague answers leave Kristin unsure whether he came to help or watch her.
 - id: k_sl_1b_c_r1
   statement: 'With patrols closing in, Brandon opens a secured maintenance gate and leads Kristin through the escape route.'
+  earn_when: follows Brandon through the maintenance gate
+  action_evidence:
+  - [follow, flee through, escape through, run through]
+  - [maintenance gate, secured gate, gate]
   entity_ids: []
   aliases:
   - brandon retains system access
@@ -670,8 +701,15 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    As patrols close in, Brandon opens a secured maintenance gate. He leads Kristin through it.
 - id: k_sl_1b_c_r2
   statement: 'Brandon enters a code no civilian should know, getting them clear toward the freight route while deepening Kristin’s suspicion.'
+  earn_when: asks Brandon to use the gate code
+  action_evidence:
+  - [ask, tell, get]
+  - [Brandon, man]
+  - [gate code, access code, enter the code, use the code, key in the code]
   entity_ids: []
   aliases:
   - brandon retains system access
@@ -704,8 +742,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Brandon enters a code no civilian should know. It gets them clear toward the freight route. Kristin trusts him less.
 - id: k_sl_1c_a_r1
   statement: 'Kristin finds electrical load, fresh ventilation, and recent work that prove the abandoned terminal is still operating.'
+  earn_when: inspects signs of activity at the loading docks
+  action_evidence:
+  - [inspect, examine, check, search, study, look at]
+  - [loading docks, power, electrical load, ventilation, vents, tire tracks]
   entity_ids: []
   aliases:
   - facility proof
@@ -726,8 +770,15 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running.
 - id: k_sl_1c_a_r2
   statement: 'Michelle’s transit token opens a service entrance beneath the terminal, confirming an active facility below. The service schematic marks a dry maintenance ascent that joins the drainage spine, too exposed to use now but worth remembering.'
+  earn_when: uses the transit token at the service entrance
+  action_evidence:
+  - [use, scan, insert, try, open, unlock]
+  - [transit token, token]
+  - [service entrance, service door, entrance below the terminal]
   entity_ids: []
   aliases:
   - facility proof
@@ -752,8 +803,15 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    The transit token opens a service entrance to an active facility below. A service map shows a dry maintenance climb to the drainage spine. Kristin sees that route is too exposed to use now.
 - id: k_sl_1c_b_r1
   statement: 'From the processing area, Kristin matches sedated prisoners to missing-person records and knows they are alive.'
+  earn_when: compares the prisoners with missing-person records
+  action_evidence:
+  - [compare, match, cross-check, check, read]
+  - [prisoners, captives, people in the processing area]
+  - [missing-person records, missing people records, missing records, records, identification numbers, ID numbers]
   entity_ids: []
   aliases:
   - captives confirmed alive
@@ -776,8 +834,15 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Kristin matches sedated prisoners in the processing area to missing-person records. They are alive.
 - id: k_sl_1c_b_r2
   statement: 'Kristin sees sedated captives alive in the processing line and glimpses a woman who could be Michelle before the view vanishes.'
+  earn_when: searches the processing line for Michelle
+  action_evidence:
+  - [look for, search for, scan for, find]
+  - [Michelle, woman who looks like Michelle]
+  - [processing line, processing area, observation shaft]
   entity_ids: []
   aliases:
   - captives confirmed alive
@@ -804,8 +869,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Kristin sees sedated captives alive in the processing line. She glimpses a woman who could be Michelle. Then the view vanishes.
 - id: k_sl_1c_c_r1
   statement: 'A logistics terminal shows that Los Angeles is only a regional hub in a detention network spanning the country.'
+  earn_when: reads the logistics terminal
+  action_evidence:
+  - [read, search, inspect, check]
+  - [logistics terminal, terminal computer, computer]
   entity_ids: []
   aliases:
   - national detention network known
@@ -830,8 +901,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    The logistics terminal shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
 - id: k_sl_1c_c_r2
   statement: 'A recording of Charles and Rebecca reveals they engineered the crisis to rule as its promised solution.'
+  earn_when: plays the recording of Charles and Rebecca
+  action_evidence:
+  - [play, listen to, open]
+  - [recording of Charles and Rebecca, Charles and Rebecca recording, recording]
   entity_ids: []
   aliases:
   - architects strategy known
@@ -856,8 +933,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    A recording shows that Charles and Rebecca made the crisis. They plan to rule as its promised solution.
 - id: k_sl_2a_a_r1
   statement: 'Kristin finds years of leaked code, emergency supplies, and Continuity files in Brandon’s fortified hideout.'
+  earn_when: searches Brandon's hideout
+  action_evidence:
+  - [search, inspect, examine, look through]
+  - [Brandon's hideout, hideout, servers, leaked documents, Continuity files]
   entity_ids: [brandon_hideout, hideout_servers]
   aliases:
   - brandon prepared before event
@@ -878,8 +961,15 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Kristin finds years of leaked code, emergency supplies, and Continuity files in Brandon's fortified hideout.
 - id: k_sl_2a_a_r2
   statement: 'Brandon says he tried to expose the program before the disappearances, but Kristin cannot tell foresight from guilt.'
+  earn_when: questions Brandon about his attempt to expose the program
+  action_evidence:
+  - [ask, question, press]
+  - [Brandon, Brandon Corfman]
+  - [expose the program, warn about the program, before the disappearances]
   entity_ids: []
   aliases:
   - brandon prepared before event
@@ -900,8 +990,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Brandon says he tried to expose the program before the disappearances. Kristin cannot tell whether he saw them coming or feels guilty.
 - id: k_sl_2a_b_r1
   statement: 'Kristin turns the facility’s cooling weakness into a credible inspection emergency, and Brandon builds their cover around it.'
+  earn_when: checks the facility's cooling weakness
+  action_evidence:
+  - [inspect, test, check, investigate, pull, read, study]
+  - [cooling system, cooling water, cooling weakness, water pressure]
   entity_ids: []
   aliases:
   - false identities ready
@@ -924,8 +1020,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Kristin finds a cooling weakness she can use for a real inspection warning. Brandon builds their cover around it.
 - id: k_sl_2a_b_r2
   statement: 'Brandon prepares technical credentials while Kristin chooses how much of the real cooling-water and ventilation risk to put in their lie.'
+  earn_when: prepares the inspector credentials with Brandon
+  action_evidence:
+  - [prepare, draft, assemble, review, build, make, create, forge]
+  - [technical credentials, inspector credentials, inspection credentials, credentials]
   entity_ids: []
   aliases:
   - false identities ready
@@ -948,8 +1050,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: >-
+    Brandon prepares technical credentials. Kristin weighs how much of the real cooling-water and ventilation risk to put in their lie.
 - id: k_sl_2a_c_r1
   statement: 'Kristin persuades a doubtful supervisor that a cooling-water imbalance and ventilation fault could disable the service level, gaining corridor access.'
+  earn_when: warns the supervisor about cooling and ventilation faults
+  action_evidence:
+  - [tell the supervisor, warn the supervisor, convince the supervisor, explain to the supervisor, tell the security officer, warn the security officer]
+  - [cooling, cooling water, water pressure, water system, ventilation, vent, air sensor]
   entity_ids: []
   aliases:
   - restricted corridor access
@@ -980,8 +1088,14 @@ knowledge:
   - [ventilation fault, ventilation monitor, service-level shutdown, sensor fault, ventilation warning]
   - [corridor access, access, restricted access, infrastructure access, corridor entrance]
   - [supervisor, security supervisor, facility supervisor, the supervisor, security officer, inspection supervisor]
+  delivery_text: >-
+    Kristin convinces the supervisor that a cooling-water imbalance and ventilation fault could shut down the service level. He grants corridor access.
 - id: k_sl_2a_c_r2
   statement: Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility and its limited inspection console.
+  earn_when: enters the restricted infrastructure corridor
+  action_evidence:
+  - [enter, go into, walk into, access]
+  - [restricted infrastructure corridor, infrastructure corridor, service corridor, access corridor, restricted infrastructure corridors, infrastructure corridors, service corridors]
   entity_ids: [kristin, brandon, regional_facility, infrastructure_corridors, inspection_console]
   aliases:
   - infrastructure corridor
@@ -1008,6 +1122,8 @@ knowledge:
   - [opened, open, access, gained access, opened access, corridor opened]
   - [restricted infrastructure corridor, infrastructure corridor, service corridor, access corridor, restricted passage]
   - [gaining access to the facility, access to the facility, facility access gained]
+  delivery_text: >-
+    Kristin and Brandon open a restricted infrastructure corridor. They have access to the facility and its limited inspection console.
 - id: k_sl_2a_c_r2_rebecca_observes
   statement: Rebecca has ordered the infiltrators watched.
   entity_ids: [rebecca, kristin, brandon, regional_facility]
