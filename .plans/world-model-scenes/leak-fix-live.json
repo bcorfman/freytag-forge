@@ -1,0 +1,21 @@
+{
+  "run_name": "freytag-world-leakfix-live-2",
+  "workdir": "/home/bcorfman/dev/ringer-work/freytag-world-leakfix-2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "leakfix-live-1b-1c",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 1,
+      "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live benchmark itself. Reply with the single word: ready.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -a && . ./.env && set +a && TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/item-facts-world-1b-1c.json --scene 1B --script dead-drop --replicates 1 --out bench/results/world-leakfix2-1b-1c --confirm ; TMPDIR=/tmp .venv/bin/python .plans/world-model-scenes/leak_fix_check.py bench/results/world-leakfix2-1b-1c bench/results/world-leakfix-2a",
+      "check_timeout_s": 1800,
+      "timeout_s": 300,
+      "verified": "the 1B-1C live replicate ran once from the check from a thorough entry; leak_fix_check.py read it with the saved 2A run and failed on any leak rejection"
+    }
+  ]
+}

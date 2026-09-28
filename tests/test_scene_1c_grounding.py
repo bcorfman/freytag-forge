@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.runtime.world_model import apply_scene_placements, world_for
@@ -109,3 +110,27 @@ def test_scene_1c_narration_rejects_a_sibling_facility_area() -> None:
         ).turn("Search the loading docks for a way into the service level.")
 
     assert caught.value.code == "narration_known_term_leak"
+
+
+def _neutral_turn(state: RuntimeState) -> None:
+    RuntimeEngine(
+        state,
+        lambda _command: {
+            "segments": [{"kind": "narration", "text": "Kristin checks the loading docks."}],
+            "selected_knowledge_ids": [],
+        },
+    ).turn("Search the loading docks for guards.")
+
+
+def test_scene_1c_waits_for_the_logistics_terminal_before_2a() -> None:
+    state = _scene_1c_state()
+    for fact_id in ("facility_proof", "captives_confirmed_alive"):
+        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+
+    for _ in range(8):
+        _neutral_turn(state)
+    assert state.current_scene_id == "1C"
+
+    state.facts.assert_fact(Fact(predicate="national_detention_network_known", subject="story", value="true"))
+    _neutral_turn(state)
+    assert state.current_scene_id == "2A"
