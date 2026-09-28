@@ -2,10 +2,10 @@
 
 Status (2026-09-28): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
-486). The three narration leak fixes on `claude/magical-wozniak-tvkj5x`
-held in one live replicate each. The run found a fourth leak, a bench
-setup gap, fixed since. Next: rerun the 1B-1C replicate, then 2B-3C,
-S3 and S4. See "Resume here".
+486). The narration leak fixes on `claude/magical-wozniak-tvkj5x` are
+measured live: no leak rejection in 1B, 1C or 2A, and every 1B-2A
+handoff fires. Next: merge that branch, then 2B-3C, S3 and S4. See
+"Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -46,10 +46,22 @@ still plays with the same handoffs and moves to 2A after 1C turn 9.
 `leak_fix_check.py` now fails on any leak rejection, not only the three
 terms. It missed this one.
 
-**Next:** rerun only the 1B-1C replicate:
-`.plans/world-model-scenes/leak-fix-live.json` (now run
-`freytag-world-leakfix-live-2`) writes `bench/results/world-leakfix2-1b-1c`
-and checks it together with the saved `world-leakfix-2a`. Then 2B.
+**Rerun (2026-09-28, Ringer, 1B-1C only, thorough entry; check
+passed).** The replicate completed, with all 20 turns narrated and no
+rejected turn. Every handoff fired: 1B turn 5 (`k_sl_1b_a_r1`), 1B turn 7
+(`k_sl_1b_b_r1`, Brandon's name, rejected before by "park bench"), 1C
+turns 12, 16 and 19 (the tire tracks, the captives, the logistics
+terminal). The story moved to 2A after 1C turn 9 (run turn 19), as the
+offline run predicted. Judges: continuity contradicts a stated fact
+1/20, acts beyond the command 5/20, restarts the scene 0/20. Fact
+tracking: facts after the turn correct 17/20. Read
+`bench/results/world-leakfix2-1b-1c` for the three wrong facts and
+the five over-acting turns before 2B, if they matter. Not measured
+live: 2B turns after the supervisor path, because the 2A variation
+stops when the scene is left.
+
+**Next:** merge `claude/magical-wozniak-tvkj5x` (no PR yet), then
+ground 2B (step 1.4 below).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
@@ -159,7 +171,7 @@ Not yet measured live.
   Brandon's hideout, the servers and the move to the facility. All three
   have bench scripts, live-measured, and reveal handoffs (2a806db).
   Scenes 2B-3C have no placements and no handoffs at all.
-  **Next: measure the leak fixes live, then 2B.**
+  **Next: merge the leak fixes, then 2B.**
 - **Bench scripts for 1B, 1C and 2A, and what their runs found.**
   `bench/variations/item-facts-world-1b-1c.json` plays 1B's `dead-drop`
   (10 turns) and continues into 1C's `terminal-descent` (10 turns). The
