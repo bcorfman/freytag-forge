@@ -24,7 +24,10 @@ saved `bench/results`, so it was diagnosed and checked offline only.
 **Next:** one live replicate each of `item-facts-world-1b-1c` and
 `item-facts-world-2a` through Ringer, to measure the three fixes below.
 Check that 1C turn 8 earns `k_sl_1c_c_r1` and that no turn is rejected
-for "the supervisor", "logistics terminal" or "workstation". Then 2B.
+for "the supervisor", "logistics terminal" or "workstation". The
+manifest is `.plans/world-model-scenes/leak-fix-live.json`; its check runs
+both replicates once and then `leak_fix_check.py`, which prints each
+turn and fails on a rejected fixed term or a missing handoff. Then 2B.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
