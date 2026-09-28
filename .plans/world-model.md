@@ -1,9 +1,11 @@
 # World model: plan
 
-Status (2026-09-27): decisions W1-W13 settled. S1 merged (PR 480), and S2
-merged (PRs 481 and 485). Scene grounding is under way on branch
-`world-model-scenes` (not pushed): 1B (44a99eb), 1C (f1b8d5b, 969d2d7) and
-2A (6aad57e, 88ed193) are built and tested, and 2B is next. Then 2B-3C, S3 and S4. See "Resume here".
+Status (2026-09-27, late): decisions W1-W13 settled. S1 merged (PR 480),
+and S2 merged (PRs 481 and 485). Branch `world-model-scenes` (pushed, PR
+open) grounds 1B, 1C and 2A, adds their bench scripts, fixes the bench
+match call (kind guards and a Jev check of each guessed mapping), and
+authors reveal handoffs so 1B-2A knowledge is earned by play. Next: the
+narration leak rejections, then 2B-3C, S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -15,10 +17,19 @@ continuity plan; this plan defines the world they write into.
 ## Resume here (2026-09-27)
 
 Everything through S2 is on `main` (PR 485, merge 28ad27d). Branch
-`world-model-scenes` adds `world-model-scenes/capture_scenes.py`, the 1B
-grounding (44a99eb), the 1C grounding (f1b8d5b, 969d2d7), the 2A grounding
-(6aad57e, 88ed193) and plan updates. It has not been pushed and has no PR.
-Continue the scene work on it.
+`world-model-scenes` holds the 1B, 1C and 2A grounding, their bench
+variations (`item-facts-world-1b-1c`, `item-facts-world-2a`), the match
+call fixes (1d342c1, d98cbd5, 5c24ed8), the 2A thorough entry (6be66c7)
+and the 1B-2A reveal handoffs (2a806db). It is pushed with a PR open.
+Continue the scene work on it, or on a new branch from `main` once the PR
+merges.
+
+**Next:** read the turns the narration leak check rejects
+(`narration_known_term_leak`: 1C "Go up to the logistics terminal." 3 of
+3, 2A "Warn the supervisor about the cooling-water fault." in every run),
+find the term and why it counts as unavailable, then fix. Then 2B. The
+detailed record of this session is under step 1 below, after the 2A
+entry.
 
 ### Where things stand
 
@@ -39,14 +50,14 @@ Continue the scene work on it.
   v36 in every category: place changes 38/40 against 18/24, conditions 15/16
   against 6/10, and turns with every fact right 61/68 against 26/36.
 - **Converted scenes.** 1A in full. 1B in full as a package: the dead drop,
-  the truck and Brandon's companion effect (44a99eb). It has no bench script
-  yet, so no live run has confirmed its names resolve. 1C in full as a
+  the truck and Brandon's companion effect (44a99eb). 1C in full as a
   package (f1b8d5b): the facility area tree, the freight terminal and its
-  sub-areas, and Brandon as companion. It has no bench script either.
-  2A in full as a package (6aad57e): Brandon's hideout, the servers and
-  the move to the facility. Scenes 2B-3C have no placements at all.
+  sub-areas, and Brandon as companion. 2A in full as a package (6aad57e):
+  Brandon's hideout, the servers and the move to the facility. All three
+  have bench scripts, live-measured, and reveal handoffs (2a806db).
+  Scenes 2B-3C have no placements and no handoffs at all.
   **Next: look at the narration leak rejections, then 2B.**
-- **Bench scripts for 1B, 1C and 2A (written, not yet run live).**
+- **Bench scripts for 1B, 1C and 2A, and what their runs found.**
   `bench/variations/item-facts-world-1b-1c.json` plays 1B's `dead-drop`
   (10 turns) and continues into 1C's `terminal-descent` (10 turns). The
   two scenes are chained because a bare 1C start has no transit token;
@@ -215,6 +226,7 @@ Continue the scene work on it.
   **Open:** the narration leak check (`narration_known_term_leak`) rejects
   turns often: 1C "Go up to the logistics terminal." 3 of 3, 2A "Warn the
   supervisor..." in every earlier run, and a 2A opening once ("workstation").
+  Two findings from the first replicate are also still open:
   - In 1C the narrator never took Kristin below ground. The reply put her
     at the loading docks for "Climb down into the service level.", and put
     the observation shaft in the loading-dock wall. "service entrance"
