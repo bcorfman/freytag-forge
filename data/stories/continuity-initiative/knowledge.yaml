@@ -1062,17 +1062,14 @@ knowledge:
   aliases:
   - restricted corridor access
   audience:
-    kind: world_only
-    player_visible: false
+    kind: public
+    player_visible: true
   available_in_scenes:
   - 2A
   requires:
   - fact_id: false_identities_ready
     equals: true
   establishes:
-  - op: assert
-    fact_id: rebecca_observing_infiltrators
-    value: true
   - op: assert
     fact_id: restricted_corridor_access
     value: true
@@ -1090,6 +1087,31 @@ knowledge:
   - [supervisor, security supervisor, facility supervisor, the supervisor, security officer, inspection supervisor]
   delivery_text: >-
     Kristin convinces the supervisor that a cooling-water imbalance and ventilation fault could shut down the service level. He grants corridor access.
+- id: k_sl_2a_c_r1_rebecca_observes
+  statement: Rebecca has ordered the infiltrators watched.
+  entity_ids: [rebecca, kristin, brandon, regional_facility]
+  aliases:
+  - Rebecca ordered surveillance
+  - infiltrators watched
+  audience:
+    kind: world_only
+    player_visible: false
+  available_in_scenes:
+  - 2A
+  requires:
+  - fact_id: false_identities_ready
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: rebecca_observing_infiltrators
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2A-C
+    realization_id: SL-2A-C-R1
+  relevance:
+    entity_ids: [rebecca, regional_facility]
+    priority: 0
 - id: k_sl_2a_c_r2
   statement: Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility and its limited inspection console.
   earn_when: enters the restricted infrastructure corridor

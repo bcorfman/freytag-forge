@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -84,3 +85,36 @@ def test_scene_entry_uses_protagonist_placement_parent() -> None:
     state.current_scene_id = "1C"
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     assert provider._scene_entry()["location"] == "freight terminal"
+
+
+class _Response:
+    def __init__(self, payload: object) -> None:
+        self.payload = payload
+
+    def __enter__(self) -> "_Response":
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return json.dumps(self.payload).encode()
+
+
+def test_warning_the_supervisor_earns_corridor_access_by_handoff(monkeypatch: pytest.MonkeyPatch) -> None:
+    state = _scene_2a_state()
+    state.facts.assert_fact(Fact(predicate="false_identities_ready", subject="story", value="true"))
+    apply_world_effects(PACKAGE, state.facts)
+    narration = {"segments": [{"kind": "narration", "text": "Kristin tells the supervisor about the pressure chart."}]}
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen",
+        lambda *_args, **_kwargs: _Response({"narration": json.dumps(narration)}),
+    )
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    proposal = RuntimeEngine(state, provider).turn("Warn the supervisor about the cooling-water fault.")
+
+    assert proposal.selected_knowledge_ids == ("k_sl_2a_c_r1",)
+    assert proposal.segments[0].text == "Kristin tells the supervisor about the pressure chart."
+    assert state.facts.matching("restricted_corridor_access")
+    assert state.facts.matching("rebecca_observing_infiltrators")
