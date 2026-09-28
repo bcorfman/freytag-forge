@@ -30,12 +30,7 @@ class _MatrixObservation:
 
 def _scene_entity_ids(scene: object) -> set[str]:
     metadata = scene.metadata  # type: ignore[union-attr]
-    entity_ids = {metadata.location_id, *metadata.participant_ids, *metadata.item_ids}
-    entity_ids.update(
-        placement.parent
-        for placement in metadata.item_placements.values()
-        if hasattr(placement, "parent") and placement.parent is not None
-    )
+    entity_ids = NarrationSafetyValidator._scene_entity_ids(PACKAGE, scene)
     entity_ids.update(
         entity_id
         for item in PACKAGE.knowledge.knowledge

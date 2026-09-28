@@ -130,8 +130,17 @@ def test_scene_without_item_placements_loads_with_an_empty_mapping(tmp_path: Pat
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8")
-    item_ids = "item_ids: [memory_card, transit_card, park_bench]\n"
-    placement_block = "item_placements:\n  park_bench: {parent: los_angeles_park}\n"
+    item_ids = (
+        "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, kristin_truck]\n"
+    )
+    placement_block = (
+        "item_placements:\n"
+        "  park_bench: {parent: los_angeles_park}\n"
+        "  transit_card: {parent: park_bench, under: true}\n"
+        "  number_sequence: {parent: park_bench, under: true}\n"
+        "  michelle_photograph: {parent: park_bench, under: true}\n"
+        "  kristin_truck: {parent: los_angeles_park}\n"
+    )
     assert contents.count(item_ids) == 1
     assert contents.count(placement_block) == 1
     contents = contents.replace(item_ids, "item_ids: [memory_card, transit_card]\n", 1)
@@ -363,6 +372,24 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_1a_c_r1",
         "k_sl_1a_c_r2",
         "k_sl_1a_d_r1",
+        "k_sl_1b_a_r1",
+        "k_sl_1b_a_r2",
+        "k_sl_1b_b_r1",
+        "k_sl_1b_b_r2",
+        "k_sl_1b_c_r1",
+        "k_sl_1b_c_r2",
+        "k_sl_1c_a_r1",
+        "k_sl_1c_a_r2",
+        "k_sl_1c_b_r1",
+        "k_sl_1c_b_r2",
+        "k_sl_1c_c_r1",
+        "k_sl_1c_c_r2",
+        "k_sl_2a_a_r1",
+        "k_sl_2a_a_r2",
+        "k_sl_2a_b_r1",
+        "k_sl_2a_b_r2",
+        "k_sl_2a_c_r1",
+        "k_sl_2a_c_r2",
     }
     actual = {item.id for item in package.knowledge.knowledge if item.delivery_text}
 

@@ -1,10 +1,11 @@
 # World model: plan
 
-Status (2026-09-27): decisions W1-W13 settled; S1 merged (PR 480). S2
-tasks A and C merged (PR 481). Tasks B and D-I and the five judge fixes
-(2302ef6) are on branch `world-model-s2b`, which is not pushed and has no
-PR. The v36 comparison passes on the fixed judge. Next: the PR. See
-"Resume here".
+Status (2026-09-27, late): decisions W1-W13 settled. S1 merged (PR 480),
+and S2 merged (PRs 481 and 485). Branch `world-model-scenes` (pushed, PR
+open) grounds 1B, 1C and 2A, adds their bench scripts, fixes the bench
+match call (kind guards and a Jev check of each guessed mapping), and
+authors reveal handoffs so 1B-2A knowledge is earned by play. Next: the
+narration leak rejections, then 2B-3C, S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -13,10 +14,389 @@ decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
 
-## Resume here (2026-09-26, end of session)
+## Resume here (2026-09-27)
 
-Start from branch `world-model-s2b` (in the main repository; check it out
-in a fresh worktree). It holds everything since PR 481, oldest first:
+Everything through S2 is on `main` (PR 485, merge 28ad27d). Branch
+`world-model-scenes` holds the 1B, 1C and 2A grounding, their bench
+variations (`item-facts-world-1b-1c`, `item-facts-world-2a`), the match
+call fixes (1d342c1, d98cbd5, 5c24ed8), the 2A thorough entry (6be66c7)
+and the 1B-2A reveal handoffs (2a806db). It is pushed with a PR open.
+Continue the scene work on it, or on a new branch from `main` once the PR
+merges.
+
+**Next:** read the turns the narration leak check rejects
+(`narration_known_term_leak`: 1C "Go up to the logistics terminal." 3 of
+3, 2A "Warn the supervisor about the cooling-water fault." in every run),
+find the term and why it counts as unavailable, then fix. Then 2B. The
+detailed record of this session is under step 1 below, after the 2A
+entry.
+
+### Where things stand
+
+- **The model.** The `worldkeeper` library and its storygame adapter, the
+  package schema (kinds, area parents, new-form placements, character
+  placements, companions, `on_assert` effects), seats and the engine's
+  prerequisite steps (W11-W13). Sections 4-9 describe the model, and
+  section 11 records how each part was built.
+- **The bench uses it (S2).** Replies name the parent. THINGS shows the
+  authored text or the parent's name. Things are captured into the world. The
+  match call lists only things in play: the scene's `item_ids`, things in the
+  protagonist's top-level area, and things she carries.
+- **The shipped narrator still reads authored placement text only.** The
+  runtime turn does not capture into the world until S4. Every package change
+  must leave the shipped payloads of converted scenes byte-identical, unless
+  a change is intended and approved.
+- **Measured.** On the v36 comparison with the fixed judge, the branch beat
+  v36 in every category: place changes 38/40 against 18/24, conditions 15/16
+  against 6/10, and turns with every fact right 61/68 against 26/36.
+- **Converted scenes.** 1A in full. 1B in full as a package: the dead drop,
+  the truck and Brandon's companion effect (44a99eb). 1C in full as a
+  package (f1b8d5b): the facility area tree, the freight terminal and its
+  sub-areas, and Brandon as companion. 2A in full as a package (6aad57e):
+  Brandon's hideout, the servers and the move to the facility. All three
+  have bench scripts, live-measured, and reveal handoffs (2a806db).
+  Scenes 2B-3C have no placements and no handoffs at all.
+  **Next: look at the narration leak rejections, then 2B.**
+- **Bench scripts for 1B, 1C and 2A, and what their runs found.**
+  `bench/variations/item-facts-world-1b-1c.json` plays 1B's `dead-drop`
+  (10 turns) and continues into 1C's `terminal-descent` (10 turns). The
+  two scenes are chained because a bare 1C start has no transit token;
+  1B's last turn puts it in the truck, and an offline check confirmed the
+  1B-to-1C advance keeps it there at the freight terminal.
+  `bench/variations/item-facts-world-2a.json` plays 2A's
+  `hideout-to-corridors` (10 turns): the servers, the cover (the
+  `false_identities_ready` move), the corridors and the console. Both use
+  the two-scene variation's item_facts and system prompt, with no 1A
+  overrides. Run each with `--replicates 1` (`--scene 1B` and
+  `--scene 2A`) through Ringer, then read `item_facts_unplaced` and the
+  match-call resolutions.
+  **First replicate (2026-09-27, at 3a907ba):** both completed, with no
+  rejected turns and no failed replicate. Every new name resolved:
+  the transit token, the number sequence, the photograph, the bench, the
+  truck, the loading docks, the freight terminal, the logistics terminal,
+  the hideout, the servers, the corridors and the console. The token rode
+  in the truck from 1B to 1C. The run shows four problems:
+  - `item_facts_unplaced` read 0 of 77, and that is true: no reply change
+    was dropped. Every place that did not resolve by name went to the
+    match call, which mapped it to a known name. The turn record keeps
+    those place mappings only inside `match_raw`; `item_facts_resolutions`
+    lists thing names only. Some mappings are right ("parking lot" to the
+    park, "stairway" to the corridors). Three are wrong: "below" to the
+    loading docks (1C), "checkpoint" to Brandon's hideout (2A turn 4, so
+    Kristin stayed in the hideout) and "security desk" to the inspection
+    console (2A turn 5, so Kristin moved to the console's corridors).
+  - The match call also maps strangers to Brandon: "stranger" and
+    "stranger in the park" in 1B (right, since he is the man), and also
+    "prisoners" in 1C and "guard" in 2A. It mapped "ID" to the inspection
+    console. The call seems to prefer any listed name over "new".
+  **Match fix (Ringer, Luna, one attempt; suite 876 passed).** Two rules
+  follow the spot rule in `_MATCH_SYSTEM`: a place not in THINGS and not a
+  spot in one is "new", and a person maps to someone in THINGS only when
+  it is that same person ("A guard or a prisoner who is not in THINGS is
+  \"new\"."). Each turn record now has `item_facts_place_resolutions`
+  (place name to world name, or "new"). One rerun replicate of each
+  variation, with no rejected turns: "checkpoint" was "new" and recorded
+  as unplaced, "prisoners" and "guard" no longer became Brandon, and
+  "below" went to the observation shaft. New misses in the same run:
+  "stranger in the park" became Kristin (1B turn 6) and "door" became the
+  inspection console (2A turn 10). One replicate cannot tell the rules'
+  effect from sampling noise; more replicates are needed before judging.
+  **Three more replicates each (2026-09-27, at 1d342c1; Ringer, all six
+  completed, no rejected turns).** The two rules do not hold most of the
+  time. Across the four post-fix replicates: "checkpoint" became Brandon's
+  hideout in 2 of 3 (it was "new" once, in the first rerun); "stranger in
+  the park" became Kristin in 2 of 4; "prisoners" became Brandon in 1 of 3.
+  Other wrong mappings seen once each: "service path" to Kristin, "heavy
+  electrical service" to the service level, "below" to the prisoners and to
+  the loading docks, "in front of metal door" to the inspection console,
+  and "stairway" in 2A's corridors to 1C's service level. Right mappings
+  held: "stranger" to Brandon in 1B turn 6 (3 of 3), "server console" to
+  the servers (3 of 3), "park entrance" to the park, "corridors" to the
+  infrastructure corridors. Per the fix ranking, a rule that fails this
+  often calls for step 2, an LLM check. Brandon chose both an engine kind
+  guard (B) and a per-mapping Jev question (A), B first.
+  **B done (Ringer, Luna, two attempts; suite 880 passed).** Two guards in
+  `apply_item_facts`, using only the world's kinds: a new name that the
+  match maps to the player character stays new (issue "...mapped ... to
+  the player character; kept as new"), and a character whose place the
+  match mapped to a character is left unplaced (issue "...mapped place
+  ... to a character; ... left unplaced"). A thing placed at a place
+  mapped to a character is still allowed ("Kristin's pocket"). Unit tests
+  replay the recorded live replies. Not measured live on its own; it is
+  measured together with A. **Next: A.**
+  Correction (Brandon): "B first" meant measure B live before building A.
+  A's first task was stopped before any live run, and B was measured
+  alone. **B alone, three replicates each at d98cbd5** (all six completed;
+  2A replicate 2 had one rejected turn): the guard fired 4 times, all
+  "new name to the player character": "stranger" or "stranger in the park"
+  at 1B turn 6 in 3 of 3, and "prisoners" in 1C once. The later turns then
+  mapped "stranger in the park" and "man in the park" to that new
+  stranger, consistently. The place guard never fired. At 1B turn 6 the
+  match now gave Kristin in 3 of 3, where the pre-B replicates gave
+  Brandon in 3 of 3; B does not touch the match call, so this is the
+  model's sampling, not B. Wrong mappings B leaves, out of 46: "prisoners"
+  and "guard" to Brandon (once each), "checkpoint" to "checkpoint guard"
+  and to the infrastructure corridors, "security checkpoint" to the
+  corridors, "credentials" to the inspection console, "identification
+  numbers" to the handwritten number sequence. "checkpoint" to the hideout
+  did not recur. Right: the parking lot, the truck, the servers, the
+  corridors, the stairway, the loading dock, "below" to the observation
+  shaft. So A is still needed, for people, things and places alike.
+  **A, first live run (not applied).** Brandon asked for concrete
+  questions: five templates by kind ("Are the guard and Brandon Corfman
+  the same person?", "Is the place called the checkpoint the same place
+  as Brandon's hideout, or inside it?"), fact lines from the world, and
+  "Answer yes only if the story shows it." Luna passed on the second
+  round (suite 892). Three replicates each: Jev answered all 24 checks,
+  but about 11 were wrong "no"s, mostly places in 1B and 1C ("park",
+  "parking lot", "park entrance", "loading dock", "service levels",
+  "service entrance", "server" twice, and "stranger in the park" to
+  Brandon). Right: "checkpoint" to the hideout rejected twice, the
+  corridors, the server console, the door. Unplaced entries rose from 8
+  to 23. Causes: the fact lines lack "in" ("Kristin Schweitzer is Los
+  Angeles park."), the evidence-only wording is too strict for place
+  names, and the "the" rule garbles phrases ("the below"). 2A turn 5 was
+  rejected in 3 of 3 by the narration leak check (1 of 3 without A);
+  that check runs before capture, so A does not cause it.
+  **A, grammar round (not applied).** Brandon judged the questions sound
+  and the glued-together grammar the problem. Names are now quoted with no
+  article ('Are "guard" and "Brandon Corfman" the same person?') and the
+  facts are structured `player` and `known` fields (name, place, held_by,
+  can_move, place_text). Wording otherwise unchanged. Three replicates
+  each (2A replicate 3 failed at its opening on a narration leak,
+  "workstation", unrelated to A): 25 checks, all answered, about 12 wrong
+  "no"s, so no better. Fixed: "park" to Los Angeles park (yes 2 of 2).
+  Still wrong: "parking lot" and "park entrance" to the park, "loading
+  dock" to the loading docks, "stranger" to Brandon (2 of 3). Newly wrong:
+  "server console" to the servers (no in 4 of 4, was yes). Right: every
+  person and thing that truly differs ("prisoners" to Brandon, "keycard"
+  to the credentials, "ladder" to the service entrance). Jev says no
+  whenever the story does not literally show two names are one, which
+  points at the evidence-only wording.
+  **A, most-likely round (applied).** Only the Jev wording changed:
+  "{question} Use story, player and known to decide what is most likely.",
+  yes "Most likely, {statement}.", no "Most likely, this is not so:
+  {statement}.". Luna, one attempt; suite 892 passed. Three replicates
+  each, no failed replicate: 26 checks, all answered, about 22 right.
+  Right yes: "park" and "parking lot" to the park, "stranger" to Brandon
+  (2 of 2), "loading dock" to the loading docks, "server console" to the
+  servers (3 of 3), the corridors, the facility. Right no: "prisoners" to
+  Brandon, "below" on Kristin. Wrong: "checkpoint" to Brandon's hideout
+  accepted in 2 of 2 (the tracked Kristin was still in the hideout, since
+  the cover move had not fired), "below" to the loading docks, and
+  "stranger in the park" at the stranger rejected once. Unplaced entries
+  fell to 4 (8 with B alone). Next: decide whether the checkpoint case is
+  a script problem (turn 4 runs before the cover is ready) or a check
+  problem; then 2B.
+  **Settled: a bench setup problem (6be66c7).** A bare 2A start lacks
+  `facility_infiltration_needed` (set by 1C), so SL-2A-B, the cover, was
+  never offered. The 2A variation now uses `"entry_state": "thorough"`.
+  Three replicates confirm the cover candidates are offered from turn 1,
+  and "checkpoint" no longer maps to the hideout (Kristin is unplaced at
+  "checkpoint" at turn 4). But `false_identities_ready` still arrives
+  only by the pacing cue at turn 9, because **the narrator selected no
+  knowledge candidate in any 1B, 1C or 2A turn: 0 of 147 turns with
+  candidates offered**, across the B-only, A and thorough runs. Even 1B
+  turn 5, "Compare the number sequence with the transit token.", which
+  is exactly k_sl_1b_a_r1, narrated a match and selected nothing. The
+  saved 1A run's two "selections" were authored reveals, not candidate
+  picks. **Diagnosis:** the narrator has never picked an offered candidate
+  in any saved item-facts run (40 runs, 0 picks). Knowledge is earned by
+  the authored reveal handoff (PRD: opt-in per candidate, needs
+  `action_evidence` and `delivery_text`; the runtime's exact matcher
+  decides). Only the seven 1A candidates have them; every candidate from
+  1B to 3C has neither, so it falls back to narrator selection, which
+  never happens. In 1B-2A, facts arrive only by pacing cues. The fix is
+  authoring: `earn_when`, `action_evidence` and `delivery_text` for each
+  1B, 1C and 2A candidate, with the prose from ChatGPT Desktop.
+  **Done.** ChatGPT Desktop wrote `earn_when`, `action_evidence` and
+  `delivery_text` for the 18 candidates (`k_sl_2a_c_r2_rebecca_observes`
+  left out: Kristin does not know Rebecca is watching). Brandon approved
+  eight evidence edits found by running the real matcher: added verbs
+  (study, open, read, pull, build), plurals (infrastructure corridors),
+  identification numbers, tire tracks, one merged cooling/ventilation
+  group, and `open` removed from 1c_c_r1 to avoid a tie with the
+  recording. Ringer, Luna, one attempt; suite 892 passed; the 1A, 1B, 1C,
+  2A and 3A payloads are byte-identical. Three replicates each: 1B turn 5
+  earned the freight route 3 of 3, turn 7 Brandon's name 2 of 3 (the third
+  was rejected by the leak check); 1C turn 12 facility proof and turn 16
+  captives alive 3 of 3; 2A turn 1 the hideout files, turn 2 the cover and
+  turn 6 corridor access 3 of 3. By 1C's last turns the story has already
+  moved to 2A, so the logistics-terminal turn runs in 2A.
+  **Open:** the narration leak check (`narration_known_term_leak`) rejects
+  turns often: 1C "Go up to the logistics terminal." 3 of 3, 2A "Warn the
+  supervisor..." in every earlier run, and a 2A opening once ("workstation").
+  Two findings from the first replicate are also still open:
+  - In 1C the narrator never took Kristin below ground. The reply put her
+    at the loading docks for "Climb down into the service level.", and put
+    the observation shaft in the loading-dock wall. "service entrance"
+    resolved to the service level area, which moved Kristin there on turn
+    13 while the narration kept her at the door.
+  - The narrator gave fixed things (the servers, the logistics terminal,
+    the console) to a person. The world refused each one, as it should.
+- **How to ground a scene:** `docs/world-model-grounding.md`, which
+  `AGENTS.md` points to. Read it before any package or prompt work.
+
+### Next steps, in order
+
+**1. Ground scenes 1B-3C, one Ringer task per scene.** Use structured YAML
+edits in `world.yaml`, `plot.md` and, where needed, `knowledge.yaml`.
+New prose goes to ChatGPT Desktop, never to a worker. What each scene needs
+is in "Story survey" below, and Brandon's six decisions on it are settled
+(listed there). Order:
+
+1. **1B.** The dead drop is the transit token, the handwritten number
+   sequence and Michelle's photograph. Decided by Brandon, 2026-09-27:
+   all three are entities (`transit_card`, `number_sequence`,
+   `michelle_photograph`), and they are **visible**, placed `under` the
+   park bench with no text. They are not hidden. The survey's hidden-plus-reveal
+   proposal was rejected because the `transport_route_identified` cue tells
+   the narrator the drop "lie[s] beside Michelle's photograph" as something
+   Kristin notices. worldkeeper refuses a narrated move of a hidden thing,
+   so a narrated pickup would have been dropped. No single fact records the
+   find either: SL-1B-A sets either `transport_route_identified` or
+   `brandon_face_known`. The truck is placed in the park, and the laptop
+   and driver's seat ride in it. `brandon_identified` declares W8's
+   `{accompany: brandon, with: kristin}`. **Done as 44a99eb.** The 1A and
+   1B payloads are byte-identical, and the leakage matrix raised no flag.
+   Not yet measured live: add a 1B script to a bench variation and run one
+   replicate to confirm the new names resolve.
+2. **1C. Done as f1b8d5b** (Ringer, Luna, one attempt).
+   `regional_facility` parents the six facility areas and a new
+   `freight_terminal` ("freight terminal", alias "abandoned freight
+   terminal"), which is 1C's location. `loading_docks` and
+   `observation_shaft` are areas inside the terminal, because the entry
+   text and 1C.2 put Kristin there, and a character can only be in an area
+   or an enterable thing. `logistics_terminal` is a fixed item in the
+   terminal, with no bare "terminal" alias. 1C declares
+   `companions: [brandon]`. Brandon decided (2026-09-27) that the truck
+   drove them there, so `kristin_truck` is placed at the terminal and the
+   laptop rides in it. The transit token is not placed, so it stays where
+   Kristin left it in 1B.
+   One engine change was needed. Narration safety allowed only the scene's
+   `location_id`, participants, item_ids and placement parents, so 1C
+   narration naming "loading docks" would have been rejected as a leak. It
+   now also allows every area above or below the scene's location
+   (`_related_area_ids`). The detention level is still rejected in 1C.
+   Verified: the full suite (862) passes, ruff is clean, and the 1A, 1B,
+   2A and 3A payloads are byte-identical. 1C's opening changes in one line:
+   "The scene takes place at freight terminal." Not yet measured live: no
+   1C bench script exists.
+   **Follow-up, 969d2d7.** 1C's `scene_frames` situation line said Kristin
+   and Brandon start "in its lower service level", which spoiled SL-1C-A.
+   Brandon chose to start them above ground. ChatGPT Desktop's sentence
+   ("...at its loading docks above ground, looking for a way down into its
+   service level.") was applied verbatim. `service_level` is a new area in
+   the terminal, and `observation_shaft` is inside it. The leakage
+   matrix's `_scene_entity_ids` now calls the runtime's
+   `_related_area_ids`. Its copy of the allowed set had predated
+   f1b8d5b, and flagged "loading docks" in 1C. Verified: the full suite
+   (865) passes, and payloads change only by the situation sentence.
+   A leftover worktree from the first, correctly stopped attempt is at
+   the session scratchpad's `scene-1c-service/run/scene-1c-service-level`;
+   remove it with `git worktree remove --force` when convenient.
+3. **2A. Done as 6aad57e** (Ringer, Luna, one attempt).
+   `brandon_hideout` is a new top-level area ("Brandon's hideout", aliases
+   "hideout" and "communications center"). Kristin and Brandon start there
+   through `character_placements`; `location_id` stays
+   `facility_perimeter`. `hideout_servers` ("servers") is a fixed thing in
+   the hideout. 2A declares `companions: [brandon]`.
+   Two decisions by Brandon (2026-09-27), made after checking what reads
+   `location_id`:
+   - **The move fact is `false_identities_ready`, not
+     `restricted_corridor_access`.** The latter is the `t_2a_2b` trigger,
+     so a move on it would be replaced at once by 2B's placement. The cover
+     being ready is the last fact before the facility half. Its `on_assert`
+     moves Kristin to `facility_perimeter`, and Brandon follows as her
+     companion.
+   - **The opening names the protagonist's placement.** `_scene_entry` in
+     `cloudflare.py` read `location_id`, so 2A's opening said "The scene
+     takes place at Facility perimeter." before the hideout entry text. When
+     a scene gives the protagonist a `character_placements` entry, the
+     opening now names that parent: "...at Brandon's hideout."
+   Narration safety now builds a scene's allowed entities in one helper,
+   `NarrationSafetyValidator._scene_entity_ids`. It adds character
+   placement parents and their related areas, and the leakage matrix calls
+   the same helper, so the two cannot drift. `k_sl_2a_a_r1` lists the
+   hideout and the servers in its `entity_ids`.
+   Verified: the full suite (870) passes, ruff is clean, and payloads for
+   1A, 1B, 1C and 3A are byte-identical. 2A changes only by its opening
+   location line. Not yet measured live: no 2A bench script exists.
+   **Follow-up, 88ed193** (Ringer, Luna, one attempt; Brandon asked for
+   both). `infrastructure_corridors` is an area in `regional_facility`, and
+   `inspection_console` is a fixed thing in it. The console is placed in
+   2A, 3B and 3C with no text, because 3B.1's Details line names it, and a
+   declared item that is not placed would be dropped from the narrator's
+   input. `scrutiny_2a` and `cover_review_2a` now also require
+   `false_identities_ready`, so they no longer fire in the hideout. A
+   runtime test shows scrutiny stays unset for three turns without the
+   cover, and is set with it. Verified: the full suite (875) passes, and
+   payloads for 1A-3C, 3B and 3C included, are byte-identical.
+4. **2B-2C.** Brandon is a companion in 2B and 2C. Fix the areas whose
+   text happens elsewhere (2C).
+5. **3A-3C.** Michelle is a captive in `detention_level`, and
+   `michelle_reached` sets her free. 3B declares `companions: [brandon,
+   michelle]`. Rebecca is placed in her office, and `rebecca_captured` sets
+   her captive. The senior official is in `detention_level`. Brandon moves
+   to the relay by a fact's `on_assert`, and joins 3C's participants there.
+   The portable archive gets a new-form placement.
+
+For each scene:
+
+- Before the task, capture the shipped payloads:
+  `uv run python .plans/world-model-scenes/capture_scenes.py BEFORE.json
+  1A:"Search the kitchen for signs of a struggle." 1B:"Look around the bench
+  for anything Michelle left." <scene>:"<a command>"`
+- The check re-captures after the change and diffs. A difference fails
+  unless it was intended and approved.
+- The check runs the whole suite without `-x`, so every failure shows in one
+  round. The brief names the tests the change is expected to break. The
+  1B-bench task broke the leakage matrix (a new item's name counts as a
+  future term until knowledge available earlier lists the item) and two
+  fixtures that edited the old front matter.
+- Add a script for the scene to a bench variation only when the scene is
+  ready to be measured. One live replicate per converted scene confirms that
+  its names resolve (read `item_facts_unplaced` and the match-call
+  resolutions).
+
+**2. S3: remove what the model makes redundant.** The bigger-place rule
+already went in task B. What is left is the start-place rule: one run
+without it, and keep the removal only if the numbers hold.
+
+**3. Revisit the bookmark before S4.** Capture is scored only on places and
+declared axes. Brandon was not sure undeclared conditions stay unimportant,
+such as the truck unlocked or its engine running (see "Bookmarked" in the
+S2 record).
+
+**4. S4: runtime.** Capture during play, the tree in saves (a schema bump),
+and cause routing, handed to the continuity plan's Phases 4-6. Known gap: the
+bench applies seating before the turn, so the runtime must seat inside the
+turn's snapshot, so that a rejected turn undoes it.
+
+### Working rules that bit this project
+
+- Every code change is a Ringer task on GPT-5.6 Luna (`"engine": "codex",
+  "model": "gpt-5.6-luna"`). Claude writes the brief and the check, and
+  reviews the patch.
+- `worktrees: true` detaches each task at the repository's HEAD. Commit
+  earlier rounds to a work branch before the next round. The check exports a
+  cumulative patch (`git diff --cached <base>`), because a passing
+  worktree is deleted.
+- A check that runs the full suite needs `"check_timeout_s": 900`.
+- Write manifests from a quoted heredoc (`<<'EOF'`). An unquoted one runs
+  the backticks in a brief as shell commands.
+- A worker may call failures "pre-existing". Verify that against the base
+  commit before accepting it.
+- Live bench and judge runs go through Ringer too. The check sources
+  `.env`, because a worker has no network. Re-score with
+  `bench/calibration/rejudge.py`. The saved S2 runs and comparison scripts
+  are in the main checkout's gitignored `bench/results/` (listed in the S2
+  record).
+
+## S2 record (2026-09-26 to 2026-09-27)
+
+Branch `world-model-s2b` (merged as PR 485) held everything after PR 481,
+oldest first:
 
 - 17437be: task B, the reply names the parent.
 - 77c0240: task D, seats (W11). c06ee38, 7989583, c7705b8: fixes from
@@ -83,7 +463,7 @@ Kristin ended up outside every area.
 - Ringer passed on the first attempt on Luna. The full suite passes, and
   ruff is clean.
 
-### Next 1: the two-scene smoke replicate
+### S2: the two-scene smoke replicate
 
 One replicate of `bench/variations/item-facts-world-two-scene.json` with
 the fact and continuity judges, for a few cents. It answers W5's two
@@ -522,8 +902,6 @@ which is gitignored and so exists only on this machine:
 
 To re-score a folder: `uv run python bench/calibration/rejudge.py
 --results bench/results/<folder> --out <new folder>`.
-
-### Next 2: the v36 comparison, then the PR for `world-model-s2b`
 
 ### S1 record
 
@@ -1447,9 +1825,16 @@ S2 is split into Ringer tasks on branch `world-model-s2` (S1 merged as PR
 - The continuity plan's Phase 0 bar (92% per change type) restarts on the new
   reply format from here, with v36 as the baseline.
 
-**S3 - Remove what the model makes redundant.** One run per removal: the
-start-place rule, the bigger-place rule. Keep a removal only if the numbers
-hold.
+S2 is done: merged as PRs 481 and 485, with the exit met (see the S2
+record).
+
+**Scene grounding (after S2).** Declare and place the things, areas and
+NPCs of scenes 1B-3C, one Ringer task per scene. The order and the settled
+decisions are in "Resume here".
+
+**S3 - Remove what the model makes redundant.** One run per removal. The
+bigger-place rule already went in task B, so only the start-place rule is
+left. Keep a removal only if the numbers hold.
 
 **S4 - Runtime.** Capture during play, the tree in saves (schema bump), cause
 routing: hand over to the continuity plan's Phases 4-6, which build on this

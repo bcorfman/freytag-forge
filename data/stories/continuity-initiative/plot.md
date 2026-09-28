@@ -169,9 +169,13 @@ objective: Follow Michelles lead and survive the park
 participant_ids: [kristin, brandon, michelle]
 character_placements:
   brandon: {parent: los_angeles_park, text: across the park from Kristin}
-item_ids: [memory_card, transit_card, park_bench]
+item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, kristin_truck]
 item_placements:
   park_bench: {parent: los_angeles_park}
+  transit_card: {parent: park_bench, under: true}
+  number_sequence: {parent: park_bench, under: true}
+  michelle_photograph: {parent: park_bench, under: true}
+  kristin_truck: {parent: los_angeles_park}
 entry_text: "The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.\n\n"
 transition_ids: [t_1b_1c]
 bridge_text:
@@ -233,11 +237,15 @@ Kristin realizes Brandon retains access to government systems and may be more de
 ## Scene 1C — Discovery of the Facility
 ---
 scene_id: 1C
-location_id: regional_facility
+location_id: freight_terminal
 freytag_phase: rising_action
 objective: Confirm the facility and its purpose
 participant_ids: [kristin, brandon, michelle]
-item_ids: [transit_card]
+companions: [brandon]
+item_ids: [transit_card, kristin_truck, logistics_terminal]
+item_placements:
+  kristin_truck: {parent: freight_terminal}
+  logistics_terminal: {parent: freight_terminal}
 entry_text: "Michelle's lead brought Kristin and Brandon to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. They kept to the shadow of the loading docks, looking for a way into whatever lay below.\n\n"
 transition_ids: [t_1c_2a]
 bridge_text:
@@ -330,7 +338,14 @@ location_id: facility_perimeter
 freytag_phase: rising_action
 objective: Enter the facility under false identities
 participant_ids: [kristin, brandon]
-item_ids: [transit_card]
+companions: [brandon]
+item_ids: [transit_card, hideout_servers, inspection_console]
+item_placements:
+  hideout_servers: {parent: brandon_hideout}
+  inspection_console: {parent: infrastructure_corridors}
+character_placements:
+  kristin: {parent: brandon_hideout}
+  brandon: {parent: brandon_hideout}
 entry_text: "Brandon's hideout was buried inside a dead communications center: servers, salvaged hardware, and years of leaked Continuity Initiative documents. Somewhere beneath the city the facility waited, and its unstable cooling-water and ventilation readings were exactly the kind of flaw a pair of outside inspectors might be sent to examine.\n\n"
 transition_ids: [t_2a_2b]
 bridge_text:
@@ -664,7 +679,9 @@ location_id: broadcast_relay
 freytag_phase: climax
 objective: Overload JANUS and seize the broadcast
 participant_ids: [kristin, michelle, brandon, rebecca]
-item_ids: []
+item_ids: [inspection_console]
+item_placements:
+  inspection_console: {parent: infrastructure_corridors}
 entry_text: "Alarms layered over alarms as the facility fought to predict its attackers. Above the fighting, Rebecca's executive office and the external broadcast relay waited at the end of corridors that JANUS watched move by move.\n\n"
 transition_ids: [t_3b_3c]
 bridge_text:
@@ -738,8 +755,9 @@ location_id: facility_escape
 freytag_phase: resolution
 objective: Expose the network and escape
 participant_ids: [kristin, michelle, rebecca]
-item_ids: [portable_archive]
+item_ids: [portable_archive, inspection_console]
 item_placements:
+  inspection_console: {parent: infrastructure_corridors}
   portable_archive:
     placement: with Rebecca in her hands
     while_fact_false: portable_archive_secured

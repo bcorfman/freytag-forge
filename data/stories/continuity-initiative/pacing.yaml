@@ -39,6 +39,9 @@ events:
 - id: scrutiny_2a
   scene_id: 2A
   at_turn: 3
+  when:
+  - fact_id: false_identities_ready
+    equals: true
   effects:
   - fact_id: identity_scrutiny_visible
     equals: true
@@ -106,6 +109,9 @@ events:
 - id: cover_review_2a
   scene_id: 2A
   at_turn: 7
+  when:
+  - fact_id: false_identities_ready
+    equals: true
   effects:
   - fact_id: inspector_cover_under_review
     equals: true

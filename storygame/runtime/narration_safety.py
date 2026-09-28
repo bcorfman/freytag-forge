@@ -84,12 +84,7 @@ class NarrationSafetyValidator:
         scene = next(
             item for item in state.package.scenes if item.metadata.scene_id == candidate_state.current_scene_id
         )
-        allowed_entities.update((scene.metadata.location_id, *scene.metadata.participant_ids, *scene.metadata.item_ids))
-        allowed_entities.update(
-            placement.parent
-            for placement in scene.metadata.item_placements.values()
-            if hasattr(placement, "parent") and placement.parent is not None
-        )
+        allowed_entities.update(self._scene_entity_ids(state.package, scene))
         npc_ids = {npc.id for npc in state.package.world.npcs}
         known_terms = {
             term.casefold()
@@ -248,3 +243,44 @@ class NarrationSafetyValidator:
             for anchor, beat in scene.beats.items()
             if anchor in projected
         )
+
+    @staticmethod
+    def _scene_entity_ids(package: object, scene: object) -> set[str]:
+        """Return entities that the current scene may name."""
+
+        metadata = scene.metadata
+        entity_ids = {metadata.location_id, *metadata.participant_ids, *metadata.item_ids}
+        entity_ids.update(NarrationSafetyValidator._related_area_ids(package, metadata.location_id))
+        entity_ids.update(
+            placement.parent
+            for placement in metadata.item_placements.values()
+            if hasattr(placement, "parent") and placement.parent is not None
+        )
+        locations = {location.id for location in package.world.locations}
+        for placement in metadata.character_placements.values():
+            entity_ids.add(placement.parent)
+            if placement.parent in locations:
+                entity_ids.update(NarrationSafetyValidator._related_area_ids(package, placement.parent))
+        return entity_ids
+
+    @staticmethod
+    def _related_area_ids(package: object, location_id: str) -> set[str]:
+        """Allow the scene area and every area above or below it in the area tree."""
+
+        locations = {location.id: location for location in package.world.locations}
+        related = {location_id}
+        current = locations.get(location_id)
+        while current is not None and current.parent is not None:
+            related.add(current.parent)
+            current = locations.get(current.parent)
+
+        descendants = {location_id}
+        changed = True
+        while changed:
+            changed = False
+            for location in locations.values():
+                if location.parent in descendants and location.id not in descendants:
+                    descendants.add(location.id)
+                    changed = True
+        related.update(descendants)
+        return related

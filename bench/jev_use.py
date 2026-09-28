@@ -105,3 +105,55 @@ def ask_needs_to_stand(command: str, seat_name: str, within_reach, *, environmen
     except Exception:
         return None
     return None
+
+
+def ask_same_or_part(
+    command: str,
+    story: str,
+    question: str,
+    statement: str,
+    player,
+    known,
+    *,
+    environment=None,
+    opener=None,
+) -> bool | None:
+    environment = os.environ if environment is None else environment
+    opener = urllib.request.urlopen if opener is None else opener
+    account = environment.get("CLOUDFLARE_ACCOUNT_ID")
+    token = environment.get("CLOUDFLARE_AI_TOKEN")
+    if not account or not token:
+        return None
+    body = {
+        "model": "typesafe/jev",
+        "input": {
+            "state": {"command": command, "story": story, "player": player, "known": known},
+            "questions": {
+                "same_or_part": {
+                    "type": "noul",
+                    "instructions": f"{question} Use story, player and known to decide what is most likely.",
+                    "criteria": {
+                        "true": f"Most likely, {statement}.",
+                        "false": f"Most likely, this is not so: {statement}.",
+                    },
+                }
+            },
+        },
+    }
+    try:
+        request = urllib.request.Request(
+            f"https://api.cloudflare.com/client/v4/accounts/{account}/ai/run",
+            data=json.dumps(body).encode(),
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
+            method="POST",
+        )
+        with opener(request, timeout=30) as response:
+            payload = json.loads(response.read())
+        answer = payload.get("result", {}).get("result", {}).get("answers", {}).get("same_or_part")
+        if payload.get("success") is True and payload.get("result", {}).get("state") == "Completed":
+            noul = answer.get("noul") if isinstance(answer, dict) else None
+            if isinstance(noul, (int, float)) and not isinstance(noul, bool):
+                return noul > THRESHOLD
+    except Exception:
+        return None
+    return None

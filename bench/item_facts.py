@@ -223,7 +223,7 @@ def _single_call_rules(protagonist_name, *, drop_rules=frozenset()):
     return rules
 
 
-_MATCH_SYSTEM = 'You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {"refers": ["name"], "same_as": {"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "the old lamp" for "Grandma\'s lamp". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For "Ask the cook who took the key." list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or "new" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like "the corner of the kitchen" for kitchen, give that place. Copy names from THINGS exactly.'
+_MATCH_SYSTEM = 'You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {"refers": ["name"], "same_as": {"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "the old lamp" for "Grandma\'s lamp". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For "Ask the cook who took the key." list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or "new" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like "the corner of the kitchen" for kitchen, give that place. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give "new". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is "new". Copy names from THINGS exactly.'
 _SECOND_CALL_SYSTEM = 'You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like {"item_facts": {"thing": {"place": "name", "condition": ["phrase"]}}}. List only the things in THINGS that STORY changed. For each one, give the name of who or what has it now and up to two short condition phrases. Example: if Sam picks up the lantern from the table and lights it, the lantern is {"place": "Sam", "condition": ["lit"]}. If STORY changed nothing, return {"item_facts": {}}.'
 
 
@@ -255,7 +255,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": None,
             "match_issues": [],
             "resolutions": {},
+            "place_resolutions": {},
             "engine_resolutions": {},
+            "mapping_checks": [],
         }
         self.item_facts_match_calls = 0
         self.item_facts_axis_fixes = 0
@@ -601,6 +603,45 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 return min((npc.name, *npc.aliases), key=len)
         return world.name(entity_id)
 
+    @staticmethod
+    def _mapping_name(name):
+        return f'"{name}"'
+
+    def _mapping_prompt(self, world, name, target_id, *, is_place):
+        n = self._mapping_name(name)
+        k = self._mapping_name(world.name(target_id))
+        if is_place:
+            if world.is_a(target_id, "area"):
+                return (
+                    f"Is the place called {n} the same place as {k}, or inside it?",
+                    f"the place called {n} is {k} or is inside it",
+                )
+            if world.is_a(target_id, "character"):
+                return f"Is the place called {n} on {k}?", f"the place called {n} is on {k}"
+            return f"Is the place called {n} at {k}?", f"the place called {n} is at {k}"
+        if world.is_a(target_id, "character"):
+            return f"Are {n} and {k} the same person?", f"{n} and {k} are the same person"
+        return f"Are {n} and {k} the same thing?", f"{n} and {k} are the same thing"
+
+    def _mapping_entity(self, world, entity_id):
+        parent = world.parent(entity_id)
+        holder = world.name(parent) if parent is not None and world.is_a(parent, "character") else None
+        place = None if holder else world.name(parent) if parent is not None else None
+        result = {"name": world.name(entity_id), "place": place, "held_by": holder}
+        label = world.place_label(entity_id)
+        if label and (place is None or label.casefold() != place.casefold()):
+            result["place_text"] = label
+        return result
+
+    def _mapping_state(self, world, target_id):
+        protagonist_id = self.state.package.world.protagonist_id
+        player = self._mapping_entity(world, protagonist_id)
+        if target_id == protagonist_id:
+            return player, player
+        known = self._mapping_entity(world, target_id)
+        known["can_move"] = not world.is_a(target_id, "area") and not world.schema.is_fixed(target_id)
+        return player, known
+
     def _match_payload(self, player_input, new_names, *, include_places=False):
         world = self._world()
         protagonist = world.resolve(_protagonist_name(self.state.package))
@@ -735,7 +776,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._apply_state(world, entity_id, name, value, place_pole, issues)
         return before != self.item_facts.get(name)
 
-    def apply_item_facts(self, raw, *, player_input="(none)"):
+    def apply_item_facts(self, raw, *, player_input="(none)", story="", confirm=None):
         self._ensure_scene_seeded()
         previous = self.item_facts
         issues = []
@@ -781,6 +822,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         match_issues = []
         resolutions = {}
         engine_resolutions = {}
+        mapping_checks = []
         unresolved = []
         resolved = []
         for key, value in entries:
@@ -838,13 +880,66 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 match_issues.append("invalid item_facts match reply")
 
         same_as = match_reply.get("same_as", {}) if isinstance(match_reply, dict) else {}
+        protagonist_id = self.state.package.world.protagonist_id
+        player_character_names = {
+            item["key"]
+            for item in prepared
+            if isinstance(same_as, dict)
+            and isinstance(same_as.get(item["key"]), str)
+            and same_as[item["key"]] != "new"
+            and self._resolve_name(world, same_as[item["key"]]) == protagonist_id
+        }
         place_ids = {}
+        place_resolutions = {}
+        mapping_answers = {}
+
+        def check_mapping(name, target_id, kind):
+            pair = (name, target_id)
+            if pair in mapping_answers:
+                return mapping_answers[pair]
+            question, statement = self._mapping_prompt(world, name, target_id, is_place=kind == "place")
+            player, known = self._mapping_state(world, target_id)
+            answer = confirm(player_input, story, question, statement, player, known)
+            mapping_checks.append(
+                {
+                    "name": name,
+                    "target": world.name(target_id),
+                    "kind": kind,
+                    "question": question,
+                    "player": player,
+                    "known": known,
+                    "answer": answer,
+                }
+            )
+            if answer is None:
+                issues.append(f"item_facts mapping check for {name!r} unavailable")
+            mapping_answers[pair] = answer
+            return answer
+
         for place in place_names:
             target = same_as.get(place) if isinstance(same_as, dict) else None
             if isinstance(target, str) and target != "new":
                 place_ids[place] = self._resolve_name(world, target)
-                if place_ids[place] is not None and not world.is_a(place_ids[place], "area"):
+                if place_ids[place] is not None and confirm is not None:
+                    target_id = place_ids[place]
+                    exact = (
+                        place.casefold() == world.name(target_id).casefold()
+                        or self._resolve_name(world, place) == target_id
+                    )
+                    if not exact:
+                        answer = check_mapping(place, target_id, "place")
+                        if answer is False:
+                            place_ids.pop(place, None)
+                            place_resolutions[place] = "new"
+                            continue
+                if (
+                    place_ids[place] is not None
+                    and place not in player_character_names
+                    and not world.is_a(place_ids[place], "area")
+                ):
                     world.add_alias(place_ids[place], place)
+            place_id = place_ids.get(place)
+            place_resolutions[place] = world.name(place_id) if place_id is not None else "new"
 
         for item in prepared:
             key, value = item["key"], item["value"]
@@ -853,12 +948,20 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 target = same_as.get(key)
                 if isinstance(target, str) and target != "new":
                     entity_id = self._resolve_name(world, target)
-                    if entity_id is not None:
-                        if not world.is_a(entity_id, "area"):
-                            world.add_alias(entity_id, key)
-                        resolutions[key] = world.name(entity_id)
-                        if target != world.name(entity_id):
-                            engine_resolutions[target] = world.name(entity_id)
+                    if entity_id == protagonist_id:
+                        issues.append(f"item_facts match mapped {key!r} to the player character; kept as new")
+                        entity_id = None
+                    elif entity_id is not None:
+                        answer = check_mapping(key, entity_id, "thing") if confirm is not None else True
+                        if answer is False:
+                            entity_id = None
+                            resolutions[key] = "new"
+                        else:
+                            if not world.is_a(entity_id, "area"):
+                                world.add_alias(entity_id, key)
+                            resolutions[key] = world.name(entity_id)
+                            if target != world.name(entity_id):
+                                engine_resolutions[target] = world.name(entity_id)
             if entity_id is None:
                 created = world.create(key, owner=item["owner_id"])
                 if not created.ok:
@@ -866,6 +969,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     continue
                 entity_id = created.id
                 resolutions[key] = "new"
+                if key in player_character_names:
+                    place_ids[key] = entity_id
             elif item["candidate"] and key not in resolutions:
                 resolutions[key] = world.name(entity_id)
                 if key != world.name(entity_id):
@@ -891,6 +996,17 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if place_pole:
                 self.item_facts_axis_fixes += 1
             place_parent = place_ids.get(place) if place and not place_pole else None
+            character_inside_character = (
+                place
+                and not place_pole
+                and place in place_ids
+                and world.is_a(entity_id, "character")
+                and place_parent is not None
+                and world.is_a(place_parent, "character")
+            )
+            if character_inside_character:
+                place_parent = None
+                issues.append(f"item_facts match mapped place {place!r} to a character; {name} left unplaced")
             if place and not place_pole and place not in place_ids:
                 place_parent = self._resolve_name(world, place)
             entity = world.schema.entities.get(entity_id)
@@ -924,7 +1040,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": match_raw,
             "match_issues": match_issues,
             "resolutions": resolutions,
+            "place_resolutions": place_resolutions,
             "engine_resolutions": engine_resolutions,
+            "mapping_checks": mapping_checks,
         }
         return self.item_facts, issues
 
@@ -939,7 +1057,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 "match_raw": None,
                 "match_issues": [],
                 "resolutions": {},
+                "place_resolutions": {},
                 "engine_resolutions": {},
+                "mapping_checks": [],
             }
             self._last_item_facts_match = copy.deepcopy(result)
             return result
@@ -975,7 +1095,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "match_raw": copy.deepcopy(reply),
             "match_issues": issues if not valid else [],
             "resolutions": {},
+            "place_resolutions": {},
             "engine_resolutions": engine_resolutions if valid else {},
+            "mapping_checks": [],
         }
         self._last_item_facts_match = copy.deepcopy(result)
         return result
