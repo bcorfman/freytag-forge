@@ -178,7 +178,7 @@ def test_recalled_earlier_knowledge_has_its_own_prompt_section(monkeypatch) -> N
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    provider("Ask Brandon what he is hiding.")
+    provider("Ask Brandon about the infrastructure corridors.")
 
     user = captured["payload"]["user"]
     statement = (

@@ -164,6 +164,7 @@ class KnowledgeProjector:
         is retrieval on reference, not a
         ranked cut to a budget; the numeric bound below is only a backstop
         against a pathological package, never the selection mechanism.
+        Naming a person alone does not recall knowledge from an earlier scene.
 
         The resolver validates segment grounding against this same projection,
         so the provider is never asked to ground on knowledge it was not shown.
@@ -177,21 +178,28 @@ class KnowledgeProjector:
         in_scene = [item for item in visible if state.current_scene_id in item.available_in_scenes]
         scene_ids = {item.id for item in in_scene}
         referenced_entity_ids = _input_referenced_entity_ids(state.package.world, player_input)
+        character_ids = {entity.id for entity in state.package.world.npcs}
+        character_ids.add(state.package.world.protagonist_id)
         recalled = [
             item
             for item in visible
             if item.id not in scene_ids
             and item.source.kind != "scene_entry"
-            and self._player_refers_to(item, referenced_entity_ids)
+            and self._player_refers_to(item, referenced_entity_ids, frozenset(character_ids))
         ]
         selected = [*in_scene, *recalled][: self.max_committed_knowledge]
         return tuple(self._projected(item) for item in selected)
 
     @staticmethod
-    def _player_refers_to(item: KnowledgeDefinition, referenced_entity_ids: frozenset[str]) -> bool:
+    def _player_refers_to(
+        item: KnowledgeDefinition,
+        referenced_entity_ids: frozenset[str],
+        character_ids: frozenset[str],
+    ) -> bool:
         """Decide whether the player's own words reach for one out-of-scene claim."""
 
-        return bool(referenced_entity_ids & {*item.entity_ids, *item.relevance.entity_ids})
+        non_character_ids = referenced_entity_ids - character_ids
+        return bool(non_character_ids & {*item.entity_ids, *item.relevance.entity_ids})
 
     @staticmethod
     def _projected(item: KnowledgeDefinition) -> ProjectedKnowledge:
