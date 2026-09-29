@@ -2,9 +2,11 @@
 
 Status (2026-09-28): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
-486). The narration leak fixes on `claude/magical-wozniak-tvkj5x` are
-measured live: no leak rejection in 1B, 1C or 2A, and every 1B-2A
-handoff fires. Next: merge that branch, then 2B-3C, S3 and S4. See
+486), and the narration leak fixes merged (PR 487), measured live: no
+leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
+`claude/ground-2b`: scene-entry recall scoped (ef80a28) and 2B grounded
+(3f765ba) with reveal handoffs (a1e7885), measured live: every handoff
+fired and 2B moved to 2C. Next: 2C-3C, S3 and S4. See
 "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -60,8 +62,83 @@ the five over-acting turns before 2B, if they matter. Not measured
 live: 2B turns after the supervisor path, because the 2A variation
 stops when the scene is left.
 
-**Next:** merge `claude/magical-wozniak-tvkj5x` (no PR yet), then
-ground 2B (step 1.4 below).
+**Merged** as PR 487 (459d0ae).
+
+**Stale 1A entry line in later scenes (fixed, ef80a28).** Any command
+naming Michelle recalled `k_scene_1a_entry` ("Michelle's phone remains
+on the kitchen floor") as true SCENE material in every later scene. It
+showed live in 1B turns 4 and 7. Brandon chose to scope it:
+`KnowledgeProjector._committed_for` no longer recalls `scene_entry`
+items outside their own scene. Ringer, Luna, one attempt; suite 897
+passed. Offline capture confirms the line now reaches only 1A. Not
+measured live.
+
+**2B grounding (Brandon's decisions, 2026-09-28).** `janus_archive` is
+renamed "records archive" (alias "restricted records archive"), because
+the old name put the reveal phrase "JANUS archive" (a `janus_evidence`
+must_convey) into 2B's opening. Fixed `archive_terminals` ("archive
+terminals") and `medical_terminal` things are placed in the archive;
+the medical terminal is not in a medical level. 2B declares
+`companions: [brandon]`. Payloads must stay byte-identical except 2B's
+opening location line. **Done as 3f765ba** (Ringer, Luna, one attempt;
+suite 898 passed; `ringer-work/freytag-2b-grounding/verify_2b.py`
+passed: 1A-3A payloads byte-identical except that line). The leakage
+matrix needed no knowledge edits. Not measured live: no 2B bench script
+exists.
+
+**2B live replicate (2026-09-28, Ringer, one replicate, check
+passed; 18c4f30).** `bench/variations/item-facts-world-2b.json`,
+script `archive-evidence` (10 turns, thorough entry), results in
+`bench/results/world-2b`, read by
+`.plans/world-model-scenes/scene_2b_check.py`. Completed, no rejected
+turn, no leak rejection. Every name the reply used resolved directly
+("records archive", "archive terminals", "medical terminal",
+"infrastructure corridors", "inspection console"), so no match call
+was needed and nothing was unplaced. The engine refused the reply's
+bad changes: the medical terminal (turns 5, 9) and the archive
+terminals (turn 10) "moved to Kristin" were refused as fixed, and "records
+archive" placed in Kristin (turn 4) was refused as an area. Kristin's
+walk to the corridors and back (turns 7-8) landed, with Brandon
+following. Fact tracking: facts after the turn correct 10/10.
+Continuity: command not finished 3/10 (turns 2, 5, 10), restarts the
+scene 1/10 (turn 8, "Lead Brandon back into the records archive.", a
+judge false positive, because the command asks for the return).
+**The gap:** `k_sl_2b_a_r1` and `k_sl_2b_a_r2` were offered on every
+turn, and the narrator selected neither, even for turn 1 "Search the
+archive terminals for Michelle's record." (R1) and turn 2 "Pull up my
+own record on the archive terminals." (R2). So no 2B knowledge was
+earned, `janus_evidence` arrived only as the turn-10 cue, and the scene
+never left. The 2B candidates have no `earn_when`, `action_evidence` or
+`delivery_text`. This is the same gap 2a806db closed for 1B-2A.
+
+**2B reveal handoffs (a1e7885).** Written in ChatGPT Desktop over three
+prompt rounds and approved by Brandon. The first answer gave alternatives
+the same nouns, which my prompt allowed, and a handoff fires only when
+exactly one offered candidate matches. The final prompt stated the
+matcher's rules (whole-word phrases, no plurals, possessives are one
+word, exactly one match), the commands each entry must and must not
+catch, and that `earn_when` finishes "Earn it when the player ___.".
+Landed by Ringer (Luna, one attempt; suite 898 passed; payloads
+unchanged); `ringer-work/freytag-2b-handoffs/verify_handoffs_2b.py`
+checks the exact values and 16 matcher cases.
+
+**2B rerun (2026-09-28, Ringer, one replicate, check passed;
+`bench/results/world-2b-handoffs`).** Handoffs fired on turns 1
+(`k_sl_2b_a_r1`), 3 (`k_sl_2b_b_r1`) and 5 (`k_sl_2b_c_r1`), each
+delivery sentence reached the narration word for word, and the scene
+moved to 2C after turn 8 (min_turns), so turns 9-10 did not run. No
+rejected turn, no leak rejection. Facts after the turn correct 8/8.
+Continuity: command not finished 2/8 (turns 5, 6), acts beyond the
+command 2/8 (turns 4, 8), restarts the scene 1/8 (turn 8, the same judge
+false positive as before). Turn 5's lead-up said the files were "heavily
+encrypted" right before the delivered find, although the reveal-turn
+rule ("Write only what leads up to it.") was in its prompt: 1 of 3
+reveal turns. Watch it over more replicates before any change. Minor:
+turn 8's reply carried an empty `lantern` entry copied from the
+variation's output example; the engine flagged and ignored it.
+
+**Next:** 2C grounding, from the survey: `purge_chamber` is not where
+2C's text happens ("command levels and detention sectors").
 
 ### Narration leak diagnosis (2026-09-28, offline)
 

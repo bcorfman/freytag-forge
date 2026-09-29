@@ -27,7 +27,8 @@ locations:
   name: Facility perimeter
   parent: regional_facility
 - id: janus_archive
-  name: JANUS archive
+  name: records archive
+  aliases: [restricted records archive]
   parent: regional_facility
 - id: purge_chamber
   name: Purge chamber
@@ -181,6 +182,13 @@ items:
 - id: inspection_console
   name: inspection console
   aliases: [corridor inspection console, diagnostic console]
+  fixed: true
+- id: archive_terminals
+  name: archive terminals
+  aliases: [archive terminal]
+  fixed: true
+- id: medical_terminal
+  name: medical terminal
   fixed: true
 facts:
 - scene_1a_entry_known

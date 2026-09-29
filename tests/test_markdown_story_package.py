@@ -16,10 +16,26 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
+from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package import StoryPackageError, load_story_package
 from storygame.story_package.models import ItemPlacement
 
 PACKAGE = Path("data/stories/continuity-initiative")
+
+
+def test_scene_2b_applies_archive_and_companion_placements() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "2B"
+
+    assert apply_scene_placements(package, state.facts, "2B") == ()
+
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "janus_archive"
+    assert world.parent("brandon") == "janus_archive"
+    assert world.parent("archive_terminals") == "janus_archive"
+    assert world.parent("medical_terminal") == "janus_archive"
+    assert "brandon" in world.companions("kristin")
 
 
 def copied_package(tmp_path: Path) -> Path:
@@ -390,6 +406,13 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_2a_b_r2",
         "k_sl_2a_c_r1",
         "k_sl_2a_c_r2",
+        "k_sl_2b_a_r1",
+        "k_sl_2b_a_r2",
+        "k_sl_2b_b_r1",
+        "k_sl_2b_b_r2",
+        "k_sl_2b_b_r3",
+        "k_sl_2b_c_r1",
+        "k_sl_2b_c_r2",
     }
     actual = {item.id for item in package.knowledge.knowledge if item.delivery_text}
 
