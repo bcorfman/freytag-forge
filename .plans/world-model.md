@@ -9,7 +9,8 @@ leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
 (PR 488). 2C grounded with handoffs on `claude/ground-2c`, plus two
 recall fixes (EARLIER IN THE STORY; people alone do not recall),
 measured live: no drift in 3 of 3, every handoff fires. Turn 5 no longer
-contradicts 2C.3 (0 of 3); bare "corridor" is a measured known
+contradicts 2C.3 and Brandon voices his stance 2 of 3 (00052d3); a bare
+"console" drift (1 of 3) is open; bare "corridor" is a measured known
 gap. Next: 3A-3C, S3
 and S4. See
 "Resume here".
@@ -318,7 +319,33 @@ Kristin in the command levels every turn, facts after the turn correct
 21/24, no rejected turn, restarts_scene 2 of 24 (turn 2 "enters the
 room").
 
-**Next:** push `claude/ground-2c` for review, then 3A.
+**Brandon chose to have Brandon voice his stance.** A live A/B replay of
+the three recorded turn-5 prompts (Ringer,
+`~/dev/ringer-work/freytag-answer-rule-probe`, 15 samples per arm, read
+by hand): Brandon says aloud that they must send now 5 of 15 as
+recorded, 10 of 15 with "When the player talks to someone, that person
+answers." after the gives-a-thing turn rule (one rule sample ran into a
+long exchange ending with Brandon giving in). **Landed as 00052d3**
+(Ringer, Luna; suite passed; one line in `_turn_rules_before_grounding`,
+which the recovery path reuses; not in the opening, which narrates no
+player action).
+
+**2C rerun with the answer rule (2026-09-29, three replicates, check
+passed; `bench/results/world-2c-answer-x3`).** Turn 5: Brandon argues to
+send now in 2 of 3 and is silent in 1; command_not_finished on turn 5
+0 of 3. Contradicts a stated fact 0 of 24, restarts 0 of 24, acts
+beyond the command 4 of 24 (walking into "the room" on turns 2 and 5, a
+pistol grip on turn 8). Every handoff fired (1, 4, 6); facts after the
+turn correct 21/24; no rejected turn.
+**New drift, 1 of 3, from a different cause:** replicate 1 turn 4 ("Check
+the copied files for proof of the purge order.") replied `"Kristin":
+{"place": "console"}`. "console" resolves directly (no match call) to
+2A's fixed inspection console, so Kristin moved into the infrastructure
+corridors. Turn 5's "room" then matched the corridors, and turns 6-7
+were narrated there, until turn 8 walked her back. Not addressed yet.
+
+**Next:** decide on the "console" drift, then push `claude/ground-2c` for
+review, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
