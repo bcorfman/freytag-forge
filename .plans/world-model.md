@@ -8,7 +8,9 @@ leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
 (3f765ba) with reveal handoffs (a1e7885), measured live, and merged
 (PR 488). 2C grounded with handoffs on `claude/ground-2c`, plus two
 recall fixes (EARLIER IN THE STORY; people alone do not recall),
-measured live: no drift in 3 of 3, every handoff fires. Next: 3A-3C, S3
+measured live: no drift in 3 of 3, every handoff fires. Turn 5 (Brandon's
+stance) awaits a reworded statement; bare "corridor" is a measured known
+gap. Next: 3A-3C, S3
 and S4. See
 "Resume here".
 The task split is in section 11. Written at Brandon's request
@@ -262,7 +264,47 @@ sending the copied files now.") as contradicting a stated fact in 2 of
 3 (Brandon agrees to hold the files, while 2C.3 has him argue to send
 them at once), and 3 of 7 runs since the handoffs. Not addressed yet.
 
-**Next:** push `claude/ground-2c` for review, then 3A.
+**Plain-place-word match rule, measured live (2026-09-29).** It did run
+live: in all three people-x3 replicates turn 2's reply put Kristin in a
+bare "room", mapped to the command levels. A bare "corridor" had not
+come up, so a Ringer probe (`~/dev/ringer-work/freytag-corridor-probe`:
+stubbed narrator reply, live match call and Jev check, real 2C state
+with "infrastructure corridors" in THINGS) measured it: **"corridor" went
+to 2A's infrastructure corridors 9 of 10**, "room" to the command levels
+5 of 5. Fix ranking, as measured:
+- Rule: moving the plain-word sentence first and adding 'Give that place
+  even when another place in THINGS has the same word in its name, like
+  "east corridors" or "guest room".' (1da3bbf) made it worse: corridor
+  10 of 10 wrong, room 0 of 5 (all to "kitchen"). Reverted (a8d4761).
+- LLM check: the existing Jev place check had said yes to 'Is the place
+  called "corridor" the same place as "infrastructure corridors", or
+  inside it?'. c0ddddc asks a contrastive question when the target area
+  is unrelated to the player's area ('Kristin Schweitzer is in "command
+  levels". Is the place called "corridor" really "infrastructure
+  corridors", rather than a spot in "command levels"?'), and a no now
+  lands the move in the player's area (before, a no left the thing with
+  no place). Jev answered yes 8 of 8; corridor still 8 of 10 wrong.
+  Kept for the no-place fix; suite 906 passed.
+- Scoping the match call to the current scene's areas was declined: a
+  real narrated move into an earlier scene's area (which narration
+  safety allows once that scene was entered) would be dropped.
+**Brandon chose: a known gap.** The drift that happened came from recall,
+which is fixed. Revisit if a bare "corridor" appears in 3A-3C.
+
+**Turn 5 cause (2026-09-29).** No 2C statement says where Brandon stands.
+The turn-5 SCENE has only `k_sl_2c_c_r2` ("...Kristin and Brandon must
+choose whether to risk the captives by sending it now."), so the
+narrator picks a side; in two replicates Brandon wants to wait. Plot 2C.3
+has him argue to send at once. **Brandon chose:** ChatGPT Desktop rewords
+`k_sl_2c_c_r2`'s statement and delivery_text to state Brandon's stance in
+third person, without deciding Kristin's side, keeping one phrase from
+each must_convey group. First round returned unattributed dialogue as
+the statement (my prompt asked for "something he could say aloud"); a
+corrected prompt is out. Then: land it by Ringer and rerun the 2C
+replicates to measure turn 5.
+
+**Next:** land the turn-5 statement, measure it, push `claude/ground-2c`
+for review, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
