@@ -12,10 +12,10 @@
       "model": "gpt-5.6-luna",
       "max_attempts": 1,
       "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live benchmark itself. Reply with the single word: ready.",
-      "check": "cd /home/bcorfman/dev/freytag-forge && set -a && . ./.env && set +a && TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/item-facts-world-2c.json --scene 2C --script purge-clock --replicates 1 --out bench/results/world-2c-fixes --confirm ; TMPDIR=/tmp .venv/bin/python .plans/world-model-scenes/scene_2b_check.py bench/results/world-2c-fixes",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -a && . ./.env && set +a && TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/item-facts-world-2c.json --scene 2C --script purge-clock --replicates 1 --out bench/results/world-2c-handoffs --confirm ; TMPDIR=/tmp .venv/bin/python .plans/world-model-scenes/scene_2b_check.py bench/results/world-2c-handoffs",
       "expect_files": [
-        "/home/bcorfman/dev/freytag-forge/bench/results/world-2c-fixes/all-turn-records.json",
-        "/home/bcorfman/dev/freytag-forge/bench/results/world-2c-fixes/summary.json"
+        "/home/bcorfman/dev/freytag-forge/bench/results/world-2c-handoffs/all-turn-records.json",
+        "/home/bcorfman/dev/freytag-forge/bench/results/world-2c-handoffs/summary.json"
       ],
       "check_timeout_s": 1800,
       "timeout_s": 300,
