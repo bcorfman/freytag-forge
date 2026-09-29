@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from bench.core import advance_state_to_scene
 from storygame.runtime.contracts import FactOperation, NarrationSegment, ResolvedTurnProposal, StoryEventProposal
 from storygame.runtime.engine import SCENE_ENTRY_REQUEST, RuntimeEngine
 from storygame.runtime.facts import Fact
@@ -81,6 +82,27 @@ def test_public_scene_entry_remains_in_players_committed_knowledge() -> None:
     projection = KnowledgeProjector().project(_scene_1b_state(), "player", "Search the park.")
 
     assert "k_scene_1b_entry" in _ids(projection.committed_knowledge)
+
+
+def test_naming_only_brandon_does_not_recall_earlier_scene_knowledge() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    advance_state_to_scene(PACKAGE, state, "2C")
+
+    projection = KnowledgeProjector().project(state, "player", "Ask Brandon what he is hiding.")
+    committed_ids = _ids(projection.committed_knowledge)
+    items_by_id = {item.id: item for item in PACKAGE.knowledge.knowledge}
+
+    assert all(state.current_scene_id in items_by_id[item_id].available_in_scenes for item_id in committed_ids)
+    assert "k_sl_2a_c_r2" not in committed_ids
+
+
+def test_naming_a_corridor_recalls_earlier_scene_knowledge() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    advance_state_to_scene(PACKAGE, state, "2C")
+
+    projection = KnowledgeProjector().project(state, "player", "Ask Brandon about the infrastructure corridors.")
+
+    assert "k_sl_2a_c_r2" in _ids(projection.committed_knowledge)
 
 
 def test_scene_entry_is_not_recalled_after_leaving_its_scene() -> None:

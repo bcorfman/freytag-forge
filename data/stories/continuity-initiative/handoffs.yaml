@@ -166,7 +166,7 @@ deliveries:
   fallback_text: >-
     Kristin and Brandon obtain enough evidence to expose the conspiracy, leaving the evidence in hand. It is ready to
     transmit, but sending proof will reveal their position.
-  cue_text: Copied records remain open on Kristin's terminal beside the broadcast controls.
+  cue_text: In the command levels, Kristin notices the copied files close at hand, yet using them could expose her and Brandon.
 - fact_id: rebecca_office_required_for_broadcast
   scene_id: 2C
   source_kind: message

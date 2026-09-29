@@ -14,6 +14,7 @@ from storygame.runtime.candidate_matcher import (
 )
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
+from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
 from storygame.runtime.world_model import apply_scene_placements, world_for
@@ -36,6 +37,28 @@ def test_scene_2b_applies_archive_and_companion_placements() -> None:
     assert world.parent("archive_terminals") == "janus_archive"
     assert world.parent("medical_terminal") == "janus_archive"
     assert "brandon" in world.companions("kristin")
+
+
+def test_scene_2c_applies_command_levels_and_companion_placements() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "2C"
+
+    assert apply_scene_placements(package, state.facts, "2C") == ()
+
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "purge_chamber"
+    assert world.parent("brandon") == "purge_chamber"
+    assert "brandon" in world.companions("kristin")
+
+
+def test_scene_2c_may_name_the_maintenance_network() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    scene = next(scene for scene in package.scenes if scene.metadata.scene_id == "2C")
+
+    assert "maintenance_network" in NarrationSafetyValidator._scene_entity_ids(package, scene)
+    assert world_for(package, state.facts).parent("maintenance_network") == "purge_chamber"
 
 
 def copied_package(tmp_path: Path) -> Path:
@@ -413,6 +436,14 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_2b_b_r3",
         "k_sl_2b_c_r1",
         "k_sl_2b_c_r2",
+        "k_sl_2c_a_r1",
+        "k_sl_2c_a_r2",
+        "k_sl_2c_b_r1",
+        "k_sl_2c_b_r2",
+        "k_sl_2c_c_r1",
+        "k_sl_2c_c_r2",
+        "k_sl_2c_d_r1",
+        "k_sl_2c_d_r2",
     }
     actual = {item.id for item in package.knowledge.knowledge if item.delivery_text}
 

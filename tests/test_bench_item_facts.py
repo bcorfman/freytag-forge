@@ -938,6 +938,10 @@ def test_match_system_lists_only_named_things():
         "Give a person the name of someone in THINGS only when it is that same person. "
         'A guard or a prisoner who is not in THINGS is "new".' in _MATCH_SYSTEM
     )
+    assert (
+        'A plain word like "corridor", "hall" or "room" is a spot in the place where PLAYER CHARACTER is now.'
+        in _MATCH_SYSTEM
+    )
 
 
 def test_things_omit_condition_for_empty_condition_list():

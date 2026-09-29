@@ -1063,6 +1063,7 @@ class CloudflareTurnProvider:
         """
 
         scene: list[str] = []
+        earlier_in_story: list[str] = []
         constraints: list[str] = []
         handoff_turn = self._is_authored_handoff_turn()
 
@@ -1097,7 +1098,11 @@ class CloudflareTurnProvider:
                         for detail in beat.get("details", []):
                             scene.extend(paragraphs(detail))
             for item in player.get("committed_knowledge", []):
-                scene.append(item["statement"])
+                definition = self.state.package.knowledge_indexes.by_id.get(item.get("id"))
+                if definition is not None and self.state.current_scene_id not in definition.available_in_scenes:
+                    earlier_in_story.append(item["statement"])
+                else:
+                    scene.append(item["statement"])
             if not handoff_turn:
                 for candidate in player.get("candidates", []):
                     if candidate.get("id") not in offered_ids:
@@ -1142,6 +1147,7 @@ class CloudflareTurnProvider:
         for heading, items in (
             ("CHARACTERS", self._character_lines()),
             ("SCENE", scene),
+            ("EARLIER IN THE STORY", earlier_in_story),
             ("CONSTRAINTS", constraints),
             ("PLAYER", player_lines),
         ):

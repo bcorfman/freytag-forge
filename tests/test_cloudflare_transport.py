@@ -11,6 +11,7 @@ from urllib.error import HTTPError, URLError
 
 import pytest
 
+from bench.core import advance_state_to_scene
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
     MAX_TURN_SEGMENTS,
@@ -118,6 +119,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="secret", state=state)
 
     assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
+
     assert len(attempts) == 1
     assert state.last_turn_delivery.beats_projected == ()
     assert captured["headers"]["Authorization"] == "Bearer secret"
@@ -162,6 +164,31 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     )
     unbeat_context = provider._serialized_player_context({"beats": []})
     assert "statement" in next(item for item in unbeat_context["candidates"] if item["id"] == "k_sl_1a_c_r2")
+
+
+def test_recalled_earlier_knowledge_has_its_own_prompt_section(monkeypatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    advance_state_to_scene(PACKAGE, state, "2C")
+    captured: dict[str, object] = {}
+
+    def open_request(request, timeout):
+        captured["payload"] = json.loads(request.data)
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"Fixture."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    provider("Ask Brandon about the infrastructure corridors.")
+
+    user = captured["payload"]["user"]
+    statement = (
+        "Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility and its "
+        "limited inspection console."
+    )
+    earlier = user.split("EARLIER IN THE STORY:\n", 1)[1].split("\n\nCONSTRAINTS:", 1)[0]
+    scene = user.split("SCENE:\n", 1)[1].split("\n\nEARLIER IN THE STORY:", 1)[0]
+    assert f"- {statement}" in earlier
+    assert statement not in scene
 
 
 def test_transport_caps_long_reply_and_records_telemetry(monkeypatch) -> None:

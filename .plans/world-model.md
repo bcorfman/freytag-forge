@@ -5,8 +5,11 @@ S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
 `claude/ground-2b`: scene-entry recall scoped (ef80a28) and 2B grounded
-(3f765ba) with reveal handoffs (a1e7885), measured live: every handoff
-fired and 2B moved to 2C. Next: 2C-3C, S3 and S4. See
+(3f765ba) with reveal handoffs (a1e7885), measured live, and merged
+(PR 488). 2C grounded with handoffs on `claude/ground-2c`, plus two
+recall fixes (EARLIER IN THE STORY; people alone do not recall),
+measured live: no drift in 3 of 3, every handoff fires. Next: 3A-3C, S3
+and S4. See
 "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -137,8 +140,129 @@ reveal turns. Watch it over more replicates before any change. Minor:
 turn 8's reply carried an empty `lantern` entry copied from the
 variation's output example; the engine flagged and ignored it.
 
-**Next:** 2C grounding, from the survey: `purge_chamber` is not where
-2C's text happens ("command levels and detention sectors").
+**Merged** as PR 488 (2df25bb).
+
+**2C grounding (Brandon's decisions, 2026-09-29).** 2C happens in the
+command levels: the detention sectors are sealed until 3A. `purge_chamber`
+keeps its id and is renamed "command levels" (aliases "command level",
+"upper command corridors"), as `janus_archive` was. 2C declares
+`companions: [brandon]`. Rebecca, Charles and Michelle stay unplaced
+(private contact, orders, a coded message), and Rebecca's secured office
+is not declared in 2C, because it is a must_convey of
+`rebecca_office_required_for_broadcast`. No things are declared up
+front. The `evidence_ready_to_transmit` cue named "broadcast controls"
+beside "Kristin's terminal", which contradicts 2C.5 (the broadcast works
+only from Rebecca's office). ChatGPT Desktop reworded it, and Brandon
+chose: "In the command levels, Kristin notices the copied files close at
+hand, yet using them could expose her and Brandon." Payloads must stay
+byte-identical except 2C's opening location line. Check:
+`ringer-work/freytag-2c-grounding/verify_2c.py`. **Done as 6f10f91**
+(Ringer, Luna, one attempt; suite 899 passed; payloads byte-identical
+except that line).
+
+**2C live replicate (2026-09-29, Ringer, one replicate, check passed).**
+`bench/variations/item-facts-world-2c.json`, script `purge-clock`,
+results in `bench/results/world-2c`. Completed, no rejected turn, no
+leak rejection, facts after the turn correct 9/10. No handoff (2C has
+none yet); the purge clock came by pacing (turn 3) and the two later
+facts by cues (turns 9, 10). Two grounding problems:
+- **Place drift from "corridor".** Turn 2's reply put Kristin in
+  "corridor", and the match call mapped it to 2A's infrastructure
+  corridors, which are in play because every facility area now shares a
+  parent. Turn 3 then ran in the corridors, turn 4 ("Check the copied
+  files for proof of the purge order.") walked her into 2B's records
+  archive, and turns 4-7 played there. The engine tracked it all
+  correctly; the scene drifted. **Brandon chose a match-call rule:**
+  after the spot rule, 'A plain word like "corridor", "hall" or "room"
+  is a spot in the place where PLAYER CHARACTER is now.'
+- **Dropped move on turn 10.** "Follow Michelle's route through the
+  maintenance network." put Kristin in "maintenance network", which
+  matched no area, so the move was dropped. **Brandon chose to declare
+  an area:** `maintenance_network` ("maintenance network", aliases
+  "maintenance route", "maintenance routes"). Its parent is
+  `purge_chamber`, not `regional_facility`, because narration safety
+  lets a scene name only its own area and the areas above and below it.
+  "maintenance access route" is not an alias: it is a must_convey of
+  `rebecca_office_required_for_broadcast`.
+Both fixes are in one Ringer run (`ringer-work/freytag-2c-fixes`), with
+verifiers `verify_match_rule.py` and `verify_maintenance_area.py`.
+
+**Landed:** the match rule as c1962aa and the area as e414060 (Ringer,
+Luna, one attempt each; full suite passed in each worktree; the two
+affected test files pass together).
+
+**2C rerun (2026-09-29, one replicate, check passed;
+`bench/results/world-2c-fixes`).** Kristin stayed in the command levels
+for all ten turns, and turn 10 landed her in the maintenance network,
+with nothing unplaced. No rejected turn, no leak rejection, no
+continuity flag. Facts after the turn correct 9/10: turn 3's reply
+moved Kristin to "upper command corridors", an alias of the command
+levels, so the tracked place did not change and the judge counted a
+missed move (a judge false positive about an alias). **Not measured:**
+the match rule. The narrator never said a bare "corridor" this run, and
+the match call ran on only 2 turns. Watch for it in later replicates.
+
+**2C reveal handoffs (bc595b8).** Written in ChatGPT Desktop over four
+prompt rounds and approved by Brandon. Round 2 copied the prompt's test
+commands into the noun lists (15/15 prompt commands, 0/17 variants); the
+fix was telling it that other wordings would be tested and capping noun
+phrases at three words. Final: 43/46 across 2C's three offered sets, no
+false positive. Landed by Ringer (Luna, one attempt; suite 900 passed;
+payloads unchanged; `ringer-work/freytag-2c-handoffs/verify_handoffs_2c.py`).
+
+**2C rerun with handoffs (2026-09-29, one replicate, check passed;
+`bench/results/world-2c-handoffs`).** Handoffs fired on turns 1
+(`k_sl_2c_b_r1`), 4 (`k_sl_2c_c_r1`) and 6 (`k_sl_2c_d_r2`), and the
+scene moved to 3A after turn 8. Facts after the turn correct 8/8, no
+rejected turn, no leak rejection. Continuity: turn 3 acts beyond the
+command and does not finish it; turn 7 does not finish decoding.
+**Place drift again, with a different cause.** Turn 2 ("Ask Brandon
+what he is hiding.") narrated Brandon "in the corner of the restricted
+infrastructure corridor", and the match call correctly followed the
+prose. The cause: naming Brandon recalls out-of-scene knowledge about
+him (2A's "Kristin and Brandon have opened a restricted infrastructure
+corridor...", plus 1B, 1C and 2B statements), and it is listed in SCENE
+as present fact. It was in all three 2C runs' turn-2 prompts; the
+narrator moved there in two. So the first 2C run's drift was this too,
+not the match call. **Brandon chose to mark it as the past:** keep the
+recall, but render other scenes' committed knowledge under its own
+EARLIER IN THE STORY heading after SCENE. Ringer run
+`ringer-work/freytag-earlier-recall` (check: `verify_earlier.py` on
+thorough-state prompts for 1B, 2B and 2C; fresh-state payloads
+byte-identical).
+
+**EARLIER IN THE STORY landed (522c00c;** Ringer, Luna, one attempt;
+suite 901 passed; fresh-state payloads byte-identical). **Measured over
+four 2C replicates** (`bench/results/world-2c-earlier` and
+`world-2c-earlier-x3`): every handoff fired on turns 1, 4 and 6 and the
+scene moved to 3A after turn 8 in all four; no rejected turn, no leak
+rejection; facts after the turn correct 8/8, 8/8, 7/8, 7/8 (the misses
+are turn 8 recording 3A's entry placement after the transition, a bench
+artifact). **Drift: 1 of 4** (x3 replicate 1: turn 2 again put Brandon
+"in the corner of the restricted infrastructure corridor", and turns 4-7
+ran in the records archive), against 2 of 3 before. The corridor line
+was correctly under EARLIER IN THE STORY; the narrator borrowed it
+anyway. Also seen: the narrator's generic "console" was mapped by the
+match call to 2A's fixed inspection console (refused as fixed, no harm).
+
+**Brandon chose: naming only a person does not recall (ae6406f).**
+Out-of-scene recall now ignores character ids (the world's npcs and the
+protagonist): "Ask Brandon about the infrastructure corridors." still
+recalls the 2A corridor, "Ask Brandon what he is hiding." recalls
+nothing. EARLIER IN THE STORY stays for what is recalled. Ringer, Luna;
+the first run failed only because my spec forbade updating the EARLIER
+test, which used the person-only command; the second passed in one
+attempt (suite 903). **Measured over three 2C replicates**
+(`bench/results/world-2c-people-x3`): **drift 0 of 3**, every 2C turn
+in the command levels, no earlier place named in any narration; every
+handoff fired (turns 1, 4, 6) and each replicate moved to 3A after turn
+8; facts after the turn correct 23/24; no rejected turn, no leak
+rejection. Continuity still flags turn 5 ("Argue with Brandon about
+sending the copied files now.") as contradicting a stated fact in 2 of
+3 (Brandon agrees to hold the files, while 2C.3 has him argue to send
+them at once), and 3 of 7 runs since the handoffs. Not addressed yet.
+
+**Next:** push `claude/ground-2c` for review, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 

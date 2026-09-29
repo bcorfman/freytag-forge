@@ -1401,6 +1401,10 @@ knowledge:
   delivery_text: "Michelle has organized prisoners. She is preparing an uprising from inside."
 - id: k_sl_2c_a_r1
   statement: 'Rebecca privately offers Brandon safe passage and Michelle’s release if he helps her remove Charles.'
+  earn_when: "asks Brandon about Rebecca's offer"
+  action_evidence:
+  - ["read", "check", "ask", "question", "discuss", "study", "open"]
+  - ["private message", "Brandon's message", "Brandon's messages", "offer", "offers", "offered", "safe passage", "Michelle's release"]
   entity_ids: []
   aliases:
   - rebecca offer active
@@ -1421,8 +1425,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Rebecca offers Brandon safe passage and Michelle's release if he helps her remove Charles."
 - id: k_sl_2c_a_r2
   statement: 'Rebecca tells Brandon that Charles will discard conspirators as well as prisoners, then asks him to join her instead.'
+  earn_when: "asks why Rebecca turned against Charles"
+  action_evidence:
+  - ["ask", "question", "discuss", "confront", "press", "probe", "study"]
+  - ["Rebecca turned", "Rebecca's betrayal", "Rebecca's defection", "against Charles"]
   entity_ids: []
   aliases:
   - rebecca offer active
@@ -1447,8 +1456,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Rebecca tells Brandon that Charles will discard conspirators and prisoners. She asks him to join her instead."
 - id: k_sl_2c_b_r1
   statement: 'After Michelle corrupts the records, Charles orders valuable captives transferred and everyone else destroyed within hours.'
+  earn_when: "checks the transfer orders"
+  action_evidence:
+  - ["read", "check", "search", "study", "open", "inspect", "review"]
+  - ["transfer order", "transfer orders", "purge order", "purge orders", "purge schedule", "Charles's order", "Charles's orders"]
   entity_ids: []
   aliases:
   - purge clock started
@@ -1469,8 +1483,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "After Michelle corrupts the records, Charles orders valuable captives transferred. He orders everyone else destroyed within hours."
 - id: k_sl_2c_b_r2
   statement: 'Charles prepares a broadcast of selected survivors while the purge order turns the detention sectors into a deadline.'
+  earn_when: "checks the broadcast schedule"
+  action_evidence:
+  - ["read", "check", "search", "study", "open", "inspect", "review"]
+  - ["broadcast schedule", "broadcast schedules", "broadcast plan", "broadcast plans", "selected survivor", "selected survivors", "survivor list", "survivor lists"]
   entity_ids: []
   aliases:
   - purge clock started
@@ -1491,8 +1510,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Charles prepares a broadcast of selected survivors. The purge order means time is running out in the detention sectors."
 - id: k_sl_2c_c_r1
   statement: 'Kristin and Brandon secure enough evidence to expose the conspiracy, but sending it now would reveal their position and seal the detention sectors.'
+  earn_when: "checks the copied files"
+  action_evidence:
+  - ["read", "check", "search", "study", "open", "inspect", "review"]
+  - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence"]
   entity_ids: []
   aliases:
   - evidence ready to transmit
@@ -1520,8 +1544,13 @@ knowledge:
   must_convey:
   - [evidence, proof, evidence transmission, transmit proof, evidence for broadcast, the proof]
   - [reveal their position, expose their position, seal the detention sectors, seal the cells, risk the captives, rescue impossible]
+  delivery_text: "Kristin and Brandon have enough evidence to expose the conspiracy. Sending it now would reveal their position and seal the detention sectors."
 - id: k_sl_2c_c_r2
   statement: 'The proof is ready to transmit, but Kristin and Brandon must choose whether to risk the captives by sending it now.'
+  earn_when: "argues about sending the proof"
+  action_evidence:
+  - ["argue", "discuss", "debate", "ask", "weigh", "consider", "decide"]
+  - ["send now", "sending the", "sending files", "sending the proof", "the risk", "risk now"]
   entity_ids: []
   aliases:
   - evidence ready to transmit
@@ -1549,8 +1578,13 @@ knowledge:
   must_convey:
   - [evidence, proof, transmit the evidence, broadcast proof, send the evidence, ready to transmit]
   - [risk the captives, seal the detention sectors, rescue impossible, choose rescue, choose evidence]
+  delivery_text: "The proof is ready to transmit. Kristin and Brandon must choose whether sending the proof now will risk the captives."
 - id: k_sl_2c_d_r1
   statement: "Michelle's encrypted message marks a maintenance access route into her holding block and reveals that Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
+  earn_when: "decodes Michelle's coded message"
+  action_evidence:
+  - ["decode", "read", "check", "study", "open", "search", "inspect"]
+  - ["Michelle's message", "Michelle's coded", "coded message", "coded messages", "encrypted message", "encrypted messages"]
   entity_ids: []
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
@@ -1569,8 +1603,14 @@ knowledge:
   - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office]
   - [open the detention cells, open the cells, rescue the prisoners, release the prisoners]
   - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
+  delivery_text: "Michelle's encrypted message marks a maintenance access route into her holding block. Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
 - id: k_sl_2c_d_r2
   statement: "Kristin traces Michelle's maintenance code route into her holding block, then to Rebecca's office, and learns the plan can rescue the captives only if they seize the controls to broadcast the evidence."
+  earn_when: "follows the maintenance route"
+  action_evidence:
+  - ["follow", "trace", "search", "check", "study", "inspect", "review"]
+  - ["maintenance route", "maintenance routes", "maintenance report", "maintenance reports", "route marker", "route markers", "Michelle's route"]
+  - ["route", "routes", "marker", "markers"]
   entity_ids: []
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
@@ -1589,6 +1629,7 @@ knowledge:
   - [Rebecca's office, secured office, Rebecca's secured office, Rebecca's locked office]
   - [open the detention cells, rescue the captives, release the prisoners, open the cells]
   - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
+  delivery_text: "Kristin traces Michelle's maintenance code route into her holding block, then to Rebecca's office. Kristin and Brandon can rescue the captives only by seizing the controls to broadcast the evidence."
 - id: k_sl_3a_a_r1
   statement: 'Kristin reaches Michelle alive, only to find her directing prisoners through stolen radios and coded announcements.'
   entity_ids: []
