@@ -154,11 +154,39 @@ only from Rebecca's office). ChatGPT Desktop reworded it, and Brandon
 chose: "In the command levels, Kristin notices the copied files close at
 hand, yet using them could expose her and Brandon." Payloads must stay
 byte-identical except 2C's opening location line. Check:
-`ringer-work/freytag-2c-grounding/verify_2c.py`. In progress on
-`claude/ground-2c`.
+`ringer-work/freytag-2c-grounding/verify_2c.py`. **Done as 6f10f91**
+(Ringer, Luna, one attempt; suite 899 passed; payloads byte-identical
+except that line).
 
-**Next:** land the 2C grounding, then a 2C bench script and one live
-replicate, then 2C reveal handoffs.
+**2C live replicate (2026-09-29, Ringer, one replicate, check passed).**
+`bench/variations/item-facts-world-2c.json`, script `purge-clock`,
+results in `bench/results/world-2c`. Completed, no rejected turn, no
+leak rejection, facts after the turn correct 9/10. No handoff (2C has
+none yet); the purge clock came by pacing (turn 3) and the two later
+facts by cues (turns 9, 10). Two grounding problems:
+- **Place drift from "corridor".** Turn 2's reply put Kristin in
+  "corridor", and the match call mapped it to 2A's infrastructure
+  corridors, which are in play because every facility area now shares a
+  parent. Turn 3 then ran in the corridors, turn 4 ("Check the copied
+  files for proof of the purge order.") walked her into 2B's records
+  archive, and turns 4-7 played there. The engine tracked it all
+  correctly; the scene drifted. **Brandon chose a match-call rule:**
+  after the spot rule, 'A plain word like "corridor", "hall" or "room"
+  is a spot in the place where PLAYER CHARACTER is now.'
+- **Dropped move on turn 10.** "Follow Michelle's route through the
+  maintenance network." put Kristin in "maintenance network", which
+  matched no area, so the move was dropped. **Brandon chose to declare
+  an area:** `maintenance_network` ("maintenance network", aliases
+  "maintenance route", "maintenance routes"). Its parent is
+  `purge_chamber`, not `regional_facility`, because narration safety
+  lets a scene name only its own area and the areas above and below it.
+  "maintenance access route" is not an alias: it is a must_convey of
+  `rebecca_office_required_for_broadcast`.
+Both fixes are in one Ringer run (`ringer-work/freytag-2c-fixes`), with
+verifiers `verify_match_rule.py` and `verify_maintenance_area.py`.
+
+**Next:** land both fixes, rerun the 2C replicate, then 2C reveal
+handoffs.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
