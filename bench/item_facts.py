@@ -247,6 +247,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._changed_last_turn = set()
         self._selected_names = None
         self._last_scene_seeded = None
+        self._match_offered_names = set()
         self._schema_cache = {}
         self.prior_steps: tuple[str, ...] = ()
         self._last_item_facts_unplaced = []
@@ -691,9 +692,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
         world = self._world()
 
         lines = []
+        self._match_offered_names = set()
         for name, facts in self.item_facts.items():
             if not self._name_in_scene_scope(world, name):
                 continue
+            self._match_offered_names.add(name)
             line = f"- {name}."
             if facts.get("place"):
                 line += f" Place: {facts['place'].strip()[:80]}."
@@ -729,6 +732,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             for entity_id in extra_ids:
                 label = self._entity_label(world, entity_id)
                 if label not in existing and f"- {label}." not in lines:
+                    self._match_offered_names.add(label)
                     line = f"- {label}."
                     if world.is_a(entity_id, "character"):
                         place = world.place_label(entity_id)
@@ -905,6 +909,15 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 match_issues.append("invalid item_facts match reply")
 
         same_as = match_reply.get("same_as", {}) if isinstance(match_reply, dict) else {}
+        if isinstance(same_as, dict):
+            offered = {name.strip().casefold() for name in self._match_offered_names}
+            same_as = dict(same_as)
+            for name, target in same_as.items():
+                if isinstance(target, str) and target != "new" and target.strip().casefold() not in offered:
+                    issue = f"item_facts match named {target!r} for {name!r}, which was not in THINGS; kept as new"
+                    issues.append(issue)
+                    match_issues.append(issue)
+                    same_as[name] = "new"
         protagonist_id = self.state.package.world.protagonist_id
         player_character_names = {
             item["key"]

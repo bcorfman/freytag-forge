@@ -184,6 +184,21 @@ def _apply(provider, name, *, place=None, condition=None):
     provider.apply_item_facts({name: entry})
 
 
+def _offer_match_target(provider, target):
+    original = provider._match_payload
+
+    def match_payload(player_input, new_names, *, include_places=False):
+        payload = original(player_input, new_names, include_places=include_places)
+        provider._match_offered_names.add(target)
+        marker = "\n\nNEW NAMES:"
+        line = f"- {target}."
+        if line not in payload["user"]:
+            payload["user"] = payload["user"].replace(marker, f"\n{line}{marker}", 1)
+        return payload
+
+    provider._match_payload = match_payload
+
+
 class _Response:
     def __init__(self, body):
         self.body = body
@@ -588,6 +603,95 @@ def test_match_payload_2c_excludes_the_other_scene_console():
 
     assert "- inspection console." not in things
     assert "- Kristin." in things
+
+
+def test_2c_unoffered_match_target_keeps_kristin_out_of_infrastructure_corridors(monkeypatch):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"console": "inspection console"}},
+    )
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "console"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+
+    issue = "item_facts match named 'inspection console' for 'console', which was not in THINGS; kept as new"
+    world = provider._world()
+    assert world.parent("kristin") != "infrastructure_corridors"
+    assert issue in issues
+    assert issue in provider.last_item_facts_match()["match_issues"]
+
+
+def test_2c_echoed_same_as_target_is_recorded_as_unoffered(monkeypatch):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"room": "room"}},
+    )
+
+    _facts, issues = provider.apply_item_facts(
+        {"room": {"place": "command levels"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+
+    issue = "item_facts match named 'room' for 'room', which was not in THINGS; kept as new"
+    assert issue in issues
+    assert issue in provider.last_item_facts_match()["match_issues"]
+
+
+def test_2c_offered_command_levels_target_keeps_kristin_there(monkeypatch):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"room": "command levels"}},
+    )
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "room"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+
+    world = provider._world()
+    assert world.parent("kristin") == "purge_chamber"
+    assert not any("which was not in THINGS" in issue for issue in issues)
 
 
 def test_park_bench_resolves_and_is_placed_in_scene_1b():
@@ -2084,6 +2188,7 @@ def test_same_as_learns_item_and_place_names_but_not_area_names(monkeypatch):
             "same_as": {"the stranger": "Kristin", "the corner": area_name},
         },
     )
+    _offer_match_target(provider, area_name)
     provider.apply_item_facts(
         {
             "the stranger": {"place": "the corner"},
@@ -2149,6 +2254,7 @@ def test_new_name_mapped_to_other_character_still_resolves_player_character_guar
         "_request",
         lambda *_args: {"refers": [], "same_as": {"the stranger": "Michelle"}},
     )
+    _offer_match_target(provider, "Michelle")
 
     provider.apply_item_facts({"the stranger": {"place": "kitchen"}}, player_input="Search for the stranger.")
 
@@ -2369,6 +2475,7 @@ def test_mapping_check_templates_and_facts(monkeypatch, kind, expected_question)
         "_request",
         lambda *_args: {"refers": [], "same_as": {mapping_name: target}},
     )
+    _offer_match_target(provider, target)
     provider.apply_item_facts(
         raw,
         player_input="Inspect the evidence.",
@@ -2419,6 +2526,7 @@ def test_mapping_check_unrelated_area_false_lands_in_player_area(monkeypatch):
         "_request",
         lambda *_args: {"refers": [], "same_as": {"checkpoint": "Brandon's hideout"}},
     )
+    _offer_match_target(provider, "Brandon's hideout")
 
     provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=confirm)
 
@@ -2444,6 +2552,7 @@ def test_mapping_check_unrelated_area_true_lands_in_target_area(monkeypatch):
         "_request",
         lambda *_args: {"refers": [], "same_as": {"checkpoint": "Brandon's hideout"}},
     )
+    _offer_match_target(provider, "Brandon's hideout")
 
     provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: True)
 
@@ -2477,6 +2586,7 @@ def test_mapping_check_accepted_place_keeps_mapping(monkeypatch):
         "_request",
         lambda *_args: {"refers": [], "same_as": {"checkpoint": target}},
     )
+    _offer_match_target(provider, target)
     provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: True)
     result = provider.last_item_facts_match()
     assert result["place_resolutions"] == {"checkpoint": target}
@@ -2498,6 +2608,7 @@ def test_mapping_check_rejected_thing_becomes_new_without_alias(monkeypatch):
         "_request",
         lambda *_args: {"refers": [], "same_as": {"guard": target}},
     )
+    _offer_match_target(provider, target)
     provider.apply_item_facts({"guard": {"place": "on the table"}}, confirm=lambda *_args: False)
     result = provider.last_item_facts_match()
     assert result["resolutions"] == {"guard": "new"}
@@ -2515,6 +2626,7 @@ def test_mapping_check_none_keeps_mapping_and_reports_unavailable(monkeypatch):
         "_request",
         lambda *_args: {"refers": [], "same_as": {"checkpoint": target}},
     )
+    _offer_match_target(provider, target)
     _facts, issues = provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: None)
     assert provider.last_item_facts_match()["place_resolutions"] == {"checkpoint": target}
     assert provider.last_item_facts_match()["mapping_checks"][0]["answer"] is None
