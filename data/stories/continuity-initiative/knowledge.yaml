@@ -1173,6 +1173,10 @@ knowledge:
     priority: 0
 - id: k_sl_2b_a_r1
   statement: 'In the archive, Kristin secures JANUS files showing how Americans were ranked for detention, leverage, or control.'
+  earn_when: searches the archive terminals for Michelle's record
+  action_evidence:
+  - [search, read, open, check, review]
+  - [michelle, michelle's record, michelle's records, michelle's file, michelle's files, michelle's selection file, michelle's selection files, selection file, selection files]
   entity_ids: []
   aliases:
   - janus evidence
@@ -1199,8 +1203,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "JANUS ranked every American for detention, leverage, or control."
 - id: k_sl_2b_a_r2
   statement: 'JANUS records show Kristin was left behind because Charles expected her to lead investigators to Brandon.'
+  earn_when: searches the archive terminals for my record
+  action_evidence:
+  - [search, read, open, check, review, pull up]
+  - [my own record, my record, kristin's record, kristin record, record about me, my file, my files]
   entity_ids: []
   aliases:
   - janus evidence
@@ -1225,8 +1234,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Charles left Kristin behind on purpose. He expected her to lead investigators to Brandon."
 - id: k_sl_2b_b_r1
   statement: 'Kristin finds Brandon’s name in the original JANUS records, forcing him to admit he helped write the system.'
+  earn_when: searches the development records for Brandon
+  action_evidence:
+  - [search, read, open, check, review, show, find]
+  - [development record, development records]
   entity_ids: []
   aliases:
   - brandon janus role known
@@ -1254,8 +1268,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Brandon's name is in the first JANUS records. He admits he helped write the system."
 - id: k_sl_2b_b_r2
   statement: 'Brandon says he tried to destroy JANUS after learning its purpose, but Kristin fears he still wants to hide his guilt.'
+  earn_when: confronts Brandon about the development records
+  action_evidence:
+  - [ask, confront]
+  - [brandon]
+  - [why he helped write, he helped write, helped write, write the software, development record, development records]
   entity_ids: []
   aliases:
   - brandon janus role known
@@ -1283,8 +1303,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Brandon says he tried to destroy JANUS after he learned its purpose. Kristin fears he still wants to hide his guilt."
 - id: k_sl_2b_b_r3
   statement: 'Kristin learns Charles expected her to seek Brandon and left Michelle’s evidence accessible so she would expose Brandon’s hidden network.'
+  earn_when: checks the security logs for Michelle's evidence
+  action_evidence:
+  - [search, read, open, check, review]
+  - [security log, security logs, access log, access logs]
+  - [michelle's evidence, michelle evidence, charles, hidden network, brandon's network, brandon network]
   entity_ids: []
   aliases:
   - kristin was bait
@@ -1309,8 +1335,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Charles expected Kristin to seek Brandon. He left Michelle's evidence where she could find it and expose Brandon's hidden network."
 - id: k_sl_2b_c_r1
   statement: 'Corrupted records and familiar phrases reveal that Michelle is altering classifications and hiding vulnerable prisoners.'
+  earn_when: opens the corrupted prisoner files
+  action_evidence:
+  - [search, read, open, check, review, compare]
+  - [corrupted prisoner file, corrupted prisoner files, corrupted file, corrupted files]
   entity_ids: []
   aliases:
   - michelle resistance known
@@ -1337,8 +1368,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Michelle is changing classifications. She is hiding vulnerable prisoners."
 - id: k_sl_2b_c_r2
   statement: 'Michelle’s coded maintenance messages show she has organized prisoners and is preparing an uprising from inside.'
+  earn_when: reads the maintenance reports
+  action_evidence:
+  - [search, read, open, check, review]
+  - [maintenance report, maintenance reports]
   entity_ids: []
   aliases:
   - michelle resistance known
@@ -1362,6 +1398,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Michelle has organized prisoners. She is preparing an uprising from inside."
 - id: k_sl_2c_a_r1
   statement: 'Rebecca privately offers Brandon safe passage and Michelle’s release if he helps her remove Charles.'
   entity_ids: []
