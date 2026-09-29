@@ -12,9 +12,10 @@ measured live: no drift in 3 of 3, every handoff fires. Turn 5 no longer
 contradicts 2C.3 and Brandon voices his stance 2 of 3 (00052d3); the
 bare "console" drift is fixed by scoping the shortcut (b7dcec5) and the
 match call's THINGS (decba7f), measured live 10 of 10, and match
-answers limited to THINGS (d7e0c68); showing the match call the
-narration sentence is probed, not built; bare "corridor" is a measured
-known gap. Next: decide on building the sentence, push
+answers limited to THINGS (d7e0c68), and the match call shown each new
+name's narration sentence (5224b69); Kristin's place right 10 of 10 live,
+but Jev still rejects a wrong memory-card match about 1 in 8; bare
+"corridor" is a measured known gap. Next: full live 2C replay, push
 `claude/ground-2c`, then 3A-3C, S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -402,9 +403,24 @@ Adding "Each same_as answer must be a name copied from THINGS or "new"
 now, so give that place.") gave "room" 10 of 10 and "console" 8 "new",
 1 echo, 1 memory card (Jev rejected it); Kristin's place right 20 of 20.
 
-**Next:** Brandon to decide whether to build the sentence and the
-finished "room" rule into `_match_payload` and `_MATCH_SYSTEM` (then
-rerun both probes), then push `claude/ground-2c` for review, then 3A.
+**Built (5224b69):** each NEW NAMES line carries the first narration
+sentence that uses the name, and the "room" rule ends "so give that
+place." The grounding guide now describes scene scope and this rule.
+Ringer, Luna, first attempt; suite passed. Known weak test:
+`test_match_payload_new_name_without_naming_sentence_stays_plain` uses
+`in`, so it would pass if a sentence were wrongly added; the Ringer
+verifier checks the exact line.
+**Console probe on the built engine:** Kristin's place right 10 of 10
+and "room" to the command levels 5 of 5 (Jev agreed 5 of 5). The match
+call alone answered "console" "new" 5, echoed "console" 2 (kept as new
+with an issue) and picked the memory card 3 (Jev rejected all 3).
+Pooled over the four sentence runs without the general rule, the memory
+card is 5 of 40 (12%), so Jev still does real work on this case. The
+fix loop stops here by Brandon's question; the full live 2C replay is
+the next measurement.
+
+**Next:** Brandon to decide on the full live 2C replay, then push
+`claude/ground-2c` for review, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
