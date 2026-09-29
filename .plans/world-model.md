@@ -15,8 +15,11 @@ match call's THINGS (decba7f), measured live 10 of 10, and match
 answers limited to THINGS (d7e0c68), and the match call shown each new
 name's narration sentence (5224b69); Kristin's place right 10 of 10 live,
 but Jev still rejects a wrong memory-card match about 1 in 8; bare
-"corridor" is a measured known gap. Next: full live 2C replay, push
-`claude/ground-2c`, then 3A-3C, S3 and S4. See "Resume here".
+"corridor" is a measured known gap. Full live 2C replay on 76154df
+done: no drift, every handoff fires, no leak rejection; it found an
+unplaced new "console" (1 of 3) and a missed card move (2 of 3). Next:
+Brandon to decide on those two, push `claude/ground-2c`, then 3A-3C, S3
+and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -419,7 +422,37 @@ card is 5 of 40 (12%), so Jev still does real work on this case. The
 fix loop stops here by Brandon's question; the full live 2C replay is
 the next measurement.
 
-**Next:** Brandon to decide on the full live 2C replay, then push
+**Full live 2C replay on the built engine (2026-09-29, 76154df, Ringer,
+three replicates, check passed; `bench/results/world-2c-built-x3`).**
+Every handoff fired (turns 1, 4, 6), no leak rejection, contradicts a
+stated fact 0 of 24, restarts 0 of 24, acts beyond the command 2 of 24.
+Kristin in the command levels after every turn. Facts after the turn
+correct 20/24 (21/24 before); narration contradicts given facts 6 of 24
+(2 before). The rise is turn 4: in all three the narration now puts
+Michelle's memory card into a console. Two new findings:
+- **The new console is never placed (r1).** Turn 4 replied
+  `"Michelle's memory card": {"place": "console"}`; the match call
+  answered "new" (the 5224b69 fix working live), so the card's place is
+  the new "console", but the console itself is left unplaced
+  (`item_facts_unplaced`). On turn 7 ("Decode Michelle's coded
+  message.") the reply put Kristin at "console"; with no tracked console
+  the match call mapped "console" to the memory card, and Jev said yes to
+  'Is the place called "console" at "Michelle's memory card"?', because
+  the card's place text is "console". No harm landed: Kristin's move was
+  refused (a console is not enterable) and the card stayed put. This is
+  the "where the new console itself is placed" gap, now seen live.
+- **Missed card move (r2, r3).** The narration inserts the card into the
+  console (or "a reader"), but the reply keeps it on Kristin. Capture
+  miss; judged missed_change both times.
+Unchanged from before: turn 8 ("Lead Brandon down the upper command
+corridors.") replies a place "upper command corridors" that is not
+tracked, so Kristin stays in the command levels (missed 1 of 3). r3 turn
+8 placed new "transfer carts" in the infrastructure corridors from "lower
+levels"; its Jev check named the player's place as "Detention level",
+the 3A place after the transition, not 2C's.
+
+**Next:** Brandon to decide whether the unplaced new console and the
+missed card move block the push, then push
 `claude/ground-2c` for review, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
