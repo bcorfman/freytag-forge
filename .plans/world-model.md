@@ -200,8 +200,36 @@ missed move (a judge false positive about an alias). **Not measured:**
 the match rule. The narrator never said a bare "corridor" this run, and
 the match call ran on only 2 turns. Watch for it in later replicates.
 
-**Next:** 2C reveal handoffs (eight `k_sl_2c_*` candidates) through
-ChatGPT Desktop.
+**2C reveal handoffs (bc595b8).** Written in ChatGPT Desktop over four
+prompt rounds and approved by Brandon. Round 2 copied the prompt's test
+commands into the noun lists (15/15 prompt commands, 0/17 variants); the
+fix was telling it that other wordings would be tested and capping noun
+phrases at three words. Final: 43/46 across 2C's three offered sets, no
+false positive. Landed by Ringer (Luna, one attempt; suite 900 passed;
+payloads unchanged; `ringer-work/freytag-2c-handoffs/verify_handoffs_2c.py`).
+
+**2C rerun with handoffs (2026-09-29, one replicate, check passed;
+`bench/results/world-2c-handoffs`).** Handoffs fired on turns 1
+(`k_sl_2c_b_r1`), 4 (`k_sl_2c_c_r1`) and 6 (`k_sl_2c_d_r2`), and the
+scene moved to 3A after turn 8. Facts after the turn correct 8/8, no
+rejected turn, no leak rejection. Continuity: turn 3 acts beyond the
+command and does not finish it; turn 7 does not finish decoding.
+**Place drift again, with a different cause.** Turn 2 ("Ask Brandon
+what he is hiding.") narrated Brandon "in the corner of the restricted
+infrastructure corridor", and the match call correctly followed the
+prose. The cause: naming Brandon recalls out-of-scene knowledge about
+him (2A's "Kristin and Brandon have opened a restricted infrastructure
+corridor...", plus 1B, 1C and 2B statements), and it is listed in SCENE
+as present fact. It was in all three 2C runs' turn-2 prompts; the
+narrator moved there in two. So the first 2C run's drift was this too,
+not the match call. **Brandon chose to mark it as the past:** keep the
+recall, but render other scenes' committed knowledge under its own
+EARLIER IN THE STORY heading after SCENE. Ringer run
+`ringer-work/freytag-earlier-recall` (check: `verify_earlier.py` on
+thorough-state prompts for 1B, 2B and 2C; fresh-state payloads
+byte-identical).
+
+**Next:** land the EARLIER IN THE STORY change, rerun 2C, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
