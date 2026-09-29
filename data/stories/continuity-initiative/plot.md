@@ -420,7 +420,11 @@ location_id: janus_archive
 freytag_phase: rising_action
 objective: Secure evidence while judging Brandons betrayal
 participant_ids: [kristin, brandon, michelle]
-item_ids: []
+companions: [brandon]
+item_ids: [archive_terminals, medical_terminal]
+item_placements:
+  archive_terminals: {parent: janus_archive}
+  medical_terminal: {parent: janus_archive}
 entry_text: "The records archive hummed behind the restricted corridor. Rows of terminals held the Initiative's selection files - and, somewhere in them, the answers to why Michelle was taken and who helped build the system that chose her.\n\n"
 transition_ids: [t_2b_2c]
 bridge_text:
