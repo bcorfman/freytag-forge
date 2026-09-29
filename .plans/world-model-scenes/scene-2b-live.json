@@ -1,0 +1,22 @@
+{
+  "run_name": "freytag-world-2b-live",
+  "workdir": "/home/bcorfman/dev/ringer-work/freytag-world-2b-live",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "world-2b-live",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 1,
+      "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live benchmark itself. Reply with the single word: ready.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -a && . ./.env && set +a && TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/item-facts-world-2b.json --scene 2B --script archive-evidence --replicates 1 --out bench/results/world-2b --confirm ; TMPDIR=/tmp .venv/bin/python .plans/world-model-scenes/scene_2b_check.py bench/results/world-2b",
+      "expect_files": ["/home/bcorfman/dev/freytag-forge/bench/results/world-2b/all-turn-records.json", "/home/bcorfman/dev/freytag-forge/bench/results/world-2b/summary.json"],
+      "check_timeout_s": 1800,
+      "timeout_s": 300,
+      "verified": "the 2B live replicate ran once from the check from a thorough entry; scene_2b_check.py printed every turn's resolutions and rejections and failed on an incomplete run or a name resolved to another scene's terminal"
+    }
+  ]
+}
