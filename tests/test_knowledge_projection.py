@@ -83,6 +83,22 @@ def test_public_scene_entry_remains_in_players_committed_knowledge() -> None:
     assert "k_scene_1b_entry" in _ids(projection.committed_knowledge)
 
 
+def test_scene_entry_is_not_recalled_after_leaving_its_scene() -> None:
+    scene_1a = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "1A")
+    scene_1b = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "1B")
+
+    state_1a = RuntimeState(package=PACKAGE, current_scene_id="1A", phase=scene_1a.metadata.freytag_phase)
+    state_1a._assert_scene_entry_fact("1A")
+    in_scene = KnowledgeProjector().project(state_1a, "player", "Pick up Michelle's phone.")
+    assert "k_scene_1a_entry" in _ids(in_scene.committed_knowledge)
+
+    state_1b = RuntimeState(package=PACKAGE, current_scene_id="1B", phase=scene_1b.metadata.freytag_phase)
+    state_1b._assert_scene_entry_fact("1A")
+    state_1b._assert_scene_entry_fact("1B")
+    after_leaving = KnowledgeProjector().project(state_1b, "player", "Put Michelle's photograph in my pocket.")
+    assert "k_scene_1a_entry" not in _ids(after_leaving.committed_knowledge)
+
+
 def test_character_scoped_scene_entry_remains_sayable_by_that_character() -> None:
     public_entry = next(item for item in PACKAGE.knowledge.knowledge if item.id == "k_scene_1b_entry")
     scoped_entry = public_entry.model_copy(

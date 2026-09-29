@@ -159,7 +159,9 @@ class KnowledgeProjector:
         what the turn is about, and everything else reaches the narrator only
         when the player's own words reach for it. An earlier scene nobody
         mentions therefore costs no tokens, while a player who raises it gets
-        continuity instead of a blank. This is retrieval on reference, not a
+        continuity instead of a blank. Scene-entry framing is not recalled
+        outside its own scene because it describes that scene's opening. This
+        is retrieval on reference, not a
         ranked cut to a budget; the numeric bound below is only a backstop
         against a pathological package, never the selection mechanism.
 
@@ -176,7 +178,11 @@ class KnowledgeProjector:
         scene_ids = {item.id for item in in_scene}
         referenced_entity_ids = _input_referenced_entity_ids(state.package.world, player_input)
         recalled = [
-            item for item in visible if item.id not in scene_ids and self._player_refers_to(item, referenced_entity_ids)
+            item
+            for item in visible
+            if item.id not in scene_ids
+            and item.source.kind != "scene_entry"
+            and self._player_refers_to(item, referenced_entity_ids)
         ]
         selected = [*in_scene, *recalled][: self.max_committed_knowledge]
         return tuple(self._projected(item) for item in selected)
