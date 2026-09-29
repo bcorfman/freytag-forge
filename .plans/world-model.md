@@ -9,11 +9,11 @@ leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
 (PR 488). 2C grounded with handoffs on `claude/ground-2c`, plus two
 recall fixes (EARLIER IN THE STORY; people alone do not recall),
 measured live: no drift in 3 of 3, every handoff fires. Turn 5 no longer
-contradicts 2C.3 and Brandon voices his stance 2 of 3 (00052d3); a bare
-"console" drift (1 of 3) is open; bare "corridor" is a measured known
-gap. Next: 3A-3C, S3
-and S4. See
-"Resume here".
+contradicts 2C.3 and Brandon voices his stance 2 of 3 (00052d3); the
+bare "console" drift is fixed by scoping the shortcut (b7dcec5) and the
+match call's THINGS (decba7f), measured live 10 of 10; bare "corridor"
+is a measured known gap. Next: push `claude/ground-2c` for review, then
+3A-3C, S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -364,9 +364,21 @@ and Jev): the shortcut no longer fires, but the match call picked
 landed in the infrastructure corridors 10 of 10 ("room" 5 of 5 to the
 command levels). The match call sees the console because its THINGS
 filter compares top-level areas, and every facility area shares one.
+**Brandon chose to scope the match call's THINGS too (decba7f):** it now
+uses the same `_name_in_scene_scope` test as the shortcut, so in 2C it
+lists only Kristin and the memory card. The place and character lines
+that follow are unchanged. Ringer, Luna, first attempt; the check
+compared THINGS with scene scope in 1A, 1B and 2C, compared the place
+lines with a baseline from the old code, and ran the full suite.
+**Measured by the same live probe:** Kristin no longer reaches the
+infrastructure corridors (0 of 10, was 10 of 10). Her place is the new
+"console" 10 of 10. "room" still goes to the command levels 5 of 5. The
+match call still never answers "new" for "console": it now picks
+"Michelle's memory card" 10 of 10, and Jev rejects that pairing 10 of 10.
+So the right outcome depends on Jev catching a wrong match. Not tested:
+where the new console itself is placed, and a full live 2C replay.
 
-**Next:** decide on the "console" drift, then push `claude/ground-2c` for
-review, then 3A.
+**Next:** push `claude/ground-2c` for review, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
