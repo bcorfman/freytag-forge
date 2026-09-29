@@ -2,9 +2,10 @@
 
 Status (2026-09-28): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
-486). The narration leak fixes on `claude/magical-wozniak-tvkj5x` are
-measured live: no leak rejection in 1B, 1C or 2A, and every 1B-2A
-handoff fires. Next: merge that branch, then 2B-3C, S3 and S4. See
+486), and the narration leak fixes merged (PR 487), measured live: no
+leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
+`claude/ground-2b`: scene-entry recall scoped (ef80a28) and 2B grounding
+in progress. Next: a 2B bench script, then 2C-3C, S3 and S4. See
 "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -60,8 +61,28 @@ the five over-acting turns before 2B, if they matter. Not measured
 live: 2B turns after the supervisor path, because the 2A variation
 stops when the scene is left.
 
-**Next:** merge `claude/magical-wozniak-tvkj5x` (no PR yet), then
-ground 2B (step 1.4 below).
+**Merged** as PR 487 (459d0ae).
+
+**Stale 1A entry line in later scenes (fixed, ef80a28).** Any command
+naming Michelle recalled `k_scene_1a_entry` ("Michelle's phone remains
+on the kitchen floor") as true SCENE material in every later scene. It
+showed live in 1B turns 4 and 7. Brandon chose to scope it:
+`KnowledgeProjector._committed_for` no longer recalls `scene_entry`
+items outside their own scene. Ringer, Luna, one attempt; suite 897
+passed. Offline capture confirms the line now reaches only 1A. Not
+measured live.
+
+**2B grounding (Brandon's decisions, 2026-09-28).** `janus_archive` is
+renamed "records archive" (alias "restricted records archive"), because
+the old name put the reveal phrase "JANUS archive" (a `janus_evidence`
+must_convey) into 2B's opening. Fixed `archive_terminals` ("archive
+terminals") and `medical_terminal` things are placed in the archive;
+the medical terminal is not in a medical level. 2B declares
+`companions: [brandon]`. Payloads must stay byte-identical except 2B's
+opening location line. Check: `ringer-work/freytag-2b-grounding/verify_2b.py`.
+
+**Next:** land the 2B grounding, then a 2B bench script and one live
+replicate.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
