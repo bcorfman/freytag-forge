@@ -942,6 +942,13 @@ def test_match_system_lists_only_named_things():
         'A plain word like "corridor", "hall" or "room" is a spot in the place where PLAYER CHARACTER is now.'
         in _MATCH_SYSTEM
     )
+    assert (
+        'Give that place even when another place in THINGS has the same word in its name, like "east corridors" or '
+        '"guest room".' in _MATCH_SYSTEM
+    )
+    assert _MATCH_SYSTEM.index('A plain word like "corridor", "hall" or "room"') < _MATCH_SYSTEM.index(
+        "If a new name is a spot in a place from THINGS"
+    )
 
 
 def test_things_omit_condition_for_empty_condition_list():
