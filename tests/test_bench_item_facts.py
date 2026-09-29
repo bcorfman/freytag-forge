@@ -187,8 +187,8 @@ def _apply(provider, name, *, place=None, condition=None):
 def _offer_match_target(provider, target):
     original = provider._match_payload
 
-    def match_payload(player_input, new_names, *, include_places=False):
-        payload = original(player_input, new_names, include_places=include_places)
+    def match_payload(player_input, new_names, *, include_places=False, story=""):
+        payload = original(player_input, new_names, include_places=include_places, story=story)
         provider._match_offered_names.add(target)
         marker = "\n\nNEW NAMES:"
         line = f"- {target}."
@@ -603,6 +603,50 @@ def test_match_payload_2c_excludes_the_other_scene_console():
 
     assert "- inspection console." not in things
     assert "- Kristin." in things
+
+
+def test_match_payload_2c_new_name_includes_story_sentence(monkeypatch):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+    payloads = []
+
+    def request(_provider, payload):
+        payloads.append(payload)
+        return {"refers": [], "same_as": {"console": "new"}}
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    provider.apply_item_facts(
+        {"Kristin": {"place": "console"}},
+        player_input="Check the copied files for proof of the purge order.",
+        story="Kristin sits down at the console. She searches the copied files for the purge order.",
+        confirm=lambda *_args: True,
+    )
+
+    assert len(payloads) == 1
+    assert '- console (from: "Kristin sits down at the console.")' in payloads[0]["user"]
+
+
+def test_match_payload_new_name_without_naming_sentence_stays_plain():
+    provider = _seeded_provider()
+    plain = provider._match_payload("Check the copied files for proof of the purge order.", ["console"])
+    other = provider._match_payload(
+        "Check the copied files for proof of the purge order.",
+        ["console"],
+        story="Kristin checks the copied files.",
+    )
+
+    assert "NEW NAMES:\n- console" in plain["user"]
+    assert "NEW NAMES:\n- console" in other["user"]
 
 
 def test_2c_unoffered_match_target_keeps_kristin_out_of_infrastructure_corridors(monkeypatch):
@@ -1067,8 +1111,8 @@ def test_match_system_lists_only_named_things():
         'A guard or a prisoner who is not in THINGS is "new".' in _MATCH_SYSTEM
     )
     assert (
-        'A plain word like "corridor", "hall" or "room" is a spot in the place where PLAYER CHARACTER is now.'
-        in _MATCH_SYSTEM
+        'A plain word like "corridor", "hall" or "room" is a spot in the place where PLAYER CHARACTER '
+        "is now, so give that place." in _MATCH_SYSTEM
     )
 
 

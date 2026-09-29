@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import re
 from urllib.error import HTTPError, URLError
 
 from worldkeeper import MemoryBackend, World, WorldSchema
@@ -223,7 +224,7 @@ def _single_call_rules(protagonist_name, *, drop_rules=frozenset()):
     return rules
 
 
-_MATCH_SYSTEM = 'You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {"refers": ["name"], "same_as": {"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "the old lamp" for "Grandma\'s lamp". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For "Ask the cook who took the key." list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or "new" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like "the corner of the kitchen" for kitchen, give that place. A plain word like "corridor", "hall" or "room" is a spot in the place where PLAYER CHARACTER is now. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give "new". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is "new". Copy names from THINGS exactly.'
+_MATCH_SYSTEM = 'You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {"refers": ["name"], "same_as": {"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "the old lamp" for "Grandma\'s lamp". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For "Ask the cook who took the key." list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or "new" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like "the corner of the kitchen" for kitchen, give that place. A plain word like "corridor", "hall" or "room" is a spot in the place where PLAYER CHARACTER is now, so give that place. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give "new". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is "new". Copy names from THINGS exactly.'
 _SECOND_CALL_SYSTEM = 'You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like {"item_facts": {"thing": {"place": "name", "condition": ["phrase"]}}}. List only the things in THINGS that STORY changed. For each one, give the name of who or what has it now and up to two short condition phrases. Example: if Sam picks up the lantern from the table and lights it, the lantern is {"place": "Sam", "condition": ["lit"]}. If STORY changed nothing, return {"item_facts": {}}.'
 
 
@@ -688,7 +689,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         known["can_move"] = not world.is_a(target_id, "area") and not world.schema.is_fixed(target_id)
         return player, known
 
-    def _match_payload(self, player_input, new_names, *, include_places=False):
+    def _match_payload(self, player_input, new_names, *, include_places=False, story=""):
         world = self._world()
 
         lines = []
@@ -739,11 +740,23 @@ class ItemFactsProvider(CloudflareTurnProvider):
                         if place:
                             line += f" Place: {place.strip()[:80]}."
                     lines.append(line)
+        story_sentences = [sentence.strip() for sentence in re.split(r"(?<=[.!?])\s+", story) if sentence.strip()]
+        new_name_lines = []
+        for name in new_names:
+            sentence = next(
+                (sentence for sentence in story_sentences if name.casefold() in sentence.casefold()),
+                None,
+            )
+            if sentence is None:
+                new_name_lines.append(f"- {name}")
+                continue
+            sentence = sentence.replace('"', "'")[:200]
+            new_name_lines.append(f'- {name} (from: "{sentence}")')
         return {
             "system": _MATCH_SYSTEM,
             "user": (
                 f"COMMAND:\n- {player_input}\n\nPLAYER CHARACTER:\n- {_protagonist_name(self.state.package)}\n\n"
-                "THINGS:\n" + "\n".join(lines) + "\n\nNEW NAMES:\n" + "\n".join(f"- {name}" for name in new_names)
+                "THINGS:\n" + "\n".join(lines) + "\n\nNEW NAMES:\n" + "\n".join(new_name_lines)
             ),
             "max_tokens": 200,
             "response_format": {"type": "json_object"},
@@ -899,7 +912,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
             self.item_facts_match_calls += 1
             try:
                 match_reply = CloudflareTurnProvider._request(
-                    self, self._match_payload(player_input, match_names, include_places=bool(place_names))
+                    self,
+                    self._match_payload(player_input, match_names, include_places=bool(place_names), story=story),
                 )
             except Exception as error:
                 match_issues.append(f"item_facts match failed: {error}")

@@ -150,10 +150,13 @@ reading level, one idea per sentence, and every path that narrates.
 - **Give only what the command refers to,** plus the protagonist and her place
   every turn. An open container brings its visible contents. Hidden things are
   never given.
-- **Show a model only the things in play.** The match call lists the scene's
-  `item_ids`, things in the protagonist's top-level area and things she
-  carries. A thing left in another scene is not a candidate, or the model
-  will map a new name onto it.
+- **Show a model only the things in play.** The match call lists the things in
+  scene scope: the scene's items and people, things at or below the scene's
+  area or the protagonist's area, things she carries, and things with no place.
+  An answer that names anything else is kept as new.
+- **Show the match call where a new name came from.** Each new name is shown
+  with the narration sentence that used it. Without it, the model guesses the
+  thing that fits the command.
 - **Engine steps are told, not asked.** When the engine seats the protagonist
   or hands her a thing before an action, the narrator gets a line such as
   `Just before this: Kristin sat down in the driver's seat.` Don't ask the
