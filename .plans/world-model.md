@@ -5,8 +5,9 @@ S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
 `claude/ground-2b`: scene-entry recall scoped (ef80a28) and 2B grounded
-(3f765ba) with reveal handoffs (a1e7885), measured live: every handoff
-fired and 2B moved to 2C. Next: 2C-3C, S3 and S4. See
+(3f765ba) with reveal handoffs (a1e7885), measured live, and merged
+(PR 488). 2C grounding in progress on `claude/ground-2c`. Next: 2C bench
+and handoffs, then 3A-3C, S3 and S4. See
 "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -137,8 +138,27 @@ reveal turns. Watch it over more replicates before any change. Minor:
 turn 8's reply carried an empty `lantern` entry copied from the
 variation's output example; the engine flagged and ignored it.
 
-**Next:** 2C grounding, from the survey: `purge_chamber` is not where
-2C's text happens ("command levels and detention sectors").
+**Merged** as PR 488 (2df25bb).
+
+**2C grounding (Brandon's decisions, 2026-09-29).** 2C happens in the
+command levels: the detention sectors are sealed until 3A. `purge_chamber`
+keeps its id and is renamed "command levels" (aliases "command level",
+"upper command corridors"), as `janus_archive` was. 2C declares
+`companions: [brandon]`. Rebecca, Charles and Michelle stay unplaced
+(private contact, orders, a coded message), and Rebecca's secured office
+is not declared in 2C, because it is a must_convey of
+`rebecca_office_required_for_broadcast`. No things are declared up
+front. The `evidence_ready_to_transmit` cue named "broadcast controls"
+beside "Kristin's terminal", which contradicts 2C.5 (the broadcast works
+only from Rebecca's office). ChatGPT Desktop reworded it, and Brandon
+chose: "In the command levels, Kristin notices the copied files close at
+hand, yet using them could expose her and Brandon." Payloads must stay
+byte-identical except 2C's opening location line. Check:
+`ringer-work/freytag-2c-grounding/verify_2c.py`. In progress on
+`claude/ground-2c`.
+
+**Next:** land the 2C grounding, then a 2C bench script and one live
+replicate, then 2C reveal handoffs.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
