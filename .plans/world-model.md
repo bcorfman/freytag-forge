@@ -11,9 +11,11 @@ recall fixes (EARLIER IN THE STORY; people alone do not recall),
 measured live: no drift in 3 of 3, every handoff fires. Turn 5 no longer
 contradicts 2C.3 and Brandon voices his stance 2 of 3 (00052d3); the
 bare "console" drift is fixed by scoping the shortcut (b7dcec5) and the
-match call's THINGS (decba7f), measured live 10 of 10; bare "corridor"
-is a measured known gap. Next: push `claude/ground-2c` for review, then
-3A-3C, S3 and S4. See "Resume here".
+match call's THINGS (decba7f), measured live 10 of 10, and match
+answers limited to THINGS (d7e0c68); showing the match call the
+narration sentence is probed, not built; bare "corridor" is a measured
+known gap. Next: decide on building the sentence, push
+`claude/ground-2c`, then 3A-3C, S3 and S4. See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -377,8 +379,32 @@ match call still never answers "new" for "console": it now picks
 "Michelle's memory card" 10 of 10, and Jev rejects that pairing 10 of 10.
 So the right outcome depends on Jev catching a wrong match. Not tested:
 where the new console itself is placed, and a full live 2C replay.
+Brandon: Jev is meant to be the fallback, not the thing that makes this
+work. Cause: the match call never sees the narration, only the command,
+THINGS and the bare new name, so it guesses the thing that fits the
+command.
+**Closed set (d7e0c68):** a same_as answer must be "new" or a name
+offered in THINGS (any case); anything else is kept as new with an
+issue. Before this, an answer naming the unoffered inspection console
+still moved Kristin. Ringer, Luna, second attempt (first was a worker
+network error); full suite passed. Eight existing tests stubbed targets
+their THINGS never offered; they now inject the target into the offer.
+Risk not measured: a new name the model maps to a person named only in
+the command, not in THINGS, is now new.
+**Probe `~/dev/ringer-work/freytag-match-sentence-probe`** (stubbed 2C
+turn, live match call and Jev; not yet in the engine): showing each new
+name's narration sentence in NEW NAMES (`- console (from: "Kristin sits
+down at the console.")`) took "console" to "new" 9, 8 of 10, but "room"
+to the command levels only 3 of 5 and 6 of 10 (the rest echoed "room").
+Adding "Each same_as answer must be a name copied from THINGS or "new"
+..." fixed "room" 10 of 10 but sent "console" to the memory card 5 of
+10. Finishing the existing rule instead ("... where PLAYER CHARACTER is
+now, so give that place.") gave "room" 10 of 10 and "console" 8 "new",
+1 echo, 1 memory card (Jev rejected it); Kristin's place right 20 of 20.
 
-**Next:** push `claude/ground-2c` for review, then 3A.
+**Next:** Brandon to decide whether to build the sentence and the
+finished "room" rule into `_match_payload` and `_MATCH_SYSTEM` (then
+rerun both probes), then push `claude/ground-2c` for review, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
