@@ -8,8 +8,8 @@ leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
 (3f765ba) with reveal handoffs (a1e7885), measured live, and merged
 (PR 488). 2C grounded with handoffs on `claude/ground-2c`, plus two
 recall fixes (EARLIER IN THE STORY; people alone do not recall),
-measured live: no drift in 3 of 3, every handoff fires. Turn 5 (Brandon's
-stance) awaits a reworded statement; bare "corridor" is a measured known
+measured live: no drift in 3 of 3, every handoff fires. Turn 5 no longer
+contradicts 2C.3 (0 of 3); bare "corridor" is a measured known
 gap. Next: 3A-3C, S3
 and S4. See
 "Resume here".
@@ -300,11 +300,25 @@ has him argue to send at once. **Brandon chose:** ChatGPT Desktop rewords
 third person, without deciding Kristin's side, keeping one phrase from
 each must_convey group. First round returned unattributed dialogue as
 the statement (my prompt asked for "something he could say aloud"); a
-corrected prompt is out. Then: land it by Ringer and rerun the 2C
-replicates to measure turn 5.
+corrected prompt is out. Brandon chose the pair: statement "Brandon wants
+to send the evidence now. He will risk the captives. He accepts that this
+makes rescue impossible." and the matching delivery_text. **Landed**
+(Ringer, Luna, one attempt; suite passed; only those two fields changed).
 
-**Next:** land the turn-5 statement, measure it, push `claude/ground-2c`
-for review, then 3A.
+**2C turn-5 rerun (2026-09-29, three replicates, check passed;
+`bench/results/world-2c-stance-x3`).** The stance line was in every
+turn-5 SCENE. Continuity contradicts a stated fact **0 of 24 turns**
+(turn 5 was 2 of 3 before). But in all three, turn 5 is one paragraph
+of Kristin arguing to wait, and Brandon never answers, so the judge
+flags command_not_finished 3 of 3. By Brandon's standing rule an NPC
+who stays silent does not make a command unfinished, so that is a judge
+false positive; the open question is only whether Brandon should voice
+his stance. Otherwise unchanged: every handoff fired (turns 1, 4, 6),
+Kristin in the command levels every turn, facts after the turn correct
+21/24, no rejected turn, restarts_scene 2 of 24 (turn 2 "enters the
+room").
+
+**Next:** push `claude/ground-2c` for review, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
