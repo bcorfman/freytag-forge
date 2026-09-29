@@ -185,8 +185,23 @@ facts by cues (turns 9, 10). Two grounding problems:
 Both fixes are in one Ringer run (`ringer-work/freytag-2c-fixes`), with
 verifiers `verify_match_rule.py` and `verify_maintenance_area.py`.
 
-**Next:** land both fixes, rerun the 2C replicate, then 2C reveal
-handoffs.
+**Landed:** the match rule as c1962aa and the area as e414060 (Ringer,
+Luna, one attempt each; full suite passed in each worktree; the two
+affected test files pass together).
+
+**2C rerun (2026-09-29, one replicate, check passed;
+`bench/results/world-2c-fixes`).** Kristin stayed in the command levels
+for all ten turns, and turn 10 landed her in the maintenance network,
+with nothing unplaced. No rejected turn, no leak rejection, no
+continuity flag. Facts after the turn correct 9/10: turn 3's reply
+moved Kristin to "upper command corridors", an alias of the command
+levels, so the tracked place did not change and the judge counted a
+missed move (a judge false positive about an alias). **Not measured:**
+the match rule. The narrator never said a bare "corridor" this run, and
+the match call ran on only 2 turns. Watch for it in later replicates.
+
+**Next:** 2C reveal handoffs (eight `k_sl_2c_*` candidates) through
+ChatGPT Desktop.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
