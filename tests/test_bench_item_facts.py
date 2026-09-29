@@ -5,7 +5,7 @@ import pytest
 
 import bench.cli as bench_cli
 import bench.core as core
-from bench.core import load_variation, score_fact_tracking_judgments
+from bench.core import load_variation, score_fact_tracking_judgments, seeded_state_for_scene
 from bench.item_facts import (
     _MATCH_SYSTEM,
     ItemFactsProvider,
@@ -1936,6 +1936,61 @@ def test_resolve_refer_ambiguous_or_unmatched_names():
     assert _resolve_refer("phone", ["Kristin's phone", "Michelle's phone"]) is None
     assert _resolve_refer("truck", ["workstation chair"]) is None
     assert _resolve_refer("man", ["workman"]) is None
+
+
+def _scope_provider(scene_id, *, thorough):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, scene_id) if thorough else core.package_and_state(variation, scene_id)
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+    return provider
+
+
+def test_bare_name_shortcut_ignores_a_tracked_thing_in_another_scene():
+    provider = _scope_provider("2C", thorough=True)
+    world = provider._world()
+
+    assert world.resolve("console") is None
+    assert _resolve_refer("console", provider.item_facts) == "inspection console"
+    assert not provider._name_in_scene_scope(world, "inspection console")
+    assert provider._resolve_name(world, "console") is None
+
+
+def test_bare_name_shortcut_keeps_a_tracked_thing_in_the_scene_area():
+    provider = _scope_provider("1A", thorough=False)
+    world = provider._world()
+
+    assert world.resolve("chair") is None
+    assert _resolve_refer("chair", provider.item_facts) == "workstation chair"
+    assert provider._name_in_scene_scope(world, "workstation chair")
+    assert provider._resolve_name(world, "chair") == "workstation_chair"
+
+
+def test_bare_name_shortcut_keeps_a_thing_held_by_the_protagonist():
+    provider = _scope_provider("2C", thorough=True)
+    world = provider._world()
+
+    assert world.resolve("card") is None
+    assert _resolve_refer("card", provider.item_facts) == "Michelle's memory card"
+    assert world.holder("memory_card") == provider.state.package.world.protagonist_id
+    assert provider._name_in_scene_scope(world, "Michelle's memory card")
+    assert provider._resolve_name(world, "card") == "memory_card"
+
+
+def test_full_name_shortcut_still_resolves_out_of_scene_scope():
+    provider = _scope_provider("2C", thorough=True)
+    world = provider._world()
+
+    assert not provider._name_in_scene_scope(world, "inspection console")
+    assert provider._resolve_name(world, "inspection console") == "inspection_console"
 
 
 def test_prepare_turn_resolves_short_names(monkeypatch):

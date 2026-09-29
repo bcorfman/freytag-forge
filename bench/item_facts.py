@@ -593,8 +593,33 @@ class ItemFactsProvider(CloudflareTurnProvider):
         target = world.resolve(key)
         if target:
             return target
-        refer = _resolve_refer(key, self.item_facts)
+        refer = _resolve_refer(key, [name for name in self.item_facts if self._name_in_scene_scope(world, name)])
         return world.resolve(refer) if refer else None
+
+    def _name_in_scene_scope(self, world, name):
+        entity_id = world.resolve(name)
+        if entity_id is None:
+            return True
+
+        package = self.state.package
+        protagonist_id = package.world.protagonist_id
+        scene = next(item for item in package.scenes if item.metadata.scene_id == self.state.current_scene_id)
+        if entity_id in {protagonist_id, *scene.metadata.participant_ids, *scene.metadata.item_ids}:
+            return True
+
+        entity_area = world.area(entity_id)
+        if entity_area is None:
+            return True
+
+        def at_or_below(area_id, ancestor_id):
+            return area_id == ancestor_id or ancestor_id in world.chain(area_id)
+
+        scene_area = world.area(scene.metadata.location_id)
+        protagonist_area = world.area(protagonist_id)
+        return any(
+            ancestor_id is not None and at_or_below(entity_area, ancestor_id)
+            for ancestor_id in (scene_area, protagonist_area)
+        )
 
     def _entity_label(self, world, entity_id):
         if world.is_a(entity_id, "character"):
