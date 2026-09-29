@@ -566,6 +566,30 @@ def test_match_payload_only_lists_things_in_play_for_each_scene():
     assert "- Michelle's phone." in things
 
 
+def test_match_payload_2c_excludes_the_other_scene_console():
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+
+    things = (
+        provider._match_payload("Go to the console.", ["console"])["user"]
+        .split("THINGS:\n", 1)[1]
+        .split("\n\nNEW NAMES:", 1)[0]
+    )
+
+    assert "- inspection console." not in things
+    assert "- Kristin." in things
+
+
 def test_park_bench_resolves_and_is_placed_in_scene_1b():
     state = RuntimeState.bootstrap(PACKAGE)
     apply_scene_placements(PACKAGE, state.facts, "1B")
