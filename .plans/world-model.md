@@ -5,7 +5,8 @@ S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
 `claude/ground-2b`: scene-entry recall scoped (ef80a28) and 2B grounded
-(3f765ba). Next: a 2B bench script, then 2C-3C, S3 and S4. See
+(3f765ba), and measured live (no leak rejection; facts 10/10). Next: 2B
+reveal handoffs, then 2C-3C, S3 and S4. See
 "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -85,7 +86,34 @@ passed: 1A-3A payloads byte-identical except that line). The leakage
 matrix needed no knowledge edits. Not measured live: no 2B bench script
 exists.
 
-**Next:** a 2B bench script and one live replicate.
+**2B live replicate (2026-09-28, Ringer, one replicate, check
+passed; 18c4f30).** `bench/variations/item-facts-world-2b.json`,
+script `archive-evidence` (10 turns, thorough entry), results in
+`bench/results/world-2b`, read by
+`.plans/world-model-scenes/scene_2b_check.py`. Completed, no rejected
+turn, no leak rejection. Every name the reply used resolved directly
+("records archive", "archive terminals", "medical terminal",
+"infrastructure corridors", "inspection console"), so no match call
+was needed and nothing was unplaced. The engine refused the reply's
+bad changes: the medical terminal (turns 5, 9) and the archive
+terminals (turn 10) "moved to Kristin" were refused as fixed, and "records
+archive" placed in Kristin (turn 4) was refused as an area. Kristin's
+walk to the corridors and back (turns 7-8) landed, with Brandon
+following. Fact tracking: facts after the turn correct 10/10.
+Continuity: command not finished 3/10 (turns 2, 5, 10), restarts the
+scene 1/10 (turn 8, "Lead Brandon back into the records archive.", a
+judge false positive, because the command asks for the return).
+**The gap:** `k_sl_2b_a_r1` and `k_sl_2b_a_r2` were offered on every
+turn, and the narrator selected neither, even for turn 1 "Search the
+archive terminals for Michelle's record." (R1) and turn 2 "Pull up my
+own record on the archive terminals." (R2). So no 2B knowledge was
+earned, `janus_evidence` arrived only as the turn-10 cue, and the scene
+never left. The 2B candidates have no `earn_when`, `action_evidence` or
+`delivery_text`. This is the same gap 2a806db closed for 1B-2A.
+
+**Next:** 2B reveal handoffs for the seven `k_sl_2b_*` candidates,
+written in ChatGPT Desktop and approved by Brandon, then landed by a
+Ringer task (as 2a806db), then rerun the 2B replicate.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
