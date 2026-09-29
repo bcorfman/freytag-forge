@@ -5,8 +5,8 @@ S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
 `claude/ground-2b`: scene-entry recall scoped (ef80a28) and 2B grounded
-(3f765ba), and measured live (no leak rejection; facts 10/10). Next: 2B
-reveal handoffs, then 2C-3C, S3 and S4. See
+(3f765ba) with reveal handoffs (a1e7885), measured live: every handoff
+fired and 2B moved to 2C. Next: 2C-3C, S3 and S4. See
 "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -111,9 +111,34 @@ earned, `janus_evidence` arrived only as the turn-10 cue, and the scene
 never left. The 2B candidates have no `earn_when`, `action_evidence` or
 `delivery_text`. This is the same gap 2a806db closed for 1B-2A.
 
-**Next:** 2B reveal handoffs for the seven `k_sl_2b_*` candidates,
-written in ChatGPT Desktop and approved by Brandon, then landed by a
-Ringer task (as 2a806db), then rerun the 2B replicate.
+**2B reveal handoffs (a1e7885).** Written in ChatGPT Desktop over three
+prompt rounds and approved by Brandon. The first answer gave alternatives
+the same nouns, which my prompt allowed, and a handoff fires only when
+exactly one offered candidate matches. The final prompt stated the
+matcher's rules (whole-word phrases, no plurals, possessives are one
+word, exactly one match), the commands each entry must and must not
+catch, and that `earn_when` finishes "Earn it when the player ___.".
+Landed by Ringer (Luna, one attempt; suite 898 passed; payloads
+unchanged); `ringer-work/freytag-2b-handoffs/verify_handoffs_2b.py`
+checks the exact values and 16 matcher cases.
+
+**2B rerun (2026-09-28, Ringer, one replicate, check passed;
+`bench/results/world-2b-handoffs`).** Handoffs fired on turns 1
+(`k_sl_2b_a_r1`), 3 (`k_sl_2b_b_r1`) and 5 (`k_sl_2b_c_r1`), each
+delivery sentence reached the narration word for word, and the scene
+moved to 2C after turn 8 (min_turns), so turns 9-10 did not run. No
+rejected turn, no leak rejection. Facts after the turn correct 8/8.
+Continuity: command not finished 2/8 (turns 5, 6), acts beyond the
+command 2/8 (turns 4, 8), restarts the scene 1/8 (turn 8, the same judge
+false positive as before). Turn 5's lead-up said the files were "heavily
+encrypted" right before the delivered find, although the reveal-turn
+rule ("Write only what leads up to it.") was in its prompt: 1 of 3
+reveal turns. Watch it over more replicates before any change. Minor:
+turn 8's reply carried an empty `lantern` entry copied from the
+variation's output example; the engine flagged and ignored it.
+
+**Next:** 2C grounding, from the survey: `purge_chamber` is not where
+2C's text happens ("command levels and detention sectors").
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
