@@ -4,8 +4,8 @@ Status (2026-09-28): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
-`claude/ground-2b`: scene-entry recall scoped (ef80a28) and 2B grounding
-in progress. Next: a 2B bench script, then 2C-3C, S3 and S4. See
+`claude/ground-2b`: scene-entry recall scoped (ef80a28) and 2B grounded
+(3f765ba). Next: a 2B bench script, then 2C-3C, S3 and S4. See
 "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -79,10 +79,13 @@ must_convey) into 2B's opening. Fixed `archive_terminals` ("archive
 terminals") and `medical_terminal` things are placed in the archive;
 the medical terminal is not in a medical level. 2B declares
 `companions: [brandon]`. Payloads must stay byte-identical except 2B's
-opening location line. Check: `ringer-work/freytag-2b-grounding/verify_2b.py`.
+opening location line. **Done as 3f765ba** (Ringer, Luna, one attempt;
+suite 898 passed; `ringer-work/freytag-2b-grounding/verify_2b.py`
+passed: 1A-3A payloads byte-identical except that line). The leakage
+matrix needed no knowledge edits. Not measured live: no 2B bench script
+exists.
 
-**Next:** land the 2B grounding, then a 2B bench script and one live
-replicate.
+**Next:** a 2B bench script and one live replicate.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
