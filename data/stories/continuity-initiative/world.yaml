@@ -31,7 +31,8 @@ locations:
   aliases: [restricted records archive]
   parent: regional_facility
 - id: purge_chamber
-  name: Purge chamber
+  name: command levels
+  aliases: [command level, upper command corridors]
   parent: regional_facility
 - id: detention_level
   name: Detention level

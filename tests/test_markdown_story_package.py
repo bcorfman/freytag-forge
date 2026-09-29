@@ -38,6 +38,19 @@ def test_scene_2b_applies_archive_and_companion_placements() -> None:
     assert "brandon" in world.companions("kristin")
 
 
+def test_scene_2c_applies_command_levels_and_companion_placements() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "2C"
+
+    assert apply_scene_placements(package, state.facts, "2C") == ()
+
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "purge_chamber"
+    assert world.parent("brandon") == "purge_chamber"
+    assert "brandon" in world.companions("kristin")
+
+
 def copied_package(tmp_path: Path) -> Path:
     destination = tmp_path / "package"
     shutil.copytree(PACKAGE, destination)
