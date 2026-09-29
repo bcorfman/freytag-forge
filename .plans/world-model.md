@@ -229,7 +229,21 @@ EARLIER IN THE STORY heading after SCENE. Ringer run
 thorough-state prompts for 1B, 2B and 2C; fresh-state payloads
 byte-identical).
 
-**Next:** land the EARLIER IN THE STORY change, rerun 2C, then 3A.
+**EARLIER IN THE STORY landed (522c00c;** Ringer, Luna, one attempt;
+suite 901 passed; fresh-state payloads byte-identical). **Measured over
+four 2C replicates** (`bench/results/world-2c-earlier` and
+`world-2c-earlier-x3`): every handoff fired on turns 1, 4 and 6 and the
+scene moved to 3A after turn 8 in all four; no rejected turn, no leak
+rejection; facts after the turn correct 8/8, 8/8, 7/8, 7/8 (the misses
+are turn 8 recording 3A's entry placement after the transition, a bench
+artifact). **Drift: 1 of 4** (x3 replicate 1: turn 2 again put Brandon
+"in the corner of the restricted infrastructure corridor", and turns 4-7
+ran in the records archive), against 2 of 3 before. The corridor line
+was correctly under EARLIER IN THE STORY; the narrator borrowed it
+anyway. Also seen: the narrator's generic "console" was mapped by the
+match call to 2A's fixed inspection console (refused as fixed, no harm).
+
+**Next:** Brandon's decision on the remaining drift, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
