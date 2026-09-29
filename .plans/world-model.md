@@ -342,7 +342,28 @@ the copied files for proof of the purge order.") replied `"Kristin":
 {"place": "console"}`. "console" resolves directly (no match call) to
 2A's fixed inspection console, so Kristin moved into the infrastructure
 corridors. Turn 5's "room" then matched the corridors, and turns 6-7
-were narrated there, until turn 8 walked her back. Not addressed yet.
+were narrated there, until turn 8 walked her back.
+The cause was the bare-name shortcut in `_resolve_name`: `_resolve_refer`
+takes a bare word when exactly one tracked name in the whole story ends
+in it. Brandon asked whether renaming the console to "terminal" would
+help; no, several tracked names already end in "terminal", and the match
+call had already sent a bare "terminal" to 2B's archive terminals.
+**Brandon chose to scope the shortcut (b7dcec5):** it now considers only
+tracked names in scene scope (the scene's and the player's areas and
+below, scene items and people, held things, unplaced things). Full
+names and aliases resolve as before. Ringer, Luna; suite 910 passed.
+The first run failed on my verifier, which demanded that Kristin stay
+in the command levels after a "new" match, while the existing design
+leaves her unplaced; the worker changed placement logic to satisfy it.
+The corrected run passed on its second attempt.
+**Measured by a live probe** (`~/dev/ringer-work/freytag-console-probe`:
+stubbed reply putting Kristin at a bare "console" on "Check the copied
+files for proof of the purge order.", thorough 2C entry, live match call
+and Jev): the shortcut no longer fires, but the match call picked
+"inspection console" 10 of 10, Jev confirmed 10 of 10, and Kristin still
+landed in the infrastructure corridors 10 of 10 ("room" 5 of 5 to the
+command levels). The match call sees the console because its THINGS
+filter compares top-level areas, and every facility area shares one.
 
 **Next:** decide on the "console" drift, then push `claude/ground-2c` for
 review, then 3A.
