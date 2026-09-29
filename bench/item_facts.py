@@ -607,11 +607,31 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _mapping_name(name):
         return f'"{name}"'
 
+    def _mapping_area_context(self, world, target_id):
+        protagonist_id = self.state.package.world.protagonist_id
+        player_area = world.area(protagonist_id)
+        contrastive = (
+            world.is_a(target_id, "area")
+            and player_area is not None
+            and target_id != player_area
+            and player_area not in world.chain(target_id)
+            and target_id not in world.chain(player_area)
+        )
+        return player_area, contrastive
+
     def _mapping_prompt(self, world, name, target_id, *, is_place):
         n = self._mapping_name(name)
         k = self._mapping_name(world.name(target_id))
         if is_place:
             if world.is_a(target_id, "area"):
+                player_area, contrastive = self._mapping_area_context(world, target_id)
+                if contrastive:
+                    player = world.name(self.state.package.world.protagonist_id)
+                    p = self._mapping_name(world.name(player_area))
+                    return (
+                        f"{player} is in {p}. Is the place called {n} really {k}, rather than a spot in {p}?",
+                        f"the place called {n} is {k}, not a spot in {p}",
+                    )
                 return (
                     f"Is the place called {n} the same place as {k}, or inside it?",
                     f"the place called {n} is {k} or is inside it",
@@ -892,11 +912,15 @@ class ItemFactsProvider(CloudflareTurnProvider):
         place_ids = {}
         place_resolutions = {}
         mapping_answers = {}
+        mapping_contrastive = {}
+        mapping_player_areas = {}
 
         def check_mapping(name, target_id, kind):
             pair = (name, target_id)
             if pair in mapping_answers:
                 return mapping_answers[pair]
+            player_area, contrastive = self._mapping_area_context(world, target_id)
+            contrastive = contrastive and kind == "place"
             question, statement = self._mapping_prompt(world, name, target_id, is_place=kind == "place")
             player, known = self._mapping_state(world, target_id)
             answer = confirm(player_input, story, question, statement, player, known)
@@ -909,11 +933,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     "player": player,
                     "known": known,
                     "answer": answer,
+                    "contrastive": contrastive,
                 }
             )
             if answer is None:
                 issues.append(f"item_facts mapping check for {name!r} unavailable")
             mapping_answers[pair] = answer
+            mapping_contrastive[pair] = contrastive
+            mapping_player_areas[pair] = player_area
             return answer
 
         for place in place_names:
@@ -929,8 +956,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     if not exact:
                         answer = check_mapping(place, target_id, "place")
                         if answer is False:
-                            place_ids.pop(place, None)
-                            place_resolutions[place] = "new"
+                            pair = (place, target_id)
+                            if mapping_contrastive.get(pair):
+                                player_area = mapping_player_areas[pair]
+                                place_ids[place] = player_area
+                                place_resolutions[place] = world.name(player_area)
+                            else:
+                                place_ids.pop(place, None)
+                                place_resolutions[place] = "new"
                             continue
                 if (
                     place_ids[place] is not None

@@ -2247,7 +2247,8 @@ def test_stubbed_run_records_new_change_on_same_turn(monkeypatch):
         ("thing_other", 'Are "Artifact" and "back door" the same thing?'),
         (
             "place_area",
-            'Is the place called "checkpoint" the same place as "Brandon\'s hideout", or inside it?',
+            'Kristin Schweitzer is in "Michelle\'s house". Is the place called "checkpoint" really '
+            '"Brandon\'s hideout", rather than a spot in "Michelle\'s house"?',
         ),
         ("place_character", 'Is the place called "checkpoint" on "Brandon Corfman"?'),
         ("place_other", 'Is the place called "in front of metal door" at "back door"?'),
@@ -2310,7 +2311,7 @@ def test_mapping_check_templates_and_facts(monkeypatch, kind, expected_question)
 def test_mapping_check_rejected_place_is_unplaced(monkeypatch):
     provider = _provider()
     world = provider._world()
-    area_id = next(entity_id for entity_id in world.entity_ids() if world.is_a(entity_id, "area"))
+    area_id = world.area(provider.state.package.world.protagonist_id)
     target = world.name(area_id)
     monkeypatch.setattr(
         CloudflareTurnProvider,
@@ -2322,6 +2323,69 @@ def test_mapping_check_rejected_place_is_unplaced(monkeypatch):
     assert result["place_resolutions"] == {"checkpoint": "new"}
     assert provider.last_item_facts_unplaced() == [{"name": "the lantern", "place": "checkpoint"}]
     assert result["mapping_checks"][0]["answer"] is False
+
+
+def test_mapping_check_unrelated_area_false_lands_in_player_area(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    player_area = world.area(provider.state.package.world.protagonist_id)
+    calls = []
+
+    def confirm(*args):
+        calls.append(args)
+        return False
+
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"checkpoint": "Brandon's hideout"}},
+    )
+
+    provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=confirm)
+
+    result = provider.last_item_facts_match()
+    assert result["place_resolutions"] == {"checkpoint": world.name(player_area)}
+    assert result["mapping_checks"][0]["contrastive"] is True
+    player_place = world.name(player_area)
+    assert calls[0][2] == (
+        f'Kristin Schweitzer is in "{player_place}". Is the place called "checkpoint" really '
+        f'"Brandon\'s hideout", rather than a spot in "{player_place}"?'
+    )
+    assert calls[0][3] == (f'the place called "checkpoint" is "Brandon\'s hideout", not a spot in "{player_place}"')
+    assert world.parent(world.resolve("the lantern")) == player_area
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_mapping_check_unrelated_area_true_lands_in_target_area(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    target_id = world.resolve("Brandon's hideout")
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"checkpoint": "Brandon's hideout"}},
+    )
+
+    provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: True)
+
+    result = provider.last_item_facts_match()
+    assert result["place_resolutions"] == {"checkpoint": world.name(target_id)}
+    assert result["mapping_checks"][0]["contrastive"] is True
+    assert world.parent(world.resolve("the lantern")) == target_id
+
+
+def test_mapping_check_related_areas_keep_old_question():
+    provider = _provider()
+    world = provider._world()
+    player_area = world.area(provider.state.package.world.protagonist_id)
+    expected = 'Is the place called "checkpoint" the same place as "{}", or inside it?'
+
+    question, _statement = provider._mapping_prompt(world, "checkpoint", player_area, is_place=True)
+    assert question == expected.format(world.name(player_area))
+
+    child_area = next(area_id for area_id in world.entity_ids() if world.parent(area_id) == player_area)
+    question, _statement = provider._mapping_prompt(world, "checkpoint", child_area, is_place=True)
+    assert question == expected.format(world.name(child_area))
 
 
 def test_mapping_check_accepted_place_keeps_mapping(monkeypatch):
