@@ -401,6 +401,7 @@ class CloudflareTurnProvider:
             self._object_place_rule(),
             "Finish each action the player gives.",
             "When the player gives a thing to someone, that person takes it.",
+            "When the player talks to someone, that person answers.",
             f"Only show {self._protagonist_name()} doing what the player said.",
             "Do not make up new objects, clues, or things inside containers.",
             "Everything in the SCENE section is true, but the player finds a clue only when their action reaches it.",
