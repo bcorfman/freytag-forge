@@ -6,8 +6,10 @@ S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
 `claude/ground-2b`: scene-entry recall scoped (ef80a28) and 2B grounded
 (3f765ba) with reveal handoffs (a1e7885), measured live, and merged
-(PR 488). 2C grounding in progress on `claude/ground-2c`. Next: 2C bench
-and handoffs, then 3A-3C, S3 and S4. See
+(PR 488). 2C grounded with handoffs on `claude/ground-2c`, plus two
+recall fixes (EARLIER IN THE STORY; people alone do not recall),
+measured live: no drift in 3 of 3, every handoff fires. Next: 3A-3C, S3
+and S4. See
 "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -243,7 +245,24 @@ was correctly under EARLIER IN THE STORY; the narrator borrowed it
 anyway. Also seen: the narrator's generic "console" was mapped by the
 match call to 2A's fixed inspection console (refused as fixed, no harm).
 
-**Next:** Brandon's decision on the remaining drift, then 3A.
+**Brandon chose: naming only a person does not recall (ae6406f).**
+Out-of-scene recall now ignores character ids (the world's npcs and the
+protagonist): "Ask Brandon about the infrastructure corridors." still
+recalls the 2A corridor, "Ask Brandon what he is hiding." recalls
+nothing. EARLIER IN THE STORY stays for what is recalled. Ringer, Luna;
+the first run failed only because my spec forbade updating the EARLIER
+test, which used the person-only command; the second passed in one
+attempt (suite 903). **Measured over three 2C replicates**
+(`bench/results/world-2c-people-x3`): **drift 0 of 3**, every 2C turn
+in the command levels, no earlier place named in any narration; every
+handoff fired (turns 1, 4, 6) and each replicate moved to 3A after turn
+8; facts after the turn correct 23/24; no rejected turn, no leak
+rejection. Continuity still flags turn 5 ("Argue with Brandon about
+sending the copied files now.") as contradicting a stated fact in 2 of
+3 (Brandon agrees to hold the files, while 2C.3 has him argue to send
+them at once), and 3 of 7 runs since the handoffs. Not addressed yet.
+
+**Next:** push `claude/ground-2c` for review, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
