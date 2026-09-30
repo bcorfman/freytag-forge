@@ -1236,10 +1236,29 @@ Not tested: the material on turns that do not enter the office. As an
 always-on SCENE line it would push entry on any command, so the build
 should earn it by the entry command, like the other reveal handoffs.
 
-**Next (Brandon's call):** a 3B.2 office-entry handoff (statement,
-`earn_when`, `action_evidence`, `delivery_text`) written in ChatGPT
-Desktop from the 3B.2 plot text, scored with the real matcher, landed
-by Ringer, then 3B x3 rerun. Also open: the 3A r1 capture miss,
+**Brandon chose the 3B.2 office-entry handoff (2026-09-30).** New entry
+`k_sl_3b_e_r1`, offered from `human_security_control` until earned, so
+together with the B set and, if B fires first, the D set. earn_when
+"enters Rebecca's office"; delivery_text "Kristin and Michelle enter
+Rebecca's office. Brandon holds off the security forces." (the plot
+sentence split in two, no new prose). The ChatGPT Desktop prompt asks
+only for the verb and noun lists, and gives it the four co-offered
+entries' final lists (`~/dev/ringer-work/freytag-3b-office-entry/
+chatgpt_prompt.md`). Score the answer with `score_office.py` there:
+the prompt's four examples, 12 other wordings held back, the existing
+B and D commands, 18 ordinary commands in both sets, and two hard
+negatives the matcher cannot tell apart ("Take the files from Rebecca's
+office.").
+Build questions after the lists: a new storylet `SL-3B-E` and fact (like
+`office_entered`) in storylet-routes.yaml and knowledge.yaml; its
+`on_assert` would move Kristin to `executive_office` (companions
+follow) and then Brandon back to `security_corridors` (world effects
+have `move` but no companion-clearing op; moving a companion alone
+already splits him, as `relay_open` does). Whether B should require the
+entry, so Rebecca is never confronted from the corridors, is open.
+
+**Next:** Brandon runs the prompt in ChatGPT Desktop; score the answer;
+then the build by Ringer and a 3B x3 rerun. Also open: the 3A r1 capture miss,
 "Rebecca" as new, and Brandon's stale place text.
 
 ### Narration leak diagnosis (2026-09-28, offline)
