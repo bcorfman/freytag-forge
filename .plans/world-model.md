@@ -28,7 +28,9 @@ bench script and fixes measured live; 3B grounded (1e37fdd), handoffs
 same gap in 3A); referred people and places in THINGS chosen and
 probed live (Kristin reaches the place 3A 28/30, 3B 15/20, from 0/30
 and 2/20) and built (bc0ddf1); reruns: 3A reaches the medical level 3/3 in
-narration, 3B still stops at the office door 3/3; then 3C, S3 and S4.
+narration, 3B still stops at the office door 3/3; a probe traced it to
+missing 3B.2 material (office entry 15/15 with it, 4/15 without, a rule
+1/15); a 3B.2 entry handoff next; then 3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -1209,12 +1211,36 @@ Michelle any more (it did in all six before).
 - "Rebecca" resolved as a new person on 3B turn 5 or 6 in 3 of 3 both
   before and now, so it is not from this change; it is still a gap.
 
-**Next:** decide how to finish the 3B move. The narrator now knows the
-office is a place but stops at its door. Brandon ranks a prompt rule
-first for narration defects; a probe on the recorded 3B turn-3 prompts
-could test one (for example "When the command says to go into a place,
-end the turn with Kristin inside it."), scored on the narration, not only
-item_facts. Also open: the 3A r1 capture miss and "Rebecca" as new.
+**Cause of the 3B door stop: the story material.** Plot 3B.2 says
+"Kristin and Michelle enter Rebecca’s office while Brandon holds off
+security forces.", but no line carries it: turn 3 offers only
+`k_sl_3b_b_r1`/`r2` (the confrontation), and SCENE's only office line is
+3B.1's "Security corridors between the resistance and Rebecca's
+executive office", which frames the office as beyond the fight.
+
+**Office-entry probe (2026-09-30, Ringer, check passed;
+`~/dev/ringer-work/freytag-office-entry-probe`, `office_probe.json`).**
+The three recorded bc0ddf1 turn-3 prompts, 5 samples each, 15 per arm,
+all 45 returned. Narration read by hand, counted only when Kristin ends
+inside the office:
+- recorded: **4/15** (all from r3; r1 and r2 0/10); item_facts put her
+  in the office 6/15, two of them on "towards" narrations.
+- material (the 3B.2 sentence above copied into SCENE, unchanged):
+  **15/15**, item_facts 15/15. Side effects: in 4 of the r3 samples
+  Brandon speaks over comms, holding off security, while THINGS lists him
+  with Kristin; Rebecca, placed in the office, is never mentioned.
+- rule ("When the player goes into a place, the story ends with them
+  inside it." after the answer rule): **1/15**; mostly "starts walking
+  towards" the office. No better than recorded; dropped.
+Not tested: the material on turns that do not enter the office. As an
+always-on SCENE line it would push entry on any command, so the build
+should earn it by the entry command, like the other reveal handoffs.
+
+**Next (Brandon's call):** a 3B.2 office-entry handoff (statement,
+`earn_when`, `action_evidence`, `delivery_text`) written in ChatGPT
+Desktop from the 3B.2 plot text, scored with the real matcher, landed
+by Ringer, then 3B x3 rerun. Also open: the 3A r1 capture miss,
+"Rebecca" as new, and Brandon's stale place text.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
