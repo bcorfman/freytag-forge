@@ -17,9 +17,10 @@ name's narration sentence (5224b69); Kristin's place right 10 of 10 live,
 but Jev still rejects a wrong memory-card match about 1 in 8; bare
 "corridor" is a measured known gap. Full live 2C replay on 76154df
 done: no drift, every handoff fires, no leak rejection; it found an
-unplaced new "console" (1 of 3) and a missed card move (2 of 3). Next:
-Brandon to decide on those two, push `claude/ground-2c`, then 3A-3C, S3
-and S4. See "Resume here".
+unplaced new "console" (1 of 3) and a missed card move (2 of 3). Brandon
+chose to give new place names a kind (tasks A-C below the replay);
+next is task A, then push `claude/ground-2c`, then 3A-3C, S3 and S4.
+See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -451,9 +452,50 @@ tracked, so Kristin stays in the command levels (missed 1 of 3). r3 turn
 levels"; its Jev check named the player's place as "Detention level",
 the 3A place after the transition, not 2C's.
 
-**Next:** Brandon to decide whether the unplaced new console and the
-missed card move block the push, then push
-`claude/ground-2c` for review, then 3A.
+**Brandon chose: new place names get a kind (2026-09-29).** Since the
+match call arrived, every new place name left something unplaced:
+"console" (a thing), "checkpoint", "lower levels" and "maintenance
+network" (places), and "prisoners" (a group of people). Brandon wants
+this gone for good, so the fix addresses the cause: the engine did not
+know what kind a new name is. Decisions:
+- The match call gives each name it calls "new" a kind: place, person,
+  group or thing. The engine creates that kind with a minted ID. A
+  missing or unknown kind makes a thing and records an issue. A new name
+  used as a place for a thing is made a container, since the reply shows
+  only a bare parent name (W5) and never the relation.
+- A new place goes inside the player's area. A new person, group or
+  thing goes in the player's place (the area, if that place cannot hold
+  it).
+- **A group** ("prisoners") is somewhere, but it holds nothing: a
+  thing sent to a group lands in the group's place. A single member who
+  takes a thing is named, so that is a person case. The 1C "prisoners"
+  case was a capture error, not a group holding a thing: the narration
+  had identification numbers etched into the walls near the prisoners,
+  and the match call wrongly took them for the handwritten number
+  sequence.
+- **Members:** a person in a group has the group as parent, so members go
+  wherever the group goes. People join a group from the story package or
+  from narration (an ordinary move). Leaving is an ordinary move.
+- **Talking to a group:** a member answers. A group with no members says
+  nothing.
+- **People and groups named only in a reply are created.** Brandon: a
+  created person belongs to one scene; if they have no part in the plot
+  they can stay for the rest of the story, as long as they do nothing
+  story-breaking, and that would be the player's doing.
+
+Three Ringer tasks, each measured before the next: **A** kinds and
+creation (a thing sent to a group lands in its place), which blocks the
+2C push; **B** group membership; **C** talking to a group. B and C land
+before 3A. A's verifier is
+`~/dev/ringer-work/freytag-new-place-kinds/verify_new_place_kinds.py`
+(the four kinds, the fallback, the recorded 2C turns 4 and 7). A is
+measured live by a probe replaying console, prisoners, checkpoint,
+lower levels and maintenance network 10 times each against the 92% bar,
+plus the 1C identification-numbers turn to see if 5224b69 already stops
+that mismatch, then a full 2C replay.
+
+**Next:** Ringer task A, its live probe, the 2C replay, push
+`claude/ground-2c`, then B and C, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
