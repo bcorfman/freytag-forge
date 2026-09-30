@@ -2293,6 +2293,59 @@ def _new_place_kind_provider(monkeypatch, reply, calls=None):
     return provider
 
 
+def _group_narrator_prompt(monkeypatch, group_members=()):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"prisoners": "new"}, "kind": {"prisoners": "group"}},
+    )
+    provider.apply_item_facts(
+        {"prisoners": {"place": "command levels"}},
+        player_input="Ask the prisoners who runs this level.",
+    )
+    for member in group_members:
+        provider.apply_item_facts(
+            {member: {"place": "prisoners"}},
+            player_input=f"Join the prisoners with {member}.",
+        )
+    provider._selected_names = ["prisoners"]
+    return provider, provider._section_user_prompt({"player_input": "Ask the prisoners who runs this level."})
+
+
+def test_group_talk_empty_group_says_nothing(monkeypatch):
+    _provider, prompt = _group_narrator_prompt(monkeypatch)
+
+    assert (
+        "- prisoners. Place: command levels. This is a group of people. If the player talks to them, they say nothing."
+    ) in prompt
+
+
+def test_group_talk_member_answers(monkeypatch):
+    _provider, prompt = _group_narrator_prompt(monkeypatch, ("Brandon",))
+
+    assert (
+        "- prisoners. Place: command levels. This is a group of people. If the player talks to them, Brandon answers."
+    ) in prompt
+
+
+def test_group_talk_player_does_not_answer(monkeypatch):
+    provider, prompt = _group_narrator_prompt(monkeypatch, ("Kristin",))
+
+    assert (
+        "- prisoners. Place: command levels. This is a group of people. If the player talks to them, Brandon answers."
+    ) in prompt
+    assert "Kristin answers" not in prompt
+    assert "This is a group of people." not in provider._things_block()
+
+
+def test_group_talk_capture_things_block_has_no_talk_line(monkeypatch):
+    provider, prompt = _group_narrator_prompt(monkeypatch, ("Brandon",))
+
+    assert "If the player talks to them, Brandon answers." in prompt
+    things = provider._things_block()
+    assert "- prisoners. Place: command levels." in things
+    assert "If the player talks to them" not in things
+
+
 def test_group_member_player_follows_with_companion_and_new_thing_uses_group_place(monkeypatch):
     provider = _new_place_kind_provider(
         monkeypatch,

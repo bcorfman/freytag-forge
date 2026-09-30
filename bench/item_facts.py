@@ -404,17 +404,17 @@ class ItemFactsProvider(CloudflareTurnProvider):
         super()._prepare_turn_visibility()
         self._ensure_scene_seeded()
 
-    def _things_block(self):
+    def _things_block(self, *, narration=False):
         lines = ["THINGS:"] if self._thing_names() else []
         world = self._world()
         for name in self._thing_names():
             facts = self.item_facts[name]
             line = f"- {name}."
             place = facts["place"]
+            entity_id = world.resolve(name)
             if place:
                 line += f" Place: {place.strip()}."
             if facts["condition"]:
-                entity_id = world.resolve(name)
                 axes = world.axis_definitions(entity_id) if entity_id else ()
                 rendered = []
                 axis_values = world.axis_values(entity_id) if entity_id else {}
@@ -425,6 +425,24 @@ class ItemFactsProvider(CloudflareTurnProvider):
                         rendered.append(f"{current} (or {other})")
                 rendered.extend(condition for condition in facts["condition"] if condition not in axis_values.values())
                 line += f" Condition: {', '.join(rendered)}."
+            if narration and entity_id and world.is_a(entity_id, "group"):
+                members = [
+                    member_id
+                    for member_id in world.members(entity_id)
+                    if member_id != self.state.package.world.protagonist_id
+                ]
+                line += " This is a group of people."
+                if members:
+                    member_names = [self._entity_label(world, member_id) for member_id in members]
+                    if len(member_names) == 1:
+                        answer = member_names[0]
+                    elif len(member_names) == 2:
+                        answer = f"{member_names[0]} or {member_names[1]}"
+                    else:
+                        answer = f"{', '.join(member_names[:-1])} or {member_names[-1]}"
+                    line += f" If the player talks to them, {answer} answers."
+                else:
+                    line += " If the player talks to them, they say nothing."
             lines.append(line)
         return "\n".join(lines)
 
@@ -469,7 +487,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _section_user_prompt(self, user):
         rendered = super()._section_user_prompt(user)
-        things = self._things_block()
+        things = self._things_block(narration=True)
         if not things:
             return rendered
         marker = "\n\nCONSTRAINTS:"
