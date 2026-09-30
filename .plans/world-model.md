@@ -924,7 +924,19 @@ current question is 48/48. Secondary: `together()` treats a truck in the
 freight terminal as near Kristin in the observation shaft (a sub-area),
 so a yes can seat her in a truck she is nowhere near.
 
-**Next:** Brandon's call on the seating fix, then 3B; land the
+**Brandon chose to build both (seating).** **Landed as 775be92** (Ringer,
+Luna; the worker's second attempt was correct, but my check demanded
+that every new test fail on the old engine, contradicting my own brief,
+which asked for a test that a laptop command still seats; corrected
+check passed: verifier, suite 947). The yes/no use question is now asked
+only when the command names the thing (its names, aliases and learned
+aliases, or the head noun of a possessive name, so "my laptop" counts;
+whole words, case-insensitive); a seat is available only in the
+player's own area. One live 1B-1C replicate is running
+(`bench/results/world-1b-1c-seating`; its script names no laptop, so
+the expected seating steps are none; the leakfix2 run had 4 of 19).
+
+**Next:** read the 1B-1C seating replicate, then 3B; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
