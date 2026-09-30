@@ -2308,6 +2308,7 @@ def _group_narrator_prompt(monkeypatch, group_members=()):
             player_input=f"Join the prisoners with {member}.",
         )
     provider._selected_names = ["prisoners"]
+    provider._referred_names = ["prisoners"]
     return provider, provider._section_user_prompt({"player_input": "Ask the prisoners who runs this level."})
 
 
@@ -2344,6 +2345,39 @@ def test_group_talk_capture_things_block_has_no_talk_line(monkeypatch):
     things = provider._things_block()
     assert "- prisoners. Place: command levels." in things
     assert "If the player talks to them" not in things
+
+
+def test_group_talk_not_addressed_has_plain_line(monkeypatch):
+    provider, _prompt = _group_narrator_prompt(monkeypatch, ("Brandon",))
+    provider._referred_names = []
+    prompt = provider._section_user_prompt({"player_input": "Search the command levels."})
+
+    assert "- prisoners. Place: command levels." in prompt
+    assert "This is a group of people." not in prompt
+
+
+def test_prepare_turn_tracks_referred_names_and_clears_them(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"prisoners": "new"}, "kind": {"prisoners": "group"}},
+    )
+    provider.apply_item_facts(
+        {"prisoners": {"place": "command levels"}},
+        player_input="Ask the prisoners who runs this level.",
+    )
+    replies = iter(
+        [
+            {"refers": ["prisoners"], "same_as": {}},
+            {"refers": [], "same_as": {}},
+        ]
+    )
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: next(replies))
+
+    provider.prepare_turn("Ask the prisoners who runs this level.")
+    assert provider._referred_names == ["prisoners"]
+
+    provider.prepare_turn("Search the command levels.")
+    assert provider._referred_names == []
 
 
 def test_group_member_player_follows_with_companion_and_new_thing_uses_group_place(monkeypatch):

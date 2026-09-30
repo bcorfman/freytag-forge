@@ -50,7 +50,8 @@ person or group is created where the player is, when that is allowed. A thing
 used as a place becomes a container. A group holds nothing; a person can be a
 member of a group. Members go wherever the group goes, and joining or leaving is
 an ordinary move. The narrator's THINGS line for a group says which member
-answers when the player talks to it, or that it says nothing when it has none.
+answers only on a turn whose command addresses the group (the match call lists
+it in `refers`), or that it says nothing when it has none.
 New things made while the player is in a group go to the
 group's place. Things named as being in a group stay at the group's parent. If
 the kind is missing or unknown,

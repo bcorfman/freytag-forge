@@ -247,6 +247,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._item_facts_issues = []
         self._changed_last_turn = set()
         self._selected_names = None
+        self._referred_names = []
         self._last_scene_seeded = None
         self._match_offered_names = set()
         self._schema_cache = {}
@@ -425,7 +426,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                         rendered.append(f"{current} (or {other})")
                 rendered.extend(condition for condition in facts["condition"] if condition not in axis_values.values())
                 line += f" Condition: {', '.join(rendered)}."
-            if narration and entity_id and world.is_a(entity_id, "group"):
+            if narration and entity_id and world.is_a(entity_id, "group") and name in self._referred_names:
                 members = [
                     member_id
                     for member_id in world.members(entity_id)
@@ -1234,6 +1235,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return self.item_facts, issues
 
     def prepare_turn(self, player_input):
+        self._referred_names = []
         dependencies = self.dependency_names()
         candidates = [name for name in self.item_facts if name not in dependencies]
         if not candidates:
@@ -1274,6 +1276,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     refers.append(resolved)
                 if resolved is not None and resolved != name:
                     engine_resolutions[name] = resolved
+            self._referred_names = refers
             selected = set(dependencies) | set(refers)
             self._selected_names = [name for name in self.item_facts if name in selected]
         self._select_protagonist()
