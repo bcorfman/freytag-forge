@@ -1021,6 +1021,17 @@ gone. The new turn-19 flag is Jev scoring the fixed logistics terminal
 as moved (0.55, just over the 0.5 line) when Kristin walks into it:
 judge noise.
 
+**Jev judge concurrency (2026-09-30).** Brandon noticed judging ran as
+one thread. **f5a4569** (Ringer, Luna, one attempt): `judgeInput` builds
+every request, runs them through a pool (default 8; `--concurrency`,
+`JEV_CONCURRENCY`), combines in the original order, and retries 429/503
+up to 5 times with Retry-After. **Follow-up** (Ringer, Luna, one
+attempt): split continuity variants merge their parts in request order.
+Verified offline on the saved 71-call contradictions input with a fake
+Jev: output byte-identical at 1 and 8 (baseline, fact, split,
+split-examples), 1210 ms -> 179 ms, never more than 8 in flight. Not
+yet measured: the real Jev's rate limit under 8 concurrent calls.
+
 **Next:** 3B. land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
