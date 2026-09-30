@@ -252,13 +252,15 @@ test("judgeInput uses the protagonist location question only for the protagonist
   const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
   assert.equal(requests[0].questions.moved.instructions, "At the end of this turn, is `Kristin` in a different room or area from the one `Kristin` started in? Answer from `narrator_narration` only.");
   assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn in another room, in a vehicle, or somewhere else outdoors.");
-  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` ends the turn in the room or area where `Kristin` started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move.");
-  assert.equal(requests[1].questions.moved.instructions, "At the end of this turn, is `desk` held by a different person, or in a different place, than at the start of this turn? Answer from `narrator_narration` only.");
+  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` ends the turn in the room or area where `Kristin` started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.");
+  assert.equal(requests[1].questions.moved.instructions, "At the end of this turn, is `desk` held by a different person, or in a different place, than `before_place`? Answer from `narrator_narration` only.");
   assert.equal(requests[0].state.command, "Search the room.");
   assert.equal(requests[0].state.just_before, "Engine moves Kristin.");
   assert.equal(requests[0].state.narrator_narration, "Kristin walks over to the desk.");
   assert.deepEqual(requests[0].state.after_place_contains, ["desk"]);
+  assert.match(requests[0].questions.moved.criteria.false, /`before_place` already counts every step in `just_before`, so a step in `just_before` is never a move\./);
   assert.match(requests[1].questions.moved.criteria.false, /pocket or a bag/);
+  assert.match(requests[1].questions.moved.criteria.false, /`before_place` already counts every step in `just_before`, so a step in `just_before` is never a move\./);
   await rm(dir, { recursive: true, force: true });
 });
 

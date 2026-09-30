@@ -423,12 +423,12 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
       ? nounl(
         `At the end of this turn, is ${t} in a different room or area from the one ${t} started in? Answer from \`narrator_narration\` only.`,
         `${t} ends the turn in another room, in a vehicle, or somewhere else outdoors.`,
-        `${t} ends the turn in the room or area where ${t} started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move.`,
+        `${t} ends the turn in the room or area where ${t} started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move. ` + "`before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.",
       )
       : nounl(
-        `At the end of this turn, is ${t} held by a different person, or in a different place, than at the start of this turn? Answer from \`narrator_narration\` only.`,
+        `At the end of this turn, is ${t}` + " held by a different person, or in a different place, than `before_place`? Answer from `narrator_narration` only.",
         "It ends the turn with a different holder or in a different place.",
-        "It ends where it started. When `before_place` is a person, anywhere on that person or in something that person carries is the same place, such as a hand, a pocket or a bag. A thing that stays with that person has not moved, even when that person carries it somewhere else. An attempt that fails, or a hand-over that nobody takes, is not a move.",
+        "It ends where it started. When `before_place` is a person, anywhere on that person or in something that person carries is the same place, such as a hand, a pocket or a bag. A thing that stays with that person has not moved, even when that person carries it somewhere else. An attempt that fails, or a hand-over that nobody takes, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.",
       ),
   };
   if (axes.length) {
