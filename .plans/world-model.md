@@ -20,8 +20,9 @@ done: no drift, every handoff fires, no leak rejection; it found an
 unplaced new "console" (1 of 3) and a missed card move (2 of 3). Brandon
 chose to give new place names a kind (tasks A-C below the replay);
 task A and its follow-ups (286e690) measured live: unplaced 0 of 40 in
-the probe and 0 of 24 turns in the 2C replay; task B (group members)
-built as 67a0141; next is C (talking to a group), then 3A-3C, S3 and S4.
+the probe and 0 of 24 turns in the 2C replay; tasks B (group members, 67a0141)
+and C (talking to a group, 0371c13) built, C measured live; next is
+Brandon's call on the member-answer rate, then 3A-3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -587,7 +588,28 @@ resolves directly, so no model call decides it; the live question is
 whether the narrator writes joins at all, which 3A will show. No story
 declares a group yet (3A's captives is a 3A grounding decision).
 
-**Next:** C (talking to a group), then 3A.
+**Task C built (0371c13;** Ringer, Luna, second attempt; suite 937
+passed; `~/dev/ringer-work/freytag-group-talk/verify_group_talk.py`).
+In the narrator prompt only, a group's THINGS line adds "This is a group
+of people." then "If the player talks to them, Brandon answers." (members
+other than the player character, joined with "or") or "If the player
+talks to them, they say nothing." The capture call's THINGS is unchanged.
+**Measured live** (`~/dev/ringer-work/freytag-group-talk-probe`: the
+three recorded 2C turn-2 prompts from `world-2c-containers-x3`, with the
+command "Ask the technicians who signed the purge order." and a
+"technicians" line, 15 narrator samples per arm, read by hand):
+- no talk line (before C): an unnamed technician answers aloud 7 of 15;
+  the other 8 end on a hesitant lead-up.
+- empty group: silent 15 of 15.
+- one member ("senior technician"): he is the one who responds 15 of
+  15, and no other technician speaks, but he says an answer aloud only 3
+  of 15; in 6 of 15 Kristin only clears her throat and he turns to her.
+So the silence and the choice of speaker hold. The member's answer is
+weaker than the unnamed answer was before (3 of 15 against 7 of 15), and
+the command is often not finished. Open for Brandon: whether to act on
+that (for example "answers out loud"), measured the same way.
+
+**Next:** Brandon's call on the member-answer rate, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
