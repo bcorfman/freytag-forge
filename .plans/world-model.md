@@ -817,8 +817,12 @@ recognised her (about 4 in 10 openings). The reworded turn-1 delivery
 ("Kristin finds Michelle alive. ...") makes the lead-up and the delivery
 one sequence and moved 7/15 lead-ups onto a radio trail.
 
-**Next:** Brandon's call on turn 1 (land the delivery rewording, an LLM
-check of the opening, or accept); land the
+**Brandon chose** to land turn 1's rewording and accept the remaining
+opening conflict: **landed as 59a71df** (Ringer, Luna, one attempt;
+suite 944). A confirming x3 rerun is running
+(`bench/results/world-3a-delivery-x3`).
+
+**Next:** read the confirming 3A rerun, then 3B; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
