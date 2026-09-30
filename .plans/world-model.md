@@ -24,8 +24,9 @@ the probe and 0 of 24 turns in the 2C replay; tasks B (group members, 67a0141)
 and C (talking to a group, 0371c13) built, C measured live (member-answer
 rate accepted); 3A grounding landed (d503361); 3A handoffs,
 bench script and fixes measured live; 3B grounded (1e37fdd), handoffs
-(c3d3963) and bench script landed, first live replicate read, x3
-running; then 3C, S3 and S4.
+(c3d3963) and bench script landed, x3 read (office never reached,
+same gap in 3A); referred people and places in THINGS chosen, live
+probe next; then 3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -1106,7 +1107,41 @@ to), not the cause: moves land when the narration names the place.
 Three replicates are running to see whether the office miss repeats
 (`bench/results/world-3b-x3`).
 
-**Next:** read the 3B x3 replicates.
+**3B x3 (2026-09-30, three replicates, check passed;
+`bench/results/world-3b-x3`).** All moved to 3C after turn 9; handoffs on
+turns 1, 4, 6, 8 in all three; no leak rejection; facts after the turn
+correct 27/27; contradicts 1/27, restarts 0/27, beyond the command 7/27,
+not finished 6/27. **The office is never reached, 4 of 4 runs:** turn 3
+narrates a keycard door, a vent, or (r2) Kristin "trying to locate
+Michelle", who is her companion beside her. **The same gap is in 3A,
+unnoticed:** "Follow Michelle into the medical level." left Kristin in
+the detention level 6 of 6 (`world-3a-delivery-x3`, `world-3a-groups-x3`),
+and those narrations also scan "for any sign of Michelle". The fact judge
+scores these turns correct, because nothing moved. **Cause:** THINGS is
+drawn only from tracked things (`bench/item_facts.py` `prepare_turn`:
+items, the protagonist, narrated new things, groups). NPCs and areas are
+never in that pool, so a command naming Michelle or the executive office
+hands the narrator neither; on those turns no match call runs at all.
+Adding referred people and places to THINGS widens the approved
+protagonist-only exception, so it is Brandon's decision.
+
+**Brandon chose both (2026-09-30):** a command that names a person or a
+place gives them a THINGS line ("- Michelle. Place: security
+corridors.", "- executive office. This is a place."), and Kristin's line
+always carries her companions ("- Kristin. Place: security corridors.
+With her: Brandon, Michelle."). **Measured first by a live probe**
+(`~/dev/ringer-work/freytag-referred-things-probe`, `probe_referred.py`):
+the recorded 3B turn-3 prompts (`world-3b` r1, `world-3b-x3` r1-r3) and
+3A turn-4 prompts (`world-3a-delivery-x3`, `world-3a-groups-x3`), 5
+narrator samples per prompt per arm (100 calls), recorded vs both lines
+injected into THINGS. Scored by whether the reply's item_facts put
+Kristin at the named place, and read by hand for "searching for
+Michelle". Dry run passed offline (anchors found in all 10 prompts);
+manifest linted; the live run is next.
+
+**Next:** run the referred-things probe; if the lines move Kristin and
+stop the searching narrations, build them into THINGS by Ringer, then
+rerun 3B (x3) and 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
