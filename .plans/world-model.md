@@ -675,7 +675,17 @@ to the detention level." reveals the medical experiments and "Check the
 clock." the expiring codes. Brandon chose a round 4 that keeps the verbs
 and drops generic nouns (`chatgpt_followup_r4.md`); scored on both.
 
-**Next:** Brandon runs the round-4 follow-up in ChatGPT Desktop; land the
+Round 4 answer (`handoffs_3a_final.yaml`): prompt examples 16/16, other
+wordings 19/24, fires on ordinary commands 0/20 (`negatives_3a.py`), no
+wrong entry fired. Still missed: "treatment logs", "medical equipment",
+"Ask Michelle about the experiments.", "Ask the official for the override
+codes." (bare "official" was removed), and "Take the ... codes from the
+senior official." Landing by Ringer
+(`ringer-work/freytag-3a-handoffs`, check `verify_handoffs_3a.py`: exact
+values, knowledge.yaml otherwise unchanged, 18 matcher cases including
+8 that must fire nothing, payloads byte-identical outside 3A).
+
+**Next:** land the 3A handoffs; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
