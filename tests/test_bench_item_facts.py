@@ -2293,6 +2293,53 @@ def _new_place_kind_provider(monkeypatch, reply, calls=None):
     return provider
 
 
+def _new_group_scoped_alias_provider(monkeypatch, reply, calls=None):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-3a.json")
+    _, state = seeded_state_for_scene(variation, "3A")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+
+    def request(_provider, payload):
+        if calls is not None:
+            calls.append(payload)
+        return reply
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    provider._ensure_scene_seeded()
+    return provider
+
+
+def test_group_scoped_alias_resolves_placed_group_in_scene(monkeypatch):
+    provider = _new_group_scoped_alias_provider(monkeypatch, {"refers": [], "same_as": {}})
+    world = provider._world()
+
+    assert provider._resolve_name(world, "prisoners") == "captives"
+
+
+def test_group_scoped_alias_prepare_turn_selects_group(monkeypatch):
+    provider = _new_group_scoped_alias_provider(monkeypatch, {"refers": ["prisoners"], "same_as": {}})
+
+    result = provider.prepare_turn("Ask the prisoners who runs this block.")
+
+    assert "detention captives" in provider.item_facts
+    assert provider._referred_names == ["detention captives"]
+    assert "detention captives" in provider._selected_names
+    assert result["engine_resolutions"] == {"prisoners": "detention captives"}
+
+
+def test_group_scoped_alias_does_not_resolve_outside_group_scene_scope(monkeypatch):
+    provider = _new_place_kind_provider(monkeypatch, {"refers": [], "same_as": {}})
+
+    assert provider._resolve_name(provider._world(), "prisoners") is None
+
+
 def _group_narrator_prompt(monkeypatch, group_members=()):
     provider = _new_place_kind_provider(
         monkeypatch,

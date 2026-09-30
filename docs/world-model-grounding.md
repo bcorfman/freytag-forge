@@ -14,6 +14,10 @@ silently. So grounding means one thing: **every name a model may use for a
 place, thing or person resolves to exactly the right entity, in the scene
 where it is used.**
 
+A group's scoped aliases name it only while the group is placed and in scene
+scope. Plain words therefore stay free to name different people in other
+scenes.
+
 ## Why it matters: one worked failure
 
 Scene 1B's entry text names "an ordinary bench near the service path", but the

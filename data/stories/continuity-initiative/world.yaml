@@ -117,6 +117,7 @@ npcs:
 groups:
 - id: captives
   name: detention captives
+  scoped_aliases: [prisoners, prisoner, captives, captive]
 items:
 - id: memory_card
   name: Michelle's memory card

@@ -22,19 +22,20 @@ def _resolve_refer(name: str, tracked) -> str | None:
     if name in names:
         return name
 
-    def norm(value):
-        value = value.strip().lower().rstrip(".,;:!? ").strip()
-        for article in ("the", "my", "a", "an"):
-            if value.startswith(article + " "):
-                return value[len(article) + 1 :]
-        return value
-
-    wanted = norm(name)
-    exact = [item for item in names if norm(item) == wanted]
+    wanted = _normalize_refer(name)
+    exact = [item for item in names if _normalize_refer(item) == wanted]
     if len(exact) == 1:
         return exact[0]
-    suffix = [item for item in names if norm(item).endswith(" " + wanted)]
+    suffix = [item for item in names if _normalize_refer(item).endswith(" " + wanted)]
     return suffix[0] if len(suffix) == 1 else None
+
+
+def _normalize_refer(value: str) -> str:
+    value = value.strip().lower().rstrip(".,;:!? ").strip()
+    for article in ("the", "my", "a", "an"):
+        if value.startswith(article + " "):
+            return value[len(article) + 1 :]
+    return value
 
 
 def _protagonist_name(package) -> str | None:
@@ -615,7 +616,20 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if target:
             return target
         refer = _resolve_refer(key, [name for name in self.item_facts if self._name_in_scene_scope(world, name)])
-        return world.resolve(refer) if refer else None
+        if refer:
+            target = world.resolve(refer)
+            if target:
+                return target
+        return self._resolve_scoped_group(world, key)
+
+    def _resolve_scoped_group(self, world, name):
+        wanted = _normalize_refer(name)
+        for group in self.state.package.world.groups:
+            if any(_normalize_refer(alias) == wanted for alias in group.scoped_aliases) and (
+                world.area(group.id) is not None and self._name_in_scene_scope(world, world.name(group.id))
+            ):
+                return group.id
+        return None
 
     def _name_in_scene_scope(self, world, name):
         entity_id = world.resolve(name)
@@ -1272,6 +1286,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 if not isinstance(name, str):
                     continue
                 resolved = _resolve_refer(name, self.item_facts)
+                if resolved is None:
+                    group_id = self._resolve_scoped_group(self._world(), name)
+                    if group_id is not None:
+                        tracked_name = self._world().name(group_id)
+                        if tracked_name in self.item_facts:
+                            resolved = tracked_name
                 if resolved is not None and resolved not in refers:
                     refers.append(resolved)
                 if resolved is not None and resolved != name:

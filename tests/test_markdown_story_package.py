@@ -88,6 +88,7 @@ def test_group_member_package_declares_group_and_places_member(tmp_path: Path) -
     destination = copied_package(tmp_path)
     world_path = destination / "world.yaml"
     world_data = yaml.safe_load(world_path.read_text())
+    world_data["groups"][0].pop("scoped_aliases", None)
     world_data["groups"].append({"id": "prisoners", "name": "Prisoners", "aliases": ["prisoners"]})
     world_path.write_text(yaml.safe_dump(world_data, sort_keys=False))
     plot_path = destination / "plot.md"
@@ -106,6 +107,17 @@ def test_group_member_package_declares_group_and_places_member(tmp_path: Path) -
     assert apply_scene_placements(package, state.facts, "2C") == ()
     world = world_for(package, state.facts)
     assert world.members("prisoners") == ("michelle",)
+
+
+def test_group_scoped_alias_loader_rejects_declared_name(tmp_path: Path) -> None:
+    destination = copied_package(tmp_path)
+    world_path = destination / "world.yaml"
+    world_data = yaml.safe_load(world_path.read_text())
+    world_data["groups"][0]["scoped_aliases"] = ["Kristin"]
+    world_path.write_text(yaml.safe_dump(world_data, sort_keys=False))
+
+    with pytest.raises(StoryPackageError, match="scoped alias 'Kristin'.*declared entity name or alias"):
+        load_story_package(destination)
 
 
 def copied_package(tmp_path: Path) -> Path:

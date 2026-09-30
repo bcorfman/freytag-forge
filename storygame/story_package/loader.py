@@ -1079,6 +1079,19 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
             (root / "storylets.md").read_text(encoding="utf-8"), plot_beat_anchors, plot_scene_ids
         )
         world = WorldSource.model_validate(_yaml(root / "world.yaml"))
+        declared_names = {
+            form.casefold()
+            for entity in (*world.locations, *world.npcs, *world.groups, *world.items)
+            for form in (entity.name, *entity.aliases)
+        }
+        for group in world.groups:
+            for scoped_alias in group.scoped_aliases:
+                if not scoped_alias.strip():
+                    raise StoryPackageError(f"group '{group.id}' scoped alias must be a non-blank string")
+                if scoped_alias.casefold() in declared_names:
+                    raise StoryPackageError(
+                        f"group '{group.id}' scoped alias '{scoped_alias}' duplicates a declared entity name or alias"
+                    )
         declared_ids = {entity.id for entity in (*world.locations, *world.npcs, *world.groups, *world.items)}
         for fact_id, effects in world.fact_effects.items():
             for effect in effects:
