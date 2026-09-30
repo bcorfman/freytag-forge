@@ -652,7 +652,16 @@ noun phrases at most three words). Offered sets: A on arrival; B after
 `michelle_reached`; D after `behavioral_experiments_known`; C last. The
 prompt lists B and D together, which is only stricter.
 
-**Next:** Brandon runs the 3A handoff prompt in ChatGPT Desktop; land the
+Round 1 answer (`handoffs_3a.yaml`), scored by `score_3a.py` with the
+real matcher: prompt examples 16/16 (after my "not" example, which the
+negation rule always blocks, was reworded), other wordings 6/24, no wrong
+entry fired. Short verb lists and narrow noun lists ("Find Michelle."
+matches nothing; "Michelle" is in no noun list). Round 2 prompt
+(`chatgpt_prompt_r2.md`) asks for 8-12 verbs, every name for the target,
+the share-a-verb-or-a-noun-not-both rule, and "the prisoners" in
+delivery text.
+
+**Next:** Brandon runs the round-2 prompt in ChatGPT Desktop; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
