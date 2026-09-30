@@ -32,6 +32,10 @@ narration, 3B still stops at the office door 3/3; a probe traced it to
 missing 3B.2 material (office entry 15/15 with it, 4/15 without, a rule
 1/15); a 3B.2 entry handoff next; then 3C, S3 and S4.
 See "Resume here".
+**Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
+AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
+the candidate causes on recorded prompts (narration read by hand), and fix
+the story material at the source. A narrator rule comes last.
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -1258,7 +1262,10 @@ already splits him, as `relay_open` does). Whether B should require the
 entry, so Rebecca is never confronted from the corridors, is open.
 
 **Next:** Brandon runs the prompt in ChatGPT Desktop; score the answer;
-then the build by Ringer and a 3B x3 rerun. Also open: the 3A r1 capture miss,
+then the build by Ringer and a 3B x3 rerun. For 3C, and for the open 3B
+gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
+text), start from step 1 of "Fixing a Scene": read the recorded prompt
+against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
 "Rebecca" as new, and Brandon's stale place text.
 
 ### Narration leak diagnosis (2026-09-28, offline)
@@ -1689,6 +1696,12 @@ turn's snapshot, so that a rejected turn undoes it.
 
 ### Working rules that bit this project
 
+- A narration miss is diagnosed from the recorded prompt read against
+  plot.md, and probed, before any rule or engine change ("Fixing a Scene"
+  in AGENTS.md). The 3B office miss cost a THINGS build and two live
+  reruns. That was because the diagnosis (THINGS) was never checked
+  against the plot, and the probe scored item_facts instead of the
+  narration. The cause was missing 3B.2 material.
 - Every code change is a Ringer task on GPT-5.6 Luna (`"engine": "codex",
   "model": "gpt-5.6-luna"`). Claude writes the brief and the check, and
   reviews the patch.
