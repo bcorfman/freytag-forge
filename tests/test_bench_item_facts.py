@@ -2270,6 +2270,189 @@ def test_same_as_new_place_is_created_as_fallback_container(monkeypatch):
     assert any("the checkpoint" in issue and "kind" in issue for issue in issues)
 
 
+def _new_place_kind_provider(monkeypatch, reply, calls=None):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+
+    def request(_provider, payload):
+        if calls is not None:
+            calls.append(payload)
+        return reply
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    return provider
+
+
+def test_new_place_kind_thing_creates_container_and_reuses_it(monkeypatch):
+    calls = []
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "thing"}},
+        calls,
+    )
+    before_world = provider._world()
+    kristin = provider.state.package.world.protagonist_id
+    kristin_place = before_world.parent(kristin)
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "command levels"}, "Michelle's memory card": {"place": "console"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+    world = provider._world()
+    console = world.resolve("console")
+    card = world.resolve("Michelle's memory card")
+    assert console is not None and world.is_a(console, "container")
+    assert world.parent(console) == kristin_place
+    assert card is not None and world.parent(card) == console
+    assert provider.last_item_facts_unplaced() == []
+    assert not any("kind" in issue.lower() for issue in issues)
+    assert calls[0]["max_tokens"] == 300
+
+    calls.clear()
+    provider.apply_item_facts(
+        {"Kristin": {"place": "console"}, "Michelle's memory card": {"place": "console"}},
+        player_input="Decode Michelle's coded message.",
+    )
+    world = provider._world()
+    assert not any("console" in payload["user"] for payload in calls if "NEW NAMES:" in payload["user"])
+    assert world.area(kristin) == world.area(kristin_place)
+    assert world.parent(card) == console
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_kind_place_creates_fixed_nested_area(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"checkpoint": "new"}, "kind": {"checkpoint": "place"}},
+    )
+    before_world = provider._world()
+    kristin = provider.state.package.world.protagonist_id
+    old_area = before_world.area(kristin)
+
+    provider.apply_item_facts({"Kristin": {"place": "checkpoint"}}, player_input="Walk to the checkpoint.")
+    world = provider._world()
+    checkpoint = world.resolve("checkpoint")
+    assert checkpoint is not None and world.is_a(checkpoint, "area")
+    assert world.parent(checkpoint) == old_area
+    assert world.parent(kristin) == checkpoint
+    assert world.area(kristin) == checkpoint
+    assert old_area in world.chain(kristin)
+    assert not world.move(checkpoint, old_area).ok
+    assert provider._world().parent(checkpoint) == old_area
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_kind_person_creates_carrier_for_card(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"courier": "new"}, "kind": {"courier": "person"}},
+    )
+    world = provider._world()
+    kristin_place = world.parent(provider.state.package.world.protagonist_id)
+
+    provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "courier"}},
+        player_input="Give the courier Michelle's memory card.",
+    )
+    world = provider._world()
+    courier = world.resolve("courier")
+    card = world.resolve("Michelle's memory card")
+    assert courier is not None and world.is_a(courier, "character")
+    assert world.parent(courier) == kristin_place
+    assert card is not None and world.parent(card) == courier
+    assert world.relation(card) == "carried_by"
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_kind_group_is_not_a_character_or_container(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"prisoners": "new"}, "kind": {"prisoners": "group"}},
+    )
+    world = provider._world()
+    kristin_place = world.parent(provider.state.package.world.protagonist_id)
+
+    provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "prisoners"}},
+        player_input="Show the prisoners Michelle's memory card.",
+    )
+    world = provider._world()
+    prisoners = world.resolve("prisoners")
+    card = world.resolve("Michelle's memory card")
+    assert prisoners is not None and world.kind(prisoners) == "group"
+    assert not world.is_a(prisoners, "character")
+    assert world.parent(prisoners) == kristin_place
+    assert card is not None and world.parent(card) == world.parent(prisoners)
+    assert world.parent(card) != prisoners
+    assert not world.move(card, prisoners).ok
+    assert not world.move(prisoners, card).ok
+    assert provider.last_item_facts_unplaced() == []
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        {"refers": [], "same_as": {"console": "new"}},
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "gadget"}},
+    ],
+    ids=["missing-kind", "unknown-kind"],
+)
+def test_new_place_kind_fallback_makes_container_and_reports_kind(monkeypatch, reply):
+    provider = _new_place_kind_provider(monkeypatch, reply)
+
+    _facts, issues = provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "console"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+    world = provider._world()
+    console = world.resolve("console")
+    card = world.resolve("Michelle's memory card")
+    assert console is not None and world.is_a(console, "container")
+    assert card is not None and world.parent(card) == console
+    assert any("console" in issue and "kind" in issue.lower() for issue in issues)
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_kind_new_reply_key_person_is_character(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"guard": "new"}, "kind": {"guard": "person"}},
+    )
+    world = provider._world()
+    player_area = world.area(provider.state.package.world.protagonist_id)
+
+    provider.apply_item_facts({"guard": {"place": "command levels"}}, player_input="Question the guard.")
+    world = provider._world()
+    guard = world.resolve("guard")
+    assert guard is not None and world.is_a(guard, "character")
+    assert world.area(guard) == player_area
+
+
+def test_new_place_kind_match_payload_requests_300_tokens(monkeypatch):
+    calls = []
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "thing"}},
+        calls,
+    )
+
+    provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "console"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+    assert calls[0]["max_tokens"] == 300
+
+
 def test_new_name_mapped_to_player_character_stays_new(monkeypatch):
     provider = _provider()
     monkeypatch.setattr(
