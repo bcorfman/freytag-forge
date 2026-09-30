@@ -902,7 +902,7 @@ restart missed; 3A r3 t10 a pedantic ordering contradiction; 3A r3 t6 and
 **Both done (Brandon, 2026-09-30).** (1) The 1B-1C turn-16 label is now
 a contradiction. (2) "A later passage never excuses a conflict with the
 opening or an earlier turn." added to the rubric (Ringer, Luna, one
-attempt), committed with the label as 2ff6f0e-class commit below.
+attempt), committed with the label as 9cc11de.
 Re-judged (`new2.txt`): 3A handoffs 46/48 (44 before; r2 t1 now caught),
 handoffs 111/116 and regression 453/486 (456 before; within Luna's
 run-to-run noise). Remaining: 5 command_not_finished judgment calls.
