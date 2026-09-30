@@ -1177,8 +1177,9 @@ ordering use the same matching.
 
 **Found while building, not fixed:** Brandon's `place_label` in 3B (and
 3A, 2B) is "across the park from Kristin", authored placement text from
-1B that survives his later companion placements because `place_text`
-only drops text once a `wk_moved` fact exists. The new person lines use
+1B that survives his later companion placements. Likely cause, not yet
+checked: `place_text` drops the text only once a `wk_moved` fact exists
+on him or a container. The new person lines use
 the parent's name to avoid it, but any other path that reads Brandon's
 `place_label` still gets the stale text.
 
