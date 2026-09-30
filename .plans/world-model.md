@@ -27,7 +27,8 @@ bench script and fixes measured live; 3B grounded (1e37fdd), handoffs
 (c3d3963) and bench script landed, x3 read (office never reached,
 same gap in 3A); referred people and places in THINGS chosen and
 probed live (Kristin reaches the place 3A 28/30, 3B 15/20, from 0/30
-and 2/20); build next; then 3C, S3 and S4.
+and 2/20) and built (bc0ddf1); 3B and 3A x3 reruns next; then 3C, S3
+and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -1155,10 +1156,36 @@ never finished. Not tested: whether the lines hurt other turns (every
 prompt here names a person or a place), and the person line alone vs
 the companions alone (only the combined arm ran).
 
-**Next:** build the referred people and places lines and Kristin's
-companions into THINGS by Ringer, then rerun 3B (x3) and 3A. Watch 3B
-turn 3 when other things are listed, the one case the probe left
-unfixed.
+**Built (bc0ddf1, Ringer, Luna, two tasks; suite 963 passed).**
+`ItemFactsProvider.prepare_turn` scans the command with
+`_command_names_thing` against world names. A named NPC who is visible
+and together with Kristin gets `- Michelle. Place: <parent name>.`; a
+named visible area gets `- executive office. This is a place.`, except
+Kristin's own area and its ancestors (a place inside it, like the medical
+level, still gets one). People come first, then places, in command
+order, directly after Kristin's line. Kristin's line gains
+`With Kristin: Brandon, Michelle.`: the probe measured "With her:", but
+packages record no pronouns and the runtime must not assume a gender, so
+this wording is untested live. The new lines are narrator-prompt only;
+the match call and second call are byte-identical
+(`~/dev/ringer-work/freytag-referred-things/verify_referred.py` checks
+five turns in 3B, 3A and 2B). The first worker also changed the shared
+`_entity_label` (shortest name, which turns Michelle into "Shelly") and
+left a crash on possessive-tail names ("Drive home."); a fix task
+restored the helper, gave the new lines their own label, and made the
+ordering use the same matching.
+
+**Found while building, not fixed:** Brandon's `place_label` in 3B (and
+3A, 2B) is "across the park from Kristin", authored placement text from
+1B that survives his later companion placements because `place_text`
+only drops text once a `wk_moved` fact exists. The new person lines use
+the parent's name to avoid it, but any other path that reads Brandon's
+`place_label` still gets the stale text.
+
+**Next:** read the live reruns on bc0ddf1, 3B x3
+(`bench/results/world-3b-referred-x3`) and 3A x3
+(`bench/results/world-3a-referred-x3`), running now. Watch 3B turn 3
+when other things are listed, the one case the probe left unfixed.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
