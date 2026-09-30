@@ -611,7 +611,16 @@ location_id: detention_level
 freytag_phase: crisis
 objective: Reach Michelle and join the uprising
 participant_ids: [kristin, michelle, brandon, senior_official]
-item_ids: [override_codes]
+companions: [brandon]
+item_ids: [override_codes, stolen_radio, gate_status_panel]
+item_placements:
+  override_codes: {parent: senior_official}
+  stolen_radio: {parent: detention_level}
+  gate_status_panel: {parent: detention_level}
+character_placements:
+  captives: {parent: detention_level}
+  senior_official: {parent: captives}
+  michelle: {parent: detention_level}
 entry_text: "A partly unsecured detention sector opened onto rows of captives. Coded announcements crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.\n\n"
 transition_ids: [t_3a_3b]
 bridge_text:

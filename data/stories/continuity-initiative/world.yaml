@@ -39,8 +39,11 @@ locations:
   aliases: [maintenance route, maintenance routes]
   parent: purge_chamber
 - id: detention_level
-  name: Detention level
+  name: detention level
   parent: regional_facility
+- id: medical_level
+  name: medical level
+  parent: detention_level
 - id: broadcast_relay
   name: Broadcast relay
   parent: regional_facility
@@ -111,6 +114,9 @@ npcs:
   - imprisoned official
   - government prisoner
   narrator_bio: A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
+groups:
+- id: captives
+  name: detention captives
 items:
 - id: memory_card
   name: Michelle's memory card
@@ -173,7 +179,13 @@ items:
   name: handwritten number sequence
   aliases: [number sequence, handwritten sequence]
 - id: override_codes
-  name: Emergency override codes
+  name: emergency override codes
+  hidden: true
+- id: stolen_radio
+  name: stolen radio
+- id: gate_status_panel
+  name: gate-status panel
+  fixed: true
 - id: portable_archive
   name: Portable data case
   aliases:
@@ -249,7 +261,10 @@ facts:
 - uprising_prepared
 - conditioned_release_plan_known
 - behavioral_experiments_known
-- military_override_codes_available
+- id: military_override_codes_available
+  on_assert:
+  - {move: override_codes, parent: kristin}
+  - {reveal: override_codes}
 - human_security_control
 - detention_locations_offer_known
 - charles_abandoned_rebecca

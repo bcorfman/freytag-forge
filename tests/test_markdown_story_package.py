@@ -17,7 +17,7 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
-from storygame.runtime.world_model import apply_scene_placements, world_for
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package import StoryPackageError, load_story_package
 from storygame.story_package.models import ItemPlacement
 
@@ -52,6 +52,29 @@ def test_scene_2c_applies_command_levels_and_companion_placements() -> None:
     assert "brandon" in world.companions("kristin")
 
 
+def test_scene_3a_applies_detention_group_and_codes_placements() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "3A"
+
+    assert apply_scene_placements(package, state.facts, "3A") == ()
+
+    world = world_for(package, state.facts)
+    for entity_id in ("kristin", "brandon", "michelle", "captives", "stolen_radio", "gate_status_panel"):
+        assert world.parent(entity_id) == "detention_level"
+    assert world.parent("senior_official") == "captives"
+    assert world.members("captives") == ("senior_official",)
+    assert world.parent("override_codes") == "senior_official"
+    assert world.is_hidden("override_codes")
+    assert "brandon" in world.companions("kristin")
+
+    state.facts.assert_fact(Fact(predicate="military_override_codes_available", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    world = world_for(package, state.facts)
+    assert world.parent("override_codes") == "kristin"
+    assert not world.is_hidden("override_codes")
+
+
 def test_scene_2c_may_name_the_maintenance_network() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
@@ -65,7 +88,7 @@ def test_group_member_package_declares_group_and_places_member(tmp_path: Path) -
     destination = copied_package(tmp_path)
     world_path = destination / "world.yaml"
     world_data = yaml.safe_load(world_path.read_text())
-    world_data["groups"] = [{"id": "prisoners", "name": "Prisoners", "aliases": ["prisoners"]}]
+    world_data["groups"].append({"id": "prisoners", "name": "Prisoners", "aliases": ["prisoners"]})
     world_path.write_text(yaml.safe_dump(world_data, sort_keys=False))
     plot_path = destination / "plot.md"
     plot = plot_path.read_text()

@@ -61,6 +61,7 @@ def test_world_schema_data_is_plain_and_covers_authored_entities() -> None:
         "vehicle",
         "desk",
         "seat",
+        "group",
     }
     for entity in PACKAGE.world.locations:
         assert entities[entity.id]["kind"] == "area"
@@ -275,4 +276,5 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "memory_card_recovered",
         "brandon_identified",
         "false_identities_ready",
+        "military_override_codes_available",
     }
