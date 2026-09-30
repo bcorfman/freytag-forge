@@ -2330,6 +2330,64 @@ def test_new_place_kind_thing_creates_container_and_reuses_it(monkeypatch):
     assert provider.last_item_facts_unplaced() == []
 
 
+def test_new_thing_container_reply_key_creates_container(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "thing"}},
+    )
+    provider.apply_item_facts(
+        {"console": {"place": "Kristin"}},
+        player_input="Check the console beside Kristin.",
+    )
+    provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "console"}},
+        player_input="Put Michelle's memory card in the console.",
+    )
+    world = provider._world()
+    console = world.resolve("console")
+    card = world.resolve("Michelle's memory card")
+    assert console is not None and world.is_a(console, "container")
+    assert card is not None and world.parent(card) == console
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_thing_container_refused_move_is_recorded(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {}},
+    )
+    _facts, issues = provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "handwritten number sequence"}},
+        player_input="Put Michelle's memory card with the handwritten number sequence.",
+    )
+    assert provider.last_item_facts_unplaced() == [
+        {"name": "Michelle's memory card", "place": "handwritten number sequence"}
+    ]
+    assert any("cannot hold" in issue for issue in issues)
+
+
+def test_new_thing_container_created_at_player_destination(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "thing"}},
+    )
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "records archive"},
+            "Michelle's memory card": {"place": "console"},
+        },
+        player_input="Go to the records archive and put Michelle's memory card in the console.",
+    )
+    world = provider._world()
+    archive = world.resolve("records archive")
+    console = world.resolve("console")
+    card = world.resolve("Michelle's memory card")
+    assert archive is not None
+    assert console is not None and world.is_a(console, "container")
+    assert world.parent(console) == archive
+    assert card is not None and world.parent(card) == console
+
+
 def test_new_place_kind_place_creates_fixed_nested_area(monkeypatch):
     provider = _new_place_kind_provider(
         monkeypatch,
@@ -2565,7 +2623,7 @@ def test_new_name_mapped_to_player_character_stays_new(monkeypatch):
     stranger_id = world.resolve("stranger in the park")
     assert stranger_id is not None
     assert stranger_id != world.resolve("Kristin")
-    assert world.unplaced_name(world.resolve("handwritten number sequence")) == "stranger in the park"
+    assert world.parent(world.resolve("handwritten number sequence")) == stranger_id
     assert provider.last_item_facts_match()["resolutions"]["stranger in the park"] == "new"
     assert "item_facts match mapped 'stranger in the park' to the player character; kept as new" in issues
 

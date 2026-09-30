@@ -49,7 +49,10 @@ group or thing. A place becomes an area under the player's current area. A
 person or group is created where the player is, when that is allowed. A thing
 used as a place becomes a container. A group holds nothing; things named as
 being in a group stay at the group's parent. If the kind is missing or unknown,
-the engine makes the safest thing-shaped fallback and records an issue.
+the engine makes the safest thing-shaped fallback and records an issue. A new
+thing named by the reply is a container, and new entities are created where the
+player ends up after the reply. A refused move is recorded as unplaced with an
+issue.
 
 ### Things
 

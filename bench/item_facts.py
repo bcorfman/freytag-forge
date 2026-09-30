@@ -787,6 +787,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 result = world.move(entity_id, area)
         if not result.ok and "cannot hold" in result.reason:
             result = world.set_unplaced(entity_id, place[:80])
+            entry = {"name": name, "place": place[:80]}
+            if entry not in self._last_item_facts_unplaced:
+                self._last_item_facts_unplaced.append(entry)
+            issues.append(f"item_facts for {name!r} left unplaced: {place!r} cannot hold things")
         if not result.ok:
             issues.append(f"item_facts for {name!r} refused place {place!r}: {result.reason}")
 
@@ -927,7 +931,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if not isinstance(kind_reply, dict):
             kind_reply = {}
 
-        def new_kind(name, *, place=False):
+        def new_kind(name, *, place=False, reply_key=False):
             raw_kind = next(
                 (
                     value
@@ -937,13 +941,18 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 None,
             )
             normalized = raw_kind.strip().casefold() if isinstance(raw_kind, str) else ""
-            kind = {"place": "area", "person": "character", "group": "group", "thing": "thing"}.get(normalized)
+            kind = {
+                "place": "area",
+                "person": "character",
+                "group": "group",
+                "thing": "container" if reply_key else "thing",
+            }.get(normalized)
             if kind is None and name in kind_required_names:
-                fallback = "container" if place else "thing"
+                fallback = "container" if place or reply_key else "thing"
                 issues.append(f"item_facts match gave no kind for {name!r}; made a thing")
                 return fallback
             if kind is None:
-                return "container" if place else "thing"
+                return "container" if place or reply_key else "thing"
             return kind
 
         if isinstance(same_as, dict):
@@ -1035,11 +1044,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
             place_id = place_ids.get(place)
             place_resolutions[place] = world.name(place_id) if place_id is not None else "new"
 
-        player_area = world.area(protagonist_id)
-        player_parent = world.parent(protagonist_id)
-        for place in place_names:
+        def create_new_place(place):
+            player_area = world.area(protagonist_id)
+            player_parent = world.parent(protagonist_id)
             if place in place_ids or place not in kind_required_names:
-                continue
+                return
             kind = new_kind(place, place=True)
             if kind == "area":
                 parent = player_area
@@ -1068,6 +1077,30 @@ class ItemFactsProvider(CloudflareTurnProvider):
             else:
                 issues.append(f"item_facts for {place!r} could not be created: {created.reason}")
 
+        player_move_place = None
+        for _key, value, entity_id in resolved:
+            if entity_id == protagonist_id and isinstance(value.get("place"), str):
+                player_move_place = value["place"].strip()
+                break
+        if player_move_place in place_names:
+            create_new_place(player_move_place)
+
+        player_move_applied = False
+        for _key, value, entity_id in resolved:
+            if entity_id != protagonist_id or "place" not in value:
+                continue
+            place = value["place"].strip() if isinstance(value["place"], str) else None
+            place_pole = self._axis_match_id(world, entity_id, place) if place else None
+            place_parent = place_ids.get(place) if place and not place_pole else None
+            if place and not place_pole and place_parent is None:
+                place_parent = self._resolve_name(world, place)
+            self._apply_move(world, entity_id, self._entity_label(world, entity_id), value, place_parent, issues)
+            player_move_applied = True
+            break
+
+        for place in place_names:
+            create_new_place(place)
+
         for item in prepared:
             key, value = item["key"], item["value"]
             entity_id = item["id"]
@@ -1090,7 +1123,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                             if target != world.name(entity_id):
                                 engine_resolutions[target] = world.name(entity_id)
             if entity_id is None:
-                kind = new_kind(key)
+                kind = new_kind(key, reply_key=True)
                 parent = player_area if kind == "area" else None
                 created = world.create(key, parent=parent, kind=kind, owner=item["owner_id"])
                 if not created.ok:
@@ -1160,6 +1193,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
             moves.append((entity_id, name, value, place_parent, place_pole))
             states.append((entity_id, name, value, place_pole))
         for entity_id, name, value, place_parent, _place_pole in moves:
+            if entity_id == protagonist_id and player_move_applied:
+                continue
             self._apply_move(world, entity_id, name, value, place_parent, issues)
         for entity_id, name, value, place_pole in states:
             self._apply_state(world, entity_id, name, value, place_pole, issues)
