@@ -20,7 +20,8 @@ done: no drift, every handoff fires, no leak rejection; it found an
 unplaced new "console" (1 of 3) and a missed card move (2 of 3). Brandon
 chose to give new place names a kind (tasks A-C below the replay);
 task A and its follow-ups (286e690) measured live: unplaced 0 of 40 in
-the probe and 0 of 24 turns in the 2C replay; next is push `claude/ground-2c`, then 3A-3C, S3 and S4.
+the probe and 0 of 24 turns in the 2C replay; task B (group members)
+built as 67a0141; next is C (talking to a group), then 3A-3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -564,8 +565,29 @@ narrator's reply wrote "sits at a console" as `"console": {"place":
 reply-capture class as the missed card move); turn 8's "upper command
 corridors" is still untracked.
 
-**Next:** push `claude/ground-2c` for review, then B (group members)
-and C (talking to a group), then 3A.
+`claude/ground-2c` is pushed (22a3f58); no PR opened yet.
+
+**Task B built (67a0141;** Ringer, Luna, second attempt: the first broke
+`test_protagonist_at_furniture_lands_in_its_area`). A character may have
+a group as parent (relation "in"), so members go where the group goes;
+`World.members()` lists them; groups do not nest and hold no things. A
+reply sending a person to a group makes them a member; new things made
+while the player is in a group go to the group's place. `world.yaml`
+may declare `groups:` (same fields as `npcs`); `character_placements`
+may place a group (no participant entry needed) and a member in it,
+groups placed first. Narration safety lets a scene name the group it
+places; a command naming a group or its alias references it. Defaults I
+chose, not yet Brandon's: the `groups:` list and placing groups through
+`character_placements`. Verified by
+`~/dev/ringer-work/freytag-group-members/verify_group_members.py` (join,
+group move, carry, leave, player plus companion joining, a new thing at
+the group's place, nesting refused, a package group with a member) and
+the suite (933 passed). Not measured live: a member join is a name that
+resolves directly, so no model call decides it; the live question is
+whether the narrator writes joins at all, which 3A will show. No story
+declares a group yet (3A's captives is a 3A grounding decision).
+
+**Next:** C (talking to a group), then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
