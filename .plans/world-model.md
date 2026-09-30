@@ -801,7 +801,24 @@ opening only saw "a familiar face"). That spoils the turn-1 reveal
 (SL-3A-A: Michelle is reachable only by the coded route before she is
 reached), and turn 1's failed search then contradicts the opening.
 
-**Next:** Brandon's call on the delivery rewording and the opening; land the
+**Brandon chose:** land turn 10's rewording (**landed as 44b5d95**,
+Ringer, Luna, one attempt; only that field changed), and probe a
+placement text for Michelle for turn 1. A character's placement text
+never reaches the narrator today (only item placement texts are
+rendered), so the probe injected the line the engine would produce,
+`- Michelle. Place: heard only over the stolen radios.`, into THINGS
+(`ringer-work/freytag-3a-michelle-place-probe`: the rebuilt 3A opening,
+10 samples per arm; the three recorded turn-1 prompts, 4 per arm).
+Opening identifies Michelle 4/10 without it, 3/10 with it; turn 1 says
+she is not there 12/12 without, 11/12 with. No effect, not built.
+So turn 1's "none of them seem to be Michelle" is a strong habit of this
+prompt, and it contradicts the story only when the opening has already
+recognised her (about 4 in 10 openings). The reworded turn-1 delivery
+("Kristin finds Michelle alive. ...") makes the lead-up and the delivery
+one sequence and moved 7/15 lead-ups onto a radio trail.
+
+**Next:** Brandon's call on turn 1 (land the delivery rewording, an LLM
+check of the opening, or accept); land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
