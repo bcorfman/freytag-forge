@@ -685,7 +685,14 @@ senior official." Landing by Ringer
 values, knowledge.yaml otherwise unchanged, 18 matcher cases including
 8 that must fire nothing, payloads byte-identical outside 3A).
 
-**Next:** land the 3A handoffs; land the
+**Landed:** the handoffs as 10f80a6 (Ringer, Luna, one attempt;
+`verify_handoffs_3a.py` passed, 3A payload unchanged, suite 938) and the
+3A bench variation `bench/variations/item-facts-world-3a.json`, script
+`reaching-michelle` (12 turns, thorough entry), as b4ea71c. One live
+replicate is running (`ringer-work/freytag-world-3a-live`, results
+`bench/results/world-3a`).
+
+**Next:** read the 3A replicate; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
