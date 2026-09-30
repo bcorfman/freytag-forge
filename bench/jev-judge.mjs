@@ -595,13 +595,14 @@ export async function judgeInput(
         earlier_narration: earlier,
         hidden_canon: hc,
       };
-      const turnRecord = { number, first, hc, cAnswers: {}, perThing: [], continuityJobs: 0, factJobs: 0 };
+      const turnRecord = { number, first, hc, cAnswers: {}, cParts: [], perThing: [], continuityJobs: 0, factJobs: 0 };
       runTurns.push(turnRecord);
       if (judges !== "fact") {
         const questions = continuityQuestions(state, Boolean(hc));
-        for (const requestInput of continuityRequests(state, questions, variant)) {
+        for (const [partIndex, requestInput] of continuityRequests(state, questions, variant).entries()) {
+          turnRecord.cParts.push(undefined);
           addJob(turnRecord, "continuity", replicate, number, undefined, requestInput.state, requestInput.questions,
-            (part) => Object.assign(turnRecord.cAnswers, part));
+            (part) => { turnRecord.cParts[partIndex] = part; });
         }
       }
       const before = turn.item_facts_before || {};
@@ -666,6 +667,9 @@ export async function judgeInput(
     }
   });
   await Promise.all(workers);
+  for (const run of turns) {
+    for (const turn of run.runTurns) Object.assign(turn.cAnswers, ...turn.cParts);
+  }
   const raw = jobs.map(({ result }) => result);
   for (const result of raw) {
     if (model && result.model !== model) throw new Error(`Jev model changed from ${model} to ${result.model}.`);

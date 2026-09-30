@@ -457,6 +457,22 @@ test("concurrent judging keeps ordered output identical", async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
+test("split continuity answers keep request order when responses finish out of order", async () => {
+  const dir = await packageDir();
+  const input = { runs: [{ turns: [{
+    scene_id: "1A",
+    player_input: "Search the desk.",
+    narration: "She searches the desk.",
+    item_facts_before: {},
+    item_facts_after: {},
+  }] }] };
+  const options = { packagePath: dir, variant: "split", judges: "continuity", environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" } };
+  const sequential = await judgeInput(input, { ...options, concurrency: 1, fetchImpl: delayedFetch(0) });
+  const concurrent = await judgeInput(input, { ...options, concurrency: 8, fetchImpl: reverseFetch });
+  assert.deepEqual(concurrent.continuity, sequential.continuity);
+  await rm(dir, { recursive: true, force: true });
+});
+
 test("concurrent judging respects its in-flight cap", async () => {
   const dir = await packageDir(); let inFlight = 0; let maximum = 0; let calls = 0;
   const fetchImpl = async (_url, options) => {
@@ -507,4 +523,11 @@ function delayedFetch(delay) {
     if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
     return jevResponse(options);
   };
+}
+
+let reverseFetchCall = 0;
+async function reverseFetch(_url, options) {
+  const wait = (2 - (reverseFetchCall++ % 3)) * 2;
+  if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+  return jevResponse(options);
 }
