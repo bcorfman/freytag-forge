@@ -21,8 +21,8 @@ unplaced new "console" (1 of 3) and a missed card move (2 of 3). Brandon
 chose to give new place names a kind (tasks A-C below the replay);
 task A and its follow-ups (286e690) measured live: unplaced 0 of 40 in
 the probe and 0 of 24 turns in the 2C replay; tasks B (group members, 67a0141)
-and C (talking to a group, 0371c13) built, C measured live; next is
-Brandon's call on the member-answer rate, then 3A-3C, S3 and S4.
+and C (talking to a group, 0371c13) built, C measured live (member-answer
+rate accepted); next is 3A-3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -606,10 +606,14 @@ command "Ask the technicians who signed the purge order." and a
   of 15; in 6 of 15 Kristin only clears her throat and he turns to her.
 So the silence and the choice of speaker hold. The member's answer is
 weaker than the unnamed answer was before (3 of 15 against 7 of 15), and
-the command is often not finished. Open for Brandon: whether to act on
-that (for example "answers out loud"), measured the same way.
+the command is often not finished. Brandon chose to try "answers out
+loud" and accept the rate if it did not improve substantially. A live A/B
+on the same three prompts (15 samples per arm, read by hand; `manifest-
+loud.json`, `group_talk_loud.json`): "answers" 5 of 15 aloud, "answers out
+loud" 5 of 15. No change, so the wording stays as built and the rate is
+accepted (8 of 30 pooled for "answers").
 
-**Next:** Brandon's call on the member-answer rate, then 3A.
+**Next:** 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
