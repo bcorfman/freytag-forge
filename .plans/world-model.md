@@ -22,8 +22,9 @@ chose to give new place names a kind (tasks A-C below the replay);
 task A and its follow-ups (286e690) measured live: unplaced 0 of 40 in
 the probe and 0 of 24 turns in the 2C replay; tasks B (group members, 67a0141)
 and C (talking to a group, 0371c13) built, C measured live (member-answer
-rate accepted); 3A grounding landed (d503361); 3A handoffs
-prompt ready for ChatGPT Desktop; then 3B-3C, S3 and S4.
+rate accepted); 3A grounding landed (d503361); 3A handoffs,
+bench script and fixes measured live; 3B grounded (1e37fdd); 3B
+handoffs prompt ready for ChatGPT Desktop; then 3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -1033,8 +1034,43 @@ split-examples), 1210 ms -> 179 ms, never more than 8 in flight. Live (real Jev,
 input, 51 fact calls): 11.9 s at 1, 3.5 s at 8, no 429, identical
 verdicts.
 
-**Next:** 3B. land the
-answer by Ringer with a matcher verifier; then a 3A bench script and a
+**3B grounding (2026-09-30, from earlier precedent; Brandon asked
+for it to follow prior fixes and to be asked only about departures).**
+Kristin starts in a new `security_corridors` area ("security
+corridors", in `regional_facility`) through `character_placements`, so
+the opening names it, as in 2A; `location_id` stays `broadcast_relay`,
+whose name is unchanged (nothing collides, so no rename). Rebecca is
+placed in a new `executive_office` area ("executive office", 3B's
+entry-text phrase): "Rebecca's office" is a 2C must_convey and place
+names are leak-scanned, the same reason 3A's group got a scene-only name.
+3B declares `companions: [brandon, michelle]` (survey decision 5).
+`relay_open` gets `on_assert: {move: brandon, parent: broadcast_relay}`
+(decision 6); he then stops following Kristin, because companions follow
+only while they share her parent. Charles stays unplaced (decision 4).
+The inspection console keeps its place in the infrastructure corridors
+(immovable things keep their place); whether a console command pulls
+Kristin there is measured live, as the cameras and checkpoints wait
+until they surface. Ringer run `ringer-work/freytag-3b-grounding`
+(check `verify_3b.py`; payloads byte-identical except 3B's opening
+line).
+
+**3B grounding landed (1e37fdd;** Ringer, Luna, one attempt;
+`verify_3b.py` passed; suite 956). No knowledge or leakage edits were
+needed. Not measured live: no 3B bench script exists yet.
+
+**3B reveal handoffs:** all eight `k_sl_3b_*` candidates lack
+`earn_when`, `action_evidence` and `delivery_text`. Offered sets: A on
+arrival; B after `human_security_control`; D after
+`detention_locations_secured`; C after `charles_abandoned_rebecca`. The
+ChatGPT Desktop prompt is `~/dev/ringer-work/freytag-3b-handoffs/
+chatgpt_prompt.md`; it folds in the 3A rounds' lessons from the start
+(verbs of every action kind, start verbs, no ordinary single nouns,
+other wordings and ordinary commands will be tested). Score answers with
+`score_3b.py` (prompt examples, 22 other wordings, 20 ordinary commands
+that must fire nothing).
+
+**Next:** 3B handoffs from ChatGPT Desktop,
+landed by Ringer with a matcher verifier; then a 3B bench script and a
 live replicate.
 
 ### Narration leak diagnosis (2026-09-28, offline)
