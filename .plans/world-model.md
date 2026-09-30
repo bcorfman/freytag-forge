@@ -822,7 +822,30 @@ opening conflict: **landed as 59a71df** (Ringer, Luna, one attempt;
 suite 944). A confirming x3 rerun is running
 (`bench/results/world-3a-delivery-x3`).
 
-**Next:** read the confirming 3A rerun, then 3B; land the
+**Confirming 3A rerun (2026-09-30, three replicates, check passed;
+`bench/results/world-3a-delivery-x3`).** All moved to 3B after turn 10;
+handoffs on turns 1, 4, 6, 10 in all three; no leak rejection; facts
+after the turn correct 25/30. In the text the player reads, both fixes
+hold: turn 10 now reads "... Kristin warns Michelle that the
+emergency-gate authorization is about to expire." 3/3, and turn 1 is a
+search that ends "Kristin finds Michelle alive." 3/3 (r1's lead-up
+follows a radio trail). The opening recognised Michelle 1 of 3.
+**But the continuity judge still flags them:** turn 10 command not
+finished 3/3, turn 1 contradicts a stated fact 2/3 (one where the opening
+did not recognise her; the judge reads "none of them seem to be
+Michelle" against the delivered find). The judge input is right:
+`story_text` carries the delivered sentence and the prompt says "Use
+them to decide command_not_finished"; the judge answers from the
+narrator's lead-up anyway. A judge fault, not a story fault.
+Continuity totals: contradicts 2/30, beyond 3/30, restarts 2/30, not
+finished 13/30.
+Minor, new: turn 10's reply echoes the card's place text "with Kristin",
+which does not resolve after the move to 3B (unplaced 3/3, a
+transition-turn artifact like 2C's turn 8); r2 turn 2 sent Michelle to
+"holding block" and left her unplaced (1/30).
+
+**Next:** Brandon's call: fix the continuity judge's use of story_text,
+or move to 3B; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
