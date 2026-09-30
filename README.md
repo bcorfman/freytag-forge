@@ -21,6 +21,7 @@ Python 3.12+ and [uv](https://docs.astral.sh/uv/) run the compiler and tests. Ho
 | --- | --- |
 | `uv sync` | Install dependencies. |
 | `TMPDIR=/tmp uv run pytest -q` | Run the full suite. |
+| `TMPDIR=/tmp uv run pytest -q --cov` | Run the full suite with the 90% coverage gate (CI runs this). |
 | `uv run ruff check --fix . && uv run ruff format .` | Lint and format. |
 
 Product and runtime reference: [docs/PRD.md](docs/PRD.md).
