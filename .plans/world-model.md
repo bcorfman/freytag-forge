@@ -936,7 +936,15 @@ player's own area. One live 1B-1C replicate is running
 (`bench/results/world-1b-1c-seating`; its script names no laptop, so
 the expected seating steps are none; the leakfix2 run had 4 of 19).
 
-**Next:** read the 1B-1C seating replicate, then 3B; land the
+**1B-1C seating replicate (2026-09-30, one replicate, check passed;
+`bench/results/world-1b-1c-seating`).** Seating steps 0 of 20 turns (the
+leakfix2 run: 4 of 19); no rejected turn; every 1B-1C handoff fired
+(turns 5, 7, 12, 16, 19). First live run on the read-order judge: command
+not finished 0/20 (leakfix2 had 3 false flags from the engine steps),
+contradicts 2/20, acts beyond the command 4/20, restarts 0/20; the quote
+check did not fire. Facts after the turn correct 17/20.
+
+**Next:** 3B. land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
