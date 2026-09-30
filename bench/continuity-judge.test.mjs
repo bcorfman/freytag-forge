@@ -79,6 +79,7 @@ test("continuity judge sends also_called and explains its meaning", async () => 
     },
   ]);
   assert.match(request.input[0].content, /A name listed in `also_called` is another name for the same person or thing\./);
+  assert.match(request.input[0].content, /A later passage never excuses a conflict with the opening or an earlier turn\./);
   assert.doesNotMatch(request.input[0].content, /when no player command moved it/);
   assert.match(request.input[0].content, /Each turn gives command, the words the player typed, and turn_text/);
   assert.match(request.input[0].content, /A command to look at, examine, search or check a thing is finished when the turn shows her attending to that thing/);
