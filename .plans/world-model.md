@@ -24,8 +24,8 @@ the probe and 0 of 24 turns in the 2C replay; tasks B (group members, 67a0141)
 and C (talking to a group, 0371c13) built, C measured live (member-answer
 rate accepted); 3A grounding landed (d503361); 3A handoffs,
 bench script and fixes measured live; 3B grounded (1e37fdd), handoffs
-(c3d3963) and bench script landed, live replicate running; then 3C, S3
-and S4.
+(c3d3963) and bench script landed, first live replicate read, x3
+running; then 3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -1088,7 +1088,25 @@ thorough entry; turn 1 uses the inspection console to test drift), as
 29b7cd7. One live replicate is running (`ringer-work/freytag-world-3b-live`,
 results `bench/results/world-3b`).
 
-**Next:** read the 3B live replicate.
+**3B live replicate (2026-09-30, one replicate, check passed;
+`bench/results/world-3b`).** Completed; moved to 3C after turn 9. No
+leak rejection. Handoffs fired on turns 1 (`k_sl_3b_a_r1`), 4 (`b_r1`),
+6 (`d_r1`) and 8 (`c_r1`). Facts after the turn correct 9/9; continuity:
+contradicts 0/9, restarts 0/9, beyond the command 1/9 (turn 4), not
+finished 2/9 (turns 3, 4). **No console drift:** turn 1 ("Trigger false
+water-pressure alarms from the inspection console.") kept Kristin in the
+security corridors and the console in place. **The office is never
+reached:** turn 3 ("Lead Michelle into the executive office.") stops at a
+keycard door, so Kristin stays in the security corridors all scene;
+Rebecca is narrated "near a console" there (turn 6), and turn 4's lead-up
+restates turn 1's alarm statement (a sayable CONSTRAINTS line) before the
+delivered confrontation. THINGS listing only Kristin on these turns is
+the approved design (people and areas are not listed unless referred
+to), not the cause: moves land when the narration names the place.
+Three replicates are running to see whether the office miss repeats
+(`bench/results/world-3b-x3`).
+
+**Next:** read the 3B x3 replicates.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
