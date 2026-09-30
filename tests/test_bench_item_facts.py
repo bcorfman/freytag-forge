@@ -2438,6 +2438,95 @@ def test_new_place_kind_new_reply_key_person_is_character(monkeypatch):
     assert world.area(guard) == player_area
 
 
+def test_new_place_echo_thing_creates_container_and_places_mover(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {
+            "refers": [],
+            "same_as": {"console": "console"},
+            "kind": {"console": "thing"},
+        },
+    )
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "console"},
+            "Michelle's memory card": {"place": "console"},
+        },
+        player_input="Move to the console and inspect Michelle's memory card.",
+    )
+    world = provider._world()
+    console = world.resolve("console")
+    card = world.resolve("Michelle's memory card")
+    assert console is not None and world.kind(console) == "container"
+    assert card is not None and world.parent(card) == console
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_echo_group_creates_group_and_places_mover(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {
+            "refers": [],
+            "same_as": {"prisoners": "prisoners"},
+            "kind": {"prisoners": "group"},
+        },
+    )
+    provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "prisoners"}},
+        player_input="Show the prisoners Michelle's memory card.",
+    )
+    world = provider._world()
+    prisoners = world.resolve("prisoners")
+    card = world.resolve("Michelle's memory card")
+    assert prisoners is not None and world.kind(prisoners) == "group"
+    assert card is not None and world.parent(card) == world.parent(prisoners)
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_echo_place_creates_area_and_places_mover(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {
+            "refers": [],
+            "same_as": {"checkpoint": "checkpoint"},
+            "kind": {"checkpoint": "place"},
+        },
+    )
+    old_area = provider._world().area(provider.state.package.world.protagonist_id)
+    provider.apply_item_facts(
+        {"Kristin": {"place": "checkpoint"}},
+        player_input="Walk to the checkpoint.",
+    )
+    world = provider._world()
+    checkpoint = world.resolve("checkpoint")
+    kristin = provider.state.package.world.protagonist_id
+    assert checkpoint is not None and world.kind(checkpoint) == "area"
+    assert world.parent(kristin) == checkpoint
+    assert world.parent(checkpoint) == old_area
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_echo_unoffered_target_creates_key_as_character(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {
+            "refers": [],
+            "same_as": {"guard": "checkpoint guard"},
+            "kind": {"guard": "person"},
+        },
+    )
+    provider.apply_item_facts(
+        {"guard": {"place": "command levels"}},
+        player_input="Question the guard.",
+    )
+    world = provider._world()
+    guard = world.resolve("guard")
+    kristin = provider.state.package.world.protagonist_id
+    assert guard is not None and world.kind(guard) == "character"
+    assert world.parent(guard) == world.parent(kristin)
+    assert provider.last_item_facts_unplaced() == []
+
+
 def test_new_place_kind_match_payload_requests_300_tokens(monkeypatch):
     calls = []
     provider = _new_place_kind_provider(

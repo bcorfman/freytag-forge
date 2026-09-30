@@ -927,12 +927,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if not isinstance(kind_reply, dict):
             kind_reply = {}
 
-        kind_required_names = {
-            name
-            for name, target in same_as.items()
-            if isinstance(name, str) and isinstance(target, str) and target.strip().casefold() == "new"
-        }
-
         def new_kind(name, *, place=False):
             raw_kind = next(
                 (
@@ -961,6 +955,11 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     issues.append(issue)
                     match_issues.append(issue)
                     same_as[name] = "new"
+        kind_required_names = {
+            name
+            for name, target in same_as.items()
+            if isinstance(name, str) and isinstance(target, str) and target.strip().casefold() == "new"
+        }
         protagonist_id = self.state.package.world.protagonist_id
         player_character_names = {
             item["key"]
