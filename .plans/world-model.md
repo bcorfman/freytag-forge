@@ -22,7 +22,8 @@ chose to give new place names a kind (tasks A-C below the replay);
 task A and its follow-ups (286e690) measured live: unplaced 0 of 40 in
 the probe and 0 of 24 turns in the 2C replay; tasks B (group members, 67a0141)
 and C (talking to a group, 0371c13) built, C measured live (member-answer
-rate accepted); next is 3A-3C, S3 and S4.
+rate accepted); 3A grounding decided and running; then 3A
+handoffs, 3B-3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -613,7 +614,27 @@ loud.json`, `group_talk_loud.json`): "answers" 5 of 15 aloud, "answers out
 loud" 5 of 15. No change, so the wording stays as built and the rate is
 accepted (8 of 30 pooled for "answers").
 
-**Next:** 3A.
+**3A grounding (Brandon's decisions, 2026-09-30).** A `captives` group
+(alias "prisoners") in the detention level with the senior official as
+its only member; Michelle is placed in the detention level on her own
+with no text, because SL-3A-A says she must not speak directly before
+she is reached and a member is named in the group's talk line. A
+`medical_level` area ("medical level") inside `detention_level`. Things:
+a movable "stolen radio" (no bare "radio" alias: item names are
+leak-scanned in every scene), a fixed "gate-status panel", and
+`override_codes` renamed "emergency override codes", hidden and carried
+by the senior official; `military_override_codes_available` moves them
+to Kristin and reveals them. My defaults: `companions: [brandon]`,
+`detention_level` renamed "detention level" with no aliases (an alias
+like "detention sector" would be leak-scanned in 2C, whose SCENE names
+the detention sectors). Cameras and checkpoints wait until they surface
+live. Group names are not in the narration leak index (task B added
+groups only to recall), so "captives" and "prisoners" stay safe in 1C.
+Ringer run `ringer-work/freytag-3a-grounding` (check: `verify_3a.py`;
+payloads byte-identical except 3A's opening line).
+
+**Next:** land 3A grounding, then 3A reveal handoffs (ChatGPT Desktop,
+as 2B and 2C) and a 3A bench script.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
