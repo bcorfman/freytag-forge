@@ -744,7 +744,11 @@ Ringer run `ringer-work/freytag-group-scoped-aliases` (check
 refers "prisoners" addresses it, a reply's "prisoners" lands on it with
 no new group; 1C and 2C unchanged).
 
-**Next:** land scoped aliases, then a 3A rerun; land the
+**Landed:** group scoped aliases as 3bae27c (Ringer, Luna, second
+attempt; `verify_scoped_aliases.py` passed; suite 944). Three live 3A
+replicates are running (`bench/results/world-3a-groups-x3`).
+
+**Next:** read the 3A x3 rerun; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
