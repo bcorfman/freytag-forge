@@ -1029,8 +1029,9 @@ up to 5 times with Retry-After. **Follow-up** (Ringer, Luna, one
 attempt): split continuity variants merge their parts in request order.
 Verified offline on the saved 71-call contradictions input with a fake
 Jev: output byte-identical at 1 and 8 (baseline, fact, split,
-split-examples), 1210 ms -> 179 ms, never more than 8 in flight. Not
-yet measured: the real Jev's rate limit under 8 concurrent calls.
+split-examples), 1210 ms -> 179 ms, never more than 8 in flight. Live (real Jev, saved contradictions
+input, 51 fact calls): 11.9 s at 1, 3.5 s at 8, no 429, identical
+verdicts.
 
 **Next:** 3B. land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
