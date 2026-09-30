@@ -2213,6 +2213,10 @@ def test_turn_rules_sharpen_the_authored_place_rule() -> None:
     assert "Keep each object where the scene puts it." in rules
     assert "Finish each action the player gives." in rules
     assert "When the player gives a thing to someone, that person takes it." in rules
+    assert (
+        rules[rules.index("When the player gives a thing to someone, that person takes it.") + 1]
+        == "When the player talks to someone, that person answers."
+    )
     assert "Only show Kristin doing what the player said." in rules
     assert ("Finish each action the player gives." + " " + "Only show Kristin doing what the player said.") not in rules
     assert "Answer what the player did. Only show Kristin doing what the player said." not in rules

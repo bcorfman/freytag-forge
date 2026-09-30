@@ -8,9 +8,20 @@ leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
 (3f765ba) with reveal handoffs (a1e7885), measured live, and merged
 (PR 488). 2C grounded with handoffs on `claude/ground-2c`, plus two
 recall fixes (EARLIER IN THE STORY; people alone do not recall),
-measured live: no drift in 3 of 3, every handoff fires. Next: 3A-3C, S3
-and S4. See
-"Resume here".
+measured live: no drift in 3 of 3, every handoff fires. Turn 5 no longer
+contradicts 2C.3 and Brandon voices his stance 2 of 3 (00052d3); the
+bare "console" drift is fixed by scoping the shortcut (b7dcec5) and the
+match call's THINGS (decba7f), measured live 10 of 10, and match
+answers limited to THINGS (d7e0c68), and the match call shown each new
+name's narration sentence (5224b69); Kristin's place right 10 of 10 live,
+but Jev still rejects a wrong memory-card match about 1 in 8; bare
+"corridor" is a measured known gap. Full live 2C replay on 76154df
+done: no drift, every handoff fires, no leak rejection; it found an
+unplaced new "console" (1 of 3) and a missed card move (2 of 3). Brandon
+chose to give new place names a kind (tasks A-C below the replay);
+task A and its follow-ups (286e690) measured live: unplaced 0 of 40 in
+the probe and 0 of 24 turns in the 2C replay; next is push `claude/ground-2c`, then 3A-3C, S3 and S4.
+See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -262,7 +273,299 @@ sending the copied files now.") as contradicting a stated fact in 2 of
 3 (Brandon agrees to hold the files, while 2C.3 has him argue to send
 them at once), and 3 of 7 runs since the handoffs. Not addressed yet.
 
-**Next:** push `claude/ground-2c` for review, then 3A.
+**Plain-place-word match rule, measured live (2026-09-29).** It did run
+live: in all three people-x3 replicates turn 2's reply put Kristin in a
+bare "room", mapped to the command levels. A bare "corridor" had not
+come up, so a Ringer probe (`~/dev/ringer-work/freytag-corridor-probe`:
+stubbed narrator reply, live match call and Jev check, real 2C state
+with "infrastructure corridors" in THINGS) measured it: **"corridor" went
+to 2A's infrastructure corridors 9 of 10**, "room" to the command levels
+5 of 5. Fix ranking, as measured:
+- Rule: moving the plain-word sentence first and adding 'Give that place
+  even when another place in THINGS has the same word in its name, like
+  "east corridors" or "guest room".' (1da3bbf) made it worse: corridor
+  10 of 10 wrong, room 0 of 5 (all to "kitchen"). Reverted (a8d4761).
+- LLM check: the existing Jev place check had said yes to 'Is the place
+  called "corridor" the same place as "infrastructure corridors", or
+  inside it?'. c0ddddc asks a contrastive question when the target area
+  is unrelated to the player's area ('Kristin Schweitzer is in "command
+  levels". Is the place called "corridor" really "infrastructure
+  corridors", rather than a spot in "command levels"?'), and a no now
+  lands the move in the player's area (before, a no left the thing with
+  no place). Jev answered yes 8 of 8; corridor still 8 of 10 wrong.
+  Kept for the no-place fix; suite 906 passed.
+- Scoping the match call to the current scene's areas was declined: a
+  real narrated move into an earlier scene's area (which narration
+  safety allows once that scene was entered) would be dropped.
+**Brandon chose: a known gap.** The drift that happened came from recall,
+which is fixed. Revisit if a bare "corridor" appears in 3A-3C.
+
+**Turn 5 cause (2026-09-29).** No 2C statement says where Brandon stands.
+The turn-5 SCENE has only `k_sl_2c_c_r2` ("...Kristin and Brandon must
+choose whether to risk the captives by sending it now."), so the
+narrator picks a side; in two replicates Brandon wants to wait. Plot 2C.3
+has him argue to send at once. **Brandon chose:** ChatGPT Desktop rewords
+`k_sl_2c_c_r2`'s statement and delivery_text to state Brandon's stance in
+third person, without deciding Kristin's side, keeping one phrase from
+each must_convey group. First round returned unattributed dialogue as
+the statement (my prompt asked for "something he could say aloud"); a
+corrected prompt is out. Brandon chose the pair: statement "Brandon wants
+to send the evidence now. He will risk the captives. He accepts that this
+makes rescue impossible." and the matching delivery_text. **Landed**
+(Ringer, Luna, one attempt; suite passed; only those two fields changed).
+
+**2C turn-5 rerun (2026-09-29, three replicates, check passed;
+`bench/results/world-2c-stance-x3`).** The stance line was in every
+turn-5 SCENE. Continuity contradicts a stated fact **0 of 24 turns**
+(turn 5 was 2 of 3 before). But in all three, turn 5 is one paragraph
+of Kristin arguing to wait, and Brandon never answers, so the judge
+flags command_not_finished 3 of 3. By Brandon's standing rule an NPC
+who stays silent does not make a command unfinished, so that is a judge
+false positive; the open question is only whether Brandon should voice
+his stance. Otherwise unchanged: every handoff fired (turns 1, 4, 6),
+Kristin in the command levels every turn, facts after the turn correct
+21/24, no rejected turn, restarts_scene 2 of 24 (turn 2 "enters the
+room").
+
+**Brandon chose to have Brandon voice his stance.** A live A/B replay of
+the three recorded turn-5 prompts (Ringer,
+`~/dev/ringer-work/freytag-answer-rule-probe`, 15 samples per arm, read
+by hand): Brandon says aloud that they must send now 5 of 15 as
+recorded, 10 of 15 with "When the player talks to someone, that person
+answers." after the gives-a-thing turn rule (one rule sample ran into a
+long exchange ending with Brandon giving in). **Landed as 00052d3**
+(Ringer, Luna; suite passed; one line in `_turn_rules_before_grounding`,
+which the recovery path reuses; not in the opening, which narrates no
+player action).
+
+**2C rerun with the answer rule (2026-09-29, three replicates, check
+passed; `bench/results/world-2c-answer-x3`).** Turn 5: Brandon argues to
+send now in 2 of 3 and is silent in 1; command_not_finished on turn 5
+0 of 3. Contradicts a stated fact 0 of 24, restarts 0 of 24, acts
+beyond the command 4 of 24 (walking into "the room" on turns 2 and 5, a
+pistol grip on turn 8). Every handoff fired (1, 4, 6); facts after the
+turn correct 21/24; no rejected turn.
+**New drift, 1 of 3, from a different cause:** replicate 1 turn 4 ("Check
+the copied files for proof of the purge order.") replied `"Kristin":
+{"place": "console"}`. "console" resolves directly (no match call) to
+2A's fixed inspection console, so Kristin moved into the infrastructure
+corridors. Turn 5's "room" then matched the corridors, and turns 6-7
+were narrated there, until turn 8 walked her back.
+The cause was the bare-name shortcut in `_resolve_name`: `_resolve_refer`
+takes a bare word when exactly one tracked name in the whole story ends
+in it. Brandon asked whether renaming the console to "terminal" would
+help; no, several tracked names already end in "terminal", and the match
+call had already sent a bare "terminal" to 2B's archive terminals.
+**Brandon chose to scope the shortcut (b7dcec5):** it now considers only
+tracked names in scene scope (the scene's and the player's areas and
+below, scene items and people, held things, unplaced things). Full
+names and aliases resolve as before. Ringer, Luna; suite 910 passed.
+The first run failed on my verifier, which demanded that Kristin stay
+in the command levels after a "new" match, while the existing design
+leaves her unplaced; the worker changed placement logic to satisfy it.
+The corrected run passed on its second attempt.
+**Measured by a live probe** (`~/dev/ringer-work/freytag-console-probe`:
+stubbed reply putting Kristin at a bare "console" on "Check the copied
+files for proof of the purge order.", thorough 2C entry, live match call
+and Jev): the shortcut no longer fires, but the match call picked
+"inspection console" 10 of 10, Jev confirmed 10 of 10, and Kristin still
+landed in the infrastructure corridors 10 of 10 ("room" 5 of 5 to the
+command levels). The match call sees the console because its THINGS
+filter compares top-level areas, and every facility area shares one.
+**Brandon chose to scope the match call's THINGS too (decba7f):** it now
+uses the same `_name_in_scene_scope` test as the shortcut, so in 2C it
+lists only Kristin and the memory card. The place and character lines
+that follow are unchanged. Ringer, Luna, first attempt; the check
+compared THINGS with scene scope in 1A, 1B and 2C, compared the place
+lines with a baseline from the old code, and ran the full suite.
+**Measured by the same live probe:** Kristin no longer reaches the
+infrastructure corridors (0 of 10, was 10 of 10). Her place is the new
+"console" 10 of 10. "room" still goes to the command levels 5 of 5. The
+match call still never answers "new" for "console": it now picks
+"Michelle's memory card" 10 of 10, and Jev rejects that pairing 10 of 10.
+So the right outcome depends on Jev catching a wrong match. Not tested:
+where the new console itself is placed, and a full live 2C replay.
+Brandon: Jev is meant to be the fallback, not the thing that makes this
+work. Cause: the match call never sees the narration, only the command,
+THINGS and the bare new name, so it guesses the thing that fits the
+command.
+**Closed set (d7e0c68):** a same_as answer must be "new" or a name
+offered in THINGS (any case); anything else is kept as new with an
+issue. Before this, an answer naming the unoffered inspection console
+still moved Kristin. Ringer, Luna, second attempt (first was a worker
+network error); full suite passed. Eight existing tests stubbed targets
+their THINGS never offered; they now inject the target into the offer.
+Risk not measured: a new name the model maps to a person named only in
+the command, not in THINGS, is now new.
+**Probe `~/dev/ringer-work/freytag-match-sentence-probe`** (stubbed 2C
+turn, live match call and Jev; not yet in the engine): showing each new
+name's narration sentence in NEW NAMES (`- console (from: "Kristin sits
+down at the console.")`) took "console" to "new" 9, 8 of 10, but "room"
+to the command levels only 3 of 5 and 6 of 10 (the rest echoed "room").
+Adding "Each same_as answer must be a name copied from THINGS or "new"
+..." fixed "room" 10 of 10 but sent "console" to the memory card 5 of
+10. Finishing the existing rule instead ("... where PLAYER CHARACTER is
+now, so give that place.") gave "room" 10 of 10 and "console" 8 "new",
+1 echo, 1 memory card (Jev rejected it); Kristin's place right 20 of 20.
+
+**Built (5224b69):** each NEW NAMES line carries the first narration
+sentence that uses the name, and the "room" rule ends "so give that
+place." The grounding guide now describes scene scope and this rule.
+Ringer, Luna, first attempt; suite passed. Known weak test:
+`test_match_payload_new_name_without_naming_sentence_stays_plain` uses
+`in`, so it would pass if a sentence were wrongly added; the Ringer
+verifier checks the exact line.
+**Console probe on the built engine:** Kristin's place right 10 of 10
+and "room" to the command levels 5 of 5 (Jev agreed 5 of 5). The match
+call alone answered "console" "new" 5, echoed "console" 2 (kept as new
+with an issue) and picked the memory card 3 (Jev rejected all 3).
+Pooled over the four sentence runs without the general rule, the memory
+card is 5 of 40 (12%), so Jev still does real work on this case. The
+fix loop stops here by Brandon's question; the full live 2C replay is
+the next measurement.
+
+**Full live 2C replay on the built engine (2026-09-29, 76154df, Ringer,
+three replicates, check passed; `bench/results/world-2c-built-x3`).**
+Every handoff fired (turns 1, 4, 6), no leak rejection, contradicts a
+stated fact 0 of 24, restarts 0 of 24, acts beyond the command 2 of 24.
+Kristin in the command levels after every turn. Facts after the turn
+correct 20/24 (21/24 before); narration contradicts given facts 6 of 24
+(2 before). The rise is turn 4: in all three the narration now puts
+Michelle's memory card into a console. Two new findings:
+- **The new console is never placed (r1).** Turn 4 replied
+  `"Michelle's memory card": {"place": "console"}`; the match call
+  answered "new" (the 5224b69 fix working live), so the card's place is
+  the new "console", but the console itself is left unplaced
+  (`item_facts_unplaced`). On turn 7 ("Decode Michelle's coded
+  message.") the reply put Kristin at "console"; with no tracked console
+  the match call mapped "console" to the memory card, and Jev said yes to
+  'Is the place called "console" at "Michelle's memory card"?', because
+  the card's place text is "console". No harm landed: Kristin's move was
+  refused (a console is not enterable) and the card stayed put. This is
+  the "where the new console itself is placed" gap, now seen live.
+- **Missed card move (r2, r3).** The narration inserts the card into the
+  console (or "a reader"), but the reply keeps it on Kristin. Capture
+  miss; judged missed_change both times.
+Unchanged from before: turn 8 ("Lead Brandon down the upper command
+corridors.") replies a place "upper command corridors" that is not
+tracked, so Kristin stays in the command levels (missed 1 of 3). r3 turn
+8 placed new "transfer carts" in the infrastructure corridors from "lower
+levels"; its Jev check named the player's place as "Detention level",
+the 3A place after the transition, not 2C's.
+
+**Brandon chose: new place names get a kind (2026-09-29).** Since the
+match call arrived, every new place name left something unplaced:
+"console" (a thing), "checkpoint", "lower levels" and "maintenance
+network" (places), and "prisoners" (a group of people). Brandon wants
+this gone for good, so the fix addresses the cause: the engine did not
+know what kind a new name is. Decisions:
+- The match call gives each name it calls "new" a kind: place, person,
+  group or thing. The engine creates that kind with a minted ID. A
+  missing or unknown kind makes a thing and records an issue. A new name
+  used as a place for a thing is made a container, since the reply shows
+  only a bare parent name (W5) and never the relation.
+- A new place goes inside the player's area. A new person, group or
+  thing goes in the player's place (the area, if that place cannot hold
+  it).
+- **A group** ("prisoners") is somewhere, but it holds nothing: a
+  thing sent to a group lands in the group's place. A single member who
+  takes a thing is named, so that is a person case. The 1C "prisoners"
+  case was a capture error, not a group holding a thing: the narration
+  had identification numbers etched into the walls near the prisoners,
+  and the match call wrongly took them for the handwritten number
+  sequence.
+- **Members:** a person in a group has the group as parent, so members go
+  wherever the group goes. People join a group from the story package or
+  from narration (an ordinary move). Leaving is an ordinary move.
+- **Talking to a group:** a member answers. A group with no members says
+  nothing.
+- **People and groups named only in a reply are created.** Brandon: a
+  created person belongs to one scene; if they have no part in the plot
+  they can stay for the rest of the story, as long as they do nothing
+  story-breaking, and that would be the player's doing.
+
+Three Ringer tasks, each measured before the next: **A** kinds and
+creation (a thing sent to a group lands in its place), which blocks the
+2C push; **B** group membership; **C** talking to a group. B and C land
+before 3A. A's verifier is
+`~/dev/ringer-work/freytag-new-place-kinds/verify_new_place_kinds.py`
+(the four kinds, the fallback, the recorded 2C turns 4 and 7). A is
+measured live by a probe replaying console, prisoners, checkpoint,
+lower levels and maintenance network 10 times each against the 92% bar,
+plus the 1C identification-numbers turn to see if 5224b69 already stops
+that mismatch, then a full 2C replay.
+
+**Task A built (2026-09-30).** b0f409c (Ringer, Luna, first attempt):
+the match call answers a kind per new name; worldkeeper gains the group
+kind and creates areas, characters and groups; a thing sent to a group
+lands in the group's place; a missing kind falls back to a thing with an
+issue. b4426fb ports the offline verifier's cases into tests (each fails
+on the old engine). **First live probe** (`~/dev/ringer-work/
+freytag-new-place-probe`, recorded replies replayed through capture with
+the live match call and Jev, 10 trials each): kind answers right 40 of
+40, but console, checkpoint and prisoners still unplaced 10 of 10. The
+match call echoes the name (`"console": "console"`) instead of "new";
+the closed-set rule kept it as new, but the set of names to create was
+built before that rule ran. Fixed in 1d0c7a4 (Ringer, Luna). A first
+fix attempt also treated a name the match call leaves out as new; that
+turned phrases like "in her hand" into containers and was stopped; a
+name left out keeps the old behaviour. **Probe after 1d0c7a4:** console
+a container in the command levels holding the card 10 of 10; checkpoint
+a new area holding Kristin 10 of 10 (the guard a new character there);
+prisoners a group, the identification numbers in its place 10 of 10 and
+never taken for the handwritten number sequence; "lower levels" matched
+to the infrastructure corridors with Jev agreeing 10 of 10 (placed, not
+new). Unplaced 0 of 40. "maintenance network" was dropped from the probe:
+it has been an authored area since e414060.
+**Known gap:** new entities are created in the player's place before the
+same reply's move of the player lands, so the prisoners were made in the
+freight terminal although the reply moved Kristin to the observation
+shaft.
+**Test speed (same day):** the suite now runs in parallel (a3a2952) and
+coverage is opt-in with the 90% gate kept in CI (ff5395c): about 22 s
+idle, was about 3 minutes.
+
+**2C replay on 1d0c7a4 (2026-09-30, three replicates, check passed;
+`bench/results/world-2c-kinds-x3`).** Every handoff fired (1, 4, 6), no
+leak rejection, restarts 0 of 24, contradicts a stated fact 1 of 24
+(turn 2: Brandon "in a room" rather than the command-center corner),
+acts beyond the command 2 of 24; facts after the turn correct 21/24
+(20/24 before), narration contradicts given facts 2 of 24 (6 before).
+Turn 8's "upper command corridors" is still untracked (missed 3 of 3).
+r1: the console was created in the command levels holding the card, and
+turn 7's "Kristin at the console" kept her in the command levels. Two
+new gaps, from r2:
+- **A new thing named as a reply key is a plain thing, so it can hold
+  nothing.** r2's reply gave `"console": {"place": "Kristin"}` (a
+  narrator capture error: "sits at a console" read as holding it). The
+  engine made a plain thing carried by Kristin. On turn 7 the card was
+  put into it, the move was refused, and the card was left unplaced.
+- **That refusal is silent.** `_apply_move` falls back to `set_unplaced`
+  without an issue and without adding to `last_item_facts_unplaced`, so
+  replay tallies of unplaced things undercount. (The probe checked
+  parents directly, so its result stands.)
+
+**Brandon chose: a new narrated thing is a container from the start.**
+286e690 (Ringer, Luna, first attempt) fixes all three: a new reply key of
+kind thing is a container; a move refused because the parent cannot
+hold things is recorded as unplaced with an issue; new entities are
+created where the player ends up after the reply's own move.
+**Probe on 286e690:** console, checkpoint and prisoners right 10 of 10
+each (prisoners now at the observation shaft with Kristin, was the
+freight terminal); "lower levels" to the infrastructure corridors 10 of
+10; unplaced 0 of 40. **2C replay on 286e690** (`bench/results/
+world-2c-containers-x3`): every handoff fired, no leak rejection, no
+item_facts issue and nothing unplaced in any of 24 turns; contradicts a
+stated fact 0 of 24, restarts 0 of 24, acts beyond the command 2 of 24;
+facts after the turn correct 22/24 (21 before), narration contradicts
+given facts 2 of 24. Remaining, not engine gaps: in r2 and r3 the
+narrator's reply wrote "sits at a console" as `"console": {"place":
+"Kristin"}`, so the console is recorded as carried by her (the same
+reply-capture class as the missed card move); turn 8's "upper command
+corridors" is still untracked.
+
+**Next:** push `claude/ground-2c` for review, then B (group members)
+and C (talking to a group), then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 

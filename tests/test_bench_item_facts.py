@@ -5,7 +5,7 @@ import pytest
 
 import bench.cli as bench_cli
 import bench.core as core
-from bench.core import load_variation, score_fact_tracking_judgments
+from bench.core import load_variation, score_fact_tracking_judgments, seeded_state_for_scene
 from bench.item_facts import (
     _MATCH_SYSTEM,
     ItemFactsProvider,
@@ -159,7 +159,7 @@ def test_unknown_item_names_share_one_match_call(monkeypatch):
         return {"same_as": {"first object": "new", "second object": "new"}}
 
     monkeypatch.setattr(CloudflareTurnProvider, "_request", match)
-    provider.apply_item_facts(
+    _, issues = provider.apply_item_facts(
         {"first object": {"place": "on the desk"}, "second object": {"place": "on the desk"}},
         player_input="Place the first object and the second object on the desk.",
     )
@@ -182,6 +182,21 @@ def _apply(provider, name, *, place=None, condition=None):
     if condition is not None:
         entry["condition"] = condition
     provider.apply_item_facts({name: entry})
+
+
+def _offer_match_target(provider, target):
+    original = provider._match_payload
+
+    def match_payload(player_input, new_names, *, include_places=False, story=""):
+        payload = original(player_input, new_names, include_places=include_places, story=story)
+        provider._match_offered_names.add(target)
+        marker = "\n\nNEW NAMES:"
+        line = f"- {target}."
+        if line not in payload["user"]:
+            payload["user"] = payload["user"].replace(marker, f"\n{line}{marker}", 1)
+        return payload
+
+    provider._match_payload = match_payload
 
 
 class _Response:
@@ -566,6 +581,163 @@ def test_match_payload_only_lists_things_in_play_for_each_scene():
     assert "- Michelle's phone." in things
 
 
+def test_match_payload_2c_excludes_the_other_scene_console():
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+
+    things = (
+        provider._match_payload("Go to the console.", ["console"])["user"]
+        .split("THINGS:\n", 1)[1]
+        .split("\n\nNEW NAMES:", 1)[0]
+    )
+
+    assert "- inspection console." not in things
+    assert "- Kristin." in things
+
+
+def test_match_payload_2c_new_name_includes_story_sentence(monkeypatch):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+    payloads = []
+
+    def request(_provider, payload):
+        payloads.append(payload)
+        return {"refers": [], "same_as": {"console": "new"}}
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    provider.apply_item_facts(
+        {"Kristin": {"place": "console"}},
+        player_input="Check the copied files for proof of the purge order.",
+        story="Kristin sits down at the console. She searches the copied files for the purge order.",
+        confirm=lambda *_args: True,
+    )
+
+    assert len(payloads) == 1
+    assert '- console (from: "Kristin sits down at the console.")' in payloads[0]["user"]
+
+
+def test_match_payload_new_name_without_naming_sentence_stays_plain():
+    provider = _seeded_provider()
+    plain = provider._match_payload("Check the copied files for proof of the purge order.", ["console"])
+    other = provider._match_payload(
+        "Check the copied files for proof of the purge order.",
+        ["console"],
+        story="Kristin checks the copied files.",
+    )
+
+    assert "NEW NAMES:\n- console" in plain["user"]
+    assert "NEW NAMES:\n- console" in other["user"]
+
+
+def test_2c_unoffered_match_target_keeps_kristin_out_of_infrastructure_corridors(monkeypatch):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"console": "inspection console"}},
+    )
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "console"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+
+    issue = "item_facts match named 'inspection console' for 'console', which was not in THINGS; kept as new"
+    world = provider._world()
+    assert world.parent("kristin") != "infrastructure_corridors"
+    assert issue in issues
+    assert issue in provider.last_item_facts_match()["match_issues"]
+
+
+def test_2c_echoed_same_as_target_is_recorded_as_unoffered(monkeypatch):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"room": "room"}},
+    )
+
+    _facts, issues = provider.apply_item_facts(
+        {"room": {"place": "command levels"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+
+    issue = "item_facts match named 'room' for 'room', which was not in THINGS; kept as new"
+    assert issue in issues
+    assert issue in provider.last_item_facts_match()["match_issues"]
+
+
+def test_2c_offered_command_levels_target_keeps_kristin_there(monkeypatch):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"room": "command levels"}},
+    )
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "room"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+
+    world = provider._world()
+    assert world.parent("kristin") == "purge_chamber"
+    assert not any("which was not in THINGS" in issue for issue in issues)
+
+
 def test_park_bench_resolves_and_is_placed_in_scene_1b():
     state = RuntimeState.bootstrap(PACKAGE)
     apply_scene_placements(PACKAGE, state.facts, "1B")
@@ -752,7 +924,7 @@ def test_unresolved_place_joins_the_single_match_call(monkeypatch):
         },
         player_input="Look around the kitchen.",
     )
-    assert not issues
+    assert any("strange coin" in issue and "kind" in issue for issue in issues)
     assert len(payloads) == 1
     assert "- the counter by the sink" in payloads[0]["user"]
     assert "- strange coin" in payloads[0]["user"]
@@ -760,16 +932,18 @@ def test_unresolved_place_joins_the_single_match_call(monkeypatch):
     assert facts["strange coin"]["place"] == "workstation"
 
 
-def test_unresolved_place_is_never_created(monkeypatch):
+def test_unresolved_place_is_created_as_fallback_container(monkeypatch):
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"same_as": {"old porch": "new"}})
     provider = _seeded_provider()
     facts, issues = provider.apply_item_facts(
         {"Michelle's phone": {"place": "old porch"}}, player_input="Carry Michelle's phone outside."
     )
-    assert not issues
+    assert any("old porch" in issue and "kind" in issue for issue in issues)
     assert facts["Michelle's phone"]["place"] == "old porch"
-    assert provider.last_item_facts_unplaced() == [{"name": "Michelle's phone", "place": "old porch"}]
-    assert world_for(PACKAGE, provider.state.facts).resolve("old porch") is None
+    world = world_for(PACKAGE, provider.state.facts)
+    assert provider.last_item_facts_unplaced() == []
+    assert world.is_a(world.resolve("old porch"), "container")
+    assert world.parent("michelle_phone") == world.resolve("old porch")
 
 
 def test_contents_reply_moves_each_thing():
@@ -918,6 +1092,10 @@ def test_constant_rules_can_move_to_system_prompt(monkeypatch):
 
 def test_match_system_describes_references_and_new_names():
     assert '"refers"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
+    assert '"kind"' in _MATCH_SYSTEM
+    assert 'Say "place"' in _MATCH_SYSTEM
+    assert 'Say "person"' in _MATCH_SYSTEM
+    assert 'Say "group"' in _MATCH_SYSTEM
     assert "carried" not in _MATCH_SYSTEM
     assert "PLACES" not in _MATCH_SYSTEM
     assert '"places"' not in _MATCH_SYSTEM
@@ -939,8 +1117,8 @@ def test_match_system_lists_only_named_things():
         'A guard or a prisoner who is not in THINGS is "new".' in _MATCH_SYSTEM
     )
     assert (
-        'A plain word like "corridor", "hall" or "room" is a spot in the place where PLAYER CHARACTER is now.'
-        in _MATCH_SYSTEM
+        'A plain word like "corridor", "hall" or "room" is a spot in the place where PLAYER CHARACTER '
+        "is now, so give that place." in _MATCH_SYSTEM
     )
 
 
@@ -1938,6 +2116,61 @@ def test_resolve_refer_ambiguous_or_unmatched_names():
     assert _resolve_refer("man", ["workman"]) is None
 
 
+def _scope_provider(scene_id, *, thorough):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, scene_id) if thorough else core.package_and_state(variation, scene_id)
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+    return provider
+
+
+def test_bare_name_shortcut_ignores_a_tracked_thing_in_another_scene():
+    provider = _scope_provider("2C", thorough=True)
+    world = provider._world()
+
+    assert world.resolve("console") is None
+    assert _resolve_refer("console", provider.item_facts) == "inspection console"
+    assert not provider._name_in_scene_scope(world, "inspection console")
+    assert provider._resolve_name(world, "console") is None
+
+
+def test_bare_name_shortcut_keeps_a_tracked_thing_in_the_scene_area():
+    provider = _scope_provider("1A", thorough=False)
+    world = provider._world()
+
+    assert world.resolve("chair") is None
+    assert _resolve_refer("chair", provider.item_facts) == "workstation chair"
+    assert provider._name_in_scene_scope(world, "workstation chair")
+    assert provider._resolve_name(world, "chair") == "workstation_chair"
+
+
+def test_bare_name_shortcut_keeps_a_thing_held_by_the_protagonist():
+    provider = _scope_provider("2C", thorough=True)
+    world = provider._world()
+
+    assert world.resolve("card") is None
+    assert _resolve_refer("card", provider.item_facts) == "Michelle's memory card"
+    assert world.holder("memory_card") == provider.state.package.world.protagonist_id
+    assert provider._name_in_scene_scope(world, "Michelle's memory card")
+    assert provider._resolve_name(world, "card") == "memory_card"
+
+
+def test_full_name_shortcut_still_resolves_out_of_scene_scope():
+    provider = _scope_provider("2C", thorough=True)
+    world = provider._world()
+
+    assert not provider._name_in_scene_scope(world, "inspection console")
+    assert provider._resolve_name(world, "inspection console") == "inspection_console"
+
+
 def test_prepare_turn_resolves_short_names(monkeypatch):
     provider = _provider()
     _apply(provider, "Kristin's laptop", place="in the truck", condition=[])
@@ -2005,6 +2238,7 @@ def test_same_as_learns_item_and_place_names_but_not_area_names(monkeypatch):
             "same_as": {"the stranger": "Kristin", "the corner": area_name},
         },
     )
+    _offer_match_target(provider, area_name)
     provider.apply_item_facts(
         {
             "the stranger": {"place": "the corner"},
@@ -2018,7 +2252,7 @@ def test_same_as_learns_item_and_place_names_but_not_area_names(monkeypatch):
     assert provider.last_item_facts_match()["place_resolutions"] == {"the corner": area_name}
 
 
-def test_same_as_new_place_is_recorded_and_left_unplaced(monkeypatch):
+def test_same_as_new_place_is_created_as_fallback_container(monkeypatch):
     provider = _provider()
     monkeypatch.setattr(
         CloudflareTurnProvider,
@@ -2026,13 +2260,344 @@ def test_same_as_new_place_is_recorded_and_left_unplaced(monkeypatch):
         lambda *_args: {"refers": [], "same_as": {"the checkpoint": "new"}},
     )
 
-    provider.apply_item_facts(
+    _, issues = provider.apply_item_facts(
         {"the stranger": {"place": "the checkpoint"}},
         player_input="Move the stranger to the checkpoint.",
     )
 
     assert provider.last_item_facts_match()["place_resolutions"] == {"the checkpoint": "new"}
-    assert provider.last_item_facts_unplaced() == [{"name": "the stranger", "place": "the checkpoint"}]
+    assert provider.last_item_facts_unplaced() == []
+    assert any("the checkpoint" in issue and "kind" in issue for issue in issues)
+
+
+def _new_place_kind_provider(monkeypatch, reply, calls=None):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-2c.json")
+    _, state = seeded_state_for_scene(variation, "2C")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    provider._ensure_scene_seeded()
+
+    def request(_provider, payload):
+        if calls is not None:
+            calls.append(payload)
+        return reply
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    return provider
+
+
+def test_new_place_kind_thing_creates_container_and_reuses_it(monkeypatch):
+    calls = []
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "thing"}},
+        calls,
+    )
+    before_world = provider._world()
+    kristin = provider.state.package.world.protagonist_id
+    kristin_place = before_world.parent(kristin)
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "command levels"}, "Michelle's memory card": {"place": "console"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+    world = provider._world()
+    console = world.resolve("console")
+    card = world.resolve("Michelle's memory card")
+    assert console is not None and world.is_a(console, "container")
+    assert world.parent(console) == kristin_place
+    assert card is not None and world.parent(card) == console
+    assert provider.last_item_facts_unplaced() == []
+    assert not any("kind" in issue.lower() for issue in issues)
+    assert calls[0]["max_tokens"] == 300
+
+    calls.clear()
+    provider.apply_item_facts(
+        {"Kristin": {"place": "console"}, "Michelle's memory card": {"place": "console"}},
+        player_input="Decode Michelle's coded message.",
+    )
+    world = provider._world()
+    assert not any("console" in payload["user"] for payload in calls if "NEW NAMES:" in payload["user"])
+    assert world.area(kristin) == world.area(kristin_place)
+    assert world.parent(card) == console
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_thing_container_reply_key_creates_container(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "thing"}},
+    )
+    provider.apply_item_facts(
+        {"console": {"place": "Kristin"}},
+        player_input="Check the console beside Kristin.",
+    )
+    provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "console"}},
+        player_input="Put Michelle's memory card in the console.",
+    )
+    world = provider._world()
+    console = world.resolve("console")
+    card = world.resolve("Michelle's memory card")
+    assert console is not None and world.is_a(console, "container")
+    assert card is not None and world.parent(card) == console
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_thing_container_refused_move_is_recorded(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {}},
+    )
+    _facts, issues = provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "handwritten number sequence"}},
+        player_input="Put Michelle's memory card with the handwritten number sequence.",
+    )
+    assert provider.last_item_facts_unplaced() == [
+        {"name": "Michelle's memory card", "place": "handwritten number sequence"}
+    ]
+    assert any("cannot hold" in issue for issue in issues)
+
+
+def test_new_thing_container_created_at_player_destination(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "thing"}},
+    )
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "records archive"},
+            "Michelle's memory card": {"place": "console"},
+        },
+        player_input="Go to the records archive and put Michelle's memory card in the console.",
+    )
+    world = provider._world()
+    archive = world.resolve("records archive")
+    console = world.resolve("console")
+    card = world.resolve("Michelle's memory card")
+    assert archive is not None
+    assert console is not None and world.is_a(console, "container")
+    assert world.parent(console) == archive
+    assert card is not None and world.parent(card) == console
+
+
+def test_new_place_kind_place_creates_fixed_nested_area(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"checkpoint": "new"}, "kind": {"checkpoint": "place"}},
+    )
+    before_world = provider._world()
+    kristin = provider.state.package.world.protagonist_id
+    old_area = before_world.area(kristin)
+
+    provider.apply_item_facts({"Kristin": {"place": "checkpoint"}}, player_input="Walk to the checkpoint.")
+    world = provider._world()
+    checkpoint = world.resolve("checkpoint")
+    assert checkpoint is not None and world.is_a(checkpoint, "area")
+    assert world.parent(checkpoint) == old_area
+    assert world.parent(kristin) == checkpoint
+    assert world.area(kristin) == checkpoint
+    assert old_area in world.chain(kristin)
+    assert not world.move(checkpoint, old_area).ok
+    assert provider._world().parent(checkpoint) == old_area
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_kind_person_creates_carrier_for_card(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"courier": "new"}, "kind": {"courier": "person"}},
+    )
+    world = provider._world()
+    kristin_place = world.parent(provider.state.package.world.protagonist_id)
+
+    provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "courier"}},
+        player_input="Give the courier Michelle's memory card.",
+    )
+    world = provider._world()
+    courier = world.resolve("courier")
+    card = world.resolve("Michelle's memory card")
+    assert courier is not None and world.is_a(courier, "character")
+    assert world.parent(courier) == kristin_place
+    assert card is not None and world.parent(card) == courier
+    assert world.relation(card) == "carried_by"
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_kind_group_is_not_a_character_or_container(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"prisoners": "new"}, "kind": {"prisoners": "group"}},
+    )
+    world = provider._world()
+    kristin_place = world.parent(provider.state.package.world.protagonist_id)
+
+    provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "prisoners"}},
+        player_input="Show the prisoners Michelle's memory card.",
+    )
+    world = provider._world()
+    prisoners = world.resolve("prisoners")
+    card = world.resolve("Michelle's memory card")
+    assert prisoners is not None and world.kind(prisoners) == "group"
+    assert not world.is_a(prisoners, "character")
+    assert world.parent(prisoners) == kristin_place
+    assert card is not None and world.parent(card) == world.parent(prisoners)
+    assert world.parent(card) != prisoners
+    assert not world.move(card, prisoners).ok
+    assert not world.move(prisoners, card).ok
+    assert provider.last_item_facts_unplaced() == []
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        {"refers": [], "same_as": {"console": "new"}},
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "gadget"}},
+    ],
+    ids=["missing-kind", "unknown-kind"],
+)
+def test_new_place_kind_fallback_makes_container_and_reports_kind(monkeypatch, reply):
+    provider = _new_place_kind_provider(monkeypatch, reply)
+
+    _facts, issues = provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "console"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+    world = provider._world()
+    console = world.resolve("console")
+    card = world.resolve("Michelle's memory card")
+    assert console is not None and world.is_a(console, "container")
+    assert card is not None and world.parent(card) == console
+    assert any("console" in issue and "kind" in issue.lower() for issue in issues)
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_kind_new_reply_key_person_is_character(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"guard": "new"}, "kind": {"guard": "person"}},
+    )
+    world = provider._world()
+    player_area = world.area(provider.state.package.world.protagonist_id)
+
+    provider.apply_item_facts({"guard": {"place": "command levels"}}, player_input="Question the guard.")
+    world = provider._world()
+    guard = world.resolve("guard")
+    assert guard is not None and world.is_a(guard, "character")
+    assert world.area(guard) == player_area
+
+
+def test_new_place_echo_thing_creates_container_and_places_mover(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {
+            "refers": [],
+            "same_as": {"console": "console"},
+            "kind": {"console": "thing"},
+        },
+    )
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "console"},
+            "Michelle's memory card": {"place": "console"},
+        },
+        player_input="Move to the console and inspect Michelle's memory card.",
+    )
+    world = provider._world()
+    console = world.resolve("console")
+    card = world.resolve("Michelle's memory card")
+    assert console is not None and world.kind(console) == "container"
+    assert card is not None and world.parent(card) == console
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_echo_group_creates_group_and_places_mover(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {
+            "refers": [],
+            "same_as": {"prisoners": "prisoners"},
+            "kind": {"prisoners": "group"},
+        },
+    )
+    provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "prisoners"}},
+        player_input="Show the prisoners Michelle's memory card.",
+    )
+    world = provider._world()
+    prisoners = world.resolve("prisoners")
+    card = world.resolve("Michelle's memory card")
+    assert prisoners is not None and world.kind(prisoners) == "group"
+    assert card is not None and world.parent(card) == world.parent(prisoners)
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_echo_place_creates_area_and_places_mover(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {
+            "refers": [],
+            "same_as": {"checkpoint": "checkpoint"},
+            "kind": {"checkpoint": "place"},
+        },
+    )
+    old_area = provider._world().area(provider.state.package.world.protagonist_id)
+    provider.apply_item_facts(
+        {"Kristin": {"place": "checkpoint"}},
+        player_input="Walk to the checkpoint.",
+    )
+    world = provider._world()
+    checkpoint = world.resolve("checkpoint")
+    kristin = provider.state.package.world.protagonist_id
+    assert checkpoint is not None and world.kind(checkpoint) == "area"
+    assert world.parent(kristin) == checkpoint
+    assert world.parent(checkpoint) == old_area
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_echo_unoffered_target_creates_key_as_character(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {
+            "refers": [],
+            "same_as": {"guard": "checkpoint guard"},
+            "kind": {"guard": "person"},
+        },
+    )
+    provider.apply_item_facts(
+        {"guard": {"place": "command levels"}},
+        player_input="Question the guard.",
+    )
+    world = provider._world()
+    guard = world.resolve("guard")
+    kristin = provider.state.package.world.protagonist_id
+    assert guard is not None and world.kind(guard) == "character"
+    assert world.parent(guard) == world.parent(kristin)
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_new_place_kind_match_payload_requests_300_tokens(monkeypatch):
+    calls = []
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "thing"}},
+        calls,
+    )
+
+    provider.apply_item_facts(
+        {"Michelle's memory card": {"place": "console"}},
+        player_input="Check the copied files for proof of the purge order.",
+    )
+    assert calls[0]["max_tokens"] == 300
 
 
 def test_new_name_mapped_to_player_character_stays_new(monkeypatch):
@@ -2058,7 +2623,7 @@ def test_new_name_mapped_to_player_character_stays_new(monkeypatch):
     stranger_id = world.resolve("stranger in the park")
     assert stranger_id is not None
     assert stranger_id != world.resolve("Kristin")
-    assert world.unplaced_name(world.resolve("handwritten number sequence")) == "stranger in the park"
+    assert world.parent(world.resolve("handwritten number sequence")) == stranger_id
     assert provider.last_item_facts_match()["resolutions"]["stranger in the park"] == "new"
     assert "item_facts match mapped 'stranger in the park' to the player character; kept as new" in issues
 
@@ -2070,6 +2635,7 @@ def test_new_name_mapped_to_other_character_still_resolves_player_character_guar
         "_request",
         lambda *_args: {"refers": [], "same_as": {"the stranger": "Michelle"}},
     )
+    _offer_match_target(provider, "Michelle")
 
     provider.apply_item_facts({"the stranger": {"place": "kitchen"}}, player_input="Search for the stranger.")
 
@@ -2247,7 +2813,8 @@ def test_stubbed_run_records_new_change_on_same_turn(monkeypatch):
         ("thing_other", 'Are "Artifact" and "back door" the same thing?'),
         (
             "place_area",
-            'Is the place called "checkpoint" the same place as "Brandon\'s hideout", or inside it?',
+            'Kristin Schweitzer is in "Michelle\'s house". Is the place called "checkpoint" really '
+            '"Brandon\'s hideout", rather than a spot in "Michelle\'s house"?',
         ),
         ("place_character", 'Is the place called "checkpoint" on "Brandon Corfman"?'),
         ("place_other", 'Is the place called "in front of metal door" at "back door"?'),
@@ -2289,6 +2856,7 @@ def test_mapping_check_templates_and_facts(monkeypatch, kind, expected_question)
         "_request",
         lambda *_args: {"refers": [], "same_as": {mapping_name: target}},
     )
+    _offer_match_target(provider, target)
     provider.apply_item_facts(
         raw,
         player_input="Inspect the evidence.",
@@ -2307,21 +2875,88 @@ def test_mapping_check_templates_and_facts(monkeypatch, kind, expected_question)
         assert check["known"]["can_move"] is False
 
 
-def test_mapping_check_rejected_place_is_unplaced(monkeypatch):
+def test_mapping_check_rejected_place_is_created_as_fallback_container(monkeypatch):
     provider = _provider()
     world = provider._world()
-    area_id = next(entity_id for entity_id in world.entity_ids() if world.is_a(entity_id, "area"))
+    area_id = world.area(provider.state.package.world.protagonist_id)
     target = world.name(area_id)
     monkeypatch.setattr(
         CloudflareTurnProvider,
         "_request",
         lambda *_args: {"refers": [], "same_as": {"checkpoint": target}},
     )
-    provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: False)
+    _, issues = provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: False)
     result = provider.last_item_facts_match()
     assert result["place_resolutions"] == {"checkpoint": "new"}
-    assert provider.last_item_facts_unplaced() == [{"name": "the lantern", "place": "checkpoint"}]
+    assert provider.last_item_facts_unplaced() == []
+    assert any("checkpoint" in issue and "kind" in issue for issue in issues)
+    assert provider._world().parent(provider._world().resolve("the lantern")) == provider._world().resolve("checkpoint")
     assert result["mapping_checks"][0]["answer"] is False
+
+
+def test_mapping_check_unrelated_area_false_lands_in_player_area(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    player_area = world.area(provider.state.package.world.protagonist_id)
+    calls = []
+
+    def confirm(*args):
+        calls.append(args)
+        return False
+
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"checkpoint": "Brandon's hideout"}},
+    )
+    _offer_match_target(provider, "Brandon's hideout")
+
+    provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=confirm)
+
+    result = provider.last_item_facts_match()
+    assert result["place_resolutions"] == {"checkpoint": world.name(player_area)}
+    assert result["mapping_checks"][0]["contrastive"] is True
+    player_place = world.name(player_area)
+    assert calls[0][2] == (
+        f'Kristin Schweitzer is in "{player_place}". Is the place called "checkpoint" really '
+        f'"Brandon\'s hideout", rather than a spot in "{player_place}"?'
+    )
+    assert calls[0][3] == (f'the place called "checkpoint" is "Brandon\'s hideout", not a spot in "{player_place}"')
+    assert world.parent(world.resolve("the lantern")) == player_area
+    assert provider.last_item_facts_unplaced() == []
+
+
+def test_mapping_check_unrelated_area_true_lands_in_target_area(monkeypatch):
+    provider = _provider()
+    world = provider._world()
+    target_id = world.resolve("Brandon's hideout")
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {"checkpoint": "Brandon's hideout"}},
+    )
+    _offer_match_target(provider, "Brandon's hideout")
+
+    provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: True)
+
+    result = provider.last_item_facts_match()
+    assert result["place_resolutions"] == {"checkpoint": world.name(target_id)}
+    assert result["mapping_checks"][0]["contrastive"] is True
+    assert world.parent(world.resolve("the lantern")) == target_id
+
+
+def test_mapping_check_related_areas_keep_old_question():
+    provider = _provider()
+    world = provider._world()
+    player_area = world.area(provider.state.package.world.protagonist_id)
+    expected = 'Is the place called "checkpoint" the same place as "{}", or inside it?'
+
+    question, _statement = provider._mapping_prompt(world, "checkpoint", player_area, is_place=True)
+    assert question == expected.format(world.name(player_area))
+
+    child_area = next(area_id for area_id in world.entity_ids() if world.parent(area_id) == player_area)
+    question, _statement = provider._mapping_prompt(world, "checkpoint", child_area, is_place=True)
+    assert question == expected.format(world.name(child_area))
 
 
 def test_mapping_check_accepted_place_keeps_mapping(monkeypatch):
@@ -2334,6 +2969,7 @@ def test_mapping_check_accepted_place_keeps_mapping(monkeypatch):
         "_request",
         lambda *_args: {"refers": [], "same_as": {"checkpoint": target}},
     )
+    _offer_match_target(provider, target)
     provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: True)
     result = provider.last_item_facts_match()
     assert result["place_resolutions"] == {"checkpoint": target}
@@ -2355,6 +2991,7 @@ def test_mapping_check_rejected_thing_becomes_new_without_alias(monkeypatch):
         "_request",
         lambda *_args: {"refers": [], "same_as": {"guard": target}},
     )
+    _offer_match_target(provider, target)
     provider.apply_item_facts({"guard": {"place": "on the table"}}, confirm=lambda *_args: False)
     result = provider.last_item_facts_match()
     assert result["resolutions"] == {"guard": "new"}
@@ -2372,6 +3009,7 @@ def test_mapping_check_none_keeps_mapping_and_reports_unavailable(monkeypatch):
         "_request",
         lambda *_args: {"refers": [], "same_as": {"checkpoint": target}},
     )
+    _offer_match_target(provider, target)
     _facts, issues = provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: None)
     assert provider.last_item_facts_match()["place_resolutions"] == {"checkpoint": target}
     assert provider.last_item_facts_match()["mapping_checks"][0]["answer"] is None

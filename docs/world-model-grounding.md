@@ -44,6 +44,16 @@ problems surface, not exhaustively up front.
 - **A spot inside an area is not an area.** "The corner of the kitchen" is the
   kitchen. Detail like "near the door" stays out of the tree.
 
+When the match call marks a new name, it also gives a kind: place, person,
+group or thing. A place becomes an area under the player's current area. A
+person or group is created where the player is, when that is allowed. A thing
+used as a place becomes a container. A group holds nothing; things named as
+being in a group stay at the group's parent. If the kind is missing or unknown,
+the engine makes the safest thing-shaped fallback and records an issue. A new
+thing named by the reply is a container, and new entities are created where the
+player ends up after the reply. A refused move is recorded as unplaced with an
+issue.
+
 ### Things
 
 - **Declare every physical thing the story text names that a player could act
@@ -150,10 +160,13 @@ reading level, one idea per sentence, and every path that narrates.
 - **Give only what the command refers to,** plus the protagonist and her place
   every turn. An open container brings its visible contents. Hidden things are
   never given.
-- **Show a model only the things in play.** The match call lists the scene's
-  `item_ids`, things in the protagonist's top-level area and things she
-  carries. A thing left in another scene is not a candidate, or the model
-  will map a new name onto it.
+- **Show a model only the things in play.** The match call lists the things in
+  scene scope: the scene's items and people, things at or below the scene's
+  area or the protagonist's area, things she carries, and things with no place.
+  An answer that names anything else is kept as new.
+- **Show the match call where a new name came from.** Each new name is shown
+  with the narration sentence that used it. Without it, the model guesses the
+  thing that fits the command.
 - **Engine steps are told, not asked.** When the engine seats the protagonist
   or hands her a thing before an action, the narrator gets a line such as
   `Just before this: Kristin sat down in the driver's seat.` Don't ask the

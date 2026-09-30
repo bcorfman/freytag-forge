@@ -42,10 +42,8 @@ dev = [
 
 [tool.pytest.ini_options]
 addopts = [
-    "--cov=storygame",
-    "--cov-branch",
-    "--cov-fail-under=90",
-    "--cov-report=term",
+    "-n",
+    "auto",
 ]
 testpaths = ["tests"]
 filterwarnings = ["ignore::DeprecationWarning"]
@@ -60,11 +58,15 @@ markers = [
 ]
 
 [tool.coverage.run]
+branch = true
 source = ["storygame"]
 omit = [
     "storygame/__init__.py",
     "storygame/__main__.py",
 ]
+
+[tool.coverage.report]
+fail_under = 90
 
 [tool.ruff]
 line-length = 120

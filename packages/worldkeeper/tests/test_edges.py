@@ -57,7 +57,11 @@ def test_create_rejections_and_owner_and_custom_backend():
     assert not w.create("").ok
     assert not w.create("x" * 81).ok
     assert not w.create("lamp").ok
-    assert not w.create("new", kind="character").ok
+    character = w.create("new", kind="character")
+    assert character.ok
+    assert not w.create("another", kind="entity").ok
+    assert not w.create("unplaced room", kind="area").ok
+    assert not w.create("bad room", parent="ada", kind="area").ok
     assert not w.create("new", owner="lamp").ok
     assert not w.create("new", parent="lamp").ok
     assert not w.create("new", parent="ada", under=True).ok

@@ -1546,7 +1546,7 @@ knowledge:
   - [reveal their position, expose their position, seal the detention sectors, seal the cells, risk the captives, rescue impossible]
   delivery_text: "Kristin and Brandon have enough evidence to expose the conspiracy. Sending it now would reveal their position and seal the detention sectors."
 - id: k_sl_2c_c_r2
-  statement: 'The proof is ready to transmit, but Kristin and Brandon must choose whether to risk the captives by sending it now.'
+  statement: 'Brandon wants to send the evidence now. He will risk the captives. He accepts that this makes rescue impossible.'
   earn_when: "argues about sending the proof"
   action_evidence:
   - ["argue", "discuss", "debate", "ask", "weigh", "consider", "decide"]
@@ -1578,7 +1578,7 @@ knowledge:
   must_convey:
   - [evidence, proof, transmit the evidence, broadcast proof, send the evidence, ready to transmit]
   - [risk the captives, seal the detention sectors, rescue impossible, choose rescue, choose evidence]
-  delivery_text: "The proof is ready to transmit. Kristin and Brandon must choose whether sending the proof now will risk the captives."
+  delivery_text: "Brandon says the proof must go out now. He will risk the captives, even if that makes rescue impossible."
 - id: k_sl_2c_d_r1
   statement: "Michelle's encrypted message marks a maintenance access route into her holding block and reveals that Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
   earn_when: "decodes Michelle's coded message"

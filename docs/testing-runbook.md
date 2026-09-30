@@ -18,10 +18,8 @@ variations).
 
 - Run from the repository root. Pytest needs `TMPDIR=/tmp` (WSL); use
   `uv run python`, never bare `python`.
-- The 90% coverage floor is repository-wide. A focused pytest run can pass
-  every assertion and still exit nonzero on coverage; add `--no-cov` or
-  `-o addopts=''` for focused work, and use the full suite as the coverage
-  check of record.
+- Coverage is off unless `--cov` is given. Focused pytest runs need no extra
+  flag; use the full suite with `--cov` as the coverage check of record.
 - Never pin collection counts in tests or in this file.
 - Hosted checks run against staging only, never a local API. Staging deploys
   only from `main`.
@@ -32,7 +30,8 @@ variations).
 persistence behavior. Free; no network.
 
 ```bash
-TMPDIR=/tmp uv run pytest -q                                  # full suite + coverage
+TMPDIR=/tmp uv run pytest -q                                  # full suite without coverage
+TMPDIR=/tmp uv run pytest -q --cov                           # full suite + 90% coverage gate
 TMPDIR=/tmp uv run pytest -q --no-cov -m "(unit or component) and not authoring_quality"  # CI fast feedback
 TMPDIR=/tmp uv run pytest -q --no-cov -m authoring_quality    # package authoring checks
 TMPDIR=/tmp uv run pytest -q --cov -n 2 --tier-report=/tmp/test-suite-health.json  # CI required gate
@@ -40,8 +39,8 @@ uv run ruff check --fix . && uv run ruff format .
 cd frontend && npm test && npm run build
 ```
 
-**Pass:** all tests pass and total coverage is at or above 90%; Ruff reports no
-remaining issues; `npm test` passes and Vite writes `frontend/dist/`.
+**Pass:** all tests pass; the `--cov` run reaches at least 90% coverage; Ruff
+reports no remaining issues; `npm test` passes and Vite writes `frontend/dist/`.
 
 **Cleanup:** None. `frontend/dist/` is generated; delete it freely.
 

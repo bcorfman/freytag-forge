@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Run context coverage report
-        run: TMPDIR=/tmp uv run pytest -q --cov-context=test --tier-report=artifacts/test-suite-context-health.json
+        run: TMPDIR=/tmp uv run pytest -q --cov --cov-context=test --tier-report=artifacts/test-suite-context-health.json
       - name: Upload context coverage report
         if: always()
         uses: actions/upload-artifact@v7

@@ -48,6 +48,29 @@ def test_queries_and_state():
     assert w.set_status("ada", "incapacitated").ok and w.status("ada") == "incapacitated"
 
 
+def test_created_area_character_and_group_persist_and_follow_placement_rules():
+    w = make()
+    annex = w.create("annex", parent="village", kind="area")
+    character = w.create("new person", parent=annex.id, kind="character")
+    group = w.create("prisoners", parent=annex.id, kind="group")
+    assert annex.ok and character.ok and group.ok
+    assert w.parent(annex.id) == "village"
+    assert w.relation(annex.id) == "in"
+    assert w.chain(annex.id) == ("village",)
+    assert w.area(annex.id) == annex.id
+    assert w.is_a(annex.id, "area")
+    assert not w.move(annex.id, "parlour").ok
+    assert not w.move("lamp", group.id).ok
+    assert not w.move("ada", group.id).ok
+    assert w.move(group.id, "village").ok
+
+    rebuilt = World(w.schema, w.backend)
+    assert rebuilt.parent(annex.id) == "village"
+    assert rebuilt.chain(annex.id) == ("village",)
+    assert rebuilt.area(annex.id) == annex.id
+    assert rebuilt.kind(group.id) == "group"
+
+
 def test_together_includes_nested_areas_but_not_siblings_or_unplaced():
     w = make()
     w.schema = WorldSchema.from_data(

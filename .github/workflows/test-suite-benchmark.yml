@@ -20,7 +20,7 @@ jobs:
           - name: coverage
             args: "--cov"
           - name: coverage-context
-            args: "--cov-context=test"
+            args: "--cov --cov-context=test"
           - name: coverage-health
             args: "--cov --tier-report=artifacts/health.json"
     steps:
