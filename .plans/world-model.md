@@ -844,8 +844,36 @@ which does not resolve after the move to 3B (unplaced 3/3, a
 transition-turn artifact like 2C's turn 8); r2 turn 2 sent Michelle to
 "holding block" and left her unplaced (1/30).
 
-**Next:** Brandon's call: fix the continuity judge's use of story_text,
-or move to 3B; land the
+**Brandon asked for a proper, general fix to the judge errors (no
+special case; ChatGPT Desktop rewrites allowed).** Diagnosis on every
+saved handoff turn (112 across 2B-3A): the continuity judge flagged 21
+as unfinished and 5 as contradictions, nearly all false. Two causes, both
+general: (1) the judge gets `narration` plus a side list `story_text`
+with an instruction to use it for one question, and Luna ignores it; (2)
+`player_input` bundles the engine's own steps ("Kristin sat down in the
+driver's seat. Kristin picked up her laptop.") with the typed command,
+so the judge demands those steps (all four 1B-1C false flags).
+**Design: judge the turn the player reads.** `judge_turns` adds
+`command` (typed) and `turn_text`, the turn as ordered passages tagged
+`game` (the engine's steps, true, never part of the command),
+`narrator` (the only text being judged) and `story` (delivered reveal and
+bridge, canon). The rubric (`ringer-work/freytag-judge-read-order/
+system_message.txt`) reads turn_text in order as one sequence ("a later
+passage can change what an earlier passage said ... a change, not a
+contradiction"), judges command_not_finished on every passage, and every
+other question on narrator passages only. Every narrator-fault yes must
+quote its sentence; code withdraws a yes whose quote is only story or
+game text and flags one whose quote is found nowhere. All earlier
+rulings are kept (world facts over canon, refinement, NPC refusal).
+**Calibration:** my labels on the 29 handoff turns of four current-
+package runs (`labels-handoffs-*.json`, rulings in their notes; not
+Brandon's) plus Brandon's round 8 and 9 labels and the v28 labels as the
+regression bar. The old judge's saved verdicts agree 101/116 on the
+handoff cells. Both the current and the new judge re-judge all seven
+runs (`rejudge_cont.sh`), continuity only.
+
+**Next:** baseline and build are running; then re-judge with the new
+judge and compare; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
