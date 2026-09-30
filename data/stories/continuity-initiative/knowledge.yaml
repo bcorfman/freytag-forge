@@ -1900,6 +1900,10 @@ knowledge:
   delivery_text: "Kristin warns Michelle that the emergency-gate authorization is about to expire. Michelle launches the prepared uprising rather than wait."
 - id: k_sl_3b_a_r1
   statement: 'Kristin feeds JANUS false water-pressure and ventilation alarms in empty service corridors until human operators must take control.'
+  earn_when: "feeds JANUS false alarms"
+  action_evidence:
+  - [trigger, set off, sound, raise, create, plant, feed, send, report, fake, stage, simulate, cause, start, trip, activate, use, reset, flood, overwhelm]
+  - [false alarm, false alarms, fake alarm, fake alarms, water-pressure alarm, water-pressure alarms, false water-pressure alarm, false water-pressure alarms, ventilation alarm, ventilation alarms, fake ventilation alarm, fake ventilation alarms, service-corridor alarm, service-corridor alarms, inspection console, false alert, false alerts, fake alert, fake alerts, JANUS alert, JANUS alerts, Kristin's alarm, Kristin's alarms, Kristin's decoy, Kristin's decoys, empty service corridor, empty service corridors, false emergency, false emergencies, fake emergency, fake emergencies, false warning, false warnings, fake warning, fake warnings, ventilation warning, ventilation warnings, pressure alarm, pressure alarms]
   entity_ids: []
   aliases:
   - human security control
@@ -1920,8 +1924,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Kristin feeds JANUS false alarms. Human operators take control."
 - id: k_sl_3b_a_r2
   statement: 'By making the facility’s emergencies impossible to predict, Kristin forces security to abandon JANUS’s guidance.'
+  earn_when: "makes JANUS guidance useless"
+  action_evidence:
+  - [cycle, reroute, take, choose, vary, change, switch, scramble, confuse, evade, outguess, mislead, zigzag, weave, reverse, turn on, turn off, bypass, open, close, flip]
+  - [empty corridor, empty corridors, unused door, unused doors, door cycle, door cycles, light cycle, light cycles, corridor light, corridor lights, unpredictable route, unpredictable routes, random route, random routes, JANUS guidance, JANUS prediction, JANUS predictions, JANUS forecast, JANUS forecasts, Kristin's route, Kristin's routes, Kristin's zigzag, Kristin's zigzags, on and off, random pattern, random patterns]
   entity_ids: []
   aliases:
   - human security control
@@ -1942,8 +1951,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Kristin makes the emergencies impossible to predict. Security leaves JANUS's guidance."
 - id: k_sl_3b_b_r1
   statement: 'Michelle confronts Rebecca with the experiment approvals, and Rebecca offers every detention-site location as leverage.'
+  earn_when: "confronts Rebecca with approvals"
+  action_evidence:
+  - [show, confront, accuse, challenge, question, press, explain, present, reveal, expose, bring, hand, give, read, cite, prove, verify, ask]
+  - [experiments, experiment approval, experiment approvals, approved experiment, approved experiments, approval form, approval forms, signed approval, signed approvals, approval signature, approval signatures, Rebecca's approval, Rebecca's approvals, Rebecca approval, Rebecca approvals, her approval, her approvals, Rebecca's signature, Rebecca's signatures, her signature, her signatures, experiment file, experiment files, trial approval, trial approvals, human experiment, human experiments, test subject, test subjects, research approval, research approvals, project approval, project approvals, authorization form, authorization forms]
   entity_ids: []
   aliases:
   - detention locations offer known
@@ -1973,8 +1987,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Michelle confronts Rebecca with the experiment approvals. Rebecca offers the detention-site locations as leverage."
 - id: k_sl_3b_b_r2
   statement: 'Rebecca offers the detention-site locations before the confrontation is complete, and Michelle secures them without treating Rebecca as trustworthy.'
+  earn_when: "secures detention-site locations"
+  action_evidence:
+  - [ask, request, demand, get, take, copy, save, secure, collect, retrieve, record, photograph, scan, download, write down, verify, send]
+  - [detention site, detention sites, detention-site location, detention-site locations, site location, site locations, prison location, prison locations, prison address, prison addresses, holding site, holding sites, holding-site address, holding-site addresses, black site, black sites, black-site location, black-site locations, detention list, detention lists, Rebecca's list, Rebecca's lists, her list, her lists, Rebecca's locations, her locations, site directory, site directories, detention directory, detention directories, location sheet, location sheets, site map, site maps]
   entity_ids: []
   aliases:
   - detention locations offer known
@@ -2001,8 +2020,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Rebecca offers the detention-site locations. Michelle secures them without trusting Rebecca."
 - id: k_sl_3b_d_r1
   statement: 'Charles locks down Rebecca''s office, abandons her, and turns the harmless water emergency into a real deluge through the outer access level.'
+  earn_when: "learns Charles abandons Rebecca"
+  action_evidence:
+  - [answer, ask, speak, call, reply, listen, hear, challenge, address, question, respond, contact, lock, unlock, open, close, talk, try]
+  - [remote channel, remote channels, Charles's channel, Charles's channels, his channel, his channels, remote call, remote calls, Charles's call, Charles's calls, his call, his calls, office lockdown, office lockdowns, office lock, office locks, executive-office lock, executive-office locks, remote screen, remote screens, Charles's screen, Charles's screens, his screen, his screens, Charles's voice, his voice, Charles's message, Charles's messages, his message, his messages, Rebecca's husband, her husband, come for her, Charles's betrayal, his betrayal, Rebecca's fate, her fate, executive screen, locked office door]
   entity_ids: []
   aliases:
   - charles abandoned rebecca
@@ -2031,8 +2055,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level."
 - id: k_sl_3b_d_r2
   statement: 'A remote order shows Charles has chosen to flood the outer access level rather than lose control of the evidence, trapping Rebecca with the people she endangered.'
+  earn_when: "finds Charles's flood order"
+  action_evidence:
+  - [read, check, inspect, find, view, examine, trace, follow, uncover, review, confirm, verify, monitor, scan, look at, investigate]
+  - [Charles's remote order, Charles's remote orders, remote flood order, remote flood orders, flood order, flood orders, outer access level, flood alarm, flood alarms, outer access alarm, outer access alarms, outer-level alarm, outer-level alarms, floodgate order, floodgate orders, floodgate release, floodgate releases, deluge order, deluge orders, Charles's flood order, Charles's flood orders, his flood order, his flood orders, Charles's command, Charles's commands, his command, his commands, remote directive, remote directives, access-level flood, outer-level flood, flood notice, flood notices, Rebecca's trap, her trap, deluge warning, deluge warnings, flood warning, flood warnings]
   entity_ids: []
   aliases:
   - charles abandoned rebecca
@@ -2061,8 +2090,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Charles orders the outer access level flooded rather than lose control of the evidence. This traps Rebecca with the people she endangered."
 - id: k_sl_3b_c_r1
   statement: 'Brandon disconnects the external relay from JANUS and sends a confession that authenticates Michelle’s evidence.'
+  earn_when: "has Brandon send confession"
+  action_evidence:
+  - [tell, ask, order, direct, have, get, make, cut, cut off, disconnect, sever, detach, unlink, isolate, record, confess, write, sign, admit, state, send]
+  - [the relay, external relay, Broadcast relay, relay link, relay links, relay connection, relay connections, JANUS link, JANUS links, JANUS connection, JANUS connections, JANUS tether, JANUS tethers, Brandon's relay, his relay, Brandon's confession, his confession, confession, signed confession, signed confessions, recorded confession, recorded confessions, video confession, video confessions, audio confession, audio confessions, builder confession, builder confessions, JANUS confession, JANUS confessions, creator confession, creator confessions, Brandon's statement, Brandon's statements, his statement, his statements, admission, admissions, relay chamber, part in JANUS, role in JANUS]
   entity_ids: []
   aliases:
   - relay open
@@ -2093,8 +2127,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Brandon disconnects the external relay from JANUS. He sends a confession that authenticates Michelle's evidence."
 - id: k_sl_3b_c_r2
   statement: 'Brandon holds the relay open against the security lockdown so Kristin and Michelle can begin the broadcast.'
+  earn_when: "begins the public broadcast"
+  action_evidence:
+  - [start, begin, launch, initiate, broadcast, air, transmit, stream, send, publish, release, share, play, turn on, open, activate, go live]
+  - [broadcast, public broadcast, live broadcast, emergency broadcast, open broadcast, broadcast feed, broadcast feeds, broadcast channel, broadcast channels, public channel, public channels, live channel, live channels, broadcast signal, broadcast signals, public signal, public signals, broadcast stream, broadcast streams, live stream, live streams, transmission, transmissions, public transmission, public transmissions, to the world, Michelle's broadcast, her broadcast, Michelle's evidence, her evidence, broadcast launch, broadcast start, open relay, held relay, Michelle's transmission, her transmission]
   entity_ids: []
   aliases:
   - relay open
@@ -2125,6 +2164,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Brandon holds the relay open against the security lockdown. Kristin and Michelle can begin the broadcast."
 - id: k_sl_3c_a_r1
   statement: 'Michelle broadcasts captives, JANUS records, planning sessions, and detention locations to independent networks.'
   entity_ids: []
