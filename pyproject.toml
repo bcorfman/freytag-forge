@@ -42,6 +42,8 @@ dev = [
 
 [tool.pytest.ini_options]
 addopts = [
+    "-n",
+    "auto",
     "--cov=storygame",
     "--cov-branch",
     "--cov-fail-under=90",
