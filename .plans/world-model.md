@@ -899,8 +899,32 @@ probably wrong; the odd seating step is an engine question); 3A r1 t4
 restart missed; 3A r3 t10 a pedantic ordering contradiction; 3A r3 t6 and
 2B t5 unfinished (judgment calls).
 
-**Next:** Brandon's call: tighten the read-order sentence for the opening
-case, then 3B; land the
+**Both done (Brandon, 2026-09-30).** (1) The 1B-1C turn-16 label is now
+a contradiction. (2) "A later passage never excuses a conflict with the
+opening or an earlier turn." added to the rubric (Ringer, Luna, one
+attempt), committed with the label as 2ff6f0e-class commit below.
+Re-judged (`new2.txt`): 3A handoffs 46/48 (44 before; r2 t1 now caught),
+handoffs 111/116 and regression 453/486 (456 before; within Luna's
+run-to-run noise). Remaining: 5 command_not_finished judgment calls.
+
+**Why the engine seated Kristin (diagnosed).** Before each command the
+bench asks Jev "does this command use Kristin's laptop?" (the laptop is
+`use_seated`); a yes seats her in the driver's seat first. The question's
+false side lists only handling (open, move, carry...), with no case for a
+command about something else, so "Read the identification numbers on the
+prisoners below." reads as "reading" = using. In the 1B-1C run 4 of 19
+commands seated her this way. Probe (`ringer-work/freytag-uses-thing-
+probe`, 16 commands x 3): the current question says yes to 6 of 10
+commands that do not involve the laptop, every time (18 false yeses), and
+misses no real use; adding "the command is about something else" cuts
+false yeses to 3 but misses 2 real uses (6 answers). Proposed fix, not
+built: ask Jev only when the command names the thing (the engine's
+existing command-to-entity-name matching); on this set that plus the
+current question is 48/48. Secondary: `together()` treats a truck in the
+freight terminal as near Kristin in the observation shaft (a sub-area),
+so a yes can seat her in a truck she is nowhere near.
+
+**Next:** Brandon's call on the seating fix, then 3B; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
