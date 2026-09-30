@@ -669,7 +669,13 @@ uprising.", "deadline", "listen". Round 3 is a same-chat follow-up
 (`chatgpt_followup_r3.md`): add verbs for every action kind and general
 nouns, keep the delivery and earn_when text.
 
-**Next:** Brandon runs the round-3 follow-up in ChatGPT Desktop; land the
+Round 3 answer (`handoffs_3a_r3.yaml`): other wordings 20/24, but it
+fires on ordinary commands 8 of 20 (round 2: 0 of 20), e.g. "Walk back
+to the detention level." reveals the medical experiments and "Check the
+clock." the expiring codes. Brandon chose a round 4 that keeps the verbs
+and drops generic nouns (`chatgpt_followup_r4.md`); scored on both.
+
+**Next:** Brandon runs the round-4 follow-up in ChatGPT Desktop; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
