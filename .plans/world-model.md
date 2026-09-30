@@ -748,7 +748,32 @@ no new group; 1C and 2C unchanged).
 attempt; `verify_scoped_aliases.py` passed; suite 944). Three live 3A
 replicates are running (`bench/results/world-3a-groups-x3`).
 
-**Next:** read the 3A x3 rerun; land the
+**3A rerun with both fixes (2026-09-30, three replicates, check passed;
+`bench/results/world-3a-groups-x3`).** All three completed and moved to
+3B after turn 10; handoffs fired on turns 1, 4, 6 and 10 in all three; no
+leak rejection; nothing unplaced; facts after the turn correct 27/30.
+The radio reached Kristin (turn 8) and the codes Brandon (turn 9) 3 of 3.
+- Turn 3 ("Ask the prisoners who runs this block."): the captives were
+  addressed and the talk line reached the narrator 3 of 3, and the
+  senior official answered 3 of 3 (was: no line, an invented speaker).
+  Two answers still name an invented commander ("Sector Commander",
+  "Lieutenant Colonel Jenkins").
+- Turn 2 ("Ask Michelle about the other sites."): the match call listed
+  the captives in refers in r2, the talk line came back, and that
+  replicate talked to the official: drift 1 of 3 (probe 20/20 before).
+  In r1 and r3 Kristin goes to Michelle but does not ask; not finished
+  3 of 3.
+- Turn 5 ("Read the experiment records."): records read 2 of 3; r1 had
+  the talk line (refers again) and went to the gate-status panel.
+- **Turn 1, 3 of 3:** the lead-up says "none of them seem to be
+  Michelle", then the delivery says "Michelle is alive..." (judged
+  contradicts a stated fact). The reveal-turn lead-up class seen in 2B.
+- **Turn 10, 3 of 3:** Kristin never warns Michelle; the delivery and the
+  3B bridge text follow (command not finished).
+Continuity totals: contradicts 3/30 (all turn 1), beyond the command
+3/30, restarts 2/30, not finished 10/30.
+
+**Next:** Brandon's call: turn 1's lead-up and turn 10, or move to 3B; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
