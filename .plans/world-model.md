@@ -22,8 +22,8 @@ chose to give new place names a kind (tasks A-C below the replay);
 task A and its follow-ups (286e690) measured live: unplaced 0 of 40 in
 the probe and 0 of 24 turns in the 2C replay; tasks B (group members, 67a0141)
 and C (talking to a group, 0371c13) built, C measured live (member-answer
-rate accepted); 3A grounding decided and running; then 3A
-handoffs, 3B-3C, S3 and S4.
+rate accepted); 3A grounding landed (d503361); 3A handoffs
+prompt ready for ChatGPT Desktop; then 3B-3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -633,8 +633,28 @@ groups only to recall), so "captives" and "prisoners" stay safe in 1C.
 Ringer run `ringer-work/freytag-3a-grounding` (check: `verify_3a.py`;
 payloads byte-identical except 3A's opening line).
 
-**Next:** land 3A grounding, then 3A reveal handoffs (ChatGPT Desktop,
-as 2B and 2C) and a 3A bench script.
+**3A grounding landed (d503361;** Ringer, Luna). The first run found that
+a declared group name resolves in every scene: "captives"/"prisoners"
+would have mapped 1C's narrated prisoners to the unplaced 3A group.
+Brandon chose a 3A-only name: the group is "detention captives" with no
+aliases; in 3A the match call maps bare "prisoners" to it (in scope), in
+1C those words stay new. Three tests that pinned the old package were
+updated (kinds set, world-effect facts set, the leakage matrix's entity
+positions now include groups). `verify_3a.py` passed (payloads
+byte-identical except 3A's opening line); suite 938 passed. Not measured
+live: no 3A bench script exists yet.
+
+**3A reveal handoffs:** all eight `k_sl_3a_*` candidates lack
+`earn_when`, `action_evidence` and `delivery_text`. The ChatGPT Desktop
+prompt is `~/dev/ringer-work/freytag-3a-handoffs/chatgpt_prompt.md`
+(matcher rules, must/must-not commands, other wordings will be tested,
+noun phrases at most three words). Offered sets: A on arrival; B after
+`michelle_reached`; D after `behavioral_experiments_known`; C last. The
+prompt lists B and D together, which is only stricter.
+
+**Next:** Brandon runs the 3A handoff prompt in ChatGPT Desktop; land the
+answer by Ringer with a matcher verifier; then a 3A bench script and a
+live replicate.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
