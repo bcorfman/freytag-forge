@@ -39,6 +39,56 @@ ARCHIVE = FIXTURE_DIR / "arm-c" / "run1"
 PLAYER_INPUT = (FIXTURE_DIR / "fixture_player_input.txt").read_text(encoding="utf-8")
 
 
+@pytest.fixture(autouse=True)
+def no_implicit_taking_network(monkeypatch):
+    monkeypatch.setattr(core, "ask_moves_thing", lambda *_args: False)
+
+
+def test_bench_takes_photograph_before_put(monkeypatch):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
+    variation["_fixed_turns"] = 1
+    requests = []
+    providers = []
+
+    class RecordingProvider(ItemFactsProvider):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            providers.append(self)
+
+    def provider_for_with_item_facts(state, _variation):
+        return RecordingProvider(
+            worker_url="", token="", state=state, item_facts={}, mode="single_call", seed_from_package=True
+        )
+
+    def request(_provider, payload):
+        requests.append(payload)
+        if payload["system"] == _MATCH_SYSTEM:
+            return {"refers": ["Michelle's photograph"], "same_as": {}}
+        return {
+            "segments": [{"kind": "narration", "text": "Kristin puts the photograph away.", "grounding_ids": []}],
+            "selected_knowledge_ids": [],
+        }
+
+    monkeypatch.setattr(core, "provider_for", provider_for_with_item_facts)
+    monkeypatch.setattr(core, "ask_moves_thing", lambda *_args: True)
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+
+    result = core.run_scene(
+        variation,
+        "1B",
+        {"name": "put", "inputs": ["Put Michelle's photograph in my pocket."]},
+    )
+
+    assert result["status"] == "ok"
+    turn = result["turns"][0]
+    step = "Kristin picked up Michelle's photograph from the park bench."
+    assert turn["taking_steps"] == [step]
+    assert turn["taking_asked"] is True
+    assert any(f"Just before this: {step}" in request["user"] for request in requests)
+    assert turn["item_facts_before"]["Michelle's photograph"]["place"] == "Kristin"
+    assert providers[0].prior_steps == ()
+
+
 def _seed_bench_custody(monkeypatch) -> None:
     original_package_and_state = core.package_and_state
 

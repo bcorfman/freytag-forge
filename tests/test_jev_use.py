@@ -3,7 +3,50 @@ from __future__ import annotations
 import io
 import json
 
-from bench.jev_use import ask_needs_to_stand, ask_same_or_part, ask_uses_thing
+from bench.jev_use import ask_moves_thing, ask_needs_to_stand, ask_same_or_part, ask_uses_thing
+
+
+def test_jev_moves_thing_request_and_answers():
+    calls = []
+
+    def opener(request, timeout):
+        calls.append((request, timeout))
+        return io.BytesIO(
+            json.dumps(
+                {
+                    "success": True,
+                    "result": {
+                        "state": "Completed",
+                        "result": {"answers": {"moves_thing": {"type": "noul", "noul": 0.78}}},
+                    },
+                }
+            ).encode()
+        )
+
+    assert (
+        ask_moves_thing(
+            "Put Michelle's photograph in my pocket.",
+            "Michelle's photograph",
+            environment={"CLOUDFLARE_ACCOUNT_ID": "account", "CLOUDFLARE_AI_TOKEN": "token"},
+            opener=opener,
+        )
+        is True
+    )
+    body = json.loads(calls[0][0].data)
+    assert "moves_thing" in body["input"]["questions"]
+
+
+def test_jev_moves_thing_failures_give_none():
+    environment = {"CLOUDFLARE_ACCOUNT_ID": "account", "CLOUDFLARE_AI_TOKEN": "token"}
+    assert ask_moves_thing("Put the photograph in my pocket.", "photograph", environment={}) is None
+
+    def bad_opener(*_args, **_kwargs):
+        raise OSError("offline")
+
+    assert (
+        ask_moves_thing("Put the photograph in my pocket.", "photograph", environment=environment, opener=bad_opener)
+        is None
+    )
 
 
 def test_jev_use_request_and_answers():

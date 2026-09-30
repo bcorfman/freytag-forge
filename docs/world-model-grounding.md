@@ -188,6 +188,8 @@ reading level, one idea per sentence, and every path that narrates.
   narrator to perform a step the world model can perform. The engine seats the
   player only when the command names the thing that needs seated use. It uses
   only a seat in her own area.
+  The engine also picks up a loose thing before a command that puts it somewhere
+  when the command names it and it is in the player's own area.
 
 ### What a model is asked to return
 

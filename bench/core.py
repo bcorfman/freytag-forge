@@ -25,7 +25,7 @@ from bench.item_facts import (
     package_seed,
     validate_item_facts,
 )
-from bench.jev_use import ask_needs_to_stand, ask_same_or_part, ask_uses_thing
+from bench.jev_use import ask_moves_thing, ask_needs_to_stand, ask_same_or_part, ask_uses_thing
 from bench.judge_input import judge_turns
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
@@ -38,6 +38,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.seating import seat_before_use, stand_before_leave
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.taking import take_before_put
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
@@ -728,6 +729,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             standing_steps: tuple[str, ...] = ()
             standing_asked = False
             standing_issues: tuple[str, ...] = ()
+            taking_steps: tuple[str, ...] = ()
+            taking_asked = False
+            taking_issues: tuple[str, ...] = ()
             prior_scene = state.current_scene_id
             match_info = {
                 "match_call": False,
@@ -742,13 +746,18 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 standing_steps = standing.steps
                 standing_asked = standing.asked
                 standing_issues = standing.issues
+                taking = take_before_put(provider._world(), package, typed_input, ask_moves_thing)
+                taking_steps = taking.steps
+                taking_asked = taking.asked
+                taking_issues = taking.issues
                 if not standing_steps:
                     seating = seat_before_use(provider._world(), package, typed_input, ask_uses_thing)
                     player_input = seating.command
                     seating_steps = seating.steps
                     seating_asked = seating.asked
                     seating_issues = seating.issues
-                provider.prior_steps = standing_steps or seating_steps
+                provider.prior_steps = (*standing_steps, *taking_steps, *seating_steps)
+                player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
             if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
                 match_info = provider.prepare_turn(typed_input)
             things_given: list[str] = []
@@ -774,6 +783,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         "seating_steps": list(seating_steps),
                         "seating_asked": seating_asked,
                         "seating_issues": list(seating_issues),
+                        "taking_steps": list(taking_steps),
+                        "taking_asked": taking_asked,
+                        "taking_issues": list(taking_issues),
                         "standing_steps": list(standing_steps),
                         "standing_asked": standing_asked,
                         "standing_issues": list(standing_issues),
@@ -796,6 +808,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         "seating_steps": list(seating_steps),
                         "seating_asked": seating_asked,
                         "seating_issues": list(seating_issues),
+                        "taking_steps": list(taking_steps),
+                        "taking_asked": taking_asked,
+                        "taking_issues": list(taking_issues),
                         "standing_steps": list(standing_steps),
                         "standing_asked": standing_asked,
                         "standing_issues": list(standing_issues),
@@ -882,6 +897,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "seating_steps": list(seating_steps),
                     "seating_asked": seating_asked,
                     "seating_issues": list(seating_issues),
+                    "taking_steps": list(taking_steps),
+                    "taking_asked": taking_asked,
+                    "taking_issues": list(taking_issues),
                     "standing_steps": list(standing_steps),
                     "standing_asked": standing_asked,
                     "standing_issues": list(standing_issues),
