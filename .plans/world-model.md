@@ -719,8 +719,21 @@ Two group findings:
   so it was dropped. The narrator invented "Lieutenant Commander Rachel
   Patel". This is the cost of the 3A-only name.
 
-**Next:** Brandon's call on the talk line (show it only when the command
-addresses the group, and how refers reaches the group); land the
+**Brandon chose (2026-09-30):** the talk sentences reach the narrator
+only when the command addresses the group (the match call lists it in
+refers); Ringer run `ringer-work/freytag-group-talk-addressed`. For turn
+3 he chose to tighten the match prompt. **Measured first by a live probe**
+(`ringer-work/freytag-refers-probe`: seeded 3A state, 10 match calls per
+command per arm). Rule tried, after the cook example: 'Copy each name in
+refers exactly as THINGS writes it, even when the command calls it
+something else. For "Ask the maids about the key." when THINGS has "house
+staff", list "house staff".' Commands that address the captives list
+"detention captives" 14/30 (0/30 before; "Talk to the captives about the
+guards." still 0/10), but "Ask Michelle about the other sites." now lists
+the captives and most of THINGS 10/10 (3/10 before), which would put the
+talk line back on exactly the turns it is being removed from. Not landed.
+
+**Next:** Brandon's call on reaching the group from a plain word; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
