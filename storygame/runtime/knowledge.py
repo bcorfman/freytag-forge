@@ -68,7 +68,7 @@ def _input_referenced_entity_ids(world, player_input: str) -> frozenset[str]:
     folded_input = player_input.casefold()
     return frozenset(
         entity.id
-        for entities in (world.locations, world.npcs, world.items)
+        for entities in (world.locations, world.npcs, world.groups, world.items)
         for entity in entities
         if any(re.search(rf"(?<!\w){re.escape(form)}(?!\w)", folded_input) for form in _entity_surface_forms(entity))
     )

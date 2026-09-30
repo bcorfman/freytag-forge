@@ -2293,6 +2293,28 @@ def _new_place_kind_provider(monkeypatch, reply, calls=None):
     return provider
 
 
+def test_group_member_player_follows_with_companion_and_new_thing_uses_group_place(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "thing"}},
+    )
+    world = provider._world()
+    group = world.create("prisoners", parent="purge_chamber", kind="group")
+    assert group.ok
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "prisoners"}, "console": {"place": "prisoners"}},
+        player_input="Join the prisoners and carry the console.",
+    )
+
+    assert not issues
+    assert world.parent("kristin") == group.id
+    assert world.parent("brandon") == group.id
+    console_id = world.resolve("console")
+    assert console_id is not None
+    assert world.parent(console_id) == "purge_chamber"
+
+
 def test_new_place_kind_thing_creates_container_and_reuses_it(monkeypatch):
     calls = []
     provider = _new_place_kind_provider(

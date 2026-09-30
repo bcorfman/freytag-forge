@@ -86,9 +86,12 @@ def _yaml(path: Path) -> dict[str, Any]:
 
 def _validate_scene_placements(world_source: WorldSource, scenes: tuple[Scene, ...], schema: WorldSchema) -> None:
     entity_ids = {
-        entity.id for group in (world_source.locations, world_source.npcs, world_source.items) for entity in group
+        entity.id
+        for group in (world_source.locations, world_source.npcs, world_source.groups, world_source.items)
+        for entity in group
     }
     npc_ids = {npc.id for npc in world_source.npcs}
+    group_ids = {group.id for group in world_source.groups}
     for item in world_source.items:
         if not schema.kind_is(item.kind, "thing"):
             raise StoryPackageError(f"item '{item.id}' kind '{item.kind}' does not descend from thing")
@@ -107,13 +110,28 @@ def _validate_scene_placements(world_source: WorldSource, scenes: tuple[Scene, .
                 raise StoryPackageError(f"scene {scene.metadata.scene_id} companion '{companion_id}' must name an NPC")
             if companion_id == world_source.protagonist_id:
                 raise StoryPackageError(f"scene {scene.metadata.scene_id} protagonist cannot be a companion")
-        invalid_character_placements = set(scene.metadata.character_placements) - set(scene.metadata.participant_ids)
+        invalid_character_placements = set(scene.metadata.character_placements) - (
+            set(scene.metadata.participant_ids) | group_ids
+        )
         if invalid_character_placements:
             raise StoryPackageError(
                 f"scene {scene.metadata.scene_id} character_placements must name participants: "
                 f"{sorted(invalid_character_placements)}"
             )
         for character_id, placement in scene.metadata.character_placements.items():
+            if character_id in group_ids:
+                if placement.parent not in entity_ids:
+                    raise StoryPackageError(
+                        f"scene {scene.metadata.scene_id} placement for group '{character_id}' has unknown parent "
+                        f"'{placement.parent}'"
+                    )
+                result = world.place(character_id, placement.parent, text=placement.text)
+                if not result.ok:
+                    raise StoryPackageError(
+                        f"scene {scene.metadata.scene_id} placement for group '{character_id}' was refused: "
+                        f"{result.reason}"
+                    )
+                continue
             if character_id not in npc_ids:
                 raise StoryPackageError(
                     f"scene {scene.metadata.scene_id} character placement '{character_id}' must name an NPC"
@@ -392,7 +410,7 @@ def _validate_knowledge(package: StoryPackage) -> None:
     """Fail closed when a declarative revelation cannot be proven package-local."""
 
     scenes = {scene.metadata.scene_id for scene in package.scenes}
-    entity_groups = (package.world.locations, package.world.npcs, package.world.items)
+    entity_groups = (package.world.locations, package.world.npcs, package.world.groups, package.world.items)
     entities = {entity.id for group in entity_groups for entity in group}
     facts = package.fact_ids
     catalog = package.knowledge
@@ -622,7 +640,7 @@ def _validate_narration_term_traps(package: StoryPackage) -> None:
 
 def _validate(package: StoryPackage) -> None:
     scenes = {scene.metadata.scene_id: scene for scene in package.scenes}
-    entity_groups = (package.world.locations, package.world.npcs, package.world.items)
+    entity_groups = (package.world.locations, package.world.npcs, package.world.groups, package.world.items)
     entities = {entity.id for group in entity_groups for entity in group}
     if sum(len(group) for group in entity_groups) != len(entities):
         raise StoryPackageError("entity IDs must be unique")
@@ -1061,7 +1079,7 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
             (root / "storylets.md").read_text(encoding="utf-8"), plot_beat_anchors, plot_scene_ids
         )
         world = WorldSource.model_validate(_yaml(root / "world.yaml"))
-        declared_ids = {entity.id for entity in (*world.locations, *world.npcs, *world.items)}
+        declared_ids = {entity.id for entity in (*world.locations, *world.npcs, *world.groups, *world.items)}
         for fact_id, effects in world.fact_effects.items():
             for effect in effects:
                 referenced = {

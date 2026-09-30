@@ -61,7 +61,8 @@ def test_created_area_character_and_group_persist_and_follow_placement_rules():
     assert w.is_a(annex.id, "area")
     assert not w.move(annex.id, "parlour").ok
     assert not w.move("lamp", group.id).ok
-    assert not w.move("ada", group.id).ok
+    assert w.move("ada", group.id).ok
+    assert w.members(group.id) == ("ada",)
     assert w.move(group.id, "village").ok
 
     rebuilt = World(w.schema, w.backend)
@@ -215,3 +216,30 @@ def test_schema_errors_and_resolver():
     )
     w = World(s, MemoryBackend(), resolver=lambda n, c: "b")
     assert w.resolve("coin") == "b"
+
+
+def test_group_member_moves_with_group_and_can_leave():
+    w = make()
+    group = w.create("crowd", parent="parlour", kind="group")
+    assert w.move("ada", group.id).ok
+    assert w.area("ada") == "parlour"
+    assert w.move(group.id, "village").ok
+    assert w.area("ada") == "village"
+    assert w.move("ada", "parlour").ok
+    assert w.members(group.id) == ()
+
+
+def test_group_member_rejects_group_and_thing():
+    w = make()
+    group = w.create("crowd", parent="parlour", kind="group")
+    other_group = w.create("other crowd", parent="parlour", kind="group")
+    assert w.move("ada", group.id).ok
+    assert w.members(group.id) == ("ada",)
+    assert not w.move(group.id, other_group.id).ok
+    assert not w.move("lamp", group.id).ok
+
+
+def test_group_member_unknown_group_has_no_members():
+    w = make()
+    assert w.members("missing") == ()
+    assert w.members("parlour") == ()

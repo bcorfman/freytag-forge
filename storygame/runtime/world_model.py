@@ -89,6 +89,14 @@ def apply_scene_placements(package: StoryPackage, facts: FactStore, scene_id: st
         )
         refusals.append(refusal)
         logging.getLogger(__name__).warning("scene placement refused: %s", refusal)
+    for group_id, placement in scene.metadata.character_placements.items():
+        if group_id not in {group.id for group in package.world.groups}:
+            continue
+        result = world.place(group_id, placement.parent, text=placement.text)
+        if not result.ok:
+            refusal = ScenePlacementRefusal(scene_id, group_id, placement.parent, result.reason)
+            refusals.append(refusal)
+            logging.getLogger(__name__).warning("scene placement refused: %s", refusal)
     for item_id, placement in scene.metadata.item_placements.items():
         if not isinstance(placement, ItemPlacement) or placement.parent is None:
             continue
@@ -104,6 +112,8 @@ def apply_scene_placements(package: StoryPackage, facts: FactStore, scene_id: st
             refusals.append(refusal)
             logging.getLogger(__name__).warning("scene placement refused: %s", refusal)
     for character_id, placement in scene.metadata.character_placements.items():
+        if character_id in {group.id for group in package.world.groups}:
+            continue
         result = world.place(character_id, placement.parent, text=placement.text)
         if not result.ok:
             refusal = ScenePlacementRefusal(scene_id, character_id, placement.parent, result.reason)

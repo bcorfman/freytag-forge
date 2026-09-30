@@ -349,6 +349,7 @@ class WorldSource(_Model):
     locations: tuple[Location, ...]
     npcs: tuple[Entity, ...]
     items: tuple[Item, ...]
+    groups: tuple[Entity, ...] = ()
     kinds: tuple[KindDeclaration, ...] = ()
     facts: tuple[str, ...] = ()
     fact_effects: Mapping[str, tuple[WorldEffect, ...]] = {}

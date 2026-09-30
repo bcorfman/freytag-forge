@@ -273,10 +273,12 @@ class NarrationSafetyValidator:
             if hasattr(placement, "parent") and placement.parent is not None
         )
         locations = {location.id for location in package.world.locations}
+        groups = {group.id for group in package.world.groups}
         for placement in metadata.character_placements.values():
             entity_ids.add(placement.parent)
             if placement.parent in locations:
                 entity_ids.update(NarrationSafetyValidator._related_area_ids(package, placement.parent))
+        entity_ids.update(group_id for group_id in metadata.character_placements if group_id in groups)
         return entity_ids
 
     @staticmethod

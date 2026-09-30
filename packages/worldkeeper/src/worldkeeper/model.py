@@ -515,6 +515,18 @@ class World:
         """Return companions following an entity."""
         return tuple(sorted(fact.subject for fact in self._facts("wk_companion") if fact.object == entity_id))
 
+    def members(self, group_id):
+        """Return the character IDs whose parent is this group."""
+        if not self._is_a(group_id, "group"):
+            return ()
+        return tuple(
+            sorted(
+                candidate
+                for candidate in self._ids()
+                if self._is_a(candidate, "character") and self.parent(candidate) == group_id
+            )
+        )
+
     def place_label(self, entity_id):
         """Return authored placement text, parent name, or unplaced name."""
         if not self.exists(entity_id):
@@ -621,6 +633,8 @@ class World:
             not self._is_a(parent_id, "thing") or self._is_a(parent_id, "character") or self._is_a(parent_id, "area")
         ):
             return "under needs a thing parent"
+        if self._is_a(entity_id, "character") and self._is_a(parent_id, "group"):
+            return None
         if (self._is_a(entity_id, "character") or self._is_a(entity_id, "group")) and not (
             self._is_a(parent_id, "area") or self.is_enterable(parent_id)
         ):
@@ -729,7 +743,12 @@ class World:
                 return self._bad("area parent must be an area")
             if under:
                 return self._bad("under needs a thing parent")
-        elif kind in ("character", "group"):
+        elif kind == "character":
+            if parent is not None and not (
+                self._is_a(parent, "area") or self._is_a(parent, "group") or self.is_enterable(parent)
+            ):
+                return self._bad("characters can only be in areas or enterable things")
+        elif kind == "group":
             if parent is not None and not (self._is_a(parent, "area") or self.is_enterable(parent)):
                 return self._bad("characters can only be in areas or enterable things")
         elif "thing" not in _ancestors(self.schema.kinds, kind):

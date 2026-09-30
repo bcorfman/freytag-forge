@@ -61,6 +61,30 @@ def test_scene_2c_may_name_the_maintenance_network() -> None:
     assert world_for(package, state.facts).parent("maintenance_network") == "purge_chamber"
 
 
+def test_group_member_package_declares_group_and_places_member(tmp_path: Path) -> None:
+    destination = copied_package(tmp_path)
+    world_path = destination / "world.yaml"
+    world_data = yaml.safe_load(world_path.read_text())
+    world_data["groups"] = [{"id": "prisoners", "name": "Prisoners", "aliases": ["prisoners"]}]
+    world_path.write_text(yaml.safe_dump(world_data, sort_keys=False))
+    plot_path = destination / "plot.md"
+    plot = plot_path.read_text()
+    plot = plot.replace(
+        "participant_ids: [kristin, brandon, michelle]\ncompanions: [brandon]\nitem_ids: []",
+        "participant_ids: [kristin, brandon, michelle]\n"
+        "character_placements:\n  prisoners: {parent: purge_chamber}\n  michelle: {parent: prisoners}\n"
+        "companions: [brandon]\nitem_ids: []",
+        1,
+    )
+    plot_path.write_text(plot)
+
+    package = load_story_package(destination)
+    state = RuntimeState.bootstrap(package)
+    assert apply_scene_placements(package, state.facts, "2C") == ()
+    world = world_for(package, state.facts)
+    assert world.members("prisoners") == ("michelle",)
+
+
 def copied_package(tmp_path: Path) -> Path:
     destination = tmp_path / "package"
     shutil.copytree(PACKAGE, destination)

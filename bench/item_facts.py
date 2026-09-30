@@ -780,6 +780,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if (
             not result.ok
             and world.is_a(entity_id, "character")
+            and not world.is_a(place_parent, "group")
             and result.reason.startswith("characters can only be in")
         ):
             area = world.area(place_parent)
@@ -1047,6 +1048,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
         def create_new_place(place):
             player_area = world.area(protagonist_id)
             player_parent = world.parent(protagonist_id)
+            if player_parent and world.is_a(player_parent, "group"):
+                player_parent = world.parent(player_parent)
             if place in place_ids or place not in kind_required_names:
                 return
             kind = new_kind(place, place=True)
@@ -1158,8 +1161,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if place_pole:
                 self.item_facts_axis_fixes += 1
             place_parent = place_ids.get(place) if place and not place_pole else None
-            if place_parent and world.is_a(place_parent, "group") and not world.is_a(entity_id, "character"):
-                place_parent = world.parent(place_parent)
             character_inside_character = (
                 place
                 and not place_pole
@@ -1173,6 +1174,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 issues.append(f"item_facts match mapped place {place!r} to a character; {name} left unplaced")
             if place and not place_pole and place not in place_ids:
                 place_parent = self._resolve_name(world, place)
+            if place_parent and world.is_a(place_parent, "group") and not world.is_a(entity_id, "character"):
+                place_parent = world.parent(place_parent)
             entity = world.schema.entities.get(entity_id)
             own_seat_place = bool(entity and entity.seat_for and place_parent == entity.seat_for)
             if own_seat_place:

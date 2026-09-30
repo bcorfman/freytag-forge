@@ -26,6 +26,8 @@ def world_source_schema_data(world: WorldSource) -> dict:
         )
     for entity in world.npcs:
         entities.append({"id": entity.id, "name": entity.name, "aliases": list(entity.aliases), "kind": "character"})
+    for entity in world.groups:
+        entities.append({"id": entity.id, "name": entity.name, "aliases": list(entity.aliases), "kind": "group"})
     for item in world.items:
         item_data = {
             "id": item.id,
