@@ -555,6 +555,20 @@ def _scene_1b_provider():
     )
 
 
+def _scene_provider(scene_id, *, item_facts=None):
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = scene_id
+    apply_scene_placements(PACKAGE, state.facts, scene_id)
+    return ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts=item_facts or {},
+        mode="single_call",
+        seed_from_package=True,
+    )
+
+
 def test_prepare_turn_gives_visible_contents_under_referred_park_bench(monkeypatch):
     provider = _scene_1b_provider()
     monkeypatch.setattr(
@@ -2467,6 +2481,84 @@ def test_prepare_turn_tracks_referred_names_and_clears_them(monkeypatch):
 
     provider.prepare_turn("Search the command levels.")
     assert provider._referred_names == []
+
+
+def test_prepare_turn_adds_referred_people_and_places_only_to_narration_things():
+    provider = _scene_provider("3B")
+
+    provider.prepare_turn("Lead Michelle into the executive office.")
+
+    assert provider._things_block(narration=True).splitlines() == [
+        "THINGS:",
+        "- Kristin. Place: security corridors. With Kristin: Brandon, Michelle.",
+        "- Michelle. Place: security corridors.",
+        "- executive office. This is a place.",
+    ]
+    assert "Michelle" not in provider._things_block()
+    assert "executive office" not in provider._things_block()
+
+
+def test_prepare_turn_does_not_refer_to_a_distant_person():
+    provider = _scene_provider("2B")
+
+    provider.prepare_turn("Search the archive terminals for Michelle's record.")
+
+    assert provider._referred_lines == []
+
+
+def test_prepare_turn_refers_to_nested_place_but_not_current_place():
+    provider = _scene_provider("3A")
+
+    provider.prepare_turn("Follow Michelle into the medical level.")
+    assert provider._referred_lines == [
+        "- Michelle. Place: detention level.",
+        "- medical level. This is a place.",
+    ]
+
+    provider.prepare_turn("Lead Michelle into the detention level.")
+    assert provider._referred_lines == ["- Michelle. Place: detention level."]
+    assert "- detention level. This is a place." not in provider._things_block(narration=True)
+
+
+def test_prepare_turn_records_referred_lines_on_match_call(monkeypatch):
+    provider = _scene_provider("3B", item_facts={"mystery": {"place": "Kristin", "condition": []}})
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {}},
+    )
+
+    result = provider.prepare_turn("Lead Michelle into the executive office.")
+
+    assert result["match_call"]
+    assert provider._referred_lines == [
+        "- Michelle. Place: security corridors.",
+        "- executive office. This is a place.",
+    ]
+
+
+def test_prepare_turn_replaces_referred_lines_on_next_turn():
+    provider = _scene_provider("3B")
+
+    provider.prepare_turn("Lead Michelle into the executive office.")
+    provider.prepare_turn("Trigger false water-pressure alarms in the empty service corridors.")
+
+    assert provider._referred_lines == []
+
+
+def test_prepare_turn_orders_possessive_place_without_error():
+    provider = _scene_provider("3B")
+
+    provider.prepare_turn("Drive home.")
+
+    assert "- Michelle's house. This is a place." in provider._referred_lines
+
+
+def test_entity_label_keeps_shortest_name():
+    provider = _scene_provider("3B")
+
+    assert provider._entity_label(provider._world(), "michelle") == "Shelly"
+    assert "With Kristin: Brandon, Michelle." in provider._things_block(narration=True)
 
 
 def test_group_member_player_follows_with_companion_and_new_thing_uses_group_place(monkeypatch):

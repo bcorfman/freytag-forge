@@ -11,6 +11,7 @@ from worldkeeper import MemoryBackend, World, WorldSchema
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
+from storygame.runtime.seating import _command_names_thing
 from storygame.runtime.validation import ProgressionValidator
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects
 from storygame.story_package.models import item_placement_is_visible, placement_text
@@ -249,6 +250,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._changed_last_turn = set()
         self._selected_names = None
         self._referred_names = []
+        self._referred_lines = []
         self._last_scene_seeded = None
         self._match_offered_names = set()
         self._schema_cache = {}
@@ -407,9 +409,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._ensure_scene_seeded()
 
     def _things_block(self, *, narration=False):
-        lines = ["THINGS:"] if self._thing_names() else []
+        names = self._thing_names()
+        lines = ["THINGS:"] if names or (narration and self._referred_lines) else []
         world = self._world()
-        for name in self._thing_names():
+        protagonist_id = self.state.package.world.protagonist_id
+        protagonist_index = None
+        for name in names:
             facts = self.item_facts[name]
             line = f"- {name}."
             place = facts["place"]
@@ -445,7 +450,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     line += f" If the player talks to them, {answer} answers."
                 else:
                     line += " If the player talks to them, they say nothing."
+            if narration and entity_id == protagonist_id:
+                companions = world.companions(protagonist_id)
+                if companions:
+                    labels = ", ".join(self._referred_entity_label(world, member_id) for member_id in companions)
+                    line += f" With {name}: {labels}."
+                protagonist_index = len(lines)
             lines.append(line)
+        if narration and self._referred_lines:
+            insert_at = protagonist_index + 1 if protagonist_index is not None else len(lines)
+            lines[insert_at:insert_at] = self._referred_lines
         return "\n".join(lines)
 
     def _thing_names(self):
@@ -662,6 +676,73 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if npc:
                 return min((npc.name, *npc.aliases), key=len)
         return world.name(entity_id)
+
+    def _referred_entity_label(self, world, entity_id):
+        if world.is_a(entity_id, "character"):
+            npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
+            if npc:
+                return npc.aliases[0] if npc.aliases else npc.name
+        return world.name(entity_id)
+
+    def _referred_lines_for_command(self, player_input):
+        world = self._world()
+        protagonist_id = self.state.package.world.protagonist_id
+        existing_names = set(self._thing_names())
+        command = player_input.replace("’", "'").casefold()
+
+        def command_position(entity_id):
+            positions = []
+            for name in world.names(entity_id):
+                normalized_name = name.replace("’", "'").casefold().strip()
+                match = re.search(rf"(?<!\w){re.escape(normalized_name)}(?!\w)", command)
+                if match:
+                    positions.append(match.start())
+                possessive = re.fullmatch(r"\w+'s\s+(.+)", normalized_name)
+                if possessive:
+                    match = re.search(
+                        rf"(?<!\w){re.escape(possessive.group(1))}(?!\w)",
+                        command,
+                    )
+                    if match:
+                        positions.append(match.start())
+            return min(positions, default=len(command))
+
+        people = []
+        for npc in self.state.package.world.npcs:
+            entity_id = npc.id
+            if (
+                entity_id == protagonist_id
+                or not world.is_visible(entity_id)
+                or not world.together(protagonist_id, entity_id)
+            ):
+                continue
+            if not _command_names_thing(player_input, world.names(entity_id)):
+                continue
+            label = self._referred_entity_label(world, entity_id)
+            if label in existing_names:
+                continue
+            parent_id = world.parent(entity_id)
+            line = f"- {label}."
+            if parent_id is not None:
+                line = f"- {label}. Place: {world.name(parent_id)}."
+            people.append((command_position(entity_id), line))
+
+        protagonist_area = world.area(protagonist_id)
+        excluded_areas = {protagonist_area, *world.chain(protagonist_area)} if protagonist_area is not None else set()
+        places = []
+        for entity_id in world.entity_ids():
+            if not world.is_a(entity_id, "area") or not world.is_visible(entity_id) or entity_id in excluded_areas:
+                continue
+            if not _command_names_thing(player_input, world.names(entity_id)):
+                continue
+            label = world.name(entity_id)
+            if label in existing_names:
+                continue
+            places.append((command_position(entity_id), f"- {label}. This is a place."))
+
+        people.sort(key=lambda item: item[0])
+        places.sort(key=lambda item: item[0])
+        return [line for _, line in (*people, *places)]
 
     @staticmethod
     def _mapping_name(name):
@@ -1250,6 +1331,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def prepare_turn(self, player_input):
         self._referred_names = []
+        self._referred_lines = self._referred_lines_for_command(player_input)
         dependencies = self.dependency_names()
         candidates = [name for name in self.item_facts if name not in dependencies]
         if not candidates:
