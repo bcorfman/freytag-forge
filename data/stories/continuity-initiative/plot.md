@@ -693,9 +693,13 @@ location_id: broadcast_relay
 freytag_phase: climax
 objective: Overload JANUS and seize the broadcast
 participant_ids: [kristin, michelle, brandon, rebecca]
+companions: [brandon, michelle]
 item_ids: [inspection_console]
 item_placements:
   inspection_console: {parent: infrastructure_corridors}
+character_placements:
+  kristin: {parent: security_corridors}
+  rebecca: {parent: executive_office}
 entry_text: "Alarms layered over alarms as the facility fought to predict its attackers. Above the fighting, Rebecca's executive office and the external broadcast relay waited at the end of corridors that JANUS watched move by move.\n\n"
 transition_ids: [t_3b_3c]
 bridge_text:

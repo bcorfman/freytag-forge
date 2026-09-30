@@ -75,6 +75,28 @@ def test_scene_3a_applies_detention_group_and_codes_placements() -> None:
     assert not world.is_hidden("override_codes")
 
 
+def test_scene_3b_places_group_in_security_corridors_and_moves_brandon_to_relay() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "3B"
+
+    assert apply_scene_placements(package, state.facts, "3B") == ()
+
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "security_corridors"
+    assert world.parent("brandon") == "security_corridors"
+    assert world.parent("michelle") == "security_corridors"
+    assert world.parent("rebecca") == "executive_office"
+    assert set(world.companions("kristin")) == {"brandon", "michelle"}
+
+    state.facts.assert_fact(Fact(predicate="relay_open", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    world = world_for(package, state.facts)
+    assert world.parent("brandon") == "broadcast_relay"
+    assert world.parent("kristin") == "security_corridors"
+    assert world.parent("michelle") == "security_corridors"
+
+
 def test_scene_2c_may_name_the_maintenance_network() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)

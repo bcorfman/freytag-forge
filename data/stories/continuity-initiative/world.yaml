@@ -47,6 +47,12 @@ locations:
 - id: broadcast_relay
   name: Broadcast relay
   parent: regional_facility
+- id: security_corridors
+  name: security corridors
+  parent: regional_facility
+- id: executive_office
+  name: executive office
+  parent: regional_facility
 - id: facility_escape
   name: Facility escape route
   parent: regional_facility
@@ -226,7 +232,9 @@ facts:
 - janus_evidence
 - purge_clock_started
 - michelle_reached
-- relay_open
+- id: relay_open
+  on_assert:
+  - {move: brandon, parent: broadcast_relay}
 - broadcast_started
 - continuity_initiative_known
 - michelle_warning_known

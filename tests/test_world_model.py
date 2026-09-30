@@ -276,5 +276,6 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "memory_card_recovered",
         "brandon_identified",
         "false_identities_ready",
+        "relay_open",
         "military_override_codes_available",
     }
