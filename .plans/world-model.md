@@ -786,7 +786,22 @@ alive. ...", turn 10 "Kristin warns Michelle that the emergency-gate
 authorization is about to expire. ..."), so lead-up plus delivery reads
 as one sequence (`probe_delivery.py`).
 
-**Next:** read the delivery probe; land the
+**Delivery probe** (`delivery_probe.json`, same six prompts, 5 samples
+each, read by hand). Turn 10 with "Kristin warns Michelle that the
+emergency-gate authorization is about to expire. Michelle launches the
+prepared uprising rather than wait.": the lead-up ends at Michelle and
+the delivered sentence is the warning, 15/15 (the recorded lead-ups
+searched for her instead). Turn 1 with "Kristin finds Michelle alive.
+Michelle is directing the prisoners through stolen radios and coded
+announcements.": 7/15 lead-ups now follow a radio signal toward her; 8/15
+still say "none of them seem to be Michelle" before the find. **Root
+cause of turn 1:** the 3A opening already spots Michelle ("she realizes
+it's Michelle") in all three x3 replicates (the first replicate's
+opening only saw "a familiar face"). That spoils the turn-1 reveal
+(SL-3A-A: Michelle is reachable only by the coded route before she is
+reached), and turn 1's failed search then contradicts the opening.
+
+**Next:** Brandon's call on the delivery rewording and the opening; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
