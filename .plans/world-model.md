@@ -1,6 +1,6 @@
 # World model: plan
 
-Status (2026-09-28): decisions W1-W13 settled. S1 merged (PR 480),
+Status (2026-09-30): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
@@ -25,8 +25,9 @@ and C (talking to a group, 0371c13) built, C measured live (member-answer
 rate accepted); 3A grounding landed (d503361); 3A handoffs,
 bench script and fixes measured live; 3B grounded (1e37fdd), handoffs
 (c3d3963) and bench script landed, x3 read (office never reached,
-same gap in 3A); referred people and places in THINGS chosen, live
-probe next; then 3C, S3 and S4.
+same gap in 3A); referred people and places in THINGS chosen and
+probed live (Kristin reaches the place 3A 28/30, 3B 15/20, from 0/30
+and 2/20); build next; then 3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -1139,9 +1140,25 @@ Kristin at the named place, and read by hand for "searching for
 Michelle". Dry run passed offline (anchors found in all 10 prompts);
 manifest linted; the live run is next.
 
-**Next:** run the referred-things probe; if the lines move Kristin and
-stop the searching narrations, build them into THINGS by Ringer, then
-rerun 3B (x3) and 3A.
+**Probe result (2026-09-30, Ringer, check passed; 100 of 100 calls
+returned, no error; `referred_probe.json` in the probe folder).** Kristin
+placed at the named place, recorded vs both lines: 3A turn 4 0/30 vs
+28/30 (recorded put her in "detention level" or "detention sector"); 3B
+turn 3 2/20 vs 15/20. Narrations that search, look or scan for Michelle
+(regex, then read by hand): 3A 29/30 vs 0/30; 3B 13/20 vs 0/20. **All
+five 3B misses come from one prompt,** `world-3b-x3` r2, 0/5 (the other
+three prompts 5/5 each). Its THINGS also holds "Michelle's memory card.
+Place: with Kristin." and "emergency override codes. Place: Kristin.";
+the narration leads Michelle "through the security corridors" with
+Kristin's "eyes fixed on the executive office", so the move is begun but
+never finished. Not tested: whether the lines hurt other turns (every
+prompt here names a person or a place), and the person line alone vs
+the companions alone (only the combined arm ran).
+
+**Next:** build the referred people and places lines and Kristin's
+companions into THINGS by Ringer, then rerun 3B (x3) and 3A. Watch 3B
+turn 3 when other things are listed, the one case the probe left
+unfixed.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
