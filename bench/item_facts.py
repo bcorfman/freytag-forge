@@ -224,7 +224,7 @@ def _single_call_rules(protagonist_name, *, drop_rules=frozenset()):
     return rules
 
 
-_MATCH_SYSTEM = 'You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {"refers": ["name"], "same_as": {"new name": "name"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "the old lamp" for "Grandma\'s lamp". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For "Ask the cook who took the key." list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or "new" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like "the corner of the kitchen" for kitchen, give that place. A plain word like "corridor", "hall" or "room" is a spot in the place where PLAYER CHARACTER is now, so give that place. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give "new". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is "new". Copy names from THINGS exactly.'
+_MATCH_SYSTEM = 'You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {"refers": ["name"], "same_as": {"new name": "name"}, "kind": {"new name": "thing"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like "the old lamp" for "Grandma\'s lamp". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For "Ask the cook who took the key." list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or "new" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like "the corner of the kitchen" for kitchen, give that place. A plain word like "corridor", "hall" or "room" is a spot in the place where PLAYER CHARACTER is now, so give that place. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give "new". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is "new". Copy names from THINGS exactly. In kind, give one word for each name you called "new". Say "place" for a room, hall or other spot a person can walk into. Say "person" for one person. Say "group" for a group of people, like "prisoners". Say "thing" for anything else, like a box or a console.'
 _SECOND_CALL_SYSTEM = 'You keep track of things in a story. Read THINGS, PLAYER and STORY. Return only JSON like {"item_facts": {"thing": {"place": "name", "condition": ["phrase"]}}}. List only the things in THINGS that STORY changed. For each one, give the name of who or what has it now and up to two short condition phrases. Example: if Sam picks up the lantern from the table and lights it, the lantern is {"place": "Sam", "condition": ["lit"]}. If STORY changed nothing, return {"item_facts": {}}.'
 
 
@@ -758,7 +758,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 f"COMMAND:\n- {player_input}\n\nPLAYER CHARACTER:\n- {_protagonist_name(self.state.package)}\n\n"
                 "THINGS:\n" + "\n".join(lines) + "\n\nNEW NAMES:\n" + "\n".join(new_name_lines)
             ),
-            "max_tokens": 200,
+            "max_tokens": 300,
             "response_format": {"type": "json_object"},
         }
 
@@ -886,7 +886,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         for _key, value, _entity_id in resolved:
             if isinstance(value.get("place"), str):
                 place = value["place"].strip()
-                if (
+                if place and (
                     not self._axis_match_id(world, _entity_id, place)
                     and not (
                         world.place_label(_entity_id) and world.place_label(_entity_id).casefold() == place.casefold()
@@ -897,7 +897,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         for item in prepared:
             if isinstance(item["value"].get("place"), str):
                 place = item["value"]["place"].strip()
-                if self._resolve_name(world, place) is None:
+                if place and self._resolve_name(world, place) is None:
                     place_names.append(place)
         match_names = []
         for item in prepared:
@@ -923,6 +923,35 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 match_issues.append("invalid item_facts match reply")
 
         same_as = match_reply.get("same_as", {}) if isinstance(match_reply, dict) else {}
+        kind_reply = match_reply.get("kind", {}) if isinstance(match_reply, dict) else {}
+        if not isinstance(kind_reply, dict):
+            kind_reply = {}
+
+        kind_required_names = {
+            name
+            for name, target in same_as.items()
+            if isinstance(name, str) and isinstance(target, str) and target.strip().casefold() == "new"
+        }
+
+        def new_kind(name, *, place=False):
+            raw_kind = next(
+                (
+                    value
+                    for key, value in kind_reply.items()
+                    if isinstance(key, str) and key.casefold() == name.casefold()
+                ),
+                None,
+            )
+            normalized = raw_kind.strip().casefold() if isinstance(raw_kind, str) else ""
+            kind = {"place": "area", "person": "character", "group": "group", "thing": "thing"}.get(normalized)
+            if kind is None and name in kind_required_names:
+                fallback = "container" if place else "thing"
+                issues.append(f"item_facts match gave no kind for {name!r}; made a thing")
+                return fallback
+            if kind is None:
+                return "container" if place else "thing"
+            return kind
+
         if isinstance(same_as, dict):
             offered = {name.strip().casefold() for name in self._match_offered_names}
             same_as = dict(same_as)
@@ -996,6 +1025,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                             else:
                                 place_ids.pop(place, None)
                                 place_resolutions[place] = "new"
+                                kind_required_names.add(place)
                             continue
                 if (
                     place_ids[place] is not None
@@ -1005,6 +1035,39 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     world.add_alias(place_ids[place], place)
             place_id = place_ids.get(place)
             place_resolutions[place] = world.name(place_id) if place_id is not None else "new"
+
+        player_area = world.area(protagonist_id)
+        player_parent = world.parent(protagonist_id)
+        for place in place_names:
+            if place in place_ids or place not in kind_required_names:
+                continue
+            kind = new_kind(place, place=True)
+            if kind == "area":
+                parent = player_area
+            elif kind in ("character", "group"):
+                parent = (
+                    player_parent
+                    if player_parent and (world.is_a(player_parent, "area") or world.is_enterable(player_parent))
+                    else player_area
+                )
+            else:
+                kind = "container"
+                parent = (
+                    player_parent
+                    if player_parent
+                    and (
+                        world.is_a(player_parent, "area")
+                        or world.is_a(player_parent, "container")
+                        or world.is_a(player_parent, "supporter")
+                    )
+                    else player_area
+                )
+            created = world.create(place, parent=parent, kind=kind)
+            if created.ok:
+                place_ids[place] = created.id
+                place_resolutions[place] = "new"
+            else:
+                issues.append(f"item_facts for {place!r} could not be created: {created.reason}")
 
         for item in prepared:
             key, value = item["key"], item["value"]
@@ -1028,7 +1091,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
                             if target != world.name(entity_id):
                                 engine_resolutions[target] = world.name(entity_id)
             if entity_id is None:
-                created = world.create(key, owner=item["owner_id"])
+                kind = new_kind(key)
+                parent = player_area if kind == "area" else None
+                created = world.create(key, parent=parent, kind=kind, owner=item["owner_id"])
                 if not created.ok:
                     issues.append(f"item_facts for {key!r} could not be created: {created.reason}")
                     continue
@@ -1061,6 +1126,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if place_pole:
                 self.item_facts_axis_fixes += 1
             place_parent = place_ids.get(place) if place and not place_pole else None
+            if place_parent and world.is_a(place_parent, "group") and not world.is_a(entity_id, "character"):
+                place_parent = world.parent(place_parent)
             character_inside_character = (
                 place
                 and not place_pole

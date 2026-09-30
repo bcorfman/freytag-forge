@@ -9,6 +9,7 @@ BASE_KINDS = {
     "entity": (),
     "area": ("entity",),
     "character": ("entity",),
+    "group": ("entity",),
     "thing": ("entity",),
     "container": ("thing",),
     "supporter": ("thing",),
@@ -298,6 +299,7 @@ class World:
                 self._value("wk_name", entity_id) or "",
                 self._value("wk_kind", entity_id) or "thing",
                 owner=self._value("wk_owner", entity_id),
+                parent=self._value("wk_parent", entity_id),
             )
         return None
 
@@ -619,7 +621,9 @@ class World:
             not self._is_a(parent_id, "thing") or self._is_a(parent_id, "character") or self._is_a(parent_id, "area")
         ):
             return "under needs a thing parent"
-        if self._is_a(entity_id, "character") and not (self._is_a(parent_id, "area") or self.is_enterable(parent_id)):
+        if (self._is_a(entity_id, "character") or self._is_a(entity_id, "group")) and not (
+            self._is_a(parent_id, "area") or self.is_enterable(parent_id)
+        ):
             return "characters can only be in areas or enterable things"
         if not self._is_a(entity_id, "character") and not any(
             self._is_a(parent_id, candidate) for candidate in ("area", "container", "supporter", "character")
@@ -716,14 +720,30 @@ class World:
             return self._bad("name must be 1 to 80 characters")
         if self.resolve(name):
             return self._bad("an entity already has that name")
-        if kind not in self.schema.kinds or "thing" not in _ancestors(self.schema.kinds, kind):
+        if kind not in self.schema.kinds:
+            return self._bad("kind must be a kind of thing")
+        if kind == "area":
+            if parent is None:
+                return self._bad("areas need an area parent")
+            if not self.exists(parent) or not self._is_a(parent, "area"):
+                return self._bad("area parent must be an area")
+            if under:
+                return self._bad("under needs a thing parent")
+        elif kind in ("character", "group"):
+            if parent is not None and not (self._is_a(parent, "area") or self.is_enterable(parent)):
+                return self._bad("characters can only be in areas or enterable things")
+        elif "thing" not in _ancestors(self.schema.kinds, kind):
             return self._bad("kind must be a kind of thing")
         if owner is not None and not self._is_a(owner, "character"):
             return self._bad("owner must be a character")
         if parent is not None:
             if not self.exists(parent):
                 return self._bad("unknown entity")
-            if not any(self._is_a(parent, candidate) for candidate in ("area", "container", "supporter", "character")):
+            if kind == "area" or kind in ("character", "group"):
+                pass
+            elif not any(
+                self._is_a(parent, candidate) for candidate in ("area", "container", "supporter", "character")
+            ):
                 return self._bad("that parent cannot hold things")
             if under and not self._is_a(parent, "thing"):
                 return self._bad("under needs a thing parent")
@@ -736,7 +756,7 @@ class World:
         if owner:
             self._replace("wk_owner", entity_id, value=owner)
         if parent:
-            self._write_placement(entity_id, parent, self._relation(parent, under))
+            self._write_placement(entity_id, parent, "in" if kind == "area" else self._relation(parent, under))
         return OpResult(True, id=entity_id)
 
     def set_axis(self, entity_id, value):

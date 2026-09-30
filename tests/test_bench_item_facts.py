@@ -159,7 +159,7 @@ def test_unknown_item_names_share_one_match_call(monkeypatch):
         return {"same_as": {"first object": "new", "second object": "new"}}
 
     monkeypatch.setattr(CloudflareTurnProvider, "_request", match)
-    provider.apply_item_facts(
+    _, issues = provider.apply_item_facts(
         {"first object": {"place": "on the desk"}, "second object": {"place": "on the desk"}},
         player_input="Place the first object and the second object on the desk.",
     )
@@ -924,7 +924,7 @@ def test_unresolved_place_joins_the_single_match_call(monkeypatch):
         },
         player_input="Look around the kitchen.",
     )
-    assert not issues
+    assert any("strange coin" in issue and "kind" in issue for issue in issues)
     assert len(payloads) == 1
     assert "- the counter by the sink" in payloads[0]["user"]
     assert "- strange coin" in payloads[0]["user"]
@@ -932,16 +932,18 @@ def test_unresolved_place_joins_the_single_match_call(monkeypatch):
     assert facts["strange coin"]["place"] == "workstation"
 
 
-def test_unresolved_place_is_never_created(monkeypatch):
+def test_unresolved_place_is_created_as_fallback_container(monkeypatch):
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"same_as": {"old porch": "new"}})
     provider = _seeded_provider()
     facts, issues = provider.apply_item_facts(
         {"Michelle's phone": {"place": "old porch"}}, player_input="Carry Michelle's phone outside."
     )
-    assert not issues
+    assert any("old porch" in issue and "kind" in issue for issue in issues)
     assert facts["Michelle's phone"]["place"] == "old porch"
-    assert provider.last_item_facts_unplaced() == [{"name": "Michelle's phone", "place": "old porch"}]
-    assert world_for(PACKAGE, provider.state.facts).resolve("old porch") is None
+    world = world_for(PACKAGE, provider.state.facts)
+    assert provider.last_item_facts_unplaced() == []
+    assert world.is_a(world.resolve("old porch"), "container")
+    assert world.parent("michelle_phone") == world.resolve("old porch")
 
 
 def test_contents_reply_moves_each_thing():
@@ -1090,6 +1092,10 @@ def test_constant_rules_can_move_to_system_prompt(monkeypatch):
 
 def test_match_system_describes_references_and_new_names():
     assert '"refers"' in _MATCH_SYSTEM and '"same_as"' in _MATCH_SYSTEM
+    assert '"kind"' in _MATCH_SYSTEM
+    assert 'Say "place"' in _MATCH_SYSTEM
+    assert 'Say "person"' in _MATCH_SYSTEM
+    assert 'Say "group"' in _MATCH_SYSTEM
     assert "carried" not in _MATCH_SYSTEM
     assert "PLACES" not in _MATCH_SYSTEM
     assert '"places"' not in _MATCH_SYSTEM
@@ -2246,7 +2252,7 @@ def test_same_as_learns_item_and_place_names_but_not_area_names(monkeypatch):
     assert provider.last_item_facts_match()["place_resolutions"] == {"the corner": area_name}
 
 
-def test_same_as_new_place_is_recorded_and_left_unplaced(monkeypatch):
+def test_same_as_new_place_is_created_as_fallback_container(monkeypatch):
     provider = _provider()
     monkeypatch.setattr(
         CloudflareTurnProvider,
@@ -2254,13 +2260,14 @@ def test_same_as_new_place_is_recorded_and_left_unplaced(monkeypatch):
         lambda *_args: {"refers": [], "same_as": {"the checkpoint": "new"}},
     )
 
-    provider.apply_item_facts(
+    _, issues = provider.apply_item_facts(
         {"the stranger": {"place": "the checkpoint"}},
         player_input="Move the stranger to the checkpoint.",
     )
 
     assert provider.last_item_facts_match()["place_resolutions"] == {"the checkpoint": "new"}
-    assert provider.last_item_facts_unplaced() == [{"name": "the stranger", "place": "the checkpoint"}]
+    assert provider.last_item_facts_unplaced() == []
+    assert any("the checkpoint" in issue and "kind" in issue for issue in issues)
 
 
 def test_new_name_mapped_to_player_character_stays_new(monkeypatch):
@@ -2538,7 +2545,7 @@ def test_mapping_check_templates_and_facts(monkeypatch, kind, expected_question)
         assert check["known"]["can_move"] is False
 
 
-def test_mapping_check_rejected_place_is_unplaced(monkeypatch):
+def test_mapping_check_rejected_place_is_created_as_fallback_container(monkeypatch):
     provider = _provider()
     world = provider._world()
     area_id = world.area(provider.state.package.world.protagonist_id)
@@ -2548,10 +2555,12 @@ def test_mapping_check_rejected_place_is_unplaced(monkeypatch):
         "_request",
         lambda *_args: {"refers": [], "same_as": {"checkpoint": target}},
     )
-    provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: False)
+    _, issues = provider.apply_item_facts({"the lantern": {"place": "checkpoint"}}, confirm=lambda *_args: False)
     result = provider.last_item_facts_match()
     assert result["place_resolutions"] == {"checkpoint": "new"}
-    assert provider.last_item_facts_unplaced() == [{"name": "the lantern", "place": "checkpoint"}]
+    assert provider.last_item_facts_unplaced() == []
+    assert any("checkpoint" in issue and "kind" in issue for issue in issues)
+    assert provider._world().parent(provider._world().resolve("the lantern")) == provider._world().resolve("checkpoint")
     assert result["mapping_checks"][0]["answer"] is False
 
 

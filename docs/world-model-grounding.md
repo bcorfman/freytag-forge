@@ -44,6 +44,13 @@ problems surface, not exhaustively up front.
 - **A spot inside an area is not an area.** "The corner of the kitchen" is the
   kitchen. Detail like "near the door" stays out of the tree.
 
+When the match call marks a new name, it also gives a kind: place, person,
+group or thing. A place becomes an area under the player's current area. A
+person or group is created where the player is, when that is allowed. A thing
+used as a place becomes a container. A group holds nothing; things named as
+being in a group stay at the group's parent. If the kind is missing or unknown,
+the engine makes the safest thing-shaped fallback and records an issue.
+
 ### Things
 
 - **Declare every physical thing the story text names that a player could act
