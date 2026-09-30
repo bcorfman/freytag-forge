@@ -944,7 +944,56 @@ not finished 0/20 (leakfix2 had 3 false flags from the engine steps),
 contradicts 2/20, acts beyond the command 4/20, restarts 0/20; the quote
 check did not fire. Facts after the turn correct 17/20.
 
-**Next:** 3B. land the
+**The two contradictions, and Brandon's fixes (2026-09-30).** Turn 14
+("Climb down into the service level."): turn 13's narration had already
+taken Kristin down, and her place was right ("service level"). But the
+1C `situation` line, sent every turn, said she was "at its loading docks
+above ground, looking for a way down"; the narrator copied it. Turn 4
+("Put Michelle's photograph in my pocket."): the photograph was on the
+park bench; the narrator pulled it out of her pocket instead, because no
+step picked it up. Fix 1 **landed as ccc76b1** (Ringer, Luna; attempt 1
+was right but my check was wrap-sensitive; fixed, passed on attempt 2):
+the 1C situation describes the place only, and the grounding guide says
+a situation never says where a character is. No other scene's
+situation states a position. `location_id` stays `freight_terminal`:
+`loading_docks` would make narration safety reject "service level" (a
+sibling, not above or below). Fix 2 **landed as b378b61** (Ringer,
+Luna): `take_before_put` (storygame/runtime/taking.py) runs in the bench
+after the standing check. For each loose, visible thing in the player's
+own area that the command names and she does not hold, it asks Jev
+`ask_moves_thing` (does the command put, place, store or hand over the
+thing?). On yes it moves the thing to her and adds "Just before this:
+Kristin picked up Michelle's photograph from the park bench." (an
+item's authored `take_text` wins; no "from" for an area). The engine
+still receives only the typed command. Records carry `taking_steps`,
+`taking_asked`, `taking_issues`. First run failed on my wrap-sensitive
+check; the worker had also switched the engine call to the combined
+command and rewritten two tests to match, so I rejected it and reran
+with that forbidden (passed first try; suite 953). Untested live: the
+Jev question's accuracy beyond this one replicate.
+
+**1B-1C contradictions replicate (2026-09-30, one replicate, check
+passed; `bench/results/world-1b-1c-contradictions`).** Both targets
+fixed: turn 4 took the pick-up step ("She puts Michelle's photograph in
+her pocket."), and turn 14 went down from the loading docks. Jev asked
+only on turn 4 (0 false steps on turns 7, 8, 10, 11, 20, which name
+things she holds). No rejected turn. Continuity: contradicts 1/20 (was
+2), beyond the command 3/20, not finished 2/20 (turns 15, 18), restarts
+0. The one contradiction is new and has a different cause: turn 1
+("Look under the park bench.") went beyond the command, and the narrator
+invented a note ("Meet me at the old oak..."); capture matched it to the
+number sequence and gave it to Kristin, so turn 3 ("Pick up the
+handwritten number sequence.") picked up a thing she already held.
+Facts after the turn correct 13/20 (was 17/20); one is a judge fault:
+the fact-tracking judge flags turn 4 as a missed change because the
+engine step moved the photograph before the "before" facts are read. The
+others are capture misses: turn 8 (the man hands the sequence back; it
+stays with him), turn 10 (the token dropped on the driver's seat while
+Kristin sits in it), turn 13 (the token left at the loading docks).
+Turns 1, 16 are invented changes.
+
+**Next:** Brandon's call on the fact judge's engine-step fault and the
+turn-1 invented note; then 3B. land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
