@@ -992,8 +992,36 @@ stays with him), turn 10 (the token dropped on the driver's seat while
 Kristin sits in it), turn 13 (the token left at the loading docks).
 Turns 1, 16 are invented changes.
 
-**Next:** Brandon's call on the fact judge's engine-step fault and the
-turn-1 invented note; then 3B. land the
+**Brandon chose to fix both.** Fact judge **816dfea** (Ringer, Luna;
+attempt 2): both Jev `moved` questions say `before_place` already
+counts every step in `just_before`; the thing question compares with
+`before_place`, not "the start of this turn". Turn 1 cause: THINGS is
+the scene's transition dependencies plus the match call's `refers`,
+expanded by `given_with`, which covered only containers; the bench is a
+supporter and the sequence, photograph and token lie under it, so the
+narrator knew only of the token (a dependency). **48eb838** (Ringer,
+Luna; one attempt): `given_with` also returns a supporter's visible
+things on or under it. Suite 955, node judge tests 13.
+
+**1B-1C things replicate (2026-09-30, one replicate;
+`bench/results/world-1b-1c-things`).** Contradicts **0/20**, facts
+after the turn correct **19/20**, beyond the command 5/20, not finished
+3/20 (turns 6, 7, 18), restarts 0, no rejected turn. Turn 1's prompt
+listed all three things under the bench; the narrator invented no note.
+Turn 4 took the pick-up step again. Record gap: `item_facts_before`
+(what the judges see as given) lists only the selected names, not what
+`given_with` adds to the prompt.
+
+**Fact judge old vs new (Ringer probe, Jev, 2026-09-30).** Fact
+agreement with the labels: round 8 315/336 both; round 9 233 -> 234/251;
+v28 (Claude labels) 253 -> 254/266. Round 7's run is not saved here, so
+it was not scored. On the contradictions replicate: missed_change turns
+[3, 4, 10] -> [10, 19], facts correct 13 -> 14/20; turn 4's false flag is
+gone. The new turn-19 flag is Jev scoring the fixed logistics terminal
+as moved (0.55, just over the 0.5 line) when Kristin walks into it:
+judge noise.
+
+**Next:** 3B. land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
