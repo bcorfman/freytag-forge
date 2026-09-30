@@ -23,8 +23,9 @@ task A and its follow-ups (286e690) measured live: unplaced 0 of 40 in
 the probe and 0 of 24 turns in the 2C replay; tasks B (group members, 67a0141)
 and C (talking to a group, 0371c13) built, C measured live (member-answer
 rate accepted); 3A grounding landed (d503361); 3A handoffs,
-bench script and fixes measured live; 3B grounded (1e37fdd); 3B
-handoffs prompt ready for ChatGPT Desktop; then 3C, S3 and S4.
+bench script and fixes measured live; 3B grounded (1e37fdd), handoffs
+(c3d3963) and bench script landed, live replicate running; then 3C, S3
+and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -1069,9 +1070,25 @@ other wordings and ordinary commands will be tested). Score answers with
 `score_3b.py` (prompt examples, 22 other wordings, 20 ordinary commands
 that must fire nothing).
 
-**Next:** 3B handoffs from ChatGPT Desktop,
-landed by Ringer with a matcher verifier; then a 3B bench script and a
-live replicate.
+ChatGPT Desktop rounds, scored by `score_3b.py` (real matcher): layered
+same-chat follow-ups went narrow (6/25 other wordings), then too broad
+(19/25, but firing on 13 of 41 ordinary commands). Brandon had the
+prompt rewritten from scratch; fresh prompts v2-v4 (`chatgpt_prompt_v4.md`:
+noun count, pronoun phrases, verb coverage, a word-by-word self-check)
+reached prompt examples 16/16, other wordings 13/25, ordinary 2-4/50.
+Brandon then had Claude fix v4 directly (`make_final.py`: specific phrases
+added, broad ones like "escape route" and "service corridors" cut).
+Final: prompt examples 16/16, fresh wordings written after tuning 12/16,
+no wrong entry, 1 of 50 ordinary commands ("Ask Brandon to hold the
+relay.", the relay action itself). **Landed** as c3d3963 (Ringer, Luna,
+one attempt; `verify_handoffs_3b.py`: exact values, 26 matcher cases,
+payloads byte-identical outside 3B; suite 956). Bench variation
+`item-facts-world-3b.json`, script `battle-for-the-broadcast` (12 turns,
+thorough entry; turn 1 uses the inspection console to test drift), as
+29b7cd7. One live replicate is running (`ringer-work/freytag-world-3b-live`,
+results `bench/results/world-3b`).
+
+**Next:** read the 3B live replicate.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
