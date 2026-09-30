@@ -81,6 +81,11 @@ def test_judge_turns_projects_authored_text_and_reveal_visibility() -> None:
 
     assert judged[0]["story_text"] == [reveal.delivery_text]
     assert judged[0]["narrator_narration"] == "Kristin searches beneath the drawer."
+    assert judged[0]["command"] == ""
+    assert judged[0]["turn_text"] == [
+        {"by": "narrator", "text": "Kristin searches beneath the drawer."},
+        {"by": "story", "text": reveal.delivery_text},
+    ]
     assert "Michelle's memory card" not in judged[0]["item_facts_before"]
     assert "Michelle's memory card" in judged[0]["item_facts_after"]
     assert judged[1]["story_text"] == []
@@ -151,9 +156,16 @@ def test_judge_turns_projects_typed_command_and_engine_prefix() -> None:
     judged = judge_turns(turns, [], PACKAGE)
 
     assert judged[0]["command_typed"] == "Search the workstation."
+    assert judged[0]["command"] == "Search the workstation."
     assert judged[0]["just_before"] == "The engine walks to the kitchen."
+    assert judged[0]["turn_text"] == [
+        {"by": "game", "text": "The engine walks to the kitchen."},
+        {"by": "narrator", "text": "Kristin searches the workstation."},
+    ]
     assert judged[1]["command_typed"] == "Search the workstation."
+    assert judged[1]["command"] == "Search the workstation."
     assert judged[1]["just_before"] == ""
+    assert judged[1]["turn_text"] == [{"by": "narrator", "text": "Kristin searches it."}]
     assert "command_typed" not in turns[0]
 
 

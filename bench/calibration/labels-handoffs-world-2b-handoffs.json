@@ -1,0 +1,28 @@
+{
+ "source": "Claude labels for the read-order judge fix, 2026-09-30",
+ "results_dir": "bench/results/world-2b-handoffs",
+ "continuity": {
+  "1:1": {
+   "contradicts_stated_fact": "no",
+   "restarts_scene": "no",
+   "command_not_finished": "no",
+   "reveals_hidden_canon": "no"
+  },
+  "1:3": {
+   "contradicts_stated_fact": "no",
+   "restarts_scene": "no",
+   "command_not_finished": "no",
+   "reveals_hidden_canon": "no"
+  },
+  "1:5": {
+   "contradicts_stated_fact": "no",
+   "restarts_scene": "no",
+   "command_not_finished": "no",
+   "reveals_hidden_canon": "no"
+  }
+ },
+ "fact": {},
+ "notes": {
+  "rulings": "Claude's labels (not the author's), on authored-handoff turns only; other turns are unlabelled. Rulings applied: the turn is read as the player reads it, the narrator's text then the story's delivered sentences in order. A command is finished when the narration or the delivered sentences show it done. A lead-up that searches without success followed by a delivered find is a search that succeeds, not a contradiction; it contradicts only what was established before the turn (the opening or an earlier turn). Engine steps prefixed to player_input (\"Kristin sat down in the driver's seat.\") are the game's own actions, not part of the command. Rediscovering Michelle at her holding block after she was found on turn 1 is a restart."
+ }
+}

@@ -16,6 +16,10 @@ const verdict = {
       restarts_scene: "no",
       command_not_finished: "no",
       reveals_hidden_canon: "no",
+      contradicts_stated_fact_quote: "",
+      protagonist_acts_beyond_command_quote: "The phone lies on the floor.",
+      restarts_scene_quote: "",
+      reveals_hidden_canon_quote: "",
       reason: "The narration picks up the phone.",
     },
   ],
@@ -25,7 +29,7 @@ test("continuity judge sends also_called and explains its meaning", async () => 
   let request;
   const turns = [
     {
-      player_input: "Look at the phone.",
+      command: "Look at the phone.",
       narration: "The phone lies on the floor. The story adds this sentence.",
       narrator_narration: "The phone lies on the floor.",
       story_text: ["The story adds this sentence."],
@@ -49,7 +53,9 @@ test("continuity judge sends also_called and explains its meaning", async () => 
     },
   );
 
-  assert.deepEqual(result, verdict);
+  assert.deepEqual(result, {
+    turns: [{ ...verdict.turns[0], quote_overrides: [], quote_flags: [] }],
+  });
   assert.equal(request.model, "gpt-5.6-luna");
   assert.equal(request.store, false);
   assert.equal(request.text.format.type, "json_schema");
@@ -63,20 +69,22 @@ test("continuity judge sends also_called and explains its meaning", async () => 
     {
       turn_number: 1,
       scene_id: "1A",
-      player_input: "Look at the phone.",
-      narration: "The phone lies on the floor.",
+      command: "Look at the phone.",
+      turn_text: [
+        { by: "narrator", text: "The phone lies on the floor." },
+        { by: "story", text: "The story adds this sentence." },
+      ],
       given_facts: { phone: { place: "her hands" } },
       also_called: { phone: ["the handset"] },
-      story_text: ["The story adds this sentence."],
     },
   ]);
   assert.match(request.input[0].content, /A name listed in `also_called` is another name for the same person or thing\./);
   assert.doesNotMatch(request.input[0].content, /when no player command moved it/);
-  assert.match(request.input[0].content, /story_text lists sentences the story itself wrote at the end of this turn\. They are not part of narration\. They are canon\./);
-  assert.match(request.input[0].content, /A command to look at, examine, search or check a thing is finished when the narration shows her attending to that thing/);
+  assert.match(request.input[0].content, /Each turn gives command, the words the player typed, and turn_text/);
+  assert.match(request.input[0].content, /A command to look at, examine, search or check a thing is finished when the turn shows her attending to that thing/);
   assert.match(request.input[0].content, /She cannot control another character/);
   assert.match(request.input[0].content, /When she tries to take a thing from another character, trying is her whole part/);
-  assert.match(request.input[0].content, /The narration does not have to say whether she gets it/);
+  assert.match(request.input[0].content, /The turn does not have to say whether she gets it/);
   assert.match(request.input[0].content, /A refusal, a struggle or silence is still a response/);
   assert.doesNotMatch(request.input[0].content, /the narration must show what that character does; only holding a thing out is not finished/);
   assert.match(request.input[0].content, /drives away from the house does not finish drive to the park/);
@@ -88,14 +96,22 @@ test("continuity judge sends also_called and explains its meaning", async () => 
     "restarts_scene",
     "command_not_finished",
     "reveals_hidden_canon",
+    "contradicts_stated_fact_quote",
+    "protagonist_acts_beyond_command_quote",
+    "restarts_scene_quote",
+    "reveals_hidden_canon_quote",
     "reason",
   ]);
 });
 
-test("continuity judge falls back to the full narration when narrator text is absent", async () => {
+test("continuity judge builds turn_text when it is absent", async () => {
   let request;
   await judgeContinuity(
-    { sceneId: "1A", opening: "", turns: [{ narration: "Full narration.", story_text: ["Authored text."] }] },
+    {
+      sceneId: "1A",
+      opening: "",
+      turns: [{ command: "Look.", just_before: "Kristin sits down.", narration: "Full narration.", story_text: ["Authored text."] }],
+    },
     {
       environment: { OPENAI_API_KEY: "test-key" },
       fetchImpl: async (_url, options) => {
@@ -105,8 +121,63 @@ test("continuity judge falls back to the full narration when narrator text is ab
     },
   );
   const sent = JSON.parse(request.input[1].content).turns[0];
-  assert.equal(sent.narration, "Full narration.");
-  assert.deepEqual(sent.story_text, ["Authored text."]);
+  assert.deepEqual(sent.turn_text, [
+    { by: "game", text: "Kristin sits down." },
+    { by: "narrator", text: "Full narration." },
+    { by: "story", text: "Authored text." },
+  ]);
+  assert.equal(sent.narration, undefined);
+  assert.equal(sent.story_text, undefined);
+});
+
+test("continuity judge withdraws a yes quoted only from story text", async () => {
+  const storyOnly = {
+    ...verdict.turns[0],
+    protagonist_acts_beyond_command: "yes",
+    protagonist_acts_beyond_command_quote: "The story finds the key.",
+  };
+  const result = await judgeContinuity(
+    {
+      sceneId: "1A",
+      opening: "",
+      turns: [{ command: "Search the drawer.", turn_text: [{ by: "story", text: "The story finds the key." }] }],
+    },
+    {
+      environment: { OPENAI_API_KEY: "test-key" },
+      fetchImpl: async () => response({ turns: [storyOnly] }),
+    },
+  );
+  assert.equal(result.turns[0].protagonist_acts_beyond_command, "no");
+  assert.deepEqual(result.turns[0].quote_overrides, [
+    {
+      criterion: "protagonist_acts_beyond_command",
+      quote: "The story finds the key.",
+      note: "withdrawn: the quote is story or game text, not narrator text",
+    },
+  ]);
+  assert.deepEqual(result.turns[0].quote_flags, []);
+});
+
+test("continuity judge flags an unverifiable yes quote", async () => {
+  const unverifiable = {
+    ...verdict.turns[0],
+    protagonist_acts_beyond_command: "no",
+    protagonist_acts_beyond_command_quote: "",
+    restarts_scene: "yes",
+    restarts_scene_quote: "A sentence that is not present.",
+  };
+  const result = await judgeContinuity(
+    { sceneId: "1A", opening: "", turns: [{ command: "Look.", turn_text: [{ by: "narrator", text: "The phone lies here." }] }] },
+    {
+      environment: { OPENAI_API_KEY: "test-key" },
+      fetchImpl: async () => response({ turns: [unverifiable] }),
+    },
+  );
+  assert.equal(result.turns[0].restarts_scene, "yes");
+  assert.deepEqual(result.turns[0].quote_flags, [
+    { criterion: "restarts_scene", quote: "A sentence that is not present.", note: "unverified: quote not found in turn_text" },
+  ]);
+  assert.deepEqual(result.turns[0].quote_overrides, []);
 });
 
 test("packageCanon returns the whole scene block", () => {

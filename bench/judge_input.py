@@ -234,6 +234,12 @@ def judge_turns(
         )
         copy["story_text"] = _story_text(turn, scene_transitions, package)
         copy["narrator_narration"] = _narrator_narration(copy["narration"], copy["story_text"])
+        copy["command"] = typed_input
+        copy["turn_text"] = [
+            *([{"by": "game", "text": copy["just_before"]}] if copy["just_before"] else []),
+            *([{"by": "narrator", "text": copy["narrator_narration"]}] if copy["narrator_narration"] else []),
+            *([{"by": "story", "text": text} for text in copy["story_text"]]),
+        ]
         copy["place_contents"] = _place_contents(turn, package)
         copy["item_facts_names"] = turn.get("item_facts_names", {})
         before = dict(turn.get("item_facts_before", {}))
