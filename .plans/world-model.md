@@ -661,7 +661,15 @@ matches nothing; "Michelle" is in no noun list). Round 2 prompt
 the share-a-verb-or-a-noun-not-both rule, and "the prisoners" in
 delivery text.
 
-**Next:** Brandon runs the round-2 prompt in ChatGPT Desktop; land the
+Round 2 answer (`handoffs_3a_r2.yaml`): prompt examples 16/16, other
+wordings 14/24, no wrong entry fired, and no pair offered together shares
+both a verb and a noun. Still missed: record synonyms (logs, files,
+patient records), using the codes (take, enter), bare "Start the
+uprising.", "deadline", "listen". Round 3 is a same-chat follow-up
+(`chatgpt_followup_r3.md`): add verbs for every action kind and general
+nouns, keep the delivery and earn_when text.
+
+**Next:** Brandon runs the round-3 follow-up in ChatGPT Desktop; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
