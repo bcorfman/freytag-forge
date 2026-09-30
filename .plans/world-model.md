@@ -773,7 +773,20 @@ The radio reached Kristin (turn 8) and the codes Brandon (turn 9) 3 of 3.
 Continuity totals: contradicts 3/30 (all turn 1), beyond the command
 3/30, restarts 2/30, not finished 10/30.
 
-**Next:** Brandon's call: turn 1's lead-up and turn 10, or move to 3B; land the
+**Brandon chose to work on turns 1 and 10.** Both are handoff turns
+whose lead-up stops short of the command ("Write only what leads up to
+it."). Rule probe (`ringer-work/freytag-3a-leadup-probe`, the six
+recorded prompts, 5 samples each per arm, keyword tally read against
+samples): turn 1 says Michelle is not found 13/15 as recorded, 14/15 with
+"Your story must not go against it.", 9/15 with "First, show Kristin
+doing what the player typed.", 11/15 with both; turn 10 warns Michelle
+3/15, 4/15, 6/15, 3/15. No rule holds. Next measured: the delivery
+sentences carry the player's action (turn 1 "Kristin finds Michelle
+alive. ...", turn 10 "Kristin warns Michelle that the emergency-gate
+authorization is about to expire. ..."), so lead-up plus delivery reads
+as one sequence (`probe_delivery.py`).
+
+**Next:** read the delivery probe; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
