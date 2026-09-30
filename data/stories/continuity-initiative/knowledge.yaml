@@ -1660,7 +1660,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle is alive. She directs the prisoners through stolen radios and coded announcements."
+  delivery_text: "Kristin finds Michelle alive. Michelle is directing the prisoners through stolen radios and coded announcements."
 - id: k_sl_3a_a_r2
   statement: 'Michelle reunites with Kristin briefly, then explains that freeing this block means little without exposing the other sites.'
   earn_when: "asks Michelle about other sites"
