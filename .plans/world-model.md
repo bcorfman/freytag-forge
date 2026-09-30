@@ -733,7 +733,18 @@ guards." still 0/10), but "Ask Michelle about the other sites." now lists
 the captives and most of THINGS 10/10 (3/10 before), which would put the
 talk line back on exactly the turns it is being removed from. Not landed.
 
-**Next:** Brandon's call on reaching the group from a plain word; land the
+**Landed:** the talk sentences only when addressed, as 108decb (Ringer,
+Luna, first attempt): `prepare_turn` sets `_referred_names` from the
+match call's resolved refers and clears it every turn. **Brandon chose
+group scoped aliases** for turn 3: a group may declare `scoped_aliases`
+that resolve only while it is placed and in scene scope, never as world
+aliases; the captives get `[prisoners, prisoner, captives, captive]`.
+Ringer run `ringer-work/freytag-group-scoped-aliases` (check
+`verify_scoped_aliases.py`: 3A resolves the plain words to the group,
+refers "prisoners" addresses it, a reply's "prisoners" lands on it with
+no new group; 1C and 2C unchanged).
+
+**Next:** land scoped aliases, then a 3A rerun; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
