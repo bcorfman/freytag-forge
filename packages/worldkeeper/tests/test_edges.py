@@ -128,3 +128,33 @@ def test_closed_visibility_and_resolution_callback():
     callback_world = World(w.schema, w.backend, resolver=lambda name, ids: calls.append((name, ids)) or "key")
     assert callback_world.resolve("unknown") == "key"
     assert calls and calls[0][0] == "unknown"
+
+
+def test_given_with_includes_visible_contents_on_and_under_supporters():
+    schema = WorldSchema.from_data(
+        {
+            "entities": [
+                {"id": "room", "name": "room", "kind": "area"},
+                {"id": "table", "name": "table", "kind": "supporter"},
+                {"id": "on_item", "name": "on item", "kind": "thing"},
+                {"id": "under_item", "name": "under item", "kind": "thing"},
+                {"id": "hidden_item", "name": "hidden item", "kind": "thing", "hidden": True},
+                {
+                    "id": "box",
+                    "name": "box",
+                    "kind": "container",
+                    "openable": True,
+                    "contents": ["coin"],
+                },
+            ]
+        }
+    )
+    w = World(schema, MemoryBackend())
+    assert w.seed().ok
+    assert w.place("on_item", "table").ok
+    assert w.place("under_item", "table", under=True).ok
+    assert w.place("hidden_item", "table", under=True).ok
+    assert w.set_axis("box", "closed").ok
+
+    assert w.given_with("table") == ("on_item", "under_item")
+    assert w.given_with("box") == ()

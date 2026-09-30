@@ -492,7 +492,13 @@ class World:
         )
 
     def given_with(self, entity_id):
-        """Return visible direct contents of an open or non-openable container."""
+        """Return visible direct contents of containers and supporters."""
+        if self._is_a(entity_id, "supporter"):
+            return tuple(
+                child
+                for child in self.contents(entity_id)
+                if self.relation(child) in {"on", "under"} and self.is_visible(child)
+            )
         if not self._is_a(entity_id, "container"):
             return ()
         container = self._entity(entity_id)

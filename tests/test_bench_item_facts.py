@@ -541,6 +541,48 @@ def test_match_payload_gives_placed_character_place_from_real_package():
     assert "- Brandon. Place: across the park from Kristin." in payload["user"].splitlines()
 
 
+def _scene_1b_provider():
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "1B"
+    apply_scene_placements(PACKAGE, state.facts, "1B")
+    return ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+
+
+def test_prepare_turn_gives_visible_contents_under_referred_park_bench(monkeypatch):
+    provider = _scene_1b_provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": ["park bench"], "same_as": {}},
+    )
+
+    provider.prepare_turn("Look under the park bench.")
+
+    names = provider._thing_names()
+    assert "handwritten number sequence" in names
+    assert "Michelle's photograph" in names
+    assert "Transit token" in names
+    assert "- handwritten number sequence." in provider._things_block()
+
+
+def test_prepare_turn_without_referred_park_bench_omits_its_contents(monkeypatch):
+    provider = _scene_1b_provider()
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": [], "same_as": {}})
+
+    provider.prepare_turn("Walk across the park to the man watching me.")
+
+    names = provider._thing_names()
+    assert "handwritten number sequence" not in names
+    assert "Michelle's photograph" not in names
+
+
 def test_match_payload_only_lists_things_in_play_for_each_scene():
     def provider_for(scene_id):
         state = RuntimeState.bootstrap(PACKAGE)
