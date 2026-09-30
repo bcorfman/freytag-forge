@@ -27,8 +27,8 @@ bench script and fixes measured live; 3B grounded (1e37fdd), handoffs
 (c3d3963) and bench script landed, x3 read (office never reached,
 same gap in 3A); referred people and places in THINGS chosen and
 probed live (Kristin reaches the place 3A 28/30, 3B 15/20, from 0/30
-and 2/20) and built (bc0ddf1); 3B and 3A x3 reruns next; then 3C, S3
-and S4.
+and 2/20) and built (bc0ddf1); reruns: 3A reaches the medical level 3/3 in
+narration, 3B still stops at the office door 3/3; then 3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -1183,10 +1183,38 @@ on him or a container. The new person lines use
 the parent's name to avoid it, but any other path that reads Brandon's
 `place_label` still gets the stale text.
 
-**Next:** read the live reruns on bc0ddf1, 3B x3
-(`bench/results/world-3b-referred-x3`) and 3A x3
-(`bench/results/world-3a-referred-x3`), running now. Watch 3B turn 3
-when other things are listed, the one case the probe left unfixed.
+**Live reruns on bc0ddf1 (2026-09-30, Ringer, both checks passed;
+`bench/results/world-3b-referred-x3`, `world-3a-referred-x3`).** All six
+replicates completed; 3B moved to 3C after turn 9 and 3A to 3B after
+turn 10 in every replicate; every handoff fired as before; no leak
+rejection. No turn-3 (3B) or turn-4 (3A) narration searches for
+Michelle any more (it did in all six before).
+- **3A turn 4 ("Follow Michelle into the medical level."):** the
+  narration takes Kristin into the medical level 3 of 3 (0 of 6 before).
+  The facts land 2 of 3: in r1 the reply kept Kristin in the detention
+  level and put only Michelle in the medical level (fact judge: missed
+  change).
+- **3B turn 3 ("Lead Michelle into the executive office."):** the
+  narration leads Michelle "towards" the office and stops at the door 3
+  of 3; it never goes in. The facts put Kristin in the office once (r2),
+  and the fact judge calls that an invented change, because the
+  narration only approached. So the office is still not reached. The
+  probe scored the reply's item_facts, not the narration, so its 15/20
+  likely overstated 3B.
+- Judges, before (x3) vs now: 3B contradicts 1/27 vs 0/27, beyond the
+  command 7/27 vs 2/27, facts correct 27/27 vs 24/27 (r2 t3 above; r1 t9
+  and r2 t9 are Kristin's move on "Start the broadcast with Michelle.");
+  3A contradicts 3/30 vs 1/30, restarts 2/30 vs 0/30, beyond 3/30 vs
+  1/30, facts correct 27/30 vs 28/30.
+- "Rebecca" resolved as a new person on 3B turn 5 or 6 in 3 of 3 both
+  before and now, so it is not from this change; it is still a gap.
+
+**Next:** decide how to finish the 3B move. The narrator now knows the
+office is a place but stops at its door. Brandon ranks a prompt rule
+first for narration defects; a probe on the recorded 3B turn-3 prompts
+could test one (for example "When the command says to go into a place,
+end the turn with Kristin inside it."), scored on the narration, not only
+item_facts. Also open: the 3A r1 capture miss and "Rebecca" as new.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
