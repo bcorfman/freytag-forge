@@ -19,7 +19,8 @@ but Jev still rejects a wrong memory-card match about 1 in 8; bare
 done: no drift, every handoff fires, no leak rejection; it found an
 unplaced new "console" (1 of 3) and a missed card move (2 of 3). Brandon
 chose to give new place names a kind (tasks A-C below the replay);
-next is task A, then push `claude/ground-2c`, then 3A-3C, S3 and S4.
+task A built and measured live (unplaced 0 of 40); next is the 2C
+replay, then push `claude/ground-2c`, then 3A-3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -494,8 +495,38 @@ lower levels and maintenance network 10 times each against the 92% bar,
 plus the 1C identification-numbers turn to see if 5224b69 already stops
 that mismatch, then a full 2C replay.
 
-**Next:** Ringer task A, its live probe, the 2C replay, push
-`claude/ground-2c`, then B and C, then 3A.
+**Task A built (2026-09-30).** b0f409c (Ringer, Luna, first attempt):
+the match call answers a kind per new name; worldkeeper gains the group
+kind and creates areas, characters and groups; a thing sent to a group
+lands in the group's place; a missing kind falls back to a thing with an
+issue. b4426fb ports the offline verifier's cases into tests (each fails
+on the old engine). **First live probe** (`~/dev/ringer-work/
+freytag-new-place-probe`, recorded replies replayed through capture with
+the live match call and Jev, 10 trials each): kind answers right 40 of
+40, but console, checkpoint and prisoners still unplaced 10 of 10. The
+match call echoes the name (`"console": "console"`) instead of "new";
+the closed-set rule kept it as new, but the set of names to create was
+built before that rule ran. Fixed in 1d0c7a4 (Ringer, Luna). A first
+fix attempt also treated a name the match call leaves out as new; that
+turned phrases like "in her hand" into containers and was stopped; a
+name left out keeps the old behaviour. **Probe after 1d0c7a4:** console
+a container in the command levels holding the card 10 of 10; checkpoint
+a new area holding Kristin 10 of 10 (the guard a new character there);
+prisoners a group, the identification numbers in its place 10 of 10 and
+never taken for the handwritten number sequence; "lower levels" matched
+to the infrastructure corridors with Jev agreeing 10 of 10 (placed, not
+new). Unplaced 0 of 40. "maintenance network" was dropped from the probe:
+it has been an authored area since e414060.
+**Known gap:** new entities are created in the player's place before the
+same reply's move of the player lands, so the prisoners were made in the
+freight terminal although the reply moved Kristin to the observation
+shaft.
+**Test speed (same day):** the suite now runs in parallel (a3a2952) and
+coverage is opt-in with the 90% gate kept in CI (ff5395c): about 22 s
+idle, was about 3 minutes.
+
+**Next:** full 2C replay on 1d0c7a4, then Brandon on the creation-order
+gap, push `claude/ground-2c`, then B and C, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
