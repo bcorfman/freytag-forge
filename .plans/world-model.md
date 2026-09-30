@@ -525,8 +525,28 @@ shaft.
 coverage is opt-in with the 90% gate kept in CI (ff5395c): about 22 s
 idle, was about 3 minutes.
 
-**Next:** full 2C replay on 1d0c7a4, then Brandon on the creation-order
-gap, push `claude/ground-2c`, then B and C, then 3A.
+**2C replay on 1d0c7a4 (2026-09-30, three replicates, check passed;
+`bench/results/world-2c-kinds-x3`).** Every handoff fired (1, 4, 6), no
+leak rejection, restarts 0 of 24, contradicts a stated fact 1 of 24
+(turn 2: Brandon "in a room" rather than the command-center corner),
+acts beyond the command 2 of 24; facts after the turn correct 21/24
+(20/24 before), narration contradicts given facts 2 of 24 (6 before).
+Turn 8's "upper command corridors" is still untracked (missed 3 of 3).
+r1: the console was created in the command levels holding the card, and
+turn 7's "Kristin at the console" kept her in the command levels. Two
+new gaps, from r2:
+- **A new thing named as a reply key is a plain thing, so it can hold
+  nothing.** r2's reply gave `"console": {"place": "Kristin"}` (a
+  narrator capture error: "sits at a console" read as holding it). The
+  engine made a plain thing carried by Kristin. On turn 7 the card was
+  put into it, the move was refused, and the card was left unplaced.
+- **That refusal is silent.** `_apply_move` falls back to `set_unplaced`
+  without an issue and without adding to `last_item_facts_unplaced`, so
+  replay tallies of unplaced things undercount. (The probe checked
+  parents directly, so its result stands.)
+
+**Next:** Brandon on these two gaps and the creation-order gap, then
+push `claude/ground-2c`, then B and C, then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
