@@ -47,6 +47,11 @@ problems surface, not exhaustively up front.
   two different worlds.
 - **A spot inside an area is not an area.** "The corner of the kitchen" is the
   kitchen. Detail like "near the door" stays out of the tree.
+- **A scene's `situation` never says where a character is.** It is sent every turn,
+  so "Kristin is at the loading docks" goes stale the moment she moves,
+  and the narrator follows it over her place in THINGS. Describe the place only;
+  give the starting position in `entry_text` (sent once), then let tracked facts
+  carry it.
 
 When the match call marks a new name, it also gives a kind: place, person,
 group or thing. A place becomes an area under the player's current area. A
