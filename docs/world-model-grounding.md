@@ -180,7 +180,9 @@ reading level, one idea per sentence, and every path that narrates.
 - **Engine steps are told, not asked.** When the engine seats the protagonist
   or hands her a thing before an action, the narrator gets a line such as
   `Just before this: Kristin sat down in the driver's seat.` Don't ask the
-  narrator to perform a step the world model can perform.
+  narrator to perform a step the world model can perform. The engine seats the
+  player only when the command names the thing that needs seated use. It uses
+  only a seat in her own area.
 
 ### What a model is asked to return
 
