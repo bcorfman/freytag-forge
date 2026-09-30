@@ -872,8 +872,35 @@ regression bar. The old judge's saved verdicts agree 101/116 on the
 handoff cells. Both the current and the new judge re-judge all seven
 runs (`rejudge_cont.sh`), continuity only.
 
-**Next:** baseline and build are running; then re-judge with the new
-judge and compare; land the
+**Landed as 5fd9d0f** (Ringer, Luna; the second attempt's check failed
+only because my verifier read `bench/results` inside the worktree, where
+it is gitignored; the corrected check passed on the worker's code: both
+verifiers, node tests 11/11, suite 944). Re-judged with Luna, continuity
+only, same inputs both arms (`baseline.txt`, `new.txt`):
+
+| Run | Current judge | Read-order judge |
+|---|---|---|
+| 1B-1C handoffs | 19/20 | 19/20 |
+| 2B handoffs | 9/12 | 11/12 |
+| 2C handoffs | 36/36 | 36/36 |
+| 3A handoffs | 41/48 | 44/48 |
+| round 8 (Brandon) | 172/192 | 179/192 |
+| round 9 (Brandon) | 130/142 | 129/142 |
+| v28 (Claude) | 143/152 | 148/152 |
+
+Handoff turns 105 -> 110/116; regression set 445 -> 456/486. The quote
+check fired 0 times (every yes quoted real narrator text). Remaining
+handoff disagreements: 3A r2 t1 (the opening had recognised Michelle; the
+judge used "a later passage can change an earlier one" to excuse a
+conflict with the opening, which the rule does not allow); 1B-1C t16 (the
+engine had just seated Kristin in the driver's seat while the narration
+has her at the shaft; the judge's contradiction is fair and my label is
+probably wrong; the odd seating step is an engine question); 3A r1 t4
+restart missed; 3A r3 t10 a pedantic ordering contradiction; 3A r3 t6 and
+2B t5 unfinished (judgment calls).
+
+**Next:** Brandon's call: tighten the read-order sentence for the opening
+case, then 3B; land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
