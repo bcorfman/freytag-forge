@@ -692,7 +692,35 @@ values, knowledge.yaml otherwise unchanged, 18 matcher cases including
 replicate is running (`ringer-work/freytag-world-3a-live`, results
 `bench/results/world-3a`).
 
-**Next:** read the 3A replicate; land the
+**3A live replicate (2026-09-30, one replicate, check passed;
+`bench/results/world-3a`).** Completed; moved to 3B after turn 10. No leak
+rejection. Handoffs fired on turns 1 (`k_sl_3a_a_r1`), 4 (`b_r2`), 6
+(`d_r1`) and 10 (`c_r2`); turns 2, 5 and 7 found no offered candidate
+(each set completes when its first entry fires). Facts after the turn
+correct 9/10. Continuity: contradicts a stated fact 0/10, acts beyond
+the command 2/10 (turns 2, 5), command not finished 4/10 (2, 4, 5, 10),
+restarts 1/10 (10). The codes worked: revealed to Kristin by the turn-6
+handoff, handed to Brandon on turn 9. The radio was picked up on turn 8.
+Two group findings:
+- **The group talk line hijacks turns that do not address the group.**
+  On turns 2 ("Ask Michelle about the other sites.") and 5 ("Read the
+  experiment records.") no match call ran, so THINGS came from the
+  default names and carried the captives' line "... If the player talks
+  to them, senior official answers." Both narrations walked Kristin to
+  the captives and had her ask the official where Michelle is. A live
+  A/B on those two recorded prompts (`ringer-work/freytag-3a-talkline-
+  probe`, 10 samples per prompt per arm, read by hand): as recorded,
+  20/20 go to the captives; with the talk sentences removed, 0/20 (turn
+  2 goes to Michelle 10/10); with the captives' line removed, 0/20
+  (turn 5 finds the records 5/10).
+- **Addressing the group by its plain word loses the line.** Turn 3
+  ("Ask the prisoners who runs this block.") had no captives line: the
+  match call's refers answered "prisoners", which is not a THINGS name,
+  so it was dropped. The narrator invented "Lieutenant Commander Rachel
+  Patel". This is the cost of the 3A-only name.
+
+**Next:** Brandon's call on the talk line (show it only when the command
+addresses the group, and how refers reaches the group); land the
 answer by Ringer with a matcher verifier; then a 3A bench script and a
 live replicate.
 
