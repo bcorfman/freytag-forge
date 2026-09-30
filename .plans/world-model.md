@@ -19,8 +19,8 @@ but Jev still rejects a wrong memory-card match about 1 in 8; bare
 done: no drift, every handoff fires, no leak rejection; it found an
 unplaced new "console" (1 of 3) and a missed card move (2 of 3). Brandon
 chose to give new place names a kind (tasks A-C below the replay);
-task A built and measured live (unplaced 0 of 40); next is the 2C
-replay, then push `claude/ground-2c`, then 3A-3C, S3 and S4.
+task A and its follow-ups (286e690) measured live: unplaced 0 of 40 in
+the probe and 0 of 24 turns in the 2C replay; next is push `claude/ground-2c`, then 3A-3C, S3 and S4.
 See "Resume here".
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
@@ -545,8 +545,27 @@ new gaps, from r2:
   replay tallies of unplaced things undercount. (The probe checked
   parents directly, so its result stands.)
 
-**Next:** Brandon on these two gaps and the creation-order gap, then
-push `claude/ground-2c`, then B and C, then 3A.
+**Brandon chose: a new narrated thing is a container from the start.**
+286e690 (Ringer, Luna, first attempt) fixes all three: a new reply key of
+kind thing is a container; a move refused because the parent cannot
+hold things is recorded as unplaced with an issue; new entities are
+created where the player ends up after the reply's own move.
+**Probe on 286e690:** console, checkpoint and prisoners right 10 of 10
+each (prisoners now at the observation shaft with Kristin, was the
+freight terminal); "lower levels" to the infrastructure corridors 10 of
+10; unplaced 0 of 40. **2C replay on 286e690** (`bench/results/
+world-2c-containers-x3`): every handoff fired, no leak rejection, no
+item_facts issue and nothing unplaced in any of 24 turns; contradicts a
+stated fact 0 of 24, restarts 0 of 24, acts beyond the command 2 of 24;
+facts after the turn correct 22/24 (21 before), narration contradicts
+given facts 2 of 24. Remaining, not engine gaps: in r2 and r3 the
+narrator's reply wrote "sits at a console" as `"console": {"place":
+"Kristin"}`, so the console is recorded as carried by her (the same
+reply-capture class as the missed card move); turn 8's "upper command
+corridors" is still untracked.
+
+**Next:** push `claude/ground-2c` for review, then B (group members)
+and C (talking to a group), then 3A.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
