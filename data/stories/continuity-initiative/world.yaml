@@ -275,6 +275,10 @@ facts:
   - {move: override_codes, parent: kristin}
   - {reveal: override_codes}
 - human_security_control
+- id: rebecca_office_reached
+  on_assert:
+  - {move: kristin, parent: executive_office}
+  - {move: brandon, parent: security_corridors}
 - detention_locations_offer_known
 - charles_abandoned_rebecca
 - brandon_confession_available

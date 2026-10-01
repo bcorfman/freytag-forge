@@ -292,6 +292,12 @@ new_fact_ids:
   used_by_storylets:
   - SL-3B-A
   used_by_transitions: []
+- id: rebecca_office_reached
+  definition: Kristin and Michelle have reached Rebecca’s office.
+  used_by_storylets:
+  - SL-3B-E
+  - SL-3B-B
+  used_by_transitions: []
 - id: detention_locations_offer_known
   definition: Rebecca has offered detention-site location information as leverage.
   used_by_storylets:
@@ -1890,6 +1896,39 @@ storylets:
     - scene_id_not: 3B
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3B-E
+  scene_id: 3B
+  title: Reach Rebecca’s Office
+  activation:
+    scene_id: 3B
+    conditions:
+    - fact_id: human_security_control
+      equals: true
+    pacing:
+      earliest_turn: 0
+      target_turn: 5
+      latest_turn: 6
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: 'If the player stalls in the corridors, bring Kristin and Michelle into Rebecca’s office while Brandon holds off security forces.'
+  realization_options:
+  - id: SL-3B-E-R1
+    dramatic_intent: Kristin and Michelle enter Rebecca’s office while Brandon holds off security forces.
+    operations:
+    - op: assert
+      fact_id: rebecca_office_reached
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: rebecca_office_reached
+      equals: true
+    abort_when:
+    - scene_id_not: 3B
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-3B-B
   scene_id: 3B
   title: Rebecca Bargains With the Only Thing She Still Has
@@ -1897,6 +1936,8 @@ storylets:
     scene_id: 3B
     conditions:
     - fact_id: human_security_control
+      equals: true
+    - fact_id: rebecca_office_reached
       equals: true
     pacing:
       earliest_turn: 0

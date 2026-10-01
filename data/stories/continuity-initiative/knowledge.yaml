@@ -92,6 +92,8 @@ facts:
 - id: human_security_control
   purpose: JANUS can no longer reliably predict the group’s route and human operators
     have taken direct control.
+- id: rebecca_office_reached
+  purpose: Kristin and Michelle have reached Rebecca’s office.
 - id: detention_locations_offer_known
   purpose: Rebecca has offered detention-site location information as leverage.
 - id: charles_abandoned_rebecca
@@ -1952,6 +1954,26 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: "Kristin makes the emergencies impossible to predict. Security leaves JANUS's guidance."
+- id: k_sl_3b_e_r1
+  statement: 'Kristin and Michelle enter Rebecca’s office while Brandon holds off security forces.'
+  earn_when: "enters Rebecca's office"
+  action_evidence:
+  - ["go into", "walk into", "head into", "get into", "move into", "step into", "lead", "take", "bring", "guide", "enter", "break into", "slip into", "push into", "escort", "go to", "walk to", "head to"]
+  - ["executive office", "executive offices", "executive suite", "executive suites", "Rebecca's office", "Rebecca's offices", "Rebecca office", "Rebecca offices", "Rebecca's suite", "Rebecca's suites", "Rebecca suite", "Rebecca suites", "her office", "her offices", "her suite", "her suites", "CEO's office", "CEO's offices", "CEO office", "CEO offices", "the CEO's office", "the CEO's offices", "CEO's suite", "CEO's suites", "CEO suite", "CEO suites", "the CEO's suite", "the CEO's suites", "chief executive's office", "chief executive's offices"]
+  entity_ids: []
+  aliases: [rebecca office reached]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3B]
+  requires:
+  - fact_id: human_security_control
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: rebecca_office_reached
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-3B-E, realization_id: SL-3B-E-R1}
+  relevance: {entity_ids: [], priority: 0}
+  delivery_text: "Kristin and Michelle enter Rebecca's office. Brandon holds off the security forces."
 - id: k_sl_3b_b_r1
   statement: 'Michelle confronts Rebecca with the experiment approvals, and Rebecca offers every detention-site location as leverage.'
   earn_when: "confronts Rebecca with approvals"
@@ -1969,6 +1991,8 @@ knowledge:
   - 3B
   requires:
   - fact_id: human_security_control
+    equals: true
+  - fact_id: rebecca_office_reached
     equals: true
   establishes:
   - op: assert
@@ -2005,6 +2029,8 @@ knowledge:
   - 3B
   requires:
   - fact_id: human_security_control
+    equals: true
+  - fact_id: rebecca_office_reached
     equals: true
   establishes:
   - op: assert

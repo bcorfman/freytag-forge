@@ -277,5 +277,6 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "brandon_identified",
         "false_identities_ready",
         "relay_open",
+        "rebecca_office_reached",
         "military_override_codes_available",
     }
