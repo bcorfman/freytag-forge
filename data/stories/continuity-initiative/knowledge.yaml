@@ -258,7 +258,7 @@ scene_frames:
   situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels."
   pressure: Reach Michelle and join the uprising
 - scene_id: 3B
-  situation: Security corridors between the resistance and Rebecca's executive office. JANUS is tracking the fight through cameras, doors, and alarms; the group needs an opening to reach the broadcast relay.
+  situation: The fight runs through the security corridors and the executive office. JANUS is tracking the fight through cameras, doors, and alarms; the group needs an opening to reach the broadcast relay.
   pressure: Overload JANUS and seize the broadcast
 - scene_id: 3C
   situation: The secured command office and broadcast chamber during a mounting deluge. The relay is open for the moment, but escaping captives need a route out before water and bulkheads close it.
@@ -1955,8 +1955,8 @@ knowledge:
     priority: 0
   delivery_text: "Kristin makes the emergencies impossible to predict. Security leaves JANUS's guidance."
 - id: k_sl_3b_e_r1
-  statement: 'Kristin and Michelle enter Rebecca’s office while Brandon holds off security forces.'
-  earn_when: "enters Rebecca's office"
+  statement: 'Kristin and Michelle are in the executive office. Brandon stays in the security corridors and holds off the security forces.'
+  earn_when: "enters the executive office"
   action_evidence:
   - ["go into", "walk into", "head into", "get into", "move into", "step into", "lead", "take", "bring", "guide", "enter", "break into", "slip into", "push into", "escort", "go to", "walk to", "head to"]
   - ["executive office", "executive offices", "executive suite", "executive suites", "Rebecca's office", "Rebecca's offices", "Rebecca office", "Rebecca offices", "Rebecca's suite", "Rebecca's suites", "Rebecca suite", "Rebecca suites", "her office", "her offices", "her suite", "her suites", "CEO's office", "CEO's offices", "CEO office", "CEO offices", "the CEO's office", "the CEO's offices", "CEO's suite", "CEO's suites", "CEO suite", "CEO suites", "the CEO's suite", "the CEO's suites", "chief executive's office", "chief executive's offices"]
@@ -1973,7 +1973,7 @@ knowledge:
     value: true
   source: {kind: storylet_realization, storylet_id: SL-3B-E, realization_id: SL-3B-E-R1}
   relevance: {entity_ids: [], priority: 0}
-  delivery_text: "Kristin and Michelle enter Rebecca's office. Brandon holds off the security forces."
+  delivery_text: "Kristin and Michelle enter the executive office. Brandon stays behind in the corridors and holds off the security forces."
 - id: k_sl_3b_b_r1
   statement: 'Michelle confronts Rebecca with the experiment approvals, and Rebecca offers every detention-site location as leverage.'
   earn_when: "confronts Rebecca with approvals"
