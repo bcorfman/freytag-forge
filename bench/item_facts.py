@@ -137,7 +137,7 @@ def _view(package, facts, axes=None, schema=None, *, structural=False):
                     place = min((place, *(npc.aliases if npc else ())), key=len)
         else:
             place = world.place_label(entity_id)
-            if parent and world.is_a(parent, "character") and place == world.name(parent):
+            if parent and world.is_a(parent, "character"):
                 npc = next((e for e in package.world.npcs if e.id == parent), None)
                 place = min((world.name(parent), *(npc.aliases if npc else ())), key=len)
         conditions = (
@@ -795,6 +795,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
         holder = world.name(parent) if parent is not None and world.is_a(parent, "character") else None
         place = None if holder else world.name(parent) if parent is not None else None
         result = {"name": world.name(entity_id), "place": place, "held_by": holder}
+        owner = world.owner(entity_id)
+        if owner is not None:
+            result["owner"] = world.name(owner)
         label = world.place_label(entity_id)
         if label and (place is None or label.casefold() != place.casefold()):
             result["place_text"] = label

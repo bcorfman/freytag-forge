@@ -53,6 +53,7 @@ locations:
 - id: executive_office
   name: executive office
   parent: regional_facility
+  owner: rebecca
 - id: facility_escape
   name: Facility escape route
   parent: regional_facility
@@ -214,6 +215,11 @@ items:
 - id: medical_terminal
   name: medical terminal
   fixed: true
+- id: rebecca_desk
+  name: executive desk
+  aliases: [Rebecca's desk]
+  kind: desk
+  owner: rebecca
 facts:
 - scene_1a_entry_known
 - scene_1b_entry_known

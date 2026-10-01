@@ -31,7 +31,12 @@ and 2/20) and built (bc0ddf1); reruns: 3A reaches the medical level 3/3 in
 narration; the 3B office entry, the moved-protagonist scene rule
 (de181fb), reveal-move precedence (d63bfaa) and the 2A arrival reveal
 (2c0ed9d) landed; 3B holds the office and 2A reaches the perimeter 3/3,
-with no restarts in either (2026-10-01); then 3C, S3 and S4.
+with no restarts in either (2026-10-01); the 2A arrival delivery now
+reads in order (6bc7dd4) and the console is no longer a 3B/3C scene
+item (9cff368), and Rebecca's executive desk is declared and fixed
+(21338bb), and Jev sees owners so "Rebecca's office" maps to it
+(ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
+(8e09018), each measured live 3/3; then 3C, S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1574,13 +1579,200 @@ waving them through, and the appended delivery then says they "leave
 the hideout and reach the facility perimeter", so the trip is told after
 the check (3/3). The command itself places them at the checkpoint.
 
-**Next:** decide whether the turn-4 order wart matters; the 3B turn-9
-fact misses (console and override codes on the broadcast turn); then
-3C, S3 and S4. For 3C, and for the open 3B
+**Next (superseded 2026-10-01; see the 3B console entry below):** the
+turn-4 order wart, the 3B turn-9 console and the 3B desk are fixed.
+Open from 3B: the turn-1 console drift ("rush back to the
+infrastructure corridors"); a second narrated "Charles's desk" (1/3);
+the "Shelly" label for Michelle as a place. "Rebecca's office" (ab3bd4f)
+and "with Kristin" (8e09018) are fixed; the no-change skip is held.
+Then 3C, S3 and S4. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
 "Rebecca" as new, and Brandon's stale place text.
+
+**Brandon chose (2026-10-01): fix both.** (1) 2A turn 4: reword only the
+arrival's delivery_text so it reads after a checkpoint lead-up too.
+ChatGPT prompt `~/dev/ringer-work/freytag-2a-arrival/chatgpt_followup_r3.md`
+(standalone); waiting on the answer. (2) 3B turn 9: the recorded prompt
+lists `inspection console. Place: infrastructure corridors.` in THINGS
+and PLAYER while Kristin is in the executive office (3/3), and the
+narrator brings it into the office.
+**Turn-9 probe (`~/dev/ringer-work/freytag-3b-turn9-probe`, Ringer,
+check passed; 3 recorded prompts x 5 samples x 2 arms, read by hand).**
+Console in the office (taken, plugged in, or on the desk): recorded
+9/15, console lines removed 0/15. With the lines removed the narrator
+uses a new "broadcast system/console" or the relay, or stops at the
+codes hand-off (the appended delivery then starts the broadcast).
+**Why it is there:** `inspection_console` is a 3B scene item (plot.md 3B
+`item_ids`, placed in 3B grounding), so `_name_in_scene_scope` keeps it
+in scope wherever Kristin is, and the match call refers it for
+"Start the broadcast with Michelle." 3C lists it too. **Recording gap:**
+a turn record's `match_raw` holds the post-reply match call, not
+`prepare_turn`'s, so the pre-turn refers are not saved.
+
+**2A delivery landed (6bc7dd4;** Ringer, Luna, first attempt; one line;
+every payload unchanged; suite 977). New delivery_text from ChatGPT:
+"Kristin and Brandon are at the facility perimeter. Their false
+identities pass the first security checks."
+**2A x3 on 6bc7dd4 (2026-10-01, check passed;
+`bench/results/world-2a-delivery-x3`).** All three moved to 2B after turn
+7; every handoff fired, the arrival on turn 4 in 3/3; no leak rejection;
+Kristin's places as before. Turn 4 now reads in order 3/3 (guard scans
+the card, then "Kristin and Brandon are at the facility perimeter...").
+Judges vs world-2a-arrival-x3: restarts 0 -> 0, contradicts 1 -> 1,
+beyond 1 -> 1, facts correct 19 -> 20/21. The two flags: r3 turn 7 the
+console says "Credential check failed"; r2 turn 5 an unasked tablet.
+
+**3B console scoping (Brandon chose option A, 2026-10-01):**
+`inspection_console` leaves 3B's and 3C's `item_ids` and placements in
+plot.md; it keeps its 2A place, so it is in scope only when Kristin is
+in the infrastructure corridors. Side effect, allowed by the check: the
+3B prompt loses the Details line "limited inspection console". Build
+`~/dev/ringer-work/freytag-3b-console` (check `verify_console.py`). First
+run failed on the old-behaviour test
+`test_inspection_console_is_fixed_in_the_infrastructure_corridors[3B,3C]`
+(it applied 3B's placements to a bare state); respecced to apply 2A
+first. **Landed as 9cff368** (Ringer, Luna, first attempt on the respec;
+`verify_console.py` PASS; suite 977).
+**3B x3 on 9cff368 (2026-10-01, check passed;
+`bench/results/world-3b-console-x3`).** All three moved to 3C after turn
+9; every handoff fired; no leak rejection; Kristin in the executive
+office from turn 3 on, 3/3. Turn 9: the console is in THINGS 0/3 (was
+3/3) and no narration brings it into the office (was 3/3, read by
+hand). Turn 1 still gets the console by its full name 3/3, and still
+narrates "rush back to the infrastructure corridors" 3/3, as before
+this change (the known console drift; r3 records the move, r1 and r2 do
+not). Judges vs world-3b-precedence-x3: contradicts 1 -> 0, beyond 1 ->
+1, restarts 0 -> 0, facts correct 24 -> 24/27.
+**New on turn 9, not fixed:** the match call now refers "Michelle's
+memory card" (3/3) and the narrator gives it to Kristin or puts it in a
+tablet. r1 has Kristin hold "the desk in her hands", and the desk moves
+to her: the desk was created by narration in turn 6, so it is not
+fixed. r3 records the tablet's place as "Shelly" and r2 the card's as
+"with Kristin" (place text, not resolved).
+
+**3B desk (Brandon chose grounding, 2026-10-01).** Step 1 found the
+turn-9 "desk in her hands" was a turn-7 capture error: the turn-6 reply
+put Rebecca at "desk", a new ordinary thing was created, and the turn-7
+reply `{"Charles's desk": {"place": "Kristin"}, "Kristin": {"place":
+"Charles's desk"}}` moved it onto Kristin; turn 9's THINGS then said
+`desk. Place: Kristin.` The desk shows in 6/6 recent 3B replicates.
+**Landed as 21338bb** (Ringer, Luna, first attempt; `verify_desk.py`
+replays r1 turns 6-7 offline; payloads unchanged; suite 977):
+`rebecca_desk`, name "executive desk", alias "Rebecca's desk", `kind:
+desk` (fixed furniture), owner Rebecca, a 3B item in `executive_office`.
+Not the bare name "desk": a trial with it failed four tests, because
+the leak check rejects a not-yet-reached declared name, so "Search the
+desk." was rejected in 1A (the "workstation" trap).
+**3B x3 on 21338bb (2026-10-01, check passed;
+`bench/results/world-3b-desk-x3`).** All three moved to 3C after turn
+9; every handoff fired; no leak rejection. One desk only, in the
+executive office throughout, 3/3. The turn-7 swapped reply recurred in
+r1 and r3 and was refused ("fixed things cannot move") both times. No
+narration has Kristin holding the desk. Judges vs world-3b-console-x3:
+facts correct 24 -> 26/27, contradicts 0 -> 0, beyond 1 -> 1, restarts
+0 -> 1 (r1 turn 3, the office-entry lead-up "pushes the door open").
+**Still open:** r2 turn 4 matched "Rebecca's office" as new (1/3; r1 and
+r3 matched it to the executive office), so Kristin sat in a new place
+for turns 4-9 (the "Rebecca" as new family).
+
+**"Rebecca's office" as new: cause (2026-10-01).** Step 1 on the
+recorded turn 4: the reply ("Rebecca's office" for all three people)
+and the match call (same_as executive office) were right 3/3. The Jev
+mapping check ("Is the place called "Rebecca's office" the same place
+as "executive office", or inside it?") answered no in r2 only, so the
+name became a new place. r1 and r2 sent the same question, player and
+known state. Jev's known state says only "executive office, place
+Regional facility"; nothing says the office is Rebecca's. An alias is
+ruled out ("Rebecca's office" is a 2C must_convey, so the leak check
+would reject it in 2C).
+**Probe (`~/dev/ringer-work/freytag-3b-office-match-probe`, Ringer,
+check passed; the recorded r2 Jev call, 15 per arm):** recorded: yes
+8/15, noul 0.46-0.60 (on the 0.5 threshold); known with `"owner":
+"Rebecca Jenkins"`: yes 15/15, noul 0.82-0.84. Owned entities at 3B
+today: Kristin's truck, Michelle's workstation, Rebecca's desk.
+**Brandon chose both parts (2026-10-01). Landed as ab3bd4f** (Ringer,
+Luna, first attempt; `~/dev/ringer-work/freytag-3b-office-owner`,
+`verify_owner.py` replays r2 turn 4 offline with a stub Jev; payloads
+unchanged; suite 979). Places could not have an owner (the trial failed
+to load), so `Location.owner` and its pass-through in
+`world_source_schema_data` came with it; `_mapping_entity` adds
+`"owner": <display name>`; `executive_office` is owned by Rebecca, no
+alias. Side effect: "Rebecca's executive office" now resolves.
+**3B x3 on ab3bd4f (2026-10-01, check passed;
+`bench/results/world-3b-owner-x3`).** All three moved to 3C after turn
+9; every handoff fired; no leak rejection. "Rebecca's office" mapped to
+the executive office 3/3 (Jev yes with the owner), no new office place,
+Kristin in the executive office from turn 3 to 9 in 3/3. The desk stayed
+put; r2 turn 7 "Charles's desk" -> executive desk (Jev yes) and the
+swapped move refused. Judges vs world-3b-desk-x3: restarts 1 -> 0,
+contradicts 0 -> 0, facts correct 26 -> 25/27, beyond 1 -> 5. The beyond
+rise is judge variance, not this change: r1 and r2 turn 1 have the same
+prompt and the same narration ("rush back to the infrastructure
+corridors", the known turn-1 drift) as the desk run, judged no there and
+yes here; the rest (turn 5 Kristin studies the list, turn 7 sits at a
+desk) are narration variance on turns this change cannot reach before
+turn 4.
+
+**Place text (2026-10-01, step 1).** Two different things.
+- "Shelly" is only a label: r3 turn 9 put the tablet on Michelle
+  correctly; `_view` labels a person parent by the shortest of name and
+  aliases, which for Michelle is "Shelly".
+- "with Kristin" is a real loss. On 3B turn 3 the reply often gives the
+  memory card `"place": "with Kristin"` (every 3B run since the office
+  entry). The match call maps it to Kristin; Jev is asked "Is the place
+  called "with Kristin" on "Kristin Schweitzer"?" and says no (8/8
+  recorded), so the card goes into a new entity "with Kristin", which
+  later prompts show and the narrator echoes. Stripping "with" is reply
+  phrase parsing, which the decisions rule out.
+**Probe (`~/dev/ringer-work/freytag-with-place-probe`, Ringer, check
+passed; 4 recorded checks x 10 x 2 wordings).** "with Kristin": recorded
+0/10 (noul ~0.25), "...mean the thing is carried by...?" 0/10 (noul
+0.44-0.50). Controls held under both: "Kristin's pocket" yes 10/10,
+"prisoners" and "guard" vs Brandon no 10/10. So wording alone does not
+fix it. In "with Kristin" the card was already on Kristin: the reply
+restates no change. Across all recorded place mapping checks, 50 had the
+thing already at the match target (Jev yes 41, no 9: "with Kristin",
+r2's "Rebecca's office"); 34 did not (yes 26, no 8).
+**Brandon chose the no-change skip (2026-10-01), then building it found
+the real source.** "with Kristin" is authored: world.yaml
+`memory_card_recovered` has `{move: memory_card, parent: kristin, text:
+with Kristin}` (from S1 task 4, 89b1eea). The THINGS line shows
+`Michelle's memory card. Place: with Kristin.` (3B owner run 5/6 card
+lines, 3A 4/4, 2C 9/10) and replies copy it (3, 3, 2 turns). The other
+held-thing move (`override_codes`) has no text and shows "Kristin". The
+skip trial also missed r2's "Rebecca's office", because "Rebecca" is
+resolved only later by the thing mapping. Skip build paused for
+Brandon's call: remove the authored text first (fix at the source).
+**Brandon chose the data fix first; the trial found it breaks the game
+path.** Offline, deleting `text: with Kristin` changed no captured
+payload but failed 3 tests. The hosted runtime
+(`CloudflareTurnProvider._placement_rules`, not the bench provider)
+turns that text into the narrator rule "Michelle's memory card is with
+Kristin."; with no text the rule disappears, so the real game would
+stop telling the narrator where the card is. Not built. The text is
+right for that sentence and wrong only for the bench THINGS `Place:`
+field, which wants a bare name (W5).
+**Brandon chose the bench label (2026-10-01). Landed as 8e09018**
+(Ringer, Luna, first attempt; `~/dev/ringer-work/freytag-held-label`,
+`verify_held.py`; one line in `_view`; two hermetic tests; payloads
+unchanged; suite 981): a thing whose parent is a person shows the
+person's label in THINGS; the authored text stays in the world and the
+runtime rule. Offline trace of the loss: Kristin's room change clears
+the card's text, so a later "with Kristin" echo no longer equals the
+label, goes to the match call and Jev, and Jev's no makes a new entity.
+**3B x3 on 8e09018 (2026-10-01, check passed;
+`bench/results/world-3b-held-x3`).** All three moved to 3C after turn
+9; every handoff fired; no leak rejection. "with Kristin" in prompts 0
+and in replies 0 (was 5/6 and 3 in the owner run); every card reply is
+"Kristin", or "Michelle" when narrated (r2 turn 9, shown as "Shelly");
+no made-up place. Judges vs world-3b-owner-x3: beyond 5 -> 1, restarts
+0 -> 0, contradicts 0 -> 1 (r3 turn 9: Brandon radios the reveal
+statement word for word), facts correct 25 -> 25/27 (both turn 9, the
+broadcast turn). The no-change skip stays held: nothing is left for it
+in this run. Seen, not fixed: r2 has a second desk, "Charles's desk", in
+the executive office (it never moves).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 

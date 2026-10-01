@@ -22,7 +22,9 @@ def _scene_2a_state() -> RuntimeState:
 @pytest.mark.parametrize("scene_id", ["2A", "3B", "3C"])
 def test_inspection_console_is_fixed_in_the_infrastructure_corridors(scene_id: str) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    assert apply_scene_placements(PACKAGE, state.facts, scene_id) == ()
+    assert apply_scene_placements(PACKAGE, state.facts, "2A") == ()
+    if scene_id != "2A":
+        assert apply_scene_placements(PACKAGE, state.facts, scene_id) == ()
     world = world_for(PACKAGE, state.facts)
 
     assert world.parent("inspection_console") == "infrastructure_corridors"
