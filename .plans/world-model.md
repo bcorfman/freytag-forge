@@ -1484,7 +1484,20 @@ has no lexical scanning. Gaps:
   later arrival fact, they must key on that fact.
 - Its test plan (10 full replicates x 4 arms x 2 scenes) is heavier than
   our method: offline replay for the deterministic rule, then x3 live per
-  scene. For 3C, and for the open 3B
+  scene.
+
+**Brandon chose (2026-10-01):** build the precedence rule alone first,
+then the 2A story data. **Landed as d63bfaa** (Ringer, Luna). The
+worker's code passed the suite (975), but the check failed on my
+verifier, which read the recorded turn from the gitignored
+`bench/results/`. I gave it a copied fixture (`r1_t3_record.json`) and
+reran the same check on the worker's worktree: PASS. The offline replay
+of 3B r1 turn 3 now keeps Kristin and Michelle in the executive office
+and Brandon in the corridors, and logs "item_facts place for 'Kristin'
+('security corridors') overridden by fact rebecca_office_reached".
+Controls: with no fact set that turn, the reply's move lands; a fact
+from an earlier turn pins nobody. 3B x3 rerun running
+(`bench/results/world-3b-precedence-x3`). For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
