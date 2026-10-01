@@ -1276,7 +1276,20 @@ section, no new prose; pacing target 5, latest 6. Ringer run
 `ringer-work/freytag-3b-office-entry` (check `verify_office.py`: exact
 values, matcher cases, world moves, every payload byte-identical).
 
-**Next:** land the build, then rerun 3B x3. For 3C, and for the open 3B
+**Landed:** the office entry as 9085012 (Ringer, Luna; the first run
+stopped correctly on `tests/test_canon_journey.py`, which pins the 3B
+knowledge order; the rerun was allowed to insert `k_sl_3b_e_r1` before
+`b_r1` and drop one idle 3B turn, and passed first attempt;
+`verify_office.py` PASS, every payload byte-identical; suite 966). After
+`rebecca_office_reached`, Brandon stays in `world.companions("kristin")`
+by design (W8: a companion follows only while in the same place), so the
+"With Kristin:" line was wrong; b5326d9 lists a companion only when he
+shares her place (Ringer, Luna, first attempt). Rerun 3B x3 running
+(`bench/results/world-3b-office-x3`).
+
+**Next:** read the 3B x3 rerun: does turn 3 fire `k_sl_3b_e_r1` and
+narrate Kristin inside the office (read by hand), does turn 4 confront
+Rebecca there, and is "With Kristin: Michelle." on later turns. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
