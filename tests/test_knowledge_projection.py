@@ -33,6 +33,18 @@ def _scene_1b_state(package=PACKAGE) -> RuntimeState:
     return state
 
 
+def _scene_state(scene_id: str) -> RuntimeState:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = scene_id
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == scene_id)
+    state._assert_scene_entry_fact(scene_id)
+    return state
+
+
+def _assert_story_fact(state: RuntimeState, fact_id: str) -> None:
+    state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+
+
 def test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone_talk() -> None:
     term_to_knowledge = PACKAGE.knowledge_indexes.term_to_knowledge
 
@@ -82,6 +94,51 @@ def test_public_scene_entry_remains_in_players_committed_knowledge() -> None:
     projection = KnowledgeProjector().project(_scene_1b_state(), "player", "Search the park.")
 
     assert "k_scene_1b_entry" in _ids(projection.committed_knowledge)
+
+
+def test_moving_3b_knowledge_hides_frame_and_scene_line_but_stays_projected() -> None:
+    state = _scene_state("3B")
+    _assert_story_fact(state, "human_security_control")
+    _assert_story_fact(state, "rebecca_office_reached")
+
+    projection = KnowledgeProjector().project(state, "player", "Inspect the executive office.")
+
+    assert projection.scene_frame == ""
+    assert "k_sl_3b_e_r1" in projection.scene_hidden_ids
+    assert "k_sl_3b_e_r1" in _ids(projection.committed_knowledge)
+    assert "k_sl_3b_e_r1" in _ids(projection.sayable_knowledge)
+
+
+def test_3b_frame_remains_without_the_moving_fact() -> None:
+    state = _scene_state("3B")
+    _assert_story_fact(state, "human_security_control")
+
+    projection = KnowledgeProjector().project(state, "player", "Inspect the executive office.")
+    frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "3B")
+
+    assert projection.scene_frame == frame.situation
+    assert projection.scene_hidden_ids == ()
+
+
+def test_moving_2a_knowledge_is_scene_local() -> None:
+    state = _scene_state("2A")
+    _assert_story_fact(state, "false_identities_ready")
+
+    projection = KnowledgeProjector().project(state, "player", "Approach the facility entrance.")
+
+    assert projection.scene_frame == ""
+    assert {"k_sl_2a_b_r1", "k_sl_2a_b_r2"} <= set(projection.scene_hidden_ids)
+
+
+def test_moving_2a_knowledge_does_not_hide_the_2b_frame() -> None:
+    state = _scene_state("2B")
+    _assert_story_fact(state, "false_identities_ready")
+
+    projection = KnowledgeProjector().project(state, "player", "Approach the facility entrance.")
+    frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "2B")
+
+    assert projection.scene_frame == frame.situation
+    assert projection.scene_hidden_ids == ()
 
 
 def test_naming_only_brandon_does_not_recall_earlier_scene_knowledge() -> None:

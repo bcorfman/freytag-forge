@@ -1099,6 +1099,8 @@ class CloudflareTurnProvider:
                         for detail in beat.get("details", []):
                             scene.extend(paragraphs(detail))
             for item in player.get("committed_knowledge", []):
+                if item.get("id") in player.get("scene_hidden_ids", []):
+                    continue
                 definition = self.state.package.knowledge_indexes.by_id.get(item.get("id"))
                 if definition is not None and self.state.current_scene_id not in definition.available_in_scenes:
                     earlier_in_story.append(item["statement"])
