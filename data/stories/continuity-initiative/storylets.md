@@ -668,6 +668,44 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-2A-E — Reach the Facility
+
+**Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility)
+
+**Allowed scene:** `2A`
+
+**Available when**
+- Kristin and Brandon have their false identities ready.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+
+**Dramatic purpose**
+- Take Kristin and Brandon from the hideout to the facility, where their identities survive the initial checks.
+
+**Possible realizations**
+- Kristin and Brandon pass through several layers of security, and their identities survive the initial checks.
+
+**Effects**
+- May set `facility_perimeter_reached`.
+
+**Completion**
+- Kristin and Brandon are at the facility perimeter, past the initial identity checks.
+
+**Abort**
+- The pair leaves the scene before reaching the facility.
+
+**Protected boundary**
+- Reaching the facility does not face the supervisor; that remains `SL-2A-C`.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 7`
+- latest: `turn 8`
+
+---
+
 ### SL-2A-C — The Supervisor Needs a Reason
 
 **Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility), [2A.4 — The First Complication](plot.md#scene-2a4--the-first-complication)
@@ -1308,6 +1346,45 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-3B-E — Reach Rebecca’s Office
+
+**Source beats:** [3B.2 — Rebecca’s Office](plot.md#scene-3b2--rebeccas-office)
+
+**Allowed scene:** `3B`
+
+**Available when**
+- JANUS has been overloaded enough that human security has taken direct control.
+
+**Participants / items**
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- Brandon Corfman
+
+**Dramatic purpose**
+- Bring Kristin and Michelle into Rebecca’s office while Brandon holds off security forces.
+
+**Possible realizations**
+- Kristin and Michelle enter Rebecca’s office while Brandon holds off security forces.
+
+**Effects**
+- May set `rebecca_office_reached`.
+
+**Completion**
+- Kristin and Michelle have reached Rebecca’s office.
+
+**Abort**
+- The group leaves the scene before reaching Rebecca’s office.
+
+**Protected boundary**
+- Reaching the office does not confront Rebecca; that remains `SL-3B-B`.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 5`
+- latest: `turn 6`
+
+---
+
 ### SL-3B-B — Rebecca Bargains With the Only Thing She Still Has
 
 **Source beats:** [3B.2 — Rebecca’s Office](plot.md#scene-3b2--rebeccas-office)
@@ -1731,7 +1808,7 @@ Current bridge facts are: `michelle_lead_actionable`, `transport_route_departure
 1. **Optional means optional.** A scene must remain satisfiable even if none of its ordinary storylets are selected. Canonical bridge events may be required, but storylets only provide optional realization guidance for them.
 2. **No fixed action vocabulary.** “Possible realizations” are prompt guidance only. The LLM interprets arbitrary player roleplay and proposes semantic effects.
 3. **Scene-local context first.** Only participating/present/relevant entities should enter the default turn context. Off-scene references should add only public/currently-known facts.
-   A later scene participant is not automatically present: Brandon cannot speak in 1B until `SL-1B-B` establishes his encounter, Michelle cannot speak directly in 3A until `SL-3A-A`, the imprisoned official cannot speak directly in 3A until `SL-3A-D`, and Rebecca cannot speak directly in 3B until `SL-3B-B` brings the group to her office.
+   A later scene participant is not automatically present: Brandon cannot speak in 1B until `SL-1B-B` establishes his encounter, Michelle cannot speak directly in 3A until `SL-3A-A`, the imprisoned official cannot speak directly in 3A until `SL-3A-D`, and Rebecca cannot speak directly in 3B until `SL-3B-E` brings the group to her office.
 4. **Pressure carries pacing.** `SL-2C-B`, `SL-3A-C`, and the deluge/broadcast situations are natural places for deterministic pressure. Pressure may force circumstances to worsen or a canonical event to become urgent, but it must not grant Kristin unexplained knowledge.
 5. **Required dependencies stay explicit elsewhere.** The memory card, Brandon, broadcast access, relay access, archive, or any substitutes/fallbacks should be declared in the package dependency model; this file does not silently make them mandatory.
 6. **Protected revelations are monotonic.** Optional content can foreshadow later facts, but it must not make a protected revelation true/known before the original scene permits it.

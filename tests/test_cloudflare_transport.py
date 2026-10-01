@@ -191,6 +191,34 @@ def test_recalled_earlier_knowledge_has_its_own_prompt_section(monkeypatch) -> N
     assert statement not in scene
 
 
+def test_moving_knowledge_stays_in_constraints_but_not_scene(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured["payload"] = json.loads(request.data)
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"ok"}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "3B"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "3B")
+    state._assert_scene_entry_fact("3B")
+    state.facts.assert_fact(Fact(predicate="human_security_control", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
+
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    provider("Inspect the executive office.")
+
+    statement = PACKAGE.knowledge_indexes.by_id["k_sl_3b_e_r1"].statement
+    situation = next(item.situation for item in PACKAGE.knowledge.scene_frames if item.scene_id == "3B")
+    user_prompt = captured["payload"]["user"]
+    scene = user_prompt.split("\n\nCONSTRAINTS:\n", 1)[0]
+    constraints = user_prompt.split("\n\nCONSTRAINTS:\n", 1)[1]
+    assert statement not in scene
+    assert situation not in scene
+    assert "may say this aloud: " + statement in constraints
+
+
 def test_transport_caps_long_reply_and_records_telemetry(monkeypatch) -> None:
     reply = {"segments": [{"kind": "narration", "text": f"Opening {index}."} for index in range(9)]}
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))

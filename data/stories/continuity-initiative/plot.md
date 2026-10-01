@@ -611,7 +611,16 @@ location_id: detention_level
 freytag_phase: crisis
 objective: Reach Michelle and join the uprising
 participant_ids: [kristin, michelle, brandon, senior_official]
-item_ids: [override_codes]
+companions: [brandon]
+item_ids: [override_codes, stolen_radio, gate_status_panel]
+item_placements:
+  override_codes: {parent: senior_official}
+  stolen_radio: {parent: detention_level}
+  gate_status_panel: {parent: detention_level}
+character_placements:
+  captives: {parent: detention_level}
+  senior_official: {parent: captives}
+  michelle: {parent: detention_level}
 entry_text: "A partly unsecured detention sector opened onto rows of captives. Coded announcements crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.\n\n"
 transition_ids: [t_3a_3b]
 bridge_text:
@@ -684,9 +693,13 @@ location_id: broadcast_relay
 freytag_phase: climax
 objective: Overload JANUS and seize the broadcast
 participant_ids: [kristin, michelle, brandon, rebecca]
+companions: [brandon, michelle]
 item_ids: [inspection_console]
 item_placements:
   inspection_console: {parent: infrastructure_corridors}
+character_placements:
+  kristin: {parent: security_corridors}
+  rebecca: {parent: executive_office}
 entry_text: "Alarms layered over alarms as the facility fought to predict its attackers. Above the fighting, Rebecca's executive office and the external broadcast relay waited at the end of corridors that JANUS watched move by move.\n\n"
 transition_ids: [t_3b_3c]
 bridge_text:

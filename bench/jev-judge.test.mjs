@@ -252,13 +252,15 @@ test("judgeInput uses the protagonist location question only for the protagonist
   const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
   assert.equal(requests[0].questions.moved.instructions, "At the end of this turn, is `Kristin` in a different room or area from the one `Kristin` started in? Answer from `narrator_narration` only.");
   assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn in another room, in a vehicle, or somewhere else outdoors.");
-  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` ends the turn in the room or area where `Kristin` started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move.");
-  assert.equal(requests[1].questions.moved.instructions, "At the end of this turn, is `desk` held by a different person, or in a different place, than at the start of this turn? Answer from `narrator_narration` only.");
+  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` ends the turn in the room or area where `Kristin` started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.");
+  assert.equal(requests[1].questions.moved.instructions, "At the end of this turn, is `desk` held by a different person, or in a different place, than `before_place`? Answer from `narrator_narration` only.");
   assert.equal(requests[0].state.command, "Search the room.");
   assert.equal(requests[0].state.just_before, "Engine moves Kristin.");
   assert.equal(requests[0].state.narrator_narration, "Kristin walks over to the desk.");
   assert.deepEqual(requests[0].state.after_place_contains, ["desk"]);
+  assert.match(requests[0].questions.moved.criteria.false, /`before_place` already counts every step in `just_before`, so a step in `just_before` is never a move\./);
   assert.match(requests[1].questions.moved.criteria.false, /pocket or a bag/);
+  assert.match(requests[1].questions.moved.criteria.false, /`before_place` already counts every step in `just_before`, so a step in `just_before` is never a move\./);
   await rm(dir, { recursive: true, force: true });
 });
 
@@ -434,7 +436,98 @@ test("judgeInput rejects a later Jev model version", async () => {
     return { status: 200, json: async () => ({ success: true, errors: [], result: { state: "Completed", result: { model: calls === 1 ? "jev-1" : "jev-2", answers, usage: {} } } }) };
   };
   const input = { runs: [{ turns: [{ scene_id: "1A", player_input: "Look at the desk.", narration: "x", item_facts_before: {}, item_facts_after: {} }, { scene_id: "1A", player_input: "Look at the door.", narration: "y", item_facts_before: {}, item_facts_after: {} }] }] };
-  await assert.rejects(() => judgeInput(input, { packagePath: dir, environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" }, fetchImpl }), /model changed/);
+  // This stub chooses its model by sequential call number, so keep this regression check sequential.
+  await assert.rejects(() => judgeInput(input, { packagePath: dir, concurrency: 1, environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" }, fetchImpl }), /model changed/);
   assert.equal(calls, 2);
   await rm(dir, { recursive: true, force: true });
 });
+
+test("concurrent judging keeps ordered output identical", async () => {
+  const dir = await packageDir();
+  const input = {
+    runs: [{ turns: [
+      { scene_id: "1A", player_input: "Search the desk.", narration: "She searches the desk.", item_facts_before: { desk: { place: "room", condition: [] } }, item_facts_after: { desk: { place: "room", condition: ["open"] }, lamp: { place: "desk", condition: [] } } },
+      { scene_id: "1A", player_input: "Take the lamp.", narration: "She takes the lamp.", item_facts_before: { lamp: { place: "desk", condition: [] } }, item_facts_after: { lamp: { place: "hand", condition: [] } } },
+    ] }],
+  };
+  const options = { packagePath: dir, environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" } };
+  const sequential = await judgeInput(input, { ...options, concurrency: 1, fetchImpl: delayedFetch(0) });
+  const concurrent = await judgeInput(input, { ...options, concurrency: 8, fetchImpl: delayedFetch(7) });
+  assert.deepEqual(concurrent, sequential);
+  await rm(dir, { recursive: true, force: true });
+});
+
+test("split continuity answers keep request order when responses finish out of order", async () => {
+  const dir = await packageDir();
+  const input = { runs: [{ turns: [{
+    scene_id: "1A",
+    player_input: "Search the desk.",
+    narration: "She searches the desk.",
+    item_facts_before: {},
+    item_facts_after: {},
+  }] }] };
+  const options = { packagePath: dir, variant: "split", judges: "continuity", environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" } };
+  const sequential = await judgeInput(input, { ...options, concurrency: 1, fetchImpl: delayedFetch(0) });
+  const concurrent = await judgeInput(input, { ...options, concurrency: 8, fetchImpl: reverseFetch });
+  assert.deepEqual(concurrent.continuity, sequential.continuity);
+  await rm(dir, { recursive: true, force: true });
+});
+
+test("concurrent judging respects its in-flight cap", async () => {
+  const dir = await packageDir(); let inFlight = 0; let maximum = 0; let calls = 0;
+  const fetchImpl = async (_url, options) => {
+    calls++; inFlight++; maximum = Math.max(maximum, inFlight);
+    await new Promise((resolve) => setTimeout(resolve, 2));
+    inFlight--;
+    return jevResponse(options);
+  };
+  const input = { runs: [{ turns: Array.from({ length: 5 }, (_, i) => ({ scene_id: "1A", player_input: `Search desk ${i}.`, narration: "She searches.", item_facts_before: {}, item_facts_after: {} })) }] };
+  await judgeInput(input, { packagePath: dir, concurrency: 4, environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" }, fetchImpl });
+  assert.equal(maximum, 4); assert.ok(calls > 4);
+  await rm(dir, { recursive: true, force: true });
+});
+
+test("judgeInput retries rate limits without adding raw entries", async () => {
+  const dir = await packageDir(); const input = { runs: [{ turns: [{ scene_id: "1A", player_input: "Search the desk.", narration: "She searches.", item_facts_before: {}, item_facts_after: {} }] }] };
+  let attempts = 0;
+  const retrying = await judgeInput(input, {
+    packagePath: dir, concurrency: 1, sleep: async () => {},
+    environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+    fetchImpl: async (_url, options) => attempts++ === 0 ? { status: 429, headers: new Headers([["retry-after", "0"]]), json: async () => ({}) } : jevResponse(options),
+  });
+  const normal = await judgeInput(input, { packagePath: dir, concurrency: 1, environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" }, fetchImpl: delayedFetch(0) });
+  assert.equal(attempts, 2); assert.deepEqual(retrying, normal);
+  await rm(dir, { recursive: true, force: true });
+});
+
+test("judgeInput fails after six rate limits", async () => {
+  const dir = await packageDir(); let attempts = 0;
+  await assert.rejects(() => judgeInput({ runs: [{ turns: [{ scene_id: "1A", player_input: "Search the desk.", narration: "She searches.", item_facts_before: {}, item_facts_after: {} }] }] }, {
+    packagePath: dir, concurrency: 1, sleep: async () => {}, environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+    fetchImpl: async () => { attempts++; return { status: 429, json: async () => ({}) }; },
+  }), /HTTP 429/);
+  assert.equal(attempts, 6);
+  await rm(dir, { recursive: true, force: true });
+});
+
+function jevResponse(options) {
+  const questions = JSON.parse(options.body).input.questions;
+  const answers = Object.fromEntries(Object.keys(questions).map((name) => [name, { type: "noul", noul: 0.1 }]));
+  return { status: 200, json: async () => ({ success: true, errors: [], result: { state: "Completed", result: { model: "jev-1", answers, usage: {} } } }) };
+}
+
+function delayedFetch(delay) {
+  let call = 0;
+  return async (_url, options) => {
+    const wait = (call++ * delay) % 9;
+    if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+    return jevResponse(options);
+  };
+}
+
+let reverseFetchCall = 0;
+async function reverseFetch(_url, options) {
+  const wait = (2 - (reverseFetchCall++ % 3)) * 2;
+  if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+  return jevResponse(options);
+}

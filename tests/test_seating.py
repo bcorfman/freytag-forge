@@ -172,6 +172,51 @@ def test_no_seat_nearby_gets_no_steps():
     assert result.asked is False
 
 
+def test_seating_names_unrelated_command_is_not_asked():
+    _, world = _world()
+    _put_player_and_laptop_in_kitchen(world)
+    asked = []
+
+    result = seat_before_use(
+        world,
+        PACKAGE,
+        "Read the identification numbers on the prisoners below.",
+        lambda *args: asked.append(args) or True,
+    )
+
+    assert result.steps == ()
+    assert result.asked is False
+    assert result.issues == ()
+    assert asked == []
+
+
+def test_seating_names_possessive_head_still_asks_and_seats():
+    _, world = _world()
+    _put_player_and_laptop_in_kitchen(world)
+
+    result = seat_before_use(world, PACKAGE, "Search my laptop for Michelle's files.", lambda *_: True)
+
+    assert result.steps == (
+        "Kristin set the workstation chair upright.",
+        "Kristin sat down in the workstation chair.",
+        "Kristin picked up her laptop.",
+    )
+    assert result.asked is True
+
+
+def test_seating_nearby_nested_area_does_not_use_seat():
+    _, world = _world()
+    assert world.move("kristin", "observation_shaft").ok
+    assert world.move("kristin_laptop", "observation_shaft").ok
+    assert world.move("workstation_chair", "freight_terminal").ok
+
+    result = seat_before_use(world, PACKAGE, "Read the files on my laptop.", lambda *_: True)
+
+    assert result.steps == ()
+    assert result.asked is False
+    assert world.parent("kristin") == "observation_shaft"
+
+
 def test_truck_laptop_uses_driver_seat_and_is_picked_up():
     _, world = _world()
     assert world.move("kristin", "outside_house").ok

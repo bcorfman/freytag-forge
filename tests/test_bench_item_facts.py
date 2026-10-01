@@ -15,8 +15,9 @@ from bench.item_facts import (
     validate_item_facts,
 )
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import apply_scene_placements, world_for
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
 
@@ -539,6 +540,125 @@ def test_match_payload_gives_placed_character_place_from_real_package():
     )
 
     assert "- Brandon. Place: across the park from Kristin." in payload["user"].splitlines()
+
+
+def _scene_1b_provider():
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "1B"
+    apply_scene_placements(PACKAGE, state.facts, "1B")
+    return ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+
+
+def _scene_provider(scene_id, *, item_facts=None):
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = scene_id
+    apply_scene_placements(PACKAGE, state.facts, scene_id)
+    return ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts=item_facts or {},
+        mode="single_call",
+        seed_from_package=True,
+    )
+
+
+def _office_reveal_provider():
+    provider = _scene_provider("3B")
+    provider.state.facts.assert_fact(Fact(predicate="human_security_control", subject="story", value="true"))
+    provider.prepare_turn("Lead Michelle into the executive office.")
+    provider.state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
+    apply_world_effects(PACKAGE, provider.state.facts)
+    return provider
+
+
+def test_new_authored_move_overrides_conflicting_reply_places_and_companion():
+    provider = _office_reveal_provider()
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "security corridors"}, "Michelle": {"place": "security corridors"}}
+    )
+    world = provider._world()
+
+    assert world.parent("kristin") == "executive_office"
+    assert world.parent("michelle") == "executive_office"
+    assert world.parent("brandon") == "security_corridors"
+    overridden = [issue for issue in issues if "overridden" in issue]
+    assert any("rebecca_office_reached" in issue and "Kristin" in issue for issue in overridden)
+
+
+def test_reply_place_lands_when_no_fact_is_newly_set():
+    provider = _scene_provider("3B")
+    provider.prepare_turn("Lead Michelle into the executive office.")
+
+    _facts, issues = provider.apply_item_facts({"Kristin": {"place": "security corridors"}})
+
+    assert provider._world().parent("kristin") == "security_corridors"
+    assert not any("overridden" in issue for issue in issues)
+
+
+def test_fact_true_before_prepare_turn_does_not_pin_a_later_reply():
+    provider = _scene_provider("3B")
+    provider.state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
+    apply_world_effects(PACKAGE, provider.state.facts)
+    provider.prepare_turn("Lead Michelle into the executive office.")
+
+    _facts, issues = provider.apply_item_facts({"Kristin": {"place": "security corridors"}})
+
+    assert provider._world().parent("kristin") == "security_corridors"
+    assert not any("overridden" in issue for issue in issues)
+
+
+def test_override_keeps_other_fields_and_other_entity_places():
+    provider = _office_reveal_provider()
+
+    _facts, _issues = provider.apply_item_facts(
+        {
+            "Brandon": {"place": "executive office", "condition": ["tired"]},
+            "Kristin's laptop": {"place": "workstation"},
+        }
+    )
+    world = provider._world()
+
+    assert world.parent("kristin") == "executive_office"
+    assert world.parent("brandon") == "security_corridors"
+    assert world.conditions("brandon") == ("tired",)
+    assert world.parent("kristin_laptop") == "michelle_workstation"
+
+
+def test_prepare_turn_gives_visible_contents_under_referred_park_bench(monkeypatch):
+    provider = _scene_1b_provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": ["park bench"], "same_as": {}},
+    )
+
+    provider.prepare_turn("Look under the park bench.")
+
+    names = provider._thing_names()
+    assert "handwritten number sequence" in names
+    assert "Michelle's photograph" in names
+    assert "Transit token" in names
+    assert "- handwritten number sequence." in provider._things_block()
+
+
+def test_prepare_turn_without_referred_park_bench_omits_its_contents(monkeypatch):
+    provider = _scene_1b_provider()
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": [], "same_as": {}})
+
+    provider.prepare_turn("Walk across the park to the man watching me.")
+
+    names = provider._thing_names()
+    assert "handwritten number sequence" not in names
+    assert "Michelle's photograph" not in names
 
 
 def test_match_payload_only_lists_things_in_play_for_each_scene():
@@ -2293,6 +2413,259 @@ def _new_place_kind_provider(monkeypatch, reply, calls=None):
     return provider
 
 
+def _new_group_scoped_alias_provider(monkeypatch, reply, calls=None):
+    variation = load_variation(ROOT / "bench" / "variations" / "item-facts-world-3a.json")
+    _, state = seeded_state_for_scene(variation, "3A")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+
+    def request(_provider, payload):
+        if calls is not None:
+            calls.append(payload)
+        return reply
+
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
+    provider._ensure_scene_seeded()
+    return provider
+
+
+def test_group_scoped_alias_resolves_placed_group_in_scene(monkeypatch):
+    provider = _new_group_scoped_alias_provider(monkeypatch, {"refers": [], "same_as": {}})
+    world = provider._world()
+
+    assert provider._resolve_name(world, "prisoners") == "captives"
+
+
+def test_group_scoped_alias_prepare_turn_selects_group(monkeypatch):
+    provider = _new_group_scoped_alias_provider(monkeypatch, {"refers": ["prisoners"], "same_as": {}})
+
+    result = provider.prepare_turn("Ask the prisoners who runs this block.")
+
+    assert "detention captives" in provider.item_facts
+    assert provider._referred_names == ["detention captives"]
+    assert "detention captives" in provider._selected_names
+    assert result["engine_resolutions"] == {"prisoners": "detention captives"}
+
+
+def test_group_scoped_alias_does_not_resolve_outside_group_scene_scope(monkeypatch):
+    provider = _new_place_kind_provider(monkeypatch, {"refers": [], "same_as": {}})
+
+    assert provider._resolve_name(provider._world(), "prisoners") is None
+
+
+def _group_narrator_prompt(monkeypatch, group_members=()):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"prisoners": "new"}, "kind": {"prisoners": "group"}},
+    )
+    provider.apply_item_facts(
+        {"prisoners": {"place": "command levels"}},
+        player_input="Ask the prisoners who runs this level.",
+    )
+    for member in group_members:
+        provider.apply_item_facts(
+            {member: {"place": "prisoners"}},
+            player_input=f"Join the prisoners with {member}.",
+        )
+    provider._selected_names = ["prisoners"]
+    provider._referred_names = ["prisoners"]
+    return provider, provider._section_user_prompt({"player_input": "Ask the prisoners who runs this level."})
+
+
+def test_group_talk_empty_group_says_nothing(monkeypatch):
+    _provider, prompt = _group_narrator_prompt(monkeypatch)
+
+    assert (
+        "- prisoners. Place: command levels. This is a group of people. If the player talks to them, they say nothing."
+    ) in prompt
+
+
+def test_group_talk_member_answers(monkeypatch):
+    _provider, prompt = _group_narrator_prompt(monkeypatch, ("Brandon",))
+
+    assert (
+        "- prisoners. Place: command levels. This is a group of people. If the player talks to them, Brandon answers."
+    ) in prompt
+
+
+def test_group_talk_player_does_not_answer(monkeypatch):
+    provider, prompt = _group_narrator_prompt(monkeypatch, ("Kristin",))
+
+    assert (
+        "- prisoners. Place: command levels. This is a group of people. If the player talks to them, Brandon answers."
+    ) in prompt
+    assert "Kristin answers" not in prompt
+    assert "This is a group of people." not in provider._things_block()
+
+
+def test_group_talk_capture_things_block_has_no_talk_line(monkeypatch):
+    provider, prompt = _group_narrator_prompt(monkeypatch, ("Brandon",))
+
+    assert "If the player talks to them, Brandon answers." in prompt
+    things = provider._things_block()
+    assert "- prisoners. Place: command levels." in things
+    assert "If the player talks to them" not in things
+
+
+def test_group_talk_not_addressed_has_plain_line(monkeypatch):
+    provider, _prompt = _group_narrator_prompt(monkeypatch, ("Brandon",))
+    provider._referred_names = []
+    prompt = provider._section_user_prompt({"player_input": "Search the command levels."})
+
+    assert "- prisoners. Place: command levels." in prompt
+    assert "This is a group of people." not in prompt
+
+
+def test_prepare_turn_tracks_referred_names_and_clears_them(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"prisoners": "new"}, "kind": {"prisoners": "group"}},
+    )
+    provider.apply_item_facts(
+        {"prisoners": {"place": "command levels"}},
+        player_input="Ask the prisoners who runs this level.",
+    )
+    replies = iter(
+        [
+            {"refers": ["prisoners"], "same_as": {}},
+            {"refers": [], "same_as": {}},
+        ]
+    )
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: next(replies))
+
+    provider.prepare_turn("Ask the prisoners who runs this level.")
+    assert provider._referred_names == ["prisoners"]
+
+    provider.prepare_turn("Search the command levels.")
+    assert provider._referred_names == []
+
+
+def test_prepare_turn_adds_referred_people_and_places_only_to_narration_things():
+    provider = _scene_provider("3B")
+
+    provider.prepare_turn("Lead Michelle into the executive office.")
+
+    assert provider._things_block(narration=True).splitlines() == [
+        "THINGS:",
+        "- Kristin. Place: security corridors. With Kristin: Brandon, Michelle.",
+        "- Michelle. Place: security corridors.",
+        "- executive office. This is a place.",
+    ]
+    assert "Michelle" not in provider._things_block()
+    assert "executive office" not in provider._things_block()
+
+
+def test_with_line_drops_a_companion_in_another_place():
+    provider = _scene_provider("3B")
+    provider.state.facts.assert_fact(Fact(predicate="relay_open", subject="story", value="true"))
+    assert apply_world_effects(PACKAGE, provider.state.facts) == ()
+
+    line = next(line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin."))
+    assert line == "- Kristin. Place: security corridors. With Kristin: Michelle."
+
+
+def test_with_line_is_absent_when_no_companion_is_present():
+    provider = _scene_provider("3B")
+    provider.state.facts.assert_fact(Fact(predicate="relay_open", subject="story", value="true"))
+    assert apply_world_effects(PACKAGE, provider.state.facts) == ()
+    assert provider._world().move("michelle", "broadcast_relay").ok
+
+    line = next(line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin."))
+    assert line == "- Kristin. Place: security corridors."
+
+
+def test_prepare_turn_does_not_refer_to_a_distant_person():
+    provider = _scene_provider("2B")
+
+    provider.prepare_turn("Search the archive terminals for Michelle's record.")
+
+    assert provider._referred_lines == []
+
+
+def test_prepare_turn_refers_to_nested_place_but_not_current_place():
+    provider = _scene_provider("3A")
+
+    provider.prepare_turn("Follow Michelle into the medical level.")
+    assert provider._referred_lines == [
+        "- Michelle. Place: detention level.",
+        "- medical level. This is a place.",
+    ]
+
+    provider.prepare_turn("Lead Michelle into the detention level.")
+    assert provider._referred_lines == ["- Michelle. Place: detention level."]
+    assert "- detention level. This is a place." not in provider._things_block(narration=True)
+
+
+def test_prepare_turn_records_referred_lines_on_match_call(monkeypatch):
+    provider = _scene_provider("3B", item_facts={"mystery": {"place": "Kristin", "condition": []}})
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"refers": [], "same_as": {}},
+    )
+
+    result = provider.prepare_turn("Lead Michelle into the executive office.")
+
+    assert result["match_call"]
+    assert provider._referred_lines == [
+        "- Michelle. Place: security corridors.",
+        "- executive office. This is a place.",
+    ]
+
+
+def test_prepare_turn_replaces_referred_lines_on_next_turn():
+    provider = _scene_provider("3B")
+
+    provider.prepare_turn("Lead Michelle into the executive office.")
+    provider.prepare_turn("Trigger false water-pressure alarms in the empty service corridors.")
+
+    assert provider._referred_lines == []
+
+
+def test_prepare_turn_orders_possessive_place_without_error():
+    provider = _scene_provider("3B")
+
+    provider.prepare_turn("Drive home.")
+
+    assert "- Michelle's house. This is a place." in provider._referred_lines
+
+
+def test_entity_label_keeps_shortest_name():
+    provider = _scene_provider("3B")
+
+    assert provider._entity_label(provider._world(), "michelle") == "Shelly"
+    assert "With Kristin: Brandon, Michelle." in provider._things_block(narration=True)
+
+
+def test_group_member_player_follows_with_companion_and_new_thing_uses_group_place(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"console": "new"}, "kind": {"console": "thing"}},
+    )
+    world = provider._world()
+    group = world.create("prisoners", parent="purge_chamber", kind="group")
+    assert group.ok
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "prisoners"}, "console": {"place": "prisoners"}},
+        player_input="Join the prisoners and carry the console.",
+    )
+
+    assert not issues
+    assert world.parent("kristin") == group.id
+    assert world.parent("brandon") == group.id
+    console_id = world.resolve("console")
+    assert console_id is not None
+    assert world.parent(console_id) == "purge_chamber"
+
+
 def test_new_place_kind_thing_creates_container_and_reuses_it(monkeypatch):
     calls = []
     provider = _new_place_kind_provider(
@@ -2494,6 +2867,26 @@ def test_new_place_kind_new_reply_key_person_is_character(monkeypatch):
     guard = world.resolve("guard")
     assert guard is not None and world.is_a(guard, "character")
     assert world.area(guard) == player_area
+
+
+def test_new_place_kind_new_reply_key_place_uses_player_area_without_mapping_check(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"observatory": "new"}, "kind": {"observatory": "place"}},
+    )
+    world = provider._world()
+    player_area = world.area(provider.state.package.world.protagonist_id)
+
+    provider.apply_item_facts(
+        {"observatory": {"condition": ["open"]}},
+        player_input="Enter the observatory.",
+    )
+
+    world = provider._world()
+    observatory = world.resolve("observatory")
+    assert observatory is not None and world.is_a(observatory, "area")
+    assert world.parent(observatory) == player_area
+    assert provider.last_item_facts_match()["mapping_checks"] == []
 
 
 def test_new_place_echo_thing_creates_container_and_places_mover(monkeypatch):

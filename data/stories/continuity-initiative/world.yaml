@@ -39,10 +39,19 @@ locations:
   aliases: [maintenance route, maintenance routes]
   parent: purge_chamber
 - id: detention_level
-  name: Detention level
+  name: detention level
   parent: regional_facility
+- id: medical_level
+  name: medical level
+  parent: detention_level
 - id: broadcast_relay
   name: Broadcast relay
+  parent: regional_facility
+- id: security_corridors
+  name: security corridors
+  parent: regional_facility
+- id: executive_office
+  name: executive office
   parent: regional_facility
 - id: facility_escape
   name: Facility escape route
@@ -111,6 +120,10 @@ npcs:
   - imprisoned official
   - government prisoner
   narrator_bio: A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
+groups:
+- id: captives
+  name: detention captives
+  scoped_aliases: [prisoners, prisoner, captives, captive]
 items:
 - id: memory_card
   name: Michelle's memory card
@@ -173,7 +186,13 @@ items:
   name: handwritten number sequence
   aliases: [number sequence, handwritten sequence]
 - id: override_codes
-  name: Emergency override codes
+  name: emergency override codes
+  hidden: true
+- id: stolen_radio
+  name: stolen radio
+- id: gate_status_panel
+  name: gate-status panel
+  fixed: true
 - id: portable_archive
   name: Portable data case
   aliases:
@@ -207,13 +226,16 @@ facts:
 - scene_3c_entry_known
 - michelle_abduction_suspicion
 - facility_proof
-- id: false_identities_ready
+- false_identities_ready
+- id: facility_perimeter_reached
   on_assert:
   - {move: kristin, parent: facility_perimeter}
 - janus_evidence
 - purge_clock_started
 - michelle_reached
-- relay_open
+- id: relay_open
+  on_assert:
+  - {move: brandon, parent: broadcast_relay}
 - broadcast_started
 - continuity_initiative_known
 - michelle_warning_known
@@ -249,8 +271,15 @@ facts:
 - uprising_prepared
 - conditioned_release_plan_known
 - behavioral_experiments_known
-- military_override_codes_available
+- id: military_override_codes_available
+  on_assert:
+  - {move: override_codes, parent: kristin}
+  - {reveal: override_codes}
 - human_security_control
+- id: rebecca_office_reached
+  on_assert:
+  - {move: kristin, parent: executive_office}
+  - {move: brandon, parent: security_corridors}
 - detention_locations_offer_known
 - charles_abandoned_rebecca
 - brandon_confession_available

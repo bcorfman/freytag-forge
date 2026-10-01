@@ -75,7 +75,7 @@ def _future_knowledge_ids(scene_index: int, positions: dict[str, int]) -> set[st
 def _entity_first_positions(positions: dict[str, int]) -> dict[str, int]:
     first_positions = {
         entity.id: len(PACKAGE.scenes)
-        for group in (PACKAGE.world.locations, PACKAGE.world.npcs, PACKAGE.world.items)
+        for group in (PACKAGE.world.locations, PACKAGE.world.npcs, PACKAGE.world.groups, PACKAGE.world.items)
         for entity in group
     }
     for index, scene in enumerate(PACKAGE.scenes):

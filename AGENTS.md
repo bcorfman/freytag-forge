@@ -83,6 +83,53 @@ list — easiest to forget), `_system_prompt`, `_section_user_prompt`,
 `_scene_setting`, and `_recover_malformed_response`. Where two paths need the
 same rule, build it in one helper and call it from both.
 
+## Fixing a Scene
+
+**Recommend only proven techniques.** Before proposing any fix or design, find
+how this is already handled:
+- the decisions in `.plans/world-model.md` (the W decisions in section 12, and
+  "Brandon chose" entries);
+- `docs/world-model-grounding.md`;
+- the fixes that landed in earlier scenes.
+
+Recommend that. Propose something new only when none of them covers the case.
+Say so plainly, and name what you checked. Example: a companion split is
+already decided (W8, "a companion moves with the protagonist only while it is
+in the same place"). An invented split effect contradicted that decision.
+
+Each scene goes through the same steps: ground it (places, things,
+placements; payloads byte-identical except approved lines), add reveal
+handoffs, write a bench script, run three live replicates, then fix what they
+show. When a turn narrates the wrong thing, or misses what the plot says
+happens, follow these steps in order. Rules and engine changes made before
+step 1 have mostly cost time.
+
+1. **Read the failing turn's recorded prompt in full, next to the scene in
+   `plot.md`.** Does the prompt carry the story's material for what should
+   happen? Does a line pull the other way (a SCENE line that frames it
+   differently, a talk line, stale recall)? Most misses so far were one of
+   these: 3B's office entry (no 3B.2 line), 3A's captives talk line, 2C's
+   silent stance, 2C's stale 1A recall.
+2. **Probe the recorded prompts before building anything.** Replay them live
+   with one arm per candidate cause. Add the missing plot sentence copied
+   unchanged, or remove the line that pulls. Use 10-15 samples per arm, run by
+   Ringer, and read every narration by hand. Score what the narration does, not
+   the reply's `item_facts`: they report moves the prose never made. On a
+   reveal turn, score the narration plus the appended delivery text. The
+   narrator is told to write only the lead-up, so a lead-up that stops short
+   is the handoff working.
+3. **Fix at the source the probe points to.**
+   - Missing story material is a reveal handoff or a statement written in
+     ChatGPT Desktop, then scored with the real matcher.
+   - A line that pulls wrong is scoped or removed, by Ringer.
+   - A narrator rule comes last. Use it only for a story-neutral behaviour,
+     and only if it wins its probe arm. Most rules tried have lost: the
+     go-into-a-place rule (1/15 vs 4/15), the plain-corridor rule and the copy-refers rule
+     (both made it worse). One won: "When the player talks to someone, that
+     person answers."
+4. **Rerun the same bench script and replicate count, and read it with the
+   scene check.** Then record in the plan what changed and what is still open.
+
 ## Forbidden Patterns
 
 - No story/genre-specific runtime branches, fixed action tables, hand-edited generated artifacts, or prose as canonical truth.

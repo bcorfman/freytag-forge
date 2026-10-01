@@ -30,3 +30,9 @@ These labels come from one story. Tuning a judge until it agrees with this
 corpus does not show that it generalizes to another story.
 
 An optional `superseded` block records labels that are kept for reference but skipped when scoring.
+
+`labels-handoffs-*.json` are Claude's labels, not the author's, on the
+authored-handoff turns only of four runs (1B-1C, 2B, 2C, 3A); every other
+turn is unlabelled. Their `notes.rulings` give the rulings applied: read the
+turn in order, game steps are not part of the command, and a delivered
+sentence can finish a command or complete a search.

@@ -32,7 +32,10 @@ class RevealCandidate(_KnowledgeModel):
 
 
 class TurnKnowledgeContext(_KnowledgeModel):
-    """The complete fact-derived provider contract for one audience."""
+    """The complete fact-derived provider contract for one audience.
+
+    Moving knowledge stays committed for grounding and speech, but can be hidden from the scene text.
+    """
 
     scene_id: str
     phase: str
@@ -46,6 +49,7 @@ class TurnKnowledgeContext(_KnowledgeModel):
     continuity_ids: tuple[str, ...]
     candidates: tuple[RevealCandidate, ...]
     handoff_deliveries: tuple[FactDelivery, ...] = ()
+    scene_hidden_ids: tuple[str, ...] = ()
 
     def payload_size(self) -> int:
         return len(self.model_dump_json(exclude={"sayable_knowledge"}).encode())
@@ -68,7 +72,7 @@ def _input_referenced_entity_ids(world, player_input: str) -> frozenset[str]:
     folded_input = player_input.casefold()
     return frozenset(
         entity.id
-        for entities in (world.locations, world.npcs, world.items)
+        for entities in (world.locations, world.npcs, world.groups, world.items)
         for entity in entities
         if any(re.search(rf"(?<!\w){re.escape(form)}(?!\w)", folded_input) for form in _entity_surface_forms(entity))
     )
@@ -101,6 +105,7 @@ class KnowledgeProjector:
             frame for frame in state.package.knowledge.scene_frames if frame.scene_id == state.current_scene_id
         )
         committed = self._committed_for(state, audience_id, player_input)
+        scene_hidden_ids = self._moving_item_ids(state)
         # What a speaker may say aloud is a tighter, scene-focused slice than the
         # grounding basis; they are not the same list.
         sayable = self._established_for(state, audience_id, self.max_sayable_knowledge)
@@ -110,7 +115,7 @@ class KnowledgeProjector:
         return TurnKnowledgeContext(
             scene_id=state.current_scene_id,
             phase=state.phase,
-            scene_frame=frame.situation,
+            scene_frame="" if scene_hidden_ids else frame.situation,
             pressure=frame.pressure,
             audience_id=audience_id,
             committed_knowledge=committed,
@@ -122,6 +127,23 @@ class KnowledgeProjector:
             handoff_deliveries=tuple(
                 delivery for delivery in state.package.deliveries if delivery.fact_id in state.staged_handoff_fact_ids
             ),
+            scene_hidden_ids=scene_hidden_ids,
+        )
+
+    def _moving_item_ids(self, state: RuntimeState) -> tuple[str, ...]:
+        """Return established current-scene claims that move the protagonist."""
+
+        moving_facts = {
+            fact_id
+            for fact_id, effects in state.package.world.fact_effects.items()
+            if any(effect.move == state.package.world.protagonist_id for effect in effects)
+        }
+        return tuple(
+            item.id
+            for item in state.package.knowledge.knowledge
+            if state.current_scene_id in item.available_in_scenes
+            and self._established(item, state)
+            and any(operation.op == "assert" and operation.fact_id in moving_facts for operation in item.establishes)
         )
 
     def _established_for(self, state: RuntimeState, audience_id: str, limit: int) -> tuple[ProjectedKnowledge, ...]:

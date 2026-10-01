@@ -1,0 +1,37 @@
+{
+  "name": "item-facts-world-3b",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 12,
+  "entry_state": "thorough",
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "system_prompt": {
+    "constant_rules_in_system": true,
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"place\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+  },
+  "scripts": {
+    "3B": [
+      {
+        "name": "battle-for-the-broadcast",
+        "inputs": [
+          "Trigger false water-pressure alarms from the inspection console.",
+          "Cycle the doors and lights in the empty corridors.",
+          "Lead Michelle into the executive office.",
+          "Show Rebecca the experiment approvals.",
+          "Copy Rebecca's list of detention sites.",
+          "Ask Rebecca whether Charles will come for her.",
+          "Read Charles's remote order.",
+          "Tell Brandon to cut the relay off from JANUS.",
+          "Start the broadcast with Michelle.",
+          "Warn Michelle about the rising water.",
+          "Radio Brandon at the relay.",
+          "Lock the office door behind Rebecca."
+        ]
+      }
+    ]
+  }
+}

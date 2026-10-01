@@ -1,6 +1,6 @@
 # World model: plan
 
-Status (2026-09-28): decisions W1-W13 settled. S1 merged (PR 480),
+Status (2026-09-30): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
@@ -20,8 +20,23 @@ done: no drift, every handoff fires, no leak rejection; it found an
 unplaced new "console" (1 of 3) and a missed card move (2 of 3). Brandon
 chose to give new place names a kind (tasks A-C below the replay);
 task A and its follow-ups (286e690) measured live: unplaced 0 of 40 in
-the probe and 0 of 24 turns in the 2C replay; next is push `claude/ground-2c`, then 3A-3C, S3 and S4.
+the probe and 0 of 24 turns in the 2C replay; tasks B (group members, 67a0141)
+and C (talking to a group, 0371c13) built, C measured live (member-answer
+rate accepted); 3A grounding landed (d503361); 3A handoffs,
+bench script and fixes measured live; 3B grounded (1e37fdd), handoffs
+(c3d3963) and bench script landed, x3 read (office never reached,
+same gap in 3A); referred people and places in THINGS chosen and
+probed live (Kristin reaches the place 3A 28/30, 3B 15/20, from 0/30
+and 2/20) and built (bc0ddf1); reruns: 3A reaches the medical level 3/3 in
+narration; the 3B office entry, the moved-protagonist scene rule
+(de181fb), reveal-move precedence (d63bfaa) and the 2A arrival reveal
+(2c0ed9d) landed; 3B holds the office and 2A reaches the perimeter 3/3,
+with no restarts in either (2026-10-01); then 3C, S3 and S4.
 See "Resume here".
+**Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
+AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
+the candidate causes on recorded prompts (narration read by hand), and fix
+the story material at the source. A narrator rule comes last.
 The task split is in section 11. Written at Brandon's request
 after decision 1e (containment) in
 [narrated-world-continuity.md](narrated-world-continuity.md) kept turning into
@@ -564,8 +579,1008 @@ narrator's reply wrote "sits at a console" as `"console": {"place":
 reply-capture class as the missed card move); turn 8's "upper command
 corridors" is still untracked.
 
-**Next:** push `claude/ground-2c` for review, then B (group members)
-and C (talking to a group), then 3A.
+`claude/ground-2c` is pushed (22a3f58); no PR opened yet.
+
+**Task B built (67a0141;** Ringer, Luna, second attempt: the first broke
+`test_protagonist_at_furniture_lands_in_its_area`). A character may have
+a group as parent (relation "in"), so members go where the group goes;
+`World.members()` lists them; groups do not nest and hold no things. A
+reply sending a person to a group makes them a member; new things made
+while the player is in a group go to the group's place. `world.yaml`
+may declare `groups:` (same fields as `npcs`); `character_placements`
+may place a group (no participant entry needed) and a member in it,
+groups placed first. Narration safety lets a scene name the group it
+places; a command naming a group or its alias references it. Defaults I
+chose, not yet Brandon's: the `groups:` list and placing groups through
+`character_placements`. Verified by
+`~/dev/ringer-work/freytag-group-members/verify_group_members.py` (join,
+group move, carry, leave, player plus companion joining, a new thing at
+the group's place, nesting refused, a package group with a member) and
+the suite (933 passed). Not measured live: a member join is a name that
+resolves directly, so no model call decides it; the live question is
+whether the narrator writes joins at all, which 3A will show. No story
+declares a group yet (3A's captives is a 3A grounding decision).
+
+**Task C built (0371c13;** Ringer, Luna, second attempt; suite 937
+passed; `~/dev/ringer-work/freytag-group-talk/verify_group_talk.py`).
+In the narrator prompt only, a group's THINGS line adds "This is a group
+of people." then "If the player talks to them, Brandon answers." (members
+other than the player character, joined with "or") or "If the player
+talks to them, they say nothing." The capture call's THINGS is unchanged.
+**Measured live** (`~/dev/ringer-work/freytag-group-talk-probe`: the
+three recorded 2C turn-2 prompts from `world-2c-containers-x3`, with the
+command "Ask the technicians who signed the purge order." and a
+"technicians" line, 15 narrator samples per arm, read by hand):
+- no talk line (before C): an unnamed technician answers aloud 7 of 15;
+  the other 8 end on a hesitant lead-up.
+- empty group: silent 15 of 15.
+- one member ("senior technician"): he is the one who responds 15 of
+  15, and no other technician speaks, but he says an answer aloud only 3
+  of 15; in 6 of 15 Kristin only clears her throat and he turns to her.
+So the silence and the choice of speaker hold. The member's answer is
+weaker than the unnamed answer was before (3 of 15 against 7 of 15), and
+the command is often not finished. Brandon chose to try "answers out
+loud" and accept the rate if it did not improve substantially. A live A/B
+on the same three prompts (15 samples per arm, read by hand; `manifest-
+loud.json`, `group_talk_loud.json`): "answers" 5 of 15 aloud, "answers out
+loud" 5 of 15. No change, so the wording stays as built and the rate is
+accepted (8 of 30 pooled for "answers").
+
+**3A grounding (Brandon's decisions, 2026-09-30).** A `captives` group
+(alias "prisoners") in the detention level with the senior official as
+its only member; Michelle is placed in the detention level on her own
+with no text, because SL-3A-A says she must not speak directly before
+she is reached and a member is named in the group's talk line. A
+`medical_level` area ("medical level") inside `detention_level`. Things:
+a movable "stolen radio" (no bare "radio" alias: item names are
+leak-scanned in every scene), a fixed "gate-status panel", and
+`override_codes` renamed "emergency override codes", hidden and carried
+by the senior official; `military_override_codes_available` moves them
+to Kristin and reveals them. My defaults: `companions: [brandon]`,
+`detention_level` renamed "detention level" with no aliases (an alias
+like "detention sector" would be leak-scanned in 2C, whose SCENE names
+the detention sectors). Cameras and checkpoints wait until they surface
+live. Group names are not in the narration leak index (task B added
+groups only to recall), so "captives" and "prisoners" stay safe in 1C.
+Ringer run `ringer-work/freytag-3a-grounding` (check: `verify_3a.py`;
+payloads byte-identical except 3A's opening line).
+
+**3A grounding landed (d503361;** Ringer, Luna). The first run found that
+a declared group name resolves in every scene: "captives"/"prisoners"
+would have mapped 1C's narrated prisoners to the unplaced 3A group.
+Brandon chose a 3A-only name: the group is "detention captives" with no
+aliases; in 3A the match call maps bare "prisoners" to it (in scope), in
+1C those words stay new. Three tests that pinned the old package were
+updated (kinds set, world-effect facts set, the leakage matrix's entity
+positions now include groups). `verify_3a.py` passed (payloads
+byte-identical except 3A's opening line); suite 938 passed. Not measured
+live: no 3A bench script exists yet.
+
+**3A reveal handoffs:** all eight `k_sl_3a_*` candidates lack
+`earn_when`, `action_evidence` and `delivery_text`. The ChatGPT Desktop
+prompt is `~/dev/ringer-work/freytag-3a-handoffs/chatgpt_prompt.md`
+(matcher rules, must/must-not commands, other wordings will be tested,
+noun phrases at most three words). Offered sets: A on arrival; B after
+`michelle_reached`; D after `behavioral_experiments_known`; C last. The
+prompt lists B and D together, which is only stricter.
+
+Round 1 answer (`handoffs_3a.yaml`), scored by `score_3a.py` with the
+real matcher: prompt examples 16/16 (after my "not" example, which the
+negation rule always blocks, was reworded), other wordings 6/24, no wrong
+entry fired. Short verb lists and narrow noun lists ("Find Michelle."
+matches nothing; "Michelle" is in no noun list). Round 2 prompt
+(`chatgpt_prompt_r2.md`) asks for 8-12 verbs, every name for the target,
+the share-a-verb-or-a-noun-not-both rule, and "the prisoners" in
+delivery text.
+
+Round 2 answer (`handoffs_3a_r2.yaml`): prompt examples 16/16, other
+wordings 14/24, no wrong entry fired, and no pair offered together shares
+both a verb and a noun. Still missed: record synonyms (logs, files,
+patient records), using the codes (take, enter), bare "Start the
+uprising.", "deadline", "listen". Round 3 is a same-chat follow-up
+(`chatgpt_followup_r3.md`): add verbs for every action kind and general
+nouns, keep the delivery and earn_when text.
+
+Round 3 answer (`handoffs_3a_r3.yaml`): other wordings 20/24, but it
+fires on ordinary commands 8 of 20 (round 2: 0 of 20), e.g. "Walk back
+to the detention level." reveals the medical experiments and "Check the
+clock." the expiring codes. Brandon chose a round 4 that keeps the verbs
+and drops generic nouns (`chatgpt_followup_r4.md`); scored on both.
+
+Round 4 answer (`handoffs_3a_final.yaml`): prompt examples 16/16, other
+wordings 19/24, fires on ordinary commands 0/20 (`negatives_3a.py`), no
+wrong entry fired. Still missed: "treatment logs", "medical equipment",
+"Ask Michelle about the experiments.", "Ask the official for the override
+codes." (bare "official" was removed), and "Take the ... codes from the
+senior official." Landing by Ringer
+(`ringer-work/freytag-3a-handoffs`, check `verify_handoffs_3a.py`: exact
+values, knowledge.yaml otherwise unchanged, 18 matcher cases including
+8 that must fire nothing, payloads byte-identical outside 3A).
+
+**Landed:** the handoffs as 10f80a6 (Ringer, Luna, one attempt;
+`verify_handoffs_3a.py` passed, 3A payload unchanged, suite 938) and the
+3A bench variation `bench/variations/item-facts-world-3a.json`, script
+`reaching-michelle` (12 turns, thorough entry), as b4ea71c. One live
+replicate is running (`ringer-work/freytag-world-3a-live`, results
+`bench/results/world-3a`).
+
+**3A live replicate (2026-09-30, one replicate, check passed;
+`bench/results/world-3a`).** Completed; moved to 3B after turn 10. No leak
+rejection. Handoffs fired on turns 1 (`k_sl_3a_a_r1`), 4 (`b_r2`), 6
+(`d_r1`) and 10 (`c_r2`); turns 2, 5 and 7 found no offered candidate
+(each set completes when its first entry fires). Facts after the turn
+correct 9/10. Continuity: contradicts a stated fact 0/10, acts beyond
+the command 2/10 (turns 2, 5), command not finished 4/10 (2, 4, 5, 10),
+restarts 1/10 (10). The codes worked: revealed to Kristin by the turn-6
+handoff, handed to Brandon on turn 9. The radio was picked up on turn 8.
+Two group findings:
+- **The group talk line hijacks turns that do not address the group.**
+  On turns 2 ("Ask Michelle about the other sites.") and 5 ("Read the
+  experiment records.") no match call ran, so THINGS came from the
+  default names and carried the captives' line "... If the player talks
+  to them, senior official answers." Both narrations walked Kristin to
+  the captives and had her ask the official where Michelle is. A live
+  A/B on those two recorded prompts (`ringer-work/freytag-3a-talkline-
+  probe`, 10 samples per prompt per arm, read by hand): as recorded,
+  20/20 go to the captives; with the talk sentences removed, 0/20 (turn
+  2 goes to Michelle 10/10); with the captives' line removed, 0/20
+  (turn 5 finds the records 5/10).
+- **Addressing the group by its plain word loses the line.** Turn 3
+  ("Ask the prisoners who runs this block.") had no captives line: the
+  match call's refers answered "prisoners", which is not a THINGS name,
+  so it was dropped. The narrator invented "Lieutenant Commander Rachel
+  Patel". This is the cost of the 3A-only name.
+
+**Brandon chose (2026-09-30):** the talk sentences reach the narrator
+only when the command addresses the group (the match call lists it in
+refers); Ringer run `ringer-work/freytag-group-talk-addressed`. For turn
+3 he chose to tighten the match prompt. **Measured first by a live probe**
+(`ringer-work/freytag-refers-probe`: seeded 3A state, 10 match calls per
+command per arm). Rule tried, after the cook example: 'Copy each name in
+refers exactly as THINGS writes it, even when the command calls it
+something else. For "Ask the maids about the key." when THINGS has "house
+staff", list "house staff".' Commands that address the captives list
+"detention captives" 14/30 (0/30 before; "Talk to the captives about the
+guards." still 0/10), but "Ask Michelle about the other sites." now lists
+the captives and most of THINGS 10/10 (3/10 before), which would put the
+talk line back on exactly the turns it is being removed from. Not landed.
+
+**Landed:** the talk sentences only when addressed, as 108decb (Ringer,
+Luna, first attempt): `prepare_turn` sets `_referred_names` from the
+match call's resolved refers and clears it every turn. **Brandon chose
+group scoped aliases** for turn 3: a group may declare `scoped_aliases`
+that resolve only while it is placed and in scene scope, never as world
+aliases; the captives get `[prisoners, prisoner, captives, captive]`.
+Ringer run `ringer-work/freytag-group-scoped-aliases` (check
+`verify_scoped_aliases.py`: 3A resolves the plain words to the group,
+refers "prisoners" addresses it, a reply's "prisoners" lands on it with
+no new group; 1C and 2C unchanged).
+
+**Landed:** group scoped aliases as 3bae27c (Ringer, Luna, second
+attempt; `verify_scoped_aliases.py` passed; suite 944). Three live 3A
+replicates are running (`bench/results/world-3a-groups-x3`).
+
+**3A rerun with both fixes (2026-09-30, three replicates, check passed;
+`bench/results/world-3a-groups-x3`).** All three completed and moved to
+3B after turn 10; handoffs fired on turns 1, 4, 6 and 10 in all three; no
+leak rejection; nothing unplaced; facts after the turn correct 27/30.
+The radio reached Kristin (turn 8) and the codes Brandon (turn 9) 3 of 3.
+- Turn 3 ("Ask the prisoners who runs this block."): the captives were
+  addressed and the talk line reached the narrator 3 of 3, and the
+  senior official answered 3 of 3 (was: no line, an invented speaker).
+  Two answers still name an invented commander ("Sector Commander",
+  "Lieutenant Colonel Jenkins").
+- Turn 2 ("Ask Michelle about the other sites."): the match call listed
+  the captives in refers in r2, the talk line came back, and that
+  replicate talked to the official: drift 1 of 3 (probe 20/20 before).
+  In r1 and r3 Kristin goes to Michelle but does not ask; not finished
+  3 of 3.
+- Turn 5 ("Read the experiment records."): records read 2 of 3; r1 had
+  the talk line (refers again) and went to the gate-status panel.
+- **Turn 1, 3 of 3:** the lead-up says "none of them seem to be
+  Michelle", then the delivery says "Michelle is alive..." (judged
+  contradicts a stated fact). The reveal-turn lead-up class seen in 2B.
+- **Turn 10, 3 of 3:** Kristin never warns Michelle; the delivery and the
+  3B bridge text follow (command not finished).
+Continuity totals: contradicts 3/30 (all turn 1), beyond the command
+3/30, restarts 2/30, not finished 10/30.
+
+**Brandon chose to work on turns 1 and 10.** Both are handoff turns
+whose lead-up stops short of the command ("Write only what leads up to
+it."). Rule probe (`ringer-work/freytag-3a-leadup-probe`, the six
+recorded prompts, 5 samples each per arm, keyword tally read against
+samples): turn 1 says Michelle is not found 13/15 as recorded, 14/15 with
+"Your story must not go against it.", 9/15 with "First, show Kristin
+doing what the player typed.", 11/15 with both; turn 10 warns Michelle
+3/15, 4/15, 6/15, 3/15. No rule holds. Next measured: the delivery
+sentences carry the player's action (turn 1 "Kristin finds Michelle
+alive. ...", turn 10 "Kristin warns Michelle that the emergency-gate
+authorization is about to expire. ..."), so lead-up plus delivery reads
+as one sequence (`probe_delivery.py`).
+
+**Delivery probe** (`delivery_probe.json`, same six prompts, 5 samples
+each, read by hand). Turn 10 with "Kristin warns Michelle that the
+emergency-gate authorization is about to expire. Michelle launches the
+prepared uprising rather than wait.": the lead-up ends at Michelle and
+the delivered sentence is the warning, 15/15 (the recorded lead-ups
+searched for her instead). Turn 1 with "Kristin finds Michelle alive.
+Michelle is directing the prisoners through stolen radios and coded
+announcements.": 7/15 lead-ups now follow a radio signal toward her; 8/15
+still say "none of them seem to be Michelle" before the find. **Root
+cause of turn 1:** the 3A opening already spots Michelle ("she realizes
+it's Michelle") in all three x3 replicates (the first replicate's
+opening only saw "a familiar face"). That spoils the turn-1 reveal
+(SL-3A-A: Michelle is reachable only by the coded route before she is
+reached), and turn 1's failed search then contradicts the opening.
+
+**Brandon chose:** land turn 10's rewording (**landed as 44b5d95**,
+Ringer, Luna, one attempt; only that field changed), and probe a
+placement text for Michelle for turn 1. A character's placement text
+never reaches the narrator today (only item placement texts are
+rendered), so the probe injected the line the engine would produce,
+`- Michelle. Place: heard only over the stolen radios.`, into THINGS
+(`ringer-work/freytag-3a-michelle-place-probe`: the rebuilt 3A opening,
+10 samples per arm; the three recorded turn-1 prompts, 4 per arm).
+Opening identifies Michelle 4/10 without it, 3/10 with it; turn 1 says
+she is not there 12/12 without, 11/12 with. No effect, not built.
+So turn 1's "none of them seem to be Michelle" is a strong habit of this
+prompt, and it contradicts the story only when the opening has already
+recognised her (about 4 in 10 openings). The reworded turn-1 delivery
+("Kristin finds Michelle alive. ...") makes the lead-up and the delivery
+one sequence and moved 7/15 lead-ups onto a radio trail.
+
+**Brandon chose** to land turn 1's rewording and accept the remaining
+opening conflict: **landed as 59a71df** (Ringer, Luna, one attempt;
+suite 944). A confirming x3 rerun is running
+(`bench/results/world-3a-delivery-x3`).
+
+**Confirming 3A rerun (2026-09-30, three replicates, check passed;
+`bench/results/world-3a-delivery-x3`).** All moved to 3B after turn 10;
+handoffs on turns 1, 4, 6, 10 in all three; no leak rejection; facts
+after the turn correct 25/30. In the text the player reads, both fixes
+hold: turn 10 now reads "... Kristin warns Michelle that the
+emergency-gate authorization is about to expire." 3/3, and turn 1 is a
+search that ends "Kristin finds Michelle alive." 3/3 (r1's lead-up
+follows a radio trail). The opening recognised Michelle 1 of 3.
+**But the continuity judge still flags them:** turn 10 command not
+finished 3/3, turn 1 contradicts a stated fact 2/3 (one where the opening
+did not recognise her; the judge reads "none of them seem to be
+Michelle" against the delivered find). The judge input is right:
+`story_text` carries the delivered sentence and the prompt says "Use
+them to decide command_not_finished"; the judge answers from the
+narrator's lead-up anyway. A judge fault, not a story fault.
+Continuity totals: contradicts 2/30, beyond 3/30, restarts 2/30, not
+finished 13/30.
+Minor, new: turn 10's reply echoes the card's place text "with Kristin",
+which does not resolve after the move to 3B (unplaced 3/3, a
+transition-turn artifact like 2C's turn 8); r2 turn 2 sent Michelle to
+"holding block" and left her unplaced (1/30).
+
+**Brandon asked for a proper, general fix to the judge errors (no
+special case; ChatGPT Desktop rewrites allowed).** Diagnosis on every
+saved handoff turn (112 across 2B-3A): the continuity judge flagged 21
+as unfinished and 5 as contradictions, nearly all false. Two causes, both
+general: (1) the judge gets `narration` plus a side list `story_text`
+with an instruction to use it for one question, and Luna ignores it; (2)
+`player_input` bundles the engine's own steps ("Kristin sat down in the
+driver's seat. Kristin picked up her laptop.") with the typed command,
+so the judge demands those steps (all four 1B-1C false flags).
+**Design: judge the turn the player reads.** `judge_turns` adds
+`command` (typed) and `turn_text`, the turn as ordered passages tagged
+`game` (the engine's steps, true, never part of the command),
+`narrator` (the only text being judged) and `story` (delivered reveal and
+bridge, canon). The rubric (`ringer-work/freytag-judge-read-order/
+system_message.txt`) reads turn_text in order as one sequence ("a later
+passage can change what an earlier passage said ... a change, not a
+contradiction"), judges command_not_finished on every passage, and every
+other question on narrator passages only. Every narrator-fault yes must
+quote its sentence; code withdraws a yes whose quote is only story or
+game text and flags one whose quote is found nowhere. All earlier
+rulings are kept (world facts over canon, refinement, NPC refusal).
+**Calibration:** my labels on the 29 handoff turns of four current-
+package runs (`labels-handoffs-*.json`, rulings in their notes; not
+Brandon's) plus Brandon's round 8 and 9 labels and the v28 labels as the
+regression bar. The old judge's saved verdicts agree 101/116 on the
+handoff cells. Both the current and the new judge re-judge all seven
+runs (`rejudge_cont.sh`), continuity only.
+
+**Landed as 5fd9d0f** (Ringer, Luna; the second attempt's check failed
+only because my verifier read `bench/results` inside the worktree, where
+it is gitignored; the corrected check passed on the worker's code: both
+verifiers, node tests 11/11, suite 944). Re-judged with Luna, continuity
+only, same inputs both arms (`baseline.txt`, `new.txt`):
+
+| Run | Current judge | Read-order judge |
+|---|---|---|
+| 1B-1C handoffs | 19/20 | 19/20 |
+| 2B handoffs | 9/12 | 11/12 |
+| 2C handoffs | 36/36 | 36/36 |
+| 3A handoffs | 41/48 | 44/48 |
+| round 8 (Brandon) | 172/192 | 179/192 |
+| round 9 (Brandon) | 130/142 | 129/142 |
+| v28 (Claude) | 143/152 | 148/152 |
+
+Handoff turns 105 -> 110/116; regression set 445 -> 456/486. The quote
+check fired 0 times (every yes quoted real narrator text). Remaining
+handoff disagreements: 3A r2 t1 (the opening had recognised Michelle; the
+judge used "a later passage can change an earlier one" to excuse a
+conflict with the opening, which the rule does not allow); 1B-1C t16 (the
+engine had just seated Kristin in the driver's seat while the narration
+has her at the shaft; the judge's contradiction is fair and my label is
+probably wrong; the odd seating step is an engine question); 3A r1 t4
+restart missed; 3A r3 t10 a pedantic ordering contradiction; 3A r3 t6 and
+2B t5 unfinished (judgment calls).
+
+**Both done (Brandon, 2026-09-30).** (1) The 1B-1C turn-16 label is now
+a contradiction. (2) "A later passage never excuses a conflict with the
+opening or an earlier turn." added to the rubric (Ringer, Luna, one
+attempt), committed with the label as 9cc11de.
+Re-judged (`new2.txt`): 3A handoffs 46/48 (44 before; r2 t1 now caught),
+handoffs 111/116 and regression 453/486 (456 before; within Luna's
+run-to-run noise). Remaining: 5 command_not_finished judgment calls.
+
+**Why the engine seated Kristin (diagnosed).** Before each command the
+bench asks Jev "does this command use Kristin's laptop?" (the laptop is
+`use_seated`); a yes seats her in the driver's seat first. The question's
+false side lists only handling (open, move, carry...), with no case for a
+command about something else, so "Read the identification numbers on the
+prisoners below." reads as "reading" = using. In the 1B-1C run 4 of 19
+commands seated her this way. Probe (`ringer-work/freytag-uses-thing-
+probe`, 16 commands x 3): the current question says yes to 6 of 10
+commands that do not involve the laptop, every time (18 false yeses), and
+misses no real use; adding "the command is about something else" cuts
+false yeses to 3 but misses 2 real uses (6 answers). Proposed fix, not
+built: ask Jev only when the command names the thing (the engine's
+existing command-to-entity-name matching); on this set that plus the
+current question is 48/48. Secondary: `together()` treats a truck in the
+freight terminal as near Kristin in the observation shaft (a sub-area),
+so a yes can seat her in a truck she is nowhere near.
+
+**Brandon chose to build both (seating).** **Landed as 775be92** (Ringer,
+Luna; the worker's second attempt was correct, but my check demanded
+that every new test fail on the old engine, contradicting my own brief,
+which asked for a test that a laptop command still seats; corrected
+check passed: verifier, suite 947). The yes/no use question is now asked
+only when the command names the thing (its names, aliases and learned
+aliases, or the head noun of a possessive name, so "my laptop" counts;
+whole words, case-insensitive); a seat is available only in the
+player's own area. One live 1B-1C replicate is running
+(`bench/results/world-1b-1c-seating`; its script names no laptop, so
+the expected seating steps are none; the leakfix2 run had 4 of 19).
+
+**1B-1C seating replicate (2026-09-30, one replicate, check passed;
+`bench/results/world-1b-1c-seating`).** Seating steps 0 of 20 turns (the
+leakfix2 run: 4 of 19); no rejected turn; every 1B-1C handoff fired
+(turns 5, 7, 12, 16, 19). First live run on the read-order judge: command
+not finished 0/20 (leakfix2 had 3 false flags from the engine steps),
+contradicts 2/20, acts beyond the command 4/20, restarts 0/20; the quote
+check did not fire. Facts after the turn correct 17/20.
+
+**The two contradictions, and Brandon's fixes (2026-09-30).** Turn 14
+("Climb down into the service level."): turn 13's narration had already
+taken Kristin down, and her place was right ("service level"). But the
+1C `situation` line, sent every turn, said she was "at its loading docks
+above ground, looking for a way down"; the narrator copied it. Turn 4
+("Put Michelle's photograph in my pocket."): the photograph was on the
+park bench; the narrator pulled it out of her pocket instead, because no
+step picked it up. Fix 1 **landed as ccc76b1** (Ringer, Luna; attempt 1
+was right but my check was wrap-sensitive; fixed, passed on attempt 2):
+the 1C situation describes the place only, and the grounding guide says
+a situation never says where a character is. No other scene's
+situation states a position. `location_id` stays `freight_terminal`:
+`loading_docks` would make narration safety reject "service level" (a
+sibling, not above or below). Fix 2 **landed as b378b61** (Ringer,
+Luna): `take_before_put` (storygame/runtime/taking.py) runs in the bench
+after the standing check. For each loose, visible thing in the player's
+own area that the command names and she does not hold, it asks Jev
+`ask_moves_thing` (does the command put, place, store or hand over the
+thing?). On yes it moves the thing to her and adds "Just before this:
+Kristin picked up Michelle's photograph from the park bench." (an
+item's authored `take_text` wins; no "from" for an area). The engine
+still receives only the typed command. Records carry `taking_steps`,
+`taking_asked`, `taking_issues`. First run failed on my wrap-sensitive
+check; the worker had also switched the engine call to the combined
+command and rewritten two tests to match, so I rejected it and reran
+with that forbidden (passed first try; suite 953). Untested live: the
+Jev question's accuracy beyond this one replicate.
+
+**1B-1C contradictions replicate (2026-09-30, one replicate, check
+passed; `bench/results/world-1b-1c-contradictions`).** Both targets
+fixed: turn 4 took the pick-up step ("She puts Michelle's photograph in
+her pocket."), and turn 14 went down from the loading docks. Jev asked
+only on turn 4 (0 false steps on turns 7, 8, 10, 11, 20, which name
+things she holds). No rejected turn. Continuity: contradicts 1/20 (was
+2), beyond the command 3/20, not finished 2/20 (turns 15, 18), restarts
+0. The one contradiction is new and has a different cause: turn 1
+("Look under the park bench.") went beyond the command, and the narrator
+invented a note ("Meet me at the old oak..."); capture matched it to the
+number sequence and gave it to Kristin, so turn 3 ("Pick up the
+handwritten number sequence.") picked up a thing she already held.
+Facts after the turn correct 13/20 (was 17/20); one is a judge fault:
+the fact-tracking judge flags turn 4 as a missed change because the
+engine step moved the photograph before the "before" facts are read. The
+others are capture misses: turn 8 (the man hands the sequence back; it
+stays with him), turn 10 (the token dropped on the driver's seat while
+Kristin sits in it), turn 13 (the token left at the loading docks).
+Turns 1, 16 are invented changes.
+
+**Brandon chose to fix both.** Fact judge **816dfea** (Ringer, Luna;
+attempt 2): both Jev `moved` questions say `before_place` already
+counts every step in `just_before`; the thing question compares with
+`before_place`, not "the start of this turn". Turn 1 cause: THINGS is
+the scene's transition dependencies plus the match call's `refers`,
+expanded by `given_with`, which covered only containers; the bench is a
+supporter and the sequence, photograph and token lie under it, so the
+narrator knew only of the token (a dependency). **48eb838** (Ringer,
+Luna; one attempt): `given_with` also returns a supporter's visible
+things on or under it. Suite 955, node judge tests 13.
+
+**1B-1C things replicate (2026-09-30, one replicate;
+`bench/results/world-1b-1c-things`).** Contradicts **0/20**, facts
+after the turn correct **19/20**, beyond the command 5/20, not finished
+3/20 (turns 6, 7, 18), restarts 0, no rejected turn. Turn 1's prompt
+listed all three things under the bench; the narrator invented no note.
+Turn 4 took the pick-up step again. Record gap: `item_facts_before`
+(what the judges see as given) lists only the selected names, not what
+`given_with` adds to the prompt.
+
+**Fact judge old vs new (Ringer probe, Jev, 2026-09-30).** Fact
+agreement with the labels: round 8 315/336 both; round 9 233 -> 234/251;
+v28 (Claude labels) 253 -> 254/266. Round 7's run is not saved here, so
+it was not scored. On the contradictions replicate: missed_change turns
+[3, 4, 10] -> [10, 19], facts correct 13 -> 14/20; turn 4's false flag is
+gone. The new turn-19 flag is Jev scoring the fixed logistics terminal
+as moved (0.55, just over the 0.5 line) when Kristin walks into it:
+judge noise.
+
+**Jev judge concurrency (2026-09-30).** Brandon noticed judging ran as
+one thread. **f5a4569** (Ringer, Luna, one attempt): `judgeInput` builds
+every request, runs them through a pool (default 8; `--concurrency`,
+`JEV_CONCURRENCY`), combines in the original order, and retries 429/503
+up to 5 times with Retry-After. **Follow-up** (Ringer, Luna, one
+attempt): split continuity variants merge their parts in request order.
+Verified offline on the saved 71-call contradictions input with a fake
+Jev: output byte-identical at 1 and 8 (baseline, fact, split,
+split-examples), 1210 ms -> 179 ms, never more than 8 in flight. Live (real Jev, saved contradictions
+input, 51 fact calls): 11.9 s at 1, 3.5 s at 8, no 429, identical
+verdicts.
+
+**3B grounding (2026-09-30, from earlier precedent; Brandon asked
+for it to follow prior fixes and to be asked only about departures).**
+Kristin starts in a new `security_corridors` area ("security
+corridors", in `regional_facility`) through `character_placements`, so
+the opening names it, as in 2A; `location_id` stays `broadcast_relay`,
+whose name is unchanged (nothing collides, so no rename). Rebecca is
+placed in a new `executive_office` area ("executive office", 3B's
+entry-text phrase): "Rebecca's office" is a 2C must_convey and place
+names are leak-scanned, the same reason 3A's group got a scene-only name.
+3B declares `companions: [brandon, michelle]` (survey decision 5).
+`relay_open` gets `on_assert: {move: brandon, parent: broadcast_relay}`
+(decision 6); he then stops following Kristin, because companions follow
+only while they share her parent. Charles stays unplaced (decision 4).
+The inspection console keeps its place in the infrastructure corridors
+(immovable things keep their place); whether a console command pulls
+Kristin there is measured live, as the cameras and checkpoints wait
+until they surface. Ringer run `ringer-work/freytag-3b-grounding`
+(check `verify_3b.py`; payloads byte-identical except 3B's opening
+line).
+
+**3B grounding landed (1e37fdd;** Ringer, Luna, one attempt;
+`verify_3b.py` passed; suite 956). No knowledge or leakage edits were
+needed. Not measured live: no 3B bench script exists yet.
+
+**3B reveal handoffs:** all eight `k_sl_3b_*` candidates lack
+`earn_when`, `action_evidence` and `delivery_text`. Offered sets: A on
+arrival; B after `human_security_control`; D after
+`detention_locations_secured`; C after `charles_abandoned_rebecca`. The
+ChatGPT Desktop prompt is `~/dev/ringer-work/freytag-3b-handoffs/
+chatgpt_prompt.md`; it folds in the 3A rounds' lessons from the start
+(verbs of every action kind, start verbs, no ordinary single nouns,
+other wordings and ordinary commands will be tested). Score answers with
+`score_3b.py` (prompt examples, 22 other wordings, 20 ordinary commands
+that must fire nothing).
+
+ChatGPT Desktop rounds, scored by `score_3b.py` (real matcher): layered
+same-chat follow-ups went narrow (6/25 other wordings), then too broad
+(19/25, but firing on 13 of 41 ordinary commands). Brandon had the
+prompt rewritten from scratch; fresh prompts v2-v4 (`chatgpt_prompt_v4.md`:
+noun count, pronoun phrases, verb coverage, a word-by-word self-check)
+reached prompt examples 16/16, other wordings 13/25, ordinary 2-4/50.
+Brandon then had Claude fix v4 directly (`make_final.py`: specific phrases
+added, broad ones like "escape route" and "service corridors" cut).
+Final: prompt examples 16/16, fresh wordings written after tuning 12/16,
+no wrong entry, 1 of 50 ordinary commands ("Ask Brandon to hold the
+relay.", the relay action itself). **Landed** as c3d3963 (Ringer, Luna,
+one attempt; `verify_handoffs_3b.py`: exact values, 26 matcher cases,
+payloads byte-identical outside 3B; suite 956). Bench variation
+`item-facts-world-3b.json`, script `battle-for-the-broadcast` (12 turns,
+thorough entry; turn 1 uses the inspection console to test drift), as
+29b7cd7. One live replicate is running (`ringer-work/freytag-world-3b-live`,
+results `bench/results/world-3b`).
+
+**3B live replicate (2026-09-30, one replicate, check passed;
+`bench/results/world-3b`).** Completed; moved to 3C after turn 9. No
+leak rejection. Handoffs fired on turns 1 (`k_sl_3b_a_r1`), 4 (`b_r1`),
+6 (`d_r1`) and 8 (`c_r1`). Facts after the turn correct 9/9; continuity:
+contradicts 0/9, restarts 0/9, beyond the command 1/9 (turn 4), not
+finished 2/9 (turns 3, 4). **No console drift:** turn 1 ("Trigger false
+water-pressure alarms from the inspection console.") kept Kristin in the
+security corridors and the console in place. **The office is never
+reached:** turn 3 ("Lead Michelle into the executive office.") stops at a
+keycard door, so Kristin stays in the security corridors all scene;
+Rebecca is narrated "near a console" there (turn 6), and turn 4's lead-up
+restates turn 1's alarm statement (a sayable CONSTRAINTS line) before the
+delivered confrontation. THINGS listing only Kristin on these turns is
+the approved design (people and areas are not listed unless referred
+to), not the cause: moves land when the narration names the place.
+Three replicates are running to see whether the office miss repeats
+(`bench/results/world-3b-x3`).
+
+**3B x3 (2026-09-30, three replicates, check passed;
+`bench/results/world-3b-x3`).** All moved to 3C after turn 9; handoffs on
+turns 1, 4, 6, 8 in all three; no leak rejection; facts after the turn
+correct 27/27; contradicts 1/27, restarts 0/27, beyond the command 7/27,
+not finished 6/27. **The office is never reached, 4 of 4 runs:** turn 3
+narrates a keycard door, a vent, or (r2) Kristin "trying to locate
+Michelle", who is her companion beside her. **The same gap is in 3A,
+unnoticed:** "Follow Michelle into the medical level." left Kristin in
+the detention level 6 of 6 (`world-3a-delivery-x3`, `world-3a-groups-x3`),
+and those narrations also scan "for any sign of Michelle". The fact judge
+scores these turns correct, because nothing moved. **Cause:** THINGS is
+drawn only from tracked things (`bench/item_facts.py` `prepare_turn`:
+items, the protagonist, narrated new things, groups). NPCs and areas are
+never in that pool, so a command naming Michelle or the executive office
+hands the narrator neither; on those turns no match call runs at all.
+Adding referred people and places to THINGS widens the approved
+protagonist-only exception, so it is Brandon's decision.
+
+**Brandon chose both (2026-09-30):** a command that names a person or a
+place gives them a THINGS line ("- Michelle. Place: security
+corridors.", "- executive office. This is a place."), and Kristin's line
+always carries her companions ("- Kristin. Place: security corridors.
+With her: Brandon, Michelle."). **Measured first by a live probe**
+(`~/dev/ringer-work/freytag-referred-things-probe`, `probe_referred.py`):
+the recorded 3B turn-3 prompts (`world-3b` r1, `world-3b-x3` r1-r3) and
+3A turn-4 prompts (`world-3a-delivery-x3`, `world-3a-groups-x3`), 5
+narrator samples per prompt per arm (100 calls), recorded vs both lines
+injected into THINGS. Scored by whether the reply's item_facts put
+Kristin at the named place, and read by hand for "searching for
+Michelle". Dry run passed offline (anchors found in all 10 prompts);
+manifest linted; the live run is next.
+
+**Probe result (2026-09-30, Ringer, check passed; 100 of 100 calls
+returned, no error; `referred_probe.json` in the probe folder).** Kristin
+placed at the named place, recorded vs both lines: 3A turn 4 0/30 vs
+28/30 (recorded put her in "detention level" or "detention sector"); 3B
+turn 3 2/20 vs 15/20. Narrations that search, look or scan for Michelle
+(regex, then read by hand): 3A 29/30 vs 0/30; 3B 13/20 vs 0/20. **All
+five 3B misses come from one prompt,** `world-3b-x3` r2, 0/5 (the other
+three prompts 5/5 each). Its THINGS also holds "Michelle's memory card.
+Place: with Kristin." and "emergency override codes. Place: Kristin.";
+the narration leads Michelle "through the security corridors" with
+Kristin's "eyes fixed on the executive office", so the move is begun but
+never finished. Not tested: whether the lines hurt other turns (every
+prompt here names a person or a place), and the person line alone vs
+the companions alone (only the combined arm ran).
+
+**Built (bc0ddf1, Ringer, Luna, two tasks; suite 963 passed).**
+`ItemFactsProvider.prepare_turn` scans the command with
+`_command_names_thing` against world names. A named NPC who is visible
+and together with Kristin gets `- Michelle. Place: <parent name>.`; a
+named visible area gets `- executive office. This is a place.`, except
+Kristin's own area and its ancestors (a place inside it, like the medical
+level, still gets one). People come first, then places, in command
+order, directly after Kristin's line. Kristin's line gains
+`With Kristin: Brandon, Michelle.`: the probe measured "With her:", but
+packages record no pronouns and the runtime must not assume a gender, so
+this wording is untested live. The new lines are narrator-prompt only;
+the match call and second call are byte-identical
+(`~/dev/ringer-work/freytag-referred-things/verify_referred.py` checks
+five turns in 3B, 3A and 2B). The first worker also changed the shared
+`_entity_label` (shortest name, which turns Michelle into "Shelly") and
+left a crash on possessive-tail names ("Drive home."); a fix task
+restored the helper, gave the new lines their own label, and made the
+ordering use the same matching.
+
+**Found while building, not fixed:** Brandon's `place_label` in 3B (and
+3A, 2B) is "across the park from Kristin", authored placement text from
+1B that survives his later companion placements. Likely cause, not yet
+checked: `place_text` drops the text only once a `wk_moved` fact exists
+on him or a container. The new person lines use
+the parent's name to avoid it, but any other path that reads Brandon's
+`place_label` still gets the stale text.
+
+**Live reruns on bc0ddf1 (2026-09-30, Ringer, both checks passed;
+`bench/results/world-3b-referred-x3`, `world-3a-referred-x3`).** All six
+replicates completed; 3B moved to 3C after turn 9 and 3A to 3B after
+turn 10 in every replicate; every handoff fired as before; no leak
+rejection. No turn-3 (3B) or turn-4 (3A) narration searches for
+Michelle any more (it did in all six before).
+- **3A turn 4 ("Follow Michelle into the medical level."):** the
+  narration takes Kristin into the medical level 3 of 3 (0 of 6 before).
+  The facts land 2 of 3: in r1 the reply kept Kristin in the detention
+  level and put only Michelle in the medical level (fact judge: missed
+  change).
+- **3B turn 3 ("Lead Michelle into the executive office."):** the
+  narration leads Michelle "towards" the office and stops at the door 3
+  of 3; it never goes in. The facts put Kristin in the office once (r2),
+  and the fact judge calls that an invented change, because the
+  narration only approached. So the office is still not reached. The
+  probe scored the reply's item_facts, not the narration, so its 15/20
+  likely overstated 3B.
+- Judges, before (x3) vs now: 3B contradicts 1/27 vs 0/27, beyond the
+  command 7/27 vs 2/27, facts correct 27/27 vs 24/27 (r2 t3 above; r1 t9
+  and r2 t9 are Kristin's move on "Start the broadcast with Michelle.");
+  3A contradicts 3/30 vs 1/30, restarts 2/30 vs 0/30, beyond 3/30 vs
+  1/30, facts correct 27/30 vs 28/30.
+- "Rebecca" resolved as a new person on 3B turn 5 or 6 in 3 of 3 both
+  before and now, so it is not from this change; it is still a gap.
+
+**Cause of the 3B door stop: the story material.** Plot 3B.2 says
+"Kristin and Michelle enter Rebecca’s office while Brandon holds off
+security forces.", but no line carries it: turn 3 offers only
+`k_sl_3b_b_r1`/`r2` (the confrontation), and SCENE's only office line is
+3B.1's "Security corridors between the resistance and Rebecca's
+executive office", which frames the office as beyond the fight.
+
+**Office-entry probe (2026-09-30, Ringer, check passed;
+`~/dev/ringer-work/freytag-office-entry-probe`, `office_probe.json`).**
+The three recorded bc0ddf1 turn-3 prompts, 5 samples each, 15 per arm,
+all 45 returned. Narration read by hand, counted only when Kristin ends
+inside the office:
+- recorded: **4/15** (all from r3; r1 and r2 0/10); item_facts put her
+  in the office 6/15, two of them on "towards" narrations.
+- material (the 3B.2 sentence above copied into SCENE, unchanged):
+  **15/15**, item_facts 15/15. Side effects: in 4 of the r3 samples
+  Brandon speaks over comms, holding off security, while THINGS lists him
+  with Kristin; Rebecca, placed in the office, is never mentioned.
+- rule ("When the player goes into a place, the story ends with them
+  inside it." after the answer rule): **1/15**; mostly "starts walking
+  towards" the office. No better than recorded; dropped.
+Not tested: the material on turns that do not enter the office. As an
+always-on SCENE line it would push entry on any command, so the build
+should earn it by the entry command, like the other reveal handoffs.
+
+**Brandon chose the 3B.2 office-entry handoff (2026-09-30).** New entry
+`k_sl_3b_e_r1`, offered from `human_security_control` until earned, so
+together with the B set and, if B fires first, the D set. earn_when
+"enters Rebecca's office"; delivery_text "Kristin and Michelle enter
+Rebecca's office. Brandon holds off the security forces." (the plot
+sentence split in two, no new prose). The ChatGPT Desktop prompt asks
+only for the verb and noun lists, and gives it the four co-offered
+entries' final lists (`~/dev/ringer-work/freytag-3b-office-entry/
+chatgpt_prompt.md`). Score the answer with `score_office.py` there:
+the prompt's four examples, 12 other wordings held back, the existing
+B and D commands, 18 ordinary commands in both sets, and two hard
+negatives the matcher cannot tell apart ("Take the files from Rebecca's
+office.").
+Build questions after the lists: a new storylet `SL-3B-E` and fact (like
+`office_entered`) in storylet-routes.yaml and knowledge.yaml; its
+`on_assert` would move Kristin to `executive_office` (companions
+follow) and then Brandon back to `security_corridors` (world effects
+have `move` but no companion-clearing op; moving a companion alone
+already splits him, as `relay_open` does). Whether B should require the
+entry, so Rebecca is never confronted from the corridors, is open.
+
+**ChatGPT round 1 accepted (`answer_r1.yaml`).** `score_office.py`:
+prompt examples 8/8, other wordings 18/24 (misses: "Get/Move Michelle
+into ...", "Hurry into ..."; a split verb phrase cannot match, and a bare
+"get" or "move" would fire on ordinary commands), existing B and D
+entries 12/12, ordinary commands fire nothing 36/36, the two known hard
+negatives fire. In the bench script only turn 3 fires it.
+**Brandon chose (2026-09-30):** `rebecca_office_reached` moves Kristin
+(Michelle follows) into the executive office and Brandon back to the
+security corridors; SL-3B-B requires it, as storylets.md already said
+("Kristin and Michelle have reached Rebecca’s office"). The SL-3B-E
+storylets.md section and route text are copied from plot 3B.2 and the B
+section, no new prose; pacing target 5, latest 6. Ringer run
+`ringer-work/freytag-3b-office-entry` (check `verify_office.py`: exact
+values, matcher cases, world moves, every payload byte-identical).
+
+**Landed:** the office entry as 9085012 (Ringer, Luna; the first run
+stopped correctly on `tests/test_canon_journey.py`, which pins the 3B
+knowledge order; the rerun was allowed to insert `k_sl_3b_e_r1` before
+`b_r1` and drop one idle 3B turn, and passed first attempt;
+`verify_office.py` PASS, every payload byte-identical; suite 966). After
+`rebecca_office_reached`, Brandon stays in `world.companions("kristin")`
+by design (W8: a companion follows only while in the same place), so the
+"With Kristin:" line was wrong; b5326d9 lists a companion only when he
+shares her place (Ringer, Luna, first attempt). Rerun 3B x3 running
+(`bench/results/world-3b-office-x3`).
+
+**3B x3 on the office entry (2026-10-01, Ringer, check passed;
+`bench/results/world-3b-office-x3`).** All three moved to 3C after turn
+9; handoffs on turns 1, 3 (`k_sl_3b_e_r1`), 4, 6 and 8 in all three; no
+leak rejection. Turn 3 narrates Kristin leading Michelle into the
+office 3/3 (read by hand), and Kristin's place is the office from turn
+3 on 3/3. Judges vs `world-3b-referred-x3`: restarts 3/27 (was 0),
+contradicts 4/27 (was 0), beyond the command 4/27 (was 2), facts correct
+24/27 (same). New defects, read from the prompts:
+- **Turn 4 re-enters the office, 3/3** (all three restarts). Its SCENE
+  still opens with the situation line "Security corridors between the
+  resistance and Rebecca's executive office..." (knowledge.yaml
+  `situation`). It also carries the earned "Kristin and Michelle enter
+  Rebecca’s office while Brandon holds off security forces." as a SCENE
+  line and a "may say this aloud" line for Michelle and Brandon, and the
+  3B.2 detail words.
+- **Brandon follows Kristin in on turn 3** in r1 and r3 ("Brandon follows
+  them in"), right before the appended delivery text says he holds off
+  security. The reply put him in the office, a narrated rejoin (W8), so
+  "With Kristin: Brandon, Michelle." returns on turn 4. The turn-3
+  CONSTRAINTS did show the delivery text.
+- **Turn 3 narrates the entry twice:** the narrator writes the entry,
+  then the delivery text repeats it.
+- **"Rebecca's office" is not a world name.** The 3B grounding kept it
+  off the executive office because it is a 2C must_convey. My delivery
+  text and statement use it anyway, and in r1 turn 4 the reply used it.
+  It resolved as a new place, so Kristin, Brandon, Michelle and Rebecca
+  went unplaced at "Rebecca's office" for turns 4-8.
+
+**Turn-4 re-entry probe (2026-10-01, Ringer, check passed;
+`~/dev/ringer-work/freytag-turn4-reentry-probe`, `turn4_probe.json`).**
+The three recorded turn-4 prompts, 5 samples each, 15 per arm, 60 of 60
+returned. Re-entry read by hand (Kristin walks or enters into the office
+she is in): recorded 15/15; earned entry lines removed (its SCENE line
+and both may-say lines) 15/15; situation line removed 15/15; **both
+removed 0/15** ("Kristin stands in...", "Kristin is in Rebecca's
+executive office..."). Either line alone is enough to cause the
+re-entry. In the both-removed arm the narration says "Rebecca's office"
+in 9 of 15, which the engine resolves as a new place (the r1 unplacing).
+The situation line removed here was the whole line, including its JANUS
+clause.
+
+The ChatGPT wording prompt (statement, earn_when and delivery_text with
+"executive office", and Brandon plainly staying behind) is at
+`~/dev/ringer-work/freytag-3b-office-entry/chatgpt_prompt_wording.md`.
+
+**ChatGPT rewording (round 2, `wording_r1.yaml` plus the follow-up):**
+statement "Kristin and Michelle are in the executive office. Brandon stays
+in the security corridors and holds off the security forces."; earn_when
+"enters the executive office"; delivery_text "Kristin and Michelle enter
+the executive office. Brandon stays behind in the corridors and holds off
+the security forces."; 3B situation first sentence "The fight runs
+through the security corridors and the executive office."
+
+**Reworded-lines probe (2026-10-01, Ringer, check passed;
+`~/dev/ringer-work/freytag-reworded-probe`, `reworded_probe.json`).** The
+recorded office-x3 turn-3 and turn-4 prompts, 5 samples each, 15 per arm,
+read by hand. **It does not hold; not built.**
+- Turn 3 (new situation line and delivery text): Kristin ends inside the
+  office 0/15 reworded (all "pulls her towards the executive office"; in
+  r2 she opens the door and motions Michelle in) vs 12/15 recorded. The
+  reworded arm changed two lines, so which one broke the entry is not
+  known.
+- Turn 4 (new situation line and statement): re-entry 15/15 reworded
+  ("Kristin walks into the executive office, where Michelle and Brandon
+  are waiting"), the same as recorded 15/15. Only removing both lines
+  (0/15) has stopped it.
+The build is prepared but not launched
+(`~/dev/ringer-work/freytag-3b-wording`).
+
+**Correction: the turn-3 scoring above was wrong.** On a reveal turn the
+game appends the delivery text after the narration, and CONSTRAINTS tells
+the narrator "Write only what leads up to it." So the player reads the
+narration plus the delivery text. A lead-up that stops at the door is the
+handoff working, not a failed entry. Score reveal turns on narration plus
+delivery text.
+
+**Turn-3 isolation probe (2026-10-01, Ringer, check passed;
+`~/dev/ringer-work/freytag-turn3-isolate-probe`, `t3_probe.json`).**
+Three recorded turn-3 prompts, 15 per arm, read by hand.
+- Narration alone ends inside the office: recorded 8/15, new situation
+  only 14/15, new delivery only about 0/15 (lead-up only).
+- Brandon follows her in: recorded 2, situation only 0 (he holds off
+  outside in 12), delivery only 0.
+- With the new delivery text, the narrator writes only the lead-up. The
+  appended "Kristin and Michelle enter the executive office. Brandon stays
+  behind in the corridors..." performs the entry once. It never says
+  "Rebecca's office", and Brandon stays behind.
+- With the recorded delivery text, the narrator often writes the entry
+  itself, and the appended text repeats it. That is the doubled entry
+  seen live.
+
+So the reworded turn 3 (both lines) is better than recorded. Turn 4's
+re-entry is unchanged by the rewording (15/15 both) and is a separate open
+problem; only removing both the situation line and the earned entry lines
+has stopped it.
+
+**Wording landed** as a1be840 (Ringer, Luna, first attempt; the four
+approved lines in knowledge.yaml only; payloads unchanged except the 3B
+situation sentence; suite 966).
+
+**Brandon chose to try an engine rule for the turn-4 re-entry
+(2026-10-01).** A protagonist-moving fact is typed data
+(`package.world.fact_effects`: a `move` of the protagonist), so the rule
+can key on it. But in 2A, `false_identities_ready` moves Kristin, and the
+items that set it (`k_sl_2a_b_r1`/`r2`) also carry the cover story, so
+hiding their statements cuts 2A material. Probes on the recorded turn-4
+prompts with the new statement, 15 per arm, re-entry read by hand:
+- situation line removed, statement kept everywhere: 15/15
+  (`freytag-situation-only-probe`). The narrow rule fails.
+- situation removed, SCENE statement line kept, may-say lines dropped:
+  8/15 (`freytag-statement-split-probe`).
+- situation removed, SCENE statement line dropped, may-say lines kept:
+  1/15 (same probe). In r1 and r3 the narration plans to overload JANUS
+  instead of answering the command, but the confrontation is the
+  appended delivery text, so the turn still delivers it.
+- Earlier: statement removed everywhere, situation kept: 15/15. So both
+  the situation line and the SCENE statement line must go.
+
+**Brandon chose to build that rule and rerun 3B and 2A (2026-10-01).**
+2A baseline x3 on a1be840 (`bench/results/world-2a-baseline-x3`): all
+three moved to 2B after turn 7, every handoff fired, no leak rejection.
+The same defect is there: after `k_sl_2a_b_r1` sets
+`false_identities_ready` (turn 2), Kristin is back in "Brandon's
+hideout" on the next turn or the same one, in 3/3 (r1 perimeter only on
+turn 2; r2 never at the perimeter; r3 hideout, checkpoint, hideout).
+
+First build attempt (`ringer-work/freytag-moved-scene-rule`) removed the
+moving items from `committed_knowledge`. That list is also the grounding
+and narration-safety basis, so seven tests broke (canon journeys,
+leakage matrix, deadline exit, reveal prerequisites, persona
+escalation). My spec was wrong, not the worker. Respecified: the
+projection adds `scene_hidden_ids` and blanks `scene_frame`; the SCENE
+renderer skips those items; committed and sayable knowledge are
+unchanged. Verifier `verify_rule2.py` checks the rendered prompt.
+
+**Rule landed** as de181fb (Ringer, Luna, first attempt on the respec;
+`verify_rule2.py` PASS; suite 971).
+
+**3B and 2A x3 on de181fb (2026-10-01, Ringer, both checks passed;
+`bench/results/world-3b-rule-x3`, `world-2a-rule-x3`).** All six
+completed; every handoff fired as before; no leak rejection.
+- **3B:** where Kristin was in the office after turn 3 (r2, r3), turn 4
+  opens "Kristin is in the executive office with Michelle", no
+  re-entry. Judges vs office-x3: contradicts 4 -> 0, restarts 3 -> 1,
+  beyond 4 -> 3, facts correct 24 -> 23/27. **r1:** the turn-3 narration
+  is only the lead-up (as designed), so the reply put Kristin in "security
+  corridors". That overrode the story effect's move, although the
+  appended delivery text says she entered. Turns 4-5 were then narrated
+  in the corridors. r2 turn 1 drifted to the inspection console's
+  "infrastructure corridors", the known console drift.
+- **2A:** facts correct 15 -> 19/21, restarts 2 -> 1, contradicts 2 ->
+  2. Kristin is still recorded in the hideout on turns 2-3 in 3/3. The
+  2A cover delivery ("Kristin finds a cooling weakness... Brandon builds
+  their cover around it.") never takes her to the perimeter, and the
+  script's turn 3 ("Ask Brandon to build inspector credentials...") is
+  hideout work. So each reply puts her back in the hideout, over the
+  `false_identities_ready` move.
+**Shared cause:** on a reveal turn, the reply's item_facts follow the
+narration (a lead-up, or a scene where nobody moves), and they override
+the story effect's move. No recorded decision covers which wins when a
+story effect and the same turn's reply disagree about the protagonist's
+place. That is Brandon's call. In 2A the move may also be premature:
+the cover is built in the hideout before they travel.
+**Brandon chose (2026-10-01):** ask ChatGPT Desktop for a plan. Prompt at
+`~/dev/ringer-work/freytag-move-reconcile/chatgpt_prompt.md`. It is
+self-contained: how a turn, a reveal and a world effect work, the
+3B r1 and 2A evidence, and the constraints (story-agnostic, no lexical
+scanning, plain narrator rules, reply changes land unless an override is
+explicit and logged, story-data fixes allowed). It asks for two to four
+options, a ranked recommendation, the 2A story-data question, and a
+recorded-prompt test plan scored on narration plus delivery text.
+
+**ChatGPT's answer (round 1).** Recommended: on a reveal, the reveal
+fact's world effects run after the reply. They override only a
+conflicting `place` for entities that effect moved (companions
+included), and each override is logged. Every other reply change lands.
+Also proposed: one handoff prompt line, "Give item_facts after the game
+adds that text."; and, for 2A, story data: drop the perimeter move from
+`false_identities_ready` and give it to a later reveal (the checkpoint
+guard) whose delivery narrates the trip. Rejected by it: prompt-only,
+data-only, and a second model pass (conflicts with single-call capture).
+**My check against the record:** the precedence rule fits W7 (one-way
+fact-to-world) and W8 (companions follow by shared place). It keeps
+"reply changes must land" with an explicit, logged exception, and it
+has no lexical scanning. Gaps:
+- It bundles three changes into one arm; measure-each-fix says build and
+  measure precedence alone first. Precedence is deterministic, so it can
+  be checked offline by replaying the recorded 3B r1 reply, before any
+  live run.
+- The prompt line is a new narrator rule; rules come last.
+- It missed that 2A pacing events key on `false_identities_ready`:
+  `scrutiny_2a` (turn 3, "Facility staff are visibly scrutinizing
+  Kristin's inspector cover.") and `cover_review_2a` (turn 7). These
+  already fire in the hideout today (r1 and r3 turn 3). With the move on a
+  later arrival fact, they must key on that fact.
+- Its test plan (10 full replicates x 4 arms x 2 scenes) is heavier than
+  our method: offline replay for the deterministic rule, then x3 live per
+  scene.
+
+**Brandon chose (2026-10-01):** build the precedence rule alone first,
+then the 2A story data. **Landed as d63bfaa** (Ringer, Luna). The
+worker's code passed the suite (975), but the check failed on my
+verifier, which read the recorded turn from the gitignored
+`bench/results/`. I gave it a copied fixture (`r1_t3_record.json`) and
+reran the same check on the worker's worktree: PASS. The offline replay
+of 3B r1 turn 3 now keeps Kristin and Michelle in the executive office
+and Brandon in the corridors, and logs "item_facts place for 'Kristin'
+('security corridors') overridden by fact rebecca_office_reached".
+Controls: with no fact set that turn, the reply's move lands; a fact
+from an earlier turn pins nobody.
+
+The first rerun crashed on an older bug that only now surfaced:
+`apply_item_facts` read `player_area` (bound only in the mapping loop)
+when a reply named a new area on a turn with no mapping checks. Fixed as
+7d015a5 (Ringer, Luna; the regression test fails without the fix;
+suite 976).
+
+**3B x3 with precedence (2026-10-01, check passed;
+`bench/results/world-3b-precedence-x3`).** All three moved to 3C after
+turn 9; every handoff fired; no leak rejection. Kristin is in the
+executive office from turn 3 on in 3/3. Turn 4 opens "Kristin is in the
+executive office with Michelle" in 3/3 (read by hand), with no re-entry.
+Overrides logged (4, all Brandon): r1 turn 3 kept him in the security
+corridors, and turn 8 in 3/3 kept him at the broadcast relay
+(`relay_open`) when the reply said security corridors. Judges vs the
+rule-only run: restarts 1 -> 0/27, contradicts 0 -> 1, beyond 3 -> 1,
+facts correct 23 -> 24/27. The three wrong-fact turns are all turn 9
+(the broadcast: the console and override codes moved). r1 turn 1 is the
+known console drift to the infrastructure corridors.
+
+**Next:** the 2A story data through a ChatGPT follow-up: drop the
+perimeter move from `false_identities_ready`; add an arrival reveal at
+the checkpoint guard whose delivery narrates the trip and owns the move;
+key `scrutiny_2a` and `cover_review_2a` on the arrival fact. Then 2A x3.
+Plot 2A.3 already narrates the arrival ("Kristin and Brandon pass through
+several layers of security. Their identities survive the initial
+checks..."), so plot.md needs no change. Proposed structure, following the
+3B pattern Brandon chose: a new storylet `SL-2A-E` and fact (like
+`facility_perimeter_reached`) whose `on_assert` moves Kristin to
+`facility_perimeter` (Brandon follows); `false_identities_ready` loses its
+move; the C set (supervisor, corridor) also requires the arrival fact, as
+SL-3B-B requires the office entry. ChatGPT prompt for the entry's text and
+lists: `~/dev/ringer-work/freytag-2a-arrival/chatgpt_prompt.md` (statement
+as a state with no moving verb; delivery that narrates the trip). Scorer:
+`score_arrival.py` (4 prompt examples, 10 held-back wordings, 14 commands
+that must fire nothing, including the bench script's other 2A commands).
+
+**ChatGPT round 1** (`answer_r1.yaml`): the statement and delivery_text
+were right; earn_when was "travel to the facility." (wrong verb form,
+trailing period). The lists fired on 7 of 7 ordinary hideout planning
+commands ("Show Brandon the facility schematics.", "Use the servers to
+map the facility.", ...), because bare verbs (show, use, display, go)
+paired with bare "facility". My prompt invited that. **Brandon had me
+fix the lists directly** (`answer_final.yaml`): only multi-word travel
+and check verb phrases ("go to", "drive out to", "show the checkpoint",
+"present our credentials at", "take Brandon to"), no bare "facility",
+no "my/our credentials" nouns. Score: prompt examples 4/4, held-back
+wordings 10/10, must-fire-nothing 21/21; fresh after tuning: positives
+6/6. One known matcher limit fires: "Explain to Brandon how to get to
+the facility." ("get to"). In the bench script only turn 4 fires.
+Build: Ringer `ringer-work/freytag-2a-arrival` (check
+`verify_arrival.py`: exact values, gating, world moves, pacing re-key,
+payloads byte-identical).
+
+**Landed as 2c0ed9d** (Ringer, Luna, second attempt; `verify_arrival.py`
+PASS; suite 977). Test edits were all of the allowed kinds: the moving
+fact swapped in the 2A grounding and projection tests, one idle 2A turn
+dropped from the canon journey, the world-effects set updated, and the
+storylet count 35 -> 36. With the arrival as the moving item, the scene
+rule now hides the arrival's SCENE line, not the cover story's.
+
+**2A x3 on 2c0ed9d (2026-10-01, check passed;
+`bench/results/world-2a-arrival-x3`).** All three moved to 2B after turn
+7; every handoff fired, with the arrival on turn 4 in 3/3; no leak
+rejection. Kristin's place in 3/3: hideout on turns 1-3 (the cover turns),
+facility perimeter on turn 4, then the perimeter (r3: "facility
+corridor") on turn 5 and the infrastructure corridors on turns 6-7.
+Overrides logged: in r2 and r3, turn 4 replies said "checkpoint" for
+Kristin and Brandon, kept at the facility perimeter. No narration
+mentions the scrutiny line. Judges vs the baseline (2A x3 on a1be840):
+restarts 2 -> 0/21, contradicts 2 -> 1, beyond 0 -> 1, facts correct
+15 -> 19/21. **Wart:** on turn 4 the lead-up already shows the guard
+waving them through, and the appended delivery then says they "leave
+the hideout and reach the facility perimeter", so the trip is told after
+the check (3/3). The command itself places them at the checkpoint.
+
+**Next:** decide whether the turn-4 order wart matters; the 3B turn-9
+fact misses (console and override codes on the broadcast turn); then
+3C, S3 and S4. For 3C, and for the open 3B
+gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
+text), start from step 1 of "Fixing a Scene": read the recorded prompt
+against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
+"Rebecca" as new, and Brandon's stale place text.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
@@ -995,6 +2010,12 @@ turn's snapshot, so that a rejected turn undoes it.
 
 ### Working rules that bit this project
 
+- A narration miss is diagnosed from the recorded prompt read against
+  plot.md, and probed, before any rule or engine change ("Fixing a Scene"
+  in AGENTS.md). The 3B office miss cost a THINGS build and two live
+  reruns. That was because the diagnosis (THINGS) was never checked
+  against the plot, and the probe scored item_facts instead of the
+  narration. The cause was missing 3B.2 material.
 - Every code change is a Ringer task on GPT-5.6 Luna (`"engine": "codex",
   "model": "gpt-5.6-luna"`). Claude writes the brief and the check, and
   reviews the patch.

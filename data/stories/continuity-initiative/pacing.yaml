@@ -40,7 +40,7 @@ events:
   scene_id: 2A
   at_turn: 3
   when:
-  - fact_id: false_identities_ready
+  - fact_id: facility_perimeter_reached
     equals: true
   effects:
   - fact_id: identity_scrutiny_visible
@@ -110,7 +110,7 @@ events:
   scene_id: 2A
   at_turn: 7
   when:
-  - fact_id: false_identities_ready
+  - fact_id: facility_perimeter_reached
     equals: true
   effects:
   - fact_id: inspector_cover_under_review

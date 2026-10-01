@@ -423,12 +423,12 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
       ? nounl(
         `At the end of this turn, is ${t} in a different room or area from the one ${t} started in? Answer from \`narrator_narration\` only.`,
         `${t} ends the turn in another room, in a vehicle, or somewhere else outdoors.`,
-        `${t} ends the turn in the room or area where ${t} started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move.`,
+        `${t} ends the turn in the room or area where ${t} started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move. ` + "`before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.",
       )
       : nounl(
-        `At the end of this turn, is ${t} held by a different person, or in a different place, than at the start of this turn? Answer from \`narrator_narration\` only.`,
+        `At the end of this turn, is ${t}` + " held by a different person, or in a different place, than `before_place`? Answer from `narrator_narration` only.",
         "It ends the turn with a different holder or in a different place.",
-        "It ends where it started. When `before_place` is a person, anywhere on that person or in something that person carries is the same place, such as a hand, a pocket or a bag. A thing that stays with that person has not moved, even when that person carries it somewhere else. An attempt that fails, or a hand-over that nobody takes, is not a move.",
+        "It ends where it started. When `before_place` is a person, anywhere on that person or in something that person carries is the same place, such as a hand, a pocket or a bag. A thing that stays with that person has not moved, even when that person carries it somewhere else. An attempt that fails, or a hand-over that nobody takes, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.",
       ),
   };
   if (axes.length) {
@@ -518,7 +518,10 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
 
 export async function judgeInput(
   input,
-  { packagePath, fetchImpl = fetch, environment = process.env, only, variant = "baseline", judges = "both", protagonist } = {},
+  {
+    packagePath, fetchImpl = fetch, environment = process.env, only, variant = "baseline", judges = "both", protagonist,
+    concurrency, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  } = {},
 ) {
   if (!CONTINUITY_VARIANTS.includes(variant)) {
     throw new Error(`Unknown continuity variant: ${variant}`);
@@ -530,36 +533,45 @@ export async function judgeInput(
     throw new Error("CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN are required.");
   }
   const plot = readFileSync(resolve(packagePath, "plot.md"), "utf8");
-  const raw = []; let calls = 0; let model;
+  const configuredConcurrency = Number(concurrency ?? environment.JEV_CONCURRENCY);
+  const limit = Number.isInteger(configuredConcurrency) && configuredConcurrency > 0 ? configuredConcurrency : 8;
+  const jobs = []; const turns = []; let model;
   const request = async (judge, replicate, turn, thing, state, questions) => {
     const questionSize = Math.max(0, ...Object.values(questions).map((q) => JSON.stringify(q).length));
     if (Math.ceil((JSON.stringify(state).length + questionSize) / 4) > 30000) {
       throw new Error("Jev request exceeds the 30000 token estimate.");
     }
-    const response = await fetchImpl(
-      `https://api.cloudflare.com/client/v4/accounts/${environment.CLOUDFLARE_ACCOUNT_ID}/ai/run`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${environment.CLOUDFLARE_AI_TOKEN}`,
-        },
-        body: JSON.stringify({ model: "typesafe/jev", input: questionSet(state, questions) }),
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${environment.CLOUDFLARE_AI_TOKEN}`,
       },
-    );
-    calls += 1;
+      body: JSON.stringify({ model: "typesafe/jev", input: questionSet(state, questions) }),
+    };
+    let response;
+    for (let retry = 0; ; retry++) {
+      response = await fetchImpl(
+        `https://api.cloudflare.com/client/v4/accounts/${environment.CLOUDFLARE_ACCOUNT_ID}/ai/run`, options,
+      );
+      if (![429, 503].includes(response.status) || retry === 5) break;
+      const retryAfter = Number(response.headers?.get?.("retry-after"));
+      const seconds = Number.isFinite(retryAfter) ? retryAfter : 2 ** retry;
+      await sleep(seconds * 1000);
+    }
     const parsed = parseEnvelope(response.status, await response.json(), Object.keys(questions));
-    if (model && parsed.model !== model) throw new Error(`Jev model changed from ${model} to ${parsed.model}.`);
-    model ||= parsed.model;
-    raw.push({
+    return {
       judge, replicate, turn, ...(thing === undefined ? {} : { thing }), model: parsed.model,
       variant, state, questions, answers: parsed.answers, usage: parsed.usage,
-    });
-    return parsed.answers;
+    };
   };
-  const continuity = { judgments: [], judge_calls: 0 }; const fact = { judgments: [], judge_calls: 0 };
+  const addJob = (record, judge, replicate, number, thing, state, questions, answers) => {
+    const job = { judge, replicate, turn: number, thing, state, questions };
+    jobs.push({ ...job, run: async () => { const result = await request(judge, replicate, number, thing, state, questions); answers(result.answers); return result; } });
+    if (judge === "continuity") record.continuityJobs++; else record.factJobs++;
+  };
   for (let ri = 0; ri < input.runs.length; ri++) {
-    const run = input.runs[ri]; const cTurns = []; const fTurns = [];
+    const run = input.runs[ri]; const runTurns = [];
     for (let i = 0; i < run.turns.length; i++) {
       const turn = run.turns[i];
       const replicate = run.replicate ?? ri;
@@ -583,28 +595,15 @@ export async function judgeInput(
         earlier_narration: earlier,
         hidden_canon: hc,
       };
+      const turnRecord = { number, first, hc, cAnswers: {}, cParts: [], perThing: [], continuityJobs: 0, factJobs: 0 };
+      runTurns.push(turnRecord);
       if (judges !== "fact") {
         const questions = continuityQuestions(state, Boolean(hc));
-        const answers = {};
-        for (const requestInput of continuityRequests(state, questions, variant)) {
-          const part = await request(
-            "continuity", replicate, number, undefined, requestInput.state, requestInput.questions,
-          );
-          Object.assign(answers, part);
-          continuity.judge_calls++;
+        for (const [partIndex, requestInput] of continuityRequests(state, questions, variant).entries()) {
+          turnRecord.cParts.push(undefined);
+          addJob(turnRecord, "continuity", replicate, number, undefined, requestInput.state, requestInput.questions,
+            (part) => { turnRecord.cParts[partIndex] = part; });
         }
-        const truth = Object.fromEntries(
-          Object.entries(answers).map(([name, answer]) => [name, answer?.noul > THRESHOLD]),
-        );
-        const reason = Object.entries(answers)
-          .filter(([, answer]) => answer?.noul > THRESHOLD)
-          .map(([name, answer]) => `${name} ${answer.noul.toFixed(2)}`)
-          .join("; ");
-        cTurns.push({
-          turn: number,
-          ...combineContinuity(truth, { firstTurnInScene: first, hasHiddenCanon: Boolean(hc) }),
-          reason,
-        });
       }
       const before = turn.item_facts_before || {};
       const after = turn.item_facts_after || {};
@@ -651,23 +650,53 @@ export async function judgeInput(
         };
         item.axes = turn.item_facts_axes?.[thing] || [];
         const fq = factQuestions(thing, item, pf, protagonist);
-        const fa = await request("fact", replicate, number, thing, fs, fq);
-        fact.judge_calls++;
-        const ft = Object.fromEntries(
-          Object.entries(fa).map(([name, answer]) => [name, answer?.noul > THRESHOLD]),
-        );
-        perThing.push({ ...item, answersTrue: ft, answers: fa });
+        const perThing = { item, answers: undefined };
+        turnRecord.perThing.push(perThing);
+        addJob(turnRecord, "fact", replicate, number, thing, fs, fq,
+          (answers) => { perThing.answers = answers; });
       }
-      const combined = combineFact(perThing);
-      const factReason = perThing
-        .flatMap((item) => Object.entries(item.answersTrue)
-          .filter(([, yes]) => yes)
-          .map(([name]) => `${item.thing}:${name} ${(item.answers?.[name]?.noul ?? 0).toFixed(2)}`))
-        .join("; ");
-      fTurns.push({ turn: number, ...combined, reason: factReason });
+    }
+    turns.push({ runTurns, continuity: judges !== "fact", fact: judges !== "continuity" });
+  }
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, jobs.length) }, async () => {
+    while (true) {
+      const index = next++;
+      if (index >= jobs.length) return;
+      jobs[index].result = await jobs[index].run();
+    }
+  });
+  await Promise.all(workers);
+  for (const run of turns) {
+    for (const turn of run.runTurns) Object.assign(turn.cAnswers, ...turn.cParts);
+  }
+  const raw = jobs.map(({ result }) => result);
+  for (const result of raw) {
+    if (model && result.model !== model) throw new Error(`Jev model changed from ${model} to ${result.model}.`);
+    model ||= result.model;
+  }
+  const continuity = { judgments: [], judge_calls: 0 }; const fact = { judgments: [], judge_calls: 0 };
+  for (const run of turns) {
+    const cTurns = []; const fTurns = [];
+    for (const turn of run.runTurns) {
+      if (run.continuity) {
+        const truth = Object.fromEntries(Object.entries(turn.cAnswers).map(([name, answer]) => [name, answer?.noul > THRESHOLD]));
+        const reason = Object.entries(turn.cAnswers).filter(([, answer]) => answer?.noul > THRESHOLD)
+          .map(([name, answer]) => `${name} ${answer.noul.toFixed(2)}`).join("; ");
+        cTurns.push({ turn: turn.number, ...combineContinuity(truth, { firstTurnInScene: turn.first, hasHiddenCanon: Boolean(turn.hc) }), reason });
+        continuity.judge_calls += turn.continuityJobs;
+      }
+      if (run.fact) {
+        const perThing = turn.perThing.map(({ item, answers }) => ({ ...item,
+          answersTrue: Object.fromEntries(Object.entries(answers).map(([name, answer]) => [name, answer?.noul > THRESHOLD])), answers }));
+        const factReason = perThing.flatMap((item) => Object.entries(item.answersTrue).filter(([, yes]) => yes)
+          .map(([name]) => `${item.thing}:${name} ${(item.answers?.[name]?.noul ?? 0).toFixed(2)}`)).join("; ");
+        fTurns.push({ turn: turn.number, ...combineFact(perThing), reason: factReason });
+        fact.judge_calls += turn.factJobs;
+      }
     }
     continuity.judgments.push({ turns: cTurns });
-    fact.judgments.push({ turns: judges === "continuity" ? [] : fTurns });
+    fact.judgments.push({ turns: run.fact ? fTurns : [] });
   }
   return { continuity, fact, raw };
 }
@@ -684,7 +713,8 @@ async function main() {
   const variant = process.argv.includes("--variant") ? argument("--variant") : "baseline";
   const judges = process.argv.includes("--judges") ? argument("--judges") : "both";
   const protagonist = process.argv.includes("--protagonist") ? argument("--protagonist") : undefined;
-  const result = await judgeInput(input, { packagePath: argument("--package"), only, variant, judges, protagonist });
+  const concurrency = process.argv.includes("--concurrency") ? argument("--concurrency") : undefined;
+  const result = await judgeInput(input, { packagePath: argument("--package"), only, variant, judges, protagonist, concurrency });
   const out = argument("--out");
   if (judges !== "fact") {
     writeFileSync(resolve(out, "continuity-judgments.json"), JSON.stringify(result.continuity, null, 2) + "\n");

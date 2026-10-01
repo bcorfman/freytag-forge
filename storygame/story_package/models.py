@@ -167,6 +167,10 @@ class Entity(_Model):
     narrator_bio: str | None = None
 
 
+class Group(Entity):
+    scoped_aliases: tuple[str, ...] = ()
+
+
 class Location(Entity):
     parent: str | None = Field(default=None, pattern=_ID)
 
@@ -349,6 +353,7 @@ class WorldSource(_Model):
     locations: tuple[Location, ...]
     npcs: tuple[Entity, ...]
     items: tuple[Item, ...]
+    groups: tuple[Group, ...] = ()
     kinds: tuple[KindDeclaration, ...] = ()
     facts: tuple[str, ...] = ()
     fact_effects: Mapping[str, tuple[WorldEffect, ...]] = {}

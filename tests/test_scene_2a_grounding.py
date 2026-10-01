@@ -32,10 +32,15 @@ def test_scene_2a_places_the_hideout_and_fixed_servers() -> None:
     assert not world.move("hideout_servers", "kristin").ok
 
 
-def test_false_identities_ready_moves_the_group_to_the_facility() -> None:
+def test_facility_perimeter_reached_moves_the_group_to_the_facility() -> None:
     state = _scene_2a_state()
     state.facts.assert_fact(Fact(predicate="false_identities_ready", subject="story", value="true"))
 
+    assert apply_world_effects(PACKAGE, state.facts) == ()
+    world = world_for(PACKAGE, state.facts)
+    assert world.parent("kristin") == "brandon_hideout"
+
+    state.facts.assert_fact(Fact(predicate="facility_perimeter_reached", subject="story", value="true"))
     assert apply_world_effects(PACKAGE, state.facts) == ()
     world = world_for(PACKAGE, state.facts)
 
@@ -129,6 +134,7 @@ class _Response:
 def test_warning_the_supervisor_earns_corridor_access_by_handoff(monkeypatch: pytest.MonkeyPatch) -> None:
     state = _scene_2a_state()
     state.facts.assert_fact(Fact(predicate="false_identities_ready", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="facility_perimeter_reached", subject="story", value="true"))
     apply_world_effects(PACKAGE, state.facts)
     narration = {"segments": [{"kind": "narration", "text": "Kristin tells the supervisor about the pressure chart."}]}
     monkeypatch.setattr(

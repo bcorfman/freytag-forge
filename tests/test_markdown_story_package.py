@@ -17,7 +17,7 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
-from storygame.runtime.world_model import apply_scene_placements, world_for
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package import StoryPackageError, load_story_package
 from storygame.story_package.models import ItemPlacement
 
@@ -52,6 +52,87 @@ def test_scene_2c_applies_command_levels_and_companion_placements() -> None:
     assert "brandon" in world.companions("kristin")
 
 
+def test_scene_3a_applies_detention_group_and_codes_placements() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "3A"
+
+    assert apply_scene_placements(package, state.facts, "3A") == ()
+
+    world = world_for(package, state.facts)
+    for entity_id in ("kristin", "brandon", "michelle", "captives", "stolen_radio", "gate_status_panel"):
+        assert world.parent(entity_id) == "detention_level"
+    assert world.parent("senior_official") == "captives"
+    assert world.members("captives") == ("senior_official",)
+    assert world.parent("override_codes") == "senior_official"
+    assert world.is_hidden("override_codes")
+    assert "brandon" in world.companions("kristin")
+
+    state.facts.assert_fact(Fact(predicate="military_override_codes_available", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    world = world_for(package, state.facts)
+    assert world.parent("override_codes") == "kristin"
+    assert not world.is_hidden("override_codes")
+
+
+def test_scene_3b_places_group_in_security_corridors_and_moves_brandon_to_relay() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "3B"
+
+    assert apply_scene_placements(package, state.facts, "3B") == ()
+
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "security_corridors"
+    assert world.parent("brandon") == "security_corridors"
+    assert world.parent("michelle") == "security_corridors"
+    assert world.parent("rebecca") == "executive_office"
+    assert set(world.companions("kristin")) == {"brandon", "michelle"}
+
+    state.facts.assert_fact(Fact(predicate="relay_open", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    world = world_for(package, state.facts)
+    assert world.parent("brandon") == "broadcast_relay"
+    assert world.parent("kristin") == "security_corridors"
+    assert world.parent("michelle") == "security_corridors"
+
+
+def test_scene_3b_office_entry_moves_kristin_and_michelle_in_and_leaves_brandon() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "3B"
+
+    assert apply_scene_placements(package, state.facts, "3B") == ()
+
+    state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "executive_office"
+    assert world.parent("michelle") == "executive_office"
+    assert world.parent("brandon") == "security_corridors"
+    assert world.parent("rebecca") == "executive_office"
+
+
+def test_scene_2a_arrival_moves_kristin_and_brandon_to_the_perimeter() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "2A"
+
+    assert apply_scene_placements(package, state.facts, "2A") == ()
+
+    state.facts.assert_fact(Fact(predicate="false_identities_ready", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "brandon_hideout"
+    assert world.parent("brandon") == "brandon_hideout"
+
+    state.facts.assert_fact(Fact(predicate="facility_perimeter_reached", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "facility_perimeter"
+    assert world.parent("brandon") == "facility_perimeter"
+
+
 def test_scene_2c_may_name_the_maintenance_network() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
@@ -59,6 +140,42 @@ def test_scene_2c_may_name_the_maintenance_network() -> None:
 
     assert "maintenance_network" in NarrationSafetyValidator._scene_entity_ids(package, scene)
     assert world_for(package, state.facts).parent("maintenance_network") == "purge_chamber"
+
+
+def test_group_member_package_declares_group_and_places_member(tmp_path: Path) -> None:
+    destination = copied_package(tmp_path)
+    world_path = destination / "world.yaml"
+    world_data = yaml.safe_load(world_path.read_text())
+    world_data["groups"][0].pop("scoped_aliases", None)
+    world_data["groups"].append({"id": "prisoners", "name": "Prisoners", "aliases": ["prisoners"]})
+    world_path.write_text(yaml.safe_dump(world_data, sort_keys=False))
+    plot_path = destination / "plot.md"
+    plot = plot_path.read_text()
+    plot = plot.replace(
+        "participant_ids: [kristin, brandon, michelle]\ncompanions: [brandon]\nitem_ids: []",
+        "participant_ids: [kristin, brandon, michelle]\n"
+        "character_placements:\n  prisoners: {parent: purge_chamber}\n  michelle: {parent: prisoners}\n"
+        "companions: [brandon]\nitem_ids: []",
+        1,
+    )
+    plot_path.write_text(plot)
+
+    package = load_story_package(destination)
+    state = RuntimeState.bootstrap(package)
+    assert apply_scene_placements(package, state.facts, "2C") == ()
+    world = world_for(package, state.facts)
+    assert world.members("prisoners") == ("michelle",)
+
+
+def test_group_scoped_alias_loader_rejects_declared_name(tmp_path: Path) -> None:
+    destination = copied_package(tmp_path)
+    world_path = destination / "world.yaml"
+    world_data = yaml.safe_load(world_path.read_text())
+    world_data["groups"][0]["scoped_aliases"] = ["Kristin"]
+    world_path.write_text(yaml.safe_dump(world_data, sort_keys=False))
+
+    with pytest.raises(StoryPackageError, match="scoped alias 'Kristin'.*declared entity name or alias"):
+        load_story_package(destination)
 
 
 def copied_package(tmp_path: Path) -> Path:
@@ -80,7 +197,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 34
+    assert len(package.storylets) == 36
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
@@ -427,6 +544,7 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_2a_a_r2",
         "k_sl_2a_b_r1",
         "k_sl_2a_b_r2",
+        "k_sl_2a_e_r1",
         "k_sl_2a_c_r1",
         "k_sl_2a_c_r2",
         "k_sl_2b_a_r1",
@@ -436,6 +554,23 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_2b_b_r3",
         "k_sl_2b_c_r1",
         "k_sl_2b_c_r2",
+        "k_sl_3a_a_r1",
+        "k_sl_3a_a_r2",
+        "k_sl_3a_b_r1",
+        "k_sl_3a_b_r2",
+        "k_sl_3a_c_r1",
+        "k_sl_3a_c_r2",
+        "k_sl_3a_d_r1",
+        "k_sl_3a_d_r2",
+        "k_sl_3b_a_r1",
+        "k_sl_3b_a_r2",
+        "k_sl_3b_e_r1",
+        "k_sl_3b_b_r1",
+        "k_sl_3b_b_r2",
+        "k_sl_3b_c_r1",
+        "k_sl_3b_c_r2",
+        "k_sl_3b_d_r1",
+        "k_sl_3b_d_r2",
         "k_sl_2c_a_r1",
         "k_sl_2c_a_r2",
         "k_sl_2c_b_r1",
