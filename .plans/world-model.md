@@ -37,8 +37,8 @@ item (9cff368), and Rebecca's executive desk is declared and fixed
 (21338bb), and Jev sees owners so "Rebecca's office" maps to it
 (ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
 (8e09018), each measured live 3/3; 3C grounded (broadcast chamber,
-archive moves to Kristin when secured); 3C handoff prompt ready for
-ChatGPT Desktop; then the 3C bench script and x3, then S3 and S4.
+archive moves to Kristin when secured); 3C handoffs approved and landing;
+then the 3C bench script and x3, then S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1833,6 +1833,20 @@ nouns missing, fragment phrases, and b_r1's delivery reads as hitting
 Rebecca with the case. Same-chat follow-up `chatgpt_followup_r2.md`; a
 second held-back set (`fresh2`, 20 wordings, written after the follow-up
 named some fresh words) scores round 1 at 6/20.
+Round 2 (`handoffs_3c_r2.yaml`): prompt 20/20, held-back 23/40 and
+9/20, no wrong entry, but "ask" made 2/40 ordinary commands fire ("Ask
+Michelle about the archive.", "Ask the senior official how he is.").
+**Brandon had Claude fix round 2 directly** (`make_final.py`, as in 3B):
+dropped bare "the archive" and "senior official"; added the missing
+verbs and real names (experiments, revolts, riots, the pumps, surrender,
+"where Charles"). A third held-back set (`fresh3`) was written before the
+fixes, but the fixes then drew on it, so it is not blind; fragments
+taken from it were removed again. **Wordings written after tuning, lists
+unchanged since: 18/20, no wrong entry, ordinary commands 0/15** (all
+ordinary sets 0/55). The two misses need a bare "Rebecca" ("Restrain
+Rebecca ..."), which would fire on "Ask Rebecca where she is going.", or
+a bare "footage". Landing by Ringer: `verify_handoffs_3c.py` (exact
+values, 30 matcher cases, payloads byte-identical outside 3C).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
