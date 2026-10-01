@@ -19,9 +19,18 @@ from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package import StoryPackageError, load_story_package
-from storygame.story_package.models import ItemPlacement
+from storygame.story_package.models import ItemPlacement, SceneFrame
 
 PACKAGE = Path("data/stories/continuity-initiative")
+
+
+def test_scene_frame_situation_may_be_omitted() -> None:
+    package = load_story_package(PACKAGE)
+    frame = next(item for item in package.knowledge.scene_frames if item.scene_id == "3C")
+
+    assert frame.situation == ""
+    assert frame.pressure == "Expose the network and escape"
+    assert SceneFrame(scene_id="3C", pressure="Expose the network and escape").situation == ""
 
 
 def test_scene_2b_applies_archive_and_companion_placements() -> None:

@@ -127,7 +127,7 @@ class SceneFrame(_Model):
     """A concise, explicitly player-safe immediate scene situation."""
 
     scene_id: str = Field(pattern=_SCENE_ID)
-    situation: str = Field(min_length=1)
+    situation: str = ""
     pressure: str = Field(min_length=1)
 
 

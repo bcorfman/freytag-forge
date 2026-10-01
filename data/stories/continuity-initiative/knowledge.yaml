@@ -263,7 +263,6 @@ scene_frames:
   situation: The fight runs through the security corridors and the executive office. JANUS is tracking the fight through cameras, doors, and alarms; the group needs an opening to reach the broadcast relay.
   pressure: Overload JANUS and seize the broadcast
 - scene_id: 3C
-  situation: The secured command office and broadcast chamber during a mounting deluge. The relay is open for the moment, but escaping captives need a route out before water and bulkheads close it.
   pressure: Expose the network and escape
 knowledge:
 - id: k_sl_1a_a_r1
