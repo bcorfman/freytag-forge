@@ -2232,6 +2232,10 @@ knowledge:
   delivery_text: "Brandon holds the relay open against the security lockdown. Kristin and Michelle can begin the broadcast."
 - id: k_sl_3c_a_r1
   statement: 'Michelle broadcasts captives, JANUS records, planning sessions, and detention locations to independent networks.'
+  earn_when: sends the evidence to networks
+  action_evidence:
+  - [ask, talk to, send, broadcast, air, play, show, share, transmit, stream, publish, release, upload, present, display, project, screen, put on, run, relay]
+  - [detention-site locations, detention site locations, captives' video, captive video, captive videos, prisoner video, prisoner videos, captives' footage, captive footage, prisoner footage, JANUS records, JANUS selection records, selection records, planning sessions, planning session, Charles and Rebecca, Charles's planning, Rebecca's planning, broadcast evidence, national broadcast, national broadcasts, independent networks, independent network, outside networks, outside network, public broadcast, public broadcasts, evidence package, evidence packages, detention locations, prisoner locations, captive locations, detention-site list, detention site list, behavioral experiments, behavioral experiment, experiments, experiment records, experiment record, detention site map, detention-site map, detention map]
   entity_ids: []
   aliases:
   - truth no longer containable
@@ -2257,8 +2261,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Michelle broadcasts video of the captives, JANUS records, planning sessions, and detention locations to independent networks."
 - id: k_sl_3c_a_r2
   statement: 'When Charles calls her a terrorist, Michelle answers with live revolts that make the truth impossible to contain.'
+  earn_when: answers Charles's terrorist claim
+  action_evidence:
+  - [ask, talk to, answer, respond, reply, counter, challenge, refute, reject, deny, expose, show, display, broadcast, air, play, announce, address, confront, rebut, tell, call, put, cut to, switch to]
+  - [Charles's terrorist claim, terrorist claim, terrorist claims, terrorist charge, terrorist charges, terrorist label, terrorist labels, Charles's accusation, Charles's accusations, his accusation, his accusations, his terrorist claim, his terrorist claims, live revolts, live revolt, facility revolts, facility revolt, prison revolts, prison revolt, uprisings, uprising, live uprisings, live uprising, revolt footage, uprising footage, revolt images, uprising images, prisoner revolt, prisoner revolts, captive revolt, captive revolts, live feeds, live feed, revolts, revolt, riots, riot, the riots, a liar, is lying, his lies, Charles's lies, Charles's claim, his claim]
   entity_ids: []
   aliases:
   - truth no longer containable
@@ -2281,8 +2290,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "When Charles calls Michelle a terrorist, she answers with live revolts. The truth is impossible to contain."
 - id: k_sl_3c_b_r1
   statement: 'Kristin stops Rebecca fleeing with the archive, and Michelle sends its prisoner locations to independent networks.'
+  earn_when: takes the data case from Rebecca
+  action_evidence:
+  - [ask, talk to, stop, block, hold, grab, take, seize, chase, tackle, corner, run after, catch, pin, restrain, confront, intercept, prevent, secure, wrest, wrestle, wrestle away]
+  - [data case, data cases, portable data case, portable data cases, Rebecca's data case, Rebecca's data cases, Rebecca data case, Rebecca data cases, her data case, her data cases, Rebecca's escape, Rebecca escapes, Rebecca fleeing, Rebecca's flight, Rebecca's exit, Rebecca exits, her escape, her flight, her exit, Rebecca's hands, her hands, Rebecca's bag, Rebecca's bags, her bag, her bags, archive case, archive cases, portable case, portable cases, data briefcase, data briefcases, Rebecca's arm, her arm]
   entity_ids: []
   aliases:
   - portable archive secured
@@ -2320,8 +2334,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Kristin stops Rebecca from fleeing with the data case. Michelle sends its prisoner locations to independent networks."
 - id: k_sl_3c_b_r2
   statement: 'The prisoners capture Rebecca after her archive is copied beyond her reach, while Charles escapes his remote command site.'
+  earn_when: copies the archive beyond Rebecca's reach
+  action_evidence:
+  - [ask, talk to, copy, send, upload, share, publish, release, transmit, distribute, broadcast, hand, give, turn over, let, give up, deliver, expose, spread, save, push, turn, leave]
+  - [Rebecca's archive, her archive, portable archive, portable archives, archive copies, archive copy, archive backup, archive backups, independent networks, independent network, outside networks, outside network, public servers, public server, the prisoners, those prisoners, prisoner group, prisoner groups, Rebecca's capture, Rebecca captures, her capture, remote command site, remote command sites, Charles's command site, his command site, Charles's escape, his escape, archive upload, archive uploads, archive release, archive releases, copies of the archive]
   entity_ids: []
   aliases:
   - portable archive secured
@@ -2359,8 +2378,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "The prisoners capture Rebecca after the archive is copied beyond her reach. Charles escapes his remote command site."
 - id: k_sl_3c_c_r1
   statement: 'Kristin restores power to drainage pumps and holds one watertight barrier while Michelle leads captives through the maintenance tunnel.'
+  earn_when: restores power to the drainage pumps
+  action_evidence:
+  - [ask, talk to, restore, turn on, switch on, power up, start, activate, repair, fix, run, operate, use, route, reroute, boot, hold, shut, close, seal, lead, guide, brace, keep]
+  - [drainage pumps, drainage pump, pump controls, pump control, drainage controls, drainage control, pump power, drainage power, pump switch, pump switches, pump panel, pump panels, drainage panel, drainage panels, watertight barrier, watertight barriers, barrier door, barrier doors, flood barrier, flood barriers, sealed barrier, sealed barriers, maintenance tunnel, maintenance tunnels, maintenance route, maintenance routes, escape tunnel, escape tunnels, tunnel route, tunnel routes, the pumps, the pump]
   entity_ids: []
   aliases:
   - evacuation route open
@@ -2389,8 +2413,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Kristin restores power to the drainage pumps and holds a watertight barrier. Michelle leads the captives through the maintenance tunnel."
 - id: k_sl_3c_c_r2
   statement: 'Michelle uses the senior official’s authorization to release the surface gates while Brandon keeps the relay open and water closes the facility around them.'
+  earn_when: releases the emergency surface gates
+  action_evidence:
+  - [ask, talk to, release, open, unlock, raise, activate, start, switch on, power up, use, enter, type, input, authorize, approve, send, have, tell, order, give, hand, trigger]
+  - [emergency surface gates, emergency surface gate, surface gates, surface gate, emergency gates, emergency gate, gate authorization, gate authorizations, one-time authorization, one-time authorizations, senior official's authorization, official authorization, official's authorization, override codes, override code, emergency override codes, Michelle's authorization, her authorization, gate code, gate codes, surface release, surface releases, gate release, gate releases, gate signal, gate signals, escape signal, escape signals, surface alarm, surface alarms, gates to the surface, surface exits, surface exit]
   entity_ids: []
   aliases:
   - captives reaching surface
@@ -2419,8 +2448,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Michelle uses the senior official's authorization to release the surface gates. Brandon keeps the relay open while water closes the facility around them."
 - id: k_sl_3c_d_r1
   statement: 'Across the country, detention sites begin to surrender or release prisoners as the national network fractures.'
+  earn_when: checks reports from detention sites
+  action_evidence:
+  - [ask, talk to, check, read, watch, view, look at, review, inspect, scan, monitor, follow, search, listen to, track, confirm, count, list, tally, compare, scroll through]
+  - [other detention sites, other detention site, detention-site reports, detention site reports, facility reports, facility report, facilities surrendering, facility surrender, facility surrenders, site surrender, site surrenders, site releases, site release, prison releases, prison release, national network, national networks, network fracture, network fractures, network collapse, network collapses, country reports, national reports, other facilities, detention reports, news reports, site news, surrender reports, release reports, facility news, surrender, surrendered, the reports, detention sites, detention site]
   entity_ids: []
   aliases:
   - national network fragmenting
@@ -2445,8 +2479,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Across the country, detention sites begin to surrender or release prisoners. The national network fractures."
 - id: k_sl_3c_d_r2
   statement: 'Families and communities organize independent rescue efforts after learning that many of the missing are still alive.'
+  earn_when: calls the families of the missing
+  action_evidence:
+  - [ask, talk to, call, contact, tell, inform, reach, join, help, organize, support, meet, work with, coordinate, speak to, comfort, greet, visit, find, gather, volunteer, volunteer with]
+  - [the missing, missing families, missing family, family members, family member, the families, those families, community rescues, community rescue, rescue efforts, rescue effort, rescue volunteers, rescue volunteer, volunteers organizing rescues, rescue teams, rescue team, rescue groups, rescue group, local communities, local community, independent rescues, independent rescue, survivors' families, survivor families, missing survivors, living missing, still alive, community volunteers, community volunteer, rescue organizers]
   entity_ids: []
   aliases:
   - community rescue efforts begun
@@ -2471,8 +2510,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "Families and communities organize independent rescue efforts. Many of the missing are still alive."
 - id: k_sl_3c_e_r1
   statement: 'A recovered JANUS file names the disappearances Phase One and reveals a second plan to provoke conflict among survivors.'
+  earn_when: opens the recovered JANUS file
+  action_evidence:
+  - [ask, talk to, open, read, review, inspect, check, examine, find, recover, unseal, access, search, look at, study, decrypt, decode, restore, repair, piece together]
+  - [recovered JANUS file, recovered JANUS files, JANUS file, JANUS files, JANUS document, JANUS documents, recovered document, recovered documents, Phase One, Phase Two, second plan, second plans, survivor conflict, survivor conflicts, survivors' conflict, conflict among survivors, disappearance plan, disappearance plans, missing-person plan, missing-person plans, Phase One plan, Phase One plans, Phase Two plan, Phase Two plans, JANUS phase, JANUS phases, conflict plan, conflict plans, hidden plan, hidden plans, recovered phase file, recovered phase files]
   entity_ids: []
   aliases:
   - phase one label known
@@ -2506,8 +2550,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "A recovered JANUS file calls the disappearances Phase One. It names a second plan to provoke conflict among survivors."
 - id: k_sl_3c_e_r2
   statement: 'From an unknown location, Charles watches the unrest and believes frightened people may still ask him to restore order.'
+  earn_when: traces Charles's unknown location
+  action_evidence:
+  - [ask, talk to, trace, search, find, track, locate, follow, scan, watch, monitor, check, look for, hunt, seek, investigate, pursue, probe, map, pinpoint]
+  - [Charles's location, Charles's locations, his location, his locations, the feeds, video feeds, video feed, remote feeds, remote feed, Charles's feed, Charles's feeds, his feed, his feeds, unknown location, unknown locations, hiding place, hiding places, Charles's hiding place, his hiding place, last known location, last known locations, Charles's signal, Charles's signals, his signal, his signals, remote signal, remote signals, the unrest, national unrest, public unrest, restore order, restored order, Charles at large, where Charles, Charles went, Charles is hiding]
   entity_ids: []
   aliases:
   - phase two conflict plan known
@@ -2540,6 +2589,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  delivery_text: "From an unknown location, Charles watches the unrest. He believes frightened people may still ask him to restore order."
 - id: k_bridge_1b_departure
   statement: Kristin and Brandon can depart along the identified transport route.
   entity_ids: [kristin, brandon, transit_card]

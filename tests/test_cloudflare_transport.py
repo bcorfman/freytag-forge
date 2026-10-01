@@ -68,6 +68,23 @@ def _authored_handoff_package():
     return PACKAGE.model_copy(update={"knowledge": catalog, "knowledge_indexes": indexes})
 
 
+def _groupless_3c_package():
+    knowledge_id = "k_sl_3c_a_r1"
+    knowledge = next(item for item in PACKAGE.knowledge.knowledge if item.id == knowledge_id)
+    groupless = knowledge.model_copy(
+        update={"earn_when": None, "action_evidence": (), "delivery_text": None}
+    )
+    catalog = PACKAGE.knowledge.model_copy(
+        update={
+            "knowledge": tuple(groupless if item.id == knowledge_id else item for item in PACKAGE.knowledge.knowledge),
+        }
+    )
+    indexes = PACKAGE.knowledge_indexes.model_copy(
+        update={"by_id": {**PACKAGE.knowledge_indexes.by_id, knowledge_id: groupless}}
+    )
+    return PACKAGE.model_copy(update={"knowledge": catalog, "knowledge_indexes": indexes})
+
+
 def _assert_memory_card_in_custody(state: RuntimeState) -> None:
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
 
@@ -1088,7 +1105,7 @@ def test_transport_harness_selection_can_be_disabled_for_comparison(monkeypatch)
 
 
 def test_transport_attributes_a_groupless_statement_and_records_telemetry(monkeypatch) -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
+    state = RuntimeState.bootstrap(_groupless_3c_package())
     state.current_scene_id = "3C"
     state.facts.assert_fact(Fact(predicate="broadcast_started", subject="story", value="true"))
     RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
@@ -1112,7 +1129,7 @@ def test_transport_attributes_a_groupless_statement_and_records_telemetry(monkey
 
 
 def test_transport_drops_an_ungrounded_groupless_selection(monkeypatch) -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
+    state = RuntimeState.bootstrap(_groupless_3c_package())
     state.current_scene_id = "3C"
     state.facts.assert_fact(Fact(predicate="broadcast_started", subject="story", value="true"))
     RuntimeEngine(state, lambda *args, **kwargs: {"segments": []})._activate_pacing()
