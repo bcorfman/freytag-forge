@@ -3635,3 +3635,20 @@ def test_fact_tracking_is_wired_into_cli_summary_and_ledger(monkeypatch, tmp_pat
     ledger = json.loads((tmp_path / "ledger.jsonl").read_text())
     assert ledger["fact_tracking"]["changes_by_cause"] == {"command": 0, "narrator": 0}
     assert ledger["spend"]["judge_calls"] == 2
+
+
+def test_package_location_owner_reaches_world():
+    provider = _provider()
+
+    assert provider._world().owner("executive_office") == "rebecca"
+
+
+def test_mapping_state_includes_owned_entity_owner_only():
+    provider = _provider()
+    world = provider._world()
+
+    _, owned = provider._mapping_state(world, "executive_office")
+    _, unowned = provider._mapping_state(world, "regional_facility")
+
+    assert owned["owner"] == "Rebecca Jenkins"
+    assert "owner" not in unowned

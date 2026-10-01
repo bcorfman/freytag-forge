@@ -795,6 +795,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
         holder = world.name(parent) if parent is not None and world.is_a(parent, "character") else None
         place = None if holder else world.name(parent) if parent is not None else None
         result = {"name": world.name(entity_id), "place": place, "held_by": holder}
+        owner = world.owner(entity_id)
+        if owner is not None:
+            result["owner"] = world.name(owner)
         label = world.place_label(entity_id)
         if label and (place is None or label.casefold() != place.casefold()):
             result["place_text"] = label

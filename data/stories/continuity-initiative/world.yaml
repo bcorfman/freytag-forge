@@ -53,6 +53,7 @@ locations:
 - id: executive_office
   name: executive office
   parent: regional_facility
+  owner: rebecca
 - id: facility_escape
   name: Facility escape route
   parent: regional_facility

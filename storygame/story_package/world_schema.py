@@ -22,6 +22,7 @@ def world_source_schema_data(world: WorldSource) -> dict:
                 "aliases": list(entity.aliases),
                 "kind": "area",
                 "parent": entity.parent,
+                "owner": entity.owner,
             }
         )
     for entity in world.npcs:
