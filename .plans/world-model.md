@@ -1356,7 +1356,36 @@ read by hand. **It does not hold; not built.**
 The build is prepared but not launched
 (`~/dev/ringer-work/freytag-3b-wording`).
 
-**Next (Brandon's call):** the rewording failed on both turns. For 3C, and for the open 3B
+**Correction: the turn-3 scoring above was wrong.** On a reveal turn the
+game appends the delivery text after the narration, and CONSTRAINTS tells
+the narrator "Write only what leads up to it." So the player reads the
+narration plus the delivery text. A lead-up that stops at the door is the
+handoff working, not a failed entry. Score reveal turns on narration plus
+delivery text.
+
+**Turn-3 isolation probe (2026-10-01, Ringer, check passed;
+`~/dev/ringer-work/freytag-turn3-isolate-probe`, `t3_probe.json`).**
+Three recorded turn-3 prompts, 15 per arm, read by hand.
+- Narration alone ends inside the office: recorded 8/15, new situation
+  only 14/15, new delivery only about 0/15 (lead-up only).
+- Brandon follows her in: recorded 2, situation only 0 (he holds off
+  outside in 12), delivery only 0.
+- With the new delivery text, the narrator writes only the lead-up. The
+  appended "Kristin and Michelle enter the executive office. Brandon stays
+  behind in the corridors..." performs the entry once. It never says
+  "Rebecca's office", and Brandon stays behind.
+- With the recorded delivery text, the narrator often writes the entry
+  itself, and the appended text repeats it. That is the doubled entry
+  seen live.
+
+So the reworded turn 3 (both lines) is better than recorded. Turn 4's
+re-entry is unchanged by the rewording (15/15 both) and is a separate open
+problem; only removing both the situation line and the earned entry lines
+has stopped it.
+
+**Next (Brandon's call):** build the wording (prepared,
+`~/dev/ringer-work/freytag-3b-wording`) for turn 3, and decide the turn-4
+re-entry separately. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
