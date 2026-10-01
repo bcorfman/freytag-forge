@@ -1520,7 +1520,19 @@ known console drift to the infrastructure corridors.
 **Next:** the 2A story data through a ChatGPT follow-up: drop the
 perimeter move from `false_identities_ready`; add an arrival reveal at
 the checkpoint guard whose delivery narrates the trip and owns the move;
-key `scrutiny_2a` and `cover_review_2a` on the arrival fact. Then 2A x3. For 3C, and for the open 3B
+key `scrutiny_2a` and `cover_review_2a` on the arrival fact. Then 2A x3.
+Plot 2A.3 already narrates the arrival ("Kristin and Brandon pass through
+several layers of security. Their identities survive the initial
+checks..."), so plot.md needs no change. Proposed structure, following the
+3B pattern Brandon chose: a new storylet `SL-2A-E` and fact (like
+`facility_perimeter_reached`) whose `on_assert` moves Kristin to
+`facility_perimeter` (Brandon follows); `false_identities_ready` loses its
+move; the C set (supervisor, corridor) also requires the arrival fact, as
+SL-3B-B requires the office entry. ChatGPT prompt for the entry's text and
+lists: `~/dev/ringer-work/freytag-2a-arrival/chatgpt_prompt.md` (statement
+as a state with no moving verb; delivery that narrates the trip). Scorer:
+`score_arrival.py` (4 prompt examples, 10 held-back wordings, 14 commands
+that must fire nothing, including the bench script's other 2A commands). For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
