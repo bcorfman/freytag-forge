@@ -1532,7 +1532,24 @@ SL-3B-B requires the office entry. ChatGPT prompt for the entry's text and
 lists: `~/dev/ringer-work/freytag-2a-arrival/chatgpt_prompt.md` (statement
 as a state with no moving verb; delivery that narrates the trip). Scorer:
 `score_arrival.py` (4 prompt examples, 10 held-back wordings, 14 commands
-that must fire nothing, including the bench script's other 2A commands). For 3C, and for the open 3B
+that must fire nothing, including the bench script's other 2A commands).
+
+**ChatGPT round 1** (`answer_r1.yaml`): the statement and delivery_text
+were right; earn_when was "travel to the facility." (wrong verb form,
+trailing period). The lists fired on 7 of 7 ordinary hideout planning
+commands ("Show Brandon the facility schematics.", "Use the servers to
+map the facility.", ...), because bare verbs (show, use, display, go)
+paired with bare "facility". My prompt invited that. **Brandon had me
+fix the lists directly** (`answer_final.yaml`): only multi-word travel
+and check verb phrases ("go to", "drive out to", "show the checkpoint",
+"present our credentials at", "take Brandon to"), no bare "facility",
+no "my/our credentials" nouns. Score: prompt examples 4/4, held-back
+wordings 10/10, must-fire-nothing 21/21; fresh after tuning: positives
+6/6. One known matcher limit fires: "Explain to Brandon how to get to
+the facility." ("get to"). In the bench script only turn 4 fires.
+Build: Ringer `ringer-work/freytag-2a-arrival` (check
+`verify_arrival.py`: exact values, gating, world moves, pacing re-key,
+payloads byte-identical). For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
