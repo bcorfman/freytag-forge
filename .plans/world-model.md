@@ -1602,6 +1602,31 @@ in scope wherever Kristin is, and the match call refers it for
 a turn record's `match_raw` holds the post-reply match call, not
 `prepare_turn`'s, so the pre-turn refers are not saved.
 
+**2A delivery landed (6bc7dd4;** Ringer, Luna, first attempt; one line;
+every payload unchanged; suite 977). New delivery_text from ChatGPT:
+"Kristin and Brandon are at the facility perimeter. Their false
+identities pass the first security checks."
+**2A x3 on 6bc7dd4 (2026-10-01, check passed;
+`bench/results/world-2a-delivery-x3`).** All three moved to 2B after turn
+7; every handoff fired, the arrival on turn 4 in 3/3; no leak rejection;
+Kristin's places as before. Turn 4 now reads in order 3/3 (guard scans
+the card, then "Kristin and Brandon are at the facility perimeter...").
+Judges vs world-2a-arrival-x3: restarts 0 -> 0, contradicts 1 -> 1,
+beyond 1 -> 1, facts correct 19 -> 20/21. The two flags: r3 turn 7 the
+console says "Credential check failed"; r2 turn 5 an unasked tablet.
+
+**3B console scoping (Brandon chose option A, 2026-10-01):**
+`inspection_console` leaves 3B's and 3C's `item_ids` and placements in
+plot.md; it keeps its 2A place, so it is in scope only when Kristin is
+in the infrastructure corridors. Side effect, allowed by the check: the
+3B prompt loses the Details line "limited inspection console". Build
+`~/dev/ringer-work/freytag-3b-console` (check `verify_console.py`). First
+run failed on the old-behaviour test
+`test_inspection_console_is_fixed_in_the_infrastructure_corridors[3B,3C]`
+(it applied 3B's placements to a bare state); respecced to apply 2A
+first. Open to measure live: 3B turn 1 names the console while it is out
+of scope.
+
 ### Narration leak diagnosis (2026-09-28, offline)
 
 Reproduced by running the real `RuntimeEngine` and
