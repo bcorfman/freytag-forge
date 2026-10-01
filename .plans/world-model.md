@@ -1420,7 +1420,36 @@ leakage matrix, deadline exit, reveal prerequisites, persona
 escalation). My spec was wrong, not the worker. Respecified: the
 projection adds `scene_hidden_ids` and blanks `scene_frame`; the SCENE
 renderer skips those items; committed and sayable knowledge are
-unchanged. Verifier `verify_rule2.py` checks the rendered prompt. For 3C, and for the open 3B
+unchanged. Verifier `verify_rule2.py` checks the rendered prompt.
+
+**Rule landed** as de181fb (Ringer, Luna, first attempt on the respec;
+`verify_rule2.py` PASS; suite 971).
+
+**3B and 2A x3 on de181fb (2026-10-01, Ringer, both checks passed;
+`bench/results/world-3b-rule-x3`, `world-2a-rule-x3`).** All six
+completed; every handoff fired as before; no leak rejection.
+- **3B:** where Kristin was in the office after turn 3 (r2, r3), turn 4
+  opens "Kristin is in the executive office with Michelle", no
+  re-entry. Judges vs office-x3: contradicts 4 -> 0, restarts 3 -> 1,
+  beyond 4 -> 3, facts correct 24 -> 23/27. **r1:** the turn-3 narration
+  is only the lead-up (as designed), so the reply put Kristin in "security
+  corridors". That overrode the story effect's move, although the
+  appended delivery text says she entered. Turns 4-5 were then narrated
+  in the corridors. r2 turn 1 drifted to the inspection console's
+  "infrastructure corridors", the known console drift.
+- **2A:** facts correct 15 -> 19/21, restarts 2 -> 1, contradicts 2 ->
+  2. Kristin is still recorded in the hideout on turns 2-3 in 3/3. The
+  2A cover delivery ("Kristin finds a cooling weakness... Brandon builds
+  their cover around it.") never takes her to the perimeter, and the
+  script's turn 3 ("Ask Brandon to build inspector credentials...") is
+  hideout work. So each reply puts her back in the hideout, over the
+  `false_identities_ready` move.
+**Shared cause:** on a reveal turn, the reply's item_facts follow the
+narration (a lead-up, or a scene where nobody moves), and they override
+the story effect's move. No recorded decision covers which wins when a
+story effect and the same turn's reply disagree about the protagonist's
+place. That is Brandon's call. In 2A the move may also be premature:
+the cover is built in the hideout before they travel. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
