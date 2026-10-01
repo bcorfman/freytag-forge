@@ -1315,13 +1315,25 @@ contradicts 4/27 (was 0), beyond the command 4/27 (was 2), facts correct
   It resolved as a new place, so Kristin, Brandon, Michelle and Rebecca
   went unplaced at "Rebecca's office" for turns 4-8.
 
-**Next (Brandon's call):** step 2 of "Fixing a Scene". Probe the three
-recorded turn-4 prompts with subtractive arms: recorded; the earned
-entry lines removed (SCENE and the two may-say lines); the situation
-line removed; both removed. Read the narration by hand for re-entry.
-The "Rebecca's office" wording in my delivery text and statement goes
-back to ChatGPT Desktop, with "executive office" in place of "Rebecca's
-office", per the 3B grounding note. For 3C, and for the open 3B
+**Turn-4 re-entry probe (2026-10-01, Ringer, check passed;
+`~/dev/ringer-work/freytag-turn4-reentry-probe`, `turn4_probe.json`).**
+The three recorded turn-4 prompts, 5 samples each, 15 per arm, 60 of 60
+returned. Re-entry read by hand (Kristin walks or enters into the office
+she is in): recorded 15/15; earned entry lines removed (its SCENE line
+and both may-say lines) 15/15; situation line removed 15/15; **both
+removed 0/15** ("Kristin stands in...", "Kristin is in Rebecca's
+executive office..."). Either line alone is enough to cause the
+re-entry. In the both-removed arm the narration says "Rebecca's office"
+in 10 of 15, which the engine resolves as a new place (the r1 unplacing).
+The situation line removed here was the whole line, including its JANUS
+clause.
+
+The ChatGPT wording prompt (statement, earn_when and delivery_text with
+"executive office", and Brandon plainly staying behind) is at
+`~/dev/ringer-work/freytag-3b-office-entry/chatgpt_prompt_wording.md`.
+
+**Next (Brandon's call):** a fix for each of the two lines; see the
+session report. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
