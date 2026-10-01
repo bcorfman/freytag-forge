@@ -1261,8 +1261,22 @@ have `move` but no companion-clearing op; moving a companion alone
 already splits him, as `relay_open` does). Whether B should require the
 entry, so Rebecca is never confronted from the corridors, is open.
 
-**Next:** Brandon runs the prompt in ChatGPT Desktop; score the answer;
-then the build by Ringer and a 3B x3 rerun. For 3C, and for the open 3B
+**ChatGPT round 1 accepted (`answer_r1.yaml`).** `score_office.py`:
+prompt examples 8/8, other wordings 18/24 (misses: "Get/Move Michelle
+into ...", "Hurry into ..."; a split verb phrase cannot match, and a bare
+"get" or "move" would fire on ordinary commands), existing B and D
+entries 12/12, ordinary commands fire nothing 36/36, the two known hard
+negatives fire. In the bench script only turn 3 fires it.
+**Brandon chose (2026-09-30):** `rebecca_office_reached` moves Kristin
+(Michelle follows) into the executive office and Brandon back to the
+security corridors; SL-3B-B requires it, as storylets.md already said
+("Kristin and Michelle have reached Rebecca’s office"). The SL-3B-E
+storylets.md section and route text are copied from plot 3B.2 and the B
+section, no new prose; pacing target 5, latest 6. Ringer run
+`ringer-work/freytag-3b-office-entry` (check `verify_office.py`: exact
+values, matcher cases, world moves, every payload byte-identical).
+
+**Next:** land the build, then rerun 3B x3. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
