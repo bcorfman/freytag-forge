@@ -694,9 +694,7 @@ freytag_phase: climax
 objective: Overload JANUS and seize the broadcast
 participant_ids: [kristin, michelle, brandon, rebecca]
 companions: [brandon, michelle]
-item_ids: [inspection_console]
-item_placements:
-  inspection_console: {parent: infrastructure_corridors}
+item_ids: []
 character_placements:
   kristin: {parent: security_corridors}
   rebecca: {parent: executive_office}
@@ -773,9 +771,8 @@ location_id: facility_escape
 freytag_phase: resolution
 objective: Expose the network and escape
 participant_ids: [kristin, michelle, rebecca]
-item_ids: [portable_archive, inspection_console]
+item_ids: [portable_archive]
 item_placements:
-  inspection_console: {parent: infrastructure_corridors}
   portable_archive:
     placement: with Rebecca in her hands
     while_fact_false: portable_archive_secured
