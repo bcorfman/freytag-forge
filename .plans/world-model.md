@@ -1978,6 +1978,25 @@ so it never saw these lines. The captives placement did not reach THINGS
 with Kr), and r2 made "prisoners" new.
 Probe (`probe_maysay.py`; new turn-7 prompts x 5): recorded / Rebecca's
 may-say lines removed / all may-say lines removed.
+**May-say probe (check passed; new turn-7 prompts x 5; read by hand).**
+Chase / tunnel: recorded 10/15 / 5/15; Rebecca's may-say lines removed
+0/15 / 12/15; all may-say lines removed 9/15 / 3/15. A self-naming
+filter (no speaker may say a statement naming them): all speakers 0/15 /
+15/15, Rebecca only 12/15 / 3/15 (Michelle keeps "Kristin stops Rebecca
+fleeing..."). The all-speakers filter would strip most of Michelle's and
+Br's lines in every scene, with no record covering may-say lines.
+**Brandon chose to hold and rethink.** The chase follows the earned
+present-tense b_r1 statement, the same pattern as 3B's turn-4 re-entry,
+fixed by de181fb (hide an earned item's SCENE line, keep it sayable),
+which triggers only on protagonist moves. **Hide-b_r1 probe
+(`probe_hideb1.py`):** recorded 13/15 chase / 2/15 tunnel; b_r1 SCENE line
+hidden 0/15 / 15/15; SCENE and may-say lines hidden 0/15 / 15/15. So the
+SCENE line alone is enough. **Brandon chose to widen de181fb's trigger
+to any world effect** (situation blanking stays for protagonist moves
+only). Newly hidden after their facts: 1A memory card, 1B Brandon
+identified, 3A override codes, 3B relay open, 3C archive secured. Ringer
+`~/dev/ringer-work/freytag-hide-effect-lines` (check `verify_hide.py`);
+then 3C x3 and 3B x3 (3B also gains Rebecca as a speaker from the alias).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
