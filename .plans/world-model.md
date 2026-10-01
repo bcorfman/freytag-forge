@@ -1449,7 +1449,15 @@ narration (a lead-up, or a scene where nobody moves), and they override
 the story effect's move. No recorded decision covers which wins when a
 story effect and the same turn's reply disagree about the protagonist's
 place. That is Brandon's call. In 2A the move may also be premature:
-the cover is built in the hideout before they travel. For 3C, and for the open 3B
+the cover is built in the hideout before they travel.
+**Brandon chose (2026-10-01):** ask ChatGPT Desktop for a plan. Prompt at
+`~/dev/ringer-work/freytag-move-reconcile/chatgpt_prompt.md`. It is
+self-contained: how a turn, a reveal and a world effect work, the
+3B r1 and 2A evidence, and the constraints (story-agnostic, no lexical
+scanning, plain narrator rules, reply changes land unless an override is
+explicit and logged, story-data fixes allowed). It asks for two to four
+options, a ranked recommendation, the 2A story-data question, and a
+recorded-prompt test plan scored on narration plus delivery text. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
