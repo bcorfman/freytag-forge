@@ -34,7 +34,8 @@ narration; the 3B office entry, the moved-protagonist scene rule
 with no restarts in either (2026-10-01); the 2A arrival delivery now
 reads in order (6bc7dd4) and the console is no longer a 3B/3C scene
 item (9cff368), and Rebecca's executive desk is declared and fixed
-(21338bb), each measured live 3/3; then 3C, S3 and S4.
+(21338bb), and Jev sees owners so "Rebecca's office" maps to it
+(ab3bd4f), each measured live 3/3; then 3C, S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1579,8 +1580,9 @@ the check (3/3). The command itself places them at the checkpoint.
 
 **Next (superseded 2026-10-01; see the 3B console entry below):** the
 turn-4 order wart, the 3B turn-9 console and the 3B desk are fixed.
-Open from 3B: place text "Shelly" / "with Kristin" kept unresolved, and
-"Rebecca's office" matched as new 1/3. Then 3C, S3 and S4. For 3C, and for the open 3B
+Open from 3B: place text "Shelly" / "with Kristin" kept unresolved; the
+turn-1 console drift ("rush back to the infrastructure corridors").
+"Rebecca's office" is fixed (ab3bd4f). Then 3C, S3 and S4. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
@@ -1687,6 +1689,28 @@ check passed; the recorded r2 Jev call, 15 per arm):** recorded: yes
 8/15, noul 0.46-0.60 (on the 0.5 threshold); known with `"owner":
 "Rebecca Jenkins"`: yes 15/15, noul 0.82-0.84. Owned entities at 3B
 today: Kristin's truck, Michelle's workstation, Rebecca's desk.
+**Brandon chose both parts (2026-10-01). Landed as ab3bd4f** (Ringer,
+Luna, first attempt; `~/dev/ringer-work/freytag-3b-office-owner`,
+`verify_owner.py` replays r2 turn 4 offline with a stub Jev; payloads
+unchanged; suite 979). Places could not have an owner (the trial failed
+to load), so `Location.owner` and its pass-through in
+`world_source_schema_data` came with it; `_mapping_entity` adds
+`"owner": <display name>`; `executive_office` is owned by Rebecca, no
+alias. Side effect: "Rebecca's executive office" now resolves.
+**3B x3 on ab3bd4f (2026-10-01, check passed;
+`bench/results/world-3b-owner-x3`).** All three moved to 3C after turn
+9; every handoff fired; no leak rejection. "Rebecca's office" mapped to
+the executive office 3/3 (Jev yes with the owner), no new office place,
+Kristin in the executive office from turn 3 to 9 in 3/3. The desk stayed
+put; r2 turn 7 "Charles's desk" -> executive desk (Jev yes) and the
+swapped move refused. Judges vs world-3b-desk-x3: restarts 1 -> 0,
+contradicts 0 -> 0, facts correct 26 -> 25/27, beyond 1 -> 5. The beyond
+rise is judge variance, not this change: r1 and r2 turn 1 have the same
+prompt and the same narration ("rush back to the infrastructure
+corridors", the known turn-1 drift) as the desk run, judged no there and
+yes here; the rest (turn 5 Kristin studies the list, turn 7 sits at a
+desk) are narration variance on turns this change cannot reach before
+turn 4.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
