@@ -1955,6 +1955,29 @@ change** (`SceneFrame.situation` optional, default ""), a new mechanism:
 de181fb hides the situation only after a protagonist-moving fact, which
 3C has none of. Prepared in `~/dev/ringer-work/freytag-3c-no-situation`
 (check `verify_no_situation.py`), to launch after the alias patch lands.
+**Landed:** Rebecca-only alias and the captives placement as d4f04be
+(Ringer, Luna, second attempt after the respec; `rebecca` added to the
+1C recording reveal's entity_ids; payloads unchanged; suite 986); the
+schema change as 7afb3bb (Ringer, Luna, first attempt; 3C payload loses
+only the situation line; suite 987).
+**3C x3 on 7afb3bb (2026-10-01, check passed; `bench/results/world-3c-x3`;
+the earlier x3 is `world-3c-x3-before-fixes`).** All completed; no leak
+rejection; handoffs on turns 1, 3, 6, 10, 11 in 3/3. Judges vs before:
+restarts 3 -> 0, beyond 4 -> 2, contradicts 3 -> 4, facts correct 28 ->
+27/36. Turn 3: Rebecca in THINGS 3/3, Kr walks straight to her, no
+re-entry (was 3/3). Turn 7: r2 leads the prisoners into the tunnel; **r1
+and r3 have Kr chase Rebecca down a hallway with a briefcase**, after
+turn 3's reveal already stopped her. Step 1: the turn-7 prompt now has six
+"Rebecca Jenkins may say this aloud:" lines (every 3C statement,
+including "Kristin stops Rebecca fleeing with the archive"). Cause:
+`CloudflareTurnProvider._is_present` infers presence from NPC names and
+aliases in beat prose; with the alias "Rebecca" she is present in 3C and
+becomes a speaker. The earlier situation probe used pre-alias prompts,
+so it never saw these lines. The captives placement did not reach THINGS
+(the referred-people step walks NPCs, not groups, and the group is not
+with Kr), and r2 made "prisoners" new.
+Probe (`probe_maysay.py`; new turn-7 prompts x 5): recorded / Rebecca's
+may-say lines removed / all may-say lines removed.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
