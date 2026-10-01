@@ -35,7 +35,8 @@ with no restarts in either (2026-10-01); the 2A arrival delivery now
 reads in order (6bc7dd4) and the console is no longer a 3B/3C scene
 item (9cff368), and Rebecca's executive desk is declared and fixed
 (21338bb), and Jev sees owners so "Rebecca's office" maps to it
-(ab3bd4f), each measured live 3/3; then 3C, S3 and S4.
+(ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
+(8e09018), each measured live 3/3; then 3C, S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1580,9 +1581,11 @@ the check (3/3). The command itself places them at the checkpoint.
 
 **Next (superseded 2026-10-01; see the 3B console entry below):** the
 turn-4 order wart, the 3B turn-9 console and the 3B desk are fixed.
-Open from 3B: place text "Shelly" / "with Kristin" kept unresolved; the
-turn-1 console drift ("rush back to the infrastructure corridors").
-"Rebecca's office" is fixed (ab3bd4f). Then 3C, S3 and S4. For 3C, and for the open 3B
+Open from 3B: the turn-1 console drift ("rush back to the
+infrastructure corridors"); a second narrated "Charles's desk" (1/3);
+the "Shelly" label for Michelle as a place. "Rebecca's office" (ab3bd4f)
+and "with Kristin" (8e09018) are fixed; the no-change skip is held.
+Then 3C, S3 and S4. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
@@ -1751,6 +1754,25 @@ Kristin."; with no text the rule disappears, so the real game would
 stop telling the narrator where the card is. Not built. The text is
 right for that sentence and wrong only for the bench THINGS `Place:`
 field, which wants a bare name (W5).
+**Brandon chose the bench label (2026-10-01). Landed as 8e09018**
+(Ringer, Luna, first attempt; `~/dev/ringer-work/freytag-held-label`,
+`verify_held.py`; one line in `_view`; two hermetic tests; payloads
+unchanged; suite 981): a thing whose parent is a person shows the
+person's label in THINGS; the authored text stays in the world and the
+runtime rule. Offline trace of the loss: Kristin's room change clears
+the card's text, so a later "with Kristin" echo no longer equals the
+label, goes to the match call and Jev, and Jev's no makes a new entity.
+**3B x3 on 8e09018 (2026-10-01, check passed;
+`bench/results/world-3b-held-x3`).** All three moved to 3C after turn
+9; every handoff fired; no leak rejection. "with Kristin" in prompts 0
+and in replies 0 (was 5/6 and 3 in the owner run); every card reply is
+"Kristin", or "Michelle" when narrated (r2 turn 9, shown as "Shelly");
+no made-up place. Judges vs world-3b-owner-x3: beyond 5 -> 1, restarts
+0 -> 0, contradicts 0 -> 1 (r3 turn 9: Brandon radios the reveal
+statement word for word), facts correct 25 -> 25/27 (both turn 9, the
+broadcast turn). The no-change skip stays held: nothing is left for it
+in this run. Seen, not fixed: r2 has a second desk, "Charles's desk", in
+the executive office (it never moves).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
