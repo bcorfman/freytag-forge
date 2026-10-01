@@ -1672,6 +1672,22 @@ facts correct 24 -> 26/27, contradicts 0 -> 0, beyond 1 -> 1, restarts
 r3 matched it to the executive office), so Kristin sat in a new place
 for turns 4-9 (the "Rebecca" as new family).
 
+**"Rebecca's office" as new: cause (2026-10-01).** Step 1 on the
+recorded turn 4: the reply ("Rebecca's office" for all three people)
+and the match call (same_as executive office) were right 3/3. The Jev
+mapping check ("Is the place called "Rebecca's office" the same place
+as "executive office", or inside it?") answered no in r2 only, so the
+name became a new place. r1 and r2 sent the same question, player and
+known state. Jev's known state says only "executive office, place
+Regional facility"; nothing says the office is Rebecca's. An alias is
+ruled out ("Rebecca's office" is a 2C must_convey, so the leak check
+would reject it in 2C).
+**Probe (`~/dev/ringer-work/freytag-3b-office-match-probe`, Ringer,
+check passed; the recorded r2 Jev call, 15 per arm):** recorded: yes
+8/15, noul 0.46-0.60 (on the 0.5 threshold); known with `"owner":
+"Rebecca Jenkins"`: yes 15/15, noul 0.82-0.84. Owned entities at 3B
+today: Kristin's truck, Michelle's workstation, Rebecca's desk.
+
 ### Narration leak diagnosis (2026-09-28, offline)
 
 Reproduced by running the real `RuntimeEngine` and
