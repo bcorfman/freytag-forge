@@ -1296,6 +1296,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                                 engine_resolutions[target] = world.name(entity_id)
             if entity_id is None:
                 kind = new_kind(key, reply_key=True)
+                player_area = world.area(protagonist_id)
                 parent = player_area if kind == "area" else None
                 created = world.create(key, parent=parent, kind=kind, owner=item["owner_id"])
                 if not created.ok:

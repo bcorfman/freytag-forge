@@ -2869,6 +2869,26 @@ def test_new_place_kind_new_reply_key_person_is_character(monkeypatch):
     assert world.area(guard) == player_area
 
 
+def test_new_place_kind_new_reply_key_place_uses_player_area_without_mapping_check(monkeypatch):
+    provider = _new_place_kind_provider(
+        monkeypatch,
+        {"refers": [], "same_as": {"observatory": "new"}, "kind": {"observatory": "place"}},
+    )
+    world = provider._world()
+    player_area = world.area(provider.state.package.world.protagonist_id)
+
+    provider.apply_item_facts(
+        {"observatory": {"condition": ["open"]}},
+        player_input="Enter the observatory.",
+    )
+
+    world = provider._world()
+    observatory = world.resolve("observatory")
+    assert observatory is not None and world.is_a(observatory, "area")
+    assert world.parent(observatory) == player_area
+    assert provider.last_item_facts_match()["mapping_checks"] == []
+
+
 def test_new_place_echo_thing_creates_container_and_places_mover(monkeypatch):
     provider = _new_place_kind_provider(
         monkeypatch,
