@@ -28,9 +28,10 @@ bench script and fixes measured live; 3B grounded (1e37fdd), handoffs
 same gap in 3A); referred people and places in THINGS chosen and
 probed live (Kristin reaches the place 3A 28/30, 3B 15/20, from 0/30
 and 2/20) and built (bc0ddf1); reruns: 3A reaches the medical level 3/3 in
-narration, 3B still stops at the office door 3/3; a probe traced it to
-missing 3B.2 material (office entry 15/15 with it, 4/15 without, a rule
-1/15); a 3B.2 entry handoff next; then 3C, S3 and S4.
+narration; the 3B office entry, the moved-protagonist scene rule
+(de181fb), reveal-move precedence (d63bfaa) and the 2A arrival reveal
+(2c0ed9d) landed; 3B holds the office and 2A reaches the perimeter 3/3,
+with no restarts in either (2026-10-01); then 3C, S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1549,7 +1550,33 @@ wordings 10/10, must-fire-nothing 21/21; fresh after tuning: positives
 the facility." ("get to"). In the bench script only turn 4 fires.
 Build: Ringer `ringer-work/freytag-2a-arrival` (check
 `verify_arrival.py`: exact values, gating, world moves, pacing re-key,
-payloads byte-identical). For 3C, and for the open 3B
+payloads byte-identical).
+
+**Landed as 2c0ed9d** (Ringer, Luna, second attempt; `verify_arrival.py`
+PASS; suite 977). Test edits were all of the allowed kinds: the moving
+fact swapped in the 2A grounding and projection tests, one idle 2A turn
+dropped from the canon journey, the world-effects set updated, and the
+storylet count 35 -> 36. With the arrival as the moving item, the scene
+rule now hides the arrival's SCENE line, not the cover story's.
+
+**2A x3 on 2c0ed9d (2026-10-01, check passed;
+`bench/results/world-2a-arrival-x3`).** All three moved to 2B after turn
+7; every handoff fired, with the arrival on turn 4 in 3/3; no leak
+rejection. Kristin's place in 3/3: hideout on turns 1-3 (the cover turns),
+facility perimeter on turn 4, then the perimeter (r3: "facility
+corridor") on turn 5 and the infrastructure corridors on turns 6-7.
+Overrides logged: in r2 and r3, turn 4 replies said "checkpoint" for
+Kristin and Brandon, kept at the facility perimeter. No narration
+mentions the scrutiny line. Judges vs the baseline (2A x3 on a1be840):
+restarts 2 -> 0/21, contradicts 2 -> 1, beyond 0 -> 1, facts correct
+15 -> 19/21. **Wart:** on turn 4 the lead-up already shows the guard
+waving them through, and the appended delivery then says they "leave
+the hideout and reach the facility perimeter", so the trip is told after
+the check (3/3). The command itself places them at the checkpoint.
+
+**Next:** decide whether the turn-4 order wart matters; the 3B turn-9
+fact misses (console and override codes on the broadcast turn); then
+3C, S3 and S4. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
