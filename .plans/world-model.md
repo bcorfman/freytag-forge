@@ -33,7 +33,8 @@ narration; the 3B office entry, the moved-protagonist scene rule
 (2c0ed9d) landed; 3B holds the office and 2A reaches the perimeter 3/3,
 with no restarts in either (2026-10-01); the 2A arrival delivery now
 reads in order (6bc7dd4) and the console is no longer a 3B/3C scene
-item (9cff368), measured live 3/3 each; then 3C, S3 and S4.
+item (9cff368), and Rebecca's executive desk is declared and fixed
+(21338bb), each measured live 3/3; then 3C, S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1577,9 +1578,9 @@ the hideout and reach the facility perimeter", so the trip is told after
 the check (3/3). The command itself places them at the checkpoint.
 
 **Next (superseded 2026-10-01; see the 3B console entry below):** the
-turn-4 order wart and the 3B turn-9 console are both fixed. Open from
-3B turn 9: a narrated desk is movable, and place text "Shelly" / "with
-Kristin" is kept unresolved. Then 3C, S3 and S4. For 3C, and for the open 3B
+turn-4 order wart, the 3B turn-9 console and the 3B desk are fixed.
+Open from 3B: place text "Shelly" / "with Kristin" kept unresolved, and
+"Rebecca's office" matched as new 1/3. Then 3C, S3 and S4. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
@@ -1645,6 +1646,31 @@ tablet. r1 has Kristin hold "the desk in her hands", and the desk moves
 to her: the desk was created by narration in turn 6, so it is not
 fixed. r3 records the tablet's place as "Shelly" and r2 the card's as
 "with Kristin" (place text, not resolved).
+
+**3B desk (Brandon chose grounding, 2026-10-01).** Step 1 found the
+turn-9 "desk in her hands" was a turn-7 capture error: the turn-6 reply
+put Rebecca at "desk", a new ordinary thing was created, and the turn-7
+reply `{"Charles's desk": {"place": "Kristin"}, "Kristin": {"place":
+"Charles's desk"}}` moved it onto Kristin; turn 9's THINGS then said
+`desk. Place: Kristin.` The desk shows in 6/6 recent 3B replicates.
+**Landed as 21338bb** (Ringer, Luna, first attempt; `verify_desk.py`
+replays r1 turns 6-7 offline; payloads unchanged; suite 977):
+`rebecca_desk`, name "executive desk", alias "Rebecca's desk", `kind:
+desk` (fixed furniture), owner Rebecca, a 3B item in `executive_office`.
+Not the bare name "desk": a trial with it failed four tests, because
+the leak check rejects a not-yet-reached declared name, so "Search the
+desk." was rejected in 1A (the "workstation" trap).
+**3B x3 on 21338bb (2026-10-01, check passed;
+`bench/results/world-3b-desk-x3`).** All three moved to 3C after turn
+9; every handoff fired; no leak rejection. One desk only, in the
+executive office throughout, 3/3. The turn-7 swapped reply recurred in
+r1 and r3 and was refused ("fixed things cannot move") both times. No
+narration has Kristin holding the desk. Judges vs world-3b-console-x3:
+facts correct 24 -> 26/27, contradicts 0 -> 0, beyond 1 -> 1, restarts
+0 -> 1 (r1 turn 3, the office-entry lead-up "pushes the door open").
+**Still open:** r2 turn 4 matched "Rebecca's office" as new (1/3; r1 and
+r3 matched it to the executive office), so Kristin sat in a new place
+for turns 4-9 (the "Rebecca" as new family).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
