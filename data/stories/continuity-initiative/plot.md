@@ -694,7 +694,9 @@ freytag_phase: climax
 objective: Overload JANUS and seize the broadcast
 participant_ids: [kristin, michelle, brandon, rebecca]
 companions: [brandon, michelle]
-item_ids: []
+item_ids: [rebecca_desk]
+item_placements:
+  rebecca_desk: {parent: executive_office}
 character_placements:
   kristin: {parent: security_corridors}
   rebecca: {parent: executive_office}
