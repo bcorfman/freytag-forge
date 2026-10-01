@@ -1324,7 +1324,7 @@ and both may-say lines) 15/15; situation line removed 15/15; **both
 removed 0/15** ("Kristin stands in...", "Kristin is in Rebecca's
 executive office..."). Either line alone is enough to cause the
 re-entry. In the both-removed arm the narration says "Rebecca's office"
-in 10 of 15, which the engine resolves as a new place (the r1 unplacing).
+in 9 of 15, which the engine resolves as a new place (the r1 unplacing).
 The situation line removed here was the whole line, including its JANUS
 clause.
 
