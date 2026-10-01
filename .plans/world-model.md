@@ -1332,8 +1332,31 @@ The ChatGPT wording prompt (statement, earn_when and delivery_text with
 "executive office", and Brandon plainly staying behind) is at
 `~/dev/ringer-work/freytag-3b-office-entry/chatgpt_prompt_wording.md`.
 
-**Next (Brandon's call):** a fix for each of the two lines; see the
-session report. For 3C, and for the open 3B
+**ChatGPT rewording (round 2, `wording_r1.yaml` plus the follow-up):**
+statement "Kristin and Michelle are in the executive office. Brandon stays
+in the security corridors and holds off the security forces."; earn_when
+"enters the executive office"; delivery_text "Kristin and Michelle enter
+the executive office. Brandon stays behind in the corridors and holds off
+the security forces."; 3B situation first sentence "The fight runs
+through the security corridors and the executive office."
+
+**Reworded-lines probe (2026-10-01, Ringer, check passed;
+`~/dev/ringer-work/freytag-reworded-probe`, `reworded_probe.json`).** The
+recorded office-x3 turn-3 and turn-4 prompts, 5 samples each, 15 per arm,
+read by hand. **It does not hold; not built.**
+- Turn 3 (new situation line and delivery text): Kristin ends inside the
+  office 0/15 reworded (all "pulls her towards the executive office"; in
+  r2 she opens the door and motions Michelle in) vs 12/15 recorded. The
+  reworded arm changed two lines, so which one broke the entry is not
+  known.
+- Turn 4 (new situation line and statement): re-entry 15/15 reworded
+  ("Kristin walks into the executive office, where Michelle and Brandon
+  are waiting"), the same as recorded 15/15. Only removing both lines
+  (0/15) has stopped it.
+The build is prepared but not launched
+(`~/dev/ringer-work/freytag-3b-wording`).
+
+**Next (Brandon's call):** the rewording failed on both turns. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
