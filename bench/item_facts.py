@@ -13,7 +13,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProvid
 from storygame.runtime.facts import Fact
 from storygame.runtime.seating import _command_names_thing
 from storygame.runtime.validation import ProgressionValidator
-from storygame.runtime.world_model import apply_scene_placements, apply_world_effects
+from storygame.runtime.world_model import _true, apply_scene_placements, apply_world_effects
 from storygame.story_package.models import item_placement_is_visible, placement_text
 from storygame.story_package.world_schema import world_source_schema_data
 
@@ -256,6 +256,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._schema_cache = {}
         self.prior_steps: tuple[str, ...] = ()
         self._last_item_facts_unplaced = []
+        self._fact_effect_snapshot = None
         self._last_item_facts_match = {
             "match_call": False,
             "match_raw": None,
@@ -942,6 +943,37 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._apply_state(world, entity_id, name, value, place_pole, issues)
         return before != self.item_facts.get(name)
 
+    def _fact_move_overrides(self, world):
+        if self._fact_effect_snapshot is None:
+            return {}
+        newly_true = {
+            fact_id
+            for fact_id in self.state.package.world.fact_effects
+            if _true(self.state.facts, fact_id) and fact_id not in self._fact_effect_snapshot
+        }
+        overrides = {}
+        for fact_id in newly_true:
+            for effect in self.state.package.world.fact_effects[fact_id]:
+                moved_id = effect.move
+                if moved_id is None:
+                    continue
+                moved_parent = world.parent(moved_id)
+                overrides[moved_id] = (fact_id, moved_parent)
+                for companion_id in world.companions(moved_id):
+                    if world.is_a(companion_id, "character") and world.parent(companion_id) == moved_parent:
+                        overrides[companion_id] = (fact_id, moved_parent)
+        return overrides
+
+    def _override_place(self, world, entity_id, name, value, place_parent, place_pole, overrides, issues):
+        override = overrides.get(entity_id)
+        if "place" not in value or override is None or place_pole is not None or place_parent == override[1]:
+            return value
+        fact_id, final_parent = override
+        final_place = world.place_label(entity_id) or (world.name(final_parent) if final_parent else "nowhere")
+        place = value["place"].strip()
+        issues.append(f"item_facts place for {name!r} ({place!r}) overridden by fact {fact_id}: stays in {final_place}")
+        return {key: item for key, item in value.items() if key != "place"}
+
     def apply_item_facts(self, raw, *, player_input="(none)", story="", confirm=None):
         self._ensure_scene_seeded()
         previous = self.item_facts
@@ -951,6 +983,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if not isinstance(raw, dict):
             self._held_item_facts = {}
             self._changed_last_turn = set()
+            self._fact_effect_snapshot = None
             issues.append(
                 "narrator omitted item_facts"
                 if raw is None
@@ -958,6 +991,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             )
             return previous, issues
         world = self._world()
+        fact_move_overrides = self._fact_move_overrides(world)
         entries = []
         explicit_keys = set(raw)
         explicit_ids = {
@@ -1208,6 +1242,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             create_new_place(player_move_place)
 
         player_move_applied = False
+        overridden_keys = set()
         for _key, value, entity_id in resolved:
             if entity_id != protagonist_id or "place" not in value:
                 continue
@@ -1216,6 +1251,21 @@ class ItemFactsProvider(CloudflareTurnProvider):
             place_parent = place_ids.get(place) if place and not place_pole else None
             if place and not place_pole and place_parent is None:
                 place_parent = self._resolve_name(world, place)
+            effective_value = self._override_place(
+                world,
+                entity_id,
+                _key,
+                value,
+                place_parent,
+                place_pole,
+                fact_move_overrides,
+                issues,
+            )
+            if effective_value is not value:
+                overridden_keys.add(_key)
+                value = effective_value
+                place_parent = None
+                place_pole = None
             self._apply_move(world, entity_id, self._entity_label(world, entity_id), value, place_parent, issues)
             player_move_applied = True
             break
@@ -1275,6 +1325,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 short_name = _protagonist_name(self.state.package)
                 issues.append(f"item_facts condition for {short_name} ignored")
                 value = {k: v for k, v in value.items() if k != "condition"}
+            if key in overridden_keys:
+                value = {item_key: item for item_key, item in value.items() if item_key != "place"}
             place = value.get("place").strip() if isinstance(value.get("place"), str) else None
             place_pole = self._axis_match_id(world, entity_id, place) if place else None
             if place_pole:
@@ -1295,6 +1347,21 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 place_parent = self._resolve_name(world, place)
             if place_parent and world.is_a(place_parent, "group") and not world.is_a(entity_id, "character"):
                 place_parent = world.parent(place_parent)
+            if key not in overridden_keys:
+                value = self._override_place(
+                    world,
+                    entity_id,
+                    key,
+                    value,
+                    place_parent,
+                    place_pole,
+                    fact_move_overrides,
+                    issues,
+                )
+                if value is not None and "place" not in value:
+                    place = None
+                    place_pole = None
+                    place_parent = None
             entity = world.schema.entities.get(entity_id)
             own_seat_place = bool(entity and entity.seat_for and place_parent == entity.seat_for)
             if own_seat_place:
@@ -1332,9 +1399,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
             "engine_resolutions": engine_resolutions,
             "mapping_checks": mapping_checks,
         }
+        self._fact_effect_snapshot = None
         return self.item_facts, issues
 
     def prepare_turn(self, player_input):
+        self._fact_effect_snapshot = {
+            fact_id for fact_id in self.state.package.world.fact_effects if _true(self.state.facts, fact_id)
+        }
         self._referred_names = []
         self._referred_lines = self._referred_lines_for_command(player_input)
         dependencies = self.dependency_names()

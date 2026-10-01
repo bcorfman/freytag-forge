@@ -570,6 +570,69 @@ def _scene_provider(scene_id, *, item_facts=None):
     )
 
 
+def _office_reveal_provider():
+    provider = _scene_provider("3B")
+    provider.state.facts.assert_fact(Fact(predicate="human_security_control", subject="story", value="true"))
+    provider.prepare_turn("Lead Michelle into the executive office.")
+    provider.state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
+    apply_world_effects(PACKAGE, provider.state.facts)
+    return provider
+
+
+def test_new_authored_move_overrides_conflicting_reply_places_and_companion():
+    provider = _office_reveal_provider()
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "security corridors"}, "Michelle": {"place": "security corridors"}}
+    )
+    world = provider._world()
+
+    assert world.parent("kristin") == "executive_office"
+    assert world.parent("michelle") == "executive_office"
+    assert world.parent("brandon") == "security_corridors"
+    overridden = [issue for issue in issues if "overridden" in issue]
+    assert any("rebecca_office_reached" in issue and "Kristin" in issue for issue in overridden)
+
+
+def test_reply_place_lands_when_no_fact_is_newly_set():
+    provider = _scene_provider("3B")
+    provider.prepare_turn("Lead Michelle into the executive office.")
+
+    _facts, issues = provider.apply_item_facts({"Kristin": {"place": "security corridors"}})
+
+    assert provider._world().parent("kristin") == "security_corridors"
+    assert not any("overridden" in issue for issue in issues)
+
+
+def test_fact_true_before_prepare_turn_does_not_pin_a_later_reply():
+    provider = _scene_provider("3B")
+    provider.state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
+    apply_world_effects(PACKAGE, provider.state.facts)
+    provider.prepare_turn("Lead Michelle into the executive office.")
+
+    _facts, issues = provider.apply_item_facts({"Kristin": {"place": "security corridors"}})
+
+    assert provider._world().parent("kristin") == "security_corridors"
+    assert not any("overridden" in issue for issue in issues)
+
+
+def test_override_keeps_other_fields_and_other_entity_places():
+    provider = _office_reveal_provider()
+
+    _facts, _issues = provider.apply_item_facts(
+        {
+            "Brandon": {"place": "executive office", "condition": ["tired"]},
+            "Kristin's laptop": {"place": "workstation"},
+        }
+    )
+    world = provider._world()
+
+    assert world.parent("kristin") == "executive_office"
+    assert world.parent("brandon") == "security_corridors"
+    assert world.conditions("brandon") == ("tired",)
+    assert world.parent("kristin_laptop") == "michelle_workstation"
+
+
 def test_prepare_turn_gives_visible_contents_under_referred_park_bench(monkeypatch):
     provider = _scene_1b_provider()
     monkeypatch.setattr(
