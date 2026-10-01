@@ -36,7 +36,9 @@ reads in order (6bc7dd4) and the console is no longer a 3B/3C scene
 item (9cff368), and Rebecca's executive desk is declared and fixed
 (21338bb), and Jev sees owners so "Rebecca's office" maps to it
 (ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
-(8e09018), each measured live 3/3; then 3C, S3 and S4.
+(8e09018), each measured live 3/3; 3C grounded (broadcast chamber,
+archive moves to Kristin when secured); next 3C reveal handoffs, bench
+script and x3, then S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1773,6 +1775,42 @@ statement word for word), facts correct 25 -> 25/27 (both turn 9, the
 broadcast turn). The no-change skip stays held: nothing is left for it
 in this run. Seen, not fixed: r2 has a second desk, "Charles's desk", in
 the executive office (it never moves).
+
+**3C grounding (2026-10-01, from earlier precedent; Brandon chose the two
+departures).** 3C's entry text says "broadcast chamber", which no story
+file names outside 3C (no bench narration has used it), while plot.md
+puts the broadcast and the archive in Rebecca's office (2C.5, 3C.1,
+3C.3). **Brandon chose a new area**: `broadcast_chamber` ("broadcast
+chamber") inside `executive_office`. Kristin starts there through
+`character_placements`, so the opening names it, as in 2A and 3B;
+`location_id` stays `facility_escape`. `companions: [michelle]`. Brandon
+joins `participant_ids` and is placed at the relay, not as a companion
+(survey decision 6). Rebecca is placed in the executive office. The
+portable archive gets the new-form placement `{parent: rebecca, text:
+with Rebecca in her hands}`: the text keeps the hosted runtime's
+placement rule, and new-form placements take no visibility guard, so
+`portable_archive_secured` gets `on_assert` move to Kristin instead
+(the memory card and override codes pattern, W7). **Brandon chose no
+world effect for `rebecca_captured`** for now: no captive axis was ever
+built (3A uses group membership, and the captives group is in the
+detention level). The 3C replicates show whether her capture needs one.
+Things from 3C.3 (pump controls, barrier, surface gates, maintenance
+tunnel) and the captives group's 3C place wait until they surface live,
+as the cameras did. Charles stays unplaced (decision 4). Ringer run
+`~/dev/ringer-work/freytag-3c-grounding` (check `verify_3c.py`;
+payloads byte-identical except 3C's opening line and Brandon's new
+CHARACTERS line).
+
+**3C grounding landed** (Ringer, Luna; first run stopped on an unlisted
+old-behaviour test, `test_portable_archive_starts_with_rebecca`, which
+was respecced; second run passed first attempt; `verify_3c.py` PASS;
+suite 982). Five tests that pinned the old guarded placement were
+updated. Review fix: the worker's rewrite of
+`test_turn_rules_omit_guarded_placement_after_fact_is_asserted` asserted
+absence both before and after the fact (it never applied 3C's
+placements), so it was restored to check that "...is with Rebecca in her
+hands." is a turn rule before the fact and gone after it. Not measured
+live: no 3C bench script and no 3C handoffs yet.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 

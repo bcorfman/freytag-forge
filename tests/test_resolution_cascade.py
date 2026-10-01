@@ -80,9 +80,10 @@ def test_portable_archive_starts_with_rebecca() -> None:
     scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "3C")
     placement = scene.metadata.item_placements["portable_archive"]
 
-    assert "rebecca" in placement.placement.casefold()
-    assert placement.while_fact_false == "portable_archive_secured"
+    assert placement.parent == "rebecca"
+    assert "Rebecca" in placement.text
     assert "portable_archive" in scene.metadata.item_ids
+    assert "portable_archive_secured" in PACKAGE.world.fact_effects
 
 
 def _copied_package(tmp_path: Path) -> Path:

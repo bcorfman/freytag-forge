@@ -54,6 +54,9 @@ locations:
   name: executive office
   parent: regional_facility
   owner: rebecca
+- id: broadcast_chamber
+  name: broadcast chamber
+  parent: executive_office
 - id: facility_escape
   name: Facility escape route
   parent: regional_facility
@@ -290,7 +293,9 @@ facts:
 - charles_abandoned_rebecca
 - brandon_confession_available
 - truth_no_longer_containable
-- portable_archive_secured
+- id: portable_archive_secured
+  on_assert:
+  - {move: portable_archive, parent: kristin}
 - archive_contains_prisoner_locations
 - archive_copies_distributed
 - evacuation_route_open

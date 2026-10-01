@@ -24,6 +24,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, SelectedRevealResolver
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
 from tests._legacy_package import legacy_package
@@ -1927,13 +1928,16 @@ def test_turn_rules_omit_guarded_placement_after_fact_is_asserted() -> None:
     custom_world = PACKAGE.world.model_copy(
         update={"items": tuple(custom_archive if item.id == archive.id else item for item in PACKAGE.world.items)}
     )
-    state = RuntimeState.bootstrap(PACKAGE.model_copy(update={"world": custom_world}))
+    package = PACKAGE.model_copy(update={"world": custom_world})
+    state = RuntimeState.bootstrap(package)
     state.current_scene_id = "3C"
+    assert apply_scene_placements(package, state.facts, "3C") == ()
     provider = CloudflareTurnProvider(worker_url="", token="", state=state)
 
-    assert "Rebecca's data case" in next(rule for rule in provider._turn_rules() if "Say who owns" in rule)
+    assert "Rebecca's data case is with Rebecca in her hands." in provider._turn_rules()
 
     state.facts.assert_fact(Fact(predicate="portable_archive_secured", subject="story", value="true"))
+    apply_world_effects(package, state.facts)
 
     assert not any("Rebecca's data case" in rule for rule in provider._turn_rules())
 

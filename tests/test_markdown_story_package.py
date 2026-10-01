@@ -97,6 +97,31 @@ def test_scene_3b_places_group_in_security_corridors_and_moves_brandon_to_relay(
     assert world.parent("michelle") == "security_corridors"
 
 
+def test_scene_3c_places_broadcast_chamber_and_moves_archive_to_kristin() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "3A"
+    assert apply_scene_placements(package, state.facts, "3A") == ()
+    state.current_scene_id = "3B"
+    assert apply_scene_placements(package, state.facts, "3B") == ()
+    state.facts.assert_fact(Fact(predicate="relay_open", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    state.current_scene_id = "3C"
+
+    assert apply_scene_placements(package, state.facts, "3C") == ()
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "broadcast_chamber"
+    assert world.parent("michelle") == "broadcast_chamber"
+    assert world.parent("rebecca") == "executive_office"
+    assert world.parent("brandon") == "broadcast_relay"
+    assert world.parent("portable_archive") == "rebecca"
+    assert set(world.companions("kristin")) == {"michelle"}
+
+    state.facts.assert_fact(Fact(predicate="portable_archive_secured", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    assert world_for(package, state.facts).parent("portable_archive") == "kristin"
+
+
 def test_scene_3b_office_entry_moves_kristin_and_michelle_in_and_leaves_brandon() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
