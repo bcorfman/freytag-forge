@@ -1999,7 +1999,7 @@ def test_package_seed_moves_3c_archive_to_kristin():
     state = RuntimeState(package=PACKAGE, current_scene_id="3C", phase="resolution")
     state._assert_scene_entry_fact("3C")
     things, _ = package_seed(PACKAGE, state, "3C")
-    assert things["Portable data case"] == {"place": "Rebecca Jenkins", "condition": []}
+    assert things["Portable data case"] == {"place": "Rebecca", "condition": []}
     state.facts.assert_fact(core.Fact(predicate="portable_archive_secured", subject="story", value="true"))
     things, _ = package_seed(PACKAGE, state, "3C")
     assert things["Portable data case"] == {"place": "Kristin", "condition": []}

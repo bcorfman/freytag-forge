@@ -913,7 +913,7 @@ knowledge:
   action_evidence:
   - [play, listen to, open]
   - [recording of Charles and Rebecca, Charles and Rebecca recording, recording]
-  entity_ids: []
+  entity_ids: [rebecca]
   aliases:
   - architects strategy known
   audience:

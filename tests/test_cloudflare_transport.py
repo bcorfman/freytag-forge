@@ -71,9 +71,7 @@ def _authored_handoff_package():
 def _groupless_3c_package():
     knowledge_id = "k_sl_3c_a_r1"
     knowledge = next(item for item in PACKAGE.knowledge.knowledge if item.id == knowledge_id)
-    groupless = knowledge.model_copy(
-        update={"earn_when": None, "action_evidence": (), "delivery_text": None}
-    )
+    groupless = knowledge.model_copy(update={"earn_when": None, "action_evidence": (), "delivery_text": None})
     catalog = PACKAGE.knowledge.model_copy(
         update={
             "knowledge": tuple(groupless if item.id == knowledge_id else item for item in PACKAGE.knowledge.knowledge),

@@ -122,6 +122,23 @@ def test_scene_3c_places_broadcast_chamber_and_moves_archive_to_kristin() -> Non
     assert world_for(package, state.facts).parent("portable_archive") == "kristin"
 
 
+def test_scene_3c_places_captives_in_maintenance_network() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "3A"
+    assert apply_scene_placements(package, state.facts, "3A") == ()
+    state.current_scene_id = "3B"
+    assert apply_scene_placements(package, state.facts, "3B") == ()
+    state.facts.assert_fact(Fact(predicate="relay_open", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    state.current_scene_id = "3C"
+
+    assert apply_scene_placements(package, state.facts, "3C") == ()
+    world = world_for(package, state.facts)
+    assert world.parent("captives") == "maintenance_network"
+    assert world.parent("senior_official") == "captives"
+
+
 def test_scene_3b_office_entry_moves_kristin_and_michelle_in_and_leaves_brandon() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)

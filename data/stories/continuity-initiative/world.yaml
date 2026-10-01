@@ -115,6 +115,7 @@ npcs:
   narrator_bio: A 58-year-old former senior government official with a forceful, disciplined manner and experience directing complex operations. He is Rebecca Jenkins's husband.
 - id: rebecca
   name: Rebecca Jenkins
+  aliases: [Rebecca]
   # This narrator-safe substitution preserves Rebecca's introduction while withholding later revelations.
   narrator_bio: Charles's 56-year-old wife and the chief executive of a biotechnology and defense contractor. She is exacting and technically capable.
 - id: senior_official
