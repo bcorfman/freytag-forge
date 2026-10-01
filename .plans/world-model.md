@@ -1457,7 +1457,34 @@ self-contained: how a turn, a reveal and a world effect work, the
 scanning, plain narrator rules, reply changes land unless an override is
 explicit and logged, story-data fixes allowed). It asks for two to four
 options, a ranked recommendation, the 2A story-data question, and a
-recorded-prompt test plan scored on narration plus delivery text. For 3C, and for the open 3B
+recorded-prompt test plan scored on narration plus delivery text.
+
+**ChatGPT's answer (round 1).** Recommended: on a reveal, the reveal
+fact's world effects run after the reply. They override only a
+conflicting `place` for entities that effect moved (companions
+included), and each override is logged. Every other reply change lands.
+Also proposed: one handoff prompt line, "Give item_facts after the game
+adds that text."; and, for 2A, story data: drop the perimeter move from
+`false_identities_ready` and give it to a later reveal (the checkpoint
+guard) whose delivery narrates the trip. Rejected by it: prompt-only,
+data-only, and a second model pass (conflicts with single-call capture).
+**My check against the record:** the precedence rule fits W7 (one-way
+fact-to-world) and W8 (companions follow by shared place). It keeps
+"reply changes must land" with an explicit, logged exception, and it
+has no lexical scanning. Gaps:
+- It bundles three changes into one arm; measure-each-fix says build and
+  measure precedence alone first. Precedence is deterministic, so it can
+  be checked offline by replaying the recorded 3B r1 reply, before any
+  live run.
+- The prompt line is a new narrator rule; rules come last.
+- It missed that 2A pacing events key on `false_identities_ready`:
+  `scrutiny_2a` (turn 3, "Facility staff are visibly scrutinizing
+  Kristin's inspector cover.") and `cover_review_2a` (turn 7). These
+  already fire in the hideout today (r1 and r3 turn 3). With the move on a
+  later arrival fact, they must key on that fact.
+- Its test plan (10 full replicates x 4 arms x 2 scenes) is heavier than
+  our method: offline replay for the deterministic rule, then x3 live per
+  scene. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
