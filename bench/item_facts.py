@@ -137,7 +137,7 @@ def _view(package, facts, axes=None, schema=None, *, structural=False):
                     place = min((place, *(npc.aliases if npc else ())), key=len)
         else:
             place = world.place_label(entity_id)
-            if parent and world.is_a(parent, "character") and place == world.name(parent):
+            if parent and world.is_a(parent, "character"):
                 npc = next((e for e in package.world.npcs if e.id == parent), None)
                 place = min((world.name(parent), *(npc.aliases if npc else ())), key=len)
         conditions = (

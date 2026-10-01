@@ -26,6 +26,8 @@ PACKAGE = load_story_package(ROOT / "data" / "stories" / "continuity-initiative"
 SINGLE = ROOT / "bench" / "variations" / "item-facts-single.json"
 SECOND = ROOT / "bench" / "variations" / "item-facts-second.json"
 WORLD_TWO_SCENE = ROOT / "bench" / "variations" / "item-facts-world-two-scene.json"
+WORLD_1B_1C = ROOT / "bench" / "variations" / "item-facts-world-1b-1c.json"
+WORLD_3B = ROOT / "bench" / "variations" / "item-facts-world-3b.json"
 
 
 def _provider(mode="single_call"):
@@ -135,6 +137,40 @@ def test_structural_facts_do_not_change_narrator_view():
         provider.facts_for_names(["Kristin's laptop"])["Kristin's laptop"]["place"]
         == "in Kristin's truck outside the house"
     )
+
+
+def test_thorough_3b_held_memory_card_uses_holder_label():
+    variation = load_variation(WORLD_3B)
+    _, state = seeded_state_for_scene(variation, "3B")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+
+    world = provider._world()
+    assert world.place_label("memory_card") == "with Kristin"
+    assert provider.item_facts["Michelle's memory card"]["place"] == "Kristin"
+
+
+def test_authored_text_remains_for_thing_not_held_by_person():
+    variation = load_variation(WORLD_1B_1C)
+    _, state = seeded_state_for_scene(variation, "1B")
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        prompt_variant=variation["_prompt_variant"],
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+
+    assert provider.item_facts["Kristin's laptop"]["place"] == "in Kristin's truck outside the house"
 
 
 def test_revealed_hidden_thing_can_move_without_being_hidden_again():
