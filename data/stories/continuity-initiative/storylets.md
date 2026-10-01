@@ -668,6 +668,44 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-2A-E — Reach the Facility
+
+**Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility)
+
+**Allowed scene:** `2A`
+
+**Available when**
+- Kristin and Brandon have their false identities ready.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+
+**Dramatic purpose**
+- Take Kristin and Brandon from the hideout to the facility, where their identities survive the initial checks.
+
+**Possible realizations**
+- Kristin and Brandon pass through several layers of security, and their identities survive the initial checks.
+
+**Effects**
+- May set `facility_perimeter_reached`.
+
+**Completion**
+- Kristin and Brandon are at the facility perimeter, past the initial identity checks.
+
+**Abort**
+- The pair leaves the scene before reaching the facility.
+
+**Protected boundary**
+- Reaching the facility does not face the supervisor; that remains `SL-2A-C`.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 7`
+- latest: `turn 8`
+
+---
+
 ### SL-2A-C — The Supervisor Needs a Reason
 
 **Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility), [2A.4 — The First Complication](plot.md#scene-2a4--the-first-complication)

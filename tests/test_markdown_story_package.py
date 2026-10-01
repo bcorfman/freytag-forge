@@ -113,6 +113,26 @@ def test_scene_3b_office_entry_moves_kristin_and_michelle_in_and_leaves_brandon(
     assert world.parent("rebecca") == "executive_office"
 
 
+def test_scene_2a_arrival_moves_kristin_and_brandon_to_the_perimeter() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "2A"
+
+    assert apply_scene_placements(package, state.facts, "2A") == ()
+
+    state.facts.assert_fact(Fact(predicate="false_identities_ready", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "brandon_hideout"
+    assert world.parent("brandon") == "brandon_hideout"
+
+    state.facts.assert_fact(Fact(predicate="facility_perimeter_reached", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    world = world_for(package, state.facts)
+    assert world.parent("kristin") == "facility_perimeter"
+    assert world.parent("brandon") == "facility_perimeter"
+
+
 def test_scene_2c_may_name_the_maintenance_network() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
@@ -177,7 +197,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 35
+    assert len(package.storylets) == 36
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
@@ -524,6 +544,7 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_2a_a_r2",
         "k_sl_2a_b_r1",
         "k_sl_2a_b_r2",
+        "k_sl_2a_e_r1",
         "k_sl_2a_c_r1",
         "k_sl_2a_c_r2",
         "k_sl_2b_a_r1",

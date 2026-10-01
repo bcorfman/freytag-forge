@@ -6,6 +6,8 @@ facts:
   purpose: Kristin has confirmed that the supposedly abandoned terminal conceals an active underground detention facility.
 - id: false_identities_ready
   purpose: Kristin and Brandon have credible technical-inspector identities and a cooling-water/ventilation cover story for entering the facility.
+- id: facility_perimeter_reached
+  purpose: Kristin and Brandon have reached the facility perimeter and passed the initial identity checks.
 - id: janus_evidence
   purpose: Kristin has secured archive material showing JANUS classified Americans for detention, leverage, and political control.
 - id: purge_clock_started
@@ -1054,6 +1056,35 @@ knowledge:
     priority: 0
   delivery_text: >-
     Brandon prepares technical credentials. Kristin weighs how much of the real cooling-water and ventilation risk to put in their lie.
+- id: k_sl_2a_e_r1
+  statement: "Kristin and Brandon are at the facility perimeter. Their false identities have passed the first security checks."
+  earn_when: "travels to the facility"
+  action_evidence:
+  - ["go to", "head to", "drive to", "travel to", "get to", "set out for", "head out to", "drive out to", "make for", "proceed to", "take Brandon to", "drive Brandon to", "bring Brandon to", "lead Brandon to", "show the checkpoint", "show the guard", "show the security guard", "hand the guard", "hand the checkpoint guard", "present our credentials at", "present my credentials at", "present the inspector credentials", "flash my credentials at", "flash my inspector credentials", "flash our inspector credentials", "show my credentials at", "show our credentials at", "show my inspector credentials at", "show our inspector credentials at"]
+  - ["the facility", "facility perimeter", "the facility perimeter", "checkpoint", "checkpoints", "security checkpoint", "security checkpoints", "checkpoint guard", "checkpoint guards", "the guard", "identity check", "identity checks", "security check", "security checks", "inspector credentials", "inspection credentials"]
+  entity_ids: []
+  aliases:
+  - facility perimeter reached
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 2A
+  requires:
+  - fact_id: false_identities_ready
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: facility_perimeter_reached
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-2A-E
+    realization_id: SL-2A-E-R1
+  relevance:
+    entity_ids: []
+    priority: 0
+  delivery_text: "Kristin and Brandon leave the hideout and reach the facility perimeter. Their false identities pass the first security checks."
 - id: k_sl_2a_c_r1
   statement: 'Kristin persuades a doubtful supervisor that a cooling-water imbalance and ventilation fault could disable the service level, gaining corridor access.'
   earn_when: warns the supervisor about cooling and ventilation faults
@@ -1070,6 +1101,8 @@ knowledge:
   - 2A
   requires:
   - fact_id: false_identities_ready
+    equals: true
+  - fact_id: facility_perimeter_reached
     equals: true
   establishes:
   - op: assert
@@ -1103,6 +1136,8 @@ knowledge:
   requires:
   - fact_id: false_identities_ready
     equals: true
+  - fact_id: facility_perimeter_reached
+    equals: true
   establishes:
   - op: assert
     fact_id: rebecca_observing_infiltrators
@@ -1130,6 +1165,8 @@ knowledge:
   - 2A
   requires:
   - fact_id: false_identities_ready
+    equals: true
+  - fact_id: facility_perimeter_reached
     equals: true
   establishes:
   - op: assert
@@ -1161,6 +1198,8 @@ knowledge:
   - 2A
   requires:
   - fact_id: false_identities_ready
+    equals: true
+  - fact_id: facility_perimeter_reached
     equals: true
   establishes:
   - op: assert

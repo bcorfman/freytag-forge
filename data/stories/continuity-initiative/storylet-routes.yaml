@@ -206,6 +206,12 @@ new_fact_ids:
   used_by_storylets:
   - SL-2A-A
   used_by_transitions: []
+- id: facility_perimeter_reached
+  definition: Kristin and Brandon have reached the facility perimeter and passed the initial identity checks.
+  used_by_storylets:
+  - SL-2A-E
+  - SL-2A-C
+  used_by_transitions: []
 - id: restricted_corridor_access
   definition: Kristin and Brandon have access to restricted infrastructure corridors.
   used_by_storylets:
@@ -1218,6 +1224,41 @@ storylets:
     - scene_id_not: 2A
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2A-E
+  scene_id: 2A
+  title: Reach the Facility
+  activation:
+    scene_id: 2A
+    conditions:
+    - fact_id: false_identities_ready
+      equals: true
+    pacing:
+      earliest_turn: 0
+      target_turn: 7
+      latest_turn: 8
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: If the player lingers in the hideout once the cover is ready, take Kristin and Brandon to the facility, where their identities survive the initial checks.
+  realization_options:
+  - id: SL-2A-E-R1
+    dramatic_intent: Kristin and Brandon pass through several layers of security, and their identities survive the initial checks.
+    operations:
+    - op: assert
+      fact_id: facility_perimeter_reached
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - brandon_history
+    - janus_selection_system
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: facility_perimeter_reached
+      equals: true
+    abort_when:
+    - scene_id_not: 2A
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-2A-C
   scene_id: 2A
   title: The Supervisor Needs a Reason
@@ -1225,6 +1266,8 @@ storylets:
     scene_id: 2A
     conditions:
     - fact_id: false_identities_ready
+      equals: true
+    - fact_id: facility_perimeter_reached
       equals: true
     pacing:
       earliest_turn: 0

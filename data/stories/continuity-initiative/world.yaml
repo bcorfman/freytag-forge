@@ -226,7 +226,8 @@ facts:
 - scene_3c_entry_known
 - michelle_abduction_suspicion
 - facility_proof
-- id: false_identities_ready
+- false_identities_ready
+- id: facility_perimeter_reached
   on_assert:
   - {move: kristin, parent: facility_perimeter}
 - janus_evidence

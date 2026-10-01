@@ -275,7 +275,7 @@ def test_shipped_package_declares_no_world_effects() -> None:
     assert set(PACKAGE.world.fact_effects) == {
         "memory_card_recovered",
         "brandon_identified",
-        "false_identities_ready",
+        "facility_perimeter_reached",
         "relay_open",
         "rebecca_office_reached",
         "military_override_codes_available",

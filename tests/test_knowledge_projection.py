@@ -122,17 +122,17 @@ def test_3b_frame_remains_without_the_moving_fact() -> None:
 
 def test_moving_2a_knowledge_is_scene_local() -> None:
     state = _scene_state("2A")
-    _assert_story_fact(state, "false_identities_ready")
+    _assert_story_fact(state, "facility_perimeter_reached")
 
     projection = KnowledgeProjector().project(state, "player", "Approach the facility entrance.")
 
     assert projection.scene_frame == ""
-    assert {"k_sl_2a_b_r1", "k_sl_2a_b_r2"} <= set(projection.scene_hidden_ids)
+    assert "k_sl_2a_e_r1" in projection.scene_hidden_ids
 
 
 def test_moving_2a_knowledge_does_not_hide_the_2b_frame() -> None:
     state = _scene_state("2B")
-    _assert_story_fact(state, "false_identities_ready")
+    _assert_story_fact(state, "facility_perimeter_reached")
 
     projection = KnowledgeProjector().project(state, "player", "Approach the facility entrance.")
     frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "2B")
