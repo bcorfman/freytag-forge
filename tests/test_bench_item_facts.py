@@ -15,8 +15,9 @@ from bench.item_facts import (
     validate_item_facts,
 )
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import apply_scene_placements, world_for
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
 
@@ -2496,6 +2497,25 @@ def test_prepare_turn_adds_referred_people_and_places_only_to_narration_things()
     ]
     assert "Michelle" not in provider._things_block()
     assert "executive office" not in provider._things_block()
+
+
+def test_with_line_drops_a_companion_in_another_place():
+    provider = _scene_provider("3B")
+    provider.state.facts.assert_fact(Fact(predicate="relay_open", subject="story", value="true"))
+    assert apply_world_effects(PACKAGE, provider.state.facts) == ()
+
+    line = next(line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin."))
+    assert line == "- Kristin. Place: security corridors. With Kristin: Michelle."
+
+
+def test_with_line_is_absent_when_no_companion_is_present():
+    provider = _scene_provider("3B")
+    provider.state.facts.assert_fact(Fact(predicate="relay_open", subject="story", value="true"))
+    assert apply_world_effects(PACKAGE, provider.state.facts) == ()
+    assert provider._world().move("michelle", "broadcast_relay").ok
+
+    line = next(line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin."))
+    assert line == "- Kristin. Place: security corridors."
 
 
 def test_prepare_turn_does_not_refer_to_a_distant_person():

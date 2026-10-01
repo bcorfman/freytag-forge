@@ -451,7 +451,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 else:
                     line += " If the player talks to them, they say nothing."
             if narration and entity_id == protagonist_id:
-                companions = world.companions(protagonist_id)
+                protagonist_parent = world.parent(protagonist_id)
+                companions = tuple(
+                    companion_id
+                    for companion_id in world.companions(protagonist_id)
+                    if world.parent(companion_id) == protagonist_parent
+                )
                 if companions:
                     labels = ", ".join(self._referred_entity_label(world, member_id) for member_id in companions)
                     line += f" With {name}: {labels}."
