@@ -1712,6 +1712,27 @@ yes here; the rest (turn 5 Kristin studies the list, turn 7 sits at a
 desk) are narration variance on turns this change cannot reach before
 turn 4.
 
+**Place text (2026-10-01, step 1).** Two different things.
+- "Shelly" is only a label: r3 turn 9 put the tablet on Michelle
+  correctly; `_view` labels a person parent by the shortest of name and
+  aliases, which for Michelle is "Shelly".
+- "with Kristin" is a real loss. On 3B turn 3 the reply often gives the
+  memory card `"place": "with Kristin"` (every 3B run since the office
+  entry). The match call maps it to Kristin; Jev is asked "Is the place
+  called "with Kristin" on "Kristin Schweitzer"?" and says no (8/8
+  recorded), so the card goes into a new entity "with Kristin", which
+  later prompts show and the narrator echoes. Stripping "with" is reply
+  phrase parsing, which the decisions rule out.
+**Probe (`~/dev/ringer-work/freytag-with-place-probe`, Ringer, check
+passed; 4 recorded checks x 10 x 2 wordings).** "with Kristin": recorded
+0/10 (noul ~0.25), "...mean the thing is carried by...?" 0/10 (noul
+0.44-0.50). Controls held under both: "Kristin's pocket" yes 10/10,
+"prisoners" and "guard" vs Brandon no 10/10. So wording alone does not
+fix it. In "with Kristin" the card was already on Kristin: the reply
+restates no change. Across all recorded place mapping checks, 50 had the
+thing already at the match target (Jev yes 41, no 9: "with Kristin",
+r2's "Rebecca's office"); 34 did not (yes 26, no 8).
+
 ### Narration leak diagnosis (2026-09-28, offline)
 
 Reproduced by running the real `RuntimeEngine` and
