@@ -1582,6 +1582,26 @@ text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
 "Rebecca" as new, and Brandon's stale place text.
 
+**Brandon chose (2026-10-01): fix both.** (1) 2A turn 4: reword only the
+arrival's delivery_text so it reads after a checkpoint lead-up too.
+ChatGPT prompt `~/dev/ringer-work/freytag-2a-arrival/chatgpt_followup_r3.md`
+(standalone); waiting on the answer. (2) 3B turn 9: the recorded prompt
+lists `inspection console. Place: infrastructure corridors.` in THINGS
+and PLAYER while Kristin is in the executive office (3/3), and the
+narrator brings it into the office.
+**Turn-9 probe (`~/dev/ringer-work/freytag-3b-turn9-probe`, Ringer,
+check passed; 3 recorded prompts x 5 samples x 2 arms, read by hand).**
+Console in the office (taken, plugged in, or on the desk): recorded
+9/15, console lines removed 0/15. With the lines removed the narrator
+uses a new "broadcast system/console" or the relay, or stops at the
+codes hand-off (the appended delivery then starts the broadcast).
+**Why it is there:** `inspection_console` is a 3B scene item (plot.md 3B
+`item_ids`, placed in 3B grounding), so `_name_in_scene_scope` keeps it
+in scope wherever Kristin is, and the match call refers it for
+"Start the broadcast with Michelle." 3C lists it too. **Recording gap:**
+a turn record's `match_raw` holds the post-reply match call, not
+`prepare_turn`'s, so the pre-turn refers are not saved.
+
 ### Narration leak diagnosis (2026-09-28, offline)
 
 Reproduced by running the real `RuntimeEngine` and
