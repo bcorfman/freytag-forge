@@ -1943,6 +1943,18 @@ removal. Turn 7, Kr reaches the tunnel: removed 12/15; v1 (no place)
 sentence sends Kr looking for Michelle in some room. Turn 3 (Rebecca
 listed): 0/15 restarts in every arm. **Brandon chose removal
 (2026-10-01).**
+The aliases build (first run) failed twice: "Charles" as an alias made
+the leak check reject authored 3B/3C pacing complications
+(`relay_power_3b`, `destruction_3b`, `collapse_3c`) and the 3B
+`charles_abandoned_rebecca` cue, because Charles is never placed or
+present. The grounding guide ("Aliases are scanned for safety and
+leaks. Never add an alias ... that would match text in scenes where the
+character is not allowed") covers it. **Brandon chose Rebecca only.**
+Rerunning. Removal of the 3C situation: **Brandon chose a schema
+change** (`SceneFrame.situation` optional, default ""), a new mechanism:
+de181fb hides the situation only after a protagonist-moving fact, which
+3C has none of. Prepared in `~/dev/ringer-work/freytag-3c-no-situation`
+(check `verify_no_situation.py`), to launch after the alias patch lands.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
