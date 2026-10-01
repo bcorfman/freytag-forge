@@ -37,8 +37,8 @@ item (9cff368), and Rebecca's executive desk is declared and fixed
 (21338bb), and Jev sees owners so "Rebecca's office" maps to it
 (ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
 (8e09018), each measured live 3/3; 3C grounded (broadcast chamber,
-archive moves to Kristin when secured); 3C handoffs approved and landing;
-then the 3C bench script and x3, then S3 and S4.
+archive moves to Kristin when secured); 3C handoffs landed (b75af9d); the 3C smoke
+run found a protected-term gap, fix building; then 3C x3, S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1847,6 +1847,28 @@ ordinary sets 0/55). The two misses need a bare "Rebecca" ("Restrain
 Rebecca ..."), which would fire on "Ask Rebecca where she is going.", or
 a bare "footage". Landing by Ringer: `verify_handoffs_3c.py` (exact
 values, 30 matcher cases, payloads byte-identical outside 3C).
+**Landed as b75af9d** (Ringer, Luna; the first run failed
+`test_transport_attributes_a_groupless_statement_and_records_telemetry`,
+which used `k_sl_3c_a_r1` as its handoff-free example; respecced to
+strip that handoff in a package copy; second run first attempt; suite
+982), with `bench/variations/item-facts-world-3c.json`, script
+`exposure-and-escape` (12 turns, thorough entry, one reveal per set).
+
+**3C live smoke (2026-10-01, one replicate; `bench/results/world-3c`).**
+Failed at the opening, before any turn: `protected_narration_leak`
+"janus selection". Step 1: the opening SCENE carries 3C.1's Details line
+"JANUS selection records" from plot.md, and the narrator repeated it.
+The player earned that phrase in 2B (`janus_evidence` is true at a
+thorough 3C entry; its delivery must convey "JANUS selection records").
+But `earned_protected_terms` counts only earned knowledge statements,
+and no statement contains it, so a protected phrase delivered by a
+handoff stays banned forever. 05ca16b already decided that narration may
+name what the player has earned. **Brandon chose to count earned
+deliveries**: a protected term is earned when a delivery whose fact is
+true conveys it (must_convey or fallback_text). Ringer
+`~/dev/ringer-work/freytag-3c-protected-earned` (check
+`verify_protected.py`: accepted in 3C, still rejected in 2A and for
+"phase two" in 3C; payloads unchanged).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
