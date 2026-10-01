@@ -85,6 +85,18 @@ same rule, build it in one helper and call it from both.
 
 ## Fixing a Scene
 
+**Recommend only proven techniques.** Before proposing any fix or design, find
+how this is already handled:
+- the decisions in `.plans/world-model.md` (the W decisions in section 12, and
+  "Brandon chose" entries);
+- `docs/world-model-grounding.md`;
+- the fixes that landed in earlier scenes.
+
+Recommend that. Propose something new only when none of them covers the case.
+Say so plainly, and name what you checked. Example: a companion split is
+already decided (W8, "a companion moves with the protagonist only while it is
+in the same place"). An invented split effect contradicted that decision.
+
 Each scene goes through the same steps: ground it (places, things,
 placements; payloads byte-identical except approved lines), add reveal
 handoffs, write a bench script, run three live replicates, then fix what they
