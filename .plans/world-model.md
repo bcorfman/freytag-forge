@@ -1917,6 +1917,23 @@ from the smoke run: Michelle unconscious, Br at the surface, the park
 Probe (`~/dev/ringer-work/freytag-3c-probe`, Ringer; recorded x3
 prompts x 5): t3 arms recorded / no situation line / Rebecca in THINGS /
 both; t7 arms recorded / no situation line. Read by hand.
+**Probe result (check passed; read by hand).** Turn 3, Kr re-enters
+the office: recorded 15/15, no situation 15/15, Rebecca in THINGS 0/15,
+both 0/15. So the restart is Rebecca's missing THINGS line, not the
+situation. Turn 7, Kr reaches the maintenance tunnel or leads the
+prisoners there: recorded 6/15 (9 go to Michelle in the chamber or an
+invented office; "secured command office" 2/15), no situation 12/15 (2
+stop at a console with Michelle; invented office 0/15). The situation
+line pulls on the evacuation.
+**Brandon chose (2026-10-01):** (1) aliases "Rebecca" and "Charles" on
+the two Jenkins NPCs; (2) reword the 3C situation through ChatGPT
+Desktop and probe the rewrite against the removal arm
+(`~/dev/ringer-work/freytag-3c-probe/chatgpt_situation_prompt.md`, three
+versions: no place / broadcast chamber only / maintenance routes as the
+way out); (3) place the captives group in `maintenance_network` at 3C
+entry. (1) and (3) are building in `~/dev/ringer-work/freytag-3c-aliases`
+(check `verify_aliases.py`: payloads unchanged apart from the Jenkins
+CHARACTERS lines and 3C).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
