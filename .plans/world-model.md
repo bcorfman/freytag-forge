@@ -1801,7 +1801,7 @@ as the cameras did. Charles stays unplaced (decision 4). Ringer run
 payloads byte-identical except 3C's opening line and Brandon's new
 CHARACTERS line).
 
-**3C grounding landed** (Ringer, Luna; first run stopped on an unlisted
+**3C grounding landed as 226b9ed** (Ringer, Luna; first run stopped on an unlisted
 old-behaviour test, `test_portable_archive_starts_with_rebecca`, which
 was respecced; second run passed first attempt; `verify_3c.py` PASS;
 suite 982). Five tests that pinned the old guarded placement were
