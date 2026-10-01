@@ -114,7 +114,10 @@ step 1 have mostly cost time.
    with one arm per candidate cause. Add the missing plot sentence copied
    unchanged, or remove the line that pulls. Use 10-15 samples per arm, run by
    Ringer, and read every narration by hand. Score what the narration does, not
-   the reply's `item_facts`: they report moves the prose never made.
+   the reply's `item_facts`: they report moves the prose never made. On a
+   reveal turn, score the narration plus the appended delivery text. The
+   narrator is told to write only the lead-up, so a lead-up that stops short
+   is the handoff working.
 3. **Fix at the source the probe points to.**
    - Missing story material is a reveal handoff or a statement written in
      ChatGPT Desktop, then scored with the real matcher.
