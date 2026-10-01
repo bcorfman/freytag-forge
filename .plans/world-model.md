@@ -1732,6 +1732,16 @@ fix it. In "with Kristin" the card was already on Kristin: the reply
 restates no change. Across all recorded place mapping checks, 50 had the
 thing already at the match target (Jev yes 41, no 9: "with Kristin",
 r2's "Rebecca's office"); 34 did not (yes 26, no 8).
+**Brandon chose the no-change skip (2026-10-01), then building it found
+the real source.** "with Kristin" is authored: world.yaml
+`memory_card_recovered` has `{move: memory_card, parent: kristin, text:
+with Kristin}` (from S1 task 4, 89b1eea). The THINGS line shows
+`Michelle's memory card. Place: with Kristin.` (3B owner run 5/6 card
+lines, 3A 4/4, 2C 9/10) and replies copy it (3, 3, 2 turns). The other
+held-thing move (`override_codes`) has no text and shows "Kristin". The
+skip trial also missed r2's "Rebecca's office", because "Rebecca" is
+resolved only later by the thing mapping. Skip build paused for
+Brandon's call: remove the authored text first (fix at the source).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
