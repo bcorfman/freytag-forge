@@ -37,8 +37,8 @@ item (9cff368), and Rebecca's executive desk is declared and fixed
 (21338bb), and Jev sees owners so "Rebecca's office" maps to it
 (ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
 (8e09018), each measured live 3/3; 3C grounded (broadcast chamber,
-archive moves to Kristin when secured); next 3C reveal handoffs, bench
-script and x3, then S3 and S4.
+archive moves to Kristin when secured); 3C handoff prompt ready for
+ChatGPT Desktop; then the 3C bench script and x3, then S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1811,6 +1811,21 @@ absence both before and after the fact (it never applied 3C's
 placements), so it was restored to check that "...is with Rebecca in her
 hands." is a turn rule before the fact and gone after it. Not measured
 live: no 3C bench script and no 3C handoffs yet.
+
+**3C reveal handoffs:** all ten `k_sl_3c_*` candidates lack
+`earn_when`, `action_evidence` and `delivery_text`. Offered sets: A on
+arrival (`broadcast_started` is set by 3B's bridge); B after
+`truth_no_longer_containable`; C after `rebecca_captured`; D after
+`captives_reaching_surface`; E after `national_network_fragmenting` and
+`charles_at_large`. Only D-R1 sets `national_network_fragmenting`, but
+the resolution event `resolution_network_consequences` sets it too, so a
+D-R2 path does not strand E. The ChatGPT Desktop prompt is
+`~/dev/ringer-work/freytag-3c-handoffs/chatgpt_prompt.md`, built from
+3B's v4 prompt (matcher rules, verb coverage, pairs, banned single
+words, self-check). It also asks for earn_when and delivery_text: 8th
+grade, never Brandon's fate, never "detention captives". Score answers
+with `score_3c.py`: 20 prompt examples, 40 held-back wordings, 40
+ordinary commands, and text checks. Waiting on Brandon's ChatGPT run.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
