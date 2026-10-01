@@ -37,8 +37,9 @@ item (9cff368), and Rebecca's executive desk is declared and fixed
 (21338bb), and Jev sees owners so "Rebecca's office" maps to it
 (ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
 (8e09018), each measured live 3/3; 3C grounded (broadcast chamber,
-archive moves to Kristin when secured); 3C handoffs landed (b75af9d); the 3C smoke
-run found a protected-term gap, fix building; then 3C x3, S3 and S4.
+archive moves to Kristin when secured); 3C handoffs landed (b75af9d); protected terms
+delivered by a handoff count as earned (2c5b389); 3C x3 running; then
+S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1869,6 +1870,22 @@ true conveys it (must_convey or fallback_text). Ringer
 `~/dev/ringer-work/freytag-3c-protected-earned` (check
 `verify_protected.py`: accepted in 3C, still rejected in 2A and for
 "phase two" in 3C; payloads unchanged).
+**Landed as 2c5b389** (Ringer, Luna, first attempt; three hermetic
+tests; review fix: the fact-truth test now uses the package idiom
+`value if not None else object`; suite 985).
+**3C smoke rerun on 2c5b389 (one replicate, `bench/results/world-3c`).**
+Completed 12/12, no leak rejection, handoffs on turns 1, 3, 6, 10 and 11
+(a, b, c, d, e r1). Judges: facts correct 9/12, contradicts 2, beyond 1,
+restarts 1. Seen, to be checked over x3 before any fix: t1 narrates
+Michelle "still unconscious"; t4 the reply's "archive" resolves to 2B's
+records archive area (ignored); t6 "pump controls" as Kr's place (create
+failed: name taken); t7 "maintenance tunnel" -> infrastructure corridors
+(the maintenance network exists) and "captives" new (the 3A group is
+out of scope); t9 "surface" -> Los Angeles park, so t10-11 sit Kr on a
+park bench, and Br is narrated waiting at the surface (plot: he stays at
+the relay, fate uncertain); t12 the SCENE situation phrase "secured
+command office and broadcast chamber" becomes a new place.
+x3 running: `bench/results/world-3c-x3`.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
