@@ -1405,11 +1405,22 @@ prompts with the new statement, 15 per arm, re-entry read by hand:
 - Earlier: statement removed everywhere, situation kept: 15/15. So both
   the situation line and the SCENE statement line must go.
 
-**Next (Brandon's call):** the working rule hides the scene's situation
-line and the moving item's SCENE line once a story effect has moved the
-protagonist in this scene, and keeps its may-say lines. In 2A that
-moves the cover story out of SCENE, leaving only Brandon's and
-Michelle's may-say lines. For 3C, and for the open 3B
+**Brandon chose to build that rule and rerun 3B and 2A (2026-10-01).**
+2A baseline x3 on a1be840 (`bench/results/world-2a-baseline-x3`): all
+three moved to 2B after turn 7, every handoff fired, no leak rejection.
+The same defect is there: after `k_sl_2a_b_r1` sets
+`false_identities_ready` (turn 2), Kristin is back in "Brandon's
+hideout" on the next turn or the same one, in 3/3 (r1 perimeter only on
+turn 2; r2 never at the perimeter; r3 hideout, checkpoint, hideout).
+
+First build attempt (`ringer-work/freytag-moved-scene-rule`) removed the
+moving items from `committed_knowledge`. That list is also the grounding
+and narration-safety basis, so seven tests broke (canon journeys,
+leakage matrix, deadline exit, reveal prerequisites, persona
+escalation). My spec was wrong, not the worker. Respecified: the
+projection adds `scene_hidden_ids` and blanks `scene_frame`; the SCENE
+renderer skips those items; committed and sayable knowledge are
+unchanged. Verifier `verify_rule2.py` checks the rendered prompt. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
