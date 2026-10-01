@@ -1287,9 +1287,41 @@ by design (W8: a companion follows only while in the same place), so the
 shares her place (Ringer, Luna, first attempt). Rerun 3B x3 running
 (`bench/results/world-3b-office-x3`).
 
-**Next:** read the 3B x3 rerun: does turn 3 fire `k_sl_3b_e_r1` and
-narrate Kristin inside the office (read by hand), does turn 4 confront
-Rebecca there, and is "With Kristin: Michelle." on later turns. For 3C, and for the open 3B
+**3B x3 on the office entry (2026-10-01, Ringer, check passed;
+`bench/results/world-3b-office-x3`).** All three moved to 3C after turn
+9; handoffs on turns 1, 3 (`k_sl_3b_e_r1`), 4, 6 and 8 in all three; no
+leak rejection. Turn 3 narrates Kristin leading Michelle into the
+office 3/3 (read by hand), and Kristin's place is the office from turn
+3 on 3/3. Judges vs `world-3b-referred-x3`: restarts 3/27 (was 0),
+contradicts 4/27 (was 0), beyond the command 4/27 (was 2), facts correct
+24/27 (same). New defects, read from the prompts:
+- **Turn 4 re-enters the office, 3/3** (all three restarts). Its SCENE
+  still opens with the situation line "Security corridors between the
+  resistance and Rebecca's executive office..." (knowledge.yaml
+  `situation`). It also carries the earned "Kristin and Michelle enter
+  Rebecca’s office while Brandon holds off security forces." as a SCENE
+  line and a "may say this aloud" line for Michelle and Brandon, and the
+  3B.2 detail words.
+- **Brandon follows Kristin in on turn 3** in r1 and r3 ("Brandon follows
+  them in"), right before the appended delivery text says he holds off
+  security. The reply put him in the office, a narrated rejoin (W8), so
+  "With Kristin: Brandon, Michelle." returns on turn 4. The turn-3
+  CONSTRAINTS did show the delivery text.
+- **Turn 3 narrates the entry twice:** the narrator writes the entry,
+  then the delivery text repeats it.
+- **"Rebecca's office" is not a world name.** The 3B grounding kept it
+  off the executive office because it is a 2C must_convey. My delivery
+  text and statement use it anyway, and in r1 turn 4 the reply used it.
+  It resolved as a new place, so Kristin, Brandon, Michelle and Rebecca
+  went unplaced at "Rebecca's office" for turns 4-8.
+
+**Next (Brandon's call):** step 2 of "Fixing a Scene". Probe the three
+recorded turn-4 prompts with subtractive arms: recorded; the earned
+entry lines removed (SCENE and the two may-say lines); the situation
+line removed; both removed. Read the narration by hand for re-entry.
+The "Rebecca's office" wording in my delivery text and statement goes
+back to ChatGPT Desktop, with "executive office" in place of "Rebecca's
+office", per the 3B grounding note. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
