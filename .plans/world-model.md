@@ -31,7 +31,9 @@ and 2/20) and built (bc0ddf1); reruns: 3A reaches the medical level 3/3 in
 narration; the 3B office entry, the moved-protagonist scene rule
 (de181fb), reveal-move precedence (d63bfaa) and the 2A arrival reveal
 (2c0ed9d) landed; 3B holds the office and 2A reaches the perimeter 3/3,
-with no restarts in either (2026-10-01); then 3C, S3 and S4.
+with no restarts in either (2026-10-01); the 2A arrival delivery now
+reads in order (6bc7dd4) and the console is no longer a 3B/3C scene
+item (9cff368), measured live 3/3 each; then 3C, S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1574,9 +1576,10 @@ waving them through, and the appended delivery then says they "leave
 the hideout and reach the facility perimeter", so the trip is told after
 the check (3/3). The command itself places them at the checkpoint.
 
-**Next:** decide whether the turn-4 order wart matters; the 3B turn-9
-fact misses (console and override codes on the broadcast turn); then
-3C, S3 and S4. For 3C, and for the open 3B
+**Next (superseded 2026-10-01; see the 3B console entry below):** the
+turn-4 order wart and the 3B turn-9 console are both fixed. Open from
+3B turn 9: a narrated desk is movable, and place text "Shelly" / "with
+Kristin" is kept unresolved. Then 3C, S3 and S4. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
@@ -1624,8 +1627,24 @@ in the infrastructure corridors. Side effect, allowed by the check: the
 run failed on the old-behaviour test
 `test_inspection_console_is_fixed_in_the_infrastructure_corridors[3B,3C]`
 (it applied 3B's placements to a bare state); respecced to apply 2A
-first. Open to measure live: 3B turn 1 names the console while it is out
-of scope.
+first. **Landed as 9cff368** (Ringer, Luna, first attempt on the respec;
+`verify_console.py` PASS; suite 977).
+**3B x3 on 9cff368 (2026-10-01, check passed;
+`bench/results/world-3b-console-x3`).** All three moved to 3C after turn
+9; every handoff fired; no leak rejection; Kristin in the executive
+office from turn 3 on, 3/3. Turn 9: the console is in THINGS 0/3 (was
+3/3) and no narration brings it into the office (was 3/3, read by
+hand). Turn 1 still gets the console by its full name 3/3, and still
+narrates "rush back to the infrastructure corridors" 3/3, as before
+this change (the known console drift; r3 records the move, r1 and r2 do
+not). Judges vs world-3b-precedence-x3: contradicts 1 -> 0, beyond 1 ->
+1, restarts 0 -> 0, facts correct 24 -> 24/27.
+**New on turn 9, not fixed:** the match call now refers "Michelle's
+memory card" (3/3) and the narrator gives it to Kristin or puts it in a
+tablet. r1 has Kristin hold "the desk in her hands", and the desk moves
+to her: the desk was created by narration in turn 6, so it is not
+fixed. r3 records the tablet's place as "Shelly" and r2 the card's as
+"with Kristin" (place text, not resolved).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
