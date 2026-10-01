@@ -1496,8 +1496,31 @@ of 3B r1 turn 3 now keeps Kristin and Michelle in the executive office
 and Brandon in the corridors, and logs "item_facts place for 'Kristin'
 ('security corridors') overridden by fact rebecca_office_reached".
 Controls: with no fact set that turn, the reply's move lands; a fact
-from an earlier turn pins nobody. 3B x3 rerun running
-(`bench/results/world-3b-precedence-x3`). For 3C, and for the open 3B
+from an earlier turn pins nobody.
+
+The first rerun crashed on an older bug that only now surfaced:
+`apply_item_facts` read `player_area` (bound only in the mapping loop)
+when a reply named a new area on a turn with no mapping checks. Fixed as
+7d015a5 (Ringer, Luna; the regression test fails without the fix;
+suite 976).
+
+**3B x3 with precedence (2026-10-01, check passed;
+`bench/results/world-3b-precedence-x3`).** All three moved to 3C after
+turn 9; every handoff fired; no leak rejection. Kristin is in the
+executive office from turn 3 on in 3/3. Turn 4 opens "Kristin is in the
+executive office with Michelle" in 3/3 (read by hand), with no re-entry.
+Overrides logged (4, all Brandon): r1 turn 3 kept him in the security
+corridors, and turn 8 in 3/3 kept him at the broadcast relay
+(`relay_open`) when the reply said security corridors. Judges vs the
+rule-only run: restarts 1 -> 0/27, contradicts 0 -> 1, beyond 3 -> 1,
+facts correct 23 -> 24/27. The three wrong-fact turns are all turn 9
+(the broadcast: the console and override codes moved). r1 turn 1 is the
+known console drift to the infrastructure corridors.
+
+**Next:** the 2A story data through a ChatGPT follow-up: drop the
+perimeter move from `false_identities_ready`; add an arrival reveal at
+the checkpoint guard whose delivery narrates the trip and owns the move;
+key `scrutiny_2a` and `cover_review_2a` on the arrival fact. Then 2A x3. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
