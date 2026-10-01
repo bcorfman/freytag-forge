@@ -1742,6 +1742,15 @@ held-thing move (`override_codes`) has no text and shows "Kristin". The
 skip trial also missed r2's "Rebecca's office", because "Rebecca" is
 resolved only later by the thing mapping. Skip build paused for
 Brandon's call: remove the authored text first (fix at the source).
+**Brandon chose the data fix first; the trial found it breaks the game
+path.** Offline, deleting `text: with Kristin` changed no captured
+payload but failed 3 tests. The hosted runtime
+(`CloudflareTurnProvider._placement_rules`, not the bench provider)
+turns that text into the narrator rule "Michelle's memory card is with
+Kristin."; with no text the rule disappears, so the real game would
+stop telling the narrator where the card is. Not built. The text is
+right for that sentence and wrong only for the bench THINGS `Place:`
+field, which wants a bare name (W5).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
