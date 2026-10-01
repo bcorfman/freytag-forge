@@ -1383,9 +1383,33 @@ re-entry is unchanged by the rewording (15/15 both) and is a separate open
 problem; only removing both the situation line and the earned entry lines
 has stopped it.
 
-**Next (Brandon's call):** build the wording (prepared,
-`~/dev/ringer-work/freytag-3b-wording`) for turn 3, and decide the turn-4
-re-entry separately. For 3C, and for the open 3B
+**Wording landed** as a1be840 (Ringer, Luna, first attempt; the four
+approved lines in knowledge.yaml only; payloads unchanged except the 3B
+situation sentence; suite 966).
+
+**Brandon chose to try an engine rule for the turn-4 re-entry
+(2026-10-01).** A protagonist-moving fact is typed data
+(`package.world.fact_effects`: a `move` of the protagonist), so the rule
+can key on it. But in 2A, `false_identities_ready` moves Kristin, and the
+items that set it (`k_sl_2a_b_r1`/`r2`) also carry the cover story, so
+hiding their statements cuts 2A material. Probes on the recorded turn-4
+prompts with the new statement, 15 per arm, re-entry read by hand:
+- situation line removed, statement kept everywhere: 15/15
+  (`freytag-situation-only-probe`). The narrow rule fails.
+- situation removed, SCENE statement line kept, may-say lines dropped:
+  8/15 (`freytag-statement-split-probe`).
+- situation removed, SCENE statement line dropped, may-say lines kept:
+  1/15 (same probe). In r1 and r3 the narration plans to overload JANUS
+  instead of answering the command, but the confrontation is the
+  appended delivery text, so the turn still delivers it.
+- Earlier: statement removed everywhere, situation kept: 15/15. So both
+  the situation line and the SCENE statement line must go.
+
+**Next (Brandon's call):** the working rule hides the scene's situation
+line and the moving item's SCENE line once a story effect has moved the
+protagonist in this scene, and keeps its may-say lines. In 2A that
+moves the cover story out of SCENE, leaving only Brandon's and
+Michelle's may-say lines. For 3C, and for the open 3B
 gaps (the 3A r1 capture miss, "Rebecca" as new, Brandon's stale place
 text), start from step 1 of "Fixing a Scene": read the recorded prompt
 against plot.md before proposing a fix. Also open: the 3A r1 capture miss,
