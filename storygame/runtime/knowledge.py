@@ -105,7 +105,20 @@ class KnowledgeProjector:
             frame for frame in state.package.knowledge.scene_frames if frame.scene_id == state.current_scene_id
         )
         committed = self._committed_for(state, audience_id, player_input)
-        scene_hidden_ids = self._moving_item_ids(state)
+        scene_hidden_ids = self._effect_item_ids(state)
+        protagonist_moving_facts = {
+            fact_id
+            for fact_id, effects in state.package.world.fact_effects.items()
+            if any(effect.move == state.package.world.protagonist_id for effect in effects)
+        }
+        hides_protagonist_move = any(
+            item.id in scene_hidden_ids
+            and any(
+                operation.op == "assert" and operation.fact_id in protagonist_moving_facts
+                for operation in item.establishes
+            )
+            for item in state.package.knowledge.knowledge
+        )
         # What a speaker may say aloud is a tighter, scene-focused slice than the
         # grounding basis; they are not the same list.
         sayable = self._established_for(state, audience_id, self.max_sayable_knowledge)
@@ -115,7 +128,7 @@ class KnowledgeProjector:
         return TurnKnowledgeContext(
             scene_id=state.current_scene_id,
             phase=state.phase,
-            scene_frame="" if scene_hidden_ids else frame.situation,
+            scene_frame="" if hides_protagonist_move else frame.situation,
             pressure=frame.pressure,
             audience_id=audience_id,
             committed_knowledge=committed,
@@ -130,20 +143,16 @@ class KnowledgeProjector:
             scene_hidden_ids=scene_hidden_ids,
         )
 
-    def _moving_item_ids(self, state: RuntimeState) -> tuple[str, ...]:
-        """Return established current-scene claims that move the protagonist."""
+    def _effect_item_ids(self, state: RuntimeState) -> tuple[str, ...]:
+        """Return established current-scene claims with any world effect."""
 
-        moving_facts = {
-            fact_id
-            for fact_id, effects in state.package.world.fact_effects.items()
-            if any(effect.move == state.package.world.protagonist_id for effect in effects)
-        }
+        effect_facts = set(state.package.world.fact_effects)
         return tuple(
             item.id
             for item in state.package.knowledge.knowledge
             if state.current_scene_id in item.available_in_scenes
             and self._established(item, state)
-            and any(operation.op == "assert" and operation.fact_id in moving_facts for operation in item.establishes)
+            and any(operation.op == "assert" and operation.fact_id in effect_facts for operation in item.establishes)
         )
 
     def _established_for(self, state: RuntimeState, audience_id: str, limit: int) -> tuple[ProjectedKnowledge, ...]:
