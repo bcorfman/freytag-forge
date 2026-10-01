@@ -1885,7 +1885,38 @@ out of scope); t9 "surface" -> Los Angeles park, so t10-11 sit Kr on a
 park bench, and Br is narrated waiting at the surface (plot: he stays at
 the relay, fate uncertain); t12 the SCENE situation phrase "secured
 command office and broadcast chamber" becomes a new place.
-x3 running: `bench/results/world-3c-x3`.
+**3C x3 on 2c5b389 (2026-10-01, check passed;
+`bench/results/world-3c-x3`).** All three completed 12/12; no leak
+rejection; every handoff fired 3/3 on turns 1, 3, 6, 10, 11. The data
+case moved to Kr on turn 3 and to Michelle on turn 12, 3/3. Judges:
+facts correct 28/36, contradicts 3, beyond 4, restarts 3. Not repeated
+from the smoke run: Michelle unconscious, Br at the surface, the park
+(each 0/3). Open:
+- **Turn 3 restart, 3/3** ("Take the portable data case from Rebecca."):
+  Kr "enters the executive office" again. Step 1: THINGS lists Kr in the
+  executive office and the case on Rebecca, but not Rebecca. The command
+  never refers her, because `rebecca` has no "Rebecca" alias (Kr,
+  Michelle and Br have first-name aliases), so `_referred_lines_for_command`
+  does not match the name. Likely the same root as the open "Rebecca" as
+  new. The SCENE's first line, 3C's knowledge.yaml situation "The secured
+  command office and broadcast chamber during a mounting deluge...", names
+  a room the world does not have.
+- **Turns 7-9, the evacuation, 2/3 not narrated**: r1 stays in the
+  broadcast chamber, r3 invents a "secured command office" (also the
+  smoke run's t12: 2 of 4 runs; it comes from the situation line); only
+  r2 reaches the maintenance network and a new "surface". Step 1 on t7:
+  the command asks Kr to lead the prisoners, but plot.md 3C.3 has
+  Michelle lead them while Kr works the pumps, and the prompt says so, so
+  the narrator goes to find Michelle. The bench input is partly at fault.
+  The captives group is still in the detention level (its 3C place was
+  deferred until it surfaced; it has), and the tunnel is not in THINGS.
+  SCENE and the "may say this aloud" lines also carry unearned
+  realizations (c_r2's gate release, b_r2's capture), voiced as Michelle.
+- Turn 4: the reply's "archive" resolves to 2B's records archive area
+  (4/4, ignored). Turn 6: "pump controls" becomes Kr's place (4/4).
+Probe (`~/dev/ringer-work/freytag-3c-probe`, Ringer; recorded x3
+prompts x 5): t3 arms recorded / no situation line / Rebecca in THINGS /
+both; t7 arms recorded / no situation line. Read by hand.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
