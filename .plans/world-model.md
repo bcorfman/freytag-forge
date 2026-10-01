@@ -1825,7 +1825,14 @@ D-R2 path does not strand E. The ChatGPT Desktop prompt is
 words, self-check). It also asks for earn_when and delivery_text: 8th
 grade, never Brandon's fate, never "detention captives". Score answers
 with `score_3c.py`: 20 prompt examples, 40 held-back wordings, 40
-ordinary commands, and text checks. Waiting on Brandon's ChatGPT run.
+ordinary commands, and text checks.
+Round 1 (`handoffs_3c.yaml`): prompt examples 20/20, held-back wordings
+14/40, wrong entry 1 ("the viewers" in a_r2), ordinary commands 0/40,
+text rules clean. Narrow: no "ask", few physical or device verbs, plain
+nouns missing, fragment phrases, and b_r1's delivery reads as hitting
+Rebecca with the case. Same-chat follow-up `chatgpt_followup_r2.md`; a
+second held-back set (`fresh2`, 20 wordings, written after the follow-up
+named some fresh words) scores round 1 at 6/20.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
