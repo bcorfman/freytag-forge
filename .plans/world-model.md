@@ -1934,6 +1934,15 @@ way out); (3) place the captives group in `maintenance_network` at 3C
 entry. (1) and (3) are building in `~/dev/ringer-work/freytag-3c-aliases`
 (check `verify_aliases.py`: payloads unchanged apart from the Jenkins
 CHARACTERS lines and 3C).
+**Situation probe (`probe_situation.py`, Ringer, check passed; recorded
+x3 prompts x 5; read by hand).** ChatGPT's three rewrites against
+removal. Turn 7, Kr reaches the tunnel: removed 12/15; v1 (no place)
+1/15, Kr goes to Michelle "in a nearby room"; v2 (broadcast chamber)
+2/15, 10 go back to the chamber; v3 (maintenance routes as the way out)
+0/15. All are worse than the original line (6/15): any situation
+sentence sends Kr looking for Michelle in some room. Turn 3 (Rebecca
+listed): 0/15 restarts in every arm. **Brandon chose removal
+(2026-10-01).**
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
