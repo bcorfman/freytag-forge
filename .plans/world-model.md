@@ -39,8 +39,8 @@ item (9cff368), and Rebecca's executive desk is declared and fixed
 (8e09018), each measured live 3/3; 3C grounded (broadcast chamber,
 archive moves to Kristin when secured); 3C handoffs landed (b75af9d); protected terms
 delivered by a handoff count as earned (2c5b389); 3C fixed through
-d92d7a5 and measured x3 (one open: the maintenance tunnel resolves to
-the infrastructure corridors 2/3); then S3 and S4.
+b28cc71 and measured x3 (contradicts 2, beyond 0, restarts 0, facts
+29/36; both contradictions are the bench script's turn 7); then S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -2018,7 +2018,20 @@ on turns 7-8. Facts judged wrong on turns 8 and 12 in 3/3 and turn 9 in
 Michelle correctly but are labelled "Shelly" (the known `_view` label).
 Candidate fix, from the guide's alias rule and the 2B/2C place-alias
 precedent: alias "maintenance tunnel" on `maintenance_network` (plot.md
-3C.3 uses it). Not decided.
+3C.3 uses it). **Brandon chose the alias; landed as b28cc71** (Ringer,
+Luna, first attempt; one line; no leak test affected; payloads
+unchanged; suite 990).
+**3C x3 on b28cc71 (2026-10-01, check passed; `bench/results/world-3c-x3`;
+previous run `world-3c-x3-hide`).** All completed, no rejected turn, no
+leak rejection, handoffs 1, 3, 6, 10, 11 in 3/3. "maintenance tunnel" ->
+maintenance network 3/3 (was 1/3). Judges: contradicts 2, beyond 0,
+restarts 0, facts correct 29/36 (was 1 / 1 / 1 / 28). Both
+contradictions are turn 7 and are right: the bench input "Lead the
+prisoners into the maintenance tunnel." gives Kr Michelle's part (plot.md
+3C.3: Michelle leads them while Kristin keeps the pumps and barrier
+working). That is the script, not the engine. Minor: r2 turn 9 resolved
+"surface" to the Facility escape route (3C's location_id), r1 and r3 made
+a new "surface"; Kr's turn-6 place is a narrated "control room" 3/3.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
