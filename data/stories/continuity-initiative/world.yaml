@@ -59,6 +59,7 @@ locations:
   parent: executive_office
 - id: facility_escape
   name: Los Angeles surface
+  parent: regional_facility
 - id: infrastructure_corridors
   name: infrastructure corridors
   aliases: [restricted infrastructure corridors, infrastructure corridor]

@@ -40,6 +40,7 @@ def test_scene_1c_places_the_facility_arrival() -> None:
         "purge_chamber",
         "detention_level",
         "broadcast_relay",
+        "facility_escape",
         "freight_terminal",
     ):
         assert locations[location_id].parent == "regional_facility"

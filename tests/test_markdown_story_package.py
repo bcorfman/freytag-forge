@@ -164,7 +164,7 @@ def test_scene_3c_places_pump_controls_and_declares_surface_location() -> None:
     assert world.parent("drainage_pump_controls") == "maintenance_network"
     facility_escape = next(location for location in package.world.locations if location.id == "facility_escape")
     assert facility_escape.name == "Los Angeles surface"
-    assert facility_escape.parent is None
+    assert facility_escape.parent == "regional_facility"
 
 
 def test_scene_3b_office_entry_moves_kristin_and_michelle_in_and_leaves_brandon() -> None:
