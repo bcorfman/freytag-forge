@@ -8,6 +8,7 @@ import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments, seeded_state_for_scene
 from bench.item_facts import (
     _MATCH_SYSTEM,
+    START_PLACE_RULE_TEMPLATE,
     ItemFactsProvider,
     _resolve_refer,
     _single_call_rules,
@@ -404,6 +405,30 @@ def test_drop_rules_removes_exact_rule_lines():
         assert all(rule in system for rule in _single_call_rules("Kristin") if rule not in rendered_dropped)
 
 
+def test_drop_rules_removes_start_place_rule_only_from_turn_prompt():
+    provider = _provider()
+    dropped_provider = _provider()
+    dropped_provider.drop_rules = frozenset({START_PLACE_RULE_TEMPLATE})
+    start_rule = START_PLACE_RULE_TEMPLATE.format(protagonist="Kristin")
+
+    assert start_rule in provider._system_prompt(opening=False)
+    assert start_rule not in dropped_provider._system_prompt(opening=False)
+    assert dropped_provider._system_prompt(opening=False) == provider._system_prompt(opening=False).replace(
+        f"\n{start_rule}", "", 1
+    )
+    assert start_rule not in dropped_provider._system_prompt(opening=True)
+
+
+def test_drop_rules_accepts_start_place_rule_template():
+    validate_item_facts(
+        {
+            "mode": "single_call",
+            "seed": {"thing": {"place": "on the table", "condition": []}},
+            "drop_rules": [START_PLACE_RULE_TEMPLATE],
+        }
+    )
+
+
 def test_single_call_prompt_has_each_rule_once():
     dropped = [
         'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
@@ -508,6 +533,17 @@ def test_seated_protagonist_gets_the_stay_seated_rule():
 
     assert world.move("kristin", "kitchen").ok
     assert rule not in provider._system_prompt(opening=False)
+
+
+def test_dropped_start_place_rule_keeps_seat_rule_in_place():
+    provider = _seeded_provider()
+    world = provider._world()
+    assert world.move("kristin", "workstation_chair").ok
+    provider.drop_rules = frozenset({START_PLACE_RULE_TEMPLATE})
+
+    system = provider._system_prompt(opening=False)
+    assert START_PLACE_RULE_TEMPLATE.format(protagonist="Kristin") not in system
+    assert "Kristin stays sitting in the workstation chair." in system
 
 
 def test_seat_place_named_as_its_furniture_is_a_quiet_no_op():

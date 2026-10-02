@@ -218,6 +218,10 @@ _SINGLE_CALL_RULES = (
     'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
 )
 
+START_PLACE_RULE_TEMPLATE = (
+    "{protagonist} starts this turn at the place PLAYER gives. Do not have {protagonist} walk there again."
+)
+
 
 def _single_call_rules(protagonist_name, *, drop_rules=frozenset()):
     protagonist = protagonist_name or "Sam"
@@ -542,14 +546,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
         protagonist = _protagonist_name(self.state.package)
         rules = list(_single_call_rules(protagonist, drop_rules=self.drop_rules))
         if not opening and protagonist:
-            rules.insert(
-                2,
-                f"{protagonist} starts this turn at the place PLAYER gives. Do not have {protagonist} walk there again.",
-            )
+            start_place_rule_kept = START_PLACE_RULE_TEMPLATE not in self.drop_rules
+            if start_place_rule_kept:
+                rules.insert(2, START_PLACE_RULE_TEMPLATE.format(protagonist=protagonist))
             world = self._world()
             seat = world.parent(self.state.package.protagonist_id)
             if seat and world.schema.entities.get(seat) and world.schema.entities[seat].seat_for:
-                rules.insert(3, f"{protagonist} stays sitting in the {world.name(seat)}.")
+                rules.insert(
+                    2 + start_place_rule_kept,
+                    f"{protagonist} stays sitting in the {world.name(seat)}.",
+                )
         return f"{system}\n{'\n'.join(rules)}"
 
     def _request(self, payload):
@@ -1508,7 +1514,7 @@ def validate_item_facts(value, *, known_names=None):
     if not isinstance(drop_rules, list) or not all(isinstance(rule, str) for rule in drop_rules):
         raise ValueError(f"item_facts drop_rules must be a list of strings; got {drop_rules!r}")
     for rule in drop_rules:
-        if rule not in _SINGLE_CALL_RULES:
+        if rule not in (*_SINGLE_CALL_RULES, START_PLACE_RULE_TEMPLATE):
             raise ValueError(f"item_facts drop_rules contains unknown rule {rule!r}")
     seed = value.get("seed", {})
     if not isinstance(seed, dict) or (not seed and not seed_from_package):
