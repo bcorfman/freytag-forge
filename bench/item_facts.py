@@ -495,6 +495,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     seat_name = self._entity_label(world, seat_id)
                     if seat_name not in names and seat_name in self.item_facts:
                         names.insert(index + 1, seat_name)
+                parent_id = world.parent(entity_id)
+                if parent_id:
+                    for seat_id in world.seats(parent_id):
+                        seat_name = self._entity_label(world, seat_id)
+                        if seat_name not in names and seat_name in self.item_facts:
+                            names.insert(index + 1, seat_name)
             index += 1
         return names
 
@@ -1168,8 +1174,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if pair in mapping_answers:
                 return mapping_answers[pair]
             player_area, contrastive = self._mapping_area_context(world, target_id)
-            contrastive = contrastive and kind == "place"
-            question, statement = self._mapping_prompt(world, name, target_id, is_place=kind == "place")
+            is_place = kind == "place" and not (world.is_a(target_id, "character") and new_kind(name) == "character")
+            contrastive = contrastive and is_place
+            question, statement = self._mapping_prompt(world, name, target_id, is_place=is_place)
             player, known = self._mapping_state(world, target_id)
             answer = confirm(player_input, story, question, statement, player, known)
             mapping_checks.append(
@@ -1358,19 +1365,28 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if place_pole:
                 self.item_facts_axis_fixes += 1
             place_parent = place_ids.get(place) if place and not place_pole else None
+            if place and not place_pole and place_parent is None:
+                place_parent = self._resolve_name(world, place)
+            character_at_character_no_move = False
             character_inside_character = (
                 place
                 and not place_pole
-                and place in place_ids
                 and world.is_a(entity_id, "character")
                 and place_parent is not None
                 and world.is_a(place_parent, "character")
             )
             if character_inside_character:
-                place_parent = None
-                issues.append(f"item_facts match mapped place {place!r} to a character; {name} left unplaced")
-            if place and not place_pole and place not in place_ids:
-                place_parent = self._resolve_name(world, place)
+                target_area = world.area(place_parent)
+                if place_parent == entity_id or target_area is None:
+                    place_parent = None
+                    character_at_character_no_move = True
+                    issues.append(f"item_facts match mapped place {place!r} to a character; {name} not moved")
+                else:
+                    place_parent = target_area
+                    issues.append(
+                        f"item_facts match mapped place {place!r} to a character; "
+                        f"{name} placed in {world.name(target_area)}"
+                    )
             if place_parent and world.is_a(place_parent, "group") and not world.is_a(entity_id, "character"):
                 place_parent = world.parent(place_parent)
             if key not in overridden_keys:
@@ -1397,6 +1413,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 and not place_pole
                 and place_parent is None
                 and not own_seat_place
+                and not character_at_character_no_move
                 and not (world.place_label(entity_id) and world.place_label(entity_id).casefold() == place.casefold())
             )
             if unresolved_place:

@@ -631,7 +631,7 @@ def test_match_payload_gives_placed_character_place_from_real_package():
         include_places=True,
     )
 
-    assert "- Brandon. Place: across the park from Kristin." in payload["user"].splitlines()
+    assert "- Brandon. Place: watching Kristin in the park." in payload["user"].splitlines()
 
 
 def _scene_1b_provider():
@@ -646,6 +646,98 @@ def _scene_1b_provider():
         mode="single_call",
         seed_from_package=True,
     )
+
+
+def test_person_kind_place_mapping_asks_same_person_question(monkeypatch):
+    provider = _scene_1b_provider()
+    questions = []
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "kind": {"man": "person"},
+            "refers": [],
+            "same_as": {"man": "Brandon"},
+        },
+    )
+
+    def confirm(*args):
+        questions.append(args[2])
+        return True
+
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "man"},
+            "Michelle's phone": {"place": "man"},
+        },
+        player_input="Walk over to the man watching me and hand him Michelle's phone.",
+        confirm=confirm,
+    )
+
+    world = provider._world()
+    brandon = world.resolve("Brandon")
+    assert questions == ['Are "man" and "Brandon Corfman" the same person?']
+    assert world.parent(world.resolve("Michelle's phone")) == brandon
+    assert world.resolve("man") in (None, brandon)
+    assert world.area(world.resolve("Kristin")) == world.area(brandon)
+
+
+def test_place_kind_mapping_to_character_keeps_on_question(monkeypatch):
+    provider = _scene_1b_provider()
+    questions = []
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "kind": {"man": "place"},
+            "refers": [],
+            "same_as": {"man": "Brandon"},
+        },
+    )
+
+    def confirm(*args):
+        questions.append(args[2])
+        return True
+
+    provider.apply_item_facts(
+        {"Kristin": {"place": "man"}},
+        player_input="Walk over to the man watching me.",
+        confirm=confirm,
+    )
+
+    assert questions[0].startswith('Is the place called "man"')
+
+
+def test_character_at_character_lands_in_its_area(monkeypatch):
+    provider = _scene_1b_provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "kind": {"man": "person"},
+            "refers": [],
+            "same_as": {"man": "Brandon"},
+        },
+    )
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "man"}},
+        player_input="Walk over to the man watching me.",
+        confirm=lambda *_args: True,
+    )
+
+    world = provider._world()
+    assert world.area(world.resolve("Kristin")) == world.area(world.resolve("Brandon"))
+    assert provider.last_item_facts_unplaced() == []
+    assert any("placed in" in issue for issue in issues)
+
+
+def test_seat_given_when_its_furniture_holds_a_given_thing():
+    provider = _scene_provider("1A")
+    provider.apply_item_facts({"Kristin's laptop": {"place": "workstation"}})
+    provider._selected_names = ["Kristin", "Kristin's laptop"]
+
+    assert "workstation chair" in provider._thing_names()
 
 
 def _scene_provider(scene_id, *, item_facts=None):
@@ -3165,7 +3257,7 @@ def test_new_name_mapped_to_other_character_still_resolves_player_character_guar
     assert provider.last_item_facts_match()["resolutions"] == {"the stranger": world.name(world.resolve("Michelle"))}
 
 
-def test_character_inside_character_place_is_left_unplaced(monkeypatch):
+def test_character_inside_character_place_is_not_moved(monkeypatch):
     provider = _provider()
     monkeypatch.setattr(
         CloudflareTurnProvider,
@@ -3177,8 +3269,8 @@ def test_character_inside_character_place_is_left_unplaced(monkeypatch):
         {"Kristin": {"place": "service path"}}, player_input="Go to the service path."
     )
 
-    assert provider.last_item_facts_unplaced() == [{"name": "Kristin", "place": "service path"}]
-    assert "item_facts match mapped place 'service path' to a character; Kristin left unplaced" in issues
+    assert provider.last_item_facts_unplaced() == []
+    assert "item_facts match mapped place 'service path' to a character; Kristin not moved" in issues
 
 
 def test_thing_at_place_mapped_to_character_is_allowed_character_inside(monkeypatch):
