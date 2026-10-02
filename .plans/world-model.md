@@ -38,8 +38,9 @@ item (9cff368), and Rebecca's executive desk is declared and fixed
 (ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
 (8e09018), each measured live 3/3; 3C grounded (broadcast chamber,
 archive moves to Kristin when secured); 3C handoffs landed (b75af9d); protected terms
-delivered by a handoff count as earned (2c5b389); 3C x3 running; then
-S3 and S4.
+delivered by a handoff count as earned (2c5b389); 3C fixed through
+d92d7a5 and measured x3 (one open: the maintenance tunnel resolves to
+the infrastructure corridors 2/3); then S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -1997,6 +1998,27 @@ only). Newly hidden after their facts: 1A memory card, 1B Brandon
 identified, 3A override codes, 3B relay open, 3C archive secured. Ringer
 `~/dev/ringer-work/freytag-hide-effect-lines` (check `verify_hide.py`);
 then 3C x3 and 3B x3 (3B also gains Rebecca as a speaker from the alias).
+**Landed as d92d7a5** (Ringer, Luna, second attempt: the first had two
+of three required tests; suite 990).
+**3C x3 and 3B x3 on d92d7a5 (2026-10-01, both checks passed;
+`bench/results/world-3c-x3`, `world-3b-hide-x3`; the alias-only 3C run
+is `world-3c-x3-alias`).** 3C: all completed, handoffs 1, 3, 6, 10, 11
+in 3/3; judges contradicts 1, beyond 1, restarts 1, facts 28/36 (before
+the 3C fixes: 3 / 4 / 3 / 28; after the alias alone: 4 / 2 / 0 / 27).
+Turn 7: no Rebecca chase 0/3, Kr leads the prisoners into the tunnel
+3/3, then reaches the surface 3/3. Turn 3: no re-entry 3/3. 3B: handoffs
+1, 3, 4, 6, 8 in 3/3, Kr in the office from turn 3 on 3/3; contradicts
+2, beyond 2, restarts 0, facts 25/27 (held run: 1 / 1 / 0 / 25). 3B's
+prompts carry no Rebecca may-say lines (0 on every turn), so the alias
+did not change 3B's speakers.
+Open in 3C: "maintenance tunnel" resolves to the infrastructure
+corridors in r2 and r3 (r1: maintenance network), so Kr's place is wrong
+on turns 7-8. Facts judged wrong on turns 8 and 12 in 3/3 and turn 9 in
+2/3 are mostly label or judge noise: the codes and the case go to
+Michelle correctly but are labelled "Shelly" (the known `_view` label).
+Candidate fix, from the guide's alias rule and the 2B/2C place-alias
+precedent: alias "maintenance tunnel" on `maintenance_network` (plot.md
+3C.3 uses it). Not decided.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
