@@ -1,6 +1,6 @@
 # World model: plan
 
-Status (2026-09-30): decisions W1-W13 settled. S1 merged (PR 480),
+Status (2026-10-01): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
@@ -38,9 +38,9 @@ item (9cff368), and Rebecca's executive desk is declared and fixed
 (ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
 (8e09018), each measured live 3/3; 3C grounded (broadcast chamber,
 archive moves to Kristin when secured); 3C handoffs landed (b75af9d); protected terms
-delivered by a handoff count as earned (2c5b389); 3C's ending lands on
-ef46ca4 (contradicts, beyond, restarts all 0 x3; places right every
-turn); two bench faults being fixed (Shelly label, judge place aliases);
+delivered by a handoff count as earned (2c5b389); 3C done on
+`claude/ground-3c` (8989705: contradicts, beyond, restarts 0 x3; facts
+34/36; every handoff fires; places right every turn), not yet merged;
 then S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -55,7 +55,24 @@ decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
 
-## Resume here (2026-09-28)
+## Resume here (2026-10-01)
+
+**Where things stand.** Branch `claude/ground-3c` (not pushed, no PR)
+holds 3C end to end: grounding (226b9ed), handoffs and the
+`exposure-and-escape` bench script (b75af9d), and the fixes the live runs
+called for: earned protected terms (2c5b389), Rebecca's alias and the
+captives placement (d4f04be), no 3C situation line (7afb3bb), de181fb's
+trigger widened to any world effect (d92d7a5), "maintenance tunnel"
+(b28cc71), the Los Angeles surface and drainage pump controls (ab44510,
+ef46ca4), first-alias labels (2b3bcbc) and judge place names (8989705).
+Latest 3C x3: contradicts, beyond, restarts 0; facts 34/36. 3B x3 on
+d92d7a5 held. Fact-judge calibration unchanged (93.5% / 93.2%).
+**Next:** merge `claude/ground-3c` (PR, main CI), then S3 (the
+start-place rule removal run) and the S4 bookmark (section "Next steps,
+in order", items 2-4). The scene-by-scene detail is in the entries below,
+newest last within each scene.
+
+## Earlier resume notes (2026-09-28)
 
 Everything through the 1B-2A handoffs is on `main` (PR 486, merge
 5ecc30a). Branch `claude/magical-wozniak-tvkj5x` holds the three leak fixes
@@ -2082,6 +2099,15 @@ inputs, fact judge only, old judge (2b3bcbc, detached worktree) vs new
 Round 7's results folder (v8) no longer exists. The only movement is a
 one-cell swap on round 8's Michelle's-phone turns, which disagree with the
 labels in both arms.
+**3C x3 on 8989705 (2026-10-01, check passed; `world-3c-x3`; previous
+`world-3c-x3-reparent`).** All completed, no rejection, handoffs 1, 3, 6,
+10, 11 in 3/3. Judges: contradicts 0, beyond 0, restarts 0, **facts
+correct 34/36** (was 25/36; before any 3C fix 3 / 4 / 3 / 28). Kr's place
+right every turn 3/3; holders read "Michelle" (turn 8 codes, turn 12
+case) 3/3. Left: r1 turn 4 (the reply's loose "archive" thing) and r1
+turn 7 (the judge still reads "into the tunnel" as a move, 0.63; was
+3/3). r2 and r3 restore the pumps from the office on turn 6 (fits "the
+same inspection access"). **3C is done**; the ending lands.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
