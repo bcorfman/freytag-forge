@@ -129,8 +129,7 @@ character_placements:
 
 ### Names
 
-- **The tracked name is what models see.** Characters are shown by their
-  shortest alias ("Kristin"). Things are shown by `name`. A new alias is a new
+- **The tracked name is what models see.** Characters are shown by their first alias ("Kristin"). Things are shown by `name`. A new alias is a new
   way to be matched, so add one only for a word the story really uses.
 - **Aliases are scanned for safety and leaks.** Never add an alias such as
   "stranger" that would match text in scenes where the character is not

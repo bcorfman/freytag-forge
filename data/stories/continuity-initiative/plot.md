@@ -772,12 +772,17 @@ scene_id: 3C
 location_id: facility_escape
 freytag_phase: resolution
 objective: Expose the network and escape
-participant_ids: [kristin, michelle, rebecca]
-item_ids: [portable_archive]
+participant_ids: [kristin, michelle, rebecca, brandon]
+companions: [michelle]
+item_ids: [portable_archive, drainage_pump_controls]
 item_placements:
-  portable_archive:
-    placement: with Rebecca in her hands
-    while_fact_false: portable_archive_secured
+  portable_archive: {parent: rebecca, text: with Rebecca in her hands}
+  drainage_pump_controls: {parent: maintenance_network}
+character_placements:
+  kristin: {parent: broadcast_chamber}
+  rebecca: {parent: executive_office}
+  brandon: {parent: broadcast_relay}
+  captives: {parent: maintenance_network}
 entry_text: "The broadcast chamber lights steadied as Brandon's relay held open. Outside, Charles's emergency deluge was filling the outer access level and forcing water toward the maintenance routes; inside, the evidence was ready to leave for good.\n\n"
 transition_ids: []
 ---

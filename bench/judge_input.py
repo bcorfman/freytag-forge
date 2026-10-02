@@ -208,6 +208,30 @@ def _place_contents(turn: dict[str, Any], package: StoryPackage) -> dict[str, li
     return contents
 
 
+def _place_names(turn: dict[str, Any], package: StoryPackage) -> dict[str, list[str]]:
+    """Map recorded place labels to the package location names they identify."""
+
+    locations_by_name: dict[str, tuple[str, list[str]]] = {}
+    for location in package.world.locations:
+        names = [location.name, *getattr(location, "aliases", ())]
+        for name in names:
+            locations_by_name.setdefault(name.casefold(), (location.name, list(getattr(location, "aliases", ()))))
+
+    result: dict[str, list[str]] = {}
+    for facts in (turn.get("item_facts_before", {}), turn.get("item_facts_after", {})):
+        if not isinstance(facts, dict):
+            continue
+        for entry in facts.values():
+            if not isinstance(entry, dict) or not isinstance(entry.get("place"), str):
+                continue
+            label = entry["place"]
+            location = locations_by_name.get(label.casefold())
+            if location is not None:
+                name, aliases = location
+                result[label] = [name, *aliases]
+    return result
+
+
 def judge_turns(
     turns: list[dict[str, Any]],
     scene_transitions: list[dict[str, Any]],
@@ -241,6 +265,7 @@ def judge_turns(
             *([{"by": "story", "text": text} for text in copy["story_text"]]),
         ]
         copy["place_contents"] = _place_contents(turn, package)
+        copy["place_names"] = _place_names(turn, package)
         copy["item_facts_names"] = turn.get("item_facts_names", {})
         before = dict(turn.get("item_facts_before", {}))
         after = dict(turn.get("item_facts_after", {}))

@@ -110,6 +110,15 @@ def test_item_facts_view_and_things_block_do_not_write_facts():
     assert provider.state.facts.asserted == before
 
 
+def test_item_facts_view_uses_michelle_for_a_thing_she_holds():
+    provider = _seeded_provider()
+    world = provider._world()
+    assert world.reveal("memory_card").ok
+    assert world.move("memory_card", "michelle").ok
+
+    assert provider.facts_for_names(["Michelle's memory card"])["Michelle's memory card"]["place"] == "Michelle"
+
+
 def test_structural_place_stays_with_carried_thing_when_holder_moves():
     provider = _seeded_provider()
     facts, issues = provider.apply_item_facts(
@@ -1995,20 +2004,19 @@ def test_package_seed_accepts_the_prefix_case_insensitively():
     assert issues == []
 
 
-def test_package_seed_hides_guarded_3c_archive():
+def test_package_seed_moves_3c_archive_to_kristin():
     state = RuntimeState(package=PACKAGE, current_scene_id="3C", phase="resolution")
     state._assert_scene_entry_fact("3C")
     things, _ = package_seed(PACKAGE, state, "3C")
-    assert things["Portable data case"] == {"place": "with Rebecca in her hands", "condition": []}
+    assert things["Portable data case"] == {"place": "Rebecca", "condition": []}
     state.facts.assert_fact(core.Fact(predicate="portable_archive_secured", subject="story", value="true"))
     things, _ = package_seed(PACKAGE, state, "3C")
-    assert "Portable data case" not in things
+    assert things["Portable data case"] == {"place": "Kristin", "condition": []}
 
 
 def test_package_seed_honors_true_guarded_placement():
     scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "3C")
-    placement = scene.metadata.item_placements["portable_archive"]
-    guarded = ItemPlacement(placement=placement.placement, while_fact_true="portable_archive_secured")
+    guarded = ItemPlacement(placement="with Rebecca in her hands", while_fact_true="portable_archive_secured")
     metadata = scene.metadata.model_copy(update={"item_placements": {"portable_archive": guarded}})
     package = PACKAGE.model_copy(
         update={
@@ -2024,7 +2032,7 @@ def test_package_seed_honors_true_guarded_placement():
     assert "Portable data case" not in things
     state.facts.assert_fact(core.Fact(predicate="portable_archive_secured", subject="story", value="true"))
     things, _ = package_seed(package, state, "3C")
-    assert things["Portable data case"] == {"place": placement.placement, "condition": []}
+    assert things["Portable data case"] == {"place": "with Rebecca in her hands", "condition": []}
 
 
 @pytest.mark.parametrize("change", [{"fixed_turns": 1}, {"scene": "9Z", "fixed_turns": 1, "script": "x"}])

@@ -1,6 +1,6 @@
 # World model: plan
 
-Status (2026-09-30): decisions W1-W13 settled. S1 merged (PR 480),
+Status (2026-10-01): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
@@ -36,7 +36,12 @@ reads in order (6bc7dd4) and the console is no longer a 3B/3C scene
 item (9cff368), and Rebecca's executive desk is declared and fixed
 (21338bb), and Jev sees owners so "Rebecca's office" maps to it
 (ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
-(8e09018), each measured live 3/3; then 3C, S3 and S4.
+(8e09018), each measured live 3/3; 3C grounded (broadcast chamber,
+archive moves to Kristin when secured); 3C handoffs landed (b75af9d); protected terms
+delivered by a handoff count as earned (2c5b389); 3C done on
+`claude/ground-3c` (8989705: contradicts, beyond, restarts 0 x3; facts
+34/36; every handoff fires; places right every turn), not yet merged;
+then S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -50,7 +55,24 @@ decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
 
-## Resume here (2026-09-28)
+## Resume here (2026-10-01)
+
+**Where things stand.** Branch `claude/ground-3c` (not pushed, no PR)
+holds 3C end to end: grounding (226b9ed), handoffs and the
+`exposure-and-escape` bench script (b75af9d), and the fixes the live runs
+called for: earned protected terms (2c5b389), Rebecca's alias and the
+captives placement (d4f04be), no 3C situation line (7afb3bb), de181fb's
+trigger widened to any world effect (d92d7a5), "maintenance tunnel"
+(b28cc71), the Los Angeles surface and drainage pump controls (ab44510,
+ef46ca4), first-alias labels (2b3bcbc) and judge place names (8989705).
+Latest 3C x3: contradicts, beyond, restarts 0; facts 34/36. 3B x3 on
+d92d7a5 held. Fact-judge calibration unchanged (93.5% / 93.2%).
+**Next:** merge `claude/ground-3c` (PR, main CI), then S3 (the
+start-place rule removal run) and the S4 bookmark (section "Next steps,
+in order", items 2-4). The scene-by-scene detail is in the entries below,
+newest last within each scene.
+
+## Earlier resume notes (2026-09-28)
 
 Everything through the 1B-2A handoffs is on `main` (PR 486, merge
 5ecc30a). Branch `claude/magical-wozniak-tvkj5x` holds the three leak fixes
@@ -1773,6 +1795,319 @@ statement word for word), facts correct 25 -> 25/27 (both turn 9, the
 broadcast turn). The no-change skip stays held: nothing is left for it
 in this run. Seen, not fixed: r2 has a second desk, "Charles's desk", in
 the executive office (it never moves).
+
+**3C grounding (2026-10-01, from earlier precedent; Brandon chose the two
+departures).** 3C's entry text says "broadcast chamber", which no story
+file names outside 3C (no bench narration has used it), while plot.md
+puts the broadcast and the archive in Rebecca's office (2C.5, 3C.1,
+3C.3). **Brandon chose a new area**: `broadcast_chamber` ("broadcast
+chamber") inside `executive_office`. Kristin starts there through
+`character_placements`, so the opening names it, as in 2A and 3B;
+`location_id` stays `facility_escape`. `companions: [michelle]`. Brandon
+joins `participant_ids` and is placed at the relay, not as a companion
+(survey decision 6). Rebecca is placed in the executive office. The
+portable archive gets the new-form placement `{parent: rebecca, text:
+with Rebecca in her hands}`: the text keeps the hosted runtime's
+placement rule, and new-form placements take no visibility guard, so
+`portable_archive_secured` gets `on_assert` move to Kristin instead
+(the memory card and override codes pattern, W7). **Brandon chose no
+world effect for `rebecca_captured`** for now: no captive axis was ever
+built (3A uses group membership, and the captives group is in the
+detention level). The 3C replicates show whether her capture needs one.
+Things from 3C.3 (pump controls, barrier, surface gates, maintenance
+tunnel) and the captives group's 3C place wait until they surface live,
+as the cameras did. Charles stays unplaced (decision 4). Ringer run
+`~/dev/ringer-work/freytag-3c-grounding` (check `verify_3c.py`;
+payloads byte-identical except 3C's opening line and Brandon's new
+CHARACTERS line).
+
+**3C grounding landed as 226b9ed** (Ringer, Luna; first run stopped on an unlisted
+old-behaviour test, `test_portable_archive_starts_with_rebecca`, which
+was respecced; second run passed first attempt; `verify_3c.py` PASS;
+suite 982). Five tests that pinned the old guarded placement were
+updated. Review fix: the worker's rewrite of
+`test_turn_rules_omit_guarded_placement_after_fact_is_asserted` asserted
+absence both before and after the fact (it never applied 3C's
+placements), so it was restored to check that "...is with Rebecca in her
+hands." is a turn rule before the fact and gone after it. Not measured
+live: no 3C bench script and no 3C handoffs yet.
+
+**3C reveal handoffs:** all ten `k_sl_3c_*` candidates lack
+`earn_when`, `action_evidence` and `delivery_text`. Offered sets: A on
+arrival (`broadcast_started` is set by 3B's bridge); B after
+`truth_no_longer_containable`; C after `rebecca_captured`; D after
+`captives_reaching_surface`; E after `national_network_fragmenting` and
+`charles_at_large`. Only D-R1 sets `national_network_fragmenting`, but
+the resolution event `resolution_network_consequences` sets it too, so a
+D-R2 path does not strand E. The ChatGPT Desktop prompt is
+`~/dev/ringer-work/freytag-3c-handoffs/chatgpt_prompt.md`, built from
+3B's v4 prompt (matcher rules, verb coverage, pairs, banned single
+words, self-check). It also asks for earn_when and delivery_text: 8th
+grade, never Brandon's fate, never "detention captives". Score answers
+with `score_3c.py`: 20 prompt examples, 40 held-back wordings, 40
+ordinary commands, and text checks.
+Round 1 (`handoffs_3c.yaml`): prompt examples 20/20, held-back wordings
+14/40, wrong entry 1 ("the viewers" in a_r2), ordinary commands 0/40,
+text rules clean. Narrow: no "ask", few physical or device verbs, plain
+nouns missing, fragment phrases, and b_r1's delivery reads as hitting
+Rebecca with the case. Same-chat follow-up `chatgpt_followup_r2.md`; a
+second held-back set (`fresh2`, 20 wordings, written after the follow-up
+named some fresh words) scores round 1 at 6/20.
+Round 2 (`handoffs_3c_r2.yaml`): prompt 20/20, held-back 23/40 and
+9/20, no wrong entry, but "ask" made 2/40 ordinary commands fire ("Ask
+Michelle about the archive.", "Ask the senior official how he is.").
+**Brandon had Claude fix round 2 directly** (`make_final.py`, as in 3B):
+dropped bare "the archive" and "senior official"; added the missing
+verbs and real names (experiments, revolts, riots, the pumps, surrender,
+"where Charles"). A third held-back set (`fresh3`) was written before the
+fixes, but the fixes then drew on it, so it is not blind; fragments
+taken from it were removed again. **Wordings written after tuning, lists
+unchanged since: 18/20, no wrong entry, ordinary commands 0/15** (all
+ordinary sets 0/55). The two misses need a bare "Rebecca" ("Restrain
+Rebecca ..."), which would fire on "Ask Rebecca where she is going.", or
+a bare "footage". Landing by Ringer: `verify_handoffs_3c.py` (exact
+values, 30 matcher cases, payloads byte-identical outside 3C).
+**Landed as b75af9d** (Ringer, Luna; the first run failed
+`test_transport_attributes_a_groupless_statement_and_records_telemetry`,
+which used `k_sl_3c_a_r1` as its handoff-free example; respecced to
+strip that handoff in a package copy; second run first attempt; suite
+982), with `bench/variations/item-facts-world-3c.json`, script
+`exposure-and-escape` (12 turns, thorough entry, one reveal per set).
+
+**3C live smoke (2026-10-01, one replicate; `bench/results/world-3c`).**
+Failed at the opening, before any turn: `protected_narration_leak`
+"janus selection". Step 1: the opening SCENE carries 3C.1's Details line
+"JANUS selection records" from plot.md, and the narrator repeated it.
+The player earned that phrase in 2B (`janus_evidence` is true at a
+thorough 3C entry; its delivery must convey "JANUS selection records").
+But `earned_protected_terms` counts only earned knowledge statements,
+and no statement contains it, so a protected phrase delivered by a
+handoff stays banned forever. 05ca16b already decided that narration may
+name what the player has earned. **Brandon chose to count earned
+deliveries**: a protected term is earned when a delivery whose fact is
+true conveys it (must_convey or fallback_text). Ringer
+`~/dev/ringer-work/freytag-3c-protected-earned` (check
+`verify_protected.py`: accepted in 3C, still rejected in 2A and for
+"phase two" in 3C; payloads unchanged).
+**Landed as 2c5b389** (Ringer, Luna, first attempt; three hermetic
+tests; review fix: the fact-truth test now uses the package idiom
+`value if not None else object`; suite 985).
+**3C smoke rerun on 2c5b389 (one replicate, `bench/results/world-3c`).**
+Completed 12/12, no leak rejection, handoffs on turns 1, 3, 6, 10 and 11
+(a, b, c, d, e r1). Judges: facts correct 9/12, contradicts 2, beyond 1,
+restarts 1. Seen, to be checked over x3 before any fix: t1 narrates
+Michelle "still unconscious"; t4 the reply's "archive" resolves to 2B's
+records archive area (ignored); t6 "pump controls" as Kr's place (create
+failed: name taken); t7 "maintenance tunnel" -> infrastructure corridors
+(the maintenance network exists) and "captives" new (the 3A group is
+out of scope); t9 "surface" -> Los Angeles park, so t10-11 sit Kr on a
+park bench, and Br is narrated waiting at the surface (plot: he stays at
+the relay, fate uncertain); t12 the SCENE situation phrase "secured
+command office and broadcast chamber" becomes a new place.
+**3C x3 on 2c5b389 (2026-10-01, check passed;
+`bench/results/world-3c-x3`).** All three completed 12/12; no leak
+rejection; every handoff fired 3/3 on turns 1, 3, 6, 10, 11. The data
+case moved to Kr on turn 3 and to Michelle on turn 12, 3/3. Judges:
+facts correct 28/36, contradicts 3, beyond 4, restarts 3. Not repeated
+from the smoke run: Michelle unconscious, Br at the surface, the park
+(each 0/3). Open:
+- **Turn 3 restart, 3/3** ("Take the portable data case from Rebecca."):
+  Kr "enters the executive office" again. Step 1: THINGS lists Kr in the
+  executive office and the case on Rebecca, but not Rebecca. The command
+  never refers her, because `rebecca` has no "Rebecca" alias (Kr,
+  Michelle and Br have first-name aliases), so `_referred_lines_for_command`
+  does not match the name. Likely the same root as the open "Rebecca" as
+  new. The SCENE's first line, 3C's knowledge.yaml situation "The secured
+  command office and broadcast chamber during a mounting deluge...", names
+  a room the world does not have.
+- **Turns 7-9, the evacuation, 2/3 not narrated**: r1 stays in the
+  broadcast chamber, r3 invents a "secured command office" (also the
+  smoke run's t12: 2 of 4 runs; it comes from the situation line); only
+  r2 reaches the maintenance network and a new "surface". Step 1 on t7:
+  the command asks Kr to lead the prisoners, but plot.md 3C.3 has
+  Michelle lead them while Kr works the pumps, and the prompt says so, so
+  the narrator goes to find Michelle. The bench input is partly at fault.
+  The captives group is still in the detention level (its 3C place was
+  deferred until it surfaced; it has), and the tunnel is not in THINGS.
+  SCENE and the "may say this aloud" lines also carry unearned
+  realizations (c_r2's gate release, b_r2's capture), voiced as Michelle.
+- Turn 4: the reply's "archive" resolves to 2B's records archive area
+  (4/4, ignored). Turn 6: "pump controls" becomes Kr's place (4/4).
+Probe (`~/dev/ringer-work/freytag-3c-probe`, Ringer; recorded x3
+prompts x 5): t3 arms recorded / no situation line / Rebecca in THINGS /
+both; t7 arms recorded / no situation line. Read by hand.
+**Probe result (check passed; read by hand).** Turn 3, Kr re-enters
+the office: recorded 15/15, no situation 15/15, Rebecca in THINGS 0/15,
+both 0/15. So the restart is Rebecca's missing THINGS line, not the
+situation. Turn 7, Kr reaches the maintenance tunnel or leads the
+prisoners there: recorded 6/15 (9 go to Michelle in the chamber or an
+invented office; "secured command office" 2/15), no situation 12/15 (2
+stop at a console with Michelle; invented office 0/15). The situation
+line pulls on the evacuation.
+**Brandon chose (2026-10-01):** (1) aliases "Rebecca" and "Charles" on
+the two Jenkins NPCs; (2) reword the 3C situation through ChatGPT
+Desktop and probe the rewrite against the removal arm
+(`~/dev/ringer-work/freytag-3c-probe/chatgpt_situation_prompt.md`, three
+versions: no place / broadcast chamber only / maintenance routes as the
+way out); (3) place the captives group in `maintenance_network` at 3C
+entry. (1) and (3) are building in `~/dev/ringer-work/freytag-3c-aliases`
+(check `verify_aliases.py`: payloads unchanged apart from the Jenkins
+CHARACTERS lines and 3C).
+**Situation probe (`probe_situation.py`, Ringer, check passed; recorded
+x3 prompts x 5; read by hand).** ChatGPT's three rewrites against
+removal. Turn 7, Kr reaches the tunnel: removed 12/15; v1 (no place)
+1/15, Kr goes to Michelle "in a nearby room"; v2 (broadcast chamber)
+2/15, 10 go back to the chamber; v3 (maintenance routes as the way out)
+0/15. All are worse than the original line (6/15): any situation
+sentence sends Kr looking for Michelle in some room. Turn 3 (Rebecca
+listed): 0/15 restarts in every arm. **Brandon chose removal
+(2026-10-01).**
+The aliases build (first run) failed twice: "Charles" as an alias made
+the leak check reject authored 3B/3C pacing complications
+(`relay_power_3b`, `destruction_3b`, `collapse_3c`) and the 3B
+`charles_abandoned_rebecca` cue, because Charles is never placed or
+present. The grounding guide ("Aliases are scanned for safety and
+leaks. Never add an alias ... that would match text in scenes where the
+character is not allowed") covers it. **Brandon chose Rebecca only.**
+Rerunning. Removal of the 3C situation: **Brandon chose a schema
+change** (`SceneFrame.situation` optional, default ""), a new mechanism:
+de181fb hides the situation only after a protagonist-moving fact, which
+3C has none of. Prepared in `~/dev/ringer-work/freytag-3c-no-situation`
+(check `verify_no_situation.py`), to launch after the alias patch lands.
+**Landed:** Rebecca-only alias and the captives placement as d4f04be
+(Ringer, Luna, second attempt after the respec; `rebecca` added to the
+1C recording reveal's entity_ids; payloads unchanged; suite 986); the
+schema change as 7afb3bb (Ringer, Luna, first attempt; 3C payload loses
+only the situation line; suite 987).
+**3C x3 on 7afb3bb (2026-10-01, check passed; `bench/results/world-3c-x3`;
+the earlier x3 is `world-3c-x3-before-fixes`).** All completed; no leak
+rejection; handoffs on turns 1, 3, 6, 10, 11 in 3/3. Judges vs before:
+restarts 3 -> 0, beyond 4 -> 2, contradicts 3 -> 4, facts correct 28 ->
+27/36. Turn 3: Rebecca in THINGS 3/3, Kr walks straight to her, no
+re-entry (was 3/3). Turn 7: r2 leads the prisoners into the tunnel; **r1
+and r3 have Kr chase Rebecca down a hallway with a briefcase**, after
+turn 3's reveal already stopped her. Step 1: the turn-7 prompt now has six
+"Rebecca Jenkins may say this aloud:" lines (every 3C statement,
+including "Kristin stops Rebecca fleeing with the archive"). Cause:
+`CloudflareTurnProvider._is_present` infers presence from NPC names and
+aliases in beat prose; with the alias "Rebecca" she is present in 3C and
+becomes a speaker. The earlier situation probe used pre-alias prompts,
+so it never saw these lines. The captives placement did not reach THINGS
+(the referred-people step walks NPCs, not groups, and the group is not
+with Kr), and r2 made "prisoners" new.
+Probe (`probe_maysay.py`; new turn-7 prompts x 5): recorded / Rebecca's
+may-say lines removed / all may-say lines removed.
+**May-say probe (check passed; new turn-7 prompts x 5; read by hand).**
+Chase / tunnel: recorded 10/15 / 5/15; Rebecca's may-say lines removed
+0/15 / 12/15; all may-say lines removed 9/15 / 3/15. A self-naming
+filter (no speaker may say a statement naming them): all speakers 0/15 /
+15/15, Rebecca only 12/15 / 3/15 (Michelle keeps "Kristin stops Rebecca
+fleeing..."). The all-speakers filter would strip most of Michelle's and
+Br's lines in every scene, with no record covering may-say lines.
+**Brandon chose to hold and rethink.** The chase follows the earned
+present-tense b_r1 statement, the same pattern as 3B's turn-4 re-entry,
+fixed by de181fb (hide an earned item's SCENE line, keep it sayable),
+which triggers only on protagonist moves. **Hide-b_r1 probe
+(`probe_hideb1.py`):** recorded 13/15 chase / 2/15 tunnel; b_r1 SCENE line
+hidden 0/15 / 15/15; SCENE and may-say lines hidden 0/15 / 15/15. So the
+SCENE line alone is enough. **Brandon chose to widen de181fb's trigger
+to any world effect** (situation blanking stays for protagonist moves
+only). Newly hidden after their facts: 1A memory card, 1B Brandon
+identified, 3A override codes, 3B relay open, 3C archive secured. Ringer
+`~/dev/ringer-work/freytag-hide-effect-lines` (check `verify_hide.py`);
+then 3C x3 and 3B x3 (3B also gains Rebecca as a speaker from the alias).
+**Landed as d92d7a5** (Ringer, Luna, second attempt: the first had two
+of three required tests; suite 990).
+**3C x3 and 3B x3 on d92d7a5 (2026-10-01, both checks passed;
+`bench/results/world-3c-x3`, `world-3b-hide-x3`; the alias-only 3C run
+is `world-3c-x3-alias`).** 3C: all completed, handoffs 1, 3, 6, 10, 11
+in 3/3; judges contradicts 1, beyond 1, restarts 1, facts 28/36 (before
+the 3C fixes: 3 / 4 / 3 / 28; after the alias alone: 4 / 2 / 0 / 27).
+Turn 7: no Rebecca chase 0/3, Kr leads the prisoners into the tunnel
+3/3, then reaches the surface 3/3. Turn 3: no re-entry 3/3. 3B: handoffs
+1, 3, 4, 6, 8 in 3/3, Kr in the office from turn 3 on 3/3; contradicts
+2, beyond 2, restarts 0, facts 25/27 (held run: 1 / 1 / 0 / 25). 3B's
+prompts carry no Rebecca may-say lines (0 on every turn), so the alias
+did not change 3B's speakers.
+Open in 3C: "maintenance tunnel" resolves to the infrastructure
+corridors in r2 and r3 (r1: maintenance network), so Kr's place is wrong
+on turns 7-8. Facts judged wrong on turns 8 and 12 in 3/3 and turn 9 in
+2/3 are mostly label or judge noise: the codes and the case go to
+Michelle correctly but are labelled "Shelly" (the known `_view` label).
+Candidate fix, from the guide's alias rule and the 2B/2C place-alias
+precedent: alias "maintenance tunnel" on `maintenance_network` (plot.md
+3C.3 uses it). **Brandon chose the alias; landed as b28cc71** (Ringer,
+Luna, first attempt; one line; no leak test affected; payloads
+unchanged; suite 990).
+**3C x3 on b28cc71 (2026-10-01, check passed; `bench/results/world-3c-x3`;
+previous run `world-3c-x3-hide`).** All completed, no rejected turn, no
+leak rejection, handoffs 1, 3, 6, 10, 11 in 3/3. "maintenance tunnel" ->
+maintenance network 3/3 (was 1/3). Judges: contradicts 2, beyond 0,
+restarts 0, facts correct 29/36 (was 1 / 1 / 1 / 28). Both
+contradictions are turn 7 and are right: the bench input "Lead the
+prisoners into the maintenance tunnel." gives Kr Michelle's part (plot.md
+3C.3: Michelle leads them while Kristin keeps the pumps and barrier
+working). That is the script, not the engine. Minor: r2 turn 9 resolved
+"surface" to the Facility escape route (3C's location_id), r1 and r3 made
+a new "surface"; Kr's turn-6 place is a narrated "control room" 3/3.
+**Brandon chose (2026-10-01): turn 7 and the small things too ("the
+ending scene must land").** Bench turn 7 is now "Follow Michelle and the
+prisoners into the maintenance tunnel." (3C.3: Michelle leads them).
+facility_escape renamed "Los Angeles surface" (2C rename precedent; no
+bare "surface" alias, leak-scanned) and a fixed "drainage pump controls"
+placed in the maintenance network (3A gate-status panel precedent):
+**ab44510** (Ringer, Luna, first attempt; payloads unchanged; suite
+991). I recommended making the surface top-level.
+**3C x3 on ab44510 (`world-3c-x3`; previous `world-3c-x3-tunnel`).** All
+completed, handoffs 3/3, no rejection. Judges: contradicts 0, beyond 0,
+restarts 1, facts correct 26/36 (was 2 / 0 / 0 / 29). Turn 6 "control
+room" -> maintenance network 3/3 (the pump controls work). **Turn 9
+"surface" still new 3/3:** the top-level area is outside the match
+call's scope, which walks the tree (the guide: "Two rooms with no common
+parent count as two different worlds"). My recommendation contradicted
+that line. Turn 12 (3/3): the turn-9 reply leaves Michelle in the
+maintenance network, so the companion link breaks and Kr walks back down
+to hand her the case (r1 flagged as a restart). **Brandon chose to
+re-parent the surface under regional_facility** (as facility_perimeter,
+the facility's outside edge); running
+(`~/dev/ringer-work/freytag-3c-surface-pumps`, `verify_reparent.py`).
+**Landed as ef46ca4.** **3C x3 on ef46ca4 (`world-3c-x3`; previous
+`world-3c-x3-toplevel`).** All completed, no rejection, handoffs 1, 3,
+6, 10, 11 in 3/3. Judges: contradicts 0, beyond 0, restarts 0. Kr's
+place right on every turn 3/3: broadcast chamber, executive office,
+maintenance network (turn 6, "control panel" -> drainage pump controls
+3/3), Los Angeles surface (turn 9, "surface" -> it 3/3), and turn 12
+hands Michelle the case at the surface 3/3 (no trip back). Facts correct
+25/36, held down by two bench faults, not narration: turns 8 and 12 show
+the receiver as "Shelly" (`_view` labels a holder by the shortest alias)
+3/3; turn 7 the judge reads "into the maintenance tunnel" as a move
+because it is never told the maintenance network's aliases 3/3.
+**Brandon chose both bench fixes:** label people by their first alias
+(as `_referred_entity_label` already does; the guide's "shortest alias"
+sentence updated), and give the fact judge each place's aliases
+(`place_names` from `judge_input.py`; `before/after_place_names` in the
+jev state). Ringer `~/dev/ringer-work/freytag-3c-bench-faults.json`
+(two tasks; checks `verify_label.py`, `verify_judge_aliases.py`); then a
+3C x3 rerun.
+**Landed:** first-alias labels as 2b3bcbc, judge place names as 8989705
+(Ringer, Luna, both first attempt; suite and node tests pass).
+**Fact-judge calibration (2026-10-01, Brandon asked; Ringer
+`~/dev/ringer-work/freytag-judge-place-calib`, `calib.sh`).** Same saved
+inputs, fact judge only, old judge (2b3bcbc, detached worktree) vs new
+(8989705), scored by `check_calib.py` against Brandon's labels: round 8
+(v9 run) 314/336 = 93.5% both; round 9 (v10 run) 234/251 = 93.2% both.
+Round 7's results folder (v8) no longer exists. The only movement is a
+one-cell swap on round 8's Michelle's-phone turns, which disagree with the
+labels in both arms.
+**3C x3 on 8989705 (2026-10-01, check passed; `world-3c-x3`; previous
+`world-3c-x3-reparent`).** All completed, no rejection, handoffs 1, 3, 6,
+10, 11 in 3/3. Judges: contradicts 0, beyond 0, restarts 0, **facts
+correct 34/36** (was 25/36; before any 3C fix 3 / 4 / 3 / 28). Kr's place
+right every turn 3/3; holders read "Michelle" (turn 8 codes, turn 12
+case) 3/3. Left: r1 turn 4 (the reply's loose "archive" thing) and r1
+turn 7 (the judge still reads "into the tunnel" as a move, 0.63; was
+3/3). r2 and r3 restore the pumps from the office on turn 6 (fits "the
+same inspection access"). **3C is done**; the ending lands.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 

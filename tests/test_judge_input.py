@@ -56,6 +56,33 @@ def test_declared_axes_strip_undeclared_conditions_from_old_records() -> None:
     assert turn["item_facts_after"]["drawer"]["condition"] == ["open", "unlocked"]
 
 
+def test_judge_turns_projects_location_aliases_for_fact_places() -> None:
+    turn = {
+        "narration": "Kristin follows Michelle into the maintenance tunnel.",
+        "item_facts_before": {"Kristin": {"place": "MAINTENANCE TUNNEL"}},
+        "item_facts_after": {"Kristin": {"place": "maintenance network"}, "phone": {"place": "unknown place"}},
+    }
+
+    judged = judge_turns([turn], [], PACKAGE)[0]
+
+    assert judged["place_names"] == {
+        "MAINTENANCE TUNNEL": [
+            "maintenance network",
+            "maintenance route",
+            "maintenance routes",
+            "maintenance tunnel",
+            "maintenance tunnels",
+        ],
+        "maintenance network": [
+            "maintenance network",
+            "maintenance route",
+            "maintenance routes",
+            "maintenance tunnel",
+            "maintenance tunnels",
+        ],
+    }
+
+
 def test_judge_turns_projects_authored_text_and_reveal_visibility() -> None:
     reveal = PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r0"]
     turns = [

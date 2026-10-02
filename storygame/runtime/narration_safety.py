@@ -109,11 +109,24 @@ class NarrationSafetyValidator:
         earned_entity_ids = {
             entity_id for knowledge_id in earned_ids for entity_id in indexes.by_id[knowledge_id].entity_ids
         }
+        true_fact_ids = {
+            fact.predicate
+            for fact in candidate_state.facts.asserted
+            if (fact.value if fact.value is not None else fact.object) == "true"
+        }
         earned_protected_terms = {
             form
             for form in indexes.protected_terms
             if any(
                 self._contains(indexes.by_id[knowledge_id].statement.casefold(), form) for knowledge_id in earned_ids
+            )
+            or any(
+                delivery.fact_id in true_fact_ids
+                and (
+                    any(self._contains(phrase.casefold(), form) for group in delivery.must_convey for phrase in group)
+                    or self._contains(delivery.fallback_text.casefold(), form)
+                )
+                for delivery in state.package.deliveries
             )
         }
         staged_handoff_deliveries = tuple(

@@ -251,8 +251,8 @@ test("judgeInput uses the protagonist location question only for the protagonist
   });
   const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
   assert.equal(requests[0].questions.moved.instructions, "At the end of this turn, is `Kristin` in a different room or area from the one `Kristin` started in? Answer from `narrator_narration` only.");
-  assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn in another room, in a vehicle, or somewhere else outdoors.");
-  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` ends the turn in the room or area where `Kristin` started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.");
+  assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn in another room, in a vehicle, or somewhere else outdoors. A name listed in `before_place_names` or `after_place_names` is the same place as `before_place` or `after_place`.");
+  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` ends the turn in the room or area where `Kristin` started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move. A name listed in `before_place_names` or `after_place_names` is the same place as `before_place` or `after_place`.");
   assert.equal(requests[1].questions.moved.instructions, "At the end of this turn, is `desk` held by a different person, or in a different place, than `before_place`? Answer from `narrator_narration` only.");
   assert.equal(requests[0].state.command, "Search the room.");
   assert.equal(requests[0].state.just_before, "Engine moves Kristin.");
@@ -340,6 +340,10 @@ test("judgeInput sends start and duplicate-name fact questions", async () => {
         "Kristin's laptop": { place: "desk", condition: [] },
         laptop: { place: "hands", condition: [] },
       },
+      place_names: {
+        desk: ["desk", "work surface"],
+        hands: ["hands"],
+      },
     }] }],
   };
   await judgeInput(input, {
@@ -352,6 +356,10 @@ test("judgeInput sends start and duplicate-name fact questions", async () => {
   const newThing = factRequests.find((request) => request.state.thing === "laptop");
   assert.deepEqual(existingThing.state.other_things, ["laptop"]);
   assert.deepEqual(newThing.state.other_things, ["Kristin's laptop"]);
+  assert.deepEqual(existingThing.state.before_place_names, ["desk", "work surface"]);
+  assert.deepEqual(existingThing.state.after_place_names, ["desk", "work surface"]);
+  assert.deepEqual(newThing.state.before_place_names, []);
+  assert.deepEqual(newThing.state.after_place_names, ["hands"]);
   assert.ok(Object.hasOwn(existingThing.questions, "start_conflict"));
   assert.ok(Object.hasOwn(newThing.questions, "same_as_other"));
   await rm(dir, { recursive: true, force: true });

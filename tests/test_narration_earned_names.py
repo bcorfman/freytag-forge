@@ -60,6 +60,28 @@ def test_earned_names_are_accepted_in_later_scene() -> None:
     _narrate(state, "Michelle and Brandon watch the JANUS relay as alarms sound.")
 
 
+def test_true_delivery_earns_protected_terms() -> None:
+    state = _seeded_3b()
+
+    _narrate(state, "The JANUS selection records fill the archive screen.")
+
+
+def test_false_delivery_fact_does_not_earn_protected_terms() -> None:
+    state = _seeded_3b()
+    for fact in state.facts.matching("janus_evidence"):
+        state.facts.retract_fact(fact)
+
+    with pytest.raises(ProposalValidationError) as exc_info:
+        _narrate(state, "The JANUS selection records fill the archive screen.")
+    assert exc_info.value.code == "protected_narration_leak"
+
+
+def test_undelivered_protected_terms_remain_unearned() -> None:
+    with pytest.raises(ProposalValidationError) as exc_info:
+        _narrate(_seeded_3b(), "The phase two conflict plan fills the archive screen.")
+    assert exc_info.value.code == "protected_narration_leak"
+
+
 def test_bare_later_scene_rejects_unearned_names() -> None:
     with pytest.raises(ProposalValidationError):
         _narrate(_bare_3b(), "Michelle and Brandon watch the JANUS relay as alarms sound.")

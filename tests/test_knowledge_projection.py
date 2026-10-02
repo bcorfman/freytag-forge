@@ -120,6 +120,38 @@ def test_3b_frame_remains_without_the_moving_fact() -> None:
     assert projection.scene_hidden_ids == ()
 
 
+def test_3b_effect_knowledge_hides_scene_line_but_keeps_frame_and_commitment() -> None:
+    state = _scene_state("3B")
+    _establish(state, "k_sl_3b_c_r1")
+
+    projection = KnowledgeProjector().project(state, "player", "Inspect the broadcast relay.")
+    frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "3B")
+
+    assert projection.scene_frame == frame.situation
+    assert "k_sl_3b_c_r1" in projection.scene_hidden_ids
+    assert "k_sl_3b_c_r1" in _ids(projection.committed_knowledge)
+
+
+def test_3c_effect_knowledge_stays_committed_when_hidden() -> None:
+    state = _scene_state("3C")
+    _establish(state, "k_sl_3c_b_r1")
+
+    projection = KnowledgeProjector().project(state, "player", "Take the portable data case from Rebecca.")
+
+    assert "k_sl_3c_b_r1" in projection.scene_hidden_ids
+    assert "k_sl_3c_b_r1" in _ids(projection.committed_knowledge)
+
+
+def test_protagonist_effect_knowledge_still_blanks_frame() -> None:
+    state = _scene_state("3B")
+    _assert_story_fact(state, "human_security_control")
+    _assert_story_fact(state, "rebecca_office_reached")
+
+    projection = KnowledgeProjector().project(state, "player", "Inspect the executive office.")
+
+    assert projection.scene_frame == ""
+
+
 def test_moving_2a_knowledge_is_scene_local() -> None:
     state = _scene_state("2A")
     _assert_story_fact(state, "facility_perimeter_reached")
