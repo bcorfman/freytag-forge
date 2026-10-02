@@ -135,9 +135,19 @@ stays for now; rerun the paired arms after the 1A fixes below.
   1055d04** (Ringer, Luna, one attempt): THINGS renders a declared axis
   as `State: <pole>. It can be: <other>.`, and a reply `state` sets the
   pole (aliases mapped; an unmatched state is kept as a condition).
-**Next:** a one-replicate smoke on 6ebaf2c (running), then the paired
-two-scene x3 again, with and without the start-place rule, read
-against the 92% whole-state bar. Then the S4 bookmark (section
+- **Smoke on 6ebaf2c (one replicate, with the rule;
+  `bench/results/s3-fixes-smoke`):** facts after the turn 18/19, t6 and
+  t12 right, restarts 0; the reply's `state` landed on t6 (laptop open)
+  and t8 (drawer closed). It also showed a side effect of 1055d04 that I
+  missed in review: every character's engine status rendered as
+  "State: free. It can be: captive." on every turn, because the axis
+  rendering had left its `if facts["condition"]` gate, and the 1055d04
+  worker had changed three tests to expect it. **Fixed as 880748e**
+  (Ringer, Luna: the gate restored; I restored the three test lines by
+  hand; suite 1002).
+**Next:** the paired two-scene x3 on 880748e, with and without the
+start-place rule (running; `bench/results/s3-fixes-with-rule-x3`,
+`s3-fixes-no-rule-x3`), read against the 92% whole-state bar. Then the S4 bookmark (section
 "Next steps, in order", items 3-4).
 
 ## Earlier resume notes (2026-09-28)
