@@ -426,11 +426,17 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
         `${t} ends the turn in another room, in a vehicle, or somewhere else outdoors.`,
         `${t} ends the turn in the room or area where ${t} started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move. ` + "`before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.",
       )
-      : nounl(
-        `At the end of this turn, is ${t}` + " held by a different person, or in a different place, than `before_place`? Answer from `narrator_narration` only.",
-        "It ends the turn with a different holder or in a different place.",
-        "It ends where it started. When `before_place` is a person, anywhere on that person or in something that person carries is the same place, such as a hand, a pocket or a bag. A thing that stays with that person has not moved, even when that person carries it somewhere else. An attempt that fails, or a hand-over that nobody takes, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.",
-      ),
+      : item.beforePlaceIsPerson
+        ? nounl(
+          `At the end of this turn, does someone other than \`before_place\` have ${t}, or has ${t} been put down somewhere? Answer from \`narrator_narration\` only.`,
+          "Someone else has it now, or it was set down, dropped or left somewhere.",
+          "`before_place` still has it at the end. In a hand, in a pocket, or in a bag all count as having it. Taking it out of a pocket or putting it away is not a move. Carrying it to another place is not a move. An attempt that fails, or a hand-over that nobody takes, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.",
+        )
+        : nounl(
+          `At the end of this turn, is ${t}` + " held by a different person, or in a different place, than `before_place`? Answer from `narrator_narration` only.",
+          "It ends the turn with a different holder or in a different place.",
+          "It ends where it started. When `before_place` is a person, anywhere on that person or in something that person carries is the same place, such as a hand, a pocket or a bag. A thing that stays with that person has not moved, even when that person carries it somewhere else. An attempt that fails, or a hand-over that nobody takes, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.",
+        ),
   };
   if (axes.length) {
     q.condition_changed = nounl(
@@ -632,6 +638,9 @@ export async function judgeInput(
           ...pf,
           conditionsChanged: pf.newConditions.length > 0 || pf.goneConditions.length > 0,
           placeChanged,
+          beforePlaceIsPerson: thing !== protagonist && (turn.person_places || []).some(
+            (place) => String(place).toLowerCase() === String(b?.place || "").toLowerCase(),
+          ),
         };
         const otherThings = things.filter((otherThing) => otherThing !== thing);
         const fs = {

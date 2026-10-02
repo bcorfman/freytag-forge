@@ -40,8 +40,9 @@ item (9cff368), and Rebecca's executive desk is declared and fixed
 archive moves to Kristin when secured); 3C handoffs landed (b75af9d); protected terms
 delivered by a handoff count as earned (2c5b389); 3C done on
 `claude/ground-3c` (8989705: contradicts, beyond, restarts 0 x3; facts
-34/36; every handoff fires; places right every turn), not yet merged;
-then S3 and S4.
+34/36; every handoff fires; places right every turn), merged (PR 493);
+S3 in progress on `claude/s3-start-rule` (the start-place rule is
+droppable, 71f05d2; paired two-scene x3 read: 1A t6/t12 fixed (1055d04, 6ebaf2c, 880748e); 1A-1B now 55/57 with the rule, so the rule stays); then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -57,20 +58,119 @@ continuity plan; this plan defines the world they write into.
 
 ## Resume here (2026-10-01)
 
-**Where things stand.** Branch `claude/ground-3c` (not pushed, no PR)
-holds 3C end to end: grounding (226b9ed), handoffs and the
-`exposure-and-escape` bench script (b75af9d), and the fixes the live runs
-called for: earned protected terms (2c5b389), Rebecca's alias and the
-captives placement (d4f04be), no 3C situation line (7afb3bb), de181fb's
-trigger widened to any world effect (d92d7a5), "maintenance tunnel"
-(b28cc71), the Los Angeles surface and drainage pump controls (ab44510,
-ef46ca4), first-alias labels (2b3bcbc) and judge place names (8989705).
-Latest 3C x3: contradicts, beyond, restarts 0; facts 34/36. 3B x3 on
-d92d7a5 held. Fact-judge calibration unchanged (93.5% / 93.2%).
-**Next:** merge `claude/ground-3c` (PR, main CI), then S3 (the
-start-place rule removal run) and the S4 bookmark (section "Next steps,
-in order", items 2-4). The scene-by-scene detail is in the entries below,
-newest last within each scene.
+**Where things stand.** 3C is merged (PR 493, a0c7662; main CI passed).
+S3 is on branch `claude/s3-start-rule` (not pushed). Brandon chose the
+run size: item-facts-world-two-scene, 3 replicates with the start-place
+rule and 3 without, on the same commit.
+- 71f05d2 (Ringer, Luna, one attempt; suite passed): the turn-only rule
+  "<Name> starts this turn at the place PLAYER gives. Do not have <Name>
+  walk there again." is a template that `item_facts.drop_rules` may name.
+  `bench/variations/item-facts-world-two-scene-no-start-rule.json` is the
+  two-scene variation with it dropped.
+- Smoke, one no-rule replicate (`bench/results/s3-no-start-rule-smoke`):
+  19/19 turns, judges ran, no prompt carries the rule. Continuity:
+  contradicts 1, beyond 2, restarts 1 (t10, a judge false positive: the
+  command says "Go back into the kitchen"). Facts after the turn 15/19.
+  Read by hand: 5 of the 13 1A turns open with "Kristin walks over to
+  Michelle's workstation" while she is already in the kitchen. That is
+  the re-walk the rule was written for. Compare it with the rule arm.
+- Paired x3 on 3ddf9a6 (`bench/results/s3-with-start-rule-x3`,
+  `s3-no-start-rule-x3`; all 6 replicates complete, 57 turns each arm).
+  The manifest, `compare_arms.py` and its output `compare.txt` are in
+  `~/dev/ringer-work/freytag-s3-start-rule/`. With rule / without:
+  restarts flagged 2 / 4, real 0 / 0 (every flag is a commanded move:
+  t10 "Go back into the kitchen" both arms, t4 "bring my laptop inside"
+  and t12 "walk out to the truck" without); uncommanded walk-first
+  openings 21 / 15 ("Kristin walks over to Michelle's workstation"
+  opens t1, t2, t6 and t8 in every replicate of both arms, so the rule
+  does not stop the re-walk); contradicts 4 / 5, beyond 7 / 6; facts
+  after the turn correct 47 / 43. The four extra fact misses are 1B t16
+  and t18 (the phone hand-off and the transit token) and t4's round trip
+  (a known judge fault); Kristin's own after-place is scored right on
+  those turns (0.90-0.92), so none is the place the rule is about.
+  Reading: the numbers hold without the rule, within replicate noise.
+**Correction (2026-10-01).** The 92% headline is the whole state per
+turn, and on it the no-rule arm is lower (43/57 vs 47/57). So the rule
+stays for now; rerun the paired arms after the 1A fixes below.
+- **1A against the bar.** 1B-3C pooled 156/166 (94.0%); 1A-1B 47/57
+  (82.5%) with the rule. Two turns miss in all 6 replicates: t6 and t12.
+- **t6 probe ("Open my laptop."; Ringer, 3 recorded prompts x 5 per arm,
+  read by hand; `~/dev/ringer-work/freytag-1a-t6-t12/probe_t6.json`).**
+  The prose opens the laptop 76/76. The reply gives `"condition":
+  ["open"]` 6/15 as recorded, 5/15 without the talk rule, 2/15 without
+  Michelle's may-say line, 2/15 with both removed, and 11/16 on the four
+  S2 prompts (S2 live: 4/4). No line is convicted; the reply records the
+  condition about half the time whatever the prompt. Not fixed yet.
+- **t12 probe (judge only; `probe_t12.txt`).** Kristin keeps the phone,
+  and capture says "Kristin", which is right. The fact judge still says
+  "moved" 0.54-0.66 when the prose leaves it "in her hand" (S2's 0.59
+  for the same prose; t12 passed in S2 only because those narrations put
+  it back in her pocket). A holder-worded move question for a thing that
+  starts with a person ("does someone other than `before_place` have it,
+  or has it been put down?") gives 0.20-0.37 on all 6, keeps the real
+  t16 hand-overs at 0.96-0.97 (6/6), and still flags the two t16 turns
+  whose capture missed the hand-over (0.85, 0.92). The three t18 flips
+  are right too: capture already had the phone back with Kristin. Facts
+  after the turn: with rule 47 -> 52/57 (one of the five, r2 t11, is Jev
+  noise at 0.49/0.51), without 45 -> 48/57. The probe's person list was
+  hard-coded; a real fix has `judge_input` pass whether `before_place`
+  is a character. **Not yet calibrated:** the v9/v10 label check hit
+  Jev's gateway limit (HTTP 429, "Wholesale rate limit exceeded") twice.
+  Run it before building.
+- **t12 calibration (Ringer, judge only):** current and holder both
+  93.2% on the v9 (313/336) and v10 (234/251) labels; missed_change
+  unchanged (44/48, 29/35). **Built as 6ebaf2c** (Ringer, Luna; my
+  check used bash-only `<(...)` under /bin/sh, so the task failed on a
+  correct patch, which I exported and checked by hand: verifier PASS,
+  suite 1001, ruff clean). `judge_input` adds `person_places` from the
+  package's character names and aliases; the judge asks the holder
+  question only for those.
+- **t6: Brandon chose to probe a reply-format change first.** Arms on
+  the 3 recorded t6 prompts, 5 samples each (`probe_t6_format.json`):
+  recorded 10/15 gave open; THINGS wording only ("State: closed. It can
+  be: open.") 15/15, names and places unchanged, and the reply answered
+  with a `"state"` key unasked; a reply `state` rule plus example 15/15
+  but it shortened the name to "laptop" (11/15) and put the laptop on
+  Kristin (3/15); both 15/15 with the same side effects. **Built as
+  1055d04** (Ringer, Luna, one attempt): THINGS renders a declared axis
+  as `State: <pole>. It can be: <other>.`, and a reply `state` sets the
+  pole (aliases mapped; an unmatched state is kept as a condition).
+- **Smoke on 6ebaf2c (one replicate, with the rule;
+  `bench/results/s3-fixes-smoke`):** facts after the turn 18/19, t6 and
+  t12 right, restarts 0; the reply's `state` landed on t6 (laptop open)
+  and t8 (drawer closed). It also showed a side effect of 1055d04 that I
+  missed in review: every character's engine status rendered as
+  "State: free. It can be: captive." on every turn, because the axis
+  rendering had left its `if facts["condition"]` gate, and the 1055d04
+  worker had changed three tests to expect it. **Fixed as 880748e**
+  (Ringer, Luna: the gate restored; I restored the three test lines by
+  hand; suite 1002).
+- **Paired x3 on 880748e (`bench/results/s3-fixes-with-rule-x3`,
+  `s3-fixes-no-rule-x3`; `compare-fixes.txt`).** With rule / without:
+  facts after the turn **55/57 (96.5%)** / 47/56 (83.9%); place
+  changes 40/41 / 36/36; condition changes 14/14 / 10/14; missed_change
+  0 / 4. The two misses with the rule are both t1 (the drawer). Restarts
+  flagged 4 / 4, all commanded moves (t4, t10), so real 0 / 0.
+  Contradicts 9 / 1. Read by hand, most are real narration slips, not
+  capture: t17 "sees Michelle's phone on the ground" right after handing
+  it to Brandon (2 of 3), t6 "sits down in the chair" while it is still
+  overturned (t7 rights it), t12 still takes the phone out of her
+  pocket, t15 calls the number sequence no clue; t14 "in her pocket" is
+  the judge's hand/pocket blind spot. Not probed; 9 vs 1 is unexplained
+  and may be noise. No-rule r3 lost t1 to a leak rejection ("photo"),
+  so it judged 18 turns.
+- **S3 decision: keep the start-place rule.** Without it the whole-state
+  rate falls 12.6 points on the same code. The drop_rules template stays
+  so it can be re-measured.
+- **The bar now (whole state per turn, latest run per scene):** 1A-1B
+  55/57 (96.5%), 1B-1C 19/20, 2A 20/21, 2B 8/8, 2C 22/24 (91.7%), 3A
+  28/30, 3B 25/27, 3C 34/36; pooled 211/223 (94.6%). Only 2C is under
+  92%, by one turn on 24. 1B-1C and 2B rest on one replicate, and the
+  scene runs are on different commits.
+**Next:** open the PR for `claude/s3-start-rule`. Then the 1A-1B
+narration slips above (read each prompt against plot.md first), and the
+S4 bookmark (section "Next steps, in order", items 3-4). Then the S4 bookmark (section
+"Next steps, in order", items 3-4).
 
 ## Earlier resume notes (2026-09-28)
 

@@ -8,6 +8,7 @@ import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments, seeded_state_for_scene
 from bench.item_facts import (
     _MATCH_SYSTEM,
+    START_PLACE_RULE_TEMPLATE,
     ItemFactsProvider,
     _resolve_refer,
     _single_call_rules,
@@ -108,6 +109,17 @@ def test_item_facts_view_and_things_block_do_not_write_facts():
     provider._things_block()
 
     assert provider.state.facts.asserted == before
+
+
+def test_things_block_hides_axis_for_kristin_but_shows_laptop_state():
+    provider = _seeded_provider(state_axes={"Kristin's laptop": {"closed": ["shut"], "open": []}})
+    provider._selected_names = ["Kristin", "Kristin's laptop"]
+    block = provider._things_block()
+    kristin_line = next(line for line in block.splitlines() if line.startswith("- Kristin."))
+    laptop_line = next(line for line in block.splitlines() if line.startswith("- Kristin's laptop."))
+
+    assert "State:" not in kristin_line
+    assert "State: closed. It can be: open." in laptop_line
 
 
 def test_item_facts_view_uses_michelle_for_a_thing_she_holds():
@@ -404,6 +416,30 @@ def test_drop_rules_removes_exact_rule_lines():
         assert all(rule in system for rule in _single_call_rules("Kristin") if rule not in rendered_dropped)
 
 
+def test_drop_rules_removes_start_place_rule_only_from_turn_prompt():
+    provider = _provider()
+    dropped_provider = _provider()
+    dropped_provider.drop_rules = frozenset({START_PLACE_RULE_TEMPLATE})
+    start_rule = START_PLACE_RULE_TEMPLATE.format(protagonist="Kristin")
+
+    assert start_rule in provider._system_prompt(opening=False)
+    assert start_rule not in dropped_provider._system_prompt(opening=False)
+    assert dropped_provider._system_prompt(opening=False) == provider._system_prompt(opening=False).replace(
+        f"\n{start_rule}", "", 1
+    )
+    assert start_rule not in dropped_provider._system_prompt(opening=True)
+
+
+def test_drop_rules_accepts_start_place_rule_template():
+    validate_item_facts(
+        {
+            "mode": "single_call",
+            "seed": {"thing": {"place": "on the table", "condition": []}},
+            "drop_rules": [START_PLACE_RULE_TEMPLATE],
+        }
+    )
+
+
 def test_single_call_prompt_has_each_rule_once():
     dropped = [
         'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
@@ -508,6 +544,17 @@ def test_seated_protagonist_gets_the_stay_seated_rule():
 
     assert world.move("kristin", "kitchen").ok
     assert rule not in provider._system_prompt(opening=False)
+
+
+def test_dropped_start_place_rule_keeps_seat_rule_in_place():
+    provider = _seeded_provider()
+    world = provider._world()
+    assert world.move("kristin", "workstation_chair").ok
+    provider.drop_rules = frozenset({START_PLACE_RULE_TEMPLATE})
+
+    system = provider._system_prompt(opening=False)
+    assert START_PLACE_RULE_TEMPLATE.format(protagonist="Kristin") not in system
+    assert "Kristin stays sitting in the workstation chair." in system
 
 
 def test_seat_place_named_as_its_furniture_is_a_quiet_no_op():
@@ -1306,7 +1353,7 @@ def test_things_show_state_axis_vocabulary_and_other_conditions():
     block = provider._things_block()
     assert (
         "THINGS:\n"
-        "- the lantern. Place: on the table. Condition: shut (or open), dusty.\n"
+        "- the lantern. Place: on the table. State: shut. It can be: open. Condition: dusty.\n"
         "- the gate. Place: at the garden path."
     ) in block
 
@@ -1316,9 +1363,46 @@ def test_things_axis_vocabulary_remains_after_empty_condition_reply():
     provider._selected_names = list(provider.item_facts)
     provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
     provider.apply_item_facts({"the lantern": {"condition": ["shut"]}})
-    assert "Condition: shut (or open), lit." in provider._things_block()
+    assert "State: shut. It can be: open. Condition: lit." in provider._things_block()
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert "Condition: shut (or open), lit." in provider._things_block()
+    assert "State: shut. It can be: open. Condition: lit." in provider._things_block()
+
+
+def test_state_reply_alone_sets_the_axis():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+
+    facts, issues = provider.apply_item_facts({"drawer": {"state": "open"}})
+
+    assert not issues
+    assert facts["drawer"]["condition"] == ["open"]
+
+
+def test_state_reply_with_place_sets_both():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+
+    facts, issues = provider.apply_item_facts({"drawer": {"place": "workstation", "state": "open"}})
+
+    assert not issues
+    assert facts["drawer"]["place"] == "in Michelle's workstation"
+    assert facts["drawer"]["condition"] == ["open"]
+
+
+def test_state_reply_accepts_an_axis_alias():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+
+    facts, issues = provider.apply_item_facts({"drawer": {"state": "shut"}})
+
+    assert not issues
+    assert facts["drawer"]["condition"] == ["closed"]
+
+
+def test_unmatched_state_reply_is_kept_as_a_condition():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+
+    facts, issues = provider.apply_item_facts({"drawer": {"state": "dusty"}})
+
+    assert not issues
+    assert facts["drawer"]["condition"] == ["closed", "dusty"]
 
 
 def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(monkeypatch):
@@ -1962,7 +2046,7 @@ def test_workstation_brings_its_chair_into_things():
     provider._selected_names = ["workstation"]
     block = provider._things_block()
     assert block.index("- workstation.") < block.index("- workstation chair.")
-    assert "Condition: upright (or overturned)." in block or "Condition: overturned (or upright)." in block
+    assert "State: upright. It can be: overturned." in block or "State: overturned. It can be: upright." in block
 
 
 def test_kristin_at_the_workstation_is_not_seated():

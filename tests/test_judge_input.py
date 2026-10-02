@@ -83,6 +83,26 @@ def test_judge_turns_projects_location_aliases_for_fact_places() -> None:
     }
 
 
+def test_judge_turns_projects_character_place_labels_without_changing_turn() -> None:
+    turn = {
+        "narration": "Kristin checks the phone.",
+        "item_facts_before": {
+            "phone": {"place": "kRISTIN"},
+            "note": {"place": "table"},
+        },
+        "item_facts_after": {
+            "phone": {"place": "Michelle"},
+            "note": {"place": "TABLE"},
+        },
+    }
+    original = deepcopy(turn)
+
+    judged = judge_turns([turn], [], PACKAGE)[0]
+
+    assert judged["person_places"] == ["Michelle", "kRISTIN"]
+    assert turn == original
+
+
 def test_judge_turns_projects_authored_text_and_reveal_visibility() -> None:
     reveal = PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r0"]
     turns = [

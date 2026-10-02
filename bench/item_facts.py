@@ -218,6 +218,10 @@ _SINGLE_CALL_RULES = (
     'If a thing is under something, add "under": true, like {{"place": "table", "under": true}}.',
 )
 
+START_PLACE_RULE_TEMPLATE = (
+    "{protagonist} starts this turn at the place PLAYER gives. Do not have {protagonist} walk there again."
+)
+
 
 def _single_call_rules(protagonist_name, *, drop_rules=frozenset()):
     protagonist = protagonist_name or "Sam"
@@ -434,9 +438,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     current = axis_values.get(axis["name"])
                     if current:
                         other = next(pole for pole in axis["poles"] if pole != current)
-                        rendered.append(f"{current} (or {other})")
+                        line += f" State: {current}. It can be: {other}."
                 rendered.extend(condition for condition in facts["condition"] if condition not in axis_values.values())
-                line += f" Condition: {', '.join(rendered)}."
+                if rendered:
+                    line += f" Condition: {', '.join(rendered)}."
             if narration and entity_id and world.is_a(entity_id, "group") and name in self._referred_names:
                 members = [
                     member_id
@@ -542,14 +547,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
         protagonist = _protagonist_name(self.state.package)
         rules = list(_single_call_rules(protagonist, drop_rules=self.drop_rules))
         if not opening and protagonist:
-            rules.insert(
-                2,
-                f"{protagonist} starts this turn at the place PLAYER gives. Do not have {protagonist} walk there again.",
-            )
+            start_place_rule_kept = START_PLACE_RULE_TEMPLATE not in self.drop_rules
+            if start_place_rule_kept:
+                rules.insert(2, START_PLACE_RULE_TEMPLATE.format(protagonist=protagonist))
             world = self._world()
             seat = world.parent(self.state.package.protagonist_id)
             if seat and world.schema.entities.get(seat) and world.schema.entities[seat].seat_for:
-                rules.insert(3, f"{protagonist} stays sitting in the {world.name(seat)}.")
+                rules.insert(
+                    2 + start_place_rule_kept,
+                    f"{protagonist} stays sitting in the {world.name(seat)}.",
+                )
         return f"{system}\n{'\n'.join(rules)}"
 
     def _request(self, payload):
@@ -629,10 +636,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 and bool(value["contents"])
                 and all(isinstance(item, str) and item.strip() for item in value["contents"])
             )
-        return ("place" in value and isinstance(value["place"], str) and bool(value["place"].strip())) or (
-            "condition" in value
-            and isinstance(value["condition"], list)
-            and all(isinstance(item, str) and item.strip() for item in value["condition"])
+        return (
+            ("place" in value and isinstance(value["place"], str) and bool(value["place"].strip()))
+            or ("state" in value and isinstance(value["state"], str) and bool(value["state"].strip()))
+            or (
+                "condition" in value
+                and isinstance(value["condition"], list)
+                and all(isinstance(item, str) and item.strip() for item in value["condition"])
+            )
         )
 
     def _resolve_name(self, world, key):
@@ -926,15 +937,22 @@ class ItemFactsProvider(CloudflareTurnProvider):
         current_poles = list(world.axis_values(entity_id).values())
         before_pole = current_poles[0] if current_poles else None
         condition_poles = []
+        state_pole = None
+        free = []
+        if "state" in value and isinstance(value["state"], str) and value["state"].strip():
+            state = value["state"].strip()
+            state_pole = self._axis_match_id(world, entity_id, state)
+            if state_pole is None:
+                free.append(state[:40])
         if "condition" in value and value["condition"]:
             conditions = value["condition"]
             if len(conditions) > 2:
                 issues.append(f"item_facts for {name!r} has more than two condition phrases; kept the first two")
             condition_poles = [self._axis_match_id(world, entity_id, item) for item in conditions]
-            free = [item.strip()[:40] for item, pole in zip(conditions, condition_poles, strict=True) if not pole]
-            if free:
-                world.set_conditions(entity_id, free[:2])
-        reply_poles = {pole for pole in (place_pole, *condition_poles) if pole is not None}
+            free.extend(item.strip()[:40] for item, pole in zip(conditions, condition_poles, strict=True) if not pole)
+        if free:
+            world.set_conditions(entity_id, free[:2])
+        reply_poles = {pole for pole in (place_pole, state_pole, *condition_poles) if pole is not None}
         changed_pole = None
         if reply_poles and before_pole is not None:
             differing = reply_poles - {before_pole}
@@ -1508,7 +1526,7 @@ def validate_item_facts(value, *, known_names=None):
     if not isinstance(drop_rules, list) or not all(isinstance(rule, str) for rule in drop_rules):
         raise ValueError(f"item_facts drop_rules must be a list of strings; got {drop_rules!r}")
     for rule in drop_rules:
-        if rule not in _SINGLE_CALL_RULES:
+        if rule not in (*_SINGLE_CALL_RULES, START_PLACE_RULE_TEMPLATE):
             raise ValueError(f"item_facts drop_rules contains unknown rule {rule!r}")
     seed = value.get("seed", {})
     if not isinstance(seed, dict) or (not seed and not seed_from_package):
