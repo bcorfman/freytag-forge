@@ -42,7 +42,7 @@ delivered by a handoff count as earned (2c5b389); 3C done on
 `claude/ground-3c` (8989705: contradicts, beyond, restarts 0 x3; facts
 34/36; every handoff fires; places right every turn), merged (PR 493);
 S3 in progress on `claude/s3-start-rule` (the start-place rule is
-droppable, 71f05d2; paired two-scene x3 read: the rule stays for now; 1A t6/t12 probed); then S4.
+droppable, 71f05d2; paired two-scene x3 read: the rule stays for now; 1A t6/t12 fixed, 1055d04 and 6ebaf2c, rerun next); then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -117,8 +117,27 @@ stays for now; rerun the paired arms after the 1A fixes below.
   is a character. **Not yet calibrated:** the v9/v10 label check hit
   Jev's gateway limit (HTTP 429, "Wholesale rate limit exceeded") twice.
   Run it before building.
-**Next:** the t12 calibration run when Jev's limit clears, then the
-judge fix by Ringer if it holds; Brandon decides the t6 approach. Then the S4 bookmark (section
+- **t12 calibration (Ringer, judge only):** current and holder both
+  93.2% on the v9 (313/336) and v10 (234/251) labels; missed_change
+  unchanged (44/48, 29/35). **Built as 6ebaf2c** (Ringer, Luna; my
+  check used bash-only `<(...)` under /bin/sh, so the task failed on a
+  correct patch, which I exported and checked by hand: verifier PASS,
+  suite 1001, ruff clean). `judge_input` adds `person_places` from the
+  package's character names and aliases; the judge asks the holder
+  question only for those.
+- **t6: Brandon chose to probe a reply-format change first.** Arms on
+  the 3 recorded t6 prompts, 5 samples each (`probe_t6_format.json`):
+  recorded 10/15 gave open; THINGS wording only ("State: closed. It can
+  be: open.") 15/15, names and places unchanged, and the reply answered
+  with a `"state"` key unasked; a reply `state` rule plus example 15/15
+  but it shortened the name to "laptop" (11/15) and put the laptop on
+  Kristin (3/15); both 15/15 with the same side effects. **Built as
+  1055d04** (Ringer, Luna, one attempt): THINGS renders a declared axis
+  as `State: <pole>. It can be: <other>.`, and a reply `state` sets the
+  pole (aliases mapped; an unmatched state is kept as a condition).
+**Next:** a one-replicate smoke on 6ebaf2c (running), then the paired
+two-scene x3 again, with and without the start-place rule, read
+against the 92% whole-state bar. Then the S4 bookmark (section
 "Next steps, in order", items 3-4).
 
 ## Earlier resume notes (2026-09-28)
