@@ -42,7 +42,7 @@ delivered by a handoff count as earned (2c5b389); 3C done on
 `claude/ground-3c` (8989705: contradicts, beyond, restarts 0 x3; facts
 34/36; every handoff fires; places right every turn), merged (PR 493);
 S3 in progress on `claude/s3-start-rule` (the start-place rule is
-droppable, 71f05d2; paired two-scene x3 running); then S4.
+droppable, 71f05d2; paired two-scene x3 read: holds without it); then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -74,15 +74,24 @@ rule and 3 without, on the same commit.
   Read by hand: 5 of the 13 1A turns open with "Kristin walks over to
   Michelle's workstation" while she is already in the kitchen. That is
   the re-walk the rule was written for. Compare it with the rule arm.
-- Running: the paired x3 (`bench/results/s3-with-start-rule-x3`,
-  `s3-no-start-rule-x3`). The manifest, the per-turn comparison script
-  (`compare_arms.py`, which also counts first sentences that walk or
-  approach, for hand reading) and its output `compare.txt` are in
-  `~/dev/ringer-work/freytag-s3-start-rule/`.
-**Next:** read the paired run. Keep the removal (delete the rule from
-`_system_prompt`) only if restarts, re-walks and facts after the turn
-hold without it. Then the S4 bookmark (section "Next steps, in order",
-items 3-4).
+- Paired x3 on 3ddf9a6 (`bench/results/s3-with-start-rule-x3`,
+  `s3-no-start-rule-x3`; all 6 replicates complete, 57 turns each arm).
+  The manifest, `compare_arms.py` and its output `compare.txt` are in
+  `~/dev/ringer-work/freytag-s3-start-rule/`. With rule / without:
+  restarts flagged 2 / 4, real 0 / 0 (every flag is a commanded move:
+  t10 "Go back into the kitchen" both arms, t4 "bring my laptop inside"
+  and t12 "walk out to the truck" without); uncommanded walk-first
+  openings 21 / 15 ("Kristin walks over to Michelle's workstation"
+  opens t1, t2, t6 and t8 in every replicate of both arms, so the rule
+  does not stop the re-walk); contradicts 4 / 5, beyond 7 / 6; facts
+  after the turn correct 47 / 43. The four extra fact misses are 1B t16
+  and t18 (the phone hand-off and the transit token) and t4's round trip
+  (a known judge fault); Kristin's own after-place is scored right on
+  those turns (0.90-0.92), so none is the place the rule is about.
+  Reading: the numbers hold without the rule, within replicate noise.
+**Next:** Brandon decides whether to delete the rule (and its
+drop_rules template) on this reading. Then the S4 bookmark (section
+"Next steps, in order", items 3-4).
 
 ## Earlier resume notes (2026-09-28)
 
