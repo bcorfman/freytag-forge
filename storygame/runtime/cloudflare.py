@@ -400,6 +400,7 @@ class CloudflareTurnProvider:
             "Use the places and details the story gives you.",
             self._object_place_rule(),
             "Finish each action the player gives.",
+            "A thing the player holds is in their hand until the story puts it away.",
             "When the player gives a thing to someone, that person takes it.",
             "When the player talks to someone, that person answers.",
             f"Only show {self._protagonist_name()} doing what the player said.",
