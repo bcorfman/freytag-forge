@@ -61,8 +61,12 @@ jobs:
       - name: Run fast feedback tests
         run: TMPDIR=/tmp uv run pytest -q --no-cov -n 4 -m "(unit or component) and not authoring_quality"
 
-  test:
-    name: Required coverage gate
+  test-shard:
+    name: Coverage shard ${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -88,14 +92,48 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Run tests
-        run: TMPDIR=/tmp uv run pytest -q --cov -n 4 --tier-report=artifacts/test-suite-health.json
+        env:
+          COVERAGE_FILE: .coverage.shard${{ matrix.shard }}
+        run: TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index ${{ matrix.shard }} --shard-count 4 --tier-report=artifacts/test-suite-health-${{ matrix.shard }}.json
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: .coverage.shard${{ matrix.shard }}
+          include-hidden-files: true
+          if-no-files-found: error
       - name: Upload test-suite health report
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: test-suite-health
+          name: test-suite-health-${{ matrix.shard }}
           path: artifacts/
           if-no-files-found: warn
+
+  test:
+    name: Required coverage gate
+    needs: test-shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Download coverage data
+        uses: actions/download-artifact@v7
+        with:
+          pattern: coverage-shard-*
+          merge-multiple: true
+          path: coverage-data
+      - name: Combine coverage data
+        run: uv run coverage combine coverage-data
+      - name: Enforce coverage gate
+        run: |
+          report="$(uv run coverage report)"
+          printf '%s\n' "$report"
+          printf '%s\n' "$report" | grep 'TOTAL' >> "$GITHUB_STEP_SUMMARY"
 
   deploy-staging:
     name: Deploy staging

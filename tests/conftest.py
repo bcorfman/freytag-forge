@@ -198,6 +198,8 @@ def _quality_tier_for_path(path: Path) -> str:
 def pytest_addoption(parser: pytest.Parser) -> None:
     group = parser.getgroup("test-suite-health")
     group.addoption("--tier-report", default="", help="Write tier, timing, and construction counts as JSON.")
+    group.addoption("--shard-index", type=int, default=0, help="Index of the test shard to run.")
+    group.addoption("--shard-count", type=int, default=1, help="Number of test shards.")
     group.addoption(
         "--strict-test-budgets", action="store_true", help="Fail when unit/component test budgets are exceeded."
     )
@@ -273,6 +275,21 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             duplicate_errors.append(f"{item.nodeid}: expected exactly one quality tier, got {quality_markers}")
     if duplicate_errors:
         raise pytest.UsageError("Test-suite collection guard failed:\n" + "\n".join(duplicate_errors))
+    shard_index = config.getoption("--shard-index")
+    shard_count = config.getoption("--shard-count")
+    if shard_count < 1:
+        raise pytest.UsageError("--shard-count must be at least 1")
+    if shard_index not in range(shard_count):
+        raise pytest.UsageError("--shard-index must be in range(--shard-count)")
+    if shard_count > 1:
+        sorted_items = sorted(items, key=lambda item: item.nodeid)
+        kept_nodeids = {
+            item.nodeid for position, item in enumerate(sorted_items) if position % shard_count == shard_index
+        }
+        deselected = [item for item in items if item.nodeid not in kept_nodeids]
+        if deselected:
+            config.hook.pytest_deselected(items=deselected)
+        items[:] = [item for item in items if item.nodeid in kept_nodeids]
 
 
 def pytest_collection_finish(session: pytest.Session) -> None:
