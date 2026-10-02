@@ -16,6 +16,18 @@ Write the move. Earn the reveal. Live with the consequence.
 - **Break the story on purpose.** Moves that would wreck what comes next warn you first. Push on or take it back.
 - **Any story, one engine.** Authors write Markdown; the engine plays it.
 
+## Not your parser's world model
+
+Inform and its kin model the world as nouns *and* verbs. Every action needs a rule, from the standard library or written by the author, and the parser turns down everything else. Your imagination ends where the author's verb list does.
+
+Freytag Forge keeps the nouns and drops the verb list. The world model tracks what exists, where it is, and what state it's in, but it never decides what an action does. The narrator writes the outcome of whatever you try. The world model is the referee:
+
+- **It holds the line.** A bolted-down desk won't be carried off. A hidden key can't be grabbed before anyone finds it.
+- **It grows.** Something new the story names becomes a real object, with a place you can return to.
+- **It keeps the cast together.** Companions walk with you, groups move as one, and what you carry goes where you go.
+
+Authors declare what's in the world. They never have to guess what players will try.
+
 ## For contributors
 
 Python 3.12+ and [uv](https://docs.astral.sh/uv/) run the compiler and tests. Hosted play needs only a browser.
