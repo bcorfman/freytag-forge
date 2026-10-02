@@ -774,9 +774,10 @@ freytag_phase: resolution
 objective: Expose the network and escape
 participant_ids: [kristin, michelle, rebecca, brandon]
 companions: [michelle]
-item_ids: [portable_archive]
+item_ids: [portable_archive, drainage_pump_controls]
 item_placements:
   portable_archive: {parent: rebecca, text: with Rebecca in her hands}
+  drainage_pump_controls: {parent: maintenance_network}
 character_placements:
   kristin: {parent: broadcast_chamber}
   rebecca: {parent: executive_office}

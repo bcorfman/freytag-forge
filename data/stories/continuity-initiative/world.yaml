@@ -58,8 +58,7 @@ locations:
   name: broadcast chamber
   parent: executive_office
 - id: facility_escape
-  name: Facility escape route
-  parent: regional_facility
+  name: Los Angeles surface
 - id: infrastructure_corridors
   name: infrastructure corridors
   aliases: [restricted infrastructure corridors, infrastructure corridor]
@@ -224,6 +223,9 @@ items:
   aliases: [Rebecca's desk]
   kind: desk
   owner: rebecca
+- id: drainage_pump_controls
+  name: drainage pump controls
+  fixed: true
 facts:
 - scene_1a_entry_known
 - scene_1b_entry_known

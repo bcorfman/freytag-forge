@@ -148,6 +148,25 @@ def test_scene_3c_places_captives_in_maintenance_network() -> None:
     assert world.parent("senior_official") == "captives"
 
 
+def test_scene_3c_places_pump_controls_and_declares_surface_location() -> None:
+    package = load_story_package(PACKAGE)
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "3A"
+    assert apply_scene_placements(package, state.facts, "3A") == ()
+    state.current_scene_id = "3B"
+    assert apply_scene_placements(package, state.facts, "3B") == ()
+    state.facts.assert_fact(Fact(predicate="relay_open", subject="story", value="true"))
+    assert apply_world_effects(package, state.facts) == ()
+    state.current_scene_id = "3C"
+
+    assert apply_scene_placements(package, state.facts, "3C") == ()
+    world = world_for(package, state.facts)
+    assert world.parent("drainage_pump_controls") == "maintenance_network"
+    facility_escape = next(location for location in package.world.locations if location.id == "facility_escape")
+    assert facility_escape.name == "Los Angeles surface"
+    assert facility_escape.parent is None
+
+
 def test_scene_3b_office_entry_moves_kristin_and_michelle_in_and_leaves_brandon() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)
