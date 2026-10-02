@@ -6,11 +6,12 @@ Write the move. Earn the reveal. Live with the consequence.
 
 ## Features
 
-- **Just type.** Tell your character what to do. No menus, no parser syntax. Say two things at once and both happen, in order.
-- **A world that stays put.** Every place, thing and person has a spot. Pocket the phone and it's in your pocket three scenes later. The desk never wanders off.
-- **Your crew comes with you.** Companions follow you from room to room. Talk to someone and they answer.
+- **Type anything.** No verb list, no "I don't understand that." A live narrator answers whatever you try.
+- **The AI writes. It doesn't decide.** The model proposes; the engine checks every change against the world before it counts.
+- **It doesn't forget.** Where every person and object is lives in the engine, not in the model's memory.
+- **A plot, not drift.** An authored story with a real arc. Your choices bend it, but it still goes somewhere.
 - **Earn every reveal.** Secrets land only when your action earns them, in the author's own words.
-- **Canon holds.** No invented facts, wrong speakers, or plot jumping ahead. No later-scene secrets slipping out early. A bad turn is thrown out whole.
+- **Canon holds.** No invented facts, wrong speakers, or plot jumping ahead. A bad turn is thrown out whole.
 - **Delay costs you.** The clock keeps running, so every detour is a real choice.
 - **Break the story on purpose.** Moves that would wreck what comes next warn you first. Push on or take it back.
 - **Any story, one engine.** Authors write Markdown; the engine plays it.
