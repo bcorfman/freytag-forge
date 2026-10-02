@@ -1,6 +1,6 @@
 # World model: plan
 
-Status (2026-10-01): decisions W1-W13 settled. S1 merged (PR 480),
+Status (2026-10-02): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
@@ -41,8 +41,10 @@ archive moves to Kristin when secured); 3C handoffs landed (b75af9d); protected 
 delivered by a handoff count as earned (2c5b389); 3C done on
 `claude/ground-3c` (8989705: contradicts, beyond, restarts 0 x3; facts
 34/36; every handoff fires; places right every turn), merged (PR 493);
-S3 in progress on `claude/s3-start-rule` (the start-place rule is
-droppable, 71f05d2; paired two-scene x3 read: 1A t6/t12 fixed (1055d04, 6ebaf2c, 880748e); 1A-1B now 55/57 with the rule, so the rule stays); then S4.
+S3 done and merged (PR 497, 33a1081): the start-place rule is
+droppable (71f05d2) but stays; 1A t6/t12 fixed (1055d04, 6ebaf2c,
+880748e); 1A-1B now 55/57 with the rule. Next: the 1A-1B narration
+slips, the bookmark, then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -56,10 +58,16 @@ decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
 
-## Resume here (2026-10-01)
+## Resume here (2026-10-02)
+
+**Checked against the results on disk (2026-10-02).** Every figure
+below matches its `bench/results` summary, and "The bar now" pools to
+211/223. S3 is merged (PR 497, 33a1081); nothing on `main` since
+touches the world model. Open work is under **Next** at the end of
+this section.
 
 **Where things stand.** 3C is merged (PR 493, a0c7662; main CI passed).
-S3 is on branch `claude/s3-start-rule` (not pushed). Brandon chose the
+S3 was on branch `claude/s3-start-rule`, now merged as PR 497. Brandon chose the
 run size: item-facts-world-two-scene, 3 replicates with the start-place
 rule and 3 without, on the same commit.
 - 71f05d2 (Ringer, Luna, one attempt; suite passed): the turn-only rule
@@ -167,10 +175,35 @@ stays for now; rerun the paired arms after the 1A fixes below.
   28/30, 3B 25/27, 3C 34/36; pooled 211/223 (94.6%). Only 2C is under
   92%, by one turn on 24. 1B-1C and 2B rest on one replicate, and the
   scene runs are on different commits.
-**Next:** open the PR for `claude/s3-start-rule`. Then the 1A-1B
-narration slips above (read each prompt against plot.md first), and the
-S4 bookmark (section "Next steps, in order", items 3-4). Then the S4 bookmark (section
-"Next steps, in order", items 3-4).
+- **Not yet recorded until 2026-10-02: JANUS taken as a place.** 3B
+  `world-3b-hide-x3` r3 t2 ("Cycle the doors and lights in the empty
+  corridors."): the reply gave JANUS a place, the match call said it
+  was a new place the same as "security corridors", and the engine
+  logged "item_facts name 'JANUS' resolved to an area". Kristin's place
+  stayed right. 1 of 27 turns; the same family as "Rebecca's office"
+  made new. Not probed.
+- **Bare "corridor" (2C known gap) did not recur.** Brandon asked to
+  revisit it if it showed in 3A-3C. In `world-3a-referred-x3`,
+  `world-3b-hide-x3` and `world-3c-x3` no place is a bare "corridor";
+  the one bare "corridors" is a match call's `refers` entry.
+
+**Next:**
+1. **The 1A-1B narration slips** in `s3-fixes-with-rule-x3`. Read each
+   failing turn's prompt against plot.md first, then probe. t17 phone
+   "on the ground" after the hand-over (r2, r3), and t18 r2's man
+   "holding" it follows from that; t6 sits in the overturned chair (r1,
+   r3); t12 takes the phone out of her pocket (r1-r3, also "command not
+   finished" 3/3); t15 calls the number sequence no clue (r2, r3); t19
+   r1 picks up the transit token unasked. t14 "in her pocket" is the
+   judge's hand/pocket blind spot, not a narration slip.
+2. **The bookmark** (section "Next steps, in order", item 3): decide
+   whether undeclared conditions are scored.
+3. **S4** (item 4). The continuity plan's Phases 4-6, which S4 hands
+   to, have not started; its status line dates from 2026-09-24.
+   Known gaps to carry in: new entities made in the player's old place
+   when the same reply moves the player; Jev rejects a wrong
+   memory-card match about 1 in 8; the runtime must seat inside the
+   turn's snapshot; 2C is at 22/24 (91.7%), one turn under the bar.
 
 ## Earlier resume notes (2026-09-28)
 
