@@ -38,9 +38,10 @@ item (9cff368), and Rebecca's executive desk is declared and fixed
 (ab3bd4f), and THINGS shows a held thing's holder, not "with Kristin"
 (8e09018), each measured live 3/3; 3C grounded (broadcast chamber,
 archive moves to Kristin when secured); 3C handoffs landed (b75af9d); protected terms
-delivered by a handoff count as earned (2c5b389); 3C fixed through
-b28cc71 and measured x3 (contradicts 2, beyond 0, restarts 0, facts
-29/36; both contradictions are the bench script's turn 7); then S3 and S4.
+delivered by a handoff count as earned (2c5b389); 3C's ending lands on
+ef46ca4 (contradicts, beyond, restarts all 0 x3; places right every
+turn); two bench faults being fixed (Shelly label, judge place aliases);
+then S3 and S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -2053,6 +2054,24 @@ to hand her the case (r1 flagged as a restart). **Brandon chose to
 re-parent the surface under regional_facility** (as facility_perimeter,
 the facility's outside edge); running
 (`~/dev/ringer-work/freytag-3c-surface-pumps`, `verify_reparent.py`).
+**Landed as ef46ca4.** **3C x3 on ef46ca4 (`world-3c-x3`; previous
+`world-3c-x3-toplevel`).** All completed, no rejection, handoffs 1, 3,
+6, 10, 11 in 3/3. Judges: contradicts 0, beyond 0, restarts 0. Kr's
+place right on every turn 3/3: broadcast chamber, executive office,
+maintenance network (turn 6, "control panel" -> drainage pump controls
+3/3), Los Angeles surface (turn 9, "surface" -> it 3/3), and turn 12
+hands Michelle the case at the surface 3/3 (no trip back). Facts correct
+25/36, held down by two bench faults, not narration: turns 8 and 12 show
+the receiver as "Shelly" (`_view` labels a holder by the shortest alias)
+3/3; turn 7 the judge reads "into the maintenance tunnel" as a move
+because it is never told the maintenance network's aliases 3/3.
+**Brandon chose both bench fixes:** label people by their first alias
+(as `_referred_entity_label` already does; the guide's "shortest alias"
+sentence updated), and give the fact judge each place's aliases
+(`place_names` from `judge_input.py`; `before/after_place_names` in the
+jev state). Ringer `~/dev/ringer-work/freytag-3c-bench-faults.json`
+(two tasks; checks `verify_label.py`, `verify_judge_aliases.py`); then a
+3C x3 rerun.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
