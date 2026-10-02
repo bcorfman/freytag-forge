@@ -6,9 +6,11 @@ Write the move. Earn the reveal. Live with the consequence.
 
 ## Features
 
-- **Just type.** Tell your character what to do. No menus, no parser syntax.
+- **Just type.** Tell your character what to do. No menus, no parser syntax. Say two things at once and both happen, in order.
+- **A world that stays put.** Every place, thing and person has a spot. Pocket the phone and it's in your pocket three scenes later. The desk never wanders off.
+- **Your crew comes with you.** Companions follow you from room to room. Talk to someone and they answer.
 - **Earn every reveal.** Secrets land only when your action earns them, in the author's own words.
-- **Canon holds.** No invented facts, wrong speakers, or plot jumping ahead. A bad turn is thrown out whole.
+- **Canon holds.** No invented facts, wrong speakers, or plot jumping ahead. No later-scene secrets slipping out early. A bad turn is thrown out whole.
 - **Delay costs you.** The clock keeps running, so every detour is a real choice.
 - **Break the story on purpose.** Moves that would wreck what comes next warn you first. Push on or take it back.
 - **Any story, one engine.** Authors write Markdown; the engine plays it.
