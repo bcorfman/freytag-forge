@@ -36,7 +36,7 @@ locations:
   parent: regional_facility
 - id: maintenance_network
   name: maintenance network
-  aliases: [maintenance route, maintenance routes]
+  aliases: [maintenance route, maintenance routes, maintenance tunnel, maintenance tunnels]
   parent: purge_chamber
 - id: detention_level
   name: detention level
