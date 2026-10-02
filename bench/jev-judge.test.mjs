@@ -264,6 +264,37 @@ test("judgeInput uses the protagonist location question only for the protagonist
   await rm(dir, { recursive: true, force: true });
 });
 
+test("judgeInput uses the holder question for character-held things", async () => {
+  const dir = await packageDir();
+  const seen = [];
+  await judgeInput({ runs: [{ turns: [{
+    scene_id: "1A",
+    player_input: "Check the phone and table.",
+    narration: "She checks the phone and table.",
+    item_facts_before: {
+      phone: { place: "Kristin", condition: [] },
+      cup: { place: "table", condition: [] },
+    },
+    item_facts_after: {
+      phone: { place: "Kristin", condition: [] },
+      cup: { place: "table", condition: [] },
+    },
+    person_places: ["Kristin"],
+  }] }] }, {
+    packagePath: dir,
+    judges: "fact",
+    protagonist: "the player",
+    environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+    fetchImpl: stubFetch(seen),
+  });
+  const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
+  const phone = requests.find((request) => request.state.thing === "phone");
+  const cup = requests.find((request) => request.state.thing === "cup");
+  assert.equal(phone.questions.moved.instructions, "At the end of this turn, does someone other than `before_place` have `phone`, or has `phone` been put down somewhere? Answer from `narrator_narration` only.");
+  assert.equal(cup.questions.moved.instructions, "At the end of this turn, is `cup` held by a different person, or in a different place, than `before_place`? Answer from `narrator_narration` only.");
+  await rm(dir, { recursive: true, force: true });
+});
+
 test("hiddenCanon extracts one scene only", () => {
   const plot = "## Scene 1A\n**Hidden canon:** a key is under the rug.\n## Scene 1B\nVisible text.";
   assert.equal(hiddenCanon(plot, "1A"), "a key is under the rug.");

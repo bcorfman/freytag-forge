@@ -232,6 +232,25 @@ def _place_names(turn: dict[str, Any], package: StoryPackage) -> dict[str, list[
     return result
 
 
+def _person_places(turn: dict[str, Any], package: StoryPackage) -> list[str]:
+    """Return recorded place labels that identify a package character."""
+
+    person_names = {
+        name.casefold() for person in package.world.npcs for name in (person.name, *getattr(person, "aliases", ()))
+    }
+    result: set[str] = set()
+    for facts in (turn.get("item_facts_before", {}), turn.get("item_facts_after", {})):
+        if not isinstance(facts, dict):
+            continue
+        for entry in facts.values():
+            if not isinstance(entry, dict) or not isinstance(entry.get("place"), str):
+                continue
+            label = entry["place"]
+            if label.casefold() in person_names:
+                result.add(label)
+    return sorted(result)
+
+
 def judge_turns(
     turns: list[dict[str, Any]],
     scene_transitions: list[dict[str, Any]],
@@ -266,6 +285,7 @@ def judge_turns(
         ]
         copy["place_contents"] = _place_contents(turn, package)
         copy["place_names"] = _place_names(turn, package)
+        copy["person_places"] = _person_places(turn, package)
         copy["item_facts_names"] = turn.get("item_facts_names", {})
         before = dict(turn.get("item_facts_before", {}))
         after = dict(turn.get("item_facts_after", {}))
