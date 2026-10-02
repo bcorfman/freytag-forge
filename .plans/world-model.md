@@ -42,7 +42,7 @@ delivered by a handoff count as earned (2c5b389); 3C done on
 `claude/ground-3c` (8989705: contradicts, beyond, restarts 0 x3; facts
 34/36; every handoff fires; places right every turn), merged (PR 493);
 S3 in progress on `claude/s3-start-rule` (the start-place rule is
-droppable, 71f05d2; paired two-scene x3 read: holds without it); then S4.
+droppable, 71f05d2; paired two-scene x3 read: the rule stays for now; 1A t6/t12 probed); then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -89,8 +89,36 @@ rule and 3 without, on the same commit.
   (a known judge fault); Kristin's own after-place is scored right on
   those turns (0.90-0.92), so none is the place the rule is about.
   Reading: the numbers hold without the rule, within replicate noise.
-**Next:** Brandon decides whether to delete the rule (and its
-drop_rules template) on this reading. Then the S4 bookmark (section
+**Correction (2026-10-01).** The 92% headline is the whole state per
+turn, and on it the no-rule arm is lower (43/57 vs 47/57). So the rule
+stays for now; rerun the paired arms after the 1A fixes below.
+- **1A against the bar.** 1B-3C pooled 156/166 (94.0%); 1A-1B 47/57
+  (82.5%) with the rule. Two turns miss in all 6 replicates: t6 and t12.
+- **t6 probe ("Open my laptop."; Ringer, 3 recorded prompts x 5 per arm,
+  read by hand; `~/dev/ringer-work/freytag-1a-t6-t12/probe_t6.json`).**
+  The prose opens the laptop 76/76. The reply gives `"condition":
+  ["open"]` 6/15 as recorded, 5/15 without the talk rule, 2/15 without
+  Michelle's may-say line, 2/15 with both removed, and 11/16 on the four
+  S2 prompts (S2 live: 4/4). No line is convicted; the reply records the
+  condition about half the time whatever the prompt. Not fixed yet.
+- **t12 probe (judge only; `probe_t12.txt`).** Kristin keeps the phone,
+  and capture says "Kristin", which is right. The fact judge still says
+  "moved" 0.54-0.66 when the prose leaves it "in her hand" (S2's 0.59
+  for the same prose; t12 passed in S2 only because those narrations put
+  it back in her pocket). A holder-worded move question for a thing that
+  starts with a person ("does someone other than `before_place` have it,
+  or has it been put down?") gives 0.20-0.37 on all 6, keeps the real
+  t16 hand-overs at 0.96-0.97 (6/6), and still flags the two t16 turns
+  whose capture missed the hand-over (0.85, 0.92). The three t18 flips
+  are right too: capture already had the phone back with Kristin. Facts
+  after the turn: with rule 47 -> 52/57 (one of the five, r2 t11, is Jev
+  noise at 0.49/0.51), without 45 -> 48/57. The probe's person list was
+  hard-coded; a real fix has `judge_input` pass whether `before_place`
+  is a character. **Not yet calibrated:** the v9/v10 label check hit
+  Jev's gateway limit (HTTP 429, "Wholesale rate limit exceeded") twice.
+  Run it before building.
+**Next:** the t12 calibration run when Jev's limit clears, then the
+judge fix by Ringer if it holds; Brandon decides the t6 approach. Then the S4 bookmark (section
 "Next steps, in order", items 3-4).
 
 ## Earlier resume notes (2026-09-28)
