@@ -2032,6 +2032,27 @@ prisoners into the maintenance tunnel." gives Kr Michelle's part (plot.md
 working). That is the script, not the engine. Minor: r2 turn 9 resolved
 "surface" to the Facility escape route (3C's location_id), r1 and r3 made
 a new "surface"; Kr's turn-6 place is a narrated "control room" 3/3.
+**Brandon chose (2026-10-01): turn 7 and the small things too ("the
+ending scene must land").** Bench turn 7 is now "Follow Michelle and the
+prisoners into the maintenance tunnel." (3C.3: Michelle leads them).
+facility_escape renamed "Los Angeles surface" (2C rename precedent; no
+bare "surface" alias, leak-scanned) and a fixed "drainage pump controls"
+placed in the maintenance network (3A gate-status panel precedent):
+**ab44510** (Ringer, Luna, first attempt; payloads unchanged; suite
+991). I recommended making the surface top-level.
+**3C x3 on ab44510 (`world-3c-x3`; previous `world-3c-x3-tunnel`).** All
+completed, handoffs 3/3, no rejection. Judges: contradicts 0, beyond 0,
+restarts 1, facts correct 26/36 (was 2 / 0 / 0 / 29). Turn 6 "control
+room" -> maintenance network 3/3 (the pump controls work). **Turn 9
+"surface" still new 3/3:** the top-level area is outside the match
+call's scope, which walks the tree (the guide: "Two rooms with no common
+parent count as two different worlds"). My recommendation contradicted
+that line. Turn 12 (3/3): the turn-9 reply leaves Michelle in the
+maintenance network, so the companion link breaks and Kr walks back down
+to hand her the case (r1 flagged as a restart). **Brandon chose to
+re-parent the surface under regional_facility** (as facility_perimeter,
+the facility's outside edge); running
+(`~/dev/ringer-work/freytag-3c-surface-pumps`, `verify_reparent.py`).
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
