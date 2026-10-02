@@ -430,17 +430,18 @@ class ItemFactsProvider(CloudflareTurnProvider):
             entity_id = world.resolve(name)
             if place:
                 line += f" Place: {place.strip()}."
-            axes = world.axis_definitions(entity_id) if entity_id else ()
-            rendered = []
-            axis_values = world.axis_values(entity_id) if entity_id else {}
-            for axis in axes:
-                current = axis_values.get(axis["name"])
-                if current:
-                    other = next(pole for pole in axis["poles"] if pole != current)
-                    line += f" State: {current}. It can be: {other}."
-            rendered.extend(condition for condition in facts["condition"] if condition not in axis_values.values())
-            if rendered:
-                line += f" Condition: {', '.join(rendered)}."
+            if facts["condition"]:
+                axes = world.axis_definitions(entity_id) if entity_id else ()
+                rendered = []
+                axis_values = world.axis_values(entity_id) if entity_id else {}
+                for axis in axes:
+                    current = axis_values.get(axis["name"])
+                    if current:
+                        other = next(pole for pole in axis["poles"] if pole != current)
+                        line += f" State: {current}. It can be: {other}."
+                rendered.extend(condition for condition in facts["condition"] if condition not in axis_values.values())
+                if rendered:
+                    line += f" Condition: {', '.join(rendered)}."
             if narration and entity_id and world.is_a(entity_id, "group") and name in self._referred_names:
                 members = [
                     member_id

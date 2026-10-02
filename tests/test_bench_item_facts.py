@@ -111,6 +111,17 @@ def test_item_facts_view_and_things_block_do_not_write_facts():
     assert provider.state.facts.asserted == before
 
 
+def test_things_block_hides_axis_for_kristin_but_shows_laptop_state():
+    provider = _seeded_provider(state_axes={"Kristin's laptop": {"closed": ["shut"], "open": []}})
+    provider._selected_names = ["Kristin", "Kristin's laptop"]
+    block = provider._things_block()
+    kristin_line = next(line for line in block.splitlines() if line.startswith("- Kristin."))
+    laptop_line = next(line for line in block.splitlines() if line.startswith("- Kristin's laptop."))
+
+    assert "State:" not in kristin_line
+    assert "State: closed. It can be: open." in laptop_line
+
+
 def test_item_facts_view_uses_michelle_for_a_thing_she_holds():
     provider = _seeded_provider()
     world = provider._world()
@@ -2671,7 +2682,7 @@ def test_prepare_turn_adds_referred_people_and_places_only_to_narration_things()
 
     assert provider._things_block(narration=True).splitlines() == [
         "THINGS:",
-        "- Kristin. Place: security corridors. State: free. It can be: captive. With Kristin: Brandon, Michelle.",
+        "- Kristin. Place: security corridors. With Kristin: Brandon, Michelle.",
         "- Michelle. Place: security corridors.",
         "- executive office. This is a place.",
     ]
@@ -2685,7 +2696,7 @@ def test_with_line_drops_a_companion_in_another_place():
     assert apply_world_effects(PACKAGE, provider.state.facts) == ()
 
     line = next(line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin."))
-    assert line == "- Kristin. Place: security corridors. State: free. It can be: captive. With Kristin: Michelle."
+    assert line == "- Kristin. Place: security corridors. With Kristin: Michelle."
 
 
 def test_with_line_is_absent_when_no_companion_is_present():
@@ -2695,7 +2706,7 @@ def test_with_line_is_absent_when_no_companion_is_present():
     assert provider._world().move("michelle", "broadcast_relay").ok
 
     line = next(line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin."))
-    assert line == "- Kristin. Place: security corridors. State: free. It can be: captive."
+    assert line == "- Kristin. Place: security corridors."
 
 
 def test_prepare_turn_does_not_refer_to_a_distant_person():
