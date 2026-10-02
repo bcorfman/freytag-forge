@@ -42,7 +42,7 @@ delivered by a handoff count as earned (2c5b389); 3C done on
 `claude/ground-3c` (8989705: contradicts, beyond, restarts 0 x3; facts
 34/36; every handoff fires; places right every turn), merged (PR 493);
 S3 in progress on `claude/s3-start-rule` (the start-place rule is
-droppable, 71f05d2; paired two-scene x3 read: the rule stays for now; 1A t6/t12 fixed, 1055d04 and 6ebaf2c, rerun next); then S4.
+droppable, 71f05d2; paired two-scene x3 read: 1A t6/t12 fixed (1055d04, 6ebaf2c, 880748e); 1A-1B now 55/57 with the rule, so the rule stays); then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -145,9 +145,31 @@ stays for now; rerun the paired arms after the 1A fixes below.
   worker had changed three tests to expect it. **Fixed as 880748e**
   (Ringer, Luna: the gate restored; I restored the three test lines by
   hand; suite 1002).
-**Next:** the paired two-scene x3 on 880748e, with and without the
-start-place rule (running; `bench/results/s3-fixes-with-rule-x3`,
-`s3-fixes-no-rule-x3`), read against the 92% whole-state bar. Then the S4 bookmark (section
+- **Paired x3 on 880748e (`bench/results/s3-fixes-with-rule-x3`,
+  `s3-fixes-no-rule-x3`; `compare-fixes.txt`).** With rule / without:
+  facts after the turn **55/57 (96.5%)** / 47/56 (83.9%); place
+  changes 40/41 / 36/36; condition changes 14/14 / 10/14; missed_change
+  0 / 4. The two misses with the rule are both t1 (the drawer). Restarts
+  flagged 4 / 4, all commanded moves (t4, t10), so real 0 / 0.
+  Contradicts 9 / 1. Read by hand, most are real narration slips, not
+  capture: t17 "sees Michelle's phone on the ground" right after handing
+  it to Brandon (2 of 3), t6 "sits down in the chair" while it is still
+  overturned (t7 rights it), t12 still takes the phone out of her
+  pocket, t15 calls the number sequence no clue; t14 "in her pocket" is
+  the judge's hand/pocket blind spot. Not probed; 9 vs 1 is unexplained
+  and may be noise. No-rule r3 lost t1 to a leak rejection ("photo"),
+  so it judged 18 turns.
+- **S3 decision: keep the start-place rule.** Without it the whole-state
+  rate falls 12.6 points on the same code. The drop_rules template stays
+  so it can be re-measured.
+- **The bar now (whole state per turn, latest run per scene):** 1A-1B
+  55/57 (96.5%), 1B-1C 19/20, 2A 20/21, 2B 8/8, 2C 22/24 (91.7%), 3A
+  28/30, 3B 25/27, 3C 34/36; pooled 211/223 (94.6%). Only 2C is under
+  92%, by one turn on 24. 1B-1C and 2B rest on one replicate, and the
+  scene runs are on different commits.
+**Next:** open the PR for `claude/s3-start-rule`. Then the 1A-1B
+narration slips above (read each prompt against plot.md first), and the
+S4 bookmark (section "Next steps, in order", items 3-4). Then the S4 bookmark (section
 "Next steps, in order", items 3-4).
 
 ## Earlier resume notes (2026-09-28)
