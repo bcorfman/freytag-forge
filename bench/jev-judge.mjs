@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 
 export const THRESHOLD = 0.5;
 const ALSO_CALLED_SENTENCE = "A name listed in `also_called` is another name for the same person or thing.";
+const PLACE_NAMES_SENTENCE = "A name listed in `before_place_names` or `after_place_names` is the same place as `before_place` or `after_place`.";
 
 const CONTINUITY_NAMES = [
   "given_conflict", "given_start_conflict", "earlier_conflict", "beyond_command",
@@ -513,6 +514,13 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
       };
     }
   }
+  for (const name of ["moved", "after_place_right", "before_conflict", "start_conflict"]) {
+    if (q[name]) {
+      q[name].criteria = Object.fromEntries(
+        Object.entries(q[name].criteria).map(([side, text]) => [side, `${text} ${PLACE_NAMES_SENTENCE}`]),
+      );
+    }
+  }
   return q;
 }
 
@@ -635,8 +643,10 @@ export async function judgeInput(
           thing,
           other_things: otherThings,
           before_place: b?.place || "",
+          before_place_names: (turn.place_names || {})[b?.place || ""] || [],
           before_conditions: b?.condition || [],
           after_place: a?.place || "",
+          after_place_names: (turn.place_names || {})[a?.place || ""] || [],
           after_place_contains: (() => {
             const contents = turn.place_contents || {};
             if (Object.hasOwn(contents, a?.place || "")) return contents[a?.place || ""];
