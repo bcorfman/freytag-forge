@@ -1,6 +1,15 @@
 # Narrated world continuity: implementation plan
 
-Status (2026-09-24): Phase 0 bench work is through round 9 and
+Status (2026-10-02): active work is in [world-model.md](world-model.md);
+start at its "Resume here". Since 2026-09-25 that plan replaces decision
+1e and gives 1a's state axes a home. Its phases S1-S3 are merged (S3 as
+PR 497, 33a1081). Its S4 hands the runtime to this plan's Phases 4-6,
+which have not started. Phase 0 here ended with v36, recorded and on
+`main` (a797a64). Decisions 1b and 1d below are still as written; check
+world-model.md's W decisions before treating either as open. Phase 0's
+92%-per-change-type bar now restarts on the world model's bench.
+
+Earlier status (2026-09-24): Phase 0 bench work is through round 9 and
 single-mechanism runs v11-v36 on branch `round9`; v11-v35 merged to `main` (PRs #473, #475). A new
 session should start at "State at hand-off (2026-09-23) - START HERE" in
 Phase 0. It lists what changed in v21-v26, the next steps in order, the
