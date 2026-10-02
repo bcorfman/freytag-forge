@@ -1342,7 +1342,7 @@ def test_things_show_state_axis_vocabulary_and_other_conditions():
     block = provider._things_block()
     assert (
         "THINGS:\n"
-        "- the lantern. Place: on the table. Condition: shut (or open), dusty.\n"
+        "- the lantern. Place: on the table. State: shut. It can be: open. Condition: dusty.\n"
         "- the gate. Place: at the garden path."
     ) in block
 
@@ -1352,9 +1352,46 @@ def test_things_axis_vocabulary_remains_after_empty_condition_reply():
     provider._selected_names = list(provider.item_facts)
     provider.state_axes = {"the lantern": {"shut": ["closed"], "open": []}}
     provider.apply_item_facts({"the lantern": {"condition": ["shut"]}})
-    assert "Condition: shut (or open), lit." in provider._things_block()
+    assert "State: shut. It can be: open. Condition: lit." in provider._things_block()
     provider.apply_item_facts({"the lantern": {"condition": []}})
-    assert "Condition: shut (or open), lit." in provider._things_block()
+    assert "State: shut. It can be: open. Condition: lit." in provider._things_block()
+
+
+def test_state_reply_alone_sets_the_axis():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+
+    facts, issues = provider.apply_item_facts({"drawer": {"state": "open"}})
+
+    assert not issues
+    assert facts["drawer"]["condition"] == ["open"]
+
+
+def test_state_reply_with_place_sets_both():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+
+    facts, issues = provider.apply_item_facts({"drawer": {"place": "workstation", "state": "open"}})
+
+    assert not issues
+    assert facts["drawer"]["place"] == "in Michelle's workstation"
+    assert facts["drawer"]["condition"] == ["open"]
+
+
+def test_state_reply_accepts_an_axis_alias():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+
+    facts, issues = provider.apply_item_facts({"drawer": {"state": "shut"}})
+
+    assert not issues
+    assert facts["drawer"]["condition"] == ["closed"]
+
+
+def test_unmatched_state_reply_is_kept_as_a_condition():
+    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
+
+    facts, issues = provider.apply_item_facts({"drawer": {"state": "dusty"}})
+
+    assert not issues
+    assert facts["drawer"]["condition"] == ["closed", "dusty"]
 
 
 def test_single_call_strips_item_facts_before_strict_proposal_and_carries_them(monkeypatch):
@@ -1998,7 +2035,7 @@ def test_workstation_brings_its_chair_into_things():
     provider._selected_names = ["workstation"]
     block = provider._things_block()
     assert block.index("- workstation.") < block.index("- workstation chair.")
-    assert "Condition: upright (or overturned)." in block or "Condition: overturned (or upright)." in block
+    assert "State: upright. It can be: overturned." in block or "State: overturned. It can be: upright." in block
 
 
 def test_kristin_at_the_workstation_is_not_seated():
@@ -2634,7 +2671,7 @@ def test_prepare_turn_adds_referred_people_and_places_only_to_narration_things()
 
     assert provider._things_block(narration=True).splitlines() == [
         "THINGS:",
-        "- Kristin. Place: security corridors. With Kristin: Brandon, Michelle.",
+        "- Kristin. Place: security corridors. State: free. It can be: captive. With Kristin: Brandon, Michelle.",
         "- Michelle. Place: security corridors.",
         "- executive office. This is a place.",
     ]
@@ -2648,7 +2685,7 @@ def test_with_line_drops_a_companion_in_another_place():
     assert apply_world_effects(PACKAGE, provider.state.facts) == ()
 
     line = next(line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin."))
-    assert line == "- Kristin. Place: security corridors. With Kristin: Michelle."
+    assert line == "- Kristin. Place: security corridors. State: free. It can be: captive. With Kristin: Michelle."
 
 
 def test_with_line_is_absent_when_no_companion_is_present():
@@ -2658,7 +2695,7 @@ def test_with_line_is_absent_when_no_companion_is_present():
     assert provider._world().move("michelle", "broadcast_relay").ok
 
     line = next(line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin."))
-    assert line == "- Kristin. Place: security corridors."
+    assert line == "- Kristin. Place: security corridors. State: free. It can be: captive."
 
 
 def test_prepare_turn_does_not_refer_to_a_distant_person():
