@@ -2072,6 +2072,16 @@ sentence updated), and give the fact judge each place's aliases
 jev state). Ringer `~/dev/ringer-work/freytag-3c-bench-faults.json`
 (two tasks; checks `verify_label.py`, `verify_judge_aliases.py`); then a
 3C x3 rerun.
+**Landed:** first-alias labels as 2b3bcbc, judge place names as 8989705
+(Ringer, Luna, both first attempt; suite and node tests pass).
+**Fact-judge calibration (2026-10-01, Brandon asked; Ringer
+`~/dev/ringer-work/freytag-judge-place-calib`, `calib.sh`).** Same saved
+inputs, fact judge only, old judge (2b3bcbc, detached worktree) vs new
+(8989705), scored by `check_calib.py` against Brandon's labels: round 8
+(v9 run) 314/336 = 93.5% both; round 9 (v10 run) 234/251 = 93.2% both.
+Round 7's results folder (v8) no longer exists. The only movement is a
+one-cell swap on round 8's Michelle's-phone turns, which disagree with the
+labels in both arms.
 
 ### Narration leak diagnosis (2026-09-28, offline)
 
