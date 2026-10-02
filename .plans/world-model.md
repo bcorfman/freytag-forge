@@ -40,8 +40,9 @@ item (9cff368), and Rebecca's executive desk is declared and fixed
 archive moves to Kristin when secured); 3C handoffs landed (b75af9d); protected terms
 delivered by a handoff count as earned (2c5b389); 3C done on
 `claude/ground-3c` (8989705: contradicts, beyond, restarts 0 x3; facts
-34/36; every handoff fires; places right every turn), not yet merged;
-then S3 and S4.
+34/36; every handoff fires; places right every turn), merged (PR 493);
+S3 in progress on `claude/s3-start-rule` (the start-place rule is
+droppable, 71f05d2; paired two-scene x3 running); then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -57,20 +58,31 @@ continuity plan; this plan defines the world they write into.
 
 ## Resume here (2026-10-01)
 
-**Where things stand.** Branch `claude/ground-3c` (not pushed, no PR)
-holds 3C end to end: grounding (226b9ed), handoffs and the
-`exposure-and-escape` bench script (b75af9d), and the fixes the live runs
-called for: earned protected terms (2c5b389), Rebecca's alias and the
-captives placement (d4f04be), no 3C situation line (7afb3bb), de181fb's
-trigger widened to any world effect (d92d7a5), "maintenance tunnel"
-(b28cc71), the Los Angeles surface and drainage pump controls (ab44510,
-ef46ca4), first-alias labels (2b3bcbc) and judge place names (8989705).
-Latest 3C x3: contradicts, beyond, restarts 0; facts 34/36. 3B x3 on
-d92d7a5 held. Fact-judge calibration unchanged (93.5% / 93.2%).
-**Next:** merge `claude/ground-3c` (PR, main CI), then S3 (the
-start-place rule removal run) and the S4 bookmark (section "Next steps,
-in order", items 2-4). The scene-by-scene detail is in the entries below,
-newest last within each scene.
+**Where things stand.** 3C is merged (PR 493, a0c7662; main CI passed).
+S3 is on branch `claude/s3-start-rule` (not pushed). Brandon chose the
+run size: item-facts-world-two-scene, 3 replicates with the start-place
+rule and 3 without, on the same commit.
+- 71f05d2 (Ringer, Luna, one attempt; suite passed): the turn-only rule
+  "<Name> starts this turn at the place PLAYER gives. Do not have <Name>
+  walk there again." is a template that `item_facts.drop_rules` may name.
+  `bench/variations/item-facts-world-two-scene-no-start-rule.json` is the
+  two-scene variation with it dropped.
+- Smoke, one no-rule replicate (`bench/results/s3-no-start-rule-smoke`):
+  19/19 turns, judges ran, no prompt carries the rule. Continuity:
+  contradicts 1, beyond 2, restarts 1 (t10, a judge false positive: the
+  command says "Go back into the kitchen"). Facts after the turn 15/19.
+  Read by hand: 5 of the 13 1A turns open with "Kristin walks over to
+  Michelle's workstation" while she is already in the kitchen. That is
+  the re-walk the rule was written for. Compare it with the rule arm.
+- Running: the paired x3 (`bench/results/s3-with-start-rule-x3`,
+  `s3-no-start-rule-x3`). The manifest, the per-turn comparison script
+  (`compare_arms.py`, which also counts first sentences that walk or
+  approach, for hand reading) and its output `compare.txt` are in
+  `~/dev/ringer-work/freytag-s3-start-rule/`.
+**Next:** read the paired run. Keep the removal (delete the rule from
+`_system_prompt`) only if restarts, re-walks and facts after the turn
+hold without it. Then the S4 bookmark (section "Next steps, in order",
+items 3-4).
 
 ## Earlier resume notes (2026-09-28)
 
