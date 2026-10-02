@@ -196,6 +196,92 @@ stays for now; rerun the paired arms after the 1A fixes below.
    finished" 3/3); t15 calls the number sequence no clue (r2, r3); t19
    r1 picks up the transit token unasked. t14 "in her pocket" is the
    judge's hand/pocket blind spot, not a narration slip.
+   **Diagnosed and probed (2026-10-02, branch `claude/1a-1b-slips`;
+   probes in `~/dev/ringer-work/freytag-1b-t16-man/`, Ringer, read by
+   hand).**
+   - **t16 -> t17 -> t18 is capture, not narration.** t16 ("Walk over
+     to the man watching me and hand him Michelle's phone."): the match
+     call said "man" is Brandon (kind person) 3/3, but Jev's check asked
+     'Is the place called "man" on "Brandon Corfman"?' and said no (10
+     of 12 recorded asks across the S3 runs). "man" became a new person,
+     Kristin was left unplaced at "man", and t17's THINGS said
+     "Kristin. Place: man." and "Michelle's phone. Place: man."; the
+     narrator then put the phone on the ground. Jev probe on the 15
+     recorded man->Brandon checks: recorded wording 17/75 yes; the
+     same-person question 21/75; Brandon's text "watching Kristin from
+     across the park" 60/75 but 0/15 on 1B-1C t8, where the man is
+     already beside her; **"watching Kristin in the park" with the
+     same-person question 75/75**. The same-person question for every
+     recorded person-kind place check: Rebecca 10/10 (was 2/6), "with
+     Kristin" 40/40 (was 0/24; today it makes a new holder named "with
+     Kristin" in 3B t3), guard -> Brandon stays no 0/5.
+   - **t6 is a missing THINGS line.** The overturned chair is given only
+     when the workstation is named, so "Open my laptop." never shows it.
+     Probe (3 recorded prompts x 5): sitting 15/15 recorded, 0/15 with
+     the chair line, 0/15 with workstation and chair; the laptop opens
+     every time. Side effect: with the chair given the narrator often
+     "picks up her laptop", and in r2 sometimes carries it to the
+     kitchen.
+   - **Not defects:** t15 (the dead-drop reveal is earned by "Compare
+     the number sequence with the transit token", so withholding its
+     meaning is the handoff working); t14 (judge blind spot); t19
+     (narrator initiative).
+   - **t12** takes the phone out of her pocket in 19 of 19 recorded runs
+     on every commit. The world state is right (holder unchanged; no
+     pocket part, 2026-09-27).
+   **Brandon chose (2026-10-02):** build all four t16/t6 fixes: Brandon's
+   1B text "watching Kristin in the park"; the same-person question for
+   a person-kind place name; a character placed at a character lands in
+   that character's area (W12's furniture rule applied to people); a
+   seat is given when a given thing rests on its furniture. Probe a
+   narrator rule for t12 and build it only if it wins.
+   - **t12 rule probe** (3 recorded prompts x 5, read by hand;
+     `~/dev/ringer-work/freytag-1a-1b-slips/probe_t12_rule.txt`):
+     "When the player puts a thing in a pocket, show it going into the
+     pocket." lost (takes it out 15/15). "A thing the player holds is in
+     their hand until the story puts it away." won: into her pocket
+     14/15 (0/15 recorded), walks to the truck 15/15. Side effects: the
+     prose is formulaic ("takes ... out of her hand and puts it in her
+     pocket"), and 2/15 replies named it "Kristin's phone".
+   - **Built.** ff7fcb4 (Ringer, Luna, two attempts): the 1B text, the
+     same-person question (`check_mapping` uses it when the match kind
+     is person and the target a character), a character placed at a
+     character lands in its area (or is not moved when it is itself),
+     and `_thing_names` gives a seat when a listed thing's parent is its
+     furniture. e7d0260 (Ringer, Luna): the hand rule, turn rules only,
+     right after "Finish each action the player gives."; shipped turn
+     payloads change only by that line. Both checks failed only on a
+     pre-existing ruff issue in `.plans/world-model-scenes/
+     scene_2b_check.py` (formatted in 5c748c0); patches reviewed, suite
+     1007, ruff clean, the build's shipped payloads byte-identical.
+   - **Measured live (2026-10-02, with the start rule;
+     `bench/results/slips-smoke`, `slips-with-rule-x3`; comparison in
+     `~/dev/ringer-work/freytag-1a-1b-slips/compare-x3.txt`).** Smoke:
+     contradicts 0/19, t16 resolved "man" to Brandon (same-person
+     question yes; Kristin stays in the park; phone with Brandon), t12
+     into her pocket, t6 no sitting. x3 against `s3-fixes-with-rule-x3`:
+     facts after the turn **50/56 (89.3%) vs 55/57**, contradicts 5 vs 9,
+     restarts flagged 7 vs 4 (not yet read by hand), missed_change 4 vs 0.
+     Targets: t17 phone on the ground 1/3 (was 2/3); t6 sits 1/3 (was
+     1-2/3), and r1 carries the laptop to the table (the probe's side
+     effect); t12 takes it out 1/3 (was 3/3). New misses: t7 (the chair)
+     2/3 and r2 lost a turn (18 turns). **Not accepted yet: the bar fell.**
+     Read t7, the restarts and the missed changes before anything else.
+   - **New finding: THINGS names Brandon before he is identified.** A
+     held thing renders its holder with `person_label` (the first alias,
+     "Brandon"). Every run where t16 resolved to Brandon (2 older, the
+     smoke) narrates "Brandon" on t17-t19, before plot 1B.2 lets him say
+     his name. The fix makes this the usual case. No decision covers a
+     label for a person Kristin has not identified; needs one.
+   - **New finding: "Kristin's pocket" left the phone unplaced** (smoke
+     t12). The match call was asked about "pocket" and answered "Kristin's
+     pocket", which was not offered, so the phone kept the text "Kristin's
+     pocket" with no parent. The hand rule makes the reply say "Kristin's
+     pocket" more often. Count it in the x3 records.
+   - **Brandon asked (2026-10-02) for E2E tests that the player is shown
+     what each transition needs** (his example: 1A never shows the
+     workstation or the KMS drawer). Planned in
+     [scene-affordance-e2e.md](scene-affordance-e2e.md).
 2. **The bookmark** (section "Next steps, in order", item 3): decide
    whether undeclared conditions are scored.
 3. **S4** (item 4). The continuity plan's Phases 4-6, which S4 hands
