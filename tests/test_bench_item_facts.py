@@ -110,6 +110,15 @@ def test_item_facts_view_and_things_block_do_not_write_facts():
     assert provider.state.facts.asserted == before
 
 
+def test_item_facts_view_uses_michelle_for_a_thing_she_holds():
+    provider = _seeded_provider()
+    world = provider._world()
+    assert world.reveal("memory_card").ok
+    assert world.move("memory_card", "michelle").ok
+
+    assert provider.facts_for_names(["Michelle's memory card"])["Michelle's memory card"]["place"] == "Michelle"
+
+
 def test_structural_place_stays_with_carried_thing_when_holder_moves():
     provider = _seeded_provider()
     facts, issues = provider.apply_item_facts(

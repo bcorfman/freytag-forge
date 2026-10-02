@@ -111,6 +111,10 @@ def _schema_for(package, axes=None, facts=None):
 
 def _view(package, facts, axes=None, schema=None, *, structural=False):
     world = World(schema or _schema_for(package, axes), facts, make_fact=Fact)
+
+    def person_label(npc, name):
+        return npc.aliases[0] if npc and npc.aliases else name
+
     ids = []
     for entity_id in world.entity_ids():
         if (
@@ -126,7 +130,7 @@ def _view(package, facts, axes=None, schema=None, *, structural=False):
         name = world.name(entity_id)
         if world.is_a(entity_id, "character"):
             npc = next((e for e in package.world.npcs if e.id == entity_id), None)
-            name = min((name, *(npc.aliases if npc else ())), key=len)
+            name = person_label(npc, name)
         parent = world.parent(entity_id)
         if structural:
             place = world.unplaced_name(entity_id)
@@ -134,12 +138,12 @@ def _view(package, facts, axes=None, schema=None, *, structural=False):
                 place = world.name(parent)
                 if world.is_a(parent, "character"):
                     npc = next((e for e in package.world.npcs if e.id == parent), None)
-                    place = min((place, *(npc.aliases if npc else ())), key=len)
+                    place = person_label(npc, place)
         else:
             place = world.place_label(entity_id)
             if parent and world.is_a(parent, "character"):
                 npc = next((e for e in package.world.npcs if e.id == parent), None)
-                place = min((world.name(parent), *(npc.aliases if npc else ())), key=len)
+                place = person_label(npc, world.name(parent))
         conditions = (
             []
             if entity_id == package.world.protagonist_id
