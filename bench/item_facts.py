@@ -44,6 +44,13 @@ def _protagonist_name(package) -> str | None:
     return min((*npc.aliases, npc.name), key=len) if npc else None
 
 
+def _character_label(facts, npc, name, *, shortest=False):
+    if npc and npc.unnamed_label and npc.named_by and not _true(facts, npc.named_by):
+        return npc.unnamed_label
+    labels = (npc.name, *npc.aliases) if npc else (name,)
+    return min(labels, key=len) if shortest else (npc.aliases[0] if npc and npc.aliases else name)
+
+
 def declared_axes_for_world(world, names):
     """Return declared pole pairs for the named things that have axes."""
 
@@ -67,6 +74,10 @@ def declared_axes_for_package(package, names, state_axes=None):
 
 def _schema_for(package, axes=None, facts=None):
     data = copy.deepcopy(world_source_schema_data(package.world))
+    entities = {entity["id"]: entity for entity in data["entities"]}
+    for npc in package.world.npcs:
+        if npc.unnamed_label:
+            entities[npc.id].setdefault("aliases", []).append(npc.unnamed_label)
     if axes:
         resolver = World(WorldSchema.from_data(data), facts or MemoryBackend(), make_fact=Fact)
         for name, poles in axes.items():
@@ -113,7 +124,7 @@ def _view(package, facts, axes=None, schema=None, *, structural=False):
     world = World(schema or _schema_for(package, axes), facts, make_fact=Fact)
 
     def person_label(npc, name):
-        return npc.aliases[0] if npc and npc.aliases else name
+        return _character_label(facts, npc, name)
 
     ids = []
     for entity_id in world.entity_ids():
@@ -741,17 +752,21 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _entity_label(self, world, entity_id):
         if world.is_a(entity_id, "character"):
-            npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
-            if npc:
-                return min((npc.name, *npc.aliases), key=len)
+            label = self._character_label(world, entity_id, shortest=True)
+            if label is not None:
+                return label
         return world.name(entity_id)
 
     def _referred_entity_label(self, world, entity_id):
         if world.is_a(entity_id, "character"):
-            npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
-            if npc:
-                return npc.aliases[0] if npc.aliases else npc.name
+            label = self._character_label(world, entity_id)
+            if label is not None:
+                return label
         return world.name(entity_id)
+
+    def _character_label(self, world, entity_id, *, shortest=False):
+        npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
+        return _character_label(self.state.facts, npc, world.name(entity_id), shortest=shortest) if npc else None
 
     def _referred_lines_for_command(self, player_input):
         world = self._world()
@@ -793,7 +808,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
             parent_id = world.parent(entity_id)
             line = f"- {label}."
             if parent_id is not None:
-                line = f"- {label}. Place: {world.name(parent_id)}."
+                parent_label = (
+                    self._entity_label(world, parent_id)
+                    if world.is_a(parent_id, "character")
+                    else world.name(parent_id)
+                )
+                line = f"- {label}. Place: {parent_label}."
             people.append((command_position(entity_id), line))
 
         protagonist_area = world.area(protagonist_id)
@@ -1213,7 +1233,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
             offered = {name.strip().casefold() for name in self._match_offered_names}
             same_as = dict(same_as)
             for name, target in same_as.items():
-                if isinstance(target, str) and target != "new" and target.strip().casefold() not in offered:
+                target_id = self._resolve_name(world, target) if isinstance(target, str) else None
+                offered_target = any(
+                    self._resolve_name(world, offered_name) == target_id for offered_name in self._match_offered_names
+                )
+                if (
+                    isinstance(target, str)
+                    and target != "new"
+                    and target.strip().casefold() not in offered
+                    and (target_id is None or not offered_target)
+                ):
                     issue = f"item_facts match named {target!r} for {name!r}, which was not in THINGS; kept as new"
                     issues.append(issue)
                     match_issues.append(issue)

@@ -236,7 +236,10 @@ def _person_places(turn: dict[str, Any], package: StoryPackage) -> list[str]:
     """Return recorded place labels that identify a package character."""
 
     person_names = {
-        name.casefold() for person in package.world.npcs for name in (person.name, *getattr(person, "aliases", ()))
+        name.casefold()
+        for person in package.world.npcs
+        for name in (person.name, *getattr(person, "aliases", ()), getattr(person, "unnamed_label", None))
+        if name is not None
     }
     result: set[str] = set()
     for facts in (turn.get("item_facts_before", {}), turn.get("item_facts_after", {})):

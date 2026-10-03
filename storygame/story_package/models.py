@@ -160,11 +160,19 @@ class Entity(_Model):
     name: str = Field(min_length=1)
     aliases: tuple[str, ...] = ()
     fallback_ids: tuple[str, ...] = ()
+    unnamed_label: str | None = None
+    named_by: str | None = Field(default=None, pattern=_ID)
     # plot.md biographies are written for a reader who already knows the ending, so a
     # character's own concealed history can sit inside the paragraph that introduces
     # them. Setting this replaces that paragraph for prompt purposes only; plot.md
     # remains narrative ground truth and is never edited to accommodate the narrator.
     narrator_bio: str | None = None
+
+    @model_validator(mode="after")
+    def validate_unnamed_label_pair(self):
+        if (self.unnamed_label is None) != (self.named_by is None):
+            raise ValueError(f"character '{self.name}' must declare both unnamed_label and named_by")
+        return self
 
 
 class Group(Entity):
@@ -359,6 +367,14 @@ class WorldSource(_Model):
     facts: tuple[str, ...] = ()
     fact_effects: Mapping[str, tuple[WorldEffect, ...]] = {}
     protected_knowledge: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_character_name_facts(self):
+        declared_facts = set(self.facts)
+        for character in self.npcs:
+            if character.named_by is not None and character.named_by not in declared_facts:
+                raise ValueError(f"character '{character.name}' names undeclared story fact '{character.named_by}'")
+        return self
 
     @model_validator(mode="before")
     @classmethod

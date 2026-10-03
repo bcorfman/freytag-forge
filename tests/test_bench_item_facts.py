@@ -633,7 +633,7 @@ def test_match_payload_gives_placed_character_place_from_real_package():
         include_places=True,
     )
 
-    assert "- Brandon. Place: watching Kristin in the park." in payload["user"].splitlines()
+    assert "- the man watching Kristin. Place: watching Kristin in the park." in payload["user"].splitlines()
 
 
 def _scene_1b_provider():
@@ -710,6 +710,54 @@ def test_place_kind_mapping_to_character_keeps_on_question(monkeypatch):
     assert questions[0].startswith('Is the place called "man"')
 
 
+def test_match_answer_resolving_to_offered_thing_is_kept(monkeypatch):
+    provider = _scene_1b_provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"kind": {"man": "person"}, "refers": [], "same_as": {"man": "Brandon"}},
+    )
+
+    _, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "man"}},
+        player_input="Walk over to the man watching me.",
+    )
+
+    assert not any("which was not in THINGS" in issue for issue in issues)
+
+
+def test_match_answer_with_unnamed_label_maps_to_character(monkeypatch):
+    provider = _scene_1b_provider()
+    questions = []
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "kind": {"man": "person"},
+            "refers": [],
+            "same_as": {"man": "the man watching Kristin"},
+        },
+    )
+
+    def confirm(*args):
+        questions.append(args[2])
+        return True
+
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "man"},
+            "Michelle's phone": {"place": "man"},
+        },
+        player_input="Walk over to the man watching me and hand him Michelle's phone.",
+        confirm=confirm,
+    )
+
+    world = provider._world()
+    brandon = world.resolve("Brandon")
+    assert len(questions) == 1
+    assert world.parent(world.resolve("Michelle's phone")) == brandon
+
+
 def test_character_at_character_lands_in_its_area(monkeypatch):
     provider = _scene_1b_provider()
     monkeypatch.setattr(
@@ -732,6 +780,31 @@ def test_character_at_character_lands_in_its_area(monkeypatch):
     assert world.area(world.resolve("Kristin")) == world.area(world.resolve("Brandon"))
     assert provider.last_item_facts_unplaced() == []
     assert any("placed in" in issue for issue in issues)
+
+
+def test_unnamed_label_shown_until_named():
+    provider = _scene_1b_provider()
+    provider.apply_item_facts({"Michelle's phone": {"held_by": "Brandon"}})
+    provider._selected_names = ["Michelle's phone", "Kristin"]
+
+    before = provider._things_block()
+    assert "the man watching Kristin" in before
+    assert "Brandon" not in before
+
+    provider.state.facts.assert_fact(Fact(predicate="brandon_identified", subject="story", value="true"))
+    after = provider._things_block()
+    assert "Brandon" in after
+    assert "the man watching Kristin" not in after
+
+
+def test_unnamed_label_resolves_to_character():
+    provider = _scene_1b_provider()
+    provider.apply_item_facts({"Michelle's phone": {"held_by": "the man watching Kristin"}})
+
+    world = provider._world()
+    assert world.resolve("the man watching Kristin") == "brandon"
+    assert world.parent("michelle_phone") == "brandon"
+    assert not world.resolve("the man watching Kristin").startswith("item_")
 
 
 def test_seat_given_when_its_furniture_holds_a_given_thing():
@@ -2881,7 +2954,7 @@ def test_prepare_turn_adds_referred_people_and_places_only_to_narration_things()
 
     assert provider._things_block(narration=True).splitlines() == [
         "THINGS:",
-        "- Kristin. Place: security corridors. With Kristin: Brandon, Michelle.",
+        "- Kristin. Place: security corridors. With Kristin: the man watching Kristin, Michelle.",
         "- Michelle. Place: security corridors.",
         "- executive office. This is a place.",
     ]
@@ -2968,7 +3041,7 @@ def test_entity_label_keeps_shortest_name():
     provider = _scene_provider("3B")
 
     assert provider._entity_label(provider._world(), "michelle") == "Shelly"
-    assert "With Kristin: Brandon, Michelle." in provider._things_block(narration=True)
+    assert "With Kristin: the man watching Kristin, Michelle." in provider._things_block(narration=True)
 
 
 def test_group_member_player_follows_with_companion_and_new_thing_uses_group_place(monkeypatch):
