@@ -23,6 +23,7 @@ from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteSt
 from storygame.runtime.scripted_provider import ScriptedTurnProvider
 from storygame.runtime.state import RuntimeState, RuntimeStateError
 from storygame.runtime.validation import ProposalValidationError
+from storygame.runtime.world_model import display_name, world_for
 from storygame.story_package.loader import StoryPackageError, load_story_package
 
 
@@ -71,6 +72,21 @@ def _default_package_root() -> Path:
 
 def _state_summary(state: RuntimeState) -> dict[str, object]:
     elapsed = state.facts.matching("story_elapsed_seconds", "story")
+    world = world_for(state.package, state.facts)
+    scene = next(scene for scene in state.package.scenes if scene.metadata.scene_id == state.current_scene_id)
+    protagonist_id = state.package.world.protagonist_id
+    things = {}
+    for entity_id in world.entity_ids():
+        holder_id = world.holder(entity_id)
+        if entity_id not in scene.metadata.item_ids and holder_id != protagonist_id:
+            continue
+        if world.is_hidden(entity_id):
+            continue
+        parent_id = world.parent(entity_id)
+        things[display_name(state.package, state.facts, world, entity_id)] = {
+            "place": display_name(state.package, state.facts, world, parent_id) if parent_id else None,
+            "held_by": display_name(state.package, state.facts, world, holder_id) if holder_id else None,
+        }
     return {
         "story_id": state.package.story_id,
         "scene_id": state.current_scene_id,
@@ -83,6 +99,7 @@ def _state_summary(state: RuntimeState) -> dict[str, object]:
         "story_elapsed_seconds": int(elapsed[-1].value) if elapsed and elapsed[-1].value else 0,
         "turn_index": state.turn_index,
         "turns_since_scene_entry": state.turn_index - state.scene_entered_at_turn,
+        "things": dict(sorted(things.items())),
     }
 
 
