@@ -50,8 +50,9 @@ held things behind a flag (4402a2f): paired x3 base 51/57, held_by
 54/57 (94.7%), t1 and t12 right 3/3; held_by made the default
 (64a1cb3) and W14 unnamed label built (6e1b191): x3 54/57, Brandon
 named early 0/3. Merged as PR 501 (fd52d0c). Bookmark kept (Brandon,
-2026-10-03): undeclared conditions stay unscored. Next: S4 on
-`claude/s4-runtime`; the task plan is under "S4 - Runtime" in section 11.
+2026-10-03): undeclared conditions stay unscored. S4 on
+`claude/s4-runtime`: S4a (e3c3ef6) and S4b (7ab8092) built. Next: S4c.
+The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -4588,6 +4589,23 @@ the task says):
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
+
+- **S4a done: e3c3ef6** (Ringer, Luna, one attempt; suite and ruff
+  clean; shipped payloads byte-identical). `SCHEMA_VERSION` 5;
+  `world_model.display_name` (the unnamed label until `named_by`);
+  `_state_summary["things"]` lists scene items and things the
+  protagonist holds, hidden ones left out, each by display name with
+  `place` and `held_by`. The bench's `_character_label` still has its
+  own copy of the label rule; S4c can switch it.
+- **S4b done: 7ab8092** (Ringer, Luna, one attempt; reviewed, two
+  fixes by hand). The Worker's `/jev` path uses the narrator's token,
+  body limit and `BudgetLedger`, with `typesafe/jev` priced at 0.042
+  micro-USD per input token (Cloudflare's model page, 2026-10-03) and
+  a 30,000-token cap. `storygame/runtime/jev.py` has `JevClient` (fails
+  closed to None) and `noul_yes`. Fixes: the client sends
+  `BROWSER_USER_AGENT` like the narrator; the reply's `model` reads
+  `result.result.model`. Worker 15/15, suite 1031. Not yet deployed or
+  called live.
 
 ## 12. Decisions for Brandon
 
