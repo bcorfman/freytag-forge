@@ -43,8 +43,13 @@ delivered by a handoff count as earned (2c5b389); 3C done on
 34/36; every handoff fires; places right every turn), merged (PR 493);
 S3 done and merged (PR 497, 33a1081): the start-place rule is
 droppable (71f05d2) but stays; 1A t6/t12 fixed (1055d04, 6ebaf2c,
-880748e); 1A-1B now 55/57 with the rule. Next: the 1A-1B narration
-slips, the bookmark, then S4.
+880748e); 1A-1B now 55/57 with the rule. On `claude/1a-1b-slips`
+(2026-10-03): seat scoped to things on furniture (b2fcce3), W9 amended
+so closed containers bring their contents (151abce), and `held_by` for
+held things behind a flag (4402a2f): paired x3 base 51/57, held_by
+54/57 (94.7%), t1 and t12 right 3/3. Next: Brandon's call on making
+held_by the default, then the early "Brandon" naming, the bookmark,
+then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -488,8 +493,20 @@ stays for now; rerun the paired arms after the 1A fixes below.
      wins if `place` is missing, unresolved, the holder, or the holder's
      area (or an area inside it); otherwise `place` wins. Flag off,
      nothing changes. Variation `item-facts-world-two-scene-held-by`
-     also gives the held lantern in the JSON example. Paired x3 on
-     4402a2f running: `held-by-base-x3` and `held-by-on-x3`.
+     also gives the held lantern in the JSON example.
+   - **Paired x3 on 4402a2f (`bench/results/held-by-base-x3`,
+     `held-by-on-x3`; `compare-held-by-base.txt`,
+     `compare-held-by-on.txt`; read by hand).** Base / held_by: facts
+     after the turn 51/57 / **54/57 (94.7%)**; invented changes 4 / 0;
+     contradicts 0 / 2; restarts flagged 1 / 3, real 0 / 0 (t4 and t10,
+     commanded). held_by misses, all reply omissions, not held_by
+     errors: r2 t5 (every item_facts entry empty), r2 and r3 t6 (prose
+     opens the laptop, reply leaves out `state`). **t1 right 3/3**
+     (base: contents at Kristin 2/3). **t12 right 3/3**: the phone is
+     held by Kristin, with no "Kristin's pocket" and no phantom
+     "Kristin's phone" (base: unresolved "Kristin's pocket" 2/3,
+     phantom 1/3), so the t12 capture-fix design is not needed. Brandon
+     is still named at t17-t19 in 3/3 of both arms (open item).
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the
