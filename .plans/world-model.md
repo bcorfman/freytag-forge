@@ -54,7 +54,9 @@ named early 0/3. Merged as PR 501 (fd52d0c). Bookmark kept (Brandon,
 `claude/s4-runtime`: S4a-S4d2 built (capture runs in the turn behind
 `FREYTAG_WORLD_CAPTURE`); S4e1 bench runtime mode built (3bdb7d7,
 857a008, 1b7de5e); S4e x3 through the runtime path 53/57 (93.0%)
-vs `w14-x3` 54/57. Next: staging `@world-state` (needs Brandon:
+vs `w14-x3` 54/57. The `held_by`-plus-`place` misses probed
+(2026-10-03): prompt arms do not help; an engine precedence fix scores
+38/44 vs 27/44 offline (awaiting Brandon). Next: staging `@world-state` (needs Brandon:
 deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
@@ -4718,6 +4720,43 @@ decide 1d from the refusals and story breaks that S4d records.
   - Recording difference, not a state difference: on a scene-entry turn
     (t13) runtime records Kristin's after-place after the scene
     placements are re-applied (park), the bench before (driver's seat).
+- **`held_by`-plus-`place` probed (2026-10-03; Ringer,
+  `~/dev/ringer-work/freytag-held-place-probe/`, `probe_held_place.txt`,
+  `held_place.json`; read by hand).** Recorded prompts of
+  `s4e-runtime-x3`, all 3 replicates: t1, t6, t9 x 5 samples, controls
+  t3, t5, t12, t16 x 2. Resolving the recorded places offline shows
+  three causes, not one: t1's "in drawer" does not resolve (the leading
+  "in"), so `held_by` wins; t9's "passenger seat" is not declared
+  (only the driver's seat is), so `held_by` wins; t6's "workstation"
+  resolves and is not an area, so `place` wins, though the same reply
+  puts Kristin at the workstation.
+  - *Prompt arms (replies with both keys, recorded / "instead" /
+    set-down example).* "instead" ends the `held_by` sentence; set-down
+    adds 'If Kristin sets the lantern on a table, the lantern is
+    {"place": "table"}.' t1 1/15 / 9/15 / 0/15; t6 14/15 / 15/15 /
+    15/15; t9 14/15 / 15/15 / 13/15; controls about the same. **Neither
+    arm stops the double key on t6 or t9; "instead" makes t1 worse.**
+    Not adopted.
+  - *Prose, read by hand (recorded arm).* t6: she picks the laptop up
+    and keeps it in 11 of 14, sets it back on the workstation in 3. t9:
+    she sets it on a seat in 14 of 14 (one reply names the driver's
+    seat where the prose says passenger seat).
+  - *Precedence scored offline on every double-key entry against that
+    reading (recorded arm, 44 entries):* current 27/44; drop a leading
+    "in/on/at/inside/into/onto/under" before resolving 31/44 (t1 0/4 ->
+    4/4); that plus "`held_by` wins when `place` is the holder's own
+    place in the same reply" **38/44** (t6 3/14 -> 11/14, t9 12/14 ->
+    11/14). Controls t3, t5, t12, t16 right under all three. Remaining
+    misses: t6's 3 set-backs (the keys cannot show them), t9's 2
+    unresolved passenger seats, and the one driver's/passenger mismatch.
+    Declaring the truck's passenger seat would clear t9's 2 under every
+    rule (41/44 with both changes, estimated, not run).
+  - *Recommendation.* Engine-side, no prompt change: extend 4402a2f's
+    precedence (the proven design: `held_by` wins when `place` is the
+    holder or the holder's area) to the holder's own place in the same
+    reply, and strip a leading preposition before resolving. Declare the
+    passenger seat as 1A-1B grounding (read the grounding guide first).
+    Waiting on Brandon.
 
 ## 12. Decisions for Brandon
 
