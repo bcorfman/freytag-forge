@@ -92,7 +92,9 @@ check (2026-10-03): token break 3/3 and proceed commits it, controls
 new person (parked with the echo and false pole; Brandon stopped
 scene-1 work). Runtime sweep of all seven later scenes x3: the runtime
 path matches the bench path once a scene-exit bench artifact is left
-out; 1B-1C is under the bar at about 80% (always was).
+out; 1B-1C is under the bar at about 80% (always was). Capture is on
+in production (Brandon); the exit-turn bench fix built as deb5cb6 and
+measured live.
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -131,9 +133,12 @@ parked) and asked for a win across all scenes. Runtime sweep done
 (section 11, "Runtime sweep, all scenes"): the runtime path matches
 the bench path in every scene once a bench artifact on scene-exit
 turns is left out; 1B-1C is the one scene under the bar (about 80%,
-unchanged since 48eb838). **Resume at:** Brandon's call on turning
-`FREYTAG_WORLD_CAPTURE` on in production, the bench exit-turn fix, and
-whether 1B-1C is next. The notes below are older.
+unchanged since 48eb838). Brandon turned `FREYTAG_WORLD_CAPTURE` on
+in production. The bench exit-turn fix is built (deb5cb6) and measured
+live: exit turns now score right (2A 3/3, 3A 3/3). **Resume at:**
+merging `claude/s4f-live-check`, then Brandon's call on what is next
+(1B-1C at about 80% is the one scene under the bar). The notes below
+are older.
 
 
 **Checked against the results on disk (2026-10-02).** Every figure
@@ -4949,6 +4954,21 @@ the task says):
     unrecorded (`Kristin:moved` with `missed_change`).
   - Pooled with exit turns left out: runtime 183/204 (89.7%); without
     1B-1C, 138/147 (93.9%).
+  - **Brandon (2026-10-03): turned `FREYTAG_WORLD_CAPTURE` on in
+    production, and asked for the exit-turn fix.**
+  - *Exit-turn fix done: deb5cb6* (Ringer `freytag-exit-turn`, Luna,
+    one attempt; reviewed, applied unchanged). `WorldCapture.after_commit`
+    records `facts_after` (things given plus changed this turn), taken
+    before the authored transition; the runtime bench uses it on a turn
+    that leaves the scene. Game state unchanged. The check proved the new
+    bench test fails on the old code; suite, ruff, shipped payloads and
+    bench prompts unchanged.
+    Live rerun (`runtime-sweep-2a-x3-exitfix`, `-3a-x3-exitfix`): 2A
+    19/21 (was 17/21), exit turns 3/3 (was 0/3); 3A 27/27 (was 27/30),
+    exit turns 3/3. New in this 3A run only: t9 "Hand Brandon the
+    emergency override codes." rejected 3/3 as a leak ("rebecca"),
+    0/3 in the sweep an hour before; the fix cannot change prompts, so
+    it is narrator drift. Not chased.
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
