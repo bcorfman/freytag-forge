@@ -385,6 +385,20 @@ stays for now; rerun the paired arms after the 1A fixes below.
      Rejected up front: parsing "<Name>'s <noun>" in the engine (typed
      kinds over phrase parsing) and a narrator naming rule (the engine
      resolves names).
+   - **x3 on 151abce (`bench/results/closed-contents-x3`;
+     `compare-closed-contents.txt`; read by hand).** 57/57 turns;
+     facts after the turn 49/57 (48/57 on b2fcce3); contradicts 2 (was
+     7); restarts 2, both commanded moves. **t1 prose fixed 3/3:** the
+     drawer opens and shows the declared stapler, batteries, pens and
+     clips, with nothing invented; `open` lands 3/3. **New t1 miss
+     (r1, r3):** the reply gives all four contents `"place": "Kristin"`,
+     so they move to her though she only looked. It is the same reply
+     habit that put the drawer itself at "Kristin" 15/15 in the t1 probe
+     (refused there, because the drawer is fixed). Not yet diagnosed.
+     One-offs: r1 t6 carries the laptop to the kitchen and the reply
+     leaves out `open`; r1 t16 narrates the hand-over and the reply
+     leaves out the phone (r1 t18 follows); r2 t8, r2 t11 and r3 t4 are
+     judge disagreements on prose that reads right.
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the
