@@ -186,6 +186,10 @@ items:
   seat_for: kristin_truck
   enter_text: Kristin sat down in the driver's seat.
   leave_text: Kristin got out of the truck.
+- id: truck_passenger_seat
+  name: passenger seat
+  kind: seat
+  fixed: true
 - id: transit_card
   name: Transit token
 - id: michelle_photograph

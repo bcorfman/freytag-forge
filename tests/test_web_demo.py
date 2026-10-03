@@ -104,6 +104,7 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
             "workstation chair": {"place": "kitchen", "held_by": None},
             "workstation": {"place": "kitchen", "held_by": None},
             "driver's seat": {"place": "Kristin's truck", "held_by": None},
+            "passenger seat": {"place": "Kristin's truck", "held_by": None},
         },
     }
     opening = session.json()["opening"]

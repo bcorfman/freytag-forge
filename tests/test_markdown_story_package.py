@@ -275,6 +275,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "michelle_phone": ItemPlacement(parent="kitchen", text="on the kitchen floor"),
         "kristin_laptop": ItemPlacement(parent="kristin_truck", text="in Kristin's truck outside the house"),
         "truck_driver_seat": ItemPlacement(parent="kristin_truck"),
+        "truck_passenger_seat": ItemPlacement(parent="kristin_truck"),
         "kristin_truck": ItemPlacement(parent="outside_house"),
         "michelle_workstation": ItemPlacement(parent="kitchen"),
         "michelle_drawer": ItemPlacement(parent="michelle_workstation", part_of=True, text="in Michelle's workstation"),
@@ -381,9 +382,11 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
     contents = plot.read_text(encoding="utf-8")
     contents = contents.replace(
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
-        "workstation_chair, truck_driver_seat, kristin_truck, michelle_workstation, back_door]\n",
+        "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
+        "michelle_workstation, back_door]\n",
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
-        "workstation_chair, truck_driver_seat, kristin_truck, michelle_workstation, back_door, test_item]\n",
+        "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
+        "michelle_workstation, back_door, test_item]\n",
         1,
     )
     contents = contents.replace(
