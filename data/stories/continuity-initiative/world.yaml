@@ -192,6 +192,9 @@ items:
   fixed: true
 - id: transit_card
   name: Transit token
+  axes:
+  - {intact: [], destroyed: [broken, snapped, crushed]}
+  unavailable: destroyed
 - id: michelle_photograph
   name: Michelle's photograph
   aliases: [photograph, photo]

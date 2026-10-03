@@ -47,6 +47,13 @@ def _turn(text: str = "The search continues.") -> dict[str, object]:
     return {"segments": [{"kind": "narration", "text": text}]}
 
 
+def _state_1b() -> RuntimeState:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "1B"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "1B")
+    return state
+
+
 def test_capture_off_changes_nothing() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     before = state.snapshot()
@@ -139,6 +146,70 @@ def test_game_break_proceed_applies_capture(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert world_for(PACKAGE, state.facts).holder("michelle_phone") == "kristin"
     assert state.pending_capture is None
+
+
+def test_captured_unavailable_pole_raises_game_break(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_request(monkeypatch)
+    state = _state_1b()
+    provider = _provider(
+        state,
+        {"refers": ["Transit token"], "same_as": {}},
+        {**_turn(), "item_facts": {"Transit token": {"state": "destroyed"}}},
+    )
+    engine = RuntimeEngine(state, provider, capture=_capture(state, provider))
+
+    proposal = engine.turn("Inspect the transit token.")
+
+    assert proposal.game_break is not None
+    assert "transit_card" in proposal.game_break.affected_ids
+    assert world_for(PACKAGE, state.facts).axis_values("transit_card")["intact"] == "intact"
+    assert state.pending_break is not None
+
+
+def test_captured_unavailable_pole_proceed_commits(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_request(monkeypatch)
+    state = _state_1b()
+    provider = _provider(
+        state,
+        {"refers": ["Transit token"], "same_as": {}},
+        {**_turn(), "item_facts": {"Transit token": {"state": "destroyed"}}},
+    )
+    engine = RuntimeEngine(state, provider, capture=_capture(state, provider))
+
+    engine.turn("Inspect the transit token.")
+    engine.resolve_break("proceed")
+
+    assert world_for(PACKAGE, state.facts).axis_values("transit_card")["intact"] == "destroyed"
+    assert state.pending_break is None
+
+
+def test_captured_non_dependency_axis_raises_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_request(monkeypatch)
+    state = _state_1b()
+    provider = _provider(
+        state,
+        {"refers": ["Transit token"], "same_as": {}},
+        {**_turn(), "item_facts": {"Transit token": {"state": "intact"}}},
+    )
+    engine = RuntimeEngine(state, provider, capture=_capture(state, provider))
+
+    proposal = engine.turn("Inspect the transit token.")
+
+    assert proposal.game_break is None
+    assert state.pending_break is None
+
+
+def test_already_unavailable_dependency_does_not_break_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_request(monkeypatch)
+    state = _state_1b()
+    world_for(PACKAGE, state.facts).set_axis("transit_card", "destroyed")
+    provider = _provider(state, {"refers": [], "same_as": {}}, _turn())
+    engine = RuntimeEngine(state, provider, capture=_capture(state, provider))
+
+    proposal = engine.turn("Search the park.")
+
+    assert proposal.game_break is None
+    assert state.pending_break is None
 
 
 def test_game_break_return_discards_capture(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -236,6 +307,9 @@ def test_provider_gets_typed_command_not_added_steps() -> None:
 
         def after_commit(self, *_args: object, **_kwargs: object) -> dict[str, object]:
             return {"issues": [], "unplaced": [], "changed": []}
+
+        def context(self) -> dict[str, object]:
+            return {}
 
         def discard(self) -> None:
             pass

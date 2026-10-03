@@ -79,6 +79,7 @@ class RuntimeEngine(CanonicalEventMixin):
         command_text = " ".join(split_command(player_input))
         self.last_player_command = command_text
         self.state.require_turn_allowed()
+        already = set(self.validator.unsatisfied_dependencies(self.state.current_scene_id, self.state.facts))
         before = self.state.snapshot()
         try:
             self.state.last_turn_delivery = TurnDelivery()
@@ -117,7 +118,7 @@ class RuntimeEngine(CanonicalEventMixin):
             raise
         # Keep the package's existing future-dependency analysis as the final
         # pre-commit check, after narration safety has accepted the candidate.
-        at_risk = self.validator.validate(self.state, proposal)
+        at_risk = tuple(id_ for id_ in self.validator.validate(self.state, proposal) if id_ not in already)
         if at_risk:
             warning = GameBreakWarning(
                 warning_id="future_dependency_at_risk",
@@ -138,6 +139,7 @@ class RuntimeEngine(CanonicalEventMixin):
         staged_cue_fact_id = self.state.staged_cue_fact_id
         self.state.apply_proposal(proposal, canonical_event_ids=(canonical_event_id,) if canonical_event_id else ())
         if self.capture:
+            context = self.capture.context()
             capture_record = self.capture.after_commit(
                 command_text,
                 proposal.narration,
@@ -154,6 +156,24 @@ class RuntimeEngine(CanonicalEventMixin):
                     ),
                 }
             )
+            newly = (
+                set(self.validator.unsatisfied_dependencies(self.state.current_scene_id, self.state.facts)) - already
+            )
+            if newly:
+                warning = GameBreakWarning(
+                    warning_id="future_dependency_at_risk",
+                    reason="This consequence would leave a required future dependency unavailable.",
+                    affected_ids=tuple(sorted(newly)),
+                    snapshot_id=self.state.new_snapshot_id(),
+                )
+                self.state.restore_snapshot(before)
+                self.state.set_pending_break(
+                    warning,
+                    snapshot=before,
+                    proposal=proposal,
+                    capture=context,
+                )
+                return proposal.model_copy(update={"game_break": warning})
         if staged_cue_fact_id and self.state.current_scene_id == before.current_scene_id:
             self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)
             self.state.staged_cue_fact_id = None

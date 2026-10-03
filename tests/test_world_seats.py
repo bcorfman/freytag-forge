@@ -41,6 +41,17 @@ def test_package_rejects_enter_pole_outside_axes(tmp_path):
         load_story_package(root)
 
 
+def test_axis_unavailable_must_be_a_pole(tmp_path):
+    root = _changed_package(
+        tmp_path,
+        lambda data: next(item for item in data["items"] if item["id"] == "workstation_chair").update(
+            unavailable="gone"
+        ),
+    )
+    with pytest.raises(StoryPackageError, match="item 'workstation_chair' unavailable is not a pole"):
+        load_story_package(root)
+
+
 def test_package_rejects_enterable_plain_thing(tmp_path):
     root = _changed_package(
         tmp_path,

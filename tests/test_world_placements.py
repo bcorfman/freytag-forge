@@ -162,7 +162,7 @@ def test_cyclic_story_kinds_are_story_package_errors(tmp_path):
     world["kinds"] = [{"id": "a", "is": ["b"]}, {"id": "b", "is": ["a"]}]
     for item in world["items"]:
         if item.get("kind") not in BASE_KINDS:
-            item.update(kind="thing", enter_pole=None, seat_for=None, axes=[])
+            item.update(kind="thing", enter_pole=None, unavailable=None, seat_for=None, axes=[])
     world_path.write_text(yaml.safe_dump(world, sort_keys=False))
     with pytest.raises(StoryPackageError, match="cycle among kinds"):
         load_story_package(root)
