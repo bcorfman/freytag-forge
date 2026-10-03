@@ -62,14 +62,19 @@ probed and the command-scoped THINGS state wording built (b867fb5):
 x3 49/57, t9 right 3/3, but r1 gains a chair invention (cascading to
 t7) and a state echo on t6; keep or revert is open. `@world-state` rewritten (80e507d: player-voice inputs, asserts the
 phone is held by Kristin Schweitzer after the pick-up and the move) and
-run on staging at b24fb4d (2026-10-03): **fails, capture is not in
-effect there.** The prose pockets the phone, but `state.things` keeps
-it in the kitchen, and a direct staging turn returns no
-`capture_steps`/`capture_issues`, which capture always records
-(even a missing reply gives an issue). Needs Brandon: confirm
-`FREYTAG_WORLD_CAPTURE=1` on the staging service and redeploy it.
-Next: staging `@world-state` (needs Brandon:
-deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
+run on staging at b24fb4d (2026-10-03): first failed (the phone stayed
+in the kitchen). Brandon then confirmed `FREYTAG_WORLD_CAPTURE=1` on
+staging. **Rerun on b24fb4d passes** (2026-10-03): the phone is held by
+Kristin Schweitzer after the pick-up and after "Go out to the truck."
+The Worker's `/jev` is live (one `moves_thing` ask answered). A direct
+turn ("Put Michelle's phone in my pocket.") returned `capture_issues`
+("item_facts match mapped place 'Kristin' to a character; Kristin not
+moved") and the phone held by Kristin. Correction to the earlier
+diagnosis: an empty capture record is not proof that capture is off,
+because the turn response drops `capture_steps`, `capture_issues` and
+`capture_unplaced` when all three are empty. S4e is done.
+Next: keep or revert b867fb5 (Brandon), then S4f (decide 1d, then
+build cause routing).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -4627,7 +4632,8 @@ the task says):
   The bench loop then calls the same collaborator.
 - **S4e. Measure the runtime path.** Bench x3 on the default
   two-scene variation through the runtime provider, against `w14-x3`
-  (54/57). Then hosted `@world-state` on staging.
+  (54/57). Then hosted `@world-state` on staging. **Done (2026-10-03):**
+  x3 53/57; `@world-state` passes on staging at b24fb4d with capture on.
 - **S4f. Cause routing.** Decide 1d first, using what S4d records. Then
   build it.
 
