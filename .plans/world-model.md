@@ -60,7 +60,7 @@ and a declared passenger seat (bfd8345) built; x3 49/57 (one miss from
 the change, t9's unasked laptop close drops its state 3/3); t9 state
 probed and the command-scoped THINGS state wording built (b867fb5):
 x3 49/57, t9 right 3/3, but r1 gains a chair invention (cascading to
-t7) and a state echo on t6; keep or revert is open. `@world-state` rewritten (80e507d: player-voice inputs, asserts the
+t7) and a state echo on t6; **Brandon kept b867fb5 (2026-10-03).** `@world-state` rewritten (80e507d: player-voice inputs, asserts the
 phone is held by Kristin Schweitzer after the pick-up and the move) and
 run on staging at b24fb4d (2026-10-03): first failed (the phone stayed
 in the kitchen). Brandon then confirmed `FREYTAG_WORLD_CAPTURE=1` on
@@ -73,7 +73,7 @@ moved") and the phone held by Kristin. Correction to the earlier
 diagnosis: an empty capture record is not proof that capture is off,
 because the turn response drops `capture_steps`, `capture_issues` and
 `capture_unplaced` when all three are empty. S4e is done.
-Next: keep or revert b867fb5 (Brandon), then S4f (decide 1d, then
+Next: S4f (decide 1d, then
 build cause routing).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
