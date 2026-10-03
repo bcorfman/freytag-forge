@@ -1,0 +1,38 @@
+{
+  "name": "item-facts-world-3a-runtime",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 12,
+  "entry_state": "thorough",
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "runtime": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "system_prompt": {
+    "constant_rules_in_system": true,
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+  },
+  "scripts": {
+    "3A": [
+      {
+        "name": "reaching-michelle",
+        "inputs": [
+          "Search the holding blocks for Michelle.",
+          "Ask Michelle about the other sites.",
+          "Ask the prisoners who runs this block.",
+          "Follow Michelle into the medical level.",
+          "Read the experiment records.",
+          "Talk to the framed official.",
+          "Check the gate-status panel.",
+          "Pick up the stolen radio.",
+          "Hand Brandon the emergency override codes.",
+          "Warn Michelle that the codes are expiring.",
+          "Tell Michelle to start the uprising.",
+          "Lead the prisoners to the nearest checkpoint."
+        ]
+      }
+    ]
+  }
+}

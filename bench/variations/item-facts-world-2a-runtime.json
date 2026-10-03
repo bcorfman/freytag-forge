@@ -1,0 +1,36 @@
+{
+  "name": "item-facts-world-2a-runtime",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 10,
+  "entry_state": "thorough",
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "runtime": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "system_prompt": {
+    "constant_rules_in_system": true,
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+  },
+  "scripts": {
+    "2A": [
+      {
+        "name": "hideout-to-corridors",
+        "inputs": [
+          "Search Brandon's servers for leaked Continuity Initiative files.",
+          "Pull the facility's cooling-water readings off the servers.",
+          "Ask Brandon to build inspector credentials around the cooling-water fault.",
+          "Show the checkpoint guard my inspector credentials.",
+          "Warn the supervisor about the cooling-water fault.",
+          "Walk into the infrastructure corridors.",
+          "Log in to the inspection console.",
+          "Check the water-pressure readings on the inspection console.",
+          "Cycle the corridor lights from the inspection console.",
+          "Lead Brandon deeper down the infrastructure corridors."
+        ]
+      }
+    ]
+  }
+}

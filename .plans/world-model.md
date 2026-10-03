@@ -89,8 +89,10 @@ as 7f01a75 on `claude/s4f-npc-axes`: recorded knock-out replies raise
 the break 14/15, controls 0/15; merged as PR 506 (8b7fafa). Live
 check (2026-10-03): token break 3/3 and proceed commits it, controls
 0/6; knock-out break 1/3, one miss from the match call making "man" a
-new person. Open: that miss, the prose echo, the false knock-out pole
-(1/15).
+new person (parked with the echo and false pole; Brandon stopped
+scene-1 work). Runtime sweep of all seven later scenes x3: the runtime
+path matches the bench path once a scene-exit bench artifact is left
+out; 1B-1C is under the bar at about 80% (always was).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -124,9 +126,14 @@ passed). Live check done (section 11, "S4f live check"): the token
 break fires 3/3 with proceed committing it, controls 0/6; the
 knock-out breaks 1/3, and r1 is a miss because the match call said
 "man" was new, so a second man was knocked out and Brandon stayed
-conscious. **Resume at:** that match-call miss (record and read the
-match prompt first, then probe), the prose echo, and the false
-knock-out pole (1/15). The notes below are older.
+conscious. Brandon then stopped scene-1 work (those three items are
+parked) and asked for a win across all scenes. Runtime sweep done
+(section 11, "Runtime sweep, all scenes"): the runtime path matches
+the bench path in every scene once a bench artifact on scene-exit
+turns is left out; 1B-1C is the one scene under the bar (about 80%,
+unchanged since 48eb838). **Resume at:** Brandon's call on turning
+`FREYTAG_WORLD_CAPTURE` on in production, the bench exit-turn fix, and
+whether 1B-1C is next. The notes below are older.
 
 
 **Checked against the results on disk (2026-10-02).** Every figure
@@ -4907,6 +4914,41 @@ the task says):
   depends on the match call tying "the man" to Brandon's unnamed label,
   and it said "new" in 1 of 2 real knock-outs. The same family as
   "Rebecca's office" made new and JANUS taken as a place.
+  **Brandon (2026-10-03): stop spending time on scene 1.** The
+  knock-out match miss, the state echo and the false knock-out pole are
+  parked as known gaps; reopen only if real play shows them.
+
+  *Runtime sweep, all scenes (2026-10-03, on 8b7fafa; Ringer
+  `freytag-runtime-sweep`, every task one attempt;
+  `~/dev/ringer-work/freytag-runtime-sweep/`: `compare.py`,
+  `compare_noexit.py`).* The seven scene variations copied with
+  `"runtime": true` (`bench/variations/item-facts-world-*-runtime.json`,
+  otherwise identical), x3 each, after a 2A smoke. Results in
+  `bench/results/runtime-sweep-<scene>-x3`.
+  - Raw, whole state per turn: runtime 185/222 (83.3%) vs the scenes'
+    last bench-path results 156/166 (94.0%), lower in every scene.
+  - **Most of the gap is a bench artifact on the scene-exit turn.** In
+    runtime mode capture applies the reply, then the authored transition
+    moves Kristin into the next scene (the right game state). The bench
+    records that place but judges against the narration with the entry
+    segment stripped (`segments[:-1]`), so the move reads as invented.
+    The bench path applies the reply after the transition, so it puts
+    her back where the prose left her. Exit turns fail 3/3 in 2A, 2B, 2C
+    and 3A, 2/3 in 3B.
+  - Exit turns left out of both arms: 2A 17/18 vs 17/18, 2B 7/7 vs
+    21/21, 2C 21/21 vs 21/21, 3A 26/27 vs 27/27, 3B 24/24 vs 22/24. Only
+    1B-1C (18/19 vs 45/57) and 3C (34/36 vs 30/36) stayed lower.
+  - Control, bench path on the same code (`benchpath-now-1b-1c-x3`,
+    `benchpath-now-3c-x3`): 1B-1C 45/57 (the same), 3C 32/36. So the
+    runtime path matches the bench path in every scene.
+  - The 1B-1C baseline (19/20) was one replicate. Its commit 48eb838
+    rerun x3 (`old-48eb838-1b-1c-x3`) gives 49/60 (82%) vs today's
+    47/60 (bench path) and 46/60 (runtime). No regression from the
+    scene-1 work; 1B-1C has always been about 80% and is the one scene
+    under the bar. Its misses are mostly Kristin's own moves left
+    unrecorded (`Kristin:moved` with `missed_change`).
+  - Pooled with exit turns left out: runtime 183/204 (89.7%); without
+    1B-1C, 138/147 (93.9%).
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
