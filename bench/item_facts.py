@@ -223,9 +223,26 @@ START_PLACE_RULE_TEMPLATE = (
 )
 
 
-def _single_call_rules(protagonist_name, *, drop_rules=frozenset()):
+def _single_call_rules(protagonist_name, *, drop_rules=frozenset(), held_by=False):
     protagonist = protagonist_name or "Sam"
-    rules = tuple(rule.format(protagonist=protagonist) for rule in _SINGLE_CALL_RULES if rule not in drop_rules)
+    place_rule = _SINGLE_CALL_RULES[1]
+    example_rule = _SINGLE_CALL_RULES[2]
+    if held_by:
+        place_rule = (
+            'Give only what changed. For "place", give the name of the thing or place where it is now. '
+            'If a person holds it, give "held_by" with that person\'s name. '
+            'Use "condition" for up to two short phrases.'
+        )
+        example_rule = (
+            "Example: if {protagonist} picks up a lantern and lights it, the lantern is "
+            '{{"held_by": "{protagonist}", "condition": ["lit"]}}.'
+        )
+    selected_rules = (_SINGLE_CALL_RULES[0], place_rule, example_rule, *_SINGLE_CALL_RULES[3:])
+    rules = tuple(
+        rule.format(protagonist=protagonist)
+        for index, rule in enumerate(selected_rules)
+        if _SINGLE_CALL_RULES[index] not in drop_rules
+    )
     if protagonist_name:
         return rules[:1] + (
             f"When {protagonist_name} goes to a new place, add {protagonist_name} to item_facts with the place where {protagonist_name} is when the story ends.",
@@ -242,7 +259,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
     allowed_reply_keys = CloudflareTurnProvider.allowed_reply_keys | {"item_facts"}
 
     def __init__(
-        self, *, item_facts, mode, state_axes=None, seed_issues=None, seed_from_package=False, drop_rules=(), **kwargs
+        self,
+        *,
+        item_facts,
+        mode,
+        state_axes=None,
+        seed_issues=None,
+        seed_from_package=False,
+        drop_rules=(),
+        held_by=False,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.item_facts_seed_names = tuple(item_facts)
@@ -251,6 +277,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.state_axes = copy.deepcopy(state_axes or {})
         self.seed_from_package = seed_from_package
         self.drop_rules = frozenset(drop_rules)
+        self.held_by = held_by
         self._pending_item_facts = None
         self._pending_item_facts_present = False
         self._held_item_facts = {}
@@ -298,6 +325,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seed_issues=None,
         seed_from_package=False,
         drop_rules=(),
+        held_by=False,
     ):
         base = CloudflareTurnProvider.from_environment(state, prompt_variant=prompt_variant)
         return cls(
@@ -312,6 +340,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             seed_issues=seed_issues,
             seed_from_package=seed_from_package,
             drop_rules=drop_rules,
+            held_by=held_by,
         )
 
     def _world(self, *, axes=None):
@@ -429,7 +458,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             place = facts["place"]
             entity_id = world.resolve(name)
             if place:
-                line += f" Place: {place.strip()}."
+                parent_id = world.parent(entity_id) if entity_id else None
+                label = "Held by" if self.held_by and parent_id and world.is_a(parent_id, "character") else "Place"
+                line += f" {label}: {place.strip()}."
             if facts["condition"]:
                 axes = world.axis_definitions(entity_id) if entity_id else ()
                 rendered = []
@@ -516,11 +547,17 @@ class ItemFactsProvider(CloudflareTurnProvider):
             lines.insert(0, f"Just before this: {' '.join(self.prior_steps)}")
         if not lines or "scene_setting" not in user:
             return lines
-        return [
-            f"{name}. Place: {self.item_facts[name]['place'].strip()}."
-            for name in self._thing_names()
-            if self.item_facts[name]["place"]
-        ] + lines
+        player_lines = []
+        world = self._world()
+        for name in self._thing_names():
+            place = self.item_facts[name]["place"]
+            if not place:
+                continue
+            entity_id = world.resolve(name)
+            parent_id = world.parent(entity_id) if entity_id else None
+            label = "Held by" if self.held_by and parent_id and world.is_a(parent_id, "character") else "Place"
+            player_lines.append(f"{name}. {label}: {place.strip()}.")
+        return player_lines + lines
 
     def _section_user_prompt(self, user):
         rendered = super()._section_user_prompt(user)
@@ -551,7 +588,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if self.item_facts_mode != "single_call":
             return system
         protagonist = _protagonist_name(self.state.package)
-        rules = list(_single_call_rules(protagonist, drop_rules=self.drop_rules))
+        rules = list(_single_call_rules(protagonist, drop_rules=self.drop_rules, held_by=self.held_by))
         if not opening and protagonist:
             start_place_rule_kept = START_PLACE_RULE_TEMPLATE not in self.drop_rules
             if start_place_rule_kept:
@@ -632,8 +669,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         wanted = set(names)
         return {name: copy.deepcopy(facts) for name, facts in view.items() if name in wanted}
 
-    @staticmethod
-    def _valid_entry(value):
+    def _valid_entry(self, value):
         if not isinstance(value, dict) or not value:
             return False
         if "contents" in value:
@@ -644,6 +680,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
             )
         return (
             ("place" in value and isinstance(value["place"], str) and bool(value["place"].strip()))
+            or (
+                self.held_by
+                and "held_by" in value
+                and isinstance(value["held_by"], str)
+                and bool(value["held_by"].strip())
+            )
             or ("state" in value and isinstance(value["state"], str) and bool(value["state"].strip()))
             or (
                 "condition" in value
@@ -1022,6 +1064,33 @@ class ItemFactsProvider(CloudflareTurnProvider):
             )
             return previous, issues
         world = self._world()
+        if self.held_by:
+            raw = copy.deepcopy(raw)
+            for value in raw.values():
+                if not isinstance(value, dict) or not isinstance(value.get("held_by"), str):
+                    continue
+                holder_name = value["held_by"].strip()
+                holder_id = self._resolve_name(world, holder_name)
+                place = value.get("place")
+                place_id = self._resolve_name(world, place) if isinstance(place, str) and place.strip() else None
+                holder_area = world.area(holder_id) if holder_id is not None else None
+                held_by_wins = (
+                    holder_id is None
+                    or not isinstance(place, str)
+                    or place_id is None
+                    or place_id == holder_id
+                    or (
+                        holder_area is not None
+                        and world.is_a(place_id, "area")
+                        and (
+                            place_id in {holder_area, *world.chain(holder_area)}
+                            or holder_area in {place_id, *world.chain(place_id)}
+                        )
+                    )
+                )
+                if held_by_wins:
+                    value["place"] = holder_name
+                value.pop("held_by", None)
         fact_move_overrides = self._fact_move_overrides(world)
         entries = []
         explicit_keys = set(raw)
@@ -1545,6 +1614,9 @@ def validate_item_facts(value, *, known_names=None):
     for rule in drop_rules:
         if rule not in (*_SINGLE_CALL_RULES, START_PLACE_RULE_TEMPLATE):
             raise ValueError(f"item_facts drop_rules contains unknown rule {rule!r}")
+    held_by = value.get("held_by", False)
+    if not isinstance(held_by, bool):
+        raise ValueError("item_facts held_by must be a boolean")
     seed = value.get("seed", {})
     if not isinstance(seed, dict) or (not seed and not seed_from_package):
         raise ValueError("item_facts must have a non-empty seed unless seed_from_package is enabled")

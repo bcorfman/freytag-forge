@@ -763,6 +763,92 @@ def _scene_provider(scene_id, *, item_facts=None):
     )
 
 
+def test_held_by_flag_swaps_place_rules():
+    provider = _scene_provider("1A")
+    old_place = (
+        'Give only what changed. For "place", give the name of the person, thing, or place that has it now. '
+        'Use "condition" for up to two short phrases.'
+    )
+    new_place = (
+        'Give only what changed. For "place", give the name of the thing or place where it is now. '
+        'If a person holds it, give "held_by" with that person\'s name. '
+        'Use "condition" for up to two short phrases.'
+    )
+    old_example = (
+        "Example: if Kristin picks up a lantern and lights it, the lantern is "
+        '{"place": "Kristin", "condition": ["lit"]}.'
+    )
+    new_example = (
+        "Example: if Kristin picks up a lantern and lights it, the lantern is "
+        '{"held_by": "Kristin", "condition": ["lit"]}.'
+    )
+
+    assert old_place in provider._system_prompt()
+    assert old_example in provider._system_prompt()
+    provider.held_by = True
+    system = provider._system_prompt()
+    assert new_place in system
+    assert new_example in system
+    assert old_place not in system
+    assert old_example not in system
+    assert new_place not in _single_call_rules("Kristin", held_by=True, drop_rules={old_place})
+
+
+def test_held_by_flag_shows_held_by_in_things():
+    provider = _scene_provider("1A")
+    provider.apply_item_facts({"Michelle's phone": {"place": "Kristin"}})
+    provider.held_by = True
+    provider._selected_names = ["Michelle's phone", "Kristin"]
+
+    block = provider._things_block()
+    phone = next(line for line in block.splitlines() if line.startswith("- Michelle's phone."))
+    kristin = next(line for line in block.splitlines() if line.startswith("- Kristin."))
+    assert "Held by: Kristin." in phone
+    assert "Place: Kristin." not in phone
+    assert "Place:" in kristin
+
+
+def test_held_by_pocket_place_keeps_holder():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts({"Michelle's phone": {"held_by": "Kristin", "place": "Kristin's pocket"}})
+    assert provider._world().parent("michelle_phone") == "kristin"
+
+
+def test_held_by_place_elsewhere_wins():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts({"Kristin's laptop": {"place": "Kristin"}})
+    provider.apply_item_facts({"Kristin's laptop": {"held_by": "Kristin", "place": "workstation"}})
+    assert provider._world().parent("kristin_laptop") == "michelle_workstation"
+
+
+def test_held_by_holders_area_keeps_holder():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts({"Kristin's laptop": {"held_by": "Kristin", "place": "kitchen"}})
+    assert provider._world().parent("kristin_laptop") == "kristin"
+
+
+def test_held_by_alone_places_with_holder():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    _facts, issues = provider.apply_item_facts({"Michelle's phone": {"held_by": "Kristin"}})
+    assert not any("empty" in issue or "invalid" in issue for issue in issues)
+    assert provider._world().parent("michelle_phone") == "kristin"
+
+
+def test_held_by_flag_off_keeps_today():
+    provider = _scene_provider("1A")
+    system = provider._system_prompt()
+    assert (
+        'Give only what changed. For "place", give the name of the person, thing, or place that has it now.' in system
+    )
+    provider.apply_item_facts({"Michelle's phone": {"place": "Kristin"}})
+    provider._selected_names = ["Michelle's phone"]
+    assert "Place: Kristin." in provider._things_block()
+
+
 def _office_reveal_provider():
     provider = _scene_provider("3B")
     provider.state.facts.assert_fact(Fact(predicate="human_security_control", subject="story", value="true"))
