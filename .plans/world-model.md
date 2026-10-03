@@ -84,8 +84,10 @@ quoted echo but the prose still says "state" 6/30 and the reply names
 the pole 14/30. Brandon kept the b867fb5 wording; steps 1-4 built
 for the token (e39882c, suite 1065, payloads unchanged but the token's
 THINGS state), merged as PR 504 (6b6a843; main CI and staging deploy
-passed). Open: Brandon's knock-out (NPC axes), the prose echo,
-list-form `state`, a live check of the game break.
+passed). Brandon's knock-out (NPC axes) and list-form `state` built
+as 7f01a75 on `claude/s4f-npc-axes`: recorded knock-out replies raise
+the break 14/15, controls 0/15. Open: the prose echo, the false
+knock-out pole (1/15), a live check of the game break, merge.
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -113,10 +115,11 @@ reliably and never on a control, but the prose echoes the field
 7/30; the older-wording arm does not fix it cleanly. Brandon kept the
 b867fb5 wording; steps 1-4 built for the token as e39882c, merged as
 PR 504 (6b6a843; main CI and staging deploy passed, no staged E2E
-run). **Resume
-at the S4f open items** (section 11, after "S4f build done"): NPC
-axes for Brandon's knock-out, the prose echo, list-form `state`, and
-a live check of the game break.
+run). NPC axes for Brandon's knock-out and list-form `state` built as
+7f01a75 on `claude/s4f-npc-axes` (unpushed; replay 14/15 knock-outs
+break, 0/15 controls). **Resume at the S4f open items** (section 11,
+after "S4f NPC axes and list state done"): the prose echo, the false
+knock-out pole, a live check of the game break, and merging 7f01a75.
 Branch commits are plan-only and unpushed. The notes below are older.
 
 
@@ -4837,6 +4840,35 @@ the task says):
   does not); Brandon (an NPC: only items declare axes, and THINGS would
   show his built-in captive/free state that 880748e hid); the prose
   echo; list-form `state` replies (dropped by `_apply_state`).
+
+  *S4f NPC axes and list state done: 7f01a75* (branch
+  `claude/s4f-npc-axes`; Ringer `freytag-s4f-npc`, Luna, one attempt;
+  reviewed, two test inputs changed by hand to player voice). `Npc`
+  model with `axes` and `unavailable` (validator and schema conversion
+  shared with `Item`; loader rejects a non-pole); Brandon
+  `{conscious: [awake], unconscious: [knocked out]}`, `unavailable:
+  unconscious`; `unavailable_entity_ids` loops npcs and items. A referred
+  person's THINGS line gets its declared axes through one helper shared
+  with things (` State: conscious. If it changes, give "state":
+  "unconscious".`, the wording the man arm was probed with, 14/15);
+  captive/free never shown. `_apply_state` reads a list `state` (first
+  matching pole wins, the rest become conditions) and compares against
+  every current pole, not only the first axis (for a person the first
+  axis is the built-in captive one). Note: "the man" names Brandon only
+  after a match call learns "man" as his alias, as in the bench runs.
+  Suite 1073, coverage 92.9%, ruff clean; shipped payloads and bench
+  prompts byte-identical (no bench command names Brandon while he is
+  present).
+  *Replay (hermetic, Ringer `s4f-npc-replay`, `replay_man.py`,
+  `replay_man.txt`):* the 30 recorded man-arm replies from `pole.json`
+  through the built capture in 1B: game break on brandon 14/15
+  knock-outs (the miss is the "dazed" reply, correctly not the pole),
+  0/15 controls, no errors. The known false pole (r2 t19 s1, prose
+  "remains conscious") still raises a break. The `["broken"]` list
+  reply now lands; the two `["broken into two pieces"]` replies do
+  not (exact pole or alias only) and stay conditions.
+  Still open: the prose echo; the false knock-out pole (1/15); a live
+  check of the game break (the bench has no game-break path); merge.
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
