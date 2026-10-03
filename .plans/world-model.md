@@ -355,6 +355,36 @@ stays for now; rerun the paired arms after the 1A fixes below.
        'Michelle's phone' the same thing?" is right, so the owner check
        is not the fault. The reply name never appears in the prose. No
        earlier fix covers a reply name that the prose never uses.
+   - **Brandon chose (2026-10-02):** amend W9 (closed containers bring
+     their contents; probed first, built as 151abce, x3 below) and
+     design a capture fix for t12's "Kristin's phone".
+   - **t12 capture fix: design, not yet probed (new work; no earlier
+     fix covers it).** All saved runs hold 5 such turns, all t12. Two
+     separate breaks:
+     - (a) *The match call renames the key* (3 of 5): asked about
+       "Kristin's phone", it answers `same_as: {"phone": "Michelle's
+       phone"}`, so `same_as.get("Kristin's phone")` is empty and the
+       name is made new (`apply_item_facts`, the prepared-items loop).
+       The match prompt says "Copy names from THINGS exactly" but not
+       to key answers by the NEW NAMES as written. Nearest precedent:
+       d7e0c68 (answers must name something in THINGS). Candidate: one
+       match-prompt sentence asking for each NEW NAME as the key, probed
+       on replayed match calls. Cost: match payloads are not stored in
+       turn records, so the probe must rebuild them (or the bench must
+       start recording them).
+     - (b) *Jev refuses* (2 of 5): asked 'Are "Kristin's phone" and
+       "Michelle's phone" the same thing?', with the narration and
+       `held_by: Kristin` in state, it says no. On names alone that is
+       right. Nearest precedent: rewording the Jev question for the
+       case (ff7fcb4's same-person question, 6ebaf2c's holder
+       question), probed on recorded checks and calibrated against
+       labelled ones. Candidate: when a new name's possessor is the
+       target's holder, ask whether it is "the phone Kristin has now".
+       Only 2 recorded positives, so the probe needs negative controls
+       (wrong possessive matches that must stay no).
+     Rejected up front: parsing "<Name>'s <noun>" in the engine (typed
+     kinds over phrase parsing) and a narrator naming rule (the engine
+     resolves names).
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the
@@ -4445,6 +4475,18 @@ the round 7 USB drive in the drawer, was already removed in round 8 by fix A
 hidden-card leak is closed by the `hidden` axis. The list would also need
 text matching of narrated names against authored ones, which W1 rejected,
 and it overrides 1c. Also rejected: contents left as setting text only.
+
+**Amended (Brandon, 2026-10-02): a given container brings its contents,
+open or closed.** Contents given only when open missed the very case above:
+on the turn that opens the drawer it is still closed, so the narrator
+invented contents (1A t1: 15/15 recorded, 0/15 with them given). Listing
+them does not make the narrator open a closed drawer unasked (recorded
+closed-drawer turns: "Shut the drawer." opens it 18/25 in both arms, "Look
+beneath the KMS drawer." 4/10 -> 1/10) and stops invented contents there
+too (7 -> 0). Hidden things stay hidden. Visibility is unchanged:
+`World.is_shut_away` marks a thing hidden only by closed containers, and
+only `given_with` and the bench view use it (151abce), so runtime taking
+and seating still treat it as not visible.
 
 W11. **Seats. Decided (Brandon, 2026-09-25).** When the narration has
 Kristin sit down, the reply names the chair, and the world must hold her
