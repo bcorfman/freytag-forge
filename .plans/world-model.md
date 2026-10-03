@@ -73,8 +73,8 @@ moved") and the phone held by Kristin. Correction to the earlier
 diagnosis: an empty capture record is not proof that capture is off,
 because the turn response drops `capture_steps`, `capture_issues` and
 `capture_unplaced` when all three are empty. S4e is done.
-Next: S4f (decide 1d, then
-build cause routing).
+Next: S4f. 1d decided (refuse and record); open: how a captured
+change can make a dependency unavailable (see S4f in section 11).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -4636,6 +4636,21 @@ the task says):
   x3 53/57; `@world-state` passes on staging at b24fb4d with capture on.
 - **S4f. Cause routing.** Decide 1d first, using what S4d records. Then
   build it.
+  **Evidence (2026-10-03):** 171 runtime-path turns (`s4e-runtime-x3`,
+  `held-place-x3`, `state-field-x3`, all 1A-1B): 0 rejected turns, 0
+  refused changes (fixed, fact override, hidden, cannot-hold); issues are
+  only format slips (7 empty entries, 1 omitted `item_facts`, 1 person
+  named as a place). The bench has no game-break path.
+  **Brandon chose (2026-10-03): 1d is refuse and record.** A refused
+  captured change is dropped, recorded in `capture_issues`, and the
+  turn stands; no regeneration until measured play shows refusals.
+  **Brandon chose: the future-dependency check should see captured
+  changes.** Found before building: the check reads only `destroyed`
+  and `incapacitated` facts (`ProgressionValidator.unsatisfied_dependencies`),
+  and capture never writes them (no `make_unavailable` path from a
+  reply), so moving the check after capture alone changes nothing.
+  The story's dependencies are `memory_card`, `transit_card` and
+  `brandon`. Open: how a reply marks a thing unavailable.
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
