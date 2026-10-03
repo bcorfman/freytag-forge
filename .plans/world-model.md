@@ -52,7 +52,8 @@ held things behind a flag (4402a2f): paired x3 base 51/57, held_by
 named early 0/3. Merged as PR 501 (fd52d0c). Bookmark kept (Brandon,
 2026-10-03): undeclared conditions stay unscored. S4 on
 `claude/s4-runtime`: S4a-S4d2 built (capture runs in the turn behind
-`FREYTAG_WORLD_CAPTURE`). Next: S4e, measuring the runtime path.
+`FREYTAG_WORLD_CAPTURE`); S4e1 bench runtime mode built (3bdb7d7,
+857a008). Next: S4e smoke and x3 through the runtime path.
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -4667,6 +4668,18 @@ decide 1d from the refusals and story breaks that S4d records.
   Not yet run live. Next: S4e (bench x3 through the runtime path, then
   staging `@world-state`, whose input "Check that you still have ..."
   must be rewritten in the player's voice).
+- **S4e1 done: 3bdb7d7; S4e1b: 857a008** (Ringer, Luna, one attempt
+  each; reviewed). The bench had no runtime path: it ran capture itself
+  with one provider for the run. A variation with `"runtime": true`
+  (`item-facts-world-two-scene-runtime.json`, the default plus that key)
+  now runs each turn as the web does: sqlite save and load, a fresh
+  `build_capture_provider`, and `WorldCapture` inside
+  `RuntimeEngine.turn`. `WorldCapture.last_before`/`last_after` give the
+  bench its turn records. S4e1b fixed three review gaps: `player_input`
+  lost the implied steps (the judges read them from it), `match_issues`
+  was missing, and the tests did not stub Jev. Hermetic tests show both
+  modes give identical prompts, steps and facts on scripted replies.
+  Suite 1050, coverage 93%. Live smoke (1 replicate) running.
 
 ## 12. Decisions for Brandon
 
