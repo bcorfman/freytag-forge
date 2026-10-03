@@ -58,8 +58,9 @@ vs `w14-x3` 54/57. The `held_by`-plus-`place` misses probed
 (2026-10-03): prompt arms do not help; the precedence fix (2e51727)
 and a declared passenger seat (bfd8345) built; x3 49/57 (one miss from
 the change, t9's unasked laptop close drops its state 3/3); t9 state
-probed: a command-scoped THINGS state wording records it 15/15 (awaiting
-Brandon). Next: staging `@world-state` (needs Brandon:
+probed and the command-scoped THINGS state wording built (b867fb5):
+x3 49/57, t9 right 3/3, but r1 gains a chair invention (cascading to
+t7) and a state echo on t6; keep or revert is open. Next: staging `@world-state` (needs Brandon:
 deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
@@ -4816,8 +4817,32 @@ decide 1d from the refusals and story breaks that S4d records.
     closed.", r2 t8) vs 0/39.
   Recommendation: scoped, if its two costs are acceptable. It names
   the field the reply must write for the thing the player acts on, and
-  it is the one arm without a large side effect. Not built; waiting on
-  Brandon.
+  it is the one arm without a large side effect.
+  - **Built (Brandon chose, 2026-10-03): b867fb5** (Ringer, Luna, one
+    attempt; suite 1058, ruff clean; shipped and bench prompts
+    byte-identical, since only the narrator's THINGS for match-call
+    referred things changes; grounding guide bullet added).
+  - **x3 on b867fb5 (`bench/results/state-field-x3`;
+    `compare-state-field-x3.txt`; read by hand).** Facts after the turn
+    **49/57**, same as `held-place-x3`; missed 3 / 6, invented 5 / 2,
+    kept ended condition 1 / 3, contradicts 2 / 2, restarts flagged 3 / 4.
+    **t9 right 3/3** (0/3 before): the close is recorded 2/2, and r1's
+    reply gives "closed" with no close narrated, which matches the
+    laptop it closed on t5. Misses:
+    - Caused by the change, all r1: t5 the reply sets the chair upright
+      (never narrated; the chair line is the unscoped one, the laptop's
+      is scoped); so t7 has nothing to change; t6 the prose opens the
+      laptop and the reply gives `"state": "closed"`, echoing the
+      current value from 'State: closed. If it changes, give "state":
+      "open".' (the probe had this 0/12).
+    - Judge, not capture: t8 x3 flagged invented with every drawer score
+      0.91-0.99 (the memory card 0.51-0.61; same flag 1/3 before); r2 t6
+      invented, prose picks the laptop up and the reply holds it.
+    - r2 t10: the reply keeps the thrown phone `held_by: Kristin`
+      (reply error, unrelated).
+    Net: three t9 fixes against three r1 misses (one invention cascading
+    to t7, one echo). **Open:** whether to keep b867fb5; the echo and
+    the chair invention are its costs.
 
 ## 12. Decisions for Brandon
 
