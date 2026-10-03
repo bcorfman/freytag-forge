@@ -549,6 +549,25 @@ stays for now; rerun the paired arms after the 1A fixes below.
      [scene-affordance-e2e.md](scene-affordance-e2e.md).
 2. **The bookmark** (section "Next steps, in order", item 3): decide
    whether undeclared conditions are scored.
+   **Counted (2026-10-03; `w14-x3`, `held-by-on-x3`,
+   `closed-contents-x3`, 171 1A-1B turns read by hand; reply side only
+   for `world-3a-referred-x3`, `world-3b-hide-x3`, `world-3c-x3`).**
+   1A-1B undeclared changes in the prose: t4 opens the truck door and
+   never shuts it 9/9 (reply 0); t10 breaks the phone (commanded) 5/9
+   in prose, reply "broken" 9/9, kept as a condition and carried in
+   THINGS, so later turns call it broken; t11 turns the phone on and
+   shows "a faint image" or messages 7/9 unasked (reply 5/9), and 3
+   later turns call it unresponsive; t6 powers the laptop on 4/9
+   (reply 0); t13 starts the truck 9/9 (the authored delivery text).
+   None is story-breaking. The t11 screen is an invented hint of a clue
+   (the no-new-clues rule's territory), not a state-tracking gap. The
+   reply also writes non-changes as conditions ("searching", "examined",
+   "in pocket", "in hand"). 3A-3C replies: 11 undeclared entries in 93
+   turns. 3C t6 pumps restored is carried by its handoff 3/3 (reply
+   "operational" 1/3). 3C t4 "Copy the archive to the independent
+   networks." has no handoff: the prose starts the copy and never
+   finishes it 3/3 (reply "copied" 1/3). Whether later 3C turns depend
+   on it was not read.
 3. **S4** (item 4). The continuity plan's Phases 4-6, which S4 hands
    to, have not started; its status line dates from 2026-09-24.
    Known gaps to carry in: new entities made in the player's old place
