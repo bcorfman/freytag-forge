@@ -4592,6 +4592,21 @@ the task says):
   unplaced names go in the turn delivery record. Tests use a scripted
   provider: a pick-up reaches the next prompt's THINGS; a rejected turn
   changes nothing; a malformed entry is dropped and recorded.
+  *S4d design (2026-10-03, from `RuntimeEngine.turn` and the bench
+  loop, `bench/core.py` ~725-880).* The bench runs standing, taking and
+  seating (and `prepare_turn`) before `engine.turn`, and
+  `apply_item_facts` after it returns, both outside the turn's snapshot.
+  In the runtime: a story-agnostic capture collaborator, handed to
+  `RuntimeEngine`, (1) runs the steps and `prepare_turn` inside
+  `turn()`'s `try`, after `before = snapshot()`, so a rejection undoes
+  them; (2) applies the reply's `item_facts` after
+  `state.apply_proposal`, i.e. after the future-dependency check (1d
+  decides later whether that check should see them); (3) keeps the raw
+  `item_facts` and the steps with a pending game break, so "proceed"
+  applies them to the restored snapshot. Jev questions go through
+  `JevClient`. The web runtime uses `ItemFactsProvider` and capture only
+  when `FREYTAG_WORLD_CAPTURE=1`; production stays off until S4e.
+  The bench loop then calls the same collaborator.
 - **S4e. Measure the runtime path.** Bench x3 on the default
   two-scene variation through the runtime provider, against `w14-x3`
   (54/57). Then hosted `@world-state` on staging.
