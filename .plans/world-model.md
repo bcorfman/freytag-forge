@@ -4574,6 +4574,17 @@ the task says):
   seeding moves to scene entry, next to `apply_scene_placements`, and
   runs once per scene. Hand seeds and variation `state_axes` stay
   bench-only.
+  *Setting facts (checked 2026-10-03).* Only 1A has any. With the
+  default variation's typed seed, the bench parse adds the laptop's
+  "closed" (its axis lives only in the variation's `state_axes`), a
+  stale duplicate "shut" on the drawer, and the phone's "not damaged".
+  The variation's `overrides` already remove the phone sentences and
+  the drawer-contents setting fact. **Brandon chose (2026-10-03):
+  promote all (S4c2).** `world.yaml` gets the variation's axes and
+  aliases; plot.md and knowledge.yaml lose the four lines the variation
+  removes, plus the two 1A setting facts the typed axes now give; the
+  runtime gets no setting-fact parser. Same precedent as removing the
+  chair sentence (2026-09-26).
 - **S4d. Capture in the turn.** `RuntimeEngine.turn` runs seating,
   taking and standing, the match call, the narration and
   `apply_item_facts` on the turn's candidate state. A rejected turn
