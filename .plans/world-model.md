@@ -4746,6 +4746,28 @@ every move of it. The desk kind stays fixed. A reply that records the
 chair's place as Kristin is a capture error, and W5's held-by question
 measures it.
 
+W14. **A person the protagonist has not identified is shown by a label.
+Decided (Brandon, 2026-10-03).** Once the t16 hand-over resolved "the man"
+to Brandon, THINGS said "Held by: Brandon" and the narrator named him on
+t17-t19 in every run, before plot 1B.2 lets him give his name. Probe on the
+recorded t17-t19 prompts: the narrator says "Brandon" 42/45 as recorded and
+0/45 when only THINGS and PLAYER show "the man watching Kristin"; renaming
+him in CHARACTERS too adds nothing. The 2026-09-26 "known as" label was
+dropped only because CHARACTERS already names him; the probe shows THINGS is
+what the narrator copies.
+
+- **Data, not branches.** A character may declare `unnamed_label` (text)
+  and `named_by` (a declared story fact). Both or neither.
+- **The rule.** While `named_by` is not true, every label the narrator and
+  match call are shown for that character is `unnamed_label`: his own
+  THINGS line, a holder or place that is him, referred-people lines.
+  CHARACTERS is unchanged.
+- **Resolution.** The label resolves to the character in the bench world
+  schema only. It is not a package alias, so narration leak scans do not
+  see it.
+- Brandon declares `unnamed_label: the man watching Kristin` (his 1B
+  placement text) and `named_by: brandon_identified`.
+
 W10. **A self-contained library. Decided (Brandon, 2026-09-25).** The model is
 a separate, reusable library named `worldkeeper`, designed to be publishable
 to PyPI later: a uv workspace member, standard library only, no `storygame`
