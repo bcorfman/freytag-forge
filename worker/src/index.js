@@ -48,6 +48,9 @@ export default {
     if (!accountId || !apiToken) {
       return respondError("WORKER_CONFIGURATION_ERROR", "Workers AI credentials are not configured", 500, traceId);
     }
+    if (new URL(request.url).pathname === "/jev") {
+      return handleJev({ body, env, accountId, apiToken, traceId, workerRevision, respondError });
+    }
     if (!system || !user) {
       return respondError("INVALID_REQUEST", "Both system and user prompts are required", 400, traceId);
     }
@@ -179,11 +182,132 @@ function dailyLimit(value) {
   return Number.isFinite(numeric) && numeric > 0 ? Math.floor(numeric * 1_000_000) : 5_000_000;
 }
 
+async function handleJev({ body, env, accountId, apiToken, traceId, workerRevision, respondError }) {
+  const input = body?.input;
+  const state = input?.state;
+  const questions = input?.questions;
+  if (
+    !input ||
+    typeof input !== "object" ||
+    Array.isArray(input) ||
+    !(typeof state === "string" || (state && typeof state === "object" && !Array.isArray(state))) ||
+    !questions ||
+    typeof questions !== "object" ||
+    Array.isArray(questions) ||
+    Object.keys(questions).length === 0
+  ) {
+    return respondError("INVALID_REQUEST", "Jev input with state and questions is required", 400, traceId);
+  }
+
+  const model = asString(env.CF_JEV_MODEL).trim() || "typesafe/jev";
+  const prices = modelPrices(env, respondError, traceId);
+  if (prices instanceof Response) return prices;
+  const estimatedTokens = estimateInputTokens(JSON.stringify(input));
+  if (estimatedTokens > 30000) return respondError("REQUEST_TOO_LARGE", "Jev request is too large", 413, traceId);
+  const reservedAmount = callCostMicroUsd(prices, model, estimatedTokens, 0);
+  if (reservedAmount === null || !Number.isFinite(reservedAmount) || reservedAmount < 0) {
+    return respondError("WORKER_CONFIGURATION_ERROR", "The configured model has no price", 500, traceId);
+  }
+
+  const limit = dailyLimit(env.DAILY_BUDGET_USD);
+  let budget;
+  try {
+    if (!env.DAILY_BUDGET) throw new Error("DAILY_BUDGET is missing");
+    budget = env.DAILY_BUDGET.get(env.DAILY_BUDGET.idFromName(utcDay(new Date())));
+    const reserveResponse = await budget.fetch("https://budget/reserve", {
+      method: "POST",
+      body: JSON.stringify({ amount: reservedAmount, limit })
+    });
+    if (!reserveResponse.ok) throw new Error(`reserve returned ${reserveResponse.status}`);
+    const reservation = await reserveResponse.json();
+    if (!reservation.ok) return respondError("AI_DAILY_BUDGET_EXCEEDED", "The daily model budget is spent", 429, traceId);
+    const reservationId = reservation.id;
+    let settlementAmount = reservedAmount;
+    try {
+      let aiResponse;
+      try {
+        aiResponse = await callJev({ accountId, apiToken, model, input });
+      } catch (error) {
+        console.error("Workers AI network failure", { trace_id: traceId, error: String(error) });
+        return respondError("AI_NETWORK_ERROR", "Workers AI could not be reached", 502, traceId);
+      }
+      const upstreamRequestId = aiResponse.headers.get("cf-ray") || aiResponse.headers.get("x-request-id") || "";
+      const rawResponse = await aiResponse.text();
+      const parsedResponse = tryParseJson(rawResponse);
+      const usage = parsedResponse?.result?.result?.usage;
+      if (Number.isFinite(usage?.input_tokens)) {
+        const actualAmount = callCostMicroUsd(prices, model, usage.input_tokens, 0);
+        if (actualAmount !== null) settlementAmount = actualAmount;
+      }
+      if (!aiResponse.ok) {
+        return jevUpstreamError(aiResponse, parsedResponse, traceId, upstreamRequestId, respondError);
+      }
+      if (
+        parsedResponse?.success !== true ||
+        parsedResponse?.result?.state !== "Completed" ||
+        !parsedResponse?.result?.result?.answers ||
+        typeof parsedResponse.result.result.answers !== "object" ||
+        Array.isArray(parsedResponse.result.result.answers)
+      ) {
+        return jevUpstreamError(aiResponse, parsedResponse, traceId, upstreamRequestId, respondError);
+      }
+      return json(
+        { answers: parsedResponse.result.result.answers, model: parsedResponse.result.result.model || model, trace_id: traceId },
+        200,
+        { "X-Worker-Revision": workerRevision }
+      );
+    } finally {
+      try {
+        const settleResponse = await budget.fetch("https://budget/settle", {
+          method: "POST",
+          body: JSON.stringify({ id: reservationId, amount: settlementAmount })
+        });
+        if (!settleResponse.ok) throw new Error(`settle returned ${settleResponse.status}`);
+      } catch (error) {
+        console.error("Daily budget settlement failed", { trace_id: traceId, error: String(error) });
+      }
+    }
+  } catch (error) {
+    console.error("Daily budget counter failure", { trace_id: traceId, error: String(error) });
+    return respondError("BUDGET_UNAVAILABLE", "The daily budget counter is unavailable", 503, traceId);
+  }
+}
+
+function jevUpstreamError(aiResponse, parsedResponse, traceId, upstreamRequestId, respondError) {
+  const upstreamErrors = extractErrors(parsedResponse);
+  const upstreamCode = firstErrorCode(upstreamErrors);
+  const upstreamMessage = firstErrorMessage(upstreamErrors);
+  const classification = classifyUpstreamFailure(aiResponse.ok ? 502 : aiResponse.status, upstreamCode, upstreamMessage);
+  console.error("Workers AI upstream failure", {
+    trace_id: traceId,
+    upstream_request_id: upstreamRequestId,
+    upstream_status: aiResponse.ok ? 502 : aiResponse.status,
+    upstream_code: upstreamCode,
+    upstream_message: upstreamMessage
+  });
+  const headers = {};
+  const retryAfter = aiResponse.headers.get("retry-after");
+  if (retryAfter) headers["Retry-After"] = retryAfter;
+  return respondError(classification.code, classification.message, classification.httpStatus, traceId, {
+    upstream_status: aiResponse.ok ? 502 : aiResponse.status,
+    upstream_code: upstreamCode || undefined,
+    upstream_request_id: upstreamRequestId || undefined
+  }, headers);
+}
+
 async function callWorkersAi({ accountId, apiToken, model, system, user, maxTokens, responseFormat }) {
   return fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run/${model}`, {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json", Authorization: `Bearer ${apiToken}` },
     body: JSON.stringify({ messages: [{ role: "system", content: system }, { role: "user", content: user }], max_tokens: maxTokens, ...(responseFormat ? { response_format: responseFormat, temperature: 0 } : {}) })
+  });
+}
+
+async function callJev({ accountId, apiToken, model, input }) {
+  return fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run`, {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json", Authorization: `Bearer ${apiToken}` },
+    body: JSON.stringify({ model, input })
   });
 }
 

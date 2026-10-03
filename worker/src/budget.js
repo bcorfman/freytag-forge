@@ -1,7 +1,9 @@
 export const DEFAULT_MODEL_PRICES = {
   // The exact fast model is not listed on Cloudflare's price page. Use the
   // dearest 8b variant's prices so the count errs high.
-  "@cf/meta/llama-3.1-8b-instruct-fast": { input: 0.282, output: 0.827 }
+  "@cf/meta/llama-3.1-8b-instruct-fast": { input: 0.282, output: 0.827 },
+  // Jev bills input tokens only ($0.042 per million).
+  "typesafe/jev": { input: 0.042, output: 0 }
 };
 
 function utf8ByteLength(text) {

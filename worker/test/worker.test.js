@@ -130,3 +130,91 @@ test("successful AI usage settles to actual cost", async () => {
     assert.equal(await namespace.storage().get("spent"), 2);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+function jevRequest(input, token = "secret") {
+  return new Request("https://worker.test/jev", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ input })
+  });
+}
+
+test("jev route returns answers and posts the Jev input to Workers AI", async () => {
+  const input = { state: { scene: "hall" }, questions: { safe: "Is it safe?" } };
+  let aiRequest;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    aiRequest = { url, init };
+    return new Response(JSON.stringify({
+      success: true,
+      result: { state: "Completed", model: "typesafe/jev", result: { answers: { safe: { type: "noul", noul: 0.8 } }, usage: { input_tokens: 2 } } }
+    }), { status: 200 });
+  };
+  try {
+    const response = await worker.fetch(jevRequest(input), env());
+    assert.equal(response.status, 200);
+    assert.deepEqual((await response.json()).answers, { safe: { type: "noul", noul: 0.8 } });
+    assert.equal(aiRequest.url, "https://api.cloudflare.com/client/v4/accounts/account/ai/run");
+    assert.deepEqual(JSON.parse(aiRequest.init.body), { model: "typesafe/jev", input });
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("jev budget reserves and settles, then refuses a spent budget without Workers AI", async () => {
+  const namespace = new Namespace();
+  let aiCalls = 0;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    aiCalls += 1;
+    return new Response(JSON.stringify({ success: true, result: { state: "Completed", result: { answers: {}, usage: { input_tokens: 1 } } } }));
+  };
+  try {
+    const first = await worker.fetch(jevRequest({ state: "hall", questions: { safe: "?" } }), env({ DAILY_BUDGET: namespace }));
+    assert.equal(first.status, 200);
+    assert.deepEqual(await namespace.storage().get("reservations"), {});
+    assert.equal((await namespace.storage().get("spent")) > 0, true);
+    const second = await worker.fetch(jevRequest({ state: "hall", questions: { safe: "?" } }), env({ DAILY_BUDGET: namespace, DAILY_BUDGET_USD: "0.000001" }));
+    assert.equal(second.status, 429);
+    assert.equal((await second.json()).code, "AI_DAILY_BUDGET_EXCEEDED");
+    assert.equal(aiCalls, 1);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("jev unauthorized returns 401 without calling Workers AI", async () => {
+  let aiCalls = 0;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { aiCalls += 1; throw new Error("AI should not be called"); };
+  try {
+    const response = await worker.fetch(jevRequest({ state: "hall", questions: { safe: "?" } }, "wrong"), env());
+    assert.equal(response.status, 401);
+    assert.equal(aiCalls, 0);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("jev oversized returns 413 without calling Workers AI", async () => {
+  let aiCalls = 0;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { aiCalls += 1; throw new Error("AI should not be called"); };
+  try {
+    const response = await worker.fetch(jevRequest({ state: "x".repeat(90001), questions: { safe: "?" } }), env());
+    assert.equal(response.status, 413);
+    assert.equal(aiCalls, 0);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("jev invalid returns 400 when questions are missing", async () => {
+  const response = await worker.fetch(jevRequest({ state: "hall" }), env());
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).code, "INVALID_REQUEST");
+});
+
+test("narration route unchanged returns narration and model", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ success: true, result: { response: "Done." } }));
+  try {
+    const response = await worker.fetch(request(), env());
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.narration, "Done.");
+    assert.equal(body.model, "@cf/meta/llama-3.1-8b-instruct-fast");
+  } finally { globalThis.fetch = originalFetch; }
+});
