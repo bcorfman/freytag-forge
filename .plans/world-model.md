@@ -51,7 +51,8 @@ held things behind a flag (4402a2f): paired x3 base 51/57, held_by
 (64a1cb3) and W14 unnamed label built (6e1b191): x3 54/57, Brandon
 named early 0/3. Merged as PR 501 (fd52d0c). Bookmark kept (Brandon,
 2026-10-03): undeclared conditions stay unscored. S4 on
-`claude/s4-runtime`: S4a (e3c3ef6) and S4b (7ab8092) built. Next: S4c.
+`claude/s4-runtime`: S4a, S4b, S4c1, S4c2 and S4d1 built; S4d2 (capture
+in the turn) running.
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -4632,6 +4633,25 @@ decide 1d from the refusals and story breaks that S4d records.
   `BROWSER_USER_AGENT` like the narrator; the reply's `model` reads
   `result.result.model`. Worker 15/15, suite 1031. Not yet deployed or
   called live.
+- **S4c1 done: 8b52f4d** (Ringer, Luna, one attempt). `bench/item_facts.py`
+  moved to `storygame/runtime/item_facts.py` as a 99% rename (docstring
+  only); importers updated, no shim; coverage 92.7% with it inside the
+  gate; bench prompts and shipped payloads byte-identical.
+- **S4c2 done: 696494f** (Ringer, Luna, one attempt; reviewed). Laptop
+  axis `{closed: [shut], open: []}` in `world.yaml`; the six lines out
+  of plot.md/knowledge.yaml; the two-scene variations carry no
+  `overrides` or `state_axes`; the runtime has no setting-fact parsing,
+  so reseeding on a fresh provider changes nothing. Bench capture
+  prompts byte-identical to before; shipped 1A payloads differ only by
+  the six lines (checked by `compare_payloads_s4c2.py`). It also removed
+  `escalation-control.json`'s replacement for a cue_text line gone since
+  6f10f91, so that variation resolves again.
+- **S4d1 done: c0a5231** (Ringer, Luna, one attempt).
+  `storygame/runtime/jev_questions.py` builds the four Jev questions
+  behind an `ask(state, questions)` callable; `bench/jev_use.py` wraps a
+  direct Cloudflare `ask`, request bodies byte-identical.
+- **S4d2 running:** `storygame/runtime/capture.py` `WorldCapture` wired
+  into `RuntimeEngine` per the design above.
 
 ## 12. Decisions for Brandon
 
