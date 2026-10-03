@@ -462,6 +462,23 @@ stays for now; rerun the paired arms after the 1A fixes below.
      **Not adopted.** Rule count is not the t1 lever, and the hand rule's
      win depends on the lines around it, which is fragile. Which dropped
      line carries it is not yet isolated.
+   - **W5's `Held by:` fallback probed (Brandon chose option 3,
+     2026-10-03; Ringer; t1, t3, t4, t6, t11, t12, t16 from
+     `closed-contents-x3` x 3 replicates x 5; `probe_held_by.txt`; read
+     by hand).** Arm: the place line says 'For "place", give the name of
+     the thing or place where it is now. If a person holds it, give
+     "held_by" with that person's name.'; both lantern examples give
+     `"held_by": "Kristin"`; THINGS and PLAYER show "Held by: Kristin."
+     instead of "Place: Kristin.". Recorded / held_by: t1 drawer or
+     contents at Kristin 13/15 / 1/15; pick-ups t3+t11 30/30 / 30/30; t4
+     carried laptop held 9/15 / 15/15; t12 phone held 0/15 ("Kristin's
+     pocket") / 15/15; t16 phone with the man 12/15 / 15/15; t6 laptop
+     held 2/15 / 8/15. The t6 and t1 "held" cases give both keys:
+     `held_by: Kristin` and `place: workstation` / "in drawer", and the
+     prose agrees with `place` (she sets the laptop down). Both keys are
+     common: t3 12/15, t4 14/15, t12 11/15, t16 11/15. There `place`
+     names the holder's part ("Kristin's pocket", "the man's hand") or
+     the holder's own area (kitchen), and `held_by` is right.
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the
