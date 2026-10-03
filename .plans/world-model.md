@@ -60,7 +60,15 @@ and a declared passenger seat (bfd8345) built; x3 49/57 (one miss from
 the change, t9's unasked laptop close drops its state 3/3); t9 state
 probed and the command-scoped THINGS state wording built (b867fb5):
 x3 49/57, t9 right 3/3, but r1 gains a chair invention (cascading to
-t7) and a state echo on t6; keep or revert is open. Next: staging `@world-state` (needs Brandon:
+t7) and a state echo on t6; keep or revert is open. `@world-state` rewritten (80e507d: player-voice inputs, asserts the
+phone is held by Kristin Schweitzer after the pick-up and the move) and
+run on staging at b24fb4d (2026-10-03): **fails, capture is not in
+effect there.** The prose pockets the phone, but `state.things` keeps
+it in the kitchen, and a direct staging turn returns no
+`capture_steps`/`capture_issues`, which capture always records
+(even a missing reply gives an issue). Needs Brandon: confirm
+`FREYTAG_WORLD_CAPTURE=1` on the staging service and redeploy it.
+Next: staging `@world-state` (needs Brandon:
 deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
