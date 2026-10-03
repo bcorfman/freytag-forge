@@ -86,8 +86,11 @@ for the token (e39882c, suite 1065, payloads unchanged but the token's
 THINGS state), merged as PR 504 (6b6a843; main CI and staging deploy
 passed). Brandon's knock-out (NPC axes) and list-form `state` built
 as 7f01a75 on `claude/s4f-npc-axes`: recorded knock-out replies raise
-the break 14/15, controls 0/15. Open: the prose echo, the false
-knock-out pole (1/15), a live check of the game break, merge.
+the break 14/15, controls 0/15; merged as PR 506 (8b7fafa). Live
+check (2026-10-03): token break 3/3 and proceed commits it, controls
+0/6; knock-out break 1/3, one miss from the match call making "man" a
+new person. Open: that miss, the prose echo, the false knock-out pole
+(1/15).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -104,7 +107,7 @@ continuity plan; this plan defines the world they write into.
 
 ## Resume here (2026-10-03)
 
-**Latest (2026-10-03, branch `claude/world-state-e2e`).** S4e is done:
+**Latest (2026-10-03, branch `claude/s4f-live-check`).** S4e is done:
 `@world-state` passes on staging (b24fb4d) with
 `FREYTAG_WORLD_CAPTURE=1` (Brandon verified the variable). Brandon kept
 b867fb5. S4f: 1d is refuse and record (no regeneration); the
@@ -116,11 +119,14 @@ reliably and never on a control, but the prose echoes the field
 b867fb5 wording; steps 1-4 built for the token as e39882c, merged as
 PR 504 (6b6a843; main CI and staging deploy passed, no staged E2E
 run). NPC axes for Brandon's knock-out and list-form `state` built as
-7f01a75 on `claude/s4f-npc-axes` (unpushed; replay 14/15 knock-outs
-break, 0/15 controls). **Resume at the S4f open items** (section 11,
-after "S4f NPC axes and list state done"): the prose echo, the false
-knock-out pole, a live check of the game break, and merging 7f01a75.
-Branch commits are plan-only and unpushed. The notes below are older.
+7f01a75, merged as PR 506 (8b7fafa; main CI and staging deploy
+passed). Live check done (section 11, "S4f live check"): the token
+break fires 3/3 with proceed committing it, controls 0/6; the
+knock-out breaks 1/3, and r1 is a miss because the match call said
+"man" was new, so a second man was knocked out and Brandon stayed
+conscious. **Resume at:** that match-call miss (record and read the
+match prompt first, then probe), the prose echo, and the false
+knock-out pole (1/15). The notes below are older.
 
 
 **Checked against the results on disk (2026-10-02).** Every figure
@@ -4869,6 +4875,38 @@ the task says):
   not (exact pole or alias only) and stay conditions.
   Still open: the prose echo; the false knock-out pole (1/15); a live
   check of the game break (the bench has no game-break path); merge.
+  Merged as PR 506 (8b7fafa, 2026-10-03); main CI passed and staging
+  deployed.
+
+  *S4f live check (2026-10-03; Ringer `freytag-s4f-live`, one attempt
+  each; `~/dev/ringer-work/freytag-s4f-live/live_break.py`, `x3.txt`,
+  `x3.json`; all narrations read by hand).* The real runtime turn on
+  8b7fafa (8b narrator through the Worker, Jev through Cloudflare),
+  seeded at 1B with the bench's bare entry, one setup turn ("Look
+  around the bench for anything Michelle left."), then one command, 3
+  sessions each. On a break the script answers proceed. The bare entry
+  does not carry Michelle's phone from 1A, so the first smoke's
+  phone-check setup turn was rejected as a leak; it was dropped.
+  - "Snap the transit token in half.": the prose snaps it 3/3; the reply
+    gives `"state": "destroyed"` 3/3; the break fires on `transit_card`
+    3/3, the turn is pending, and proceed commits it (token destroyed,
+    `transit_card` unavailable). No state echo in the prose (0/3).
+  - "Look closely at the transit token.": no break 3/3 (`intact`).
+  - "Knock the man out.": break on `brandon` 1/3. r2 is right: the match
+    call maps "man" to "the man watching Kristin", Jev confirms, proceed
+    leaves Brandon unconscious. r3 is right not to break: the prose has
+    Kristin hesitate and not strike. **r1 is a miss.** The prose knocks
+    him out and the reply gives `"man": {"condition": ["unconscious"]}`,
+    but the match call answers `"same_as": {"man": "new"}`. The engine
+    creates a new person `n_man_1`, marks that one unconscious, and
+    Brandon stays conscious, so nothing protects him. The match call's
+    prompt was not recorded, so it is not read yet.
+  - "Ask the man who he is.": no break 3/3 (the narrator never has him
+    answer in any of the three; that is the known talk gap, not S4f).
+  Reading: the token break works live end to end. The knock-out break
+  depends on the match call tying "the man" to Brandon's unnamed label,
+  and it said "new" in 1 of 2 real knock-outs. The same family as
+  "Rebecca's office" made new and JANUS taken as a place.
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
