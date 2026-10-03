@@ -79,8 +79,10 @@ unavailable in `world.yaml`. Findings, design sketch and the probe
 plan are under S4f in section 11. Probe on recorded 1B prompts done
 (2026-10-03): token pole lands 27/30 on destroy commands, man 14/15
 on a knock-out (one false), 0/30 on controls; the prose echoes
-"its state now 'destroyed'" 7/30. Brandon to choose before steps 1-4
-are built (nothing built yet).
+"its state now 'destroyed'" 7/30. The older 1055d04 wording drops the
+quoted echo but the prose still says "state" 6/30 and the reply names
+the pole 14/30. Brandon to choose before steps 1-4 are built (nothing
+built yet).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -105,8 +107,8 @@ dependency check is to see captured changes through axis poles marked
 unavailable in `world.yaml`. The S4f probe ran (results under "Probe
 result" in section 11, "S4f. Cause routing"): the pole is set
 reliably and never on a control, but the prose echoes the field
-7/30. **Resume at Brandon's choice** on the echo, then design steps
-1-4.
+7/30; the older-wording arm does not fix it cleanly. **Resume at
+Brandon's choice** on the echo, then design steps 1-4.
 Branch commits are plan-only and unpushed. The notes below are older.
 
 
@@ -4776,6 +4778,26 @@ the task says):
   control, which meets the build condition above. Open before
   building: the prose echo (a player-facing line), one false game
   break in 15 knock-outs, and the list-form `state` misses.
+
+  *Older-wording arm (2026-10-03; Ringer, one attempt; `pole_old.json`,
+  `probe_pole_old.txt`; 45 narrations read by hand).* Same three t15
+  prompts, token line `State: intact. It can be: destroyed.` (the
+  1055d04 wording, no field name).
+  - The prose destroys the token 30/30; control never.
+  - The literal echo "its state now 'destroyed'" is gone (6/30 ->
+    0/30), but "its once-intact state now marred by the pressure"
+    rises (1/30 -> 6/30, all crush). The prose still says "state".
+  - The reply names the pole far less: `destroyed` (state or
+    condition) 14/30 vs 26/30. Snap gives `broken` otherwise (an
+    alias, so snap lands 15/15). Crush gives `"condition":
+    ["crushed"]` 14/15, which lands only if `crushed` is an alias;
+    with the sketch's aliases (`broken`, `snapped`) crush lands 0/15.
+    One crush reply had empty `item_facts`.
+  - Control: `intact` (state or condition) 15/15, never the pole.
+  Reading: the older wording trades a quoted echo for a softer one and
+  makes landing depend on alias coverage. It is also the wording
+  b867fb5 replaced to fix t9 (laptop close 3/3), so reverting it for
+  command-named things would reopen t9. Neither wording is clean.
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
