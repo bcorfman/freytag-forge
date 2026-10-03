@@ -380,15 +380,20 @@ test("keeps NPC interaction and reveals bounded to the current scene @npc", asyn
 
 test("preserves legal world-state changes across follow-up turns @world-state", async ({ page }) => {
   await startSceneSession(page);
-  const pickup = await submitTurn(page, "Pick up Michelle's phone and keep it with you.");
-  const followUp = await submitTurn(page, "Check that you still have Michelle's phone.");
+  const pickup = await submitTurn(page, "Pick up Michelle's phone and put it in my pocket.");
+  await resolveWarningIfPresent(page);
+  const followUp = await submitTurn(page, "Go out to the truck.");
   await resolveWarningIfPresent(page);
   await writeCategoryReport("world-state", {
     pickup_state: pickup.state,
     follow_up_state: followUp.state,
+    pickup_phone: pickup.state?.things?.["Michelle's phone"],
+    follow_up_phone: followUp.state?.things?.["Michelle's phone"],
     narration: followUp.segments,
   });
   expect(followUp.state?.scene_id).toBeTruthy();
+  expect(pickup.state?.things?.["Michelle's phone"]?.held_by).toBe("Kristin Schweitzer");
+  expect(followUp.state?.things?.["Michelle's phone"]?.held_by).toBe("Kristin Schweitzer");
 });
 
 test("handles aggressive and chaotic-but-legal policies without an accidental dead end @safety", async ({ page }) => {
