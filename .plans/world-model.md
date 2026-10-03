@@ -57,7 +57,9 @@ named early 0/3. Merged as PR 501 (fd52d0c). Bookmark kept (Brandon,
 vs `w14-x3` 54/57. The `held_by`-plus-`place` misses probed
 (2026-10-03): prompt arms do not help; the precedence fix (2e51727)
 and a declared passenger seat (bfd8345) built; x3 49/57 (one miss from
-the change, t9's unasked laptop close drops its state 3/3). Next: staging `@world-state` (needs Brandon:
+the change, t9's unasked laptop close drops its state 3/3); t9 state
+probed: a command-scoped THINGS state wording records it 15/15 (awaiting
+Brandon). Next: staging `@world-state` (needs Brandon:
 deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
@@ -4791,6 +4793,31 @@ decide 1d from the refusals and story breaks that S4d records.
     omissions and judge faults, which vary run to run (51-55 on earlier
     same-code x3s). **Open:** the reply drops a narrated `state` when the
     narrator closes the laptop unasked (t9, 4 of the last 6 t9s).
+- **t9 dropped `state` probed (2026-10-03, Brandon asked; Ringer,
+  `~/dev/ringer-work/freytag-t9-state-probe/`, three rounds,
+  `probe_t9_state{,_r2,_r3}.txt`; read by hand).** The t9 prompt never
+  names a reply `state` field; the only cue is THINGS "State: open. It
+  can be: closed." (1055d04). Prose closes the laptop in most samples
+  (the line itself invites it). Arms, scored as "reply records the
+  close, of samples whose prose closes it", with t6, t8, t1 controls:
+  - recorded: 8/19, 7/11, 8/12 (23/42 pooled); no unasked chair state.
+  - *example* (the lantern example gives `"state": "lit"`): 14/19, but
+    the reply drops the laptop's place 6/15 (left with Kristin). Out.
+  - *things* (every axis line: 'State: open. If it changes, give
+    "state": "closed".'): 18/18 and 13/13, but the t6 reply sets the
+    workstation chair upright, never narrated, in 7/8 samples whose
+    prompt lists the chair (r2, r3), which would leave t7 nothing to do.
+  - *field* ('State ("state"): open. It can be: closed.'): 10/10, same
+    chair invention 7/24, one close never narrated. Out.
+  - **scoped** (the *things* wording only on lines for things the
+    command names, like b2fcce3's scoped seat line): **15/15**; t6
+    open 12/12, t8 closed 6/6, t1 open 6/6; chair invented 2/24 (r3 t6)
+    vs 0/24; the prose says "state" 2/39 ("The drawer's state is now
+    closed.", r2 t8) vs 0/39.
+  Recommendation: scoped, if its two costs are acceptable. It names
+  the field the reply must write for the thing the player acts on, and
+  it is the one arm without a large side effect. Not built; waiting on
+  Brandon.
 
 ## 12. Decisions for Brandon
 
