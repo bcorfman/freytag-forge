@@ -727,6 +727,28 @@ def test_match_payload_gives_placed_character_place_from_real_package():
     assert "- the man watching Kristin. Place: watching Kristin in the park." in payload["user"].splitlines()
 
 
+def test_referred_npc_line_shows_declared_state():
+    provider = _scene_1b_provider()
+    # An earlier turn's match call learns "man" as Brandon's name.
+    provider._world().add_alias("brandon", "man")
+
+    lines = provider._referred_lines_for_command("Ask the man who he is.")
+
+    assert (
+        "- the man watching Kristin. Place: Los Angeles park. State: conscious. "
+        'If it changes, give "state": "unconscious".'
+    ) in lines
+    assert all("captive" not in line and "free" not in line for line in lines)
+
+
+def test_referred_npc_without_axes_has_no_state():
+    provider = _scene_1b_provider()
+    world = provider._world()
+    lines = [provider._state_text(world, "michelle", narration=True)]
+
+    assert all("State:" not in line for line in lines)
+
+
 def _scene_1b_provider():
     state = RuntimeState.bootstrap(PACKAGE)
     state.current_scene_id = "1B"

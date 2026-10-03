@@ -394,6 +394,28 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _object_place_rule(self):
         return "Each thing starts at the place THINGS gives it."
 
+    @staticmethod
+    def _state_text(world, entity_id, *, narration):
+        if not entity_id:
+            return ""
+        if world.is_a(entity_id, "character"):
+            entity = world.schema.entities.get(entity_id)
+            axes = entity.axes if entity else ()
+        else:
+            axes = world.axis_definitions(entity_id)
+        axis_values = world.axis_values(entity_id)
+        text = ""
+        for axis in axes:
+            current = axis_values.get(axis["name"])
+            if not current:
+                continue
+            other = next(pole for pole in axis["poles"] if pole != current)
+            if narration:
+                text += f' State: {current}. If it changes, give "state": "{other}".'
+            else:
+                text += f" State: {current}. It can be: {other}."
+        return text
+
     def _prepare_turn_visibility(self):
         super()._prepare_turn_visibility()
         self._ensure_scene_seeded()
@@ -414,18 +436,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 label = "Held by" if self.held_by and parent_id and world.is_a(parent_id, "character") else "Place"
                 line += f" {label}: {place.strip()}."
             if facts["condition"]:
-                axes = world.axis_definitions(entity_id) if entity_id else ()
-                rendered = []
                 axis_values = world.axis_values(entity_id) if entity_id else {}
-                for axis in axes:
-                    current = axis_values.get(axis["name"])
-                    if current:
-                        other = next(pole for pole in axis["poles"] if pole != current)
-                        if narration and name in self._referred_names:
-                            line += f' State: {current}. If it changes, give "state": "{other}".'
-                        else:
-                            line += f" State: {current}. It can be: {other}."
-                rendered.extend(condition for condition in facts["condition"] if condition not in axis_values.values())
+                line += self._state_text(world, entity_id, narration=narration and name in self._referred_names)
+                rendered = [condition for condition in facts["condition"] if condition not in axis_values.values()]
                 if rendered:
                     line += f" Condition: {', '.join(rendered)}."
             if narration and entity_id and world.is_a(entity_id, "group") and name in self._referred_names:
@@ -641,7 +654,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 and isinstance(value["held_by"], str)
                 and bool(value["held_by"].strip())
             )
-            or ("state" in value and isinstance(value["state"], str) and bool(value["state"].strip()))
+            or (
+                "state" in value
+                and (
+                    (isinstance(value["state"], str) and bool(value["state"].strip()))
+                    or (
+                        isinstance(value["state"], list)
+                        and any(isinstance(item, str) and item.strip() for item in value["state"])
+                    )
+                )
+            )
             or (
                 "condition" in value
                 and isinstance(value["condition"], list)
@@ -758,6 +780,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     else world.name(parent_id)
                 )
                 line = f"- {label}. Place: {parent_label}."
+            line += self._state_text(world, entity_id, narration=True)
             people.append((command_position(entity_id), line))
 
         protagonist_area = world.area(protagonist_id)
@@ -946,16 +969,23 @@ class ItemFactsProvider(CloudflareTurnProvider):
             issues.append(f"item_facts for {name!r} refused place {place!r}: {result.reason}")
 
     def _apply_state(self, world, entity_id, name, value, place_pole, issues):
-        current_poles = list(world.axis_values(entity_id).values())
-        before_pole = current_poles[0] if current_poles else None
+        current_poles = set(world.axis_values(entity_id).values())
         condition_poles = []
         state_pole = None
         free = []
-        if "state" in value and isinstance(value["state"], str) and value["state"].strip():
-            state = value["state"].strip()
-            state_pole = self._axis_match_id(world, entity_id, state)
-            if state_pole is None:
-                free.append(state[:40])
+        states = value.get("state")
+        if isinstance(states, str):
+            states = [states]
+        if isinstance(states, list):
+            for state in states:
+                if not isinstance(state, str) or not state.strip():
+                    continue
+                state = state.strip()
+                matched = self._axis_match_id(world, entity_id, state)
+                if matched is not None and state_pole is None:
+                    state_pole = matched
+                elif matched is None:
+                    free.append(state[:40])
         if "condition" in value and value["condition"]:
             conditions = value["condition"]
             if len(conditions) > 2:
@@ -966,8 +996,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
             world.set_conditions(entity_id, free[:2])
         reply_poles = {pole for pole in (place_pole, state_pole, *condition_poles) if pole is not None}
         changed_pole = None
-        if reply_poles and before_pole is not None:
-            differing = reply_poles - {before_pole}
+        if reply_poles and current_poles:
+            differing = reply_poles - current_poles
             if len(differing) == 1:
                 changed_pole = differing.pop()
         effective_pole = place_pole or changed_pole

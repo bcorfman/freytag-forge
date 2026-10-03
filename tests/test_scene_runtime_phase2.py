@@ -291,6 +291,19 @@ def test_dependency_unavailable_by_axis_pole() -> None:
     assert "transit_card" not in validator.unsatisfied_dependencies("1B", state.facts)
 
 
+def test_npc_dependency_unavailable_by_axis_pole() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    world = world_for(PACKAGE, state.facts)
+    validator = ProgressionValidator(PACKAGE)
+
+    assert "brandon" not in validator.unsatisfied_dependencies("1B", state.facts)
+    world.set_axis("brandon", "unconscious")
+    assert "brandon" in validator.unsatisfied_dependencies("1B", state.facts)
+
+    world.set_axis("brandon", "conscious")
+    assert "brandon" not in validator.unsatisfied_dependencies("1B", state.facts)
+
+
 def test_dependency_axis_pole_honours_fallback() -> None:
     item = next(item for item in PACKAGE.world.items if item.id == "memory_card")
     world_source = PACKAGE.world.model_copy(

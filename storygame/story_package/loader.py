@@ -1125,6 +1125,10 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
                 raise StoryPackageError(f"item '{item.id}' enter_pole is not a pole of its axes")
             if item.unavailable is not None and item.unavailable not in axis_poles:
                 raise StoryPackageError(f"item '{item.id}' unavailable is not a pole of its axes")
+        for npc in world.npcs:
+            axis_poles = {pole for axis in npc.axes for pole in axis}
+            if npc.unavailable is not None and npc.unavailable not in axis_poles:
+                raise StoryPackageError(f"npc '{npc.id}' unavailable is not a pole of its axes")
         location_ids = {location.id for location in world.locations}
         for location in world.locations:
             if location.parent is not None and location.parent not in location_ids:

@@ -103,6 +103,9 @@ npcs:
   - Brandon Corfman
   unnamed_label: the man watching Kristin
   named_by: brandon_identified
+  axes:
+  - {conscious: [awake], unconscious: [knocked out]}
+  unavailable: unconscious
   # plot.md states that Brandon conceals his own past involvement in the program.
   # That is brandon_history, which is protected_knowledge, so the narrator is given
   # a bio that stops short of it. plot.md remains the canonical characterisation.
