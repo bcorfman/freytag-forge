@@ -824,7 +824,11 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     capture = engine.capture
                 else:
                     proposal = result
-                last_prompt = getattr(provider, "last_prompt", None)
+                last_prompt = (
+                    capture.last_after.get("narration_prompt")
+                    if runtime and capture.last_after and "narration_prompt" in capture.last_after
+                    else getattr(provider, "last_prompt", None)
+                )
                 turn_prompt = dict(last_prompt) if last_prompt is not None else None
             except NarrationProviderError as error:
                 if runtime and runtime_context.get("engine") is not None:

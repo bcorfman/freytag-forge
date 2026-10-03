@@ -84,6 +84,7 @@ class WorldCapture:
     def after_commit(self, command: str, narration: str, *, entered_scene: bool) -> dict[str, Any]:
         raw = self.provider.pending_item_facts()
         adapter = _ask_adapter(self.ask)
+        narration_prompt = dict(self.provider.last_prompt) if self.provider.last_prompt is not None else None
         _previous, issues = self.provider.apply_item_facts(
             raw,
             player_input=command,
@@ -109,6 +110,7 @@ class WorldCapture:
             "changed": sorted(self.provider._changed_last_turn),
             "raw": _json_value(raw),
             "match_info": _json_value(self.provider.last_item_facts_match()),
+            "narration_prompt": narration_prompt,
         }
         self.last_after = record
         self.provider.prior_steps = ()

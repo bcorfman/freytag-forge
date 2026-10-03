@@ -96,6 +96,41 @@ def test_runtime_mode_matches_bench_mode(monkeypatch: pytest.MonkeyPatch, fake_j
     ]
 
 
+def test_runtime_mode_records_narration_prompt(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
+    calls: list[dict] = []
+
+    def scripted_reply(self, payload):
+        calls.append(payload)
+        self.last_prompt = {"system": payload["system"], "user": payload["user"]}
+        system = payload["system"]
+        if system.startswith("You match names"):
+            return {"refers": [], "same_as": {"Mysterious key": "new"}, "kind": {"Mysterious key": "thing"}}
+        if system.startswith("You keep track"):
+            return {"item_facts": {}}
+        if "Open the drawer" in payload["user"]:
+            return {
+                "segments": [{"kind": "narration", "text": "Kristin finds the key."}],
+                "item_facts": {"Mysterious key": {"held_by": "Kristin"}},
+            }
+        return {"segments": [{"kind": "narration", "text": "The room is quiet."}]}
+
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.invalid/turn")
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", scripted_reply)
+    variation = _variation(RUNTIME, turns=1)
+    result = core.run_scene(variation, "1A", variation["scripts"]["1A"][0])
+
+    match_calls = [call for call in calls if call["system"].startswith("You match names")]
+    narration_calls = [
+        call
+        for call in calls
+        if not call["system"].startswith("You match names") and not call["system"].startswith("You keep track")
+    ]
+    assert len(match_calls) == 2
+    assert calls.index(match_calls[-1]) > calls.index(narration_calls[1])
+    assert result["turns"][0]["prompt_system"] == narration_calls[1]["system"]
+    assert result["turns"][0]["prompt_user"] == narration_calls[1]["user"]
+
+
 def test_runtime_mode_records_steps(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
     def prepare_state(state):
         world = world_for(state.package, state.facts)
