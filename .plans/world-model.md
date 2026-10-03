@@ -4575,6 +4575,9 @@ the task says):
 - **S4f. Cause routing.** Decide 1d first, using what S4d records. Then
   build it.
 
+**Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
+decide 1d from the refusals and story breaks that S4d records.
+
 ## 12. Decisions for Brandon
 
 W1. **How a reply's place becomes a relation and parent. Decided (Brandon,
