@@ -49,8 +49,8 @@ so closed containers bring their contents (151abce), and `held_by` for
 held things behind a flag (4402a2f): paired x3 base 51/57, held_by
 54/57 (94.7%), t1 and t12 right 3/3; held_by made the default
 (64a1cb3) and W14 unnamed label built (6e1b191): x3 54/57, Brandon
-named early 0/3. Next: open the PR for `claude/1a-1b-slips`, then the
-bookmark, then S4.
+named early 0/3. PR 501 opened (2026-10-03; suite 1021, ruff
+clean). Next: merge PR 501 once CI passes, then the bookmark, then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
