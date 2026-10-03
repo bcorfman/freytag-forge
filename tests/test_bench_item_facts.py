@@ -356,7 +356,7 @@ def test_single_call_rules_require_facts_for_every_change():
     system = provider._system_prompt()
 
     assert 'Give only what changed. For "place", give the name' in system
-    assert 'Example: if Kristin picks up a lantern and lights it, the lantern is {"place": "Kristin"' in system
+    assert 'Example: if Kristin picks up a lantern and lights it, the lantern is {"held_by": "Kristin"' in system
     assert 'If a thing is under something, add "under": true' in system
     assert "Also return item_facts" not in system
 
@@ -413,7 +413,9 @@ def test_drop_rules_removes_exact_rule_lines():
     for opening in (False, True):
         system = provider._system_prompt(opening=opening)
         assert all(rule not in system for rule in rendered_dropped)
-        assert all(rule in system for rule in _single_call_rules("Kristin") if rule not in rendered_dropped)
+        assert all(
+            rule in system for rule in _single_call_rules("Kristin", held_by=True) if rule not in rendered_dropped
+        )
 
 
 def test_drop_rules_removes_start_place_rule_only_from_turn_prompt():
@@ -451,7 +453,7 @@ def test_single_call_prompt_has_each_rule_once():
     for opening in (False, True):
         system = provider._system_prompt(opening=opening)
         dropped_system = dropped_provider._system_prompt(opening=opening)
-        rule_lines = list(_single_call_rules("Kristin"))
+        rule_lines = list(_single_call_rules("Kristin", held_by=True))
         if not opening:
             rule_lines.insert(
                 2,
@@ -763,7 +765,7 @@ def _scene_provider(scene_id, *, item_facts=None):
     )
 
 
-def test_held_by_flag_swaps_place_rules():
+def test_held_by_is_the_default():
     provider = _scene_provider("1A")
     old_place = (
         'Give only what changed. For "place", give the name of the person, thing, or place that has it now. '
@@ -783,14 +785,15 @@ def test_held_by_flag_swaps_place_rules():
         '{"held_by": "Kristin", "condition": ["lit"]}.'
     )
 
-    assert old_place in provider._system_prompt()
-    assert old_example in provider._system_prompt()
-    provider.held_by = True
     system = provider._system_prompt()
     assert new_place in system
     assert new_example in system
     assert old_place not in system
     assert old_example not in system
+    provider.held_by = False
+    old_system = provider._system_prompt()
+    assert old_place in old_system
+    assert old_example in old_system
     assert new_place not in _single_call_rules("Kristin", held_by=True, drop_rules={old_place})
 
 
@@ -840,6 +843,7 @@ def test_held_by_alone_places_with_holder():
 
 def test_held_by_flag_off_keeps_today():
     provider = _scene_provider("1A")
+    provider.held_by = False
     system = provider._system_prompt()
     assert (
         'Give only what changed. For "place", give the name of the person, thing, or place that has it now.' in system
@@ -1211,7 +1215,7 @@ def test_world_two_scene_variation_drops_the_drawer_sentence():
     assert "The drawer holds pens, binder clips, a stapler, and spare batteries." not in prompt["user"]
     assert variation["system_prompt"]["output_example"]
     assert json.loads(variation["system_prompt"]["output_example"])["item_facts"]["lantern"] == {
-        "place": "{protagonist}",
+        "held_by": "{protagonist}",
         "condition": ["lit"],
     }
 
@@ -1219,10 +1223,11 @@ def test_world_two_scene_variation_drops_the_drawer_sentence():
 def test_rules_ask_for_parent_names_on_turn_and_opening():
     provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
     rules = (
-        'Give only what changed. For "place", give the name of the person, thing, or place that has it now. '
+        'Give only what changed. For "place", give the name of the thing or place where it is now. '
+        'If a person holds it, give "held_by" with that person\'s name. '
         'Use "condition" for up to two short phrases.',
         "Example: if Kristin picks up a lantern and lights it, the lantern is "
-        '{"place": "Kristin", "condition": ["lit"]}.',
+        '{"held_by": "Kristin", "condition": ["lit"]}.',
         'If a thing is under something, add "under": true, like {"place": "table", "under": true}.',
     )
     for opening in (False, True):
@@ -1248,7 +1253,7 @@ def test_player_lines_use_place_labels():
     provider._selected_names = ["Michelle's phone"]
     user = provider._section_user_prompt(provider.assemble_turn_prompt("Look at Michelle's phone.")["context"])
     player = user.split("PLAYER:\n", 1)[1]
-    assert "- Michelle's phone. Place: Kristin." in player
+    assert "- Michelle's phone. Held by: Kristin." in player
     assert " is Kristin." not in player
 
 

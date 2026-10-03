@@ -267,7 +267,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seed_issues=None,
         seed_from_package=False,
         drop_rules=(),
-        held_by=False,
+        held_by=True,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -325,7 +325,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seed_issues=None,
         seed_from_package=False,
         drop_rules=(),
-        held_by=False,
+        held_by=True,
     ):
         base = CloudflareTurnProvider.from_environment(state, prompt_variant=prompt_variant)
         return cls(

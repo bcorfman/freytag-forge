@@ -7,7 +7,7 @@
   "item_facts": {"mode": "single_call", "seed_from_package": true, "state_axes": {"drawer": {"closed": ["shut"], "open": []}, "Kristin's laptop": {"closed": ["shut"], "open": []}, "workstation chair": {"overturned": [], "upright": ["standing"]}}},
   "system_prompt": {
     "constant_rules_in_system": true,
-    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"place\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
   },
   "overrides": {
     "knowledge.yaml": {"replacements": [
