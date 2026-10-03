@@ -496,7 +496,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     if seat_name not in names and seat_name in self.item_facts:
                         names.insert(index + 1, seat_name)
                 parent_id = world.parent(entity_id)
-                if parent_id:
+                if parent_id and world.relation(entity_id) == "on":
                     for seat_id in world.seats(parent_id):
                         seat_name = self._entity_label(world, seat_id)
                         if seat_name not in names and seat_name in self.item_facts:

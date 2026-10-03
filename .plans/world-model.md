@@ -266,7 +266,34 @@ stays for now; rerun the paired arms after the 1A fixes below.
      1-2/3), and r1 carries the laptop to the table (the probe's side
      effect); t12 takes it out 1/3 (was 3/3). New misses: t7 (the chair)
      2/3 and r2 lost a turn (18 turns). **Not accepted yet: the bar fell.**
-     Read t7, the restarts and the missed changes before anything else.
+   - **Read by hand (2026-10-02).** t1 is the old drawer miss (an
+     invented notebook; 2/3 before too). The new misses:
+     - **t7 (r2, r3) is ff7fcb4's seat rule overreaching.** It adds a
+       seat when a listed thing's parent is the furniture, and the
+       drawer is `part_of` the workstation. So the chair line ("State:
+       overturned. It can be: upright.") shows on every drawer turn
+       (t1, t2, t8). On t1 the reply set the chair upright in r2
+       (narrated, unasked) and r3 (never narrated), so t7 had nothing
+       left to change. It also makes r3 t6's "sits down in the chair"
+       consistent with the world, though the judge flagged it.
+       **Probe** (Ringer; 3 recorded t1 prompts x 5;
+       `probe_t1_seat.txt`): the reply sets a chair state 10/15 with
+       the line and 0/15 without, and the prose names the chair 0/15
+       in both; the drawer opens 14/15 vs 12/15.
+     - r1 t6 carries the laptop to a "kitchen table" (the t6 probe's
+       known side effect; the new place was never offered to the match
+       call, so the laptop was left unplaced). r1 t9: the prose closes
+       the laptop and the reply leaves out `state`. Both 1/3.
+     - **Restarts: 0 real of 7.** Every flag is a commanded move (t4,
+       t9, t10, t12). r2's "t12" is the pocket-and-truck turn,
+       renumbered because r2 t11 was a leak rejection ("forced
+       entry"), the same family as the earlier "photo" rejection.
+     - Unchanged findings, counted: "Brandon" is narrated before 1B.2
+       on t17-t19 in 8 turns over 3/3 (was 0 before t19 in
+       `s3-fixes-with-rule-x3`); "Kristin's pocket" unplaced 1/56.
+   - **Fix (scoped, not new):** the seat is given only when the listed
+     thing rests on its furniture (`relation == "on"`), the wording
+     Brandon approved. Build and x3 rerun below.
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the

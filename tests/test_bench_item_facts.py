@@ -740,6 +740,15 @@ def test_seat_given_when_its_furniture_holds_a_given_thing():
     assert "workstation chair" in provider._thing_names()
 
 
+def test_seat_not_given_for_a_part_of_its_furniture():
+    provider = _scene_provider("1A")
+    provider._selected_names = ["Kristin", "drawer"]
+
+    assert "workstation chair" not in provider._thing_names()
+    drawer_id = provider._world().resolve("drawer")
+    assert provider._world().relation(drawer_id) == "part_of"
+
+
 def _scene_provider(scene_id, *, item_facts=None):
     state = RuntimeState.bootstrap(PACKAGE)
     state.current_scene_id = scene_id
