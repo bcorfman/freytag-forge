@@ -81,8 +81,10 @@ plan are under S4f in section 11. Probe on recorded 1B prompts done
 on a knock-out (one false), 0/30 on controls; the prose echoes
 "its state now 'destroyed'" 7/30. The older 1055d04 wording drops the
 quoted echo but the prose still says "state" 6/30 and the reply names
-the pole 14/30. Brandon to choose before steps 1-4 are built (nothing
-built yet).
+the pole 14/30. Brandon kept the b867fb5 wording; steps 1-4 built
+for the token (e39882c, suite 1065, payloads unchanged but the token's
+THINGS state). Open: Brandon's knock-out (NPC axes), the prose echo,
+list-form `state`, a live check of the game break.
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -107,8 +109,11 @@ dependency check is to see captured changes through axis poles marked
 unavailable in `world.yaml`. The S4f probe ran (results under "Probe
 result" in section 11, "S4f. Cause routing"): the pole is set
 reliably and never on a control, but the prose echoes the field
-7/30; the older-wording arm does not fix it cleanly. **Resume at
-Brandon's choice** on the echo, then design steps 1-4.
+7/30; the older-wording arm does not fix it cleanly. Brandon kept the
+b867fb5 wording; steps 1-4 built for the token as e39882c. **Resume
+at the S4f open items** (section 11, after "S4f build done"): NPC
+axes for Brandon's knock-out, the prose echo, list-form `state`, and
+a live check of the game break.
 Branch commits are plan-only and unpushed. The notes below are older.
 
 
@@ -4798,6 +4803,35 @@ the task says):
   makes landing depend on alias coverage. It is also the wording
   b867fb5 replaced to fix t9 (laptop close 3/3), so reverting it for
   command-named things would reopen t9. Neither wording is clean.
+  **Brandon chose (2026-10-03): keep the b867fb5 wording, build steps
+  1-4, token aliases `broken`, `snapped`, `crushed`; the echo is a
+  separate open narrator problem.**
+
+  *S4f build done: e39882c* (Ringer `freytag-s4f-build`, Luna, two
+  attempts; reviewed, fixes by hand). `Item.unavailable` (loader
+  rejects a non-pole); transit_card `{intact: [], destroyed: [broken,
+  snapped, crushed]}`, `unavailable: destroyed`;
+  `validation.unavailable_entity_ids` (bare destroyed/incapacitated
+  facts plus items on their unavailable pole) used by both dependency
+  checks; `RuntimeEngine.turn` records the dependencies already
+  unavailable before the turn, raises the proposal break only for new
+  ones, and after `capture.after_commit` restores `before` and raises
+  the same break (capture context taken before `after_commit`) when a
+  capture newly makes one unavailable. Proceed replays it through the
+  existing `resolve_break` path. Review fixes: my check wrongly asked
+  for the token's state on PLAYER lines too, so the worker added axis
+  states to every PLAYER line; reverted (PLAYER carries no state, as
+  before). Dropped an unused `unavailable` key passed to worldkeeper,
+  called `capture.context()` directly (a test stub gained
+  `context()`), and made the fallback test assert the axis counts.
+  Suite 1065, coverage 92.9%, ruff clean; shipped payloads
+  byte-identical; bench prompts differ only by the 1B token THINGS
+  line `State: intact. It can be: destroyed.`
+  Not yet tested: live (the bench has no game-break path; the probe's
+  prompts also carried the token state on PLAYER, which production
+  does not); Brandon (an NPC: only items declare axes, and THINGS would
+  show his built-in captive/free state that 880748e hid); the prose
+  echo; list-form `state` replies (dropped by `_apply_state`).
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
