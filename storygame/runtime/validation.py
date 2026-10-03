@@ -17,7 +17,7 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.facts import Fact, FactStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
-from storygame.runtime.world_model import WORLD_EFFECTS_APPLIED
+from storygame.runtime.world_model import WORLD_EFFECTS_APPLIED, world_for
 from storygame.story_package.models import FactPredicate, StoryPackage, Transition
 
 
@@ -27,6 +27,23 @@ class ProposalValidationError(RuntimeStateError):
     def __init__(self, message: str, *, code: str | None = None) -> None:
         super().__init__(message)
         self.code = code
+
+
+def unavailable_entity_ids(package: StoryPackage, facts: FactStore) -> set[str]:
+    """Return entities made unavailable by facts or their declared axis pole."""
+
+    unavailable = {fact.subject for fact in facts.matching("destroyed")} | {
+        fact.subject for fact in facts.matching("incapacitated")
+    }
+    world = world_for(package, facts)
+    for item in package.world.items:
+        axis_values = world.axis_values(item.id)
+        if item.unavailable is not None and any(
+            item.unavailable in axis["poles"] and axis_values.get(axis["name"]) == item.unavailable
+            for axis in world.axis_definitions(item.id)
+        ):
+            unavailable.add(item.id)
+    return unavailable
 
 
 def unconveyed_terms(groups: tuple[tuple[str, ...], ...], text: str) -> tuple[str, ...]:
@@ -371,9 +388,7 @@ class ProgressionValidator:
     def transition_dependencies_available(self, transition: Transition, facts: FactStore) -> bool:
         """Check the transition's declared dependencies, honoring declared fallbacks."""
 
-        unavailable = {fact.subject for fact in facts.matching("destroyed")} | {
-            fact.subject for fact in facts.matching("incapacitated")
-        }
+        unavailable = unavailable_entity_ids(self.package, facts)
         return all(
             dependency not in unavailable
             or any(fallback not in unavailable for fallback in self._fallbacks(dependency))
@@ -385,9 +400,7 @@ class ProgressionValidator:
 
         remaining = self._reachable_transitions(scene_id)
         required = {dependency for transition in remaining for dependency in transition.required_dependencies}
-        unavailable = {fact.subject for fact in facts.matching("destroyed")} | {
-            fact.subject for fact in facts.matching("incapacitated")
-        }
+        unavailable = unavailable_entity_ids(self.package, facts)
         return tuple(
             sorted(
                 dependency

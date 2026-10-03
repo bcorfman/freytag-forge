@@ -20,7 +20,12 @@ from storygame.runtime.contracts import (
 from storygame.runtime.facts import Fact
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
-from storygame.runtime.validation import ProgressionValidator, ProposalValidationError, predicate_matches
+from storygame.runtime.validation import (
+    ProgressionValidator,
+    ProposalValidationError,
+    predicate_matches,
+    unavailable_entity_ids,
+)
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import FactPredicate
@@ -271,6 +276,39 @@ def test_internal_dependency_analysis_honors_declared_fallbacks() -> None:
     facts.assert_fact(Fact(predicate="destroyed", subject="brandon"))
     assert "brandon" in validator.unsatisfied_dependencies("1A", facts)
     assert validator.eligible_transitions(RuntimeState.bootstrap(PACKAGE)) == ()
+
+
+def test_dependency_unavailable_by_axis_pole() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    world = world_for(PACKAGE, state.facts)
+    validator = ProgressionValidator(PACKAGE)
+
+    assert "transit_card" not in validator.unsatisfied_dependencies("1B", state.facts)
+    world.set_axis("transit_card", "destroyed")
+    assert "transit_card" in validator.unsatisfied_dependencies("1B", state.facts)
+
+    world.set_axis("transit_card", "intact")
+    assert "transit_card" not in validator.unsatisfied_dependencies("1B", state.facts)
+
+
+def test_dependency_axis_pole_honours_fallback() -> None:
+    item = next(item for item in PACKAGE.world.items if item.id == "memory_card")
+    world_source = PACKAGE.world.model_copy(
+        update={
+            "items": tuple(
+                item.model_copy(update={"axes": [{"intact": [], "destroyed": []}], "unavailable": "destroyed"})
+                if current.id == "memory_card"
+                else current
+                for current in PACKAGE.world.items
+            )
+        }
+    )
+    package = PACKAGE.model_copy(update={"world": world_source})
+    state = RuntimeState.bootstrap(package)
+    world_for(package, state.facts).set_axis("memory_card", "destroyed")
+
+    assert "memory_card" in unavailable_entity_ids(package, state.facts)
+    assert "memory_card" not in ProgressionValidator(package).unsatisfied_dependencies("1A", state.facts)
 
 
 def test_internal_validator_accepts_a_satisfied_transition_and_false_predicates() -> None:

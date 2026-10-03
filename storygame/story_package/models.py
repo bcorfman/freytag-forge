@@ -195,6 +195,7 @@ class Item(Entity):
     owner: str | None = Field(default=None, pattern=_ID)
     enterable: bool | None = None
     enter_pole: str | None = Field(default=None, pattern=_ID)
+    unavailable: str | None = Field(default=None, pattern=_ID)
     seat_for: str | None = Field(default=None, pattern=_ID)
     use_seated: bool = False
     right_text: str | None = None

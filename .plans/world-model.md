@@ -1,6 +1,6 @@
 # World model: plan
 
-Status (2026-10-02): decisions W1-W13 settled. S1 merged (PR 480),
+Status (2026-10-03): decisions W1-W13 settled. S1 merged (PR 480),
 S2 merged (PRs 481 and 485), and the 1B, 1C and 2A grounding merged (PR
 486), and the narration leak fixes merged (PR 487), measured live: no
 leak rejection in 1B, 1C or 2A, and every 1B-2A handoff fires. On
@@ -60,8 +60,31 @@ and a declared passenger seat (bfd8345) built; x3 49/57 (one miss from
 the change, t9's unasked laptop close drops its state 3/3); t9 state
 probed and the command-scoped THINGS state wording built (b867fb5):
 x3 49/57, t9 right 3/3, but r1 gains a chair invention (cascading to
-t7) and a state echo on t6; keep or revert is open. Next: staging `@world-state` (needs Brandon:
-deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
+t7) and a state echo on t6; **Brandon kept b867fb5 (2026-10-03).** `@world-state` rewritten (80e507d: player-voice inputs, asserts the
+phone is held by Kristin Schweitzer after the pick-up and the move) and
+run on staging at b24fb4d (2026-10-03): first failed (the phone stayed
+in the kitchen). Brandon then confirmed `FREYTAG_WORLD_CAPTURE=1` on
+staging. **Rerun on b24fb4d passes** (2026-10-03): the phone is held by
+Kristin Schweitzer after the pick-up and after "Go out to the truck."
+The Worker's `/jev` is live (one `moves_thing` ask answered). A direct
+turn ("Put Michelle's phone in my pocket.") returned `capture_issues`
+("item_facts match mapped place 'Kristin' to a character; Kristin not
+moved") and the phone held by Kristin. Correction to the earlier
+diagnosis: an empty capture record is not proof that capture is off,
+because the turn response drops `capture_steps`, `capture_issues` and
+`capture_unplaced` when all three are empty. S4e is done.
+Next: S4f. 1d decided (refuse and record). Brandon chose that the
+dependency check sees captured changes through poles marked
+unavailable in `world.yaml`. Findings, design sketch and the probe
+plan are under S4f in section 11. Probe on recorded 1B prompts done
+(2026-10-03): token pole lands 27/30 on destroy commands, man 14/15
+on a knock-out (one false), 0/30 on controls; the prose echoes
+"its state now 'destroyed'" 7/30. The older 1055d04 wording drops the
+quoted echo but the prose still says "state" 6/30 and the reply names
+the pole 14/30. Brandon kept the b867fb5 wording; steps 1-4 built
+for the token (e39882c, suite 1065, payloads unchanged but the token's
+THINGS state). Open: Brandon's knock-out (NPC axes), the prose echo,
+list-form `state`, a live check of the game break.
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -76,7 +99,23 @@ decision 1a's state axes, the `fixed` refusal and the protagonist's place a
 home in one model. The capture loop, cause routing and rollout stay in the
 continuity plan; this plan defines the world they write into.
 
-## Resume here (2026-10-02)
+## Resume here (2026-10-03)
+
+**Latest (2026-10-03, branch `claude/world-state-e2e`).** S4e is done:
+`@world-state` passes on staging (b24fb4d) with
+`FREYTAG_WORLD_CAPTURE=1` (Brandon verified the variable). Brandon kept
+b867fb5. S4f: 1d is refuse and record (no regeneration); the
+dependency check is to see captured changes through axis poles marked
+unavailable in `world.yaml`. The S4f probe ran (results under "Probe
+result" in section 11, "S4f. Cause routing"): the pole is set
+reliably and never on a control, but the prose echoes the field
+7/30; the older-wording arm does not fix it cleanly. Brandon kept the
+b867fb5 wording; steps 1-4 built for the token as e39882c. **Resume
+at the S4f open items** (section 11, after "S4f build done"): NPC
+axes for Brandon's knock-out, the prose echo, list-form `state`, and
+a live check of the game break.
+Branch commits are plan-only and unpushed. The notes below are older.
+
 
 **Checked against the results on disk (2026-10-02).** Every figure
 below matches its `bench/results` summary, and "The bar now" pools to
@@ -4619,9 +4658,180 @@ the task says):
   The bench loop then calls the same collaborator.
 - **S4e. Measure the runtime path.** Bench x3 on the default
   two-scene variation through the runtime provider, against `w14-x3`
-  (54/57). Then hosted `@world-state` on staging.
+  (54/57). Then hosted `@world-state` on staging. **Done (2026-10-03):**
+  x3 53/57; `@world-state` passes on staging at b24fb4d with capture on.
 - **S4f. Cause routing.** Decide 1d first, using what S4d records. Then
   build it.
+  **Evidence (2026-10-03):** 171 runtime-path turns (`s4e-runtime-x3`,
+  `held-place-x3`, `state-field-x3`, all 1A-1B): 0 rejected turns, 0
+  refused changes (fixed, fact override, hidden, cannot-hold); issues are
+  only format slips (7 empty entries, 1 omitted `item_facts`, 1 person
+  named as a place). The bench has no game-break path.
+  **Brandon chose (2026-10-03): 1d is refuse and record.** A refused
+  captured change is dropped, recorded in `capture_issues`, and the
+  turn stands; no regeneration until measured play shows refusals.
+  **Brandon chose: the future-dependency check should see captured
+  changes.** Found before building: the check reads only `destroyed`
+  and `incapacitated` facts (`ProgressionValidator.unsatisfied_dependencies`),
+  and capture never writes them (no `make_unavailable` path from a
+  reply), so moving the check after capture alone changes nothing.
+  The story's dependencies are `memory_card`, `transit_card` and
+  `brandon`. Open: how a reply marks a thing unavailable.
+  **Brandon chose (2026-10-03): mark poles in world.yaml.** Reuse the
+  proven 1a axes and the reply `state` key (1055d04). `world.yaml`
+  marks which pole of a thing's axis makes it unavailable; when capture
+  sets that pole, the engine records it and the dependency check runs
+  before the turn is final. Probe first. Nothing is built yet.
+
+  *S4f findings from the code (2026-10-03):*
+  - `ProgressionValidator.unsatisfied_dependencies`
+    (`storygame/runtime/validation.py` ~383) reads only bare
+    `destroyed`/`incapacitated` facts, and honours `fallback_ids`
+    (`memory_card` falls back to `michelle_phone`).
+  - worldkeeper's `set_status(entity, "missing"|"destroyed"|"incapacitated")`
+    (`packages/worldkeeper/src/worldkeeper/model.py` ~824) writes
+    `wk_status`, which that check never reads. Nothing calls it from
+    capture.
+  - Characters get a built-in `captive`/`free` axis
+    (`model.py` `_axes`, ~324); things get only declared axes
+    (`models.py` ~204, two poles with alias lists; `initial` set by the
+    loader). `ProgressionValidator._validate_operations` forbids `wk_`
+    mutation from proposals, so capture must write through worldkeeper,
+    not a proposal.
+  - Engine order (`storygame/runtime/engine.py` `turn`): narration
+    validated -> `validator.validate` (future dependencies; game break
+    stores `before` and `capture.context()`) -> `apply_proposal` ->
+    `capture.after_commit` (applies `item_facts`). So captured changes
+    land after the check. `pending_capture` already carries capture
+    across a game break, and "proceed" re-applies it
+    (`WorldCapture.resume`).
+  - Dependencies in this story (`pacing.yaml`): `t_1a_1b` needs
+    `memory_card`; `t_1b_1c` needs `transit_card` and `brandon`;
+    later transitions need `brandon`. `memory_card` is `hidden` until
+    `memory_card_recovered`, so a reply cannot touch it before then.
+
+  *Design sketch (to confirm after the probe):*
+  1. Package: an axis may name its unavailable pole, e.g. on
+     `transit_card` `axes: [{intact: [], destroyed: [broken, snapped]}]`
+     with `unavailable: destroyed`; Brandon a declared axis such as
+     `{conscious: [awake], unconscious: [knocked out]}` with
+     `unavailable: unconscious` (pole names are what the narrator reads
+     in THINGS, so keep them plain words). Loader rejects an
+     `unavailable` that is not one of the axis's poles. Story-agnostic.
+  2. Check: `unsatisfied_dependencies` also counts an entity unavailable
+     when its axis sits on its declared unavailable pole (or
+     `wk_status` destroyed/incapacitated). One helper, so the bench's
+     `dependency_names` and the runtime agree.
+  3. Engine: after `capture.after_commit`, if a dependency is newly at
+     risk, restore `before`, `set_pending_break` with the proposal and
+     `capture.context()` (the same game-break path a proposal uses), so
+     "proceed" replays the turn with capture and "go back" undoes it.
+     1d still holds: no regeneration.
+  4. Tests (scripted provider, hermetic): a reply setting the token to
+     `destroyed` raises the game break and changes nothing; proceed
+     commits it; a non-dependency axis change raises nothing; a declared
+     fallback still available raises nothing.
+
+  *Probe plan (next step; Ringer, read every narration by hand):*
+  - Recorded prompts: 1B turns t14-t19 in
+    `bench/results/state-field-x3/all-turn-records.json` (`prompt_system`,
+    `prompt_user`) carry "Transit token" in THINGS; Brandon ("the man")
+    is in 1B t16-t19 and 1B-1C. Pick 3 prompts.
+  - Edit each prompt's THINGS line for the token to the axis wording
+    1055d04 renders (`State: intact. It can be: destroyed.`), and
+    replace PLAYER with a destroying command in player voice:
+    "Snap the transit token in half.", "Burn the transit token with my
+    lighter." Control arm: "Look closely at the transit token." (must
+    not set destroyed). Brandon arm: his line with `State: conscious.
+    It can be: unconscious.` and "Knock the man out with my phone."
+  - 10-15 samples per arm on the 8b narrator through the Worker. Score:
+    the reply's `state` for the token/Brandon (does it set the pole
+    when the prose destroys it; never on the control), and read the
+    prose (destroyed in prose but no `state` = a miss).
+  - If the pole is set reliably and never on the control, build steps
+    1-4 as Ringer tasks. If not, record the rates and return to Brandon
+    before adding any narrator rule.
+
+  *Probe result (2026-10-03; Ringer `freytag-s4f-pole-probe`, one
+  attempt; `~/dev/ringer-work/freytag-s4f-pole-probe/probe_pole.py`,
+  `pole.json`, `probe_pole.txt`; all 75 narrations read by hand).*
+  Token arms on `state-field-x3` 1B t15 r1-r3; man arms on r1 t18, r1
+  t19, r2 t19 (r3 has no THINGS line for him; PLAYER lacked his line
+  on those turns, so the probe added it).
+  - Token, snap/crush: the prose destroys the token 30/30. The reply
+    gives `"state": "destroyed"` 26/30 (snap 11/15, crush 15/15); one
+    more gives only `"condition": ["broken"]`, which the sketch's
+    alias `broken` maps to the pole (`_axis_match_id`). So 27/30 would
+    land. The 3 misses give `state` as a list (`["broken"]`, twice
+    `["broken into two pieces"]`); `_apply_state` reads only a string
+    `state`, so they are dropped.
+  - Token control ("Look closely at the transit token."): the prose
+    never destroys it; the reply gives `"state": "intact"` 15/15,
+    destroyed 0/15.
+  - Man, "Knock the man out.": the prose knocks him out 13/15; the
+    reply gives `unconscious` 14/15. One false pole: r2 t19 s1 says
+    "The man groans, but remains conscious." with `unconscious`. The
+    other non-knockout (s4, "dazed, but still conscious") gives
+    `"state": "dazed"`, correctly not the pole.
+  - Man control ("Ask the man who he is."): unconscious 0/15
+    (`conscious` 14/15, one empty `item_facts`).
+  - **New defect: the field wording leaks into the prose** on the
+    destroy arms 7/30 ("its state now 'destroyed'", "its once-intact
+    state now marred"); 0/45 on the other arms. The same kind of
+    echo b867fb5 showed on t6.
+  Reading: the pole is set reliably (27/30 and 14/15) and never on a
+  control, which meets the build condition above. Open before
+  building: the prose echo (a player-facing line), one false game
+  break in 15 knock-outs, and the list-form `state` misses.
+
+  *Older-wording arm (2026-10-03; Ringer, one attempt; `pole_old.json`,
+  `probe_pole_old.txt`; 45 narrations read by hand).* Same three t15
+  prompts, token line `State: intact. It can be: destroyed.` (the
+  1055d04 wording, no field name).
+  - The prose destroys the token 30/30; control never.
+  - The literal echo "its state now 'destroyed'" is gone (6/30 ->
+    0/30), but "its once-intact state now marred by the pressure"
+    rises (1/30 -> 6/30, all crush). The prose still says "state".
+  - The reply names the pole far less: `destroyed` (state or
+    condition) 14/30 vs 26/30. Snap gives `broken` otherwise (an
+    alias, so snap lands 15/15). Crush gives `"condition":
+    ["crushed"]` 14/15, which lands only if `crushed` is an alias;
+    with the sketch's aliases (`broken`, `snapped`) crush lands 0/15.
+    One crush reply had empty `item_facts`.
+  - Control: `intact` (state or condition) 15/15, never the pole.
+  Reading: the older wording trades a quoted echo for a softer one and
+  makes landing depend on alias coverage. It is also the wording
+  b867fb5 replaced to fix t9 (laptop close 3/3), so reverting it for
+  command-named things would reopen t9. Neither wording is clean.
+  **Brandon chose (2026-10-03): keep the b867fb5 wording, build steps
+  1-4, token aliases `broken`, `snapped`, `crushed`; the echo is a
+  separate open narrator problem.**
+
+  *S4f build done: e39882c* (Ringer `freytag-s4f-build`, Luna, two
+  attempts; reviewed, fixes by hand). `Item.unavailable` (loader
+  rejects a non-pole); transit_card `{intact: [], destroyed: [broken,
+  snapped, crushed]}`, `unavailable: destroyed`;
+  `validation.unavailable_entity_ids` (bare destroyed/incapacitated
+  facts plus items on their unavailable pole) used by both dependency
+  checks; `RuntimeEngine.turn` records the dependencies already
+  unavailable before the turn, raises the proposal break only for new
+  ones, and after `capture.after_commit` restores `before` and raises
+  the same break (capture context taken before `after_commit`) when a
+  capture newly makes one unavailable. Proceed replays it through the
+  existing `resolve_break` path. Review fixes: my check wrongly asked
+  for the token's state on PLAYER lines too, so the worker added axis
+  states to every PLAYER line; reverted (PLAYER carries no state, as
+  before). Dropped an unused `unavailable` key passed to worldkeeper,
+  called `capture.context()` directly (a test stub gained
+  `context()`), and made the fallback test assert the axis counts.
+  Suite 1065, coverage 92.9%, ruff clean; shipped payloads
+  byte-identical; bench prompts differ only by the 1B token THINGS
+  line `State: intact. It can be: destroyed.`
+  Not yet tested: live (the bench has no game-break path; the probe's
+  prompts also carried the token state on PLAYER, which production
+  does not); Brandon (an NPC: only items declare axes, and THINGS would
+  show his built-in captive/free state that 880748e hid); the prose
+  echo; list-form `state` replies (dropped by `_apply_state`).
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.

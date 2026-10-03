@@ -100,6 +100,9 @@ issue.
 - **Story facts that restate a physical relation declare the effect once.**
   Use `on_assert` with `move`, `reveal`, `accompany` or `set_axis`. The
   binding is one-way: narrated moves never change story facts.
+- **A thing needed later may name its unusable pole with `unavailable:`.** For
+  example, the transit token can use `destroyed`. When a reply puts it on that
+  pole, the game stops and asks the player to go on or go back.
 
 ### Characters (NPCs)
 
