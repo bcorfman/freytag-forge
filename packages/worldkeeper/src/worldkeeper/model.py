@@ -482,6 +482,17 @@ class World:
             return False
         return not any(self._closed_in(entity) for entity in (entity_id,) + self.chain(entity_id))
 
+    def is_shut_away(self, entity_id):
+        """Return whether an entity is hidden only by closed containers."""
+        if (
+            not self.exists(entity_id)
+            or self.is_hidden(entity_id)
+            or self.status(entity_id) == "missing"
+            or self.is_visible(entity_id)
+        ):
+            return False
+        return any(self._closed_in(entity) for entity in (entity_id,) + self.chain(entity_id))
+
     def _closed_in(self, entity_id):
         parent_id = self.parent(entity_id)
         return bool(
@@ -501,11 +512,10 @@ class World:
             )
         if not self._is_a(entity_id, "container"):
             return ()
-        container = self._entity(entity_id)
-        if container.openable and self.axis_values(entity_id).get("open") == "closed":
-            return ()
         return tuple(
-            child for child in self.contents(entity_id) if self.relation(child) == "in" and self.is_visible(child)
+            child
+            for child in self.contents(entity_id)
+            if self.relation(child) == "in" and (self.is_visible(child) or self.is_shut_away(child))
         )
 
     def conditions(self, entity_id):

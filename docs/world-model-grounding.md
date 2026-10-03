@@ -164,7 +164,9 @@ reading level, one idea per sentence, and every path that narrates.
 
 - **Never IDs, relations or the tree.** A THINGS line is the name, then the
   place, then the condition:
-  `- Michelle's phone. Place: Kristin. Condition: not damaged.`
+  `- Michelle's memory card. Place: drawer.`
+  A thing a person holds says who holds it instead of a place:
+  `- Michelle's phone. Held by: Kristin. Condition: not damaged.`
 - **The place is the authored `text` while it is still true, or else the
   parent's name.** Never compose English from the tree ("with Kristin in the
   kitchen of the house"). The narrator echoes what it reads, and composed
@@ -172,8 +174,9 @@ reading level, one idea per sentence, and every path that narrates.
 - **A two-pole state is shown with its other pole,** `open (or closed)`, so the
   model can report a change.
 - **Give only what the command refers to,** plus the protagonist and her place
-  every turn. An open container brings its visible contents. Hidden things are
-  never given.
+  every turn. A container brings its visible contents, open or closed, so the
+  turn that opens it can show what is really inside. Hidden things are never
+  given.
 - **Show a model only the things in play.** The match call lists the things in
   scene scope: the scene's items and people, things at or below the scene's
   area or the protagonist's area, things she carries, and things with no place.
@@ -192,10 +195,15 @@ reading level, one idea per sentence, and every path that narrates.
 
 ### What a model is asked to return
 
-- **A place is a name, never a phrase.** Ask for
-  `{"place": "Kristin"}`, not "in her hand" or "the passenger seat of the
-  truck". The engine resolves names; it never parses phrases. The only extra
-  field is `"under": true`.
+- **A place is a name, never a phrase.** Ask for `{"place": "driver's
+  seat"}`, not "the passenger seat of the truck". The engine resolves names;
+  it never parses phrases.
+- **A held thing names its holder in `held_by`, not in `place`.** Ask for
+  `{"held_by": "Kristin"}`, not `{"place": "Kristin"}`. When "place" could
+  name a person, the narrator also wrote "Kristin" for a drawer she only
+  opened. When a reply gives both, `held_by` wins if `place` is missing,
+  unresolved, the holder, or the holder's area; otherwise `place` wins. The
+  other extra field is `"under": true`.
 - **Replace an example; do not add one.** The place rule has one example. If
   it teaches the wrong shape, change it rather than adding a second rule
   beside it.

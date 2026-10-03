@@ -83,7 +83,7 @@ def test_drawer_alias_closes_and_opening_reveals_declared_pens():
     closed, issues = provider.apply_item_facts({"drawer": {"condition": ["shut"]}})
     assert not issues
     assert closed["drawer"]["condition"] == ["closed"]
-    assert "pens" not in closed
+    assert closed["pens"]["place"] == "drawer"
 
 
 def test_item_inside_closed_drawer_can_move_and_opens_drawer():
@@ -356,7 +356,7 @@ def test_single_call_rules_require_facts_for_every_change():
     system = provider._system_prompt()
 
     assert 'Give only what changed. For "place", give the name' in system
-    assert 'Example: if Kristin picks up a lantern and lights it, the lantern is {"place": "Kristin"' in system
+    assert 'Example: if Kristin picks up a lantern and lights it, the lantern is {"held_by": "Kristin"' in system
     assert 'If a thing is under something, add "under": true' in system
     assert "Also return item_facts" not in system
 
@@ -413,7 +413,9 @@ def test_drop_rules_removes_exact_rule_lines():
     for opening in (False, True):
         system = provider._system_prompt(opening=opening)
         assert all(rule not in system for rule in rendered_dropped)
-        assert all(rule in system for rule in _single_call_rules("Kristin") if rule not in rendered_dropped)
+        assert all(
+            rule in system for rule in _single_call_rules("Kristin", held_by=True) if rule not in rendered_dropped
+        )
 
 
 def test_drop_rules_removes_start_place_rule_only_from_turn_prompt():
@@ -451,7 +453,7 @@ def test_single_call_prompt_has_each_rule_once():
     for opening in (False, True):
         system = provider._system_prompt(opening=opening)
         dropped_system = dropped_provider._system_prompt(opening=opening)
-        rule_lines = list(_single_call_rules("Kristin"))
+        rule_lines = list(_single_call_rules("Kristin", held_by=True))
         if not opening:
             rule_lines.insert(
                 2,
@@ -631,7 +633,7 @@ def test_match_payload_gives_placed_character_place_from_real_package():
         include_places=True,
     )
 
-    assert "- Brandon. Place: across the park from Kristin." in payload["user"].splitlines()
+    assert "- the man watching Kristin. Place: watching Kristin in the park." in payload["user"].splitlines()
 
 
 def _scene_1b_provider():
@@ -648,6 +650,180 @@ def _scene_1b_provider():
     )
 
 
+def test_person_kind_place_mapping_asks_same_person_question(monkeypatch):
+    provider = _scene_1b_provider()
+    questions = []
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "kind": {"man": "person"},
+            "refers": [],
+            "same_as": {"man": "Brandon"},
+        },
+    )
+
+    def confirm(*args):
+        questions.append(args[2])
+        return True
+
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "man"},
+            "Michelle's phone": {"place": "man"},
+        },
+        player_input="Walk over to the man watching me and hand him Michelle's phone.",
+        confirm=confirm,
+    )
+
+    world = provider._world()
+    brandon = world.resolve("Brandon")
+    assert questions == ['Are "man" and "Brandon Corfman" the same person?']
+    assert world.parent(world.resolve("Michelle's phone")) == brandon
+    assert world.resolve("man") in (None, brandon)
+    assert world.area(world.resolve("Kristin")) == world.area(brandon)
+
+
+def test_place_kind_mapping_to_character_keeps_on_question(monkeypatch):
+    provider = _scene_1b_provider()
+    questions = []
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "kind": {"man": "place"},
+            "refers": [],
+            "same_as": {"man": "Brandon"},
+        },
+    )
+
+    def confirm(*args):
+        questions.append(args[2])
+        return True
+
+    provider.apply_item_facts(
+        {"Kristin": {"place": "man"}},
+        player_input="Walk over to the man watching me.",
+        confirm=confirm,
+    )
+
+    assert questions[0].startswith('Is the place called "man"')
+
+
+def test_match_answer_resolving_to_offered_thing_is_kept(monkeypatch):
+    provider = _scene_1b_provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {"kind": {"man": "person"}, "refers": [], "same_as": {"man": "Brandon"}},
+    )
+
+    _, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "man"}},
+        player_input="Walk over to the man watching me.",
+    )
+
+    assert not any("which was not in THINGS" in issue for issue in issues)
+
+
+def test_match_answer_with_unnamed_label_maps_to_character(monkeypatch):
+    provider = _scene_1b_provider()
+    questions = []
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "kind": {"man": "person"},
+            "refers": [],
+            "same_as": {"man": "the man watching Kristin"},
+        },
+    )
+
+    def confirm(*args):
+        questions.append(args[2])
+        return True
+
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "man"},
+            "Michelle's phone": {"place": "man"},
+        },
+        player_input="Walk over to the man watching me and hand him Michelle's phone.",
+        confirm=confirm,
+    )
+
+    world = provider._world()
+    brandon = world.resolve("Brandon")
+    assert len(questions) == 1
+    assert world.parent(world.resolve("Michelle's phone")) == brandon
+
+
+def test_character_at_character_lands_in_its_area(monkeypatch):
+    provider = _scene_1b_provider()
+    monkeypatch.setattr(
+        CloudflareTurnProvider,
+        "_request",
+        lambda *_args: {
+            "kind": {"man": "person"},
+            "refers": [],
+            "same_as": {"man": "Brandon"},
+        },
+    )
+
+    _facts, issues = provider.apply_item_facts(
+        {"Kristin": {"place": "man"}},
+        player_input="Walk over to the man watching me.",
+        confirm=lambda *_args: True,
+    )
+
+    world = provider._world()
+    assert world.area(world.resolve("Kristin")) == world.area(world.resolve("Brandon"))
+    assert provider.last_item_facts_unplaced() == []
+    assert any("placed in" in issue for issue in issues)
+
+
+def test_unnamed_label_shown_until_named():
+    provider = _scene_1b_provider()
+    provider.apply_item_facts({"Michelle's phone": {"held_by": "Brandon"}})
+    provider._selected_names = ["Michelle's phone", "Kristin"]
+
+    before = provider._things_block()
+    assert "the man watching Kristin" in before
+    assert "Brandon" not in before
+
+    provider.state.facts.assert_fact(Fact(predicate="brandon_identified", subject="story", value="true"))
+    after = provider._things_block()
+    assert "Brandon" in after
+    assert "the man watching Kristin" not in after
+
+
+def test_unnamed_label_resolves_to_character():
+    provider = _scene_1b_provider()
+    provider.apply_item_facts({"Michelle's phone": {"held_by": "the man watching Kristin"}})
+
+    world = provider._world()
+    assert world.resolve("the man watching Kristin") == "brandon"
+    assert world.parent("michelle_phone") == "brandon"
+    assert not world.resolve("the man watching Kristin").startswith("item_")
+
+
+def test_seat_given_when_its_furniture_holds_a_given_thing():
+    provider = _scene_provider("1A")
+    provider.apply_item_facts({"Kristin's laptop": {"place": "workstation"}})
+    provider._selected_names = ["Kristin", "Kristin's laptop"]
+
+    assert "workstation chair" in provider._thing_names()
+
+
+def test_seat_not_given_for_a_part_of_its_furniture():
+    provider = _scene_provider("1A")
+    provider._selected_names = ["Kristin", "drawer"]
+
+    assert "workstation chair" not in provider._thing_names()
+    drawer_id = provider._world().resolve("drawer")
+    assert provider._world().relation(drawer_id) == "part_of"
+
+
 def _scene_provider(scene_id, *, item_facts=None):
     state = RuntimeState.bootstrap(PACKAGE)
     state.current_scene_id = scene_id
@@ -660,6 +836,94 @@ def _scene_provider(scene_id, *, item_facts=None):
         mode="single_call",
         seed_from_package=True,
     )
+
+
+def test_held_by_is_the_default():
+    provider = _scene_provider("1A")
+    old_place = (
+        'Give only what changed. For "place", give the name of the person, thing, or place that has it now. '
+        'Use "condition" for up to two short phrases.'
+    )
+    new_place = (
+        'Give only what changed. For "place", give the name of the thing or place where it is now. '
+        'If a person holds it, give "held_by" with that person\'s name. '
+        'Use "condition" for up to two short phrases.'
+    )
+    old_example = (
+        "Example: if Kristin picks up a lantern and lights it, the lantern is "
+        '{"place": "Kristin", "condition": ["lit"]}.'
+    )
+    new_example = (
+        "Example: if Kristin picks up a lantern and lights it, the lantern is "
+        '{"held_by": "Kristin", "condition": ["lit"]}.'
+    )
+
+    system = provider._system_prompt()
+    assert new_place in system
+    assert new_example in system
+    assert old_place not in system
+    assert old_example not in system
+    provider.held_by = False
+    old_system = provider._system_prompt()
+    assert old_place in old_system
+    assert old_example in old_system
+    assert new_place not in _single_call_rules("Kristin", held_by=True, drop_rules={old_place})
+
+
+def test_held_by_flag_shows_held_by_in_things():
+    provider = _scene_provider("1A")
+    provider.apply_item_facts({"Michelle's phone": {"place": "Kristin"}})
+    provider.held_by = True
+    provider._selected_names = ["Michelle's phone", "Kristin"]
+
+    block = provider._things_block()
+    phone = next(line for line in block.splitlines() if line.startswith("- Michelle's phone."))
+    kristin = next(line for line in block.splitlines() if line.startswith("- Kristin."))
+    assert "Held by: Kristin." in phone
+    assert "Place: Kristin." not in phone
+    assert "Place:" in kristin
+
+
+def test_held_by_pocket_place_keeps_holder():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts({"Michelle's phone": {"held_by": "Kristin", "place": "Kristin's pocket"}})
+    assert provider._world().parent("michelle_phone") == "kristin"
+
+
+def test_held_by_place_elsewhere_wins():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts({"Kristin's laptop": {"place": "Kristin"}})
+    provider.apply_item_facts({"Kristin's laptop": {"held_by": "Kristin", "place": "workstation"}})
+    assert provider._world().parent("kristin_laptop") == "michelle_workstation"
+
+
+def test_held_by_holders_area_keeps_holder():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts({"Kristin's laptop": {"held_by": "Kristin", "place": "kitchen"}})
+    assert provider._world().parent("kristin_laptop") == "kristin"
+
+
+def test_held_by_alone_places_with_holder():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    _facts, issues = provider.apply_item_facts({"Michelle's phone": {"held_by": "Kristin"}})
+    assert not any("empty" in issue or "invalid" in issue for issue in issues)
+    assert provider._world().parent("michelle_phone") == "kristin"
+
+
+def test_held_by_flag_off_keeps_today():
+    provider = _scene_provider("1A")
+    provider.held_by = False
+    system = provider._system_prompt()
+    assert (
+        'Give only what changed. For "place", give the name of the person, thing, or place that has it now.' in system
+    )
+    provider.apply_item_facts({"Michelle's phone": {"place": "Kristin"}})
+    provider._selected_names = ["Michelle's phone"]
+    assert "Place: Kristin." in provider._things_block()
 
 
 def _office_reveal_provider():
@@ -1024,7 +1288,7 @@ def test_world_two_scene_variation_drops_the_drawer_sentence():
     assert "The drawer holds pens, binder clips, a stapler, and spare batteries." not in prompt["user"]
     assert variation["system_prompt"]["output_example"]
     assert json.loads(variation["system_prompt"]["output_example"])["item_facts"]["lantern"] == {
-        "place": "{protagonist}",
+        "held_by": "{protagonist}",
         "condition": ["lit"],
     }
 
@@ -1032,10 +1296,11 @@ def test_world_two_scene_variation_drops_the_drawer_sentence():
 def test_rules_ask_for_parent_names_on_turn_and_opening():
     provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
     rules = (
-        'Give only what changed. For "place", give the name of the person, thing, or place that has it now. '
+        'Give only what changed. For "place", give the name of the thing or place where it is now. '
+        'If a person holds it, give "held_by" with that person\'s name. '
         'Use "condition" for up to two short phrases.',
         "Example: if Kristin picks up a lantern and lights it, the lantern is "
-        '{"place": "Kristin", "condition": ["lit"]}.',
+        '{"held_by": "Kristin", "condition": ["lit"]}.',
         'If a thing is under something, add "under": true, like {"place": "table", "under": true}.',
     )
     for opening in (False, True):
@@ -1061,7 +1326,7 @@ def test_player_lines_use_place_labels():
     provider._selected_names = ["Michelle's phone"]
     user = provider._section_user_prompt(provider.assemble_turn_prompt("Look at Michelle's phone.")["context"])
     player = user.split("PLAYER:\n", 1)[1]
-    assert "- Michelle's phone. Place: Kristin." in player
+    assert "- Michelle's phone. Held by: Kristin." in player
     assert " is Kristin." not in player
 
 
@@ -1234,12 +1499,15 @@ def test_open_drawer_gives_its_contents():
     assert "memory card" not in things
 
 
-def test_closed_drawer_gives_no_contents():
-    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
-    provider._selected_names = ["drawer"]
-    things = provider._things_block()
-    assert "- drawer." in things
-    assert "pens" not in things
+def test_closed_container_contents_given_with_it():
+    provider = _scene_provider("1A")
+    provider._selected_names = ["Kristin", "drawer"]
+    world = provider._world()
+
+    assert world.axis_values(world.resolve("drawer")).get("open") == "closed"
+    assert all(name in provider._thing_names() for name in ("stapler", "spare batteries", "pens", "binder clips"))
+    assert "Michelle's memory card" not in provider._thing_names()
+    assert "- stapler. Place: drawer." in provider._things_block()
 
 
 def test_item_facts_uses_things_place_rule_on_turn_and_opening(monkeypatch):
@@ -1969,6 +2237,10 @@ def test_package_seed_scene_1a_matches_authored_things():
             "place": "in Michelle's workstation",
             "condition": ["closed", "shut"],
         },
+        "pens": {"place": "drawer", "condition": []},
+        "binder clips": {"place": "drawer", "condition": []},
+        "stapler": {"place": "drawer", "condition": []},
+        "spare batteries": {"place": "drawer", "condition": []},
         "workstation chair": {
             "place": "at Michelle's workstation",
             "condition": ["overturned"],
@@ -2682,7 +2954,7 @@ def test_prepare_turn_adds_referred_people_and_places_only_to_narration_things()
 
     assert provider._things_block(narration=True).splitlines() == [
         "THINGS:",
-        "- Kristin. Place: security corridors. With Kristin: Brandon, Michelle.",
+        "- Kristin. Place: security corridors. With Kristin: the man watching Kristin, Michelle.",
         "- Michelle. Place: security corridors.",
         "- executive office. This is a place.",
     ]
@@ -2769,7 +3041,7 @@ def test_entity_label_keeps_shortest_name():
     provider = _scene_provider("3B")
 
     assert provider._entity_label(provider._world(), "michelle") == "Shelly"
-    assert "With Kristin: Brandon, Michelle." in provider._things_block(narration=True)
+    assert "With Kristin: the man watching Kristin, Michelle." in provider._things_block(narration=True)
 
 
 def test_group_member_player_follows_with_companion_and_new_thing_uses_group_place(monkeypatch):
@@ -3165,7 +3437,7 @@ def test_new_name_mapped_to_other_character_still_resolves_player_character_guar
     assert provider.last_item_facts_match()["resolutions"] == {"the stranger": world.name(world.resolve("Michelle"))}
 
 
-def test_character_inside_character_place_is_left_unplaced(monkeypatch):
+def test_character_inside_character_place_is_not_moved(monkeypatch):
     provider = _provider()
     monkeypatch.setattr(
         CloudflareTurnProvider,
@@ -3177,8 +3449,8 @@ def test_character_inside_character_place_is_left_unplaced(monkeypatch):
         {"Kristin": {"place": "service path"}}, player_input="Go to the service path."
     )
 
-    assert provider.last_item_facts_unplaced() == [{"name": "Kristin", "place": "service path"}]
-    assert "item_facts match mapped place 'service path' to a character; Kristin left unplaced" in issues
+    assert provider.last_item_facts_unplaced() == []
+    assert "item_facts match mapped place 'service path' to a character; Kristin not moved" in issues
 
 
 def test_thing_at_place_mapped_to_character_is_allowed_character_inside(monkeypatch):

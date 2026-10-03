@@ -304,6 +304,7 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     drop_rules = variation.get("item_facts", {}).get("drop_rules", [])
     if drop_rules:
         hash_payload["item_facts_drop_rules"] = sorted(drop_rules)
+    hash_payload["item_facts_held_by"] = bool(variation.get("item_facts", {}).get("held_by", True))
     variation["_variation_hash"] = stable_hash(hash_payload)
     variation["_story_package_value"] = package_value
     return variation
@@ -489,6 +490,7 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
             seed_issues=seed_issues,
             seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
             drop_rules=tuple(variation.get("item_facts", {}).get("drop_rules", [])),
+            held_by=bool(variation.get("item_facts", {}).get("held_by", True)),
         )
     return CloudflareTurnProvider.from_environment(state, prompt_variant=variation["_prompt_variant"])
 
@@ -599,6 +601,7 @@ def prompt_for(
             state_axes=state_axes,
             seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
             drop_rules=tuple(variation.get("item_facts", {}).get("drop_rules", [])),
+            held_by=bool(variation.get("item_facts", {}).get("held_by", True)),
         )
     else:
         provider = CloudflareTurnProvider(

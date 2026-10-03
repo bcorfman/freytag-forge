@@ -44,6 +44,13 @@ def _protagonist_name(package) -> str | None:
     return min((*npc.aliases, npc.name), key=len) if npc else None
 
 
+def _character_label(facts, npc, name, *, shortest=False):
+    if npc and npc.unnamed_label and npc.named_by and not _true(facts, npc.named_by):
+        return npc.unnamed_label
+    labels = (npc.name, *npc.aliases) if npc else (name,)
+    return min(labels, key=len) if shortest else (npc.aliases[0] if npc and npc.aliases else name)
+
+
 def declared_axes_for_world(world, names):
     """Return declared pole pairs for the named things that have axes."""
 
@@ -67,6 +74,10 @@ def declared_axes_for_package(package, names, state_axes=None):
 
 def _schema_for(package, axes=None, facts=None):
     data = copy.deepcopy(world_source_schema_data(package.world))
+    entities = {entity["id"]: entity for entity in data["entities"]}
+    for npc in package.world.npcs:
+        if npc.unnamed_label:
+            entities[npc.id].setdefault("aliases", []).append(npc.unnamed_label)
     if axes:
         resolver = World(WorldSchema.from_data(data), facts or MemoryBackend(), make_fact=Fact)
         for name, poles in axes.items():
@@ -113,7 +124,7 @@ def _view(package, facts, axes=None, schema=None, *, structural=False):
     world = World(schema or _schema_for(package, axes), facts, make_fact=Fact)
 
     def person_label(npc, name):
-        return npc.aliases[0] if npc and npc.aliases else name
+        return _character_label(facts, npc, name)
 
     ids = []
     for entity_id in world.entity_ids():
@@ -121,7 +132,7 @@ def _view(package, facts, axes=None, schema=None, *, structural=False):
             entity_id == package.world.protagonist_id
             or not world.is_a(entity_id, "area")
             and not world.is_a(entity_id, "character")
-            and world.is_visible(entity_id)
+            and (world.is_visible(entity_id) or world.is_shut_away(entity_id))
             and (world.parent(entity_id) or world.unplaced_name(entity_id))
         ):
             ids.append(entity_id)
@@ -223,9 +234,26 @@ START_PLACE_RULE_TEMPLATE = (
 )
 
 
-def _single_call_rules(protagonist_name, *, drop_rules=frozenset()):
+def _single_call_rules(protagonist_name, *, drop_rules=frozenset(), held_by=False):
     protagonist = protagonist_name or "Sam"
-    rules = tuple(rule.format(protagonist=protagonist) for rule in _SINGLE_CALL_RULES if rule not in drop_rules)
+    place_rule = _SINGLE_CALL_RULES[1]
+    example_rule = _SINGLE_CALL_RULES[2]
+    if held_by:
+        place_rule = (
+            'Give only what changed. For "place", give the name of the thing or place where it is now. '
+            'If a person holds it, give "held_by" with that person\'s name. '
+            'Use "condition" for up to two short phrases.'
+        )
+        example_rule = (
+            "Example: if {protagonist} picks up a lantern and lights it, the lantern is "
+            '{{"held_by": "{protagonist}", "condition": ["lit"]}}.'
+        )
+    selected_rules = (_SINGLE_CALL_RULES[0], place_rule, example_rule, *_SINGLE_CALL_RULES[3:])
+    rules = tuple(
+        rule.format(protagonist=protagonist)
+        for index, rule in enumerate(selected_rules)
+        if _SINGLE_CALL_RULES[index] not in drop_rules
+    )
     if protagonist_name:
         return rules[:1] + (
             f"When {protagonist_name} goes to a new place, add {protagonist_name} to item_facts with the place where {protagonist_name} is when the story ends.",
@@ -242,7 +270,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
     allowed_reply_keys = CloudflareTurnProvider.allowed_reply_keys | {"item_facts"}
 
     def __init__(
-        self, *, item_facts, mode, state_axes=None, seed_issues=None, seed_from_package=False, drop_rules=(), **kwargs
+        self,
+        *,
+        item_facts,
+        mode,
+        state_axes=None,
+        seed_issues=None,
+        seed_from_package=False,
+        drop_rules=(),
+        held_by=True,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.item_facts_seed_names = tuple(item_facts)
@@ -251,6 +288,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.state_axes = copy.deepcopy(state_axes or {})
         self.seed_from_package = seed_from_package
         self.drop_rules = frozenset(drop_rules)
+        self.held_by = held_by
         self._pending_item_facts = None
         self._pending_item_facts_present = False
         self._held_item_facts = {}
@@ -298,6 +336,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seed_issues=None,
         seed_from_package=False,
         drop_rules=(),
+        held_by=True,
     ):
         base = CloudflareTurnProvider.from_environment(state, prompt_variant=prompt_variant)
         return cls(
@@ -312,6 +351,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             seed_issues=seed_issues,
             seed_from_package=seed_from_package,
             drop_rules=drop_rules,
+            held_by=held_by,
         )
 
     def _world(self, *, axes=None):
@@ -429,7 +469,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             place = facts["place"]
             entity_id = world.resolve(name)
             if place:
-                line += f" Place: {place.strip()}."
+                parent_id = world.parent(entity_id) if entity_id else None
+                label = "Held by" if self.held_by and parent_id and world.is_a(parent_id, "character") else "Place"
+                line += f" {label}: {place.strip()}."
             if facts["condition"]:
                 axes = world.axis_definitions(entity_id) if entity_id else ()
                 rendered = []
@@ -495,6 +537,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     seat_name = self._entity_label(world, seat_id)
                     if seat_name not in names and seat_name in self.item_facts:
                         names.insert(index + 1, seat_name)
+                parent_id = world.parent(entity_id)
+                if parent_id and world.relation(entity_id) == "on":
+                    for seat_id in world.seats(parent_id):
+                        seat_name = self._entity_label(world, seat_id)
+                        if seat_name not in names and seat_name in self.item_facts:
+                            names.insert(index + 1, seat_name)
             index += 1
         return names
 
@@ -510,11 +558,17 @@ class ItemFactsProvider(CloudflareTurnProvider):
             lines.insert(0, f"Just before this: {' '.join(self.prior_steps)}")
         if not lines or "scene_setting" not in user:
             return lines
-        return [
-            f"{name}. Place: {self.item_facts[name]['place'].strip()}."
-            for name in self._thing_names()
-            if self.item_facts[name]["place"]
-        ] + lines
+        player_lines = []
+        world = self._world()
+        for name in self._thing_names():
+            place = self.item_facts[name]["place"]
+            if not place:
+                continue
+            entity_id = world.resolve(name)
+            parent_id = world.parent(entity_id) if entity_id else None
+            label = "Held by" if self.held_by and parent_id and world.is_a(parent_id, "character") else "Place"
+            player_lines.append(f"{name}. {label}: {place.strip()}.")
+        return player_lines + lines
 
     def _section_user_prompt(self, user):
         rendered = super()._section_user_prompt(user)
@@ -545,7 +599,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if self.item_facts_mode != "single_call":
             return system
         protagonist = _protagonist_name(self.state.package)
-        rules = list(_single_call_rules(protagonist, drop_rules=self.drop_rules))
+        rules = list(_single_call_rules(protagonist, drop_rules=self.drop_rules, held_by=self.held_by))
         if not opening and protagonist:
             start_place_rule_kept = START_PLACE_RULE_TEMPLATE not in self.drop_rules
             if start_place_rule_kept:
@@ -626,8 +680,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         wanted = set(names)
         return {name: copy.deepcopy(facts) for name, facts in view.items() if name in wanted}
 
-    @staticmethod
-    def _valid_entry(value):
+    def _valid_entry(self, value):
         if not isinstance(value, dict) or not value:
             return False
         if "contents" in value:
@@ -638,6 +691,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
             )
         return (
             ("place" in value and isinstance(value["place"], str) and bool(value["place"].strip()))
+            or (
+                self.held_by
+                and "held_by" in value
+                and isinstance(value["held_by"], str)
+                and bool(value["held_by"].strip())
+            )
             or ("state" in value and isinstance(value["state"], str) and bool(value["state"].strip()))
             or (
                 "condition" in value
@@ -693,17 +752,21 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _entity_label(self, world, entity_id):
         if world.is_a(entity_id, "character"):
-            npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
-            if npc:
-                return min((npc.name, *npc.aliases), key=len)
+            label = self._character_label(world, entity_id, shortest=True)
+            if label is not None:
+                return label
         return world.name(entity_id)
 
     def _referred_entity_label(self, world, entity_id):
         if world.is_a(entity_id, "character"):
-            npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
-            if npc:
-                return npc.aliases[0] if npc.aliases else npc.name
+            label = self._character_label(world, entity_id)
+            if label is not None:
+                return label
         return world.name(entity_id)
+
+    def _character_label(self, world, entity_id, *, shortest=False):
+        npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
+        return _character_label(self.state.facts, npc, world.name(entity_id), shortest=shortest) if npc else None
 
     def _referred_lines_for_command(self, player_input):
         world = self._world()
@@ -745,7 +808,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
             parent_id = world.parent(entity_id)
             line = f"- {label}."
             if parent_id is not None:
-                line = f"- {label}. Place: {world.name(parent_id)}."
+                parent_label = (
+                    self._entity_label(world, parent_id)
+                    if world.is_a(parent_id, "character")
+                    else world.name(parent_id)
+                )
+                line = f"- {label}. Place: {parent_label}."
             people.append((command_position(entity_id), line))
 
         protagonist_area = world.area(protagonist_id)
@@ -1016,6 +1084,33 @@ class ItemFactsProvider(CloudflareTurnProvider):
             )
             return previous, issues
         world = self._world()
+        if self.held_by:
+            raw = copy.deepcopy(raw)
+            for value in raw.values():
+                if not isinstance(value, dict) or not isinstance(value.get("held_by"), str):
+                    continue
+                holder_name = value["held_by"].strip()
+                holder_id = self._resolve_name(world, holder_name)
+                place = value.get("place")
+                place_id = self._resolve_name(world, place) if isinstance(place, str) and place.strip() else None
+                holder_area = world.area(holder_id) if holder_id is not None else None
+                held_by_wins = (
+                    holder_id is None
+                    or not isinstance(place, str)
+                    or place_id is None
+                    or place_id == holder_id
+                    or (
+                        holder_area is not None
+                        and world.is_a(place_id, "area")
+                        and (
+                            place_id in {holder_area, *world.chain(holder_area)}
+                            or holder_area in {place_id, *world.chain(place_id)}
+                        )
+                    )
+                )
+                if held_by_wins:
+                    value["place"] = holder_name
+                value.pop("held_by", None)
         fact_move_overrides = self._fact_move_overrides(world)
         entries = []
         explicit_keys = set(raw)
@@ -1138,7 +1233,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
             offered = {name.strip().casefold() for name in self._match_offered_names}
             same_as = dict(same_as)
             for name, target in same_as.items():
-                if isinstance(target, str) and target != "new" and target.strip().casefold() not in offered:
+                target_id = self._resolve_name(world, target) if isinstance(target, str) else None
+                offered_target = any(
+                    self._resolve_name(world, offered_name) == target_id for offered_name in self._match_offered_names
+                )
+                if (
+                    isinstance(target, str)
+                    and target != "new"
+                    and target.strip().casefold() not in offered
+                    and (target_id is None or not offered_target)
+                ):
                     issue = f"item_facts match named {target!r} for {name!r}, which was not in THINGS; kept as new"
                     issues.append(issue)
                     match_issues.append(issue)
@@ -1168,8 +1272,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if pair in mapping_answers:
                 return mapping_answers[pair]
             player_area, contrastive = self._mapping_area_context(world, target_id)
-            contrastive = contrastive and kind == "place"
-            question, statement = self._mapping_prompt(world, name, target_id, is_place=kind == "place")
+            is_place = kind == "place" and not (world.is_a(target_id, "character") and new_kind(name) == "character")
+            contrastive = contrastive and is_place
+            question, statement = self._mapping_prompt(world, name, target_id, is_place=is_place)
             player, known = self._mapping_state(world, target_id)
             answer = confirm(player_input, story, question, statement, player, known)
             mapping_checks.append(
@@ -1358,19 +1463,28 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if place_pole:
                 self.item_facts_axis_fixes += 1
             place_parent = place_ids.get(place) if place and not place_pole else None
+            if place and not place_pole and place_parent is None:
+                place_parent = self._resolve_name(world, place)
+            character_at_character_no_move = False
             character_inside_character = (
                 place
                 and not place_pole
-                and place in place_ids
                 and world.is_a(entity_id, "character")
                 and place_parent is not None
                 and world.is_a(place_parent, "character")
             )
             if character_inside_character:
-                place_parent = None
-                issues.append(f"item_facts match mapped place {place!r} to a character; {name} left unplaced")
-            if place and not place_pole and place not in place_ids:
-                place_parent = self._resolve_name(world, place)
+                target_area = world.area(place_parent)
+                if place_parent == entity_id or target_area is None:
+                    place_parent = None
+                    character_at_character_no_move = True
+                    issues.append(f"item_facts match mapped place {place!r} to a character; {name} not moved")
+                else:
+                    place_parent = target_area
+                    issues.append(
+                        f"item_facts match mapped place {place!r} to a character; "
+                        f"{name} placed in {world.name(target_area)}"
+                    )
             if place_parent and world.is_a(place_parent, "group") and not world.is_a(entity_id, "character"):
                 place_parent = world.parent(place_parent)
             if key not in overridden_keys:
@@ -1397,6 +1511,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 and not place_pole
                 and place_parent is None
                 and not own_seat_place
+                and not character_at_character_no_move
                 and not (world.place_label(entity_id) and world.place_label(entity_id).casefold() == place.casefold())
             )
             if unresolved_place:
@@ -1528,6 +1643,9 @@ def validate_item_facts(value, *, known_names=None):
     for rule in drop_rules:
         if rule not in (*_SINGLE_CALL_RULES, START_PLACE_RULE_TEMPLATE):
             raise ValueError(f"item_facts drop_rules contains unknown rule {rule!r}")
+    held_by = value.get("held_by", False)
+    if not isinstance(held_by, bool):
+        raise ValueError("item_facts held_by must be a boolean")
     seed = value.get("seed", {})
     if not isinstance(seed, dict) or (not seed and not seed_from_package):
         raise ValueError("item_facts must have a non-empty seed unless seed_from_package is enabled")

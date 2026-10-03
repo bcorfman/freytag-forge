@@ -20,7 +20,22 @@ from storygame.runtime.world_model import (
     world_schema_data,
 )
 from storygame.story_package.loader import StoryPackageError, load_story_package
-from storygame.story_package.models import WorldEffect
+from storygame.story_package.models import Entity, WorldEffect, WorldSource
+
+
+def test_unnamed_label_needs_named_by() -> None:
+    with pytest.raises(ValueError, match="character 'The stranger'"):
+        Entity(id="stranger", name="The stranger", unnamed_label="the stranger")
+
+
+def test_character_named_by_must_be_a_declared_fact() -> None:
+    raw = PACKAGE.world.model_dump(mode="python")
+    raw["npcs"][0]["unnamed_label"] = "the unnamed person"
+    raw["npcs"][0]["named_by"] = "missing_fact"
+
+    with pytest.raises(ValueError, match="character 'Kristin.*undeclared story fact 'missing_fact'"):
+        WorldSource.model_validate(raw)
+
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)

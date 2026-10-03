@@ -35,7 +35,9 @@ def main(run_dir: str) -> int:
             print(f"   transition {transition}")
         for number, turn in enumerate(run.get("turns") or (), start=1):
             typed = turn.get("typed_input") or turn.get("player_input")
-            print(f"   t{number} [{turn.get('scene_id')}] {typed} -> handoff={turn.get('authored_handoff_candidate_id')}")
+            print(
+                f"   t{number} [{turn.get('scene_id')}] {typed} -> handoff={turn.get('authored_handoff_candidate_id')}"
+            )
             for key in ("item_facts_place_resolutions", "item_facts_resolutions", "item_facts_unplaced"):
                 value = turn.get(key)
                 if value:

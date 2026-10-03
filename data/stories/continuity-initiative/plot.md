@@ -168,7 +168,7 @@ freytag_phase: rising_action
 objective: Follow Michelles lead and survive the park
 participant_ids: [kristin, brandon, michelle]
 character_placements:
-  brandon: {parent: los_angeles_park, text: across the park from Kristin}
+  brandon: {parent: los_angeles_park, text: watching Kristin in the park}
 item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, kristin_truck]
 item_placements:
   park_bench: {parent: los_angeles_park}

@@ -2259,6 +2259,7 @@ def test_turn_rules_sharpen_the_authored_place_rule() -> None:
     assert "Use the places and details the story gives you." in rules
     assert "Keep each object where the scene puts it." in rules
     assert "Finish each action the player gives." in rules
+    assert "A thing the player holds is in their hand until the story puts it away." in rules
     assert "When the player gives a thing to someone, that person takes it." in rules
     assert (
         rules[rules.index("When the player gives a thing to someone, that person takes it.") + 1]
@@ -2267,6 +2268,18 @@ def test_turn_rules_sharpen_the_authored_place_rule() -> None:
     assert "Only show Kristin doing what the player said." in rules
     assert ("Finish each action the player gives." + " " + "Only show Kristin doing what the player said.") not in rules
     assert "Answer what the player did. Only show Kristin doing what the player said." not in rules
+
+
+def test_turn_rules_keep_held_thing_in_hand() -> None:
+    rules = _instruction_for(None, ()).splitlines()
+    held_thing_rule = "A thing the player holds is in their hand until the story puts it away."
+
+    finish_index = rules.index("Finish each action the player gives.")
+    assert rules[finish_index + 1] == held_thing_rule
+
+    provider = CloudflareTurnProvider.__new__(CloudflareTurnProvider)
+    provider.state = RuntimeState.bootstrap(PACKAGE)
+    assert held_thing_rule not in provider._constant_opening_rules()
 
 
 def test_selection_duty_uses_one_random_choice_rule() -> None:

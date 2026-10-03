@@ -1,0 +1,108 @@
+{
+  "name": "item-facts-world-two-scene-no-lantern-example",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 13,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true,
+    "state_axes": {
+      "drawer": {
+        "closed": [
+          "shut"
+        ],
+        "open": []
+      },
+      "Kristin's laptop": {
+        "closed": [
+          "shut"
+        ],
+        "open": []
+      },
+      "workstation chair": {
+        "overturned": [],
+        "upright": [
+          "standing"
+        ]
+      }
+    },
+    "drop_rules": [
+      "Example: if {protagonist} picks up a lantern and lights it, the lantern is {{\"held_by\": \"{protagonist}\", \"condition\": [\"lit\"]}}."
+    ]
+  },
+  "continue_to": {
+    "scene": "1B",
+    "fixed_turns": 6,
+    "script": "carry-and-hand-off"
+  },
+  "system_prompt": {
+    "constant_rules_in_system": true,
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+  },
+  "overrides": {
+    "knowledge.yaml": {
+      "replacements": [
+        {
+          "old": "The house is quiet, Michelle is missing, and Michelle's phone remains on the kitchen floor.",
+          "new": "The house is quiet and Michelle is missing."
+        }
+      ]
+    },
+    "plot.md": {
+      "replacements": [
+        {
+          "old": "Michelle's phone on the kitchen floor; ",
+          "new": ""
+        },
+        {
+          "old": "* Michelle's phone remains on the kitchen floor undamaged.\n",
+          "new": ""
+        },
+        {
+          "old": ", \"Michelle's phone is not damaged.\"]",
+          "new": "]"
+        },
+        {
+          "old": "\"The drawer holds pens, binder clips, a stapler, and spare batteries.\", ",
+          "new": ""
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "1A": [
+      {
+        "name": "change-types",
+        "inputs": [
+          "Open the drawer with my initials carved into it.",
+          "Look beneath the KMS drawer.",
+          "Pick up Michelle's phone and put it in my pocket.",
+          "Go out to the truck and bring my laptop inside.",
+          "Set my laptop on Michelle's workstation.",
+          "Open my laptop.",
+          "Stand the overturned chair back up.",
+          "Shut the drawer.",
+          "Carry my laptop back out to the truck.",
+          "Go back into the kitchen and throw Michelle's phone hard against the wall.",
+          "Pick up Michelle's phone from the floor.",
+          "Put Michelle's phone in my pocket and walk out to the truck.",
+          "Read the files on Michelle's memory card with my laptop."
+        ]
+      }
+    ],
+    "1B": [
+      {
+        "name": "carry-and-hand-off",
+        "inputs": [
+          "Check that I still have Michelle's phone.",
+          "Look around the bench for anything Michelle left.",
+          "Walk over to the man watching me and hand him Michelle's phone.",
+          "Check who has Michelle's phone now.",
+          "Take Michelle's phone back from the man.",
+          "Ask the man who he is."
+        ]
+      }
+    ]
+  }
+}

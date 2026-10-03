@@ -43,8 +43,14 @@ delivered by a handoff count as earned (2c5b389); 3C done on
 34/36; every handoff fires; places right every turn), merged (PR 493);
 S3 done and merged (PR 497, 33a1081): the start-place rule is
 droppable (71f05d2) but stays; 1A t6/t12 fixed (1055d04, 6ebaf2c,
-880748e); 1A-1B now 55/57 with the rule. Next: the 1A-1B narration
-slips, the bookmark, then S4.
+880748e); 1A-1B now 55/57 with the rule. On `claude/1a-1b-slips`
+(2026-10-03): seat scoped to things on furniture (b2fcce3), W9 amended
+so closed containers bring their contents (151abce), and `held_by` for
+held things behind a flag (4402a2f): paired x3 base 51/57, held_by
+54/57 (94.7%), t1 and t12 right 3/3; held_by made the default
+(64a1cb3) and W14 unnamed label built (6e1b191): x3 54/57, Brandon
+named early 0/3. PR 501 opened (2026-10-03; suite 1021, ruff
+clean). Next: merge PR 501 once CI passes, then the bookmark, then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -196,8 +202,373 @@ stays for now; rerun the paired arms after the 1A fixes below.
    finished" 3/3); t15 calls the number sequence no clue (r2, r3); t19
    r1 picks up the transit token unasked. t14 "in her pocket" is the
    judge's hand/pocket blind spot, not a narration slip.
+   **Diagnosed and probed (2026-10-02, branch `claude/1a-1b-slips`;
+   probes in `~/dev/ringer-work/freytag-1b-t16-man/`, Ringer, read by
+   hand).**
+   - **t16 -> t17 -> t18 is capture, not narration.** t16 ("Walk over
+     to the man watching me and hand him Michelle's phone."): the match
+     call said "man" is Brandon (kind person) 3/3, but Jev's check asked
+     'Is the place called "man" on "Brandon Corfman"?' and said no (10
+     of 12 recorded asks across the S3 runs). "man" became a new person,
+     Kristin was left unplaced at "man", and t17's THINGS said
+     "Kristin. Place: man." and "Michelle's phone. Place: man."; the
+     narrator then put the phone on the ground. Jev probe on the 15
+     recorded man->Brandon checks: recorded wording 17/75 yes; the
+     same-person question 21/75; Brandon's text "watching Kristin from
+     across the park" 60/75 but 0/15 on 1B-1C t8, where the man is
+     already beside her; **"watching Kristin in the park" with the
+     same-person question 75/75**. The same-person question for every
+     recorded person-kind place check: Rebecca 10/10 (was 2/6), "with
+     Kristin" 40/40 (was 0/24; today it makes a new holder named "with
+     Kristin" in 3B t3), guard -> Brandon stays no 0/5.
+   - **t6 is a missing THINGS line.** The overturned chair is given only
+     when the workstation is named, so "Open my laptop." never shows it.
+     Probe (3 recorded prompts x 5): sitting 15/15 recorded, 0/15 with
+     the chair line, 0/15 with workstation and chair; the laptop opens
+     every time. Side effect: with the chair given the narrator often
+     "picks up her laptop", and in r2 sometimes carries it to the
+     kitchen.
+   - **Not defects:** t15 (the dead-drop reveal is earned by "Compare
+     the number sequence with the transit token", so withholding its
+     meaning is the handoff working); t14 (judge blind spot); t19
+     (narrator initiative).
+   - **t12** takes the phone out of her pocket in 19 of 19 recorded runs
+     on every commit. The world state is right (holder unchanged; no
+     pocket part, 2026-09-27).
+   **Brandon chose (2026-10-02):** build all four t16/t6 fixes: Brandon's
+   1B text "watching Kristin in the park"; the same-person question for
+   a person-kind place name; a character placed at a character lands in
+   that character's area (W12's furniture rule applied to people); a
+   seat is given when a given thing rests on its furniture. Probe a
+   narrator rule for t12 and build it only if it wins.
+   - **t12 rule probe** (3 recorded prompts x 5, read by hand;
+     `~/dev/ringer-work/freytag-1a-1b-slips/probe_t12_rule.txt`):
+     "When the player puts a thing in a pocket, show it going into the
+     pocket." lost (takes it out 15/15). "A thing the player holds is in
+     their hand until the story puts it away." won: into her pocket
+     14/15 (0/15 recorded), walks to the truck 15/15. Side effects: the
+     prose is formulaic ("takes ... out of her hand and puts it in her
+     pocket"), and 2/15 replies named it "Kristin's phone".
+   - **Built.** ff7fcb4 (Ringer, Luna, two attempts): the 1B text, the
+     same-person question (`check_mapping` uses it when the match kind
+     is person and the target a character), a character placed at a
+     character lands in its area (or is not moved when it is itself),
+     and `_thing_names` gives a seat when a listed thing's parent is its
+     furniture. e7d0260 (Ringer, Luna): the hand rule, turn rules only,
+     right after "Finish each action the player gives."; shipped turn
+     payloads change only by that line. Both checks failed only on a
+     pre-existing ruff issue in `.plans/world-model-scenes/
+     scene_2b_check.py` (formatted in 5c748c0); patches reviewed, suite
+     1007, ruff clean, the build's shipped payloads byte-identical.
+   - **Measured live (2026-10-02, with the start rule;
+     `bench/results/slips-smoke`, `slips-with-rule-x3`; comparison in
+     `~/dev/ringer-work/freytag-1a-1b-slips/compare-x3.txt`).** Smoke:
+     contradicts 0/19, t16 resolved "man" to Brandon (same-person
+     question yes; Kristin stays in the park; phone with Brandon), t12
+     into her pocket, t6 no sitting. x3 against `s3-fixes-with-rule-x3`:
+     facts after the turn **50/56 (89.3%) vs 55/57**, contradicts 5 vs 9,
+     restarts flagged 7 vs 4 (not yet read by hand), missed_change 4 vs 0.
+     Targets: t17 phone on the ground 1/3 (was 2/3); t6 sits 1/3 (was
+     1-2/3), and r1 carries the laptop to the table (the probe's side
+     effect); t12 takes it out 1/3 (was 3/3). New misses: t7 (the chair)
+     2/3 and r2 lost a turn (18 turns). **Not accepted yet: the bar fell.**
+   - **Read by hand (2026-10-02).** t1 is the old drawer miss (an
+     invented notebook; 2/3 before too). The new misses:
+     - **t7 (r2, r3) is ff7fcb4's seat rule overreaching.** It adds a
+       seat when a listed thing's parent is the furniture, and the
+       drawer is `part_of` the workstation. So the chair line ("State:
+       overturned. It can be: upright.") shows on every drawer turn
+       (t1, t2, t8). On t1 the reply set the chair upright in r2
+       (narrated, unasked) and r3 (never narrated), so t7 had nothing
+       left to change. It also makes r3 t6's "sits down in the chair"
+       consistent with the world, though the judge flagged it.
+       **Probe** (Ringer; 3 recorded t1 prompts x 5;
+       `probe_t1_seat.txt`): the reply sets a chair state 10/15 with
+       the line and 0/15 without, and the prose names the chair 0/15
+       in both; the drawer opens 14/15 vs 12/15.
+     - r1 t6 carries the laptop to a "kitchen table" (the t6 probe's
+       known side effect; the new place was never offered to the match
+       call, so the laptop was left unplaced). r1 t9: the prose closes
+       the laptop and the reply leaves out `state`. Both 1/3.
+     - **Restarts: 0 real of 7.** Every flag is a commanded move (t4,
+       t9, t10, t12). r2's "t12" is the pocket-and-truck turn,
+       renumbered because r2 t11 was a leak rejection ("forced
+       entry"), the same family as the earlier "photo" rejection.
+     - Unchanged findings, counted: "Brandon" is narrated before 1B.2
+       on t17-t19 in 8 turns over 3/3 (was 0 before t19 in
+       `s3-fixes-with-rule-x3`); "Kristin's pocket" unplaced 1/56.
+   - **Fix (scoped, not new):** the seat is given only when the listed
+     thing rests on its furniture (`relation == "on"`), the wording
+     Brandon approved. **Built as b2fcce3** (Ringer, Luna, one attempt;
+     suite and ruff clean; shipped payloads byte-identical).
+   - **x3 on b2fcce3 (`bench/results/seat-on-with-rule-x3`;
+     `compare-seat-on.txt`).** 57/57 turns, no leak rejection. t7 right
+     3/3 and the chair is never righted early. Restarts 1 (t10, a
+     commanded move), so real 0. Facts after the turn 48/57, but the
+     misses moved. Read by hand:
+     - t1 r2, r3 (identical prose): the drawer opens in the prose, and
+       the reply gives `"drawer": {"place": "Kristin", "under": true}`
+       with no `state`, so it stays closed. The old t1 weak spot.
+     - t12 r2, r3: the reply names the phone "Kristin's phone" (the
+       hand rule's probe side effect, 2/15 there). Michelle's phone
+       stays right with Kristin. A phantom "Kristin's phone" is made in
+       "Kristin's pocket": r3's match said it is Michelle's phone, but
+       the name was still kept as new; r2's match was asked about bare
+       "phone". The prose is right but formulaic ("takes Michelle's
+       phone out of her hand and puts it in her pocket").
+     - r3 t4 the reply opens the laptop unasked; r1 t6 the reply moves
+       the chair "on floor" (the chair line still shows at t6, by
+       design), and r1 t11 inherits that "on floor".
+     - r1 t4 and r2 t8 are judge scores at 0.52 (noise).
+     The bar still reads below 55/57. Not accepted yet.
+   - **Unnamed-man probe (Brandon chose to probe before deciding;
+     Ringer; 9 recorded t17-t19 prompts from `slips-with-rule-x3` x 5;
+     `probe_unnamed.txt`).** Narration says "Brandon": recorded 42/45;
+     THINGS and PLAYER lines only, with "Brandon" shown as "the man
+     watching Kristin", 0/45; also CHARACTERS and the may-say line,
+     0/45. So the THINGS holder line is the whole cause. t19 then
+     refuses or deflects ("I'm just a concerned citizen") instead of
+     giving his name, which fits 1B.2. Recorded r1 and r3 t19 had him
+     say "I'm Brandon Corfman". Side effect: at t18 the man holds the
+     phone back more often (the prose ends with Kristin holding it 6/15
+     recorded, 2/15 THINGS-only, 3/15 all). Under the NPC-refusal rule,
+     a refusal is clean when Kristin acts. The reply then names the man
+     "the man watching Kristin" (or without "the"), which capture
+     would have to resolve to Brandon.
+   - **t1 and t12 read against plot.md, then probed (2026-10-02;
+     Ringer; `probe_t1_contents.txt`, `probe_t12_hand.txt`; read by
+     hand).**
+     - **t1: the closed drawer's contents are never given.** W9 names
+       this case ("Open the drawer." hands the narrator the drawer but
+       not what is in it), but `given_with` (worldkeeper `model.py`)
+       gives contents only once a container is open, and on t1 it is
+       still closed. From t8 on, THINGS lists them. Probe on the 3
+       recorded t1 prompts x 5, with the four content lines copied from
+       r1 t8's THINGS: invented contents 15/15 recorded -> 0/15 (every
+       narration shows the stapler, batteries, pens and clips; the prose
+       is samey); reply gives `open` 11/15 -> 14/15; reply places the
+       drawer at "Kristin" 15/15 -> 8/15 (refused harmlessly, the drawer
+       is fixed). Grounded in W9; not built. Open question: when to give
+       a closed container's contents (see Resume note).
+     - **t12: the hand rule's trade-off, measured.** The 6 recorded t12
+       prompts with the rule x 5. Phone ends in her pocket (prose)
+       28/30 with the rule vs 15/30 without; the prose takes it out of
+       her pocket first 3/30 vs 25/30; the reply names it "Kristin's
+       phone" 14/30 vs 6/30. The phantom "Kristin's phone" was made
+       every time it appeared, live (5 of 5 such turns); the judge
+       failed it in `seat-on-with-rule-x3` and passed it in
+       `slips-with-rule-x3`. Jev's "no" to "Are 'Kristin's phone' and
+       'Michelle's phone' the same thing?" is right, so the owner check
+       is not the fault. The reply name never appears in the prose. No
+       earlier fix covers a reply name that the prose never uses.
+   - **Brandon chose (2026-10-02):** amend W9 (closed containers bring
+     their contents; probed first, built as 151abce, x3 below) and
+     design a capture fix for t12's "Kristin's phone".
+   - **t12 capture fix: design, not yet probed (new work; no earlier
+     fix covers it).** All saved runs hold 5 such turns, all t12. Two
+     separate breaks:
+     - (a) *The match call renames the key* (3 of 5): asked about
+       "Kristin's phone", it answers `same_as: {"phone": "Michelle's
+       phone"}`, so `same_as.get("Kristin's phone")` is empty and the
+       name is made new (`apply_item_facts`, the prepared-items loop).
+       The match prompt says "Copy names from THINGS exactly" but not
+       to key answers by the NEW NAMES as written. Nearest precedent:
+       d7e0c68 (answers must name something in THINGS). Candidate: one
+       match-prompt sentence asking for each NEW NAME as the key, probed
+       on replayed match calls. Cost: match payloads are not stored in
+       turn records, so the probe must rebuild them (or the bench must
+       start recording them).
+     - (b) *Jev refuses* (2 of 5): asked 'Are "Kristin's phone" and
+       "Michelle's phone" the same thing?', with the narration and
+       `held_by: Kristin` in state, it says no. On names alone that is
+       right. Nearest precedent: rewording the Jev question for the
+       case (ff7fcb4's same-person question, 6ebaf2c's holder
+       question), probed on recorded checks and calibrated against
+       labelled ones. Candidate: when a new name's possessor is the
+       target's holder, ask whether it is "the phone Kristin has now".
+       Only 2 recorded positives, so the probe needs negative controls
+       (wrong possessive matches that must stay no).
+     Rejected up front: parsing "<Name>'s <noun>" in the engine (typed
+     kinds over phrase parsing) and a narrator naming rule (the engine
+     resolves names).
+   - **x3 on 151abce (`bench/results/closed-contents-x3`;
+     `compare-closed-contents.txt`; read by hand).** 57/57 turns;
+     facts after the turn 49/57 (48/57 on b2fcce3); contradicts 2 (was
+     7); restarts 2, both commanded moves. **t1 prose fixed 3/3:** the
+     drawer opens and shows the declared stapler, batteries, pens and
+     clips, with nothing invented; `open` lands 3/3. **New t1 miss
+     (r1, r3):** the reply gives all four contents `"place": "Kristin"`,
+     so they move to her though she only looked. It is the same reply
+     habit that put the drawer itself at "Kristin" 15/15 in the t1 probe
+     (refused there, because the drawer is fixed). Not yet diagnosed.
+     One-offs: r1 t6 carries the laptop to the kitchen and the reply
+     leaves out `open`; r1 t16 narrates the hand-over and the reply
+     leaves out the phone (r1 t18 follows); r2 t8, r2 t11 and r3 t4 are
+     judge disagreements on prose that reads right.
+   - **t1 "place: Kristin" diagnosed (2026-10-03; Brandon chose t1
+     first).** Every saved t1 reply through v36 placed the drawer in the
+     workstation (0 of 36 at Kristin); from the S2 runs on it is nearly
+     always at Kristin. S2's reply format changed three things at once
+     (W5): both examples now show a held lantern at "Kristin"; the place
+     line says "that has it now" (was "its current location"); and the
+     cup example (a place that is not a person) went. Probe (Ringer; 3
+     recorded t1 prompts from `closed-contents-x3` plus the same runs'
+     t3/t11 pick-ups as controls, 5 samples, read by hand;
+     `probe_t1_place.txt`). Drawer at Kristin / contents at Kristin /
+     control phone at Kristin: recorded 12/15, 12/15, 30/30; without
+     the 'Example: if Kristin picks up a lantern' line 1/15, 1/15,
+     28/30; "where it is now" 0/15, 0/15, 27/30; a condition-only box
+     example in its place 0/15, 0/15, 25/30. Every control miss is the
+     reply writing "Kristin's pocket" (prose right). Without the line,
+     the reply sometimes puts the contents "in Michelle's workstation"
+     instead of the drawer (3/15; where_now 6/15). **Subtractive arm
+     chosen for live measurement:** variation
+     `item-facts-world-two-scene-no-lantern-example` (bed7f8c) drops the
+     line through `drop_rules`; the JSON example still shows a held
+     lantern at the protagonist.
+   - **x3 without the lantern line (`bench/results/no-lantern-x3`;
+     `compare-no-lantern.txt`; read by hand). Not accepted.** t1 fixed
+     3/3 (drawer in the workstation, contents "in drawer", nothing at
+     Kristin). But facts after the turn stay 49/57: carried things broke
+     elsewhere. t4 (3/3) the prose carries the laptop in and the reply
+     places it at "Michelle's house"; t5 and t6 (3 turns) the reply gives
+     an empty `"laptop": {}`; r3 t9 leaves out "closed". The probe's
+     controls covered pick-ups only, not carries.
+   - **Carry controls (Ringer; recorded t1, t4, t5, t6, t9 prompts from
+     `closed-contents-x3` x 5; `probe_t1_carry.txt`).** t1 drawer at
+     Kristin / t4 carried laptop at Kristin (want 15): recorded 10/15,
+     10/15; no_example 0/15, 0/15; "where it is now" 0/15, 2/15. t5, t6
+     and t9 unchanged. So one wording does both jobs: it makes the
+     reply write "Kristin" for a carried thing and for a drawer she only
+     opened.
+   - **Two examples, the v36 shape (Ringer; t1, t3, t4, t5, t6, t9,
+     t11 x 5; `probe_t1_two.txt`).** Kept the lantern line and added
+     'Example: if Kristin opens a box and looks inside, the box is
+     {"condition": ["open"]}.' Recorded / two examples: t1 drawer at
+     Kristin 11/15 / 4/15; pick-ups at Kristin 29/30 / 29/30; t4 carried
+     laptop at Kristin 10/15 / 6/15; t6 ("Open my laptop.") laptop at
+     Kristin 0/15 / 11/15, a new wrong move. Worse overall. **No reply
+     wording tried separates "carries it" from "opens it"**: every arm
+     that clears t1 also loses carries.
+   - **Scoped narrator rules (Brandon asked whether there are too many
+     rules; 2026-10-03).** The system prompt is 28 lines (~375 words),
+     identical on every turn of a scene; THINGS is scoped; CONSTRAINTS
+     mostly scoped but ~4 candidate/grounding lines are always sent.
+     Probe (Ringer; t1, t12, t16, t18, t19 from `closed-contents-x3` x 3
+     replicates x 5; `probe_scoped_rules.txt`; read by hand). Scoped arm,
+     gated on what the turn's prompt shows: hand rule only when THINGS
+     has a thing at Kristin; give and talk rules only in 1B (someone is
+     with her); "A character may only say ..." only with a may-say line;
+     the two candidate-only lines dropped when there are no candidates.
+     Recorded / scoped: t1 drawer or contents at Kristin 11/15 / 14/15
+     (no gain); **t12 takes the phone out of her pocket 1/15 / 14/15**
+     (the hand rule was still present; dropping the give and talk rules
+     and candidate lines undid its effect); t16 hand-over 14/15 / 14/15;
+     t18 phone back 1/15 / 2/15; t19 the man speaks 10/15 / 11/15.
+     **Not adopted.** Rule count is not the t1 lever, and the hand rule's
+     win depends on the lines around it, which is fragile. Which dropped
+     line carries it is not yet isolated.
+   - **W5's `Held by:` fallback probed (Brandon chose option 3,
+     2026-10-03; Ringer; t1, t3, t4, t6, t11, t12, t16 from
+     `closed-contents-x3` x 3 replicates x 5; `probe_held_by.txt`; read
+     by hand).** Arm: the place line says 'For "place", give the name of
+     the thing or place where it is now. If a person holds it, give
+     "held_by" with that person's name.'; both lantern examples give
+     `"held_by": "Kristin"`; THINGS and PLAYER show "Held by: Kristin."
+     instead of "Place: Kristin.". Recorded / held_by: t1 drawer or
+     contents at Kristin 13/15 / 1/15; pick-ups t3+t11 30/30 / 30/30; t4
+     carried laptop held 9/15 / 15/15; t12 phone held 0/15 ("Kristin's
+     pocket") / 15/15; t16 phone with the man 12/15 / 15/15; t6 laptop
+     held 2/15 / 8/15. The t6 and t1 "held" cases give both keys:
+     `held_by: Kristin` and `place: workstation` / "in drawer", and the
+     prose agrees with `place` (she sets the laptop down). Both keys are
+     common: t3 12/15, t4 14/15, t12 11/15, t16 11/15. There `place`
+     names the holder's part ("Kristin's pocket", "the man's hand") or
+     the holder's own area (kitchen), and `held_by` is right.
+   - **Built behind a flag (Brandon chose, 2026-10-03): 4402a2f**
+     (Ringer, Luna, one attempt; suite 1015, ruff clean, shipped
+     payloads byte-identical). `item_facts.held_by` swaps the place line
+     and example, shows "Held by: <person>." in the narrator's THINGS
+     and PLAYER (not the match call), and turns a reply's `held_by` into
+     the parent. Precedence when both keys come (new design): `held_by`
+     wins if `place` is missing, unresolved, the holder, or the holder's
+     area (or an area inside it); otherwise `place` wins. Flag off,
+     nothing changes. Variation `item-facts-world-two-scene-held-by`
+     also gives the held lantern in the JSON example.
+   - **Paired x3 on 4402a2f (`bench/results/held-by-base-x3`,
+     `held-by-on-x3`; `compare-held-by-base.txt`,
+     `compare-held-by-on.txt`; read by hand).** Base / held_by: facts
+     after the turn 51/57 / **54/57 (94.7%)**; invented changes 4 / 0;
+     contradicts 0 / 2; restarts flagged 1 / 3, real 0 / 0 (t4 and t10,
+     commanded). held_by misses, all reply omissions, not held_by
+     errors: r2 t5 (every item_facts entry empty), r2 and r3 t6 (prose
+     opens the laptop, reply leaves out `state`). **t1 right 3/3**
+     (base: contents at Kristin 2/3). **t12 right 3/3**: the phone is
+     held by Kristin, with no "Kristin's pocket" and no phantom
+     "Kristin's phone" (base: unresolved "Kristin's pocket" 2/3,
+     phantom 1/3), so the t12 capture-fix design is not needed. Brandon
+     is still named at t17-t19 in 3/3 of both arms (open item).
+   - **held_by made the default (64a1cb3, Brandon chose 2026-10-03).**
+     Every single-call variation gives the held lantern as `held_by`;
+     `item-facts-world-two-scene-place-held` keeps the old form for
+     comparison; the pre-S2 `item-facts-package-two-scene` sets
+     `held_by: false` (I restored its phrase example by hand). The
+     grounding guide shows "Held by:", the `held_by` key and its
+     precedence, and W9's amendment.
+   - **W14 built (6e1b191; decision in section 12).** Brandon is "the
+     man watching Kristin" until `brandon_identified`. The match call's
+     offered-names check now compares things, not strings, so "Brandon"
+     still maps to the labelled character (the first build had broken
+     t16 and weakened its test; caught in review and fixed). Thorough
+     scene seeding sets `brandon_identified` from 1C on.
+   - **x3 on 6e1b191, default variation (`bench/results/w14-x3`;
+     `compare-w14.txt`; read by hand).** Facts after the turn **54/57
+     (94.7%)**, missed changes 0, contradicts 1, restarts 1 (commanded).
+     **Brandon named early 0/3** (3/3 before); t16 maps "the man" to
+     Brandon by the same-person question 3/3. Misses: r1 t6 (the reply
+     gives `held_by: Kristin` and `place: workstation`, the prose keeps
+     the laptop in her hands, so the precedence rule picks the wrong
+     key); r3 t8 and r3 t11 (judge scores ~0.62 on the memory card,
+     prose right). Watch: the reply sometimes writes position into
+     `condition` ("broken, in pocket", "in hand"), which THINGS then
+     repeats.
+   - **New finding: THINGS names Brandon before he is identified.** A
+     held thing renders its holder with `person_label` (the first alias,
+     "Brandon"). Every run where t16 resolved to Brandon (2 older, the
+     smoke) narrates "Brandon" on t17-t19, before plot 1B.2 lets him say
+     his name. The fix makes this the usual case. No decision covers a
+     label for a person Kristin has not identified; needs one.
+   - **New finding: "Kristin's pocket" left the phone unplaced** (smoke
+     t12). The match call was asked about "pocket" and answered "Kristin's
+     pocket", which was not offered, so the phone kept the text "Kristin's
+     pocket" with no parent. The hand rule makes the reply say "Kristin's
+     pocket" more often. Count it in the x3 records.
+   - **Brandon asked (2026-10-02) for E2E tests that the player is shown
+     what each transition needs** (his example: 1A never shows the
+     workstation or the KMS drawer). Planned in
+     [scene-affordance-e2e.md](scene-affordance-e2e.md).
 2. **The bookmark** (section "Next steps, in order", item 3): decide
    whether undeclared conditions are scored.
+   **Counted (2026-10-03; `w14-x3`, `held-by-on-x3`,
+   `closed-contents-x3`, 171 1A-1B turns read by hand; reply side only
+   for `world-3a-referred-x3`, `world-3b-hide-x3`, `world-3c-x3`).**
+   1A-1B undeclared changes in the prose: t4 opens the truck door and
+   never shuts it 9/9 (reply 0); t10 breaks the phone (commanded) 5/9
+   in prose, reply "broken" 9/9, kept as a condition and carried in
+   THINGS, so later turns call it broken; t11 turns the phone on and
+   shows "a faint image" or messages 7/9 unasked (reply 5/9), and 3
+   later turns call it unresponsive; t6 powers the laptop on 4/9
+   (reply 0); t13 starts the truck 9/9 (the authored delivery text).
+   None is story-breaking. The t11 screen is an invented hint of a clue
+   (the no-new-clues rule's territory), not a state-tracking gap. The
+   reply also writes non-changes as conditions ("searching", "examined",
+   "in pocket", "in hand"). 3A-3C replies: 11 undeclared entries in 93
+   turns. 3C t6 pumps restored is carried by its handoff 3/3 (reply
+   "operational" 1/3). 3C t4 "Copy the archive to the independent
+   networks." has no handoff: the prose starts the copy and never
+   finishes it 3/3 (reply "copied" 1/3). No later 3C turn refers to
+   the copy; the outcome comes from the story's own text ("The national
+   network fractures.", t10 3/3).
 3. **S4** (item 4). The continuity plan's Phases 4-6, which S4 hands
    to, have not started; its status line dates from 2026-09-24.
    Known gaps to carry in: new entities made in the player's old place
@@ -4272,6 +4643,18 @@ hidden-card leak is closed by the `hidden` axis. The list would also need
 text matching of narrated names against authored ones, which W1 rejected,
 and it overrides 1c. Also rejected: contents left as setting text only.
 
+**Amended (Brandon, 2026-10-02): a given container brings its contents,
+open or closed.** Contents given only when open missed the very case above:
+on the turn that opens the drawer it is still closed, so the narrator
+invented contents (1A t1: 15/15 recorded, 0/15 with them given). Listing
+them does not make the narrator open a closed drawer unasked (recorded
+closed-drawer turns: "Shut the drawer." opens it 18/25 in both arms, "Look
+beneath the KMS drawer." 4/10 -> 1/10) and stops invented contents there
+too (7 -> 0). Hidden things stay hidden. Visibility is unchanged:
+`World.is_shut_away` marks a thing hidden only by closed containers, and
+only `given_with` and the bench view use it (151abce), so runtime taking
+and seating still treat it as not visible.
+
 W11. **Seats. Decided (Brandon, 2026-09-25).** When the narration has
 Kristin sit down, the reply names the chair, and the world must hold her
 there. Following Inform 7, a container or supporter may be `enterable`, and
@@ -4407,6 +4790,28 @@ chair is light enough to carry to another room, and `fixed` would refuse
 every move of it. The desk kind stays fixed. A reply that records the
 chair's place as Kristin is a capture error, and W5's held-by question
 measures it.
+
+W14. **A person the protagonist has not identified is shown by a label.
+Decided (Brandon, 2026-10-03).** Once the t16 hand-over resolved "the man"
+to Brandon, THINGS said "Held by: Brandon" and the narrator named him on
+t17-t19 in every run, before plot 1B.2 lets him give his name. Probe on the
+recorded t17-t19 prompts: the narrator says "Brandon" 42/45 as recorded and
+0/45 when only THINGS and PLAYER show "the man watching Kristin"; renaming
+him in CHARACTERS too adds nothing. The 2026-09-26 "known as" label was
+dropped only because CHARACTERS already names him; the probe shows THINGS is
+what the narrator copies.
+
+- **Data, not branches.** A character may declare `unnamed_label` (text)
+  and `named_by` (a declared story fact). Both or neither.
+- **The rule.** While `named_by` is not true, every label the narrator and
+  match call are shown for that character is `unnamed_label`: his own
+  THINGS line, a holder or place that is him, referred-people lines.
+  CHARACTERS is unchanged.
+- **Resolution.** The label resolves to the character in the bench world
+  schema only. It is not a package alias, so narration leak scans do not
+  see it.
+- Brandon declares `unnamed_label: the man watching Kristin` (his 1B
+  placement text) and `named_by: brandon_identified`.
 
 W10. **A self-contained library. Decided (Brandon, 2026-09-25).** The model is
 a separate, reusable library named `worldkeeper`, designed to be publishable

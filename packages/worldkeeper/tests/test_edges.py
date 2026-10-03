@@ -24,7 +24,7 @@ def test_schema_and_query_edges():
     assert not w.together("missing", "ada")
     assert w.contents("village") == ("parlour",)
     assert not w.is_visible("missing")
-    assert w.given_with("lamp") == () and w.given_with("chest") == ()
+    assert w.given_with("lamp") == () and w.given_with("chest") == ("chest_quills",)
     assert w.place_label("missing") is None
 
 
@@ -119,7 +119,7 @@ def test_closed_visibility_and_resolution_callback():
     w = make()
     assert w.set_axis("chest", "closed").ok
     assert not w.is_visible("chest_quills")
-    assert w.given_with("chest") == ()
+    assert w.given_with("chest") == ("chest_quills",)
     assert w.set_axis("chest", "open").ok and w.given_with("chest") == ("chest_quills",)
     assert w.resolve("the brass key") == "key"
     assert w.resolve("parlour floor") == "parlour"
@@ -157,4 +157,35 @@ def test_given_with_includes_visible_contents_on_and_under_supporters():
     assert w.set_axis("box", "closed").ok
 
     assert w.given_with("table") == ("on_item", "under_item")
-    assert w.given_with("box") == ()
+    assert w.given_with("box") == ("box_coin",)
+
+
+def test_is_shut_away_only_for_closed_containers():
+    schema = WorldSchema.from_data(
+        {
+            "entities": [
+                {"id": "room", "name": "room", "kind": "area"},
+                {"id": "box", "name": "box", "kind": "container", "openable": True},
+                {"id": "item", "name": "item", "kind": "thing"},
+                {"id": "hidden", "name": "hidden", "kind": "thing", "hidden": True},
+                {"id": "table", "name": "table", "kind": "supporter"},
+                {"id": "table_item", "name": "table item", "kind": "thing"},
+            ]
+        }
+    )
+    w = World(schema, MemoryBackend())
+    assert w.seed().ok
+    assert w.place("item", "box").ok
+    assert w.place("hidden", "box").ok
+    assert w.place("table_item", "table").ok
+    assert w.set_axis("box", "closed").ok
+
+    assert not w.is_visible("item")
+    assert w.is_shut_away("item")
+    assert w.set_axis("box", "open").ok
+    assert w.is_visible("item")
+    assert not w.is_shut_away("item")
+    assert not w.is_visible("hidden")
+    assert not w.is_shut_away("hidden")
+    assert w.is_visible("table_item")
+    assert not w.is_shut_away("table_item")

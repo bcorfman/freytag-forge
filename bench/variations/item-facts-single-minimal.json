@@ -17,7 +17,7 @@
       "Never write IDs or story bookkeeping into the prose.",
       "Do not copy sentences from the SCENE section."
     ],
-    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern on the table. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"place\":\"on the table\",\"condition\":[\"dark\"]}}}"
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She looks at the lantern on the table. Its light has gone out.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"on the table\",\"condition\":[\"dark\"]}}}"
   },
   "overrides": {
     "knowledge.yaml": {
