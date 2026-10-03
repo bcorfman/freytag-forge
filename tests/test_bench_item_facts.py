@@ -950,6 +950,37 @@ def test_held_by_pocket_place_keeps_holder():
     assert provider._world().parent("michelle_phone") == "kristin"
 
 
+def test_held_by_place_with_prefix_resolves():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts({"stapler": {"held_by": "Kristin", "place": "in drawer"}})
+    assert provider._world().parent("michelle_drawer_stapler") == "michelle_drawer"
+
+
+def test_held_by_place_is_holders_own_place_keeps_holder():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "workstation"},
+            "Kristin's laptop": {"held_by": "Kristin", "place": "workstation"},
+        }
+    )
+    assert provider._world().parent("kristin_laptop") == "kristin"
+
+
+def test_held_by_place_elsewhere_with_holder_elsewhere_wins():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "outside the house"},
+            "Kristin's laptop": {"held_by": "Kristin", "place": "driver's seat"},
+        }
+    )
+    assert provider._world().parent("kristin_laptop") == "truck_driver_seat"
+
+
 def test_held_by_place_elsewhere_wins():
     provider = _scene_provider("1A")
     provider.held_by = True
@@ -2305,6 +2336,7 @@ def test_package_seed_scene_1a_matches_authored_things():
             "condition": ["overturned"],
         },
         "driver's seat": {"place": "Kristin's truck", "condition": []},
+        "passenger seat": {"place": "Kristin's truck", "condition": []},
         "Kristin's truck": {"place": "outside the house", "condition": []},
         "workstation": {"place": "kitchen", "condition": []},
         "back door": {"place": "kitchen", "condition": []},

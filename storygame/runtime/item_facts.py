@@ -1027,19 +1027,47 @@ class ItemFactsProvider(CloudflareTurnProvider):
         world = self._world()
         if self.held_by:
             raw = copy.deepcopy(raw)
+
+            def resolve_precedence_place(place):
+                if not isinstance(place, str) or not place.strip():
+                    return None, place
+                place = place.strip()
+                place_id = self._resolve_name(world, place)
+                if place_id is not None:
+                    return place_id, place
+                stripped = re.sub(
+                    r"^(?:in|on|at|inside|into|onto|under)\s+(?:the\s+)?",
+                    "",
+                    place,
+                    count=1,
+                    flags=re.IGNORECASE,
+                ).strip()
+                if stripped != place:
+                    place_id = self._resolve_name(world, stripped)
+                    if place_id is not None:
+                        return place_id, stripped
+                return None, place
+
             for value in raw.values():
                 if not isinstance(value, dict) or not isinstance(value.get("held_by"), str):
                     continue
                 holder_name = value["held_by"].strip()
                 holder_id = self._resolve_name(world, holder_name)
                 place = value.get("place")
-                place_id = self._resolve_name(world, place) if isinstance(place, str) and place.strip() else None
+                place_id, resolved_place = resolve_precedence_place(place)
                 holder_area = world.area(holder_id) if holder_id is not None else None
+                holder_entry_place_id = None
+                if holder_id is not None:
+                    for key, holder_entry in raw.items():
+                        if isinstance(holder_entry, dict) and self._resolve_name(world, key) == holder_id:
+                            holder_entry_place_id, _ = resolve_precedence_place(holder_entry.get("place"))
+                            break
                 held_by_wins = (
                     holder_id is None
                     or not isinstance(place, str)
                     or place_id is None
                     or place_id == holder_id
+                    or holder_entry_place_id == place_id
                     or (
                         holder_area is not None
                         and world.is_a(place_id, "area")
@@ -1051,6 +1079,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 )
                 if held_by_wins:
                     value["place"] = holder_name
+                elif resolved_place != place:
+                    value["place"] = resolved_place
                 value.pop("held_by", None)
         fact_move_overrides = self._fact_move_overrides(world)
         entries = []
