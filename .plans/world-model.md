@@ -55,8 +55,9 @@ named early 0/3. Merged as PR 501 (fd52d0c). Bookmark kept (Brandon,
 `FREYTAG_WORLD_CAPTURE`); S4e1 bench runtime mode built (3bdb7d7,
 857a008, 1b7de5e); S4e x3 through the runtime path 53/57 (93.0%)
 vs `w14-x3` 54/57. The `held_by`-plus-`place` misses probed
-(2026-10-03): prompt arms do not help; an engine precedence fix scores
-38/44 vs 27/44 offline (awaiting Brandon). Next: staging `@world-state` (needs Brandon:
+(2026-10-03): prompt arms do not help; the precedence fix (2e51727)
+and a declared passenger seat (bfd8345) built; x3 49/57 (one miss from
+the change, t9's unasked laptop close drops its state 3/3). Next: staging `@world-state` (needs Brandon:
 deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
@@ -4756,7 +4757,40 @@ decide 1d from the refusals and story breaks that S4d records.
     holder or the holder's area) to the holder's own place in the same
     reply, and strip a leading preposition before resolving. Declare the
     passenger seat as 1A-1B grounding (read the grounding guide first).
-    Waiting on Brandon.
+  - **Built (Brandon chose both, 2026-10-03): 2e51727** (precedence:
+    the holder's own place in the same reply, and a leading
+    in/on/at/inside/into/onto/under dropped before resolving; grounding
+    guide updated) **and bfd8345** (1A `truck_passenger_seat`, kind seat,
+    fixed, no `seat_for`, placed on the truck). Ringer, Luna, one attempt
+    each; suite 1055, ruff clean; narrator and bench prompts
+    byte-identical for both (the seat shows in THINGS only when referred).
+  - **x3 on bfd8345 (`bench/results/held-place-x3`;
+    `~/dev/ringer-work/freytag-held-place-build/compare-held-place-x3.txt`;
+    read by hand).** Facts after the turn **49/57** vs `s4e-runtime-x3`
+    53/57; contradicts 2 / 2; restarts flagged 4 / 0; Kristin's
+    after-place wrong 0 / 0. The eight misses:
+    - t9 x3: the laptop now lands on the seat 3/3 (passenger seat
+      resolves r1 and r3; r2's reply swaps the keys, `held_by: "passenger
+      seat"`, `place: "Kristin's truck"`, so it lands on the truck). All
+      three narrate "She closes her laptop" unasked and the reply gives no
+      `state`, so it stays open (the old run's r1 t9 had the same
+      omission; r2 and r3 there did not close it). Reply omission, not
+      the change.
+    - r2 t6: "picks up her laptop. She sets it down on the workstation and
+      opens it." with Kristin at the workstation: the new rule gives it to
+      Kristin. The set-back case the probe predicted (3 of 14). Caused by
+      the change.
+    - r1 t5: every item_facts entry empty (reply omission). r1 t10: the
+      narration puts the memory card on the kitchen counter (narrator
+      contradiction). r3 t4: the known t4 round-trip judge fault. r3 t8:
+      every listed score above 0.97, flagged invented (judge; the reply
+      moves Kristin from the chair to the kitchen as narrated).
+    - The old run's precedence misses are gone: t1 contents stay in the
+      drawer 3/3, t6 held 2/3 (r2 above), t9 not left with Kristin 3/3.
+    One of the eight misses comes from the change; the rest are reply
+    omissions and judge faults, which vary run to run (51-55 on earlier
+    same-code x3s). **Open:** the reply drops a narrated `state` when the
+    narrator closes the laptop unasked (t9, 4 of the last 6 t9s).
 
 ## 12. Decisions for Brandon
 
