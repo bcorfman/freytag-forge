@@ -53,8 +53,9 @@ named early 0/3. Merged as PR 501 (fd52d0c). Bookmark kept (Brandon,
 2026-10-03): undeclared conditions stay unscored. S4 on
 `claude/s4-runtime`: S4a-S4d2 built (capture runs in the turn behind
 `FREYTAG_WORLD_CAPTURE`); S4e1 bench runtime mode built (3bdb7d7,
-857a008, 1b7de5e), smoke 19/19. Next: read the S4e x3 through the
-runtime path against `w14-x3`.
+857a008, 1b7de5e); S4e x3 through the runtime path 53/57 (93.0%)
+vs `w14-x3` 54/57. Next: staging `@world-state` (needs Brandon:
+deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -4694,8 +4695,29 @@ decide 1d from the refusals and story breaks that S4d records.
   hand). `WorldCapture.after_commit` keeps the narration prompt before
   `apply_item_facts`; the bench records it. The worker's test never
   sent the new name, so it passed without the fix; the stub now does,
-  and the test fails without the fix. Suite 1051. x3 on 1b7de5e
-  running (`bench/results/s4e-runtime-x3`).
+  and the test fails without the fix. Suite 1051.
+- **S4e x3 on 1b7de5e (`bench/results/s4e-runtime-x3`;
+  `compare-s4e-runtime-x3.txt`; read by hand).** Runtime path / `w14-x3`:
+  facts after the turn **53/57 (93.0%)** / 54/57; contradicts 2 / 1;
+  restarts 0 / 1; Kristin's after-place wrong 0 / 0; no rejections; the
+  start-place rule in 57/57 prompts; the implied steps fire (t9 and t12
+  pick-ups, t13 driver's seat) and reach `player_input`. Within
+  replicate noise, so the runtime path holds the bar. The four misses:
+  - r1 t9, r3 t1, r3 t6: the `held_by`-plus-`place` precedence, the
+    w14 r1 t6 family. t9: `held_by: Kristin, place: passenger seat`
+    (unresolved), prose sets the laptop on the seat, so the laptop
+    stays with Kristin (and still "open": the reply gave no state for
+    "She closes her laptop"). t1: the drawer contents get `held_by:
+    Kristin, place: in drawer`, and held_by wins, so the stapler, pens,
+    batteries and clips go to Kristin. t6: `held_by: Kristin, place:
+    workstation`, prose picks the laptop up, place wins. Not a runtime
+    defect (the same `apply_item_facts`), but now 4 of the last 6
+    misses across `w14-x3` and this run. Not probed.
+  - r2 t4: Kristin holds the laptop back in the house, which is right;
+    the known t4 round-trip judge fault ("moved" 0.53).
+  - Recording difference, not a state difference: on a scene-entry turn
+    (t13) runtime records Kristin's after-place after the scene
+    placements are re-applied (park), the bench before (driver's seat).
 
 ## 12. Decisions for Brandon
 
