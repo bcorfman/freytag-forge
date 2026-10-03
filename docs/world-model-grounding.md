@@ -211,6 +211,10 @@ reading level, one idea per sentence, and every path that narrates.
 - **Hand the model material before rules.** A declared entity with a name,
   or a THINGS line, prevents more mistakes than a rule telling the model what
   not to do.
+- **Show state guidance only for named things.** THINGS shows a state as
+  `State: open. It can be: closed.` For a thing named by the player's command,
+  it says `State: open. If it changes, give "state": "closed".` On every line,
+  this made the reply change states the story never touched.
 - **Capture stays in the one narration reply.** Never add a second call to
   collect world changes.
 - **Never repair places by scanning prose.** Regex or keyword matching of

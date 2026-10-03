@@ -181,6 +181,38 @@ def test_things_block_hides_axis_for_kristin_but_shows_laptop_state():
     assert "State: closed. It can be: open." in laptop_line
 
 
+def test_things_names_state_field_for_referred_thing():
+    provider = _seeded_provider(state_axes={"Kristin's laptop": {"closed": ["shut"], "open": []}})
+    provider._selected_names = ["Kristin", "Kristin's laptop"]
+    provider._referred_names = ["Kristin's laptop"]
+    laptop_line = next(
+        line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin's laptop.")
+    )
+
+    assert 'State: closed. If it changes, give "state": "open".' in laptop_line
+    assert "It can be" not in laptop_line
+
+
+def test_things_keeps_axis_line_for_unreferred_thing():
+    provider = _seeded_provider(state_axes={"Kristin's laptop": {"closed": ["shut"], "open": []}})
+    provider._selected_names = ["Kristin", "Kristin's laptop"]
+    provider._referred_names = []
+    laptop_line = next(
+        line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin's laptop.")
+    )
+
+    assert "State: closed. It can be: open." in laptop_line
+
+
+def test_match_things_keep_axis_line_for_referred_thing():
+    provider = _seeded_provider(state_axes={"Kristin's laptop": {"closed": ["shut"], "open": []}})
+    provider._selected_names = ["Kristin", "Kristin's laptop"]
+    provider._referred_names = ["Kristin's laptop"]
+    laptop_line = next(line for line in provider._things_block().splitlines() if line.startswith("- Kristin's laptop."))
+
+    assert "State: closed. It can be: open." in laptop_line
+
+
 def test_item_facts_view_uses_michelle_for_a_thing_she_holds():
     provider = _seeded_provider()
     world = provider._world()

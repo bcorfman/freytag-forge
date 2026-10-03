@@ -421,7 +421,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     current = axis_values.get(axis["name"])
                     if current:
                         other = next(pole for pole in axis["poles"] if pole != current)
-                        line += f" State: {current}. It can be: {other}."
+                        if narration and name in self._referred_names:
+                            line += f' State: {current}. If it changes, give "state": "{other}".'
+                        else:
+                            line += f" State: {current}. It can be: {other}."
                 rendered.extend(condition for condition in facts["condition"] if condition not in axis_values.values())
                 if rendered:
                     line += f" Condition: {', '.join(rendered)}."
