@@ -58,9 +58,15 @@ class WorldCapture:
         record = {
             "command": " ".join((*provider_steps, command)),
             "steps": list(provider_steps),
+            "standing_steps": list(standing.steps),
+            "taking_steps": list(taking.steps),
+            "seating_steps": list(seating_steps),
             "standing_asked": standing.asked,
             "taking_asked": taking.asked,
             "seating_asked": seating.asked if seating else False,
+            "standing_issues": list(standing.issues),
+            "taking_issues": list(taking.issues),
+            "seating_issues": list(seating.issues if seating else ()),
             "asked": {
                 "standing": standing.asked,
                 "taking": taking.asked,

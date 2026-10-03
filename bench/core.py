@@ -785,7 +785,17 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 provider.prior_steps = (*standing_steps, *taking_steps, *seating_steps)
                 player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
             if runtime:
-                player_input = typed_input
+                before_record = capture.last_before or {}
+                standing_steps = tuple(before_record.get("standing_steps", ()))
+                standing_asked = before_record.get("standing_asked", False)
+                standing_issues = tuple(before_record.get("standing_issues", ()))
+                taking_steps = tuple(before_record.get("taking_steps", ()))
+                taking_asked = before_record.get("taking_asked", False)
+                taking_issues = tuple(before_record.get("taking_issues", ()))
+                seating_steps = tuple(before_record.get("seating_steps", ()))
+                seating_asked = before_record.get("seating_asked", False)
+                seating_issues = tuple(before_record.get("seating_issues", ()))
+                player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
             if not runtime and isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
                 match_info = provider.prepare_turn(typed_input)
             things_given: list[str] = []
@@ -825,6 +835,16 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     before_record = capture.last_before or {}
                     things_given = list(before_record.get("things_given", ()))
                     facts_before = before_record.get("item_facts_before", {})
+                    standing_steps = tuple(before_record.get("standing_steps", ()))
+                    standing_asked = before_record.get("standing_asked", False)
+                    standing_issues = tuple(before_record.get("standing_issues", ()))
+                    taking_steps = tuple(before_record.get("taking_steps", ()))
+                    taking_asked = before_record.get("taking_asked", False)
+                    taking_issues = tuple(before_record.get("taking_issues", ()))
+                    seating_steps = tuple(before_record.get("seating_steps", ()))
+                    seating_asked = before_record.get("seating_asked", False)
+                    seating_issues = tuple(before_record.get("seating_issues", ()))
+                    player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
                 if fixed_turns is None or error.error_code != "INVALID_PROPOSAL":
                     raise
                 if isinstance(provider, ItemFactsProvider):
@@ -870,6 +890,16 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     before_record = capture.last_before or {}
                     things_given = list(before_record.get("things_given", ()))
                     facts_before = before_record.get("item_facts_before", {})
+                    standing_steps = tuple(before_record.get("standing_steps", ()))
+                    standing_asked = before_record.get("standing_asked", False)
+                    standing_issues = tuple(before_record.get("standing_issues", ()))
+                    taking_steps = tuple(before_record.get("taking_steps", ()))
+                    taking_asked = before_record.get("taking_asked", False)
+                    taking_issues = tuple(before_record.get("taking_issues", ()))
+                    seating_steps = tuple(before_record.get("seating_steps", ()))
+                    seating_asked = before_record.get("seating_asked", False)
+                    seating_issues = tuple(before_record.get("seating_issues", ()))
+                    player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
                 if isinstance(provider, ItemFactsProvider):
                     provider.discard_pending_item_facts()
                     provider.prior_steps = ()
@@ -915,6 +945,16 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 after_record = capture.last_after or {}
                 things_given = list(before_record.get("things_given", ()))
                 facts_before = before_record.get("item_facts_before", {})
+                standing_steps = tuple(before_record.get("standing_steps", ()))
+                standing_asked = before_record.get("standing_asked", False)
+                standing_issues = tuple(before_record.get("standing_issues", ()))
+                taking_steps = tuple(before_record.get("taking_steps", ()))
+                taking_asked = before_record.get("taking_asked", False)
+                taking_issues = tuple(before_record.get("taking_issues", ()))
+                seating_steps = tuple(before_record.get("seating_steps", ()))
+                seating_asked = before_record.get("seating_asked", False)
+                seating_issues = tuple(before_record.get("seating_issues", ()))
+                player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
                 raw_item_facts = after_record.get("raw", {})
                 fact_issues = after_record.get("issues", [])
                 match_info = after_record.get("match_info", match_info)
@@ -946,6 +986,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "item_facts_held": list(provider._held_item_facts),
                     "match_call": match_info["match_call"],
                     "match_raw": match_info["match_raw"],
+                    "match_issues": match_info["match_issues"],
                     "item_facts_resolutions": match_info["resolutions"],
                     "item_facts_place_resolutions": match_info.get("place_resolutions", {}),
                     "item_facts_mapping_checks": match_info.get("mapping_checks", []),

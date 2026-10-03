@@ -14,20 +14,22 @@ from pathlib import Path
 import pytest
 
 import bench.core as core
+import bench.jev_use as jev_use
 from storygame.runtime.cloudflare import CloudflareTurnProvider
+from storygame.runtime.world_model import world_for
 
 ROOT = Path(__file__).resolve().parents[1]
 NORMAL = ROOT / "bench/variations/item-facts-world-two-scene.json"
 RUNTIME = ROOT / "bench/variations/item-facts-world-two-scene-runtime.json"
 
 
-def _variation(path: Path, turns: int = 3) -> dict:
+def _variation(path: Path, turns: int = 3, inputs: list[str] | None = None) -> dict:
     variation = core.load_variation(path)
     variation["fixed_turns"] = turns
     variation["_fixed_turns"] = turns
     variation["continue_to"] = None
     variation["_continue_to"] = None
-    variation["scripts"]["1A"][0]["inputs"] = [
+    variation["scripts"]["1A"][0]["inputs"] = inputs or [
         "Open the drawer with my initials carved into it.",
         "Pick up Michelle's phone and put it in my pocket.",
         "Look beneath the KMS drawer.",
@@ -42,24 +44,113 @@ def _narration_reply(_self, _payload):
     }
 
 
-def _run(monkeypatch: pytest.MonkeyPatch, path: Path, turns: int = 3) -> dict:
+@pytest.fixture
+def fake_jev(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
+    questions_asked: list[dict] = []
+
+    def factory(*, environment, opener):
+        def ask(_state, questions):
+            questions_asked.append(questions)
+            return {question_id: {"noul": 1.0} for question_id in questions}
+
+        return ask
+
+    monkeypatch.setattr(jev_use, "_ask", factory)
+    monkeypatch.setattr(core, "ask_jev", factory)
+    return questions_asked
+
+
+def _run(monkeypatch: pytest.MonkeyPatch, path: Path, turns: int = 3, inputs: list[str] | None = None) -> dict:
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.invalid/turn")
     monkeypatch.setattr(CloudflareTurnProvider, "_request", _narration_reply)
-    variation = _variation(path, turns)
+    variation = _variation(path, turns, inputs)
     return core.run_scene(variation, "1A", variation["scripts"]["1A"][0])
 
 
-def test_runtime_mode_matches_bench_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_runtime_mode_matches_bench_mode(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
     normal = _run(monkeypatch, NORMAL)
     runtime = _run(monkeypatch, RUNTIME)
 
-    fields = ("prompt_user", "things_given", "item_facts_before", "item_facts_after", "item_facts_issues")
+    fields = (
+        "player_input",
+        "typed_input",
+        "prompt_system",
+        "prompt_user",
+        "things_given",
+        "item_facts_before",
+        "item_facts_after",
+        "item_facts_issues",
+        "match_issues",
+        "seating_steps",
+        "seating_asked",
+        "seating_issues",
+        "taking_steps",
+        "taking_asked",
+        "taking_issues",
+        "standing_steps",
+        "standing_asked",
+        "standing_issues",
+    )
     assert [[turn[field] for field in fields] for turn in normal["turns"]] == [
         [turn[field] for field in fields] for turn in runtime["turns"]
     ]
 
 
-def test_runtime_mode_builds_fresh_provider_each_turn(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_runtime_mode_records_steps(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
+    def prepare_state(state):
+        world = world_for(state.package, state.facts)
+        assert world.move("kristin", "kitchen").ok
+        assert world.move("kristin_laptop", "kitchen").ok
+
+    original_provider_for = core.provider_for
+    original_before_turn = core.WorldCapture.before_turn
+
+    def provider_for_with_laptop(state, variation):
+        prepare_state(state)
+        return original_provider_for(state, variation)
+
+    def before_turn_with_laptop(capture, command):
+        prepare_state(capture.provider.state)
+        return original_before_turn(capture, command)
+
+    monkeypatch.setattr(core, "provider_for", provider_for_with_laptop)
+    monkeypatch.setattr(core.WorldCapture, "before_turn", before_turn_with_laptop)
+    original_opening = core.RuntimeEngine.opening
+
+    def opening_with_laptop_ready(engine):
+        result = original_opening(engine)
+        prepare_state(engine.state)
+        return result
+
+    monkeypatch.setattr(core.RuntimeEngine, "opening", opening_with_laptop_ready)
+    inputs = ["Read the files on my laptop."]
+    normal = _run(monkeypatch, NORMAL, turns=1, inputs=inputs)
+    runtime = _run(monkeypatch, RUNTIME, turns=1, inputs=inputs)
+
+    normal_turn = normal["turns"][0]
+    runtime_turn = runtime["turns"][0]
+    step_fields = (
+        "seating_steps",
+        "seating_asked",
+        "seating_issues",
+        "taking_steps",
+        "taking_asked",
+        "taking_issues",
+        "standing_steps",
+        "standing_asked",
+        "standing_issues",
+    )
+    assert any(runtime_turn[field] for field in ("seating_steps", "taking_steps", "standing_steps")), {
+        "runtime": {field: runtime_turn[field] for field in step_fields},
+        "normal": {field: normal_turn[field] for field in step_fields},
+    }
+    assert [runtime_turn[field] for field in step_fields] == [normal_turn[field] for field in step_fields]
+    steps = runtime_turn["standing_steps"] + runtime_turn["taking_steps"] + runtime_turn["seating_steps"]
+    assert runtime_turn["player_input"].startswith(" ".join(steps))
+    assert runtime_turn["player_input"].endswith(inputs[0])
+
+
+def test_runtime_mode_builds_fresh_provider_each_turn(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
     calls = []
     original = core.build_capture_provider
 
@@ -84,7 +175,7 @@ def test_runtime_mode_builds_fresh_provider_each_turn(monkeypatch: pytest.Monkey
     assert len(loads) == len(result["turns"])
 
 
-def test_runtime_mode_records_rejected_turn(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_runtime_mode_records_rejected_turn(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
     calls = 0
 
     def invalid_after_opening(_self, _payload):
