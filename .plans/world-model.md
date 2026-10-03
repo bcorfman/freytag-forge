@@ -83,7 +83,8 @@ on a knock-out (one false), 0/30 on controls; the prose echoes
 quoted echo but the prose still says "state" 6/30 and the reply names
 the pole 14/30. Brandon kept the b867fb5 wording; steps 1-4 built
 for the token (e39882c, suite 1065, payloads unchanged but the token's
-THINGS state). Open: Brandon's knock-out (NPC axes), the prose echo,
+THINGS state), merged as PR 504 (6b6a843; main CI and staging deploy
+passed). Open: Brandon's knock-out (NPC axes), the prose echo,
 list-form `state`, a live check of the game break.
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
@@ -110,7 +111,9 @@ unavailable in `world.yaml`. The S4f probe ran (results under "Probe
 result" in section 11, "S4f. Cause routing"): the pole is set
 reliably and never on a control, but the prose echoes the field
 7/30; the older-wording arm does not fix it cleanly. Brandon kept the
-b867fb5 wording; steps 1-4 built for the token as e39882c. **Resume
+b867fb5 wording; steps 1-4 built for the token as e39882c, merged as
+PR 504 (6b6a843; main CI and staging deploy passed, no staged E2E
+run). **Resume
 at the S4f open items** (section 11, after "S4f build done"): NPC
 axes for Brandon's knock-out, the prose echo, list-form `state`, and
 a live check of the game break.
@@ -4824,6 +4827,8 @@ the task says):
   before). Dropped an unused `unavailable` key passed to worldkeeper,
   called `capture.context()` directly (a test stub gained
   `context()`), and made the fallback test assert the axis counts.
+  Merged as PR 504 (6b6a843, 2026-10-03); main CI passed, staging
+  deployed; no staged E2E run.
   Suite 1065, coverage 92.9%, ruff clean; shipped payloads
   byte-identical; bench prompts differ only by the 1B token THINGS
   line `State: intact. It can be: destroyed.`
