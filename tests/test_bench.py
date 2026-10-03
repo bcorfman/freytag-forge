@@ -22,9 +22,9 @@ from bench.core import (
     score_judgments,
     welch_t_test,
 )
-from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
+from storygame.runtime.item_facts import _MATCH_SYSTEM, ItemFactsProvider
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.world_model import world_for
 from tests._legacy_package import legacy_package
@@ -1679,12 +1679,8 @@ def test_one_storylet_can_be_read_in_isolation(monkeypatch) -> None:
     wide = prompt_for(default_variation(), "1A", "Feel under the drawer.", "1A.2")
 
     assert "k_sl_1a_d_r1" in narrow["user"]
-    assert "Michelle's phone on the kitchen floor" not in narrow["user"], (
-        "a neighbouring storylet's beat must not bleed in"
-    )
-    assert "Michelle's phone on the kitchen floor" in wide["user"], (
-        "the beat view keeps every storylet that presents it"
-    )
+    assert "KMS initials carved in drawer" not in narrow["user"], "a neighbouring storylet's beat must not bleed in"
+    assert "KMS initials carved in drawer" in wide["user"], "the beat view keeps every storylet that presents it"
 
 
 def test_a_beat_and_a_storylet_cannot_be_named_together() -> None:

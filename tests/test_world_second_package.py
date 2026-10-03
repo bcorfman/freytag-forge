@@ -6,11 +6,11 @@ from pathlib import Path
 import pytest
 from worldkeeper import MemoryBackend, OpResult, World, WorldSchema
 
-from bench.item_facts import package_seed
 from bench.judge_input import _revealed_item_names
 from storygame.audit import audit_package
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.facts import Fact, FactStore
+from storygame.runtime.item_facts import package_seed
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import (

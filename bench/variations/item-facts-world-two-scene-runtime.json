@@ -1,10 +1,11 @@
 {
-  "name": "item-facts-world-two-scene-no-start-rule",
+  "name": "item-facts-world-two-scene-runtime",
   "story_package": "data/stories/continuity-initiative",
   "fixed_turns": 13,
   "continuity_judge": true,
   "fact_tracking_judge": true,
-  "item_facts": {"mode": "single_call", "seed_from_package": true, "drop_rules": ["{protagonist} starts this turn at the place PLAYER gives. Do not have {protagonist} walk there again."]},
+  "runtime": true,
+  "item_facts": {"mode": "single_call", "seed_from_package": true},
   "continue_to": {"scene": "1B", "fixed_turns": 6, "script": "carry-and-hand-off"},
   "system_prompt": {
     "constant_rules_in_system": true,

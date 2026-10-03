@@ -12,21 +12,17 @@ import shutil
 import subprocess
 import tempfile
 import time
+import urllib.request
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
 from statistics import mean, stdev
 from typing import Any
 
-from bench.item_facts import (
-    ItemFactsProvider,
-    _protagonist_name,
-    declared_axes_for_world,
-    package_seed,
-    validate_item_facts,
-)
+from bench.jev_use import _ask as ask_jev
 from bench.jev_use import ask_moves_thing, ask_needs_to_stand, ask_same_or_part, ask_uses_thing
 from bench.judge_input import judge_turns
+from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
     CloudflareTurnProvider,
@@ -35,7 +31,15 @@ from storygame.runtime.cloudflare import (
 from storygame.runtime.contracts import RuntimeContractError, join_narration
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
+from storygame.runtime.item_facts import (
+    ItemFactsProvider,
+    _protagonist_name,
+    declared_axes_for_world,
+    package_seed,
+    validate_item_facts,
+)
 from storygame.runtime.knowledge import KnowledgeProjector
+from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.seating import seat_before_use, stand_before_leave
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.taking import take_before_put
@@ -173,6 +177,9 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     fact_tracking_judge = variation.get("fact_tracking_judge", False)
     if not isinstance(fact_tracking_judge, bool):
         raise ValueError("fact_tracking_judge must be a boolean")
+    runtime = variation.get("runtime", False)
+    if not isinstance(runtime, bool):
+        raise ValueError("runtime must be a boolean")
     item_facts = None
     if "item_facts" in variation:
         item_facts = validate_item_facts(variation["item_facts"])
@@ -182,6 +189,7 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     variation["_entry_state"] = entry_state
     variation["_fixed_turns"] = fixed_turns
     variation["_fact_tracking_judge"] = fact_tracking_judge
+    variation["_runtime"] = runtime
     variation["_item_facts"] = item_facts
     variation["_path"] = str(path.resolve())
     package_path = resolve_package(path, package_value)
@@ -701,17 +709,31 @@ def scripts_for(variation: dict[str, Any], scene_id: str) -> list[dict[str, Any]
 
 def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], max_turns: int = 12) -> dict[str, Any]:
     package, state = seeded_state_for_scene(variation, scene_id)
+    runtime = variation.get("_runtime", variation.get("runtime", False))
+    if runtime and variation.get("_item_facts") is None and "item_facts" not in variation:
+        raise ValueError("runtime mode requires an item_facts variation")
+    runtime_tmp = tempfile.TemporaryDirectory(prefix="freytag-bench-runtime-") if runtime else None
+    runtime_store = RuntimeStateSqliteStore(Path(runtime_tmp.name) / "state.sqlite") if runtime_tmp else None
+    runtime_session = "bench"
+    runtime_ask = ask_jev(environment=os.environ, opener=urllib.request.urlopen) if runtime else None
     seeded_by = (
         "thorough" if variation.get("_entry_state", variation.get("entry_state", "bare")) == "thorough" else "none"
     )
     arrival_entry_state = entry_state(state, seeded_by=seeded_by)
-    provider = provider_for(state, variation)
-    engine = RuntimeEngine(state, provider)
+    provider = build_capture_provider(state) if runtime else provider_for(state, variation)
+    capture = WorldCapture(provider, runtime_ask) if runtime else None
+    engine = RuntimeEngine(state, provider, capture=capture)
     try:
         opening = engine.opening()
         if isinstance(provider, ItemFactsProvider):
-            provider.discard_pending_item_facts()
+            if runtime:
+                capture.discard()
+                runtime_store.save(runtime_session, state)
+            else:
+                provider.discard_pending_item_facts()
     except (NarrationProviderError, ProposalValidationError, RuntimeContractError) as error:
+        if runtime_tmp:
+            runtime_tmp.cleanup()
         return _failed_scene_record(variation, scene_id, script, provider, error, entry_state=arrival_entry_state)
     turns: list[dict[str, Any]] = []
     rejected_turns: list[dict[str, Any]] = []
@@ -722,6 +744,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
     scene_transitions: list[dict[str, Any]] = []
 
     def play_turns(turn_limit: int, turn_inputs: list[str], *, stop_on_exit: bool) -> bool:
+        nonlocal state, provider, capture, engine
         for turn_index in range(turn_limit):
             turn_number = len(turns) + len(rejected_turns) + 1
             typed_input = turn_inputs[turn_index % len(turn_inputs)]
@@ -743,7 +766,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 "resolutions": {},
                 "mapping_checks": [],
             }
-            if isinstance(provider, ItemFactsProvider):
+            if not runtime and isinstance(provider, ItemFactsProvider):
                 standing = stand_before_leave(provider._world(), package, typed_input, ask_needs_to_stand)
                 player_input = standing.command
                 standing_steps = standing.steps
@@ -761,18 +784,71 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     seating_issues = seating.issues
                 provider.prior_steps = (*standing_steps, *taking_steps, *seating_steps)
                 player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
-            if isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
+            if runtime:
+                before_record = capture.last_before or {}
+                standing_steps = tuple(before_record.get("standing_steps", ()))
+                standing_asked = before_record.get("standing_asked", False)
+                standing_issues = tuple(before_record.get("standing_issues", ()))
+                taking_steps = tuple(before_record.get("taking_steps", ()))
+                taking_asked = before_record.get("taking_asked", False)
+                taking_issues = tuple(before_record.get("taking_issues", ()))
+                seating_steps = tuple(before_record.get("seating_steps", ()))
+                seating_asked = before_record.get("seating_asked", False)
+                seating_issues = tuple(before_record.get("seating_issues", ()))
+                player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
+            if not runtime and isinstance(provider, ItemFactsProvider) and provider.item_facts_mode == "single_call":
                 match_info = provider.prepare_turn(typed_input)
             things_given: list[str] = []
             facts_before: dict[str, Any] = {}
-            if isinstance(provider, ItemFactsProvider):
+            if not runtime and isinstance(provider, ItemFactsProvider):
                 things_given = list(provider._selected_names) if provider._selected_names is not None else []
                 facts_before = provider.facts_for_names(things_given, structural=True)
+            runtime_context: dict[str, Any] = {}
+
+            def runtime_engine_factory(current_state=state, context=runtime_context) -> RuntimeEngine:
+                runtime_store.save(runtime_session, current_state)
+                loaded_state = runtime_store.load(runtime_session, package)
+                loaded_provider = build_capture_provider(loaded_state)
+                loaded_capture = WorldCapture(loaded_provider, runtime_ask)
+                context["engine"] = RuntimeEngine(loaded_state, loaded_provider, capture=loaded_capture)
+                return context["engine"]
+
             try:
-                proposal = _turn_with_rate_limit_retry(engine, typed_input)
-                last_prompt = getattr(provider, "last_prompt", None)
+                result = _turn_with_rate_limit_retry(
+                    engine, typed_input, engine_factory=runtime_engine_factory if runtime else None
+                )
+                if runtime:
+                    proposal, engine = result
+                    state = engine.state
+                    provider = engine.provider
+                    capture = engine.capture
+                else:
+                    proposal = result
+                last_prompt = (
+                    capture.last_after.get("narration_prompt")
+                    if runtime and capture.last_after and "narration_prompt" in capture.last_after
+                    else getattr(provider, "last_prompt", None)
+                )
                 turn_prompt = dict(last_prompt) if last_prompt is not None else None
             except NarrationProviderError as error:
+                if runtime and runtime_context.get("engine") is not None:
+                    engine = runtime_context["engine"]
+                    state = engine.state
+                    provider = engine.provider
+                    capture = engine.capture
+                    before_record = capture.last_before or {}
+                    things_given = list(before_record.get("things_given", ()))
+                    facts_before = before_record.get("item_facts_before", {})
+                    standing_steps = tuple(before_record.get("standing_steps", ()))
+                    standing_asked = before_record.get("standing_asked", False)
+                    standing_issues = tuple(before_record.get("standing_issues", ()))
+                    taking_steps = tuple(before_record.get("taking_steps", ()))
+                    taking_asked = before_record.get("taking_asked", False)
+                    taking_issues = tuple(before_record.get("taking_issues", ()))
+                    seating_steps = tuple(before_record.get("seating_steps", ()))
+                    seating_asked = before_record.get("seating_asked", False)
+                    seating_issues = tuple(before_record.get("seating_issues", ()))
+                    player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
                 if fixed_turns is None or error.error_code != "INVALID_PROPOSAL":
                     raise
                 if isinstance(provider, ItemFactsProvider):
@@ -792,12 +868,42 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         "standing_steps": list(standing_steps),
                         "standing_asked": standing_asked,
                         "standing_issues": list(standing_issues),
+                        **(
+                            {
+                                "things_given": things_given,
+                                "item_facts_before": facts_before,
+                                "item_facts_after": facts_before,
+                                "item_facts_issues": [],
+                            }
+                            if runtime
+                            else {}
+                        ),
                         "rejection_code": "INVALID_PROPOSAL",
                         "rejection_reason": str(error),
                     }
                 )
+                if runtime:
+                    runtime_store.save(runtime_session, state)
                 continue
             except (ProposalValidationError, RuntimeContractError) as error:
+                if runtime and runtime_context.get("engine") is not None:
+                    engine = runtime_context["engine"]
+                    state = engine.state
+                    provider = engine.provider
+                    capture = engine.capture
+                    before_record = capture.last_before or {}
+                    things_given = list(before_record.get("things_given", ()))
+                    facts_before = before_record.get("item_facts_before", {})
+                    standing_steps = tuple(before_record.get("standing_steps", ()))
+                    standing_asked = before_record.get("standing_asked", False)
+                    standing_issues = tuple(before_record.get("standing_issues", ()))
+                    taking_steps = tuple(before_record.get("taking_steps", ()))
+                    taking_asked = before_record.get("taking_asked", False)
+                    taking_issues = tuple(before_record.get("taking_issues", ()))
+                    seating_steps = tuple(before_record.get("seating_steps", ()))
+                    seating_asked = before_record.get("seating_asked", False)
+                    seating_issues = tuple(before_record.get("seating_issues", ()))
+                    player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
                 if isinstance(provider, ItemFactsProvider):
                     provider.discard_pending_item_facts()
                     provider.prior_steps = ()
@@ -817,16 +923,80 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         "standing_steps": list(standing_steps),
                         "standing_asked": standing_asked,
                         "standing_issues": list(standing_issues),
+                        **(
+                            {
+                                "things_given": things_given,
+                                "item_facts_before": facts_before,
+                                "item_facts_after": facts_before,
+                                "item_facts_issues": [],
+                            }
+                            if runtime
+                            else {}
+                        ),
                         "rejection_code": getattr(error, "code", None) or getattr(error, "error_code", ""),
                         "rejection_reason": str(error),
                     }
                 )
+                if runtime:
+                    runtime_store.save(runtime_session, state)
                 continue
             entered = state.current_scene_id != prior_scene
             segments = proposal.segments[:-1] if entered else proposal.segments
             narration = join_narration(tuple(segments)) if segments else ""
             item_facts_record: dict[str, Any] | None = None
-            if isinstance(provider, ItemFactsProvider):
+            if runtime:
+                before_record = capture.last_before or {}
+                after_record = capture.last_after or {}
+                things_given = list(before_record.get("things_given", ()))
+                facts_before = before_record.get("item_facts_before", {})
+                standing_steps = tuple(before_record.get("standing_steps", ()))
+                standing_asked = before_record.get("standing_asked", False)
+                standing_issues = tuple(before_record.get("standing_issues", ()))
+                taking_steps = tuple(before_record.get("taking_steps", ()))
+                taking_asked = before_record.get("taking_asked", False)
+                taking_issues = tuple(before_record.get("taking_issues", ()))
+                seating_steps = tuple(before_record.get("seating_steps", ()))
+                seating_asked = before_record.get("seating_asked", False)
+                seating_issues = tuple(before_record.get("seating_issues", ()))
+                player_input = " ".join((*standing_steps, *taking_steps, *seating_steps, typed_input))
+                raw_item_facts = after_record.get("raw", {})
+                fact_issues = after_record.get("issues", [])
+                match_info = after_record.get("match_info", match_info)
+                after_names = set(things_given) | set(provider._changed_last_turn)
+                facts_after = provider.facts_for_names(after_names, structural=True)
+                item_facts_names: dict[str, list[str]] = {}
+                world = provider._world()
+                for facts in (facts_before, facts_after):
+                    for display_name, entry in facts.items():
+                        place = entry.get("place") if isinstance(entry, dict) else None
+                        for display in (display_name, place):
+                            if not isinstance(display, str):
+                                continue
+                            entity_id = world.resolve(display)
+                            if entity_id:
+                                other_names = [name for name in world.names(entity_id) if name != display]
+                                if other_names:
+                                    item_facts_names[display] = other_names
+                item_facts_record = {
+                    "things_given": things_given,
+                    "item_facts_before": facts_before,
+                    "item_facts_after": facts_after,
+                    "item_facts_names": item_facts_names,
+                    "item_facts_axes": declared_axes_for_world(world, {*facts_before, *facts_after}),
+                    "item_facts_raw": raw_item_facts,
+                    "item_facts_issues": fact_issues,
+                    "item_facts_unplaced": after_record.get("unplaced", []),
+                    "item_facts_source": provider.item_facts_mode,
+                    "item_facts_held": list(provider._held_item_facts),
+                    "match_call": match_info["match_call"],
+                    "match_raw": match_info["match_raw"],
+                    "match_issues": match_info["match_issues"],
+                    "item_facts_resolutions": match_info["resolutions"],
+                    "item_facts_place_resolutions": match_info.get("place_resolutions", {}),
+                    "item_facts_mapping_checks": match_info.get("mapping_checks", []),
+                    "item_facts_engine_resolutions": match_info["engine_resolutions"],
+                }
+            elif isinstance(provider, ItemFactsProvider):
                 raw_item_facts = provider.pending_item_facts()
                 if provider.item_facts_mode == "second_call":
                     raw_item_facts = provider.second_call_update(typed_input, narration)
@@ -934,6 +1104,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     turn_record.update(item_facts_record)
                 turn_record["turn_number"] = turn_number
                 turns.append(turn_record)
+            if runtime:
+                runtime_store.save(runtime_session, state)
             if entered:
                 scene_transitions.append(
                     {
@@ -967,7 +1139,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             )
             play_turns(continue_to["fixed_turns"], continuation_script["inputs"], stop_on_exit=False)
     except (NarrationProviderError, ProposalValidationError, RuntimeContractError, RuntimeError) as error:
-        return _failed_scene_record(
+        result = _failed_scene_record(
             variation,
             scene_id,
             script,
@@ -978,12 +1150,16 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             entry_state=arrival_entry_state,
             rejected_turns=rejected_turns,
         )
+        if runtime_tmp:
+            runtime_tmp.cleanup()
+        return result
 
     record = {
         "status": "ok",
         "replicate": 0,
         "script": script["name"],
         "scene_id": scene_id,
+        "runtime": bool(variation.get("_runtime", variation.get("runtime", False))),
         "opening": opening.narration,
         "turns": turns,
         "completed": quota is None and bool(turns),
@@ -1011,6 +1187,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         record["item_facts_reply_keys"] = dict(provider.item_facts_reply_keys)
         record["item_facts_axis_fixes"] = provider.item_facts_axis_fixes
         record["item_facts_lifted"] = provider.item_facts_lifted
+    if runtime_tmp:
+        runtime_tmp.cleanup()
     return record
 
 
@@ -1042,6 +1220,7 @@ def _failed_scene_record(
         "replicate": 0,
         "script": script["name"],
         "scene_id": scene_id,
+        "runtime": bool(variation.get("_runtime", variation.get("runtime", False))),
         "opening": opening,
         "turns": turns or [],
         "completed": False,
@@ -1067,18 +1246,22 @@ def _failed_scene_record(
     return record
 
 
-def _turn_with_rate_limit_retry(engine: RuntimeEngine, player_input: str) -> Any:
+def _turn_with_rate_limit_retry(engine: RuntimeEngine, player_input: str, *, engine_factory: Any = None) -> Any:
     retries = int(os.getenv("BENCH_RATE_LIMIT_RETRIES", "3"))
     delay = float(os.getenv("BENCH_RATE_LIMIT_RETRY_SECONDS", "1"))
     for attempt in range(retries + 1):
         before = engine.state.model_copy(deep=True)
+        if engine_factory is not None:
+            engine = engine_factory()
         try:
-            return engine.turn(player_input)
+            proposal = engine.turn(player_input)
+            return (proposal, engine) if engine_factory is not None else proposal
         except NarrationProviderError as error:
             if error.error_code != "RATE_LIMITED" or attempt >= retries:
                 raise
-            for field in RuntimeState.model_fields:
-                setattr(engine.state, field, getattr(before, field))
+            if engine_factory is None:
+                for field in RuntimeState.model_fields:
+                    setattr(engine.state, field, getattr(before, field))
             engine.last_projection = None
             time.sleep(delay)
     raise AssertionError("unreachable")

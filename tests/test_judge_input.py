@@ -1,8 +1,8 @@
 from copy import deepcopy
 from pathlib import Path
 
-from bench.item_facts import declared_axes_for_package
 from bench.judge_input import judge_turns
+from storygame.runtime.item_facts import declared_axes_for_package
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))

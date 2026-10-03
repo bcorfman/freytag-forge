@@ -26,6 +26,15 @@ def _put_player_and_laptop_in_kitchen(world):
     assert world.move("kristin_laptop", "kitchen").ok
 
 
+def test_passenger_seat_resolves_in_1a():
+    _, world = _world()
+
+    assert world.resolve("passenger seat") == "truck_passenger_seat"
+    assert world.parent("truck_passenger_seat") == "kristin_truck"
+    assert world.move("kristin_laptop", "truck_passenger_seat").ok
+    assert world.parent("kristin_laptop") == "truck_passenger_seat"
+
+
 def test_overturned_chair_is_righted_then_kristin_sits():
     _, world = _world()
     _put_player_and_laptop_in_kitchen(world)

@@ -43,6 +43,9 @@ class TurnDelivery(BaseModel):
     handoff_staged: bool = False
     segments_truncated: bool = False
     segments_dropped: int = 0
+    capture_steps: tuple[str, ...] = ()
+    capture_issues: tuple[str, ...] = ()
+    capture_unplaced: tuple[str, ...] = ()
 
 
 class RuntimeSnapshot(BaseModel):
@@ -78,6 +81,7 @@ class RuntimeState(BaseModel):
     pending_break: GameBreakWarning | None = None
     pending_snapshot: RuntimeSnapshot | None = None
     pending_proposal: ResolvedTurnProposal | None = None
+    pending_capture: dict[str, Any] | None = None
     delivered_cue_ids: tuple[str, ...] = ()
     staged_cue_fact_id: str | None = None
     staged_handoff_fact_ids: tuple[str, ...] = ()
@@ -158,6 +162,7 @@ class RuntimeState(BaseModel):
         *,
         snapshot: RuntimeSnapshot | None = None,
         proposal: ResolvedTurnProposal | None = None,
+        capture: dict[str, Any] | None = None,
     ) -> None:
         self.require_turn_allowed()
         if warning.snapshot_id == "":
@@ -167,6 +172,7 @@ class RuntimeState(BaseModel):
         self.pending_proposal = proposal or ResolvedTurnProposal(
             segments=({"kind": "narration", "text": "Pending game-break candidate."},)
         )
+        self.pending_capture = capture
 
     def apply_proposal(
         self, proposal: ResolvedTurnProposal, *, canonical_event_ids: tuple[str, ...] = (), apply_world: bool = True
@@ -258,11 +264,13 @@ class RuntimeState(BaseModel):
             self.pending_break = None
             self.pending_snapshot = None
             self.pending_proposal = None
+            self.pending_capture = None
             self.apply_proposal(candidate)
             return
         self.pending_break = None
         self.pending_snapshot = None
         self.pending_proposal = None
+        self.pending_capture = None
 
     def new_snapshot_id(self) -> str:
         return f"snapshot_{uuid4().hex}"

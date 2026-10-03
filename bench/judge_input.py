@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from bench.item_facts import declared_axes_for_package
+from storygame.runtime.item_facts import declared_axes_for_package
 from storygame.story_package.models import ItemPlacement, StoryPackage
 
 

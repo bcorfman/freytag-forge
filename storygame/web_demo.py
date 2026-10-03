@@ -15,14 +15,18 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.contracts import ResolvedTurnProposal, RuntimeContractError, contract_error_summary
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.item_facts import ItemFactsProvider
+from storygame.runtime.jev import JevClient
 from storygame.runtime.knowledge_audit import build_knowledge_audit
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.scripted_provider import ScriptedTurnProvider
 from storygame.runtime.state import RuntimeState, RuntimeStateError
 from storygame.runtime.validation import ProposalValidationError
+from storygame.runtime.world_model import display_name, world_for
 from storygame.story_package.loader import StoryPackageError, load_story_package
 
 
@@ -71,6 +75,21 @@ def _default_package_root() -> Path:
 
 def _state_summary(state: RuntimeState) -> dict[str, object]:
     elapsed = state.facts.matching("story_elapsed_seconds", "story")
+    world = world_for(state.package, state.facts)
+    scene = next(scene for scene in state.package.scenes if scene.metadata.scene_id == state.current_scene_id)
+    protagonist_id = state.package.world.protagonist_id
+    things = {}
+    for entity_id in world.entity_ids():
+        holder_id = world.holder(entity_id)
+        if entity_id not in scene.metadata.item_ids and holder_id != protagonist_id:
+            continue
+        if world.is_hidden(entity_id):
+            continue
+        parent_id = world.parent(entity_id)
+        things[display_name(state.package, state.facts, world, entity_id)] = {
+            "place": display_name(state.package, state.facts, world, parent_id) if parent_id else None,
+            "held_by": display_name(state.package, state.facts, world, holder_id) if holder_id else None,
+        }
     return {
         "story_id": state.package.story_id,
         "scene_id": state.current_scene_id,
@@ -83,6 +102,7 @@ def _state_summary(state: RuntimeState) -> dict[str, object]:
         "story_elapsed_seconds": int(elapsed[-1].value) if elapsed and elapsed[-1].value else 0,
         "turn_index": state.turn_index,
         "turns_since_scene_entry": state.turn_index - state.scene_entered_at_turn,
+        "things": dict(sorted(things.items())),
     }
 
 
@@ -106,11 +126,15 @@ def _turn_payload(
         segments = [item.model_dump(mode="json") for item in proposal.segments] or [
             {"kind": "narration", "text": narration}
         ]
+    delivery = state.last_turn_delivery.model_dump(mode="json")
+    if not any(delivery[key] for key in ("capture_steps", "capture_issues", "capture_unplaced")):
+        for key in ("capture_steps", "capture_issues", "capture_unplaced"):
+            delivery.pop(key, None)
     payload = {
         "segments": segments,
         "lines": [narration] if narration else [],
         "game_break": game_break,
-        "delivery": state.last_turn_delivery.model_dump(mode="json"),
+        "delivery": delivery,
         "state": _state_summary(state),
     }
     if prompt is not None:
@@ -202,7 +226,17 @@ def create_demo_app(
             if resolved_channel == "production":
                 raise NarrationProviderError("narration service is unavailable", 503, "SCRIPTED_PROVIDER_FORBIDDEN")
             return ScriptedTurnProvider.from_environment(state)
+        if getenv("FREYTAG_WORLD_CAPTURE", "") == "1":
+            return build_capture_provider(state)
         return CloudflareTurnProvider.from_environment(state)
+
+    def engine_for(state: RuntimeState, provider=None) -> RuntimeEngine:
+        provider = provider if provider is not None else provider_for(state)
+        capture = None
+        if getenv("FREYTAG_WORLD_CAPTURE", "") == "1" and getenv("FREYTAG_TURN_PROVIDER", "") != "scripted":
+            capture_provider = provider if isinstance(provider, ItemFactsProvider) else build_capture_provider(state)
+            capture = WorldCapture(capture_provider, JevClient.from_environment().ask)
+        return RuntimeEngine(state, provider, capture=capture)
 
     def require_turn_rate_limit(body: TurnRequest, request: Request) -> None:
         if turn_rate_limit <= 0 or _test_clock_token_matches(request.headers.get("X-Freytag-Test-Clock-Token", "")):
@@ -246,7 +280,7 @@ def create_demo_app(
         state = RuntimeState.bootstrap(package)
         try:
             provider = provider_for(state)
-            opening = RuntimeEngine(state, provider).opening()
+            opening = engine_for(state, provider).opening()
         except NarrationProviderError as error:
             raise _narration_http_error(error) from error
         except RuntimeContractError as error:
@@ -285,7 +319,7 @@ def create_demo_app(
         try:
             provider = provider_for(state)
             test_clock = _test_clock_seconds(body, request)
-            engine = RuntimeEngine(state, provider)
+            engine = engine_for(state, provider)
             proposal = engine.turn(body.input_text, clock_seconds=test_clock)
         except NarrationProviderError as error:
             raise _narration_http_error(error) from error
@@ -310,7 +344,7 @@ def create_demo_app(
         if not state.pending_break or state.pending_break.warning_id != body.warning_id:
             raise HTTPException(status_code=409, detail="game-break warning does not match this session")
         try:
-            resolved = RuntimeEngine(state, provider_for(state)).resolve_break(body.decision)
+            resolved = engine_for(state).resolve_break(body.decision)
         except RuntimeStateError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         store.save(body.session_id, state)

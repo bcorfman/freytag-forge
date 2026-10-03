@@ -21,6 +21,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState, RuntimeStateError
 from storygame.runtime.validation import ProgressionValidator, ProposalValidationError, predicate_matches
+from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import FactPredicate
 
@@ -156,7 +157,30 @@ def test_knowledge_schema_save_cutover_rejects_legacy_snapshot_version(tmp_path)
     with pytest.raises(RuntimeSaveError, match="incompatible"):
         store.load("session", PACKAGE)
 
-    assert store.SCHEMA_VERSION == 4
+    assert store.SCHEMA_VERSION == 5
+
+
+def test_version_4_save_is_refused(tmp_path) -> None:
+    store = RuntimeStateSqliteStore(tmp_path / "runtime.sqlite")
+    store.save("session", RuntimeState.bootstrap(PACKAGE))
+    with store._connect() as connection:  # noqa: SLF001 - fixture simulates a legacy persisted row.
+        connection.execute("UPDATE runtime_snapshots SET version = 4 WHERE session_id = ?", ("session",))
+
+    with pytest.raises(RuntimeSaveError, match="incompatible"):
+        store.load("session", PACKAGE)
+
+
+def test_save_load_keeps_moved_thing(tmp_path) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    world = world_for(PACKAGE, state.facts)
+    assert world.move("michelle_phone", PACKAGE.world.protagonist_id).ok
+    expected_parent = world.parent("michelle_phone")
+    store = RuntimeStateSqliteStore(tmp_path / "runtime.sqlite")
+    store.save("session", state)
+
+    restored = store.load("session", PACKAGE)
+
+    assert world_for(PACKAGE, restored.facts).parent("michelle_phone") == expected_parent
 
 
 def test_successful_proposal_commits_events_and_transition() -> None:

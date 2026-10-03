@@ -6,6 +6,7 @@ from collections.abc import Callable
 from copy import deepcopy
 
 from storygame.runtime.canonical_events import CanonicalEventMixin
+from storygame.runtime.capture import WorldCapture
 from storygame.runtime.command_split import split_command
 from storygame.runtime.contracts import (
     FactOperation,
@@ -36,7 +37,12 @@ SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
 
 class RuntimeEngine(CanonicalEventMixin):
     def __init__(
-        self, state: RuntimeState, provider: Callable[[str], object], *, projector: KnowledgeProjector | None = None
+        self,
+        state: RuntimeState,
+        provider: Callable[[str], object],
+        *,
+        projector: KnowledgeProjector | None = None,
+        capture: WorldCapture | None = None,
     ) -> None:
         self.state = state
         self.provider = provider
@@ -46,6 +52,7 @@ class RuntimeEngine(CanonicalEventMixin):
         self.narration_validator = NarrationSafetyValidator()
         self.last_projection: TurnKnowledgeContext | None = None
         self.last_player_command: str | None = None
+        self.capture = capture
 
     def opening(self) -> ResolvedTurnProposal:
         """Open on the authored entry text, then the provider's embellishment; an opening commits no canon.
@@ -76,6 +83,14 @@ class RuntimeEngine(CanonicalEventMixin):
         try:
             self.state.last_turn_delivery = TurnDelivery()
             self.state.turn_index += 1
+            capture_record = self.capture.before_turn(command_text) if self.capture else {}
+            if self.capture:
+                self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                    update={
+                        "capture_steps": tuple(capture_record.get("steps", ())),
+                        "capture_issues": tuple(capture_record.get("issues", ())),
+                    }
+                )
             self._activate_pacing(realize_complications=True)
             self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                 update={
@@ -96,6 +111,8 @@ class RuntimeEngine(CanonicalEventMixin):
             candidate_state.apply_proposal(proposal, apply_world=False)
             self.narration_validator.validate(self.state, candidate_state, proposal, self.projector, command_text)
         except (ProposalValidationError, RuntimeContractError):
+            if self.capture:
+                self.capture.discard()
             self.state.restore_snapshot(before)
             raise
         # Keep the package's existing future-dependency analysis as the final
@@ -108,13 +125,35 @@ class RuntimeEngine(CanonicalEventMixin):
                 affected_ids=at_risk,
                 snapshot_id=self.state.new_snapshot_id(),
             )
-            self.state.set_pending_break(warning, snapshot=before, proposal=proposal)
+            self.state.set_pending_break(
+                warning,
+                snapshot=before,
+                proposal=proposal,
+                capture=self.capture.context() if self.capture else None,
+            )
             return proposal.model_copy(update={"game_break": warning})
         canonical_event_id = None
         if self.state.staged_handoff_fact_ids and not provider_proposal.selected_knowledge_ids:
             proposal, canonical_event_id = self._prepare_handoff(proposal)
         staged_cue_fact_id = self.state.staged_cue_fact_id
         self.state.apply_proposal(proposal, canonical_event_ids=(canonical_event_id,) if canonical_event_id else ())
+        if self.capture:
+            capture_record = self.capture.after_commit(
+                command_text,
+                proposal.narration,
+                entered_scene=self.state.current_scene_id != before.current_scene_id,
+            )
+            delivery = self.state.last_turn_delivery
+            self.state.last_turn_delivery = delivery.model_copy(
+                update={
+                    "capture_issues": (*delivery.capture_issues, *capture_record["issues"]),
+                    "capture_unplaced": tuple(
+                        item.get("name", "")
+                        for item in capture_record["unplaced"]
+                        if isinstance(item, dict) and item.get("name")
+                    ),
+                }
+            )
         if staged_cue_fact_id and self.state.current_scene_id == before.current_scene_id:
             self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)
             self.state.staged_cue_fact_id = None
@@ -174,9 +213,29 @@ class RuntimeEngine(CanonicalEventMixin):
 
     def resolve_break(self, decision: str) -> ResolvedTurnProposal | None:
         pending = self.state.pending_proposal
+        pending_capture = self.state.pending_capture
+        pending_scene = self.state.pending_snapshot.current_scene_id if self.state.pending_snapshot else None
         self.state.resolve_break(decision)
         if decision != "proceed" or pending is None:
             return None
+        if self.capture and pending_capture is not None:
+            self.capture.resume(pending_capture)
+            capture_record = self.capture.after_commit(
+                pending_capture.get("command", ""),
+                pending.narration,
+                entered_scene=pending_scene is not None and self.state.current_scene_id != pending_scene,
+            )
+            delivery = self.state.last_turn_delivery
+            self.state.last_turn_delivery = delivery.model_copy(
+                update={
+                    "capture_issues": (*delivery.capture_issues, *capture_record["issues"]),
+                    "capture_unplaced": tuple(
+                        item.get("name", "")
+                        for item in capture_record["unplaced"]
+                        if isinstance(item, dict) and item.get("name")
+                    ),
+                }
+            )
         self._record_turn(pending)
         self._advance_pacing(pending.narrative_seconds)
         self._activate_pacing()

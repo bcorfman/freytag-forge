@@ -202,14 +202,19 @@ reading level, one idea per sentence, and every path that narrates.
   `{"held_by": "Kristin"}`, not `{"place": "Kristin"}`. When "place" could
   name a person, the narrator also wrote "Kristin" for a drawer she only
   opened. When a reply gives both, `held_by` wins if `place` is missing,
-  unresolved, the holder, or the holder's area; otherwise `place` wins. The
-  other extra field is `"under": true`.
+  unresolved, the holder, the holder's area, or where the holder is in the
+  same reply; otherwise `place` wins. A leading "in", "on" or "at" is dropped
+  before the place is resolved. The other extra field is `"under": true`.
 - **Replace an example; do not add one.** The place rule has one example. If
   it teaches the wrong shape, change it rather than adding a second rule
   beside it.
 - **Hand the model material before rules.** A declared entity with a name,
   or a THINGS line, prevents more mistakes than a rule telling the model what
   not to do.
+- **Show state guidance only for named things.** THINGS shows a state as
+  `State: open. It can be: closed.` For a thing named by the player's command,
+  it says `State: open. If it changes, give "state": "closed".` On every line,
+  this made the reply change states the story never touched.
 - **Capture stays in the one narration reply.** Never add a second call to
   collect world changes.
 - **Never repair places by scanning prose.** Regex or keyword matching of

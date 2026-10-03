@@ -10,16 +10,6 @@
     "constant_rules_in_system": true,
     "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light. She hands it to her neighbor, who takes it with a nod.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"place\":\"in the neighbor's hand\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"on the porch\"}}}"
   },
-  "overrides": {
-    "knowledge.yaml": {"replacements": [
-      {"old": "The house is quiet, Michelle is missing, and Michelle's phone remains on the kitchen floor.", "new": "The house is quiet and Michelle is missing."}
-    ]},
-    "plot.md": {"replacements": [
-      {"old": "Michelle's phone on the kitchen floor; ", "new": ""},
-      {"old": "* Michelle's phone remains on the kitchen floor undamaged.\n", "new": ""},
-      {"old": ", \"Michelle's phone is not damaged.\"]", "new": "]"}
-    ]}
-  },
   "scripts": {
     "1A": [{"name": "change-types", "inputs": [
       "Open the drawer with my initials carved into it.", "Look beneath the KMS drawer.", "Pick up Michelle's phone and put it in my pocket.", "Go out to the truck and bring my laptop inside.", "Set my laptop on Michelle's workstation.", "Open my laptop.", "Stand the overturned chair back up.", "Shut the drawer.", "Carry my laptop back out to the truck.", "Take Michelle's phone out and throw it hard against the kitchen wall.", "Pick up Michelle's phone from the floor.", "Put Michelle's phone in my pocket and walk out to the truck.", "Read the files on Michelle's memory card with my laptop."

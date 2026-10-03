@@ -81,18 +81,18 @@ location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
-item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, kristin_truck, michelle_workstation, back_door]
+item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door]
 item_placements:
   memory_card: {parent: michelle_drawer, under: true}
   michelle_phone: {parent: kitchen, text: on the kitchen floor}
   kristin_laptop: {parent: kristin_truck, text: in Kristin's truck outside the house}
   truck_driver_seat: {parent: kristin_truck}
+  truck_passenger_seat: {parent: kristin_truck}
   kristin_truck: {parent: outside_house}
   michelle_workstation: {parent: kitchen}
   back_door: {parent: kitchen}
   michelle_drawer: {parent: michelle_workstation, part_of: true, text: in Michelle's workstation}
   workstation_chair: {parent: kitchen, text: at Michelle's workstation}
-setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and spare batteries.", "Kristin's laptop is closed.", "Michelle's phone is not damaged."]
 entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:
@@ -113,11 +113,10 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; forced back door; KMS initials carved in drawer
+**Details:** missing tablet and work bag; forced back door; KMS initials carved in drawer
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
 
-* Michelle's phone remains on the kitchen floor undamaged.
 * Michelle's tablet and work bag are missing and not in their normal spots.
 * The chair at Shelly's workstation has been overturned.
 * The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.

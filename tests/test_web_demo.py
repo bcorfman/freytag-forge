@@ -13,8 +13,9 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.scripted_provider import ScriptedTurnProvider
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
-from storygame.web_demo import create_demo_app
+from storygame.web_demo import _state_summary, create_demo_app
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -94,6 +95,17 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "story_elapsed_seconds": 0,
         "turn_index": 0,
         "turns_since_scene_entry": 0,
+        "things": {
+            "Michelle's phone": {"place": "kitchen", "held_by": None},
+            "Kristin's laptop": {"place": "Kristin's truck", "held_by": None},
+            "drawer": {"place": "workstation", "held_by": None},
+            "back door": {"place": "kitchen", "held_by": None},
+            "Kristin's truck": {"place": "outside the house", "held_by": None},
+            "workstation chair": {"place": "kitchen", "held_by": None},
+            "workstation": {"place": "kitchen", "held_by": None},
+            "driver's seat": {"place": "Kristin's truck", "held_by": None},
+            "passenger seat": {"place": "Kristin's truck", "held_by": None},
+        },
     }
     opening = session.json()["opening"]
     entry_text = PACKAGE.scenes[0].metadata.entry_text
@@ -124,6 +136,48 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "segments_dropped": 0,
     }
     json.dumps(turn.json())
+
+
+def test_state_summary_lists_scene_things() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    summary = _state_summary(state)
+
+    assert summary["things"]["Michelle's phone"]["place"] is not None
+
+
+def test_state_summary_hides_hidden_things() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    summary = _state_summary(state)
+
+    assert all("memory card" not in name.casefold() for name in summary["things"])
+
+
+def test_state_summary_shows_held_thing_holder() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    world = world_for(PACKAGE, state.facts)
+    assert world.move("michelle_phone", PACKAGE.world.protagonist_id).ok
+
+    thing = _state_summary(state)["things"][world.name("michelle_phone")]
+
+    assert thing["held_by"] == world.name(PACKAGE.world.protagonist_id)
+
+
+def test_state_summary_uses_unnamed_label_until_named() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    world = world_for(PACKAGE, state.facts)
+    assert world.move("michelle_phone", "brandon").ok
+
+    before = _state_summary(state)
+    phone = before["things"][world.name("michelle_phone")]
+    unnamed_label = next(npc.unnamed_label for npc in PACKAGE.world.npcs if npc.id == "brandon")
+    real_name = world.name("brandon")
+    assert phone["held_by"] == unnamed_label
+    assert real_name not in json.dumps(before["things"])
+
+    state.facts.assert_fact(Fact(predicate="brandon_identified", subject="story", value="true"))
+
+    after = _state_summary(state)
+    assert after["things"][world.name("michelle_phone")]["held_by"] == real_name
 
 
 def test_prompt_is_absent_by_default(monkeypatch, tmp_path) -> None:

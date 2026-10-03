@@ -6,7 +6,9 @@ import pytest
 import bench.cli as bench_cli
 import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments, seeded_state_for_scene
-from bench.item_facts import (
+from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.facts import Fact
+from storygame.runtime.item_facts import (
     _MATCH_SYSTEM,
     START_PLACE_RULE_TEMPLATE,
     ItemFactsProvider,
@@ -15,8 +17,6 @@ from bench.item_facts import (
     package_seed,
     validate_item_facts,
 )
-from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
@@ -59,6 +59,65 @@ def _seeded_provider(mode="single_call", state_axes=None):
         seed_from_package=True,
         state_axes=state_axes,
     )
+
+
+def test_runtime_has_no_setting_fact_parser():
+    scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "1A")
+    package = PACKAGE.model_copy(
+        update={
+            "scenes": tuple(
+                scene.model_copy(
+                    update={"metadata": scene.metadata.model_copy(update={"setting_facts": ("The drawer is open.",)})}
+                )
+                if item is scene
+                else item
+                for item in PACKAGE.scenes
+            )
+        }
+    )
+    state = RuntimeState.bootstrap(package)
+    provider = ItemFactsProvider(
+        worker_url="",
+        token="",
+        state=state,
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+        state_axes={"drawer": {"closed": ["shut"], "open": []}},
+    )
+    provider._world().seed()
+    provider._world().set_axis("michelle_drawer", "closed")
+
+    provider._ensure_scene_seeded()
+
+    assert provider._world().axis_values("michelle_drawer")["open"] == "closed"
+
+
+def test_laptop_starts_closed_from_world():
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = ItemFactsProvider(
+        worker_url="", token="", state=state, item_facts={}, mode="single_call", seed_from_package=True
+    )
+
+    provider._ensure_scene_seeded()
+
+    assert world_for(PACKAGE, state.facts).axis_values("kristin_laptop")["closed"] == "closed"
+
+
+def test_scene_seeding_is_idempotent_across_providers():
+    state = RuntimeState.bootstrap(PACKAGE)
+    first = ItemFactsProvider(
+        worker_url="", token="", state=state, item_facts={}, mode="single_call", seed_from_package=True
+    )
+    first._ensure_scene_seeded()
+    world_for(PACKAGE, state.facts).set_axis("michelle_drawer", "open")
+
+    second = ItemFactsProvider(
+        worker_url="", token="", state=state, item_facts={}, mode="single_call", seed_from_package=True
+    )
+    second._ensure_scene_seeded()
+
+    assert world_for(PACKAGE, state.facts).axis_values("michelle_drawer")["open"] == "open"
 
 
 def _facts_for(provider, *names):
@@ -119,6 +178,38 @@ def test_things_block_hides_axis_for_kristin_but_shows_laptop_state():
     laptop_line = next(line for line in block.splitlines() if line.startswith("- Kristin's laptop."))
 
     assert "State:" not in kristin_line
+    assert "State: closed. It can be: open." in laptop_line
+
+
+def test_things_names_state_field_for_referred_thing():
+    provider = _seeded_provider(state_axes={"Kristin's laptop": {"closed": ["shut"], "open": []}})
+    provider._selected_names = ["Kristin", "Kristin's laptop"]
+    provider._referred_names = ["Kristin's laptop"]
+    laptop_line = next(
+        line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin's laptop.")
+    )
+
+    assert 'State: closed. If it changes, give "state": "open".' in laptop_line
+    assert "It can be" not in laptop_line
+
+
+def test_things_keeps_axis_line_for_unreferred_thing():
+    provider = _seeded_provider(state_axes={"Kristin's laptop": {"closed": ["shut"], "open": []}})
+    provider._selected_names = ["Kristin", "Kristin's laptop"]
+    provider._referred_names = []
+    laptop_line = next(
+        line for line in provider._things_block(narration=True).splitlines() if line.startswith("- Kristin's laptop.")
+    )
+
+    assert "State: closed. It can be: open." in laptop_line
+
+
+def test_match_things_keep_axis_line_for_referred_thing():
+    provider = _seeded_provider(state_axes={"Kristin's laptop": {"closed": ["shut"], "open": []}})
+    provider._selected_names = ["Kristin", "Kristin's laptop"]
+    provider._referred_names = ["Kristin's laptop"]
+    laptop_line = next(line for line in provider._things_block().splitlines() if line.startswith("- Kristin's laptop."))
+
     assert "State: closed. It can be: open." in laptop_line
 
 
@@ -282,7 +373,7 @@ def test_things_are_after_scene_and_render_single_value_facts():
     assert "- the gate. Place: at the garden path." in user
     assert "CONSTRAINTS:" in user
     assert provider._placement_rules() == []
-    assert provider._setting_fact_rules() == ["The drawer holds pens, binder clips, a stapler, and spare batteries."]
+    assert provider._setting_fact_rules() == []
 
 
 def test_untracked_setting_fact_reaches_turn_and_opening_prompts(monkeypatch):
@@ -290,14 +381,14 @@ def test_untracked_setting_fact_reaches_turn_and_opening_prompts(monkeypatch):
     fact = "The drawer holds pens, binder clips, a stapler, and spare batteries."
 
     turn = provider.assemble_turn_prompt("Search the workstation for useful supplies.")
-    assert fact in provider._section_user_prompt(turn["context"])
+    assert fact not in provider._section_user_prompt(turn["context"])
 
     monkeypatch.setattr(
         "storygame.runtime.cloudflare.urlopen",
         lambda request, **kwargs: _Response({"segments": [{"kind": "narration", "text": "The room is quiet."}]}),
     )
     provider.opening()
-    assert fact in provider.last_prompt["user"]
+    assert fact not in provider.last_prompt["user"]
 
 
 def test_tracked_setting_fact_does_not_reach_prompt_as_text():
@@ -306,7 +397,7 @@ def test_tracked_setting_fact_does_not_reach_prompt_as_text():
     user = provider._section_user_prompt(turn["context"])
 
     assert "The drawer is shut." not in user
-    assert "The drawer holds pens, binder clips, a stapler, and spare batteries." in user
+    assert "The drawer holds pens, binder clips, a stapler, and spare batteries." not in user
 
 
 def test_scene_with_every_setting_fact_tracked_sends_no_setting_fact_rules():
@@ -889,6 +980,37 @@ def test_held_by_pocket_place_keeps_holder():
     provider.held_by = True
     provider.apply_item_facts({"Michelle's phone": {"held_by": "Kristin", "place": "Kristin's pocket"}})
     assert provider._world().parent("michelle_phone") == "kristin"
+
+
+def test_held_by_place_with_prefix_resolves():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts({"stapler": {"held_by": "Kristin", "place": "in drawer"}})
+    assert provider._world().parent("michelle_drawer_stapler") == "michelle_drawer"
+
+
+def test_held_by_place_is_holders_own_place_keeps_holder():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "workstation"},
+            "Kristin's laptop": {"held_by": "Kristin", "place": "workstation"},
+        }
+    )
+    assert provider._world().parent("kristin_laptop") == "kristin"
+
+
+def test_held_by_place_elsewhere_with_holder_elsewhere_wins():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts(
+        {
+            "Kristin": {"place": "outside the house"},
+            "Kristin's laptop": {"held_by": "Kristin", "place": "driver's seat"},
+        }
+    )
+    assert provider._world().parent("kristin_laptop") == "truck_driver_seat"
 
 
 def test_held_by_place_elsewhere_wins():
@@ -2231,11 +2353,11 @@ def test_package_seed_scene_1a_matches_authored_things():
     things, issues = package_seed(PACKAGE, state, "1A")
     assert things == {
         "Kristin": {"place": "Michelle's house", "condition": []},
-        "Michelle's phone": {"place": "on the kitchen floor", "condition": ["not damaged"]},
+        "Michelle's phone": {"place": "on the kitchen floor", "condition": []},
         "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": ["closed"]},
         "drawer": {
             "place": "in Michelle's workstation",
-            "condition": ["closed", "shut"],
+            "condition": ["closed"],
         },
         "pens": {"place": "drawer", "condition": []},
         "binder clips": {"place": "drawer", "condition": []},
@@ -2246,13 +2368,12 @@ def test_package_seed_scene_1a_matches_authored_things():
             "condition": ["overturned"],
         },
         "driver's seat": {"place": "Kristin's truck", "condition": []},
+        "passenger seat": {"place": "Kristin's truck", "condition": []},
         "Kristin's truck": {"place": "outside the house", "condition": []},
         "workstation": {"place": "kitchen", "condition": []},
         "back door": {"place": "kitchen", "condition": []},
     }
-    assert issues == [
-        "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
-    ]
+    assert issues == []
 
 
 def test_package_seed_tracks_protagonist_at_each_scene_location():
@@ -2278,9 +2399,7 @@ def test_two_scene_variation_package_seed_includes_laptop_and_chair_state():
         "place": "at Michelle's workstation",
         "condition": ["overturned"],
     }
-    assert issues == [
-        "setting fact 'The drawer holds pens, binder clips, a stapler, and spare batteries.' could not be parsed"
-    ]
+    assert issues == []
 
 
 def test_live_run_state_is_seeded_and_placed():
@@ -2356,7 +2475,7 @@ def test_package_seed_accepts_the_prefix_case_insensitively():
         update={"scenes": tuple(replacement if item is scene else item for item in PACKAGE.scenes)}
     )
     things, issues = package_seed(package, RuntimeState.bootstrap(package), "1A")
-    assert things["drawer"]["condition"] == ["closed", "SHUT"]
+    assert things["drawer"]["condition"] == ["closed"]
     assert issues == []
 
 
@@ -2426,7 +2545,7 @@ def test_package_seed_clashing_hand_seed_is_rejected(tmp_path):
         )
 
 
-def test_package_seed_parses_new_and_reports_unparseable_setting_facts(tmp_path):
+def test_package_seed_ignores_setting_facts(tmp_path):
     scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "1A")
     replacement = scene.model_copy(
         update={
@@ -2440,11 +2559,10 @@ def test_package_seed_parses_new_and_reports_unparseable_setting_facts(tmp_path)
     )
     things, issues = package_seed(package, RuntimeState.bootstrap(package), "1A")
     assert "A lamp" not in things
-    assert any("A lamp" in issue and "A lamp is bright." in issue for issue in issues)
-    assert any("could not be parsed" in issue for issue in issues)
+    assert issues == []
 
 
-def test_package_seed_refuses_to_place_unplaced_setting_fact():
+def test_package_seed_does_not_place_unplaced_setting_fact():
     scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == "1A")
     replacement = scene.model_copy(
         update={"metadata": scene.metadata.model_copy(update={"setting_facts": ("The kettle is warm.",)})}
@@ -2454,7 +2572,7 @@ def test_package_seed_refuses_to_place_unplaced_setting_fact():
     )
     things, issues = package_seed(package, RuntimeState.bootstrap(package), "1A")
     assert "The kettle" not in things
-    assert any("The kettle" in issue and "The kettle is warm." in issue for issue in issues)
+    assert issues == []
 
 
 def test_legacy_location_key_does_not_move_entry_and_records_issue():

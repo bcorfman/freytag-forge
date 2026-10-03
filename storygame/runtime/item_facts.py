@@ -1,4 +1,4 @@
-"""Bench-only tracking of plain facts about named scene things."""
+"""Tracking of plain facts about named scene things, shared by the runtime and the bench."""
 
 # ruff: noqa: E501, E701, E702
 from __future__ import annotations
@@ -183,37 +183,6 @@ def _package_seed(package, state, scene_id):
                 world.set_unplaced(item_id, text)
     issues = []
     unconsumed = []
-    for setting in scene.metadata.setting_facts:
-        phrase = setting.strip().removesuffix(".").rstrip()
-        match = next(
-            (
-                name
-                for name in _view(package, facts)
-                if any(
-                    phrase.casefold().startswith(prefix.casefold())
-                    for prefix in (f"{name} is ", f"{name} are ", f"The {name} is ", f"The {name} are ")
-                )
-            ),
-            None,
-        )
-        if match is None:
-            issues.append(f"setting fact {setting!r} could not be parsed")
-            unconsumed.append(setting)
-            continue
-        prefix = next(
-            prefix
-            for prefix in (f"{match} is ", f"{match} are ", f"The {match} is ", f"The {match} are ")
-            if phrase.casefold().startswith(prefix.casefold())
-        )
-        value = phrase[len(prefix) :].strip()
-        entity_id = world.resolve(match)
-        if entity_id and world.set_axis(entity_id, value).ok:
-            continue
-        if entity_id is None or len(value) > 40 or len(world.conditions(entity_id)) >= 2:
-            issues.append(f"setting fact for {match!r} could not be added as a condition")
-            unconsumed.append(setting)
-        else:
-            world.set_conditions(entity_id, [*world.conditions(entity_id), value])
     return _view(package, facts), issues, unconsumed
 
 
@@ -397,36 +366,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 world.set_axis(entity_id, initial)
         if self._last_scene_seeded == scene_id:
             return
-        scene = next(item for item in self.state.package.scenes if item.metadata.scene_id == scene_id)
         _, issues, _ = _package_seed(self.state.package, self.state, scene_id)
         self.item_facts_seed_issues.extend(issues)
-        for setting in scene.metadata.setting_facts:
-            phrase = setting.strip().removesuffix(".").rstrip()
-            target = next(
-                (
-                    world.resolve(name)
-                    for name in _view(self.state.package, self.state.facts, schema=self._schema())
-                    if any(
-                        phrase.casefold().startswith(prefix.casefold())
-                        for prefix in (f"{name} is ", f"{name} are ", f"The {name} is ", f"The {name} are ")
-                    )
-                ),
-                None,
-            )
-            if target is None or not world.is_visible(target):
-                continue
-            name = world.name(target)
-            prefix = next(
-                prefix
-                for prefix in (f"{name} is ", f"{name} are ", f"The {name} is ", f"The {name} are ")
-                if phrase.casefold().startswith(prefix.casefold())
-            )
-            value = phrase[len(prefix) :].strip()
-            pole = self._axis_match_id(world, target, value)
-            if pole:
-                world.set_axis(target, pole)
-            elif len(value) <= 40:
-                world.set_conditions(target, [*world.conditions(target), value][:2])
         self._last_scene_seeded = scene_id
 
     def _axis_match_id(self, world, entity_id, text):
@@ -480,7 +421,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     current = axis_values.get(axis["name"])
                     if current:
                         other = next(pole for pole in axis["poles"] if pole != current)
-                        line += f" State: {current}. It can be: {other}."
+                        if narration and name in self._referred_names:
+                            line += f' State: {current}. If it changes, give "state": "{other}".'
+                        else:
+                            line += f" State: {current}. It can be: {other}."
                 rendered.extend(condition for condition in facts["condition"] if condition not in axis_values.values())
                 if rendered:
                     line += f" Condition: {', '.join(rendered)}."
@@ -1086,19 +1030,47 @@ class ItemFactsProvider(CloudflareTurnProvider):
         world = self._world()
         if self.held_by:
             raw = copy.deepcopy(raw)
+
+            def resolve_precedence_place(place):
+                if not isinstance(place, str) or not place.strip():
+                    return None, place
+                place = place.strip()
+                place_id = self._resolve_name(world, place)
+                if place_id is not None:
+                    return place_id, place
+                stripped = re.sub(
+                    r"^(?:in|on|at|inside|into|onto|under)\s+(?:the\s+)?",
+                    "",
+                    place,
+                    count=1,
+                    flags=re.IGNORECASE,
+                ).strip()
+                if stripped != place:
+                    place_id = self._resolve_name(world, stripped)
+                    if place_id is not None:
+                        return place_id, stripped
+                return None, place
+
             for value in raw.values():
                 if not isinstance(value, dict) or not isinstance(value.get("held_by"), str):
                     continue
                 holder_name = value["held_by"].strip()
                 holder_id = self._resolve_name(world, holder_name)
                 place = value.get("place")
-                place_id = self._resolve_name(world, place) if isinstance(place, str) and place.strip() else None
+                place_id, resolved_place = resolve_precedence_place(place)
                 holder_area = world.area(holder_id) if holder_id is not None else None
+                holder_entry_place_id = None
+                if holder_id is not None:
+                    for key, holder_entry in raw.items():
+                        if isinstance(holder_entry, dict) and self._resolve_name(world, key) == holder_id:
+                            holder_entry_place_id, _ = resolve_precedence_place(holder_entry.get("place"))
+                            break
                 held_by_wins = (
                     holder_id is None
                     or not isinstance(place, str)
                     or place_id is None
                     or place_id == holder_id
+                    or holder_entry_place_id == place_id
                     or (
                         holder_area is not None
                         and world.is_a(place_id, "area")
@@ -1110,6 +1082,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 )
                 if held_by_wins:
                     value["place"] = holder_name
+                elif resolved_place != place:
+                    value["place"] = resolved_place
                 value.pop("held_by", None)
         fact_move_overrides = self._fact_move_overrides(world)
         entries = []

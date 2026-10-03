@@ -39,6 +39,15 @@ def _true(facts: FactStore, fact_id: str) -> bool:
     return any(str(fact.value).lower() == "true" for fact in facts.matching(fact_id, "story"))
 
 
+def display_name(package: StoryPackage, facts: FactStore, world: World, entity_id: str) -> str:
+    """Return the name currently available to the player for an entity."""
+    if world.is_a(entity_id, "character"):
+        npc = next((entity for entity in package.world.npcs if entity.id == entity_id), None)
+        if npc and npc.unnamed_label and npc.named_by and not _true(facts, npc.named_by):
+            return npc.unnamed_label
+    return world.name(entity_id)
+
+
 def _marker_exists(facts: FactStore, fact_id: str) -> bool:
     return any(fact.object == fact_id for fact in facts.matching(WORLD_EFFECTS_APPLIED, "story"))
 

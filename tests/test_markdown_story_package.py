@@ -275,18 +275,14 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "michelle_phone": ItemPlacement(parent="kitchen", text="on the kitchen floor"),
         "kristin_laptop": ItemPlacement(parent="kristin_truck", text="in Kristin's truck outside the house"),
         "truck_driver_seat": ItemPlacement(parent="kristin_truck"),
+        "truck_passenger_seat": ItemPlacement(parent="kristin_truck"),
         "kristin_truck": ItemPlacement(parent="outside_house"),
         "michelle_workstation": ItemPlacement(parent="kitchen"),
         "michelle_drawer": ItemPlacement(parent="michelle_workstation", part_of=True, text="in Michelle's workstation"),
         "workstation_chair": ItemPlacement(parent="kitchen", text="at Michelle's workstation"),
         "back_door": ItemPlacement(parent="kitchen"),
     }
-    assert package.scenes[0].metadata.setting_facts == (
-        "The drawer is shut.",
-        "The drawer holds pens, binder clips, a stapler, and spare batteries.",
-        "Kristin's laptop is closed.",
-        "Michelle's phone is not damaged.",
-    )
+    assert package.scenes[0].metadata.setting_facts == ()
     pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
     mapped_facts = set(package.knowledge_indexes.facts_to_knowledge)
     assert mapped_facts <= set(package.world.facts)
@@ -386,9 +382,11 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
     contents = plot.read_text(encoding="utf-8")
     contents = contents.replace(
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
-        "workstation_chair, truck_driver_seat, kristin_truck, michelle_workstation, back_door]\n",
+        "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
+        "michelle_workstation, back_door]\n",
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
-        "workstation_chair, truck_driver_seat, kristin_truck, michelle_workstation, back_door, test_item]\n",
+        "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
+        "michelle_workstation, back_door, test_item]\n",
         1,
     )
     contents = contents.replace(
@@ -427,11 +425,8 @@ def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: 
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8").replace(
-        'setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and '
-        'spare batteries.", '
-        '"Kristin\'s laptop is closed.", '
-        '"Michelle\'s phone is not damaged."]',
-        'setting_facts: ["The test shutters are closed.", "The test lamp is on."]',
+        "entry_text:",
+        'setting_facts: ["The test shutters are closed.", "The test lamp is on."]\nentry_text:',
         1,
     )
     plot.write_text(contents, encoding="utf-8")
@@ -445,11 +440,8 @@ def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: 
     ("old", "new", "message"),
     [
         pytest.param(
-            'setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and '
-            'spare batteries.", '
-            '"Kristin\'s laptop is closed.", '
-            '"Michelle\'s phone is not damaged."]',
-            'setting_facts: ["  "]',
+            "entry_text:",
+            'setting_facts: ["  "]\nentry_text:',
             "setting_facts",
             id="loader_rejects_empty_setting_fact",
         ),
@@ -537,10 +529,7 @@ def test_loader_rejects_a_beat_without_details(tmp_path: Path) -> None:
     package = copied_package(tmp_path)
     plot = package / "plot.md"
     contents = plot.read_text(encoding="utf-8")
-    details = (
-        "**Details:** Michelle's phone on the kitchen floor; missing tablet and work bag; forced back door; "
-        "KMS initials carved in drawer\n"
-    )
+    details = "**Details:** missing tablet and work bag; forced back door; KMS initials carved in drawer\n"
     plot.write_text(contents.replace(details, "", 1), encoding="utf-8")
 
     with pytest.raises(StoryPackageError, match="scene 1A beat 1A.1 lacks a Details line"):

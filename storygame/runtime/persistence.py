@@ -24,8 +24,10 @@ class RuntimeStateSqliteStore:
     # additionally drops the dead narrative_history field, so a session saved
     # under version 2 now fails closed with 'save is incompatible with this
     # story package' instead of silently loading with a stale shape. Version 4
-    # adds the delivered cue ledger to runtime snapshots.
-    SCHEMA_VERSION = 4
+    # adds the delivered cue ledger to runtime snapshots. Version 5 is the
+    # first written after the world tree moved into the facts, so an older save
+    # may have no tree.
+    SCHEMA_VERSION = 5
 
     def __init__(self, path: Path | str) -> None:
         self.path = Path(path)

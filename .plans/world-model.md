@@ -49,8 +49,20 @@ so closed containers bring their contents (151abce), and `held_by` for
 held things behind a flag (4402a2f): paired x3 base 51/57, held_by
 54/57 (94.7%), t1 and t12 right 3/3; held_by made the default
 (64a1cb3) and W14 unnamed label built (6e1b191): x3 54/57, Brandon
-named early 0/3. PR 501 opened (2026-10-03; suite 1021, ruff
-clean). Next: merge PR 501 once CI passes, then the bookmark, then S4.
+named early 0/3. Merged as PR 501 (fd52d0c). Bookmark kept (Brandon,
+2026-10-03): undeclared conditions stay unscored. S4 on
+`claude/s4-runtime`: S4a-S4d2 built (capture runs in the turn behind
+`FREYTAG_WORLD_CAPTURE`); S4e1 bench runtime mode built (3bdb7d7,
+857a008, 1b7de5e); S4e x3 through the runtime path 53/57 (93.0%)
+vs `w14-x3` 54/57. The `held_by`-plus-`place` misses probed
+(2026-10-03): prompt arms do not help; the precedence fix (2e51727)
+and a declared passenger seat (bfd8345) built; x3 49/57 (one miss from
+the change, t9's unasked laptop close drops its state 3/3); t9 state
+probed and the command-scoped THINGS state wording built (b867fb5):
+x3 49/57, t9 right 3/3, but r1 gains a chair invention (cascading to
+t7) and a state echo on t6; keep or revert is open. Next: staging `@world-state` (needs Brandon:
+deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
+The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -547,8 +559,9 @@ stays for now; rerun the paired arms after the 1A fixes below.
      what each transition needs** (his example: 1A never shows the
      workstation or the KMS drawer). Planned in
      [scene-affordance-e2e.md](scene-affordance-e2e.md).
-2. **The bookmark** (section "Next steps, in order", item 3): decide
-   whether undeclared conditions are scored.
+2. **The bookmark** (section "Next steps, in order", item 3).
+   **Decided (Brandon, 2026-10-03): kept.** Undeclared conditions stay
+   unscored. Declare an axis when a story comes to depend on one.
    **Counted (2026-10-03; `w14-x3`, `held-by-on-x3`,
    `closed-contents-x3`, 171 1A-1B turns read by hand; reply side only
    for `world-3a-referred-x3`, `world-3b-hide-x3`, `world-3c-x3`).**
@@ -4511,6 +4524,325 @@ left. Keep a removal only if the numbers hold.
 **S4 - Runtime.** Capture during play, the tree in saves (schema bump), cause
 routing: hand over to the continuity plan's Phases 4-6, which build on this
 model instead of a `place`/`condition` dict.
+
+**S4 task plan (2026-10-03, checked against `main` at fd52d0c).** The
+continuity plan's Phases 4-6 were written for a flat `place`/`condition`
+dict, before this model existed. Here they are mapped onto what is
+already built.
+
+What exists:
+- *Phase 4 is mostly done by S1-S2.* The tree lives in `FactStore`
+  (`storygame/runtime/world_model.py`). `RuntimeState.bootstrap` and
+  each transition run `apply_scene_placements` and
+  `apply_world_effects`. `snapshot()`/`restore_snapshot()` clone the
+  facts, so rejected turns and rewinds already restore the tree, and
+  saves already serialise it. Left: `SCHEMA_VERSION` is still 4
+  (`persistence.py`), so a save written before S1 loads with no tree.
+  The web `_state_summary` shows no thing places.
+- *Phases 5-6 exist only in the bench.* `bench/item_facts.py`
+  `ItemFactsProvider` (a `CloudflareTurnProvider` subclass, ~1,360
+  lines) owns THINGS and PLAYER, the `held_by` reply format, the match
+  call, `apply_item_facts` and its Jev checks. `bench/core.py` runs
+  seating, taking and standing (`storygame/runtime/seating.py`,
+  `taking.py`) before the turn, outside the snapshot. The shipped
+  provider has no THINGS and no `item_facts`, and `TurnProposal` has no
+  field for it.
+- *Jev has no runtime route.* The bench calls Cloudflare directly
+  (`bench/jev_use.py`, `ask_same_or_part`). The Worker
+  (`worker/src/index.js`) serves one narrator model behind its token and
+  `BudgetLedger`.
+- *Cause routing (decision 1d) was never decided.* The continuity plan's
+  Phase 2 measurement did not run.
+
+Tasks, in order (each a Ringer task; shipped payloads change only where
+the task says):
+- **S4a. Saves and state summary.** `SCHEMA_VERSION` 4 -> 5, so older
+  saves fail closed like earlier bumps. `_state_summary` gains each
+  given thing's place and holder by name, for hosted E2E. Tests: a
+  save/load round trip keeps a moved thing; a version 4 save is
+  refused.
+- **S4b. Jev through the Worker.** A Jev route behind the same token
+  and `BudgetLedger`, with Jev's price in the price table (guard every
+  billed endpoint). A runtime client sends the `confirm` questions
+  (same-or-part, same-person, holder, seating, taking, standing) by
+  that route. Tests stub it, so no live worker.
+- **S4c. Move capture into `storygame/runtime`.** THINGS, PLAYER, the
+  `held_by` reply format, the match call and `apply_item_facts` move
+  out of `ItemFactsProvider`, with the bench subclass kept thin. An
+  optional `item_facts` field goes on `TurnProposal`, validated
+  strictly (`validate_item_facts`). Check: a bench offline replay of
+  `item-facts-world-two-scene` builds byte-identical prompts before and
+  after the move.
+  *Provider state (AST audit, 2026-10-03).* The web runtime builds a new
+  provider every turn from the saved state (`web_demo.provider_for`);
+  the bench keeps one for a whole run. Of `ItemFactsProvider`'s
+  attributes, only `_last_scene_seeded` carries across turns. The
+  others live within one turn or are counters, and `bench/core.py`
+  also reads `_changed_last_turn`. A fresh provider would rerun
+  `_ensure_scene_seeded` every turn and reset axes from setting facts
+  ("The drawer is shut." closes the drawer again). So the setting-fact
+  seeding moves to scene entry, next to `apply_scene_placements`, and
+  runs once per scene. Hand seeds and variation `state_axes` stay
+  bench-only.
+  *Setting facts (checked 2026-10-03).* Only 1A has any. With the
+  default variation's typed seed, the bench parse adds the laptop's
+  "closed" (its axis lives only in the variation's `state_axes`), a
+  stale duplicate "shut" on the drawer, and the phone's "not damaged".
+  The variation's `overrides` already remove the phone sentences and
+  the drawer-contents setting fact. **Brandon chose (2026-10-03):
+  promote all (S4c2).** `world.yaml` gets the variation's axes and
+  aliases; plot.md and knowledge.yaml lose the four lines the variation
+  removes, plus the two 1A setting facts the typed axes now give; the
+  runtime gets no setting-fact parser. Same precedent as removing the
+  chair sentence (2026-09-26).
+- **S4d. Capture in the turn.** `RuntimeEngine.turn` runs seating,
+  taking and standing, the match call, the narration and
+  `apply_item_facts` on the turn's candidate state. A rejected turn
+  undoes all of it, which closes the seating gap. Refused changes and
+  unplaced names go in the turn delivery record. Tests use a scripted
+  provider: a pick-up reaches the next prompt's THINGS; a rejected turn
+  changes nothing; a malformed entry is dropped and recorded.
+  *S4d design (2026-10-03, from `RuntimeEngine.turn` and the bench
+  loop, `bench/core.py` ~725-880).* The bench runs standing, taking and
+  seating (and `prepare_turn`) before `engine.turn`, and
+  `apply_item_facts` after it returns, both outside the turn's snapshot.
+  In the runtime: a story-agnostic capture collaborator, handed to
+  `RuntimeEngine`, (1) runs the steps and `prepare_turn` inside
+  `turn()`'s `try`, after `before = snapshot()`, so a rejection undoes
+  them; (2) applies the reply's `item_facts` after
+  `state.apply_proposal`, i.e. after the future-dependency check (1d
+  decides later whether that check should see them); (3) keeps the raw
+  `item_facts` and the steps with a pending game break, so "proceed"
+  applies them to the restored snapshot. Jev questions go through
+  `JevClient`. The web runtime uses `ItemFactsProvider` and capture only
+  when `FREYTAG_WORLD_CAPTURE=1`; production stays off until S4e.
+  The bench loop then calls the same collaborator.
+- **S4e. Measure the runtime path.** Bench x3 on the default
+  two-scene variation through the runtime provider, against `w14-x3`
+  (54/57). Then hosted `@world-state` on staging.
+- **S4f. Cause routing.** Decide 1d first, using what S4d records. Then
+  build it.
+
+**Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
+decide 1d from the refusals and story breaks that S4d records.
+
+- **S4a done: e3c3ef6** (Ringer, Luna, one attempt; suite and ruff
+  clean; shipped payloads byte-identical). `SCHEMA_VERSION` 5;
+  `world_model.display_name` (the unnamed label until `named_by`);
+  `_state_summary["things"]` lists scene items and things the
+  protagonist holds, hidden ones left out, each by display name with
+  `place` and `held_by`. The bench's `_character_label` still has its
+  own copy of the label rule; S4c can switch it.
+- **S4b done: 7ab8092** (Ringer, Luna, one attempt; reviewed, two
+  fixes by hand). The Worker's `/jev` path uses the narrator's token,
+  body limit and `BudgetLedger`, with `typesafe/jev` priced at 0.042
+  micro-USD per input token (Cloudflare's model page, 2026-10-03) and
+  a 30,000-token cap. `storygame/runtime/jev.py` has `JevClient` (fails
+  closed to None) and `noul_yes`. Fixes: the client sends
+  `BROWSER_USER_AGENT` like the narrator; the reply's `model` reads
+  `result.result.model`. Worker 15/15, suite 1031. Not yet deployed or
+  called live.
+- **S4c1 done: 8b52f4d** (Ringer, Luna, one attempt). `bench/item_facts.py`
+  moved to `storygame/runtime/item_facts.py` as a 99% rename (docstring
+  only); importers updated, no shim; coverage 92.7% with it inside the
+  gate; bench prompts and shipped payloads byte-identical.
+- **S4c2 done: 696494f** (Ringer, Luna, one attempt; reviewed). Laptop
+  axis `{closed: [shut], open: []}` in `world.yaml`; the six lines out
+  of plot.md/knowledge.yaml; the two-scene variations carry no
+  `overrides` or `state_axes`; the runtime has no setting-fact parsing,
+  so reseeding on a fresh provider changes nothing. Bench capture
+  prompts byte-identical to before; shipped 1A payloads differ only by
+  the six lines (checked by `compare_payloads_s4c2.py`). It also removed
+  `escalation-control.json`'s replacement for a cue_text line gone since
+  6f10f91, so that variation resolves again.
+- **S4d1 done: c0a5231** (Ringer, Luna, one attempt).
+  `storygame/runtime/jev_questions.py` builds the four Jev questions
+  behind an `ask(state, questions)` callable; `bench/jev_use.py` wraps a
+  direct Cloudflare `ask`, request bodies byte-identical.
+- **S4d2 done: 5497cca** (Ringer, Luna, two attempts: the first lacked
+  the named tests; reviewed, one fix by hand). `WorldCapture` runs the
+  steps and `prepare_turn` inside the turn's snapshot, applies
+  `item_facts` after `apply_proposal` (scene placements re-applied on a
+  scene change), and saves its context in `RuntimeState.pending_capture`
+  across a game break. `TurnDelivery` has `capture_steps`,
+  `capture_issues`, `capture_unplaced`. Web uses it only with
+  `FREYTAG_WORLD_CAPTURE=1`. Fix: the worker passed the steps joined
+  into the provider's command, which the bench never does (the steps
+  reach PLAYER through `prior_steps`), so the prompt would carry them
+  twice; the engine now passes the typed command, with a regression
+  test. Suite 1045, coverage 92.9%, bench prompts byte-identical.
+  `capture_prompt_variant` is a copy of the default variation's
+  resolved `system_prompt`, guarded by a test against the bench.
+  Not yet run live. Next: S4e (bench x3 through the runtime path, then
+  staging `@world-state`, whose input "Check that you still have ..."
+  must be rewritten in the player's voice).
+- **S4e1 done: 3bdb7d7; S4e1b: 857a008** (Ringer, Luna, one attempt
+  each; reviewed). The bench had no runtime path: it ran capture itself
+  with one provider for the run. A variation with `"runtime": true`
+  (`item-facts-world-two-scene-runtime.json`, the default plus that key)
+  now runs each turn as the web does: sqlite save and load, a fresh
+  `build_capture_provider`, and `WorldCapture` inside
+  `RuntimeEngine.turn`. `WorldCapture.last_before`/`last_after` give the
+  bench its turn records. S4e1b fixed three review gaps: `player_input`
+  lost the implied steps (the judges read them from it), `match_issues`
+  was missing, and the tests did not stub Jev. Hermetic tests show both
+  modes give identical prompts, steps and facts on scripted replies.
+  Suite 1050, coverage 93%.
+- **S4e smoke on 857a008 (1 replicate, `bench/results/s4e-runtime-smoke`;
+  Ringer probe, `~/dev/ringer-work/freytag-s4/compare-s4e-runtime-smoke.txt`).**
+  19/19 turns, no rejection. Facts after the turn 19/19; missed 0,
+  invented 0; contradicts 0, beyond 3, restarts 1 (t10, the commanded
+  "Go back into the kitchen"). Kristin's after-place never judged wrong.
+  It found a recording bug: on t1, t10 and t16 the recorded prompt was
+  the match call's, because `apply_item_facts`'s second match call for
+  new names now runs inside `engine.turn` and overwrote `last_prompt`.
+  Judges never read recorded prompts, so the scores stand.
+- **S4e1c done: 1b7de5e** (Ringer, Luna, one attempt; test fixed by
+  hand). `WorldCapture.after_commit` keeps the narration prompt before
+  `apply_item_facts`; the bench records it. The worker's test never
+  sent the new name, so it passed without the fix; the stub now does,
+  and the test fails without the fix. Suite 1051.
+- **S4e x3 on 1b7de5e (`bench/results/s4e-runtime-x3`;
+  `compare-s4e-runtime-x3.txt`; read by hand).** Runtime path / `w14-x3`:
+  facts after the turn **53/57 (93.0%)** / 54/57; contradicts 2 / 1;
+  restarts 0 / 1; Kristin's after-place wrong 0 / 0; no rejections; the
+  start-place rule in 57/57 prompts; the implied steps fire (t9 and t12
+  pick-ups, t13 driver's seat) and reach `player_input`. Within
+  replicate noise, so the runtime path holds the bar. The four misses:
+  - r1 t9, r3 t1, r3 t6: the `held_by`-plus-`place` precedence, the
+    w14 r1 t6 family. t9: `held_by: Kristin, place: passenger seat`
+    (unresolved), prose sets the laptop on the seat, so the laptop
+    stays with Kristin (and still "open": the reply gave no state for
+    "She closes her laptop"). t1: the drawer contents get `held_by:
+    Kristin, place: in drawer`, and held_by wins, so the stapler, pens,
+    batteries and clips go to Kristin. t6: `held_by: Kristin, place:
+    workstation`, prose picks the laptop up, place wins. Not a runtime
+    defect (the same `apply_item_facts`), but now 4 of the last 6
+    misses across `w14-x3` and this run. Not probed.
+  - r2 t4: Kristin holds the laptop back in the house, which is right;
+    the known t4 round-trip judge fault ("moved" 0.53).
+  - Recording difference, not a state difference: on a scene-entry turn
+    (t13) runtime records Kristin's after-place after the scene
+    placements are re-applied (park), the bench before (driver's seat).
+- **`held_by`-plus-`place` probed (2026-10-03; Ringer,
+  `~/dev/ringer-work/freytag-held-place-probe/`, `probe_held_place.txt`,
+  `held_place.json`; read by hand).** Recorded prompts of
+  `s4e-runtime-x3`, all 3 replicates: t1, t6, t9 x 5 samples, controls
+  t3, t5, t12, t16 x 2. Resolving the recorded places offline shows
+  three causes, not one: t1's "in drawer" does not resolve (the leading
+  "in"), so `held_by` wins; t9's "passenger seat" is not declared
+  (only the driver's seat is), so `held_by` wins; t6's "workstation"
+  resolves and is not an area, so `place` wins, though the same reply
+  puts Kristin at the workstation.
+  - *Prompt arms (replies with both keys, recorded / "instead" /
+    set-down example).* "instead" ends the `held_by` sentence; set-down
+    adds 'If Kristin sets the lantern on a table, the lantern is
+    {"place": "table"}.' t1 1/15 / 9/15 / 0/15; t6 14/15 / 15/15 /
+    15/15; t9 14/15 / 15/15 / 13/15; controls about the same. **Neither
+    arm stops the double key on t6 or t9; "instead" makes t1 worse.**
+    Not adopted.
+  - *Prose, read by hand (recorded arm).* t6: she picks the laptop up
+    and keeps it in 11 of 14, sets it back on the workstation in 3. t9:
+    she sets it on a seat in 14 of 14 (one reply names the driver's
+    seat where the prose says passenger seat).
+  - *Precedence scored offline on every double-key entry against that
+    reading (recorded arm, 44 entries):* current 27/44; drop a leading
+    "in/on/at/inside/into/onto/under" before resolving 31/44 (t1 0/4 ->
+    4/4); that plus "`held_by` wins when `place` is the holder's own
+    place in the same reply" **38/44** (t6 3/14 -> 11/14, t9 12/14 ->
+    11/14). Controls t3, t5, t12, t16 right under all three. Remaining
+    misses: t6's 3 set-backs (the keys cannot show them), t9's 2
+    unresolved passenger seats, and the one driver's/passenger mismatch.
+    Declaring the truck's passenger seat would clear t9's 2 under every
+    rule (41/44 with both changes, estimated, not run).
+  - *Recommendation.* Engine-side, no prompt change: extend 4402a2f's
+    precedence (the proven design: `held_by` wins when `place` is the
+    holder or the holder's area) to the holder's own place in the same
+    reply, and strip a leading preposition before resolving. Declare the
+    passenger seat as 1A-1B grounding (read the grounding guide first).
+  - **Built (Brandon chose both, 2026-10-03): 2e51727** (precedence:
+    the holder's own place in the same reply, and a leading
+    in/on/at/inside/into/onto/under dropped before resolving; grounding
+    guide updated) **and bfd8345** (1A `truck_passenger_seat`, kind seat,
+    fixed, no `seat_for`, placed on the truck). Ringer, Luna, one attempt
+    each; suite 1055, ruff clean; narrator and bench prompts
+    byte-identical for both (the seat shows in THINGS only when referred).
+  - **x3 on bfd8345 (`bench/results/held-place-x3`;
+    `~/dev/ringer-work/freytag-held-place-build/compare-held-place-x3.txt`;
+    read by hand).** Facts after the turn **49/57** vs `s4e-runtime-x3`
+    53/57; contradicts 2 / 2; restarts flagged 4 / 0; Kristin's
+    after-place wrong 0 / 0. The eight misses:
+    - t9 x3: the laptop now lands on the seat 3/3 (passenger seat
+      resolves r1 and r3; r2's reply swaps the keys, `held_by: "passenger
+      seat"`, `place: "Kristin's truck"`, so it lands on the truck). All
+      three narrate "She closes her laptop" unasked and the reply gives no
+      `state`, so it stays open (the old run's r1 t9 had the same
+      omission; r2 and r3 there did not close it). Reply omission, not
+      the change.
+    - r2 t6: "picks up her laptop. She sets it down on the workstation and
+      opens it." with Kristin at the workstation: the new rule gives it to
+      Kristin. The set-back case the probe predicted (3 of 14). Caused by
+      the change.
+    - r1 t5: every item_facts entry empty (reply omission). r1 t10: the
+      narration puts the memory card on the kitchen counter (narrator
+      contradiction). r3 t4: the known t4 round-trip judge fault. r3 t8:
+      every listed score above 0.97, flagged invented (judge; the reply
+      moves Kristin from the chair to the kitchen as narrated).
+    - The old run's precedence misses are gone: t1 contents stay in the
+      drawer 3/3, t6 held 2/3 (r2 above), t9 not left with Kristin 3/3.
+    One of the eight misses comes from the change; the rest are reply
+    omissions and judge faults, which vary run to run (51-55 on earlier
+    same-code x3s). **Open:** the reply drops a narrated `state` when the
+    narrator closes the laptop unasked (t9, 4 of the last 6 t9s).
+- **t9 dropped `state` probed (2026-10-03, Brandon asked; Ringer,
+  `~/dev/ringer-work/freytag-t9-state-probe/`, three rounds,
+  `probe_t9_state{,_r2,_r3}.txt`; read by hand).** The t9 prompt never
+  names a reply `state` field; the only cue is THINGS "State: open. It
+  can be: closed." (1055d04). Prose closes the laptop in most samples
+  (the line itself invites it). Arms, scored as "reply records the
+  close, of samples whose prose closes it", with t6, t8, t1 controls:
+  - recorded: 8/19, 7/11, 8/12 (23/42 pooled); no unasked chair state.
+  - *example* (the lantern example gives `"state": "lit"`): 14/19, but
+    the reply drops the laptop's place 6/15 (left with Kristin). Out.
+  - *things* (every axis line: 'State: open. If it changes, give
+    "state": "closed".'): 18/18 and 13/13, but the t6 reply sets the
+    workstation chair upright, never narrated, in 7/8 samples whose
+    prompt lists the chair (r2, r3), which would leave t7 nothing to do.
+  - *field* ('State ("state"): open. It can be: closed.'): 10/10, same
+    chair invention 7/24, one close never narrated. Out.
+  - **scoped** (the *things* wording only on lines for things the
+    command names, like b2fcce3's scoped seat line): **15/15**; t6
+    open 12/12, t8 closed 6/6, t1 open 6/6; chair invented 2/24 (r3 t6)
+    vs 0/24; the prose says "state" 2/39 ("The drawer's state is now
+    closed.", r2 t8) vs 0/39.
+  Recommendation: scoped, if its two costs are acceptable. It names
+  the field the reply must write for the thing the player acts on, and
+  it is the one arm without a large side effect.
+  - **Built (Brandon chose, 2026-10-03): b867fb5** (Ringer, Luna, one
+    attempt; suite 1058, ruff clean; shipped and bench prompts
+    byte-identical, since only the narrator's THINGS for match-call
+    referred things changes; grounding guide bullet added).
+  - **x3 on b867fb5 (`bench/results/state-field-x3`;
+    `compare-state-field-x3.txt`; read by hand).** Facts after the turn
+    **49/57**, same as `held-place-x3`; missed 3 / 6, invented 5 / 2,
+    kept ended condition 1 / 3, contradicts 2 / 2, restarts flagged 3 / 4.
+    **t9 right 3/3** (0/3 before): the close is recorded 2/2, and r1's
+    reply gives "closed" with no close narrated, which matches the
+    laptop it closed on t5. Misses:
+    - Caused by the change, all r1: t5 the reply sets the chair upright
+      (never narrated; the chair line is the unscoped one, the laptop's
+      is scoped); so t7 has nothing to change; t6 the prose opens the
+      laptop and the reply gives `"state": "closed"`, echoing the
+      current value from 'State: closed. If it changes, give "state":
+      "open".' (the probe had this 0/12).
+    - Judge, not capture: t8 x3 flagged invented with every drawer score
+      0.91-0.99 (the memory card 0.51-0.61; same flag 1/3 before); r2 t6
+      invented, prose picks the laptop up and the reply holds it.
+    - r2 t10: the reply keeps the thrown phone `held_by: Kristin`
+      (reply error, unrelated).
+    Net: three t9 fixes against three r1 misses (one invention cascading
+    to t7, one echo). **Open:** whether to keep b867fb5; the echo and
+    the chair invention are its costs.
 
 ## 12. Decisions for Brandon
 

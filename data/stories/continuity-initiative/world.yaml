@@ -143,6 +143,8 @@ items:
   name: Michelle's phone
 - id: kristin_laptop
   name: Kristin's laptop
+  axes:
+  - {closed: [shut], open: []}
   use_seated: true
   take_text: Kristin picked up her laptop.
 - id: michelle_drawer
@@ -184,6 +186,10 @@ items:
   seat_for: kristin_truck
   enter_text: Kristin sat down in the driver's seat.
   leave_text: Kristin got out of the truck.
+- id: truck_passenger_seat
+  name: passenger seat
+  kind: seat
+  fixed: true
 - id: transit_card
   name: Transit token
 - id: michelle_photograph
