@@ -49,8 +49,9 @@ so closed containers bring their contents (151abce), and `held_by` for
 held things behind a flag (4402a2f): paired x3 base 51/57, held_by
 54/57 (94.7%), t1 and t12 right 3/3; held_by made the default
 (64a1cb3) and W14 unnamed label built (6e1b191): x3 54/57, Brandon
-named early 0/3. PR 501 opened (2026-10-03; suite 1021, ruff
-clean). Next: merge PR 501 once CI passes, then the bookmark, then S4.
+named early 0/3. Merged as PR 501 (fd52d0c). Bookmark kept (Brandon,
+2026-10-03): undeclared conditions stay unscored. Next: S4 on
+`claude/s4-runtime`; the task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -547,8 +548,9 @@ stays for now; rerun the paired arms after the 1A fixes below.
      what each transition needs** (his example: 1A never shows the
      workstation or the KMS drawer). Planned in
      [scene-affordance-e2e.md](scene-affordance-e2e.md).
-2. **The bookmark** (section "Next steps, in order", item 3): decide
-   whether undeclared conditions are scored.
+2. **The bookmark** (section "Next steps, in order", item 3).
+   **Decided (Brandon, 2026-10-03): kept.** Undeclared conditions stay
+   unscored. Declare an axis when a story comes to depend on one.
    **Counted (2026-10-03; `w14-x3`, `held-by-on-x3`,
    `closed-contents-x3`, 171 1A-1B turns read by hand; reply side only
    for `world-3a-referred-x3`, `world-3b-hide-x3`, `world-3c-x3`).**
@@ -4511,6 +4513,67 @@ left. Keep a removal only if the numbers hold.
 **S4 - Runtime.** Capture during play, the tree in saves (schema bump), cause
 routing: hand over to the continuity plan's Phases 4-6, which build on this
 model instead of a `place`/`condition` dict.
+
+**S4 task plan (2026-10-03, checked against `main` at fd52d0c).** The
+continuity plan's Phases 4-6 were written for a flat `place`/`condition`
+dict, before this model existed. Here they are mapped onto what is
+already built.
+
+What exists:
+- *Phase 4 is mostly done by S1-S2.* The tree lives in `FactStore`
+  (`storygame/runtime/world_model.py`). `RuntimeState.bootstrap` and
+  each transition run `apply_scene_placements` and
+  `apply_world_effects`. `snapshot()`/`restore_snapshot()` clone the
+  facts, so rejected turns and rewinds already restore the tree, and
+  saves already serialise it. Left: `SCHEMA_VERSION` is still 4
+  (`persistence.py`), so a save written before S1 loads with no tree.
+  The web `_state_summary` shows no thing places.
+- *Phases 5-6 exist only in the bench.* `bench/item_facts.py`
+  `ItemFactsProvider` (a `CloudflareTurnProvider` subclass, ~1,360
+  lines) owns THINGS and PLAYER, the `held_by` reply format, the match
+  call, `apply_item_facts` and its Jev checks. `bench/core.py` runs
+  seating, taking and standing (`storygame/runtime/seating.py`,
+  `taking.py`) before the turn, outside the snapshot. The shipped
+  provider has no THINGS and no `item_facts`, and `TurnProposal` has no
+  field for it.
+- *Jev has no runtime route.* The bench calls Cloudflare directly
+  (`bench/jev_use.py`, `ask_same_or_part`). The Worker
+  (`worker/src/index.js`) serves one narrator model behind its token and
+  `BudgetLedger`.
+- *Cause routing (decision 1d) was never decided.* The continuity plan's
+  Phase 2 measurement did not run.
+
+Tasks, in order (each a Ringer task; shipped payloads change only where
+the task says):
+- **S4a. Saves and state summary.** `SCHEMA_VERSION` 4 -> 5, so older
+  saves fail closed like earlier bumps. `_state_summary` gains each
+  given thing's place and holder by name, for hosted E2E. Tests: a
+  save/load round trip keeps a moved thing; a version 4 save is
+  refused.
+- **S4b. Jev through the Worker.** A Jev route behind the same token
+  and `BudgetLedger`, with Jev's price in the price table (guard every
+  billed endpoint). A runtime client sends the `confirm` questions
+  (same-or-part, same-person, holder, seating, taking, standing) by
+  that route. Tests stub it, so no live worker.
+- **S4c. Move capture into `storygame/runtime`.** THINGS, PLAYER, the
+  `held_by` reply format, the match call and `apply_item_facts` move
+  out of `ItemFactsProvider`, with the bench subclass kept thin. An
+  optional `item_facts` field goes on `TurnProposal`, validated
+  strictly (`validate_item_facts`). Check: a bench offline replay of
+  `item-facts-world-two-scene` builds byte-identical prompts before and
+  after the move.
+- **S4d. Capture in the turn.** `RuntimeEngine.turn` runs seating,
+  taking and standing, the match call, the narration and
+  `apply_item_facts` on the turn's candidate state. A rejected turn
+  undoes all of it, which closes the seating gap. Refused changes and
+  unplaced names go in the turn delivery record. Tests use a scripted
+  provider: a pick-up reaches the next prompt's THINGS; a rejected turn
+  changes nothing; a malformed entry is dropped and recorded.
+- **S4e. Measure the runtime path.** Bench x3 on the default
+  two-scene variation through the runtime provider, against `w14-x3`
+  (54/57). Then hosted `@world-state` on staging.
+- **S4f. Cause routing.** Decide 1d first, using what S4d records. Then
+  build it.
 
 ## 12. Decisions for Brandon
 
