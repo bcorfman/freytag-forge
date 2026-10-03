@@ -444,6 +444,24 @@ stays for now; rerun the paired arms after the 1A fixes below.
      Kristin 0/15 / 11/15, a new wrong move. Worse overall. **No reply
      wording tried separates "carries it" from "opens it"**: every arm
      that clears t1 also loses carries.
+   - **Scoped narrator rules (Brandon asked whether there are too many
+     rules; 2026-10-03).** The system prompt is 28 lines (~375 words),
+     identical on every turn of a scene; THINGS is scoped; CONSTRAINTS
+     mostly scoped but ~4 candidate/grounding lines are always sent.
+     Probe (Ringer; t1, t12, t16, t18, t19 from `closed-contents-x3` x 3
+     replicates x 5; `probe_scoped_rules.txt`; read by hand). Scoped arm,
+     gated on what the turn's prompt shows: hand rule only when THINGS
+     has a thing at Kristin; give and talk rules only in 1B (someone is
+     with her); "A character may only say ..." only with a may-say line;
+     the two candidate-only lines dropped when there are no candidates.
+     Recorded / scoped: t1 drawer or contents at Kristin 11/15 / 14/15
+     (no gain); **t12 takes the phone out of her pocket 1/15 / 14/15**
+     (the hand rule was still present; dropping the give and talk rules
+     and candidate lines undid its effect); t16 hand-over 14/15 / 14/15;
+     t18 phone back 1/15 / 2/15; t19 the man speaks 10/15 / 11/15.
+     **Not adopted.** Rule count is not the t1 lever, and the hand rule's
+     win depends on the lines around it, which is fragile. Which dropped
+     line carries it is not yet isolated.
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the
