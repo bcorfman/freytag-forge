@@ -479,6 +479,17 @@ stays for now; rerun the paired arms after the 1A fixes below.
      common: t3 12/15, t4 14/15, t12 11/15, t16 11/15. There `place`
      names the holder's part ("Kristin's pocket", "the man's hand") or
      the holder's own area (kitchen), and `held_by` is right.
+   - **Built behind a flag (Brandon chose, 2026-10-03): 4402a2f**
+     (Ringer, Luna, one attempt; suite 1015, ruff clean, shipped
+     payloads byte-identical). `item_facts.held_by` swaps the place line
+     and example, shows "Held by: <person>." in the narrator's THINGS
+     and PLAYER (not the match call), and turns a reply's `held_by` into
+     the parent. Precedence when both keys come (new design): `held_by`
+     wins if `place` is missing, unresolved, the holder, or the holder's
+     area (or an area inside it); otherwise `place` wins. Flag off,
+     nothing changes. Variation `item-facts-world-two-scene-held-by`
+     also gives the held lantern in the JSON example. Paired x3 on
+     4402a2f running: `held-by-base-x3` and `held-by-on-x3`.
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the
