@@ -53,7 +53,8 @@ named early 0/3. Merged as PR 501 (fd52d0c). Bookmark kept (Brandon,
 2026-10-03): undeclared conditions stay unscored. S4 on
 `claude/s4-runtime`: S4a-S4d2 built (capture runs in the turn behind
 `FREYTAG_WORLD_CAPTURE`); S4e1 bench runtime mode built (3bdb7d7,
-857a008). Next: S4e smoke and x3 through the runtime path.
+857a008, 1b7de5e), smoke 19/19. Next: read the S4e x3 through the
+runtime path against `w14-x3`.
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -4679,7 +4680,22 @@ decide 1d from the refusals and story breaks that S4d records.
   lost the implied steps (the judges read them from it), `match_issues`
   was missing, and the tests did not stub Jev. Hermetic tests show both
   modes give identical prompts, steps and facts on scripted replies.
-  Suite 1050, coverage 93%. Live smoke (1 replicate) running.
+  Suite 1050, coverage 93%.
+- **S4e smoke on 857a008 (1 replicate, `bench/results/s4e-runtime-smoke`;
+  Ringer probe, `~/dev/ringer-work/freytag-s4/compare-s4e-runtime-smoke.txt`).**
+  19/19 turns, no rejection. Facts after the turn 19/19; missed 0,
+  invented 0; contradicts 0, beyond 3, restarts 1 (t10, the commanded
+  "Go back into the kitchen"). Kristin's after-place never judged wrong.
+  It found a recording bug: on t1, t10 and t16 the recorded prompt was
+  the match call's, because `apply_item_facts`'s second match call for
+  new names now runs inside `engine.turn` and overwrote `last_prompt`.
+  Judges never read recorded prompts, so the scores stand.
+- **S4e1c done: 1b7de5e** (Ringer, Luna, one attempt; test fixed by
+  hand). `WorldCapture.after_commit` keeps the narration prompt before
+  `apply_item_facts`; the bench records it. The worker's test never
+  sent the new name, so it passed without the fix; the stub now does,
+  and the test fails without the fix. Suite 1051. x3 on 1b7de5e
+  running (`bench/results/s4e-runtime-x3`).
 
 ## 12. Decisions for Brandon
 
