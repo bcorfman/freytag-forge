@@ -60,7 +60,9 @@ and a declared passenger seat (bfd8345) built; x3 49/57 (one miss from
 the change, t9's unasked laptop close drops its state 3/3); t9 state
 probed and the command-scoped THINGS state wording built (b867fb5):
 x3 49/57, t9 right 3/3, but r1 gains a chair invention (cascading to
-t7) and a state echo on t6; keep or revert is open. Next: staging `@world-state` (needs Brandon:
+t7) and a state echo on t6; keep or revert is open. Merged as PR 502 (b24fb4d); staging deployed
+at b24fb4d and its scene gate passed (2026-10-03; the first deploy hit a
+Railway snapshot timeout, the rerun passed). Next: staging `@world-state` (needs Brandon:
 deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
