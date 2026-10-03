@@ -76,8 +76,11 @@ because the turn response drops `capture_steps`, `capture_issues` and
 Next: S4f. 1d decided (refuse and record). Brandon chose that the
 dependency check sees captured changes through poles marked
 unavailable in `world.yaml`. Findings, design sketch and the probe
-plan are under S4f in section 11; the probe on recorded 1B prompts is
-the next step (nothing built yet).
+plan are under S4f in section 11. Probe on recorded 1B prompts done
+(2026-10-03): token pole lands 27/30 on destroy commands, man 14/15
+on a knock-out (one false), 0/30 on controls; the prose echoes
+"its state now 'destroyed'" 7/30. Brandon to choose before steps 1-4
+are built (nothing built yet).
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -99,9 +102,11 @@ continuity plan; this plan defines the world they write into.
 `FREYTAG_WORLD_CAPTURE=1` (Brandon verified the variable). Brandon kept
 b867fb5. S4f: 1d is refuse and record (no regeneration); the
 dependency check is to see captured changes through axis poles marked
-unavailable in `world.yaml`. **Resume at the S4f probe plan in section
-11** ("S4f. Cause routing"): run the Ringer probe on recorded 1B
-prompts, then build design steps 1-4 if the pole is set reliably.
+unavailable in `world.yaml`. The S4f probe ran (results under "Probe
+result" in section 11, "S4f. Cause routing"): the pole is set
+reliably and never on a control, but the prose echoes the field
+7/30. **Resume at Brandon's choice** on the echo, then design steps
+1-4.
 Branch commits are plan-only and unpushed. The notes below are older.
 
 
@@ -4739,6 +4744,38 @@ the task says):
   - If the pole is set reliably and never on the control, build steps
     1-4 as Ringer tasks. If not, record the rates and return to Brandon
     before adding any narrator rule.
+
+  *Probe result (2026-10-03; Ringer `freytag-s4f-pole-probe`, one
+  attempt; `~/dev/ringer-work/freytag-s4f-pole-probe/probe_pole.py`,
+  `pole.json`, `probe_pole.txt`; all 75 narrations read by hand).*
+  Token arms on `state-field-x3` 1B t15 r1-r3; man arms on r1 t18, r1
+  t19, r2 t19 (r3 has no THINGS line for him; PLAYER lacked his line
+  on those turns, so the probe added it).
+  - Token, snap/crush: the prose destroys the token 30/30. The reply
+    gives `"state": "destroyed"` 26/30 (snap 11/15, crush 15/15); one
+    more gives only `"condition": ["broken"]`, which the sketch's
+    alias `broken` maps to the pole (`_axis_match_id`). So 27/30 would
+    land. The 3 misses give `state` as a list (`["broken"]`, twice
+    `["broken into two pieces"]`); `_apply_state` reads only a string
+    `state`, so they are dropped.
+  - Token control ("Look closely at the transit token."): the prose
+    never destroys it; the reply gives `"state": "intact"` 15/15,
+    destroyed 0/15.
+  - Man, "Knock the man out.": the prose knocks him out 13/15; the
+    reply gives `unconscious` 14/15. One false pole: r2 t19 s1 says
+    "The man groans, but remains conscious." with `unconscious`. The
+    other non-knockout (s4, "dazed, but still conscious") gives
+    `"state": "dazed"`, correctly not the pole.
+  - Man control ("Ask the man who he is."): unconscious 0/15
+    (`conscious` 14/15, one empty `item_facts`).
+  - **New defect: the field wording leaks into the prose** on the
+    destroy arms 7/30 ("its state now 'destroyed'", "its once-intact
+    state now marred"); 0/45 on the other arms. The same kind of
+    echo b867fb5 showed on t6.
+  Reading: the pole is set reliably (27/30 and 14/15) and never on a
+  control, which meets the build condition above. Open before
+  building: the prose echo (a player-facing line), one false game
+  break in 15 knock-outs, and the list-form `state` misses.
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
