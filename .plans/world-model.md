@@ -60,7 +60,7 @@ and a declared passenger seat (bfd8345) built; x3 49/57 (one miss from
 the change, t9's unasked laptop close drops its state 3/3); t9 state
 probed and the command-scoped THINGS state wording built (b867fb5):
 x3 49/57, t9 right 3/3, but r1 gains a chair invention (cascading to
-t7) and a state echo on t6; keep or revert is open. Merged as PR 502 (b24fb4d); staging deployed
+t7) and a state echo on t6; kept (Brandon, 2026-10-03). Merged as PR 502 (b24fb4d); staging deployed
 at b24fb4d and its scene gate passed (2026-10-03; the first deploy hit a
 Railway snapshot timeout, the rerun passed). Next: staging `@world-state` (needs Brandon:
 deploy the Worker's `/jev`, set `FREYTAG_WORLD_CAPTURE=1` on staging).
@@ -4843,8 +4843,9 @@ decide 1d from the refusals and story breaks that S4d records.
     - r2 t10: the reply keeps the thrown phone `held_by: Kristin`
       (reply error, unrelated).
     Net: three t9 fixes against three r1 misses (one invention cascading
-    to t7, one echo). **Open:** whether to keep b867fb5; the echo and
-    the chair invention are its costs.
+    to t7, one echo). **Kept (Brandon chose, 2026-10-03).** Its known
+    costs, to watch in later runs: an echoed current `state` and an
+    unnarrated chair state.
 
 ## 12. Decisions for Brandon
 
