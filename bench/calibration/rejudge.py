@@ -29,8 +29,8 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     records = json.loads((args.results / "all-turn-records.json").read_text())
     sys.path.insert(0, ".")
-    from bench.item_facts import _protagonist_name  # noqa: E402
     from bench.judge_input import judge_turns  # noqa: E402
+    from storygame.runtime.item_facts import _protagonist_name  # noqa: E402
 
     package_path = records.get("package_path") or "data/stories/continuity-initiative"
     if not Path(package_path).exists():

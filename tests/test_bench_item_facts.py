@@ -6,7 +6,9 @@ import pytest
 import bench.cli as bench_cli
 import bench.core as core
 from bench.core import load_variation, score_fact_tracking_judgments, seeded_state_for_scene
-from bench.item_facts import (
+from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.facts import Fact
+from storygame.runtime.item_facts import (
     _MATCH_SYSTEM,
     START_PLACE_RULE_TEMPLATE,
     ItemFactsProvider,
@@ -15,8 +17,6 @@ from bench.item_facts import (
     package_seed,
     validate_item_facts,
 )
-from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
-from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package

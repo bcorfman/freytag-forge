@@ -22,9 +22,9 @@ from bench.core import (
     score_judgments,
     welch_t_test,
 )
-from bench.item_facts import _MATCH_SYSTEM, ItemFactsProvider
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
+from storygame.runtime.item_facts import _MATCH_SYSTEM, ItemFactsProvider
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.world_model import world_for
 from tests._legacy_package import legacy_package

@@ -1,4 +1,4 @@
-"""Bench-only tracking of plain facts about named scene things."""
+"""Tracking of plain facts about named scene things, shared by the runtime and the bench."""
 
 # ruff: noqa: E501, E701, E702
 from __future__ import annotations

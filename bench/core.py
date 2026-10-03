@@ -18,13 +18,6 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import Any
 
-from bench.item_facts import (
-    ItemFactsProvider,
-    _protagonist_name,
-    declared_axes_for_world,
-    package_seed,
-    validate_item_facts,
-)
 from bench.jev_use import ask_moves_thing, ask_needs_to_stand, ask_same_or_part, ask_uses_thing
 from bench.judge_input import judge_turns
 from storygame.runtime.cloudflare import (
@@ -35,6 +28,13 @@ from storygame.runtime.cloudflare import (
 from storygame.runtime.contracts import RuntimeContractError, join_narration
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
+from storygame.runtime.item_facts import (
+    ItemFactsProvider,
+    _protagonist_name,
+    declared_axes_for_world,
+    package_seed,
+    validate_item_facts,
+)
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.seating import seat_before_use, stand_before_leave
 from storygame.runtime.state import RuntimeState

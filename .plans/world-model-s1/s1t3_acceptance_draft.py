@@ -200,7 +200,7 @@ def test_shipped_narrator_reads_placement_text(tmp_path):
 
 
 def test_bench_seed_uses_text_then_parent_name_and_skips_hidden(tmp_path):
-    from bench.item_facts import _package_seed
+    from storygame.runtime.item_facts import _package_seed
 
     package = load_story_package(_converted(tmp_path))
     state = RuntimeState.bootstrap(package)
