@@ -329,6 +329,32 @@ stays for now; rerun the paired arms after the 1A fixes below.
      a refusal is clean when Kristin acts. The reply then names the man
      "the man watching Kristin" (or without "the"), which capture
      would have to resolve to Brandon.
+   - **t1 and t12 read against plot.md, then probed (2026-10-02;
+     Ringer; `probe_t1_contents.txt`, `probe_t12_hand.txt`; read by
+     hand).**
+     - **t1: the closed drawer's contents are never given.** W9 names
+       this case ("Open the drawer." hands the narrator the drawer but
+       not what is in it), but `given_with` (worldkeeper `model.py`)
+       gives contents only once a container is open, and on t1 it is
+       still closed. From t8 on, THINGS lists them. Probe on the 3
+       recorded t1 prompts x 5, with the four content lines copied from
+       r1 t8's THINGS: invented contents 15/15 recorded -> 0/15 (every
+       narration shows the stapler, batteries, pens and clips; the prose
+       is samey); reply gives `open` 11/15 -> 14/15; reply places the
+       drawer at "Kristin" 15/15 -> 8/15 (refused harmlessly, the drawer
+       is fixed). Grounded in W9; not built. Open question: when to give
+       a closed container's contents (see Resume note).
+     - **t12: the hand rule's trade-off, measured.** The 6 recorded t12
+       prompts with the rule x 5. Phone ends in her pocket (prose)
+       28/30 with the rule vs 15/30 without; the prose takes it out of
+       her pocket first 3/30 vs 25/30; the reply names it "Kristin's
+       phone" 14/30 vs 6/30. The phantom "Kristin's phone" was made
+       every time it appeared, live (5 of 5 such turns); the judge
+       failed it in `seat-on-with-rule-x3` and passed it in
+       `slips-with-rule-x3`. Jev's "no" to "Are 'Kristin's phone' and
+       'Michelle's phone' the same thing?" is right, so the owner check
+       is not the fault. The reply name never appears in the prose. No
+       earlier fix covers a reply name that the prose never uses.
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the
