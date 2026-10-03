@@ -106,6 +106,8 @@ issue.
 
 ### Characters (NPCs)
 
+- A person needed later may declare a state, such as Brandon's `conscious`/`unconscious`, and name the unusable one with `unavailable:`. If the narrator knocks him out, the game stops and asks the player to go on or go back.
+
 Scene 1B's Brandon is the working example:
 
 ```yaml

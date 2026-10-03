@@ -175,6 +175,28 @@ class Entity(_Model):
         return self
 
 
+def _validate_axes(value):
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ValueError("axes must be a list")
+    result = []
+    for axis in value:
+        if not isinstance(axis, Mapping) or len(axis) != 2:
+            raise ValueError("each axis must map exactly two poles to alias lists")
+        poles = list(axis)
+        if any(not isinstance(pole, str) or not pole.strip() for pole in poles):
+            raise ValueError("axis poles must be non-empty")
+        if any(not isinstance(aliases, list) for aliases in axis.values()):
+            raise ValueError("axis aliases must be lists")
+        first_words = {poles[0].casefold(), *(str(alias).casefold() for alias in axis[poles[0]])}
+        second_words = {poles[1].casefold(), *(str(alias).casefold() for alias in axis[poles[1]])}
+        if first_words & second_words:
+            raise ValueError("axis poles and aliases must not overlap")
+        result.append({pole: list(aliases) for pole, aliases in axis.items()})
+    return result
+
+
 class Group(Entity):
     scoped_aliases: tuple[str, ...] = ()
 
@@ -207,25 +229,17 @@ class Item(Entity):
     @field_validator("axes", mode="before")
     @classmethod
     def validate_axes(cls, value):
-        if value is None:
-            return []
-        if not isinstance(value, list):
-            raise ValueError("axes must be a list")
-        result = []
-        for axis in value:
-            if not isinstance(axis, Mapping) or len(axis) != 2:
-                raise ValueError("each axis must map exactly two poles to alias lists")
-            poles = list(axis)
-            if any(not isinstance(pole, str) or not pole.strip() for pole in poles):
-                raise ValueError("axis poles must be non-empty")
-            if any(not isinstance(aliases, list) for aliases in axis.values()):
-                raise ValueError("axis aliases must be lists")
-            first_words = {poles[0].casefold(), *(str(alias).casefold() for alias in axis[poles[0]])}
-            second_words = {poles[1].casefold(), *(str(alias).casefold() for alias in axis[poles[1]])}
-            if first_words & second_words:
-                raise ValueError("axis poles and aliases must not overlap")
-            result.append({pole: list(aliases) for pole, aliases in axis.items()})
-        return result
+        return _validate_axes(value)
+
+
+class Npc(Entity):
+    axes: list[dict[str, list[str]]] = Field(default_factory=list)
+    unavailable: str | None = Field(default=None, pattern=_ID)
+
+    @field_validator("axes", mode="before")
+    @classmethod
+    def validate_axes(cls, value):
+        return _validate_axes(value)
 
 
 class WorldEffect(_Model):
@@ -361,7 +375,7 @@ class WorldSource(_Model):
     story_id: str = Field(pattern=_ID)
     protagonist_id: str = Field(pattern=_ID)
     locations: tuple[Location, ...]
-    npcs: tuple[Entity, ...]
+    npcs: tuple[Npc, ...]
     items: tuple[Item, ...]
     groups: tuple[Group, ...] = ()
     kinds: tuple[KindDeclaration, ...] = ()

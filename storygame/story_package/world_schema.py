@@ -3,6 +3,17 @@
 from storygame.story_package.models import WorldSource
 
 
+def _axis_data(axes):
+    return [
+        {
+            "poles": list(axis),
+            "aliases": {alias: pole for pole, aliases in axis.items() for alias in aliases},
+            "initial": next(iter(axis)),
+        }
+        for axis in axes
+    ]
+
+
 def world_source_schema_data(world: WorldSource) -> dict:
     entities = []
     kinds = [
@@ -26,7 +37,10 @@ def world_source_schema_data(world: WorldSource) -> dict:
             }
         )
     for entity in world.npcs:
-        entities.append({"id": entity.id, "name": entity.name, "aliases": list(entity.aliases), "kind": "character"})
+        npc_data = {"id": entity.id, "name": entity.name, "aliases": list(entity.aliases), "kind": "character"}
+        if entity.axes:
+            npc_data["axes"] = _axis_data(entity.axes)
+        entities.append(npc_data)
     for entity in world.groups:
         entities.append({"id": entity.id, "name": entity.name, "aliases": list(entity.aliases), "kind": "group"})
     for item in world.items:
@@ -48,14 +62,7 @@ def world_source_schema_data(world: WorldSource) -> dict:
         if item.seat_for is not None:
             item_data["seat_for"] = item.seat_for
         if item.axes:
-            item_data["axes"] = [
-                {
-                    "poles": list(axis),
-                    "aliases": {alias: pole for pole, aliases in axis.items() for alias in aliases},
-                    "initial": next(iter(axis)),
-                }
-                for axis in item.axes
-            ]
+            item_data["axes"] = _axis_data(item.axes)
         if item.fixed is not None:
             item_data["fixed"] = item.fixed
         entities.append(item_data)

@@ -166,6 +166,73 @@ def test_captured_unavailable_pole_raises_game_break(monkeypatch: pytest.MonkeyP
     assert state.pending_break is not None
 
 
+def test_captured_npc_unavailable_pole_raises_game_break(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_request(monkeypatch)
+    state = _state_1b()
+    provider = _provider(
+        state,
+        {"refers": ["the man watching Kristin"], "same_as": {}},
+        {**_turn(), "item_facts": {"the man watching Kristin": {"state": "unconscious"}}},
+    )
+    engine = RuntimeEngine(state, provider, capture=_capture(state, provider))
+
+    proposal = engine.turn("Ask the man who he is.")
+
+    assert proposal.game_break is not None
+    assert "brandon" in proposal.game_break.affected_ids
+    assert world_for(PACKAGE, state.facts).axis_values("brandon")["conscious"] == "conscious"
+
+
+def test_captured_npc_conscious_state_raises_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_request(monkeypatch)
+    state = _state_1b()
+    provider = _provider(
+        state,
+        {"refers": ["the man watching Kristin"], "same_as": {}},
+        {**_turn(), "item_facts": {"the man watching Kristin": {"state": "conscious"}}},
+    )
+    engine = RuntimeEngine(state, provider, capture=_capture(state, provider))
+
+    proposal = engine.turn("Ask the man who he is.")
+
+    assert proposal.game_break is None
+    assert state.pending_break is None
+
+
+def test_list_state_sets_pole(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_request(monkeypatch)
+    state = _state_1b()
+    provider = _provider(
+        state,
+        {"refers": ["Transit token"], "same_as": {}},
+        {**_turn(), "item_facts": {"Transit token": {"state": ["broken"]}}},
+    )
+    engine = RuntimeEngine(state, provider, capture=_capture(state, provider))
+
+    engine.turn("Inspect the transit token.")
+    engine.resolve_break("proceed")
+
+    assert world_for(PACKAGE, state.facts).axis_values("transit_card")["intact"] == "destroyed"
+
+
+def test_list_state_unmatched_becomes_condition(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_request(monkeypatch)
+    state = _state_1b()
+    provider = _provider(
+        state,
+        {"refers": ["Transit token"], "same_as": {}},
+        {**_turn(), "item_facts": {"Transit token": {"state": ["broken into two pieces"]}}},
+    )
+    engine = RuntimeEngine(state, provider, capture=_capture(state, provider))
+
+    proposal = engine.turn("Inspect the transit token.")
+
+    assert proposal.game_break is None
+    world = world_for(PACKAGE, state.facts)
+    assert world.axis_values("transit_card")["intact"] == "intact"
+    assert "broken into two pieces" in world.conditions("transit_card")
+
+
 def test_captured_unavailable_pole_proceed_commits(monkeypatch: pytest.MonkeyPatch) -> None:
     _stub_request(monkeypatch)
     state = _state_1b()

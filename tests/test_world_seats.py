@@ -52,6 +52,15 @@ def test_axis_unavailable_must_be_a_pole(tmp_path):
         load_story_package(root)
 
 
+def test_npc_axis_unavailable_must_be_a_pole(tmp_path):
+    root = _changed_package(
+        tmp_path,
+        lambda data: next(npc for npc in data["npcs"] if npc["id"] == "brandon").update(unavailable="gone"),
+    )
+    with pytest.raises(StoryPackageError, match="npc 'brandon' unavailable is not a pole"):
+        load_story_package(root)
+
+
 def test_package_rejects_enterable_plain_thing(tmp_path):
     root = _changed_package(
         tmp_path,

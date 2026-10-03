@@ -36,13 +36,13 @@ def unavailable_entity_ids(package: StoryPackage, facts: FactStore) -> set[str]:
         fact.subject for fact in facts.matching("incapacitated")
     }
     world = world_for(package, facts)
-    for item in package.world.items:
-        axis_values = world.axis_values(item.id)
-        if item.unavailable is not None and any(
-            item.unavailable in axis["poles"] and axis_values.get(axis["name"]) == item.unavailable
-            for axis in world.axis_definitions(item.id)
+    for entity in (*package.world.npcs, *package.world.items):
+        axis_values = world.axis_values(entity.id)
+        if entity.unavailable is not None and any(
+            entity.unavailable in axis["poles"] and axis_values.get(axis["name"]) == entity.unavailable
+            for axis in world.axis_definitions(entity.id)
         ):
-            unavailable.add(item.id)
+            unavailable.add(entity.id)
     return unavailable
 
 
