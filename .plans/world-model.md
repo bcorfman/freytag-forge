@@ -4562,6 +4562,17 @@ the task says):
   strictly (`validate_item_facts`). Check: a bench offline replay of
   `item-facts-world-two-scene` builds byte-identical prompts before and
   after the move.
+  *Provider state (AST audit, 2026-10-03).* The web runtime builds a new
+  provider every turn from the saved state (`web_demo.provider_for`);
+  the bench keeps one for a whole run. Of `ItemFactsProvider`'s
+  attributes, only `_last_scene_seeded` carries across turns. The
+  others live within one turn or are counters, and `bench/core.py`
+  also reads `_changed_last_turn`. A fresh provider would rerun
+  `_ensure_scene_seeded` every turn and reset axes from setting facts
+  ("The drawer is shut." closes the drawer again). So the setting-fact
+  seeding moves to scene entry, next to `apply_scene_placements`, and
+  runs once per scene. Hand seeds and variation `state_axes` stay
+  bench-only.
 - **S4d. Capture in the turn.** `RuntimeEngine.turn` runs seating,
   taking and standing, the match call, the narration and
   `apply_item_facts` on the turn's candidate state. A rejected turn
