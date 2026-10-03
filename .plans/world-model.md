@@ -399,6 +399,51 @@ stays for now; rerun the paired arms after the 1A fixes below.
      leaves out `open`; r1 t16 narrates the hand-over and the reply
      leaves out the phone (r1 t18 follows); r2 t8, r2 t11 and r3 t4 are
      judge disagreements on prose that reads right.
+   - **t1 "place: Kristin" diagnosed (2026-10-03; Brandon chose t1
+     first).** Every saved t1 reply through v36 placed the drawer in the
+     workstation (0 of 36 at Kristin); from the S2 runs on it is nearly
+     always at Kristin. S2's reply format changed three things at once
+     (W5): both examples now show a held lantern at "Kristin"; the place
+     line says "that has it now" (was "its current location"); and the
+     cup example (a place that is not a person) went. Probe (Ringer; 3
+     recorded t1 prompts from `closed-contents-x3` plus the same runs'
+     t3/t11 pick-ups as controls, 5 samples, read by hand;
+     `probe_t1_place.txt`). Drawer at Kristin / contents at Kristin /
+     control phone at Kristin: recorded 12/15, 12/15, 30/30; without
+     the 'Example: if Kristin picks up a lantern' line 1/15, 1/15,
+     28/30; "where it is now" 0/15, 0/15, 27/30; a condition-only box
+     example in its place 0/15, 0/15, 25/30. Every control miss is the
+     reply writing "Kristin's pocket" (prose right). Without the line,
+     the reply sometimes puts the contents "in Michelle's workstation"
+     instead of the drawer (3/15; where_now 6/15). **Subtractive arm
+     chosen for live measurement:** variation
+     `item-facts-world-two-scene-no-lantern-example` (bed7f8c) drops the
+     line through `drop_rules`; the JSON example still shows a held
+     lantern at the protagonist.
+   - **x3 without the lantern line (`bench/results/no-lantern-x3`;
+     `compare-no-lantern.txt`; read by hand). Not accepted.** t1 fixed
+     3/3 (drawer in the workstation, contents "in drawer", nothing at
+     Kristin). But facts after the turn stay 49/57: carried things broke
+     elsewhere. t4 (3/3) the prose carries the laptop in and the reply
+     places it at "Michelle's house"; t5 and t6 (3 turns) the reply gives
+     an empty `"laptop": {}`; r3 t9 leaves out "closed". The probe's
+     controls covered pick-ups only, not carries.
+   - **Carry controls (Ringer; recorded t1, t4, t5, t6, t9 prompts from
+     `closed-contents-x3` x 5; `probe_t1_carry.txt`).** t1 drawer at
+     Kristin / t4 carried laptop at Kristin (want 15): recorded 10/15,
+     10/15; no_example 0/15, 0/15; "where it is now" 0/15, 2/15. t5, t6
+     and t9 unchanged. So one wording does both jobs: it makes the
+     reply write "Kristin" for a carried thing and for a drawer she only
+     opened.
+   - **Two examples, the v36 shape (Ringer; t1, t3, t4, t5, t6, t9,
+     t11 x 5; `probe_t1_two.txt`).** Kept the lantern line and added
+     'Example: if Kristin opens a box and looks inside, the box is
+     {"condition": ["open"]}.' Recorded / two examples: t1 drawer at
+     Kristin 11/15 / 4/15; pick-ups at Kristin 29/30 / 29/30; t4 carried
+     laptop at Kristin 10/15 / 6/15; t6 ("Open my laptop.") laptop at
+     Kristin 0/15 / 11/15, a new wrong move. Worse overall. **No reply
+     wording tried separates "carries it" from "opens it"**: every arm
+     that clears t1 also loses carries.
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the
