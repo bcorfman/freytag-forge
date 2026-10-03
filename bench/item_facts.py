@@ -121,7 +121,7 @@ def _view(package, facts, axes=None, schema=None, *, structural=False):
             entity_id == package.world.protagonist_id
             or not world.is_a(entity_id, "area")
             and not world.is_a(entity_id, "character")
-            and world.is_visible(entity_id)
+            and (world.is_visible(entity_id) or world.is_shut_away(entity_id))
             and (world.parent(entity_id) or world.unplaced_name(entity_id))
         ):
             ids.append(entity_id)

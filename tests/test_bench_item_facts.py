@@ -83,7 +83,7 @@ def test_drawer_alias_closes_and_opening_reveals_declared_pens():
     closed, issues = provider.apply_item_facts({"drawer": {"condition": ["shut"]}})
     assert not issues
     assert closed["drawer"]["condition"] == ["closed"]
-    assert "pens" not in closed
+    assert closed["pens"]["place"] == "drawer"
 
 
 def test_item_inside_closed_drawer_can_move_and_opens_drawer():
@@ -1335,12 +1335,15 @@ def test_open_drawer_gives_its_contents():
     assert "memory card" not in things
 
 
-def test_closed_drawer_gives_no_contents():
-    provider = _seeded_provider(state_axes={"drawer": {"closed": ["shut"], "open": []}})
-    provider._selected_names = ["drawer"]
-    things = provider._things_block()
-    assert "- drawer." in things
-    assert "pens" not in things
+def test_closed_container_contents_given_with_it():
+    provider = _scene_provider("1A")
+    provider._selected_names = ["Kristin", "drawer"]
+    world = provider._world()
+
+    assert world.axis_values(world.resolve("drawer")).get("open") == "closed"
+    assert all(name in provider._thing_names() for name in ("stapler", "spare batteries", "pens", "binder clips"))
+    assert "Michelle's memory card" not in provider._thing_names()
+    assert "- stapler. Place: drawer." in provider._things_block()
 
 
 def test_item_facts_uses_things_place_rule_on_turn_and_opening(monkeypatch):
@@ -2070,6 +2073,10 @@ def test_package_seed_scene_1a_matches_authored_things():
             "place": "in Michelle's workstation",
             "condition": ["closed", "shut"],
         },
+        "pens": {"place": "drawer", "condition": []},
+        "binder clips": {"place": "drawer", "condition": []},
+        "stapler": {"place": "drawer", "condition": []},
+        "spare batteries": {"place": "drawer", "condition": []},
         "workstation chair": {
             "place": "at Michelle's workstation",
             "condition": ["overturned"],
