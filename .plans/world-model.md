@@ -293,7 +293,42 @@ stays for now; rerun the paired arms after the 1A fixes below.
        `s3-fixes-with-rule-x3`); "Kristin's pocket" unplaced 1/56.
    - **Fix (scoped, not new):** the seat is given only when the listed
      thing rests on its furniture (`relation == "on"`), the wording
-     Brandon approved. Build and x3 rerun below.
+     Brandon approved. **Built as b2fcce3** (Ringer, Luna, one attempt;
+     suite and ruff clean; shipped payloads byte-identical).
+   - **x3 on b2fcce3 (`bench/results/seat-on-with-rule-x3`;
+     `compare-seat-on.txt`).** 57/57 turns, no leak rejection. t7 right
+     3/3 and the chair is never righted early. Restarts 1 (t10, a
+     commanded move), so real 0. Facts after the turn 48/57, but the
+     misses moved. Read by hand:
+     - t1 r2, r3 (identical prose): the drawer opens in the prose, and
+       the reply gives `"drawer": {"place": "Kristin", "under": true}`
+       with no `state`, so it stays closed. The old t1 weak spot.
+     - t12 r2, r3: the reply names the phone "Kristin's phone" (the
+       hand rule's probe side effect, 2/15 there). Michelle's phone
+       stays right with Kristin. A phantom "Kristin's phone" is made in
+       "Kristin's pocket": r3's match said it is Michelle's phone, but
+       the name was still kept as new; r2's match was asked about bare
+       "phone". The prose is right but formulaic ("takes Michelle's
+       phone out of her hand and puts it in her pocket").
+     - r3 t4 the reply opens the laptop unasked; r1 t6 the reply moves
+       the chair "on floor" (the chair line still shows at t6, by
+       design), and r1 t11 inherits that "on floor".
+     - r1 t4 and r2 t8 are judge scores at 0.52 (noise).
+     The bar still reads below 55/57. Not accepted yet.
+   - **Unnamed-man probe (Brandon chose to probe before deciding;
+     Ringer; 9 recorded t17-t19 prompts from `slips-with-rule-x3` x 5;
+     `probe_unnamed.txt`).** Narration says "Brandon": recorded 42/45;
+     THINGS and PLAYER lines only, with "Brandon" shown as "the man
+     watching Kristin", 0/45; also CHARACTERS and the may-say line,
+     0/45. So the THINGS holder line is the whole cause. t19 then
+     refuses or deflects ("I'm just a concerned citizen") instead of
+     giving his name, which fits 1B.2. Recorded r1 and r3 t19 had him
+     say "I'm Brandon Corfman". Side effect: at t18 the man holds the
+     phone back more often (the prose ends with Kristin holding it 6/15
+     recorded, 2/15 THINGS-only, 3/15 all). Under the NPC-refusal rule,
+     a refusal is clean when Kristin acts. The reply then names the man
+     "the man watching Kristin" (or without "the"), which capture
+     would have to resolve to Brandon.
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the
