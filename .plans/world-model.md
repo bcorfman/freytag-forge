@@ -566,8 +566,9 @@ stays for now; rerun the paired arms after the 1A fixes below.
    turns. 3C t6 pumps restored is carried by its handoff 3/3 (reply
    "operational" 1/3). 3C t4 "Copy the archive to the independent
    networks." has no handoff: the prose starts the copy and never
-   finishes it 3/3 (reply "copied" 1/3). Whether later 3C turns depend
-   on it was not read.
+   finishes it 3/3 (reply "copied" 1/3). No later 3C turn refers to
+   the copy; the outcome comes from the story's own text ("The national
+   network fractures.", t10 3/3).
 3. **S4** (item 4). The continuity plan's Phases 4-6, which S4 hands
    to, have not started; its status line dates from 2026-09-24.
    Known gaps to carry in: new entities made in the player's old place
