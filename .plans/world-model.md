@@ -47,9 +47,10 @@ droppable (71f05d2) but stays; 1A t6/t12 fixed (1055d04, 6ebaf2c,
 (2026-10-03): seat scoped to things on furniture (b2fcce3), W9 amended
 so closed containers bring their contents (151abce), and `held_by` for
 held things behind a flag (4402a2f): paired x3 base 51/57, held_by
-54/57 (94.7%), t1 and t12 right 3/3. Next: Brandon's call on making
-held_by the default, then the early "Brandon" naming, the bookmark,
-then S4.
+54/57 (94.7%), t1 and t12 right 3/3; held_by made the default
+(64a1cb3) and W14 unnamed label built (6e1b191): x3 54/57, Brandon
+named early 0/3. Next: open the PR for `claude/1a-1b-slips`, then the
+bookmark, then S4.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
 AGENTS.md. Read the failing turn's recorded prompt against plot.md, probe
@@ -507,6 +508,30 @@ stays for now; rerun the paired arms after the 1A fixes below.
      "Kristin's phone" (base: unresolved "Kristin's pocket" 2/3,
      phantom 1/3), so the t12 capture-fix design is not needed. Brandon
      is still named at t17-t19 in 3/3 of both arms (open item).
+   - **held_by made the default (64a1cb3, Brandon chose 2026-10-03).**
+     Every single-call variation gives the held lantern as `held_by`;
+     `item-facts-world-two-scene-place-held` keeps the old form for
+     comparison; the pre-S2 `item-facts-package-two-scene` sets
+     `held_by: false` (I restored its phrase example by hand). The
+     grounding guide shows "Held by:", the `held_by` key and its
+     precedence, and W9's amendment.
+   - **W14 built (6e1b191; decision in section 12).** Brandon is "the
+     man watching Kristin" until `brandon_identified`. The match call's
+     offered-names check now compares things, not strings, so "Brandon"
+     still maps to the labelled character (the first build had broken
+     t16 and weakened its test; caught in review and fixed). Thorough
+     scene seeding sets `brandon_identified` from 1C on.
+   - **x3 on 6e1b191, default variation (`bench/results/w14-x3`;
+     `compare-w14.txt`; read by hand).** Facts after the turn **54/57
+     (94.7%)**, missed changes 0, contradicts 1, restarts 1 (commanded).
+     **Brandon named early 0/3** (3/3 before); t16 maps "the man" to
+     Brandon by the same-person question 3/3. Misses: r1 t6 (the reply
+     gives `held_by: Kristin` and `place: workstation`, the prose keeps
+     the laptop in her hands, so the precedence rule picks the wrong
+     key); r3 t8 and r3 t11 (judge scores ~0.62 on the memory card,
+     prose right). Watch: the reply sometimes writes position into
+     `condition` ("broken, in pocket", "in hand"), which THINGS then
+     repeats.
    - **New finding: THINGS names Brandon before he is identified.** A
      held thing renders its holder with `person_label` (the first alias,
      "Brandon"). Every run where t16 resolved to Brandon (2 older, the
