@@ -7,28 +7,8 @@
   "item_facts": {
     "mode": "single_call",
     "seed_from_package": true,
-    "state_axes": {
-      "drawer": {
-        "closed": [
-          "shut"
-        ],
-        "open": []
-      },
-      "Kristin's laptop": {
-        "closed": [
-          "shut"
-        ],
-        "open": []
-      },
-      "workstation chair": {
-        "overturned": [],
-        "upright": [
-          "standing"
-        ]
-      }
-    },
     "drop_rules": [
-      "Example: if {protagonist} picks up a lantern and lights it, the lantern is {{\"held_by\": \"{protagonist}\", \"condition\": [\"lit\"]}}."
+      "Example: if {protagonist} picks up a lantern and lights it, the lantern is {{\"place\": \"{protagonist}\", \"condition\": [\"lit\"]}}."
     ]
   },
   "continue_to": {
@@ -39,36 +19,6 @@
   "system_prompt": {
     "constant_rules_in_system": true,
     "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
-  },
-  "overrides": {
-    "knowledge.yaml": {
-      "replacements": [
-        {
-          "old": "The house is quiet, Michelle is missing, and Michelle's phone remains on the kitchen floor.",
-          "new": "The house is quiet and Michelle is missing."
-        }
-      ]
-    },
-    "plot.md": {
-      "replacements": [
-        {
-          "old": "Michelle's phone on the kitchen floor; ",
-          "new": ""
-        },
-        {
-          "old": "* Michelle's phone remains on the kitchen floor undamaged.\n",
-          "new": ""
-        },
-        {
-          "old": ", \"Michelle's phone is not damaged.\"]",
-          "new": "]"
-        },
-        {
-          "old": "\"The drawer holds pens, binder clips, a stapler, and spare batteries.\", ",
-          "new": ""
-        }
-      ]
-    }
   },
   "scripts": {
     "1A": [

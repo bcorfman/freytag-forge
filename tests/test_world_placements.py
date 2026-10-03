@@ -66,7 +66,7 @@ def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
   michelle_drawer: {{parent: michelle_workstation, part_of: true}}
   workstation_chair: {{parent: kitchen}}
 """
-    plot = re.sub(r"item_placements:\n(?:  .*\n)+setting_facts:", replacement + "setting_facts:", plot, count=1)
+    plot = re.sub(r"item_placements:\n(?:  .*\n)+entry_text:", replacement + "entry_text:", plot, count=1)
     scene_1b = (
         "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
         "park_bench, kristin_truck]\n"

@@ -143,6 +143,8 @@ items:
   name: Michelle's phone
 - id: kristin_laptop
   name: Kristin's laptop
+  axes:
+  - {closed: [shut], open: []}
   use_seated: true
   take_text: Kristin picked up her laptop.
 - id: michelle_drawer

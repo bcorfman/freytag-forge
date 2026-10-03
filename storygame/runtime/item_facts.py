@@ -183,37 +183,6 @@ def _package_seed(package, state, scene_id):
                 world.set_unplaced(item_id, text)
     issues = []
     unconsumed = []
-    for setting in scene.metadata.setting_facts:
-        phrase = setting.strip().removesuffix(".").rstrip()
-        match = next(
-            (
-                name
-                for name in _view(package, facts)
-                if any(
-                    phrase.casefold().startswith(prefix.casefold())
-                    for prefix in (f"{name} is ", f"{name} are ", f"The {name} is ", f"The {name} are ")
-                )
-            ),
-            None,
-        )
-        if match is None:
-            issues.append(f"setting fact {setting!r} could not be parsed")
-            unconsumed.append(setting)
-            continue
-        prefix = next(
-            prefix
-            for prefix in (f"{match} is ", f"{match} are ", f"The {match} is ", f"The {match} are ")
-            if phrase.casefold().startswith(prefix.casefold())
-        )
-        value = phrase[len(prefix) :].strip()
-        entity_id = world.resolve(match)
-        if entity_id and world.set_axis(entity_id, value).ok:
-            continue
-        if entity_id is None or len(value) > 40 or len(world.conditions(entity_id)) >= 2:
-            issues.append(f"setting fact for {match!r} could not be added as a condition")
-            unconsumed.append(setting)
-        else:
-            world.set_conditions(entity_id, [*world.conditions(entity_id), value])
     return _view(package, facts), issues, unconsumed
 
 
@@ -397,36 +366,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 world.set_axis(entity_id, initial)
         if self._last_scene_seeded == scene_id:
             return
-        scene = next(item for item in self.state.package.scenes if item.metadata.scene_id == scene_id)
         _, issues, _ = _package_seed(self.state.package, self.state, scene_id)
         self.item_facts_seed_issues.extend(issues)
-        for setting in scene.metadata.setting_facts:
-            phrase = setting.strip().removesuffix(".").rstrip()
-            target = next(
-                (
-                    world.resolve(name)
-                    for name in _view(self.state.package, self.state.facts, schema=self._schema())
-                    if any(
-                        phrase.casefold().startswith(prefix.casefold())
-                        for prefix in (f"{name} is ", f"{name} are ", f"The {name} is ", f"The {name} are ")
-                    )
-                ),
-                None,
-            )
-            if target is None or not world.is_visible(target):
-                continue
-            name = world.name(target)
-            prefix = next(
-                prefix
-                for prefix in (f"{name} is ", f"{name} are ", f"The {name} is ", f"The {name} are ")
-                if phrase.casefold().startswith(prefix.casefold())
-            )
-            value = phrase[len(prefix) :].strip()
-            pole = self._axis_match_id(world, target, value)
-            if pole:
-                world.set_axis(target, pole)
-            elif len(value) <= 40:
-                world.set_conditions(target, [*world.conditions(target), value][:2])
         self._last_scene_seeded = scene_id
 
     def _axis_match_id(self, world, entity_id, text):

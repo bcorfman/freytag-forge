@@ -183,7 +183,7 @@ test("continuity judge flags an unverifiable yes quote", async () => {
 
 test("packageCanon returns the whole scene block", () => {
   const canon = packageCanon("1A", "data/stories/continuity-initiative");
-  assert.match(canon.plot, /Michelle's phone is not damaged\./);
+  assert.match(canon.plot, /KMS initials carved in drawer/);
   assert.doesNotMatch(canon.plot, /## Scene 1B/);
 });
 

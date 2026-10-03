@@ -2192,7 +2192,7 @@ def test_real_scene_1a_pre_reveal_prompts_keep_the_card_location_out(monkeypatch
         assert "under the drawer" not in body
         assert "beneath the drawer" not in body
         assert "drawer carved with" not in body
-        assert "drawer is shut.".casefold() in body
+        assert "drawer is shut.".casefold() not in body
 
 
 def test_real_scene_1a_accepts_visible_carving_on_turns_one_through_four(monkeypatch) -> None:
