@@ -34,6 +34,8 @@ class WorldCapture:
         self.provider = provider
         self.ask = ask
         self._command = ""
+        self.last_before: dict[str, Any] | None = None
+        self.last_after: dict[str, Any] | None = None
 
     def before_turn(self, command: str) -> dict[str, Any]:
         self._command = command
@@ -53,7 +55,7 @@ class WorldCapture:
         match_info = {}
         if self.provider.item_facts_mode == "single_call":
             match_info = self.provider.prepare_turn(command)
-        return {
+        record = {
             "command": " ".join((*provider_steps, command)),
             "steps": list(provider_steps),
             "standing_asked": standing.asked,
@@ -67,6 +69,11 @@ class WorldCapture:
             "issues": [*standing.issues, *taking.issues, *(seating.issues if seating else ())],
             "match_info": _json_value(match_info),
         }
+        things_given = list(self.provider._selected_names) if self.provider._selected_names is not None else []
+        record["things_given"] = things_given
+        record["item_facts_before"] = _json_value(self.provider.facts_for_names(things_given, structural=True))
+        self.last_before = record
+        return record
 
     def after_commit(self, command: str, narration: str, *, entered_scene: bool) -> dict[str, Any]:
         raw = self.provider.pending_item_facts()
@@ -94,7 +101,10 @@ class WorldCapture:
             "issues": _json_value(issues),
             "unplaced": _json_value(self.provider.last_item_facts_unplaced()),
             "changed": sorted(self.provider._changed_last_turn),
+            "raw": _json_value(raw),
+            "match_info": _json_value(self.provider.last_item_facts_match()),
         }
+        self.last_after = record
         self.provider.prior_steps = ()
         return record
 
