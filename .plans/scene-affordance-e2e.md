@@ -1,9 +1,10 @@
 # Scene affordance E2E tests: plan
 
-Status (2026-10-03): Phase 0 done (section 10). L0 build is running as a
-Ringer task (`.plans/scene-affordance-l0.json`, branch `claude/affordance-l0`).
-Brandon said to continue through L2 ("Keep going until you get to L2"), so
-D1-D6 take the recommended defaults below until he says otherwise.
+Status (2026-10-03): L0, L1 and L2 are built and committed on branch
+`claude/affordance-l0` (not merged). L1 has had one live smoke (1A, 1
+replicate). L2 and L3 are built and hermetically tested, never run live.
+D1-D6 took the recommended defaults (Brandon: "Keep going until you get to
+L2").
 
 ## Resume here (2026-10-02)
 
@@ -15,8 +16,46 @@ the kitchen, but the narration never shows them, so the player cannot know
 what to do. The example is one of many; the tests must be derived from the
 story package for every scene and every story, not written for 1A.
 
-Next: Brandon settles D1-D6, then Phase 0 (verify the inputs this plan
-assumes), then Phase 1.
+Next (resume here): (1) run the L2 smoke, 1A, 1 replicate, then 3; (2) run
+L1 on 1A with 3 replicates to see if the drawer miss repeats; (3) extend the
+L0 map so later scenes have gates (see "Open" below); (4) merge the branch.
+Commands are in `frontend/e2e/affordances.spec.js` and `blind-player.spec.js`
+headers; run them per `docs/testing-runbook.md` section 6 pattern
+(`E2E_TURN_TIMEOUT_MS=90000`, source `.env`). L2 needs `OPENAI_API_KEY`.
+
+## Built (2026-10-03)
+
+| Layer | Files | Commit | Verified |
+| --- | --- | --- | --- |
+| L0 map + checks | `bench/affordance_map.py`, `tests/test_affordance_map.py`, `bench/affordance_known_gaps.json` | ec737dc, a1af49a | pytest, ruff, CLI on both packages |
+| L1 `@affordances` | `frontend/e2e/affordances.js`, `scene-walk.js`, `affordances.spec.js` + node tests | efe3f9c | node tests; one live 1A run |
+| L2/L3 `@blind-player` | `frontend/e2e/blind-player.js`, `blind-player.spec.js` + node tests | a354eb0 | node tests; listed by Playwright; never run live |
+
+Ringer runs: `freytag-affordance-l0` (L0, L0b), `-l1` (L1, L1b), `-l2`.
+Manifests and checks are `.plans/scene-affordance-l*.json` and `*-check.sh`.
+
+## First live result (L1, 1A, 1 replicate, staging, 2026-10-03)
+
+Reproduces the complaint. The opening and the first exploring turn named the
+workstation (turn 0) and never named the drawer, the workstation chair or
+Kristin's laptop. The drawer holds the KMS initials the memory-card reveal
+needs. One replicate: it shows the miss is possible, not how often. That
+run sent "Search the Michelle's house." (a bad input); L1b fixed
+`exploreInput` for possessive names, so rerun before counting.
+
+## Open
+
+- **Later scenes have no gates yet.** The L0 map finds player-earned gates
+  only in 1A, 2A and 2C. Scenes 1B, 1C, 2B, 3A and 3B leave through
+  unconditional bridge events, and the map ignores each transition's
+  `required_dependencies`. So L1 reports nothing for them, which is a gap in
+  the map, not a pass. Next L0 task: include `required_dependencies` and the
+  storylets they name.
+- Known L0 findings (14 before L0b, 6 after) are in
+  `bench/affordance_known_gaps.json`: authoring gaps for ChatGPT Desktop,
+  not fixed here.
+- D4 paraphrase (Jev check) is not built; names and aliases only.
+- L2 runs without the package clock, so it plays at real turn pacing.
 
 ## 1. The problem, with evidence
 

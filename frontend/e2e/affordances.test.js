@@ -62,11 +62,18 @@ test("measureScene records opening, turn, late, and missing matches", () => {
 });
 
 test("exploreInput is imperative and strips a leading article", () => {
-  assert.equal(exploreInput(scene), "Search the Workshop.");
+  assert.equal(exploreInput(scene), "Search Workshop.");
   assert.match(exploreInput(scene), /^Search /);
   assert.match(exploreInput(scene), /\.$/);
   assert.doesNotMatch(exploreInput(scene), /\bI\b/);
   assert.throws(() => exploreInput({ scene_id: "S1" }), /no location/);
+});
+
+test("exploreInput uses natural articles for location names", () => {
+  assert.equal(exploreInput({ location: { name: "Michelle's house" } }), "Search Michelle's house.");
+  assert.equal(exploreInput({ location: { name: "the kitchen" } }), "Search the kitchen.");
+  assert.equal(exploreInput({ location: { name: "freight terminal" } }), "Search the freight terminal.");
+  assert.equal(exploreInput({ location: { name: "Michelle’s house" } }), "Search Michelle’s house.");
 });
 
 test("formatMarkdown renders a compact scene table", () => {

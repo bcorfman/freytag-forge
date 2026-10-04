@@ -81,7 +81,8 @@ export function laterAffordances(map, sceneId) {
 export function exploreInput(sceneEntry) {
   if (!sceneEntry?.location?.name) throw new Error("Cannot build exploration input: scene has no location.");
   const location = sceneEntry.location.name.replace(/^the\s+/i, "").trim();
-  return `Search the ${location}.`;
+  const noArticle = /^(?:\S*(?:'s|’s)\s+\S|[A-Z])/.test(location);
+  return `Search ${noArticle ? "" : "the "}${location}.`;
 }
 
 function firstMatch(text, terms) {
