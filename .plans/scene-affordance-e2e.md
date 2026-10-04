@@ -1,7 +1,10 @@
 # Scene affordance E2E tests: plan
 
-Status (2026-10-02): planned, nothing built. Decisions D1-D6 (section 8)
-are open; Phase 0 starts after Brandon settles them.
+Status (2026-10-03): L0, L1 and L2 are built and committed on branch
+`claude/affordance-l0` (not merged). L1 has had one live smoke (1A, 1
+replicate). L2 and L3 are built and hermetically tested, never run live.
+D1-D6 took the recommended defaults (Brandon: "Keep going until you get to
+L2").
 
 ## Resume here (2026-10-02)
 
@@ -13,8 +16,46 @@ the kitchen, but the narration never shows them, so the player cannot know
 what to do. The example is one of many; the tests must be derived from the
 story package for every scene and every story, not written for 1A.
 
-Next: Brandon settles D1-D6, then Phase 0 (verify the inputs this plan
-assumes), then Phase 1.
+Next (resume here): (1) run the L2 smoke, 1A, 1 replicate, then 3; (2) run
+L1 on 1A with 3 replicates to see if the drawer miss repeats; (3) extend the
+L0 map so later scenes have gates (see "Open" below); (4) merge the branch.
+Commands are in `frontend/e2e/affordances.spec.js` and `blind-player.spec.js`
+headers; run them per `docs/testing-runbook.md` section 6 pattern
+(`E2E_TURN_TIMEOUT_MS=90000`, source `.env`). L2 needs `OPENAI_API_KEY`.
+
+## Built (2026-10-03)
+
+| Layer | Files | Commit | Verified |
+| --- | --- | --- | --- |
+| L0 map + checks | `bench/affordance_map.py`, `tests/test_affordance_map.py`, `bench/affordance_known_gaps.json` | ec737dc, a1af49a | pytest, ruff, CLI on both packages |
+| L1 `@affordances` | `frontend/e2e/affordances.js`, `scene-walk.js`, `affordances.spec.js` + node tests | efe3f9c | node tests; one live 1A run |
+| L2/L3 `@blind-player` | `frontend/e2e/blind-player.js`, `blind-player.spec.js` + node tests | a354eb0 | node tests; listed by Playwright; never run live |
+
+Ringer runs: `freytag-affordance-l0` (L0, L0b), `-l1` (L1, L1b), `-l2`.
+Manifests and checks are `scripts/ringer/affordance/scene-affordance-l*.json` and `*-check.sh`; the live-run manifests end in `-live`, and `digest.py` there summarises an L1 or L2 report.
+
+## First live result (L1, 1A, 1 replicate, staging, 2026-10-03)
+
+Reproduces the complaint. The opening and the first exploring turn named the
+workstation (turn 0) and never named the drawer, the workstation chair or
+Kristin's laptop. The drawer holds the KMS initials the memory-card reveal
+needs. One replicate: it shows the miss is possible, not how often. That
+run sent "Search the Michelle's house." (a bad input); L1b fixed
+`exploreInput` for possessive names, so rerun before counting.
+
+## Open
+
+- **Later scenes have no gates yet.** The L0 map finds player-earned gates
+  only in 1A, 2A and 2C. Scenes 1B, 1C, 2B, 3A and 3B leave through
+  unconditional bridge events, and the map ignores each transition's
+  `required_dependencies`. So L1 reports nothing for them, which is a gap in
+  the map, not a pass. Next L0 task: include `required_dependencies` and the
+  storylets they name.
+- Known L0 findings (14 before L0b, 6 after) are in
+  `bench/affordance_known_gaps.json`: authoring gaps for ChatGPT Desktop,
+  not fixed here.
+- D4 paraphrase (Jev check) is not built; names and aliases only.
+- L2 runs without the package clock, so it plays at real turn pacing.
 
 ## 1. The problem, with evidence
 
@@ -247,3 +288,32 @@ multi-scene run. Run each scene as its own Ringer task. Guard the player
 model the way every billed endpoint is guarded. Runs target the hosted
 staging demo only, never production. Unit tests for L0 and for the
 harness pieces never call a live model.
+
+## 10. Phase 0 findings (2026-10-03, read from source)
+
+- **Scene entry:** `@llm-canon` never jumps to a scene. It plays from 1A
+  (`startSceneSession`) with the package clock and sends
+  `frontend/e2e/canon-journey.js` prompts per scene until `state.scene_id`
+  changes. Entering a scene emits its `entry_text` as the turn's last
+  segment. So L1/L2 reach scene S by playing the journey; a package-aware
+  journey is fine for *getting there*, not for the measured turns.
+- **What the UI shows the player:** the narration transcript, speech and
+  action segments, and a status line `Scene <id> • <phase>`. No objective.
+  D2 is settled by this: the blind player sees the transcript plus that
+  status line, nothing else.
+- **Delivered knowledge ids are already exposed:** each segment carries
+  `grounding_ids`, and the canon test records them. The turn also returns
+  `state.fired_storylet_ids`, `fired_pacing_event_ids`,
+  `turns_since_scene_entry` and `delivery`. Trigger facts per turn are not
+  exposed, so no new telemetry field is needed for L1; L2 infers the
+  transition from `state.scene_id`.
+- **Lighthouse-keeper fixture:** `knowledge.yaml` has no `earn_when` item, so
+  it yields few or no player-earned affordances. L0 must run clean there;
+  it only proves the derivation is not hard-coded to one story.
+- **Hosted runs need no deploy for harness-only work:** Playwright runs
+  locally in `frontend/e2e` against the staging API named by `E2E_API_BASE_URL`.
+  Only a runtime change would need the merge-and-poll gate.
+- **Blind-player guard:** the player model is called from the test process
+  with the developer's `OPENAI_API_KEY`, like `roleplay-judge.js`. It is not a
+  route. It still gets a fixed model, a hard cap on calls per run, and a
+  refusal unless `/api/v1/version` reports `channel: staging`.

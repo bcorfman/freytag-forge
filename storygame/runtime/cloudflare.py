@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from os import getenv
 from urllib.error import HTTPError, URLError
@@ -13,8 +13,10 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from storygame.runtime.candidate_matcher import (
+    _NEGATIONS,
     ActionEvidenceCandidate,
     AuthoredHandoff,
+    _words,
     uniquely_matched_authored_handoff,
     uniquely_matched_candidate,
 )
@@ -33,7 +35,7 @@ from storygame.runtime.validation import (
     derive_statement_grounding,
     unconveyed_terms,
 )
-from storygame.runtime.world_model import apply_world_effects, world_for
+from storygame.runtime.world_model import _true, apply_world_effects, world_for
 from storygame.story_package.models import (
     Item,
     ItemPlacement,
@@ -224,6 +226,7 @@ class CloudflareTurnProvider:
         state: RuntimeState,
         projector: KnowledgeProjector | None = None,
         prompt_variant: Mapping[str, object] | None = None,
+        semantic_ask: Callable[[object, object], dict | None] | None = None,
     ) -> None:
         self.worker_url = worker_url
         self.token = token
@@ -243,6 +246,10 @@ class CloudflareTurnProvider:
         self.request_count = 0
         self.recovery_count = 0
         self.reply_keys_dropped: dict[str, int] = {}
+        self.semantic_ask = semantic_ask
+        self.semantic_fallback_calls = 0
+        # This is process-local session telemetry and resets when the process restarts.
+        self.last_semantic_match: dict[str, object] = {"ran": False, "matched": None}
 
     @classmethod
     def from_environment(
@@ -262,11 +269,14 @@ class CloudflareTurnProvider:
                     exc_info=True,
                 )
                 raise NarrationProviderError("narration service is unavailable") from error
+        from storygame.runtime.jev import JevClient
+
         return cls(
             worker_url=worker_url,
             token=getenv("CLOUDFLARE_WORKER_TOKEN", "").strip(),
             state=state,
             prompt_variant=prompt_variant,
+            semantic_ask=JevClient.from_environment().ask,
         )
 
     def __call__(self, player_input: str) -> object:
@@ -277,8 +287,11 @@ class CloudflareTurnProvider:
         """Build the exact turn prompt without contacting the narration worker."""
 
         self._example_player_input = player_input
+        self.last_semantic_match = {"ran": False, "matched": None}
         self.last_projection = self.projector.project(self.state, "player", player_input)
         self.authored_handoff = uniquely_matched_authored_handoff(player_input, self.last_projection.candidates)
+        if self.authored_handoff is None:
+            self.authored_handoff = self._semantic_authored_handoff(player_input)
         self._prepare_turn_visibility()
         self.shadow_matched_candidate_id = self._shadow_matched_candidate_id(player_input)
         self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
@@ -374,6 +387,53 @@ class CloudflareTurnProvider:
             and isinstance(getattr(candidate, "delivery_text", None), str)
             and candidate.delivery_text.strip()
         }
+
+    def _semantic_authored_handoff(self, player_input: str) -> AuthoredHandoff | None:
+        if (
+            self.semantic_ask is None
+            or getenv("FREYTAG_SEMANTIC_REVEAL", "1") == "0"
+            or not player_input.strip()
+            or self.semantic_fallback_calls >= 40
+            or any(word in _NEGATIONS for word in _words(player_input))
+        ):
+            return None
+        candidates = self.last_projection.candidates if self.last_projection else ()
+        eligible = []
+        for candidate in candidates:
+            if (
+                not candidate.action_evidence
+                or not isinstance(candidate.delivery_text, str)
+                or not candidate.delivery_text.strip()
+            ):
+                continue
+            knowledge = self.state.package.knowledge_indexes.by_id.get(candidate.id)
+            if knowledge is not None and any(
+                operation.op == "assert" and _true(self.state.facts, operation.fact_id)
+                for operation in knowledge.establishes
+            ):
+                continue
+            sentence = candidate.earn_when or candidate.statement
+            if sentence:
+                eligible.append((candidate.id, sentence, candidate))
+            if len(eligible) == 6:
+                break
+        if not eligible:
+            return None
+        self.semantic_fallback_calls += 1
+        self.last_semantic_match["ran"] = True
+        try:
+            from storygame.runtime.jev_questions import reaches_reveals
+
+            matched = reaches_reveals(self.semantic_ask, player_input, [(item[0], item[1]) for item in eligible])
+        except Exception:
+            return None
+        if len(matched) != 1:
+            return None
+        candidate = next((item[2] for item in eligible if item[0] in matched), None)
+        if candidate is None:
+            return None
+        self.last_semantic_match["matched"] = candidate.id
+        return AuthoredHandoff(candidate=candidate, delivery_text=candidate.delivery_text)
 
     def _legacy_projection_candidates(self) -> tuple[RevealCandidate, ...]:
         """Return projected candidates that the narrator is allowed to select."""
@@ -488,17 +548,6 @@ class CloudflareTurnProvider:
             )
         else:
             handoff_rule = ""
-        cue = next(
-            (
-                delivery
-                for delivery in self.state.package.deliveries
-                if delivery.fact_id == self.state.staged_cue_fact_id and delivery.cue_text
-            ),
-            None,
-        )
-        cue_rule = (
-            f"Show this in the scene, as something {self._protagonist_name()} notices: {cue.cue_text}" if cue else ""
-        )
         complication_text = self.state.last_turn_delivery.complication_text
         complication_rule = f"This happens now. Show it in the scene: {complication_text}" if complication_text else ""
         default_rules = [
@@ -528,8 +577,6 @@ class CloudflareTurnProvider:
             rules.append(no_candidate_rule)
         if handoff_rule:
             rules.append(handoff_rule)
-        if cue_rule:
-            rules.append(cue_rule)
         if complication_rule:
             rules.append(complication_rule)
         rules.extend(self._owner_rules())
@@ -969,7 +1016,7 @@ class CloudflareTurnProvider:
                 ],
                 "selected_knowledge_ids": [],
             }
-            return self._cap_accepted_response(narration_only, parse_turn_proposal(narration_only))
+            return self._accept_proposal(narration_only, parse_turn_proposal(narration_only))
         except RuntimeContractError as error:
             if self.last_projection and self.last_projection.handoff_deliveries:
                 return self._fallback_handoff()
@@ -987,6 +1034,11 @@ class CloudflareTurnProvider:
         if self.authored_handoff is not None:
             proposal = self._compose_authored_handoff(proposal)
             response = proposal.model_dump(mode="json")
+        else:
+            composed = self._compose_staged_cue(proposal)
+            if composed is not proposal:
+                proposal = composed
+                response = proposal.model_dump(mode="json")
         return self._cap_accepted_response(response, proposal)
 
     def _compose_authored_handoff(self, proposal: TurnProposal) -> TurnProposal:
@@ -1022,6 +1074,22 @@ class CloudflareTurnProvider:
             }
         )
         return self._auto_attribute_committed_knowledge(composed)
+
+    def _compose_staged_cue(self, proposal: TurnProposal) -> TurnProposal:
+        """Append the staged authored cue after the narrator's ordinary prose."""
+
+        cue = next(
+            (
+                delivery
+                for delivery in self.state.package.deliveries
+                if delivery.fact_id == self.state.staged_cue_fact_id and delivery.cue_text
+            ),
+            None,
+        )
+        if cue is None:
+            return proposal
+        delivery = NarrationSegment(kind="narration", text=cue.cue_text)
+        return proposal.model_copy(update={"segments": (*proposal.segments, delivery)})
 
     def _character_lines(self) -> list[str]:
         """Introduce only the characters this scene actually involves.

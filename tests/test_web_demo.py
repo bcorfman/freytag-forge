@@ -124,17 +124,17 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
     assert opening["scene_id"] == "1A"
     assert turn.json()["segments"][0]["text"] == "The lead sharpens."
     assert turn.json()["lines"] == ["The lead sharpens."]
-    assert turn.json()["delivery"] == {
-        "beats_projected": [],
-        "must_convey_misses": [],
-        "recovery_used": False,
-        "fallback_used": False,
-        "cue_fact_id": None,
-        "complication_text": None,
-        "handoff_staged": False,
-        "segments_truncated": False,
-        "segments_dropped": 0,
-    }
+    delivery = turn.json()["delivery"]
+    assert delivery["cue_fact_id"] is not None
+    assert delivery["cue_fact_id"] in {item.fact_id for item in PACKAGE.deliveries if item.cue_text}
+    assert delivery["must_convey_misses"] == []
+    assert delivery["recovery_used"] is False
+    assert delivery["fallback_used"] is False
+    assert delivery["complication_text"] is None
+    assert delivery["handoff_staged"] is False
+    assert delivery["segments_truncated"] is False
+    assert delivery["segments_dropped"] == 0
+    assert delivery["beats_projected"] == []
     json.dumps(turn.json())
 
 

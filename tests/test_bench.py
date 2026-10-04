@@ -840,8 +840,8 @@ def test_run_scene_records_selection_and_offered_candidates(monkeypatch) -> None
     assert result["turns"][0]["shadow_matched_candidate_id"] == "k_sl_1a_b_r2"
     assert result["turns"][0]["prompt_candidate_ids"] == ["k_sl_1a_b_r2"]
     assert result["turns"][0]["candidates_offered"] == ["k_sl_1a_b_r2", "k_sl_1a_b_r1"]
-    assert result["turns"][0]["cue_fact_id"] is None
-    assert result["turns"][0]["cue_text"] is None
+    assert result["turns"][0]["cue_fact_id"] is not None
+    assert result["turns"][0]["cue_text"] is not None
     assert result["turns"][0]["complication_text"] is None
     assert result["turns"][0]["handoff_staged"] is False
 

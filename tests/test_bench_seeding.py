@@ -5,9 +5,11 @@ import pytest
 
 import bench.core as core
 import storygame.runtime.cloudflare as cloudflare
+from storygame.story_package.loader import load_story_package
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "data" / "stories" / "continuity-initiative"
+STORY_PACKAGE = load_story_package(PACKAGE)
 VARIATION_PATH = ROOT / "bench" / "variations" / "seeding-test.json"
 
 
@@ -80,7 +82,8 @@ def test_run_scene_seeding_prevents_midstory_opening_rejection(monkeypatch) -> N
 
     assert bare["status"] == "failed"
     assert "protected knowledge" in bare["failure_reason"] or "unavailable entity" in bare["failure_reason"]
-    assert seeded["turns"][0]["narration"] == prose
+    cue = next(item.cue_text for item in STORY_PACKAGE.deliveries if item.fact_id == seeded["turns"][0]["cue_fact_id"])
+    assert seeded["turns"][0]["narration"] == f"{prose} {cue}"
     assert "protected knowledge" not in seeded.get("failure_reason", "")
     assert "unavailable entity" not in seeded.get("failure_reason", "")
     assert seeded["opening"]

@@ -73,7 +73,7 @@ def test_loader_accepts_required_reveal_with_scene_producer(tmp_path: Path) -> N
     assert package.knowledge_indexes.by_id["k_sl_2c_c_r1"].requires[-1].fact_id == "rebecca_offer_active"
 
 
-def test_efficient_player_earns_2c_evidence_without_cue_or_deadline() -> None:
+def test_efficient_player_earns_2c_evidence_without_deadline() -> None:
     package = legacy_package(LOADED_PACKAGE, {"k_sl_1a_a_r1"})
     state = RuntimeState.bootstrap(package)
     provider = _ScriptedProvider(package)
@@ -122,6 +122,7 @@ def test_efficient_player_earns_2c_evidence_without_cue_or_deadline() -> None:
         if turn_index == max_turns:
             pytest.fail(f"efficient player never left 2C; in {state.current_scene_id}")
 
-    assert not cues
+    assert cues
+    assert len(cues) == len(set(cues))
     assert not deadline
     assert any(pick and pick.startswith("k_sl_2c_c_") for pick in scene_picks)

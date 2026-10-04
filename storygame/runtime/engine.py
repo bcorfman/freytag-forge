@@ -174,9 +174,6 @@ class RuntimeEngine(CanonicalEventMixin):
                     capture=context,
                 )
                 return proposal.model_copy(update={"game_break": warning})
-        if staged_cue_fact_id and self.state.current_scene_id == before.current_scene_id:
-            self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)
-            self.state.staged_cue_fact_id = None
         self._record_turn(proposal)
         self._advance_pacing(proposal.narrative_seconds if clock_seconds is None else clock_seconds)
         self._activate_pacing()
@@ -186,6 +183,28 @@ class RuntimeEngine(CanonicalEventMixin):
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
         resolution_segments = self._apply_resolution_deadline_backstop()
+        if (
+            staged_cue_fact_id
+            and self.state.current_scene_id == before.current_scene_id
+            and not (self.last_projection and self.last_projection.handoff_deliveries)
+            and getattr(self.provider, "authored_handoff", None) is None
+        ):
+            self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)
+            self.state.staged_cue_fact_id = None
+        elif staged_cue_fact_id and self.state.current_scene_id != before.current_scene_id:
+            self.state.staged_cue_fact_id = staged_cue_fact_id
+            cue_text = next(
+                (
+                    delivery.cue_text
+                    for delivery in self.state.package.deliveries
+                    if delivery.fact_id == staged_cue_fact_id and delivery.cue_text
+                ),
+                None,
+            )
+            if cue_text is not None:
+                proposal = proposal.model_copy(
+                    update={"segments": tuple(segment for segment in proposal.segments if segment.text != cue_text)}
+                )
         if entry_segments or resolution_segments:
             return proposal.model_copy(
                 update={"segments": (*proposal.segments, *(entry_segments or ()), *resolution_segments)}
@@ -370,28 +389,25 @@ class RuntimeEngine(CanonicalEventMixin):
         # Authored pacing realizations still pass in resolution; this gate is for generated escalation.
         if self._escalation_eligible():
             missing = self._bridge_delivery_fact_ids()
-            if turns_since_entry >= window.nudge_after_turns:
-                deliveries = {delivery.fact_id: delivery for delivery in self.state.package.deliveries}
-                staged = self.state.staged_cue_fact_id
-                if not (
-                    staged
-                    and staged not in self.state.delivered_cue_ids
-                    and staged in missing
-                    and deliveries.get(staged) is not None
-                    and deliveries[staged].cue_text
-                ):
-                    self.state.staged_cue_fact_id = next(
-                        (
-                            fact_id
-                            for fact_id in self._ranked_cue_fact_ids()
-                            if fact_id not in self.state.delivered_cue_ids
-                            and deliveries.get(fact_id) is not None
-                            and deliveries[fact_id].cue_text
-                        ),
-                        None,
-                    )
-            else:
-                self.state.staged_cue_fact_id = None
+            deliveries = {delivery.fact_id: delivery for delivery in self.state.package.deliveries}
+            staged = self.state.staged_cue_fact_id
+            if not (
+                staged
+                and staged not in self.state.delivered_cue_ids
+                and staged in missing
+                and deliveries.get(staged) is not None
+                and deliveries[staged].cue_text
+            ):
+                self.state.staged_cue_fact_id = next(
+                    (
+                        fact_id
+                        for fact_id in self._ranked_cue_fact_ids()
+                        if fact_id not in self.state.delivered_cue_ids
+                        and deliveries.get(fact_id) is not None
+                        and deliveries[fact_id].cue_text
+                    ),
+                    None,
+                )
             if turns_since_entry >= window.handoff_after_turns:
                 self.state.staged_handoff_fact_ids = missing or self._bridge_missing_fact_ids()
         else:

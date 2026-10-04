@@ -1,4 +1,4 @@
-"""Every authored cue must survive narration safety at its scene nudge."""
+"""Every authored cue must survive narration safety on its first scene turn."""
 
 from __future__ import annotations
 
@@ -20,9 +20,8 @@ CUE_DELIVERIES = tuple(delivery for delivery in PACKAGE.deliveries if delivery.c
     CUE_DELIVERIES,
     ids=lambda delivery: f"{delivery.scene_id}-{delivery.fact_id}",
 )
-def test_cue_text_is_accepted_at_its_scene_nudge(delivery: FactDelivery) -> None:
+def test_cue_text_is_accepted_on_the_first_scene_turn(delivery: FactDelivery) -> None:
     scene = next(item for item in PACKAGE.scenes if item.metadata.scene_id == delivery.scene_id)
-    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == delivery.scene_id)
     if scene.metadata.scene_id == PACKAGE.scenes[0].metadata.scene_id:
         state = RuntimeState.bootstrap(PACKAGE)
     else:
@@ -31,7 +30,7 @@ def test_cue_text_is_accepted_at_its_scene_nudge(delivery: FactDelivery) -> None
             current_scene_id=scene.metadata.scene_id,
             phase=scene.metadata.freytag_phase,
         )
-    state.turn_index = window.nudge_after_turns - 1
+    state.turn_index = 0
     cue_text = delivery.cue_text
     assert cue_text is not None
 
@@ -42,5 +41,8 @@ def test_cue_text_is_accepted_at_its_scene_nudge(delivery: FactDelivery) -> None
 
     proposal = engine.turn("Look around carefully.")
 
-    assert proposal.segments[0].text == cue_text
-    assert state.turn_index == window.nudge_after_turns
+    assert proposal.segments[-1].text == cue_text
+    scene_cue_ids = {item.fact_id for item in CUE_DELIVERIES if item.scene_id == delivery.scene_id}
+    assert state.delivered_cue_ids[0] in scene_cue_ids
+    assert state.staged_cue_fact_id is None
+    assert state.turn_index == 1

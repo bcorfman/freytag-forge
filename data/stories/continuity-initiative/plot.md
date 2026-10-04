@@ -123,6 +123,8 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
 
 Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely.
 
+The drawer sits crooked in its frame, as if someone shoved it back in a hurry.
+
 ### Scene 1A.2 — Michelle’s Last Investigation
 
 **Details:** Michelle's memory card; Kristin's laptop in her truck; Continuity Initiative files; population stabilization centers; Michelle’s research notes

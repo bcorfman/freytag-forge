@@ -235,7 +235,10 @@ def create_demo_app(
         capture = None
         if getenv("FREYTAG_WORLD_CAPTURE", "") == "1" and getenv("FREYTAG_TURN_PROVIDER", "") != "scripted":
             capture_provider = provider if isinstance(provider, ItemFactsProvider) else build_capture_provider(state)
-            capture = WorldCapture(capture_provider, JevClient.from_environment().ask)
+            capture_ask = JevClient.from_environment().ask
+            provider.semantic_ask = capture_ask
+            capture_provider.semantic_ask = capture_ask
+            capture = WorldCapture(capture_provider, capture_ask)
         return RuntimeEngine(state, provider, capture=capture)
 
     def require_turn_rate_limit(body: TurnRequest, request: Request) -> None:
@@ -334,6 +337,10 @@ def create_demo_app(
         warning = proposal.game_break.model_dump(mode="json") if proposal.game_break else None
         prompt = getattr(provider, "last_prompt", None) if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1" else None
         payload = _turn_payload(state, proposal, warning, prompt)
+        if prompt is not None:
+            semantic_match = getattr(provider, "last_semantic_match", None)
+            if semantic_match is not None:
+                payload["semantic_match"] = semantic_match
         if getenv("FREYTAG_EXPOSE_KNOWLEDGE_AUDIT", "") == "1":
             payload["knowledge_audit"] = build_knowledge_audit(engine, proposal, fact_keys_before)
         return payload
