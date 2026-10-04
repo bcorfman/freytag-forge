@@ -57,6 +57,47 @@ def moves_thing(ask, command: str, thing_name: str) -> bool | None:
     return _answer(ask, {"command": command, "thing": thing_name}, questions, "moves_thing")
 
 
+def reaches_reveals(ask, command: str, candidates) -> set[str]:
+    """Return reveal ids whose authored action the command clearly performs."""
+
+    limited = list(candidates)[:6]
+    questions = {
+        candidate_id: {
+            "type": "noul",
+            "instructions": (
+                "Decide whether the command itself does what the sentence says, or clearly means the same "
+                "place, thing, and act. Return true only for the whole action."
+            ),
+            "criteria": {
+                "true": (
+                    f"The command itself does this action, or clearly means the same place, thing, and act: {sentence}"
+                ),
+                "false": (
+                    f"The command is about a different thing, only talks or thinks about it, or does only part "
+                    f"of the action without its key place or thing: {sentence}"
+                ),
+            },
+        }
+        for candidate_id, sentence in limited
+    }
+    if not questions:
+        return set()
+    try:
+        answers = ask({"command": command}, questions)
+    except Exception:
+        return set()
+    if not isinstance(answers, dict):
+        return set()
+    matched = set()
+    for candidate_id in questions:
+        try:
+            if noul_yes(answers.get(candidate_id)) is True:
+                matched.add(candidate_id)
+        except Exception:
+            return set()
+    return matched
+
+
 def needs_to_stand(ask, command: str, seat_name: str, within_reach) -> bool | None:
     questions = {
         "needs_to_stand": {

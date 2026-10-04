@@ -10,7 +10,7 @@ deliveries:
     Kristin recovers Michelle's memory card from under the drawer carved with her initials, KMS, and reads the files
     on it. The card identifies the federal emergency program as the Continuity Initiative, which was preparing to
     choose who remains.
-  cue_text: Kristin's initials, KMS, are carved into a drawer of Michelle's workstation.
+  cue_text: "Kristin's initials, KMS, are carved into a drawer of Michelle's workstation. The drawer sits crooked in its frame, as if someone shoved it back in a hurry. Kristin's laptop is in her truck outside."
   costs:
   - {op: assert, fact_id: memory_card_recovered, value: true}
 - fact_id: park_pursuit_resolved
