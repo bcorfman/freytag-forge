@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-l1",
+  "workdir": "/home/bcorfman/dev/ringer-work/freytag-affordance-l1b",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "affordance-l1b-input",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 900,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push, or touch .git. You own exactly frontend/e2e/affordances.js and frontend/e2e/affordances.test.js; edit nothing else, and make no network or live-game call.\n\nDEFECT: exploreInput(sceneEntry) in frontend/e2e/affordances.js builds `Search the ${location}.` from the scene location name. For a possessive name such as \"Michelle's house\" the hosted run sent \"Search the Michelle's house.\", which is not how a player types. Fix: strip a leading \"the \" as now; then if the name starts with a possessive word (a word ending in 's or a curly-apostrophe s, followed by more words) or a proper name, return `Search ${name}.` with no article; otherwise keep `Search the ${name}.`. Treat the possessive case as the rule; do not special-case any story word. Add node:test cases in affordances.test.js for: \"Michelle's house\" -> \"Search Michelle's house.\"; \"the kitchen\" -> \"Search the kitchen.\"; \"freight terminal\" -> \"Search the freight terminal.\"; a curly apostrophe name. Keep all existing tests passing (some may assert the old text for a non-possessive name; update only what is needed).\n\nHOW TO RUN: cd frontend && (if node_modules is missing: ln -s /home/bcorfman/dev/freytag-forge/frontend/node_modules node_modules) && node --test e2e/affordances.test.js e2e/scene-walk.test.js\nWrite ./notes.md at the worktree root (not git-added) with what changed.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/.plans/scene-affordance-l1b-check.sh",
+      "verified": "owned files only; hermetic node tests pass; the @affordances test is listed; the real 1A map gives the drawer and workstation as first-step affordances"
+    }
+  ]
+}
