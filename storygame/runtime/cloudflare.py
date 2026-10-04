@@ -488,17 +488,6 @@ class CloudflareTurnProvider:
             )
         else:
             handoff_rule = ""
-        cue = next(
-            (
-                delivery
-                for delivery in self.state.package.deliveries
-                if delivery.fact_id == self.state.staged_cue_fact_id and delivery.cue_text
-            ),
-            None,
-        )
-        cue_rule = (
-            f"Show this in the scene, as something {self._protagonist_name()} notices: {cue.cue_text}" if cue else ""
-        )
         complication_text = self.state.last_turn_delivery.complication_text
         complication_rule = f"This happens now. Show it in the scene: {complication_text}" if complication_text else ""
         default_rules = [
@@ -528,8 +517,6 @@ class CloudflareTurnProvider:
             rules.append(no_candidate_rule)
         if handoff_rule:
             rules.append(handoff_rule)
-        if cue_rule:
-            rules.append(cue_rule)
         if complication_rule:
             rules.append(complication_rule)
         rules.extend(self._owner_rules())
@@ -969,7 +956,7 @@ class CloudflareTurnProvider:
                 ],
                 "selected_knowledge_ids": [],
             }
-            return self._cap_accepted_response(narration_only, parse_turn_proposal(narration_only))
+            return self._accept_proposal(narration_only, parse_turn_proposal(narration_only))
         except RuntimeContractError as error:
             if self.last_projection and self.last_projection.handoff_deliveries:
                 return self._fallback_handoff()
@@ -987,6 +974,11 @@ class CloudflareTurnProvider:
         if self.authored_handoff is not None:
             proposal = self._compose_authored_handoff(proposal)
             response = proposal.model_dump(mode="json")
+        else:
+            composed = self._compose_staged_cue(proposal)
+            if composed is not proposal:
+                proposal = composed
+                response = proposal.model_dump(mode="json")
         return self._cap_accepted_response(response, proposal)
 
     def _compose_authored_handoff(self, proposal: TurnProposal) -> TurnProposal:
@@ -1022,6 +1014,22 @@ class CloudflareTurnProvider:
             }
         )
         return self._auto_attribute_committed_knowledge(composed)
+
+    def _compose_staged_cue(self, proposal: TurnProposal) -> TurnProposal:
+        """Append the staged authored cue after the narrator's ordinary prose."""
+
+        cue = next(
+            (
+                delivery
+                for delivery in self.state.package.deliveries
+                if delivery.fact_id == self.state.staged_cue_fact_id and delivery.cue_text
+            ),
+            None,
+        )
+        if cue is None:
+            return proposal
+        delivery = NarrationSegment(kind="narration", text=cue.cue_text)
+        return proposal.model_copy(update={"segments": (*proposal.segments, delivery)})
 
     def _character_lines(self) -> list[str]:
         """Introduce only the characters this scene actually involves.

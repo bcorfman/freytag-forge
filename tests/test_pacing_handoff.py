@@ -13,6 +13,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState, TurnDelivery
+from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import (
     ActivationRule,
@@ -73,7 +74,9 @@ def test_ordinary_turn_records_no_delivery_recovery_or_fallback() -> None:
 
     engine.turn("Listen.")
 
-    assert state.last_turn_delivery == TurnDelivery()
+    assert state.last_turn_delivery.cue_fact_id is not None
+    assert state.last_turn_delivery.must_convey_misses == ()
+    assert state.last_turn_delivery.recovery_used is False
 
 
 def test_activation_rule_minimal_undelivered_facts_is_small_stable_and_non_repeating() -> None:
@@ -356,7 +359,7 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
 
     cue = engine.turn("Search the desk.")
     assert state.delivered_cue_ids == ("transport_route_identified",)
-    assert state.staged_cue_fact_id == "brandon_identified"
+    assert state.staged_cue_fact_id is None
     assert state.staged_handoff_fact_ids == ()
     assert Fact(predicate="transport_route_identified", subject="story", value="true") not in state.facts.asserted
     assert cue.segments[0].text == "A clue catches my attention."
@@ -371,7 +374,7 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     assert Fact(predicate="brandon_identified", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="missing_may_be_alive", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="transport_route_departure_ready", subject="story", value="true") in state.facts.asserted
-    assert state.staged_cue_fact_id is None
+    assert state.staged_cue_fact_id == "brandon_identified"
     assert state.staged_handoff_fact_ids == ()
     assert state.last_turn_delivery.cue_fact_id == "brandon_identified"
     assert state.last_turn_delivery.handoff_staged is True
@@ -381,6 +384,45 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     )
     target_entry = next(scene.metadata.entry_text for scene in PACKAGE.scenes if scene.metadata.scene_id == "1C")
     assert texts.index(source_bridge) < texts.index(target_entry)
+
+
+def test_handoff_turn_keeps_a_staged_cue_for_the_next_turn() -> None:
+    state = _state_1b()
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1B")
+    state.turn_index = window.handoff_after_turns - 1
+    state.staged_cue_fact_id = "transport_route_identified"
+    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "The route opens."}]})
+
+    engine.turn("Search the route.")
+
+    assert state.current_scene_id == "1C"
+    assert state.staged_cue_fact_id == "transport_route_identified"
+    assert "transport_route_identified" not in state.delivered_cue_ids
+
+
+def test_rejected_turn_does_not_consume_a_staged_cue() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.staged_cue_fact_id = "transport_route_identified"
+
+    def rejected(_input: str) -> dict[str, object]:
+        raise ProposalValidationError("rejected", code="test_rejection")
+
+    with pytest.raises(ProposalValidationError):
+        RuntimeEngine(state, rejected).turn("Search the route.")
+
+    assert state.staged_cue_fact_id == "transport_route_identified"
+    assert "transport_route_identified" not in state.delivered_cue_ids
+
+
+def test_gate_fact_that_is_already_true_has_no_cue() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Look around."}]})
+    for fact_id in engine._bridge_delivery_fact_ids():
+        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+
+    engine._activate_pacing()
+
+    assert state.staged_cue_fact_id is None
 
 
 def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> None:
@@ -431,8 +473,28 @@ def test_projected_handoff_contract_is_player_safe_and_prompt_preserves_agency(m
     assert "hint at the evidence" not in captured["payload"]["user"].casefold()
     assert (
         next(item.cue_text for item in PACKAGE.deliveries if item.fact_id == "transport_route_identified")
-        in (captured["payload"]["user"])
+        not in (captured["payload"]["user"])
     )
+
+
+def test_staged_cue_is_appended_verbatim_after_model_narration(monkeypatch) -> None:
+    state = _state_1b()
+    state.staged_cue_fact_id = "transport_route_identified"
+    delivery = next(item for item in PACKAGE.deliveries if item.fact_id == state.staged_cue_fact_id)
+    captured: dict[str, object] = {}
+
+    def open_request(request, **_kwargs: object) -> _Response:
+        captured["payload"] = json.loads(request.data)
+        return _Response({"narration": '{"segments":[{"kind":"narration","text":"The room is quiet."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    response = provider("Search the route.")
+
+    assert [segment["text"] for segment in response["segments"]] == ["The room is quiet.", delivery.cue_text]
+    assert response["segments"][-1]["text"] == delivery.cue_text
+    assert delivery.cue_text not in captured["payload"]["user"]
 
 
 def test_conveying_handoff_uses_one_worker_request_without_recovery_or_fallback(monkeypatch) -> None:

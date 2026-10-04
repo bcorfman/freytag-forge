@@ -45,9 +45,9 @@ def test_personas_cover_the_escalation_ladder_without_stranding(
             assert len(row["cue_fact_ids"]) == len(set(row["cue_fact_ids"]))
 
     for row in _rows(summaries["thorough"]).values():
-        assert row["cue_count"] == 0
+        assert row["cue_count"] == len(row["cue_fact_ids"])
         assert row["deadline_staged"] is False
-        assert row["layer_reached"] in {"none", "complication"}
+        assert row["layer_reached"] in {"none", "cue", "complication"}
 
     for scene_id, row in _rows(summaries["staller"]).items():
         if scene_id == SCENE_IDS[-1]:

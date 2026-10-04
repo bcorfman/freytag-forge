@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from storygame.runtime.candidate_matcher import (
@@ -5,7 +7,11 @@ from storygame.runtime.candidate_matcher import (
     uniquely_matched_authored_handoff,
     uniquely_matched_candidate,
 )
-from storygame.runtime.knowledge import RevealCandidate
+from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate
+from storygame.runtime.state import RuntimeState
+from storygame.story_package.loader import load_story_package
+
+PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 CARD_REFERENCES = ("recover", "retrieve", "memory card", "the card")
 
@@ -114,6 +120,68 @@ def test_empty_evidence_never_matches() -> None:
     candidate = ActionEvidenceCandidate(id="empty", required_groups=())
 
     assert uniquely_matched_candidate("Recover the damaged recording and listen to it.", (candidate,)) is None
+
+
+@pytest.mark.parametrize(
+    ("authored_phrase", "synonym"),
+    [
+        ("inspect", "Examine"),
+        ("read", "Review"),
+        ("take", "Grab"),
+        ("under", "Flip over"),
+        ("open", "Pry open"),
+        ("talk", "Speak with"),
+    ],
+)
+def test_closed_synonym_classes_expand_an_authored_group(authored_phrase: str, synonym: str) -> None:
+    candidate = ActionEvidenceCandidate(id="synonyms", required_groups=((authored_phrase,), ("drawer",)))
+
+    assert uniquely_matched_candidate(f"{synonym} the drawer.", (candidate,)) == candidate
+
+
+def test_single_word_evidence_tolerates_plural() -> None:
+    candidate = ActionEvidenceCandidate(id="plural", required_groups=(("drawer",),))
+
+    assert uniquely_matched_candidate("Inspect the drawers.", (candidate,)) == candidate
+
+
+def test_three_letter_words_are_not_pluralised() -> None:
+    candidate = ActionEvidenceCandidate(id="short", required_groups=(("map",),))
+
+    assert uniquely_matched_candidate("Inspect the maps.", (candidate,)) is None
+
+
+def test_negation_still_rejects_a_synonym_match() -> None:
+    candidate = ActionEvidenceCandidate(id="negated", required_groups=(("inspect",), ("drawer",)))
+
+    assert uniquely_matched_candidate("Do not examine the drawer.", (candidate,)) is None
+
+
+def test_synonym_expansion_does_not_break_uniqueness() -> None:
+    first = ActionEvidenceCandidate(id="first", required_groups=(("inspect",), ("drawer",)))
+    second = ActionEvidenceCandidate(id="second", required_groups=(("look",), ("drawer",)))
+
+    assert uniquely_matched_candidate("Examine the drawer.", (first, second)) is None
+
+
+@pytest.mark.parametrize(
+    "player_input",
+    [
+        "Examine the underside of my initials-marked drawer.",
+        "Feel under the drawer.",
+        "Flip over the KMS drawer.",
+        "Inspect beneath the workstation drawer.",
+    ],
+)
+def test_scene_1a_card_reveal_accepts_natural_synonyms(player_input: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-E")
+    projection = KnowledgeProjector().project(state, "player", "")
+
+    handoff = uniquely_matched_authored_handoff(player_input, projection.candidates)
+
+    assert handoff is not None
+    assert handoff.candidate.id == "k_sl_1a_b_r0"
 
 
 def test_authored_handoff_returns_the_projected_candidate_and_delivery() -> None:
