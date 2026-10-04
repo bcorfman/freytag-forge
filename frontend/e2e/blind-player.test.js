@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aggregate, analyseRun, askPlayer, formatMarkdown, playerPrompt, unseenTerms, validateCommand } from "./blind-player.js";
+import { aggregate, analyseRun, askPlayer, formatMarkdown, playerPrompt, turnLog, turnRecord, unseenTerms, validateCommand } from "./blind-player.js";
 
 const response = (command) => ({ ok: true, status: 200, json: async () => ({ output_text: JSON.stringify({ command }) }) });
 const fakeMap = { scenes: [{ scene_id: "SECRET", location: { name: "Vault" }, gates: [{ sources: [{ id: "SECRET_SOURCE", player_earned: true }] }] }] };
@@ -16,6 +16,29 @@ test("player prompt contains only screen data", () => {
 test("validates player input rules", () => {
   for (const command of ["Search the desk.", "Open my laptop."]) assert.equal(validateCommand(command).ok, true);
   for (const command of ["I search the desk.", "Wait.", "Keep watch.", "Search without touching.", "Search the desk"]) assert.equal(validateCommand(command).ok, false);
+});
+
+test("turnRecord carries semantic fallback and prompt metadata", () => {
+  const payload = { state: { scene_id: "A" }, segments: [{ grounding_ids: ["desk"] }], delivery: { x: 1 }, semantic_match: { ran: true, matched: "desk" }, prompt: "full prompt" };
+  assert.deepEqual(turnRecord({ turn: 1, input: "Search the desk.", payload, text: "The desk is here." }), {
+    turn: 1, input: "Search the desk.", text: "The desk is here.", state: { scene_id: "A" }, grounding_ids: ["desk"], delivery: { x: 1 }, semantic_match: { ran: true, matched: "desk" }, prompt: "full prompt",
+  });
+  assert.deepEqual(turnRecord({ turn: 2, input: "Search the room.", payload: {}, text: "Nothing." }).semantic_match, null);
+  assert.equal(turnRecord({ turn: 2, input: "Search the room.", payload: {}, text: "Nothing." }).prompt, null);
+});
+
+test("turnLog emits the contract without prompt, delivery, or state", () => {
+  const normal = { turn: 1, input: "Search the desk.", text: "The desk is here.", state: { scene_id: "A" }, grounding_ids: ["desk"], delivery: { hidden: true }, semantic_match: { ran: true, matched: "desk" }, prompt: "secret prompt" };
+  const rejectedTurn = { turn: 2, input: "Search the room.", text: "", rejected: true, rejection: "bad response", state: null, grounding_ids: [], delivery: {}, semantic_match: null, prompt: "another secret" };
+  const withoutMatch = { turn: 3, input: "Open the door.", text: "The door opens.", state: { scene_id: "B" }, grounding_ids: ["door"], semantic_match: undefined };
+  const result = turnLog([normal, rejectedTurn, withoutMatch]);
+  assert.deepEqual(result, [
+    { turn: 1, input: "Search the desk.", text: "The desk is here.", rejected: false, rejection: null, scene_id: "A", semantic_match: { ran: true, matched: "desk" }, grounding_ids: ["desk"] },
+    { turn: 2, input: "Search the room.", text: "", rejected: true, rejection: "bad response", scene_id: null, semantic_match: null, grounding_ids: [] },
+    { turn: 3, input: "Open the door.", text: "The door opens.", rejected: false, rejection: null, scene_id: "B", semantic_match: null, grounding_ids: ["door"] },
+  ]);
+  for (const entry of result) assert.deepEqual(Object.keys(entry).sort(), ["grounding_ids", "input", "rejected", "rejection", "scene_id", "semantic_match", "text", "turn"]);
+  assert.equal(JSON.stringify(result).includes("prompt"), false);
 });
 
 test("askPlayer handles key, cap, retry, and invalid responses", async () => {
@@ -113,6 +136,30 @@ test("aggregate and Markdown report rejected turns", () => {
   const markdown = formatMarkdown({ replicates: [withRejection, withoutRejection], aggregate: summary });
   assert.match(markdown, /Rejected turns: 1/);
   assert.match(markdown, /narration mentions an unavailable entity photo/);
+  assert.match(markdown, /Semantic reveal fallback/);
+  assert.match(markdown, /did not return it/);
+});
+
+test("Markdown lists and truncates per-turn text", () => {
+  const longText = "x".repeat(250);
+  const markdown = formatMarkdown({ replicates: [{ replicate: 1, turns: [{ turn: 1, input: "Search the desk.", text: `first\n${longText}` }] }] });
+  assert.match(markdown, /## Turns — replicate 1/);
+  const line = markdown.split("\n").find((value) => value.startsWith("- t1 "));
+  assert.equal(line.length, "- t1 Search the desk. -> ".length + 200);
+  assert.equal(line.endsWith("x"), true);
+  assert.equal(markdown.includes("first\n"), false);
+});
+
+test("analyseRun reports semantic fallback matches only when returned", () => {
+  const result = analyseRun({ sceneEntry: scene, turns: [
+    { ...committed(1), semantic_match: { ran: true, matched: "door" } },
+    { ...committed(2), semantic_match: { ran: true, matched: null } },
+    committed(3),
+  ] });
+  assert.deepEqual(result.semantic_matches, [
+    { turn: 1, input: "Search the floor.", ran: true, matched: "door" },
+    { turn: 2, input: "Search the floor.", ran: true, matched: null },
+  ]);
 });
 
 test("opening affordances use turn 0 and the turn 0/1 deadline", () => {

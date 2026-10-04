@@ -299,10 +299,10 @@ knowledge:
   delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over and the back door was forced, but nothing else was taken. This was not looting. Someone came for Michelle."
 - id: k_sl_1a_b_r0
   statement: "Kristin finds Michelle's memory card taped beneath the KMS drawer and takes it with her."
-  earn_when: searches the KMS drawer or the space beneath it
+  earn_when: searches the drawer, the gap in the drawer, or the space beneath it
   action_evidence:
   - [look, search, inspect, check]
-  - [under, beneath, underside]
+  - [under, beneath, underside, gap]
   - [drawer, KMS, workstation]
   entity_ids: [kristin, michelle, memory_card, michelle_drawer]
   aliases:

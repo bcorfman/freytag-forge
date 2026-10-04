@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadAffordanceMap, firstStepAffordances, laterAffordances, exploreInput } from "./affordances.js";
-import { askPlayer, analyseRun, aggregate, formatMarkdown } from "./blind-player.js";
+import { askPlayer, analyseRun, aggregate, formatMarkdown, turnLog, turnRecord } from "./blind-player.js";
 import { startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { walkScenes } from "./scene-walk.js";
@@ -68,7 +68,6 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
     const firstStep = firstStepAffordances(map, sceneId);
     const later = laterAffordances(map, sceneId);
     const turns = [];
-    const transcripts = [];
     const counter = { calls: 0 };
     let consecutiveRejections = 0;
     let stoppedOnRejections = false;
@@ -82,7 +81,7 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
       } catch (error) {
         const rejection = String(error?.message || "").match(/HTTP 409:\s*([\s\S]*)$/);
         if (!rejection) throw error;
-        turns.push({ turn, input, rejected: true, rejection: rejection[1], text: "", state: null, grounding_ids: [], delivery: {} });
+        turns.push({ turn, input, rejected: true, rejection: rejection[1], text: "", state: null, grounding_ids: [], delivery: {}, semantic_match: null, prompt: null });
         consecutiveRejections += 1;
         if (consecutiveRejections >= 3) {
           stoppedOnRejections = true;
@@ -95,16 +94,16 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
       const text = (payload.segments || [])
         .filter((segment) => ["narration", "action", "dialogue", "speech"].includes(segment.kind))
         .map((segment) => segment.text).filter(Boolean).join(" ").trim();
-      transcripts.push((await page.locator("#transcript").textContent()) || "");
-      turns.push({ turn, input, text, state: payload.state, grounding_ids: (payload.segments || []).flatMap((segment) => segment.grounding_ids || []), delivery: payload.delivery || {} });
+      turns.push(turnRecord({ turn, input, payload, text }));
       if (payload.state?.scene_id !== sceneId) break;
     }
     runs.push({
       replicate,
       scene: sceneId,
       opening_text: openingText,
-      transcript: transcripts,
       commands: turns.map((turn) => turn.input),
+      prompts: turns.filter((turn) => typeof turn.prompt === "string" && turn.prompt.trim()).map((turn) => ({ turn: turn.turn, prompt: turn.prompt })),
+      turns: turnLog(turns),
       turn_count: turns.length,
       ...analyseRun({ sceneEntry, nextSceneEntry, turns, firstStep, later, openingText, stopped_on_rejections: stoppedOnRejections, sceneMapSources: sceneEntry.gates?.flatMap((gate) => gate.sources || []) || [] }),
     });

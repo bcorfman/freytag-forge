@@ -20,7 +20,124 @@ aliases, a two-sentence narrator rule stops invented clues when a command
 names a thing that holds an unrevealed reveal, and the L2 silent-transition
 flag ignores affordances absent from the shown list.
 
+## L2 on aa52889 (PR 511 merged, staging sha confirmed), 1A, 3 replicates
+
+Transition 2 of 3 (turns 13 and 8; r3 never left by turn 15). Silent
+transition 2 of 3. Drawer, laptop and workstation were first shown on turn
+2-3 in all three, but the deadline rate was 0 for the drawer and laptop and
+1/3 for the workstation; the chair was never shown; the memory card was shown
+in r1 (turn 13) and r2 (turn 3), never in r3. Stuck turns in every run. The
+narrator still invents content on unlocking commands (r1 phone text, r2 a
+recording on the card, r3 an email 'Meet me at the old warehouse'); r3 never
+got the card. So the PR 511 fixes did not reach 3/3. L1 x3 on aa52889
+(Ringer `freytag-affordance-live`, pass): by turn 1 the laptop 3/3, the drawer
+2/3 (was 3/3 on 3a82bc5), the workstation 1/3 (was 3/3), the chair 0/3 (was
+2/3). Input was "Search Michelle's house." The memory card is a later
+affordance, never shown in the one explore turn (expected). Compared with
+3a82bc5 the drawer and workstation went down, so the aa52889 follow-ups did
+not help L1 and may have hurt; 3 replicates is noise-prone, so rerun before
+concluding. Not yet checked: whether the chair shows as "Her chair" (alias
+gap) in these runs.
+
+### r2/r3 transcripts read against plot.md (2026-10-04)
+
+Read from `artifacts/e2e-blind-player.json` (transcript entries are
+cumulative; diff them). Recorded narrator prompts were NOT read.
+
+- r2 (left turn 8): turn 2 "Search Michelle's workstation." showed the KMS
+  drawer and the truck laptop. Turn 3 "Inspect my KMS-carved drawer." gave the
+  card. Likely the semantic fallback, since the input has no under/beneath word
+  (unverified). Turn 5 read the card, turn 8 the bridge fired.
+- r3 (never left): turn 2 showed the drawer cue. Turn 3 "Examine Michelle's
+  workstation drawer." only restated the initials. Turn 4 "Open Michelle's
+  workstation drawer." narrated the world.yaml contents (stapler, batteries,
+  pens), which is correct for an opened drawer. The player never looked
+  beneath it, then followed an invented email to an invented warehouse.
+- Cause so far: `k_sl_1a_b_r0` `action_evidence` needs a look verb AND an
+  under/beneath word AND drawer/KMS/workstation, but its `earn_when` says
+  "searches the KMS drawer or the space beneath it". Nothing on screen points
+  to the underside; plot.md only says the drawer "sits crooked in its frame".
+- Chair: the reveal text says "Her chair is tipped over", the entity is named
+  "workstation chair". The L2 silent-transition flag may be a measurement
+  false negative (unverified; D4 alias question).
+
+Prior art checked (grounding guide, `.plans/world-model.md` W decisions):
+W9 says an opened container shows its contents, so the r3 turn-4 contents were
+correct, not a narrator fault. Nothing there covers how a player is led to
+look beneath something (`hidden: true` + `on_assert` is for hidden things; the
+`under` flag is placement only). Any cue for the underside is new work, not a
+proven technique.
+
+L2 x3 on aa52889 with `semantic_match` recorded (branch
+`claude/l2-semantic-record`, uncommitted): transition 3/3 (turns 15, 13, 13),
+all by the turn timer: the card was first shown only on the transition turn
+(13-15) in every run, silent transition 3/3, chair never shown, drawer and
+laptop by the deadline 2/3. The fallback RAN on 11 to 12 of 13-15 turns per run
+and MATCHED NOTHING, including "Examine the crooked drawer.", "Open the crooked
+drawer.", "Search the crooked drawer for hidden items." and "Search Michelle's
+workstation." So the semantic fallback ran and Jev said no. The earlier r2 hit
+had "KMS-carved" in the command. Still invented by the narrator: a paper note,
+phone contacts, "Agent Thompson", a hardware receipt. Next probe, not run yet:
+replay Jev's card question (earn_when "searches the KMS drawer or the space
+beneath it", with the entity names it sent) against these commands to see why
+"crooked drawer" fails; the recorded prompts are in each replicate's `prompts`.
+
+### Jev probe and L2 rerun (2026-10-04, staging 39ddd65 = aa52889 runtime)
+
+Probe (`scripts/ringer/affordance/jev_probe.py`, Ringer `freytag-affordance-jev-probe`,
+5 samples per cell, Jev answered the same all 5 times): the question was the
+card reveal's earn_when plus an approximation of the entity-name list (not the
+exact runtime list, which also adds a placement text). Findings:
+- The name list hurts. "Search beneath the drawer." 0/5 with names, 5/5 without.
+- "crooked drawer" commands (examine, open, search) and "Search Michelle's
+  workstation." were 0/5 in every arm. Only "Inspect my KMS-carved drawer." matched
+  (5/5 with or without names). Jev reads "KMS drawer" as a different drawer.
+- No false positives ("Read the note on the phone.", "Search the kitchen." 0/5).
+- Using the reveal's `statement` as the sentence is worse (0/5 on both should-match).
+Not yet probed: arms that put the on-screen wording ("crooked drawer") in the
+names, or drop the names; and the exact runtime names from a recorded prompt.
+
+L2 x3 on 1A (Ringer `freytag-affordance-live`, pass): transition 3/3, all on
+turn 13 by the timer. The semantic fallback ran on most turns and matched
+nothing, including "Open the crooked drawer." and "Search the crooked drawer."
+(r2, r3). Drawer, laptop, workstation shown by the deadline 3/3 (better than
+the previous L2 run: drawer and laptop were 0/3); chair 1/3 (shown turns 1, 3,
+9); the memory card was shown only on the transition turn 13 in all three. Silent
+transition 0/3 only because the timer delivery shows the card. Stuck turns 8 to 10
+of 13 per run. The narrator still invents: a receipt note 'Meet me at the old
+warehouse', a research article, an officer's dialogue. Staging turn cap was
+restored by the check.
+
+Authoring change (2026-10-04, Brandon's rule: the drawer is named only "drawer",
+"drawer gap", "gap in drawer", "gap in the drawer"): cue_text in `handoffs.yaml`
+and the 1A.1 line in `plot.md` now say "The drawer rides high in its frame,
+leaving a thin gap along its lower edge." (replaces "sits crooked"); the card
+reveal's `earn_when` in `knowledge.yaml` is "searches the drawer, the gap in the
+drawer, or the space beneath it" and its under-word group gains "gap". Jev probe
+rerun with that earn_when (5 samples, all cells 5/5 or 0/5): with the names
+approximation, "Search beneath/under the drawer.", "Feel along the gap in the
+drawer.", "Search the drawer gap.", "Look into the gap in the drawer." and
+"Search the drawer." all 5/5; "Examine the drawer." and "Open the drawer." 0/5;
+phone and kitchen controls 0/5. Without names "Examine the drawer." also matched
+(looser). The shorter sentence "searches the drawer" and the statement sentence
+were worse. Not yet measured live: the cue's effect on players; needs a merge,
+a staging deploy and L2 x3. The probe's name list is still an approximation of
+the runtime list. Still authored with other words: `plot.md` 112 and 132 and
+`handoffs.yaml` 10 ("the drawer carved with her initials, KMS").
+
+Open, not yet known (the first item is answered above): (1) whether the semantic fallback ran on r3 turns 3-4
+(staging returns `semantic_match` and `prompt` per turn, but
+`blind-player.spec.js:99` drops both from the turn record; the harness needs
+to save them, then rerun);
+(2) the recorded prompts for r3 turns 3-4; (3) the L1 x3 result.
+
 ## Resume here (2026-10-04)
+
+Latest: Jev probe and L2 rerun are recorded above. Next: probe Jev arms (names
+removed; on-screen wording "crooked drawer" added), replay the exact runtime
+names from a recorded prompt, then fix at the source the probe points to and
+rerun L2 x3. The uncommitted harness changes (turn log, semantic_match
+recording, digest) and the probe files are not committed yet.
 
 Next: (1) Brandon merges the `claude/gates-judge-names` PR and waits for the
 staging deploy; (2) rerun L2 on 1A with 3 replicates, then more, and L1 with 3;

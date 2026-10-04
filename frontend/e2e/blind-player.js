@@ -115,6 +115,32 @@ export function unseenTerms({ command = "", readText = "" } = {}) {
   return [...new Set(words.filter((word) => !unseenStopWords.has(word) && !unseenWordMatch(word, readWords)))];
 }
 
+export function turnRecord({ turn, input, payload = {}, text }) {
+  return {
+    turn,
+    input,
+    text,
+    state: payload.state,
+    grounding_ids: (payload.segments || []).flatMap((segment) => segment.grounding_ids || []),
+    delivery: payload.delivery || {},
+    semantic_match: payload.semantic_match || null,
+    prompt: payload.prompt || null,
+  };
+}
+
+export function turnLog(turns = []) {
+  return turns.map(({ turn, input, text, state, grounding_ids, semantic_match, rejected, rejection }) => ({
+    turn,
+    input,
+    text,
+    rejected: Boolean(rejected),
+    rejection: rejection ?? null,
+    scene_id: state?.scene_id ?? null,
+    semantic_match: semantic_match ?? null,
+    grounding_ids: grounding_ids || [],
+  }));
+}
+
 function realizationMatch(text, realization) {
   const words = contentWords(realization);
   if (!words.size) return false;
@@ -173,6 +199,9 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
     const unseen = unseenTerms({ command: turn.input, readText });
     if (unseen.length) unseenCommands.push({ turn: turn.turn, input: turn.input, unseen_terms: unseen });
   }
+  const semantic_matches = turns
+    .filter((turn) => turn.semantic_match != null)
+    .map((turn) => ({ turn: turn.turn, input: turn.input, ran: turn.semantic_match.ran, matched: turn.semantic_match.matched }));
   const delivery = [];
   const pacing = [];
   let previousTurn = null;
@@ -201,7 +230,7 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
     pacing_realizations: pacing,
     transition: { turn: transitionTurn, final_segment_matches_entry: finalSegmentMatches, prior_contains_entry: priorContainsEntry, earlier_segment_contains_entry: transitionPrefixContainsEntry, no_skip_or_restart: finalSegmentMatches && !priorContainsEntry && !transitionPrefixContainsEntry },
   };
-  return { stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, l3 };
+  return { stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
 }
 
 export function aggregate(runs = []) {
@@ -228,5 +257,20 @@ export function formatMarkdown(report) {
   const runs = report.replicates || [];
   const rejectedCount = report.aggregate?.rejected_count ?? runs.reduce((sum, run) => sum + (run.rejected_count ?? run.rejected_turns?.length ?? 0), 0);
   const unseen = runs.flatMap((run) => (run.unseen_commands || []).map((item) => `- Turn ${item.turn}: ${item.input} — unseen: ${item.unseen_terms.join(", ")}`));
-  return `# blind-player E2E evaluation\n\nRejected turns: ${rejectedCount}\n\n## Unseen commands\n\n${unseen.length ? unseen.join("\n") : "None"}\n\n${JSON.stringify(report, null, 2)}\n`;
+  const semanticSections = runs.map((run, index) => {
+    const entries = run.semantic_matches || [];
+    const lines = entries.length
+      ? entries.map((entry) => `- Turn ${entry.turn}: ${entry.input} — ran: ${entry.ran}, matched: ${entry.matched ?? "none"}`)
+      : ["The server did not return it."];
+    return `## Semantic reveal fallback — replicate ${run.replicate ?? index + 1}\n\n${lines.join("\n")}`;
+  });
+  const turnSections = runs.map((run, index) => {
+    const lines = (run.turns || []).map((turn) => `- t${turn.turn} ${turn.input} -> ${String(turn.text || "").replace(/\s+/g, " ").slice(0, 200)}`);
+    return `## Turns — replicate ${run.replicate ?? index + 1}\n\n${lines.length ? lines.join("\n") : "None"}`;
+  });
+  const markdownReport = {
+    ...report,
+    replicates: runs.map(({ prompts, ...run }) => run),
+  };
+  return `# blind-player E2E evaluation\n\nRejected turns: ${rejectedCount}\n\n## Unseen commands\n\n${unseen.length ? unseen.join("\n") : "None"}\n\n${turnSections.length ? turnSections.join("\n\n") : "## Turns\n\nNone"}\n\n${semanticSections.length ? semanticSections.join("\n\n") : "## Semantic reveal fallback\n\nThe server did not return it."}\n\n${JSON.stringify(markdownReport, null, 2)}\n`;
 }
