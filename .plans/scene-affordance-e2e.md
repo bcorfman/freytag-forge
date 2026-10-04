@@ -1,27 +1,37 @@
 # Scene affordance E2E tests: plan
 
-Status (2026-10-03): L0, L1 and L2 are built and committed on branch
-`claude/affordance-l0` (not merged). L1 has had one live smoke (1A, 1
-replicate). L2 and L3 are built and hermetically tested, never run live.
-D1-D6 took the recommended defaults (Brandon: "Keep going until you get to
-L2").
+Status (2026-10-04): L0-L2 are merged (PR 510, main 3a82bc5). Brandon's rule:
+if a player who reads only the screen cannot move from scene to scene, or the
+narration does not place items correctly, the game is broken. Root causes
+found in 1A and fixed in PR 510: (1) reveals unlocked only on exact authored
+word groups, so natural phrasings missed and the narrator invented filler;
+(2) the gate cue started at turn 10 of 13 and the narrator only paraphrased
+it; (3) the 1A chain (card, then the laptop in the truck) was never pointed
+at. Fixes: matcher synonym classes, cue from turn 1 appended verbatim, a
+strict Jev fallback match (cap 6 candidates, 40 calls a session,
+`FREYTAG_SEMANTIC_REVEAL=0` disables), and 1A cue/reveal text. Staging check
+on 3a82bc5, 1A, 3 replicates each: L1 first-step items shown by the deadline
+laptop 3/3 (was 0/3), drawer 3/3 (was 0/3), workstation 3/3, chair 2/3. L2:
+2 of 3 replicates left on turn 8 by play (the old runs always left on the
+turn-14 timer); r2 missed the card on 'initials-marked drawer' and followed a
+clue the narrator invented. Follow-up on branch `claude/gates-judge-names`
+(not yet merged or measured): the Jev question now carries entity names and
+aliases, a two-sentence narrator rule stops invented clues when a command
+names a thing that holds an unrevealed reveal, and the L2 silent-transition
+flag ignores affordances absent from the shown list.
 
-## Resume here (2026-10-02)
+## Resume here (2026-10-04)
 
-Brandon asked for E2E tests that prove the player is *shown* what each
-scene transition needs: the things, places and people the player must act
-on, the reveals that set the transition's facts, and the transition itself.
-His example: in 1A Kristin should see the workstation and the KMS drawer in
-the kitchen, but the narration never shows them, so the player cannot know
-what to do. The example is one of many; the tests must be derived from the
-story package for every scene and every story, not written for 1A.
-
-Next (resume here): (1) run the L2 smoke, 1A, 1 replicate, then 3; (2) run
-L1 on 1A with 3 replicates to see if the drawer miss repeats; (3) extend the
-L0 map so later scenes have gates (see "Open" below); (4) merge the branch.
-Commands are in `frontend/e2e/affordances.spec.js` and `blind-player.spec.js`
-headers; run them per `docs/testing-runbook.md` section 6 pattern
-(`E2E_TURN_TIMEOUT_MS=90000`, source `.env`). L2 needs `OPENAI_API_KEY`.
+Next: (1) Brandon merges the `claude/gates-judge-names` PR and waits for the
+staging deploy; (2) rerun L2 on 1A with 3 replicates, then more, and L1 with 3;
+read results with `scripts/ringer/affordance/digest.py`; (3) extend L0 and run
+L1/L2 on 1B and later (the map has gates only in 1A, 2A, 2C; the rest leave on
+bridge events); (4) the other 67 reveals have the same word-group structure,
+so check each scene's gate commands with natural phrasings. L2 runs need
+`scripts/ringer/affordance/scene-affordance-l2-live.sh <replicates>`: it raises
+staging's per-session turn cap (default 10 a minute) for the run and restores
+it, and waits for the redeploy to settle. Unseen-word flags on verbs such as
+retrieve and insert are false positives; ignore them.
 
 ## Built (2026-10-03)
 

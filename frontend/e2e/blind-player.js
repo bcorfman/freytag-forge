@@ -160,7 +160,13 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
     if (run.length >= 3) stuckRuns.push(run.map(({ turn, input, text }) => ({ turn, input, text })));
   }
   const gateEarned = (sceneEntry?.gates || []).filter((gate) => (gate.sources || []).some((source) => source.player_earned));
-  const silentTransition = transitionIndex >= 0 && gateEarned.some((gate) => (gate.affordances || []).some((item) => shown.find((entry) => entry.entity_id === item.entity_id)?.first_shown_turn == null));
+  const firstStepIds = new Set(firstStep.map((item) => item.entity_id));
+  const shownById = new Map(shown.map((entry) => [entry.entity_id, entry]));
+  const silentTransition = transitionIndex >= 0 && gateEarned.some((gate) => (gate.affordances || []).some((item) => {
+    if (!firstStepIds.has(item.entity_id)) return false;
+    const entry = shownById.get(item.entity_id);
+    return entry != null && entry.first_shown_turn == null;
+  }));
   const unseenCommands = [];
   for (const [index, turn] of turns.entries()) {
     const readText = [openingText, ...turns.slice(0, index).filter((candidate) => candidate.rejected !== true).map((candidate) => candidate.text)].filter(Boolean).join(" ");
