@@ -3179,7 +3179,7 @@ oldest first:
   driver's seat and the pick-up step.
 
 The full suite passes and ruff is clean at d22a221. The shipped
-narrator's 1A baseline (`.plans/world-model-s1/narrator-1a-baseline.json`)
+narrator's 1A baseline (`scripts/ringer/world-model-s1/narrator-1a-baseline.json`)
 matches the code. The results of every smoke are recorded under tasks E,
 F and G in section 11.
 

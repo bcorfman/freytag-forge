@@ -1,0 +1,22 @@
+{
+ "run_name": "freytag-affordance-live",
+ "workdir": "/home/bcorfman/dev/ringer-work/affordance-live",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "l1-1a-x3",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 2400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted L1 @affordances test on staging for scene 1A with 3 replicates and checks it completed and wrote its report. Reply with the single word: ready.",
+   "check": "bash -c 'set -o pipefail; cd /home/bcorfman/dev/freytag-forge && set -a && . ./.env && set +a && cd frontend && E2E_TURN_TIMEOUT_MS=90000 E2E_AFFORDANCE_SCENES=1A E2E_AFFORDANCE_REPLICATES=3 npx playwright test --grep @affordances 2>&1 | tail -15; rc=${PIPESTATUS[0]}; cp ../artifacts/e2e-affordances.json ../artifacts/e2e-affordances.md /home/bcorfman/dev/ringer-work/affordance-live/ 2>/dev/null; [ $rc -eq 0 ] && test -s ../artifacts/e2e-affordances.json && python3 ../scripts/ringer/affordance/digest.py ../artifacts/e2e-affordances.json'",
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/artifacts/e2e-affordances.json"
+   ],
+   "verified": "3 hosted L1 replicates of 1A completed and the report was written."
+  }
+ ]
+}

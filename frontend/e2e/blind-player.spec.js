@@ -47,6 +47,7 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
   const ceiling = Math.min(20, pacing.scenePoint(sceneId, "handoff").target_turn + 2);
   const runs = [];
   for (let replicate = 1; replicate <= replicates; replicate += 1) {
+    let openingText = "";
     if (sceneId !== "1A") {
       const targetIndex = pacing.sceneOrder.indexOf(sceneId);
       await walkScenes({
@@ -58,21 +59,39 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
         startSession: startSceneSession,
         submitTurn,
         resolveWarning: resolveWarningIfPresent,
+        onOpening: ({ scene_id, text }) => { if (scene_id === sceneId) openingText = text; },
       });
     } else {
       await startSceneSession(page);
+      openingText = (await page.locator(".entry-output").first().textContent())?.trim() || "";
     }
     const firstStep = firstStepAffordances(map, sceneId);
     const later = laterAffordances(map, sceneId);
     const turns = [];
     const transcripts = [];
     const counter = { calls: 0 };
+    let consecutiveRejections = 0;
+    let stoppedOnRejections = false;
     for (let turn = 1; turn <= ceiling; turn += 1) {
       const transcript = (await page.locator("#transcript").textContent()) || "";
       const status = (await page.locator("#status-line").textContent()) || "";
       const input = await askPlayer({ transcript, status, counter });
-      const payload = await submitTurn(page, input);
+      let payload;
+      try {
+        payload = await submitTurn(page, input);
+      } catch (error) {
+        const rejection = String(error?.message || "").match(/HTTP 409:\s*([\s\S]*)$/);
+        if (!rejection) throw error;
+        turns.push({ turn, input, rejected: true, rejection: rejection[1], text: "", state: null, grounding_ids: [], delivery: {} });
+        consecutiveRejections += 1;
+        if (consecutiveRejections >= 3) {
+          stoppedOnRejections = true;
+          break;
+        }
+        continue;
+      }
       await resolveWarningIfPresent(page);
+      consecutiveRejections = 0;
       const text = (payload.segments || [])
         .filter((segment) => ["narration", "action", "dialogue", "speech"].includes(segment.kind))
         .map((segment) => segment.text).filter(Boolean).join(" ").trim();
@@ -83,12 +102,13 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
     runs.push({
       replicate,
       scene: sceneId,
+      opening_text: openingText,
       transcript: transcripts,
       commands: turns.map((turn) => turn.input),
-      ...analyseRun({ sceneEntry, nextSceneEntry, turns, firstStep, later, sceneMapSources: sceneEntry.gates?.flatMap((gate) => gate.sources || []) || [] }),
+      turn_count: turns.length,
+      ...analyseRun({ sceneEntry, nextSceneEntry, turns, firstStep, later, openingText, stopped_on_rejections: stoppedOnRejections, sceneMapSources: sceneEntry.gates?.flatMap((gate) => gate.sources || []) || [] }),
     });
   }
   const report = { story_id: map.story_id, scene: sceneId, replicates: runs, aggregate: aggregate(runs) };
   await writeCategoryReport("blind-player", { ...report, markdown: formatMarkdown(report) });
 });
-

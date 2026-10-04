@@ -32,7 +32,7 @@ headers; run them per `docs/testing-runbook.md` section 6 pattern
 | L2/L3 `@blind-player` | `frontend/e2e/blind-player.js`, `blind-player.spec.js` + node tests | a354eb0 | node tests; listed by Playwright; never run live |
 
 Ringer runs: `freytag-affordance-l0` (L0, L0b), `-l1` (L1, L1b), `-l2`.
-Manifests and checks are `.plans/scene-affordance-l*.json` and `*-check.sh`.
+Manifests and checks are `scripts/ringer/affordance/scene-affordance-l*.json` and `*-check.sh`; the live-run manifests end in `-live`, and `digest.py` there summarises an L1 or L2 report.
 
 ## First live result (L1, 1A, 1 replicate, staging, 2026-10-03)
 

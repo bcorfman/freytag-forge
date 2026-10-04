@@ -97,6 +97,24 @@ function contentWords(value) {
   return new Set((normalizeText(value).match(/[a-z]{4,}/g) || []));
 }
 
+const unseenStopWords = new Set([
+  "the", "a", "an", "my", "of", "for", "in", "on", "to", "and", "with", "from", "at", "it", "its", "this", "that",
+  "search", "examine", "inspect", "read", "open", "take", "pull", "look", "check", "use", "go", "walk", "talk", "ask",
+  "question", "investigate", "clues", "around", "into", "out", "up", "down", "off", "over",
+]);
+
+function unseenWordMatch(word, readWords) {
+  if (readWords.has(word)) return true;
+  if (word.endsWith("s") && word.length > 3 && readWords.has(word.slice(0, -1))) return true;
+  return [...readWords].some((candidate) => candidate.endsWith("s") && candidate.length > 3 && candidate.slice(0, -1) === word);
+}
+
+export function unseenTerms({ command = "", readText = "" } = {}) {
+  const words = normalizeText(command).replace(/([a-z]+)'s\b/g, "$1").match(/[a-z]{3,}/g) || [];
+  const readWords = new Set(normalizeText(readText).match(/[a-z]{3,}/g) || []);
+  return [...new Set(words.filter((word) => !unseenStopWords.has(word) && !unseenWordMatch(word, readWords)))];
+}
+
 function realizationMatch(text, realization) {
   const words = contentWords(realization);
   if (!words.size) return false;
@@ -108,18 +126,26 @@ function entryText(scene) {
   return scene?.entry_text || scene?.entry_material?.text || scene?.entry_material?.bridge_text || scene?.entry_material?.entry_text || "";
 }
 
-export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep = [], later = [], sceneMapSources = [] } = {}) {
+export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep = [], later = [], sceneMapSources = [], openingText = "", stopped_on_rejections = false } = {}) {
   const affordances = [...new Map([...firstStep, ...later].map((item) => [item.entity_id, item])).values()];
-  const transitionIndex = turns.findIndex((turn) => turn.state?.scene_id && turn.state.scene_id !== sceneEntry?.scene_id);
-  const transitionTurn = transitionIndex < 0 ? null : turns[transitionIndex].turn;
-  const upto = transitionIndex < 0 ? turns.length : transitionIndex + 1;
+  const rejectedTurns = turns.filter((turn) => turn.rejected === true).map(({ turn, input, rejection }) => ({ turn, input, rejection }));
+  const committedTurns = turns.filter((turn) => turn.state != null && turn.rejected !== true);
+  const transitionIndex = committedTurns.findIndex((turn) => turn.state.scene_id && turn.state.scene_id !== sceneEntry?.scene_id);
+  const transitionTurn = transitionIndex < 0 ? null : committedTurns[transitionIndex].turn;
+  const upto = transitionTurn == null ? turns.length : turns.findIndex((turn) => turn.turn === transitionTurn) + 1;
   const shown = affordances.map((item) => {
-    const hit = turns.slice(0, upto).find((turn) => mentions(turn.text, item.terms || [item.name, ...(item.aliases || [])]));
-    return { entity_id: item.entity_id, first_shown_turn: hit?.turn ?? null };
+    const entries = [{ turn: 0, text: openingText }, ...turns.slice(0, upto).filter((turn) => turn.rejected !== true)];
+    const hit = entries.find((turn) => mentions(turn.text, item.terms || [item.name, ...(item.aliases || [])]));
+    return {
+      entity_id: item.entity_id,
+      first_shown_turn: hit?.turn ?? null,
+      ...(firstStep.some((candidate) => candidate.entity_id === item.entity_id) ? { deadline_met: Boolean(hit && hit.turn <= 1) } : {}),
+    };
   });
   const stuckTurns = [];
   let previous = null;
   for (const turn of turns) {
+    if (turn.rejected === true || turn.state == null) continue;
     const names = [...firstStep, ...later];
     const mentionsAffordance = names.some((item) => mentions(turn.input, item.terms || [item.name, ...(item.aliases || [])]));
     const addedStorylet = newIds(turn, previous, "fired_storylet_ids").length > 0;
@@ -134,27 +160,34 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
     if (run.length >= 3) stuckRuns.push(run.map(({ turn, input, text }) => ({ turn, input, text })));
   }
   const gateEarned = (sceneEntry?.gates || []).filter((gate) => (gate.sources || []).some((source) => source.player_earned));
-  const silentTransition = transitionIndex >= 0 && gateEarned.some((gate) => (gate.affordances || []).some((item) => !shown.find((entry) => entry.entity_id === item.entity_id)?.first_shown_turn));
+  const silentTransition = transitionIndex >= 0 && gateEarned.some((gate) => (gate.affordances || []).some((item) => shown.find((entry) => entry.entity_id === item.entity_id)?.first_shown_turn == null));
+  const unseenCommands = [];
+  for (const [index, turn] of turns.entries()) {
+    const readText = [openingText, ...turns.slice(0, index).filter((candidate) => candidate.rejected !== true).map((candidate) => candidate.text)].filter(Boolean).join(" ");
+    const unseen = unseenTerms({ command: turn.input, readText });
+    if (unseen.length) unseenCommands.push({ turn: turn.turn, input: turn.input, unseen_terms: unseen });
+  }
   const delivery = [];
   const pacing = [];
-  for (const turn of turns) {
-    const previousTurn = turns[turns.indexOf(turn) - 1];
+  let previousTurn = null;
+  for (const turn of committedTurns) {
     const newStorylets = newIds(turn, previousTurn, "fired_storylet_ids");
     const newGrounding = (turn.grounding_ids || []).filter((id) => !(previousTurn?.grounding_ids || []).includes(id));
     for (const id of [...newStorylets, ...newGrounding]) delivery.push({ source_id: id, turn: turn.turn, must_convey_misses: turn.delivery?.must_convey_misses || [] });
-    for (const id of newIds(turn, turns[turns.indexOf(turn) - 1], "fired_pacing_event_ids")) {
+    for (const id of newIds(turn, previousTurn, "fired_pacing_event_ids")) {
       const source = sourceForId(sceneEntry, id) || sceneMapSources.find((candidate) => candidate.id === id);
       const realizations = source?.realizations || source?.realization_texts || [];
       for (const realization of Array.isArray(realizations) ? realizations : [realizations]) pacing.push({ source_id: id, turn: turn.turn, matched: realizationMatch(turn.text, realization), realization });
     }
+    previousTurn = turn;
   }
   const nextEntry = normalizeText(entryText(nextSceneEntry));
-  const transition = transitionIndex < 0 ? null : turns[transitionIndex];
+  const transition = transitionIndex < 0 ? null : committedTurns[transitionIndex];
   const transitionText = normalizeText(transition?.text);
   const entryStart = transitionText.lastIndexOf(nextEntry);
   const finalSegmentMatches = Boolean(nextEntry && transitionText.endsWith(nextEntry));
   const transitionPrefixContainsEntry = entryStart > 0 && transitionText.slice(0, entryStart).includes(nextEntry);
-  const priorContainsEntry = nextEntry ? turns.slice(0, transitionIndex < 0 ? turns.length : transitionIndex).some((turn) => normalizeText(turn.text).includes(nextEntry)) : false;
+  const priorContainsEntry = nextEntry ? committedTurns.slice(0, transitionIndex < 0 ? committedTurns.length : transitionIndex).some((turn) => normalizeText(turn.text).includes(nextEntry)) : false;
   const l3 = {
     delivery,
     must_convey: delivery,
@@ -162,22 +195,32 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
     pacing_realizations: pacing,
     transition: { turn: transitionTurn, final_segment_matches_entry: finalSegmentMatches, prior_contains_entry: priorContainsEntry, earlier_segment_contains_entry: transitionPrefixContainsEntry, no_skip_or_restart: finalSegmentMatches && !priorContainsEntry && !transitionPrefixContainsEntry },
   };
-  return { transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, l3 };
+  return { stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, l3 };
 }
 
 export function aggregate(runs = []) {
   const count = runs.length || 1;
   const shown = [...new Set(runs.flatMap((run) => (run.affordances || []).map((item) => item.entity_id)))];
+  const rejectedCount = runs.reduce((sum, run) => sum + (run.rejected_count ?? run.rejected_turns?.length ?? 0), 0);
+  const turnCount = runs.reduce((sum, run) => sum + (run.turn_count ?? 0), 0);
+  const commandCount = runs.reduce((sum, run) => sum + (run.commands?.length ?? run.turns?.length ?? run.turn_count ?? 0), 0);
   return {
     replicates: runs.length,
     transition_rate: runs.filter((run) => run.transition_fired).length / count,
     mean_transition_turn: runs.filter((run) => run.transition_turn != null).reduce((sum, run) => sum + run.transition_turn, 0) / (runs.filter((run) => run.transition_turn != null).length || 1),
-    affordances_shown_by_deadline_rate: Object.fromEntries(shown.map((id) => [id, runs.filter((run) => run.affordances?.find((item) => item.entity_id === id)?.first_shown_turn != null).length / count])),
+    affordances_shown_by_deadline_rate: Object.fromEntries(shown.map((id) => [id, runs.filter((run) => run.affordances?.find((item) => item.entity_id === id)?.deadline_met).length / count])),
     stuck_run_count: runs.reduce((sum, run) => sum + (run.stuck_runs?.length || 0), 0),
     silent_transition_rate: runs.filter((run) => run.silent_transition).length / count,
+    rejected_count: rejectedCount,
+    rejected_turn_rate: rejectedCount / (turnCount || 1),
+    stopped_on_rejections_count: runs.filter((run) => run.stopped_on_rejections).length,
+    unseen_command_rate: runs.reduce((sum, run) => sum + (run.unseen_command_count || 0), 0) / (commandCount || 1),
   };
 }
 
 export function formatMarkdown(report) {
-  return `# blind-player E2E evaluation\n\n${JSON.stringify(report, null, 2)}\n`;
+  const runs = report.replicates || [];
+  const rejectedCount = report.aggregate?.rejected_count ?? runs.reduce((sum, run) => sum + (run.rejected_count ?? run.rejected_turns?.length ?? 0), 0);
+  const unseen = runs.flatMap((run) => (run.unseen_commands || []).map((item) => `- Turn ${item.turn}: ${item.input} — unseen: ${item.unseen_terms.join(", ")}`));
+  return `# blind-player E2E evaluation\n\nRejected turns: ${rejectedCount}\n\n## Unseen commands\n\n${unseen.length ? unseen.join("\n") : "None"}\n\n${JSON.stringify(report, null, 2)}\n`;
 }
