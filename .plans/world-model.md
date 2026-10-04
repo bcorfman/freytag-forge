@@ -5261,8 +5261,9 @@ decide 1d from the refusals and story breaks that S4d records.
     - r2 t10: the reply keeps the thrown phone `held_by: Kristin`
       (reply error, unrelated).
     Net: three t9 fixes against three r1 misses (one invention cascading
-    to t7, one echo). **Open:** whether to keep b867fb5; the echo and
-    the chair invention are its costs.
+    to t7, one echo). **Kept (Brandon chose, 2026-10-03).** Its known
+    costs, to watch in later runs: an echoed current `state` and an
+    unnarrated chair state.
 
 ## 12. Decisions for Brandon
 
