@@ -219,6 +219,9 @@ items:
 - id: logistics_terminal
   name: logistics terminal
   fixed: true
+- id: service_entrance
+  name: service entrance
+  fixed: true
 - id: hideout_servers
   name: servers
   fixed: true
