@@ -86,8 +86,15 @@ for the token (e39882c, suite 1065, payloads unchanged but the token's
 THINGS state), merged as PR 504 (6b6a843; main CI and staging deploy
 passed). Brandon's knock-out (NPC axes) and list-form `state` built
 as 7f01a75 on `claude/s4f-npc-axes`: recorded knock-out replies raise
-the break 14/15, controls 0/15. Open: the prose echo, the false
-knock-out pole (1/15), a live check of the game break, merge.
+the break 14/15, controls 0/15; merged as PR 506 (8b7fafa). Live
+check (2026-10-03): token break 3/3 and proceed commits it, controls
+0/6; knock-out break 1/3, one miss from the match call making "man" a
+new person (parked with the echo and false pole; Brandon stopped
+scene-1 work). Runtime sweep of all seven later scenes x3: the runtime
+path matches the bench path once a scene-exit bench artifact is left
+out; 1B-1C is under the bar at about 80% (always was). Capture is on
+in production (Brandon); the exit-turn bench fix built as deb5cb6 and
+measured live.
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -104,7 +111,7 @@ continuity plan; this plan defines the world they write into.
 
 ## Resume here (2026-10-03)
 
-**Latest (2026-10-03, branch `claude/world-state-e2e`).** S4e is done:
+**Latest (2026-10-03, branch `claude/s4f-live-check`).** S4e is done:
 `@world-state` passes on staging (b24fb4d) with
 `FREYTAG_WORLD_CAPTURE=1` (Brandon verified the variable). Brandon kept
 b867fb5. S4f: 1d is refuse and record (no regeneration); the
@@ -116,11 +123,22 @@ reliably and never on a control, but the prose echoes the field
 b867fb5 wording; steps 1-4 built for the token as e39882c, merged as
 PR 504 (6b6a843; main CI and staging deploy passed, no staged E2E
 run). NPC axes for Brandon's knock-out and list-form `state` built as
-7f01a75 on `claude/s4f-npc-axes` (unpushed; replay 14/15 knock-outs
-break, 0/15 controls). **Resume at the S4f open items** (section 11,
-after "S4f NPC axes and list state done"): the prose echo, the false
-knock-out pole, a live check of the game break, and merging 7f01a75.
-Branch commits are plan-only and unpushed. The notes below are older.
+7f01a75, merged as PR 506 (8b7fafa; main CI and staging deploy
+passed). Live check done (section 11, "S4f live check"): the token
+break fires 3/3 with proceed committing it, controls 0/6; the
+knock-out breaks 1/3, and r1 is a miss because the match call said
+"man" was new, so a second man was knocked out and Brandon stayed
+conscious. Brandon then stopped scene-1 work (those three items are
+parked) and asked for a win across all scenes. Runtime sweep done
+(section 11, "Runtime sweep, all scenes"): the runtime path matches
+the bench path in every scene once a bench artifact on scene-exit
+turns is left out; 1B-1C is the one scene under the bar (about 80%,
+unchanged since 48eb838). Brandon turned `FREYTAG_WORLD_CAPTURE` on
+in production. The bench exit-turn fix is built (deb5cb6) and measured
+live: exit turns now score right (2A 3/3, 3A 3/3). **Resume at:**
+merging `claude/s4f-live-check`, then Brandon's call on what is next
+(1B-1C at about 80% is the one scene under the bar). The notes below
+are older.
 
 
 **Checked against the results on disk (2026-10-02).** Every figure
@@ -4869,6 +4887,88 @@ the task says):
   not (exact pole or alias only) and stay conditions.
   Still open: the prose echo; the false knock-out pole (1/15); a live
   check of the game break (the bench has no game-break path); merge.
+  Merged as PR 506 (8b7fafa, 2026-10-03); main CI passed and staging
+  deployed.
+
+  *S4f live check (2026-10-03; Ringer `freytag-s4f-live`, one attempt
+  each; `~/dev/ringer-work/freytag-s4f-live/live_break.py`, `x3.txt`,
+  `x3.json`; all narrations read by hand).* The real runtime turn on
+  8b7fafa (8b narrator through the Worker, Jev through Cloudflare),
+  seeded at 1B with the bench's bare entry, one setup turn ("Look
+  around the bench for anything Michelle left."), then one command, 3
+  sessions each. On a break the script answers proceed. The bare entry
+  does not carry Michelle's phone from 1A, so the first smoke's
+  phone-check setup turn was rejected as a leak; it was dropped.
+  - "Snap the transit token in half.": the prose snaps it 3/3; the reply
+    gives `"state": "destroyed"` 3/3; the break fires on `transit_card`
+    3/3, the turn is pending, and proceed commits it (token destroyed,
+    `transit_card` unavailable). No state echo in the prose (0/3).
+  - "Look closely at the transit token.": no break 3/3 (`intact`).
+  - "Knock the man out.": break on `brandon` 1/3. r2 is right: the match
+    call maps "man" to "the man watching Kristin", Jev confirms, proceed
+    leaves Brandon unconscious. r3 is right not to break: the prose has
+    Kristin hesitate and not strike. **r1 is a miss.** The prose knocks
+    him out and the reply gives `"man": {"condition": ["unconscious"]}`,
+    but the match call answers `"same_as": {"man": "new"}`. The engine
+    creates a new person `n_man_1`, marks that one unconscious, and
+    Brandon stays conscious, so nothing protects him. The match call's
+    prompt was not recorded, so it is not read yet.
+  - "Ask the man who he is.": no break 3/3 (the narrator never has him
+    answer in any of the three; that is the known talk gap, not S4f).
+  Reading: the token break works live end to end. The knock-out break
+  depends on the match call tying "the man" to Brandon's unnamed label,
+  and it said "new" in 1 of 2 real knock-outs. The same family as
+  "Rebecca's office" made new and JANUS taken as a place.
+  **Brandon (2026-10-03): stop spending time on scene 1.** The
+  knock-out match miss, the state echo and the false knock-out pole are
+  parked as known gaps; reopen only if real play shows them.
+
+  *Runtime sweep, all scenes (2026-10-03, on 8b7fafa; Ringer
+  `freytag-runtime-sweep`, every task one attempt;
+  `~/dev/ringer-work/freytag-runtime-sweep/`: `compare.py`,
+  `compare_noexit.py`).* The seven scene variations copied with
+  `"runtime": true` (`bench/variations/item-facts-world-*-runtime.json`,
+  otherwise identical), x3 each, after a 2A smoke. Results in
+  `bench/results/runtime-sweep-<scene>-x3`.
+  - Raw, whole state per turn: runtime 185/222 (83.3%) vs the scenes'
+    last bench-path results 156/166 (94.0%), lower in every scene.
+  - **Most of the gap is a bench artifact on the scene-exit turn.** In
+    runtime mode capture applies the reply, then the authored transition
+    moves Kristin into the next scene (the right game state). The bench
+    records that place but judges against the narration with the entry
+    segment stripped (`segments[:-1]`), so the move reads as invented.
+    The bench path applies the reply after the transition, so it puts
+    her back where the prose left her. Exit turns fail 3/3 in 2A, 2B, 2C
+    and 3A, 2/3 in 3B.
+  - Exit turns left out of both arms: 2A 17/18 vs 17/18, 2B 7/7 vs
+    21/21, 2C 21/21 vs 21/21, 3A 26/27 vs 27/27, 3B 24/24 vs 22/24. Only
+    1B-1C (18/19 vs 45/57) and 3C (34/36 vs 30/36) stayed lower.
+  - Control, bench path on the same code (`benchpath-now-1b-1c-x3`,
+    `benchpath-now-3c-x3`): 1B-1C 45/57 (the same), 3C 32/36. So the
+    runtime path matches the bench path in every scene.
+  - The 1B-1C baseline (19/20) was one replicate. Its commit 48eb838
+    rerun x3 (`old-48eb838-1b-1c-x3`) gives 49/60 (82%) vs today's
+    47/60 (bench path) and 46/60 (runtime). No regression from the
+    scene-1 work; 1B-1C has always been about 80% and is the one scene
+    under the bar. Its misses are mostly Kristin's own moves left
+    unrecorded (`Kristin:moved` with `missed_change`).
+  - Pooled with exit turns left out: runtime 183/204 (89.7%); without
+    1B-1C, 138/147 (93.9%).
+  - **Brandon (2026-10-03): turned `FREYTAG_WORLD_CAPTURE` on in
+    production, and asked for the exit-turn fix.**
+  - *Exit-turn fix done: deb5cb6* (Ringer `freytag-exit-turn`, Luna,
+    one attempt; reviewed, applied unchanged). `WorldCapture.after_commit`
+    records `facts_after` (things given plus changed this turn), taken
+    before the authored transition; the runtime bench uses it on a turn
+    that leaves the scene. Game state unchanged. The check proved the new
+    bench test fails on the old code; suite, ruff, shipped payloads and
+    bench prompts unchanged.
+    Live rerun (`runtime-sweep-2a-x3-exitfix`, `-3a-x3-exitfix`): 2A
+    19/21 (was 17/21), exit turns 3/3 (was 0/3); 3A 27/27 (was 27/30),
+    exit turns 3/3. New in this 3A run only: t9 "Hand Brandon the
+    emergency override codes." rejected 3/3 as a leak ("rebecca"),
+    0/3 in the sweep an hour before; the fix cannot change prompts, so
+    it is narrator drift. Not chased.
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.

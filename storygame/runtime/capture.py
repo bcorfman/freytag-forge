@@ -104,6 +104,8 @@ class WorldCapture:
                     for refusal in refusals
                 ),
             ]
+        things_given = set(self.last_before.get("things_given", ())) if self.last_before is not None else set()
+        facts_after = self.provider.facts_for_names(things_given | self.provider._changed_last_turn, structural=True)
         record = {
             "issues": _json_value(issues),
             "unplaced": _json_value(self.provider.last_item_facts_unplaced()),
@@ -111,6 +113,7 @@ class WorldCapture:
             "raw": _json_value(raw),
             "match_info": _json_value(self.provider.last_item_facts_match()),
             "narration_prompt": narration_prompt,
+            "facts_after": _json_value(facts_after),
         }
         self.last_after = record
         self.provider.prior_steps = ()

@@ -1,0 +1,36 @@
+{
+  "name": "item-facts-world-2b-runtime",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 10,
+  "entry_state": "thorough",
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "runtime": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "system_prompt": {
+    "constant_rules_in_system": true,
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+  },
+  "scripts": {
+    "2B": [
+      {
+        "name": "archive-evidence",
+        "inputs": [
+          "Search the archive terminals for Michelle's record.",
+          "Pull up my own record on the archive terminals.",
+          "Search the development records for Brandon's name.",
+          "Show Brandon his name in the development records.",
+          "Open the corrupted prisoner files on the medical terminal.",
+          "Compare the corrupted files with Michelle's private notes.",
+          "Walk back into the infrastructure corridors.",
+          "Lead Brandon back into the records archive.",
+          "Read the maintenance reports on the medical terminal.",
+          "Copy the selection files from the archive terminals."
+        ]
+      }
+    ]
+  }
+}

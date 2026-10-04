@@ -963,7 +963,11 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 fact_issues = after_record.get("issues", [])
                 match_info = after_record.get("match_info", match_info)
                 after_names = set(things_given) | set(provider._changed_last_turn)
-                facts_after = provider.facts_for_names(after_names, structural=True)
+                facts_after = (
+                    after_record["facts_after"]
+                    if entered and "facts_after" in after_record
+                    else provider.facts_for_names(after_names, structural=True)
+                )
                 item_facts_names: dict[str, list[str]] = {}
                 world = provider._world()
                 for facts in (facts_before, facts_after):

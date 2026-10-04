@@ -1,0 +1,58 @@
+{
+  "name": "item-facts-world-1b-1c-runtime",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 10,
+  "entry_state": "thorough",
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "runtime": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "continue_to": {
+    "scene": "1C",
+    "fixed_turns": 10,
+    "script": "terminal-descent"
+  },
+  "system_prompt": {
+    "constant_rules_in_system": true,
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+  },
+  "scripts": {
+    "1B": [
+      {
+        "name": "dead-drop",
+        "inputs": [
+          "Look under the park bench.",
+          "Pick up the transit token from under the bench.",
+          "Pick up the handwritten number sequence.",
+          "Put Michelle's photograph in my pocket.",
+          "Compare the number sequence with the transit token.",
+          "Walk across the park to the man watching me.",
+          "Show the man Michelle's photograph.",
+          "Hand the man the number sequence.",
+          "Walk back to my truck.",
+          "Put the transit token in my truck."
+        ]
+      }
+    ],
+    "1C": [
+      {
+        "name": "terminal-descent",
+        "inputs": [
+          "Take the transit token out of my truck.",
+          "Study the fresh tire tracks by the loading docks.",
+          "Open the service entrance with the transit token.",
+          "Climb down into the service level.",
+          "Crawl into the observation shaft.",
+          "Read the identification numbers on the prisoners below.",
+          "Climb back out of the observation shaft.",
+          "Go up to the logistics terminal.",
+          "Search the logistics terminal for transfer records.",
+          "Hand Brandon the transit token."
+        ]
+      }
+    ]
+  }
+}

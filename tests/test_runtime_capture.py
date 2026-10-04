@@ -87,6 +87,21 @@ def test_pickup_reaches_next_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "Held by: Kristin" in provider._things_block(narration=True)
 
 
+def test_after_commit_records_facts_after(monkeypatch: pytest.MonkeyPatch) -> None:
+    _stub_request(monkeypatch)
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = _provider(
+        state,
+        {"refers": ["Michelle's phone"], "same_as": {}},
+        {**_turn("Kristin finds Michelle's phone."), "item_facts": {"Michelle's phone": {"place": "kitchen"}}},
+    )
+    capture = _capture(state, provider)
+
+    RuntimeEngine(state, provider, capture=capture).turn("Inspect Michelle's phone.")
+
+    assert capture.last_after["facts_after"]["Michelle's phone"]["place"] == "kitchen"
+
+
 def test_rejected_turn_changes_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
     _stub_request(monkeypatch)
     state = RuntimeState.bootstrap(PACKAGE)

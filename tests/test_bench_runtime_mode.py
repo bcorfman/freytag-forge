@@ -16,6 +16,7 @@ import pytest
 import bench.core as core
 import bench.jev_use as jev_use
 from storygame.runtime.cloudflare import CloudflareTurnProvider
+from storygame.runtime.contracts import NarrationSegment
 from storygame.runtime.world_model import world_for
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -94,6 +95,24 @@ def test_runtime_mode_matches_bench_mode(monkeypatch: pytest.MonkeyPatch, fake_j
     assert [[turn[field] for field in fields] for turn in normal["turns"]] == [
         [turn[field] for field in fields] for turn in runtime["turns"]
     ]
+
+
+def test_runtime_mode_exit_turn_records_facts_before_transition(
+    monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]
+) -> None:
+    def leave_scene(engine):
+        world = world_for(engine.state.package, engine.state.facts)
+        assert world.move("kristin", "los_angeles_park").ok
+        engine.state.current_scene_id = "1B"
+        return (NarrationSegment(kind="narration", text="Kristin reaches the park."),)
+
+    monkeypatch.setattr(core.RuntimeEngine, "_apply_authored_transition", leave_scene)
+    result = _run(monkeypatch, RUNTIME, turns=1)
+    turn = result["turns"][0]
+
+    assert turn["left_scene"] is True
+    assert turn["item_facts_after"]["Kristin"] == turn["item_facts_before"]["Kristin"]
+    assert turn["item_facts_after"]["Kristin"]["place"] != "Los Angeles park"
 
 
 def test_runtime_mode_records_narration_prompt(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:

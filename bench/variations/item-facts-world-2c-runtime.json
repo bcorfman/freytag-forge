@@ -1,0 +1,36 @@
+{
+  "name": "item-facts-world-2c-runtime",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 10,
+  "entry_state": "thorough",
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "runtime": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "system_prompt": {
+    "constant_rules_in_system": true,
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+  },
+  "scripts": {
+    "2C": [
+      {
+        "name": "purge-clock",
+        "inputs": [
+          "Read the transfer orders moving through the command levels.",
+          "Ask Brandon what he is hiding.",
+          "Search the command levels for the purge schedule.",
+          "Check the copied files for proof of the purge order.",
+          "Argue with Brandon about sending the copied files now.",
+          "Search the maintenance reports for Michelle's route marker.",
+          "Decode Michelle's coded message.",
+          "Lead Brandon down the upper command corridors.",
+          "Hand Brandon the copied files.",
+          "Follow Michelle's route through the maintenance network."
+        ]
+      }
+    ]
+  }
+}
