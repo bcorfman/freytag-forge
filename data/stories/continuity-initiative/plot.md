@@ -109,7 +109,7 @@ bridge_text:
 
 **Plot:** Kristin arrives at Michelle's house shortly after the mass disappearance and discovers that Michelle is missing. Evidence inside the house suggests that she could have been taken rather than simply vanishing with the others.
 
-**Hidden canon:** Michelle hid a memory card for Kristin, taped beneath the workstation drawer carved with Kristin's initials, KMS. It stays hidden until Kristin finds it.
+**Hidden canon:** Michelle hid a memory card for Kristin, taped beneath the drawer in Michelle's workstation. It stays hidden until Kristin finds it.
 
 ### Scene 1A.1 — Michelle Is Gone
 
@@ -129,7 +129,7 @@ The drawer rides high in its frame, leaving a thin gap along its lower edge.
 
 **Details:** Michelle's memory card; Kristin's laptop in her truck; Continuity Initiative files; population stabilization centers; Michelle’s research notes
 
-Kristin finds Michelle's memory card taped beneath the drawer carved with her initials, KMS. She takes the card out to her truck and opens it on her laptop.
+Kristin finds Michelle's memory card taped beneath the drawer. She takes the card out to her truck and opens it on her laptop.
 
 The card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.
 

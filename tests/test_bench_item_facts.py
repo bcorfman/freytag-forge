@@ -2822,10 +2822,10 @@ def test_bare_name_shortcut_keeps_a_tracked_thing_in_the_scene_area():
     provider = _scope_provider("1A", thorough=False)
     world = provider._world()
 
-    assert world.resolve("chair") is None
-    assert _resolve_refer("chair", provider.item_facts) == "workstation chair"
-    assert provider._name_in_scene_scope(world, "workstation chair")
-    assert provider._resolve_name(world, "chair") == "workstation_chair"
+    assert world.resolve("laptop") is None
+    assert _resolve_refer("laptop", provider.item_facts) == "Kristin's laptop"
+    assert provider._name_in_scene_scope(world, "Kristin's laptop")
+    assert provider._resolve_name(world, "laptop") == "kristin_laptop"
 
 
 def test_bare_name_shortcut_keeps_a_thing_held_by_the_protagonist():

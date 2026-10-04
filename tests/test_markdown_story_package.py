@@ -768,13 +768,13 @@ def test_scene_1a_recording_warning_handoff_matches_one_exact_action() -> None:
     assert handoff.delivery_text == package.knowledge_indexes.by_id["k_sl_1a_b_r2"].delivery_text
 
 
-def test_1a_deadline_fallback_names_the_kms_drawer() -> None:
+def test_1a_deadline_fallback_names_the_drawer() -> None:
     delivery = next(
         item for item in load_story_package(PACKAGE).deliveries if item.fact_id == "continuity_initiative_known"
     )
 
     assert delivery.scene_id == "1A"
-    assert "KMS" in delivery.fallback_text
+    assert "KMS" not in delivery.fallback_text
     assert "drawer" in delivery.fallback_text.casefold()
 
 
