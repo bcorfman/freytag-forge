@@ -1004,6 +1004,22 @@ def test_held_by_pocket_place_keeps_holder():
     assert provider._world().parent("michelle_phone") == "kristin"
 
 
+def test_held_by_naming_itself_keeps_place():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    provider.apply_item_facts({"Kristin": {"held_by": "Kristin", "place": "kitchen"}})
+    assert provider._world().parent("kristin") == provider._world().resolve("kitchen")
+
+
+def test_held_by_naming_itself_alone_is_ignored():
+    provider = _scene_provider("1A")
+    provider.held_by = True
+    old_parent = provider._world().parent("kristin")
+    _facts, issues = provider.apply_item_facts({"Kristin": {"held_by": "Kristin"}})
+    assert provider._world().parent("kristin") == old_parent
+    assert not any("to a character" in issue for issue in issues)
+
+
 def test_held_by_place_with_prefix_resolves():
     provider = _scene_provider("1A")
     provider.held_by = True

@@ -1081,11 +1081,19 @@ class ItemFactsProvider(CloudflareTurnProvider):
                         return place_id, stripped
                 return None, place
 
-            for value in raw.values():
+            for key, value in raw.items():
                 if not isinstance(value, dict) or not isinstance(value.get("held_by"), str):
                     continue
                 holder_name = value["held_by"].strip()
                 holder_id = self._resolve_name(world, holder_name)
+                entry_id = self._resolve_name(world, key)
+                if (holder_id is not None and holder_id == entry_id) or (
+                    (holder_id is None or entry_id is None)
+                    and isinstance(key, str)
+                    and holder_name.casefold() == key.strip().casefold()
+                ):
+                    value.pop("held_by")
+                    continue
                 place = value.get("place")
                 place_id, resolved_place = resolve_precedence_place(place)
                 holder_area = world.area(holder_id) if holder_id is not None else None
