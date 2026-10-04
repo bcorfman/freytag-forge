@@ -1,7 +1,9 @@
 # Scene affordance E2E tests: plan
 
-Status (2026-10-02): planned, nothing built. Decisions D1-D6 (section 8)
-are open; Phase 0 starts after Brandon settles them.
+Status (2026-10-03): Phase 0 done (section 10). L0 build is running as a
+Ringer task (`.plans/scene-affordance-l0.json`, branch `claude/affordance-l0`).
+Brandon said to continue through L2 ("Keep going until you get to L2"), so
+D1-D6 take the recommended defaults below until he says otherwise.
 
 ## Resume here (2026-10-02)
 
@@ -247,3 +249,32 @@ multi-scene run. Run each scene as its own Ringer task. Guard the player
 model the way every billed endpoint is guarded. Runs target the hosted
 staging demo only, never production. Unit tests for L0 and for the
 harness pieces never call a live model.
+
+## 10. Phase 0 findings (2026-10-03, read from source)
+
+- **Scene entry:** `@llm-canon` never jumps to a scene. It plays from 1A
+  (`startSceneSession`) with the package clock and sends
+  `frontend/e2e/canon-journey.js` prompts per scene until `state.scene_id`
+  changes. Entering a scene emits its `entry_text` as the turn's last
+  segment. So L1/L2 reach scene S by playing the journey; a package-aware
+  journey is fine for *getting there*, not for the measured turns.
+- **What the UI shows the player:** the narration transcript, speech and
+  action segments, and a status line `Scene <id> • <phase>`. No objective.
+  D2 is settled by this: the blind player sees the transcript plus that
+  status line, nothing else.
+- **Delivered knowledge ids are already exposed:** each segment carries
+  `grounding_ids`, and the canon test records them. The turn also returns
+  `state.fired_storylet_ids`, `fired_pacing_event_ids`,
+  `turns_since_scene_entry` and `delivery`. Trigger facts per turn are not
+  exposed, so no new telemetry field is needed for L1; L2 infers the
+  transition from `state.scene_id`.
+- **Lighthouse-keeper fixture:** `knowledge.yaml` has no `earn_when` item, so
+  it yields few or no player-earned affordances. L0 must run clean there;
+  it only proves the derivation is not hard-coded to one story.
+- **Hosted runs need no deploy for harness-only work:** Playwright runs
+  locally in `frontend/e2e` against the staging API named by `E2E_API_BASE_URL`.
+  Only a runtime change would need the merge-and-poll gate.
+- **Blind-player guard:** the player model is called from the test process
+  with the developer's `OPENAI_API_KEY`, like `roleplay-judge.js`. It is not a
+  route. It still gets a fixed model, a hard cap on calls per run, and a
+  refusal unless `/api/v1/version` reports `channel: staging`.
