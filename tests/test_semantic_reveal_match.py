@@ -47,6 +47,58 @@ def test_reaches_reveals_asks_once_and_caps_candidates_at_six():
     assert captured["state"] == {"command": "Search the drawer."}
     assert list(captured["questions"]) == [f"r{i}" for i in range(6)]
     assert all(question["type"] == "noul" for question in captured["questions"].values())
+    assert "search the drawer" in captured["questions"]["r0"]["instructions"]
+
+
+def test_reaches_reveals_caps_and_deduplicates_names_and_excludes_protagonist():
+    captured = {}
+
+    def ask(_state, questions):
+        captured["question"] = questions["r1"]
+        return _yes("r1")
+
+    reaches_reveals(
+        ask,
+        "Examine the initials-marked drawer.",
+        [("r1", "search the KMS drawer", ["Kristin", "KMS drawer", "KMS drawer", *[f"name-{i}" for i in range(12)]])],
+    )
+
+    instructions = captured["question"]["instructions"]
+    assert "Kristin" in instructions
+    assert instructions.count("KMS drawer") == 2
+    assert "name-10" not in instructions
+    assert "The story says: search the KMS drawer." in instructions
+
+
+def test_reaches_reveals_accepts_alias_in_candidate_names():
+    def ask(_state, questions):
+        return _yes("r1") if "initials-marked drawer" in questions["r1"]["instructions"] else {}
+
+    assert reaches_reveals(
+        ask,
+        "Search my initials-marked drawer for hidden clues.",
+        [("r1", "search the KMS drawer", ["KMS drawer", "initials-marked drawer"])],
+    ) == {"r1"}
+
+
+def test_semantic_no_clue_rule_requires_an_eligible_entity_name():
+    provider = _provider([_candidate("r1")], lambda *_args: {})
+    provider.last_semantic_match = {"ran": True, "matched": None}
+    provider._semantic_candidate_names = lambda _candidate: ("initials-marked drawer",)
+
+    assert provider._semantic_no_clue_rules("Search my initials-marked drawer.") == [
+        "The player found nothing new here.",
+        "Show only what the story already says about it.",
+    ]
+    assert provider._semantic_no_clue_rules("Search the desk.") == []
+    assert provider._semantic_no_clue_rules("Do not search my initials-marked drawer.") == []
+
+    provider.last_semantic_match["matched"] = "r1"
+    assert provider._semantic_no_clue_rules("Search my initials-marked drawer.") == []
+
+    provider.last_semantic_match["matched"] = None
+    provider.authored_handoff = SimpleNamespace(candidate=_candidate("r1"))
+    assert provider._semantic_no_clue_rules("Search my initials-marked drawer.") == []
 
 
 def test_semantic_fallback_matches_exactly_one_candidate():

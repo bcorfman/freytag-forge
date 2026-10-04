@@ -126,6 +126,72 @@ test("opening affordances use turn 0 and the turn 0/1 deadline", () => {
   assert.equal(late.affordances[0].deadline_met, false);
 });
 
+const reportAffordance = (entity_id, terms = [entity_id]) => ({ entity_id, name: entity_id, terms });
+const reportScene = {
+  scene_id: "1A",
+  gates: [{
+    affordances: [
+      reportAffordance("kristin_laptop", ["laptop"]),
+      reportAffordance("michelle_drawer", ["drawer"]),
+      reportAffordance("workstation_chair", ["chair"]),
+      reportAffordance("michelle_workstation", ["workstation"]),
+      reportAffordance("memory_card", ["memory card"]),
+    ],
+    sources: [{ id: "earned", player_earned: true }],
+  }],
+};
+const reportTurns = ({ chairShown }) => [
+  { turn: 1, input: "Inspect the workstation.", text: `${chairShown ? "The chair is overturned beside the workstation. " : ""}The drawer is ajar. Kristin's laptop is in her truck.`, state: { scene_id: "1A" } },
+  { turn: 2, input: "Examine the papers in the drawer.", text: "The workstation holds a drawer. Kristin finds the memory card.", state: { scene_id: "1A" } },
+  { turn: 8, input: "Take the package.", text: "The park bench leads to the next scene.", state: { scene_id: "1B" } },
+];
+
+test("replicate 1 is not silent when every first-step affordance was shown", () => {
+  const firstStep = reportScene.gates[0].affordances.slice(0, 4);
+  const result = analyseRun({ sceneEntry: reportScene, turns: reportTurns({ chairShown: true }), firstStep, later: [reportScene.gates[0].affordances[4]] });
+  assert.equal(result.transition_fired, true);
+  assert.equal(result.transition_turn, 8);
+  assert.equal(result.silent_transition, false);
+});
+
+test("replicate 3 stays silent when a first-step affordance was never shown", () => {
+  const firstStep = reportScene.gates[0].affordances.slice(0, 4);
+  const result = analyseRun({ sceneEntry: reportScene, turns: reportTurns({ chairShown: false }), firstStep, later: [reportScene.gates[0].affordances[4]] });
+  assert.equal(result.affordances.find((item) => item.entity_id === "workstation_chair").first_shown_turn, null);
+  assert.equal(result.silent_transition, true);
+});
+
+test("silent transition ignores earned-gate affordances absent from shown", () => {
+  const shownItem = reportAffordance("shown_item", ["item"]);
+  const absentItem = reportAffordance("absent_item", ["absent"]);
+  const result = analyseRun({
+    sceneEntry: { scene_id: "A", gates: [{ affordances: [shownItem, absentItem], sources: [{ player_earned: true }] }] },
+    turns: [{ turn: 1, input: "Inspect the item.", text: "The item is here.", state: { scene_id: "B" } }],
+    firstStep: [shownItem],
+  });
+  assert.equal(result.silent_transition, false);
+});
+
+test("unshown later affordances do not make a transition silent", () => {
+  const firstStep = reportAffordance("first_item", ["first"]);
+  const laterItem = reportAffordance("later_item", ["later"]);
+  const result = analyseRun({
+    sceneEntry: { scene_id: "A", gates: [{ affordances: [firstStep, laterItem], sources: [{ player_earned: true }] }] },
+    turns: [{ turn: 1, input: "Inspect the first item.", text: "The first item is here.", state: { scene_id: "B" } }],
+    firstStep: [firstStep],
+    later: [laterItem],
+  });
+  assert.equal(result.affordances.find((item) => item.entity_id === "later_item").first_shown_turn, null);
+  assert.equal(result.silent_transition, false);
+});
+
+test("a run without a transition is not silent", () => {
+  const item = reportAffordance("item", ["item"]);
+  const result = analyseRun({ sceneEntry: { scene_id: "A", gates: [{ affordances: [item], sources: [{ player_earned: true }] }] }, turns: [{ turn: 1, input: "Search the room.", text: "Nothing changes.", state: { scene_id: "A" } }], firstStep: [item] });
+  assert.equal(result.transition_fired, false);
+  assert.equal(result.silent_transition, false);
+});
+
 test("unseenTerms checks content words with grammar stops and simple plurals", () => {
   assert.deepEqual(unseenTerms({ command: "Open the drawer.", readText: "A drawer is in the desk." }), []);
   assert.deepEqual(unseenTerms({ command: "Open the lantern.", readText: "A drawer is here." }), ["lantern"]);
