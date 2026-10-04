@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-l2-semantic",
+  "workdir": "/home/bcorfman/dev/ringer-work/freytag-affordance-l2-semantic",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "l2-record-semantic-match",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1200,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push, or touch .git. You own exactly: frontend/e2e/blind-player.js, frontend/e2e/blind-player.test.js, frontend/e2e/blind-player.spec.js. Do NOT edit any other file. Your tests are hermetic node:test tests with no network. You must NOT run blind-player.spec.js (it spends a billed budget and needs staging).\n\nPROBLEM: the L2 @blind-player report cannot show whether the server's semantic reveal fallback ran on a turn. The staging turn response carries `semantic_match` ({ran: boolean, matched: string|null}) and `prompt` (the recorded narrator prompt string) on every turn, but frontend/e2e/blind-player.spec.js builds each turn record (the turns.push near the end of the turn loop, and the rejected-turn push above it) from state, grounding_ids and delivery only, so both are dropped.\n\nCHANGE: (1) In blind-player.js add and export `turnRecord({turn, input, payload, text})` that returns the turn record the spec pushes today ({turn, input, text, state, grounding_ids, delivery}) plus `semantic_match` (payload.semantic_match, or null when absent) and `prompt` (payload.prompt, or null when absent). Make the spec's successful-turn push use it, and add `semantic_match: null, prompt: null` to the rejected-turn record. (2) Make analyseRun carry through to its result a `semantic_matches` array with one entry {turn, input, ran, matched} for every turn that has a semantic_match object, and do not change any existing field of analyseRun's result or any existing computation. (3) In blind-player.js formatMarkdown, add a short section 'Semantic reveal fallback' per replicate that lists those entries as one line each (turn, input, ran, matched id or none); when no turn has one, print one line saying the server did not return it. Keep existing markdown output otherwise unchanged. (4) The full prompts must not be dumped into the markdown. Put them in the JSON report only: in the spec, add to each replicate record a `prompts` array of {turn, prompt} for turns whose prompt is a non-empty string.\n\nTESTS in blind-player.test.js: turnRecord with and without semantic_match and prompt; analyseRun semantic_matches for turns with ran true/matched id, ran true/matched null, and absent; formatMarkdown prints the section and the 'did not return' line; existing tests still pass untouched.\n\nHOW TO RUN (worktree root): cd frontend && node --test e2e/*.test.js. If frontend/node_modules is missing: ln -s /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules (never npm install). Also run: E2E_API_BASE_URL=http://127.0.0.1:9 npx playwright test --list --grep @blind-player\n\nOUTPUT: write ./notes.md at the worktree root (not git-added): the files changed and a one-paragraph summary.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-semantic-check.sh",
+      "verified": "owned files only; node tests pass; semantic_match and prompt are recorded per turn and shown in the report"
+    }
+  ]
+}

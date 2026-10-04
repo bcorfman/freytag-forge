@@ -1,4 +1,4 @@
-"""Print a compact digest of an L1 or L2 report: rates first, detail only for misses.
+"""Print a compact digest of an L1 or L2 report.
 
 Usage: python3 scripts/ringer/affordance/digest.py artifacts/e2e-affordances.json
        python3 scripts/ringer/affordance/digest.py artifacts/e2e-blind-player.json
@@ -33,7 +33,7 @@ def l1(report):
         )
 
 
-def l2(report):
+def l2(report, full=False):
     agg = report.get("aggregate", {})
     print("L2 aggregate:", json.dumps(agg, indent=None))
     for rep, run in enumerate(report.get("replicates", []), 1):
@@ -49,7 +49,64 @@ def l2(report):
         l3 = run.get("l3") or {}
         print("    l3:", json.dumps(l3)[:300])
 
+        if "turns" in run:
+            turns = run.get("turns") or []
+        else:
+            turns = [{"turn": number, "input": command} for number, command in enumerate(run.get("commands") or [], 1)]
+        for turn in turns:
+            print_turn(turn, run, full)
 
-with open(sys.argv[1]) as handle:
-    report = json.load(handle)
-(l2 if "replicates" in report else l1)(report)
+
+def one_line(value):
+    return " ".join(str(value if value is not None else "").split())
+
+
+def short_text(value, full=False):
+    text = one_line(value)
+    return text if full or len(text) <= 240 else text[:237] + "..."
+
+
+def turn_flags(turn, run):
+    flags = []
+    number = turn.get("turn")
+    if number in (run.get("stuck_turns") or []):
+        flags.append("stuck")
+    if turn.get("rejected"):
+        flags.append("rej")
+    semantic_match = turn.get("semantic_match")
+    if isinstance(semantic_match, dict):
+        if semantic_match.get("ran"):
+            matched = semantic_match.get("matched")
+            flags.append(f"sem:match={matched}" if matched is not None else "sem:ran")
+        else:
+            flags.append("sem:off")
+    return flags
+
+
+def print_turn(turn, run, full=False):
+    flags = turn_flags(turn, run)
+    if turn.get("rejected"):
+        text = turn.get("rejection") or ""
+    elif "text" in turn:
+        text = turn.get("text") or ""
+    else:
+        text = "(old report: no response text)"
+    flag_text = "[" + ",".join(flags) + "]"
+    print(f"  t{turn.get('turn', '?')} {flag_text} {one_line(turn.get('input', ''))} -> {short_text(text, full)}")
+
+
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    if not argv:
+        raise SystemExit("usage: digest.py <report.json> [--full]")
+    with open(argv[0]) as handle:
+        report = json.load(handle)
+    if "replicates" in report:
+        full = "--full" in argv[1:]
+        l2(report, full)
+    else:
+        l1(report)
+
+
+if __name__ == "__main__":
+    main()
