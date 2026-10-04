@@ -1,57 +1,15 @@
 [
   {
-    "check": 2,
-    "scene_id": "1A",
-    "gate": "t_1a_1b:memory_card_recovered",
-    "subject": "memory_card"
-  },
-  {
     "check": 3,
     "scene_id": "1A",
     "gate": "t_1a_1b:memory_card_recovered",
     "subject": "workstation_chair"
   },
   {
-    "check": 2,
-    "scene_id": "1A",
-    "gate": "t_1a_1b:michelle_lead_actionable",
-    "subject": "memory_card"
-  },
-  {
-    "check": 2,
-    "scene_id": "1A",
-    "gate": "t_1a_1b:michelle_lead_actionable",
-    "subject": "park_bench"
-  },
-  {
-    "check": 3,
-    "scene_id": "1A",
-    "gate": "t_1a_1b:michelle_lead_actionable",
-    "subject": "park_bench"
-  },
-  {
     "check": 3,
     "scene_id": "1A",
     "gate": "t_1a_1b:michelle_lead_actionable",
     "subject": "workstation_chair"
-  },
-  {
-    "check": 2,
-    "scene_id": "1A",
-    "gate": "t_1a_1b:patrol_return_pressure",
-    "subject": "memory_card"
-  },
-  {
-    "check": 2,
-    "scene_id": "1A",
-    "gate": "t_1a_1b:patrol_return_pressure",
-    "subject": "park_bench"
-  },
-  {
-    "check": 3,
-    "scene_id": "1A",
-    "gate": "t_1a_1b:patrol_return_pressure",
-    "subject": "park_bench"
   },
   {
     "check": 3,
@@ -70,12 +28,6 @@
     "scene_id": "2A",
     "gate": "t_2a_2b:restricted_corridor_access",
     "subject": "infrastructure_corridors"
-  },
-  {
-    "check": 3,
-    "scene_id": "2A",
-    "gate": "t_2a_2b:restricted_corridor_access",
-    "subject": "regional_facility"
   },
   {
     "check": 2,

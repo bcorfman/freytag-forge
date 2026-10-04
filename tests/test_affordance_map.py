@@ -25,12 +25,12 @@ def test_lighthouse_map_is_json_and_has_every_scene(lighthouse):
     assert [scene["scene_id"] for scene in amap["scenes"]] == [scene.metadata.scene_id for scene in lighthouse.scenes]
 
 
-def test_player_earned_knowledge_resolves_action_object(lighthouse):
+def test_action_evidence_without_object_group_does_not_use_entity_ids(lighthouse):
     amap = build_affordance_map(lighthouse)
     sources = [source for gate in amap["scenes"][0]["gates"] for source in gate["sources"]]
     key_sources = [source for source in sources if source["id"] == "k_find_key"]
     if key_sources:
-        assert {item["entity_id"] for item in key_sources[0]["affordances"]} >= {"brass_key"}
+        assert "brass_key" not in {item["entity_id"] for item in key_sources[0]["affordances"]}
 
 
 def test_engine_source_and_empty_realization_are_checkable(lighthouse):
@@ -154,8 +154,53 @@ def test_continuity_1a_gate_affordances_include_drawer_and_memory_card():
     package = load_story_package(CONTINUITY)
     amap = build_affordance_map(package)
     scene = next(scene for scene in amap["scenes"] if scene["scene_id"] == "1A")
-    affordance_ids = {affordance["entity_id"] for gate in scene["gates"] for affordance in gate["affordances"]}
-    assert {"michelle_drawer", "memory_card"} <= affordance_ids
+    affordances = [affordance for gate in scene["gates"] for affordance in gate["affordances"]]
+    affordance_ids = {affordance["entity_id"] for affordance in affordances}
+    assert {"michelle_drawer", "michelle_workstation", "kristin_laptop"} <= affordance_ids
+    assert all(
+        affordance["visible_at_entry"]
+        for affordance in affordances
+        if affordance["entity_id"]
+        in {
+            "michelle_drawer",
+            "michelle_workstation",
+            "kristin_laptop",
+        }
+    )
+    assert any("memory_card" in source["reveals"] for gate in scene["gates"] for source in gate["sources"])
+
+
+def test_protagonist_is_never_an_affordance():
+    package = load_story_package(CONTINUITY)
+    amap = build_affordance_map(package)
+    assert all(
+        affordance["entity_id"] != package.protagonist_id
+        for scene in amap["scenes"]
+        for gate in scene["gates"]
+        for affordance in gate["affordances"]
+    )
+
+
+def test_source_reveal_is_separate_from_its_affordances():
+    package = load_story_package(CONTINUITY)
+    amap = build_affordance_map(package)
+    sources = [source for scene in amap["scenes"] for gate in scene["gates"] for source in gate["sources"]]
+    source = next(source for source in sources if source["id"] == "k_sl_1a_b_r0")
+    assert source["reveals"] == ["memory_card"]
+    assert "memory_card" not in {affordance["entity_id"] for affordance in source["affordances"]}
+
+
+def test_affordances_and_scene_location_include_aliases():
+    package = load_story_package(CONTINUITY)
+    amap = build_affordance_map(package)
+    scene = next(scene for scene in amap["scenes"] if scene["scene_id"] == "1A")
+    assert amap["protagonist_id"] == package.protagonist_id
+    assert scene["location"] == {
+        "id": "mcgehee_home",
+        "name": "Michelle's house",
+        "aliases": ["Michelle's home", "the house"],
+    }
+    assert all("aliases" in affordance for gate in scene["gates"] for affordance in gate["affordances"])
 
 
 @pytest.mark.parametrize("root", [CONTINUITY, LIGHTHOUSE])

@@ -212,6 +212,8 @@ def _base_sources(package: Any, scene_id: str) -> list[dict[str, Any]]:
                 "realization_texts": [realization.text for realization in event.realizations],
             }
         )
+    for source in sources:
+        source["reveals"] = _source_reveals(package, source)
     return sources
 
 
@@ -247,6 +249,32 @@ def _source_requires(
     return result
 
 
+def _source_reveals(package: Any, source: dict[str, Any]) -> list[str]:
+    entities = _entities(package)
+    revealed = {
+        effect.reveal
+        for fact_id in source["facts"]
+        for effect in package.world.fact_effects.get(fact_id, ())
+        if effect.reveal in entities
+    }
+    return sorted(revealed)
+
+
+def _required_sources(
+    source: dict[str, Any], by_fact: dict[str, list[dict[str, Any]]], seen: set[str] | None = None
+) -> set[str]:
+    seen = set() if seen is None else seen
+    if source["id"] in seen:
+        return set()
+    seen.add(source["id"])
+    result: set[str] = set()
+    for predicate in source["requires_predicates"]:
+        for required in by_fact.get(predicate.fact_id, ()):
+            result.add(required["id"])
+            result.update(_required_sources(required, by_fact, seen))
+    return result
+
+
 def _affordances(
     package: Any,
     scene: Any,
@@ -254,13 +282,14 @@ def _affordances(
     gate: str,
     order: dict[str, int],
     all_sources: list[dict[str, Any]],
+    by_fact: dict[str, list[dict[str, Any]]],
     seen: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
     seen = set() if seen is None else seen
     if source["id"] in seen:
         return [], []
     seen.add(source["id"])
-    entity_ids = list(source["entity_ids"])
+    entity_ids: list[str] = []
     unresolved: list[str] = []
     if source["action_evidence"]:
         for group in source["action_evidence"][1:]:
@@ -269,7 +298,10 @@ def _affordances(
                 entity_ids.extend(matches)
             else:
                 unresolved.append(" / ".join(group))
+    elif source["player_earned"]:
+        entity_ids.extend(source["entity_ids"])
     entities = _entities(package)
+    protagonist_id = package.protagonist_id
     metadata = scene.metadata
     visible = {
         metadata.location_id,
@@ -284,18 +316,26 @@ def _affordances(
         if entity_id in entities and not getattr(entities[entity_id], "hidden", False)
     }
     result = []
-    earlier = [candidate for candidate in all_sources if order[candidate["id"]] < order[source["id"]]]
+    required_ids = _required_sources(source, by_fact)
+    earlier = [
+        candidate
+        for candidate in all_sources
+        if candidate["id"] in required_ids and order[candidate["id"]] < order[source["id"]]
+    ]
     for entity_id in dict.fromkeys(entity_ids):
         entity = entities.get(entity_id)
-        if entity is None:
+        if entity is None or entity_id == protagonist_id:
+            if entity_id == protagonist_id:
+                continue
             unresolved.append(entity_id)
             continue
-        revealed_by = next((candidate["id"] for candidate in earlier if entity_id in candidate["entity_ids"]), None)
+        revealed_by = next((candidate["id"] for candidate in earlier if entity_id in candidate["reveals"]), None)
         result.append(
             {
                 "entity_id": entity_id,
                 "name": entity.name,
                 "kind": _entity_kind(entity),
+                "aliases": list(entity.aliases),
                 "gate": gate,
                 "source": source["id"],
                 "visible_at_entry": entity_id in visible,
@@ -318,7 +358,7 @@ def _collect_affordances(
     seen = set() if seen is None else seen
     if source["id"] in seen:
         return [], []
-    direct, unresolved = _affordances(package, scene, source, gate, order, sources, seen)
+    direct, unresolved = _affordances(package, scene, source, gate, order, sources, by_fact, seen)
     for predicate in source["requires_predicates"]:
         for required in by_fact.get(predicate.fact_id, []):
             nested, nested_unresolved = _collect_affordances(
@@ -352,6 +392,7 @@ def _serialize_source(
         "earliest_turn": source["earliest_turn"],
         "turn_window": source.get("turn_window"),
         "requires": requires,
+        "reveals": _source_reveals(package, source),
         "affordances": list(unique_affordances.values()),
         "unresolved_terms": sorted(set(unresolved)),
     }
@@ -427,12 +468,17 @@ def build_affordance_map(package: Any) -> dict[str, Any]:
         scenes.append(
             {
                 "scene_id": scene_id,
+                "location": {
+                    "id": scene.metadata.location_id,
+                    "name": _entities(package)[scene.metadata.location_id].name,
+                    "aliases": list(_entities(package)[scene.metadata.location_id].aliases),
+                },
                 "entry_material": _entry_material(package, scene),
                 "transitions": transitions,
                 "gates": gates,
             }
         )
-    return {"story_id": package.story_id, "scenes": scenes}
+    return {"story_id": package.story_id, "protagonist_id": package.protagonist_id, "scenes": scenes}
 
 
 def _finding(check: int, scene_id: str, gate: str, subject: str, message: str) -> dict[str, Any]:
