@@ -61,12 +61,20 @@ def reaches_reveals(ask, command: str, candidates) -> set[str]:
     """Return reveal ids whose authored action the command clearly performs."""
 
     limited = list(candidates)[:6]
-    questions = {
-        candidate_id: {
+    questions = {}
+    for candidate in limited:
+        candidate_id, sentence = candidate[:2]
+        names = tuple(dict.fromkeys(candidate[2] if len(candidate) > 2 else ()))[:12]
+        name_context = (
+            f" These all mean the same thing as the words in the sentence: {'; '.join(names)}." if names else ""
+        )
+        statement_context = f" The story says: {sentence}."
+        questions[candidate_id] = {
             "type": "noul",
             "instructions": (
                 "Decide whether the command itself does what the sentence says, or clearly means the same "
                 "place, thing, and act. Return true only for the whole action."
+                f"{name_context}{statement_context}"
             ),
             "criteria": {
                 "true": (
@@ -78,8 +86,6 @@ def reaches_reveals(ask, command: str, candidates) -> set[str]:
                 ),
             },
         }
-        for candidate_id, sentence in limited
-    }
     if not questions:
         return set()
     try:

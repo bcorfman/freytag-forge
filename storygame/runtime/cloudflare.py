@@ -414,7 +414,7 @@ class CloudflareTurnProvider:
                 continue
             sentence = candidate.earn_when or candidate.statement
             if sentence:
-                eligible.append((candidate.id, sentence, candidate))
+                eligible.append((candidate.id, sentence, candidate, self._semantic_candidate_names(candidate)))
             if len(eligible) == 6:
                 break
         if not eligible:
@@ -424,7 +424,9 @@ class CloudflareTurnProvider:
         try:
             from storygame.runtime.jev_questions import reaches_reveals
 
-            matched = reaches_reveals(self.semantic_ask, player_input, [(item[0], item[1]) for item in eligible])
+            matched = reaches_reveals(
+                self.semantic_ask, player_input, [(item[0], item[1], item[3]) for item in eligible]
+            )
         except Exception:
             return None
         if len(matched) != 1:
@@ -434,6 +436,74 @@ class CloudflareTurnProvider:
             return None
         self.last_semantic_match["matched"] = candidate.id
         return AuthoredHandoff(candidate=candidate, delivery_text=candidate.delivery_text)
+
+    def _semantic_candidate_names(self, candidate: RevealCandidate) -> tuple[str, ...]:
+        package = self.state.package
+        knowledge = package.knowledge_indexes.by_id.get(candidate.id)
+        entity_ids = getattr(candidate, "entity_ids", ()) or getattr(knowledge, "entity_ids", ())
+        protagonist_id = getattr(package, "protagonist_id", None)
+        authored_world = getattr(package, "world", None)
+        if authored_world is None:
+            return ()
+        entities = {
+            entity.id: entity
+            for group in ("locations", "npcs", "groups", "items")
+            for entity in getattr(authored_world, group, ())
+        }
+        names: list[str] = []
+        try:
+            world = self._placement_world()
+        except Exception:
+            world = None
+        for entity_id in entity_ids:
+            if entity_id == protagonist_id:
+                continue
+            entity = entities.get(entity_id)
+            if entity is None:
+                continue
+            names.extend((entity.name, *entity.aliases))
+            if world is not None and hasattr(world, "place_text"):
+                placement = world.place_text(entity_id)
+                if placement:
+                    names.append(placement)
+        return tuple(dict.fromkeys(name for name in names if name))[:12]
+
+    def _semantic_no_clue_rules(self, player_input: str) -> list[str]:
+        if (
+            self._is_authored_handoff_turn()
+            or getattr(self, "semantic_ask", None) is None
+            or getenv("FREYTAG_SEMANTIC_REVEAL", "1") == "0"
+            or getattr(self, "semantic_fallback_calls", 0) >= 40
+            or any(word in _NEGATIONS for word in _words(player_input))
+            or getattr(self, "last_semantic_match", {}).get("matched") is not None
+        ):
+            return []
+        candidates = self.last_projection.candidates if self.last_projection else ()
+        eligible_count = 0
+        for candidate in candidates:
+            if (
+                not candidate.action_evidence
+                or not isinstance(candidate.delivery_text, str)
+                or not candidate.delivery_text.strip()
+            ):
+                continue
+            knowledge = self.state.package.knowledge_indexes.by_id.get(candidate.id)
+            if knowledge is not None and any(
+                operation.op == "assert" and _true(self.state.facts, operation.fact_id)
+                for operation in knowledge.establishes
+            ):
+                continue
+            if not (candidate.earn_when or candidate.statement):
+                continue
+            eligible_count += 1
+            if eligible_count > 6:
+                break
+            names = self._semantic_candidate_names(candidate)
+            if any(
+                re.search(rf"(?<!\w){re.escape(name)}(?:['’]s)?(?!\w)", player_input, re.IGNORECASE) for name in names
+            ):
+                return ["The player found nothing new here.", "Show only what the story already says about it."]
+        return []
 
     def _legacy_projection_candidates(self) -> tuple[RevealCandidate, ...]:
         """Return projected candidates that the narrator is allowed to select."""
@@ -571,6 +641,8 @@ class CloudflareTurnProvider:
         if not all(isinstance(rule, str) and rule for rule in rules):
             raise ValueError("prompt variant rules must be a list of non-empty strings")
         rules = [rule for rule in rules if rule not in system_rules]
+        if not handoff_turn:
+            rules.extend(self._semantic_no_clue_rules(getattr(self, "_example_player_input", "")))
         # A variation that replaces the rules block still needs this turn-specific
         # rule, except on authored handoffs where selection is runtime-owned.
         if configured_rules and not candidates and not handoff_turn:
