@@ -290,9 +290,9 @@ Kristin wants to enter immediately. Brandon stops her, arguing that a reckless r
 
 ### Scene 1C.3 — The Nationwide Network
 
-**Details:** logistics terminal; regional command center; nationwide facilities; political personnel; resistance organizers; experimental programs
+**Details:** logistics computer; regional command center; nationwide facilities; political personnel; resistance organizers; experimental programs
 
-Brandon accesses a logistics terminal and discovers that the Los Angeles site is not where all the missing people are held. It is a regional command center connected to facilities throughout the country.
+Brandon accesses a logistics computer and discovers that the Los Angeles site is not where all the missing people are held. It is a regional command center connected to facilities throughout the country.
 
 The missing have been divided into categories:
 

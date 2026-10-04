@@ -875,11 +875,11 @@ knowledge:
   delivery_text: >-
     Kristin sees sedated captives alive in the processing line. She glimpses a woman who could be Michelle. Then the view vanishes.
 - id: k_sl_1c_c_r1
-  statement: 'A logistics terminal shows that Los Angeles is only a regional hub in a detention network spanning the country.'
-  earn_when: reads the logistics terminal
+  statement: 'A logistics computer shows that Los Angeles is only a regional hub in a detention network spanning the country.'
+  earn_when: reads the logistics computer
   action_evidence:
   - [read, search, inspect, check]
-  - [logistics terminal, terminal computer, computer]
+  - [logistics computer, terminal computer, computer]
   entity_ids: []
   aliases:
   - national detention network known
@@ -905,7 +905,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    The logistics terminal shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
+    The logistics computer shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
 - id: k_sl_1c_c_r2
   statement: 'A recording of Charles and Rebecca reveals they engineered the crisis to rule as its promised solution.'
   earn_when: plays the recording of Charles and Rebecca

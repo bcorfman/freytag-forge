@@ -217,7 +217,7 @@ items:
   aliases:
   - data case
 - id: logistics_terminal
-  name: logistics terminal
+  name: logistics computer
   fixed: true
 - id: service_entrance
   name: service entrance

@@ -105,20 +105,20 @@ def test_judge_turns_projects_character_place_labels_without_changing_turn() -> 
 
 def test_judge_turns_lists_fixed_things() -> None:
     turn = {
-        "narration": "Kristin opens the logistics terminal with the Transit token.",
+        "narration": "Kristin opens the logistics computer with the Transit token.",
         "item_facts_before": {
-            "LOGISTICS TERMINAL": {"place": "regional facility"},
+            "LOGISTICS COMPUTER": {"place": "regional facility"},
             "Transit token": {"place": "Kristin"},
         },
         "item_facts_after": {
-            "logistics terminal": {"place": "regional facility"},
+            "logistics computer": {"place": "regional facility"},
             "Transit token": {"place": "Kristin"},
         },
     }
 
     judged = judge_turns([turn], [], PACKAGE)[0]
 
-    assert judged["fixed_things"] == ["logistics terminal"]
+    assert judged["fixed_things"] == ["logistics computer"]
 
 
 def test_judge_turns_projects_authored_text_and_reveal_visibility() -> None:
