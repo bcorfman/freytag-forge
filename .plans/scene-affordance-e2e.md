@@ -125,11 +125,53 @@ a staging deploy and L2 x3. The probe's name list is still an approximation of
 the runtime list. Still authored with other words: `plot.md` 112 and 132 and
 `handoffs.yaml` 10 ("the drawer carved with her initials, KMS").
 
+### L2 x3 on 4db42ef (drawer-gap cue; Ringer `freytag-affordance-live`, pass, 2026-10-04)
+
+Transition 3/3, all by play (turns 11, 8, 11; every earlier run left on the
+turn-13 timer or not at all). The card was first shown on turns 8, 3 and 9, no
+longer only on the transition turn. In r1 and r2 the player typed "Search the
+gap beneath the carved drawer." and "Examine the gap beneath the workstation
+drawer.", and the card followed; both turns show `sem:off`, so the plain matcher
+fired (inferred from the flag, not confirmed). r3 got there on "Examine the
+underside of the KMS drawer." (turn 9). Silent transition 1/3 (r2, chair never
+shown). By the deadline: workstation 3/3, laptop 2/3, drawer 2/3, chair 0/3
+(shown at turns 8, never, 11), memory card 0/3 (a later affordance, so its
+deadline is not the opening). Stuck turns 6, 4, 5 of 11, 8, 11; two stuck runs
+(r1 turns 5-7 on the laptop, r3 turns 4-7 on scientific equipment and a
+textbook). Invention remains: r2 took the card, then went to a park bench and a
+paper note about an old clock tower; r3 invented a textbook DNA diagram and a
+chair with a book. Not checked: whether the gap wording came from the on-screen
+cue or from the player guessing; the recorded prompts were not read.
+
 Open, not yet known (the first item is answered above): (1) whether the semantic fallback ran on r3 turns 3-4
 (staging returns `semantic_match` and `prompt` per turn, but
 `blind-player.spec.js:99` drops both from the turn record; the harness needs
 to save them, then rerun);
 (2) the recorded prompts for r3 turns 3-4; (3) the L1 x3 result.
+
+## Parallel L2 replicates: built and measured (2026-10-04, uncommitted)
+
+Built by Ringer `freytag-affordance-l2-parallel` (node side + wrapper). The
+first run's task A failed only because my check grepped the spec for the env
+name, which lives in `replicatePlan` (merge-blind-player.js); I applied both
+patches and fixed the check. Files: `frontend/e2e/merge-blind-player.js` (+test:
+`replicatePlan`, `mergeReports`, CLI `node e2e/merge-blind-player.js <dir> <n>`),
+`blind-player.spec.js` (`E2E_BLIND_REPLICATE_INDEX` runs one replicate and writes
+`e2e-blind-player-r<N>.json`; unset = old behaviour), wrapper
+`scene-affordance-l2-parallel-live.sh <n>` (one cap raise, one Playwright process
+per replicate, merge, digest) and manifest `scene-affordance-l2-parallel-live.json`
+(same run_name `freytag-affordance-live`). Differences from the draft: no
+`E2E_BLIND_REPORT_SUFFIX` (the index sets the name), and one Ringer task owning
+the cap (the wrapper version), not a task per replicate. 69 node tests pass.
+Smoke (1 replicate): merged report has the same keys as the serial path, with
+prompts, turns and semantic_matches. Parallel x3 on staging (4db42ef): the check
+took 288 s including the 60 s+ settle wait; no 429s or rejected turns. Result:
+transition 3/3 by play, all on turn 8; drawer 3/3, workstation 3/3, laptop 2/3,
+chair 0/3, memory card first shown turns 4, 3, 2; silent transition 2/3 (chair
+never shown); stuck runs 2; unseen_command_rate 0.42. Invention persists after
+the card (park bench, a paper note about a clock tower). Not done: a serial x3
+comparison on the same sha; narration latency under 3 sessions not recorded.
+Next: decide the chair (alias gap vs never shown) and the post-card invention.
 
 ## Resume here (2026-10-04)
 
@@ -149,6 +191,96 @@ so check each scene's gate commands with natural phrasings. L2 runs need
 staging's per-session turn cap (default 10 a minute) for the run and restores
 it, and waits for the redeploy to settle. Unseen-word flags on verbs such as
 retrieve and insert are false positives; ignore them.
+
+## Plan: run L2 replicates in parallel (drafted 2026-10-04, not started)
+
+Why: `l2-1a-x3` runs its 3 replicates one after another in one Playwright test
+(`blind-player.spec.js`, a `for` loop, 20 minute timeout), and the manifest has
+one task with `max_parallel: 1`. Each probe-fix-rerun cycle pays for all three
+serially, plus the Railway redeploy wait. No earlier written plan for this was
+found in `.plans/`, `scripts/ringer/affordance/` or memory (checked 2026-10-04).
+
+What the code says about sharing (read from source, 2026-10-04):
+
+- The per-minute turn cap is keyed by `session_id` (`web_demo.py`
+  `require_turn_rate_limit`), not by IP. Parallel replicates use separate
+  sessions, so they do not slow each other. The cap raise exists only because
+  the one blind player sends more than 10 turns a minute in one session.
+- The session cap is per IP per day (default 20, `require_session_rate_limit`).
+  A 1A replicate opens one session, so 3 replicates is cheap. A later scene
+  walks the earlier scenes first and opens more, so count sessions before
+  parallelising scenes beyond 1A.
+- `writeCategoryReport("blind-player", ...)` always writes
+  `artifacts/e2e-blind-player.{json,md}`. Parallel runs would overwrite one
+  another.
+- The spec rejects `E2E_BLIND_REPLICATES` outside 1 to 3 and runs the replicates
+  in one test body.
+- The check raises `FREYTAG_RATE_LIMIT_PER_MINUTE` on Railway, waits for the
+  redeploy, and deletes the variable on exit. Parallel checks that each did this
+  would redeploy staging mid-run and drop each other's sessions.
+- The OpenAI player has a call counter per replicate (`counter`), so its hard cap
+  already holds per replicate.
+
+Design (smallest change that works):
+
+1. **One wrapper owns the cap.** Split `scene-affordance-l2-live.sh` into
+   `l2-cap-raise.sh` (set the variable, wait for 5 health checks) and
+   `l2-cap-restore.sh`. Under Ringer, a first task raises it, the replicate tasks
+   depend on it, and a last task restores it. If the dependency model cannot make
+   the restore run after a failure, keep one wrapper script that raises, runs the
+   replicate processes in the background with `wait`, then restores in its `trap`.
+   The wrapper is the safer first version.
+2. **One Playwright process per replicate.** Add `E2E_BLIND_REPLICATE_INDEX` (the
+   replicate number) and `E2E_BLIND_REPORT_SUFFIX`. With an index set, the spec
+   runs only that replicate and writes `artifacts/e2e-blind-player-r<N>.json`.
+   Without it, behaviour is unchanged (3 replicates, one file). Playwright
+   `workers` stays at 1 per process, so no change to `playwright.config`.
+3. **A merge step.** Add `scripts/ringer/affordance/merge_l2.py` that reads the
+   per-replicate files and writes the existing `e2e-blind-player.json` shape
+   (`story_id`, `scene`, `replicates`, `aggregate`), renumbering `replicate`. The
+   `aggregate` logic is JavaScript in `blind-player.js`, so either the merge is a
+   small node script that imports it, or the Python version is tested against it
+   on a fixture. Either way the digest and every reader stay unchanged.
+4. **Digest unchanged.** `digest.py` runs on the merged file.
+5. **Ringer shape.** One task per replicate is the memory rule
+   (`one-ringer-task-per-run-unit`), so the manifest has `l2-1a-r1`, `r2`, `r3`
+   at `max_parallel: 3`, each with its own `expect_files` and
+   `check_timeout_s: 2400`, plus the cap tasks and the merge. Each replicate
+   task's check is the single-replicate run, not the cap script.
+
+Tests (no live model): node tests for the index and suffix handling in the spec
+helpers; a pytest for `merge_l2.py` over two small fixture reports, including a
+missing replicate (it must fail and say which). Run ruff on the script.
+
+Verify before trusting it:
+
+- Smoke first (memory: `smoke-test-billed-runs-first`): one replicate through the
+  new path, compared field by field with a report from the old path.
+- Then 3 in parallel. Compare transition turn, shown turns and stuck turns with
+  a serial `x3` on the same staging sha. Expect noise, so judge only that nothing
+  structural differs (same keys, the card first-shown turn recorded, prompts and
+  `semantic_match` present).
+- Watch staging for 429s on turns and for slower narration under 3 sessions at
+  once. If narration latency rises, `E2E_TURN_TIMEOUT_MS` (now 90000) may need
+  raising; record the observed latency.
+
+Decisions (Brandon, 2026-10-04): the goal is shorter wall time only, so scenes
+stay serial and the session cap is not a concern yet. The 1 to 3 replicate limit
+stays per process. Three concurrent sessions fit the inference budget for now.
+Each replicate is one process; extra replicates mean extra processes.
+
+Questions that were asked (answered above):
+
+- Is the goal wall time only, or also running L2 across scenes in parallel? The
+  second needs the session cap counted first.
+- Should the 1 to 3 replicate limit stay per process, with more replicates meaning
+  more processes? Recommended: yes, the limit then guards the billed OpenAI
+  calls per process.
+- Does Cloudflare Workers AI budget allow 3 concurrent sessions? The narrator is
+  the inference budget (memory: `cloudflare-workers-ai-is-the-inference-budget`),
+  and the Jev fallback adds up to 40 calls a session.
+
+Done: see "Parallel L2 replicates: built and measured" above.
 
 ## Built (2026-10-03)
 

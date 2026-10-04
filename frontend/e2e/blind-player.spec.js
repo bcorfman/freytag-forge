@@ -6,6 +6,7 @@ import { askPlayer, analyseRun, aggregate, formatMarkdown, turnLog, turnRecord }
 import { startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { walkScenes } from "./scene-walk.js";
+import { replicatePlan } from "./merge-blind-player.js";
 
 const repoRoot = resolve(import.meta.dirname, "../..");
 const storyId = "continuity_initiative";
@@ -36,8 +37,7 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
   const baseUrl = process.env.E2E_API_BASE_URL;
   await requireStaging(baseUrl);
   const sceneId = process.env.E2E_BLIND_SCENE || "1A";
-  const replicates = Number.parseInt(process.env.E2E_BLIND_REPLICATES || "1", 10);
-  if (replicates < 1 || replicates > 3) throw new Error("E2E_BLIND_REPLICATES must be between 1 and 3.");
+  const { indices: replicateIndices, category } = replicatePlan(process.env);
   test.setTimeout(20 * 60_000);
   const map = loadAffordanceMap(await storyPackageDir());
   const pacing = loadPackagePacing({ storyId });
@@ -46,7 +46,7 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
   const nextSceneEntry = map.scenes.find((scene) => scene.scene_id === pacing.sceneOrder[pacing.sceneOrder.indexOf(sceneId) + 1]);
   const ceiling = Math.min(20, pacing.scenePoint(sceneId, "handoff").target_turn + 2);
   const runs = [];
-  for (let replicate = 1; replicate <= replicates; replicate += 1) {
+  for (const replicate of replicateIndices) {
     let openingText = "";
     if (sceneId !== "1A") {
       const targetIndex = pacing.sceneOrder.indexOf(sceneId);
@@ -109,5 +109,5 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
     });
   }
   const report = { story_id: map.story_id, scene: sceneId, replicates: runs, aggregate: aggregate(runs) };
-  await writeCategoryReport("blind-player", { ...report, markdown: formatMarkdown(report) });
+  await writeCategoryReport(category, { ...report, markdown: formatMarkdown(report) });
 });
