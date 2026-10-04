@@ -295,6 +295,37 @@ test("judgeInput uses the holder question for character-held things", async () =
   await rm(dir, { recursive: true, force: true });
 });
 
+test("judgeInput skips the move question for fixed things", async () => {
+  const dir = await packageDir();
+  const seen = [];
+  await judgeInput({ runs: [{ turns: [{
+    scene_id: "1A",
+    player_input: "Open the service entrance with the transit token.",
+    narration: "She opens the service entrance with the transit token.",
+    item_facts_before: {
+      "service entrance": { place: "facility perimeter", condition: [] },
+      "Transit token": { place: "Kristin", condition: [] },
+    },
+    item_facts_after: {
+      "service entrance": { place: "facility perimeter", condition: [] },
+      "Transit token": { place: "Kristin", condition: [] },
+    },
+    fixed_things: ["service entrance"],
+  }] }] }, {
+    packagePath: dir,
+    judges: "fact",
+    protagonist: "the player",
+    environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+    fetchImpl: stubFetch(seen),
+  });
+  const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
+  const entrance = requests.find((request) => request.state.thing === "service entrance");
+  const token = requests.find((request) => request.state.thing === "Transit token");
+  assert.equal(entrance.questions.moved, undefined);
+  assert.ok(token.questions.moved);
+  await rm(dir, { recursive: true, force: true });
+});
+
 test("judgeInput gives fact questions also_called", async () => {
   const dir = await packageDir();
   const seen = [];

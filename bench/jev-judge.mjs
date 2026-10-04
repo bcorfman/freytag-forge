@@ -438,6 +438,7 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
           "It ends where it started. When `before_place` is a person, anywhere on that person or in something that person carries is the same place, such as a hand, a pocket or a bag. A thing that stays with that person has not moved, even when that person carries it somewhere else. An attempt that fails, or a hand-over that nobody takes, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move.",
         ),
   };
+  if (item.fixed) delete q.moved;
   if (axes.length) {
     q.condition_changed = nounl(
       `Does \`narration\` show ${t} changing from one state in \`states\` to the other during this turn?`,
@@ -638,6 +639,7 @@ export async function judgeInput(
           ...pf,
           conditionsChanged: pf.newConditions.length > 0 || pf.goneConditions.length > 0,
           placeChanged,
+          fixed: (turn.fixed_things || []).some((name) => name.toLowerCase() === thing.toLowerCase()),
           beforePlaceIsPerson: thing !== protagonist && (turn.person_places || []).some(
             (place) => String(place).toLowerCase() === String(b?.place || "").toLowerCase(),
           ),

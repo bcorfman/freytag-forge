@@ -103,6 +103,24 @@ def test_judge_turns_projects_character_place_labels_without_changing_turn() -> 
     assert turn == original
 
 
+def test_judge_turns_lists_fixed_things() -> None:
+    turn = {
+        "narration": "Kristin opens the logistics terminal with the Transit token.",
+        "item_facts_before": {
+            "LOGISTICS TERMINAL": {"place": "regional facility"},
+            "Transit token": {"place": "Kristin"},
+        },
+        "item_facts_after": {
+            "logistics terminal": {"place": "regional facility"},
+            "Transit token": {"place": "Kristin"},
+        },
+    }
+
+    judged = judge_turns([turn], [], PACKAGE)[0]
+
+    assert judged["fixed_things"] == ["logistics terminal"]
+
+
 def test_judge_turns_projects_authored_text_and_reveal_visibility() -> None:
     reveal = PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r0"]
     turns = [

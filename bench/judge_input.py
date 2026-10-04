@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from storygame.runtime.item_facts import declared_axes_for_package
+from storygame.runtime.item_facts import _schema_for, declared_axes_for_package
 from storygame.story_package.models import ItemPlacement, StoryPackage
 
 
@@ -254,6 +254,30 @@ def _person_places(turn: dict[str, Any], package: StoryPackage) -> list[str]:
     return sorted(result)
 
 
+def _fixed_things(turn: dict[str, Any], package: StoryPackage) -> list[str]:
+    """Return canonical names of fixed package items tracked on the turn."""
+
+    schema = _schema_for(package)
+    names_by_folded_name = {
+        name.casefold(): item.name for item in package.world.items for name in (item.name, *item.aliases)
+    }
+    fixed_names = {item.name for item in package.world.items if schema.is_fixed(item.id)}
+    tracked_names = {
+        name
+        for facts in (turn.get("item_facts_before", {}), turn.get("item_facts_after", {}))
+        if isinstance(facts, dict)
+        for name in facts
+        if isinstance(name, str)
+    }
+    return sorted(
+        {
+            names_by_folded_name[name.casefold()]
+            for name in tracked_names
+            if name.casefold() in names_by_folded_name and names_by_folded_name[name.casefold()] in fixed_names
+        }
+    )
+
+
 def judge_turns(
     turns: list[dict[str, Any]],
     scene_transitions: list[dict[str, Any]],
@@ -289,6 +313,7 @@ def judge_turns(
         copy["place_contents"] = _place_contents(turn, package)
         copy["place_names"] = _place_names(turn, package)
         copy["person_places"] = _person_places(turn, package)
+        copy["fixed_things"] = _fixed_things(turn, package)
         copy["item_facts_names"] = turn.get("item_facts_names", {})
         before = dict(turn.get("item_facts_before", {}))
         after = dict(turn.get("item_facts_after", {}))
