@@ -46,6 +46,15 @@ def test_scene_1c_places_the_facility_arrival() -> None:
         assert locations[location_id].parent == "regional_facility"
 
 
+def test_scene_1c_declares_the_service_entrance() -> None:
+    state = _scene_1c_state()
+    world = world_for(PACKAGE, state.facts)
+
+    assert world.parent("service_entrance") == "freight_terminal"
+    assert not world.move("service_entrance", "kristin").ok
+    assert "freight_terminal" in world.chain("service_entrance")
+
+
 def test_scene_1c_declares_the_service_level_area_hierarchy() -> None:
     locations = {location.id: location for location in PACKAGE.world.locations}
 

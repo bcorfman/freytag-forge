@@ -241,10 +241,11 @@ freytag_phase: rising_action
 objective: Confirm the facility and its purpose
 participant_ids: [kristin, brandon, michelle]
 companions: [brandon]
-item_ids: [transit_card, kristin_truck, logistics_terminal]
+item_ids: [transit_card, kristin_truck, logistics_terminal, service_entrance]
 item_placements:
   kristin_truck: {parent: freight_terminal}
   logistics_terminal: {parent: freight_terminal}
+  service_entrance: {parent: freight_terminal}
 entry_text: "Michelle's lead brought Kristin and Brandon to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. They kept to the shadow of the loading docks, looking for a way into whatever lay below.\n\n"
 transition_ids: [t_1c_2a]
 bridge_text:
@@ -289,9 +290,9 @@ Kristin wants to enter immediately. Brandon stops her, arguing that a reckless r
 
 ### Scene 1C.3 — The Nationwide Network
 
-**Details:** logistics terminal; regional command center; nationwide facilities; political personnel; resistance organizers; experimental programs
+**Details:** logistics computer; regional command center; nationwide facilities; political personnel; resistance organizers; experimental programs
 
-Brandon accesses a logistics terminal and discovers that the Los Angeles site is not where all the missing people are held. It is a regional command center connected to facilities throughout the country.
+Brandon accesses a logistics computer and discovers that the Los Angeles site is not where all the missing people are held. It is a regional command center connected to facilities throughout the country.
 
 The missing have been divided into categories:
 

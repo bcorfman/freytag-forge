@@ -941,7 +941,21 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     runtime_store.save(runtime_session, state)
                 continue
             entered = state.current_scene_id != prior_scene
-            segments = proposal.segments[:-1] if entered else proposal.segments
+            if entered:
+                prior_scene_record = next(scene for scene in package.scenes if scene.metadata.scene_id == prior_scene)
+                entered_scene_record = next(
+                    scene for scene in package.scenes if scene.metadata.scene_id == state.current_scene_id
+                )
+                authored_texts = {
+                    entered_scene_record.metadata.entry_text.strip(),
+                    *(text.strip() for text in prior_scene_record.metadata.bridge_text.values()),
+                }
+                end = len(proposal.segments)
+                while end and proposal.segments[end - 1].text.strip() in authored_texts:
+                    end -= 1
+                segments = proposal.segments[:end] if end < len(proposal.segments) else proposal.segments[:-1]
+            else:
+                segments = proposal.segments
             narration = join_narration(tuple(segments)) if segments else ""
             item_facts_record: dict[str, Any] | None = None
             if runtime:

@@ -115,6 +115,36 @@ def test_runtime_mode_exit_turn_records_facts_before_transition(
     assert turn["item_facts_after"]["Kristin"]["place"] != "Los Angeles park"
 
 
+def test_runtime_mode_exit_turn_narration_leaves_out_bridge_and_entry(
+    monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]
+) -> None:
+    authored_texts: dict[str, str] = {}
+
+    def leave_scene(engine):
+        world = world_for(engine.state.package, engine.state.facts)
+        assert world.move("kristin", "los_angeles_park").ok
+        source_scene = next(
+            scene for scene in engine.state.package.scenes if scene.metadata.scene_id == engine.state.current_scene_id
+        )
+        target_scene = next(scene for scene in engine.state.package.scenes if scene.metadata.scene_id == "1B")
+        bridge_text = next(iter(source_scene.metadata.bridge_text.values()))
+        authored_texts["bridge"] = bridge_text
+        authored_texts["entry"] = target_scene.metadata.entry_text
+        engine.state.current_scene_id = target_scene.metadata.scene_id
+        return (
+            NarrationSegment(kind="narration", text=bridge_text),
+            NarrationSegment(kind="narration", text=target_scene.metadata.entry_text),
+        )
+
+    monkeypatch.setattr(core.RuntimeEngine, "_apply_authored_transition", leave_scene)
+    result = _run(monkeypatch, RUNTIME, turns=1, inputs=["Walk out to the truck."])
+    turn = result["turns"][0]
+
+    assert "Kristin searches the room." in turn["narration"]
+    assert authored_texts["bridge"] not in turn["narration"]
+    assert authored_texts["entry"] not in turn["narration"]
+
+
 def test_runtime_mode_records_narration_prompt(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
     calls: list[dict] = []
 

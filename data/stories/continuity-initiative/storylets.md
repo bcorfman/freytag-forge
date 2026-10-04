@@ -523,7 +523,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Available when**
 - The active facility and living captives have been credibly confirmed.
-- Brandon can access the logistics terminal or equivalent authored records.
+- Brandon can access the logistics computer or equivalent authored records.
 - Kristin knows captives are present but does not yet know the operation’s scale.
 
 **Participants / items**

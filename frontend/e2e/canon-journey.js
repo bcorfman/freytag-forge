@@ -29,7 +29,7 @@ export const scenePrompts = {
   "1C": [
     "Use the transit token at the freight terminal and work down into the service level, reading the site for signs it is still active.",
     "From the observation shaft, watch the processing floor and match what you see against the missing-person records.",
-    "Get into a logistics terminal and follow where the transports actually go beyond this site.",
+    "Get into a logistics computer and follow where the transports actually go beyond this site.",
     "Play back the recorded conference between the people directing this operation and listen to what they intend next.",
   ],
   // 2A.1 hideout -> 2A.2 infiltration plan -> 2A.3 entering under cover

@@ -86,10 +86,10 @@ deliveries:
   source_kind: observation
   source_entity_id: kristin
   must_convey:
-  - [logistics terminal]
+  - [logistics computer]
   - [regional hub, detention network]
   fallback_text: >-
-    The logistics terminal shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
+    The logistics computer shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
 - fact_id: false_identities_ready
   scene_id: 2A
   source_kind: npc
