@@ -510,7 +510,7 @@ function factQuestions(thing, item, phrasesForThing, protagonist) {
       "It is a different object from every thing in `other_things`, or `other_things` is empty.",
     );
   }
-  for (const name of ["before_conflict", "start_conflict"]) {
+  for (const name of ["moved", "before_conflict", "start_conflict"]) {
     if (q[name]) {
       q[name] = {
         ...q[name],
@@ -666,6 +666,7 @@ export async function judgeInput(
           states: (turn.item_facts_axes?.[thing] || []).flat(),
           tracked_before: trackedBefore,
           tracked_after: trackedAfter,
+          also_called: turn.item_facts_names || {},
         };
         item.axes = turn.item_facts_axes?.[thing] || [];
         const fq = factQuestions(thing, item, pf, protagonist);

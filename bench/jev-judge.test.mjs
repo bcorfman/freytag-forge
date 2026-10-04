@@ -251,8 +251,8 @@ test("judgeInput uses the protagonist location question only for the protagonist
   });
   const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
   assert.equal(requests[0].questions.moved.instructions, "At the end of this turn, is `Kristin` in a different room or area from the one `Kristin` started in? Answer from `narrator_narration` only.");
-  assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn in another room, in a vehicle, or somewhere else outdoors. A name listed in `before_place_names` or `after_place_names` is the same place as `before_place` or `after_place`.");
-  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` ends the turn in the room or area where `Kristin` started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move. A name listed in `before_place_names` or `after_place_names` is the same place as `before_place` or `after_place`.");
+  assert.equal(requests[0].questions.moved.criteria.true, "`Kristin` ends the turn in another room, in a vehicle, or somewhere else outdoors. A name listed in `also_called` is another name for the same person or thing. A name listed in `before_place_names` or `after_place_names` is the same place as `before_place` or `after_place`.");
+  assert.equal(requests[0].questions.moved.criteria.false, "`Kristin` ends the turn in the room or area where `Kristin` started. Going out and coming back during the turn is not a move. Walking over to something inside the room, like a desk, is not a move. `before_place` already counts every step in `just_before`, so a step in `just_before` is never a move. A name listed in `also_called` is another name for the same person or thing. A name listed in `before_place_names` or `after_place_names` is the same place as `before_place` or `after_place`.");
   assert.equal(requests[1].questions.moved.instructions, "At the end of this turn, is `desk` held by a different person, or in a different place, than `before_place`? Answer from `narrator_narration` only.");
   assert.equal(requests[0].state.command, "Search the room.");
   assert.equal(requests[0].state.just_before, "Engine moves Kristin.");
@@ -292,6 +292,37 @@ test("judgeInput uses the holder question for character-held things", async () =
   const cup = requests.find((request) => request.state.thing === "cup");
   assert.equal(phone.questions.moved.instructions, "At the end of this turn, does someone other than `before_place` have `phone`, or has `phone` been put down somewhere? Answer from `narrator_narration` only.");
   assert.equal(cup.questions.moved.instructions, "At the end of this turn, is `cup` held by a different person, or in a different place, than `before_place`? Answer from `narrator_narration` only.");
+  await rm(dir, { recursive: true, force: true });
+});
+
+test("judgeInput gives fact questions also_called", async () => {
+  const dir = await packageDir();
+  const seen = [];
+  const itemFactsNames = { "handwritten number sequence": ["number sequence", "paper"] };
+  await judgeInput({ runs: [{ turns: [{
+    scene_id: "1A",
+    player_input: "Look under the park bench.",
+    narration: "She looks under the park bench.",
+    item_facts_before: {
+      "Transit token": { place: "park bench", condition: [] },
+      "handwritten number sequence": { place: "park bench", condition: [] },
+    },
+    item_facts_after: {
+      "Transit token": { place: "park bench", condition: [] },
+      "handwritten number sequence": { place: "park bench", condition: [] },
+    },
+    item_facts_names: itemFactsNames,
+  }] }] }, {
+    packagePath: dir,
+    judges: "fact",
+    environment: { CLOUDFLARE_ACCOUNT_ID: "a", CLOUDFLARE_AI_TOKEN: "t" },
+    fetchImpl: stubFetch(seen),
+  });
+  const requests = seen.map((entry) => JSON.parse(entry.options.body).input);
+  const transitToken = requests.find((request) => request.state.thing === "Transit token");
+  assert.deepEqual(transitToken.state.also_called, itemFactsNames);
+  assert.match(transitToken.questions.moved.criteria.true, /`also_called`/);
+  assert.match(transitToken.questions.moved.criteria.false, /`also_called`/);
   await rm(dir, { recursive: true, force: true });
 });
 
