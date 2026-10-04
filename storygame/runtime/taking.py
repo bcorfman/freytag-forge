@@ -41,6 +41,7 @@ def take_before_put(world, package, player_input: str, moves_thing: Callable[[st
         item_area = world.area(item_id)
         if (
             world.is_visible(item_id)
+            and not world.is_a(item_id, "vehicle")
             and not world.schema.is_fixed(item_id)
             and not item.fixed
             and world.holder(item_id) != protagonist

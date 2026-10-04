@@ -26,11 +26,12 @@ class Result:
 
 
 class World:
-    def __init__(self, items, parents, areas, fixed=()):
+    def __init__(self, items, parents, areas, fixed=(), vehicles=()):
         self.items = items
         self.parents = dict(parents)
         self.areas = dict(areas)
         self.fixed = set(fixed)
+        self.vehicles = set(vehicles)
         self.schema = self
 
     def is_fixed(self, item_id):
@@ -63,6 +64,8 @@ class World:
         return self.parents.get(item_id)
 
     def is_a(self, item_id, kind):
+        if kind == "vehicle":
+            return item_id in self.vehicles
         return kind == "area" and item_id in {"park", "other_area"}
 
     def move(self, item_id, parent):
@@ -79,10 +82,10 @@ def package(items):
     return type("Package", (), {"world": WorldPackage, "protagonist_id": "kristin"})()
 
 
-def make_world(items, parents=None, areas=None, fixed=()):
+def make_world(items, parents=None, areas=None, fixed=(), vehicles=()):
     parents = parents or {item.id: "park_bench" for item in items}
     areas = areas or {"kristin": "park", **{item.id: "park" for item in items}}
-    return World(items, parents, areas, fixed)
+    return World(items, parents, areas, fixed, vehicles)
 
 
 def test_takes_named_photograph_and_formats_command():
@@ -121,6 +124,24 @@ def test_question_answers_and_candidate_filters():
         ).asked
         is False
     )
+
+
+def test_take_before_put_never_takes_a_vehicle():
+    truck = Item("truck", "Kristin's truck")
+    token = Item("token", "Transit token")
+    world = make_world([truck, token], vehicles=("truck",))
+    asked_names = []
+
+    result = take_before_put(
+        world,
+        package([truck, token]),
+        "Put the transit token in my truck.",
+        lambda _command, name: asked_names.append(name) or True,
+    )
+
+    assert world.parents["truck"] == "park_bench"
+    assert all("truck" not in step.lower() for step in result.steps)
+    assert "Kristin's truck" not in asked_names
 
 
 def test_no_answer_and_article_area_and_authored_text():
