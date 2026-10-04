@@ -99,8 +99,9 @@ measured live. PR 507 merged. **1B-1C fixes on `claude/1b-1c-fixes`
 declared and placed in the freight terminal (1605bee, cdba53b), a
 vehicle is never taken before a put (3fd4e64), fact judge given
 `also_called` (8da2680) and never asks a fixed thing "moved"
-(2db4d93), exit turns judged without the bridge (1855c82). Live x3:
-1B-1C 46/60 -> 52/60 (86.7%), 2A 19/21 -> 21/21; still under 92%
+(2db4d93), exit turns judged without the bridge (1855c82), and the
+logistics terminal renamed the logistics computer (cc4f0f1, Brandon's
+call). Live x3: 1B-1C 46/60 -> 54/60 (90.0%), 2A 19/21 -> 21/21
 (section 11, "1B-1C fixes").
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
@@ -144,10 +145,10 @@ unchanged since 48eb838). Brandon turned `FREYTAG_WORLD_CAPTURE` on
 in production. The bench exit-turn fix is built (deb5cb6) and measured
 live: exit turns now score right (2A 3/3, 3A 3/3). PR 507 merged.
 1B-1C fixes built on `claude/1b-1c-fixes` and measured live (section
-11, "1B-1C fixes"): 1B-1C 46/60 -> 52/60 (86.7%), still under the bar.
-**Resume at:** Brandon's call on the "terminal" name collision (t18,
-t19: the narrator walks into the logistics terminal as a building),
-then a PR for `claude/1b-1c-fixes`. The notes below are older.
+11, "1B-1C fixes"): 1B-1C 46/60 -> 54/60 (90.0%) after the logistics
+computer rename. The 6 misses left are judge noise (t13 x3, t1 x2) and
+one narrator hand-back (t8). **Resume at:** a PR for
+`claude/1b-1c-fixes`. The notes below are older.
 
 
 **Checked against the results on disk (2026-10-02).** Every figure
@@ -5029,6 +5030,18 @@ the task says):
     Brandon's call); t8 the man hands the sequence back (reply records
     the hand-over); t10 r2 reply omits the token; t1 r2 token borderline;
     t14 r1 start conflict.
+  - **Logistics computer (Brandon, 2026-10-03: "make the rename
+    everywhere").** Probe on the 12 recorded t18/t19 prompts x3
+    (`~/dev/ringer-work/freytag-logistics-computer-probe`): the narrator
+    treats "logistics terminal" as a building about 22/36, "logistics
+    computer" 0/36 (always a machine with a screen; 3/36 invent a "main
+    level" place). **cc4f0f1**: renamed in world.yaml (id kept),
+    plot.md, handoffs, knowledge, storylets, the 1B-1C variations, the
+    canon E2E input and two tests; payloads byte-identical. Live x3
+    (`rename-1b-1c-x3`): **54/60 (90.0%)**, t18/t19 right 6/6, exits 3/3.
+    Left: t13 x3 (judge says Kristin moved at 0.64-0.66 while her
+    unchanged place is right at 0.84+), t1 x2 (token "moved" at
+    0.53-0.54), t8 r3 (the man hands the sequence back).
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
