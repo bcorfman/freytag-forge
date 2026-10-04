@@ -94,7 +94,14 @@ scene-1 work). Runtime sweep of all seven later scenes x3: the runtime
 path matches the bench path once a scene-exit bench artifact is left
 out; 1B-1C is under the bar at about 80% (always was). Capture is on
 in production (Brandon); the exit-turn bench fix built as deb5cb6 and
-measured live.
+measured live. PR 507 merged. **1B-1C fixes on `claude/1b-1c-fixes`
+(2026-10-03):** self `held_by` ignored (c26b740), 1C service entrance
+declared and placed in the freight terminal (1605bee, cdba53b), a
+vehicle is never taken before a put (3fd4e64), fact judge given
+`also_called` (8da2680) and never asks a fixed thing "moved"
+(2db4d93), exit turns judged without the bridge (1855c82). Live x3:
+1B-1C 46/60 -> 52/60 (86.7%), 2A 19/21 -> 21/21; still under 92%
+(section 11, "1B-1C fixes").
 The task plan is under "S4 - Runtime" in section 11.
 See "Resume here".
 **Method (Brandon, 2026-09-30):** fix every scene by "Fixing a Scene" in
@@ -135,10 +142,12 @@ the bench path in every scene once a bench artifact on scene-exit
 turns is left out; 1B-1C is the one scene under the bar (about 80%,
 unchanged since 48eb838). Brandon turned `FREYTAG_WORLD_CAPTURE` on
 in production. The bench exit-turn fix is built (deb5cb6) and measured
-live: exit turns now score right (2A 3/3, 3A 3/3). **Resume at:**
-merging `claude/s4f-live-check`, then Brandon's call on what is next
-(1B-1C at about 80% is the one scene under the bar). The notes below
-are older.
+live: exit turns now score right (2A 3/3, 3A 3/3). PR 507 merged.
+1B-1C fixes built on `claude/1b-1c-fixes` and measured live (section
+11, "1B-1C fixes"): 1B-1C 46/60 -> 52/60 (86.7%), still under the bar.
+**Resume at:** Brandon's call on the "terminal" name collision (t18,
+t19: the narrator walks into the logistics terminal as a building),
+then a PR for `claude/1b-1c-fixes`. The notes below are older.
 
 
 **Checked against the results on disk (2026-10-02).** Every figure
@@ -4969,6 +4978,57 @@ the task says):
     emergency override codes." rejected 3/3 as a leak ("rebecca"),
     0/3 in the sweep an hour before; the fix cannot change prompts, so
     it is narrator drift. Not chased.
+
+  *1B-1C fixes (2026-10-03, branch `claude/1b-1c-fixes`; Ringer
+  `freytag-1b-1c-fixes`, Luna, every build one attempt).* Misses on the
+  runtime sweep and the bench-path control (6 replicates, ~27 misses)
+  sorted by reading every failing turn:
+  - **Self `held_by`, 9 of the misses, every scene.** Replies write
+    `"Kristin": {"held_by": "Kristin", "place": X}`; precedence turned
+    that into place "Kristin", which was refused, so the move was lost
+    (2C 15/24 turns, 2A 9/21). **c26b740**: a `held_by` naming the entry
+    itself is dropped and `place` applies. Live x3: 1B-1C 46 -> 52/60,
+    "Kristin not moved" issues 8 -> 0; 2C 15 -> 0 (2C was already right
+    outside exit turns).
+  - **Undeclared service entrance (1C t13, then t14).** Probe on the
+    six recorded t13 prompts x5 (`~/dev/ringer-work/freytag-1c-entrance-probe`):
+    reply place right recorded 3/30, door declared ~27/30, door with an
+    open/closed axis 29/30 but "the service entrance's state changes to
+    open" in 4/30 narrations. Built without an axis, like the back door
+    (**1605bee**); placed at the loading docks first, which moved Kristin
+    into a sub-area the prose never names, so moved to the freight
+    terminal (**cdba53b**). Payloads byte-identical.
+  - **Kristin picked up her truck (t10).** Jev said "Put the transit
+    token in my truck." takes the truck. **3fd4e64**: `take_before_put`
+    never takes a vehicle.
+  - **Judge: the transit token "moved" when she picks up "paper" (t1).**
+    The fact criteria named `also_called` but the fact state never had
+    it. **8da2680** passes it. Calibration v9 315 -> 314/336, v10
+    234/251 both; recorded 1B-1C 46 -> 47/60. t1 stays borderline
+    (0.52-0.54).
+  - **Judge: the fixed door "moved" (t14 3/3).** **2db4d93**:
+    `judge_input` lists `fixed_things`; the fact judge never asks them
+    "moved" (the engine refuses those moves). Calibration v10 unchanged,
+    v9 one flip on a turn with no fixed thing; rejudge 51 -> 54/60.
+  - **Bench: exit turns kept the bridge text (t19).** Runtime
+    transitions append bridge and entry; only the entry was stripped.
+    **1855c82** strips trailing authored bridge/entry segments.
+  - Not built: truck seats re-placed in 1B/1C (the "new passenger seat"
+    was the declared seat, not a new thing); a protagonist move wording
+    "a desk, a door or a terminal is not a move" (labels unchanged, t13
+    did not flip).
+  - **Live x3 on 1855c82 (`final2-1b-1c-x3`): 52/60 (86.7%)**; 2A on
+    2db4d93 (`final-2a-x3`) 21/21. Results under `bench/results/`
+    (`selfheld-*`, `allfixes-*`, `final-*`, `final2-*`).
+  - **Still open (8 misses):** t13 x2 and t18: the judge says Kristin
+    moved (0.62-0.75) while also saying her unchanged place is right,
+    when she walks up to a fixed thing; t18/t19 r3: the narrator walks
+    *into* the logistics terminal as a building ("pushes the doors open
+    and steps inside... rows of shelving"), a name collision with the
+    freight terminal (rename one in the fiction is the proven fix;
+    Brandon's call); t8 the man hands the sequence back (reply records
+    the hand-over); t10 r2 reply omits the token; t1 r2 token borderline;
+    t14 r1 start conflict.
 
 **Brandon chose (2026-10-03): capture first.** Build S4a-S4e, then
 decide 1d from the refusals and story breaks that S4d records.
