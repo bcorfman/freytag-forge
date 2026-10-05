@@ -1,6 +1,6 @@
 # Scene affordance E2E tests: plan
 
-Status (2026-10-04, main 4ab36ef; see "Resume here"): L0-L2 are merged (PR 510, main 3a82bc5). Brandon's rule:
+Status (2026-10-05, main 858103e = PR 517 merged; staging deploy of 858103e pending because the push-to-main `tests` run did not start, so staging still serves b3113c8; next: confirm /api/v1/version reports the deployed SHA, then L2 1A,1B x3 against the 1B gate-move, delivery-wording and companion fixes; see the "Resume here" sections near the end of the 1B notes). Earlier status (2026-10-04, main 4ab36ef): L0-L2 are merged (PR 510, main 3a82bc5). Brandon's rule:
 if a player who reads only the screen cannot move from scene to scene, or the
 narration does not place items correctly, the game is broken. Root causes
 found in 1A and fixed in PR 510: (1) reveals unlocked only on exact authored
