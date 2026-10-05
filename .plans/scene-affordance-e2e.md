@@ -274,6 +274,20 @@ Next:
    post-card invention (coffee shop, receipt), stuck-turn and
    silent-transition metrics, unseen-word flags.
 
+## Resume here: continuous L2 over all nine scenes (2026-10-05, branch `claude/l2-all-scenes`, not merged)
+
+Built by Ringer `freytag-affordance-l2-all` (failed only a ruff E501 in a test; I applied the patch,
+ran ruff format, re-ran node 74 and digest 6 tests, committed). Wrappers:
+`scene-affordance-l2-all-live.sh <replicates> <scenes|all>`, manifests `scene-affordance-l2-all-smoke-live.json`
+and `scene-affordance-l2-all-live.json`. Smoke 1A,1B x1 passed (both timer exits; 1B opened on the transition text).
+Full run x3 (Ringer `freytag-affordance-live`, pass, 1052 s, no rejected stops): exit cause per scene
+(r1/r2/r3) 1A play/play/play (turn 8); 1B timer x3 (13); 1C timer x3 (11); 2A timer x3 (11); 2B timer x3 (16,16,15);
+2C play/timer/timer (12,16,17); 3A timer x3 (13,13,15); 3B timer x3 (14). 3C is the last scene, so "none" is expected.
+So 1B, 1C, 2A, 2B, 3A, 3B are real gaps: every player-gated scene exits by timer. Shown-by-end gaps: 1B Brandon first
+shown only on turn 13; 1C service_entrance never shown, logistics_terminal turn 11; 2A facility_perimeter never shown;
+3A override_codes never shown. Known digest quirk: `stopped_early` counts the last scene. Not done: reading
+recorded prompts; token/429 usage of the run. Next: fix earliest first (1B), per "Fixing a Scene".
+
 ## Design: L2 across all nine scenes (drafted and decided 2026-10-04, not built)
 
 What the code says (read, not run):
