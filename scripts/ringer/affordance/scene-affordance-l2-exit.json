@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-l2-exit",
+  "workdir": "/home/bcorfman/dev/ringer-work/freytag-affordance-l2-exit",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "l2-exit-cause",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1500,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your cwd IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push, or touch .git. Never call a live model or the network. You own exactly four paths: frontend/e2e/blind-player.js, frontend/e2e/blind-player.test.js, scripts/ringer/affordance/digest.py, tests/test_affordance_digest.py. Touch nothing else (blind-player.spec.js already passes the map scene as `sceneEntry`).\n\nGOAL: the L2 blind-player report must say HOW a scene was left: by the player's play, or by the fallback timer. Rule: the engine's timer fires at the scene's `handoff_after_turns` (now a field on each map scene, e.g. 1A = 13). If the transition turn (`transition_turn` in analyseRun) is LESS than sceneEntry.handoff_after_turns, the exit cause is \"play\". If it is equal or greater, it is \"timer\". If no transition fired, \"none\". If handoff_after_turns is missing from sceneEntry (older map), the cause is \"unknown\".\n\nBUILD:\n1. In analyseRun (frontend/e2e/blind-player.js) add to the returned object `handoff_after_turns` (number or null) and `exit_cause` (\"play\"|\"timer\"|\"none\"|\"unknown\").\n2. In aggregate add `play_exit_rate` and `timer_exit_rate` (count of runs / replicate count, like the existing rates).\n3. In formatMarkdown print one line per replicate with its exit cause and transition turn vs the timer turn, and the two rates in the aggregate part. Follow the existing style there.\n4. In scripts/ringer/affordance/digest.py show exit cause per replicate and the two rates in the L2 digest, tolerating old reports that lack the fields (print nothing extra for them). Add a pytest to tests/test_affordance_digest.py for a new-format and an old-format report.\n5. Node tests in blind-player.test.js: transition turn 8 with handoff 13 -> play; turn 13 with 13 -> timer; no transition -> none; missing field -> unknown; aggregate rates.\n\nHOW TO RUN (from worktree root): `cd frontend && ln -s /home/bcorfman/dev/freytag-forge/frontend/node_modules node_modules 2>/dev/null; node --test e2e/*.test.js`; `TMPDIR=/tmp uv run pytest -q tests/test_affordance_digest.py --no-cov -p no:cacheprovider`; `uv run ruff check --fix scripts/ringer/affordance/digest.py tests/test_affordance_digest.py && uv run ruff format scripts/ringer/affordance/digest.py tests/test_affordance_digest.py`.\n\nOUTPUT CONTRACT: write ./notes.md at the worktree root (not committed) listing the fields you added and any assumption.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-exit-check.sh js",
+      "verified": "owned files only; node and digest tests pass; exit_cause present"
+    }
+  ]
+}

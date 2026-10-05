@@ -158,6 +158,14 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
   const committedTurns = turns.filter((turn) => turn.state != null && turn.rejected !== true);
   const transitionIndex = committedTurns.findIndex((turn) => turn.state.scene_id && turn.state.scene_id !== sceneEntry?.scene_id);
   const transitionTurn = transitionIndex < 0 ? null : committedTurns[transitionIndex].turn;
+  const handoffAfterTurns = typeof sceneEntry?.handoff_after_turns === "number" ? sceneEntry.handoff_after_turns : null;
+  const exitCause = transitionTurn == null
+    ? "none"
+    : handoffAfterTurns == null
+      ? "unknown"
+      : transitionTurn < handoffAfterTurns
+        ? "play"
+        : "timer";
   const upto = transitionTurn == null ? turns.length : turns.findIndex((turn) => turn.turn === transitionTurn) + 1;
   const shown = affordances.map((item) => {
     const entries = [{ turn: 0, text: openingText }, ...turns.slice(0, upto).filter((turn) => turn.rejected !== true)];
@@ -230,7 +238,7 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
     pacing_realizations: pacing,
     transition: { turn: transitionTurn, final_segment_matches_entry: finalSegmentMatches, prior_contains_entry: priorContainsEntry, earlier_segment_contains_entry: transitionPrefixContainsEntry, no_skip_or_restart: finalSegmentMatches && !priorContainsEntry && !transitionPrefixContainsEntry },
   };
-  return { stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
+  return { stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, handoff_after_turns: handoffAfterTurns, exit_cause: exitCause, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
 }
 
 export function aggregate(runs = []) {
@@ -242,6 +250,8 @@ export function aggregate(runs = []) {
   return {
     replicates: runs.length,
     transition_rate: runs.filter((run) => run.transition_fired).length / count,
+    play_exit_rate: runs.filter((run) => run.exit_cause === "play").length / count,
+    timer_exit_rate: runs.filter((run) => run.exit_cause === "timer").length / count,
     mean_transition_turn: runs.filter((run) => run.transition_turn != null).reduce((sum, run) => sum + run.transition_turn, 0) / (runs.filter((run) => run.transition_turn != null).length || 1),
     affordances_shown_by_deadline_rate: Object.fromEntries(shown.map((id) => [id, runs.filter((run) => run.affordances?.find((item) => item.entity_id === id)?.deadline_met).length / count])),
     stuck_run_count: runs.reduce((sum, run) => sum + (run.stuck_runs?.length || 0), 0),
@@ -256,7 +266,9 @@ export function aggregate(runs = []) {
 export function formatMarkdown(report) {
   const runs = report.replicates || [];
   const rejectedCount = report.aggregate?.rejected_count ?? runs.reduce((sum, run) => sum + (run.rejected_count ?? run.rejected_turns?.length ?? 0), 0);
+  const aggregate = report.aggregate || {};
   const unseen = runs.flatMap((run) => (run.unseen_commands || []).map((item) => `- Turn ${item.turn}: ${item.input} — unseen: ${item.unseen_terms.join(", ")}`));
+  const exitLines = runs.map((run, index) => `- Replicate ${run.replicate ?? index + 1}: exit=${run.exit_cause ?? "unknown"}, transition turn=${run.transition_turn ?? "none"}, timer turn=${run.handoff_after_turns ?? "unknown"}`);
   const semanticSections = runs.map((run, index) => {
     const entries = run.semantic_matches || [];
     const lines = entries.length
@@ -272,5 +284,5 @@ export function formatMarkdown(report) {
     ...report,
     replicates: runs.map(({ prompts, ...run }) => run),
   };
-  return `# blind-player E2E evaluation\n\nRejected turns: ${rejectedCount}\n\n## Unseen commands\n\n${unseen.length ? unseen.join("\n") : "None"}\n\n${turnSections.length ? turnSections.join("\n\n") : "## Turns\n\nNone"}\n\n${semanticSections.length ? semanticSections.join("\n\n") : "## Semantic reveal fallback\n\nThe server did not return it."}\n\n${JSON.stringify(markdownReport, null, 2)}\n`;
+  return `# blind-player E2E evaluation\n\nRejected turns: ${rejectedCount}\n\nPlay exit rate: ${aggregate.play_exit_rate ?? "unknown"}\nTimer exit rate: ${aggregate.timer_exit_rate ?? "unknown"}\n\n## Exits\n\n${exitLines.length ? exitLines.join("\n") : "None"}\n\n## Unseen commands\n\n${unseen.length ? unseen.join("\n") : "None"}\n\n${turnSections.length ? turnSections.join("\n\n") : "## Turns\n\nNone"}\n\n${semanticSections.length ? semanticSections.join("\n\n") : "## Semantic reveal fallback\n\nThe server did not return it."}\n\n${JSON.stringify(markdownReport, null, 2)}\n`;
 }

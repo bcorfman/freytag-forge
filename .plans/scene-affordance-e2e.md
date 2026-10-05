@@ -179,8 +179,7 @@ Status: main 4ab36ef (PR 513) has the parallel L2 path and the drawer-gap cue
 (PR 512). L2 x3 on 1A moves scene to scene by play 3/3 (turn 8 in the parallel
 run). The Jev probe and the harness recording are done and merged.
 
-Chair and drawer wording (2026-10-04, applied in the working tree, uncommitted,
-not yet deployed or measured live): Ringer `freytag-affordance-chair-and-drawer-wording`
+Chair and drawer wording (2026-10-04, PR 514, main 86693db, staging sha confirmed): Ringer `freytag-affordance-chair-and-drawer-wording`
 (pass on attempt 2; the first run failed on a stale known-gaps list and on two
 bugs in my own check). Diagnosis: the 0/3 chair was a measurement alias gap.
 `workstation_chair` had only the name "workstation chair"; r2 and r3 turn 1
@@ -200,23 +199,75 @@ action_evidence and must_convey word groups, and the "KMS Mark" titles in
 `test_1a_deadline_fallback_names_the_kms_drawer` is now
 `..._names_the_drawer` and asserts "KMS" is absent; the bare-name shortcut test
 for 1A now uses "laptop", since "chair" resolves directly. Verified: full suite
-1129 passed, ruff clean. Not verified: the live effect. The worker flipped the
+1129 passed, ruff clean; live result under "L2 x3 on 86693db" below. The worker flipped the
 chair test's assertion instead of changing the example; I corrected that by
 hand (one inline edit, ran the test). The 1A card handoff `must_convey` still
 lists "beneath the KMS drawer" variants as match words, unchanged.
 
+L2 x3 on 86693db (parallel script, Ringer `freytag-affordance-live`, pass,
+2026-10-04): transition 3/3 by play, all on turn 8; stuck runs 0 (was 2); no
+rejected turns. Shown by the deadline: laptop 3/3, workstation 3/3, drawer 3/3,
+chair 1/3 (r2 turn 1: "the overturned chair", matched only through the new
+alias; r1 and r3 never named it), card first shown on turns 2, 4, 2. Silent
+transition 2/3 (r1, r3: chair never shown). So the alias fixed the
+measurement; the remaining chair misses are real, and r3 opened the drawer on
+turn 1 without ever examining the workstation. Chair is only an affordance of
+the optional kitchen-search reveal `k_sl_1a_a_r1`, so
+decide whether a never-shown chair should count as a silent transition at all.
+Invention after the card persists in all three: r1 "encrypted messages and a
+note about a coffee shop on 5th Street" from "Open Michelle's saved files." (the
+files reveal did not fire; the player then walked to the invented coffee shop),
+r2 and r3 a park bench receipt from a coffee shop. Players still say "carved
+drawer" and "my drawer"; "KMS drawer" did not appear in player input. Not
+read: the recorded prompts for the post-card turns.
+
+Brandon's goal (2026-10-04): a working game. Invented or inconsistent items
+matter only if they mislead the story or stop it progressing. Rule: in a scene
+designed so that a player action satisfies the gate, a play exit before the
+fallback timer is the normal event and a timer exit is rare. A scene that exits
+by timer by design is exempt.
+
+What the code and package show (read, not played): the timer does not force a
+transition. At `handoff_after_turns` (11 to 16 per scene in `pacing.yaml`) the
+engine stages the missing bridge facts and delivers their `handoffs.yaml`
+`fallback_text`, then the transition fires normally (`engine.py` around 411).
+`required_dependencies` mean an entity must not be destroyed or unavailable; the
+player need not hold it (`validation.py` 385). So the timer is a safety net and
+a player cannot be stuck short of a destroyed dependency. 1A's gate needs the
+card found and read, so the three turn-8 exits were play exits (the earlier
+turn-13 exits equalled the 1A timer, 13). Earlier entries above that count a
+timer exit as "transition 3/3" were too generous. `handoffs.yaml` gives most
+scenes player-earnable deliveries with a `cue_text` (1B four, 1C three, 2A one,
+2B four, 3A three, 3B five), so the L0 map's "bridge events only" for 1B, 1C, 2B,
+3A and 3B is a map gap, not proof of timer-by-design. 1C
+`national_detention_network_known` and 2C `purge_clock_started` have no cue and
+look engine-delivered.
+
+Done (2026-10-04, Ringer `freytag-affordance-l0` task `affordance-l0c-classify`, pass
+on attempt 1, 19 map tests, ruff clean): L0 map now fills a bridge event's
+`activation.all_facts_true` into `requires` and adds per scene
+`handoff_after_turns`, `gate_class`, per gate `player_earned_source_ids` and
+`cued_by_handoff`. Result: ALL eight non-final scenes are `player_gated` (each
+bridge needs player-earned facts, e.g. 1B park pursuit + route + Brandon), and
+every gate has a cued handoff. So no scene is timer-by-design; the earlier "bridge
+events only" reading for 1B, 1C, 2B, 3A, 3B was a map gap. `activation.any_of` is
+not expanded (OR set). The label is permissive (any earned source in the chain),
+so L2 exit cause is the real test. Uncommitted before this: the branch holds it.
+
 Next:
-1. Commit and merge the chair alias and drawer wording, wait for the staging
-   deploy, then run L2 x3 with `scene-affordance-l2-parallel-live.sh 3` and read
-   the chair row, the silent-transition count and whether "KMS drawer" phrasing
-   still appears in player input or narration.
-2. Narrator invention after the card (park bench, clock-tower note): read the
-   recorded prompts for the post-card turns next to plot.md, probe causes, fix
-   at the source.
-3. (done above) the drawer wording.
-4. Rerun to see whether laptop 2/3 and drawer 2/3 by the deadline are noise.
-5. L0 `required_dependencies` extension, then L1/L2 on 1B; check natural
-   phrasings against the other 67 reveals; D4 paraphrase check; Phase 5 gate.
+1. (done, above)
+2. Now first: record the exit cause in L2: play if the transition turn is before the
+   scene's `handoff_after_turns`, else timer. For a player-gated scene a timer
+   exit is a failure; for a timer-by-design scene it is informational. Re-score
+   earlier results on this basis.
+3. One continuous blind run through all nine scenes, 3 replicates in parallel,
+   using the exit labels. A player-gated scene that exits by timer in most
+   replicates is a real gap; fix it at the source (a player-earned reveal with
+   the thing to act on shown), earliest scene first, per "Fixing a Scene".
+4. Parked unless a run shows it blocks or misleads the player: the chair (1/3
+   shown, silent-transition flag counts an optional route), laptop place, the
+   post-card invention (coffee shop, receipt), stuck-turn and
+   silent-transition metrics, unseen-word flags.
 
 ## Plan: run L2 replicates in parallel (drafted 2026-10-04; built and merged, see below)
 

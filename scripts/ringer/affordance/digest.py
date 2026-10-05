@@ -36,6 +36,11 @@ def l1(report):
 def l2(report, full=False):
     agg = report.get("aggregate", {})
     print("L2 aggregate:", json.dumps(agg, indent=None))
+    if "play_exit_rate" in agg or "timer_exit_rate" in agg:
+        print(
+            f"L2 exit rates: play={agg.get('play_exit_rate', '?')} "
+            f"timer={agg.get('timer_exit_rate', '?')}"
+        )
     for rep, run in enumerate(report.get("replicates", []), 1):
         shown = ", ".join(f"{a['entity_id']}@{a['first_shown_turn']}" for a in run.get("affordances", []))
         print(
@@ -43,6 +48,12 @@ def l2(report, full=False):
             f"stuck_turns={run.get('stuck_turns')} stuck_runs={len(run.get('stuck_runs', []))} "
             f"silent={run.get('silent_transition')}"
         )
+        if "exit_cause" in run:
+            print(
+                f"    exit: cause={run.get('exit_cause')} "
+                f"transition_turn={run.get('transition_turn')} "
+                f"timer_turn={run.get('handoff_after_turns')}"
+            )
         print(f"    shown: {shown}")
         for sr in run.get("stuck_runs", []):
             print("    STUCK RUN:", json.dumps(sr)[:300])
