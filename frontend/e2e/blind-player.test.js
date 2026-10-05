@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aggregate, analyseRun, askPlayer, formatMarkdown, playerPrompt, turnLog, turnRecord, unseenTerms, validateCommand } from "./blind-player.js";
+import { aggregate, aggregateByScene, analyseRun, askPlayer, formatMarkdown, playerPrompt, sceneIdsForRun, turnLog, turnRecord, unseenTerms, validateCommand } from "./blind-player.js";
 
 const response = (command) => ({ ok: true, status: 200, json: async () => ({ output_text: JSON.stringify({ command }) }) });
 const fakeMap = { scenes: [{ scene_id: "SECRET", location: { name: "Vault" }, gates: [{ sources: [{ id: "SECRET_SOURCE", player_earned: true }] }] }] };
@@ -73,6 +73,23 @@ test("aggregates play and timer exit rates", () => {
   ];
   assert.equal(aggregate(runs).play_exit_rate, 1 / 3);
   assert.equal(aggregate(runs).timer_exit_rate, 1 / 3);
+});
+
+test("aggregates all-mode runs by scene", () => {
+  const runs = aggregateByScene([
+    { scenes: [{ scene: "1A", transition_fired: true, exit_cause: "play" }, { scene: "1B", transition_fired: true, exit_cause: "timer" }] },
+    { scenes: [{ scene: "1A", transition_fired: false, exit_cause: "none" }] },
+  ]);
+  assert.equal(runs["1A"].replicates, 2);
+  assert.equal(runs["1A"].play_exit_rate, 0.5);
+  assert.equal(runs["1B"].timer_exit_rate, 1);
+});
+
+test("validates the optional all-mode scene prefix", () => {
+  assert.deepEqual(sceneIdsForRun(["1A", "1B", "1C"], "1A,1B"), ["1A", "1B"]);
+  assert.deepEqual(sceneIdsForRun(["1A", "1B"], "all"), ["1A", "1B"]);
+  assert.throws(() => sceneIdsForRun(["1A", "1B"], "1B"), /prefix/);
+  assert.throws(() => sceneIdsForRun(["1A", "1B"], "1A,NOPE"), /scene ids/);
 });
 
 test("analyses stuck runs, silent and clean transitions, and L3", () => {

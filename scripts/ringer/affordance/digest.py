@@ -37,10 +37,7 @@ def l2(report, full=False):
     agg = report.get("aggregate", {})
     print("L2 aggregate:", json.dumps(agg, indent=None))
     if "play_exit_rate" in agg or "timer_exit_rate" in agg:
-        print(
-            f"L2 exit rates: play={agg.get('play_exit_rate', '?')} "
-            f"timer={agg.get('timer_exit_rate', '?')}"
-        )
+        print(f"L2 exit rates: play={agg.get('play_exit_rate', '?')} timer={agg.get('timer_exit_rate', '?')}")
     for rep, run in enumerate(report.get("replicates", []), 1):
         shown = ", ".join(f"{a['entity_id']}@{a['first_shown_turn']}" for a in run.get("affordances", []))
         print(
@@ -66,6 +63,54 @@ def l2(report, full=False):
             turns = [{"turn": number, "input": command} for number, command in enumerate(run.get("commands") or [], 1)]
         for turn in turns:
             print_turn(turn, run, full)
+
+
+def l2_all(report):
+    replicates = report.get("replicates", [])
+    scene_ids = list(report.get("by_scene", {}))
+    for replicate in replicates:
+        for run in replicate.get("scenes", []):
+            if run.get("scene") not in scene_ids:
+                scene_ids.append(run["scene"])
+    print("L2 all-scenes:", " ".join(scene_ids))
+    for scene_id in scene_ids:
+        runs = [
+            next(
+                (run for run in replicate.get("scenes", []) if run.get("scene") == scene_id),
+                None,
+            )
+            for replicate in replicates
+        ]
+        aggregate = report.get("by_scene", {}).get(scene_id, {})
+        affordance_ids = []
+        for run in runs:
+            if run is None:
+                continue
+            for affordance in run.get("affordances", []):
+                if affordance.get("entity_id") not in affordance_ids:
+                    affordance_ids.append(affordance.get("entity_id"))
+        exits = []
+        transitions = []
+        timers = []
+        shown = {entity_id: [] for entity_id in affordance_ids}
+        for run in runs:
+            exits.append((run or {}).get("exit_cause", "none"))
+            transitions.append((run or {}).get("transition_turn", "none"))
+            timers.append((run or {}).get("handoff_after_turns", "none"))
+            for entity_id in affordance_ids:
+                item = next(
+                    (item for item in (run or {}).get("affordances", []) if item.get("entity_id") == entity_id),
+                    None,
+                )
+                shown[entity_id].append((item or {}).get("first_shown_turn", "none"))
+        stopped = sum(1 for replicate in replicates if replicate.get("stopped_reason"))
+        print(
+            f"{scene_id}: exits={'/'.join(map(str, exits))} transitions={'/'.join(map(str, transitions))} "
+            f"timers={'/'.join(map(str, timers))} play_exit_rate={aggregate.get('play_exit_rate', '?')} "
+            f"stopped_early={stopped}"
+        )
+        for entity_id, turns in shown.items():
+            print(f"    {entity_id}: first_shown={'/'.join(map(str, turns))}")
 
 
 def one_line(value):
@@ -114,7 +159,7 @@ def main(argv=None):
         report = json.load(handle)
     if "replicates" in report:
         full = "--full" in argv[1:]
-        l2(report, full)
+        l2_all(report) if report.get("scene") == "all" else l2(report, full)
     else:
         l1(report)
 

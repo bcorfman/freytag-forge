@@ -116,6 +116,52 @@ def test_l2_old_report_prints_no_exit_fields(tmp_path, capsys):
     assert "exit rates:" not in output
 
 
+def test_l2_all_report_prints_one_row_per_scene(tmp_path, capsys):
+    report = {
+        "scene": "all",
+        "by_scene": {"1A": {"play_exit_rate": 0.5}, "1B": {"play_exit_rate": 1.0}},
+        "replicates": [
+            {
+                "stopped_reason": None,
+                "scenes": [
+                    {
+                        "scene": "1A",
+                        "exit_cause": "play",
+                        "transition_turn": 8,
+                        "handoff_after_turns": 13,
+                        "affordances": [{"entity_id": "desk", "first_shown_turn": 1}],
+                    },
+                    {
+                        "scene": "1B",
+                        "exit_cause": "timer",
+                        "transition_turn": 5,
+                        "handoff_after_turns": 5,
+                        "affordances": [],
+                    },
+                ],
+            },
+            {
+                "stopped_reason": "scene 1B had no transition by its ceiling",
+                "scenes": [
+                    {
+                        "scene": "1A",
+                        "exit_cause": "timer",
+                        "transition_turn": 13,
+                        "handoff_after_turns": 13,
+                        "affordances": [{"entity_id": "desk", "first_shown_turn": 0}],
+                    }
+                ],
+            },
+        ],
+    }
+
+    output = run_digest(tmp_path, report, capsys)
+
+    assert "1A: exits=play/timer transitions=8/13 timers=13/13 play_exit_rate=0.5 stopped_early=1" in output
+    assert "    desk: first_shown=1/0" in output
+    assert "1B: exits=timer/none transitions=5/none timers=5/none play_exit_rate=1.0 stopped_early=1" in output
+
+
 def test_l1_output_is_unchanged(tmp_path, capsys):
     report = {
         "scenes": [

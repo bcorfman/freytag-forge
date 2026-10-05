@@ -46,14 +46,17 @@ export function validateCommand(command) {
   return { ok: problems.length === 0, problems };
 }
 
-export async function askPlayer({ transcript, status, environment = process.env, fetchImpl = fetch, cap = 20, counter = { calls: 0 } } = {}) {
+export async function askPlayer({ transcript, status, environment = process.env, fetchImpl = fetch, cap = 20, counter = { calls: 0 }, totalCounter = null, totalCap = cap } = {}) {
   if (!environment.OPENAI_API_KEY) throw new Error("Blind player requires OPENAI_API_KEY.");
+  const billedCounter = totalCounter || counter;
   const prompt = playerPrompt({ transcript, status });
   let retry = false;
   let problems = [];
   while (true) {
     if (counter.calls >= cap) throw new Error(`Blind player model call cap reached (${cap}).`);
+    if (billedCounter.calls >= totalCap) throw new Error(`Blind player total model call cap reached (${totalCap}) for this replicate.`);
     counter.calls += 1;
+    if (billedCounter !== counter) billedCounter.calls += 1;
     const user = retry
       ? `${prompt.user}\n\nThe previous command was invalid. Fix these problems: ${problems.join("; ")}`
       : prompt.user;
@@ -263,7 +266,34 @@ export function aggregate(runs = []) {
   };
 }
 
+export function aggregateByScene(replicates = []) {
+  const byScene = {};
+  for (const replicate of replicates) {
+    for (const run of replicate.scenes || []) {
+      (byScene[run.scene] ||= []).push(run);
+    }
+  }
+  return Object.fromEntries(Object.entries(byScene).map(([scene, runs]) => [scene, aggregate(runs)]));
+}
+
+export function sceneIdsForRun(sceneOrder, value) {
+  if (value == null || value === "" || value === "all") return [...sceneOrder];
+  const ids = value.split(",").map((scene) => scene.trim()).filter(Boolean);
+  const valid = new Set(sceneOrder);
+  if (ids.some((scene) => !valid.has(scene))) throw new Error("E2E_BLIND_SCENES must contain only scene ids from pacing.sceneOrder.");
+  if (ids.some((scene, index) => scene !== sceneOrder[index])) throw new Error("E2E_BLIND_SCENES must be a prefix of pacing.sceneOrder.");
+  return ids;
+}
+
 export function formatMarkdown(report) {
+  if (report.scene === "all") {
+    const scenes = [...new Set((report.replicates || []).flatMap((replicate) => (replicate.scenes || []).map((run) => run.scene)))];
+    const blocks = scenes.map((scene) => {
+      const runs = (report.replicates || []).flatMap((replicate) => (replicate.scenes || []).filter((run) => run.scene === scene));
+      return formatMarkdown({ ...report, scene, replicates: runs, aggregate: report.by_scene?.[scene] });
+    });
+    return `# blind-player E2E evaluation — all scenes\n\n${blocks.join("\n")}`;
+  }
   const runs = report.replicates || [];
   const rejectedCount = report.aggregate?.rejected_count ?? runs.reduce((sum, run) => sum + (run.rejected_count ?? run.rejected_turns?.length ?? 0), 0);
   const aggregate = report.aggregate || {};
