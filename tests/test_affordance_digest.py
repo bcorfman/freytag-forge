@@ -86,6 +86,36 @@ def test_l2_old_report_uses_commands(tmp_path, capsys):
     assert "  t2 [] Open the door. -> (old report: no response text)" in output
 
 
+def test_l2_new_report_prints_exit_fields_and_rates(tmp_path, capsys):
+    report = {
+        "aggregate": {"play_exit_rate": 0.5, "timer_exit_rate": 0.5},
+        "replicates": [
+            {
+                "exit_cause": "play",
+                "transition_turn": 8,
+                "handoff_after_turns": 13,
+                "stuck_turns": [],
+                "stuck_runs": [],
+                "affordances": [],
+            }
+        ],
+    }
+
+    output = run_digest(tmp_path, report, capsys)
+
+    assert "L2 exit rates: play=0.5 timer=0.5" in output
+    assert "exit: cause=play transition_turn=8 timer_turn=13" in output
+
+
+def test_l2_old_report_prints_no_exit_fields(tmp_path, capsys):
+    report = {"aggregate": {}, "replicates": [{"stuck_turns": [], "stuck_runs": [], "affordances": []}]}
+
+    output = run_digest(tmp_path, report, capsys)
+
+    assert "exit:" not in output
+    assert "exit rates:" not in output
+
+
 def test_l1_output_is_unchanged(tmp_path, capsys):
     report = {
         "scenes": [

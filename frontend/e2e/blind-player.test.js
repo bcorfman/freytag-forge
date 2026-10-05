@@ -54,6 +54,27 @@ test("askPlayer handles key, cap, retry, and invalid responses", async () => {
 });
 
 const scene = { scene_id: "A", gates: [{ affordances: [{ entity_id: "door", name: "door", terms: ["door"] }], sources: [{ id: "reveal", player_earned: true }] }] };
+test("reports play, timer, none, and unknown exit causes", () => {
+  const handoffScene = { ...scene, handoff_after_turns: 13 };
+  assert.equal(analyseRun({ sceneEntry: handoffScene, turns: [committed(8, "B")] }).exit_cause, "play");
+  assert.equal(analyseRun({ sceneEntry: handoffScene, turns: [committed(13, "B")] }).exit_cause, "timer");
+  assert.equal(analyseRun({ sceneEntry: handoffScene, turns: [committed(13)] }).exit_cause, "none");
+  assert.equal(analyseRun({ sceneEntry: scene, turns: [committed(8, "B")] }).exit_cause, "unknown");
+  assert.equal(analyseRun({ sceneEntry: handoffScene, turns: [committed(8, "B")] }).handoff_after_turns, 13);
+  assert.equal(analyseRun({ sceneEntry: scene, turns: [committed(8, "B")] }).handoff_after_turns, null);
+});
+
+test("aggregates play and timer exit rates", () => {
+  const handoffScene = { ...scene, handoff_after_turns: 13 };
+  const runs = [
+    analyseRun({ sceneEntry: handoffScene, turns: [committed(8, "B")] }),
+    analyseRun({ sceneEntry: handoffScene, turns: [committed(13, "B")] }),
+    analyseRun({ sceneEntry: handoffScene, turns: [committed(13)] }),
+  ];
+  assert.equal(aggregate(runs).play_exit_rate, 1 / 3);
+  assert.equal(aggregate(runs).timer_exit_rate, 1 / 3);
+});
+
 test("analyses stuck runs, silent and clean transitions, and L3", () => {
   const turns = [1, 2, 3].map((turn) => ({ turn, input: "Search the floor.", text: "Nothing changes.", state: { scene_id: "A", fired_storylet_ids: [], fired_pacing_event_ids: [] }, grounding_ids: [], delivery: { must_convey_misses: [] } }));
   const stuck = analyseRun({ sceneEntry: scene, nextSceneEntry: { entry_text: "New room." }, turns, firstStep: scene.gates[0].affordances, later: [] });
