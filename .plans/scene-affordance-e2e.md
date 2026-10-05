@@ -1,6 +1,6 @@
 # Scene affordance E2E tests: plan
 
-Status (2026-10-04): L0-L2 are merged (PR 510, main 3a82bc5). Brandon's rule:
+Status (2026-10-04, main 4ab36ef; see "Resume here"): L0-L2 are merged (PR 510, main 3a82bc5). Brandon's rule:
 if a player who reads only the screen cannot move from scene to scene, or the
 narration does not place items correctly, the game is broken. Root causes
 found in 1A and fixed in PR 510: (1) reveals unlocked only on exact authored
@@ -149,7 +149,7 @@ Open, not yet known (the first item is answered above): (1) whether the semantic
 to save them, then rerun);
 (2) the recorded prompts for r3 turns 3-4; (3) the L1 x3 result.
 
-## Parallel L2 replicates: built and measured (2026-10-04, uncommitted)
+## Parallel L2 replicates: built and measured (2026-10-04, merged in PR 513)
 
 Built by Ringer `freytag-affordance-l2-parallel` (node side + wrapper). The
 first run's task A failed only because my check grepped the spec for the env
@@ -175,24 +175,50 @@ Next: decide the chair (alias gap vs never shown) and the post-card invention.
 
 ## Resume here (2026-10-04)
 
-Latest: Jev probe and L2 rerun are recorded above. Next: probe Jev arms (names
-removed; on-screen wording "crooked drawer" added), replay the exact runtime
-names from a recorded prompt, then fix at the source the probe points to and
-rerun L2 x3. The uncommitted harness changes (turn log, semantic_match
-recording, digest) and the probe files are not committed yet.
+Status: main 4ab36ef (PR 513) has the parallel L2 path and the drawer-gap cue
+(PR 512). L2 x3 on 1A moves scene to scene by play 3/3 (turn 8 in the parallel
+run). The Jev probe and the harness recording are done and merged.
 
-Next: (1) Brandon merges the `claude/gates-judge-names` PR and waits for the
-staging deploy; (2) rerun L2 on 1A with 3 replicates, then more, and L1 with 3;
-read results with `scripts/ringer/affordance/digest.py`; (3) extend L0 and run
-L1/L2 on 1B and later (the map has gates only in 1A, 2A, 2C; the rest leave on
-bridge events); (4) the other 67 reveals have the same word-group structure,
-so check each scene's gate commands with natural phrasings. L2 runs need
-`scripts/ringer/affordance/scene-affordance-l2-live.sh <replicates>`: it raises
-staging's per-session turn cap (default 10 a minute) for the run and restores
-it, and waits for the redeploy to settle. Unseen-word flags on verbs such as
-retrieve and insert are false positives; ignore them.
+Chair and drawer wording (2026-10-04, applied in the working tree, uncommitted,
+not yet deployed or measured live): Ringer `freytag-affordance-chair-and-drawer-wording`
+(pass on attempt 2; the first run failed on a stale known-gaps list and on two
+bugs in my own check). Diagnosis: the 0/3 chair was a measurement alias gap.
+`workstation_chair` had only the name "workstation chair"; r2 and r3 turn 1
+narration said "the overturned chair" (read from
+`artifacts/e2e-blind-player-r1..r3.json`), so the player did read it and the
+matcher recorded null. Same gap made the silent-transition flag a false
+positive. Changes: `aliases: [chair]` on `workstation_chair` (precedent:
+`park_bench` `aliases: [bench]`); the drawer is now named only "drawer" in
+`plot.md` 112 and 132, `handoffs.yaml` 10 (fallback_text) and `knowledge.yaml`
+301 and 332 (statement, delivery_text), by Brandon's rule and his decision that
+"the KMS drawer" is odd phrasing. Left alone on purpose: the initials-carved
+detail in the cue_text, `plot.md` 116 and 124, `knowledge.yaml` situation,
+action_evidence and must_convey word groups, and the "KMS Mark" titles in
+`storylets.md` and `storylet-routes.yaml`. Side effects: the three 1A
+`workstation_chair` check-3 findings left `bench/affordance_known_gaps.json`
+(L0 check 3 now passes for the chair; three known gaps remain);
+`test_1a_deadline_fallback_names_the_kms_drawer` is now
+`..._names_the_drawer` and asserts "KMS" is absent; the bare-name shortcut test
+for 1A now uses "laptop", since "chair" resolves directly. Verified: full suite
+1129 passed, ruff clean. Not verified: the live effect. The worker flipped the
+chair test's assertion instead of changing the example; I corrected that by
+hand (one inline edit, ran the test). The 1A card handoff `must_convey` still
+lists "beneath the KMS drawer" variants as match words, unchanged.
 
-## Plan: run L2 replicates in parallel (drafted 2026-10-04, not started)
+Next:
+1. Commit and merge the chair alias and drawer wording, wait for the staging
+   deploy, then run L2 x3 with `scene-affordance-l2-parallel-live.sh 3` and read
+   the chair row, the silent-transition count and whether "KMS drawer" phrasing
+   still appears in player input or narration.
+2. Narrator invention after the card (park bench, clock-tower note): read the
+   recorded prompts for the post-card turns next to plot.md, probe causes, fix
+   at the source.
+3. (done above) the drawer wording.
+4. Rerun to see whether laptop 2/3 and drawer 2/3 by the deadline are noise.
+5. L0 `required_dependencies` extension, then L1/L2 on 1B; check natural
+   phrasings against the other 67 reveals; D4 paraphrase check; Phase 5 gate.
+
+## Plan: run L2 replicates in parallel (drafted 2026-10-04; built and merged, see below)
 
 Why: `l2-1a-x3` runs its 3 replicates one after another in one Playwright test
 (`blind-player.spec.js`, a `for` loop, 20 minute timeout), and the manifest has

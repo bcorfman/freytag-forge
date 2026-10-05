@@ -169,6 +169,7 @@ items:
   owner: michelle
 - id: workstation_chair
   name: workstation chair
+  aliases: [chair]
   kind: seat
   axes:
   - {overturned: [], upright: [standing]}
