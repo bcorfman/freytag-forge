@@ -388,6 +388,12 @@ is an object word for step 2, so "Follow Brandon." fires it. Applied: both cues,
 four reveal groups, `maintenance_gate` and `storm_drain` in world.yaml and 1B placements. Alias `gate` on the gate was dropped:
 it collides with the item-facts hand seed "the gate". Scorer: `scripts/ringer/affordance/1b-wording-score.py` (52 commands).
 Full suite 1135 passed, ruff clean. NOT measured live: needs merge, staging deploy, then L2 1A,1B x3 (bar: 1B exits by play 2 of 3).
+1B measured live (2026-10-05, PR 516 merged, main b3113c8, staging sha confirmed, Ringer `freytag-affordance-live` task
+`l2-1a1b-x3`, pass, 358 s): 1A exits by play x3 (turn 8). 1B exits by play 2 of 3 (turns 11, 10); r3 left on the turn-13
+timer. Pass bar (2 of 3) met; was 0/3 before. r3 turn 4 "Show Michelle's photograph to the man." then turn 5-6 "Open the
+secured maintenance gate." / "Pick the lock on the maintenance gate." and it wandered into an invented alleyway and freight
+receipt; whether turn 4 or 5 fired its reveal is not checked (recorded prompts for r3 not read). Next: read r3 turns 4-6 and
+its prompts, then run the remaining scenes 1C to 3B (all timer x3 before) and fix earliest first.
 Contingent (new, only if 1-5 do not fix a live run): do not stage a cue whose reveals' `requires` are
 unmet, story-neutral, matches the docstring on `_bridge_delivery_fact_ids`.
 Rejected: adding the 1B.2 watcher details to SCENE. `_scene_setting` sends beat prose only for reveals
