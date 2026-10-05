@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from bench.affordance_map import build_affordance_map, check_affordance_map
+from bench.affordance_map import _gate_metadata, build_affordance_map, check_affordance_map
 from storygame.story_package.loader import load_story_package
 
 CONTINUITY = Path("data/stories/continuity-initiative")
@@ -213,3 +213,62 @@ def test_all_package_maps_have_scene_entries_and_json(root):
 
 def test_lighthouse_has_no_findings(lighthouse):
     assert check_affordance_map(lighthouse, build_affordance_map(lighthouse)) == []
+
+
+def test_gate_metadata_classifies_a_player_earned_chain(lighthouse):
+    earned = {
+        "id": "earned",
+        "facts": {"lead"},
+        "requires_predicates": [],
+        "player_earned": True,
+    }
+    result = _gate_metadata(lighthouse, "lead", [earned], {"lead": [earned]})
+    assert result[:3] == (
+        "player_gated",
+        "A transition gate depends on a source earned by a player action.",
+        ["earned"],
+    )
+
+
+def test_gate_metadata_classifies_an_engine_only_chain(lighthouse):
+    event = {
+        "id": "clock",
+        "facts": {"pressure"},
+        "requires_predicates": [],
+        "player_earned": False,
+    }
+    result = _gate_metadata(lighthouse, "pressure", [event], {"pressure": [event]})
+    assert result[:3] == (
+        "timer_by_design",
+        "Every transition gate source is engine-driven, unconditional, or guaranteed by scene entry.",
+        [],
+    )
+
+
+def test_bridge_activation_facts_are_requires(lighthouse):
+    package = load_story_package(CONTINUITY)
+    amap = build_affordance_map(package)
+    source = next(
+        source
+        for scene in amap["scenes"]
+        for gate in scene["gates"]
+        for source in gate["sources"]
+        if source["id"] == "storylet:bridge_1b_departure"
+    )
+    assert [requirement["fact_id"] for requirement in source["requires"]] == [
+        "park_pursuit_resolved",
+        "transport_route_identified",
+        "brandon_identified",
+        "missing_may_be_alive",
+    ]
+
+
+def test_continuity_core_scenes_are_player_gated():
+    package = load_story_package(CONTINUITY)
+    amap = build_affordance_map(package)
+    classes = {scene["scene_id"]: scene["gate_class"] for scene in amap["scenes"]}
+    assert {scene_id: classes[scene_id] for scene_id in ("1A", "2A", "2C")} == {
+        "1A": "player_gated",
+        "2A": "player_gated",
+        "2C": "player_gated",
+    }

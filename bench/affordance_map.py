@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import FactPredicate
 
 
 def _dump(value: Any) -> Any:
@@ -181,7 +182,9 @@ def _base_sources(package: Any, scene_id: str) -> list[dict[str, Any]]:
                     "facts": facts,
                     "player_earned": False,
                     "earn_when": None,
-                    "requires_predicates": [],
+                    "requires_predicates": [
+                        FactPredicate(fact_id=fact_id, equals=True) for fact_id in event.activation.all_facts_true
+                    ],
                     "entity_ids": [],
                     "action_evidence": [],
                     "must_convey_texts": [],
@@ -247,6 +250,59 @@ def _source_requires(
         item["entry_guaranteed"] = predicate.fact_id in entry or predicate.fact_id in seen
         result.append(item)
     return result
+
+
+def _source_chain(
+    source: dict[str, Any], by_fact: dict[str, list[dict[str, Any]]], seen: set[str] | None = None
+) -> set[str]:
+    """Return a source and every producer needed by its mandatory predicates."""
+
+    seen = set() if seen is None else seen
+    if source["id"] in seen:
+        return set()
+    seen.add(source["id"])
+    result = {source["id"]}
+    for predicate in source["requires_predicates"]:
+        for required in by_fact.get(predicate.fact_id, ()):
+            result.update(_source_chain(required, by_fact, seen))
+    return result
+
+
+def _gate_metadata(
+    package: Any,
+    trigger_fact_id: str,
+    gate_sources: list[dict[str, Any]],
+    by_fact: dict[str, list[dict[str, Any]]],
+) -> tuple[str, str, list[str], bool]:
+    chain: set[str] = set()
+    for source in gate_sources:
+        chain.update(_source_chain(source, by_fact))
+    source_by_id = {source["id"]: source for source in by_fact.get(trigger_fact_id, ())}
+    for source in gate_sources:
+        source_by_id.update({source["id"]: source})
+    # Include all local sources in the index so transitive producers can be found.
+    for candidates in by_fact.values():
+        source_by_id.update({source["id"]: source for source in candidates})
+    player_earned = sorted(source_id for source_id in chain if source_by_id[source_id]["player_earned"])
+    handoff_facts = {trigger_fact_id}
+    for source_id in chain:
+        source = source_by_id[source_id]
+        handoff_facts.update(source["facts"])
+        handoff_facts.update(predicate.fact_id for predicate in source["requires_predicates"])
+    cued = any(delivery.fact_id in handoff_facts and delivery.cue_text for delivery in package.deliveries)
+    if player_earned:
+        return (
+            "player_gated",
+            "A transition gate depends on a source earned by a player action.",
+            player_earned,
+            cued,
+        )
+    return (
+        "timer_by_design",
+        "Every transition gate source is engine-driven, unconditional, or guaranteed by scene entry.",
+        player_earned,
+        cued,
+    )
 
 
 def _source_reveals(package: Any, source: dict[str, Any]) -> list[str]:
@@ -457,14 +513,21 @@ def build_affordance_map(package: Any) -> dict[str, Any]:
                         )
                         for source in by_fact.get(trigger.fact_id, [])
                     ]
+                    _, _, player_earned_ids, cued_by_handoff = _gate_metadata(
+                        package, trigger.fact_id, by_fact.get(trigger.fact_id, []), by_fact
+                    )
                     gates.append(
                         {
                             "transition_id": transition.id,
                             "fact_id": trigger.fact_id,
                             "sources": gate_sources,
                             "affordances": _gate_affordances(gate_sources),
+                            "player_earned_source_ids": player_earned_ids,
+                            "cued_by_handoff": cued_by_handoff,
                         }
                     )
+        is_final = scene_id == package.scenes[-1].metadata.scene_id
+        pacing = next(item for item in package.pacing.scenes if item.scene_id == scene_id)
         scenes.append(
             {
                 "scene_id": scene_id,
@@ -476,6 +539,17 @@ def build_affordance_map(package: Any) -> dict[str, Any]:
                 "entry_material": _entry_material(package, scene),
                 "transitions": transitions,
                 "gates": gates,
+                "handoff_after_turns": pacing.handoff_after_turns,
+                "gate_class": None
+                if is_final
+                else ("player_gated" if any(gate["player_earned_source_ids"] for gate in gates) else "timer_by_design"),
+                "gate_class_reason": None
+                if is_final
+                else (
+                    "At least one transition gate depends on a player-earned source."
+                    if any(gate["player_earned_source_ids"] for gate in gates)
+                    else "All transition gates are engine-driven, unconditional, or entry-guaranteed."
+                ),
             }
         )
     return {"story_id": package.story_id, "protagonist_id": package.protagonist_id, "scenes": scenes}
@@ -588,7 +662,8 @@ def main(argv: list[str] | None = None) -> int:
         print(payload, end="")
     for scene in amap["scenes"]:
         print(
-            f"{scene['scene_id']}: {len(scene['transitions'])} transitions, {len(scene['gates'])} gates",
+            f"{scene['scene_id']}: {len(scene['transitions'])} transitions, {len(scene['gates'])} gates, "
+            f"gate_class={scene['gate_class']}, handoff_after_turns={scene['handoff_after_turns']}",
             file=sys.stderr,
         )
     return 1 if args.strict and findings else 0
