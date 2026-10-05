@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadAffordanceMap, firstStepAffordances, laterAffordances, exploreInput } from "./affordances.js";
-import { askPlayer, analyseRun, aggregate, aggregateByScene, formatMarkdown, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
+import { askPlayer, analyseRun, aggregate, aggregateByScene, collectPrompts, formatMarkdown, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
 import { startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { walkScenes } from "./scene-walk.js";
@@ -73,7 +73,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
     scene: sceneId,
     opening_text: openingText,
     commands: turns.map((turn) => turn.input),
-    prompts: turns.filter((turn) => typeof turn.prompt === "string" && turn.prompt.trim()).map((turn) => ({ turn: turn.turn, prompt: turn.prompt })),
+    prompts: collectPrompts(turns),
     turns: turnLog(turns),
     turn_count: turns.length,
     ...analyseRun({ sceneEntry, nextSceneEntry, turns, firstStep, later, openingText, stopped_on_rejections: stoppedOnRejections, sceneMapSources: sceneEntry.gates?.flatMap((gate) => gate.sources || []) || [] }),
@@ -142,5 +142,24 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
   const report = allMode
     ? { story_id: map.story_id, scene: "all", replicates: runs, by_scene: aggregateByScene(runs) }
     : { story_id: map.story_id, scene: requestedScene, replicates: runs, aggregate: aggregate(runs) };
-  await writeCategoryReport(category, { ...report, markdown: formatMarkdown(report) });
+  const promptReport = {
+    story_id: report.story_id,
+    scene: report.scene,
+    replicates: report.replicates.map((replicate) => ({
+      replicate: replicate.replicate,
+      scenes: allMode
+        ? replicate.scenes.map(({ scene, prompts }) => ({ scene, prompts }))
+        : [{ scene: replicate.scene, prompts: replicate.prompts }],
+    })),
+  };
+  await writeCategoryReport(promptsCategory(category), promptReport);
+  const mainReport = {
+    ...report,
+    replicates: report.replicates.map((replicate) => {
+      if (allMode) return { ...replicate, scenes: replicate.scenes.map(({ prompts, ...scene }) => scene) };
+      const { prompts, ...scene } = replicate;
+      return scene;
+    }),
+  };
+  await writeCategoryReport(category, { ...mainReport, markdown: formatMarkdown(mainReport) });
 });

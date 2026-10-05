@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aggregate, aggregateByScene, analyseRun, askPlayer, formatMarkdown, playerPrompt, sceneIdsForRun, turnLog, turnRecord, unseenTerms, validateCommand } from "./blind-player.js";
+import { aggregate, aggregateByScene, analyseRun, askPlayer, collectPrompts, formatMarkdown, playerPrompt, promptsCategory, sceneIdsForRun, turnLog, turnRecord, unseenTerms, validateCommand } from "./blind-player.js";
 
 const response = (command) => ({ ok: true, status: 200, json: async () => ({ output_text: JSON.stringify({ command }) }) });
 const fakeMap = { scenes: [{ scene_id: "SECRET", location: { name: "Vault" }, gates: [{ sources: [{ id: "SECRET_SOURCE", player_earned: true }] }] }] };
@@ -25,6 +25,26 @@ test("turnRecord carries semantic fallback and prompt metadata", () => {
   });
   assert.deepEqual(turnRecord({ turn: 2, input: "Search the room.", payload: {}, text: "Nothing." }).semantic_match, null);
   assert.equal(turnRecord({ turn: 2, input: "Search the room.", payload: {}, text: "Nothing." }).prompt, null);
+});
+
+test("collects object and string prompts and skips malformed prompts", () => {
+  const objectPrompt = { system: "System prompt", user: "User prompt" };
+  assert.deepEqual(collectPrompts([
+    { turn: 1, prompt: objectPrompt },
+    { turn: 2, prompt: "full prompt" },
+    { turn: 3, prompt: null },
+    { turn: 4, prompt: "   " },
+    { turn: 5, prompt: { system: "System prompt" } },
+    { turn: 6, prompt: ["system", "user"] },
+  ]), [
+    { turn: 1, prompt: objectPrompt },
+    { turn: 2, prompt: "full prompt" },
+  ]);
+});
+
+test("maps prompt report categories", () => {
+  assert.equal(promptsCategory("blind-player-r2"), "blind-player-prompts-r2");
+  assert.equal(promptsCategory("blind-player"), "blind-player-prompts");
 });
 
 test("turnLog emits the contract without prompt, delivery, or state", () => {

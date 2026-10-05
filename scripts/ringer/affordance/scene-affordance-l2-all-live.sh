@@ -22,7 +22,7 @@ for i in $(seq 1 40); do
 done
 [ "$ok" -ge 5 ] || { echo "FAIL: staging did not settle after the redeploy"; exit 1; }
 cd frontend
-rm -f ../artifacts/e2e-blind-player-r*.json ../artifacts/e2e-blind-player.json ../artifacts/e2e-blind-player.md
+rm -f ../artifacts/e2e-blind-player-r*.json ../artifacts/e2e-blind-player.json ../artifacts/e2e-blind-player.md ../artifacts/e2e-blind-player-prompts*.json ../artifacts/e2e-blind-player-prompts*.md
 tmp_root=$(mktemp -d)
 pids=()
 for n in $(seq 1 "$R"); do

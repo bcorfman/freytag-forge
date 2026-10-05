@@ -288,6 +288,36 @@ shown only on turn 13; 1C service_entrance never shown, logistics_terminal turn 
 3A override_codes never shown. Known digest quirk: `stopped_early` counts the last scene. Not done: reading
 recorded prompts; token/429 usage of the run. Next: fix earliest first (1B), per "Fixing a Scene".
 
+1B read (2026-10-04, from `artifacts/e2e-blind-player.json`, three replicates, 39 turns): only ONE
+knowledge reveal fired in 1B at all (`k_sl_1b_a_r2`, the photograph, r1 turn 2). The cue lines were
+shown from turn 1 and the player followed them, but no cue names the action the reveal needs:
+- `transport_route_identified` (`k_sl_1b_a_r1`) needs "match/compare the token to the number sequence".
+  Cue says "A transit token and a handwritten number sequence lie beside Michelle's photograph."
+  Players only examined or took each one.
+- `brandon_identified` (`k_sl_1b_b_r1`) needs "show/confront the man with the photograph"; r2 needs
+  "question Brandon about Michelle". Cue says "The watcher stands near the service path. He is the same
+  man shown with Michelle in the photograph." Players typed "Approach/Question the watcher." and the
+  narrator invented a hidden figure. Jev fallback ran on nearly every turn and matched nothing.
+- `park_pursuit_resolved` (`k_sl_1b_c_r1/r2`) needs brandon_identified AND missing_may_be_alive first.
+  Cue says "The storm-drain entrance is open ahead." Players entered the storm drain 5 to 8 times per
+  run; it can never fire before Brandon is identified. A cue for a gated step shown too early misleads.
+Same shape as the 1A card (a cue that names the thing but not the move). Recorded prompts were NOT read:
+every L2 run so far saved `prompts: []`. Cause (found 2026-10-04): staging does return the prompt
+(`FREYTAG_EXPOSE_PROMPT=1` is set on Railway), as an object `{system, user}`, but `playScene` kept a prompt
+only if `typeof turn.prompt === "string"`. Earlier notes here that said prompts were recorded were wrong
+(smoke runs only compared keys). Fixed by Ringer `freytag-affordance-l2-prompts` (pass, attempt 1): new
+`collectPrompts` and `promptsCategory` in `blind-player.js`; prompts now go to a separate
+`artifacts/e2e-blind-player-prompts[-r<N>].json` and are stripped from the main report; the all-scenes
+wrapper clears old prompts files. Node tests 76 pass. Applied to the working tree, not committed. Not yet
+verified live: a run must show non-empty prompts files.
+Proven techniques that apply: the 1A drawer-gap cue (cue text names the thing and the move; plot.md and
+`handoffs.yaml` carry the same line), PR 510 matcher synonym classes. New work: gating a cue on its
+`requires` chain (nothing found in W decisions or the grounding guide). Story text goes to ChatGPT
+Desktop, not written here.
+Next: (1) (done, see above; confirm with a 1A,1B x1 smoke) record prompts per scene; (2) probe on 1B with arms (cue gets the
+move; storm-drain cue removed until Brandon is identified), 10 to 15 samples, read by hand; (3) hand
+the cue wording to ChatGPT Desktop.
+
 ## Design: L2 across all nine scenes (drafted and decided 2026-10-04, not built)
 
 What the code says (read, not run):

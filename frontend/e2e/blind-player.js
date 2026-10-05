@@ -131,6 +131,21 @@ export function turnRecord({ turn, input, payload = {}, text }) {
   };
 }
 
+export function collectPrompts(turns = []) {
+  return turns.flatMap((turn) => {
+    const prompt = turn?.prompt;
+    const validObject = prompt && typeof prompt === "object" && !Array.isArray(prompt)
+      && typeof prompt.system === "string" && prompt.system.trim()
+      && typeof prompt.user === "string" && prompt.user.trim();
+    const validString = typeof prompt === "string" && prompt.trim();
+    return validObject || validString ? [{ turn: turn.turn, prompt }] : [];
+  });
+}
+
+export function promptsCategory(category) {
+  return category === "blind-player" ? "blind-player-prompts" : category.replace(/^blind-player(?=-r\d+$)/, "blind-player-prompts");
+}
+
 export function turnLog(turns = []) {
   return turns.map(({ turn, input, text, state, grounding_ids, semantic_match, rejected, rejection }) => ({
     turn,
