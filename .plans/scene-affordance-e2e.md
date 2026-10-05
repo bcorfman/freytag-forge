@@ -274,7 +274,7 @@ Next:
    post-card invention (coffee shop, receipt), stuck-turn and
    silent-transition metrics, unseen-word flags.
 
-## Design: L2 across all nine scenes (drafted 2026-10-04, not built)
+## Design: L2 across all nine scenes (drafted and decided 2026-10-04, not built)
 
 What the code says (read, not run):
 
@@ -321,9 +321,14 @@ Verify before trusting: smoke 1 replicate through scenes 1A to 1B only (cap the
 scene list with `E2E_BLIND_SCENES=1A,1B`), compare scene 1A with the earlier
 1-replicate result, then 3 replicates over all nine.
 
-Open for Brandon: (1) A or B? (2) The total is about 360 narrator turns plus up
-to 120 Jev fallback calls across 3 replicates; is that inside the Workers AI
-budget? (3) On a timer exit, continue (recommended) or stop the replicate?
+Decisions (Brandon, 2026-10-04): (1) B, one continuous blind run per replicate.
+(2) The cost, about 360 narrator turns plus up to 120 Jev calls across 3
+replicates, should fit the Workers AI budget; watch for 429s and record the
+actual usage after the first full run. (3) On a timer exit the run continues
+into the next scene.
+
+Next: build B as a Ringer task (harness changes 1 to 5 above), then the 1A to 1B
+smoke, then 3 replicates over all nine scenes.
 
 ## Plan: run L2 replicates in parallel (drafted 2026-10-04; built and merged, see below)
 
