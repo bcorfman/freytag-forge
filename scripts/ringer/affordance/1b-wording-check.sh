@@ -19,7 +19,7 @@ for d in H["deliveries"]:
 PY
 if grep -n "list of earlier disappearances" $D/handoffs.yaml; then echo "FAIL: missing_may_be_alive cue not deleted"; exit 1; fi
 if grep -n "storm-drain entrance is open ahead" $D/handoffs.yaml; then echo "FAIL: park_pursuit cue still names the storm drain"; exit 1; fi
-grep -q "id: maintenance_gate" $D/world.yaml && grep -q "id: storm_drain" $D/world.yaml || { echo "FAIL: maintenance_gate/storm_drain not declared in world.yaml"; exit 1; }
+grep -q "id: service_gate" $D/world.yaml && grep -q "id: storm_drain" $D/world.yaml || { echo "FAIL: service_gate/storm_drain not declared in world.yaml"; exit 1; }
 TMPDIR=/tmp uv run python /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/1b-wording-score.py || exit 1
 TMPDIR=/tmp uv run python -m bench.affordance_map --help >/dev/null 2>&1 || true
 uv run ruff check . && uv run ruff format --check . || exit 1

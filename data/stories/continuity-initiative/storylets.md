@@ -380,7 +380,7 @@ Each entry below is authoring data, not a player action menu.
 - Kristin Schweitzer
 - Brandon Corfman
 - Tactical/emergency patrol
-- Secured maintenance gate
+- Secured service gate
 
 **Dramatic purpose**
 - Turn escape pressure into character evidence.

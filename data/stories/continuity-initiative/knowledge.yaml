@@ -631,7 +631,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    The man says his name is Brandon Corfman. He says the missing people are being moved alive. A tactical team is closing across the park. Brandon says he can open the secured maintenance gate beside the storm drain. He tells Kristin to follow him.
+    The man says his name is Brandon Corfman. He says the missing people are being moved alive. A tactical team is closing across the park. Brandon says he can open the secured service gate beside the storm drain. He tells Kristin to follow him.
 - id: k_sl_1b_b_r2
   statement: 'Brandon admits he knew Michelle and insists the missing may still be alive, but his evasions leave Kristin unsure whether he came to help or watch her.'
   earn_when: asks, questions, or presses the man, watcher, or stranger about Michelle
@@ -664,13 +664,13 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Brandon says he knew Michelle. He insists the missing people may still be alive. His vague answers leave Kristin unsure whether he came to help or watch her. A tactical team is closing across the park. Brandon says he can open the secured maintenance gate beside the storm drain. He tells Kristin to follow him.
+    Brandon says he knew Michelle. He insists the missing people may still be alive. His vague answers leave Kristin unsure whether he came to help or watch her. A tactical team is closing across the park. Brandon says he can open the secured service gate beside the storm drain. He tells Kristin to follow him.
 - id: k_sl_1b_c_r1
-  statement: 'With patrols closing in, Brandon opens a secured maintenance gate and leads Kristin through the escape route.'
-  earn_when: follows Brandon, flees or escapes through the maintenance gate, opens or unlocks the gate, or goes into the storm drain or the tunnel
+  statement: 'With patrols closing in, Brandon opens a secured service gate and leads Kristin through the escape route.'
+  earn_when: follows Brandon, flees or escapes through the service gate, opens or unlocks the gate, or goes into the storm drain or the tunnel
   action_evidence:
   - [follow, flee, escape, run, run through, head into, go into, climb into, descend into, go through the gate, go through the storm drain, go through the drain, go through the tunnel, enter the gate, enter the storm drain, enter the drain, enter the tunnel, take the tunnel, take the storm drain, open, unlock, pick]
-  - [maintenance gate, secured gate, gate, storm drain, drain, tunnel, Brandon, lock]
+  - [service gate, secured gate, gate, storm drain, drain, tunnel, Brandon, lock]
   entity_ids: []
   aliases:
   - brandon retains system access
@@ -704,7 +704,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    As patrols close in, Brandon opens a secured maintenance gate. He leads Kristin through it.
+    As patrols close in, Brandon opens a secured service gate. He leads Kristin through it.
 - id: k_sl_1b_c_r2
   statement: 'Brandon enters a code no civilian should know, getting them clear toward the freight route while deepening Kristin’s suspicion.'
   earn_when: asks or tells Brandon to use the gate code or to open the gate

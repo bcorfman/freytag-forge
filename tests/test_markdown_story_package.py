@@ -354,12 +354,12 @@ def test_scene_without_item_placements_loads_with_an_empty_mapping(tmp_path: Pat
     contents = plot.read_text(encoding="utf-8")
     item_ids = (
         "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
-        "park_bench, maintenance_gate, storm_drain, kristin_truck]\n"
+        "park_bench, service_gate, storm_drain, kristin_truck]\n"
     )
     placement_block = (
         "item_placements:\n"
         "  park_bench: {parent: los_angeles_park}\n"
-        "  maintenance_gate: {parent: los_angeles_park}\n"
+        "  service_gate: {parent: los_angeles_park}\n"
         "  storm_drain: {parent: los_angeles_park}\n"
         "  transit_card: {parent: park_bench, under: true}\n"
         "  number_sequence: {parent: park_bench, under: true}\n"
