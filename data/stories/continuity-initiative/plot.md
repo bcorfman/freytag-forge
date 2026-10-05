@@ -170,9 +170,11 @@ objective: Follow Michelles lead and survive the park
 participant_ids: [kristin, brandon, michelle]
 character_placements:
   brandon: {parent: los_angeles_park, text: watching Kristin in the park}
-item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, kristin_truck]
+item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, maintenance_gate, storm_drain, kristin_truck]
 item_placements:
   park_bench: {parent: los_angeles_park}
+  maintenance_gate: {parent: los_angeles_park}
+  storm_drain: {parent: los_angeles_park}
   transit_card: {parent: park_bench, under: true}
   number_sequence: {parent: park_bench, under: true}
   michelle_photograph: {parent: park_bench, under: true}
@@ -207,6 +209,8 @@ The records suggest that the mass disappearance was preceded by years of secret 
 **Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; Michelle photograph; Continuity Initiative
 
 Kristin notices a man watching her from across the park. Believing the man works for the government, Kristin attempts to escape through abandoned service tunnels beneath the park. If Kristin speaks to him before he is identified, the man refuses to give his name and tells her to keep her voice down because patrols are nearby.
+
+The man watching Kristin waits near the service path, close enough for Kristin to show him Michelle's photograph.
 
 The man follows but saves Kristin when an emergency patrol corners her. He identifies himself as Brandon Corfman, the person in Michelle’s photograph.
 

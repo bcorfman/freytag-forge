@@ -23,7 +23,7 @@ deliveries:
   fallback_text: >-
     Kristin and Brandon escaped through the storm-drain system, and Brandon unlocked the secured maintenance gate.
     The park pursuit ended behind them when the tactical team lost their trail.
-  cue_text: A tactical team is closing across the damaged park. The storm-drain entrance is open ahead.
+  cue_text: A tactical team is closing across the damaged park.
 - fact_id: transport_route_identified
   scene_id: 1B
   source_kind: observation
@@ -47,7 +47,7 @@ deliveries:
   fallback_text: >-
     The man identified himself as Brandon Corfman, the person in Michelle's photograph. Kristin finally knew the source
     in the photograph had found her in the park.
-  cue_text: The watcher stands near the service path. He is the same man shown with Michelle in the photograph.
+  cue_text: The man watching Kristin waits near the service path. Michelle's photograph may be worth showing him.
 - fact_id: missing_may_be_alive
   scene_id: 1B
   source_kind: message
@@ -58,7 +58,6 @@ deliveries:
   fallback_text: >-
     Brandon claims that the missing are still alive, though he refuses to explain how he knows. His warning gives Kristin
     reason to believe the disappeared people are captives rather than casualties.
-  cue_text: The list of earlier disappearances lies open beside the bench. Its dates match the pattern in the other records.
 - fact_id: facility_proof
   scene_id: 1C
   source_kind: observation

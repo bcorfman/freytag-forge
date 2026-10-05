@@ -308,8 +308,19 @@ only if `typeof turn.prompt === "string"`. Earlier notes here that said prompts 
 (smoke runs only compared keys). Fixed by Ringer `freytag-affordance-l2-prompts` (pass, attempt 1): new
 `collectPrompts` and `promptsCategory` in `blind-player.js`; prompts now go to a separate
 `artifacts/e2e-blind-player-prompts[-r<N>].json` and are stripped from the main report; the all-scenes
-wrapper clears old prompts files. Node tests 76 pass. Applied to the working tree, not committed. Not yet
-verified live: a run must show non-empty prompts files.
+wrapper clears old prompts files. Node tests 76 pass. Applied to the working tree, not committed. Committed
+as ca203273. Verified live (Ringer `freytag-affordance-live`, 1A,1B x1, pass): 8 prompts for 1A and 13 for 1B in
+`e2e-blind-player-prompts-r1.json`, each `{system, user}`; the main report has no `prompts` key.
+
+1B prompts read (r1, turns 1 and 4, 2026-10-04): SCENE carries only the 1B.1 details (bench, grounds, path,
+checkpoints, patrols). No watcher, no man, no photograph-confrontation line, no storm drain. On turn 4
+("Question the watcher.") THINGS lists only Kristin and the transit token, so Brandon is not a thing the
+narrator is handed; he appears only in CHARACTERS and in the CONSTRAINT "Brandon Corfman may say this
+aloud: I won't tell you that. Keep your voice down; patrols are nearby." That is why the narrator invented
+a hidden figure. "This turn has no candidates" on both turns: the gated reveals are runtime-owned and only
+fire on a matched command. So the cue shows a man the narrator was never given. Still to probe: whether
+adding Brandon to THINGS and the 1B.2 detail to SCENE (placement is already authored: `brandon` in
+`character_placements`) makes the narrator show him; compare with W decisions on companions in THINGS.
 Proven techniques that apply: the 1A drawer-gap cue (cue text names the thing and the move; plot.md and
 `handoffs.yaml` carry the same line), PR 510 matcher synonym classes. New work: gating a cue on its
 `requires` chain (nothing found in W decisions or the grounding guide). Story text goes to ChatGPT
@@ -317,6 +328,77 @@ Desktop, not written here.
 Next: (1) (done, see above; confirm with a 1A,1B x1 smoke) record prompts per scene; (2) probe on 1B with arms (cue gets the
 move; storm-drain cue removed until Brandon is identified), 10 to 15 samples, read by hand; (3) hand
 the cue wording to ChatGPT Desktop.
+
+### 1B design: copy what makes 1A work (2026-10-04, proposed, not applied)
+
+Checked: `docs/world-model-grounding.md`, W14 in `.plans/world-model.md`, `engine.py` cue staging,
+`cloudflare.py _scene_setting`, the 1A and 1B package material, the recorded 1A and 1B prompts.
+
+What 1A does that 1B does not (each one is an earlier landed fix, so proven):
+- P1 The cue names declared things and the part to look at ("drawer", "thin gap along its lower edge").
+  1B cues name things that are not entities: "the list of earlier disappearances", "the storm-drain
+  entrance", "the maintenance gate" (`world.yaml` declares none of them; it does declare the bench, the
+  photograph, the sequence).
+- P2 The reveal's evidence verbs are what a player types by default (look, search, inspect, check) and
+  the cue's noun is in a noun group ("gap" was added to the under group). 1B-B r1 wants show, confront,
+  hold up, present; players typed approach, question, examine. 1B-C wants follow or escape through.
+  Players typed enter, follow the tunnel.
+- P3 The next step is pointed at inside the previous reveal's delivery text ("Her laptop is in her truck
+  outside."), not by an early cue. 1B has no such pointer: the storm-drain cue came as the LAST cue.
+- P4 A scene's unnamed man uses W14's label ("the man watching Kristin"); the 1B cue says "the watcher",
+  a word that is neither the label nor an alias, so a command with it refers to nothing and THINGS
+  lacks him (turn 4 prompt).
+
+Why the storm-drain cue came early (read from `engine.py` 396-440, not run): cues are ranked by the
+storylet's eligible window, but one cue is shown per turn and each is shown once; when the eligible
+cues are used up, the not-yet-eligible one is staged anyway. So SL-1B-C's cue (needs Brandon identified)
+lands around turn 5, before the step it needs.
+
+Minimum path to the bridge is TWO player moves, not five: (1) show Michelle's photograph to the man
+(`k_sl_1b_b_r1` sets brandon_identified, missing_may_be_alive, transport_route_identified); (2) follow
+Brandon through the maintenance gate, or ask for the gate code (`k_sl_1b_c_r1/r2`, need step 1). The
+token and sequence match (`k_sl_1b_a_r1`) is optional.
+
+Recommended changes (authoring only, no engine change; wording below is a DRAFT for Brandon or ChatGPT
+Desktop to rewrite, the nouns and verbs are what matter):
+1. `handoffs.yaml` `brandon_identified.cue_text` uses the label and names the photograph: "The man
+   watching Kristin stands near the service path. Michelle's photograph shows this same man."
+2. `knowledge.yaml` `k_sl_1b_b_r1`: verb group gains ask, question, speak to, talk to, approach, hand,
+   so "Show the man Michelle's photograph", "Ask the man about the photograph" and "Approach the man with
+   the photograph" all fire. Keep the photograph group. Update its `earn_when` the same way (Jev sees it).
+3. Move the next-step pointer into the delivery text of `k_sl_1b_b_r1` and `r2`: "A tactical team is
+   closing across the park. Brandon points to a secured maintenance gate beside the storm drain."
+   Reduce `park_pursuit_resolved.cue_text` to its first sentence (no storm-drain claim, so an early cue
+   cannot mislead). `k_sl_1b_c_r1` gets a wider verb group (enter, go through, head into, take) and a
+   wider object group (storm drain, storm-drain, drain, tunnel), which matches plot 1B.4.
+4. Declare `maintenance_gate` (fixed, aliases gate, secured gate) and `storm_drain` (fixed, aliases
+   storm-drain, drain, tunnel) in `world.yaml`, with `item_ids` and `item_placements` in scene 1B
+   (grounding checklist: could a reply say "place": "gate"?). Placement `text` only if it must show.
+5. Drop the `missing_may_be_alive` cue ("list of earlier disappearances"): no such thing exists, no
+   reveal acts on it, and `k_sl_1b_b_r1/r2` already deliver the fact.
+Authoring prompt written (2026-10-04): `.plans/chatgpt-1b-affordance-prompt.md` covers changes 1, 2, 3 (cue,
+evidence groups, delivery pointer) and 5 as ChatGPT Desktop tasks A-G. Change 4 (declare `maintenance_gate`,
+`storm_drain` in `world.yaml`) is structure and goes to Ringer. Not run yet. When the answer comes back: score it
+with the real matcher on the 39 recorded 1B commands plus held-back ones, then apply by Ringer.
+1B authoring applied (2026-10-05, branch `claude/l2-all-scenes`, Ringer `freytag-affordance-1b-wording`, pass on attempt 2): ChatGPT's
+answer to the prompt was scored with the real matcher first. All asked-for commands resolved but ordinary phrasings missed
+(Show him the photograph, Enter the tunnel, Flee through the gate, Ask Brandon to open the gate), so I widened the groups
+(hand, give, him; flee, escape, run, enter, climb into, go through <object>; open/unlock the gate). Judgement call: `Brandon`
+is an object word for step 2, so "Follow Brandon." fires it. Applied: both cues, delivery pointer, plot.md 1B.2 sentence,
+four reveal groups, `maintenance_gate` and `storm_drain` in world.yaml and 1B placements. Alias `gate` on the gate was dropped:
+it collides with the item-facts hand seed "the gate". Scorer: `scripts/ringer/affordance/1b-wording-score.py` (52 commands).
+Full suite 1135 passed, ruff clean. NOT measured live: needs merge, staging deploy, then L2 1A,1B x3 (bar: 1B exits by play 2 of 3).
+Contingent (new, only if 1-5 do not fix a live run): do not stage a cue whose reveals' `requires` are
+unmet, story-neutral, matches the docstring on `_bridge_delivery_fact_ids`.
+Rejected: adding the 1B.2 watcher details to SCENE. `_scene_setting` sends beat prose only for reveals
+that are candidates this turn, on purpose (Scene 2B's first beat names JANUS). That also retires two
+arms of the earlier probe idea.
+
+Check path (each step free until the last): (a) after editing, run the real matcher over the 39 recorded
+1B commands plus about 8 natural commands per step and read every hit (the photograph command must still
+fire `k_sl_1b_a_r2`, nothing may fire the wrong step); (b) capture the 1B prompts offline
+(`.plans/world-model-s1/prompt_capture.py`) and confirm THINGS lists the man by label once a command says
+"the man"; (c) L0 map, pytest, ruff; (d) L2 1A,1B x3. Pass bar: 1B exits by play in at least 2 of 3.
 
 ## Design: L2 across all nine scenes (drafted and decided 2026-10-04, not built)
 

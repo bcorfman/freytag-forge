@@ -183,6 +183,14 @@ items:
   aliases: [bench]
   kind: seat
   fixed: true
+- id: maintenance_gate
+  name: maintenance gate
+  aliases: [secured gate]
+  fixed: true
+- id: storm_drain
+  name: storm drain
+  aliases: [storm-drain, drain, tunnel]
+  fixed: true
 - id: truck_driver_seat
   name: driver's seat
   kind: seat
