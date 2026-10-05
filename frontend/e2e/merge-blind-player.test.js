@@ -25,6 +25,12 @@ const run = (replicate, scene = "1A") => ({
   unseen_command_count: 0,
 });
 const report = (replicate, scene = "1A") => ({ story_id: "continuity_initiative", scene, replicates: [run(replicate, scene)], aggregate: {} });
+const allReport = (replicate, stopped = false) => ({
+  story_id: "continuity_initiative",
+  scene: "all",
+  replicates: [{ replicate, scenes: [run(replicate, "1A"), ...(stopped ? [] : [run(replicate, "1B")])], stopped_reason: stopped ? "scene 1B had no transition by its ceiling" : "last scene finished" }],
+  by_scene: {},
+});
 
 test("replicatePlan selects either the configured range or one indexed replicate", () => {
   assert.deepEqual(replicatePlan({ E2E_BLIND_REPLICATES: "3" }), { indices: [1, 2, 3], category: "blind-player" });
@@ -40,6 +46,17 @@ test("mergeReports renumbers runs and recomputes aggregate and markdown", () => 
   assert.throws(() => mergeReports([]), /empty/);
   assert.throws(() => mergeReports([report(1), report(2, "1B")]), /same story_id and scene/);
   assert.throws(() => mergeReports([{ story_id: "x", scene: "1A" }]), /replicates array/);
+});
+
+test("mergeReports combines all-mode scenes and preserves an early stop", () => {
+  const merged = mergeReports([allReport(9), allReport(8, true)]);
+  assert.deepEqual(merged.replicates.map((item) => item.replicate), [1, 2]);
+  assert.equal(merged.scene, "all");
+  assert.equal(merged.replicates[0].scenes.length, 2);
+  assert.equal(merged.replicates[1].scenes.length, 1);
+  assert.equal(merged.by_scene["1A"].replicates, 2);
+  assert.equal(merged.by_scene["1B"].replicates, 1);
+  assert.match(merged.markdown, /all scenes/);
 });
 
 test("merge CLI writes merged JSON and markdown", async () => {

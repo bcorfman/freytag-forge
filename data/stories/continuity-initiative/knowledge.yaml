@@ -594,11 +594,11 @@ knowledge:
     Michelle's photograph shows Kristin the face of the man who has been following her.
 - id: k_sl_1b_b_r1
   statement: 'Confronted with Michelle’s photograph, Brandon identifies himself and says the missing are being moved alive.'
-  earn_when: confronts the man with Michelle's photograph
+  earn_when: shows, holds up, hands, asks, questions, approaches, or confronts the man, watcher, or stranger with Michelle's photograph
   action_evidence:
-  - [show, confront, hold up, present]
+  - [show, hold up, hand, give, ask, question, approach, confront]
   - [Michelle's photograph, Michelle's photo, photograph, photo, picture]
-  - [man, watcher, Brandon]
+  - [man, watcher, stranger, him]
   entity_ids: []
   aliases:
   - brandon identified
@@ -631,14 +631,14 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    The man says his name is Brandon Corfman. He says the missing people are being moved alive.
+    The man says his name is Brandon Corfman. He says the missing people are being moved alive. A tactical team is closing across the park, and Brandon points to a secured maintenance gate beside the storm drain.
 - id: k_sl_1b_b_r2
   statement: 'Brandon admits he knew Michelle and insists the missing may still be alive, but his evasions leave Kristin unsure whether he came to help or watch her.'
-  earn_when: questions Brandon about Michelle
+  earn_when: asks, questions, or presses the man, watcher, or stranger about Michelle
   action_evidence:
   - [ask, question, press]
-  - [Brandon, man, watcher]
-  - [Michelle, knew Michelle, know Michelle]
+  - [man, watcher, stranger, him]
+  - [about Michelle]
   entity_ids: []
   aliases:
   - brandon identified
@@ -664,13 +664,13 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Brandon says he knew Michelle. He insists the missing people may still be alive. His vague answers leave Kristin unsure whether he came to help or watch her.
+    Brandon says he knew Michelle. He insists the missing people may still be alive. His vague answers leave Kristin unsure whether he came to help or watch her. A tactical team is closing across the park, and Brandon points to a secured maintenance gate beside the storm drain.
 - id: k_sl_1b_c_r1
   statement: 'With patrols closing in, Brandon opens a secured maintenance gate and leads Kristin through the escape route.'
-  earn_when: follows Brandon through the maintenance gate
+  earn_when: follows Brandon, flees or escapes through the maintenance gate, or goes into the storm drain or the tunnel
   action_evidence:
-  - [follow, flee through, escape through, run through]
-  - [maintenance gate, secured gate, gate]
+  - [follow, flee, escape, run, run through, head into, go into, climb into, descend into, go through the gate, go through the storm drain, go through the drain, go through the tunnel, enter the gate, enter the storm drain, enter the drain, enter the tunnel, take the tunnel, take the storm drain]
+  - [maintenance gate, secured gate, gate, storm drain, drain, tunnel, Brandon]
   entity_ids: []
   aliases:
   - brandon retains system access
@@ -707,11 +707,11 @@ knowledge:
     As patrols close in, Brandon opens a secured maintenance gate. He leads Kristin through it.
 - id: k_sl_1b_c_r2
   statement: 'Brandon enters a code no civilian should know, getting them clear toward the freight route while deepening Kristin’s suspicion.'
-  earn_when: asks Brandon to use the gate code
+  earn_when: asks or tells Brandon to use the gate code or to open the gate
   action_evidence:
   - [ask, tell, get]
-  - [Brandon, man]
-  - [gate code, access code, enter the code, use the code, key in the code]
+  - [Brandon]
+  - [gate code, access code, the code, open the gate, unlock the gate]
   entity_ids: []
   aliases:
   - brandon retains system access

@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
-import { aggregate, formatMarkdown } from "./blind-player.js";
+import { aggregate, aggregateByScene, formatMarkdown } from "./blind-player.js";
 
 export function replicatePlan(env = process.env) {
   const indexValue = env.E2E_BLIND_REPLICATE_INDEX;
@@ -29,7 +29,9 @@ export function mergeReports(reports) {
     if (!Array.isArray(report.replicates)) throw new Error("A report must have a replicates array.");
   }
   const replicates = reports.flatMap((report) => report.replicates).map((replicate, index) => ({ ...replicate, replicate: index + 1 }));
-  const report = { story_id: first.story_id, scene: first.scene, replicates, aggregate: aggregate(replicates) };
+  const report = first.scene === "all"
+    ? { story_id: first.story_id, scene: "all", replicates, by_scene: aggregateByScene(replicates) }
+    : { story_id: first.story_id, scene: first.scene, replicates, aggregate: aggregate(replicates) };
   return { ...report, markdown: formatMarkdown(report) };
 }
 

@@ -254,13 +254,18 @@ events only" reading for 1B, 1C, 2B, 3A, 3B was a map gap. `activation.any_of` i
 not expanded (OR set). The label is permissive (any earned source in the chain),
 so L2 exit cause is the real test. Uncommitted before this: the branch holds it.
 
+Done (2026-10-04, PR 515 merged, main f20b24f6, commits 78795fa6 and 13aabc44):
+step 2 below. L2 now records exit cause (play or timer) per run (`blind-player.js`,
+`digest.py`, Ringer `scene-affordance-l2-exit`). Verified by node and pytest tests;
+Live smoke passed (Ringer `l2-1a-smoke`, 1 replicate, 1A, staging): transition turn 8 of timer 13, `exit_cause: play`, aggregate has `play_exit_rate` 1 and `timer_exit_rate` 0. Status line above still says main 4ab36ef; main is now f20b24f6.
+
 Next:
 1. (done, above)
-2. Now first: record the exit cause in L2: play if the transition turn is before the
+2. (done, see PR 515) record the exit cause in L2: play if the transition turn is before the
    scene's `handoff_after_turns`, else timer. For a player-gated scene a timer
    exit is a failure; for a timer-by-design scene it is informational. Re-score
    earlier results on this basis.
-3. One continuous blind run through all nine scenes, 3 replicates in parallel,
+3. (next; needs a design for walking scenes and counting sessions, not started) One continuous blind run through all nine scenes, 3 replicates in parallel,
    using the exit labels. A player-gated scene that exits by timer in most
    replicates is a real gap; fix it at the source (a player-earned reveal with
    the thing to act on shown), earliest scene first, per "Fixing a Scene".
@@ -268,6 +273,188 @@ Next:
    shown, silent-transition flag counts an optional route), laptop place, the
    post-card invention (coffee shop, receipt), stuck-turn and
    silent-transition metrics, unseen-word flags.
+
+## Resume here: continuous L2 over all nine scenes (2026-10-05, branch `claude/l2-all-scenes`, not merged)
+
+Built by Ringer `freytag-affordance-l2-all` (failed only a ruff E501 in a test; I applied the patch,
+ran ruff format, re-ran node 74 and digest 6 tests, committed). Wrappers:
+`scene-affordance-l2-all-live.sh <replicates> <scenes|all>`, manifests `scene-affordance-l2-all-smoke-live.json`
+and `scene-affordance-l2-all-live.json`. Smoke 1A,1B x1 passed (both timer exits; 1B opened on the transition text).
+Full run x3 (Ringer `freytag-affordance-live`, pass, 1052 s, no rejected stops): exit cause per scene
+(r1/r2/r3) 1A play/play/play (turn 8); 1B timer x3 (13); 1C timer x3 (11); 2A timer x3 (11); 2B timer x3 (16,16,15);
+2C play/timer/timer (12,16,17); 3A timer x3 (13,13,15); 3B timer x3 (14). 3C is the last scene, so "none" is expected.
+So 1B, 1C, 2A, 2B, 3A, 3B are real gaps: every player-gated scene exits by timer. Shown-by-end gaps: 1B Brandon first
+shown only on turn 13; 1C service_entrance never shown, logistics_terminal turn 11; 2A facility_perimeter never shown;
+3A override_codes never shown. Known digest quirk: `stopped_early` counts the last scene. Not done: reading
+recorded prompts; token/429 usage of the run. Next: fix earliest first (1B), per "Fixing a Scene".
+
+1B read (2026-10-04, from `artifacts/e2e-blind-player.json`, three replicates, 39 turns): only ONE
+knowledge reveal fired in 1B at all (`k_sl_1b_a_r2`, the photograph, r1 turn 2). The cue lines were
+shown from turn 1 and the player followed them, but no cue names the action the reveal needs:
+- `transport_route_identified` (`k_sl_1b_a_r1`) needs "match/compare the token to the number sequence".
+  Cue says "A transit token and a handwritten number sequence lie beside Michelle's photograph."
+  Players only examined or took each one.
+- `brandon_identified` (`k_sl_1b_b_r1`) needs "show/confront the man with the photograph"; r2 needs
+  "question Brandon about Michelle". Cue says "The watcher stands near the service path. He is the same
+  man shown with Michelle in the photograph." Players typed "Approach/Question the watcher." and the
+  narrator invented a hidden figure. Jev fallback ran on nearly every turn and matched nothing.
+- `park_pursuit_resolved` (`k_sl_1b_c_r1/r2`) needs brandon_identified AND missing_may_be_alive first.
+  Cue says "The storm-drain entrance is open ahead." Players entered the storm drain 5 to 8 times per
+  run; it can never fire before Brandon is identified. A cue for a gated step shown too early misleads.
+Same shape as the 1A card (a cue that names the thing but not the move). Recorded prompts were NOT read:
+every L2 run so far saved `prompts: []`. Cause (found 2026-10-04): staging does return the prompt
+(`FREYTAG_EXPOSE_PROMPT=1` is set on Railway), as an object `{system, user}`, but `playScene` kept a prompt
+only if `typeof turn.prompt === "string"`. Earlier notes here that said prompts were recorded were wrong
+(smoke runs only compared keys). Fixed by Ringer `freytag-affordance-l2-prompts` (pass, attempt 1): new
+`collectPrompts` and `promptsCategory` in `blind-player.js`; prompts now go to a separate
+`artifacts/e2e-blind-player-prompts[-r<N>].json` and are stripped from the main report; the all-scenes
+wrapper clears old prompts files. Node tests 76 pass. Applied to the working tree, not committed. Committed
+as ca203273. Verified live (Ringer `freytag-affordance-live`, 1A,1B x1, pass): 8 prompts for 1A and 13 for 1B in
+`e2e-blind-player-prompts-r1.json`, each `{system, user}`; the main report has no `prompts` key.
+
+1B prompts read (r1, turns 1 and 4, 2026-10-04): SCENE carries only the 1B.1 details (bench, grounds, path,
+checkpoints, patrols). No watcher, no man, no photograph-confrontation line, no storm drain. On turn 4
+("Question the watcher.") THINGS lists only Kristin and the transit token, so Brandon is not a thing the
+narrator is handed; he appears only in CHARACTERS and in the CONSTRAINT "Brandon Corfman may say this
+aloud: I won't tell you that. Keep your voice down; patrols are nearby." That is why the narrator invented
+a hidden figure. "This turn has no candidates" on both turns: the gated reveals are runtime-owned and only
+fire on a matched command. So the cue shows a man the narrator was never given. Still to probe: whether
+adding Brandon to THINGS and the 1B.2 detail to SCENE (placement is already authored: `brandon` in
+`character_placements`) makes the narrator show him; compare with W decisions on companions in THINGS.
+Proven techniques that apply: the 1A drawer-gap cue (cue text names the thing and the move; plot.md and
+`handoffs.yaml` carry the same line), PR 510 matcher synonym classes. New work: gating a cue on its
+`requires` chain (nothing found in W decisions or the grounding guide). Story text goes to ChatGPT
+Desktop, not written here.
+Next: (1) (done, see above; confirm with a 1A,1B x1 smoke) record prompts per scene; (2) probe on 1B with arms (cue gets the
+move; storm-drain cue removed until Brandon is identified), 10 to 15 samples, read by hand; (3) hand
+the cue wording to ChatGPT Desktop.
+
+### 1B design: copy what makes 1A work (2026-10-04, proposed, not applied)
+
+Checked: `docs/world-model-grounding.md`, W14 in `.plans/world-model.md`, `engine.py` cue staging,
+`cloudflare.py _scene_setting`, the 1A and 1B package material, the recorded 1A and 1B prompts.
+
+What 1A does that 1B does not (each one is an earlier landed fix, so proven):
+- P1 The cue names declared things and the part to look at ("drawer", "thin gap along its lower edge").
+  1B cues name things that are not entities: "the list of earlier disappearances", "the storm-drain
+  entrance", "the maintenance gate" (`world.yaml` declares none of them; it does declare the bench, the
+  photograph, the sequence).
+- P2 The reveal's evidence verbs are what a player types by default (look, search, inspect, check) and
+  the cue's noun is in a noun group ("gap" was added to the under group). 1B-B r1 wants show, confront,
+  hold up, present; players typed approach, question, examine. 1B-C wants follow or escape through.
+  Players typed enter, follow the tunnel.
+- P3 The next step is pointed at inside the previous reveal's delivery text ("Her laptop is in her truck
+  outside."), not by an early cue. 1B has no such pointer: the storm-drain cue came as the LAST cue.
+- P4 A scene's unnamed man uses W14's label ("the man watching Kristin"); the 1B cue says "the watcher",
+  a word that is neither the label nor an alias, so a command with it refers to nothing and THINGS
+  lacks him (turn 4 prompt).
+
+Why the storm-drain cue came early (read from `engine.py` 396-440, not run): cues are ranked by the
+storylet's eligible window, but one cue is shown per turn and each is shown once; when the eligible
+cues are used up, the not-yet-eligible one is staged anyway. So SL-1B-C's cue (needs Brandon identified)
+lands around turn 5, before the step it needs.
+
+Minimum path to the bridge is TWO player moves, not five: (1) show Michelle's photograph to the man
+(`k_sl_1b_b_r1` sets brandon_identified, missing_may_be_alive, transport_route_identified); (2) follow
+Brandon through the maintenance gate, or ask for the gate code (`k_sl_1b_c_r1/r2`, need step 1). The
+token and sequence match (`k_sl_1b_a_r1`) is optional.
+
+Recommended changes (authoring only, no engine change; wording below is a DRAFT for Brandon or ChatGPT
+Desktop to rewrite, the nouns and verbs are what matter):
+1. `handoffs.yaml` `brandon_identified.cue_text` uses the label and names the photograph: "The man
+   watching Kristin stands near the service path. Michelle's photograph shows this same man."
+2. `knowledge.yaml` `k_sl_1b_b_r1`: verb group gains ask, question, speak to, talk to, approach, hand,
+   so "Show the man Michelle's photograph", "Ask the man about the photograph" and "Approach the man with
+   the photograph" all fire. Keep the photograph group. Update its `earn_when` the same way (Jev sees it).
+3. Move the next-step pointer into the delivery text of `k_sl_1b_b_r1` and `r2`: "A tactical team is
+   closing across the park. Brandon points to a secured maintenance gate beside the storm drain."
+   Reduce `park_pursuit_resolved.cue_text` to its first sentence (no storm-drain claim, so an early cue
+   cannot mislead). `k_sl_1b_c_r1` gets a wider verb group (enter, go through, head into, take) and a
+   wider object group (storm drain, storm-drain, drain, tunnel), which matches plot 1B.4.
+4. Declare `maintenance_gate` (fixed, aliases gate, secured gate) and `storm_drain` (fixed, aliases
+   storm-drain, drain, tunnel) in `world.yaml`, with `item_ids` and `item_placements` in scene 1B
+   (grounding checklist: could a reply say "place": "gate"?). Placement `text` only if it must show.
+5. Drop the `missing_may_be_alive` cue ("list of earlier disappearances"): no such thing exists, no
+   reveal acts on it, and `k_sl_1b_b_r1/r2` already deliver the fact.
+Authoring prompt written (2026-10-04): `.plans/chatgpt-1b-affordance-prompt.md` covers changes 1, 2, 3 (cue,
+evidence groups, delivery pointer) and 5 as ChatGPT Desktop tasks A-G. Change 4 (declare `maintenance_gate`,
+`storm_drain` in `world.yaml`) is structure and goes to Ringer. Not run yet. When the answer comes back: score it
+with the real matcher on the 39 recorded 1B commands plus held-back ones, then apply by Ringer.
+1B authoring applied (2026-10-05, branch `claude/l2-all-scenes`, Ringer `freytag-affordance-1b-wording`, pass on attempt 2): ChatGPT's
+answer to the prompt was scored with the real matcher first. All asked-for commands resolved but ordinary phrasings missed
+(Show him the photograph, Enter the tunnel, Flee through the gate, Ask Brandon to open the gate), so I widened the groups
+(hand, give, him; flee, escape, run, enter, climb into, go through <object>; open/unlock the gate). Judgement call: `Brandon`
+is an object word for step 2, so "Follow Brandon." fires it. Applied: both cues, delivery pointer, plot.md 1B.2 sentence,
+four reveal groups, `maintenance_gate` and `storm_drain` in world.yaml and 1B placements. Alias `gate` on the gate was dropped:
+it collides with the item-facts hand seed "the gate". Scorer: `scripts/ringer/affordance/1b-wording-score.py` (52 commands).
+Full suite 1135 passed, ruff clean. NOT measured live: needs merge, staging deploy, then L2 1A,1B x3 (bar: 1B exits by play 2 of 3).
+Contingent (new, only if 1-5 do not fix a live run): do not stage a cue whose reveals' `requires` are
+unmet, story-neutral, matches the docstring on `_bridge_delivery_fact_ids`.
+Rejected: adding the 1B.2 watcher details to SCENE. `_scene_setting` sends beat prose only for reveals
+that are candidates this turn, on purpose (Scene 2B's first beat names JANUS). That also retires two
+arms of the earlier probe idea.
+
+Check path (each step free until the last): (a) after editing, run the real matcher over the 39 recorded
+1B commands plus about 8 natural commands per step and read every hit (the photograph command must still
+fire `k_sl_1b_a_r2`, nothing may fire the wrong step); (b) capture the 1B prompts offline
+(`.plans/world-model-s1/prompt_capture.py`) and confirm THINGS lists the man by label once a command says
+"the man"; (c) L0 map, pytest, ruff; (d) L2 1A,1B x3. Pass bar: 1B exits by play in at least 2 of 3.
+
+## Design: L2 across all nine scenes (drafted and decided 2026-10-04, not built)
+
+What the code says (read, not run):
+
+- Scenes after 1A already work. `blind-player.spec.js` with `E2E_BLIND_SCENE=<id>`
+  walks the earlier scenes with `walkScenes` (scripted package-aware journey,
+  package clock, one session), then the blind player plays only scene S. So
+  nine per-scene runs need no new harness, but each re-walks the earlier scenes:
+  scene k costs k-1 scripted scenes of narrator turns. Nine scenes = 36 scripted
+  scenes of live narration to measure 9 blind ones.
+- The session cap is not a concern. A replicate opens one session, and the test
+  clock token bypasses the per-IP cap (`web_demo.py` 257).
+- Per-replicate limits: `askPlayer` cap is 20 model calls per replicate, the
+  test timeout is 20 minutes, and the ceiling per scene is
+  `min(20, handoff target + 2)`. A continuous run needs all three raised.
+
+Options:
+
+A. Per-scene runs (existing path), 3 replicates each, run as 9 Ringer tasks.
+   No code change. Costs about 4x the narrator turns and measures each scene
+   from a scripted (clean) entry state.
+B. One continuous blind run per replicate (recommended). One session, the blind
+   player plays 1A, then 1B, and so on to the end; 3 replicates in parallel
+   with the existing `E2E_BLIND_REPLICATE_INDEX` path. About 9 x 13 = 120
+   turns per replicate, each scene's exit labelled play or timer. A timer exit
+   is not fatal: the engine stages the missing bridge facts, so the run
+   continues and the next scene is measured from the state a real player would
+   have. This is also the "continuous blind run" the plan's step 3 asks for.
+
+Changes for B (all in the test harness, none in the runtime):
+
+1. Refactor the spec's single-scene turn loop into a function
+   `playScene({ sceneId, ... })` returning the run record, and loop it over
+   `pacing.sceneOrder` when `E2E_BLIND_SCENE=all`. Reuse `analyseRun` per scene;
+   the opening text and `firstStep` come from the current scene's map entry.
+2. Per-scene model-call counter with cap 20, plus a hard total cap of 200 per
+   replicate (billed-endpoint guard).
+3. Test timeout 60 minutes; the Ringer check timeout 4500 s.
+4. Report shape: `scenes: [{scene, ...run}]` per replicate, and the digest
+   prints one row per scene (exit cause, exit turn, first-shown turns of the
+   gate affordances). `merge-blind-player.js` merges per scene.
+5. Stop a replicate if a scene is rejected 3 times in a row, as today.
+
+Verify before trusting: smoke 1 replicate through scenes 1A to 1B only (cap the
+scene list with `E2E_BLIND_SCENES=1A,1B`), compare scene 1A with the earlier
+1-replicate result, then 3 replicates over all nine.
+
+Decisions (Brandon, 2026-10-04): (1) B, one continuous blind run per replicate.
+(2) The cost, about 360 narrator turns plus up to 120 Jev calls across 3
+replicates, should fit the Workers AI budget; watch for 429s and record the
+actual usage after the first full run. (3) On a timer exit the run continues
+into the next scene.
+
+Next: build B as a Ringer task (harness changes 1 to 5 above), then the 1A to 1B
+smoke, then 3 replicates over all nine scenes.
 
 ## Plan: run L2 replicates in parallel (drafted 2026-10-04; built and merged, see below)
 

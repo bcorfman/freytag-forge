@@ -69,9 +69,11 @@ def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
     plot = re.sub(r"item_placements:\n(?:  .*\n)+entry_text:", replacement + "entry_text:", plot, count=1)
     scene_1b = (
         "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
-        "park_bench, kristin_truck]\n"
+        "park_bench, maintenance_gate, storm_drain, kristin_truck]\n"
         "item_placements:\n"
         "  park_bench: {parent: los_angeles_park}\n"
+        "  maintenance_gate: {parent: los_angeles_park}\n"
+        "  storm_drain: {parent: los_angeles_park}\n"
         "  transit_card: {parent: park_bench, under: true}\n"
         "  number_sequence: {parent: park_bench, under: true}\n"
         "  michelle_photograph: {parent: park_bench, under: true}\n"
