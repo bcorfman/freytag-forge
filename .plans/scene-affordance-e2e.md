@@ -254,13 +254,18 @@ events only" reading for 1B, 1C, 2B, 3A, 3B was a map gap. `activation.any_of` i
 not expanded (OR set). The label is permissive (any earned source in the chain),
 so L2 exit cause is the real test. Uncommitted before this: the branch holds it.
 
+Done (2026-10-04, PR 515 merged, main f20b24f6, commits 78795fa6 and 13aabc44):
+step 2 below. L2 now records exit cause (play or timer) per run (`blind-player.js`,
+`digest.py`, Ringer `scene-affordance-l2-exit`). Verified by node and pytest tests;
+Live smoke passed (Ringer `l2-1a-smoke`, 1 replicate, 1A, staging): transition turn 8 of timer 13, `exit_cause: play`, aggregate has `play_exit_rate` 1 and `timer_exit_rate` 0. Status line above still says main 4ab36ef; main is now f20b24f6.
+
 Next:
 1. (done, above)
-2. Now first: record the exit cause in L2: play if the transition turn is before the
+2. (done, see PR 515) record the exit cause in L2: play if the transition turn is before the
    scene's `handoff_after_turns`, else timer. For a player-gated scene a timer
    exit is a failure; for a timer-by-design scene it is informational. Re-score
    earlier results on this basis.
-3. One continuous blind run through all nine scenes, 3 replicates in parallel,
+3. (next; needs a design for walking scenes and counting sessions, not started) One continuous blind run through all nine scenes, 3 replicates in parallel,
    using the exit labels. A player-gated scene that exits by timer in most
    replicates is a real gap; fix it at the source (a player-earned reveal with
    the thing to act on shown), earliest scene first, per "Fixing a Scene".
