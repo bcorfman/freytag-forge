@@ -631,7 +631,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    The man says his name is Brandon Corfman. He says the missing people are being moved alive. A tactical team is closing across the park, and Brandon points to a secured maintenance gate beside the storm drain.
+    The man says his name is Brandon Corfman. He says the missing people are being moved alive. A tactical team is closing across the park. Brandon says he can open the secured maintenance gate beside the storm drain. He tells Kristin to follow him.
 - id: k_sl_1b_b_r2
   statement: 'Brandon admits he knew Michelle and insists the missing may still be alive, but his evasions leave Kristin unsure whether he came to help or watch her.'
   earn_when: asks, questions, or presses the man, watcher, or stranger about Michelle
@@ -664,7 +664,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Brandon says he knew Michelle. He insists the missing people may still be alive. His vague answers leave Kristin unsure whether he came to help or watch her. A tactical team is closing across the park, and Brandon points to a secured maintenance gate beside the storm drain.
+    Brandon says he knew Michelle. He insists the missing people may still be alive. His vague answers leave Kristin unsure whether he came to help or watch her. A tactical team is closing across the park. Brandon says he can open the secured maintenance gate beside the storm drain. He tells Kristin to follow him.
 - id: k_sl_1b_c_r1
   statement: 'With patrols closing in, Brandon opens a secured maintenance gate and leads Kristin through the escape route.'
   earn_when: follows Brandon, flees or escapes through the maintenance gate, opens or unlocks the gate, or goes into the storm drain or the tunnel
