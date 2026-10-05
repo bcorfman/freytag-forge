@@ -447,6 +447,24 @@ class World:
             else next((ancestor for ancestor in self.chain(entity_id) if self._is_a(ancestor, "area")), None)
         )
 
+    def spot(self, entity_id):
+        """Return the nearest area or container containing an entity."""
+        if self._is_a(entity_id, "area"):
+            return entity_id
+        return next(
+            (
+                ancestor
+                for ancestor in self.chain(entity_id)
+                if self._is_a(ancestor, "area") or self._is_a(ancestor, "container")
+            ),
+            None,
+        )
+
+    def alongside(self, first_id, second_id):
+        """Return whether two entities share the same area or container."""
+        first_spot, second_spot = self.spot(first_id), self.spot(second_id)
+        return first_spot is not None and first_spot == second_spot
+
     def holder(self, entity_id):
         """Return the containing character, if held."""
         return next((ancestor for ancestor in self.chain(entity_id) if self._is_a(ancestor, "character")), None)
@@ -692,18 +710,19 @@ class World:
             return self._bad(reason)
         old_parent, old_relation = self.parent(entity_id), self.relation(entity_id)
         new_relation = self._relation(parent_id, under)
+        if self._is_a(entity_id, "character"):
+            self._move_companions(entity_id, old_parent, parent_id)
         self._write_placement(entity_id, parent_id, new_relation)
         self._transfer_open(old_parent, parent_id, old_relation, new_relation)
         if self._is_a(entity_id, "character"):
             self._enter(parent_id)
-        self._move_companions(entity_id, old_parent, parent_id)
         return OpResult(True, id=entity_id)
 
     def _move_companions(self, entity_id, old_parent, parent_id):
         if old_parent is None:
             return
         for companion_id in self.companions(entity_id):
-            if self.parent(companion_id) == old_parent:
+            if self.alongside(companion_id, entity_id):
                 self._write_placement(companion_id, parent_id, self._relation(parent_id))
 
     def place(self, entity_id, parent_id, *, text=None, under=False, part_of=False):
@@ -882,11 +901,12 @@ class World:
             return self._bad(reason)
         old_parent, old_relation = self.parent(entity_id), self.relation(entity_id)
         new_relation = self._relation(parent_id, under)
+        if self._is_a(entity_id, "character"):
+            self._move_companions(entity_id, old_parent, parent_id)
         self._write_placement(entity_id, parent_id, new_relation)
         self._transfer_open(old_parent, parent_id, old_relation, new_relation)
         if self._is_a(entity_id, "character"):
             self._enter(parent_id)
-        self._move_companions(entity_id, old_parent, parent_id)
         if effect.get("text") is not None:
             self._replace("wk_place_text", entity_id, value=effect["text"])
             for fact in self._facts("wk_moved", entity_id):

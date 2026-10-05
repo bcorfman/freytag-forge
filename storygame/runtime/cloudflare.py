@@ -35,7 +35,7 @@ from storygame.runtime.validation import (
     derive_statement_grounding,
     unconveyed_terms,
 )
-from storygame.runtime.world_model import _true, apply_world_effects, world_for
+from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.models import (
     Item,
     ItemPlacement,
@@ -407,10 +407,7 @@ class CloudflareTurnProvider:
             ):
                 continue
             knowledge = self.state.package.knowledge_indexes.by_id.get(candidate.id)
-            if knowledge is not None and any(
-                operation.op == "assert" and _true(self.state.facts, operation.fact_id)
-                for operation in knowledge.establishes
-            ):
+            if knowledge is not None and KnowledgeProjector._established(knowledge, self.state):
                 continue
             sentence = candidate.earn_when or candidate.statement
             if sentence:
@@ -488,10 +485,7 @@ class CloudflareTurnProvider:
             ):
                 continue
             knowledge = self.state.package.knowledge_indexes.by_id.get(candidate.id)
-            if knowledge is not None and any(
-                operation.op == "assert" and _true(self.state.facts, operation.fact_id)
-                for operation in knowledge.establishes
-            ):
+            if knowledge is not None and KnowledgeProjector._established(knowledge, self.state):
                 continue
             if not (candidate.earn_when or candidate.statement):
                 continue

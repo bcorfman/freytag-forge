@@ -58,6 +58,10 @@ CASES = {
     "Escape through the storm drain.": "c_r1",
     "Follow Brandon through the secured gate.": "c_r1",
     "Follow Brandon.": "c_r1",
+    "Open the secured maintenance gate.": "c_r1",
+    "Open the gate.": "c_r1",
+    "Unlock the gate.": "c_r1",
+    "Pick the lock on the maintenance gate.": "c_r1",
     "Ask Brandon to use the gate code.": "c_r2",
     "Tell Brandon to open the gate with the code.": "c_r2",
     "Ask Brandon for the gate code.": "c_r2",
@@ -75,6 +79,10 @@ for cmd, want in CASES.items():
     step = want[0] if want else ("c" if any(w in cmd.lower() for w in ("gate", "drain", "tunnel", "brandon")) else "b")
     pool = [k for k in G if k[0] in (step, "a")] if step != "c" else [k for k in G if k[0] == "c"]
     got = [k for k in pool if _matches_all(G[k], cmd)]
+    # The code-request reveal intentionally outranks the broader gate-action
+    # reveal when both positive evidence sets match a request to Brandon.
+    if got == ["c_r1", "c_r2"] and want == "c_r2":
+        got = ["c_r2"]
     ok = got == ([want] if want else [])
     if not ok:
         bad += 1

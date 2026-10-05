@@ -224,6 +224,52 @@ def test_story_effect_move_does_not_carry_companions_when_leader_is_unplaced():
     assert world.parent("stray") is None
 
 
+def test_companions_share_a_spot_through_supporters_but_not_containers():
+    schema = WorldSchema.from_data(
+        {
+            "kinds": [{"id": "seat", "is": ["supporter"]}],
+            "entities": [
+                {"id": "park", "name": "park", "kind": "area"},
+                {"id": "other", "name": "other", "kind": "area"},
+                {"id": "truck", "name": "truck", "kind": "vehicle"},
+                {"id": "bench", "name": "bench", "kind": "supporter", "enterable": True},
+                {"id": "seat", "name": "seat", "kind": "seat", "enterable": True},
+                {"id": "leader", "name": "leader", "kind": "character"},
+                {"id": "companion", "name": "companion", "kind": "character"},
+            ],
+        }
+    )
+    world = World(schema, MemoryBackend())
+    assert world.seed().ok
+    assert world.place("bench", "park").ok
+    assert world.place("seat", "truck").ok
+    assert world.move("leader", "bench").ok
+    assert world.move("companion", "park").ok
+    assert world.set_companion("companion", "leader").ok
+
+    assert world.spot("leader") == "park"
+    assert world.alongside("leader", "companion")
+    assert world.move("leader", "other").ok
+    assert world.parent("companion") == "other"
+
+    assert world.move("leader", "park").ok
+    assert world.move("companion", "truck").ok
+    assert not world.alongside("leader", "companion")
+    assert world.move("leader", "other").ok
+    assert world.parent("companion") == "truck"
+
+    assert world.move("leader", "seat").ok
+    assert world.alongside("leader", "companion")
+    assert world.move("companion", "seat").ok
+    assert world.alongside("leader", "companion")
+    assert world.spot("leader") == "truck"
+
+    assert world.set_unplaced("leader", "somewhere else").ok
+    assert not world.alongside("leader", "companion")
+    assert world.set_unplaced("companion", "somewhere else").ok
+    assert not world.alongside("leader", "companion")
+
+
 def test_create_rejects_removed_parent_id_keyword():
     with pytest.raises(TypeError):
         companion_world().create("new thing", parent_id="hall")
