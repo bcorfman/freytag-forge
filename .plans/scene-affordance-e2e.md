@@ -394,6 +394,15 @@ timer. Pass bar (2 of 3) met; was 0/3 before. r3 turn 4 "Show Michelle's photogr
 secured maintenance gate." / "Pick the lock on the maintenance gate." and it wandered into an invented alleyway and freight
 receipt; whether turn 4 or 5 fired its reveal is not checked (recorded prompts for r3 not read). Next: read r3 turns 4-6 and
 its prompts, then run the remaining scenes 1C to 3B (all timer x3 before) and fix earliest first.
+1B r3 diagnosis and fix (2026-10-05, branch `claude/plan-1b-l2`, Ringer `freytag-affordance-1b-gate-move`): r3 turn 4 fired
+`k_sl_1b_b_r1`; turns 5-6 "Open the secured maintenance gate." / "Pick the lock on the maintenance gate." fired nothing and the narrator
+invented a lockpick and an alley. Causes: (1) `k_sl_1b_c_r1` verbs lacked open/unlock/pick, and `r2` needs ask/tell plus Brandon; (2) the Jev
+fallback never ran on turns 5-12 because `_semantic_authored_handoff` skipped a reveal when ANY establishes fact was true (`transport_route_identified`
+is set by step 1), unlike `KnowledgeProjector._established` (ALL); (3) THINGS held no Brandon or storm drain on those turns. Fixed (1) and (2)
+(the same any-skip also sat in the no-clue-rules loop); both now reuse `_established`; two hermetic tests added; scorer 56 cases pass; full suite
+1137 passed, ruff clean. The Ringer task was marked FAIL only because my check called `_matches_all` with swapped arguments; the worker's patch
+was applied by hand and the corrected check run directly. NOT measured live: needs merge, staging deploy, then L2 1A,1B x3. Still open: the delivery
+text does not name Brandon's own move (wording for ChatGPT Desktop); THINGS lacks Brandon and the storm drain on turn 5.
 Contingent (new, only if 1-5 do not fix a live run): do not stage a cue whose reveals' `requires` are
 unmet, story-neutral, matches the docstring on `_bridge_delivery_fact_ids`.
 Rejected: adding the 1B.2 watcher details to SCENE. `_scene_setting` sends beat prose only for reveals

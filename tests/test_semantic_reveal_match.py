@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider
+from storygame.runtime.facts import Fact, FactStore
 from storygame.runtime.jev_questions import reaches_reveals
 from storygame.runtime.knowledge import RevealCandidate
 
@@ -18,8 +19,8 @@ def _candidate(candidate_id="reveal", *, delivery="It is revealed.", earn_when="
     )
 
 
-def _provider(candidates, ask):
-    facts = SimpleNamespace(matching=lambda *_args: ())
+def _provider(candidates, ask, *, true_facts=()):
+    facts = FactStore(asserted={Fact(predicate=fact_id, subject="story", value="true") for fact_id in true_facts})
     state = SimpleNamespace(
         facts=facts,
         package=SimpleNamespace(knowledge_indexes=SimpleNamespace(by_id={})),
@@ -27,6 +28,12 @@ def _provider(candidates, ask):
     provider = CloudflareTurnProvider(worker_url="", token="", state=state, semantic_ask=ask)
     provider.last_projection = SimpleNamespace(candidates=tuple(candidates))
     return provider
+
+
+def _knowledge(*fact_ids):
+    return SimpleNamespace(
+        establishes=[SimpleNamespace(op="assert", fact_id=fact_id, value=True) for fact_id in fact_ids]
+    )
 
 
 def _yes(*ids):
@@ -111,6 +118,30 @@ def test_semantic_fallback_matches_exactly_one_candidate():
     assert handoff.candidate.id == "r1"
     assert len(calls) == 1
     assert provider.last_semantic_match == {"ran": True, "matched": "r1"}
+
+
+def test_semantic_fallback_offers_candidate_when_only_some_establishes_are_true():
+    candidate = _candidate("r1")
+    provider = _provider([candidate], lambda _state, questions: _yes(next(iter(questions))))
+    provider.state.package.knowledge_indexes.by_id["r1"] = _knowledge("already_known", "still_new")
+    provider.state.facts.assert_fact(Fact(predicate="already_known", subject="story", value="true"))
+
+    handoff = provider._semantic_authored_handoff("Search the drawer.")
+
+    assert handoff is not None
+    assert handoff.candidate.id == "r1"
+
+
+def test_semantic_fallback_skips_candidate_when_all_establishes_are_true():
+    candidate = _candidate("r1")
+    calls = []
+    provider = _provider(
+        [candidate], lambda *_args: calls.append(True) or _yes("r1"), true_facts=("known_a", "known_b")
+    )
+    provider.state.package.knowledge_indexes.by_id["r1"] = _knowledge("known_a", "known_b")
+
+    assert provider._semantic_authored_handoff("Search the drawer.") is None
+    assert calls == []
 
 
 @pytest.mark.parametrize(

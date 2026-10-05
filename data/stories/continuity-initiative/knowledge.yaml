@@ -667,10 +667,10 @@ knowledge:
     Brandon says he knew Michelle. He insists the missing people may still be alive. His vague answers leave Kristin unsure whether he came to help or watch her. A tactical team is closing across the park, and Brandon points to a secured maintenance gate beside the storm drain.
 - id: k_sl_1b_c_r1
   statement: 'With patrols closing in, Brandon opens a secured maintenance gate and leads Kristin through the escape route.'
-  earn_when: follows Brandon, flees or escapes through the maintenance gate, or goes into the storm drain or the tunnel
+  earn_when: follows Brandon, flees or escapes through the maintenance gate, opens or unlocks the gate, or goes into the storm drain or the tunnel
   action_evidence:
-  - [follow, flee, escape, run, run through, head into, go into, climb into, descend into, go through the gate, go through the storm drain, go through the drain, go through the tunnel, enter the gate, enter the storm drain, enter the drain, enter the tunnel, take the tunnel, take the storm drain]
-  - [maintenance gate, secured gate, gate, storm drain, drain, tunnel, Brandon]
+  - [follow, flee, escape, run, run through, head into, go into, climb into, descend into, go through the gate, go through the storm drain, go through the drain, go through the tunnel, enter the gate, enter the storm drain, enter the drain, enter the tunnel, take the tunnel, take the storm drain, open, unlock, pick]
+  - [maintenance gate, secured gate, gate, storm drain, drain, tunnel, Brandon, lock]
   entity_ids: []
   aliases:
   - brandon retains system access
