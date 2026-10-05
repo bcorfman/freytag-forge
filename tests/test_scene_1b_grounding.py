@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from storygame.runtime.facts import Fact
+from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import (
     apply_scene_placements,
@@ -51,3 +52,24 @@ def test_unidentified_brandon_stays_in_the_park() -> None:
     assert world.parent("brandon") == "los_angeles_park"
     assert world.move("kristin", "kristin_truck").ok
     assert world.parent("brandon") == "los_angeles_park"
+
+
+def test_identified_brandon_is_alongside_kristin_at_the_park_bench() -> None:
+    state = _scene_1b_state()
+    world = world_for(PACKAGE, state.facts)
+    state.facts.assert_fact(Fact(predicate="brandon_identified", subject="story", value="true"))
+    apply_world_effects(PACKAGE, state.facts)
+
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    assert world.move("kristin", "park_bench").ok
+    provider._selected_names = ["Kristin"]
+    assert "With Kristin: Brandon." in provider._things_block(narration=True)
+    assert world.move("kristin", "kristin_truck").ok
+    assert world.parent("brandon") == "kristin_truck"
