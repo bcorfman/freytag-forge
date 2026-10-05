@@ -1,6 +1,6 @@
 # Scene affordance E2E tests: plan
 
-Status (2026-10-05, main 858103e = PR 517 merged; staging deploy of 858103e pending because the push-to-main `tests` run did not start, so staging still serves b3113c8; next: confirm /api/v1/version reports the deployed SHA, then L2 1A,1B x3 against the 1B gate-move, delivery-wording and companion fixes; see the "Resume here" sections near the end of the 1B notes). Earlier status (2026-10-04, main 4ab36ef): L0-L2 are merged (PR 510, main 3a82bc5). Brandon's rule:
+Status (2026-10-05, main e856bee; see "1B live L2 pending" near the end of the 1B notes): PR 517 (1B gate move, fallback fix, delivery wording, companion alongside) and PR 518 (plan) are merged, and staging is deployed at e856bee (`/api/v1/version` confirmed sha, `scene-v1`, `staging`). The 1B live L2 has NOT been run. Next: L2 1A,1B x3 (bar: 1B exits by play in 2 of 3; read each replicate's 1B gate turns and prompts, not only exit labels). Earlier status (2026-10-04, main 4ab36ef): L0-L2 are merged (PR 510, main 3a82bc5). Brandon's rule:
 if a player who reads only the screen cannot move from scene to scene, or the
 narration does not place items correctly, the game is broken. Root causes
 found in 1A and fixed in PR 510: (1) reveals unlocked only on exact authored
@@ -416,6 +416,7 @@ first area or container instead of using `World.together`. `move` and the story-
 leader's placement is rewritten. Tests: worldkeeper `test_regressions.py` (bench carried, truck split not carried, same-vehicle seat) and
 `tests/test_scene_1b_grounding.py` (bench-to-truck carries Brandon). NOT measured live. Still unchecked: other scenes whose scripted
 journeys rely on a companion NOT following from a sub-place; the full suite passes, but no live replay has run a multi-scene walk with this rule.
+1B live L2 pending (2026-10-05): PR 517 merged as 858103e, but GitHub never started the push-to-main `tests` run for it, so no deploy happened (the Deploy job only runs on `github.ref == 'refs/heads/main'`, so re-running the PR workflow cannot deploy). A small plan-only PR (518, merged as e856bee) gave the workflow a push event; run 37387045062 passed, including Deploy staging and the scene staging evaluation, and staging reports e856bee. I started the L2 1A,1B x3 run (Ringer `freytag-affordance-live`, task `l2-1a1b-x3`, manifest `scripts/ringer/affordance/scene-affordance-l2-1a1b-live.json`) before Brandon wanted it launched, and stopped it within moments; no report was produced. The staging turn-cap variable `FREYTAG_RATE_LIMIT_PER_MINUTE` was confirmed unset afterwards. The billed calls it used before the stop were not counted. Waiting for Brandon's go before launching it again.
 Contingent (new, only if 1-5 do not fix a live run): do not stage a cue whose reveals' `requires` are
 unmet, story-neutral, matches the docstring on `_bridge_delivery_fact_ids`.
 Rejected: adding the 1B.2 watcher details to SCENE. `_scene_setting` sends beat prose only for reveals
