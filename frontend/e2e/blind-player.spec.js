@@ -32,6 +32,9 @@ async function requireStaging(baseUrl) {
   }
 }
 
+// A real player retries a rejected turn, so one bad streak should not end a replicate.
+const MAX_CONSECUTIVE_REJECTIONS = 5;
+
 async function playScene({ page, map, pacing, sceneId, openingText, totalCounter }) {
   const sceneEntry = map.scenes.find((scene) => scene.scene_id === sceneId);
   const nextSceneEntry = map.scenes.find((scene) => scene.scene_id === pacing.sceneOrder[pacing.sceneOrder.indexOf(sceneId) + 1]);
@@ -54,7 +57,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
       if (!rejection) throw error;
       turns.push({ turn, input, rejected: true, rejection: rejection[1], text: "", state: null, grounding_ids: [], delivery: {}, semantic_match: null, prompt: null });
       consecutiveRejections += 1;
-      if (consecutiveRejections >= 3) {
+      if (consecutiveRejections >= MAX_CONSECUTIVE_REJECTIONS) {
         stoppedOnRejections = true;
         break;
       }
@@ -122,7 +125,7 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
       run.replicate = replicate;
       sceneRuns.push(run);
       if (run.stopped_on_rejections) {
-        stoppedReason = `scene ${sceneId} rejected three times in a row`;
+        stoppedReason = `scene ${sceneId} rejected ${MAX_CONSECUTIVE_REJECTIONS} times in a row`;
         break;
       }
       if (!run.transition_fired) {
