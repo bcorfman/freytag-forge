@@ -274,6 +274,57 @@ Next:
    post-card invention (coffee shop, receipt), stuck-turn and
    silent-transition metrics, unseen-word flags.
 
+## Design: L2 across all nine scenes (drafted 2026-10-04, not built)
+
+What the code says (read, not run):
+
+- Scenes after 1A already work. `blind-player.spec.js` with `E2E_BLIND_SCENE=<id>`
+  walks the earlier scenes with `walkScenes` (scripted package-aware journey,
+  package clock, one session), then the blind player plays only scene S. So
+  nine per-scene runs need no new harness, but each re-walks the earlier scenes:
+  scene k costs k-1 scripted scenes of narrator turns. Nine scenes = 36 scripted
+  scenes of live narration to measure 9 blind ones.
+- The session cap is not a concern. A replicate opens one session, and the test
+  clock token bypasses the per-IP cap (`web_demo.py` 257).
+- Per-replicate limits: `askPlayer` cap is 20 model calls per replicate, the
+  test timeout is 20 minutes, and the ceiling per scene is
+  `min(20, handoff target + 2)`. A continuous run needs all three raised.
+
+Options:
+
+A. Per-scene runs (existing path), 3 replicates each, run as 9 Ringer tasks.
+   No code change. Costs about 4x the narrator turns and measures each scene
+   from a scripted (clean) entry state.
+B. One continuous blind run per replicate (recommended). One session, the blind
+   player plays 1A, then 1B, and so on to the end; 3 replicates in parallel
+   with the existing `E2E_BLIND_REPLICATE_INDEX` path. About 9 x 13 = 120
+   turns per replicate, each scene's exit labelled play or timer. A timer exit
+   is not fatal: the engine stages the missing bridge facts, so the run
+   continues and the next scene is measured from the state a real player would
+   have. This is also the "continuous blind run" the plan's step 3 asks for.
+
+Changes for B (all in the test harness, none in the runtime):
+
+1. Refactor the spec's single-scene turn loop into a function
+   `playScene({ sceneId, ... })` returning the run record, and loop it over
+   `pacing.sceneOrder` when `E2E_BLIND_SCENE=all`. Reuse `analyseRun` per scene;
+   the opening text and `firstStep` come from the current scene's map entry.
+2. Per-scene model-call counter with cap 20, plus a hard total cap of 200 per
+   replicate (billed-endpoint guard).
+3. Test timeout 60 minutes; the Ringer check timeout 4500 s.
+4. Report shape: `scenes: [{scene, ...run}]` per replicate, and the digest
+   prints one row per scene (exit cause, exit turn, first-shown turns of the
+   gate affordances). `merge-blind-player.js` merges per scene.
+5. Stop a replicate if a scene is rejected 3 times in a row, as today.
+
+Verify before trusting: smoke 1 replicate through scenes 1A to 1B only (cap the
+scene list with `E2E_BLIND_SCENES=1A,1B`), compare scene 1A with the earlier
+1-replicate result, then 3 replicates over all nine.
+
+Open for Brandon: (1) A or B? (2) The total is about 360 narrator turns plus up
+to 120 Jev fallback calls across 3 replicates; is that inside the Workers AI
+budget? (3) On a timer exit, continue (recommended) or stop the replicate?
+
 ## Plan: run L2 replicates in parallel (drafted 2026-10-04; built and merged, see below)
 
 Why: `l2-1a-x3` runs its 3 replicates one after another in one Playwright test
