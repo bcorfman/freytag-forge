@@ -397,6 +397,7 @@ class RuntimeEngine(CanonicalEventMixin):
                 and staged in missing
                 and deliveries.get(staged) is not None
                 and deliveries[staged].cue_text
+                and self._cue_reveal_available(staged)
             ):
                 self.state.staged_cue_fact_id = next(
                     (
@@ -405,6 +406,7 @@ class RuntimeEngine(CanonicalEventMixin):
                         if fact_id not in self.state.delivered_cue_ids
                         and deliveries.get(fact_id) is not None
                         and deliveries[fact_id].cue_text
+                        and self._cue_reveal_available(fact_id)
                     ),
                     None,
                 )
@@ -413,6 +415,20 @@ class RuntimeEngine(CanonicalEventMixin):
         else:
             self.state.staged_cue_fact_id = None
             self.state.staged_handoff_fact_ids = ()
+
+    def _cue_reveal_available(self, fact_id: str) -> bool:
+        """Return whether a scene reveal that establishes a cue fact can be earned."""
+
+        reveals = tuple(
+            knowledge
+            for knowledge in self.state.package.knowledge.knowledge
+            if self.state.current_scene_id in knowledge.available_in_scenes
+            and any(effect.op == "assert" and effect.fact_id == fact_id for effect in knowledge.establishes)
+        )
+        return not reveals or any(
+            all(predicate_matches(predicate, self.state.facts) for predicate in knowledge.requires)
+            for knowledge in reveals
+        )
 
     def _ranked_cue_fact_ids(self) -> tuple[str, ...]:
         """Rank missing bridge facts by their earliest eligible source window."""

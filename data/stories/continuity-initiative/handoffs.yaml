@@ -89,6 +89,7 @@ deliveries:
   - [regional hub, detention network]
   fallback_text: >-
     The logistics computer shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
+  cue_text: A logistics computer hums by the service entrance. It may be worth reading.
 - fact_id: false_identities_ready
   scene_id: 2A
   source_kind: npc
@@ -155,6 +156,7 @@ deliveries:
   fallback_text: >-
     Charles's purge order moves the transfers and killings onto a deadline. Command orders make clear that the purge
     begins within hours, before the captives can be safely moved.
+  cue_text: Transfer orders sit open in the command levels. They may be worth checking.
 - fact_id: evidence_ready_to_transmit
   scene_id: 2C
   source_kind: observation

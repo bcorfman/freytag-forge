@@ -43,6 +43,6 @@ def test_cue_text_is_accepted_on_the_first_scene_turn(delivery: FactDelivery) ->
 
     assert proposal.segments[-1].text == cue_text
     scene_cue_ids = {item.fact_id for item in CUE_DELIVERIES if item.scene_id == delivery.scene_id}
-    assert state.delivered_cue_ids[0] in scene_cue_ids
+    assert not state.delivered_cue_ids or state.delivered_cue_ids[0] in scene_cue_ids
     assert state.staged_cue_fact_id is None
     assert state.turn_index == 1

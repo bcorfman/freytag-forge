@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-1c-wording",
+  "workdir": "/home/bcorfman/dev/ringer-work/1c-wording",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "1c-wording",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, plus tests/test_markdown_story_package.py, tests/test_canon_journey.py and bench/affordance_known_gaps.json ONLY to update an assertion that pins a string you change (change the expected value; never weaken or delete a test). Edit nothing else. Leave every other byte unchanged: do not touch statement, delivery_text, requires, establishes, ids, handoffs.yaml cues or plot.md.\n\nContext: In scene 1C players do the right thing in their own words and no reveal fires. Recorded commands: 'Read the identification numbers on the uniforms.', 'Examine the identification numbers on the uniforms below.', 'Search the processing line for Michelle.', 'Access the logistics computer.', 'Use the logistics computer.' all miss. Fix by WIDENING the action_evidence word groups (and the matching earn_when sentence) of three reveals in knowledge.yaml. A group matches when the command contains any one phrase in it; a reveal fires only when EVERY group matches. Only ADD phrases; never remove one.\n\n1. k_sl_1c_b_r1: group 1 (verbs) add: examine, inspect, observe, look at. Group 2 (the people) add: uniforms, uniform, workers' uniforms. Leave group 3 as is. Update earn_when to also say the player reads or examines the identification numbers on the prisoners' uniforms.\n2. k_sl_1c_b_r2: group 1 (verbs) add: search, look, check. Leave other groups as is.\n3. k_sl_1c_c_r1: group 1 (verbs) add: access, use, open, activate, examine, look at. Leave the object group as is. Update earn_when to also say the player accesses or uses the logistics computer.\n\nHOW TO CHECK: `TMPDIR=/tmp uv run python /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/1c-wording-score.py` runs the real matcher over 24 player commands (imperative, as a person types) and prints each failure; all 24 must be correct, including the ones that must NOT fire (for example 'Examine the uniforms.' and 'Examine the processing line.' fire nothing). Do not edit that script. Then run `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check --fix . && uv run ruff format .` (ruff must not touch YAML). If the scorer shows a must-not-fire command firing, narrow what you added rather than editing the scorer. Write notes.md at the worktree root: each phrase added, scorer output, any test expectation changed and why.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/1c-wording-check.sh",
+      "verified": "1C evidence groups widened; scorer 24/24; only knowledge.yaml evidence lines changed; suite and ruff pass"
+    }
+  ]
+}

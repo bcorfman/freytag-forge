@@ -125,8 +125,7 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
     assert turn.json()["segments"][0]["text"] == "The lead sharpens."
     assert turn.json()["lines"] == ["The lead sharpens."]
     delivery = turn.json()["delivery"]
-    assert delivery["cue_fact_id"] is not None
-    assert delivery["cue_fact_id"] in {item.fact_id for item in PACKAGE.deliveries if item.cue_text}
+    assert delivery["cue_fact_id"] is None
     assert delivery["must_convey_misses"] == []
     assert delivery["recovery_used"] is False
     assert delivery["fallback_used"] is False
