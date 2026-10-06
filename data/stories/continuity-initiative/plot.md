@@ -300,6 +300,8 @@ Kristin wants to enter immediately. Brandon stops her, arguing that a reckless r
 
 Brandon accesses a logistics computer and discovers that the Los Angeles site is not where all the missing people are held. It is a regional command center connected to facilities throughout the country.
 
+The logistics computer hums beside the service entrance.
+
 The missing have been divided into categories:
 
 * Political and military personnel
@@ -558,6 +560,8 @@ Brandon pretends to consider the offer so he can gain access to the executive le
 Charles discovers that Michelle’s resistance network has corrupted JANUS records. Fearing that evidence will escape, he orders a full transfer of the most valuable captives and the destruction of everyone else.
 
 The purge will begin within hours.
+
+The transfer orders lie open in the command levels.
 
 At the same time, Charles prepares a national broadcast in which he will claim to have located survivors of the catastrophe. He plans to release a small number of carefully selected captives and use their return to legitimize his new emergency government.
 

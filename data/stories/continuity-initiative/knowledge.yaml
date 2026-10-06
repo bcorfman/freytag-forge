@@ -773,7 +773,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running.
+    Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running. The observation shaft overlooks the processing line, where people in uniforms pass below.
 - id: k_sl_1c_a_r2
   statement: 'Michelle’s transit token opens a service entrance beneath the terminal, confirming an active facility below. The service schematic marks a dry maintenance ascent that joins the drainage spine, too exposed to use now but worth remembering.'
   earn_when: uses the transit token at the service entrance
@@ -806,7 +806,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    The transit token opens a service entrance to an active facility below. A service map shows a dry maintenance climb to the drainage spine. Kristin sees that route is too exposed to use now.
+    The transit token opens a service entrance to an active facility below. A service map shows a dry maintenance climb to the drainage spine. Kristin sees that route is too exposed to use now. The observation shaft overlooks the processing line, where people in uniforms pass below.
 - id: k_sl_1c_b_r1
   statement: 'From the processing area, Kristin matches sedated prisoners to missing-person records and knows they are alive.'
   earn_when: compares the prisoners with missing-person records or reads or examines the identification numbers on the prisoners' uniforms
@@ -837,7 +837,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Kristin matches sedated prisoners in the processing area to missing-person records. They are alive.
+    Kristin matches sedated prisoners in the processing area to missing-person records. They are alive. The logistics computer waits beside the service entrance.
 - id: k_sl_1c_b_r2
   statement: 'Kristin sees sedated captives alive in the processing line and glimpses a woman who could be Michelle before the view vanishes.'
   earn_when: searches the processing line for Michelle
@@ -872,7 +872,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Kristin sees sedated captives alive in the processing line. She glimpses a woman who could be Michelle. Then the view vanishes.
+    Kristin sees sedated captives alive in the processing line. She glimpses a woman who could be Michelle. Then the view vanishes. The logistics computer waits beside the service entrance.
 - id: k_sl_1c_c_r1
   statement: 'A logistics computer shows that Los Angeles is only a regional hub in a detention network spanning the country.'
   earn_when: reads, accesses, or uses the logistics computer
@@ -1023,7 +1023,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Kristin finds a cooling weakness she can use for a real inspection warning. Brandon builds their cover around it.
+    Kristin finds a cooling weakness she can use for a real inspection warning. Brandon builds their cover around it. At the facility checkpoint, Kristin must show the inspector credentials.
 - id: k_sl_2a_b_r2
   statement: 'Brandon prepares technical credentials while Kristin chooses how much of the real cooling-water and ventilation risk to put in their lie.'
   earn_when: prepares the inspector credentials with Brandon
@@ -1053,12 +1053,12 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Brandon prepares technical credentials. Kristin weighs how much of the real cooling-water and ventilation risk to put in their lie.
+    Brandon prepares technical credentials. Kristin weighs how much of the real cooling-water and ventilation risk to put in their lie. At the facility checkpoint, Kristin must show the inspector credentials.
 - id: k_sl_2a_e_r1
   statement: "Kristin and Brandon are at the facility perimeter. Their false identities have passed the first security checks."
   earn_when: "travels to the facility"
   action_evidence:
-  - ["go to", "head to", "drive to", "travel to", "get to", "set out for", "head out to", "drive out to", "make for", "proceed to", "take Brandon to", "drive Brandon to", "bring Brandon to", "lead Brandon to", "show the checkpoint", "show the guard", "show the security guard", "hand the guard", "hand the checkpoint guard", "present our credentials at", "present my credentials at", "present the inspector credentials", "flash my credentials at", "flash my inspector credentials", "flash our inspector credentials", "show my credentials at", "show our credentials at", "show my inspector credentials at", "show our inspector credentials at"]
+  - ["go to", "head to", "drive to", "travel to", "get to", "set out for", "head out to", "drive out to", "make for", "proceed to", "take Brandon to", "drive Brandon to", "bring Brandon to", "lead Brandon to", "show the checkpoint", "show the guard", "show the security guard", "hand the guard", "hand the checkpoint guard", "present our credentials at", "present my credentials at", "present the inspector credentials", "flash my credentials at", "flash my inspector credentials", "flash our inspector credentials", "show my credentials at", "show our credentials at", "show my inspector credentials at", "show our inspector credentials at", "show the inspector credentials", "show the credentials", "show the inspection credentials", "present the credentials", "hand over the credentials"]
   - ["the facility", "facility perimeter", "the facility perimeter", "checkpoint", "checkpoints", "security checkpoint", "security checkpoints", "checkpoint guard", "checkpoint guards", "the guard", "identity check", "identity checks", "security check", "security checks", "inspector credentials", "inspection credentials"]
   entity_ids: []
   aliases:
@@ -1082,7 +1082,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks."
+  delivery_text: "Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks. A supervisor questions why their inspection was not scheduled."
 - id: k_sl_2a_c_r1
   statement: 'Kristin persuades a doubtful supervisor that a cooling-water imbalance and ventilation fault could disable the service level, gaining corridor access.'
   earn_when: warns the supervisor about cooling and ventilation faults
@@ -1522,7 +1522,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "After Michelle corrupts the records, Charles orders valuable captives transferred. He orders everyone else destroyed within hours."
+  delivery_text: "After Michelle corrupts the records, Charles orders valuable captives transferred. He orders everyone else destroyed within hours. The copied files lie close at hand."
 - id: k_sl_2c_b_r2
   statement: 'Charles prepares a broadcast of selected survivors while the purge order turns the detention sectors into a deadline.'
   earn_when: "checks the broadcast schedule"
@@ -1549,7 +1549,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Charles prepares a broadcast of selected survivors. The purge order means time is running out in the detention sectors."
+  delivery_text: "Charles prepares a broadcast of selected survivors. The purge order means time is running out in the detention sectors. The copied files lie close at hand."
 - id: k_sl_2c_c_r1
   statement: 'Kristin and Brandon secure enough evidence to expose the conspiracy, but sending it now would reveal their position and seal the detention sectors.'
   earn_when: "checks the copied files"
@@ -1583,7 +1583,7 @@ knowledge:
   must_convey:
   - [evidence, proof, evidence transmission, transmit proof, evidence for broadcast, the proof]
   - [reveal their position, expose their position, seal the detention sectors, seal the cells, risk the captives, rescue impossible]
-  delivery_text: "Kristin and Brandon have enough evidence to expose the conspiracy. Sending it now would reveal their position and seal the detention sectors."
+  delivery_text: "Kristin and Brandon have enough evidence to expose the conspiracy. Sending it now would reveal their position and seal the detention sectors. A message from Michelle is waiting."
 - id: k_sl_2c_c_r2
   statement: 'Brandon wants to send the evidence now. He will risk the captives. He accepts that this makes rescue impossible.'
   earn_when: "argues about sending the proof"
@@ -1617,13 +1617,13 @@ knowledge:
   must_convey:
   - [evidence, proof, transmit the evidence, broadcast proof, send the evidence, ready to transmit]
   - [risk the captives, seal the detention sectors, rescue impossible, choose rescue, choose evidence]
-  delivery_text: "Brandon says the proof must go out now. He will risk the captives, even if that makes rescue impossible."
+  delivery_text: "Brandon says the proof must go out now. He will risk the captives, even if that makes rescue impossible. A message from Michelle is waiting."
 - id: k_sl_2c_d_r1
   statement: "Michelle's encrypted message marks a maintenance access route into her holding block and reveals that Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
   earn_when: "decodes Michelle's coded message"
   action_evidence:
   - ["decode", "read", "check", "study", "open", "search", "inspect"]
-  - ["Michelle's message", "Michelle's coded", "coded message", "coded messages", "encrypted message", "encrypted messages"]
+  - ["Michelle's message", "Michelle's coded", "coded message", "coded messages", "encrypted message", "encrypted messages", "message from Michelle", "the message from Michelle"]
   entity_ids: []
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
