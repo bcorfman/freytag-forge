@@ -666,7 +666,7 @@ knowledge:
   delivery_text: >-
     Brandon says he knew Michelle. He insists the missing people may still be alive. His vague answers leave Kristin unsure whether he came to help or watch her. A tactical team is closing across the park. Brandon says he can open the secured service gate beside the storm drain. He tells Kristin to follow him.
 - id: k_sl_1b_c_r1
-  statement: 'With patrols closing in, Brandon opens a secured service gate and leads Kristin through the escape route.'
+  statement: 'With patrols closing in, Brandon opens a secured service gate and leads Kristin through the storm drain.'
   earn_when: follows Brandon, flees or escapes through the service gate, opens or unlocks the gate, or goes into the storm drain or the tunnel
   action_evidence:
   - [follow, flee, escape, run, run through, head into, go into, climb into, descend into, go through the gate, go through the storm drain, go through the drain, go through the tunnel, enter the gate, enter the storm drain, enter the drain, enter the tunnel, take the tunnel, take the storm drain, open, unlock, pick]
