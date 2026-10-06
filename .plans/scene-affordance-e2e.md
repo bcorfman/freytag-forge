@@ -1,6 +1,6 @@
 # Scene affordance E2E tests: plan
 
-Status (2026-10-05, main e856bee; see "1B live L2 pending" near the end of the 1B notes): PR 517 (1B gate move, fallback fix, delivery wording, companion alongside) and PR 518 (plan) are merged, and staging is deployed at e856bee (`/api/v1/version` confirmed sha, `scene-v1`, `staging`). The 1B live L2 ran on e856bee (2026-10-05, Ringer `l2-1a1b-x3`, pass, 363 s): 1A exits by play 3/3 (turns 8, 8, 12); 1B by play 2 of 3 (turn 9, 9), bar met; r3 never left 1B (see "1B live L2 on e856bee"). Next: resolve the "maintenance tunnel" alias collision (see "1B r3 diagnosed"), confirm the staging turn cap is restored, then run 1C to 3B. Earlier status (2026-10-04, main 4ab36ef): L0-L2 are merged (PR 510, main 3a82bc5). Brandon's rule:
+Status (2026-10-05, main e856bee; see "1B live L2 pending" near the end of the 1B notes): PR 517 (1B gate move, fallback fix, delivery wording, companion alongside) and PR 518 (plan) are merged, and staging is deployed at e856bee (`/api/v1/version` confirmed sha, `scene-v1`, `staging`). The 1B live L2 ran on e856bee (2026-10-05, Ringer `l2-1a1b-x3`, pass, 363 s): 1A exits by play 3/3 (turns 8, 8, 12); 1B by play 2 of 3 (turn 9, 9), bar met; r3 never left 1B (see "1B live L2 on e856bee"). Next: follow "Recommended plan: whole-game fix (2026-10-05)" below (offline simulation first); 1B pre-flight fixes (service gate, storm-drain statement, 5-rejection stop) are committed on `claude/plan-l2-1b-pending` but not merged or measured live. Earlier status (2026-10-04, main 4ab36ef): L0-L2 are merged (PR 510, main 3a82bc5). Brandon's rule:
 if a player who reads only the screen cannot move from scene to scene, or the
 narration does not place items correctly, the game is broken. Root causes
 found in 1A and fixed in PR 510: (1) reveals unlocked only on exact authored
@@ -273,6 +273,15 @@ Next:
    shown, silent-transition flag counts an optional route), laptop place, the
    post-card invention (coffee shop, receipt), stuck-turn and
    silent-transition metrics, unseen-word flags.
+
+## Recommended plan: whole-game fix (2026-10-05, Brandon asked for the most robust and resilient option, fast to staging)
+
+Not started. Context: every scene 1C-3B stalls after its first reveal (see "Offline scoring of 1C-3B"). The game is not stuck today: every scene exits by its timer, so a full playthrough fits the 2-hour budget; what is missing is player agency. Per-scene wording would take about four rounds per scene (1B took about four), so fix the cause once in the engine, story-neutral:
+1. Staged cues: show a cue only once its reveal's `requires` chain is met (no story edits; fixes 3A/3B last-step-first and the 1B storm-drain cue). No precedent in the W decisions or the grounding guide; say so when recording it.
+2. Cue-derived matching: once a cue has been shown, its named things count as accepted objects for that reveal, with a broad interaction-verb class (examine, inspect, read, open, use, access, activate, enter, follow, ask). Authored groups stay; order stays protected by `requires`. Replaces widening about 40 groups by hand and carries to the next story. The Jev fallback is not the answer (probes: inconsistent, the name list made it worse).
+3. Missing cues and next-step pointers in deliveries, for ChatGPT Desktop: 1C logistics computer and `national_detention_network_known` (no cue), 2C `purge_clock_started` (no cue), 2A `k_sl_2a_b_r1` delivery (fires turn 1, names no next place), plus a pointer per delivery where the next step is unnamed.
+Risk: item 2 could fire a reveal on a loose interaction with the named thing. Measure before building.
+Order: (1) free offline simulation of items 1 and 2 over the ~280 recorded commands in `l2-all-x3` (use `reveal_coverage.py` and `scene_gap.py`; read every new hit and miss; narrow the verb class if it over-fires); (2) build both by Ringer with hermetic tests, full suite, ruff; (3) draft the item 3 sentences for ChatGPT Desktop in parallel, scored with the real matcher; (4) merge the branch (includes the 1B pre-flight fixes), wait for the staging deploy, then ONE billed all-scenes L2 x3 with prompts recorded and the 5-rejection stop, reading play exits per scene (bar: play exit in at least 2 of 3 per scene). Still unverified and to check first: the staging turn cap (`FREYTAG_RATE_LIMIT_PER_MINUTE`) is unset after the last run.
 
 ## Resume here: continuous L2 over all nine scenes (2026-10-05, branch `claude/l2-all-scenes`, not merged)
 
