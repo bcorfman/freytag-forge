@@ -189,6 +189,8 @@ Method for each remaining scene (same as 1C): (1) `scene_gap.py <scene> <report>
 
 Then: one live round. Use the smoke wrapper first (`scene-affordance-l2-all-smoke-live.json`), then `scene-affordance-l2-all-live.json` x3 (`scene-affordance-l2-all-live.sh <replicates> <scenes|all>`), with prompts recorded. Report play versus timer exits per scene and read cue timing: check that staged cues did not leave a scene with every cue withheld for long. Compare with the l2-all-x3 baseline (1A play x3; 2C play once; every other scene timer x3). Not measured live yet: staged cues, the 1C widening, the new cues and pointers.
 
+2B wording done (2026-10-06, Ringer `freytag-affordance-2b-wording`, 1 attempt, PASS; commit 02304db on `claude/plan-2b-3a-3b-wording`). Widened `action_evidence` and `earn_when` for b_r1, b_r2, b_r3, c_r1, c_r2 (Brandon's record/earlier messages, medical terminal, patient/prisoner records, warning message, maintenance messages; verbs examine, inspect, question, access). Scorer `scripts/ringer/affordance/2b-wording-score.py` (real matcher, 30 commands, 10 must-not-fire): 20/30 before, 30/30 after; suite 1145 passed, ruff clean. Not measured live. Open: players spent most turns on Michelle's detention/Eclipse-12 transfer record and Dr. Rachel Kim, which no 2B reveal covers; that is a story question for Brandon, not widened. Still for ChatGPT Desktop: 2B pointers. Next: 3A, then 3B.
+
 Loose ends: a ChatGPT Desktop answer for the 2B, 3A and 3B cues and pointers is not yet requested. Open question: whether a pointer-based fix is enough or the L2 still shows timer exits.
 
 ## Resume here (2026-10-04)
