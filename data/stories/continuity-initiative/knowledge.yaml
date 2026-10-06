@@ -809,10 +809,10 @@ knowledge:
     The transit token opens a service entrance to an active facility below. A service map shows a dry maintenance climb to the drainage spine. Kristin sees that route is too exposed to use now.
 - id: k_sl_1c_b_r1
   statement: 'From the processing area, Kristin matches sedated prisoners to missing-person records and knows they are alive.'
-  earn_when: compares the prisoners with missing-person records
+  earn_when: compares the prisoners with missing-person records or reads or examines the identification numbers on the prisoners' uniforms
   action_evidence:
-  - [compare, match, cross-check, check, read]
-  - [prisoners, captives, people in the processing area]
+  - [compare, match, cross-check, check, read, examine, inspect, observe, look at]
+  - [prisoners, captives, people in the processing area, uniforms, uniform, workers' uniforms]
   - [missing-person records, missing people records, missing records, records, identification numbers, ID numbers]
   entity_ids: []
   aliases:
@@ -842,7 +842,7 @@ knowledge:
   statement: 'Kristin sees sedated captives alive in the processing line and glimpses a woman who could be Michelle before the view vanishes.'
   earn_when: searches the processing line for Michelle
   action_evidence:
-  - [look for, search for, scan for, find]
+  - [look for, search for, scan for, find, search, look, check]
   - [Michelle, woman who looks like Michelle]
   - [processing line, processing area, observation shaft]
   entity_ids: []
@@ -875,9 +875,9 @@ knowledge:
     Kristin sees sedated captives alive in the processing line. She glimpses a woman who could be Michelle. Then the view vanishes.
 - id: k_sl_1c_c_r1
   statement: 'A logistics computer shows that Los Angeles is only a regional hub in a detention network spanning the country.'
-  earn_when: reads the logistics computer
+  earn_when: reads, accesses, or uses the logistics computer
   action_evidence:
-  - [read, search, inspect, check]
+  - [read, search, inspect, check, access, use, open, activate, examine, look at]
   - [logistics computer, terminal computer, computer]
   entity_ids: []
   aliases:
