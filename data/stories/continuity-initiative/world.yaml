@@ -183,8 +183,8 @@ items:
   aliases: [bench]
   kind: seat
   fixed: true
-- id: maintenance_gate
-  name: maintenance gate
+- id: service_gate
+  name: service gate
   aliases: [secured gate]
   fixed: true
 - id: storm_drain

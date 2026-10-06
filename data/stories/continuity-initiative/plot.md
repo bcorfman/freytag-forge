@@ -170,10 +170,10 @@ objective: Follow Michelles lead and survive the park
 participant_ids: [kristin, brandon, michelle]
 character_placements:
   brandon: {parent: los_angeles_park, text: watching Kristin in the park}
-item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, maintenance_gate, storm_drain, kristin_truck]
+item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, service_gate, storm_drain, kristin_truck]
 item_placements:
   park_bench: {parent: los_angeles_park}
-  maintenance_gate: {parent: los_angeles_park}
+  service_gate: {parent: los_angeles_park}
   storm_drain: {parent: los_angeles_park}
   transit_card: {parent: park_bench, under: true}
   number_sequence: {parent: park_bench, under: true}
@@ -233,9 +233,9 @@ Brandon claims the missing are still alive, but he refuses to explain how he kno
 
 ### Scene 1B.4 — The Park Ambush
 
-**Details:** tactical team; storm-drain system; specialized codes; secured maintenance gate; government systems; Brandon’s hidden involvement
+**Details:** tactical team; storm-drain system; specialized codes; secured service gate; government systems; Brandon’s hidden involvement
 
-A tactical team arrives, proving Kristin was tracked from Michelle's house. Kristin and Brandon escape through a storm-drain system, but Brandon is forced to use specialized codes to unlock a secured maintenance gate.
+A tactical team arrives, proving Kristin was tracked from Michelle's house. Kristin and Brandon escape through a storm-drain system, but Brandon is forced to use specialized codes to unlock a secured service gate.
 
 Kristin realizes Brandon retains access to government systems and may be more deeply involved than he admits.
 

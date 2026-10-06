@@ -18,10 +18,10 @@ deliveries:
   source_kind: observation
   source_entity_id: kristin
   must_convey:
-  - [escaped through the storm-drain system, storm-drain system, secured maintenance gate, escaped through the storm drains, storm drains, maintenance gate]
+  - [escaped through the storm-drain system, storm-drain system, secured service gate, escaped through the storm drains, storm drains, service gate]
   - [park pursuit ended, tactical team lost their trail, pursuit ended, the pursuit was over, they lost the tactical team, the ambush was behind them]
   fallback_text: >-
-    Kristin and Brandon escaped through the storm-drain system, and Brandon unlocked the secured maintenance gate.
+    Kristin and Brandon escaped through the storm-drain system, and Brandon unlocked the secured service gate.
     The park pursuit ended behind them when the tactical team lost their trail.
   cue_text: A tactical team is closing across the damaged park.
 - fact_id: transport_route_identified

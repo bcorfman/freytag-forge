@@ -18,7 +18,7 @@ import yaml
 K = yaml.safe_load(Path("data/stories/continuity-initiative/knowledge.yaml").read_text(encoding="utf-8"))
 items = K["knowledge"] if isinstance(K, dict) else K
 g = {i["id"]: tuple(tuple(x) for x in i["action_evidence"]) for i in items if i.get("id", "").startswith("k_sl_1b_c_")}
-for cmd in ("Open the secured maintenance gate.", "Pick the lock on the maintenance gate."):
+for cmd in ("Open the secured service gate.", "Pick the lock on the service gate."):
     assert _matches_all(g["k_sl_1b_c_r1"], cmd), f"c_r1 does not match: {cmd}"
 for cmd in ("Search the bench.", "Examine the man.", "Open the folder of documents."):
     assert not _matches_all(g["k_sl_1b_c_r1"], cmd), f"c_r1 wrongly matches: {cmd}"
