@@ -1,12 +1,4 @@
-# ChatGPT Desktop prompt: next-step pointers and cue wording, Scene 2B (2026-10-06)
-
-Paste everything below the line into a FRESH ChatGPT Desktop chat with the
-project open. Score the answer against the real matcher before applying it. If
-it misses, fix this prompt and start a fresh chat; do not hand-edit the answer.
-
----
-
-You have the whole freytag-forge project. Write new story text for the
+Write new story text for the
 Continuity Initiative package (`data/stories/continuity-initiative/`). Read
 first: `AGENTS.md` ("Writing Narrator Rules", "Fixing a Scene"),
 `docs/markdown-story-authoring.md` (cue_text, delivery_text),

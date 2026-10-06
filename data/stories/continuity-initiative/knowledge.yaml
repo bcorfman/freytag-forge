@@ -1242,7 +1242,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "JANUS ranked every American for detention, leverage, or control."
+  delivery_text: "JANUS ranked every American for detention, leverage, or control. Michelle's file holds nothing more. Brandon's name may be in the development records."
 - id: k_sl_2b_a_r2
   statement: 'JANUS records show Kristin was left behind because Charles expected her to lead investigators to Brandon.'
   earn_when: searches the archive terminals for my record
@@ -1273,7 +1273,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Charles left Kristin behind on purpose. He expected her to lead investigators to Brandon."
+  delivery_text: "Charles left Kristin behind on purpose. He expected her to lead investigators to Brandon. Security logs for Michelle's evidence are still open."
 - id: k_sl_2b_b_r1
   statement: 'Kristin finds Brandon’s name in the original JANUS records, forcing him to admit he helped write the system.'
   earn_when: searches the development records for Brandon or reads Brandon's record or earlier messages
@@ -1307,7 +1307,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Brandon's name is in the first JANUS records. He admits he helped write the system."
+  delivery_text: "Brandon's name is in the first JANUS records. He admits he helped write the system. A warning message blinks on the medical terminal."
 - id: k_sl_2b_b_r2
   statement: 'Brandon says he tried to destroy JANUS after learning its purpose, but Kristin fears he still wants to hide his guilt.'
   earn_when: confronts Brandon about the development records
@@ -1342,7 +1342,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Brandon says he tried to destroy JANUS after he learned its purpose. Kristin fears he still wants to hide his guilt."
+  delivery_text: "Brandon says he tried to destroy JANUS after he learned its purpose. Kristin fears he still wants to hide his guilt. Maintenance reports are stacked beside the medical terminal."
 - id: k_sl_2b_b_r3
   statement: 'Kristin learns Charles expected her to seek Brandon and left Michelle’s evidence accessible so she would expose Brandon’s hidden network.'
   earn_when: checks the security logs for Michelle's evidence
@@ -1374,7 +1374,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Charles expected Kristin to seek Brandon. He left Michelle's evidence where she could find it and expose Brandon's hidden network."
+  delivery_text: "Charles expected Kristin to seek Brandon. He left Michelle's evidence where she could find it and expose Brandon's hidden network. Corrupted files flicker on the medical terminal."
 - id: k_sl_2b_c_r1
   statement: 'Corrupted records and familiar phrases reveal that Michelle is altering classifications and hiding vulnerable prisoners.'
   earn_when: opens the corrupted prisoner files or examines the medical terminal or its warning messages
@@ -1407,7 +1407,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle is changing classifications. She is hiding vulnerable prisoners."
+  delivery_text: "Michelle is changing classifications. She is hiding vulnerable prisoners. Maintenance reports wait on the next terminal."
 - id: k_sl_2b_c_r2
   statement: 'Michelle’s coded maintenance messages show she has organized prisoners and is preparing an uprising from inside.'
   earn_when: reads the maintenance reports
@@ -1437,7 +1437,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle has organized prisoners. She is preparing an uprising from inside."
+  delivery_text: "Michelle has organized prisoners. She is preparing an uprising from inside. Brandon's earlier messages are still open on the remote terminal."
 - id: k_sl_2c_a_r1
   statement: 'Rebecca privately offers Brandon safe passage and Michelle’s release if he helps her remove Charles.'
   earn_when: "asks Brandon about Rebecca's offer"

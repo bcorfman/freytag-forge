@@ -472,6 +472,8 @@ Michelle was not taken merely because she discovered the conspiracy. JANUS predi
 
 Kristin was deliberately left behind because the system predicted she would lead investigators to Brandon.
 
+Michelle's file gives no further lead. The development records and the medical terminal hold the next evidence.
+
 ### Scene 2B.2 — Kristin Was Bait
 
 **Details:** facility discovery; Michelle’s evidence; Brandon’s hidden network; anticipated journey; accessible evidence; security access
