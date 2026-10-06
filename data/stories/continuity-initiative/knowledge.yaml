@@ -1276,10 +1276,10 @@ knowledge:
   delivery_text: "Charles left Kristin behind on purpose. He expected her to lead investigators to Brandon."
 - id: k_sl_2b_b_r1
   statement: 'Kristin finds Brandon’s name in the original JANUS records, forcing him to admit he helped write the system.'
-  earn_when: searches the development records for Brandon
+  earn_when: searches the development records for Brandon or reads Brandon's record or earlier messages
   action_evidence:
-  - [search, read, open, check, review, show, find]
-  - [development record, development records]
+  - [search, read, open, check, review, show, find, examine, inspect]
+  - [development record, development records, Brandon's record, Brandon's records, Brandon's file, Brandon's earlier messages, earlier messages, original JANUS records, JANUS development records]
   entity_ids: []
   aliases:
   - brandon janus role known
@@ -1312,9 +1312,9 @@ knowledge:
   statement: 'Brandon says he tried to destroy JANUS after learning its purpose, but Kristin fears he still wants to hide his guilt.'
   earn_when: confronts Brandon about the development records
   action_evidence:
-  - [ask, confront]
+  - [ask, confront, question, speak to, talk to]
   - [brandon]
-  - [why he helped write, he helped write, helped write, write the software, development record, development records]
+  - [why he helped write, he helped write, helped write, write the software, development record, development records, earlier messages, earlier message, his earlier messages, JANUS]
   entity_ids: []
   aliases:
   - brandon janus role known
@@ -1347,7 +1347,7 @@ knowledge:
   statement: 'Kristin learns Charles expected her to seek Brandon and left Michelle’s evidence accessible so she would expose Brandon’s hidden network.'
   earn_when: checks the security logs for Michelle's evidence
   action_evidence:
-  - [search, read, open, check, review]
+  - [search, read, open, check, review, examine, inspect]
   - [security log, security logs, access log, access logs]
   - [michelle's evidence, michelle evidence, charles, hidden network, brandon's network, brandon network]
   entity_ids: []
@@ -1377,10 +1377,10 @@ knowledge:
   delivery_text: "Charles expected Kristin to seek Brandon. He left Michelle's evidence where she could find it and expose Brandon's hidden network."
 - id: k_sl_2b_c_r1
   statement: 'Corrupted records and familiar phrases reveal that Michelle is altering classifications and hiding vulnerable prisoners.'
-  earn_when: opens the corrupted prisoner files
+  earn_when: opens the corrupted prisoner files or examines the medical terminal or its warning messages
   action_evidence:
-  - [search, read, open, check, review, compare]
-  - [corrupted prisoner file, corrupted prisoner files, corrupted file, corrupted files]
+  - [search, read, open, check, review, compare, examine, inspect, access, confirm]
+  - [corrupted prisoner file, corrupted prisoner files, corrupted file, corrupted files, inspect the medical terminal, patient record, patient records, Michelle's patient record, prisoner file, prisoner files, prisoner record, prisoner records, warning message, delayed transfer, delayed transfers, delayed transfer notices, corrupted records]
   entity_ids: []
   aliases:
   - michelle resistance known
@@ -1412,8 +1412,8 @@ knowledge:
   statement: 'Michelle’s coded maintenance messages show she has organized prisoners and is preparing an uprising from inside.'
   earn_when: reads the maintenance reports
   action_evidence:
-  - [search, read, open, check, review]
-  - [maintenance report, maintenance reports]
+  - [search, read, open, check, review, examine, inspect]
+  - [maintenance report, maintenance reports, maintenance message, maintenance messages, coded message, coded messages]
   entity_ids: []
   aliases:
   - michelle resistance known
