@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-required-closure",
+  "workdir": "/home/bcorfman/dev/ringer-work/required-closure",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "required-closure",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only storygame/story_package/obligations.py, a NEW file tests/test_required_storylet_closure.py, and (only to update an expectation that the change legitimately alters; never weaken or delete a test) tests/test_reveal_prerequisites.py, storygame/personas.py and tests/test_personas.py. Edit nothing else. No story-specific code: the rule is generic.\n\nProblem: `required_storylet_ids(package)` returns the storylets that establish a bridge fact or belong to a resolution event. The engine (`RuntimeEngine._activate_pacing` in storygame/runtime/engine.py) discards every NON-required storylet once turns_since_entry exceeds its latest_turn. A required storylet's reveal can depend (through `requires` on its knowledge items, or through the storylet's activation_conditions) on a fact that only an optional storylet establishes. When that optional storylet expires, the required one can never fire and the scene can only exit by timer. Measured live in continuity-initiative: SL-3A-D (required) needs behavioral_experiments_known, set only by SL-3A-B (latest_turn 7); SL-3B-B (required) needs rebecca_office_reached, set only by SL-3B-E (latest_turn 6).\n\nFix: make required_storylet_ids return the transitive closure. Start from the current set. Repeat until nothing is added: for each required storylet S, take the fact ids S needs (S's activation_conditions fact ids plus the `requires` fact ids of every knowledge item whose source.storylet_id is S, read from package.knowledge_indexes.by_id values), and add every OTHER storylet in the SAME scene whose realizations assert (op == 'assert') one of those facts. Keep the return type frozenset[str]. Keep it cheap (the function is called per turn; compute the closure without rescanning everything each call, for example with functools.lru_cache keyed by id(package) is NOT acceptable because packages are mutable test fixtures: instead precompute locally with dict indexes inside the call).\n\nExpected on data/stories/continuity-initiative: the closure adds exactly SL-1A-E, SL-2A-E, SL-3A-B and SL-3B-E to the current 28 (32 total). Add tests in tests/test_required_storylet_closure.py: (1) the real package returns those four extra ids and contains the 28 old ones; (2) a small synthetic package or monkeypatched object where an optional storylet feeds a required one is pulled in, and an unrelated optional storylet is not; (3) a storylet in a different scene that asserts the same fact is NOT pulled in. Reuse how existing tests build or load packages (see tests/test_reveal_prerequisites.py).\n\nHOW TO CHECK: `TMPDIR=/tmp uv run pytest -q` (all must pass; if a test pins the old required set, update only its expected value and explain in notes.md) and `uv run ruff check --fix . && uv run ruff format .`. Write notes.md at the worktree root: what you changed, the test list, any expectation you changed and why.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/required-closure-check.sh",
+      "verified": "required_storylet_ids returns the same-scene prerequisite closure; four storylets added on the real package; suite and ruff pass"
+    }
+  ]
+}

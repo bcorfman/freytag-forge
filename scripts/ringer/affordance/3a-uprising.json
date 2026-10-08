@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-3a-uprising",
+  "workdir": "/home/bcorfman/dev/ringer-work/3a-uprising",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "3a-uprising",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, plus tests/test_markdown_story_package.py, tests/test_canon_journey.py and bench/affordance_known_gaps.json ONLY to update an assertion that pins a string you change (change the expected value; never weaken or delete a test). Edit nothing else. Leave every other byte unchanged: only action_evidence and earn_when lines may change.\n\nContext: in scene 3A the uprising reveal k_sl_3a_c_r1 never fires. Players type 'Lead the prisoners through the blind checkpoints.', 'Escort the prisoners through the checkpoints.', 'Guide the prisoners toward the surface gates.', 'Advance the prisoners through the next blind checkpoint.', 'Lead the prisoners toward the surface gates.' and 'Follow Michelle to the checkpoints.'. Its verb group lacks lead, guide, escort, advance, follow, and its object group lacks the prisoners and the surface gates. A group matches when the command contains any one phrase; a reveal fires only when EVERY group matches. Only ADD phrases; never remove one.\n\nFix k_sl_3a_c_r1 only: verbs add lead, guide, escort, advance, follow, join, march. Objects add: prisoners, the prisoners, surface gates, the surface gates, emergency surface gates. Update its earn_when sentence briefly to say players may lead the prisoners to the checkpoints or surface gates.\n\nHOW TO CHECK: `TMPDIR=/tmp uv run python /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3a-wording-score.py` runs the real matcher over 37 player commands and prints each failure; all must be correct, including the must-not-fire ones. Do not edit that script. If a must-not-fire command fires, narrow what you added rather than editing the scorer. If you must drop an object phrase, say which in notes.md. Then run `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check --fix . && uv run ruff format .` (ruff must not touch YAML). Write notes.md at the worktree root: each phrase added, scorer output, any test expectation changed and why.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3a-uprising-check.sh",
+      "verified": "3A c_r1 widened; scorer all correct; only knowledge.yaml evidence lines changed; suite and ruff pass"
+    }
+  ]
+}

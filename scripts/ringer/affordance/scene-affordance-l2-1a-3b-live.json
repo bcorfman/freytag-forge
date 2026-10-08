@@ -1,0 +1,22 @@
+{
+ "run_name": "freytag-affordance-live",
+ "workdir": "/home/bcorfman/dev/ringer-work/affordance-live",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "l2-1a-3b-x3",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 4500,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted L2 @blind-player test on staging through scenes 1A to 3B in one continuous session with 3 replicates in parallel processes and checks they completed and wrote their merged report. The check first raises staging's per-session turn cap to 60 a minute and restores it afterwards. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C,2A,2B,2C,3A,3B",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/affordance-live-all/e2e-blind-player.json"
+   ],
+   "verified": "3 continuous replicates over scenes 1A to 3B wrote a merged report."
+  }
+ ]
+}

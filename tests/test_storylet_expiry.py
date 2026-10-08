@@ -67,8 +67,8 @@ def test_required_storylet_stays_active_past_latest_turn() -> None:
         assert Fact(predicate="continuity_initiative_known", subject="story", value="true") not in state.facts.asserted
 
 
-def test_real_package_has_twenty_eight_required_storylets() -> None:
-    assert len(required_storylet_ids(PACKAGE)) == 28
+def test_real_package_has_thirty_two_required_storylets() -> None:
+    assert len(required_storylet_ids(PACKAGE)) == 32
 
 
 def test_resolution_scene_does_not_stage_escalation() -> None:

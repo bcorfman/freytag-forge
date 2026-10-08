@@ -1870,10 +1870,10 @@ knowledge:
   delivery_text: "The framed official proves the emergency gate authorization is real. The brief panel response shows the one-use code is about to expire. Michelle turns toward the prisoners at the checkpoints."
 - id: k_sl_3a_c_r1
   statement: 'Michelle triggers the coordinated uprising; prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.'
-  earn_when: "signals the prison uprising"
+  earn_when: "Players may lead the prisoners to the checkpoints or surface gates."
   action_evidence:
-  - [tell, signal, order, ask, direct, instruct, command, urge, call, rally, begin, start]
-  - [uprising, the uprising, start uprising, prison uprising, coordinated uprising, checkpoint, checkpoints, revolt, the revolt, rebellion, the rebellion, riot, the riot, breakout, detention uprising, detention revolt, checkpoint uprising]
+  - [tell, signal, order, ask, direct, instruct, command, urge, call, rally, begin, start, lead, guide, escort, advance, follow, join, march]
+  - [uprising, the uprising, start uprising, prison uprising, coordinated uprising, checkpoint, checkpoints, revolt, the revolt, rebellion, the rebellion, riot, the riot, breakout, detention uprising, detention revolt, checkpoint uprising, prisoners, the prisoners, surface gates, the surface gates, emergency surface gates]
   entity_ids: []
   aliases:
   - detention uprising started
