@@ -1,0 +1,19 @@
+{
+ "run_name": "freytag-opening-rejection",
+ "workdir": "/home/bcorfman/dev/ringer-work/opening-probe",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "opening-baseline-bff5b1a",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 900,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check creates 20 freytag-forge staging sessions one at a time and counts how many opening narrations the leak scan rejects. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/opening-rejection-probe-check.sh 20",
+   "verified": "20 sessions were created and the rejected openings counted."
+  }
+ ]
+}

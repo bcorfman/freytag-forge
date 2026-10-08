@@ -1,0 +1,20 @@
+{
+ "run_name": "freytag-opening-retry",
+ "workdir": "/home/bcorfman/dev/ringer-work/opening-retry",
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "worktrees": true,
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "opening-retry",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "timeout_s": 1800,
+   "check_timeout_s": 900,
+   "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only storygame/runtime/engine.py and a NEW file tests/test_opening_retry.py. Edit nothing else; never weaken or delete an existing test.\n\nBug: RuntimeEngine.opening() (engine.py) asks the provider for the opening narration once and validates it with self.narration_validator.validate(...). When the narrator happens to write a protected term (live example: 'forced entry' in the Scene 1A opening, from the detail 'forced back door'), validate raises ProposalValidationError, POST /api/v1/session returns 409, and the whole player session never starts. There is no player to retype, so one unlucky sample ends the session. Live: this killed 3 of about 9 session starts in a staged run.\n\nFix, story-neutral: in opening(), call the provider and validate up to 3 times in all (OPENING_ATTEMPTS = 3, a module-level constant). Each attempt must call `request()` again (or self.provider(SCENE_ENTRY_REQUEST) when there is no opening method), parse it with parse_turn_proposal and validate it. Return on the first attempt that validates. Catch only ProposalValidationError for the retry. If every attempt is rejected, re-raise the LAST error unchanged (same message and code), so the HTTP layer still answers 409 with the same X-Freytag-Rejection-Code. Do not catch RuntimeContractError or NarrationProviderError. Do not change what is returned on success (the authored entry segment first, then the provider's segments) and do not touch any state between attempts (an opening commits no canon; check that nothing is mutated before validate returns).\n\nTests in tests/test_opening_retry.py (hermetic: no network, no live worker; build the engine the way tests/test_web_demo.py and tests/test_scene_roleplay_contract.py do, using the real continuity_initiative package and a small stub provider class with an opening() method that returns queued payloads like {\"segments\": [{\"kind\": \"narration\", \"text\": \"...\"}]}; use a clean line such as \"Kristin stands in the quiet hallway.\" and the leaking line \"JANUS watches from the shadows, already aware of Kristin.\" that tests/test_web_demo.py already uses): (1) leak then clean: opening() succeeds and the provider was called twice; (2) clean first: provider called once; (3) leak three times: ProposalValidationError raised with code 'protected_narration_leak', provider called exactly 3 times; (4) a provider that raises NarrationProviderError on its first call is not retried (propagates, called once); (5) through the web app, as in test_session_opening_rejection_returns_409_and_does_not_save_session, a provider whose first opening leaks and second is clean gives a 200 session; the existing always-leaking test must keep passing untouched.\n\nHOW TO CHECK: `TMPDIR=/tmp uv run pytest -q` all pass, then `uv run ruff check --fix . && uv run ruff format .`. Write notes.md at the worktree root: the change, the tests, the pytest result.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/opening-retry-check.sh",
+   "verified": "opening retries up to 3 times on a validation rejection, re-raises the last error; suite and ruff pass"
+  }
+ ]
+}

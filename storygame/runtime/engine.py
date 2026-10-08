@@ -33,6 +33,7 @@ from storygame.story_package.models import FactDelivery
 from storygame.story_package.obligations import required_storylet_ids
 
 SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
+OPENING_ATTEMPTS = 3
 
 
 class RuntimeEngine(CanonicalEventMixin):
@@ -67,9 +68,16 @@ class RuntimeEngine(CanonicalEventMixin):
             item for item in self.state.package.scenes if item.metadata.scene_id == self.state.current_scene_id
         )
         request = getattr(self.provider, "opening", None)
-        proposal = parse_turn_proposal(request() if callable(request) else self.provider(SCENE_ENTRY_REQUEST))
-        opening_proposal = ResolvedTurnProposal(segments=proposal.segments)
-        self.narration_validator.validate(self.state, self.state, opening_proposal, self.projector, "")
+        for attempt in range(OPENING_ATTEMPTS):
+            proposal = parse_turn_proposal(request() if callable(request) else self.provider(SCENE_ENTRY_REQUEST))
+            opening_proposal = ResolvedTurnProposal(segments=proposal.segments)
+            try:
+                self.narration_validator.validate(self.state, self.state, opening_proposal, self.projector, "")
+            except ProposalValidationError:
+                if attempt == OPENING_ATTEMPTS - 1:
+                    raise
+                continue
+            break
         entry = NarrationSegment(kind="narration", text=scene.metadata.entry_text)
         return ResolvedTurnProposal(segments=(entry, *proposal.segments))
 
