@@ -109,6 +109,8 @@ class NarrationSafetyValidator:
         earned_entity_ids = {
             entity_id for knowledge_id in earned_ids for entity_id in indexes.by_id[knowledge_id].entity_ids
         }
+        fixed_entity_ids = {item.id for item in state.package.world.items if item.fixed is True}
+        available_entity_ids = (allowed_entities | earned_entity_ids) & fixed_entity_ids
         true_fact_ids = {
             fact.predicate
             for fact in candidate_state.facts.asserted
@@ -188,6 +190,8 @@ class NarrationSafetyValidator:
 
             for form in known_terms:
                 if not self._contains(text, form):
+                    continue
+                if available_entity_ids & set(indexes.entity_alias_to_entities.get(self._normalize(form), ())):
                     continue
                 knowledge_ids = set(indexes.term_to_knowledge.get(form, ()))
                 if (
