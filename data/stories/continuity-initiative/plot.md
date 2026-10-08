@@ -638,7 +638,7 @@ transition_ids: [t_3a_3b]
 bridge_text:
   t_3a_3b: >-
     Michelle's uprising disabled cameras and seized checkpoints, while Charles sealed the primary exits and sent armed
-    teams downward. Kristin, Michelle, and Brandon fought upward toward Rebecca's office and the broadcast levels.
+    teams downward. Kristin, Michelle, and Brandon fought upward through the security corridors.
 ---
 
 **Setting:** Detention sectors and experimental laboratories within the facility
@@ -703,7 +703,7 @@ Kristin, Michelle, and Brandon must fight upward toward Rebecca’s office while
 scene_id: 3B
 location_id: broadcast_relay
 freytag_phase: climax
-objective: Overload JANUS and seize the broadcast
+objective: Overload JANUS with false alarms
 participant_ids: [kristin, michelle, brandon, rebecca]
 companions: [brandon, michelle]
 item_ids: [rebecca_desk]
