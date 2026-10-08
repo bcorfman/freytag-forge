@@ -939,10 +939,10 @@ knowledge:
     A recording shows that Charles and Rebecca made the crisis. They plan to rule as its promised solution.
 - id: k_sl_2a_a_r1
   statement: 'Kristin finds years of leaked code, emergency supplies, and Continuity files in Brandon’s fortified hideout.'
-  earn_when: searches Brandon's hideout
+  earn_when: reviews, reads, or studies Continuity Initiative documents, Brandon's documents, or documents in Brandon's hideout
   action_evidence:
-  - [search, inspect, examine, look through]
-  - [Brandon's hideout, hideout, servers, leaked documents, Continuity files]
+  - [search, inspect, examine, look through, review, read, study]
+  - [Brandon's hideout, hideout, servers, leaked documents, Continuity files, Continuity Initiative documents, Brandon's documents, documents]
   entity_ids: [brandon_hideout, hideout_servers]
   aliases:
   - brandon prepared before event
@@ -1026,10 +1026,10 @@ knowledge:
     Kristin finds a cooling weakness she can use for a real inspection warning. Brandon builds their cover around it. At the facility checkpoint, Kristin must show the inspector credentials.
 - id: k_sl_2a_b_r2
   statement: 'Brandon prepares technical credentials while Kristin chooses how much of the real cooling-water and ventilation risk to put in their lie.'
-  earn_when: prepares the inspector credentials with Brandon
+  earn_when: completes, fills out, fills in, finishes, or fills the inspector forms with Brandon
   action_evidence:
-  - [prepare, draft, assemble, review, build, make, create, forge]
-  - [technical credentials, inspector credentials, inspection credentials, credentials]
+  - [prepare, draft, assemble, review, build, make, create, forge, complete, fill out, fill in, finish, fill]
+  - [technical credentials, inspector credentials, inspection credentials, credentials, inspector forms, blank inspector forms, completed inspector forms, inspection forms, forms]
   entity_ids: []
   aliases:
   - false identities ready
@@ -1056,10 +1056,10 @@ knowledge:
     Brandon prepares technical credentials. Kristin weighs how much of the real cooling-water and ventilation risk to put in their lie. At the facility checkpoint, Kristin must show the inspector credentials.
 - id: k_sl_2a_e_r1
   statement: "Kristin and Brandon are at the facility perimeter. Their false identities have passed the first security checks."
-  earn_when: "travels to the facility"
+  earn_when: "enters or follows Brandon into the secured facility, shows or presents my completed inspector forms to the guard, or follows Brandon's inspection route to the facility"
   action_evidence:
-  - ["go to", "head to", "drive to", "travel to", "get to", "set out for", "head out to", "drive out to", "make for", "proceed to", "take Brandon to", "drive Brandon to", "bring Brandon to", "lead Brandon to", "show the checkpoint", "show the guard", "show the security guard", "hand the guard", "hand the checkpoint guard", "present our credentials at", "present my credentials at", "present the inspector credentials", "flash my credentials at", "flash my inspector credentials", "flash our inspector credentials", "show my credentials at", "show our credentials at", "show my inspector credentials at", "show our inspector credentials at", "show the inspector credentials", "show the credentials", "show the inspection credentials", "present the credentials", "hand over the credentials"]
-  - ["the facility", "facility perimeter", "the facility perimeter", "checkpoint", "checkpoints", "security checkpoint", "security checkpoints", "checkpoint guard", "checkpoint guards", "the guard", "identity check", "identity checks", "security check", "security checks", "inspector credentials", "inspection credentials"]
+  - ["go to", "head to", "drive to", "travel to", "get to", "set out for", "head out to", "drive out to", "make for", "proceed to", "take Brandon to", "drive Brandon to", "bring Brandon to", "lead Brandon to", "show the checkpoint", "show the guard", "show the security guard", "hand the guard", "hand the checkpoint guard", "present our credentials at", "present my credentials at", "present the inspector credentials", "flash my credentials at", "flash my inspector credentials", "flash our inspector credentials", "show my credentials at", "show our credentials at", "show my inspector credentials at", "show our inspector credentials at", "show the inspector credentials", "show the credentials", "show the inspection credentials", "present the credentials", "hand over the credentials", "enter", "follow Brandon into", "show my completed inspector forms to", "present my completed inspector forms to", "present the inspector forms to", "show the inspector forms to", "follow Brandon's inspection route to"]
+  - ["the facility", "facility perimeter", "the facility perimeter", "checkpoint", "checkpoints", "security checkpoint", "security checkpoints", "checkpoint guard", "checkpoint guards", "the guard", "identity check", "identity checks", "security check", "security checks", "inspector credentials", "inspection credentials", "the secured facility", "secured facility", "the facility with Brandon", "inspector forms"]
   entity_ids: []
   aliases:
   - facility perimeter reached
@@ -1085,9 +1085,9 @@ knowledge:
   delivery_text: "Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks. A supervisor questions why their inspection was not scheduled."
 - id: k_sl_2a_c_r1
   statement: 'Kristin persuades a doubtful supervisor that a cooling-water imbalance and ventilation fault could disable the service level, gaining corridor access.'
-  earn_when: warns the supervisor about cooling and ventilation faults
+  earn_when: explains or warns the supervisor about cooling or ventilation faults
   action_evidence:
-  - [tell the supervisor, warn the supervisor, convince the supervisor, explain to the supervisor, tell the security officer, warn the security officer]
+  - [tell the supervisor, warn the supervisor, convince the supervisor, explain to the supervisor, tell the security officer, warn the security officer, explain the cooling-water inspection to the supervisor, explain the emergency cooling-water inspection to the supervisor, explain the cooling to the supervisor, explain the inspection to the supervisor, warn the supervisor about, tell the supervisor about]
   - [cooling, cooling water, water pressure, water system, ventilation, vent, air sensor]
   entity_ids: []
   aliases:
