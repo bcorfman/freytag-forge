@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-known-term-fixed",
+  "workdir": "/home/bcorfman/dev/ringer-work/known-term-fixed",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "known-term-fixed",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only storygame/runtime/narration_safety.py and one new test file tests/test_narration_fixed_thing_terms.py. Edit nothing else.\n\nProblem: NarrationSafetyValidator._validate_segments (storygame/runtime/narration_safety.py) has a loop 'for form in known_terms' that rejects narration with \"narration mentions unavailable knowledge '<form>'\". In story continuity-initiative, 'park bench' is a known term because scene 1A's card-read reveal lists it in must_convey. A player who left 1A without reading the card reaches 1B, where park_bench is a FIXED scenery entity (world.yaml: id park_bench, name park bench, kind seat, fixed: true) in the scene's item_ids and holds Michelle's photograph. Any 1B narration that says 'park bench' is rejected, and the test run stops after 5 rejections.\n\nFix: in that loop, when the term text equals the name or an alias (case-insensitive, same normalisation as _contains) of an entity that is (a) fixed scenery (the world thing has fixed true) and (b) in allowed_entities | earned_entity_ids, skip the term (continue). Naming a piece of scenery that is present in the scene reveals no secret. Do not relax anything for non-fixed things: a hidden item such as the memory card must still be protected. Find how fixed is stored on world things by reading storygame/story_package/models.py and the loader; use the existing entity index (indexes.entity_alias_to_entities or the package world) rather than adding story-specific code. No story names, ids or words may appear in the code.\n\nTests: in tests/test_narration_fixed_thing_terms.py add (1) a test on the real continuity-initiative package (copy how tests/test_deadline_fallback_license.py loads PACKAGE and builds a validator or RuntimeEngine) showing a 1B state where the card was never read accepts narration containing 'park bench', and (2) a test that narration naming the memory card in 1A is still rejected. Do not change or delete any existing test.\n\nHOW TO CHECK: `TMPDIR=/tmp uv run pytest -q` must pass, and `uv run ruff check . && uv run ruff format --check .`.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/known-term-fixed-check.sh",
+      "verified": "fixed scenery names skip the known-term leak check; hidden items still protected; suite and ruff pass"
+    }
+  ]
+}

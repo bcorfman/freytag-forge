@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-holding-block",
+  "workdir": "/home/bcorfman/dev/ringer-work/holding-block",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "holding-block",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only: storygame/runtime/narration_safety.py, data/stories/continuity-initiative/world.yaml, data/stories/continuity-initiative/knowledge.yaml, and one new test file tests/test_narration_holding_block.py. Edit nothing else. Do not change or delete an existing test.\n\nProblem: in story continuity-initiative scene 2C, a player types \"Enter Michelle's holding block.\" and the narration says 'detention level', which NarrationSafetyValidator (storygame/runtime/narration_safety.py, _validate_segments entity loop) rejects as \"narration mentions an unavailable entity 'detention level'\". The story says Michelle's holding block is part of the detention level (her specific cell is there). 'Holding block' is not a place in the world, only a phrase.\n\nThree changes:\n1. world.yaml: add under `locations:` an entry `- id: holding_block`, `name: holding block`, `parent: detention_level`. No aliases (aliases are leak-scanned in every scene). Read docs/world-model-grounding.md 'Places' first. If the loader or an existing test requires something more for a new place, do the minimum and say what in notes.md.\n2. knowledge.yaml: the two knowledge items with id k_sl_2c_d_r1 and k_sl_2c_d_r2 each have `entity_ids: []`. Change only those two lines to `entity_ids: [holding_block]`. Nothing else in that file may change. (An earned knowledge item's entity_ids become nameable entities, so once the player decodes Michelle's message, 'holding block' is allowed.)\n3. narration_safety.py (story-neutral, no story words in code): when an entity is allowed to be named (in allowed_entities or earned_entity_ids) and it is a location in package.world.locations, every ancestor location (follow `parent` upward) may also be named. Add the ancestors once, near where earned_entity_ids is built, using a small static helper next to _related_area_ids. Real case: holding_block is earned in 2C, its parent detention_level then becomes nameable in 2C.\n\nTests in tests/test_narration_holding_block.py, on the real continuity-initiative package (copy how tests/test_narration_place_names.py loads PACKAGE and calls NarrationSafetyValidator.validate with a RuntimeState; to make the knowledge earned, find how existing tests mark a knowledge item established, e.g. grep tests for 'established' or earn helpers): (a) scene 2C with k_sl_2c_d_r1 earned accepts narration 'Kristin enters the holding block on the detention level.'; (b) scene 2C WITHOUT that knowledge earned still rejects 'holding block'; (c) scene 1A rejects 'detention level' and 'holding block' even though the ancestor rule exists; (d) a unit test of the ancestor rule on the real package: earning a knowledge item whose entity is holding_block makes detention_level nameable. Each test must fail without its change.\n\nHOW TO CHECK: `TMPDIR=/tmp uv run pytest -q` must pass and `uv run ruff check . && uv run ruff format --check .`. If a world-audit or payload test fails because of the new place, report in notes.md rather than editing that test.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/holding-block-check.sh",
+      "verified": "holding_block declared under detention_level; earned in 2C; ancestors of nameable places nameable; other scenes still reject; suite and ruff pass"
+    }
+  ]
+}

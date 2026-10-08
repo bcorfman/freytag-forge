@@ -1180,7 +1180,7 @@ knowledge:
   must_convey:
   - [opened, open, access, gained access, opened access, corridor opened]
   - [restricted infrastructure corridor, infrastructure corridor, service corridor, access corridor, restricted passage]
-  - [gaining access to the facility, access to the facility, facility access gained]
+  - [they have access to the facility]
   delivery_text: >-
     Kristin and Brandon open a restricted infrastructure corridor. They have access to the facility and its limited inspection console.
 - id: k_sl_2a_c_r2_rebecca_observes
@@ -1624,7 +1624,7 @@ knowledge:
   action_evidence:
   - ["decode", "read", "check", "study", "open", "search", "inspect"]
   - ["Michelle's message", "Michelle's coded", "coded message", "coded messages", "encrypted message", "encrypted messages", "message from Michelle", "the message from Michelle"]
-  entity_ids: []
+  entity_ids: [holding_block]
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2C, 3A]
@@ -1650,7 +1650,7 @@ knowledge:
   - ["follow", "trace", "search", "check", "study", "inspect", "review"]
   - ["maintenance route", "maintenance routes", "maintenance report", "maintenance reports", "route marker", "route markers", "Michelle's route"]
   - ["route", "routes", "marker", "markers"]
-  entity_ids: []
+  entity_ids: [holding_block]
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2C, 3A]

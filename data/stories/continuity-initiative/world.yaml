@@ -41,6 +41,9 @@ locations:
 - id: detention_level
   name: detention level
   parent: regional_facility
+- id: holding_block
+  name: holding block
+  parent: detention_level
 - id: medical_level
   name: medical level
   parent: detention_level

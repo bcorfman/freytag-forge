@@ -622,7 +622,7 @@ scene_id: 3A
 location_id: detention_level
 freytag_phase: crisis
 objective: Reach Michelle and join the uprising
-participant_ids: [kristin, michelle, brandon, senior_official]
+participant_ids: [kristin, michelle, brandon, senior_official, rebecca]
 companions: [brandon]
 item_ids: [override_codes, stolen_radio, gate_status_panel]
 item_placements:

@@ -109,6 +109,13 @@ class NarrationSafetyValidator:
         earned_entity_ids = {
             entity_id for knowledge_id in earned_ids for entity_id in indexes.by_id[knowledge_id].entity_ids
         }
+        nameable_entity_ids = allowed_entities | earned_entity_ids
+        location_ids = {location.id for location in state.package.world.locations}
+        for entity_id in tuple(nameable_entity_ids):
+            if entity_id in location_ids:
+                nameable_entity_ids.update(self._location_ancestor_ids(state.package, entity_id))
+        fixed_entity_ids = {item.id for item in state.package.world.items if item.fixed is True}
+        available_entity_ids = nameable_entity_ids & fixed_entity_ids
         true_fact_ids = {
             fact.predicate
             for fact in candidate_state.facts.asserted
@@ -137,7 +144,12 @@ class NarrationSafetyValidator:
         )
         handoff_text = " ".join(delivery.fallback_text for delivery in staged_handoff_deliveries).casefold()
         projected_beat_text = self._projected_beat_text(state)
-
+        scene_frame = next(
+            frame
+            for frame in state.package.knowledge.scene_frames
+            if frame.scene_id == candidate_state.current_scene_id
+        )
+        authored_scene_text = f"{scene_frame.situation} {projected_beat_text}"
         for segment in segments:
             grounding = set(segment.grounding_ids)
             unknown = grounding - set(indexes.by_id)
@@ -169,6 +181,8 @@ class NarrationSafetyValidator:
                 if not self._contains(text, form):
                     continue
                 entity_set = set(entity_ids)
+                if entity_set & location_ids and self._contains_optional_plural(authored_scene_text, form):
+                    continue
                 statement_covers_entity = any(
                     grounding_id in indexes.by_id
                     and any(
@@ -178,7 +192,7 @@ class NarrationSafetyValidator:
                     for grounding_id in grounding
                 )
                 if (
-                    not entity_set & (allowed_entities | earned_entity_ids)
+                    not entity_set & nameable_entity_ids
                     and not statement_covers_entity
                     and not self._contains(handoff_text, form)
                 ):
@@ -188,6 +202,8 @@ class NarrationSafetyValidator:
 
             for form in known_terms:
                 if not self._contains(text, form):
+                    continue
+                if available_entity_ids & set(indexes.entity_alias_to_entities.get(self._normalize(form), ())):
                     continue
                 knowledge_ids = set(indexes.term_to_knowledge.get(form, ()))
                 if (
@@ -243,6 +259,18 @@ class NarrationSafetyValidator:
         return bool(re.search(_WORD_BOUNDARY.format(form=re.escape(normalized_form)), normalized_text))
 
     @staticmethod
+    def _contains_optional_plural(text: str, form: str) -> bool:
+        normalized_text = NarrationSafetyValidator._normalize(text)
+        words = NarrationSafetyValidator._normalize(form).split()
+        if not words:
+            return False
+        pattern = r"(?<!\w)" + r"\s+".join(re.escape(word) for word in words[:-1])
+        if pattern:
+            pattern += r"\s+"
+        pattern += re.escape(words[-1]) + r"s?(?!\w)"
+        return bool(re.search(pattern, normalized_text))
+
+    @staticmethod
     def _normalize(value: str) -> str:
         return " ".join(value.casefold().split())
 
@@ -280,6 +308,10 @@ class NarrationSafetyValidator:
         metadata = scene.metadata
         entity_ids = {metadata.location_id, *metadata.participant_ids, *metadata.item_ids}
         entity_ids.update(NarrationSafetyValidator._related_area_ids(package, metadata.location_id))
+        participant_ids = set(metadata.participant_ids)
+        for location in package.world.locations:
+            if location.owner in participant_ids:
+                entity_ids.update(NarrationSafetyValidator._related_area_ids(package, location.id))
         entity_ids.update(
             placement.parent
             for placement in metadata.item_placements.values()
@@ -315,3 +347,15 @@ class NarrationSafetyValidator:
                     changed = True
         related.update(descendants)
         return related
+
+    @staticmethod
+    def _location_ancestor_ids(package: object, location_id: str) -> set[str]:
+        """Return the location ancestors of a named location."""
+
+        locations = {location.id: location for location in package.world.locations}
+        ancestors: set[str] = set()
+        current = locations.get(location_id)
+        while current is not None and current.parent is not None:
+            ancestors.add(current.parent)
+            current = locations.get(current.parent)
+        return ancestors
