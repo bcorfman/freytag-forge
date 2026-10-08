@@ -712,7 +712,7 @@ item_placements:
 character_placements:
   kristin: {parent: security_corridors}
   rebecca: {parent: executive_office}
-entry_text: "Alarms layered over alarms as the facility fought to predict its attackers. Above the fighting, Rebecca's executive office and the external broadcast relay waited at the end of corridors that JANUS watched move by move.\n\n"
+entry_text: "Alarms layered over alarms as the facility fought to predict its attackers. Water-pressure warnings flashed on the inspection console while doors opened and closed in empty service corridors that JANUS watched move by move.\n\n"
 transition_ids: [t_3b_3c]
 bridge_text:
   t_3b_3c: >-

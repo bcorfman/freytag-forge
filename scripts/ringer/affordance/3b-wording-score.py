@@ -18,6 +18,9 @@ assert {"a_r1", "a_r2", "b_r1", "b_r2", "c_r1", "c_r2", "d_r1", "d_r2", "e_r1"} 
 CASES = {
     "Trace the water-pressure warnings.": {"a_r1"},
     "Trigger a false alarm.": {"a_r1"},
+    "Exploit the water-pressure warnings to overload JANUS.": {"a_r1"},
+    "Overload JANUS with false alarms.": {"a_r1"},
+    "Trigger the cooling-water overload.": set(),
     "Feed JANUS a false water-pressure alarm.": {"a_r1"},
     "Change the door cycles.": {"a_r2"},
     "Use the empty service corridors.": {"a_r1"},
