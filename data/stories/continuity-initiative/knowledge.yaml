@@ -1242,7 +1242,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "JANUS ranked every American for detention, leverage, or control."
+  delivery_text: "JANUS ranked every American for detention, leverage, or control. Michelle's file holds nothing more. Brandon's name may be in the development records."
 - id: k_sl_2b_a_r2
   statement: 'JANUS records show Kristin was left behind because Charles expected her to lead investigators to Brandon.'
   earn_when: searches the archive terminals for my record
@@ -1273,13 +1273,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Charles left Kristin behind on purpose. He expected her to lead investigators to Brandon."
+  delivery_text: "Charles left Kristin behind on purpose. He expected her to lead investigators to Brandon. Security logs for Michelle's evidence are still open."
 - id: k_sl_2b_b_r1
   statement: 'Kristin finds Brandon’s name in the original JANUS records, forcing him to admit he helped write the system.'
-  earn_when: searches the development records for Brandon
+  earn_when: searches the development records for Brandon or reads Brandon's record or earlier messages
   action_evidence:
-  - [search, read, open, check, review, show, find]
-  - [development record, development records]
+  - [search, read, open, check, review, show, find, examine, inspect]
+  - [development record, development records, Brandon's record, Brandon's records, Brandon's file, Brandon's earlier messages, earlier messages, original JANUS records, JANUS development records]
   entity_ids: []
   aliases:
   - brandon janus role known
@@ -1307,14 +1307,14 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Brandon's name is in the first JANUS records. He admits he helped write the system."
+  delivery_text: "Brandon's name is in the first JANUS records. He admits he helped write the system. A warning message blinks on the medical terminal."
 - id: k_sl_2b_b_r2
   statement: 'Brandon says he tried to destroy JANUS after learning its purpose, but Kristin fears he still wants to hide his guilt.'
   earn_when: confronts Brandon about the development records
   action_evidence:
-  - [ask, confront]
+  - [ask, confront, question, speak to, talk to]
   - [brandon]
-  - [why he helped write, he helped write, helped write, write the software, development record, development records]
+  - [why he helped write, he helped write, helped write, write the software, development record, development records, earlier messages, earlier message, his earlier messages, JANUS]
   entity_ids: []
   aliases:
   - brandon janus role known
@@ -1342,12 +1342,12 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Brandon says he tried to destroy JANUS after he learned its purpose. Kristin fears he still wants to hide his guilt."
+  delivery_text: "Brandon says he tried to destroy JANUS after he learned its purpose. Kristin fears he still wants to hide his guilt. Maintenance reports are stacked beside the medical terminal."
 - id: k_sl_2b_b_r3
   statement: 'Kristin learns Charles expected her to seek Brandon and left Michelle’s evidence accessible so she would expose Brandon’s hidden network.'
   earn_when: checks the security logs for Michelle's evidence
   action_evidence:
-  - [search, read, open, check, review]
+  - [search, read, open, check, review, examine, inspect]
   - [security log, security logs, access log, access logs]
   - [michelle's evidence, michelle evidence, charles, hidden network, brandon's network, brandon network]
   entity_ids: []
@@ -1374,13 +1374,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Charles expected Kristin to seek Brandon. He left Michelle's evidence where she could find it and expose Brandon's hidden network."
+  delivery_text: "Charles expected Kristin to seek Brandon. He left Michelle's evidence where she could find it and expose Brandon's hidden network. Corrupted files flicker on the medical terminal."
 - id: k_sl_2b_c_r1
   statement: 'Corrupted records and familiar phrases reveal that Michelle is altering classifications and hiding vulnerable prisoners.'
-  earn_when: opens the corrupted prisoner files
+  earn_when: opens the corrupted prisoner files or examines the medical terminal or its warning messages
   action_evidence:
-  - [search, read, open, check, review, compare]
-  - [corrupted prisoner file, corrupted prisoner files, corrupted file, corrupted files]
+  - [search, read, open, check, review, compare, examine, inspect, access, confirm]
+  - [corrupted prisoner file, corrupted prisoner files, corrupted file, corrupted files, inspect the medical terminal, patient record, patient records, Michelle's patient record, prisoner file, prisoner files, prisoner record, prisoner records, warning message, delayed transfer, delayed transfers, delayed transfer notices, corrupted records]
   entity_ids: []
   aliases:
   - michelle resistance known
@@ -1407,13 +1407,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle is changing classifications. She is hiding vulnerable prisoners."
+  delivery_text: "Michelle is changing classifications. She is hiding vulnerable prisoners. Maintenance reports wait on the next terminal."
 - id: k_sl_2b_c_r2
   statement: 'Michelle’s coded maintenance messages show she has organized prisoners and is preparing an uprising from inside.'
   earn_when: reads the maintenance reports
   action_evidence:
-  - [search, read, open, check, review]
-  - [maintenance report, maintenance reports]
+  - [search, read, open, check, review, examine, inspect]
+  - [maintenance report, maintenance reports, maintenance message, maintenance messages, coded message, coded messages]
   entity_ids: []
   aliases:
   - michelle resistance known
@@ -1437,7 +1437,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle has organized prisoners. She is preparing an uprising from inside."
+  delivery_text: "Michelle has organized prisoners. She is preparing an uprising from inside. Brandon's earlier messages are still open on the remote terminal."
 - id: k_sl_2c_a_r1
   statement: 'Rebecca privately offers Brandon safe passage and Michelle’s release if he helps her remove Charles.'
   earn_when: "asks Brandon about Rebecca's offer"
@@ -1671,10 +1671,10 @@ knowledge:
   delivery_text: "Kristin traces Michelle's maintenance code route into her holding block, then to Rebecca's office. Kristin and Brandon can rescue the captives only by seizing the controls to broadcast the evidence."
 - id: k_sl_3a_a_r1
   statement: 'Kristin reaches Michelle alive, only to find her directing prisoners through stolen radios and coded announcements.'
-  earn_when: "finds Michelle in detention"
+  earn_when: "finds Michelle in detention, frees the captives, or helps Michelle"
   action_evidence:
-  - [look, search, check, examine, inspect, read, study, find, trace, follow, enter, listen]
-  - [Michelle, Michelle's voice, radio voice, the radio voice, stolen radio, stolen radios, coded announcement, coded announcements, holding block, holding blocks]
+  - [look, search, check, examine, inspect, read, study, find, trace, follow, enter, listen, free, help, use, organize, coordinate, rescue]
+  - [Michelle, Michelle's voice, radio voice, the radio voice, stolen radio, stolen radios, coded announcement, coded announcements, holding block, holding blocks, captives, the captives, prisoners, the prisoners, prisoner escape, the prisoner escape, detention block]
   entity_ids: []
   aliases:
   - michelle reached
@@ -1699,7 +1699,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin finds Michelle alive. Michelle is directing the prisoners through stolen radios and coded announcements."
+  delivery_text: "Kristin finds Michelle alive. Michelle is directing the prisoners through stolen radios and coded announcements. Michelle points toward the medical level, where the experiment records wait."
 - id: k_sl_3a_a_r2
   statement: 'Michelle reunites with Kristin briefly, then explains that freeing this block means little without exposing the other sites.'
   earn_when: "asks Michelle about other sites"
@@ -1730,7 +1730,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle reunites with Kristin briefly. She explains that freeing this block means little without exposing the other sites."
+  delivery_text: "Michelle reunites with Kristin briefly. She explains that freeing this block means little without exposing the other sites. Michelle points toward the medical level, where the experiment records wait."
 - id: k_sl_3a_b_r1
   statement: 'Michelle shows Kristin experiment records proving planned "survivors" were conditioned to support Charles''s story.'
   earn_when: "reads the experiment records"
@@ -1762,7 +1762,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's story."
+  delivery_text: "Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's story. The senior official waits among the government prisoners."
 - id: k_sl_3a_b_r2
   statement: 'Michelle shows Kristin the medical level where prisoners were subjected to memory, compliance, and resistance experiments.'
   earn_when: "enters the medical level"
@@ -1791,13 +1791,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle shows Kristin the medical level. The prisoners were subjected to memory, compliance, and resistance experiments."
+  delivery_text: "Michelle shows Kristin the medical level. The prisoners were subjected to memory, compliance, and resistance experiments. The senior official waits among the government prisoners."
 - id: k_sl_3a_d_r1
   statement: 'The senior official Charles framed gives Kristin one-use authorization for the emergency surface gates, which will expire when Charles activates his new authority.'
   earn_when: "speaks with the senior official"
   action_evidence:
   - [ask, question, talk, speak, tell, press, interview, confront, consult, request, listen, meet]
-  - [senior official, framed official, imprisoned official, government prisoner, gate code, gate codes, surface gate, surface gates, emergency gate, emergency gates, emergency override code, emergency override codes, gate authorization, emergency authorization, surface gate authority, emergency gate authority, one-use code, one-use codes]
+  - [senior official, framed official, imprisoned official, government prisoner, gate code, gate codes, surface gate, surface gates, emergency gate, emergency gates, emergency override code, emergency override codes, gate authorization, emergency authorization, surface gate authority, emergency gate authority, one-use code, one-use codes, official access seal, access seal, prisoner with the official access seal, official's access seal]
   entity_ids: []
   aliases:
   - emergency gate authorization
@@ -1829,12 +1829,12 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "The senior official Charles framed gives Kristin one-use authority for the emergency surface gates. It expires when Charles activates his new authority."
+  delivery_text: "The senior official Charles framed gives Kristin one-use authority for the emergency surface gates. It expires when Charles activates his new authority. Michelle turns toward the prisoners at the checkpoints."
 - id: k_sl_3a_d_r2
   statement: 'The framed official proves the emergency gate authorization is real, but its brief response makes clear that the one-use code is about to expire.'
   earn_when: "checks the gate-status panel"
   action_evidence:
-  - [check, test, look, examine, inspect, read, study, verify, scan, review, type, enter]
+  - [check, test, look, examine, inspect, read, study, verify, scan, review, type, enter, use, override, activate, operate]
   - [gate-status panel, gate status panel, override code, override codes, emergency override code, emergency override codes, gate code, gate codes, code, codes, gate authorization, emergency authorization, emergency gate code, code expiry, code expiration, code deadline, override deadline, authorization deadline, code time limit]
   entity_ids: []
   aliases:
@@ -1867,7 +1867,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "The framed official proves the emergency gate authorization is real. The brief panel response shows the one-use code is about to expire."
+  delivery_text: "The framed official proves the emergency gate authorization is real. The brief panel response shows the one-use code is about to expire. Michelle turns toward the prisoners at the checkpoints."
 - id: k_sl_3a_c_r1
   statement: 'Michelle triggers the coordinated uprising; prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.'
   earn_when: "signals the prison uprising"
@@ -1939,10 +1939,10 @@ knowledge:
   delivery_text: "Kristin warns Michelle that the emergency-gate authorization is about to expire. Michelle launches the prepared uprising rather than wait."
 - id: k_sl_3b_a_r1
   statement: 'Kristin feeds JANUS false water-pressure and ventilation alarms in empty service corridors until human operators must take control.'
-  earn_when: "feeds JANUS false alarms"
+  earn_when: "feeds JANUS false alarms or traces or follows water-pressure warnings"
   action_evidence:
-  - [trigger, set off, sound, raise, create, plant, feed, send, report, fake, stage, simulate, cause, start, trip, activate, use, reset, flood, overwhelm]
-  - [false alarm, false alarms, fake alarm, fake alarms, water-pressure alarm, water-pressure alarms, false water-pressure alarm, false water-pressure alarms, ventilation alarm, ventilation alarms, fake ventilation alarm, fake ventilation alarms, service-corridor alarm, service-corridor alarms, inspection console, false alert, false alerts, fake alert, fake alerts, JANUS alert, JANUS alerts, Kristin's alarm, Kristin's alarms, Kristin's decoy, Kristin's decoys, empty service corridor, empty service corridors, false emergency, false emergencies, fake emergency, fake emergencies, false warning, false warnings, fake warning, fake warnings, ventilation warning, ventilation warnings, pressure alarm, pressure alarms]
+  - [trigger, set off, sound, raise, create, plant, feed, send, report, fake, stage, simulate, cause, start, trip, activate, use, reset, flood, overwhelm, trace, follow]
+  - [false alarm, false alarms, fake alarm, fake alarms, water-pressure alarm, water-pressure alarms, false water-pressure alarm, false water-pressure alarms, ventilation alarm, ventilation alarms, fake ventilation alarm, fake ventilation alarms, service-corridor alarm, service-corridor alarms, inspection console, false alert, false alerts, fake alert, fake alerts, JANUS alert, JANUS alerts, Kristin's alarm, Kristin's alarms, Kristin's decoy, Kristin's decoys, empty service corridor, empty service corridors, false emergency, false emergencies, fake emergency, fake emergencies, false warning, false warnings, fake warning, fake warnings, ventilation warning, ventilation warnings, pressure alarm, pressure alarms, water-pressure warning, water-pressure warnings, pressure warning, pressure warnings]
   entity_ids: []
   aliases:
   - human security control
@@ -1963,7 +1963,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin feeds JANUS false alarms. Human operators take control."
+  delivery_text: "Kristin feeds JANUS false alarms. Human operators take control. Rebecca's executive office waits beyond the security corridors."
 - id: k_sl_3b_a_r2
   statement: 'By making the facility’s emergencies impossible to predict, Kristin forces security to abandon JANUS’s guidance.'
   earn_when: "makes JANUS guidance useless"
@@ -1990,12 +1990,12 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin makes the emergencies impossible to predict. Security leaves JANUS's guidance."
+  delivery_text: "Kristin makes the emergencies impossible to predict. Security leaves JANUS's guidance. Rebecca's executive office waits beyond the security corridors."
 - id: k_sl_3b_e_r1
   statement: 'Kristin and Michelle are in the executive office. Brandon stays in the security corridors and holds off the security forces.'
-  earn_when: "enters the executive office"
+  earn_when: "enters, reaches, goes or proceeds to, or makes their way to the executive office"
   action_evidence:
-  - ["go into", "walk into", "head into", "get into", "move into", "step into", "lead", "take", "bring", "guide", "enter", "break into", "slip into", "push into", "escort", "go to", "walk to", "head to"]
+  - ["go into", "walk into", "head into", "get into", "move into", "step into", "lead", "take", "bring", "guide", "enter", "break into", "slip into", "push into", "escort", "go to", "walk to", "head to", "reach", "go", "proceed to", "make my way to"]
   - ["executive office", "executive offices", "executive suite", "executive suites", "Rebecca's office", "Rebecca's offices", "Rebecca office", "Rebecca offices", "Rebecca's suite", "Rebecca's suites", "Rebecca suite", "Rebecca suites", "her office", "her offices", "her suite", "her suites", "CEO's office", "CEO's offices", "CEO office", "CEO offices", "the CEO's office", "the CEO's offices", "CEO's suite", "CEO's suites", "CEO suite", "CEO suites", "the CEO's suite", "the CEO's suites", "chief executive's office", "chief executive's offices"]
   entity_ids: []
   aliases: [rebecca office reached]
@@ -2010,7 +2010,7 @@ knowledge:
     value: true
   source: {kind: storylet_realization, storylet_id: SL-3B-E, realization_id: SL-3B-E-R1}
   relevance: {entity_ids: [], priority: 0}
-  delivery_text: "Kristin and Michelle enter the executive office. Brandon stays behind in the corridors and holds off the security forces."
+  delivery_text: "Kristin and Michelle enter the executive office. Brandon stays behind in the corridors and holds off the security forces. Rebecca's experiment approvals lie near the marked site list."
 - id: k_sl_3b_b_r1
   statement: 'Michelle confronts Rebecca with the experiment approvals, and Rebecca offers every detention-site location as leverage.'
   earn_when: "confronts Rebecca with approvals"
@@ -2048,13 +2048,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle confronts Rebecca with the experiment approvals. Rebecca offers the detention-site locations as leverage."
+  delivery_text: "Michelle confronts Rebecca with the experiment approvals. Rebecca offers the detention-site locations as leverage. The executive screen carries a remote channel marked Charles."
 - id: k_sl_3b_b_r2
   statement: 'Rebecca offers the detention-site locations before the confrontation is complete, and Michelle secures them without treating Rebecca as trustworthy.'
-  earn_when: "secures detention-site locations"
+  earn_when: "examines, inspects, reads, checks, studies, or secures the marked site list"
   action_evidence:
-  - [ask, request, demand, get, take, copy, save, secure, collect, retrieve, record, photograph, scan, download, write down, verify, send]
-  - [detention site, detention sites, detention-site location, detention-site locations, site location, site locations, prison location, prison locations, prison address, prison addresses, holding site, holding sites, holding-site address, holding-site addresses, black site, black sites, black-site location, black-site locations, detention list, detention lists, Rebecca's list, Rebecca's lists, her list, her lists, Rebecca's locations, her locations, site directory, site directories, detention directory, detention directories, location sheet, location sheets, site map, site maps]
+  - [ask, request, demand, get, take, copy, save, secure, collect, retrieve, record, photograph, scan, download, write down, verify, send, examine, inspect, read, check, study]
+  - [detention site, detention sites, detention-site location, detention-site locations, site location, site locations, prison location, prison locations, prison address, prison addresses, holding site, holding sites, holding-site address, holding-site addresses, black site, black sites, black-site location, black-site locations, detention list, detention lists, Rebecca's list, Rebecca's lists, her list, her lists, Rebecca's locations, her locations, site directory, site directories, detention directory, detention directories, location sheet, location sheets, site map, site maps, site list, marked site list, Rebecca's marked site list, the site list, marked list]
   entity_ids: []
   aliases:
   - detention locations offer known
@@ -2083,13 +2083,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Rebecca offers the detention-site locations. Michelle secures them without trusting Rebecca."
+  delivery_text: "Rebecca offers the detention-site locations. Michelle secures them without trusting Rebecca. The executive screen carries a remote channel marked Charles."
 - id: k_sl_3b_d_r1
   statement: 'Charles locks down Rebecca''s office, abandons her, and turns the harmless water emergency into a real deluge through the outer access level.'
-  earn_when: "learns Charles abandons Rebecca"
+  earn_when: "accesses, examines, inspects, reads, or checks Charles's remote channel or executive screen and learns he abandons Rebecca"
   action_evidence:
-  - [answer, ask, speak, call, reply, listen, hear, challenge, address, question, respond, contact, lock, unlock, open, close, talk, try]
-  - [remote channel, remote channels, Charles's channel, Charles's channels, his channel, his channels, remote call, remote calls, Charles's call, Charles's calls, his call, his calls, office lockdown, office lockdowns, office lock, office locks, executive-office lock, executive-office locks, remote screen, remote screens, Charles's screen, Charles's screens, his screen, his screens, Charles's voice, his voice, Charles's message, Charles's messages, his message, his messages, Rebecca's husband, her husband, come for her, Charles's betrayal, his betrayal, Rebecca's fate, her fate, executive screen, locked office door]
+  - [answer, ask, speak, call, reply, listen, hear, challenge, address, question, respond, contact, lock, unlock, open, close, talk, try, access, examine, inspect, read, check]
+  - [remote channel, remote channels, Charles's channel, Charles's channels, his channel, his channels, remote call, remote calls, Charles's call, Charles's calls, his call, his calls, channel marked Charles, remote channel marked Charles, office lockdown, office lockdowns, office lock, office locks, executive-office lock, executive-office locks, remote screen, remote screens, Charles's screen, Charles's screens, his screen, his screens, Charles's voice, his voice, Charles's message, Charles's messages, his message, his messages, Rebecca's husband, her husband, come for her, Charles's betrayal, his betrayal, Rebecca's fate, her fate, executive screen, locked office door]
   entity_ids: []
   aliases:
   - charles abandoned rebecca
@@ -2118,7 +2118,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level."
+  delivery_text: "Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level. Brandon waits beside the broadcast controls."
 - id: k_sl_3b_d_r2
   statement: 'A remote order shows Charles has chosen to flood the outer access level rather than lose control of the evidence, trapping Rebecca with the people she endangered.'
   earn_when: "finds Charles's flood order"
@@ -2153,13 +2153,13 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Charles orders the outer access level flooded rather than lose control of the evidence. This traps Rebecca with the people she endangered."
+  delivery_text: "Charles orders the outer access level flooded rather than lose control of the evidence. This traps Rebecca with the people she endangered. Brandon waits beside the broadcast controls."
 - id: k_sl_3b_c_r1
   statement: 'Brandon disconnects the external relay from JANUS and sends a confession that authenticates Michelle’s evidence.'
-  earn_when: "has Brandon send confession"
+  earn_when: "accesses, opens, activates, or uses Brandon's voice channel to have Brandon send a confession"
   action_evidence:
-  - [tell, ask, order, direct, have, get, make, cut, cut off, disconnect, sever, detach, unlink, isolate, record, confess, write, sign, admit, state, send]
-  - [the relay, external relay, Broadcast relay, relay link, relay links, relay connection, relay connections, JANUS link, JANUS links, JANUS connection, JANUS connections, JANUS tether, JANUS tethers, Brandon's relay, his relay, Brandon's confession, his confession, confession, signed confession, signed confessions, recorded confession, recorded confessions, video confession, video confessions, audio confession, audio confessions, builder confession, builder confessions, JANUS confession, JANUS confessions, creator confession, creator confessions, Brandon's statement, Brandon's statements, his statement, his statements, admission, admissions, relay chamber, part in JANUS, role in JANUS]
+  - [tell, ask, order, direct, have, get, make, cut, cut off, disconnect, sever, detach, unlink, isolate, record, confess, write, sign, admit, state, send, access the Brandon voice channel, open the Brandon voice channel, open the voice channel, activate the voice channel, use the voice channel, voice channel, Brandon voice channel, Brandon channel, voice channel marked Brandon, channel marked Brandon]
+  - [the relay, external relay, Broadcast relay, relay link, relay links, relay connection, relay connections, JANUS link, JANUS links, JANUS connection, JANUS connections, JANUS tether, JANUS tethers, Brandon's relay, his relay, Brandon's confession, his confession, confession, signed confession, signed confessions, recorded confession, recorded confessions, video confession, video confessions, audio confession, audio confessions, builder confession, builder confessions, JANUS confession, JANUS confessions, creator confession, creator confessions, Brandon's statement, Brandon's statements, his statement, his statements, admission, admissions, relay chamber, part in JANUS, role in JANUS, voice]
   entity_ids: []
   aliases:
   - relay open

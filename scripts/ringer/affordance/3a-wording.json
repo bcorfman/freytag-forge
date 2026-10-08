@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-3a-wording",
+  "workdir": "/home/bcorfman/dev/ringer-work/3a-wording",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "3a-wording",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, plus tests/test_markdown_story_package.py, tests/test_canon_journey.py and bench/affordance_known_gaps.json ONLY to update an assertion that pins a string you change (change the expected value; never weaken or delete a test). Edit nothing else. Leave every other byte unchanged: do not touch statement, delivery_text, requires, establishes, ids, handoffs.yaml cues or plot.md.\n\nContext: In scene 3A players do the right thing in their own words and no reveal fires. Recorded commands that miss: 'Free the captives.', 'Help Michelle organize the prisoner escape.', 'Use the stolen radio.', 'Use the official access seal on the gate-status panel.', 'Override the gate-status panel.', 'Talk to the prisoner with the official access seal.'. Fix by WIDENING the action_evidence word groups (and the matching earn_when sentence) of reveals in knowledge.yaml. A group matches when the command contains any one phrase in it; a reveal fires only when EVERY group matches. Only ADD phrases; never remove one.\n\n1. k_sl_3a_a_r1: verbs add free, help, use, organize, coordinate, rescue. Object group add: captives, the captives, prisoners, the prisoners, prisoner escape, the prisoner escape, detention block. Update earn_when to also say the player frees the captives or helps Michelle.\n2. k_sl_3a_d_r1: object group add: official access seal, access seal, prisoner with the official access seal, official's access seal.\n3. k_sl_3a_d_r2: verbs add use, override, activate, operate. \n\nDo NOT add lead, guide, take, open or follow-the-route phrases to any 3A reveal: 'Lead the freed captives through the narrow corridor.', 'Open the detention cells.' and 'Take the stolen radio.' must fire nothing.\n\nHOW TO CHECK: `TMPDIR=/tmp uv run python /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3a-wording-score.py` runs the real matcher over 31 player commands (imperative, as a person types) and prints each failure; all must be correct, including the ones that must NOT fire. Do not edit that script. If a must-not-fire command fires, narrow what you added rather than editing the scorer. Then run `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check --fix . && uv run ruff format .` (ruff must not touch YAML). Write notes.md at the worktree root: each phrase added, scorer output, any test expectation changed and why.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3a-wording-check.sh",
+      "verified": "3A evidence groups widened; scorer all correct; only knowledge.yaml evidence lines changed; suite and ruff pass"
+    }
+  ]
+}

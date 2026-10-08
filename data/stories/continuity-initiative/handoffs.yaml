@@ -124,7 +124,7 @@ deliveries:
   fallback_text: >-
     Brandon admits that he helped write JANUS, the software that selected people for detention. His confession confirms
     that he helped develop the AI before learning what it would become.
-  cue_text: Brandon's hands stop over a record on the archive terminal. He goes quiet as he reads the next line.
+  cue_text: Brandon waits beside the development records, ready to answer a question.
 - fact_id: brandon_claimed_reform_motive
   scene_id: 2B
   source_kind: message
@@ -146,7 +146,7 @@ deliveries:
   fallback_text: >-
     Michelle's coded messages and private notes show active sabotage and a small, hidden resistance link inside the
     facility. It is altering classifications and delaying transfers.
-  cue_text: The medical terminal shows corrupted prisoner files and delayed transfer notices.
+  cue_text: The medical terminal shows corrupted prisoner files and a warning message.
 - fact_id: purge_clock_started
   scene_id: 2C
   source_kind: broadcast
@@ -217,7 +217,7 @@ deliveries:
   fallback_text: >-
     Michelle triggers coordinated disturbances through coded announcements while she organizes prisoners across the
     detention sectors. The uprising begins as prisoners rise, disable cameras, and seize internal checkpoints.
-  cue_text: Stolen radios crackle across the detention sector. Several cameras show no picture.
+  cue_text: Michelle turns toward prisoners gathering at the checkpoints. Several cameras show no picture.
 - fact_id: relay_open
   scene_id: 3B
   source_kind: observation
