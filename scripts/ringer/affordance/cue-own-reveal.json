@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-cue-own-reveal",
+  "workdir": "/home/bcorfman/dev/ringer-work/cue-own-reveal",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "cue-own-reveal",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only storygame/runtime/engine.py and tests/test_staged_cues.py (add tests; never weaken or delete one). Edit nothing else.\n\nBug: RuntimeEngine._cue_reveal_available (engine.py) hides a cue until some knowledge reveal that asserts the cue's fact has all its `requires` met. In scene 1A the delivery for fact continuity_initiative_known carries the cue (the drawer, with the memory card beneath it). Every reveal that asserts continuity_initiative_known requires memory_card_recovered, and memory_card_recovered is earned by reveal k_sl_1a_b_r0 (requires: none). So the cue that points at the card is hidden until the card is already found. Live result: 1A play exits fell from 3/3 to 1/3.\n\nFix, story-neutral: a delivery may list `costs` with op `assert` (1A: memory_card_recovered). Those facts are what the delivery sets besides its own fact. In _cue_reveal_available, take the set of the cue fact plus the fact ids of the delivery's `costs` entries whose op is 'assert' (look the delivery up in self.state.package.deliveries by fact_id). A reveal counts if it asserts ANY fact in that set. Everything else stays as is: the scene filter, the `not reveals or any(all requires met)` rule. Do not touch retract costs (1B brandon_identified and 2B brandon_janus_role_known retract trust_brandon; they must behave as before).\n\nTests in tests/test_staged_cues.py (hermetic, model them on the existing ones there and on RuntimeState.bootstrap for the real package): (1) in scene 1A at turn 0 with no facts set, _cue_reveal_available('continuity_initiative_known') is True; (2) the ranked/staged cue after _activate_pacing in 1A turn 1 is continuity_initiative_known; (3) an existing-style test that a cue whose only own-fact reveals are gated stays hidden when the delivery has no assert costs (use model_copy to remove the costs, as the file already does for the package); (4) retract costs do not widen availability.\n\nHOW TO CHECK: `TMPDIR=/tmp uv run pytest -q` all pass, then `uv run ruff check --fix . && uv run ruff format .`. Write notes.md at the worktree root: the change, the tests, and the pytest result.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/cue-own-reveal-check.sh",
+      "verified": "1A cue available at turn 0 via the delivery's assert costs; other cues unchanged; suite and ruff pass"
+    }
+  ]
+}

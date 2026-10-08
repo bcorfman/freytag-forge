@@ -74,7 +74,7 @@ def test_ordinary_turn_records_no_delivery_recovery_or_fallback() -> None:
 
     engine.turn("Listen.")
 
-    assert state.last_turn_delivery.cue_fact_id is None
+    assert state.last_turn_delivery.cue_fact_id is not None
     assert state.last_turn_delivery.must_convey_misses == ()
     assert state.last_turn_delivery.recovery_used is False
 

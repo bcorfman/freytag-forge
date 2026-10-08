@@ -419,11 +419,18 @@ class RuntimeEngine(CanonicalEventMixin):
     def _cue_reveal_available(self, fact_id: str) -> bool:
         """Return whether a scene reveal that establishes a cue fact can be earned."""
 
+        delivery = next(
+            (delivery for delivery in self.state.package.deliveries if delivery.fact_id == fact_id),
+            None,
+        )
+        reveal_fact_ids = {fact_id}
+        if delivery is not None:
+            reveal_fact_ids.update(cost.fact_id for cost in delivery.costs if cost.op == "assert")
         reveals = tuple(
             knowledge
             for knowledge in self.state.package.knowledge.knowledge
             if self.state.current_scene_id in knowledge.available_in_scenes
-            and any(effect.op == "assert" and effect.fact_id == fact_id for effect in knowledge.establishes)
+            and any(effect.op == "assert" and effect.fact_id in reveal_fact_ids for effect in knowledge.establishes)
         )
         return not reveals or any(
             all(predicate_matches(predicate, self.state.facts) for predicate in knowledge.requires)

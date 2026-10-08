@@ -4,9 +4,41 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
-from storygame.story_package.models import FactPredicate
+from storygame.story_package.models import FactPredicate, RouteOperation
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+def _state_1a(package=PACKAGE) -> RuntimeState:
+    state = RuntimeState.bootstrap(package)
+    state.turn_index = 0
+    return state
+
+
+def _package_gating_all_reveals_for_1a(package=PACKAGE, *, remove_costs: bool = False, retract_costs: bool = False):
+    knowledge = package.knowledge.model_copy(
+        update={
+            "knowledge": tuple(
+                item.model_copy(update={"requires": (FactPredicate(fact_id="cue_gate", equals=True),)})
+                if "1A" in item.available_in_scenes
+                and any(
+                    effect.op == "assert" and effect.fact_id == "continuity_initiative_known"
+                    for effect in item.establishes
+                )
+                else item
+                for item in package.knowledge.knowledge
+            )
+        }
+    )
+    delivery = next(item for item in package.deliveries if item.fact_id == "continuity_initiative_known")
+    if remove_costs:
+        delivery = delivery.model_copy(update={"costs": ()})
+    elif retract_costs:
+        delivery = delivery.model_copy(
+            update={"costs": (RouteOperation(op="retract", fact_id="memory_card_recovered", value=True),)}
+        )
+    deliveries = tuple(delivery if item.fact_id == delivery.fact_id else item for item in package.deliveries)
+    return package.model_copy(update={"knowledge": knowledge, "deliveries": deliveries})
 
 
 def _state_1b(package=PACKAGE) -> RuntimeState:
@@ -44,6 +76,39 @@ def test_unavailable_first_ranked_cue_skips_to_next_available_cue() -> None:
     RuntimeEngine(state, lambda _input: {"segments": []})._activate_pacing()
 
     assert state.staged_cue_fact_id == baseline[1]
+
+
+def test_1a_cue_is_available_from_its_assert_cost() -> None:
+    state = _state_1a()
+
+    assert RuntimeEngine(state, lambda _input: {"segments": []})._cue_reveal_available("continuity_initiative_known")
+
+
+def test_1a_turn_1_stages_continuity_initiative_cue() -> None:
+    state = _state_1a()
+    state.turn_index = 1
+
+    RuntimeEngine(state, lambda _input: {"segments": []})._activate_pacing()
+
+    assert state.staged_cue_fact_id == "continuity_initiative_known"
+
+
+def test_gated_own_fact_without_assert_cost_stays_hidden() -> None:
+    package = _package_gating_all_reveals_for_1a(remove_costs=True)
+    state = _state_1a(package)
+
+    assert not RuntimeEngine(state, lambda _input: {"segments": []})._cue_reveal_available(
+        "continuity_initiative_known"
+    )
+
+
+def test_retract_cost_does_not_widen_cue_availability() -> None:
+    package = _package_gating_all_reveals_for_1a(retract_costs=True)
+    state = _state_1a(package)
+
+    assert not RuntimeEngine(state, lambda _input: {"segments": []})._cue_reveal_available(
+        "continuity_initiative_known"
+    )
 
 
 def test_withheld_cue_stages_after_required_fact_is_asserted() -> None:
