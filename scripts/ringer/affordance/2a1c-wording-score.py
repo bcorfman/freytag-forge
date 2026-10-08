@@ -18,7 +18,7 @@ CASES = {
     "Present my emergency inspection warning to the supervisor.": {"2a_c_r1"},
     "Explain my unscheduled inspection to the supervisor.": {"2a_c_r1"},
     "Show my inspector credentials at the facility checkpoint.": {"2a_b_r2", "2a_e_r1"},
-    "Present my inspector credentials at the checkpoint.": {"2a_b_r2"},
+    "Present my inspector credentials at the checkpoint.": {"2a_b_r2", "2a_e_r1"},
     "Show my emergency inspection notice to the supervisor.": set(),
     "Tell the supervisor about the weather.": set(),
     "Show my laptop to the guard.": set(),
