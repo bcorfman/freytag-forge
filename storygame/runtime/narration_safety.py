@@ -139,6 +139,13 @@ class NarrationSafetyValidator:
         )
         handoff_text = " ".join(delivery.fallback_text for delivery in staged_handoff_deliveries).casefold()
         projected_beat_text = self._projected_beat_text(state)
+        scene_frame = next(
+            frame
+            for frame in state.package.knowledge.scene_frames
+            if frame.scene_id == candidate_state.current_scene_id
+        )
+        authored_scene_text = f"{scene_frame.situation} {projected_beat_text}"
+        location_ids = {location.id for location in state.package.world.locations}
 
         for segment in segments:
             grounding = set(segment.grounding_ids)
@@ -171,6 +178,8 @@ class NarrationSafetyValidator:
                 if not self._contains(text, form):
                     continue
                 entity_set = set(entity_ids)
+                if entity_set & location_ids and self._contains_optional_plural(authored_scene_text, form):
+                    continue
                 statement_covers_entity = any(
                     grounding_id in indexes.by_id
                     and any(
@@ -247,6 +256,18 @@ class NarrationSafetyValidator:
         return bool(re.search(_WORD_BOUNDARY.format(form=re.escape(normalized_form)), normalized_text))
 
     @staticmethod
+    def _contains_optional_plural(text: str, form: str) -> bool:
+        normalized_text = NarrationSafetyValidator._normalize(text)
+        words = NarrationSafetyValidator._normalize(form).split()
+        if not words:
+            return False
+        pattern = r"(?<!\w)" + r"\s+".join(re.escape(word) for word in words[:-1])
+        if pattern:
+            pattern += r"\s+"
+        pattern += re.escape(words[-1]) + r"s?(?!\w)"
+        return bool(re.search(pattern, normalized_text))
+
+    @staticmethod
     def _normalize(value: str) -> str:
         return " ".join(value.casefold().split())
 
@@ -284,6 +305,10 @@ class NarrationSafetyValidator:
         metadata = scene.metadata
         entity_ids = {metadata.location_id, *metadata.participant_ids, *metadata.item_ids}
         entity_ids.update(NarrationSafetyValidator._related_area_ids(package, metadata.location_id))
+        participant_ids = set(metadata.participant_ids)
+        for location in package.world.locations:
+            if location.owner in participant_ids:
+                entity_ids.update(NarrationSafetyValidator._related_area_ids(package, location.id))
         entity_ids.update(
             placement.parent
             for placement in metadata.item_placements.values()

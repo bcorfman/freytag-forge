@@ -1180,7 +1180,7 @@ knowledge:
   must_convey:
   - [opened, open, access, gained access, opened access, corridor opened]
   - [restricted infrastructure corridor, infrastructure corridor, service corridor, access corridor, restricted passage]
-  - [gaining access to the facility, access to the facility, facility access gained]
+  - [they have access to the facility]
   delivery_text: >-
     Kristin and Brandon open a restricted infrastructure corridor. They have access to the facility and its limited inspection console.
 - id: k_sl_2a_c_r2_rebecca_observes

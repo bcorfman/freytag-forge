@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-leak-names",
+  "workdir": "/home/bcorfman/dev/ringer-work/leak-names",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 2,
+  "tasks": [
+    {
+      "key": "leak-names-b",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1200,
+      "check_timeout_s": 900,
+      "spec": "You own only data/stories/continuity-initiative/knowledge.yaml, plus any existing test under tests/ that the change makes wrong. Edit nothing else. You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. HOW TO CHECK: `TMPDIR=/tmp uv run pytest -q` must pass, and `uv run ruff check . && uv run ruff format --check .`. Do not change or delete an existing test unless this change makes it wrong; if so, say why in notes.md.\n\nContext: knowledge item k_sl_2a_c_r2 has a must_convey list whose third group is `[gaining access to the facility, access to the facility, facility access gained]`. Every multi-word phrase there becomes a leak-scanned known term, so scene 2A narration that says 'access to the facility' in ordinary prose is rejected before the reveal lands (\"narration mentions unavailable knowledge 'access to the facility'\"). Fix: change that one line to `  - [they have access to the facility]`. The loader requires each group to appear inside the reveal's delivery_text, which says 'They have access to the facility', so the phrase must be a substring of it (the first attempt with 'gaining access to the facility' failed that loader check). Change nothing else in the file; the diff must be exactly that one line. Then run the full suite. If an existing test pins the old group, update only that assertion and explain in notes.md. If a must_convey scoring test fails, report it in notes.md rather than adding the short phrases back.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/leak-names-b-check.sh",
+      "verified": "must_convey group trimmed to one phrase; suite and ruff pass"
+    }
+  ]
+}

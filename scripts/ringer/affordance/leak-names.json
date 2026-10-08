@@ -1,0 +1,31 @@
+{
+  "run_name": "freytag-leak-names",
+  "workdir": "/home/bcorfman/dev/ringer-work/leak-names",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 2,
+  "tasks": [
+    {
+      "key": "leak-names-a",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You own only storygame/runtime/narration_safety.py and one new test file tests/test_narration_place_names.py. Edit nothing else. You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. HOW TO CHECK: `TMPDIR=/tmp uv run pytest -q` must pass, and `uv run ruff check . && uv run ruff format --check .`. Do not change or delete an existing test unless this change makes it wrong; if so, say why in notes.md.\n\nContext: NarrationSafetyValidator._validate_segments rejects narration with \"narration mentions an unavailable entity '<form>'\" (code narration_known_term_leak) when an entity alias is not in allowed_entities | earned_entity_ids and not covered by a grounding statement or handoff text. Two false rejections in story continuity-initiative must be fixed with two STORY-NEUTRAL engine changes. No story names, ids or words may appear in the code.\n\nChange 1 (owned places). A location is nameable in a scene when its world `owner` (storygame/story_package/models.py Location.owner) is one of that scene's participant_ids, and so is every location inside it (walk `parent` downward, like _related_area_ids does). Add this in NarrationSafetyValidator._scene_entity_ids. Real case: world.yaml executive_office has owner rebecca and broadcast_chamber has parent executive_office; scene 3A lists rebecca in participant_ids, so 3A narration may say 'broadcast chamber'. Scenes 1A-2C do not list rebecca, so they must still reject 'broadcast chamber'.\n\nChange 2 (names the scene's own text uses). In _validate_segments' entity loop, also skip a form when the current scene's own authored text says that place name. The text to search is the scene's scene_frames 'situation' line (find where the package stores scene_frames; knowledge.yaml has them) plus the existing self._projected_beat_text(state). Match the form allowing an optional plural 's' on its last word, so form 'detention level' is found in 'tied to the detention levels'. Apply this only for entities that are locations (world.locations), never items or people. Real case: scene 2B's situation says 'a medical terminal tied to the detention levels', so 2B narration may say 'detention level'. Scene 1A, whose text never says it, must still reject it.\n\nTests in tests/test_narration_place_names.py, on the real continuity-initiative package (copy how tests/test_narration_fixed_thing_terms.py loads the package and drives the validator): (1) 3A accepts narration containing 'broadcast chamber'; (2) 1B still rejects it; (3) 2B accepts 'detention level'; (4) 1A still rejects 'detention level'. Make each test fail without the corresponding change.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/leak-names-a-check.sh",
+      "verified": "owned places and scene-text place names pass the entity leak scan; other scenes still reject; suite and ruff pass"
+    },
+    {
+      "key": "leak-names-b",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1200,
+      "check_timeout_s": 900,
+      "spec": "You own only data/stories/continuity-initiative/knowledge.yaml, plus any existing test under tests/ that the change makes wrong. Edit nothing else. You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. HOW TO CHECK: `TMPDIR=/tmp uv run pytest -q` must pass, and `uv run ruff check . && uv run ruff format --check .`. Do not change or delete an existing test unless this change makes it wrong; if so, say why in notes.md.\n\nContext: knowledge item k_sl_2a_c_r2 has a must_convey list whose third group is `[gaining access to the facility, access to the facility, facility access gained]`. Every multi-word phrase there becomes a leak-scanned known term, so scene 2A narration that says 'access to the facility' in ordinary prose is rejected before the reveal lands (\"narration mentions unavailable knowledge 'access to the facility'\"). Fix by subtraction: change that one line to `  - [gaining access to the facility]`. Change nothing else in the file; the diff must be exactly that one line. Then run the full suite. If an existing test pins the old group, update only that assertion and explain in notes.md. If the suite shows the reveal's scoring (a must_convey matching test) failing, report it in notes.md rather than adding the phrases back.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/leak-names-b-check.sh",
+      "verified": "must_convey group trimmed to one phrase; suite and ruff pass"
+    }
+  ]
+}
