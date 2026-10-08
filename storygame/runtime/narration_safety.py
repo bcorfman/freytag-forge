@@ -109,8 +109,13 @@ class NarrationSafetyValidator:
         earned_entity_ids = {
             entity_id for knowledge_id in earned_ids for entity_id in indexes.by_id[knowledge_id].entity_ids
         }
+        nameable_entity_ids = allowed_entities | earned_entity_ids
+        location_ids = {location.id for location in state.package.world.locations}
+        for entity_id in tuple(nameable_entity_ids):
+            if entity_id in location_ids:
+                nameable_entity_ids.update(self._location_ancestor_ids(state.package, entity_id))
         fixed_entity_ids = {item.id for item in state.package.world.items if item.fixed is True}
-        available_entity_ids = (allowed_entities | earned_entity_ids) & fixed_entity_ids
+        available_entity_ids = nameable_entity_ids & fixed_entity_ids
         true_fact_ids = {
             fact.predicate
             for fact in candidate_state.facts.asserted
@@ -145,8 +150,6 @@ class NarrationSafetyValidator:
             if frame.scene_id == candidate_state.current_scene_id
         )
         authored_scene_text = f"{scene_frame.situation} {projected_beat_text}"
-        location_ids = {location.id for location in state.package.world.locations}
-
         for segment in segments:
             grounding = set(segment.grounding_ids)
             unknown = grounding - set(indexes.by_id)
@@ -189,7 +192,7 @@ class NarrationSafetyValidator:
                     for grounding_id in grounding
                 )
                 if (
-                    not entity_set & (allowed_entities | earned_entity_ids)
+                    not entity_set & nameable_entity_ids
                     and not statement_covers_entity
                     and not self._contains(handoff_text, form)
                 ):
@@ -344,3 +347,15 @@ class NarrationSafetyValidator:
                     changed = True
         related.update(descendants)
         return related
+
+    @staticmethod
+    def _location_ancestor_ids(package: object, location_id: str) -> set[str]:
+        """Return the location ancestors of a named location."""
+
+        locations = {location.id: location for location in package.world.locations}
+        ancestors: set[str] = set()
+        current = locations.get(location_id)
+        while current is not None and current.parent is not None:
+            ancestors.add(current.parent)
+            current = locations.get(current.parent)
+        return ancestors
