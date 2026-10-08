@@ -809,10 +809,10 @@ knowledge:
     The transit token opens a service entrance to an active facility below. A service map shows a dry maintenance climb to the drainage spine. Kristin sees that route is too exposed to use now. The observation shaft overlooks the processing line, where people in uniforms pass below.
 - id: k_sl_1c_b_r1
   statement: 'From the processing area, Kristin matches sedated prisoners to missing-person records and knows they are alive.'
-  earn_when: compares the prisoners with missing-person records or reads or examines the identification numbers on the prisoners' uniforms
+  earn_when: compares the prisoners with missing-person records or reads, examines, records, copies, photographs, captures, writes down, or logs the identification numbers on the prisoners' uniforms
   action_evidence:
-  - [compare, match, cross-check, check, read, examine, inspect, observe, look at]
-  - [prisoners, captives, people in the processing area, uniforms, uniform, workers' uniforms]
+  - [compare, match, cross-check, check, read, examine, inspect, observe, look at, record, copy, photograph, capture, write down, log]
+  - [prisoners, captives, people in the processing area, uniforms, uniform, workers' uniforms, identification numbers, ID numbers]
   - [missing-person records, missing people records, missing records, records, identification numbers, ID numbers]
   entity_ids: []
   aliases:
@@ -1026,9 +1026,9 @@ knowledge:
     Kristin finds a cooling weakness she can use for a real inspection warning. Brandon builds their cover around it. At the facility checkpoint, Kristin must show the inspector credentials.
 - id: k_sl_2a_b_r2
   statement: 'Brandon prepares technical credentials while Kristin chooses how much of the real cooling-water and ventilation risk to put in their lie.'
-  earn_when: completes, fills out, fills in, finishes, or fills the inspector forms with Brandon
+  earn_when: completes, fills out, fills in, finishes, fills, shows, presents, flashes, or hands over the inspector forms or credentials with Brandon
   action_evidence:
-  - [prepare, draft, assemble, review, build, make, create, forge, complete, fill out, fill in, finish, fill]
+  - [prepare, draft, assemble, review, build, make, create, forge, complete, fill out, fill in, finish, fill, show, present, flash, hand over]
   - [technical credentials, inspector credentials, inspection credentials, credentials, inspector forms, blank inspector forms, completed inspector forms, inspection forms, forms]
   entity_ids: []
   aliases:
@@ -1085,10 +1085,10 @@ knowledge:
   delivery_text: "Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks. A supervisor questions why their inspection was not scheduled."
 - id: k_sl_2a_c_r1
   statement: 'Kristin persuades a doubtful supervisor that a cooling-water imbalance and ventilation fault could disable the service level, gaining corridor access.'
-  earn_when: explains or warns the supervisor about cooling or ventilation faults
+  earn_when: explains or warns the supervisor about cooling, ventilation, warning, unscheduled inspection, cooling-water, or cooling-system faults
   action_evidence:
-  - [tell the supervisor, warn the supervisor, convince the supervisor, explain to the supervisor, tell the security officer, warn the security officer, explain the cooling-water inspection to the supervisor, explain the emergency cooling-water inspection to the supervisor, explain the cooling to the supervisor, explain the inspection to the supervisor, warn the supervisor about, tell the supervisor about]
-  - [cooling, cooling water, water pressure, water system, ventilation, vent, air sensor]
+  - [tell the supervisor, warn the supervisor, convince the supervisor, explain to the supervisor, tell the security officer, warn the security officer, explain the cooling-water inspection to the supervisor, explain the emergency cooling-water inspection to the supervisor, explain the cooling to the supervisor, explain the inspection to the supervisor, warn the supervisor about, tell the supervisor about, to the supervisor]
+  - [cooling, cooling water, water pressure, water system, ventilation, vent, air sensor, warning, unscheduled inspection, cooling-water, cooling-system]
   entity_ids: []
   aliases:
   - restricted corridor access
