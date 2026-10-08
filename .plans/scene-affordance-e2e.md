@@ -1,6 +1,6 @@
 # Scene affordance E2E tests: plan
 
-Latest (2026-10-08, main 11aaf97): opening retry merged (PR 524); L2 1A-2A x3 shows 1A, 1B play x3, 1C play 2/3, 2A timer/timer/none; see 'L2 1A-2A x3 on 11aaf97'. Next: 2A 'the supervisor' leak.
+Latest (2026-10-08, main 11aaf97): opening retry merged (PR 524); L2 1A-2A x3 shows 1A, 1B play x3, 1C play 2/3, 2A timer/timer/none; see 'L2 1A-2A x3 on 11aaf97'. 2A 'the supervisor' leak fixed on branch (not merged, not measured live); next: merge, redeploy, rerun L2 1A-2A x3.
 
 Status (2026-10-06, main cc7cc20): PR 520 merged (staged cues, 1C wording, cues and pointers for 1C/2A/2C) and staging deployed on that SHA; smoke 1A,1B x1 passed. Option A chosen: per-scene wording, no cue-derived matching. NEXT: 2B, 3A, 3B (branch `claude/plan-2b-3a-3b-wording`), then one live L2. See "Resume here (2026-10-06)" below.
 
@@ -215,6 +215,8 @@ Replicate 1 never started: session creation was rejected on the 1A opening ("nar
 ## L2 1A-2A x3 on 11aaf97 (2026-10-08, PR 524 merged: opening retry; staging confirmed on 11aaf97; Ringer `freytag-affordance-live`, pass, 300 s)
 
 All three replicates started (the opening retry worked; no session-creation failure). Exit cause r1/r2/r3: 1A play x3 (turn 8); 1B play x3 (8); 1C play (7), timer (12), play (8); 2A timer (11), timer (11), none (never left). Rejected turns: 1C r3 one ('servers' entity, turn 2); 2A r3 three in a row on 'the supervisor' (turns 3, 4, 5), after which it never left 2A. So the 905dc47 Details edit removed 'cooling-water imbalance' but 'the supervisor' still leaks in 2A. Not read: the 2A prompts (where the narrator picks up 'the supervisor'), the 1C r2 timer exit, the 1C r3 'servers' rejection. Next: read the 2A r3 turn 3-5 prompts against plot.md and fix at the source (the leak scan declares 'the supervisor' as an alias of the supervisor reveal; see `declared-names-are-leak-scanned-earlier`).
+
+2A 'the supervisor' leak fix (2026-10-07, branch claude/plan-l2-1a-2a-on-11aaf97, not measured live): the rejected 2A r3 turns were the player's own words ("Explain ... to the supervisor.") echoed by the narrator. Cause: `narration_safety.py` leak-scans only multi-word terms, and `k_sl_2a_c_r1` must_convey listed the two-word phrase 'the supervisor' while the 2A.1 delivery says 'A supervisor'. Removed 'the supervisor' from that group (line 1120 of knowledge.yaml); the single word 'supervisor' stays and covers it. Suite 1154 passed. Still open: other multi-word forms in the group (security supervisor, facility supervisor, security officer, inspection supervisor) could trip the same scan; 1C r2 timer exit and 1C r3 'servers' rejection unread.
 
 ## Resume here (2026-10-06)
 
