@@ -384,7 +384,7 @@ Brandon explains that he tried to expose the program but was discredited, dismis
 
 ### Scene 2A.2 — The Infiltration Plan
 
-**Details:** cooling-water imbalance; ventilation monitors; underground installation; false credentials; inspection console; command center records
+**Details:** cooling-water readings; ventilation monitors; underground installation; false credentials; inspection console; command center records
 
 Kristin identifies unstable cooling-water and ventilation readings in the facility's overextended service systems. The installation needs outside inspectors to distinguish a genuine leak from a sensor fault.
 
