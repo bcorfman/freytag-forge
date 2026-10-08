@@ -1117,7 +1117,7 @@ knowledge:
   - [cooling-water imbalance, cooling-system risk, water-pressure fault, cooling failure, cooling leak, water system problem]
   - [ventilation fault, ventilation monitor, service-level shutdown, sensor fault, ventilation warning]
   - [corridor access, access, restricted access, infrastructure access, corridor entrance]
-  - [supervisor, security supervisor, facility supervisor, the supervisor, security officer, inspection supervisor]
+  - [supervisor, security supervisor, facility supervisor, security officer, inspection supervisor]
   delivery_text: >-
     Kristin convinces the supervisor that a cooling-water imbalance and ventilation fault could shut down the service level. He grants corridor access.
 - id: k_sl_2a_c_r1_rebecca_observes
