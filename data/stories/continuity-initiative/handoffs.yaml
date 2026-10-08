@@ -217,7 +217,7 @@ deliveries:
   fallback_text: >-
     Michelle triggers coordinated disturbances through coded announcements while she organizes prisoners across the
     detention sectors. The uprising begins as prisoners rise, disable cameras, and seize internal checkpoints.
-  cue_text: Stolen radios crackle across the detention sector. Several cameras show no picture.
+  cue_text: Michelle turns toward prisoners gathering at the checkpoints. Several cameras show no picture.
 - fact_id: relay_open
   scene_id: 3B
   source_kind: observation

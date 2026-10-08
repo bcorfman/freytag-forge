@@ -660,7 +660,7 @@ Kristin follows Michelle's maintenance route into one partly unsecured detention
 
 The reunion between Kristin and Michelle is brief because the purge countdown has begun.
 
-Michelle explains that the facility contains only a fraction of the missing millions. Freeing them will matter only if the broadcast reveals the locations of the remaining sites.
+Michelle explains that the facility contains only a fraction of the missing millions. Freeing them will matter only if the broadcast reveals the locations of the remaining sites. Michelle points toward the medical level, where the experiment records wait.
 
 ### Scene 3A.2 — The Experiments
 
@@ -676,7 +676,7 @@ Rebecca’s company has been testing methods for:
 * Conditioning released captives to support official explanations
 * Predicting resistance before it occurs
 
-The people Charles intends to “rescue” during his broadcast have already been conditioned to endorse his version of events.
+The people Charles intends to “rescue” during his broadcast have already been conditioned to endorse his version of events. The senior official waits among the government prisoners.
 
 ### Scene 3A.3 — The Unexpected Prisoner
 
@@ -686,7 +686,7 @@ Among the captives is a senior official publicly blamed for causing the catastro
 
 He possesses authorization codes that can release the facility's emergency surface gates once, but the codes will expire when Charles’s new authority is formally activated.
 
-The rescue now has a strict deadline tied to Charles’s broadcast.
+The rescue now has a strict deadline tied to Charles’s broadcast. Michelle turns toward the prisoners at the checkpoints.
 
 ### Scene 3A.4 — The Uprising Begins
 
@@ -740,7 +740,7 @@ JANUS begins predicting the resistance group’s movements by analyzing doors op
 
 Kristin realizes the only way to defeat the system is to feed it a convincing lie. Using the inspection console she accessed under the false cover, she creates false water-pressure and ventilation alarms in empty outer service corridors, then cycles unused doors and lights to support the deception. She does not damage the detention levels or the escape path.
 
-These actions overload JANUS with conflicting emergencies and force human operators to take control.
+These actions overload JANUS with conflicting emergencies and force human operators to take control. Rebecca’s executive office waits beyond the security corridors.
 
 ### Scene 3B.2 — Rebecca’s Office
 
@@ -752,7 +752,7 @@ Rebecca claims that she never supported Charles’s plan to kill the captives. S
 
 Michelle reveals that Rebecca personally approved the experiments and selected which prisoners would be used.
 
-Rebecca attempts to bargain by offering the locations of every detention site.
+Rebecca attempts to bargain by offering the locations of every detention site. Rebecca’s experiment approvals lie near the marked site list. The executive screen carries a remote channel marked Charles.
 
 ### Scene 3B.3 — Charles’s Betrayal
 
@@ -776,7 +776,7 @@ Doing so leaves him isolated in a relay chamber that security can lock down and 
 
 Before completing the override, Brandon transmits a confession describing his role in creating JANUS. His statement authenticates Michelle’s evidence and prevents Charles from dismissing it as fabricated.
 
-Brandon remains behind to keep the relay open while Kristin and Michelle begin the broadcast.
+Brandon remains behind to keep the relay open while Kristin and Michelle begin the broadcast. Brandon waits beside the broadcast controls.
 
 ## Scene 3C — Exposure and Escape
 ---

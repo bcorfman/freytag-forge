@@ -1699,7 +1699,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin finds Michelle alive. Michelle is directing the prisoners through stolen radios and coded announcements."
+  delivery_text: "Kristin finds Michelle alive. Michelle is directing the prisoners through stolen radios and coded announcements. Michelle points toward the medical level, where the experiment records wait."
 - id: k_sl_3a_a_r2
   statement: 'Michelle reunites with Kristin briefly, then explains that freeing this block means little without exposing the other sites.'
   earn_when: "asks Michelle about other sites"
@@ -1730,7 +1730,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle reunites with Kristin briefly. She explains that freeing this block means little without exposing the other sites."
+  delivery_text: "Michelle reunites with Kristin briefly. She explains that freeing this block means little without exposing the other sites. Michelle points toward the medical level, where the experiment records wait."
 - id: k_sl_3a_b_r1
   statement: 'Michelle shows Kristin experiment records proving planned "survivors" were conditioned to support Charles''s story.'
   earn_when: "reads the experiment records"
@@ -1762,7 +1762,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's story."
+  delivery_text: "Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's story. The senior official waits among the government prisoners."
 - id: k_sl_3a_b_r2
   statement: 'Michelle shows Kristin the medical level where prisoners were subjected to memory, compliance, and resistance experiments.'
   earn_when: "enters the medical level"
@@ -1791,7 +1791,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle shows Kristin the medical level. The prisoners were subjected to memory, compliance, and resistance experiments."
+  delivery_text: "Michelle shows Kristin the medical level. The prisoners were subjected to memory, compliance, and resistance experiments. The senior official waits among the government prisoners."
 - id: k_sl_3a_d_r1
   statement: 'The senior official Charles framed gives Kristin one-use authorization for the emergency surface gates, which will expire when Charles activates his new authority.'
   earn_when: "speaks with the senior official"
@@ -1829,7 +1829,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "The senior official Charles framed gives Kristin one-use authority for the emergency surface gates. It expires when Charles activates his new authority."
+  delivery_text: "The senior official Charles framed gives Kristin one-use authority for the emergency surface gates. It expires when Charles activates his new authority. Michelle turns toward the prisoners at the checkpoints."
 - id: k_sl_3a_d_r2
   statement: 'The framed official proves the emergency gate authorization is real, but its brief response makes clear that the one-use code is about to expire.'
   earn_when: "checks the gate-status panel"
@@ -1867,7 +1867,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "The framed official proves the emergency gate authorization is real. The brief panel response shows the one-use code is about to expire."
+  delivery_text: "The framed official proves the emergency gate authorization is real. The brief panel response shows the one-use code is about to expire. Michelle turns toward the prisoners at the checkpoints."
 - id: k_sl_3a_c_r1
   statement: 'Michelle triggers the coordinated uprising; prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.'
   earn_when: "signals the prison uprising"
@@ -1963,7 +1963,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin feeds JANUS false alarms. Human operators take control."
+  delivery_text: "Kristin feeds JANUS false alarms. Human operators take control. Rebecca's executive office waits beyond the security corridors."
 - id: k_sl_3b_a_r2
   statement: 'By making the facility’s emergencies impossible to predict, Kristin forces security to abandon JANUS’s guidance.'
   earn_when: "makes JANUS guidance useless"
@@ -1990,7 +1990,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin makes the emergencies impossible to predict. Security leaves JANUS's guidance."
+  delivery_text: "Kristin makes the emergencies impossible to predict. Security leaves JANUS's guidance. Rebecca's executive office waits beyond the security corridors."
 - id: k_sl_3b_e_r1
   statement: 'Kristin and Michelle are in the executive office. Brandon stays in the security corridors and holds off the security forces.'
   earn_when: "enters, reaches, goes or proceeds to, or makes their way to the executive office"
@@ -2010,7 +2010,7 @@ knowledge:
     value: true
   source: {kind: storylet_realization, storylet_id: SL-3B-E, realization_id: SL-3B-E-R1}
   relevance: {entity_ids: [], priority: 0}
-  delivery_text: "Kristin and Michelle enter the executive office. Brandon stays behind in the corridors and holds off the security forces."
+  delivery_text: "Kristin and Michelle enter the executive office. Brandon stays behind in the corridors and holds off the security forces. Rebecca's experiment approvals lie near the marked site list."
 - id: k_sl_3b_b_r1
   statement: 'Michelle confronts Rebecca with the experiment approvals, and Rebecca offers every detention-site location as leverage.'
   earn_when: "confronts Rebecca with approvals"
@@ -2048,7 +2048,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle confronts Rebecca with the experiment approvals. Rebecca offers the detention-site locations as leverage."
+  delivery_text: "Michelle confronts Rebecca with the experiment approvals. Rebecca offers the detention-site locations as leverage. The executive screen carries a remote channel marked Charles."
 - id: k_sl_3b_b_r2
   statement: 'Rebecca offers the detention-site locations before the confrontation is complete, and Michelle secures them without treating Rebecca as trustworthy.'
   earn_when: "examines, inspects, reads, checks, studies, or secures the marked site list"
@@ -2083,7 +2083,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Rebecca offers the detention-site locations. Michelle secures them without trusting Rebecca."
+  delivery_text: "Rebecca offers the detention-site locations. Michelle secures them without trusting Rebecca. The executive screen carries a remote channel marked Charles."
 - id: k_sl_3b_d_r1
   statement: 'Charles locks down Rebecca''s office, abandons her, and turns the harmless water emergency into a real deluge through the outer access level.'
   earn_when: "accesses, examines, inspects, reads, or checks Charles's remote channel or executive screen and learns he abandons Rebecca"
@@ -2118,7 +2118,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level."
+  delivery_text: "Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level. Brandon waits beside the broadcast controls."
 - id: k_sl_3b_d_r2
   statement: 'A remote order shows Charles has chosen to flood the outer access level rather than lose control of the evidence, trapping Rebecca with the people she endangered.'
   earn_when: "finds Charles's flood order"
@@ -2153,7 +2153,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Charles orders the outer access level flooded rather than lose control of the evidence. This traps Rebecca with the people she endangered."
+  delivery_text: "Charles orders the outer access level flooded rather than lose control of the evidence. This traps Rebecca with the people she endangered. Brandon waits beside the broadcast controls."
 - id: k_sl_3b_c_r1
   statement: 'Brandon disconnects the external relay from JANUS and sends a confession that authenticates Michelle’s evidence.'
   earn_when: "accesses, opens, activates, or uses Brandon's voice channel to have Brandon send a confession"
