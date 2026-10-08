@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-2a1c-wording",
+  "workdir": "/home/bcorfman/dev/ringer-work/2a1c-wording",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2a1c-wording",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, plus tests/test_markdown_story_package.py, tests/test_canon_journey.py and bench/affordance_known_gaps.json ONLY to update an assertion that pins a string you change. Edit nothing else. Do not touch statement, delivery_text, requires, establishes, ids, handoffs.yaml or plot.md.\n\nContext: a live blind-player run missed these reveals. Fix by WIDENING action_evidence word groups (and the matching earn_when sentence) in knowledge.yaml. A group matches when the command contains any one phrase (contiguous words) in it; a reveal fires only when EVERY group matches. Only ADD phrases; never remove one.\n\n1. k_sl_2a_b_r2 (players show their credentials before preparing them): first group add show, present, flash, hand over. Keep the second group as is.\n2. k_sl_2a_c_r1 (players warn the supervisor without the words cooling or ventilation): first group add 'to the supervisor'. Second group add: warning, unscheduled inspection, cooling-water, cooling-system. Do NOT add the bare word inspection or emergency inspection, since 'Show my emergency inspection notice to the supervisor.' must not fire.\n3. k_sl_1c_b_r1 (players 'record' the numbers): first group add record, copy, photograph, capture, write down, log. Second group add 'identification numbers' and 'ID numbers'.\n\nHOW TO CHECK: run `TMPDIR=/tmp uv run python /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2a1c-wording-score.py` (15 commands, real matcher; prints each failure), then the same folder's 2a-wording-score.py and 1c-wording-score.py. All three must report all correct. Do not edit any scorer. If a must-not-fire command fires, narrow what you added. Then run `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check --fix . && uv run ruff format .` (ruff must not touch YAML). Write notes.md at the worktree root listing each phrase added and the scorer output.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2a1c-wording-check.sh",
+      "verified": "2A b_r2/c_r1 and 1C b_r1 evidence widened; three scorers pass; only evidence lines changed"
+    }
+  ]
+}
