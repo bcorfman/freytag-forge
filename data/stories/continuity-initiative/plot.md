@@ -703,7 +703,7 @@ Kristin, Michelle, and Brandon must fight upward toward Rebecca’s office while
 scene_id: 3B
 location_id: broadcast_relay
 freytag_phase: climax
-objective: Overload JANUS and seize the broadcast
+objective: Overload JANUS with false alarms
 participant_ids: [kristin, michelle, brandon, rebecca]
 companions: [brandon, michelle]
 item_ids: [rebecca_desk]
