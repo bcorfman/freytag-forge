@@ -239,7 +239,7 @@ deliveries:
   fallback_text: >-
     Kristin overloads JANUS with conflicting emergencies until human operators take control. Human security control
     replaces the system's predictions in the corridors.
-  cue_text: Water-pressure warnings flash while doors open and close in empty service corridors.
+  cue_text: An inspection console flashes water-pressure warnings while doors open and close in empty service corridors.
 - fact_id: charles_abandoned_rebecca
   scene_id: 3B
   source_kind: message
