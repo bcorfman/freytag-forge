@@ -1011,7 +1011,6 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `2C`
 
 **Available when**
-- The purge/transfer clock is active and understood.
 - Enough evidence exists to expose the conspiracy.
 - Rescue remains possible but dangerous.
 

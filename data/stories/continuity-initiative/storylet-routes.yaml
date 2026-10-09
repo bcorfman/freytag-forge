@@ -1590,9 +1590,7 @@ storylets:
   title: Evidence or Rescue
   activation:
     scene_id: 2C
-    conditions:
-    - fact_id: purge_clock_started
-      equals: true
+    conditions: []
     pacing:
       earliest_turn: 0
       target_turn: 10
