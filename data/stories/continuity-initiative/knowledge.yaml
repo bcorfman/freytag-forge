@@ -1554,8 +1554,8 @@ knowledge:
   statement: 'Kristin and Brandon secure enough evidence to expose the conspiracy, but sending it now would reveal their position and seal the detention sectors.'
   earn_when: "checks, secures, or copies the copied files"
   action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer", "examine", "analyze"]
-  - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence", "JANUS evidence", "JANUS files", "copied JANUS files", "portable drive", "JANUS records", "copied JANUS records", "development records", "JANUS development records"]
+  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer", "examine", "analyze", "eject", "monitor"]
+  - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence", "JANUS evidence", "JANUS files", "copied JANUS files", "portable drive", "JANUS records", "copied JANUS records", "development records", "JANUS development records", "USB drive", "my USB drive", "USB drive transfer", "USB drive's"]
   entity_ids: []
   aliases:
   - evidence ready to transmit
@@ -1622,8 +1622,8 @@ knowledge:
   statement: "Michelle's encrypted message marks a maintenance access route into her holding block and reveals that Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
   earn_when: "decodes or reads Michelle's coded message"
   action_evidence:
-  - ["decode", "read", "check", "study", "open", "search", "inspect"]
-  - ["Michelle's message", "Michelle's coded", "coded message", "coded messages", "encrypted message", "encrypted messages", "message from Michelle", "the message from Michelle", "decrypted message", "Michelle's decrypted message", "safe-house message", "Michelle's safe-house message", "Michelle's maintenance message"]
+  - ["decode", "read", "check", "study", "open", "search", "inspect", "decrypt", "examine", "analyze", "compare"]
+  - ["Michelle's message", "Michelle's coded", "coded message", "coded messages", "encrypted message", "encrypted messages", "message from Michelle", "the message from Michelle", "decrypted message", "Michelle's decrypted message", "safe-house message", "Michelle's safe-house message", "Michelle's maintenance message", "encrypted transfer messages", "decrypted transfer messages", "decoded messages", "cryptic message", "cryptic messages", "Michelle's maintenance codes"]
   entity_ids: [holding_block]
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
@@ -1648,8 +1648,8 @@ knowledge:
   earn_when: "follows the maintenance route"
   action_evidence:
   - ["follow", "trace", "search", "check", "study", "inspect", "review"]
-  - ["maintenance route", "maintenance routes", "maintenance report", "maintenance reports", "route marker", "route markers", "Michelle's route"]
-  - ["route", "routes", "marker", "markers"]
+  - ["maintenance route", "maintenance routes", "maintenance report", "maintenance reports", "route marker", "route markers", "Michelle's route", "maintenance trace", "maintenance line", "Michelle's maintenance codes"]
+  - ["route", "routes", "marker", "markers", "trace", "line"]
   entity_ids: [holding_block]
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}

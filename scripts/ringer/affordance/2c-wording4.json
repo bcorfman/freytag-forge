@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-2c-wording4",
+  "workdir": "/home/bcorfman/dev/ringer-work/2c-wording4",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2c-wording4",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, scripts/ringer/affordance/2c-wording-score.py, and (only if an existing test pins the old evidence) tests/test_markdown_story_package.py and tests/test_canon_journey.py. Edit nothing else.\n\nProblem: in the last live run of scene 2C all three blind players left by timer. Recorded commands that fired no reveal: 'Check my USB drive's transfer status.', 'Eject my USB drive.', 'Monitor the JANUS evidence transfer.', 'Copy the command records to my laptop.', 'Examine the cryptic message on my laptop.', 'Decrypt the encrypted transfer messages.', 'Examine the decrypted transfer messages.', 'Read the decrypted transfer messages.', 'Follow the maintenance trace through the ventilation shaft.', 'Trace the maintenance line to Michelle's detention level.'\n\nChange, in knowledge.yaml only, using the ALREADY EXISTING group layout (verb group first, object group second; k_sl_2c_d_r2 has a third group that stays). Append, do not remove anything.\n- k_sl_2c_c_r1: verb group add: eject, monitor. Object group add: USB drive, my USB drive, USB drive transfer, command records, copied command records.\n- k_sl_2c_d_r1: verb group add: decrypt, examine, analyze, compare. Object group add: encrypted transfer messages, decrypted transfer messages, decoded messages, cryptic message, cryptic messages, Michelle's maintenance codes.\n- k_sl_2c_d_r2: object (second) group add: maintenance trace, maintenance line, Michelle's maintenance codes. Third group add: trace, line, codes.\nDo not touch any other item, and do not change statement, delivery_text, cue_text, id, requires, establishes, source or earn_when.\n\nThen in scripts/ringer/affordance/2c-wording-score.py keep every existing case and add (expected sets are the aim; put the REAL set in CASES and list differences in notes.md): 'Check my USB drive's transfer status.' {'c_r1'}; 'Eject my USB drive.' {'c_r1'}; 'Monitor the JANUS evidence transfer.' {'c_r1'}; 'Copy the command records to my laptop.' compute the real set (b_r1 or c_r1 may fire); 'Examine the cryptic message on my laptop.' {'d_r1'}; 'Decrypt the encrypted transfer messages.' {'d_r1'}; 'Read the decrypted transfer messages.' {'d_r1'}; 'Follow the maintenance trace through the ventilation shaft.' compute the real set; 'Trace the maintenance line to Michelle's detention level.' compute the real set. Add must-not-fire cases (empty set): 'Enter the ventilation shaft.', 'Search the maintenance network for Michelle.', 'Examine the maintenance network screens.'. Existing cases that gain another 2C match from the new words: update their expected set to the real one only if the extra match is another 2C reveal, and list them in notes.md. Run: `TMPDIR=/tmp uv run python scripts/ringer/affordance/2c-wording-score.py`.\n\nWrite ./notes.md: the entries added, the scorer output, and anything surprising.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2c-wording4-check.sh",
+      "verified": "recorded commands fire the intended 2C reveal; scorer all correct; only evidence lines changed; suite and ruff pass"
+    }
+  ]
+}

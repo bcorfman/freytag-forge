@@ -40,6 +40,15 @@ CASES = {
     "Broadcast my JANUS evidence publicly.": {"c_r2"},
     "Send the JANUS evidence now.": {"c_r2"},
     "Read Michelle's safe-house message on my portable drive.": {"c_r1", "d_r1"},
+    "Check my USB drive's transfer status.": {"c_r1"},
+    "Eject my USB drive.": {"c_r1"},
+    "Monitor the JANUS evidence transfer.": {"c_r1"},
+    "Copy the command records to my laptop.": set(),
+    "Examine the cryptic message on my laptop.": {"d_r1"},
+    "Decrypt the encrypted transfer messages.": {"d_r1"},
+    "Read the decrypted transfer messages.": {"d_r1"},
+    "Follow the maintenance trace through the ventilation shaft.": {"d_r2"},
+    "Trace the maintenance line to Michelle's detention level.": {"d_r2"},
     "Argue with Brandon about sending the proof.": {"c_r2"},
     "Follow the service corridor.": set(),
     "Search Michelle's holding block.": set(),
@@ -47,6 +56,9 @@ CASES = {
     "Enter Michelle's holding block.": set(),
     "Follow Brandon to the lower levels.": set(),
     "Open the Detention Level 3 door.": set(),
+    "Enter the ventilation shaft.": set(),
+    "Search the maintenance network for Michelle.": set(),
+    "Examine the maintenance network screens.": set(),
 }
 
 bad = 0
