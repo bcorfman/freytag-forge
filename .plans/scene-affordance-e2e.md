@@ -1050,3 +1050,10 @@ Inputs: the recorded pull command, "Read the transfer orders.", "Search the comm
 - The scorer's `mention` word list includes "captive", so B's mention counts overstate; read by hand.
 - Coverage: the rejected turns in the L2 run were 8, 10, 14 and 16, past 2C.2, so a Details edit on 2C.2 would not cover them. Only the frame covers every 2C turn. Keep B.
 - Not measured: how the blind player reacts. L2 on the build with PR 545 answers that; watch 2C play-exit rate and whether 3A is reached by a detention-level command.
+
+### L2 1A-3B x3 on 576f57a (2026-10-09)
+
+Build 576f57a (2C frame names the detention level, 2C wording 3). Play exits: 1A 2/3 (r3 timer), 1B 3/3, 1C 2/3 (r2 timer), 2A 3/3, 2B 3/3, 2C 3/3, 3A 3/3, 3B 3/3. First run with every scene from 2A on left by play in all 3 replicates.
+Rejections: 2C 'detention level' 0; 2C 'rebecca' 4 (r1 turn 6, r3 turns 8-10, all "Seize the broadcast controls."); 2B r2 'coded message' x4 (turns 7-10, player kept trying the maintenance reports; still left by play at turn 12); 2B 'phase' x1; 1C r2 'phase' x1; 3A r1 'command and broadcast levels' x1.
+2C r2 player typed holding-cell commands ("Open Michelle's holding cell...") and still left by play; no detention-level pull on the chain.
+Open: 'rebecca' in 2C (NPC; PR 537 technique = add to scene participant_ids), 2B 'coded message' leak, 'phase' leak in 1C/2B, 1A r3 and 1C r2 timers.
