@@ -706,9 +706,10 @@ freytag_phase: climax
 objective: Overload JANUS with false alarms
 participant_ids: [kristin, michelle, brandon, rebecca]
 companions: [brandon, michelle]
-item_ids: [rebecca_desk]
+item_ids: [rebecca_desk, inspection_console]
 item_placements:
   rebecca_desk: {parent: executive_office}
+  inspection_console: {parent: infrastructure_corridors}
 character_placements:
   kristin: {parent: security_corridors}
   rebecca: {parent: executive_office}
