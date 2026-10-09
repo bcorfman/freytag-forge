@@ -254,7 +254,7 @@ scene_frames:
   situation: The facility's restricted records archive, with rows of terminals and a medical terminal tied to the detention levels. Kristin and Brandon must find usable evidence before their cover is reviewed.
   pressure: Secure evidence while judging Brandon's betrayal
 - scene_id: 2C
-  situation: "The command levels during an accelerating crisis: transfer orders for captives on the detention level and a maintenance network. Security activity is increasing faster than Kristin can explain, and Michelle's phrasing may be hidden somewhere in the traffic."
+  situation: "The command levels during an accelerating crisis: transfer orders for the captives on the detention level, and a maintenance network. Security activity is increasing faster than Kristin can explain, and Michelle's phrasing may be hidden somewhere in the traffic."
   pressure: Survive the purge clock and choose a combined mission
 - scene_id: 3A
   situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels."
