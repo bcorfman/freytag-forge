@@ -734,7 +734,7 @@ bridge_text:
 
 ### Scene 3B.1 — The Facility Fights Back
 
-**Details:** JANUS movement predictions; security corridors; cameras; doors; limited inspection console; broadcast relay
+**Details:** JANUS movement predictions; security corridors; cameras; doors; limited inspection console
 
 JANUS begins predicting the resistance group’s movements by analyzing doors opened, cameras disabled, and power systems disrupted.
 

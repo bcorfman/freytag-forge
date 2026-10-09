@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-3b-frame-probe",
+  "workdir": "/home/bcorfman/dev/ringer-work/freytag-3b-frame-probe",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": false,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "3b-frame-probe-smoke",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 600,
+      "check_timeout_s": 900,
+      "spec": "You are a read-only scout. Do NOT edit, create or delete any file in /home/bcorfman/dev/freytag-forge. The probe script scripts/ringer/affordance/3b_frame_probe.py already exists and the check runs it against the hosted narrator (billed). Your only job: write ./notes.md in your current directory with one sentence saying you changed nothing. Do not run the probe yourself.",
+      "check": "PROBE_N=1 bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3b-frame-probe-check.sh",
+      "verified": "probe output lists every arm for both inputs"
+    }
+  ]
+}

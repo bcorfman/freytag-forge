@@ -67,7 +67,7 @@ def test_thorough_seeding_reaches_late_scenes_without_worker_calls(monkeypatch) 
 
 
 def test_run_scene_seeding_prevents_midstory_opening_rejection(monkeypatch) -> None:
-    prose = "Michelle and Brandon watch the JANUS relay as alarms sound."
+    prose = "Michelle and Brandon watch the JANUS selection records as alarms sound."
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
     monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test")
     monkeypatch.setattr(

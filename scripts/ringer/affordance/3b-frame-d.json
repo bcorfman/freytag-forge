@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-3b-frame-d",
+  "workdir": "/home/bcorfman/dev/ringer-work/3b-frame-d",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "3b-frame-d",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only: data/stories/continuity-initiative/knowledge.yaml, data/stories/continuity-initiative/plot.md, and existing files under tests/ that pin the old wording. Edit nothing else.\n\nProblem: in story continuity-initiative scene 3B, four lines in the narrator prompt point the player at the broadcast relay, the LAST step of a chain whose first step is false alarms. A probe showed that removing them stops the pull. Make exactly these three story-text edits, byte for byte:\n\n1. knowledge.yaml, under scene_frames, the entry with scene_id 3B: set `situation` to `JANUS is tracking Kristin's moves.` and `pressure` to `Feed JANUS false water and air alarms.` (the current text names the relay and the executive office). Keep the YAML quoting style of the neighbouring entries; do not touch any other scene's frame.\n2. knowledge.yaml, the item with id k_scene_3b_entry (currently statement 'The broadcast relay is the immediate contested objective.', entity_ids [kristin, broadcast_relay], aliases [relay objective, relay]): set statement to `JANUS is tracking Kristin's group through the security corridors.`, entity_ids to [kristin, security_corridors], and set aliases to `[JANUS]` (the loader rejects an empty aliases list: it needs at least one alias, and this one does not name the relay). Keep id, audience, available_in_scenes, establishes and source exactly as they are. security_corridors is an existing place in world.yaml.\n3. plot.md, Scene 3B.1, the `**Details:**` line: remove the item `broadcast relay` (the line becomes `JANUS movement predictions; security corridors; cameras; doors; limited inspection console`). Change nothing else in plot.md.\n\nRules: do not add or change any other line. If an existing test pins the old wording of these lines (the frame, the entry statement or aliases, or the 3B.1 Details), update that test to the new wording; do not weaken any other test and do not delete a test. If the loader or a test needs more than the above (for example the entry item must keep an alias or a Details item count), do the minimum and say exactly what in ./notes.md. The sandbox has no network, so the full suite may not run there; run `TMPDIR=/tmp uv run pytest -q tests/test_world_model.py` as a quick load check if it works. The check runs the full suite.\n\nWrite ./notes.md: the three edits as made, any test you had to update and why, and anything surprising.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3b-frame-d-check.sh",
+      "verified": "3B frame, entry item and 3B.1 Details no longer name the relay; suite and ruff pass"
+    }
+  ]
+}

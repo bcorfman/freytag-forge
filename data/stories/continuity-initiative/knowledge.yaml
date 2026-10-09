@@ -260,8 +260,8 @@ scene_frames:
   situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels."
   pressure: Reach Michelle and join the uprising
 - scene_id: 3B
-  situation: The fight runs through the security corridors and the executive office. JANUS is tracking the fight through cameras, doors, and alarms; the group needs an opening to reach the broadcast relay.
-  pressure: Overload JANUS and seize the broadcast
+  situation: "JANUS is tracking Kristin's moves."
+  pressure: Feed JANUS false water and air alarms.
 - scene_id: 3C
   pressure: Expose the network and escape
 knowledge:
@@ -2718,9 +2718,9 @@ knowledge:
   establishes: [{op: assert, fact_id: scene_3a_entry_known, value: true}]
   source: {kind: scene_entry}
 - id: k_scene_3b_entry
-  statement: The broadcast relay is the immediate contested objective.
-  entity_ids: [kristin, broadcast_relay]
-  aliases: [relay objective, relay]
+  statement: JANUS is tracking Kristin's group through the security corridors.
+  entity_ids: [kristin, security_corridors]
+  aliases: [JANUS]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3B]
   establishes: [{op: assert, fact_id: scene_3b_entry_known, value: true}]
