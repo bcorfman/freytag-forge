@@ -1500,8 +1500,8 @@ knowledge:
   statement: 'After Michelle corrupts the records, Charles orders valuable captives transferred and everyone else destroyed within hours.'
   earn_when: "checks the transfer orders"
   action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review"]
-  - ["transfer order", "transfer orders", "purge order", "purge orders", "purge schedule", "Charles's order", "Charles's orders"]
+  - ["read", "check", "search", "study", "open", "inspect", "review", "find"]
+  - ["transfer order", "transfer orders", "purge order", "purge orders", "purge schedule", "Charles's order", "Charles's orders", "Project Purge", "Project Purge files", "purge file", "purge files", "command record", "command records", "transfer schedule", "transfer schedules"]
   entity_ids: []
   aliases:
   - purge clock started
@@ -1552,10 +1552,10 @@ knowledge:
   delivery_text: "Charles prepares a broadcast of selected survivors. The purge order means time is running out in the detention sectors. The copied files lie close at hand."
 - id: k_sl_2c_c_r1
   statement: 'Kristin and Brandon secure enough evidence to expose the conspiracy, but sending it now would reveal their position and seal the detention sectors.'
-  earn_when: "checks the copied files"
+  earn_when: "checks, secures, or copies the copied files"
   action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review"]
-  - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence"]
+  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer"]
+  - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence", "JANUS evidence", "JANUS files", "copied JANUS files", "portable drive"]
   entity_ids: []
   aliases:
   - evidence ready to transmit
@@ -1586,10 +1586,10 @@ knowledge:
   delivery_text: "Kristin and Brandon have enough evidence to expose the conspiracy. Sending it now would reveal their position and seal the detention sectors. A message from Michelle is waiting."
 - id: k_sl_2c_c_r2
   statement: 'Brandon wants to send the evidence now. He will risk the captives. He accepts that this makes rescue impossible.'
-  earn_when: "argues about sending the proof"
+  earn_when: "argues about or tries to send the proof"
   action_evidence:
-  - ["argue", "discuss", "debate", "ask", "weigh", "consider", "decide"]
-  - ["send now", "sending the", "sending files", "sending the proof", "the risk", "risk now"]
+  - ["argue", "discuss", "debate", "ask", "weigh", "consider", "decide", "broadcast", "send", "transmit", "release", "upload", "publish"]
+  - ["send now", "sending the", "sending files", "sending the proof", "the risk", "risk now", "JANUS evidence", "my JANUS evidence", "the JANUS evidence", "the evidence", "copied files", "the copied files"]
   entity_ids: []
   aliases:
   - evidence ready to transmit
@@ -1620,10 +1620,10 @@ knowledge:
   delivery_text: "Brandon says the proof must go out now. He will risk the captives, even if that makes rescue impossible. A message from Michelle is waiting."
 - id: k_sl_2c_d_r1
   statement: "Michelle's encrypted message marks a maintenance access route into her holding block and reveals that Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
-  earn_when: "decodes Michelle's coded message"
+  earn_when: "decodes or reads Michelle's coded message"
   action_evidence:
   - ["decode", "read", "check", "study", "open", "search", "inspect"]
-  - ["Michelle's message", "Michelle's coded", "coded message", "coded messages", "encrypted message", "encrypted messages", "message from Michelle", "the message from Michelle"]
+  - ["Michelle's message", "Michelle's coded", "coded message", "coded messages", "encrypted message", "encrypted messages", "message from Michelle", "the message from Michelle", "decrypted message", "Michelle's decrypted message", "safe-house message", "Michelle's safe-house message", "Michelle's maintenance message"]
   entity_ids: [holding_block]
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
@@ -1939,9 +1939,9 @@ knowledge:
   delivery_text: "Kristin warns Michelle that the emergency-gate authorization is about to expire. Michelle launches the prepared uprising rather than wait."
 - id: k_sl_3b_a_r1
   statement: 'Kristin feeds JANUS false water-pressure and ventilation alarms in empty service corridors until human operators must take control.'
-  earn_when: "feeds JANUS false alarms or traces or follows water-pressure warnings"
+  earn_when: "feeds JANUS false alarms or traces, follows, or inspects water-pressure warnings"
   action_evidence:
-  - [trigger, set off, sound, raise, create, plant, feed, send, report, fake, stage, simulate, cause, start, trip, activate, use, reset, flood, overwhelm, trace, follow, exploit, overload, manipulate, spoof, falsify, trigger]
+  - [trigger, set off, sound, raise, create, plant, feed, send, report, fake, stage, simulate, cause, start, trip, activate, use, reset, flood, overwhelm, trace, follow, exploit, overload, manipulate, spoof, falsify, trigger, inspect, examine, read, check, study, watch, monitor, look at]
   - [false alarm, false alarms, fake alarm, fake alarms, water-pressure alarm, water-pressure alarms, false water-pressure alarm, false water-pressure alarms, ventilation alarm, ventilation alarms, fake ventilation alarm, fake ventilation alarms, service-corridor alarm, service-corridor alarms, inspection console, false alert, false alerts, fake alert, fake alerts, JANUS alert, JANUS alerts, Kristin's alarm, Kristin's alarms, Kristin's decoy, Kristin's decoys, empty service corridor, empty service corridors, false emergency, false emergencies, fake emergency, fake emergencies, false warning, false warnings, fake warning, fake warnings, ventilation warning, ventilation warnings, pressure alarm, pressure alarms, water-pressure warning, water-pressure warnings, pressure warning, pressure warnings, water and air alarm, water and air alarms, false water and air alarm, false water and air alarms, air alarm, air alarms, water alarm, water alarms]
   entity_ids: []
   aliases:

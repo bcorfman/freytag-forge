@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-2c-wording2",
+  "workdir": "/home/bcorfman/dev/ringer-work/2c-wording2",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2c-wording2",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, scripts/ringer/affordance/2c-wording-score.py, and (only if an existing test pins the old evidence) tests/test_markdown_story_package.py and tests/test_canon_journey.py. Edit nothing else.\n\nProblem: in scene 2C players still timed out. Recorded commands that matched nothing: 'Broadcast my JANUS evidence.' and 'Broadcast my JANUS evidence publicly.' (they try to send the proof; k_sl_2c_c_r2 'argues about sending the proof' has only argue/discuss/debate/ask/weigh/consider/decide verbs and objects 'send now', 'sending the', 'sending files', 'sending the proof', 'the risk', 'risk now'); and 'Read Michelle's decrypted message.' and 'Read Michelle's safe-house message on my portable drive.' (k_sl_2c_d_r1 object group needs the unbroken phrase 'Michelle's message' or 'coded/encrypted message').\n\nChange, in knowledge.yaml only. k_sl_2c_c_r2: append to the FIRST (verb) group: broadcast, send, transmit, release, upload, publish. Append to the SECOND (object) group: JANUS evidence, my JANUS evidence, the JANUS evidence, the evidence, copied files, the copied files. Set earn_when to: \"argues about or tries to send the proof\". k_sl_2c_d_r1: append to the SECOND (object) group: decrypted message, Michelle's decrypted message, safe-house message, Michelle's safe-house message, Michelle's maintenance message. Set earn_when to: \"decodes or reads Michelle's coded message\". Do not touch any other item, and do not change statement, delivery_text, cue_text, id, requires, establishes or source.\n\nThen in scripts/ringer/affordance/2c-wording-score.py keep every existing case and add: 'Broadcast my JANUS evidence.' {'c_r2'}; 'Broadcast my JANUS evidence publicly.' {'c_r2'}; 'Send the JANUS evidence now.' {'c_r2'}; 'Read Michelle's decrypted message.' {'d_r1'}; 'Read Michelle's safe-house message on my portable drive.' compute the real set (c_r1 may also fire; that is fine, record the real set); 'Argue with Brandon about sending the proof.' {'c_r2'}. Add must-not-fire cases (empty set): 'Follow the service corridor.', 'Search Michelle's holding block.', 'Enter Michelle's holding block.'. A case may legitimately fire more than one 2C reveal; put the real set in CASES and say in notes.md which ones. Existing cases that now gain c_r2 because of the new verbs/objects: update their expected set to the real one only if the extra match is another 2C reveal, and list them in notes.md. Run: `TMPDIR=/tmp uv run python scripts/ringer/affordance/2c-wording-score.py`.\n\nWrite ./notes.md: the entries added, the scorer output, and anything surprising.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2c-wording2-check.sh",
+      "verified": "2C b_r1 and c_r1 match the recorded player wording; scorer all correct; only evidence lines changed; suite and ruff pass"
+    }
+  ]
+}
