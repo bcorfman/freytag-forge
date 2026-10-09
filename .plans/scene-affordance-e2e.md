@@ -1069,3 +1069,5 @@ Build 576f57a (2C frame names the detention level, 2C wording 3). Play exits: 1A
 Rejections: 2C 'detention level' 0; 2C 'rebecca' 4 (r1 turn 6, r3 turns 8-10, all "Seize the broadcast controls."); 2B r2 'coded message' x4 (turns 7-10, player kept trying the maintenance reports; still left by play at turn 12); 2B 'phase' x1; 1C r2 'phase' x1; 3A r1 'command and broadcast levels' x1.
 2C r2 player typed holding-cell commands ("Open Michelle's holding cell...") and still left by play; no detention-level pull on the chain.
 Open: 'rebecca' in 2C (NPC; PR 537 technique = add to scene participant_ids), 2B 'coded message' leak, 'phase' leak in 1C/2B, 1A r3 and 1C r2 timers.
+
+2C 'rebecca' rejection fix (Brandon, 2026-10-09): Ringer `2c-rebecca` added `rebecca` to the 2C `participant_ids` in plot.md (same technique as 3A, PR 537); `tests/test_markdown_story_package.py` pinned the old list and was updated to match. Suite and ruff pass. Next: merge, wait for staging, rerun L2 1A-3B x3.
