@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-2c-purge-gate",
+  "workdir": "/home/bcorfman/dev/ringer-work/2c-purge-gate",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2c-purge-gate",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only: data/stories/continuity-initiative/storylets.md, data/stories/continuity-initiative/storylet-routes.yaml, and ONE new file tests/test_2c_turn_one_copy.py. Edit nothing else.\n\nProblem: in live play of scene 2C, players type 'Copy the JANUS evidence to my laptop.' on turn 1. Storylet SL-2C-C (source of reveals k_sl_2c_c_r1 and k_sl_2c_c_r2) is closed until fact purge_clock_started is true, and the pacing event purge_2c sets that fact only at turn 3. So the command earns nothing and the narrator invents filler.\n\nEdit 1 (storylets.md): in the SL-2C-C section, under '**Available when**', delete exactly the line '- The purge/transfer clock is active and understood.' Keep the other two bullets. Change nothing else, and leave SL-2C-B and SL-2C-D untouched.\n\nEdit 2 (storylet-routes.yaml): in the storylet with `id: SL-2C-C`, replace its `activation.conditions` block (the two lines '- fact_id: purge_clock_started' and 'equals: true' under 'conditions:') with `conditions: []` on the same line as the key. Change nothing else. Leave SL-2C-D's conditions, the pacing event purge_2c, and every other mention of purge_clock_started alone.\n\nTest (tests/test_2c_turn_one_copy.py): model it on test_efficient_player_earns_2c_evidence_without_deadline in tests/test_reveal_prerequisites.py (same imports: legacy_package, RuntimeState.bootstrap, RuntimeEngine, LOADED_PACKAGE, _ScriptedProvider). Put the state in scene 2C on its first turn with fact janus_evidence true and purge_clock_started NOT true (use whatever helper those tests use to enter a scene and assert facts; read them first). Call engine.projector.project(state, 'player', 'Copy the JANUS evidence to my laptop.') and assert that k_sl_2c_c_r1 is among the returned candidate ids. Add a second test in the same file with the same setup and input 'Read the transfer orders.' asserting k_sl_2c_c_r1 is NOT offered (so the gate is not simply open to everything). If an existing test pins the old SL-2C-C activation, report it in ./notes.md and do not edit that test (you do not own it).\n\nThen run `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check . && uv run ruff format --check .`. Write ./notes.md with the diff and results.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2c-purge-gate-check.sh",
+      "verified": "SL-2C-C no longer requires purge_clock_started; the new test passes with the edit and fails without it; suite and ruff pass"
+    }
+  ]
+}
