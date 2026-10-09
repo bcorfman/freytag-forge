@@ -135,8 +135,10 @@ def _future_terms(scene_index: int) -> tuple[str, ...]:
     first_positions = _entity_first_positions(positions)
     for form, entity_ids in PACKAGE.knowledge_indexes.entity_alias_to_entities.items():
         entity_positions = {first_positions[entity_id] for entity_id in entity_ids}
-        if any(position > scene_index for position in entity_positions) and not any(
-            position <= scene_index for position in entity_positions
+        if (
+            any(position > scene_index for position in entity_positions)
+            and not any(position <= scene_index for position in entity_positions)
+            and not NarrationSafetyValidator._contains(current_scene_text, NarrationSafetyValidator._normalize(form))
         ):
             terms.add(NarrationSafetyValidator._normalize(form))
 
