@@ -2,6 +2,7 @@
 
 usage: 3b_bridge_probe.py <report-dir> <samples> OUT.json
 
+Arm D = only the clause ', so it creates a narrow escape window rather than a solution' cut.
 Reads the recorded 3B opening of replicates r1-r3 from <report-dir>/e2e-blind-player-r<N>.json.
 Arms: A = as recorded; B = the clause 'while Charles sealed the primary exits and sent armed teams
 downward' cut from the bridge sentence; C = B and the recap sentences about the one-use surface-gate
@@ -43,7 +44,14 @@ def arm_c(text):
     return RECAP.sub("", arm_b(text), count=1)
 
 
-ARMS = {"A": lambda t: t, "B": arm_b, "C": arm_c}
+ESCAPE = ", so it creates a narrow escape window rather than a solution"
+
+
+def arm_d(text):
+    return text.replace(ESCAPE, "", 1)
+
+
+ARMS = {"A": lambda t: t, "B": arm_b, "C": arm_c, "D": arm_d}
 key = os.environ["OPENAI_API_KEY"]
 model = os.environ.get("E2E_PLAYER_MODEL", "gpt-5.6-luna")
 rows = []
