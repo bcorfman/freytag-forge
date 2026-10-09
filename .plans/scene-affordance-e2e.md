@@ -1050,3 +1050,9 @@ Inputs: the recorded pull command, "Read the transfer orders.", "Search the comm
 - The scorer's `mention` word list includes "captive", so B's mention counts overstate; read by hand.
 - Coverage: the rejected turns in the L2 run were 8, 10, 14 and 16, past 2C.2, so a Details edit on 2C.2 would not cover them. Only the frame covers every 2C turn. Keep B.
 - Not measured: how the blind player reacts. L2 on the build with PR 545 answers that; watch 2C play-exit rate and whether 3A is reached by a detention-level command.
+
+### L2 on d06b0e5 and 2C wording 3 (2026-10-09)
+
+L2 1A-3B x3 on d06b0e5 (frame names the detention level): 1A, 1B, 1C 3/3 play; 2A 1/3; 2B 3/3; 2C 2/3 (r1 timer); 3A 2/3; 3B 1/3 (r1 play; r2 and r3 timer after a 2C play exit). 'detention level' rejections in 2C: 0 (was 4). One 'rebecca' rejection in 2C r3.
+2C r1 read by hand: no reveal fired in 16 turns. Turn 8 'Identify Michelle's transfer destination.' made the narrator invent 'transfer carts ... through the lower levels' before any detention-level wording; the player then followed it (turns 9-13). The frame wording first appeared at turn 10 and only after the player was heading down.
+Cause: the player's chain commands missed the evidence words (examine/analyze 'copied JANUS records', trace/identify/locate/track 'transfer order/destination/carts', 'contingency plan'). Fix: Ringer `2c-wording3` widened k_sl_2c_b_r1 and k_sl_2c_c_r1; scorer has the recorded commands and two must-not-fire cases (lower levels, Detention Level 3 door). Next: merge, wait for staging, rerun L2 1A-3B x3.
