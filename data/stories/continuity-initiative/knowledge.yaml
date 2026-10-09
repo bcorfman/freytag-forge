@@ -1500,8 +1500,8 @@ knowledge:
   statement: 'After Michelle corrupts the records, Charles orders valuable captives transferred and everyone else destroyed within hours.'
   earn_when: "checks the transfer orders"
   action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review"]
-  - ["transfer order", "transfer orders", "purge order", "purge orders", "purge schedule", "Charles's order", "Charles's orders"]
+  - ["read", "check", "search", "study", "open", "inspect", "review", "find"]
+  - ["transfer order", "transfer orders", "purge order", "purge orders", "purge schedule", "Charles's order", "Charles's orders", "Project Purge", "Project Purge files", "purge file", "purge files", "command record", "command records", "transfer schedule", "transfer schedules"]
   entity_ids: []
   aliases:
   - purge clock started
@@ -1552,10 +1552,10 @@ knowledge:
   delivery_text: "Charles prepares a broadcast of selected survivors. The purge order means time is running out in the detention sectors. The copied files lie close at hand."
 - id: k_sl_2c_c_r1
   statement: 'Kristin and Brandon secure enough evidence to expose the conspiracy, but sending it now would reveal their position and seal the detention sectors.'
-  earn_when: "checks the copied files"
+  earn_when: "checks, secures, or copies the copied files"
   action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review"]
-  - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence"]
+  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer"]
+  - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence", "JANUS evidence", "JANUS files", "copied JANUS files", "portable drive"]
   entity_ids: []
   aliases:
   - evidence ready to transmit
