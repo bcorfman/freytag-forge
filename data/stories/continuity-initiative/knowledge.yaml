@@ -1565,8 +1565,6 @@ knowledge:
   available_in_scenes:
   - 2C
   requires:
-  - fact_id: purge_clock_started
-    equals: true
   - fact_id: janus_evidence
     equals: true
   establishes:
@@ -1599,8 +1597,6 @@ knowledge:
   available_in_scenes:
   - 2C
   requires:
-  - fact_id: purge_clock_started
-    equals: true
   - fact_id: janus_evidence
     equals: true
   establishes:
