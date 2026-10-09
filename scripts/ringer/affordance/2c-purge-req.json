@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-2c-purge-req",
+  "workdir": "/home/bcorfman/dev/ringer-work/2c-purge-req",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2c-purge-req",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, and (only if an existing test pins the old requirement) tests/*.py. Edit nothing else.\n\nProblem: in live play of scene 2C, players type 'Copy the JANUS evidence to my laptop.' on turn 1. Reveals k_sl_2c_c_r1 and k_sl_2c_c_r2 both require fact purge_clock_started, which the pacing event purge_2c sets at turn 3. So a copy command typed before turn 3 earns nothing, and the player never repeats it.\n\nChange: in knowledge.yaml, in the `requires:` list of k_sl_2c_c_r1 and of k_sl_2c_c_r2, delete the entry `- fact_id: purge_clock_started` with its `equals: true` line. Keep the `janus_evidence` entry. Change nothing else in either reveal. Then run `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check . && uv run ruff format --check .`. If a test pins the old requirement list of these two reveals, update only that expectation. Do not touch tests/test_reveal_prerequisites.py's fixtures that set requires explicitly. If any test fails for another reason, report it in ./notes.md and do not paper over it. Write ./notes.md with the diff and results.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2c-purge-req-check.sh",
+      "verified": "purge_clock_started removed from the requires of c_r1 and c_r2 only; suite and ruff pass"
+    }
+  ]
+}
