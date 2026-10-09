@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-3b-alarm-words",
+  "workdir": "/home/bcorfman/dev/ringer-work/3b-alarm-words",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "3b-alarm-words",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, scripts/ringer/affordance/3b-wording-score.py, and (only if an existing test pins the old evidence) tests/test_markdown_story_package.py and tests/test_canon_journey.py. Edit nothing else.\n\nProblem: in scene 3B the first reveal k_sl_3b_a_r1 (action_evidence, two groups) does not match the player's natural wording of the sentence the scene itself teaches. The scene frame pressure says 'Feed JANUS false water and air alarms.' The real matcher (storygame/runtime/candidate_matcher.py, _matches_all) rejects 'Trigger a false water and air alarm.', 'Feed JANUS false water and air alarms.' and 'Set off the water and air alarms.' because the object group lists 'false alarm(s)', 'water-pressure alarm(s)', 'ventilation alarm(s)' and so on, but never the phrase 'water and air alarm'. The matcher needs the unbroken phrase.\n\nChange, in knowledge.yaml only, item k_sl_3b_a_r1: append these entries to the SECOND (object) group of action_evidence, after the last existing entry, as plain unquoted items in the same style: water and air alarm, water and air alarms, false water and air alarm, false water and air alarms, air alarm, air alarms, water alarm, water alarms. Do NOT touch the verb group. Do NOT add 'inspect', 'examine', 'check' or 'read' anywhere (that would make 'Examine the inspection console' fire the reveal). Do not change k_sl_3b_a_r2 or any other item, and do not change earn_when, statement, delivery_text, cue_text, id, requires, establishes or source.\n\nThen in scripts/ringer/affordance/3b-wording-score.py add these cases to CASES (command -> expected set of reveals): 'Trigger a false water and air alarm.' {'a_r1'}; 'Feed JANUS false water and air alarms.' {'a_r1'}; 'Set off the water and air alarms.' {'a_r1'}; 'Sound the air alarms.' {'a_r1'}; 'Inspect the water and air alarm system.' set(); 'Examine the inspection console.' set(); 'Inspect the water-pressure warnings.' set(). Run the scorer yourself: `TMPDIR=/tmp uv run python scripts/ringer/affordance/3b-wording-score.py`. If 'Examine the inspection console.' already matches a_r1 before your change, say so in notes.md and move that case to the expected set it really has instead of changing evidence to force it; every other case must pass. If a case you added fails for a reason you cannot fix within the owned files, remove it and say why in notes.md.\n\nWrite ./notes.md: the entries added, the scorer output, and anything surprising.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3b-alarm-words-check.sh",
+      "verified": "a_r1 object group matches the water and air alarm wording; scorer all correct; only evidence lines changed; suite and ruff pass"
+    }
+  ]
+}
