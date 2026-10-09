@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-3b-inspect-warnings",
+  "workdir": "/home/bcorfman/dev/ringer-work/3b-inspect-warnings",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "3b-inspect-warnings",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, scripts/ringer/affordance/3b-wording-score.py, and (only if an existing test pins the old evidence) tests/test_markdown_story_package.py and tests/test_canon_journey.py. Edit nothing else.\n\nProblem: in scene 3B the first reveal k_sl_3b_a_r1 never fires when a player acts on the scene cue 'An inspection console flashes water-pressure warnings while doors open and close in empty service corridors.' Players type 'Inspect the water-pressure warnings on the inspection console.' and the verb group has no inspect/examine/read/check/study verb, so nothing fires and the player stalls.\n\nChange, in knowledge.yaml only, item k_sl_3b_a_r1: append these entries to the FIRST (verb) group of action_evidence, after the last existing entry, as plain unquoted items in the same style: inspect, examine, read, check, study, watch, monitor, look at. Also change earn_when to: \"feeds JANUS false alarms or traces, follows, or inspects water-pressure warnings\". Do NOT touch the object group. Do not change k_sl_3b_a_r2 or any other item, and do not change statement, delivery_text, cue_text, id, requires, establishes or source.\n\nThen in scripts/ringer/affordance/3b-wording-score.py update CASES: 'Inspect the water-pressure warnings.' -> {'a_r1'}; 'Examine the inspection console.' -> {'a_r1'} (now intended: the cue names the console); add 'Inspect the water-pressure warnings on the inspection console.' {'a_r1'}; 'Read the water-pressure warnings.' {'a_r1'}; 'Check the inspection console.' {'a_r1'}. Keep 'Inspect the water and air alarm system.' as whatever it really now matches (it contains 'air alarm', so it will now be {'a_r1'}; set it so). Every other existing case must keep its expected result, in particular 'Inspect the relay chamber access panel.', 'Inspect Rebecca's national network controls.', 'Examine the executive screen.' and 'Examine Rebecca's marked site list.' must NOT gain a_r1. If a keep-case now fires a_r1, tell me in notes.md instead of narrowing; do not remove cases. Run the scorer: `TMPDIR=/tmp uv run python scripts/ringer/affordance/3b-wording-score.py`.\n\nWrite ./notes.md: the entries added, the scorer output, and anything surprising.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3b-inspect-warnings-check.sh",
+      "verified": "a_r1 verb group accepts inspect/examine/read/check/study; scorer all correct; only evidence line changed; suite and ruff pass"
+    }
+  ]
+}
