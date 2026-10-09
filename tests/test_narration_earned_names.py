@@ -84,7 +84,7 @@ def test_undelivered_protected_terms_remain_unearned() -> None:
 
 def test_bare_later_scene_rejects_unearned_names() -> None:
     with pytest.raises(ProposalValidationError):
-        _narrate(_bare_3b(), "Michelle and Brandon watch the JANUS relay as alarms sound.")
+        _narrate(_bare_3b(), "Michelle and Brandon watch the JANUS selection records as alarms sound.")
 
 
 def test_seeded_later_scene_rejects_not_yet_earned_item_name() -> None:
