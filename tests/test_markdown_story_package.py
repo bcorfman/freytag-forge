@@ -222,8 +222,8 @@ def test_group_member_package_declares_group_and_places_member(tmp_path: Path) -
     plot_path = destination / "plot.md"
     plot = plot_path.read_text()
     plot = plot.replace(
-        "participant_ids: [kristin, brandon, michelle]\ncompanions: [brandon]\nitem_ids: []",
-        "participant_ids: [kristin, brandon, michelle]\n"
+        "participant_ids: [kristin, brandon, michelle, rebecca]\ncompanions: [brandon]\nitem_ids: []",
+        "participant_ids: [kristin, brandon, michelle, rebecca]\n"
         "character_placements:\n  prisoners: {parent: purge_chamber}\n  michelle: {parent: prisoners}\n"
         "companions: [brandon]\nitem_ids: []",
         1,
