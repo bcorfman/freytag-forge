@@ -22,6 +22,12 @@ CASES = {
     "Copy the JANUS evidence to my laptop.": {"c_r1"},
     "Verify my portable drive.": {"c_r1"},
     "Check the copied files.": {"c_r1"},
+    "Trace Michelle's transfer order.": {"b_r1"},
+    "Identify Michelle's transfer destination.": {"b_r1"},
+    "Locate Michelle's transfer carts.": {"b_r1"},
+    "Review Charles's contingency plan.": {"b_r1"},
+    "Examine my copied JANUS records.": {"c_r1"},
+    "Analyze my copied JANUS records.": {"c_r1"},
     "Open Charles's Project Purge files.": {"b_r1"},
     "Read Charles's Project Purge files.": {"b_r1"},
     "Read Charles's command record.": {"b_r1"},
@@ -39,6 +45,8 @@ CASES = {
     "Search Michelle's holding block.": set(),
     "Follow Michelle's maintenance access route into her holding block.": set(),
     "Enter Michelle's holding block.": set(),
+    "Follow Brandon to the lower levels.": set(),
+    "Open the Detention Level 3 door.": set(),
 }
 
 bad = 0
