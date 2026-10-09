@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-2c-wording3",
+  "workdir": "/home/bcorfman/dev/ringer-work/2c-wording3",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2c-wording3",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, scripts/ringer/affordance/2c-wording-score.py, and (only if an existing test pins the old evidence) tests/test_markdown_story_package.py and tests/test_canon_journey.py. Edit nothing else.\n\nProblem: in a live run of scene 2C the player's commands matched no reveal, so the narrator invented 'transfer carts' and 'lower levels'. Recorded commands that matched nothing: 'Examine my copied JANUS records.', 'Analyze my copied JANUS records.', 'Search my copied JANUS records for Charles's contingency plan.', 'Review Charles's contingency plan.', 'Trace Michelle's transfer order.', 'Identify Michelle's transfer destination.', 'Locate Michelle's transfer carts.', 'Track Michelle's transfer carts.'\n\nChange, in knowledge.yaml only. k_sl_2c_c_r1: append to the FIRST (verb) group: examine, analyze, review (review is already there, keep one copy). Append to the SECOND (object) group: JANUS records, copied JANUS records, development records, JANUS development records. Set earn_when to: \"checks, secures, or copies the copied files\" (leave unchanged if already so). k_sl_2c_b_r1: append to the FIRST (verb) group: trace, identify, locate, track, examine. Append to the SECOND (object) group: transfer destination, transfer destinations, transfer cart, transfer carts, contingency plan, Charles's contingency plan. Set earn_when to: \"checks the transfer orders or the purge files\" (leave unchanged if already so). Do not touch any other item, and do not change statement, delivery_text, cue_text, id, requires, establishes or source.\n\nThen in scripts/ringer/affordance/2c-wording-score.py keep every existing case and add: 'Trace Michelle's transfer order.' {'b_r1'}; 'Identify Michelle's transfer destination.' {'b_r1'}; 'Locate Michelle's transfer carts.' {'b_r1'}; 'Review Charles's contingency plan.' {'b_r1'}; 'Examine my copied JANUS records.' {'c_r1'}; 'Analyze my copied JANUS records.' {'c_r1'}. Add must-not-fire cases (empty set): 'Follow Brandon to the lower levels.', 'Open the Detention Level 3 door.'. A case may legitimately fire more than one 2C reveal; put the real set in CASES and say in notes.md which ones. Existing cases that gain a new match from the new words: update their expected set to the real one only if the extra match is another 2C reveal, and list them in notes.md. Run: `TMPDIR=/tmp uv run python scripts/ringer/affordance/2c-wording-score.py`.\n\nWrite ./notes.md: the entries added, the scorer output, and anything surprising.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2c-wording3-check.sh",
+      "verified": "recorded r1 commands fire b_r1 or c_r1; scorer all correct; only evidence lines changed; suite and ruff pass"
+    }
+  ]
+}

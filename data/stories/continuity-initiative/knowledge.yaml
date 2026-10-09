@@ -1498,10 +1498,10 @@ knowledge:
   delivery_text: "Rebecca tells Brandon that Charles will discard conspirators and prisoners. She asks him to join her instead."
 - id: k_sl_2c_b_r1
   statement: 'After Michelle corrupts the records, Charles orders valuable captives transferred and everyone else destroyed within hours.'
-  earn_when: "checks the transfer orders"
+  earn_when: "checks the transfer orders or the purge files"
   action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review", "find"]
-  - ["transfer order", "transfer orders", "purge order", "purge orders", "purge schedule", "Charles's order", "Charles's orders", "Project Purge", "Project Purge files", "purge file", "purge files", "command record", "command records", "transfer schedule", "transfer schedules"]
+  - ["read", "check", "search", "study", "open", "inspect", "review", "find", "trace", "identify", "locate", "track", "examine"]
+  - ["transfer order", "transfer orders", "purge order", "purge orders", "purge schedule", "Charles's order", "Charles's orders", "Project Purge", "Project Purge files", "purge file", "purge files", "command record", "command records", "transfer schedule", "transfer schedules", "transfer destination", "transfer destinations", "transfer cart", "transfer carts", "contingency plan", "Charles's contingency plan"]
   entity_ids: []
   aliases:
   - purge clock started
@@ -1554,8 +1554,8 @@ knowledge:
   statement: 'Kristin and Brandon secure enough evidence to expose the conspiracy, but sending it now would reveal their position and seal the detention sectors.'
   earn_when: "checks, secures, or copies the copied files"
   action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer"]
-  - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence", "JANUS evidence", "JANUS files", "copied JANUS files", "portable drive"]
+  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer", "examine", "analyze"]
+  - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence", "JANUS evidence", "JANUS files", "copied JANUS files", "portable drive", "JANUS records", "copied JANUS records", "development records", "JANUS development records"]
   entity_ids: []
   aliases:
   - evidence ready to transmit
