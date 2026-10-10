@@ -1409,7 +1409,7 @@ knowledge:
     priority: 0
   delivery_text: "Michelle is changing classifications. She is hiding vulnerable prisoners. Maintenance reports wait on the next terminal."
 - id: k_sl_2b_c_r2
-  statement: 'Michelle’s coded maintenance messages show she has organized prisoners and is preparing an uprising from inside.'
+  statement: 'Michelle’s coded maintenance messages show she has organized prisoners to prepare an uprising from inside. A decoded message reads: “The prisoners are ready to rise up.”'
   earn_when: reads the maintenance reports
   action_evidence:
   - [search, read, open, check, review, examine, inspect]
@@ -1437,7 +1437,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle has organized prisoners. She is preparing an uprising from inside. Brandon's earlier messages are still open on the remote terminal."
+  delivery_text: "Michelle has organized prisoners. She is preparing an uprising from inside. A decoded message reads: “The prisoners are ready to rise up.” Brandon's earlier messages are still open on the remote terminal."
 - id: k_sl_2c_a_r1
   statement: 'Rebecca privately offers Brandon safe passage and Michelle’s release if he helps her remove Charles.'
   earn_when: "asks Brandon about Rebecca's offer"

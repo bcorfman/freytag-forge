@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-3b-charles",
+  "workdir": "/home/bcorfman/dev/ringer-work/3b-charles",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "3b-charles",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/plot.md, and (only if an existing test pins the old list) tests/*.py. Edit nothing else.\n\nProblem: in live play of scene 3B the narration leak scan rejects any turn whose narration says 'Charles Jenkins' (\"narration mentions an unavailable entity 'charles jenkins'\"). Charles is a world NPC whose only surface form is his full name, and he is in no scene's participant_ids, so no scene may name him. 3B's Characters list names him and players type 'Confront Charles'. Earlier fixes for the same rejection added Rebecca to the 3A and 2C participant_ids (PR 537, PR 548). participant_ids is not presence, so he is not placed.\n\nChange: in plot.md, in the scene metadata block with `scene_id: 3B`, change the line `participant_ids: [kristin, michelle, brandon, rebecca]` to `participant_ids: [kristin, michelle, brandon, rebecca, charles]`. That is the only edit. Then run `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check . && uv run ruff format --check .`. If a test pins the old 3B participant list, update only that expectation and say so. Write ./notes.md with the diff and results.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3b-charles-check.sh",
+      "verified": "3B participant_ids includes charles; one line changed; suite and ruff pass"
+    }
+  ]
+}

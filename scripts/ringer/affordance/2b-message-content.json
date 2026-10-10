@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-2b-message-content",
+  "workdir": "/home/bcorfman/dev/ringer-work/2b-message-content",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2b-message-content",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, data/stories/continuity-initiative/plot.md, and (only if an existing test pins the old text) tests/*.py. Edit nothing else.\n\nProblem: in live play of scene 2B the narrator invents the text of Michelle's decoded maintenance message, and sometimes writes the secret word 'phase', which the leak scan rejects. We are giving the narrator the message's exact words to copy. The text was written in ChatGPT Desktop and scored with the real narrator; use it character for character, including the curly quotes and the curly apostrophe in the statement.\n\nChange 1, knowledge.yaml, entry `id: k_sl_2b_c_r2` (only this entry): replace the `statement` line so its value is exactly:\nMichelle’s coded maintenance messages show she has organized prisoners to prepare an uprising from inside. A decoded message reads: “The prisoners are ready to rise up.”\nKeep the line's existing YAML quoting style as far as the characters allow (the old value is single-quoted; keep single quotes since the new value contains no straight single quote). Replace the `delivery_text` line so its value is exactly:\nMichelle has organized prisoners. She is preparing an uprising from inside. A decoded message reads: “The prisoners are ready to rise up.” Brandon's earlier messages are still open on the remote terminal.\n(keep the existing double-quoted style; the straight apostrophe in Brandon's stays straight).\n\nChange 2, plot.md, Scene 2B.4 (heading `### Scene 2B.4 — Michelle’s Hidden Resistance`): after the paragraph that begins `The records prove that Michelle is active inside` and before the paragraph `Michelle is not passively waiting`, add a new paragraph consisting of exactly this line (blank line before and after):\nA decoded message reads: “The prisoners are ready to rise up.”\n\nNothing else changes. Then run `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check . && uv run ruff format --check .`. If a test pins the old statement or delivery text of k_sl_2b_c_r2, update only that expectation and say so. Write ./notes.md with the diff and results.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2b-message-content-check.sh",
+      "verified": "k_sl_2b_c_r2 statement and delivery_text carry the quoted message; plot 2B.4 gains the sentence; suite and ruff pass"
+    }
+  ]
+}
