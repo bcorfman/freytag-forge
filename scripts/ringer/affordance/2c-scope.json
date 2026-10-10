@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-2c-scope",
+  "workdir": "/home/bcorfman/dev/ringer-work/2c-scope",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2c-scope",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, plus files under tests/ and bench/affordance_known_gaps.json ONLY to update an assertion that pins the old scene list of these two entries (for example a test that expects 3A in their available_in_scenes). Edit nothing else.\n\nTask: in data/stories/continuity-initiative/knowledge.yaml, the two entries with id k_sl_2c_d_r1 and id k_sl_2c_d_r2 each have the line `available_in_scenes: [2C, 3A]`. Change that line to `available_in_scenes: [2C]` in both entries and nowhere else. Reason: in 3A these earned 2C lines pull the narrator toward Rebecca's office. Do not touch any other field of any entry.\n\nHOW TO CHECK: run `TMPDIR=/tmp uv run pytest -q` and fix only assertions that pin the old [2C, 3A] list. Then run `uv run ruff check --fix . && uv run ruff format .` (ruff must not touch YAML). Write notes.md at the worktree root listing the lines changed and any test assertion you updated.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2c-scope-check.sh",
+      "verified": "k_sl_2c_d_r1 and k_sl_2c_d_r2 are scoped to 2C only; suite and ruff pass"
+    }
+  ]
+}
