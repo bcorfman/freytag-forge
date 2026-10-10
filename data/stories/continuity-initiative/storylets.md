@@ -1201,6 +1201,50 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-3A-E — The Conditioning Records Confirm the Broadcast Plan
+
+**Source beats:** [3A.2 — The Experiments](plot.md#scene-3a2--the-experiments)
+
+**Allowed scene:** `3A`
+
+**Available when**
+- Kristin has reached Michelle.
+- Kristin knows the facility ran behavioral experiments.
+- Kristin does not yet know the conditioning plan for released captives.
+
+**Participants / items**
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- Detention medical records in the medical level
+
+**Dramatic purpose**
+- Keep the records as an optional second look after the medical level is entered.
+- Show that the planned survivors were prepared to support Charles’s story.
+
+**Possible realizations**
+- Kristin reads the detention medical records with Michelle.
+- The records confirm the conditioning plan without replaying the medical-level discovery.
+
+**Effects**
+- Sets `conditioned_release_plan_known`.
+- Does not move the group or repeat the medical-level discovery.
+
+**Completion**
+- Kristin understands that the planned survivors were conditioned to support Charles’s story.
+
+**Abort**
+- The conditioning plan is already known.
+
+**Protected boundary**
+- Do not invent successful mind control beyond the specific authored methods and goals.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 6`
+- latest: `turn 7`
+
+---
+
 ### SL-3A-D — The Framed Official’s Window
 
 **Source beats:** [3A.3 — The Unexpected Prisoner](plot.md#scene-3a3--the-unexpected-prisoner)

@@ -288,6 +288,7 @@ def test_loader_reads_on_assert_effects_and_rejects_bad_world_effects(tmp_path) 
 @pytest.mark.component
 def test_shipped_package_declares_no_world_effects() -> None:
     assert set(PACKAGE.world.fact_effects) == {
+        "behavioral_experiments_known",
         "memory_card_recovered",
         "brandon_identified",
         "facility_perimeter_reached",

@@ -285,6 +285,7 @@ new_fact_ids:
   definition: Kristin knows the facility conducted the authored neurological/behavioral experiments.
   used_by_storylets:
   - SL-3A-B
+  - SL-3A-E
   - SL-3A-D
   used_by_transitions: []
 - id: military_override_codes_available
@@ -1786,6 +1787,46 @@ storylets:
     - scene_id_not: 3A
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3A-E
+  scene_id: 3A
+  title: The Conditioning Records Confirm the Broadcast Plan
+  activation:
+    scene_id: 3A
+    conditions:
+    - fact_id: michelle_reached
+      equals: true
+    - fact_id: behavioral_experiments_known
+      equals: true
+    - fact_id: conditioned_release_plan_known
+      equals: false
+    pacing:
+      earliest_turn: 0
+      target_turn: 6
+      latest_turn: 7
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: After the medical level is entered, keep the records available as an optional confirmation of the
+    conditioning plan without replaying the medical discovery or changing movement.
+  realization_options:
+  - id: SL-3A-E-R1
+    dramatic_intent: Kristin reads the detention medical records with Michelle and confirms that planned survivors were
+      conditioned to support Charles's story.
+    source_beats: [scene-3a2--the-experiments]
+    operations:
+    - op: assert
+      fact_id: conditioned_release_plan_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: conditioned_release_plan_known
+      equals: true
+    abort_when:
+    - scene_id_not: 3A
+    non_coercion_note: Offer as an optional consequence of examining the records. Do not present this realization as a
+      choice, command, or required action; equivalent player-authored approaches may validate the same operation.
 - id: SL-3A-D
   scene_id: 3A
   title: The Framed Official's Window
