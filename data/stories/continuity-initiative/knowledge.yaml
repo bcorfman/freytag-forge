@@ -2289,8 +2289,8 @@ knowledge:
   statement: 'Kristin stops Rebecca fleeing with the archive, and Michelle sends its prisoner locations to independent networks.'
   earn_when: takes the data case from Rebecca
   action_evidence:
-  - [ask, talk to, stop, block, hold, grab, take, seize, chase, tackle, corner, run after, catch, pin, restrain, confront, intercept, prevent, secure, wrest, wrestle, wrestle away]
-  - [data case, data cases, portable data case, portable data cases, Rebecca's data case, Rebecca's data cases, Rebecca data case, Rebecca data cases, her data case, her data cases, Rebecca's escape, Rebecca escapes, Rebecca fleeing, Rebecca's flight, Rebecca's exit, Rebecca exits, her escape, her flight, her exit, Rebecca's hands, her hands, Rebecca's bag, Rebecca's bags, her bag, her bags, archive case, archive cases, portable case, portable cases, data briefcase, data briefcases, Rebecca's arm, her arm]
+  - [ask, talk to, stop, block, hold, grab, take, seize, chase, tackle, corner, run after, catch, pin, restrain, confront, intercept, prevent, secure, wrest, wrestle, wrestle away, follow]
+  - [data case, data cases, portable data case, portable data cases, Rebecca's data case, Rebecca's data cases, Rebecca data case, Rebecca data cases, her data case, her data cases, Rebecca's escape, Rebecca escapes, Rebecca fleeing, Rebecca's flight, Rebecca's exit, Rebecca exits, her escape, her flight, her exit, Rebecca's hands, her hands, Rebecca's bag, Rebecca's bags, her bag, her bags, archive case, archive cases, portable case, portable cases, data briefcase, data briefcases, Rebecca's arm, her arm, follow Rebecca, Rebecca's escape route]
   entity_ids: []
   aliases:
   - portable archive secured
@@ -2402,7 +2402,7 @@ knowledge:
   statement: 'Michelle uses the senior official’s authorization to release the surface gates while Brandon keeps the relay open and water closes the facility around them.'
   earn_when: releases the emergency surface gates
   action_evidence:
-  - [ask, talk to, release, open, unlock, raise, activate, start, switch on, power up, use, enter, type, input, authorize, approve, send, have, tell, order, give, hand, trigger]
+  - [ask, talk to, release, open, unlock, raise, activate, start, switch on, power up, use, enter, type, input, authorize, approve, send, have, tell, order, give, hand, trigger, extend, guide, lead]
   - [emergency surface gates, emergency surface gate, surface gates, surface gate, emergency gates, emergency gate, gate authorization, gate authorizations, one-time authorization, one-time authorizations, senior official's authorization, official authorization, official's authorization, override codes, override code, emergency override codes, Michelle's authorization, her authorization, gate code, gate codes, surface release, surface releases, gate release, gate releases, gate signal, gate signals, escape signal, escape signals, surface alarm, surface alarms, gates to the surface, surface exits, surface exit]
   entity_ids: []
   aliases:
@@ -2433,7 +2433,7 @@ knowledge:
   statement: 'Across the country, detention sites begin to surrender or release prisoners as the national network fractures.'
   earn_when: checks reports from detention sites
   action_evidence:
-  - [ask, talk to, check, read, watch, view, look at, review, inspect, scan, monitor, follow, search, listen to, track, confirm, count, list, tally, compare, scroll through]
+  - [ask, talk to, check, read, watch, view, look at, review, inspect, scan, monitor, follow, search, listen to, track, confirm, count, list, tally, compare, scroll through, broadcast the reports, broadcast reports]
   - [other detention sites, other detention site, detention-site reports, detention site reports, facility reports, facility report, facilities surrendering, facility surrender, facility surrenders, site surrender, site surrenders, site releases, site release, prison releases, prison release, national network, national networks, network fracture, network fractures, network collapse, network collapses, country reports, national reports, other facilities, detention reports, news reports, site news, surrender reports, release reports, facility news, surrender, surrendered, the reports, detention sites, detention site]
   entity_ids: []
   aliases:
@@ -2464,7 +2464,7 @@ knowledge:
   statement: 'Families and communities organize independent rescue efforts after learning that many of the missing are still alive.'
   earn_when: calls the families of the missing
   action_evidence:
-  - [ask, talk to, call, contact, tell, inform, reach, join, help, organize, support, meet, work with, coordinate, speak to, comfort, greet, visit, find, gather, volunteer, volunteer with]
+  - [ask, talk to, call, contact, tell, inform, reach, join, help, organize, support, meet, work with, coordinate, speak to, comfort, greet, visit, find, gather, volunteer, volunteer with, broadcast updates, answer the families with]
   - [the missing, missing families, missing family, family members, family member, the families, those families, community rescues, community rescue, rescue efforts, rescue effort, rescue volunteers, rescue volunteer, volunteers organizing rescues, rescue teams, rescue team, rescue groups, rescue group, local communities, local community, independent rescues, independent rescue, survivors' families, survivor families, missing survivors, living missing, still alive, community volunteers, community volunteer, rescue organizers]
   entity_ids: []
   aliases:
