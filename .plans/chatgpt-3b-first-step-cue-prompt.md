@@ -62,6 +62,25 @@ alarms"), plot 3B.1 and the cue above. Plot 3B.1 already says Kristin uses the
 inspection console she accessed under the false cover to create false
 water-pressure and ventilation alarms in empty outer service corridors.
 
+## Hard requirement from the first attempt
+
+A first attempt (cue A: "JANUS tracks Kristin. The inspection console in the
+infrastructure corridors can send false water-pressure alarms into empty
+service corridors.") matched the evidence nouns but FAILED
+`tests/test_cue_text_safety.py`: `narration mentions protected knowledge
+'janus'`. On the first turn of 3B the name JANUS is protected knowledge the
+player has not earned, and a cue is checked on that turn. So the cue must NOT
+contain the word JANUS, or any other name or alias of a later reveal. The
+second sentence of that attempt (inspection console, infrastructure corridors,
+false water-pressure alarms, empty service corridors) passed on its own and is
+the part to keep. Keep the person hook, but say it without the name JANUS.
+Words checked against the real first-turn scan and accepted: Kristin,
+Michelle, Brandon, cameras, security, security cameras, guards, doors, the
+facility, the security system. Refer to the tracker as the cameras, security,
+or the guards (the 3B.1 plot Details line already names cameras and doors), not
+as JANUS and not as the AI. Do not use any word you cannot show is safe; if you
+are unsure, list it under "unverified" in your answer.
+
 ## Rules to keep
 
 - A cue is a SCENE DESCRIPTION, never a command ("A warning message blinks on
@@ -76,9 +95,9 @@ water-pressure and ventilation alarms in empty outer service corridors.
   matches (a_r1 or a_r2), so the player's natural command fires it. Check each
   word against the matcher (apostrophe rule, synonym classes, negations, the
   one-match rule).
-- The cue should be a person-and-thing hook with a move: JANUS is watching a
-  named person or group move by move, and the inspection console is the thing
-  that can answer it. Use only people already in 3B (Kristin, Michelle, Brandon)
+- The cue should be a person-and-thing hook with a move: the cameras or
+  security are watching a named person move by move (never "JANUS"), and the
+  inspection console is the thing that can answer it. Use only people already in 3B (Kristin, Michelle, Brandon)
   and do not hand any of them a new action the plot does not give them.
 - The narration leak scan rejects a cue-derived sentence that uses a multi-word
   alias or `action_evidence` phrase of a LATER reveal. A cue is exempt, but list
@@ -99,9 +118,13 @@ water-pressure and ventilation alarms in empty outer service corridors.
 ### A. Replace the `human_security_control` cue (handoffs.yaml, Scene 3B)
 
 Write 2 candidate cues (one or two sentences each) that make a player who reads
-only the screen walk up to the inspection console and feed JANUS false alarms.
-Each must give one person or group JANUS is tracking and one thing to act on,
-using nouns the evidence matches ("inspection console" is the safest).
+only the screen walk up to the inspection console and send false alarms.
+Each must give one person the cameras or security are tracking and one thing to
+act on, using nouns the evidence matches ("inspection console" is the safest).
+Neither may contain the word JANUS. Candidate wording that worked on its other
+half: "The inspection console in the infrastructure corridors can send false
+water-pressure alarms into empty service corridors." (It is a capability, not
+a command, and it names the console's place, as plot 3B.1 now does.)
 
 ### B. Check the 3B entry text and objective
 
@@ -122,10 +145,12 @@ which paragraph it follows. If none is needed, say so.
 1. Text to paste, per file and key, changed lines only.
 2. A table: each candidate cue, the exact nouns it uses, and which `a_r1` / `a_r2`
    group each noun matches, checked word by word against the matcher.
-3. For each candidate, five commands a player might type after reading it; at
+3. For each candidate, a line saying every word is on the safe list above or
+   is under "unverified". We will run the real first-turn test on it.
+4. For each candidate, five commands a player might type after reading it; at
    least two must be ones that should NOT fire a 3B reveal. Give the result for
    each, including which other 3B reveal a command could also fire.
-4. Your pick of the two candidates, and anything in this brief you could not
+5. Your pick of the two candidates, and anything in this brief you could not
    satisfy, and why.
 
 A sentence that is vague about where to go is as bad as one that gives away the
