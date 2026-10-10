@@ -1669,7 +1669,7 @@ Each entry below is authoring data, not a player action menu.
 - May transition into resolution once escape and broadcast consequences are established.
 
 **Completion**
-- The surviving captives reach the surface and the Los Angeles operation can no longer be concealed.
+- The evacuation route is open and the captives are moving through the maintenance tunnel.
 
 **Abort**
 - Ends on transition to the resolution state.
@@ -1714,7 +1714,7 @@ Each entry below is authoring data, not a player action menu.
 - May set `los_angeles_facility_lost`.
 
 **Completion**
-- The surviving captives reach the surface and the Los Angeles operation can no longer be concealed.
+- The surface gates are released and the Los Angeles operation can no longer be concealed.
 
 **Abort**
 - Ends on transition to the resolution state.
@@ -1763,7 +1763,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 - May establish Kristin/Michelle’s next-direction facts.
 
 **Completion**
-- The immediate national consequences are established.
+- Reports from other detention sites show the national network breaking apart.
 
 **Abort**
 - None in canonical resolution.
@@ -1804,7 +1804,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 - May set `community_rescue_efforts_begun`.
 
 **Completion**
-- The immediate national consequences are established.
+- Families and communities begin independent rescue efforts.
 
 **Abort**
 - None in canonical resolution.

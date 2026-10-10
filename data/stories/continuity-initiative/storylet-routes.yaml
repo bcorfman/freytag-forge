@@ -2292,7 +2292,7 @@ storylets:
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: captives_reaching_surface
+    - fact_id: evacuation_route_open
       equals: true
     abort_when:
     - resolution_complete: true
@@ -2330,7 +2330,7 @@ storylets:
     - phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: captives_reaching_surface
+    - fact_id: los_angeles_facility_lost
       equals: true
     abort_when:
     - resolution_complete: true
@@ -2367,9 +2367,8 @@ storylets:
     - phase_two
   completion_or_abort:
     complete_when:
-    - any_fact_true:
-      - national_network_fragmenting
-      - community_rescue_efforts_begun
+    - fact_id: national_network_fragmenting
+      equals: true
     abort_when:
     - never_in_canonical_resolution: true
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
@@ -2404,9 +2403,8 @@ storylets:
     - phase_two
   completion_or_abort:
     complete_when:
-    - any_fact_true:
-      - national_network_fragmenting
-      - community_rescue_efforts_begun
+    - fact_id: community_rescue_efforts_begun
+      equals: true
     abort_when:
     - never_in_canonical_resolution: true
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
