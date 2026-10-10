@@ -623,7 +623,7 @@ The apparent choice between exposure and rescue becomes a far more dangerous com
 scene_id: 3A
 location_id: detention_level
 freytag_phase: crisis
-objective: Reach Michelle and join the uprising
+objective: Reach Michelle
 participant_ids: [kristin, michelle, brandon, senior_official, rebecca]
 companions: [brandon]
 item_ids: [override_codes, stolen_radio, gate_status_panel]
@@ -659,6 +659,8 @@ bridge_text:
 **Details:** detention sector; rows of captives; scattered radios; coded announcements; tightening security
 
 Kristin follows Michelle's maintenance route into one partly unsecured detention sector, not a mass release. She expects rows of helpless captives. Instead, Michelle speaks into a stolen radio, coordinating prisoners through coded announcements and sympathetic facility workers.
+
+Michelle is beside the captives.
 
 The reunion between Kristin and Michelle is brief because the purge countdown has begun.
 

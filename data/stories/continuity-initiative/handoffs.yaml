@@ -193,7 +193,7 @@ deliveries:
   fallback_text: >-
     Kristin reaches Michelle among the holding blocks in the detention sector. Their reunion is brief, but Michelle is
     alive and ready to direct the rescue.
-  cue_text: The detention block opens onto rows of captives. A stolen radio crackles nearby.
+  cue_text: Michelle speaks into a stolen radio beside the captives.
 - fact_id: military_override_codes_available
   scene_id: 3A
   source_kind: npc
