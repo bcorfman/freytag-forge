@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-3c-cue-gate-probe",
+  "workdir": "/home/bcorfman/dev/ringer-work/3c-cue-gate",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "3c-cue-gate-probe",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 600,
+      "check_timeout_s": 300,
+      "spec": "You are a read-only scout. Do NOT edit, create or delete any file under /home/bcorfman/dev/freytag-forge, and do NOT git commit. Your only output file is ./notes.md in your working directory.\n\nBackground: scene 3C of the Continuity Initiative story has cue staging switched off by RuntimeEngine._escalation_eligible (storygame/runtime/engine.py). A probe script already exists at /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3c_cue_gate_probe.py. It patches that gate open and walks the 3C chain.\n\nHOW TO RUN: cd /home/bcorfman/dev/freytag-forge && uv run python scripts/ringer/affordance/3c_cue_gate_probe.py /home/bcorfman/dev/ringer-work/3c-cue-gate/report.json\n\nTask: run it, then write notes.md with (1) which facts cue staging would offer at each of the six stages, (2) whether 3C has any bridge events or deliveries, and (3) in two sentences, what is needed for cues to appear in 3C. Quote the report; do not guess.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3c-cue-gate-check.sh",
+      "expect_files": ["notes.md"],
+      "verified": "probe report has all six stages and the cue-source keys"
+    }
+  ]
+}

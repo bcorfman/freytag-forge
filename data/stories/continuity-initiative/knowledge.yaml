@@ -2255,7 +2255,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle broadcasts video of the captives, JANUS records, planning sessions, and detention locations to independent networks."
+  delivery_text: "Michelle broadcasts video of the captives, JANUS records, planning sessions, and detention locations to independent networks. Rebecca is leaving the executive office with the Portable data case."
 - id: k_sl_3c_a_r2
   statement: 'When Charles calls her a terrorist, Michelle answers with live revolts that make the truth impossible to contain.'
   earn_when: answers Charles's terrorist claim
@@ -2284,7 +2284,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "When Charles calls Michelle a terrorist, she answers with live revolts. The truth is impossible to contain."
+  delivery_text: "When Charles calls Michelle a terrorist, she answers with live revolts. The truth is impossible to contain. Rebecca still holds the Portable data case in her hands."
 - id: k_sl_3c_b_r1
   statement: 'Kristin stops Rebecca fleeing with the archive, and Michelle sends its prisoner locations to independent networks.'
   earn_when: takes the data case from Rebecca
@@ -2328,7 +2328,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin stops Rebecca from fleeing with the data case. Michelle sends its prisoner locations to independent networks."
+  delivery_text: "Kristin stops Rebecca from fleeing with the data case. Michelle sends its prisoner locations to independent networks. Water rises around the drainage pump controls."
 - id: k_sl_3c_b_r2
   statement: 'The prisoners capture Rebecca after her archive is copied beyond her reach, while Charles escapes his remote command site.'
   earn_when: copies the archive beyond Rebecca's reach
@@ -2372,7 +2372,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "The prisoners capture Rebecca after the archive is copied beyond her reach. Charles escapes his remote command site."
+  delivery_text: "The prisoners capture Rebecca after the archive is copied beyond her reach. Charles escapes his remote command site. The gates at the surface remain shut."
 - id: k_sl_3c_c_r1
   statement: 'Kristin restores power to drainage pumps and holds one watertight barrier while Michelle leads captives through the maintenance tunnel.'
   earn_when: restores power to the drainage pumps
@@ -2407,7 +2407,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin restores power to the drainage pumps and holds a watertight barrier. Michelle leads the captives through the maintenance tunnel."
+  delivery_text: "Kristin restores power to the drainage pumps and holds a watertight barrier. Michelle leads the captives through the maintenance tunnel. The gates at the surface remain shut."
 - id: k_sl_3c_c_r2
   statement: 'Michelle uses the senior official’s authorization to release the surface gates while Brandon keeps the relay open and water closes the facility around them.'
   earn_when: releases the emergency surface gates
@@ -2442,7 +2442,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle uses the senior official's authorization to release the surface gates. Brandon keeps the relay open while water closes the facility around them."
+  delivery_text: "Michelle uses the senior official's authorization to release the surface gates. Brandon keeps the relay open while water closes the facility around them. Water keeps rising around the drainage pump controls."
 - id: k_sl_3c_d_r1
   statement: 'Across the country, detention sites begin to surrender or release prisoners as the national network fractures.'
   earn_when: checks reports from detention sites
@@ -2473,7 +2473,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Across the country, detention sites begin to surrender or release prisoners. The national network fractures."
+  delivery_text: "Across the country, detention sites begin to surrender or release prisoners. The national network fractures. Families of the missing are calling for word."
 - id: k_sl_3c_d_r2
   statement: 'Families and communities organize independent rescue efforts after learning that many of the missing are still alive.'
   earn_when: calls the families of the missing
@@ -2504,7 +2504,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Families and communities organize independent rescue efforts. Many of the missing are still alive."
+  delivery_text: "Families and communities organize independent rescue efforts. Many of the missing are still alive. Reports from detention sites still reach the broadcast chamber."
 - id: k_sl_3c_e_r1
   statement: 'A recovered JANUS file names the disappearances Phase One and reveals that Phase Two was meant to provoke conflict among survivors.'
   earn_when: opens the recovered JANUS file

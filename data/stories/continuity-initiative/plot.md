@@ -877,9 +877,11 @@ The national detention network begins to fracture:
 * Communities begin organizing independent rescue efforts.
 * Families learn that many of the missing may still be alive.
 
+Reports from other detention sites reach the broadcast chamber as families of the missing call for news.
+
 Kristin’s personal goal is fulfilled when she and Michelle are reunited, but neither can return to their former life.
 
-Michelle begins publishing the complete Continuity Initiative archive. Kristin joins teams locating and opening the remaining facilities.
+Michelle begins publishing the complete Continuity Initiative archive. Kristin joins teams locating and opening the remaining facilities. Charles's last remote channel still carries a signal.
 
 The final revelation comes from a partially recovered JANUS file. The disappearance operation was labeled **Phase One**.
 
