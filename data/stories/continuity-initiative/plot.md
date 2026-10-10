@@ -512,6 +512,8 @@ Michelle has built a small covert network among prisoners and sympathetic worker
 
 The records prove that Michelle is active inside, but they cannot yet show how far her hidden network reaches.
 
+A decoded message reads: “The prisoners are ready to rise up.”
+
 Michelle is not passively waiting to be rescued. She has already begun dismantling the facility from within.
 
 ## Scene 2C — The Trap Closes
@@ -704,7 +706,7 @@ scene_id: 3B
 location_id: broadcast_relay
 freytag_phase: climax
 objective: Overload JANUS with false alarms
-participant_ids: [kristin, michelle, brandon, rebecca]
+participant_ids: [kristin, michelle, brandon, rebecca, charles]
 companions: [brandon, michelle]
 item_ids: [rebecca_desk, inspection_console]
 item_placements:
