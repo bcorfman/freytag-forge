@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hmac
+import logging
 from collections import deque
 from collections.abc import Callable
 from os import getenv
@@ -13,6 +14,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from storygame.runtime.capture import WorldCapture, build_capture_provider
@@ -203,6 +205,15 @@ def create_demo_app(
     allowed_headers.append("X-Freytag-Test-Clock-Token")
     if getenv("FREYTAG_ALLOW_TEST_CLOCK", "") == "1":
         allowed_headers.append("X-Freytag-Test-Clock-Seconds")
+
+    @app.middleware("http")
+    async def handle_unexpected_errors(request: Request, call_next):
+        try:
+            return await call_next(request)
+        except Exception:
+            logging.getLogger(__name__).exception("Unhandled exception while serving %s", request.url.path)
+            return JSONResponse({"detail": "internal server error"}, status_code=500)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[item for item in getenv("FREYTAG_CORS_ORIGINS", "*").split(",") if item],

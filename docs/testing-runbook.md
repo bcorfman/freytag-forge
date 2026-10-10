@@ -324,6 +324,6 @@ real player or protected story data, and never print
 | 429, body `{"detail": "rate limit exceeded"}` | App limiters (`FREYTAG_RATE_LIMIT_PER_MINUTE` turns per session per minute; `FREYTAG_SESSIONS_PER_IP_PER_DAY` new sessions per IP per day) | Slow down and retry |
 | 409 `uncited_knowledge`, `narration_known_term_leak`, `ineligible_selection` | Narration safety or selection rejected the turn before commit; no state changed | A real finding. The turn is lost, not retried. Reproduce locally with `bench` before spending more hosted runs |
 | 403, plain text `error code: 1010`, no Worker headers | Cloudflare Browser Integrity Check rejected the client | Keep the adapter's browser `User-Agent`; do not disable the check |
-| Single 503, or a browser CORS/`Failed to fetch` error | Worker or API briefly unavailable | Rerun once; check `/api/v1/version` before changing CORS |
+| Single 503, or a browser CORS/`Failed to fetch` error | Worker or API briefly unavailable, or an unhandled API error whose 500 carried no CORS header | Read the staging service log for a 500 and its traceback first; a traceback is a real bug, not noise. With none, rerun once and check `/api/v1/version` before changing CORS |
 | 502 with `X-Narration-Error-Code` | Typed Worker failure | Classify by that code; `UNKNOWN` means an untyped upstream failure |
 | Aborted `@llm-canon` | Infrastructure noise or a real stall | Apply section 7's counting rules before reading anything into it |

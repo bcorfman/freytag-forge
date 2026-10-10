@@ -1,0 +1,31 @@
+{
+  "run_name": "freytag-null-place-500",
+  "workdir": "/home/bcorfman/dev/ringer-work/null-place",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 2,
+  "tasks": [
+    {
+      "key": "item-facts-null-place",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only storygame/runtime/item_facts.py and one NEW test file tests/test_item_facts_null_place.py. Edit nothing else.\n\nBug (seen on staging, a 500 on POST /api/v1/turn): the narrator reply's item_facts can carry a thing with `\"place\": null` (or another non-string). `ItemFactsProvider._override_place` (about line 1035) only checks `\"place\" not in value`, then runs `value[\"place\"].strip()` and raises `AttributeError: 'NoneType' object has no attribute 'strip'`. `_apply_move` (about line 938) has the same unguarded `value[\"place\"].strip()`. Most other places in the file already guard with isinstance(..., str).\n\nFix: make both sites treat a non-string `place` as absent. In `_override_place`, return `value` unchanged when `value.get(\"place\")` is not a string. In `_apply_move`, return when it is not a string. Do not change behaviour for string places. Do not add try/except around the whole call. Keep the style of the surrounding code and add no comments beyond one short line if needed.\n\nTest: write tests/test_item_facts_null_place.py. It must be hermetic (no network, no live worker). Reproduce the crash first: build an ItemFactsProvider the way existing tests in tests/test_bench_item_facts.py and neighbouring tests do, set up a state where `_override_place` runs (an override exists for the entity, no place_pole, and place_parent differs from the override's final parent), call `apply_item_facts` with `{\"<thing>\": {\"place\": None, \"condition\": [\"lit\"]}}` and assert it does not raise and that the other keys still apply. Add a second case for `_apply_move` with a null place. Confirm the new tests FAIL on the original code (use `git stash` of item_facts.py only, then restore) and pass after your fix.\n\nHOW TO CHECK: `TMPDIR=/tmp uv run pytest -q tests/test_item_facts_null_place.py`, then `TMPDIR=/tmp uv run pytest -q`, then `uv run ruff check --fix . && uv run ruff format .`. Write notes.md at the worktree root saying what you changed and how the tests failed before the fix.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/null-place-check.sh item_facts storygame/runtime/item_facts.py tests/test_item_facts_null_place.py",
+      "verified": "non-string item_facts place is ignored in _override_place and _apply_move; new test passes; suite and ruff clean"
+    },
+    {
+      "key": "turn-500-cors",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only storygame/web_demo.py and one NEW test file tests/test_web_demo_server_error.py. Edit nothing else.\n\nBug: an unhandled exception inside a route in `create_app` (storygame/web_demo.py) becomes a 500 built by Starlette's outermost ServerErrorMiddleware, which sits OUTSIDE CORSMiddleware. That 500 has no `access-control-allow-origin` header, so the browser reports it as a CORS failure and hides the real status. Staging hit this once on POST /api/v1/turn.\n\nFix: add an `@app.middleware(\"http\")` function that wraps `await call_next(request)` in try/except Exception, logs it with `logging.getLogger(__name__).exception(...)` (use the logger style already in the file if there is one), and returns `JSONResponse({\"detail\": \"internal server error\"}, status_code=500)`. It must be registered BEFORE the existing `app.add_middleware(CORSMiddleware, ...)` call so it sits INSIDE the CORS middleware and the CORS middleware adds its headers to that 500. Do not change CORS settings, routes, or any HTTPException behaviour. Never put the exception text in the response body.\n\nTest: tests/test_web_demo_server_error.py, hermetic. Build the app the way tests/test_web_demo.py does, add a route that raises RuntimeError (or monkeypatch the engine so the turn route raises), call it with FastAPI TestClient using `raise_server_exceptions=False` and an `Origin: http://127.0.0.1:4173` header, and assert status 500, JSON body `{\"detail\": \"internal server error\"}`, and that `access-control-allow-origin` is present. Confirm the test FAILS on the original code (use `git stash` of web_demo.py only, then restore) and passes after the fix. Also assert an existing 404 for a missing session still returns 404 with its own detail.\n\nHOW TO CHECK: `TMPDIR=/tmp uv run pytest -q tests/test_web_demo_server_error.py`, then `TMPDIR=/tmp uv run pytest -q`, then `uv run ruff check --fix . && uv run ruff format .`. Write notes.md at the worktree root saying what you changed and how the test failed before the fix.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/null-place-check.sh web_demo storygame/web_demo.py tests/test_web_demo_server_error.py",
+      "verified": "unhandled route errors return a JSON 500 that carries CORS headers; new test passes; suite and ruff clean"
+    }
+  ]
+}
