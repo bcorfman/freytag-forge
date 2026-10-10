@@ -626,11 +626,12 @@ freytag_phase: crisis
 objective: Reach Michelle
 participant_ids: [kristin, michelle, brandon, senior_official, rebecca]
 companions: [brandon]
-item_ids: [override_codes, stolen_radio, gate_status_panel]
+item_ids: [override_codes, stolen_radio, gate_status_panel, emergency_surface_gates]
 item_placements:
   override_codes: {parent: senior_official}
   stolen_radio: {parent: detention_level}
   gate_status_panel: {parent: detention_level}
+  emergency_surface_gates: {parent: facility_escape}
 character_placements:
   captives: {parent: detention_level}
   senior_official: {parent: captives}
@@ -710,10 +711,11 @@ freytag_phase: climax
 objective: Overload JANUS with false alarms
 participant_ids: [kristin, michelle, brandon, rebecca, charles]
 companions: [brandon, michelle]
-item_ids: [rebecca_desk, inspection_console]
+item_ids: [rebecca_desk, inspection_console, emergency_surface_gates]
 item_placements:
   rebecca_desk: {parent: executive_office}
   inspection_console: {parent: infrastructure_corridors}
+  emergency_surface_gates: {parent: facility_escape}
 character_placements:
   kristin: {parent: security_corridors}
   rebecca: {parent: executive_office}
