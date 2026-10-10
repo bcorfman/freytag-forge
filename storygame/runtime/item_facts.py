@@ -935,7 +935,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         }
 
     def _apply_move(self, world, entity_id, name, value, place_parent, issues):
-        if place_parent is None or "place" not in value:
+        if place_parent is None or not isinstance(value.get("place"), str):
             return
         place = value["place"].strip()
         under = value.get("under") is True
@@ -1032,7 +1032,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _override_place(self, world, entity_id, name, value, place_parent, place_pole, overrides, issues):
         override = overrides.get(entity_id)
-        if "place" not in value or override is None or place_pole is not None or place_parent == override[1]:
+        if (
+            not isinstance(value.get("place"), str)
+            or override is None
+            or place_pole is not None
+            or place_parent == override[1]
+        ):
             return value
         fact_id, final_parent = override
         final_place = world.place_label(entity_id) or (world.name(final_parent) if final_parent else "nowhere")
