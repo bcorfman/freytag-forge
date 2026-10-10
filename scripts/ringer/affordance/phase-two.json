@@ -1,0 +1,20 @@
+{
+ "run_name": "freytag-phase-two",
+ "workdir": "/home/bcorfman/dev/ringer-work/phase-two",
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "worktrees": true,
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "phase-two-test",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "timeout_s": 1800,
+   "check_timeout_s": 900,
+   "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only tests/test_narration_earned_names.py. Edit nothing else, and do not touch any file under data/ or storygame/.\n\nContext: in the continuity-initiative package the statement of knowledge item k_sl_3c_e_r1 now says 'Phase One ... Phase Two was meant to provoke conflict among survivors', so once that item is earned the narrator may say 'Phase Two'. Before it is earned 'phase two' is protected knowledge and must still be rejected (the existing test test_undelivered_protected_terms_remain_unearned covers a 3B state).\n\nAdd ONE test at the end of tests/test_narration_earned_names.py, in the same style as the others, named test_earned_phase_two_statement_lets_narration_say_phase_two. It must: build a state in scene 3C that has the k_sl_3c_e_r1 item earned. The simplest way is to take the existing helper style (_bare_3b builds a bare state by scene id; do the same for '3C' with a new small helper _bare_3c, calling state._assert_scene_entry_fact('3C')) and then assert every operation in PACKAGE.knowledge_indexes.by_id['k_sl_3c_e_r1'].establishes plus every prerequisite fact in its `requires` list on state.facts, using the same fact API the file or the repo's other tests already use (look at how tests/test_storylet_expiry.py or tests/test_staged_cues.py assert facts; read them first; do not invent an API). Then call _narrate(state, 'The recovered file says Phase Two was meant to provoke conflict among survivors.') and assert it does not raise. Add a second assertion in the same test: a copy of the state built the same way but WITHOUT asserting the establishes facts must raise ProposalValidationError with code protected_narration_leak for the same text.\n\nRun `TMPDIR=/tmp uv run pytest -q tests/test_narration_earned_names.py` until green, then `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check --fix . && uv run ruff format .`. Write notes.md at the worktree root with what you did and the output.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/phase-two-check.sh",
+   "verified": "earned 3C JANUS file lets narration say Phase Two; unearned still rejected"
+  }
+ ]
+}

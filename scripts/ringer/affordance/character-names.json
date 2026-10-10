@@ -1,0 +1,20 @@
+{
+ "run_name": "freytag-character-names",
+ "workdir": "/home/bcorfman/dev/ringer-work/character-names",
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "worktrees": true,
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "character-names",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "timeout_s": 1800,
+   "check_timeout_s": 900,
+   "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only storygame/runtime/narration_safety.py and the NEW file tests/test_narration_character_names.py. Edit nothing else, and do not touch any file under data/.\n\nBug: a live game rejected narration in scene 1A because it said the name of a character who is in the scene. Michelle is a scene participant in 1A, and the narrator prompt itself lists her as 'Dr. Michelle McGehee' and says everyone else calls her 'Dr. McGehee'. Reproduction (no network, run from the worktree root):\n  state = RuntimeState.bootstrap(load_story_package(Path('data/stories/continuity-initiative')))\n  RuntimeEngine(state, lambda _i: {'segments':[{'kind':'narration','text':TEXT,'grounding_ids':[]}]}).turn('Question the officer.')\nTEXT 'The officer says Dr. McGehee is missing.' raises ProposalValidationError code narration_known_term_leak 'narration mentions unavailable knowledge dr. mcgehee'. The same happens for 'The officer asks about Michelle McGehee.' ('michelle mcgehee') and 'Dr. Michelle McGehee is missing.' ('dr. michelle'). 'The officer asks about Michelle.' passes.\n\nCause: in NarrationSafetyValidator._validate_segments, the loop `for form in known_terms:` skips a term only when it is an alias of an entity in `available_entity_ids`, and that set is limited to nameable FIXED items (nameable_entity_ids & fixed_entity_ids). A nameable character (an NPC id in npc_ids that is in nameable_entity_ids) is never skipped, so its own multi-word names that also appear as knowledge terms are treated as leaks.\n\nFix: in that loop, also skip a term when it is an alias of a nameable NPC, i.e. `nameable_entity_ids & npc_ids` intersects `indexes.entity_alias_to_entities.get(normalized form)`. Keep the fixed-item rule as it is. Make the smallest change; do not touch any other check. A character who is NOT nameable in the current scene must still be rejected: Brandon is not a 1A participant, so 'Brandon Corfman' (check which multi-word Brandon alias is a known term; use one that really is) must still raise narration_known_term_leak in a bare 1A state.\n\nTests (new file tests/test_narration_character_names.py, hermetic, no network, same style as tests/test_narration_earned_names.py): (1) the three TEXT values above now pass in a fresh 1A state; (2) a non-nameable character's multi-word name is still rejected in 1A; (3) a later-scene protected term such as 'phase two' is still rejected in a fresh 1A state with code protected_narration_leak or narration_known_term_leak. Use the real package and the real engine, and assert error codes.\n\nRun: `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check --fix . && uv run ruff format .`. Write notes.md at the worktree root with what you changed and the test output.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/character-names-check.sh",
+   "verified": "nameable characters' own names no longer rejected as unavailable knowledge; non-nameable still rejected; suite passes"
+  }
+ ]
+}
