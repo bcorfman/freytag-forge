@@ -2506,7 +2506,7 @@ knowledge:
     priority: 0
   delivery_text: "Families and communities organize independent rescue efforts. Many of the missing are still alive."
 - id: k_sl_3c_e_r1
-  statement: 'A recovered JANUS file names the disappearances Phase One and reveals a second plan to provoke conflict among survivors.'
+  statement: 'A recovered JANUS file names the disappearances Phase One and reveals that Phase Two was meant to provoke conflict among survivors.'
   earn_when: opens the recovered JANUS file
   action_evidence:
   - [ask, talk to, open, read, review, inspect, check, examine, find, recover, unseal, access, search, look at, study, decrypt, decode, restore, repair, piece together]
