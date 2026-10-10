@@ -6,7 +6,9 @@ Cells: r2 turn 1 ("Broadcast the JANUS evidence through the seized controls.") a
 ("Override the detention gate controls."), the recorded 3A prompts that carry a SCENE block.
 Arms: A = as recorded; B = both 2C reveal lines removed from the SCENE block; C = only the line
 "Kristin traces Michelle's maintenance code route ... seize the controls to broadcast the evidence" removed;
-D = only the line "Michelle's encrypted message marks ... Rebecca's secured office can broadcast ..." removed.
+D = only the line "Michelle's encrypted message marks ... Rebecca's secured office can broadcast ..." removed;
+E = both lines replaced by one route-only line (ChatGPT's suggestion). Cell t1n is the t1 prompt with the neutral
+command "Search the detention sector.".
 The counts are a reading aid only (words toward Michelle/captives/radio against Rebecca/broadcast);
 read every reply by hand.
 """
@@ -34,17 +36,33 @@ def prompt_of(turn):
     return next(p["prompt"] for p in scene["prompts"] if p["turn"] == turn)
 
 
+ROUTE_ONLY = "- Michelle\u2019s message marks a maintenance route into her holding block.\n"
+
+
+def arm_e(user):
+    return LINE_D2.sub("", LINE_D1.sub(ROUTE_ONLY, user))
+
+
+def with_command(prompt, command):
+    head, _, _ = prompt["user"].rpartition("\n")
+    return {**prompt, "user": f"{head}\n- {command}"}
+
+
 ARMS = {
     "A": lambda user: user,
     "B": lambda user: LINE_D2.sub("", LINE_D1.sub("", user)),
     "C": lambda user: LINE_D2.sub("", user),
     "D": lambda user: LINE_D1.sub("", user),
+    "E": arm_e,
 }
 if os.environ.get("PROBE_ARMS"):
     ARMS = {k: v for k, v in ARMS.items() if k in os.environ["PROBE_ARMS"]}
 CELLS = {"t1": prompt_of(1), "t5": prompt_of(5)}
+CELLS["t1n"] = with_command(CELLS["t1"], "Search the detention sector.")
+if os.environ.get("PROBE_CELLS"):
+    CELLS = {k: v for k, v in CELLS.items() if k in os.environ["PROBE_CELLS"].split(",")}
 for name, prompt in CELLS.items():
-    for arm in ("B", "C", "D"):
+    for arm in ("B", "C", "D", "E"):
         assert ARMS.get(arm, lambda u: "x")(prompt["user"]) != prompt["user"], f"{name}: arm {arm} found no line"
 url, token = os.environ["CLOUDFLARE_WORKER_URL"], os.environ.get("CLOUDFLARE_WORKER_TOKEN", "")
 rows = []
