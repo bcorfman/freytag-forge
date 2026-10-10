@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-3c-verbs",
+  "workdir": "/home/bcorfman/dev/ringer-work/3c-verbs2",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "3c-verbs2",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml and files under tests/. Edit nothing else.\n\nTASK. Widen two Scene 3C reveals in data/stories/continuity-initiative/knowledge.yaml. Blind players typed 'Answer the families.', 'Reassure the families.' and 'Answer the families' requests for information.' (none fired d_r2) and 'Trace Charles's last remote channel.' (the E cue names that channel; e_r2 has no such object). Add the words at the END of the named group, on the same line (single-line YAML flow lists; do not reflow). Remove and reorder nothing. Touch no other field.\n- k_sl_3c_d_r2, FIRST group (verbs): add `answer`, `reassure`, `respond to`.\n- k_sl_3c_e_r2, SECOND group (objects): add `Charles's last remote channel` and `his last remote channel`. Copy the quoting style of the other apostrophe words in that list.\n\nTESTS. In tests/test_3c_cue_chain.py extend the existing command table test (COMMAND_EXPECTATIONS) with these rows; they were scored with the real matcher over all ten 3C reveals. Expected is the reveal id or None. If a row disagrees, do NOT change a word list to force it: report the row in notes.md.\nAnswer the families. -> k_sl_3c_d_r2 | Reassure the families. -> k_sl_3c_d_r2 | Answer the families' requests for information. -> k_sl_3c_d_r2 | Respond to the families of the missing. -> k_sl_3c_d_r2 | Reassure the families of the missing. -> k_sl_3c_d_r2 | Answer the families about Charles's terrorist claim. -> None (matches a_r2 and d_r2) | Answer Charles's terrorist claim. -> k_sl_3c_a_r2 | Respond to Charles's terrorist claim. -> k_sl_3c_a_r2 | Answer Michelle. -> None | Reassure Michelle. -> None | Reassure the captives. -> None | Answer the captives. -> None | Answer the reports from other detention sites. -> None | Trace Charles's last remote channel. -> k_sl_3c_e_r2 | Follow Charles's last remote channel. -> k_sl_3c_e_r2 | Examine Charles's last remote channel. -> k_sl_3c_e_r2 | Read Charles's last remote channel. -> None | Trace Charles's signal. -> k_sl_3c_e_r2 | Open the recovered document. -> k_sl_3c_e_r1.\n\nHOW TO RUN TESTS. In this sandbox `uv run` cannot write its cache or download. Use the main checkout's environment but import THIS worktree's code: `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider`. First run `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame;print(storygame.__file__)\"` and confirm the path is inside your working directory; if not, say so in notes.md. Run ruff with the same interpreter (`-m ruff check --fix .` then `-m ruff format .`); it must not touch YAML. Run the full suite once at the end.\n\nOUTPUT. Write notes.md at the worktree root: lines changed, rows added, final suite counts, any row that disagreed. Do not claim the suite passes unless you ran it and saw it pass.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3c-verbs2-check.sh",
+      "verified": "d_r2 and e_r2 gained exactly the agreed words; command table matches the real matcher; suite and ruff pass"
+    }
+  ]
+}
