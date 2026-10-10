@@ -70,9 +70,13 @@ once the card is earned.
    in this order, and say which you chose and why: (a) a better cue or reveal
    handoff for the drawer (story text; Brandon wants it written in the 3A/3B
    cue style: a scene description naming a thing and a move, never a command);
-   (b) a world fact for the drawer, for example the drawer's contents declared
-   in `world.yaml` so a reply cannot invent a note (check `michelle_drawer`
-   there and whether `contents:` or a placement text fits the grounding guide);
+   (b) a world fact for the drawer. `michelle_drawer` in `world.yaml` already
+   declares `contents: [pens, binder clips, stapler, spare batteries]` and is
+   `openable`; the narrator listed exactly those on the "Open the ... drawer"
+   turn, and invented the note only one or two turns later when the player
+   asked about the edge or the paper. Say whether the grounding guide offers a
+   way to declare what is NOT in the drawer, or to name the gap as a thing, and
+   whether the gap or the card (`memory_card`, hidden?) needs a declared place;
    (c) a narrator rule only if (a) and (b) cannot work. Say plainly what you
    checked. Do not propose a new mechanism if one of these covers it.
 3. **Neighbours.** Check these still behave: "Search the kitchen for signs of a
