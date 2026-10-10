@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-1a-plot-line",
+  "workdir": "/home/bcorfman/dev/ringer-work/1a-plot-line",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "1a-plot-line",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/plot.md and files under tests/. Edit nothing else.\n\nEDIT. In data/stories/continuity-initiative/plot.md, Scene 1A.1, replace exactly this line: `The drawer rides high in its frame, leaving a thin gap along its lower edge.` with exactly this line: `The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.` Change no other line. The new wording matches the 1A cue_text already in handoffs.yaml.\n\nTESTS. If any existing test pins the old plot sentence or a hash of plot.md, update only that assertion. Otherwise add nothing.\n\nHOW TO RUN TESTS. In this sandbox `uv run` cannot write its cache or download. Use the main checkout's environment but import THIS worktree's code: `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider`. First run `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame;print(storygame.__file__)\"` and confirm the path is inside your working directory; if not, say so in notes.md. Run the full suite once at the end.\n\nOUTPUT. Write notes.md at the worktree root: the line changed, any assertion changed, final suite counts. Do not claim the suite passes unless you ran it and saw it pass.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/1a-plot-line-check.sh",
+      "verified": "plot.md 1A.1 carries the new drawer sentence, one line replaced, suite and ruff pass"
+    }
+  ]
+}
