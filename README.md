@@ -1,8 +1,5 @@
 # Freytag Forge
-
-> Freeform roleplay where every move changes what can happen next.
-
-Write the move. Earn the reveal. Live with the consequence.
+Freeform roleplay where every move changes what can happen next.
 
 ## Features
 
