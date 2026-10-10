@@ -2464,7 +2464,7 @@ knowledge:
   statement: 'Families and communities organize independent rescue efforts after learning that many of the missing are still alive.'
   earn_when: calls the families of the missing
   action_evidence:
-  - [ask, talk to, call, contact, tell, inform, reach, join, help, organize, support, meet, work with, coordinate, speak to, comfort, greet, visit, find, gather, volunteer, volunteer with, broadcast updates, answer the families with]
+  - [ask, talk to, call, contact, tell, inform, reach, join, help, organize, support, meet, work with, coordinate, speak to, comfort, greet, visit, find, gather, volunteer, volunteer with, broadcast updates, answer the families with, answer the families, reassure the families, respond to the families]
   - [the missing, missing families, missing family, family members, family member, the families, those families, community rescues, community rescue, rescue efforts, rescue effort, rescue volunteers, rescue volunteer, volunteers organizing rescues, rescue teams, rescue team, rescue groups, rescue group, local communities, local community, independent rescues, independent rescue, survivors' families, survivor families, missing survivors, living missing, still alive, community volunteers, community volunteer, rescue organizers]
   entity_ids: []
   aliases:
@@ -2536,7 +2536,7 @@ knowledge:
   earn_when: traces Charles's unknown location
   action_evidence:
   - [ask, talk to, trace, search, find, track, locate, follow, scan, watch, monitor, check, look for, hunt, seek, investigate, pursue, probe, map, pinpoint]
-  - [Charles's location, Charles's locations, his location, his locations, the feeds, video feeds, video feed, remote feeds, remote feed, Charles's feed, Charles's feeds, his feed, his feeds, unknown location, unknown locations, hiding place, hiding places, Charles's hiding place, his hiding place, last known location, last known locations, Charles's signal, Charles's signals, his signal, his signals, remote signal, remote signals, the unrest, national unrest, public unrest, restore order, restored order, Charles at large, where Charles, Charles went, Charles is hiding]
+  - [Charles's location, Charles's locations, his location, his locations, the feeds, video feeds, video feed, remote feeds, remote feed, Charles's feed, Charles's feeds, his feed, his feeds, unknown location, unknown locations, hiding place, hiding places, Charles's hiding place, his hiding place, last known location, last known locations, Charles's signal, Charles's signals, his signal, his signals, remote signal, remote signals, the unrest, national unrest, public unrest, restore order, restored order, Charles at large, where Charles, Charles went, Charles is hiding, Charles's last remote channel, his last remote channel]
   entity_ids: []
   aliases:
   - phase two conflict plan known
