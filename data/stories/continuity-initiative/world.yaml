@@ -248,6 +248,9 @@ items:
 - id: medical_terminal
   name: medical terminal
   fixed: true
+- id: detention_medical_records
+  name: detention medical records
+  aliases: [medical records, survivor records]
 - id: rebecca_desk
   name: executive desk
   aliases: [Rebecca's desk]
@@ -316,7 +319,9 @@ facts:
 - combined_broadcast_rescue_plan_known
 - uprising_prepared
 - conditioned_release_plan_known
-- behavioral_experiments_known
+- id: behavioral_experiments_known
+  on_assert:
+  - {move: detention_medical_records, parent: medical_level, text: in the medical level}
 - id: military_override_codes_available
   on_assert:
   - {move: override_codes, parent: kristin}

@@ -1733,7 +1733,7 @@ knowledge:
   action_evidence:
   - [look, search, check, examine, inspect, read, study, find, review, scan, open, take]
   - [experiment record, experiment records, medical file, medical files, survivor list, survivor lists, planned survivor, planned survivors, conditioning record, conditioning records, record, records, experiment, experiments, survivor, survivors, conditioning, experiment file, experiment files, medical records, survivor records, conditioning files]
-  entity_ids: []
+  entity_ids: [detention_medical_records]
   aliases:
   - conditioned release plan known
   audience:
@@ -1756,7 +1756,7 @@ knowledge:
     storylet_id: SL-3A-B
     realization_id: SL-3A-B-R1
   relevance:
-    entity_ids: []
+    entity_ids: [detention_medical_records]
     priority: 0
   delivery_text: "Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's story. The senior official waits among the government prisoners."
 - id: k_sl_3a_b_r2
@@ -1788,6 +1788,37 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: "Michelle shows Kristin the medical level. The prisoners were subjected to memory, compliance, and resistance experiments. The senior official waits among the government prisoners."
+- id: k_sl_3a_e_r1
+  statement: 'Michelle shows Kristin experiment records proving planned "survivors" were conditioned to support Charles''s story.'
+  earn_when: "reads the experiment records"
+  action_evidence:
+  - [look, search, check, examine, inspect, read, study, find, review, scan, open, take]
+  - [experiment record, experiment records, medical file, medical files, survivor list, survivor lists, planned survivor, planned survivors, conditioning record, conditioning records, record, records, experiment, experiments, survivor, survivors, conditioning, experiment file, experiment files, medical records, survivor records, conditioning files]
+  entity_ids: [detention_medical_records]
+  aliases:
+  - conditioned release plan known
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 3A
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  - fact_id: behavioral_experiments_known
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: conditioned_release_plan_known
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3A-E
+    realization_id: SL-3A-E-R1
+  relevance:
+    entity_ids: [detention_medical_records]
+    priority: 10
+  delivery_text: "Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's story. The senior official waits among the government prisoners."
 - id: k_sl_3a_d_r1
   statement: 'The senior official Charles framed gives Kristin one-use authorization for the emergency surface gates, which will expire when Charles activates his new authority.'
   earn_when: "speaks with the senior official"
