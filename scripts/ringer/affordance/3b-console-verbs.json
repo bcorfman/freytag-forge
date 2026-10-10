@@ -1,0 +1,20 @@
+{
+ "run_name": "freytag-affordance-3b-console-verbs",
+ "workdir": "/home/bcorfman/dev/ringer-work/3b-console-verbs",
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "worktrees": true,
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "3b-console-verbs",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "timeout_s": 1800,
+   "check_timeout_s": 900,
+   "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, scripts/ringer/affordance/3b-wording-score.py, and (only to update an assertion that pins a string you change) tests/test_markdown_story_package.py, tests/test_canon_journey.py and bench/affordance_known_gaps.json. Edit nothing else.\n\nProblem: in scene 3B live players typed 'Access the inspection console.' and nothing fired, because k_sl_3b_a_r1 has no access, open or enter verb. Players also typed 'Use the inspection console.' and 'Inspect the inspection console.', which already fire.\n\nChange: in k_sl_3b_a_r1 append to the FIRST (verb) group of action_evidence these items, matching the quoting style the group uses: access, open, enter, log into, log in to, go into. Update its earn_when to: \"feeds JANUS false alarms, uses the inspection console, or traces, follows, or inspects water-pressure warnings\". Do NOT add 'command console' (that is a name the narrator invented; the console is the inspection console). Do not touch the noun group, k_sl_3b_a_r2, any other item, or statement, delivery_text, cue_text, id, requires, establishes, source.\n\nThen add these cases to CASES in scripts/ringer/affordance/3b-wording-score.py (do not change or remove any existing case): 'Access the inspection console.' {'a_r1'}; 'Open the inspection console.' {'a_r1'}; 'Enter the inspection console.' {'a_r1'}; 'Use the inspection console.' {'a_r1'}; 'Inspect the inspection console.' {'a_r1'}; 'Access the command console.' set(); 'Seize the command console.' set(); 'Open the relay chamber access panel.' set(); 'Enter the relay chamber.' set(); 'Access the broadcast controls.' {'c_r2'} (already fires the gated relay reveal before this change; leave k_sl_3b_c_r2 untouched); 'Enter Rebecca's executive office.' stays as is.\n\nHOW TO CHECK: `TMPDIR=/tmp uv run python scripts/ringer/affordance/3b-wording-score.py` runs the real matcher; all cases must be correct, including must-not-fire ones. If a must-not-fire command fires, narrow what you added rather than weakening a case. Then run `TMPDIR=/tmp uv run pytest -q` and `uv run ruff check --fix . && uv run ruff format .` (ruff must not touch YAML). Write notes.md at the worktree root: each phrase added, scorer output, any test expectation changed and why.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/3b-console-verbs-check.sh",
+   "verified": "a_r1 gains access/open/enter verbs; new scorer cases pass; only a_r1 evidence lines and the scorer changed; suite and ruff pass"
+  }
+ ]
+}
