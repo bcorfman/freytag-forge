@@ -1623,7 +1623,7 @@ knowledge:
   entity_ids: [holding_block]
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
-  available_in_scenes: [2C, 3A]
+  available_in_scenes: [2C]
   requires:
   - {fact_id: purge_clock_started, equals: true}
   - {fact_id: evidence_ready_to_transmit, equals: true}
@@ -1649,7 +1649,7 @@ knowledge:
   entity_ids: [holding_block]
   aliases: [combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
-  available_in_scenes: [2C, 3A]
+  available_in_scenes: [2C]
   requires:
   - {fact_id: purge_clock_started, equals: true}
   - {fact_id: evidence_ready_to_transmit, equals: true}
