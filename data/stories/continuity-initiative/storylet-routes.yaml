@@ -326,6 +326,7 @@ new_fact_ids:
   used_by_storylets:
   - SL-3C-A
   - SL-3C-D
+  - SL-3C-G
   - SL-3C-E
   used_by_transitions: []
 - id: portable_archive_secured
@@ -351,14 +352,14 @@ new_fact_ids:
 - id: captives_reaching_surface
   definition: Surviving captives are reaching the surface.
   used_by_storylets:
-  - SL-3C-C
   - SL-3C-D
+  - SL-3C-G
   - SL-3C-E
   used_by_transitions: []
 - id: los_angeles_facility_lost
   definition: The Los Angeles facility is no longer a viable concealed Continuity operation.
   used_by_storylets:
-  - SL-3C-C
+  - SL-3C-F
   used_by_transitions: []
 - id: national_network_fragmenting
   definition: Public reports show the national detention network is fragmenting.
@@ -368,7 +369,7 @@ new_fact_ids:
 - id: community_rescue_efforts_begun
   definition: Communities/families have begun independent rescue efforts.
   used_by_storylets:
-  - SL-3C-D
+  - SL-3C-G
   used_by_transitions: []
 - id: phase_one_label_known
   definition: The disappearance operation is known to have been labeled Phase One.
@@ -490,18 +491,22 @@ new_fact_ids:
   - SL-3C-A
   - SL-3C-B
   - SL-3C-C
+  - SL-3C-F
   - SL-3C-D
+  - SL-3C-G
   - SL-3C-E
   used_by_transitions: []
 - id: michelle_publishing_archive
   definition: Michelle has begun distributing/publishing the Continuity Initiative archive after the exposure.
   used_by_storylets:
   - SL-3C-D
+  - SL-3C-G
   used_by_transitions: []
 - id: kristin_joined_rescue_efforts
   definition: Kristin has committed to helping locate and open remaining detention facilities.
   used_by_storylets:
   - SL-3C-D
+  - SL-3C-G
   used_by_transitions: []
 - id: home_search_window_narrowing
   definition: The patrol's widening search makes continued investigation at Michelle's home increasingly dangerous.
@@ -537,7 +542,7 @@ new_fact_ids:
   used_by_transitions: []
 - id: escape_routes_collapsing
   definition: Rising water and sealed bulkheads are closing the maintenance routes used by the escaping captives.
-  used_by_storylets: [SL-3C-C]
+  used_by_storylets: [SL-3C-C, SL-3C-F]
   used_by_transitions: []
 storylets:
 - id: SL-1A-A
@@ -2221,9 +2226,6 @@ storylets:
     - op: assert
       fact_id: rebecca_captured
       value: true
-    - op: assert
-      fact_id: charles_at_large
-      value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
@@ -2243,9 +2245,6 @@ storylets:
       value: true
     - op: assert
       fact_id: rebecca_captured
-      value: true
-    - op: assert
-      fact_id: charles_at_large
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
@@ -2287,21 +2286,41 @@ storylets:
     - op: assert
       fact_id: evacuation_route_open
       value: true
-    - op: assert
-      fact_id: captives_reaching_surface
-      value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
     - phase_two
-  - id: SL-3C-C-R2
+  completion_or_abort:
+    complete_when:
+    - fact_id: captives_reaching_surface
+      equals: true
+    abort_when:
+    - resolution_complete: true
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3C-F
+  scene_id: 3C
+  title: Open the Surface Gates
+  activation:
+    scene_id: 3C
+    conditions:
+    - fact_id: truth_no_longer_containable
+      equals: true
+    - fact_id: rebecca_captured
+      equals: true
+    pacing:
+      earliest_turn: 0
+      target_turn: 11
+      latest_turn: 12
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: 'Keep falling action dangerous: Kristin’s Army infrastructure and operations choices preserve routes while Michelle moves
+    people, but no single maneuver guarantees every section survives.'
+  realization_options:
+  - id: SL-3C-F-R1
     dramatic_intent: Use maintenance tunnels and the opened gates to get captives out while accepting loss of the
       Los Angeles facility.
     source_beats: [scene-3c3--the-deluge, scene-3c4--resolution-and-new-direction]
     operations:
-    - op: assert
-      fact_id: captives_reaching_surface
-      value: true
     - op: assert
       fact_id: los_angeles_facility_lost
       value: true
@@ -2346,7 +2365,34 @@ storylets:
     helps_transition_triggers: []
     protected_knowledge_boundaries:
     - phase_two
-  - id: SL-3C-D-R2
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - national_network_fragmenting
+      - community_rescue_efforts_begun
+    abort_when:
+    - never_in_canonical_resolution: true
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3C-G
+  scene_id: 3C
+  title: Families Begin the Rescue
+  activation:
+    scene_id: 3C
+    conditions:
+    - fact_id: truth_no_longer_containable
+      equals: true
+    - fact_id: captives_reaching_surface
+      equals: true
+    pacing:
+      earliest_turn: 0
+      target_turn: 13
+      latest_turn: 13
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: After the canonical resolution conditions land, provide optional distributed consequence color
+    without creating a new playable scene or new ending.
+  realization_options:
+  - id: SL-3C-G-R1
     dramatic_intent: Reports establish that families and communities begin independent rescue efforts.
     operations:
     - op: assert
@@ -2695,6 +2741,8 @@ canonical_resolution_events:
   activation:
     all_facts_true:
     - truth_no_longer_containable
+    - evacuation_route_open
+    - los_angeles_facility_lost
   produces:
   - op: assert
     fact_id: captives_reaching_surface
@@ -2704,6 +2752,7 @@ canonical_resolution_events:
     value: true
   realization_storylets:
   - SL-3C-C
+  - SL-3C-F
   fallback_text: Michelle leads the captives through the maintenance tunnel. Kristin keeps the drainage pumps and one barrier working. Michelle uses the gate authorization, and the flooded Los Angeles facility is lost.
   fallback_realization: Kristin’s Army infrastructure and operations background and Michelle’s evacuation leadership get surviving captives to the surface
     while the Los Angeles facility is lost.
@@ -2731,6 +2780,7 @@ canonical_resolution_events:
     value: true
   realization_storylets:
   - SL-3C-D
+  - SL-3C-G
   fallback_text: Detention sites surrender or release prisoners as the national network breaks apart. Communities begin rescue efforts. Michelle publishes the archive, Kristin joins the rescue work, and Charles escapes.
   fallback_realization: Canonical resolution reports establish network fragmentation, community rescues, Michelle’s
     publication effort, Kristin’s rescue work, and Charles’s escape.
@@ -2763,6 +2813,9 @@ canonical_resolution_events:
     - national_network_fragmenting
     - charles_at_large
     - phase_two_conflict_plan_known
+    - evacuation_route_open
+    - los_angeles_facility_lost
+    - community_rescue_efforts_begun
   produces:
   - op: assert
     fact_id: resolution_complete
@@ -2771,7 +2824,9 @@ canonical_resolution_events:
   - SL-3C-A
   - SL-3C-B
   - SL-3C-C
+  - SL-3C-F
   - SL-3C-D
+  - SL-3C-G
   - SL-3C-E
   fallback_text: The truth is public, the captives are out, and the network is breaking apart. Rebecca is captured, but Charles remains free. The Phase Two plan is known. Kristin and Michelle turn toward the work ahead.
   fallback_realization: The sole authored ending at 3C is complete once exposure, escape, antagonist outcomes, national

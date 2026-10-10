@@ -1,6 +1,6 @@
-"""Read-only probe: what would cue staging see in scene 3C if the resolution gate were open?
+"""Read-only probe for the scene 3C cue chain.
 
-No model calls. Opens `_escalation_eligible`, walks the 3C chain fact by fact, and prints,
+No model calls. Walks the 3C chain fact by fact, and prints,
 per stage, the cue source (`_bridge_delivery_fact_ids`), the ranked cue facts, the step
 facts each 3C canonical event still lacks, and whether each lacking fact has a delivery.
 """
@@ -38,9 +38,7 @@ def build(extra: tuple[str, ...], fired: set[str]) -> RuntimeEngine:
             FactOperation(operation="assert", fact=Fact(predicate=fact_id, subject="story", value="true")),
         )
     state.fired_event_ids = set(fired)
-    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Nothing."}]})
-    engine._escalation_eligible = lambda: True  # the proposed gate change, for this probe only
-    return engine
+    return RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Nothing."}]})
 
 
 def main(out: str) -> None:
@@ -71,7 +69,7 @@ def main(out: str) -> None:
             {
                 "stage": label,
                 "facts_added": list(facts),
-                "bridge_delivery_fact_ids": list(engine._bridge_delivery_fact_ids()),
+                "cue_source_fact_ids": list(engine._bridge_delivery_fact_ids()),
                 "ranked_cue_fact_ids": list(engine._ranked_cue_fact_ids()),
                 "events_lacking_facts_and_has_delivery": lacking,
             }

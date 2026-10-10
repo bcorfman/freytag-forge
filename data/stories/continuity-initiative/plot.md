@@ -791,10 +791,11 @@ freytag_phase: resolution
 objective: Expose the network and escape
 participant_ids: [kristin, michelle, rebecca, brandon]
 companions: [michelle]
-item_ids: [portable_archive, drainage_pump_controls]
+item_ids: [portable_archive, drainage_pump_controls, emergency_surface_gates]
 item_placements:
   portable_archive: {parent: rebecca, text: with Rebecca in her hands}
   drainage_pump_controls: {parent: maintenance_network}
+  emergency_surface_gates: {parent: facility_escape}
 character_placements:
   kristin: {parent: broadcast_chamber}
   rebecca: {parent: executive_office}
@@ -822,6 +823,8 @@ transition_ids: []
 
 A portable data case holding the archive is with Rebecca in the executive office.
 
+Michelle has the evidence package ready at the national broadcast controls.
+
 Michelle broadcasts:
 
 * Video of the captives
@@ -844,6 +847,8 @@ The truth can no longer be contained by controlling a single broadcast.
 
 Rebecca attempts to escape with a portable archive containing the identities of corporate and political conspirators.
 
+Rebecca leaves the executive office with the portable data case in her hands.
+
 Kristin stops her, but she warns that destroying or surrendering the archive may leave innocent people trapped because it also contains prisoner locations.
 
 Rather than destroy it, Michelle transmits copies to several independent networks.
@@ -858,7 +863,11 @@ Charles escapes from his remote command site before authorities can locate him, 
 
 Charles's deluge is already running, and water is forcing people out of the outer access level. Kristin uses the same inspection access that created the false alarms to restore power to the drainage pumps and hold one watertight barrier long enough for the captives to pass. She cannot keep every route open.
 
+Water rises around the drainage pump controls.
+
 Michelle leads the prisoners through the maintenance tunnel while Kristin keeps the pumps and barrier working.
+
+The surface gates remain shut above the waiting captives as the senior official's authorization nears expiry.
 
 From Rebecca's office, Michelle uses the senior official's expiring authorization to release the emergency surface gates once. Brandon remains at the relay so the broadcast stays live. His fate is initially uncertain.
 
@@ -882,6 +891,8 @@ Reports from other detention sites reach the broadcast chamber as families of th
 Kristin’s personal goal is fulfilled when she and Michelle are reunited, but neither can return to their former life.
 
 Michelle begins publishing the complete Continuity Initiative archive. Kristin joins teams locating and opening the remaining facilities. Charles's last remote channel still carries a signal.
+
+One recovered document in the archive remains unopened.
 
 The final revelation comes from a partially recovered JANUS file. The disappearance operation was labeled **Phase One**.
 

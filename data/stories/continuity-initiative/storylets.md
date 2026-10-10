@@ -1666,9 +1666,52 @@ Each entry below is authoring data, not a player action menu.
 **Effects**
 - May intensify the deluge as Charles seals more access routes.
 - May set `evacuation_route_open`.
-- May set `captives_reaching_surface`.
-- May set `los_angeles_facility_lost`.
 - May transition into resolution once escape and broadcast consequences are established.
+
+**Completion**
+- The surviving captives reach the surface and the Los Angeles operation can no longer be concealed.
+
+**Abort**
+- Ends on transition to the resolution state.
+
+**Protected boundary**
+- The final Phase Two revelation is delivered only by the authored recovered-JANUS resolution event, not by this escape storylet.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 11`
+- latest: `turn 12`
+
+---
+
+### SL-3C-F — Open the Surface Gates
+
+**Source beats:** [3C.3 — The Deluge](plot.md#scene-3c3--the-deluge), [3C.4 — Resolution and New Direction](plot.md#scene-3c4--resolution-and-new-direction)
+
+**Allowed scene:** `3C`
+
+**Available when**
+- Charles’s emergency deluge is running, and rising water is closing the outer access level.
+- The prisoners are moving toward escape routes.
+- Kristin can still use the inspection console to control drainage pumps and one watertight barrier.
+
+**Participants / items**
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- Brandon Corfman only as allowed by his current status/fate
+- Escaping prisoners
+- Drainage pumps, a watertight barrier, and the maintenance tunnel
+- Emergency surface gates
+
+**Dramatic purpose**
+- Give Kristin one final infrastructure-and-operations problem while Michelle leads the human evacuation.
+- Move the climax into falling action without removing danger too early.
+
+**Possible realizations**
+- Michelle uses the senior official’s authorization to release the surface gates once.
+
+**Effects**
+- May set `los_angeles_facility_lost`.
 
 **Completion**
 - The surviving captives reach the surface and the Los Angeles operation can no longer be concealed.
@@ -1717,8 +1760,48 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 
 **Effects**
 - May set `national_network_fragmenting`.
-- May set `community_rescue_efforts_begun`.
 - May establish Kristin/Michelle’s next-direction facts.
+
+**Completion**
+- The immediate national consequences are established.
+
+**Abort**
+- None in canonical resolution.
+
+**Protected boundary**
+- Off-scene facilities are described only through public/currently-known reports.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 13`
+- latest: `turn 13`
+
+---
+
+### SL-3C-G — Families Begin the Rescue
+
+**Source beats:** [3C.4 — Resolution and New Direction](plot.md#scene-3c4--resolution-and-new-direction)
+
+**Allowed scene:** `3C` (resolution phase only)
+
+**Available when**
+- `truth_no_longer_containable` is true.
+- Captives have reached the surface.
+- The broadcast consequences are being summarized.
+
+**Participants / items**
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- Public reports from other detention sites
+
+**Dramatic purpose**
+- Show distributed consequences without pulling unrelated off-scene NPC private state into the prompt.
+
+**Possible realizations**
+- Families and communities begin independent rescue efforts.
+
+**Effects**
+- May set `community_rescue_efforts_begun`.
 
 **Completion**
 - The immediate national consequences are established.

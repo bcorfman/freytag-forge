@@ -394,34 +394,32 @@ class RuntimeEngine(CanonicalEventMixin):
         windows = {window.scene_id: window for window in self.state.package.pacing.scenes}
         window = windows[self.state.current_scene_id]
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
-        # Authored pacing realizations still pass in resolution; this gate is for generated escalation.
-        if self._escalation_eligible():
-            missing = self._bridge_delivery_fact_ids()
-            deliveries = {delivery.fact_id: delivery for delivery in self.state.package.deliveries}
-            staged = self.state.staged_cue_fact_id
-            if not (
-                staged
-                and staged not in self.state.delivered_cue_ids
-                and staged in missing
-                and deliveries.get(staged) is not None
-                and deliveries[staged].cue_text
-                and self._cue_reveal_available(staged)
-            ):
-                self.state.staged_cue_fact_id = next(
-                    (
-                        fact_id
-                        for fact_id in self._ranked_cue_fact_ids()
-                        if fact_id not in self.state.delivered_cue_ids
-                        and deliveries.get(fact_id) is not None
-                        and deliveries[fact_id].cue_text
-                        and self._cue_reveal_available(fact_id)
-                    ),
-                    None,
-                )
-            if turns_since_entry >= window.handoff_after_turns:
-                self.state.staged_handoff_fact_ids = missing or self._bridge_missing_fact_ids()
-        else:
-            self.state.staged_cue_fact_id = None
+        # Cue staging is available in every scene. Deadline staging stays out of resolution.
+        missing = self._bridge_delivery_fact_ids()
+        deliveries = {delivery.fact_id: delivery for delivery in self.state.package.deliveries}
+        staged = self.state.staged_cue_fact_id
+        if not (
+            staged
+            and staged not in self.state.delivered_cue_ids
+            and staged in missing
+            and deliveries.get(staged) is not None
+            and deliveries[staged].cue_text
+            and self._cue_reveal_available(staged)
+        ):
+            self.state.staged_cue_fact_id = next(
+                (
+                    fact_id
+                    for fact_id in self._ranked_cue_fact_ids()
+                    if fact_id not in self.state.delivered_cue_ids
+                    and deliveries.get(fact_id) is not None
+                    and deliveries[fact_id].cue_text
+                    and self._cue_reveal_available(fact_id)
+                ),
+                None,
+            )
+        if self._escalation_eligible() and turns_since_entry >= window.handoff_after_turns:
+            self.state.staged_handoff_fact_ids = missing or self._bridge_missing_fact_ids()
+        elif not self._escalation_eligible():
             self.state.staged_handoff_fact_ids = ()
 
     def _cue_reveal_available(self, fact_id: str) -> bool:
@@ -475,7 +473,7 @@ class RuntimeEngine(CanonicalEventMixin):
         )
 
     def _escalation_eligible(self) -> bool:
-        """Return whether cue and Deadline staging is allowed."""
+        """Return whether Deadline staging is allowed."""
 
         scene = next(
             scene for scene in self.state.package.scenes if scene.metadata.scene_id == self.state.current_scene_id
@@ -496,8 +494,22 @@ class RuntimeEngine(CanonicalEventMixin):
             if event.activation.is_satisfied(true_facts):
                 continue
             missing = event.activation.minimal_undelivered_facts(true_facts)
-            return tuple(fact_id for fact_id in missing if fact_id in deliveries)
-        return ()
+            bridge_deliveries = tuple(fact_id for fact_id in missing if fact_id in deliveries)
+            if bridge_deliveries:
+                return bridge_deliveries
+            break
+
+        selected: list[str] = []
+        for event in self.state.package.storylet_routes.resolution_events:
+            if event.scene_id != self.state.current_scene_id or event.id in self.state.fired_event_ids:
+                continue
+            if event.activation.is_satisfied(true_facts):
+                continue
+            missing = event.activation.minimal_undelivered_facts(true_facts)
+            for fact_id in missing:
+                if fact_id in deliveries and fact_id not in selected:
+                    selected.append(fact_id)
+        return tuple(selected)
 
     def _bridge_missing_fact_ids(self) -> tuple[str, ...]:
         """Return the pending bridge's smallest set of facts still needed."""
