@@ -1,0 +1,24 @@
+{
+  "run_name": "freytag-cue-eligibility-compare",
+  "workdir": "/home/bcorfman/dev/ringer-work/cue-compare-fix",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "cue-compare-fix",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only: scripts/ringer/affordance/cue_eligibility_compare.py and tests/test_cue_eligibility_compare.py. Edit nothing else. This is a REPORT; it must not change runtime behaviour.\n\nPROBLEM. scripts/ringer/affordance/cue_eligibility_compare.py reports a row for every (state, cue fact), including states where the cue fact is ALREADY TRUE. The engine never stages a cue for a true fact: `RuntimeEngine._bridge_delivery_fact_ids` (storygame/runtime/engine.py, read it) only returns facts that are not yet true. So rows where the cue fact is already true cannot happen in play, yet they are classified CUE_SHOWN_BUT_SPENT or CUE_SHOWN_BUT_EARNED. Result: 56 'spent' rows, almost all impossible. The 'known case' the script and tests/test_cue_eligibility_compare.py assert (scene 1A, state 'SL-1A-B fired through k_sl_1a_b_r1', cue fact continuity_initiative_known) is such an impossible row: that reveal established the cue fact itself. It is NOT a real defect and the test/known-case line is wrong.\nA throwaway count with the right filter (cue fact not true in the state, `_cue_reveal_available` True, and no matching reveal eligible per explain_reveal) found exactly 3 real rows: scene 1C 'SL-1C-C fired through k_sl_1c_c_r2' cue fact national_detention_network_known; scene 2B 'SL-2B-B fired through k_sl_2b_b_r3' cue facts brandon_janus_role_known and brandon_claimed_reform_motive. 160 states had a still-missing cue fact.\n\nFIX. (1) In report(): a state where the cue fact is already true (compute true facts the way `_bridge_delivery_fact_ids` does: facts asserted with value 'true') gets classification NOT_STAGEABLE_FACT_TRUE and is excluded from the CUE_SHOWN_BUT_* classes; keep one count line for it. (2) CUE_SHOWN_BUT_SPENT now means: fact not true, cue check True, every matching player-earnable reveal is storylet_spent or no reveal is eligible with at least one storylet_spent. CUE_SHOWN_BUT_EARNED can then only occur for a multi-fact cue where a cost fact is true; keep the class but it must not count NOT_STAGEABLE rows. (3) Replace the 'Known case' lines with the real cases: print, under a heading 'Real cases (cue fact still missing, no eligible reveal)', every CUE_SHOWN_BUT_SPENT row and a line 'Real cases observed: N'. Remove the 1A known case from the report and the tests. (4) Tests: update the real-package test to assert the three real rows above appear as CUE_SHOWN_BUT_SPENT and that the 1A row is NOT_STAGEABLE_FACT_TRUE; keep the hermetic synthetic tests (a spent-reveal cue with the cue fact still missing is CUE_SHOWN_BUT_SPENT; an eligible one is AGREE; a cue whose fact is already true is NOT_STAGEABLE_FACT_TRUE) and the no-behaviour-change test. Do not pin counts other than these three named rows.\n\nHOW TO RUN TESTS. `uv run` does not work in this sandbox. Use `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_cue_eligibility_compare.py` after confirming `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame;print(storygame.__file__)\"` prints a path inside your working directory. Ruff with the same interpreter (`-m ruff check --fix . && -m ruff format .`, not on YAML or markdown). Run the full suite once at the end.\n\nOUTPUT. notes.md at the worktree root: what changed, test counts, the new class counts, and the real-cases list. Do not claim the suite passes unless you saw it pass.\n",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/cue-compare-fix-check.sh",
+      "verified": "the cue comparison ignores already-true cue facts and reports exactly the real cases; suite and ruff pass"
+    }
+  ]
+}

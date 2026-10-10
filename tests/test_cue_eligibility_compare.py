@@ -54,8 +54,9 @@ def _delivery(fact_id: str) -> FactDelivery:
 def _synthetic_package() -> SimpleNamespace:
     setup = _item("k_setup", "SL-1A-A", "setup_fact")
     # Seeding SL-1A-A's activation condition makes the target fact established
-    # without firing the target source storylet.  This exercises the earned arm.
+    # without firing the target source storylet.  This exercises the true-fact arm.
     setup = setup.model_copy(update={"establishes": (RouteOperation(op="assert", fact_id="setup_fact", value=True),)})
+    spent_setup = _item("k_spent_setup", "SL-1A-B", "spent_setup_fact")
     spent = _item("k_spent", "SL-1A-B", "spent_fact")
     eligible = _item("k_eligible", "SL-1A-C", "eligible_fact")
     earned = _item("k_earned", "SL-1A-D", "earned_fact")
@@ -75,7 +76,7 @@ def _synthetic_package() -> SimpleNamespace:
             ("SL-1A-E", ()),
         )
     )
-    items = (setup, spent, eligible, earned, missing)
+    items = (setup, spent_setup, spent, eligible, earned, missing)
     return SimpleNamespace(
         scenes=(SimpleNamespace(metadata=SimpleNamespace(scene_id="1A")),),
         deliveries=tuple(
@@ -86,34 +87,44 @@ def _synthetic_package() -> SimpleNamespace:
     )
 
 
-def test_synthetic_package_classifies_spent_eligible_earned_and_missing() -> None:
+def test_synthetic_package_classifies_spent_eligible_true_and_missing() -> None:
     from scripts.ringer.affordance.cue_eligibility_compare import report
 
     output = report(_synthetic_package())
 
     assert (
-        "1A | SL-1A-B fired through k_spent | spent_fact | True | False | "
-        "k_spent:already_established | CUE_SHOWN_BUT_SPENT"
+        "1A | SL-1A-B fired through k_spent_setup | spent_fact | True | False | "
+        "k_spent:storylet_spent | CUE_SHOWN_BUT_SPENT"
     ) in output
     assert "1A | S0 | eligible_fact | True | True | k_eligible:eligible | AGREE" in output
     assert (
         "1A | SL-1A-A fired through k_setup | earned_fact | True | False | "
-        "k_earned:already_established | CUE_SHOWN_BUT_EARNED"
+        "k_earned:already_established | NOT_STAGEABLE_FACT_TRUE"
     ) in output
     assert "1A | S0 | missing_fact | False | False | k_missing:prerequisite_missing | AGREE" in output
 
 
-def test_real_package_reports_the_known_1a_spent_case() -> None:
+def test_real_package_reports_three_real_spent_cases_and_not_stageable_1a_case() -> None:
     from scripts.ringer.affordance.cue_eligibility_compare import report
 
     output = report(PACKAGE)
 
+    for row in (
+        "1C | SL-1C-C fired through k_sl_1c_c_r2 | national_detention_network_known | True | False | "
+        "k_sl_1c_c_r1:storylet_spent | CUE_SHOWN_BUT_SPENT",
+        "2B | SL-2B-B fired through k_sl_2b_b_r3 | brandon_janus_role_known | True | False | "
+        "k_sl_2b_b_r1:storylet_spent,k_sl_2b_b_r2:storylet_spent | CUE_SHOWN_BUT_SPENT",
+        "2B | SL-2B-B fired through k_sl_2b_b_r3 | brandon_claimed_reform_motive | True | False | "
+        "k_sl_2b_b_r1:storylet_spent,k_sl_2b_b_r2:storylet_spent | CUE_SHOWN_BUT_SPENT",
+    ):
+        assert row in output
     assert (
         "1A | SL-1A-B fired through k_sl_1a_b_r1 | continuity_initiative_known | True | False | "
         "k_sl_1a_b_r0:already_established,k_sl_1a_b_r1:already_established,k_sl_1a_d_r1:already_established | "
-        "CUE_SHOWN_BUT_SPENT"
+        "NOT_STAGEABLE_FACT_TRUE"
     ) in output
-    assert "Known case observed: yes" in output
+    assert "Real cases (cue fact still missing, no eligible reveal)" in output
+    assert "Real cases observed: " in output
 
 
 def test_importing_script_does_not_change_real_cue_results() -> None:

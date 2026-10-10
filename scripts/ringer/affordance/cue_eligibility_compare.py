@@ -32,6 +32,7 @@ HIDDEN = "not_visible"
 AGREE = "AGREE"
 SPENT_CLASS = "CUE_SHOWN_BUT_SPENT"
 EARNED_CLASS = "CUE_SHOWN_BUT_EARNED"
+NOT_STAGEABLE_FACT_TRUE = "NOT_STAGEABLE_FACT_TRUE"
 INACTIVE_CLASS = "CUE_SHOWN_BUT_INACTIVE"
 HIDDEN_CLASS = "CUE_SHOWN_BUT_HIDDEN"
 OTHER = "OTHER"
@@ -45,6 +46,10 @@ def _cue_available(state: Any, fact_id: str) -> bool:
 
 def _cue_fact_ids(delivery: Any) -> frozenset[str]:
     return frozenset((delivery.fact_id,) + tuple(cost.fact_id for cost in delivery.costs if cost.op == "assert"))
+
+
+def _true_fact_ids(state: Any) -> frozenset[str]:
+    return frozenset(fact.predicate for fact in state.facts.asserted if str(fact.value).lower() == "true")
 
 
 def _matching_reveals(package: Any, scene_id: str, delivery: Any) -> tuple[Any, ...]:
@@ -92,7 +97,12 @@ def _classify(
     cue_available: bool,
     explanations: tuple[tuple[Any, str], ...],
     state: Any,
+    delivery: Any,
 ) -> str:
+    true_facts = _true_fact_ids(state)
+    if delivery.fact_id in true_facts:
+        return NOT_STAGEABLE_FACT_TRUE
+
     player_available = not explanations or any(reason == "eligible" for _, reason in explanations)
     if cue_available == player_available:
         return AGREE
@@ -100,10 +110,13 @@ def _classify(
         return OTHER
 
     reasons = {reason for _, reason in explanations}
-    fired_sources = {item.source.storylet_id for item, _ in explanations if item.source.storylet_id is not None}
-    if explanations and reasons <= {SPENT, ESTABLISHED} and fired_sources & set(state.fired_event_ids):
+    if SPENT in reasons and "eligible" not in reasons:
         return SPENT_CLASS
-    if explanations and reasons == {ESTABLISHED}:
+    if (
+        explanations
+        and reasons == {ESTABLISHED}
+        and any(cost.op == "assert" and cost.fact_id in true_facts for cost in delivery.costs)
+    ):
         return EARNED_CLASS
     if explanations and reasons == {INACTIVE}:
         return INACTIVE_CLASS
@@ -117,7 +130,7 @@ def _row(package: Any, scene_id: str, state_label: str, state: Any, delivery: An
     explanations = tuple((item, explain_reveal(state, "player", item).reason) for item in matching)
     cue_available = _cue_available(state, delivery.fact_id)
     player_available = not explanations or any(reason == "eligible" for _, reason in explanations)
-    classification = _classify(cue_available, explanations, state)
+    classification = _classify(cue_available, explanations, state, delivery)
     reasons = ",".join(f"{item.id}:{reason}" for item, reason in explanations) or "-"
     row = " | ".join(
         (
@@ -175,23 +188,19 @@ def report(package: Any) -> str:
         "",
         "Counts per classification",
     ]
-    for classification in (AGREE, SPENT_CLASS, EARNED_CLASS, INACTIVE_CLASS, HIDDEN_CLASS, OTHER):
+    for classification in (
+        AGREE,
+        NOT_STAGEABLE_FACT_TRUE,
+        SPENT_CLASS,
+        EARNED_CLASS,
+        INACTIVE_CLASS,
+        HIDDEN_CLASS,
+        OTHER,
+    ):
         lines.append(f"{classification}: {counts[classification]}")
-    lines.extend(("", "CUE_SHOWN_BUT_SPENT invitations"))
+    lines.extend(("", "Real cases (cue fact still missing, no eligible reveal)"))
     lines.extend(spent_rows or ["- none"])
-    lines.extend(
-        (
-            "",
-            (
-                "Known case: scene 1A, state 'SL-1A-B fired through "
-                "k_sl_1a_b_r1', cue fact continuity_initiative_known, "
-                "expected CUE_SHOWN_BUT_SPENT."
-            ),
-        )
-    )
-    known = "1A | SL-1A-B fired through k_sl_1a_b_r1 | continuity_initiative_known | "
-    known_observed = any(row.startswith(known) and row.endswith(SPENT_CLASS) for row in rows)
-    lines.append("Known case observed: " + ("yes" if known_observed else "NO"))
+    lines.append(f"Real cases observed: {len(spent_rows)}")
     return "\n".join(lines)
 
 
