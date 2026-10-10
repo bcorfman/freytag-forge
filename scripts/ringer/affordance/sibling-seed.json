@@ -1,0 +1,24 @@
+{
+  "run_name": "freytag-eligibility-explanation",
+  "workdir": "/home/bcorfman/dev/ringer-work/sibling-seed",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "sibling-seed",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. You own only: scripts/ringer/affordance/sibling_reachability.py and tests/test_sibling_reachability.py. Edit nothing else.\n\nPROBLEM. scripts/ringer/affordance/sibling_reachability.py `report()` builds a bare state per fired reveal (`_state`, `_apply_reveal`, `_activate_unfired_storylets`). That state never asserts the facts that make the scene's storylets reachable, so later storylets whose activation conditions need them never activate, and the 'facts still obtainable' column wrongly says 'no'. Example on the real package (data/stories/continuity-initiative): firing k_sl_3a_b_r2 (medical entry) reports sibling k_sl_3a_b_r1 as 'storylet_spent | no | conditioned_release_plan_known', but storylet SL-3A-E (activation: michelle_reached true, behavioral_experiments_known true, conditioned_release_plan_known false; reveal k_sl_3a_e_r1 asserts conditioned_release_plan_known) can still supply that fact. It is missed because michelle_reached was never asserted.\n\nFIX. Before firing a reveal, seed the state with the situation in which that storylet could fire: assert every positive predicate (equals true) from (a) the storylet's own activation conditions and (b) the fired reveal's `requires`, and retract/leave unset every `equals false` one. Do this in `report()` before `_apply_reveal`. Then `_apply_reveal`, then `_activate_unfired_storylets` as now. Nothing else about the report format or columns changes. Do not make the check more generous in any other way (do not assert facts that only other reveals establish).\n\nTEST. Add a hermetic case to tests/test_sibling_reachability.py (use the synthetic-package helper already there): storylet X has sibling reveals r1 (establishes fact F1) and r2 (establishes F2); a separate storylet Y whose activation needs a fact G that X's activation conditions assert true, and Y's reveal also establishes F1. Firing r2 must report r1 with 'facts still obtainable: yes'. Keep all existing tests passing. Also add a test that on the real package the row 'SL-3A-B | k_sl_3a_b_r2 | k_sl_3a_b_r1' now says 'yes'.\n\nHOW TO RUN TESTS. `uv run` does not work in this sandbox. Use: `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_sibling_reachability.py tests/test_reveal_eligibility.py`, after confirming `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame;print(storygame.__file__)\"` prints a path inside your working directory. Ruff with the same interpreter: `-m ruff check --fix . && -m ruff format .` (not on YAML or markdown). Run the full suite once at the end.\n\nOUTPUT. notes.md at the worktree root: what changed, test result counts, and the full new report output for the real package, plus a list of rows that still say 'facts still obtainable: no' grouped by storylet. Do not claim the suite passes unless you saw it pass.\n",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/sibling-seed-check.sh",
+      "verified": "the sibling report seeds each storylet's own prerequisites so the 3A medical-entry row says obtainable; suite and ruff pass"
+    }
+  ]
+}

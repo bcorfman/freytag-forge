@@ -7,8 +7,8 @@ from collections.abc import Iterable
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.validation import predicate_matches
 from storygame.story_package.models import FactDelivery, KnowledgeDefinition, entity_surface_forms
 
 
@@ -268,13 +268,7 @@ class KnowledgeProjector:
         candidates: list[KnowledgeDefinition] = []
         for knowledge_id in state.package.knowledge_indexes.scene_to_candidates[state.current_scene_id]:
             item = state.package.knowledge_indexes.by_id[knowledge_id]
-            if self._established(item, state) or not self._visible_to(item, audience_id):
-                continue
-            if item.source.storylet_id in state.fired_event_ids:
-                continue
-            if not all(predicate_matches(predicate, state.facts) for predicate in item.requires):
-                continue
-            if item.source.kind != "storylet_realization" or item.source.storylet_id not in state.active_event_ids:
+            if not explain_reveal(state, audience_id, item).eligible:
                 continue
             candidates.append(item)
         referenced = set(referenced_ids)
