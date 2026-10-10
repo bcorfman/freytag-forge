@@ -57,6 +57,16 @@ def _apply_reveal(state: RuntimeState, item: Any) -> None:
         state.fired_event_ids.add(storylet_id)
 
 
+def _seed_reveal_state(state: RuntimeState, storylet: Any, item: Any) -> None:
+    predicates = (*storylet.activation_conditions, *getattr(item, "requires", ()))
+    for predicate in predicates:
+        fact = Fact(predicate=predicate.fact_id, subject="story", value=str(predicate.equals).lower())
+        if predicate.equals is True:
+            state.facts.assert_fact(fact)
+        elif predicate.equals is False:
+            state.facts.retract_fact(fact)
+
+
 def _route_map(package: Any) -> dict[str, Any]:
     return {storylet.id: storylet for storylet in _storylets(package)}
 
@@ -118,6 +128,7 @@ def report(package: Any) -> str:
             continue
         for fired in siblings:
             state = _state(package, storylet.scene_id, {storylet_id})
+            _seed_reveal_state(state, storylet, fired)
             _apply_reveal(state, fired)
             _activate_unfired_storylets(state, package, storylet.scene_id)
             for sibling in siblings:
