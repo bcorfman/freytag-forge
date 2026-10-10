@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import FactDelivery
@@ -30,6 +31,15 @@ def test_cue_text_is_accepted_on_the_first_scene_turn(delivery: FactDelivery) ->
             current_scene_id=scene.metadata.scene_id,
             phase=scene.metadata.freytag_phase,
         )
+        state._assert_scene_entry_fact(scene.metadata.scene_id)  # noqa: SLF001 - model the first turn in this scene.
+    for knowledge in PACKAGE.knowledge.knowledge:
+        if knowledge.available_in_scenes and scene.metadata.scene_id not in knowledge.available_in_scenes:
+            continue
+        if not any(effect.fact_id == delivery.fact_id and effect.op == "assert" for effect in knowledge.establishes):
+            continue
+        for requirement in knowledge.requires:
+            state.facts.assert_fact(Fact(predicate=requirement.fact_id, subject="story", value="true"))
+    state.staged_cue_fact_id = delivery.fact_id
     state.turn_index = 0
     cue_text = delivery.cue_text
     assert cue_text is not None

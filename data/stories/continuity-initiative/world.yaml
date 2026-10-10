@@ -256,6 +256,10 @@ items:
 - id: drainage_pump_controls
   name: drainage pump controls
   fixed: true
+- id: emergency_surface_gates
+  name: emergency surface gates
+  aliases: [surface gates]
+  fixed: true
 facts:
 - scene_1a_entry_known
 - scene_1b_entry_known

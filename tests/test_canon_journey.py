@@ -90,7 +90,9 @@ UNCLOCKED_JOURNEY = [
     ("k_sl_3c_a_r1", "3C"),
     ("k_sl_3c_b_r1", "3C"),
     ("k_sl_3c_c_r1", "3C"),
+    ("k_sl_3c_c_r2", "3C"),
     ("k_sl_3c_d_r1", "3C"),
+    ("k_sl_3c_d_r2", "3C"),
     ("k_sl_3c_e_r1", "3C"),
 ]
 

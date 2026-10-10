@@ -73,7 +73,9 @@ def test_resolution_deadline_shows_and_commits_remaining_chain() -> None:
 
 
 def test_resolution_realization_storylets_are_required() -> None:
-    assert {f"SL-3C-{letter}" for letter in "ABCDE"} <= required_storylet_ids(PACKAGE)
+    assert {"SL-3C-A", "SL-3C-B", "SL-3C-C", "SL-3C-D", "SL-3C-E", "SL-3C-F", "SL-3C-G"} <= required_storylet_ids(
+        PACKAGE
+    )
 
 
 def test_portable_archive_starts_with_rebecca() -> None:

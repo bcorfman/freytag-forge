@@ -116,6 +116,7 @@ class NarrationSafetyValidator:
                 nameable_entity_ids.update(self._location_ancestor_ids(state.package, entity_id))
         fixed_entity_ids = {item.id for item in state.package.world.items if item.fixed is True}
         available_entity_ids = nameable_entity_ids & fixed_entity_ids
+        nameable_npc_ids = nameable_entity_ids & npc_ids
         true_fact_ids = {
             fact.predicate
             for fact in candidate_state.facts.asserted
@@ -204,6 +205,13 @@ class NarrationSafetyValidator:
                 if not self._contains(text, form):
                     continue
                 if available_entity_ids & set(indexes.entity_alias_to_entities.get(self._normalize(form), ())):
+                    continue
+                if nameable_npc_ids & set(indexes.entity_alias_to_entities.get(self._normalize(form), ())):
+                    continue
+                if any(
+                    nameable_npc_ids & set(entity_ids) and self._contains(alias, form)
+                    for alias, entity_ids in indexes.entity_alias_to_entities.items()
+                ):
                     continue
                 knowledge_ids = set(indexes.term_to_knowledge.get(form, ()))
                 if (

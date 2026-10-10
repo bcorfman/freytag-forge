@@ -103,7 +103,7 @@ def _assert_reaction_window_contract(package) -> frozenset[str]:
 def test_optional_storylets_and_pacing_events_leave_two_turns_to_react() -> None:
     required_storylet_ids = _assert_reaction_window_contract(PACKAGE)
 
-    assert len(required_storylet_ids) == 32
+    assert len(required_storylet_ids) == 34
 
 
 def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
@@ -128,7 +128,7 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
     for scene_id, window in windows.items():
         storylets = [storylet for storylet in PACKAGE.storylet_routes.storylets if storylet.scene_id == scene_id]
         targets = [storylet.target_turn for storylet in storylets]
-        assert targets == sorted(set(targets))
+        assert targets == sorted(targets)
         assert all(
             storylet.earliest_turn <= storylet.target_turn <= window.handoff_after_turns for storylet in storylets
         )

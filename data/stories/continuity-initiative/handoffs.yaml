@@ -273,3 +273,65 @@ deliveries:
     Brandon transmits a confession before security can lock down the relay chamber. He admits his role in creating JANUS,
     and the statement helps authenticate Michelle's evidence.
   cue_text: A voice channel marked Brandon is queued beside the broadcast controls.
+- fact_id: truth_no_longer_containable
+  scene_id: 3C
+  source_kind: broadcast
+  must_convey:
+  - [national broadcast, evidence package]
+  - [Charles speaks over Michelle, Charles's voice over Michelle]
+  fallback_text: The national broadcast stays live while Charles speaks over Michelle.
+  cue_text: The national broadcast is live. Charles speaks over Michelle while her evidence package waits to be sent.
+- fact_id: rebecca_captured
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [Rebecca leaves the executive office, Rebecca is leaving the executive office]
+  - [Portable data case, data case]
+  fallback_text: Rebecca leaves the executive office with the Portable data case.
+  cue_text: Rebecca is leaving the executive office with the Portable data case in her hands.
+- fact_id: evacuation_route_open
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [water rises, rising water]
+  - [drainage pump controls, pump controls]
+  fallback_text: Water rises around the drainage pump controls.
+  cue_text: Water rises around the drainage pump controls.
+- fact_id: los_angeles_facility_lost
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [surface gates, emergency surface gates]
+  - [senior official's authorization, gate authorization]
+  fallback_text: The surface gates remain shut as the senior official's authorization nears expiry.
+  cue_text: The surface gates are shut above the waiting captives. The gate authorization is close to expiry.
+- fact_id: national_network_fragmenting
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [reports from other detention sites, detention site reports]
+  - [broadcast chamber, Michelle's broadcast]
+  fallback_text: Reports from other detention sites reach the broadcast chamber.
+  cue_text: Reports from other detention sites reach the broadcast chamber.
+- fact_id: community_rescue_efforts_begun
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [families of the missing, missing families]
+  - [ask, for word]
+  fallback_text: Families of the missing ask the broadcast chamber for word.
+  cue_text: Families of the missing ask the broadcast chamber for word.
+- fact_id: phase_two_conflict_plan_known
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [recovered document, recovered file]
+  - [Charles's signal, Charles's last remote channel]
+  fallback_text: A recovered document remains closed while Charles's signal runs through his last remote channel.
+  cue_text: A recovered document remains closed. Charles's signal still runs through his last remote channel.

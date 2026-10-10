@@ -2255,7 +2255,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle broadcasts video of the captives, JANUS records, planning sessions, and detention locations to independent networks."
+  delivery_text: "Michelle broadcasts video of the captives, JANUS records, planning sessions, and detention locations to independent networks. Rebecca is leaving the executive office with the Portable data case."
 - id: k_sl_3c_a_r2
   statement: 'When Charles calls her a terrorist, Michelle answers with live revolts that make the truth impossible to contain.'
   earn_when: answers Charles's terrorist claim
@@ -2284,7 +2284,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "When Charles calls Michelle a terrorist, she answers with live revolts. The truth is impossible to contain."
+  delivery_text: "When Charles calls Michelle a terrorist, she answers with live revolts. The truth is impossible to contain. Rebecca still holds the Portable data case in her hands."
 - id: k_sl_3c_b_r1
   statement: 'Kristin stops Rebecca fleeing with the archive, and Michelle sends its prisoner locations to independent networks.'
   earn_when: takes the data case from Rebecca
@@ -2318,9 +2318,6 @@ knowledge:
   - op: assert
     fact_id: rebecca_captured
     value: true
-  - op: assert
-    fact_id: charles_at_large
-    value: true
   source:
     kind: storylet_realization
     storylet_id: SL-3C-B
@@ -2328,7 +2325,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin stops Rebecca from fleeing with the data case. Michelle sends its prisoner locations to independent networks."
+  delivery_text: "Kristin stops Rebecca from fleeing with the data case. Michelle sends its prisoner locations to independent networks. Water rises around the drainage pump controls."
 - id: k_sl_3c_b_r2
   statement: 'The prisoners capture Rebecca after her archive is copied beyond her reach, while Charles escapes his remote command site.'
   earn_when: copies the archive beyond Rebecca's reach
@@ -2362,9 +2359,6 @@ knowledge:
   - op: assert
     fact_id: rebecca_captured
     value: true
-  - op: assert
-    fact_id: charles_at_large
-    value: true
   source:
     kind: storylet_realization
     storylet_id: SL-3C-B
@@ -2382,7 +2376,6 @@ knowledge:
   entity_ids: []
   aliases:
   - evacuation route open
-  - captives reaching surface
   audience:
     kind: public
     player_visible: true
@@ -2396,9 +2389,6 @@ knowledge:
   establishes:
   - op: assert
     fact_id: evacuation_route_open
-    value: true
-  - op: assert
-    fact_id: captives_reaching_surface
     value: true
   source:
     kind: storylet_realization
@@ -2416,7 +2406,6 @@ knowledge:
   - [emergency surface gates, emergency surface gate, surface gates, surface gate, emergency gates, emergency gate, gate authorization, gate authorizations, one-time authorization, one-time authorizations, senior official's authorization, official authorization, official's authorization, override codes, override code, emergency override codes, Michelle's authorization, her authorization, gate code, gate codes, surface release, surface releases, gate release, gate releases, gate signal, gate signals, escape signal, escape signals, surface alarm, surface alarms, gates to the surface, surface exits, surface exit]
   entity_ids: []
   aliases:
-  - captives reaching surface
   - los angeles facility lost
   audience:
     kind: public
@@ -2430,15 +2419,12 @@ knowledge:
     equals: true
   establishes:
   - op: assert
-    fact_id: captives_reaching_surface
-    value: true
-  - op: assert
     fact_id: los_angeles_facility_lost
     value: true
   source:
     kind: storylet_realization
-    storylet_id: SL-3C-C
-    realization_id: SL-3C-C-R2
+    storylet_id: SL-3C-F
+    realization_id: SL-3C-F-R1
   relevance:
     entity_ids: []
     priority: 0
@@ -2499,14 +2485,14 @@ knowledge:
     value: true
   source:
     kind: storylet_realization
-    storylet_id: SL-3C-D
-    realization_id: SL-3C-D-R2
+    storylet_id: SL-3C-G
+    realization_id: SL-3C-G-R1
   relevance:
     entity_ids: []
     priority: 0
   delivery_text: "Families and communities organize independent rescue efforts. Many of the missing are still alive."
 - id: k_sl_3c_e_r1
-  statement: 'A recovered JANUS file names the disappearances Phase One and reveals a second plan to provoke conflict among survivors.'
+  statement: 'A recovered JANUS file names the disappearances Phase One and reveals that Phase Two was meant to provoke conflict among survivors.'
   earn_when: opens the recovered JANUS file
   action_evidence:
   - [ask, talk to, open, read, review, inspect, check, examine, find, recover, unseal, access, search, look at, study, decrypt, decode, restore, repair, piece together]
@@ -2632,6 +2618,14 @@ knowledge:
   available_in_scenes: [3C]
   establishes: [{op: assert, fact_id: resolution_complete, value: true}]
   source: {kind: canonical_route_event, canonical_event_id: resolution_complete}
+- id: k_resolution_escape
+  statement: Surviving captives reach the surface after the evacuation route opens.
+  entity_ids: [facility_escape]
+  aliases: [captives reach the surface, surviving captives]
+  audience: {kind: world_only, player_visible: false}
+  available_in_scenes: [3C]
+  establishes: [{op: assert, fact_id: captives_reaching_surface, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: resolution_escape}
 - id: k_resolution_michelle_publishing
   statement: Michelle has begun publishing the recovered archive.
   entity_ids: [michelle, janus_archive]
@@ -2639,6 +2633,14 @@ knowledge:
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3C]
   establishes: [{op: assert, fact_id: michelle_publishing_archive, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: resolution_network_consequences}
+- id: k_resolution_charles_at_large
+  statement: Charles remains at large after the national network consequences land.
+  entity_ids: []
+  aliases: [charles at large]
+  audience: {kind: world_only, player_visible: false}
+  available_in_scenes: [3C]
+  establishes: [{op: assert, fact_id: charles_at_large, value: true}]
   source: {kind: canonical_route_event, canonical_event_id: resolution_network_consequences}
 - id: k_resolution_kristin_rescue
   statement: Kristin has joined the wider rescue effort to find remaining detention sites.

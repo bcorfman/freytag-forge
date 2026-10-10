@@ -67,11 +67,11 @@ def test_required_storylet_stays_active_past_latest_turn() -> None:
         assert Fact(predicate="continuity_initiative_known", subject="story", value="true") not in state.facts.asserted
 
 
-def test_real_package_has_thirty_two_required_storylets() -> None:
-    assert len(required_storylet_ids(PACKAGE)) == 32
+def test_real_package_has_thirty_four_required_storylets() -> None:
+    assert len(required_storylet_ids(PACKAGE)) == 34
 
 
-def test_resolution_scene_does_not_stage_escalation() -> None:
+def test_resolution_scene_stages_cues_but_not_deadline_escalation() -> None:
     window = next(window for window in PACKAGE.pacing.scenes if window.scene_id == "3B")
     engine, state = _engine_at("3B", window.handoff_after_turns)
     engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
@@ -91,7 +91,7 @@ def test_resolution_scene_does_not_stage_escalation() -> None:
 
     engine._activate_pacing()  # noqa: SLF001 - exercise the pacing boundary directly.
 
-    assert state.staged_cue_fact_id is None
+    assert state.staged_cue_fact_id is not None
     assert state.staged_handoff_fact_ids == ()
 
 
