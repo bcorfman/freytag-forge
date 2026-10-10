@@ -302,8 +302,8 @@ knowledge:
   earn_when: searches the drawer, the gap in the drawer, or the space beneath it
   action_evidence:
   - [look, search, inspect, check]
-  - [under, beneath, underside, gap]
-  - [drawer, KMS, workstation]
+  - [under, beneath, underside, gap, lower edge, bottom edge]
+  - [drawer, KMS, workstation, "drawer's"]
   entity_ids: [kristin, michelle, memory_card, michelle_drawer]
   aliases:
   - memory card recovered

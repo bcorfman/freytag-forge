@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-affordance-1a-drawer",
+  "workdir": "/home/bcorfman/dev/ringer-work/1a-drawer",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "1a-drawer",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, data/stories/continuity-initiative/handoffs.yaml and files under tests/. Edit nothing else.\n\nEDIT 1, knowledge.yaml. In the entry `id: k_sl_1a_b_r0`, replace exactly two lines of its action_evidence. Replace `  - [under, beneath, underside, gap]` with `  - [under, beneath, underside, gap, lower edge, bottom edge]`. Replace `  - [drawer, KMS, workstation]` with `  - [drawer, KMS, workstation, \"drawer's\"]`. Keep the verb line `[look, search, inspect, check]` unchanged. Change no other line.\n\nEDIT 2, handoffs.yaml. In the 1A handoff, replace the `cue_text` line with exactly: `  cue_text: \"Kristin's initials, KMS, are carved into a drawer of Michelle's workstation. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers. Kristin's laptop is in her truck outside.\"` Change no other line. If any test pins the old cue text, update only that assertion.\n\nTESTS. Add tests/test_1a_drawer_words.py (hermetic, no live worker). Use the real matcher as tests/test_candidate_matcher.py test_scene_1a_card_reveal_accepts_natural_synonyms does (RuntimeState.bootstrap, active_event_ids add SL-1A-E, KnowledgeProjector().project, uniquely_matched_authored_handoff). Parametrize these commands. They must select k_sl_1a_b_r0: 'Examine the drawer's lower edge.', 'Feel along the drawer's lower edge.', 'Inspect the bottom edge of the drawer.', 'Check the lower edge of the KMS drawer.', 'Search the lower edge of Michelle's workstation.', 'Feel the drawer's lower edge.', 'Inspect the gap beneath the KMS drawer.', 'Search beneath the drawer.', 'Look under the KMS drawer.', 'Look underneath the drawer.', 'Check the underside of the workstation.', 'Feel beneath the drawer.', 'Check the bottom of the drawer.'. These must select nothing (None): 'Open the KMS drawer.', 'Open the high-riding drawer.', 'Inspect the workstation.', 'Inspect the drawer.', 'Examine the drawer's top edge.', 'Inspect the edge of the drawer.', 'Pull the drawer open.', 'Lift the KMS drawer.', 'Open the workstation drawer.', 'Take the note.'. These must select a different candidate than k_sl_1a_b_r0 or None: 'Inspect the back door.', 'Inspect the gate.'. Also pin that the 1A cue_text contains 'beneath its lower edge'. If a command does not behave as listed, do not change the test to fit: report it in notes.md.\n\nHOW TO RUN TESTS. In this sandbox `uv run` cannot write its cache or download. Use the main checkout's environment but import THIS worktree's code: `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider`. First run `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame;print(storygame.__file__)\"` and confirm the path is inside your working directory; if not, say so in notes.md. Run ruff with the same interpreter (`-m ruff check --fix .` then `-m ruff format .`); it must not touch YAML or markdown. Run the full suite once at the end.\n\nOUTPUT. Write notes.md at the worktree root: lines changed, tests added, mismatches, final suite counts. Do not claim the suite passes unless you ran it and saw it pass.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/1a-drawer-check.sh",
+      "verified": "k_sl_1a_b_r0 matches lower-edge phrasing, not 'Open the drawer'; cue names the gap beneath the lower edge; suite and ruff pass"
+    }
+  ]
+}
