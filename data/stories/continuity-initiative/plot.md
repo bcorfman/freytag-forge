@@ -123,7 +123,7 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
 
 Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely.
 
-The drawer rides high in its frame, leaving a thin gap along its lower edge.
+The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.
 
 ### Scene 1A.2 — Michelle’s Last Investigation
 
