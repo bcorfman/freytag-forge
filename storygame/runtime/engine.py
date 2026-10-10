@@ -482,7 +482,8 @@ class RuntimeEngine(CanonicalEventMixin):
 
     def _bridge_delivery_fact_ids(self) -> tuple[str, ...]:
         """Cue ranking only foregrounds content whose activation conditions already hold.
-        It never activates anything past a guard."""
+        It never activates anything past a guard.
+        For resolution events, the cue points at what the remaining required storylets would establish."""
 
         true_facts = frozenset(
             fact.predicate for fact in self.state.facts.asserted if str(fact.value).lower() == "true"
@@ -500,14 +501,35 @@ class RuntimeEngine(CanonicalEventMixin):
             break
 
         selected: list[str] = []
-        for event in self.state.package.storylet_routes.resolution_events:
+        resolution_events = self.state.package.storylet_routes.resolution_events
+        storylets = {storylet.id: storylet for storylet in self.state.package.storylet_routes.storylets}
+        for event in resolution_events:
+            if event.scene_id != self.state.current_scene_id or event.id in self.state.fired_event_ids:
+                continue
+            for storylet_id in event.realization_storylets:
+                if storylet_id in self.state.fired_event_ids:
+                    continue
+                storylet = storylets.get(storylet_id)
+                if storylet is None:
+                    continue
+                for realization in storylet.realizations:
+                    for operation in realization.operations:
+                        if (
+                            operation.op == "assert"
+                            and operation.fact_id in deliveries
+                            and operation.fact_id not in true_facts
+                            and operation.fact_id not in selected
+                        ):
+                            selected.append(operation.fact_id)
+
+        for event in resolution_events:
             if event.scene_id != self.state.current_scene_id or event.id in self.state.fired_event_ids:
                 continue
             if event.activation.is_satisfied(true_facts):
                 continue
             missing = event.activation.minimal_undelivered_facts(true_facts)
             for fact_id in missing:
-                if fact_id in deliveries and fact_id not in selected:
+                if fact_id in deliveries and fact_id not in true_facts and fact_id not in selected:
                     selected.append(fact_id)
         return tuple(selected)
 

@@ -2741,8 +2741,6 @@ canonical_resolution_events:
   activation:
     all_facts_true:
     - truth_no_longer_containable
-    - evacuation_route_open
-    - los_angeles_facility_lost
   produces:
   - op: assert
     fact_id: captives_reaching_surface
@@ -2813,9 +2811,6 @@ canonical_resolution_events:
     - national_network_fragmenting
     - charles_at_large
     - phase_two_conflict_plan_known
-    - evacuation_route_open
-    - los_angeles_facility_lost
-    - community_rescue_efforts_begun
   produces:
   - op: assert
     fact_id: resolution_complete

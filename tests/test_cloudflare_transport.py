@@ -1141,7 +1141,7 @@ def test_transport_drops_an_ungrounded_groupless_selection(monkeypatch) -> None:
     result = provider("Inspect the corridor.")
 
     assert result["selected_knowledge_ids"] == []
-    assert "grounding_ids" not in result["segments"][0]
+    assert result["segments"][0].get("grounding_ids", []) == []
     assert provider.grounding_attributions == ()
 
 

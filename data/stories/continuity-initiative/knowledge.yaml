@@ -2366,7 +2366,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "The prisoners capture Rebecca after the archive is copied beyond her reach. Charles escapes his remote command site. The gates at the surface remain shut."
+  delivery_text: "The prisoners capture Rebecca after the archive is copied beyond her reach. Charles escapes his remote command site."
 - id: k_sl_3c_c_r1
   statement: 'Kristin restores power to drainage pumps and holds one watertight barrier while Michelle leads captives through the maintenance tunnel.'
   earn_when: restores power to the drainage pumps

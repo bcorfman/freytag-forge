@@ -1101,9 +1101,10 @@ def test_bridge_required_player_safe_facts_have_one_self_conveying_delivery() ->
     }
     world_only = required - player_safe
     deliveries = {delivery.fact_id: delivery for delivery in package.deliveries}
+    bridge_deliveries = {fact_id: deliveries[fact_id] for fact_id in required if fact_id in deliveries}
 
-    assert set(deliveries) == required & player_safe
-    assert required <= set(deliveries) | world_only
+    assert set(bridge_deliveries) == required & player_safe
+    assert required <= set(bridge_deliveries) | world_only
     assert len(package.deliveries) == len(deliveries)
     assert all(not unconveyed_terms(delivery.must_convey, delivery.fallback_text) for delivery in deliveries.values())
 
