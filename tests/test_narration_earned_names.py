@@ -9,6 +9,7 @@ import pytest
 from storygame.personas import PERSONAS, _legacy_package, _ScriptedProvider, _select_thorough, _turn_cap
 from storygame.runtime.contracts import RuntimeContractError
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
@@ -44,6 +45,13 @@ def _bare_3b() -> RuntimeState:
     scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "3B")
     state = RuntimeState(package=PACKAGE, current_scene_id="3B", phase=scene.metadata.freytag_phase)
     state._assert_scene_entry_fact("3B")
+    return state
+
+
+def _bare_3c() -> RuntimeState:
+    scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "3C")
+    state = RuntimeState(package=PACKAGE, current_scene_id="3C", phase=scene.metadata.freytag_phase)
+    state._assert_scene_entry_fact("3C")
     return state
 
 
@@ -106,3 +114,22 @@ def test_earned_but_unshown_knowledge_cannot_be_used_as_grounding() -> None:
 
     with pytest.raises(ProposalValidationError, match="segment grounding is not committed or selected knowledge"):
         _narrate(state, statement, (unshown_id,))
+
+
+def test_earned_phase_two_statement_lets_narration_say_phase_two() -> None:
+    item = PACKAGE.knowledge_indexes.by_id["k_sl_3c_e_r1"]
+    state = _bare_3c()
+
+    for effect in item.establishes:
+        value = str(effect.value).lower() if isinstance(effect.value, bool) else str(effect.value)
+        state.facts.assert_fact(Fact(predicate=effect.fact_id, subject="story", value=value))
+    for prerequisite in item.requires:
+        value = str(prerequisite.equals).lower()
+        state.facts.assert_fact(Fact(predicate=prerequisite.fact_id, subject="story", value=value))
+
+    text = "The recovered file says Phase Two was meant to provoke conflict among survivors."
+    _narrate(state, text)
+
+    with pytest.raises(ProposalValidationError) as exc_info:
+        _narrate(_bare_3c(), text)
+    assert exc_info.value.code == "protected_narration_leak"
