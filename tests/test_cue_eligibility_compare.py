@@ -93,38 +93,37 @@ def test_synthetic_package_classifies_spent_eligible_true_and_missing() -> None:
     output = report(_synthetic_package())
 
     assert (
-        "1A | SL-1A-B fired through k_spent_setup | spent_fact | True | False | "
-        "k_spent:storylet_spent | CUE_SHOWN_BUT_SPENT"
+        "1A | SL-1A-B fired through k_spent_setup | spent_fact | False | False | k_spent:storylet_spent | AGREE"
     ) in output
     assert "1A | S0 | eligible_fact | True | True | k_eligible:eligible | AGREE" in output
     assert (
-        "1A | SL-1A-A fired through k_setup | earned_fact | True | False | "
+        "1A | SL-1A-A fired through k_setup | earned_fact | False | False | "
         "k_earned:already_established | NOT_STAGEABLE_FACT_TRUE"
     ) in output
     assert "1A | S0 | missing_fact | False | False | k_missing:prerequisite_missing | AGREE" in output
 
 
-def test_real_package_reports_three_real_spent_cases_and_not_stageable_1a_case() -> None:
+def test_real_package_reports_no_real_spent_cases_and_not_stageable_1a_case() -> None:
     from scripts.ringer.affordance.cue_eligibility_compare import report
 
     output = report(PACKAGE)
 
     for row in (
-        "1C | SL-1C-C fired through k_sl_1c_c_r2 | national_detention_network_known | True | False | "
-        "k_sl_1c_c_r1:storylet_spent | CUE_SHOWN_BUT_SPENT",
-        "2B | SL-2B-B fired through k_sl_2b_b_r3 | brandon_janus_role_known | True | False | "
-        "k_sl_2b_b_r1:storylet_spent,k_sl_2b_b_r2:storylet_spent | CUE_SHOWN_BUT_SPENT",
-        "2B | SL-2B-B fired through k_sl_2b_b_r3 | brandon_claimed_reform_motive | True | False | "
-        "k_sl_2b_b_r1:storylet_spent,k_sl_2b_b_r2:storylet_spent | CUE_SHOWN_BUT_SPENT",
+        "1C | SL-1C-C fired through k_sl_1c_c_r2 | national_detention_network_known | False | False | "
+        "k_sl_1c_c_r1:storylet_spent | AGREE",
+        "2B | SL-2B-B fired through k_sl_2b_b_r3 | brandon_janus_role_known | False | False | "
+        "k_sl_2b_b_r1:storylet_spent,k_sl_2b_b_r2:storylet_spent | AGREE",
+        "2B | SL-2B-B fired through k_sl_2b_b_r3 | brandon_claimed_reform_motive | False | False | "
+        "k_sl_2b_b_r1:storylet_spent,k_sl_2b_b_r2:storylet_spent | AGREE",
     ):
         assert row in output
     assert (
-        "1A | SL-1A-B fired through k_sl_1a_b_r1 | continuity_initiative_known | True | False | "
+        "1A | SL-1A-B fired through k_sl_1a_b_r1 | continuity_initiative_known | False | False | "
         "k_sl_1a_b_r0:already_established,k_sl_1a_b_r1:already_established,k_sl_1a_d_r1:already_established | "
         "NOT_STAGEABLE_FACT_TRUE"
     ) in output
     assert "Real cases (cue fact still missing, no eligible reveal)" in output
-    assert "Real cases observed: " in output
+    assert "Real cases observed: 0" in output
 
 
 def test_importing_script_does_not_change_real_cue_results() -> None:
