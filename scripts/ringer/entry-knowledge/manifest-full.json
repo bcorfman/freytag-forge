@@ -1,0 +1,43 @@
+{
+ "run_name": "entry-knowledge-live-full",
+ "workdir": "/home/bcorfman/dev/ringer-work/entry-knowledge-live",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "live-2a",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "timeout_s": 2400,
+   "spec": "You are a benchmark operator on freytag-forge running a LIVE, BILLED bench against a hosted narration model. Your cwd is the real repo /home/bcorfman/dev/freytag-forge and this task runs WITHOUT a sandbox. HARD RULES: edit nothing except files under bench/results/. Never run git add, commit, checkout, stash, reset, clean or push. Never print or copy .env. Run the command below EXACTLY ONCE. If it fails, do not edit code and do not retry: copy the error text verbatim into your reply and stop. COMMAND: TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/entry-knowledge-2a-2c.json --scene 2A --replicates 4 --out bench/results/entry-knowledge-full-2a --confirm\n\nThe command ends at --confirm. Then REPLY with the contents of bench/results/entry-knowledge-full-2a/summary.json verbatim, including failed_replicates and every failure_reason.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && TMPDIR=/tmp .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && test -s bench/results/entry-knowledge-full-2a/all-turn-records.json && test -s bench/results/entry-knowledge-full-2a/summary.json || { echo 'FAIL missing bench artifacts'; exit 1; }",
+   "expect_files": [],
+   "verified": "bench artifacts exist and no tracked file outside bench/results changed",
+   "max_attempts": 1
+  },
+  {
+   "key": "live-2c",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "timeout_s": 2400,
+   "spec": "You are a benchmark operator on freytag-forge running a LIVE, BILLED bench against a hosted narration model. Your cwd is the real repo /home/bcorfman/dev/freytag-forge and this task runs WITHOUT a sandbox. HARD RULES: edit nothing except files under bench/results/. Never run git add, commit, checkout, stash, reset, clean or push. Never print or copy .env. Run the command below EXACTLY ONCE. If it fails, do not edit code and do not retry: copy the error text verbatim into your reply and stop. COMMAND: TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/entry-knowledge-2a-2c.json --scene 2C --replicates 4 --out bench/results/entry-knowledge-full-2c --confirm\n\nThe command ends at --confirm. Then REPLY with the contents of bench/results/entry-knowledge-full-2c/summary.json verbatim, including failed_replicates and every failure_reason.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && TMPDIR=/tmp .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && test -s bench/results/entry-knowledge-full-2c/all-turn-records.json && test -s bench/results/entry-knowledge-full-2c/summary.json || { echo 'FAIL missing bench artifacts'; exit 1; }",
+   "expect_files": [],
+   "verified": "bench artifacts exist and no tracked file outside bench/results changed",
+   "max_attempts": 1
+  }
+ ]
+}
