@@ -1617,7 +1617,7 @@ knowledge:
   statement: 'Kristin and Brandon secure enough evidence to expose the conspiracy, but sending it now would reveal their position and seal the detention sectors.'
   earn_when: "checks, secures, or copies the copied files"
   action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer", "examine", "analyze", "eject", "monitor"]
+  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer", "examine", "analyze", "eject", "monitor", "take", "retrieve", "get", "grab", "pick up", "pull up", "use", "access", "view", "look at", "load", "plug in", "bring up", "show"]
   - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence", "JANUS evidence", "JANUS files", "copied JANUS files", "portable drive", "JANUS records", "copied JANUS records", "development records", "JANUS development records", "USB drive", "my USB drive", "USB drive transfer", "USB drive's"]
   entity_ids: []
   aliases:
