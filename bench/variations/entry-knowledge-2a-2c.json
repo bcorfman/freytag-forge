@@ -1,0 +1,39 @@
+{
+ "name": "entry-knowledge-2a-2c",
+ "story_package": "data/stories/continuity-initiative",
+ "entry_state": "thorough",
+ "continuity_judge": false,
+ "fact_tracking_judge": false,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "system_prompt": {
+  "constant_rules_in_system": true,
+  "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+ },
+ "scripts": {
+  "2A": [
+   {
+    "name": "hideout-opening",
+    "inputs": [
+     "Search Brandon's servers for leaked Continuity Initiative files.",
+     "Pull the facility's cooling-water readings off the servers.",
+     "Study the facility entrance on Brandon's maps.",
+     "Ask Brandon what the plan is."
+    ]
+   }
+  ],
+  "2C": [
+   {
+    "name": "command-levels-opening",
+    "inputs": [
+     "Study the security activity on the command levels.",
+     "Ask Brandon what Rebecca wants.",
+     "Examine the upper command corridors.",
+     "Ask Brandon about Michelle's message."
+    ]
+   }
+  ]
+ }
+}
