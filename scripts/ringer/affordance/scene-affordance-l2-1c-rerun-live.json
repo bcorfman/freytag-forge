@@ -1,0 +1,52 @@
+{
+ "run_name": "freytag-affordance-live",
+ "workdir": "/home/bcorfman/dev/ringer-work/affordance-live",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "l2-1a1b1c-rerun1",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 6000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted L2 @blind-player test on staging over scenes 1A, 1B and 1C in one continuous session, 3 replicate(s) in parallel, against staging sha 022a0f2 (PR 576: processing-numbers gap and 1C.2 plot addition). Reply with the single word: ready.",
+   "check": "bash -c 'bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C && rm -rf /home/bcorfman/dev/ringer-work/affordance-live-rerun1 && cp -r /home/bcorfman/dev/ringer-work/affordance-live-all /home/bcorfman/dev/ringer-work/affordance-live-rerun1'",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/affordance-live-rerun1/e2e-blind-player.json"
+   ],
+   "verified": "rerun 1: 3 continuous replicates over 1A, 1B and 1C, output saved aside."
+  },
+  {
+   "key": "l2-1a1b1c-rerun2",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 6000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted L2 @blind-player test on staging over scenes 1A, 1B and 1C in one continuous session, 3 replicate(s) in parallel, against staging sha 022a0f2 (PR 576: processing-numbers gap and 1C.2 plot addition). Reply with the single word: ready.",
+   "check": "bash -c 'bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C && rm -rf /home/bcorfman/dev/ringer-work/affordance-live-rerun2 && cp -r /home/bcorfman/dev/ringer-work/affordance-live-all /home/bcorfman/dev/ringer-work/affordance-live-rerun2'",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/affordance-live-rerun2/e2e-blind-player.json"
+   ],
+   "verified": "rerun 2: 3 continuous replicates over 1A, 1B and 1C, output saved aside."
+  },
+  {
+   "key": "l2-1a1b1c-rerun3",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 6000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted L2 @blind-player test on staging over scenes 1A, 1B and 1C in one continuous session, 3 replicate(s) in parallel, against staging sha 022a0f2 (PR 576: processing-numbers gap and 1C.2 plot addition). Reply with the single word: ready.",
+   "check": "bash -c 'bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C && rm -rf /home/bcorfman/dev/ringer-work/affordance-live-rerun3 && cp -r /home/bcorfman/dev/ringer-work/affordance-live-all /home/bcorfman/dev/ringer-work/affordance-live-rerun3'",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/affordance-live-rerun3/e2e-blind-player.json"
+   ],
+   "verified": "rerun 3: 3 continuous replicates over 1A, 1B and 1C, output saved aside."
+  }
+ ]
+}
