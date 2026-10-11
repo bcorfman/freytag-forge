@@ -1,0 +1,21 @@
+{
+ "run_name": "design-review-step2-smoke",
+ "workdir": "/home/bcorfman/dev/ringer-work/design-review-step2-smoke",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 1800,
+   "check_timeout_s": 120,
+   "spec": "You are a one-task Ringer probe worker running a live smoke test. Never modify any file in the repo and never commit. Run exactly this command from /home/bcorfman/dev/freytag-forge and let it finish (up to 20 minutes): bash -c 'source .env && cd frontend && E2E_BLIND_SCENE=1A E2E_BLIND_REPLICATES=3 npm run test:e2e -- --grep @blind-player' . Save the full raw output to /home/bcorfman/dev/ringer-work/design-review-step2-smoke/output.txt. Then run: /home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/design-review-step2/check_smoke.py /home/bcorfman/dev/freytag-forge and append its output to the same file. Do not hide failures; report what happened.",
+   "check": "bash -c 'cd /home/bcorfman/dev/freytag-forge && .venv/bin/python scripts/ringer/design-review-step2/check_smoke.py /home/bcorfman/dev/freytag-forge'",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/design-review-step2-smoke/output.txt"
+   ],
+   "verified": "live staging turns carry attempt bundles with causes"
+  }
+ ]
+}

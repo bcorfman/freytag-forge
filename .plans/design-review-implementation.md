@@ -1,10 +1,10 @@
 # Design review: implementation plan
 
-Status (2026-10-11): Step 1 merged (PR #592). Step 2 code done (bundle, engine, gated web exposure, blind-player.js), PR open; live smoke still open (needs the PR merged and staging redeployed); Steps 3-10 not started. Source: [chatgpt-design-review-answer.md](chatgpt-design-review-answer.md) (reviewed at `45a35cc3`, 10-step sequence). This plan turns that sequence into Ringer-sized tasks with gates. Update this file after each step is completed and tested (commit, what the check showed, what is untested), and refresh "Resume here".
+Status (2026-10-11): Step 1 merged (PR #592). Step 2 merged (PR #593) with a partial live smoke; a rejection and a forced or earned exit are still unobserved live; Steps 3-10 not started. Source: [chatgpt-design-review-answer.md](chatgpt-design-review-answer.md) (reviewed at `45a35cc3`, 10-step sequence). This plan turns that sequence into Ringer-sized tasks with gates. Update this file after each step is completed and tested (commit, what the check showed, what is untested), and refresh "Resume here".
 
 ## Resume here
 
-Finish Step 2: after the Step 2 PR merges and the `main` staging deploy succeeds, run the live smoke (one success, one rejection, one short forced continuation), needs Brandon's go since it is billed. Then open the Step 2 PR. Branch per step, one PR per step, merge commit only on Brandon's per-PR instruction, delete the branch after green CI.
+Step 2 leftovers: observe a rejected turn and a forced or earned exit live (a blind-player 1A run gave only timer exits). Then start Step 3 (one success, one rejection, one short forced continuation), needs Brandon's go since it is billed. Then open the Step 2 PR. Branch per step, one PR per step, merge commit only on Brandon's per-PR instruction, delete the branch after green CI.
 
 ## Ground rules (from AGENTS.md and memory)
 
@@ -126,3 +126,8 @@ Deterministic replay on every affected change; targeted live arms when a model b
 - Ringer run `design-review-step2c` (PASS, 197 s, 1 attempt). `turnRecord` carries `attempt_bundle`; `collectBundles` and `bundlesCategory` write a `blind-player-bundles` report beside the untouched prompts report; `analyseRun` takes `exit_cause` from the bundle (earned=play, forced, timer) with the old turn-count rule as fallback, and adds `exit_transition_cause`, `bundle_rejected_turns`, `forced_exit_rate`. `helpers.js` submitTurn attaches `error.payload` and `error.status` to a non-ok error; the spec reads the bundle from it on a 409.
 - Frontend node tests 85 pass locally. `error.payload` has no unit test (needs Playwright).
 - Untested: live smoke (one success, one rejection, one short forced continuation). Hosted staging serves main, so this waits for the merge and SHA-bound staging deploy.
+
+### Step 2 live smoke (2026-10-11, staging at 806c5174)
+- Ringer run `design-review-step2-smoke`: blind-player scene 1A, 3 replicates, PASS (134 s). `scripts/ringer/design-review-step2/check_smoke.py` passed: 24 of 24 turns carried a bundle with a narration stage.
+- Outcomes: 21 committed with cause `none`, 3 committed with cause `timer`; all three replicates exited by `timer`. No rejection, no `forced`, no `earned` exit occurred, so those paths are verified only by the replay tests, not live.
+- Not shown: the main report's `exit_cause` also read `timer` for all three, as expected from the bundle. The earlier mislabel (late earned exit as timer) cannot be seen live until an earned exit happens after the handoff turn.
