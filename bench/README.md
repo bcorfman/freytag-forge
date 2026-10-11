@@ -175,6 +175,7 @@ For each criterion, `yes` means the defect is present. Results appear as a
 `beat_delivery` is `details` for beat noun phrases or `prose` for the authored beat paragraph. `rules` replaces the normal rules block, while the runtime still supplies turn-specific candidate and handoff rules. `include_output_example: false` omits the block; `true` or omission uses today's default. A string `output_example` supplies the block contents verbatim and implies inclusion, even if the boolean is false. Non-string values are rejected. `story_package` may be any package path accepted by `load_story_package`; the live judge uses the same scene-local canon shape for arbitrary packages, while the archived hosted fixtures remain the continuity-initiative baseline.
 
 `entry_state` is optional and accepts `"bare"` (the default) or `"thorough"`. Bare starts directly at the requested scene with its entry fact. Thorough uses the persona harness's deterministic thorough player to reach that scene before live narration begins; the offline seeding makes no narration request. Each run's `entry_state` record includes `committed_knowledge_count` (the knowledge the narrator is shown at entry), `earned_knowledge_count` (the player-visible knowledge already earned), and `seeded_by`: `none` for bare and `thorough` for seeded runs.
+`entry_facts` is optional and lists world fact ids to assert at scene entry in either mode.
 
 ## Item facts
 

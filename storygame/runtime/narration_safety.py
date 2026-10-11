@@ -151,7 +151,14 @@ class NarrationSafetyValidator:
             if frame.scene_id == candidate_state.current_scene_id
         )
         authored_scene_text = f"{scene_frame.situation} {projected_beat_text}"
+        authored_complication = (
+            self._normalize(state.last_turn_delivery.complication_text)
+            if state.last_turn_delivery.complication_verbatim and state.last_turn_delivery.complication_text
+            else None
+        )
         for segment in segments:
+            if authored_complication and self._normalize(segment.text) == authored_complication:
+                continue
             grounding = set(segment.grounding_ids)
             unknown = grounding - set(indexes.by_id)
             if unknown:

@@ -286,9 +286,11 @@ An old service schematic marks one dry maintenance ascent joining the drainage s
 
 ### Scene 1C.2 — Proof of the Captives
 
-**Details:** observation shaft; sedated prisoners; processing area; identification numbers; missing-person reports; woman resembling Michelle
+**Details:** observation shaft; sedated prisoners; processing area; identification numbers; missing-person reports; woman resembling Michelle; chance to copy the prisoner numbers
 
 From an observation shaft, Kristin sees rows of sedated prisoners being moved through a processing area. Their identification numbers correspond to missing-person reports stored in Michelle’s files.
+
+Kristin can copy the full set of prisoner numbers from the processing line to support her account, but the prisoners are already being moved out of view.
 
 She briefly sees a woman resembling Michelle among a group being transferred, but the view is obscured before she can confirm her identity.
 

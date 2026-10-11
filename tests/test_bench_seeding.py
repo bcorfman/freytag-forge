@@ -5,6 +5,7 @@ import pytest
 
 import bench.core as core
 import storygame.runtime.cloudflare as cloudflare
+from storygame.runtime.facts import Fact
 from storygame.story_package.loader import load_story_package
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,13 +14,15 @@ STORY_PACKAGE = load_story_package(PACKAGE)
 VARIATION_PATH = ROOT / "bench" / "variations" / "seeding-test.json"
 
 
-def _variation(entry_state: str | None = None) -> dict[str, object]:
+def _variation(entry_state: str | None = None, entry_facts: list[str] | None = None) -> dict[str, object]:
     raw: dict[str, object] = {
         "name": "seeding-test",
         "story_package": str(PACKAGE),
     }
     if entry_state is not None:
         raw["entry_state"] = entry_state
+    if entry_facts is not None:
+        raw["entry_facts"] = entry_facts
     return core.resolve_variation(raw, VARIATION_PATH)
 
 
@@ -115,3 +118,24 @@ def test_missing_entry_state_keeps_bare_behavior() -> None:
     assert seeded.turn_index == expected.turn_index == 0
     assert seeded.facts == expected.facts
     assert core.entry_state(seeded)["seeded_by"] == "bare"
+
+
+@pytest.mark.parametrize("entry_state", [None, "thorough"])
+def test_entry_facts_are_asserted_for_bare_and_thorough_seeding(entry_state: str | None) -> None:
+    fact_id = "evidence_gap_processing_numbers"
+    _, state = core.seeded_state_for_scene(_variation(entry_state, [fact_id]), "3C")
+
+    assert Fact(predicate=fact_id, subject="story", value="true") in state.facts.asserted
+
+
+def test_unknown_entry_fact_is_rejected() -> None:
+    with pytest.raises(ValueError, match="unknown-entry-fact"):
+        _variation(entry_facts=["unknown-entry-fact"])
+
+
+def test_missing_entry_facts_keeps_bare_behavior() -> None:
+    variation = _variation()
+    _, seeded = core.seeded_state_for_scene(variation, "3B")
+    _, expected = core.package_and_state(variation, "3B")
+
+    assert seeded.facts == expected.facts

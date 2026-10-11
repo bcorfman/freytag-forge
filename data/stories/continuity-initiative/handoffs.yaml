@@ -78,7 +78,9 @@ deliveries:
   - [sedated prisoners, captives are alive, prisoners alive, living prisoners, prisoners are alive, living captives]
   fallback_text: >-
     From the observation shaft, Kristin sees sedated prisoners moving through the processing area. The captives are alive,
-    even if the view is too brief to confirm whether Michelle is among them.
+    even if the view is too brief to confirm whether Michelle is among them. Time runs out before Kristin can copy the full set of prisoner numbers from the processing line.
+  costs:
+  - {op: assert, fact_id: evidence_gap_processing_numbers, value: true}
   cue_text: The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.
 - fact_id: national_detention_network_known
   scene_id: 1C
@@ -121,9 +123,10 @@ deliveries:
   - [helped write JANUS, wrote the JANUS software, helped develop the AI, helped build JANUS, created the JANUS system, wrote part of JANUS]
   costs:
   - {op: retract, fact_id: trust_brandon, value: true}
+  - {op: assert, fact_id: evidence_gap_development_record, value: true}
   fallback_text: >-
     Brandon admits that he helped write JANUS, the software that selected people for detention. His confession confirms
-    that he helped develop the AI before learning what it would become.
+    that he helped develop the AI before learning what it would become. Time runs out before Kristin can copy the development record bearing Brandon's name.
   cue_text: Brandon waits beside the development records, ready to answer a question.
 - fact_id: brandon_claimed_reform_motive
   scene_id: 2B
@@ -260,7 +263,9 @@ deliveries:
   - [detention locations, every detention site, locations of every detention site, detention-site locations, the prison sites, all detention facilities]
   fallback_text: >-
     Rebecca offers the locations of every detention site in exchange for a chance to save herself. Her location data
-    gives Kristin and Michelle the detention locations they need for the broadcast.
+    gives Kristin and Michelle the detention locations they need for the broadcast. Time runs out before Kristin can copy Rebecca's marked site list.
+  costs:
+  - {op: assert, fact_id: evidence_gap_marked_site_list, value: true}
   cue_text: A marked site list lies beside Rebecca's national network controls.
 - fact_id: brandon_confession_available
   scene_id: 3B

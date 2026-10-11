@@ -167,7 +167,8 @@ pressure texts. The first entry whose `when` predicates match the current facts
 wins. The last entry must have no `when`; it is the default. A realization text
 creates pressure that is true and visible now. It must never carry unearned
 knowledge or name a hidden location. A bridge may narrate only pressure facts
-that its activation requires.
+that its activation requires. Set `verbatim: true` when the authored text must
+be emitted directly to the player rather than reproduced by the narrator.
 
 `storylet-routes.yaml` is the executable companion to `storylets.md`. It
 declares scene-local activation predicates, exact fact operations for each
