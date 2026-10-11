@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-2c-copy-step",
+  "workdir": "/home/bcorfman/dev/ringer-work/2c-copy-step",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2c-copy-step",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown (run `uv run ruff format` on Python files you change; if uv is unavailable use the repo .venv python with PYTHONPATH=.). You own only data/stories/continuity-initiative/knowledge.yaml, data/stories/continuity-initiative/handoffs.yaml and tests/test_candidate_matcher.py. Edit nothing else. You change no engine code.\n\nBackground: in scene 2C, blind players typed 'Retrieve my copied JANUS files.', 'Take the copied files.' and 'Use my copied files on the purge-control console.' and none matched knowledge item k_sl_2c_c_r1, because its first action_evidence group (the verbs) lacks those verbs. The matcher (storygame/runtime/candidate_matcher.py) needs one phrase from each group in the command; it expands authored phrases only inside fixed synonym classes; it returns nothing when two candidates match.\n\nChange 1, knowledge.yaml, item k_sl_2c_c_r1 only: in `action_evidence`, replace the FIRST group (the verbs) with exactly this list (all existing verbs kept, then new ones appended): read, check, search, study, open, inspect, review, secure, copy, finish copying, save, verify, back up, download, transfer, examine, analyze, eject, monitor, take, retrieve, get, grab, pick up, pull up, use, access, view, look at, load, plug in, bring up, show. Keep the SECOND group (objects) byte-identical. Do not change k_sl_2c_c_r2 or any other item or any other field.\n\nChange 2, handoffs.yaml, the entry with fact_id evidence_ready_to_transmit: replace its `cue_text` value with exactly: The copied files are close at hand. Kristin can check the copied files. Sending them could expose her and Brandon.  (a plain string; keep the file's existing style for long strings; no other field changes).\n\nChange 3, tests/test_candidate_matcher.py: add tests in the style of the existing ones (the file already loads PACKAGE and builds RevealCandidate lists for scene 1A; read it first and copy its approach). Scene 2C, with the package's 2C candidates offered (you may build the candidate tuple from the package knowledge items k_sl_2c_c_r1, k_sl_2c_c_r2 and the other 2C items whose requires you ignore for the matcher test; use the same helper the 1A tests use). Parametrised MATCH cases, each must uniquely match k_sl_2c_c_r1: 'Retrieve my copied JANUS files.', 'Take the copied files.', 'Use my copied files on the purge-control console.', 'Copy Michelle's prisoner status records to my USB drive.', 'Take the evidence.', 'Show the proof.'. Case that must uniquely match k_sl_2c_c_r2: 'Send the copied files.' Cases that must match neither k_sl_2c_c_r1 nor k_sl_2c_c_r2: 'Open the purge-control console.', 'Check Michelle's transfer order.'. One test that documents the tie: 'Ask Brandon to retrieve the copied files.' matches both c_r1 and c_r2, so uniquely_matched_candidate returns None. If any case behaves differently from this description, do not weaken it: report the case and the actual result in ./notes.md.\n\nRun: `TMPDIR=/tmp uv run pytest -q tests/test_candidate_matcher.py tests/test_markdown_story_package.py`. Write ./notes.md with the lines changed, the test results and any case that behaved differently.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2c-copy-step-check.sh",
+      "verified": "c_r1 verbs widened exactly as specified, c_r2 and object groups untouched, cue replaced, matcher tests pass, suite and ruff pass"
+    }
+  ]
+}
