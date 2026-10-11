@@ -1695,7 +1695,7 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R1}
   relevance: {entity_ids: [], priority: 0}
   must_convey:
-  - [coded message, message, Michelle's coded note]
+  - [message, Michelle's coded note]
   - [maintenance access route, maintenance path, local access route, route to Michelle]
   - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office]
   - [open the detention cells, open the cells, rescue the prisoners, release the prisoners]
@@ -1721,7 +1721,7 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R2}
   relevance: {entity_ids: [], priority: 0}
   must_convey:
-  - [Michelle's maintenance code, maintenance code, coded message, Michelle's code]
+  - [Michelle's maintenance code, maintenance code, Michelle's code]
   - [maintenance code route, maintenance path, local access route, coded path]
   - [Rebecca's office, secured office, Rebecca's secured office, Rebecca's locked office]
   - [open the detention cells, rescue the captives, release the prisoners, open the cells]
@@ -2682,7 +2682,7 @@ knowledge:
 - id: k_bridge_2b_archive_crisis
   statement: "The archive crisis is understood: the evidence, betrayal, and Michelle's resistance converge here."
   entity_ids: [kristin, michelle, brandon, janus_archive]
-  aliases: [archive crisis, Michelle's resistance]
+  aliases: [Michelle's resistance]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2B]
   establishes: [{op: assert, fact_id: archive_crisis_understood, value: true}]
@@ -2819,7 +2819,7 @@ knowledge:
 - id: k_scene_3c_entry
   statement: Exposure and escape are both immediate under the collapsing operation.
   entity_ids: [kristin, facility_escape]
-  aliases: [escape route, exposure]
+  aliases: [exposure]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3C]
   establishes: [{op: assert, fact_id: scene_3c_entry_known, value: true}]

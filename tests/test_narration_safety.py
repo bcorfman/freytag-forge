@@ -143,6 +143,54 @@ def test_scene_2c_accepts_encrypted_message_wording_before_reveal(text: str) -> 
 
 
 @pytest.mark.parametrize(
+    ("scene", "command", "text"),
+    [
+        (
+            "2B",
+            "Read the maintenance reports.",
+            "Kristin opens a coded message on the terminal, but the screen shows only static.",
+        ),
+        ("2B", "Search the archive.", "The archive crisis presses on Kristin as the lights flicker."),
+        ("1B", "Search the park.", "Kristin looks for an escape route past the checkpoint."),
+        (
+            "2C",
+            "Confront Rebecca about the broadcast controls.",
+            "Rebecca stands behind Rebecca's desk and does not answer.",
+        ),
+    ],
+)
+def test_ordinary_scene_wording_is_not_a_leak(scene: str, command: str, text: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = scene
+    state.phase = next(
+        scene_data.metadata.freytag_phase for scene_data in PACKAGE.scenes if scene_data.metadata.scene_id == scene
+    )
+    state._assert_scene_entry_fact(scene)
+
+    def provider(_player_input: str) -> dict[str, object]:
+        return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
+
+    proposal = RuntimeEngine(state, provider).turn(command)
+    assert proposal.segments[0].text == text
+
+
+def test_scene_1b_rejects_unearned_person_name() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "1B"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "1B")
+    state._assert_scene_entry_fact("1B")
+
+    def provider(_player_input: str) -> dict[str, object]:
+        return {
+            "segments": [{"kind": "narration", "text": "Rebecca waits beside the door."}],
+            "selected_knowledge_ids": [],
+        }
+
+    with pytest.raises(ProposalValidationError):
+        RuntimeEngine(state, provider).turn("Search the park.")
+
+
+@pytest.mark.parametrize(
     "text",
     ["Kristin follows the maintenance access route into the holding block."],
 )
