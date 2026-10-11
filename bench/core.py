@@ -501,6 +501,18 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
     item_facts = variation.get("_item_facts")
     if item_facts is None and "item_facts" in variation:
         item_facts = validate_item_facts(variation["item_facts"])
+    provider = _provider_with_item_facts(state, variation, item_facts)
+    if os.environ.get("FREYTAG_CONTRACT_SHADOW") == "1" and provider.semantic_ask is None:
+        # The hosted game runs the semantic reveal fallback; the shadow compares against it.
+        from storygame.runtime.jev import JevClient
+
+        provider.semantic_ask = JevClient.from_environment().ask
+    return provider
+
+
+def _provider_with_item_facts(
+    state: RuntimeState, variation: dict[str, Any], item_facts: Any
+) -> CloudflareTurnProvider:
     if item_facts is not None:
         mode, seed, state_axes = item_facts
         seed_issues: list[str] = []
