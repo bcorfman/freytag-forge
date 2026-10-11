@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-2a-supervisor-pointer",
+  "workdir": "/home/bcorfman/dev/ringer-work/2a-supervisor-pointer",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2a-supervisor-pointer",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown (run `uv run ruff format` on Python files you change; if uv is unavailable use the repo .venv python with PYTHONPATH=.). You own only data/stories/continuity-initiative/knowledge.yaml and tests/test_candidate_matcher.py. Edit nothing else. You change no engine code.\n\nBackground: in scene 2A a blind player, told by the perimeter reveal that 'A supervisor questions why their inspection was not scheduled.', answered by presenting inspection forms to the supervisor. That does not match knowledge item k_sl_2a_c_r1 (it needs a phrase like 'to the supervisor' AND a cooling, ventilation, warning or 'unscheduled inspection' phrase), the narrator invented doors, and the scene ended by timer. The fix is to end the perimeter reveal's delivery text with one pointer sentence.\n\nChange 1, knowledge.yaml, item k_sl_2a_e_r1 only: replace its `delivery_text` with exactly this text (a plain one-line string in the file's existing style): Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks. A supervisor questions why their inspection was not scheduled. Kristin can explain the unscheduled inspection to the supervisor.  Change no other field of that item and no other item.\n\nChange 2, tests/test_candidate_matcher.py: add tests in the style of the existing ones (copy how the 2C tests build candidates from PACKAGE; read the file first). Build the scene-2A candidates (items whose available_in_scenes contains '2A' and that have action_evidence). MATCH cases that must uniquely match k_sl_2a_c_r1: 'Explain the unscheduled inspection to the supervisor.' and 'Warn the supervisor about the cooling-water fault.'. Cases that must NOT match k_sl_2a_c_r1 or k_sl_2a_c_r2: 'Present my inspection forms to the supervisor.' and 'Follow the supervisor through the nearby door.'. Add one test that the delivery_text of k_sl_2a_e_r1 ends with 'Kristin can explain the unscheduled inspection to the supervisor.'. If any case behaves differently, do not weaken it: report the case and the actual result in ./notes.md.\n\nRun: `TMPDIR=/tmp uv run pytest -q tests/test_candidate_matcher.py tests/test_markdown_story_package.py`. Write ./notes.md with the lines changed and the results.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2a-supervisor-pointer-check.sh",
+      "verified": "k_sl_2a_e_r1 delivery text ends with the supervisor pointer, nothing else changed, matcher tests pass, suite and ruff pass"
+    }
+  ]
+}
