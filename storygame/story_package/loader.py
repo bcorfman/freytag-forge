@@ -329,6 +329,7 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog, world: WorldSource) ->
     audience_to_known_terms: dict[str, list[str]] = {}
     prerequisite_dependents: dict[str, list[str]] = {}
     term_to_knowledge: dict[str, list[str]] = {}
+    leak_term_to_knowledge: dict[str, list[str]] = {}
     for item in catalog.knowledge:
         if item.source.kind == "storylet_realization":
             source_key = f"storylet:{item.source.storylet_id}:{item.source.realization_id}"
@@ -345,9 +346,17 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog, world: WorldSource) ->
             for form in term_lookup_forms(alias):
                 alias_to_knowledge.setdefault(form, []).append(item.id)
                 term_to_knowledge.setdefault(form, []).append(item.id)
+                if item.leak_terms is None:
+                    leak_term_to_knowledge.setdefault(form, []).append(item.id)
         for phrasing in (term for group in item.must_convey for term in group if len(term.split()) > 1):
             for form in term_lookup_forms(phrasing):
                 term_to_knowledge.setdefault(form, []).append(item.id)
+                if item.leak_terms is None:
+                    leak_term_to_knowledge.setdefault(form, []).append(item.id)
+        if item.leak_terms is not None:
+            for leak_term in item.leak_terms:
+                for form in term_lookup_forms(leak_term):
+                    leak_term_to_knowledge.setdefault(form, []).append(item.id)
         audience_key = item.audience.kind + ":" + ",".join(item.audience.character_ids)
         audience_to_known_terms.setdefault(audience_key, []).extend(
             (
@@ -402,6 +411,7 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog, world: WorldSource) ->
         prerequisite_dependents=frozen(prerequisite_dependents),
         entity_alias_to_entities=frozen_term_index(entity_alias_to_entities),
         term_to_knowledge=frozen_term_index(term_to_knowledge),
+        leak_term_to_knowledge=frozen_term_index(leak_term_to_knowledge),
         protected_terms=tuple(sorted(protected_terms)),
     )
 
@@ -605,7 +615,7 @@ def _validate_narration_term_traps(package: StoryPackage) -> None:
         term.casefold()
         for terms in indexes.audience_to_known_terms.values()
         for term in terms
-        if len(term.split()) > 1 and term.casefold() in indexes.term_to_knowledge
+        if len(term.split()) > 1 and term.casefold() in indexes.leak_term_to_knowledge
     }
     projector = KnowledgeProjector()
     for scene in package.scenes:
@@ -629,7 +639,7 @@ def _validate_narration_term_traps(package: StoryPackage) -> None:
             normalized_term = " ".join(term.split())
             if not re.search(rf"(?<!\w){re.escape(normalized_term)}(?!\w)", authored_text):
                 continue
-            owners = tuple(indexes.term_to_knowledge.get(term, ()))
+            owners = tuple(indexes.leak_term_to_knowledge.get(term, ()))
             if set(owners) & committed:
                 continue
             raise StoryPackageError(
