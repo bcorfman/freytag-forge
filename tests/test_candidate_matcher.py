@@ -229,6 +229,29 @@ def test_scene_2c_c_r1_matches_natural_player_actions(player_input: str) -> None
     assert handoff.candidate.id == "k_sl_2c_c_r1"
 
 
+@pytest.mark.parametrize(
+    ("player_input",),
+    [
+        ("Check my copied JANUS files.",),
+        ("Open the JANUS files.",),
+        ("Review the copied files.",),
+        ("Inspect the JANUS evidence.",),
+        ("Read my copied JANUS files.",),
+    ],
+)
+def test_scene_2c_c_r1_matches_entry_text_actions(player_input: str) -> None:
+    handoff = uniquely_matched_authored_handoff(player_input, SCENE_2C_CANDIDATES)
+
+    assert handoff is not None
+    assert handoff.candidate.id == "k_sl_2c_c_r1"
+
+
+def test_scene_2c_entry_text_hands_off_the_copied_files() -> None:
+    scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "2C")
+
+    assert scene.metadata.entry_text.endswith("Kristin carried the copied JANUS files. She could check them now.\n\n")
+
+
 def test_scene_2c_c_r2_matches_sending_the_copied_files() -> None:
     handoff = uniquely_matched_authored_handoff("Send the copied files.", SCENE_2C_CANDIDATES)
 

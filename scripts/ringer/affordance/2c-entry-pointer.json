@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-2c-entry-pointer",
+  "workdir": "/home/bcorfman/dev/ringer-work/2c-entry-pointer",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2c-entry-pointer",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown (run `uv run ruff format` on Python files you change; if uv is unavailable use the repo .venv python with PYTHONPATH=.). You own only data/stories/continuity-initiative/plot.md, tests/test_candidate_matcher.py and tests/test_narration_safety.py, plus any one test file that pins the old 2C entry text. Edit nothing else (do NOT edit world.yaml). You change no engine code.\n\nBackground: players who go to Michelle first in scene 2C never take the copy step (knowledge item k_sl_2c_c_r1) and the scene ends by timer. The opening text is the one place every player reads. The fix is two appended sentences.\n\nChange 1, plot.md, scene 2C front matter (scene_id: 2C), the `entry_text` line only: append, before the closing `\\n\\n\"`, exactly this text: ` Kristin carried the copied JANUS files. She could check them now.` The line must then read: \"The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count. Kristin carried the copied JANUS files. She could check them now.\\n\\n\" . Change no other line of plot.md (keep `item_ids: []`; add no item and no placement).\n\nChange 2, tests. In tests/test_candidate_matcher.py add a parametrised test in the style of the existing scene-2C tests (SCENE_2C_CANDIDATES): each of these commands must uniquely match k_sl_2c_c_r1 through uniquely_matched_authored_handoff: 'Check my copied JANUS files.', 'Open the JANUS files.', 'Review the copied files.', 'Inspect the JANUS evidence.', 'Read my copied JANUS files.'. Add a test that the 2C scene's entry_text (find it on the package scene metadata, scene_id '2C') ends with 'Kristin carried the copied JANUS files. She could check them now.\\n\\n'. In tests/test_narration_safety.py add an ACCEPT case in the style of the existing test_ordinary_scene_wording_is_not_a_leak: scene '2C', facts janus_evidence true, command 'Look around.', narration 'Kristin carried the copied JANUS files. She could check them now.' (copy the state building the existing cases use). If any case behaves differently, do not weaken it: report the case and the result in ./notes.md.\n\nRun: `TMPDIR=/tmp uv run pytest -q tests/test_candidate_matcher.py tests/test_narration_safety.py tests/test_markdown_story_package.py`. Write ./notes.md with the lines changed and results.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2c-entry-pointer-check.sh",
+      "verified": "2C entry_text gains exactly the two sentences, nothing else in plot.md or world.yaml changes, matcher and safety tests pass, suite and ruff pass"
+    }
+  ]
+}

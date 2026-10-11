@@ -527,7 +527,7 @@ objective: Survive the purge clock and choose a combined mission
 participant_ids: [kristin, brandon, michelle, rebecca]
 companions: [brandon]
 item_ids: []
-entry_text: "The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count.\n\n"
+entry_text: "The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count. Kristin carried the copied JANUS files. She could check them now.\n\n"
 transition_ids: [t_2c_3a]
 bridge_text:
   t_2c_3a: >-
