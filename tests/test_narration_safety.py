@@ -229,6 +229,24 @@ def test_ordinary_scene_wording_is_not_a_leak(scene: str, command: str, text: st
     assert proposal.segments[0].text == text
 
 
+def test_scene_2c_accepts_copied_janus_files_when_known() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2C"
+    state.phase = next(
+        scene_data.metadata.freytag_phase for scene_data in PACKAGE.scenes if scene_data.metadata.scene_id == "2C"
+    )
+    state._assert_scene_entry_fact("2C")
+    state.facts.assert_fact(Fact(predicate="janus_evidence", subject="story", value="true"))
+    text = "Kristin carried the copied JANUS files. She could check them now."
+
+    proposal = RuntimeEngine(
+        state,
+        lambda _: {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []},
+    ).turn("Look around.")
+
+    assert proposal.segments[0].text == text
+
+
 def test_scene_2a_still_rejects_guard_leak_terms() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.current_scene_id = "2A"
