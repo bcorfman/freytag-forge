@@ -1,0 +1,21 @@
+{
+ "run_name": "design-review-step2-probe",
+ "workdir": "/home/bcorfman/dev/ringer-work/design-review-step2-probe",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "probe",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 1500,
+   "check_timeout_s": 1500,
+   "spec": "You are a one-task Ringer probe worker. Never modify any file in the repo and never commit. Write the single line 'probe delegated to the check' to /home/bcorfman/dev/ringer-work/design-review-step2-probe/note.txt and stop. The check itself runs the live probe script scripts/ringer/design-review-step2/probe_live.py (read it if you wish) and decides pass or fail. Do not run the script yourself.",
+   "check": "bash -c 'cd /home/bcorfman/dev/freytag-forge && source .env && rm -f /home/bcorfman/dev/ringer-work/design-review-step2-probe/report.json && .venv/bin/python scripts/ringer/design-review-step2/probe_live.py \"$E2E_API_BASE_URL\" \"$FREYTAG_TEST_CLOCK_TOKEN\" /home/bcorfman/dev/ringer-work/design-review-step2-probe/report.json 2>&1 | tee /home/bcorfman/dev/ringer-work/design-review-step2-probe/output.txt; exit ${PIPESTATUS[0]}'",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/design-review-step2-probe/note.txt"
+   ],
+   "verified": "live forced exit and rejection each carry a bundle"
+  }
+ ]
+}

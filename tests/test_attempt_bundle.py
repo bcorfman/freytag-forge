@@ -10,9 +10,10 @@ from storygame.runtime.attempt_bundle import AttemptBundle
 from storygame.runtime.cloudflare import NarrationProviderError
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
-from storygame.runtime.state import RuntimeState
+from storygame.runtime.state import RuntimeSnapshot, RuntimeState, TurnRecord
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import ActivationRule, CanonicalRouteEvent, FactPredicate, RouteOperation
 from storygame.web_demo import create_demo_app
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -136,7 +137,7 @@ def test_late_earned_exit_is_recorded_as_earned() -> None:
     assert forced_engine.last_attempt.transition_cause == "forced"
 
 
-def test_deadline_backstop_exit_is_recorded_as_timer() -> None:
+def test_authored_exit_at_deadline_is_recorded_as_earned() -> None:
     state = _state()
     for predicate in (
         "continuity_initiative_known",
@@ -153,9 +154,111 @@ def test_deadline_backstop_exit_is_recorded_as_timer() -> None:
     engine.turn("Inspect the kitchen.")
 
     assert state.current_scene_id == "1B"
-    assert engine.last_attempt.transition_cause == "timer"
+    # The authored transition runs before the deadline backstop. This fixture
+    # satisfies that transition, so the observed branch is earned.
+    assert engine.last_attempt.transition_cause == "earned"
     assert engine.last_attempt.committed_delta.scene_from == "1A"
     assert engine.last_attempt.committed_delta.scene_to == "1B"
+
+
+def test_authored_transition_on_a_no_reveal_turn_is_earned() -> None:
+    state = _state()
+    for predicate in (
+        "drawer_gap_pointed_out",
+        "memory_card_recovered",
+        "continuity_initiative_known",
+        "michelle_lead_actionable",
+        "michelle_warning_known",
+        "patrol_return_pressure",
+    ):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+    state.turn_index = 8
+    state.scene_entered_at_turn = 0
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
+    assert state.turn_index - state.scene_entered_at_turn < window.handoff_after_turns
+    assert state.turn_index - state.scene_entered_at_turn >= window.min_turns
+
+    engine = RuntimeEngine(state, _provider("The room stays quiet."))
+
+    engine.turn("Search the kitchen.")
+
+    assert state.current_scene_id == "1B"
+    assert engine.last_attempt.transition_cause == "earned"
+    assert engine.last_attempt.selected_reveal.knowledge_ids == ()
+    assert engine.last_attempt.committed_delta.scene_from == "1A"
+    assert engine.last_attempt.committed_delta.scene_to == "1B"
+
+
+def test_deadline_backstop_then_exit_is_timer() -> None:
+    event = CanonicalRouteEvent(
+        id="resolution_1a_exit_fact",
+        scene_id="1A",
+        activation=ActivationRule(),
+        operations=(RouteOperation(op="assert", fact_id="deadline_exit_fact", value=True),),
+        realization_storylets=("never_realized",),
+        fallback_text="The deadline passes.",
+    )
+    transition = next(item for item in PACKAGE.pacing.transitions if item.id == "t_1a_1b").model_copy(
+        update={"triggers": (FactPredicate(fact_id="deadline_exit_fact", equals=True),)}
+    )
+    pacing = PACKAGE.pacing.model_copy(
+        update={
+            "transitions": tuple(
+                transition if item.id == transition.id else item for item in PACKAGE.pacing.transitions
+            )
+        }
+    )
+    routes = PACKAGE.storylet_routes.model_copy(
+        update={"resolution_events": (*PACKAGE.storylet_routes.resolution_events, event)}
+    )
+    package = PACKAGE.model_copy(update={"pacing": pacing, "storylet_routes": routes})
+    state = RuntimeState.bootstrap(package)
+    window = next(item for item in package.pacing.scenes if item.scene_id == "1A")
+    state.turn_index = window.handoff_after_turns - 1
+    state.turn_records = [TurnRecord(id=f"turn_{i}") for i in range(state.turn_index)]
+    engine = RuntimeEngine(state, _provider("The room stays quiet."))
+
+    engine.turn("Search the kitchen.")
+
+    assert state.current_scene_id == "1A"
+    assert state.turn_records[-1].deadline_event_ids == ("resolution_1a_exit_fact",)
+    engine.turn("Search the kitchen.")
+
+    assert state.current_scene_id == "1B"
+    assert engine.last_attempt.transition_cause == "timer"
+
+
+def test_turn_record_deadline_ids_round_trip_and_old_dict_loads() -> None:
+    state = _state()
+    state.turn_records.append(TurnRecord(id="turn_1", deadline_event_ids=("resolution_x",)))
+    restored = RuntimeSnapshot.model_validate_json(state.snapshot().model_dump_json())
+    state.restore_snapshot(restored)
+    assert state.turn_records[-1].deadline_event_ids == ("resolution_x",)
+    assert TurnRecord.model_validate({"id": "turn_old"}).deadline_event_ids == ()
+
+
+def test_deadline_history_does_not_leak_between_visits() -> None:
+    state = _state()
+    state.turn_index = 3
+    state.scene_entered_at_turn = 2
+    state.turn_records = [
+        TurnRecord(id="turn_1", deadline_event_ids=("resolution_old",)),
+        TurnRecord(id="turn_2"),
+        TurnRecord(id="turn_3", transition_id="t_1a_1b"),
+    ]
+    engine = RuntimeEngine(state, _provider("The room stays quiet."))
+
+    assert engine._deadline_transition_cause(state.snapshot()) == "earned"
+
+
+def test_deadline_history_longer_than_the_bound_degrades_to_earned() -> None:
+    state = _state()
+    state.turn_index = 25
+    state.scene_entered_at_turn = 0
+    state.turn_records = [TurnRecord(id=f"turn_{i}") for i in range(25)]
+    engine = RuntimeEngine(state, _provider("The room stays quiet."))
+
+    assert engine._deadline_transition_cause(state.snapshot()) == "earned"
 
 
 class _WebProvider:
