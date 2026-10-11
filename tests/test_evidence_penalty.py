@@ -269,7 +269,7 @@ def test_3c_no_gaps_keep_original_default_texts() -> None:
     assert collapse.realizations[-1].text == (
         "Water seeps under the outer doors. Charles's emergency deluge is becoming real."
     )
-    assert routes.realizations[-1].text == (
-        "Rising water closes a maintenance passage behind the fleeing captives. "
-        "The remaining routes are narrowing fast."
+    assert (
+        routes.realizations[-1].text
+        == "Rising water is closing routes through the facility. The remaining routes are narrowing fast."
     )

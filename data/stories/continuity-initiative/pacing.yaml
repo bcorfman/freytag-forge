@@ -170,13 +170,13 @@ events:
     - {fact_id: evidence_gap_marked_site_list, equals: true}
     verbatim: true
     text: >-
-      Rising water closes a maintenance passage behind the fleeing captives. On the broadcast, Michelle says, "Rebecca gave us the locations, but Kristin left without a copy of her marked site list."
+      Rising water is closing routes through the facility. On the broadcast, Michelle says, "Rebecca gave us the locations, but Kristin left without a copy of her marked site list."
   - when:
     - {fact_id: evidence_gap_copy_check, equals: true}
     verbatim: true
     text: >-
-      Rising water closes a maintenance passage behind the fleeing captives. On the broadcast, Michelle says, "Kristin had no time to check her copied evidence against the original files."
-  - text: Rising water closes a maintenance passage behind the fleeing captives. The remaining routes are narrowing fast.
+      Rising water is closing routes through the facility. On the broadcast, Michelle says, "Kristin had no time to check her copied evidence against the original files."
+  - text: Rising water is closing routes through the facility. The remaining routes are narrowing fast.
 scenes:
 - scene_id: 1A
   min_turns: 8

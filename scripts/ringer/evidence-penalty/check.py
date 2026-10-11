@@ -69,11 +69,11 @@ R = {
     "routes_collapse_3c": [
         (
             "evidence_gap_marked_site_list",
-            'Rising water closes a maintenance passage behind the fleeing captives. On the broadcast, Michelle says, "Rebecca gave us the locations, but Kristin left without a copy of her marked site list."',
+            'Rising water is closing routes through the facility. On the broadcast, Michelle says, "Rebecca gave us the locations, but Kristin left without a copy of her marked site list."',
         ),
         (
             "evidence_gap_copy_check",
-            'Rising water closes a maintenance passage behind the fleeing captives. On the broadcast, Michelle says, "Kristin had no time to check her copied evidence against the original files."',
+            'Rising water is closing routes through the facility. On the broadcast, Michelle says, "Kristin had no time to check her copied evidence against the original files."',
         ),
     ],
 }
