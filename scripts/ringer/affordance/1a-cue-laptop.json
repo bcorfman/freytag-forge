@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-1a-cue-laptop",
+  "workdir": "/home/bcorfman/dev/ringer-work/1a-cue-laptop",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "1a-cue-laptop",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/handoffs.yaml and, only if a test pins the old cue text, the one test file that does. Edit nothing else. You change no engine code.\n\nBackground: in scene 1A the delivery entry with fact_id continuity_initiative_known has a cue_text that ends with the sentence 'Kristin's laptop is in her truck outside.' That sentence points at a next step before the memory card is found and competes with the drawer. The card's own delivery text (knowledge item k_sl_1a_b_r0) already says 'Her laptop is in her truck outside.' after the card is found, so the pointer stays there.\n\nChange, handoffs.yaml, the entry with fact_id continuity_initiative_known only: replace its `cue_text` with exactly: Kristin's initials, KMS, are carved into a drawer of Michelle's workstation. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.  (the same text minus the final laptop sentence; keep the file's quoting style; change no other field or entry). Do not touch k_sl_1a_b_r0 or any fallback_text.\n\nRun `grep -rn \"laptop is in her truck\" tests storygame docs` and report every hit in ./notes.md. If a test asserts the old cue text, update only that assertion to the new text. Then run `TMPDIR=/tmp uv run pytest -q tests/test_markdown_story_package.py tests/test_candidate_matcher.py` (if uv is unavailable use the repo .venv python with PYTHONPATH=.) and write the result in ./notes.md.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/1a-cue-laptop-check.sh",
+      "verified": "1A pre-card cue loses the laptop sentence, nothing else changes, suite and ruff pass"
+    }
+  ]
+}
