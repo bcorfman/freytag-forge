@@ -1,0 +1,20 @@
+{
+  "run_name": "freytag-2c-encrypted-leak",
+  "workdir": "/home/bcorfman/dev/ringer-work/2c-encrypted-leak",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "2c-encrypted-leak",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml, tests/test_knowledge_projection.py and tests/test_narration_safety.py. Edit nothing else.\n\nProblem: in scene 2C the leak scan rejects narration that says 'encrypted message from Michelle' or 'Michelle's encrypted message' on a turn before the d_r1 reveal is earned (the reveal needs purge_clock_started, which fires at turn 3, and the story gate stays). Cause: those two multi-word phrases sit in the FIRST must_convey group of item k_sl_2c_d_r1 in knowledge.yaml, and every multi-word must_convey phrase becomes a leak term (storygame/story_package/loader.py builds term_to_knowledge from them). The group already contains the single word 'message', which satisfies it, so the two phrases are redundant for coverage.\n\nChange in knowledge.yaml only: in k_sl_2c_d_r1, in the first must_convey group `[Michelle's encrypted message, coded message, message, Michelle's coded note, encrypted message from Michelle]`, remove exactly `Michelle's encrypted message` and `encrypted message from Michelle`. Keep the rest of the group as is ('coded message' stays; it is a separate known issue). Do not touch statement, delivery_text, action_evidence, earn_when, requires, establishes, source, cue_text or any other item, and do not touch handoffs.yaml.\n\nTests: in tests/test_knowledge_projection.py, function test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone_talk, change the two assertions on \"michelle's encrypted message\" and \"encrypted message from michelle\" so each expects set() (no owners); keep the other assertions. Rename the function only if its name becomes false. In tests/test_narration_safety.py add a test using this approach: bootstrap RuntimeState from PACKAGE, set current_scene_id to '2C', set state.phase to the 2C scene's metadata.freytag_phase, call state._assert_scene_entry_fact('2C'), assert Fact(predicate=p, subject='story', value='true') for p in ('janus_evidence','evidence_ready_to_transmit') (not purge_clock_started), then run RuntimeEngine(state, provider).turn(\"Open Michelle's message.\") with a provider returning {\"segments\": [{\"kind\": \"narration\", \"text\": T}], \"selected_knowledge_ids\": []}. For T = 'Kristin opens the encrypted message from Michelle on her laptop.' and T = \"Kristin opens Michelle's encrypted message, but the screen shows only scrambled symbols.\" the turn must be accepted. Parametrize over both. Add one more parametrized case asserting that T = 'Kristin follows the maintenance access route into the holding block.' is rejected with ProposalValidationError (the reveal content stays protected before it is earned); if that exact sentence is accepted in the real engine, pick a sentence naming 'Rebecca's secured office' instead and record which in notes.md. Existing tests that pinned the removed terms may be updated; do not weaken any other test.\n\nRun: `TMPDIR=/tmp uv run pytest -q tests/test_knowledge_projection.py tests/test_narration_safety.py` (if uv is unavailable use the repo .venv python with PYTHONPATH=.). Write ./notes.md listing the exact lines changed and test results.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/2c-encrypted-leak-check.sh",
+      "verified": "d_r1 no longer owns the two encrypted-message terms; only that must_convey group changed; new acceptance test; suite and ruff pass"
+    }
+  ]
+}

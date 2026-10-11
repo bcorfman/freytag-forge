@@ -57,9 +57,9 @@ def test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone
         }
         & term_to_knowledge.keys()
     )
-    assert set(term_to_knowledge.get("michelle's encrypted message", ())) == {"k_sl_2c_d_r1"}
+    assert set(term_to_knowledge.get("michelle's encrypted message", ())) == set()
     assert set(term_to_knowledge.get("her encrypted message", ())) == set()
-    assert set(term_to_knowledge.get("encrypted message from michelle", ())) == {"k_sl_2c_d_r1"}
+    assert set(term_to_knowledge.get("encrypted message from michelle", ())) == set()
     assert set(term_to_knowledge.get("michelle's encrypted note", ())) == set()
     assert set(term_to_knowledge.get("coded message", ())) == {"k_sl_2c_d_r1", "k_sl_2c_d_r2"}
 

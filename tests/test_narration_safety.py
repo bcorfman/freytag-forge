@@ -120,6 +120,49 @@ def test_earned_memory_card_accepts_determiner_but_unearned_term_is_rejected() -
 
 
 @pytest.mark.parametrize(
+    "text",
+    [
+        "Kristin opens the encrypted message from Michelle on her laptop.",
+        "Kristin opens Michelle's encrypted message, but the screen shows only scrambled symbols.",
+    ],
+)
+def test_scene_2c_accepts_encrypted_message_wording_before_reveal(text: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2C"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2C")
+    state._assert_scene_entry_fact("2C")
+    for predicate in ("janus_evidence", "evidence_ready_to_transmit"):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+    assert Fact(predicate="purge_clock_started", subject="story", value="true") not in state.facts.asserted
+
+    def provider(_player_input: str) -> dict[str, object]:
+        return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
+
+    proposal = RuntimeEngine(state, provider).turn("Open Michelle's message.")
+    assert proposal.segments[0].text == text
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["Kristin follows the maintenance access route into the holding block."],
+)
+def test_scene_2c_rejects_unearned_reveal_content(text: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2C"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2C")
+    state._assert_scene_entry_fact("2C")
+    for predicate in ("janus_evidence", "evidence_ready_to_transmit"):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+    assert Fact(predicate="purge_clock_started", subject="story", value="true") not in state.facts.asserted
+
+    def provider(_player_input: str) -> dict[str, object]:
+        return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
+
+    with pytest.raises(ProposalValidationError):
+        RuntimeEngine(state, provider).turn("Open Michelle's message.")
+
+
+@pytest.mark.parametrize(
     ("text", "expected_codes"),
     [
         pytest.param(

@@ -1695,7 +1695,7 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R1}
   relevance: {entity_ids: [], priority: 0}
   must_convey:
-  - [Michelle's encrypted message, coded message, message, Michelle's coded note, encrypted message from Michelle]
+  - [coded message, message, Michelle's coded note]
   - [maintenance access route, maintenance path, local access route, route to Michelle]
   - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office]
   - [open the detention cells, open the cells, rescue the prisoners, release the prisoners]
