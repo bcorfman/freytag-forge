@@ -336,10 +336,10 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
     engine = RuntimeEngine(state, lambda _: next(responses))
 
     expected_candidates = (
-        {"k_sl_1a_a_r1"},
-        {"k_sl_1a_b_r0"},
-        {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
-        {"k_sl_1a_c_r1", "k_sl_1a_c_r2"},
+        {"k_sl_1a_a_r1", "k_sl_1a_f_r1", "k_sl_1a_f_r2"},
+        {"k_sl_1a_b_r0", "k_sl_1a_f_r1", "k_sl_1a_f_r2"},
+        {"k_sl_1a_b_r1", "k_sl_1a_b_r2", "k_sl_1a_f_r1", "k_sl_1a_f_r2"},
+        {"k_sl_1a_f_r1", "k_sl_1a_f_r2"},
     )
     for player_input, expected in zip(
         (

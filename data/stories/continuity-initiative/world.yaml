@@ -292,6 +292,7 @@ facts:
   on_assert:
   - {move: memory_card, parent: kristin, text: with Kristin}
   - {reveal: memory_card}
+- drawer_gap_pointed_out
 - official_interest_in_michelle_known
 - house_marked_for_return
 - transport_route_identified
