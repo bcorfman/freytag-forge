@@ -1124,6 +1124,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     ),
                     "model_grounding_ids": list(getattr(provider, "model_grounding_ids", ())),
                     "shadow_matched_candidate_id": getattr(provider, "shadow_matched_candidate_id", None),
+                    "contract_shadow": getattr(provider, "last_contract_shadow", None),
                     "prompt_candidate_ids": list(getattr(provider, "prompt_candidate_ids", ())),
                     "candidates_offered": [candidate.id for candidate in provider.last_projection.candidates]
                     if provider.last_projection is not None

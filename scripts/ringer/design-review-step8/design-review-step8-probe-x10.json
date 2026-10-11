@@ -1,0 +1,20 @@
+{
+ "run_name": "design-review-step8-probe-x10",
+ "workdir": "/home/bcorfman/dev/ringer-work/design-review-step8-probe-x10",
+ "max_parallel": 1,
+ "worktrees": false,
+ "tasks": [
+  {
+   "key": "probe",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 900,
+   "check_timeout_s": 1800,
+   "expect_files": [],
+   "spec": "You are a read-only worker. Do NOT modify any file and do NOT run any command that calls a network service. Your only job is to write the single line 'ready' to /home/bcorfman/dev/ringer-work/design-review-step8-probe-x10-ready.txt. A separate executable check then runs the live contract probe (bench/contract_probe.py in /home/bcorfman/dev/freytag-forge) and the report is read by the orchestrator.",
+   "check": "bash -c 'set -eu; cd /home/bcorfman/dev/freytag-forge; set -a; . ./.env; set +a; OUT=/home/bcorfman/dev/ringer-work/design-review-step8-probe-x10.json; PYTHONPATH=/home/bcorfman/dev/freytag-forge /home/bcorfman/dev/freytag-forge/.venv/bin/python bench/contract_probe.py --samples 10 --arm both --out $OUT; test -s $OUT && echo PASS'",
+   "verified": "probe ran and wrote its report"
+  }
+ ]
+}

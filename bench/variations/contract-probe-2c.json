@@ -1,10 +1,10 @@
 {
   "commands": [
-    {"command": "Finish copying the files onto my drive.", "label": "positive"},
-    {"command": "Make sure the JANUS evidence is saved.", "label": "positive"},
-    {"command": "Check that the transfer to my USB drive worked.", "label": "positive"},
-    {"command": "Send the copied files to Michelle.", "label": "near-miss"},
-    {"command": "Ask Brandon about the copied files.", "label": "near-miss"},
-    {"command": "Open Michelle's message.", "label": "near-miss"}
+    {"command": "Copy the rest of the files onto my drive.", "label": "positive"},
+    {"command": "Confirm the JANUS records are backed up.", "label": "positive"},
+    {"command": "Verify the copy on my USB drive.", "label": "positive"},
+    {"command": "Forward the evidence to Michelle.", "label": "near-miss"},
+    {"command": "Question Brandon about the JANUS files.", "label": "near-miss"},
+    {"command": "Read Michelle's message.", "label": "near-miss"}
   ]
 }
