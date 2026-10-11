@@ -92,6 +92,32 @@ def test_fact_guard_is_global_and_unlocks_after_assertion():
     _narrate(state, "The bench is dusty.")
 
 
+def test_shared_guard_term_requires_every_guard_to_unlock():
+    package = PACKAGE.model_copy(
+        update={
+            "world": PACKAGE.world.model_copy(
+                update={
+                    "disclosure_guards": (
+                        DisclosureGuard(id="bench_first", terms=("bench",), unlock_fact="facility_proof"),
+                        DisclosureGuard(id="bench_second", terms=("bench",), unlock_fact="false_identities_ready"),
+                    )
+                }
+            )
+        }
+    )
+    package = package.model_copy(
+        update={"knowledge_indexes": _compile_knowledge_indexes(package.knowledge, package.world)}
+    )
+    state = _state(package, "1B")
+    state.facts.assert_fact(Fact(predicate="facility_proof", subject="story", value="true"))
+    with pytest.raises(ProposalValidationError) as exc_info:
+        _narrate(state, "The bench is dusty.")
+    assert exc_info.value.code == "disclosure_guard_leak"
+
+    state.facts.assert_fact(Fact(predicate="false_identities_ready", subject="story", value="true"))
+    _narrate(state, "The bench is dusty.")
+
+
 def test_knowledge_guard_unlocks_when_knowledge_is_earned():
     guard = DisclosureGuard(id="gate_guard", terms=("service gate",), unlock_knowledge_id="k_sl_1b_a_r1")
     package = _with_guard(PACKAGE, guard)

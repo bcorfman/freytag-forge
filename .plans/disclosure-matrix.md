@@ -1,6 +1,6 @@
 # Disclosure vocabulary matrix
 
-Inventory terms: 480. Matrix rows: 647.
+Inventory terms: 483. Matrix rows: 659.
 
 ## Counts
 
@@ -9,11 +9,11 @@ Inventory terms: 480. Matrix rows: 647.
 - knowledge_alias: 107
 - leak_term: 59
 - must_convey_phrase: 201
-- scoped_alias: 4
+- scoped_alias: 7
 
 Suggested classes:
-- needs_review: 6
-- public_candidate: 125
+- needs_review: 8
+- public_candidate: 126
 - secret_with_unlock_fact: 349
 
 ### Earned rejected
@@ -67,6 +67,8 @@ Suggested classes:
 | 2B | selection system | identifier_fragment | protected_narration_leak |
 | 2C | brandon history | identifier_fragment | protected_narration_leak |
 | 2C | janus | identifier_fragment | protected_narration_leak |
+| 2C | janus evidence | scoped_alias | narration_known_term_leak |
+| 2C | janus files | scoped_alias | protected_narration_leak |
 | 2C | janus selection | identifier_fragment | protected_narration_leak |
 | 2C | janus selection system | identifier_fragment | protected_narration_leak |
 | 2C | phase | identifier_fragment | protected_narration_leak |
@@ -76,6 +78,8 @@ Suggested classes:
 | 2C | selection system | identifier_fragment | protected_narration_leak |
 | 3A | brandon history | identifier_fragment | protected_narration_leak |
 | 3A | janus | identifier_fragment | protected_narration_leak |
+| 3A | janus evidence | scoped_alias | narration_known_term_leak |
+| 3A | janus files | scoped_alias | protected_narration_leak |
 | 3A | janus selection | identifier_fragment | protected_narration_leak |
 | 3A | janus selection system | identifier_fragment | protected_narration_leak |
 | 3A | phase | identifier_fragment | protected_narration_leak |
@@ -83,6 +87,7 @@ Suggested classes:
 | 3A | selection system | identifier_fragment | protected_narration_leak |
 | 3B | brandon history | identifier_fragment | protected_narration_leak |
 | 3B | infrastructure corridor | entity_name | narration_known_term_leak |
+| 3B | janus evidence | scoped_alias | narration_known_term_leak |
 | 3B | janus selection | identifier_fragment | protected_narration_leak |
 | 3B | janus selection system | identifier_fragment | protected_narration_leak |
 | 3B | phase | identifier_fragment | protected_narration_leak |
@@ -93,6 +98,7 @@ Suggested classes:
 | 3C | captives reach the surface | must_convey_phrase | narration_known_term_leak |
 | 3C | charles at large | knowledge_alias | narration_known_term_leak |
 | 3C | charles at large | must_convey_phrase | narration_known_term_leak |
+| 3C | janus evidence | scoped_alias | narration_known_term_leak |
 | 3C | janus selection | identifier_fragment | protected_narration_leak |
 | 3C | janus selection system | identifier_fragment | protected_narration_leak |
 | 3C | phase | identifier_fragment | protected_narration_leak |
@@ -121,7 +127,9 @@ Suggested classes:
 | 2A | janus | identifier_fragment | protected_narration_leak |
 | 2B | janus | identifier_fragment | protected_narration_leak |
 | 2C | janus | identifier_fragment | protected_narration_leak |
+| 2C | janus files | scoped_alias | protected_narration_leak |
 | 3A | janus | identifier_fragment | protected_narration_leak |
+| 3A | janus files | scoped_alias | protected_narration_leak |
 | 3B | infrastructure corridor | entity_name | narration_known_term_leak |
 
 ### Early accepted secret candidates

@@ -526,7 +526,9 @@ freytag_phase: crisis
 objective: Choose the next move under growing pressure
 participant_ids: [kristin, brandon, michelle, rebecca]
 companions: [brandon]
-item_ids: []
+item_ids: [copied_janus_files]
+item_placements:
+  copied_janus_files: {parent: kristin}
 entry_text: "The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count. Kristin carried the copied JANUS files. She could check them now.\n\n"
 transition_ids: [t_2c_3a]
 bridge_text:
@@ -628,8 +630,9 @@ freytag_phase: crisis
 objective: Reach Michelle
 participant_ids: [kristin, michelle, brandon, senior_official, rebecca]
 companions: [brandon]
-item_ids: [override_codes, stolen_radio, gate_status_panel, emergency_surface_gates]
+item_ids: [copied_janus_files, override_codes, stolen_radio, gate_status_panel, emergency_surface_gates]
 item_placements:
+  copied_janus_files: {parent: kristin}
   override_codes: {parent: senior_official}
   stolen_radio: {parent: detention_level}
   gate_status_panel: {parent: detention_level}
@@ -713,8 +716,9 @@ freytag_phase: climax
 objective: Reach the broadcast controls
 participant_ids: [kristin, michelle, brandon, rebecca, charles]
 companions: [brandon, michelle]
-item_ids: [rebecca_desk, inspection_console, emergency_surface_gates]
+item_ids: [copied_janus_files, rebecca_desk, inspection_console, emergency_surface_gates]
 item_placements:
+  copied_janus_files: {parent: kristin}
   rebecca_desk: {parent: executive_office}
   inspection_console: {parent: infrastructure_corridors}
   emergency_surface_gates: {parent: facility_escape}
@@ -795,8 +799,9 @@ freytag_phase: resolution
 objective: Expose the network and escape
 participant_ids: [kristin, michelle, rebecca, brandon]
 companions: [michelle]
-item_ids: [portable_archive, drainage_pump_controls, emergency_surface_gates]
+item_ids: [copied_janus_files, portable_archive, drainage_pump_controls, emergency_surface_gates]
 item_placements:
+  copied_janus_files: {parent: kristin}
   portable_archive: {parent: rebecca, text: with Rebecca in her hands}
   drainage_pump_controls: {parent: maintenance_network}
   emergency_surface_gates: {parent: facility_escape}

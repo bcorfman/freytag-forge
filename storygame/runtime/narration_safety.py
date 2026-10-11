@@ -271,7 +271,7 @@ class NarrationSafetyValidator:
             for form, guard_ids in indexes.disclosure_guards.items():
                 if self._contains(text, form) and not (
                     self._contains(handoff_text, form)
-                    or any(
+                    or all(
                         (
                             guard.unlock_fact is not None
                             and guard.unlock_fact in true_fact_ids

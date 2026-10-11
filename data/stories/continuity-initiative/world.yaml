@@ -241,6 +241,11 @@ items:
   name: inspection console
   aliases: [corridor inspection console, diagnostic console]
   fixed: true
+- id: copied_janus_files
+  name: copied JANUS files
+  owner: kristin
+  disclosure: public
+  scoped_aliases: [copied files, JANUS files, JANUS evidence]
 - id: archive_terminals
   name: archive terminals
   aliases: [archive terminal]

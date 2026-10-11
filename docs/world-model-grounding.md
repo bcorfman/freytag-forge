@@ -141,6 +141,8 @@ character_placements:
   "stranger" that would match text in scenes where the character is not
   allowed. If two things share a noun and trip an ambiguity check, rename one
   of them in the fiction instead of loosening the check.
+- **Public items may use scoped aliases.** Place the item in the scene where it
+  appears so those aliases resolve only while the item is in play.
 - **Review knowledge leak terms separately.** An item's optional `leak_terms`
   list names the phrases narration must guard before the item is earned. An
   empty list means it has no guarded phrases.

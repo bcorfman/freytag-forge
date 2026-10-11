@@ -1860,6 +1860,23 @@
     },
     {
       "available_scenes": [
+        "2C",
+        "3A",
+        "3B",
+        "3C"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "copied_janus_files"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "copied files",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
+    },
+    {
+      "available_scenes": [
         "2A"
       ],
       "guard_kind": "leak_term",
@@ -3920,6 +3937,40 @@
         "prisoner_records_corrupted"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2C",
+        "3A",
+        "3B",
+        "3C"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "copied_janus_files"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "janus evidence",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
+    },
+    {
+      "available_scenes": [
+        "2C",
+        "3A",
+        "3B",
+        "3C"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "copied_janus_files"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "janus files",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
     },
     {
       "available_scenes": [
@@ -14770,6 +14821,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "scoped_alias",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "copied files"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "entity_name",
       "scene": "2C",
       "skipped": {
@@ -14930,6 +14998,40 @@
         "verdict": "accepted"
       },
       "term": "janus"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "janus evidence"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "janus files"
     },
     {
       "early": {
@@ -16674,6 +16776,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "scoped_alias",
+      "scene": "3A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "copied files"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "entity_name",
       "scene": "3A",
       "skipped": {
@@ -16970,6 +17089,40 @@
         "verdict": "accepted"
       },
       "term": "janus"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "3A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "janus evidence"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "3A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "janus files"
     },
     {
       "early": {
@@ -17660,6 +17813,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "scoped_alias",
+      "scene": "3B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "copied files"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "entity_name",
       "scene": "3B",
       "skipped": {
@@ -17956,6 +18126,40 @@
         "verdict": "accepted"
       },
       "term": "janus"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "3B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "janus evidence"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "3B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "janus files"
     },
     {
       "early": {
@@ -18765,6 +18969,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "scoped_alias",
+      "scene": "3C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "copied files"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "entity_name",
       "scene": "3C",
       "skipped": {
@@ -18993,6 +19214,40 @@
         "verdict": "accepted"
       },
       "term": "janus"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "3C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "janus evidence"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "3C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "janus files"
     },
     {
       "early": {
