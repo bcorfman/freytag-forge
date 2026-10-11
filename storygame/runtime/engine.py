@@ -20,6 +20,7 @@ from storygame.runtime.contracts import (
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.narration_safety import NarrationSafetyValidator
+from storygame.runtime.reveal_eligibility import ALREADY_ESTABLISHED, STORYLET_SPENT, explain_reveal
 from storygame.runtime.state import RuntimeState, TurnDelivery, TurnRecord
 from storygame.runtime.validation import (
     ProgressionValidator,
@@ -440,6 +441,7 @@ class RuntimeEngine(CanonicalEventMixin):
         )
         return not reveals or any(
             all(predicate_matches(predicate, self.state.facts) for predicate in knowledge.requires)
+            and explain_reveal(self.state, "player", knowledge).reason not in {STORYLET_SPENT, ALREADY_ESTABLISHED}
             for knowledge in reveals
         )
 
