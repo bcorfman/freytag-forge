@@ -41,6 +41,25 @@ Word guards alone cannot settle these; the entry knowledge asserts too early.
 - `k_scene_2a_entry` says they are "entering the facility under false identities", but 2A starts at the hideout and `false_identities_ready` comes later.
 Both verified present in knowledge.yaml on 2026-10-11. Story text changes go to the ChatGPT Desktop round, not to a hand edit.
 
+### Resolved 2026-10-11 (PR #599, merge 73aa4997)
+
+ChatGPT Desktop supplied the wording; a Ringer worker applied it with no deviation.
+
+- `k_scene_2a_entry`: "Kristin must plan a way into the facility. False identities are a possible cover." Aliases unchanged.
+- `k_scene_2c_entry`: "Kristin fears a possible purge. She must choose her next move." Alias `purge clock` removed; `purge` kept.
+- `k_sl_2c_b_r1` and `_r2`: aliases now `purge clock started`, `purge clock`, so `purge clock` is guarded until `purge_clock_started`. Matrix: rejected early, allowed after the order.
+- Objective (plot.md) and `scene_frames.pressure` (knowledge.yaml) changed for 2B, 2C and 3B to remove spoilers: "Find evidence in the records archive", "Choose the next move under growing pressure", "Reach the broadcast controls".
+- Not changed: `k_scene_1b_entry` ("immediate place of pursuit"). ChatGPT called it too early only if read as current action. Left alone so this change is measured first.
+- Offline: package load, full suite (1421), ruff and CI pass.
+
+Live check (variation `bench/variations/entry-knowledge-2a-2c.json`, manifest `scripts/ringer/entry-knowledge/manifest-full.json`, results in `bench/results/entry-knowledge-full-2a|2c`, not committed). Four replicates each, first three turns plus opening read by hand, judges off:
+
+- 2A: 0 of 4 premature credentials-ready, facility-arrival or passed-check lines. Turn 2 appends the cover and credentials delivery text on every replicate; that is the earned cooling-water reveal, not a leak.
+- 2C: 0 of 4 premature purge order, countdown or combined solution. Before the fix, the single smoke replicate said "respond to the purge order" on turn 3.
+- 0 failed replicates in all runs.
+
+Still untested: legitimate reveals landing after the fix (the scripts avoid them on purpose), rejected-turn counts, and 1B. Four replicates is a smoke check, not strong evidence.
+
 ## Caveats
 
 - The matrix's "earned rejected" table does not prove a guard never releases: its synthetic earned states may omit preceding discoveries or required world effects.
