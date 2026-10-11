@@ -613,7 +613,11 @@ class CloudflareTurnProvider:
         else:
             handoff_rule = ""
         complication_text = self.state.last_turn_delivery.complication_text
-        complication_rule = f"This happens now. Show it in the scene: {complication_text}" if complication_text else ""
+        complication_rule = (
+            f"This happens now. Show it in the scene: {complication_text}"
+            if complication_text and not self.state.last_turn_delivery.complication_verbatim
+            else ""
+        )
         default_rules = [
             *self._turn_rules_before_grounding(),
             *(self._authored_handoff_rules() if handoff_turn else ()),

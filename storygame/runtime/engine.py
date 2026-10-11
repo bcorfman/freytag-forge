@@ -116,6 +116,18 @@ class RuntimeEngine(CanonicalEventMixin):
             proposal, _ = self.reveal_resolver.resolve(
                 self.state, self.last_projection, provider_proposal, self.projector, command_text
             )
+            if self.state.last_turn_delivery.complication_verbatim:
+                proposal = proposal.model_copy(
+                    update={
+                        "segments": (
+                            *proposal.segments,
+                            NarrationSegment(
+                                kind="narration",
+                                text=self.state.last_turn_delivery.complication_text or "",
+                            ),
+                        )
+                    }
+                )
             self.validator.validate_effects(self.state, proposal)
             candidate_state = deepcopy(self.state)
             candidate_state.apply_proposal(proposal, apply_world=False)
@@ -378,7 +390,10 @@ class RuntimeEngine(CanonicalEventMixin):
                     )
                     if realization is not None:
                         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
-                            update={"complication_text": realization.text}
+                            update={
+                                "complication_text": realization.text,
+                                "complication_verbatim": realization.verbatim,
+                            }
                         )
                 if event.transition_id:
                     self.state.apply_proposal(

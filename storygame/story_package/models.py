@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 
 _ID = r"^[a-z][a-z0-9_]*$"
 _SCENE_ID = r"^[1-9][A-Z]$"
@@ -484,6 +484,7 @@ class PacingRealization(_Model):
 
     when: tuple[FactPredicate, ...] = ()
     text: str = Field(min_length=1)
+    verbatim: StrictBool = False
 
     @field_validator("text")
     @classmethod
