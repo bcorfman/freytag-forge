@@ -25,6 +25,8 @@ facts:
   purpose: Kristin has recovered Michelle’s warning not to trust emergency broadcasts.
 - id: memory_card_recovered
   purpose: Kristin has recovered Michelle’s memory card.
+- id: drawer_gap_pointed_out
+  purpose: Kristin has been pointed toward the thin gap beneath Michelle’s workstation drawer.
 - id: official_interest_in_michelle_known
   purpose: Kristin knows the welfare patrol was specifically interested in Michelle’s
     research and findings.
@@ -336,6 +338,60 @@ knowledge:
   - [beneath the KMS drawer, under the KMS drawer, beneath the drawer]
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
   delivery_text: "Kristin finds Michelle's memory card taped beneath the drawer. She takes it with her. Her laptop is in her truck outside."
+- id: k_sl_1a_f_r1
+  statement: "Kristin opens the drawer and is pointed toward the thin gap beneath its lower edge."
+  earn_when: pulls or opens the drawer
+  action_evidence:
+  - [pull open, pull out, pull the, pull my, pull michelle, "pull michelle's", slide open, slide out, tug, yank, open the, open my, open michelle, open her]
+  - [drawer]
+  entity_ids: [kristin, michelle_drawer]
+  aliases:
+  - drawer gap pointed out
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: drawer_gap_pointed_out
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-F
+    realization_id: SL-1A-F-R1
+  relevance:
+    entity_ids: [kristin, michelle_drawer]
+    priority: 0
+  delivery_text: "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
+- id: k_sl_1a_f_r2
+  statement: "Kristin examines the carved initials and is pointed toward the thin gap beneath the drawer."
+  earn_when: examines the carved initials
+  action_evidence:
+  - [examine, inspect, study, read, look at, check, trace, run my fingers]
+  - [initials, carved initials, carving, my initials]
+  entity_ids: [kristin, michelle_drawer]
+  aliases:
+  - drawer gap pointed out
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: drawer_gap_pointed_out
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-F
+    realization_id: SL-1A-F-R2
+  relevance:
+    entity_ids: [kristin, michelle_drawer]
+    priority: 0
+  delivery_text: "The initials are fresh, deep cuts. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
 - id: k_sl_1a_b_r1
   statement: "Kristin reads Michelle's memory card. Its damaged recording warns her not to trust emergency broadcasts, and the Continuity Initiative files point to a dead drop at a bench in the park."
   earn_when: reads the files on Michelle's recovered memory card

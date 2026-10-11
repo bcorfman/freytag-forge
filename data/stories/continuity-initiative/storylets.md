@@ -116,6 +116,50 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-1A-F — The Drawer Points to the Gap
+
+**Source beats:** [1A.1 — Michelle Is Gone](plot.md#scene-1a1--michelle-is-gone)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- Kristin does not yet have Michelle's memory card.
+
+**Participants / items**
+- Kristin Schweitzer
+- Michelle's workstation drawer carved KMS
+- Hidden memory card
+
+**Dramatic purpose**
+- Give opening the drawer or examining the initials a short authored reply.
+- Point Kristin back toward the thin gap without recovering the memory card.
+
+**Possible realizations**
+- Kristin pulls or opens the drawer and notices the thin gap beneath its lower edge.
+- Kristin examines the carved initials and notices the thin gap beneath the drawer.
+
+**Effects**
+- Sets `drawer_gap_pointed_out`.
+- Does not recover the memory card.
+
+**Completion**
+- Kristin has been pointed toward the thin gap beneath the drawer.
+
+**Abort**
+- Kristin leaves scene 1A.
+
+**Protected boundary**
+- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 3`
+- latest: `turn 12`
+
+**Non-coercion note:** Offer as a consequence of free-text investigation. Do not present it as a choice or required command; equivalent drawer searches may validate the same operation.
+
+---
+
 ### SL-1A-B — Michelle Hid Something for Kristin
 
 **Source beats:** [1A.2 — Michelle’s Last Investigation](plot.md#scene-1a2--michelles-last-investigation), [1A.3 — The Interrupted Message](plot.md#scene-1a3--the-interrupted-message)
