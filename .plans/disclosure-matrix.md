@@ -145,8 +145,6 @@ Suggested classes:
 | 2C | coded message | must_convey_phrase |  |
 | 2C | encrypted message from michelle | must_convey_phrase |  |
 | 2C | michelle's encrypted message | must_convey_phrase |  |
-| 2C | purge clock | knowledge_alias |  |
-| 2C | purge clock | must_convey_phrase |  |
 | 3A | uprising | knowledge_alias |  |
 | 3C | escape route | knowledge_alias |  |
 | 3C | escape route | must_convey_phrase |  |

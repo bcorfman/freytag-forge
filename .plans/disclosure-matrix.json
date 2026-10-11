@@ -6295,13 +6295,14 @@
       ],
       "guard_kind": "knowledge_alias",
       "owner_ids": [
-        "k_scene_2c_entry"
+        "k_sl_2c_b_r1",
+        "k_sl_2c_b_r2"
       ],
       "requires": [],
       "suggested_class": "secret_with_unlock_fact",
       "term": "purge clock",
       "unlock_fact_ids": [
-        "scene_2c_entry_known"
+        "purge_clock_started"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
@@ -6311,13 +6312,14 @@
       ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
-        "k_scene_2c_entry"
+        "k_sl_2c_b_r1",
+        "k_sl_2c_b_r2"
       ],
       "requires": [],
       "suggested_class": "secret_with_unlock_fact",
       "term": "purge clock",
       "unlock_fact_ids": [
-        "scene_2c_entry_known"
+        "purge_clock_started"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
@@ -15611,8 +15613,8 @@
     },
     {
       "early": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "earned": {
         "error_code": "",
@@ -15628,8 +15630,8 @@
     },
     {
       "early": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "earned": {
         "error_code": "",

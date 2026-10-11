@@ -428,7 +428,7 @@ Kristin and Brandon remain unaware that their infiltration has already been comp
 scene_id: 2B
 location_id: janus_archive
 freytag_phase: rising_action
-objective: Secure evidence while judging Brandons betrayal
+objective: Find evidence in the records archive
 participant_ids: [kristin, brandon, michelle]
 companions: [brandon]
 item_ids: [archive_terminals, medical_terminal]
@@ -523,7 +523,7 @@ Michelle is not passively waiting to be rescued. She has already begun dismantli
 scene_id: 2C
 location_id: purge_chamber
 freytag_phase: crisis
-objective: Survive the purge clock and choose a combined mission
+objective: Choose the next move under growing pressure
 participant_ids: [kristin, brandon, michelle, rebecca]
 companions: [brandon]
 item_ids: []
@@ -710,7 +710,7 @@ Kristin, Michelle, and Brandon must fight upward toward Rebecca’s office while
 scene_id: 3B
 location_id: broadcast_relay
 freytag_phase: climax
-objective: Overload JANUS with false alarms
+objective: Reach the broadcast controls
 participant_ids: [kristin, michelle, brandon, rebecca, charles]
 companions: [brandon, michelle]
 item_ids: [rebecca_desk, inspection_console, emergency_surface_gates]

@@ -260,16 +260,16 @@ scene_frames:
   pressure: Enter the facility under false identities
 - scene_id: 2B
   situation: The facility's restricted records archive, with rows of terminals and a medical terminal tied to the detention levels. Kristin and Brandon must find usable evidence before their cover is reviewed.
-  pressure: Secure evidence while judging Brandon's betrayal
+  pressure: Find evidence in the records archive
 - scene_id: 2C
   situation: "The command levels during an accelerating crisis: transfer orders for the captives on the detention level, and a maintenance network. Security activity is increasing faster than Kristin can explain, and Michelle's phrasing may be hidden somewhere in the traffic."
-  pressure: Survive the purge clock and choose a combined mission
+  pressure: Choose the next move under growing pressure
 - scene_id: 3A
   situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels."
   pressure: Reach Michelle and join the uprising
 - scene_id: 3B
   situation: "JANUS is tracking Kristin's moves."
-  pressure: Feed JANUS false water and air alarms.
+  pressure: Reach the broadcast controls
 - scene_id: 3C
   pressure: Expose the network and escape
 knowledge:
@@ -1568,6 +1568,7 @@ knowledge:
   entity_ids: []
   aliases:
   - purge clock started
+  - purge clock
   audience:
     kind: public
     player_visible: true
@@ -1595,6 +1596,7 @@ knowledge:
   entity_ids: []
   aliases:
   - purge clock started
+  - purge clock
   audience:
     kind: public
     player_visible: true
@@ -2820,7 +2822,7 @@ knowledge:
   establishes: [{op: assert, fact_id: scene_1c_entry_known, value: true}]
   source: {kind: scene_entry}
 - id: k_scene_2a_entry
-  statement: The protagonists are entering the facility under false identities.
+  statement: Kristin must plan a way into the facility. False identities are a possible cover.
   entity_ids: [kristin, regional_facility]
   aliases: [false identities, facility entrance]
   audience: {kind: public, player_visible: true}
@@ -2836,9 +2838,9 @@ knowledge:
   establishes: [{op: assert, fact_id: scene_2b_entry_known, value: true}]
   source: {kind: scene_entry}
 - id: k_scene_2c_entry
-  statement: The purge clock is active and the group must act under pressure.
+  statement: Kristin fears a possible purge. She must choose her next move.
   entity_ids: [kristin, purge_chamber]
-  aliases: [purge clock, purge]
+  aliases: [purge]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2C]
   establishes: [{op: assert, fact_id: scene_2c_entry_known, value: true}]
