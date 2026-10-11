@@ -15,6 +15,7 @@ from storygame.runtime.attempt_bundle import (
     CommittedDelta,
     CueStage,
     ModelStage,
+    RevealSelection,
     SelectedReveal,
 )
 from storygame.runtime.canonical_events import CanonicalEventMixin
@@ -353,6 +354,15 @@ class RuntimeEngine(CanonicalEventMixin):
                     if any(delivery.fact_id == effect.fact_id for delivery in self.state.package.deliveries)
                 )
         stages = self._attempt_stages(provider_reply)
+        raw_reveal_selection = getattr(self.provider, "last_reveal_selection", None)
+        reveal_selection = None
+        if isinstance(raw_reveal_selection, dict) and isinstance(raw_reveal_selection.get("outcome"), str):
+            reveal_selection = RevealSelection(
+                outcome=raw_reveal_selection["outcome"],
+                matched=raw_reveal_selection.get("matched"),
+                universe_size=raw_reveal_selection.get("universe_size", 0),
+                shortlist_size=raw_reveal_selection.get("shortlist_size", 0),
+            )
         bundle = AttemptBundle(
             identity=AttemptIdentity(
                 code_sha=getenv("FREYTAG_DEPLOYMENT_SHA", "").strip()
@@ -374,6 +384,7 @@ class RuntimeEngine(CanonicalEventMixin):
             command=AttemptCommand(raw=raw_input, normalized=command_text),
             stages=stages,
             selected_reveal=SelectedReveal(knowledge_ids=selected, delivery_fact_ids=tuple(delivery_ids)),
+            reveal_selection=reveal_selection,
             committed_delta=CommittedDelta(
                 fact_predicates=tuple(sorted(after_facts - before_facts)),
                 scene_from=before.current_scene_id if changed else None,
