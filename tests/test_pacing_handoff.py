@@ -263,7 +263,7 @@ def test_resolution_pacing_realization_reaches_narrator_when_escalation_is_gated
     engine.turn("Guide the captives toward the relay.")
 
     event = next(event for event in PACKAGE.pacing.events if event.id == "collapse_3c")
-    assert event.realizations[0].text in captured[3]
+    assert event.realizations[-1].text in captured[3]
 
 
 def test_unfired_pacing_event_does_not_cross_a_scene_exit() -> None:

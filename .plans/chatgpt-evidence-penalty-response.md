@@ -1,12 +1,17 @@
 # Timer penalty paid in evidence: writing handoff
 
-Status (2026-10-10): writing brief completed against source revision
-`c0bd366f`. Proposed text only; not implemented or scored with the engine.
+Status (2026-10-10): implemented in story data (Ringer run
+`evidence-penalty-data`, codex worker; it edited the main checkout rather than
+its worktree, so Ringer's own check failed on an empty worktree, and I
+re-verified in place). Verification: `scripts/ringer/evidence-penalty/check.py`
+matches the plan exactly; full suite 1287 passed; ruff check and format clean.
+New `tests/test_evidence_penalty.py` (4 tests); two existing tests updated
+(`test_markdown_story_package.py` allows the four pacing-only gap facts;
+`test_pacing_handoff.py` now reads the default realization as the last entry).
 
-Resume here: implement the declarations, delivery costs, fallback additions,
-and ordered realizations below with Ringer, then run the scoring matrix.
-Existing story files and runtime remain unchanged. No implementation commit
-or live results exist for this proposal.
+Resume here: not yet done are the section 4 live replicates (three per
+script/state: no gaps, each gap alone, all gaps), reading selected versus
+displayed lines and the section 5 questions. No engine or runtime change.
 
 Use four gaps in supporting evidence. Preserve the evidence that makes the
 ending possible. A gap records what Kristin missed at that earlier moment;

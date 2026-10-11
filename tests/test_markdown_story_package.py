@@ -285,8 +285,14 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     assert package.scenes[0].metadata.setting_facts == ()
     pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
     mapped_facts = set(package.knowledge_indexes.facts_to_knowledge)
+    pacing_only_facts = {
+        "evidence_gap_processing_numbers",
+        "evidence_gap_development_record",
+        "evidence_gap_copy_check",
+        "evidence_gap_marked_site_list",
+    }
     assert mapped_facts <= set(package.world.facts)
-    assert set(package.world.facts) - pacing_facts <= mapped_facts
+    assert set(package.world.facts) - pacing_facts - pacing_only_facts <= mapped_facts
     assert set(package.knowledge_indexes.scene_to_candidates) == {"1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"}
     for route in package.storylet_routes.storylets:
         for realization in route.realizations:
