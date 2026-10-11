@@ -54,6 +54,16 @@ class RevealSelection(_BundleModel):
     shortlist_size: int = 0
 
 
+class ContractShadow(_BundleModel):
+    ran: bool = False
+    answers: dict[str, bool | None] = Field(default_factory=dict)
+    granted: str | None = None
+    ambiguous: bool = False
+    live_matched: str | None = None
+    agrees: bool = False
+    skipped: str | None = None
+
+
 class CommittedDelta(_BundleModel):
     fact_predicates: tuple[str, ...] = ()
     scene_from: str | None = None
@@ -81,6 +91,7 @@ class AttemptBundle(_BundleModel):
     stages: tuple[ModelStage, ...] = ()
     selected_reveal: SelectedReveal = SelectedReveal()
     reveal_selection: RevealSelection | None = None
+    contract_shadow: ContractShadow | None = None
     committed_delta: CommittedDelta = CommittedDelta()
     cue_stage: CueStage = CueStage()
     transition_cause: Literal["none", "earned", "forced", "timer"] = "none"

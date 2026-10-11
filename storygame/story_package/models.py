@@ -104,6 +104,40 @@ class Relevance(_Model):
     priority: int = 0
 
 
+class ActionContract(_Model):
+    """A semantic description of the player action that can earn a reveal.
+
+    Eligibility still comes from the knowledge record's ``requires`` field.
+    The contract does not repeat prerequisites and cannot assert facts.
+    """
+
+    targets: tuple[str, ...] = Field(min_length=1)
+    act: str = Field(min_length=1)
+    positive: tuple[str, ...] = Field(min_length=1)
+    near_miss: tuple[str, ...] = Field(min_length=1)
+
+    @field_validator("targets", "positive", "near_miss")
+    @classmethod
+    def non_empty_values(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if any(not item.strip() for item in value):
+            raise ValueError("action contract examples and targets must be non-empty")
+        return value
+
+    @field_validator("act")
+    @classmethod
+    def non_blank_act(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("action contract act must be non-empty")
+        return value
+
+    @model_validator(mode="after")
+    def distinct_examples(self) -> ActionContract:
+        positive = {item.casefold() for item in self.positive}
+        if positive & {item.casefold() for item in self.near_miss}:
+            raise ValueError("action contract near_miss entries must differ from positive entries")
+        return self
+
+
 class KnowledgeDefinition(_Model):
     """A player-safe claim whose truth is derived only from its fact effects."""
 
@@ -122,6 +156,7 @@ class KnowledgeDefinition(_Model):
     must_convey: tuple[tuple[str, ...], ...] = ()
     leak_terms: tuple[str, ...] | None = None
     delivery_text: str | None = None
+    action_contract: ActionContract | None = None
 
 
 class SceneFrame(_Model):

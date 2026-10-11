@@ -627,6 +627,8 @@ def _validate_authored_handoffs(package: StoryPackage) -> None:
     from storygame.runtime.validation import unconveyed_terms
 
     for item in package.knowledge.knowledge:
+        if item.action_contract is not None and (not item.action_evidence or item.delivery_text is None):
+            raise StoryPackageError(f"action contract knowledge '{item.id}' requires action_evidence and delivery_text")
         if item.delivery_text is None:
             continue
         if not item.action_evidence or any(not group for group in item.action_evidence):
