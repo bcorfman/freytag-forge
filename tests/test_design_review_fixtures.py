@@ -169,18 +169,27 @@ def test_skipped_reveal() -> None:
 
 
 def test_missed_pointer() -> None:
-    """Finding 2: a delivered cue is spent without an escalation nudge."""
+    """Finding 2: a delivered cue receives one stronger authored nudge."""
 
     state = _scene_state("1A")
+    package = PACKAGE.model_copy(
+        update={
+            "deliveries": tuple(
+                delivery.model_copy(update={"escalation_text": "The workstation still holds a lead worth examining."})
+                if delivery.fact_id == "continuity_initiative_known"
+                else delivery
+                for delivery in PACKAGE.deliveries
+            )
+        }
+    )
+    state.package = package
     engine = RuntimeEngine(state, _narration("The drawer remains in Michelle's workstation."))
     engine.turn("Search the drawer.")
-    cue_ids = [state.last_turn_delivery.cue_fact_id]
-    for _ in range(3):
+    for _ in range(11):
         engine.turn("Inspect the workstation.")
-        cue_ids.append(state.last_turn_delivery.cue_fact_id)
 
-    # CURRENT DEFECT (review Finding 2): no escalation; nudge_after_turns unused.
-    assert cue_ids.count("continuity_initiative_known") == 1
+    assert state.cue_stages[-1].stage == 2
+    assert state.cue_stages[-1].fact_id == "continuity_initiative_known"
     assert state.delivered_cue_ids == ("continuity_initiative_known",)
 
 

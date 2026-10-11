@@ -50,6 +50,15 @@ class TurnDelivery(BaseModel):
     capture_unplaced: tuple[str, ...] = ()
 
 
+class CueStage(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    fact_id: str
+    stage: int = Field(ge=1, le=2)
+    last_turn: int = Field(ge=0)
+    visit_entered_at: int = Field(ge=0)
+
+
 class RuntimeSnapshot(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     version: int = Field(default=SNAPSHOT_VERSION, ge=1)
@@ -62,7 +71,9 @@ class RuntimeSnapshot(BaseModel):
     scene_entered_at_turn: int = Field(ge=0)
     turn_records: tuple[TurnRecord, ...] = ()
     delivered_cue_ids: tuple[str, ...] = ()
+    cue_stages: tuple[CueStage, ...] = ()
     staged_cue_fact_id: str | None = None
+    staged_cue_stage: int = Field(default=1, ge=1, le=2)
     staged_handoff_fact_ids: tuple[str, ...] = ()
     last_turn_delivery: TurnDelivery = TurnDelivery()
 
@@ -85,7 +96,9 @@ class RuntimeState(BaseModel):
     pending_proposal: ResolvedTurnProposal | None = None
     pending_capture: dict[str, Any] | None = None
     delivered_cue_ids: tuple[str, ...] = ()
+    cue_stages: tuple[CueStage, ...] = ()
     staged_cue_fact_id: str | None = None
+    staged_cue_stage: int = Field(default=1, ge=1, le=2)
     staged_handoff_fact_ids: tuple[str, ...] = ()
     last_turn_delivery: TurnDelivery = TurnDelivery()
 
@@ -137,7 +150,9 @@ class RuntimeState(BaseModel):
             scene_entered_at_turn=self.scene_entered_at_turn,
             turn_records=tuple(self.turn_records),
             delivered_cue_ids=self.delivered_cue_ids,
+            cue_stages=self.cue_stages,
             staged_cue_fact_id=self.staged_cue_fact_id,
+            staged_cue_stage=self.staged_cue_stage,
             staged_handoff_fact_ids=self.staged_handoff_fact_ids,
             last_turn_delivery=self.last_turn_delivery,
         )
@@ -154,7 +169,9 @@ class RuntimeState(BaseModel):
         self.scene_entered_at_turn = snapshot.scene_entered_at_turn
         self.turn_records = list(snapshot.turn_records)
         self.delivered_cue_ids = snapshot.delivered_cue_ids
+        self.cue_stages = snapshot.cue_stages
         self.staged_cue_fact_id = snapshot.staged_cue_fact_id
+        self.staged_cue_stage = snapshot.staged_cue_stage
         self.staged_handoff_fact_ids = snapshot.staged_handoff_fact_ids
         self.last_turn_delivery = snapshot.last_turn_delivery
 
@@ -242,7 +259,9 @@ class RuntimeState(BaseModel):
 
         self.scene_entered_at_turn = self.turn_index
         self.delivered_cue_ids = ()
+        self.cue_stages = ()
         self.staged_cue_fact_id = None
+        self.staged_cue_stage = 1
         self.staged_handoff_fact_ids = ()
         self.facts.assert_fact(Fact(predicate=f"scene_{scene_id.lower()}_entry_known", subject="story", value="true"))
 
