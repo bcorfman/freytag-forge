@@ -286,9 +286,11 @@ An old service schematic marks one dry maintenance ascent joining the drainage s
 
 ### Scene 1C.2 — Proof of the Captives
 
-**Details:** observation shaft; sedated prisoners; processing area; identification numbers; missing-person reports; woman resembling Michelle
+**Details:** observation shaft; sedated prisoners; processing area; identification numbers; missing-person reports; woman resembling Michelle; chance to copy the prisoner numbers
 
 From an observation shaft, Kristin sees rows of sedated prisoners being moved through a processing area. Their identification numbers correspond to missing-person reports stored in Michelle’s files.
+
+Kristin can copy the full set of prisoner numbers from the processing line to support her account, but the prisoners are already being moved out of view.
 
 She briefly sees a woman resembling Michelle among a group being transferred, but the view is obscured before she can confirm her identity.
 
@@ -586,9 +588,11 @@ Their disagreement creates the story’s central **crisis choice**:
 
 ### Scene 2C.4 — Living With the Choice
 
-**Details:** copied evidence; sealed detention sectors; transfer carts; Brandon's guilt; Rebecca's offer; maintenance network
+**Details:** copied evidence; sealed detention sectors; transfer carts; Brandon's guilt; Rebecca's offer; maintenance network; chance to compare the copied evidence with the original files
 
 The apparent choice cannot be solved by a quick argument. Kristin and Brandon have time to test what each path would cost, but not enough time to pretend the costs are theoretical.
+
+Kristin can still check her copied evidence against the original files, but each moment spent on the comparison leaves less time to reach the captives.
 
 Sending the evidence would make the national case harder for Charles to bury, yet it would expose their position while transfer carts begin moving below. A direct rescue might save Michelle and the nearby captives, yet it could leave Charles free to repeat the operation elsewhere.
 
