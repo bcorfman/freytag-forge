@@ -203,7 +203,7 @@ def test_matcher_tie() -> None:
 
 
 def test_more_than_four_eligible() -> None:
-    """Finding 4: measurement must expose the four-candidate projection cap."""
+    """The prompt stays capped while exact matching sees the full universe."""
 
     state = _scene_state("1A")
     _assert_story_facts(state, "memory_card_recovered", "michelle_warning_known")
@@ -224,3 +224,5 @@ def test_more_than_four_eligible() -> None:
     projection = KnowledgeProjector().project(state, "player", "Inspect the reflective tape.")
     assert len(projection.candidates) == 4
     assert "k_sl_1a_c_r2" not in {candidate.id for candidate in projection.candidates}
+    assert len(projection.reveal_universe) == 5
+    assert projection.reveal_universe[-1].id == "k_sl_1a_c_r2"

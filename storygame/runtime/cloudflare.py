@@ -250,6 +250,12 @@ class CloudflareTurnProvider:
         self.semantic_fallback_calls = 0
         # This is process-local session telemetry and resets when the process restarts.
         self.last_semantic_match: dict[str, object] = {"ran": False, "matched": None}
+        self.last_reveal_selection: dict[str, object] = {
+            "outcome": "no_eligible_action",
+            "matched": None,
+            "universe_size": 0,
+            "shortlist_size": 0,
+        }
 
     @classmethod
     def from_environment(
@@ -288,10 +294,24 @@ class CloudflareTurnProvider:
 
         self._example_player_input = player_input
         self.last_semantic_match = {"ran": False, "matched": None}
+        self.last_reveal_selection = {
+            "outcome": "no_eligible_action",
+            "matched": None,
+            "universe_size": 0,
+            "shortlist_size": 0,
+        }
         self.last_projection = self.projector.project(self.state, "player", player_input)
-        self.authored_handoff = uniquely_matched_authored_handoff(player_input, self.last_projection.candidates)
+        universe = self._reveal_universe()
+        self.last_reveal_selection["universe_size"] = len(universe)
+        self.authored_handoff = uniquely_matched_authored_handoff(player_input, universe)
+        if self.authored_handoff is not None:
+            self.last_reveal_selection.update(outcome="exact_match", matched=self.authored_handoff.candidate.id)
+        elif self._exact_match_count(player_input, universe) > 1:
+            self.last_reveal_selection["outcome"] = "exact_tie"
         if self.authored_handoff is None:
             self.authored_handoff = self._semantic_authored_handoff(player_input)
+        if self.last_reveal_selection["outcome"] == "no_eligible_action" and self._eligible_reveal_candidates(universe):
+            self.last_reveal_selection["outcome"] = "semantic_refusal"
         self._prepare_turn_visibility()
         self.shadow_matched_candidate_id = self._shadow_matched_candidate_id(player_input)
         self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
@@ -347,7 +367,7 @@ class CloudflareTurnProvider:
         commits a reveal.
         """
 
-        candidates = self.last_projection.candidates if self.last_projection else ()
+        candidates = self._reveal_universe()
         evidence_candidates = tuple(
             ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence)
             for candidate in candidates
@@ -376,11 +396,11 @@ class CloudflareTurnProvider:
         return tuple(candidate for candidate in candidates if candidate.id == self.shadow_matched_candidate_id)
 
     def _handoff_eligible_candidate_ids(self) -> set[str]:
-        """Return projected candidates whose reveal belongs to the runtime."""
+        """Return all eligible candidates whose reveal belongs to the runtime."""
 
         return {
             candidate_id
-            for candidate in (self.last_projection.candidates if self.last_projection else ())
+            for candidate in self._reveal_universe()
             for candidate_id in (getattr(candidate, "id", None),)
             if candidate_id is not None
             and getattr(candidate, "action_evidence", ())
@@ -389,6 +409,16 @@ class CloudflareTurnProvider:
         }
 
     def _semantic_authored_handoff(self, player_input: str) -> AuthoredHandoff | None:
+        if not hasattr(self, "last_reveal_selection"):
+            self.last_reveal_selection = {
+                "outcome": "no_eligible_action",
+                "matched": None,
+                "universe_size": 0,
+                "shortlist_size": 0,
+            }
+        universe = self._reveal_universe()
+        eligible_candidates = self._eligible_reveal_candidates(universe)
+        self.last_reveal_selection["shortlist_size"] = min(6, len(eligible_candidates))
         if (
             self.semantic_ask is None
             or getenv("FREYTAG_SEMANTIC_REVEAL", "1") == "0"
@@ -396,19 +426,18 @@ class CloudflareTurnProvider:
             or self.semantic_fallback_calls >= 40
             or any(word in _NEGATIONS for word in _words(player_input))
         ):
-            return None
-        candidates = self.last_projection.candidates if self.last_projection else ()
-        eligible = []
-        for candidate in candidates:
             if (
-                not candidate.action_evidence
-                or not isinstance(candidate.delivery_text, str)
-                or not candidate.delivery_text.strip()
+                self.semantic_fallback_calls >= 40
+                and eligible_candidates
+                and self.semantic_ask is not None
+                and getenv("FREYTAG_SEMANTIC_REVEAL", "1") != "0"
+                and player_input.strip()
+                and not any(word in _NEGATIONS for word in _words(player_input))
             ):
-                continue
-            knowledge = self.state.package.knowledge_indexes.by_id.get(candidate.id)
-            if knowledge is not None and KnowledgeProjector._established(knowledge, self.state):
-                continue
+                self.last_reveal_selection["outcome"] = "budget_exhausted"
+            return None
+        eligible = []
+        for candidate in eligible_candidates:
             sentence = candidate.earn_when or candidate.statement
             if sentence:
                 eligible.append((candidate.id, sentence, candidate, self._semantic_candidate_names(candidate)))
@@ -418,21 +447,66 @@ class CloudflareTurnProvider:
             return None
         self.semantic_fallback_calls += 1
         self.last_semantic_match["ran"] = True
+        provider_failed = False
+
+        def ask_semantic(state, questions):
+            nonlocal provider_failed
+            try:
+                return self.semantic_ask(state, questions)
+            except Exception:
+                provider_failed = True
+                raise
+
         try:
             from storygame.runtime.jev_questions import reaches_reveals
 
-            matched = reaches_reveals(
-                self.semantic_ask, player_input, [(item[0], item[1], item[3]) for item in eligible]
-            )
+            matched = reaches_reveals(ask_semantic, player_input, [(item[0], item[1], item[3]) for item in eligible])
         except Exception:
+            self.last_reveal_selection["outcome"] = "provider_error"
+            return None
+        if provider_failed:
+            self.last_reveal_selection["outcome"] = "provider_error"
             return None
         if len(matched) != 1:
+            self.last_reveal_selection["outcome"] = (
+                "shortlist_exclusion" if len(eligible_candidates) > len(eligible) else "semantic_refusal"
+            )
             return None
         candidate = next((item[2] for item in eligible if item[0] in matched), None)
         if candidate is None:
+            self.last_reveal_selection["outcome"] = "semantic_refusal"
             return None
         self.last_semantic_match["matched"] = candidate.id
+        self.last_reveal_selection.update(outcome="semantic_match", matched=candidate.id)
         return AuthoredHandoff(candidate=candidate, delivery_text=candidate.delivery_text)
+
+    def _reveal_universe(self) -> tuple[RevealCandidate, ...]:
+        """Return all eligible reveals, with compatibility for old test doubles."""
+
+        projection = getattr(self, "last_projection", None)
+        if projection is None:
+            return ()
+        universe = getattr(projection, "reveal_universe", ())
+        return universe or projection.candidates
+
+    def _eligible_reveal_candidates(self, candidates: tuple[RevealCandidate, ...]) -> tuple[RevealCandidate, ...]:
+        return tuple(
+            candidate
+            for candidate in candidates
+            if candidate.action_evidence
+            and isinstance(candidate.delivery_text, str)
+            and candidate.delivery_text.strip()
+            and not (
+                (knowledge := self.state.package.knowledge_indexes.by_id.get(candidate.id)) is not None
+                and KnowledgeProjector._established(knowledge, self.state)
+            )
+        )
+
+    @staticmethod
+    def _exact_match_count(player_input: str, candidates: tuple[RevealCandidate, ...]) -> int:
+        return sum(
+            uniquely_matched_authored_handoff(player_input, (candidate,)) is not None for candidate in candidates
+        )
 
     def _semantic_candidate_names(self, candidate: RevealCandidate) -> tuple[str, ...]:
         package = self.state.package
@@ -475,7 +549,7 @@ class CloudflareTurnProvider:
             or getattr(self, "last_semantic_match", {}).get("matched") is not None
         ):
             return []
-        candidates = self.last_projection.candidates if self.last_projection else ()
+        candidates = self._reveal_universe()
         eligible_count = 0
         for candidate in candidates:
             if (

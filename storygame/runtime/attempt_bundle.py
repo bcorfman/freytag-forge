@@ -47,6 +47,13 @@ class SelectedReveal(_BundleModel):
     delivery_fact_ids: tuple[str, ...] = ()
 
 
+class RevealSelection(_BundleModel):
+    outcome: str
+    matched: str | None = None
+    universe_size: int = 0
+    shortlist_size: int = 0
+
+
 class CommittedDelta(_BundleModel):
     fact_predicates: tuple[str, ...] = ()
     scene_from: str | None = None
@@ -73,6 +80,7 @@ class AttemptBundle(_BundleModel):
     command: AttemptCommand
     stages: tuple[ModelStage, ...] = ()
     selected_reveal: SelectedReveal = SelectedReveal()
+    reveal_selection: RevealSelection | None = None
     committed_delta: CommittedDelta = CommittedDelta()
     cue_stage: CueStage = CueStage()
     transition_cause: Literal["none", "earned", "forced", "timer"] = "none"

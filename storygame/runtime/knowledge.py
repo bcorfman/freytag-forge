@@ -49,11 +49,12 @@ class TurnKnowledgeContext(_KnowledgeModel):
     referenced_entity_ids: tuple[str, ...]
     continuity_ids: tuple[str, ...]
     candidates: tuple[RevealCandidate, ...]
+    reveal_universe: tuple[RevealCandidate, ...] = ()
     handoff_deliveries: tuple[FactDelivery, ...] = ()
     scene_hidden_ids: tuple[str, ...] = ()
 
     def payload_size(self) -> int:
-        return len(self.model_dump_json(exclude={"sayable_knowledge"}).encode())
+        return len(self.model_dump_json(exclude={"sayable_knowledge", "reveal_universe"}).encode())
 
 
 def _entity_surface_forms(entity) -> tuple[str, ...]:
@@ -189,7 +190,7 @@ class KnowledgeProjector:
         sayable = self._established_for(state, audience_id, self.max_sayable_knowledge)
         established_ids = tuple(sorted({entity_id for item in committed for entity_id in item.entity_ids}))
         referenced_ids = self._referenced_established_ids(state, player_input, established_ids)
-        candidates = self._candidates(state, audience_id, referenced_ids)
+        reveal_universe = self._candidates(state, audience_id, referenced_ids)
         return TurnKnowledgeContext(
             scene_id=state.current_scene_id,
             phase=state.phase,
@@ -201,7 +202,8 @@ class KnowledgeProjector:
             established_entity_ids=established_ids,
             referenced_entity_ids=referenced_ids,
             continuity_ids=tuple(record.id for record in state.turn_records[-self.max_continuity_records :]),
-            candidates=candidates,
+            candidates=reveal_universe[: self.max_candidates],
+            reveal_universe=reveal_universe,
             handoff_deliveries=tuple(
                 delivery for delivery in state.package.deliveries if delivery.fact_id in state.staged_handoff_fact_ids
             ),
@@ -356,7 +358,7 @@ class KnowledgeProjector:
                 item.id,
             )
         )
-        return tuple(self._candidate(item) for item in candidates[: self.max_candidates])
+        return tuple(self._candidate(item) for item in candidates)
 
     @staticmethod
     def _candidate(item: KnowledgeDefinition) -> RevealCandidate:

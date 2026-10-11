@@ -24,10 +24,12 @@ def _state() -> RuntimeState:
     return state
 
 
-def _provider(text: str):
+def _provider(text: str, reveal_selection: dict[str, object] | None = None):
     def provider(_command: str) -> dict[str, object]:
         return {"segments": [{"kind": "narration", "text": text}]}
 
+    if reveal_selection is not None:
+        provider.last_reveal_selection = reveal_selection
     return provider
 
 
@@ -39,33 +41,71 @@ def test_bundle_round_trip_and_unknown_version_refusal() -> None:
         outcome="committed",
     )
     assert AttemptBundle.from_json(bundle.to_json()) == bundle
+    old_bundle_dict = bundle.model_dump()
+    old_bundle_dict.pop("reveal_selection")
+    loaded_old_bundle = AttemptBundle.model_validate(old_bundle_dict)
+    assert loaded_old_bundle.reveal_selection is None
+    assert AttemptBundle.from_json(loaded_old_bundle.to_json()) == loaded_old_bundle
     with pytest.raises(ValidationError, match="unsupported attempt bundle schema version"):
         AttemptBundle.model_validate({**bundle.model_dump(), "schema_version": 2})
 
 
 def test_accepted_and_rejected_attempts_are_recorded_and_rejection_restores_state() -> None:
     state = _state()
-    engine = RuntimeEngine(state, _provider("The drawer remains closed."))
+    engine = RuntimeEngine(
+        state,
+        _provider(
+            "The drawer remains closed.",
+            {"outcome": "exact_match", "matched": "k_drawer", "universe_size": 4, "shortlist_size": 1},
+        ),
+    )
     engine.turn("Search the drawer.")
     assert engine.last_attempt is not None
     assert engine.last_attempt.outcome == "committed"
     assert engine.last_attempt.stages[0].reply is not None
+    assert engine.last_attempt.reveal_selection is not None
+    assert engine.last_attempt.reveal_selection.outcome == "exact_match"
+    assert engine.last_attempt.reveal_selection.matched == "k_drawer"
+    assert engine.last_attempt.reveal_selection.universe_size == 4
+    assert engine.last_attempt.reveal_selection.shortlist_size == 1
 
     before = state.snapshot()
-    engine.provider = _provider("Rebecca is in the room.")
+    engine.provider = _provider(
+        "Rebecca is in the room.",
+        {"outcome": "no_eligible_action", "universe_size": 2, "shortlist_size": 0},
+    )
     with pytest.raises(ProposalValidationError) as caught:
         engine.turn("Search the kitchen.")
     assert caught.value.code == "narration_known_term_leak"
     assert engine.last_attempt is not None
     assert engine.last_attempt.outcome == "rejected"
     assert engine.last_attempt.rejection.code == "narration_known_term_leak"
+    assert engine.last_attempt.reveal_selection is not None
+    assert engine.last_attempt.reveal_selection.outcome == "no_eligible_action"
+    assert engine.last_attempt.reveal_selection.universe_size == 2
+    assert engine.last_attempt.reveal_selection.shortlist_size == 0
     assert state.snapshot() == before
+
+
+def test_provider_without_reveal_selection_attribute_records_none() -> None:
+    engine = RuntimeEngine(_state(), _provider("The room stays quiet."))
+
+    engine.turn("Search the drawer.")
+
+    assert engine.last_attempt is not None
+    assert engine.last_attempt.reveal_selection is None
 
 
 def test_operational_failure_is_separate_from_rejection() -> None:
     def provider(_command: str):
         raise NarrationProviderError("worker unavailable", error_code="WORKER_DOWN")
 
+    provider.last_reveal_selection = {
+        "outcome": "provider_error",
+        "matched": None,
+        "universe_size": 3,
+        "shortlist_size": 2,
+    }
     engine = RuntimeEngine(_state(), provider)
     with pytest.raises(NarrationProviderError):
         engine.turn("Listen to the recording.")
@@ -73,6 +113,10 @@ def test_operational_failure_is_separate_from_rejection() -> None:
     assert engine.last_attempt.outcome == "operational_failure"
     assert engine.last_attempt.operational_failure.code == "WORKER_DOWN"
     assert engine.last_attempt.rejection is None
+    assert engine.last_attempt.reveal_selection is not None
+    assert engine.last_attempt.reveal_selection.outcome == "provider_error"
+    assert engine.last_attempt.reveal_selection.universe_size == 3
+    assert engine.last_attempt.reveal_selection.shortlist_size == 2
 
 
 def test_real_staged_handoff_is_recorded_as_forced() -> None:
