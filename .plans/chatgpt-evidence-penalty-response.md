@@ -27,11 +27,31 @@ All 18 runs completed, 0 rejected turns.
   3C, not the penalty text. Not yet probed: whether the quoted line competes with
   the command, or whether a reveal turn on the same step crowds it out.
 
-Resume here: the penalty is recorded and selected but invisible to the player.
-Next, per the scene-fix procedure: read the failing prompts beside plot.md, then
-probe arms (e.g. line framed as a broadcast heard on the turn, line placed as
-delivery text rather than a narrator instruction) with 10-15 samples each.
-Do not add a narrator rule first.
+Fix and re-measure (2026-10-11): pacing realizations take an optional
+`verbatim: true` (models.py, state.py, engine.py, cloudflare.py,
+narration_safety.py exemption for the exact authored segment; docs line in
+`docs/markdown-story-authoring.md`). The engine appends the authored line to
+the turn's narration and the narrator is no longer told to show it. Set on the
+four gap realizations only; no text changed. Technique: emit authored text
+deterministically (standing preference), not a new narrator rule. Offline
+matrix finished too (`tests/test_evidence_penalty.py`: forced delivery with
+must_convey already met, spent event, collision, 16-combination reachability,
+static no-gate-reads-a-gap check; no xfails). Suite 1315+ passed, ruff clean.
+Live replicates again (`bench/results/evidence-gap-v-*`, 3 each, 3C): gap line
+reached the player in 18 of 18 gap events (3,3,3,3 in single-gap states, 6 in
+`all`), 0 duplicates, 0 rejected turns, all runs completed, no-gap controls
+carried no gap line. Read: the line is appended after the narrator's text,
+so the player sees the water sentence and then Michelle's quote. Wrinkle seen,
+not caused by this change: at turn 10 the narrator often has Kristin on the
+surface in sunlight while the authored default says rising water closes a
+passage behind the fleeing captives.
+
+Resume here: open items are only judgment calls for Brandon: (a) whether
+Michelle's quoted lines read as a real cost to the player (the plan's proposed
+dramatic effect is still unproven by a human read), (b) the turn-10
+surface-versus-passage mismatch (an authored-text question for ChatGPT Desktop),
+(c) whether the narrator invents a penalty in no-gap runs beyond the 3 control
+runs seen (0 of 36 turns earlier).
 
 Use four gaps in supporting evidence. Preserve the evidence that makes the
 ending possible. A gap records what Kristin missed at that earlier moment;
