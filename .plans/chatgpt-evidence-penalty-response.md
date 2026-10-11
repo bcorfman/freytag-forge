@@ -9,9 +9,29 @@ New `tests/test_evidence_penalty.py` (4 tests); two existing tests updated
 (`test_markdown_story_package.py` allows the four pacing-only gap facts;
 `test_pacing_handoff.py` now reads the default realization as the last entry).
 
-Resume here: not yet done are the section 4 live replicates (three per
-script/state: no gaps, each gap alone, all gaps), reading selected versus
-displayed lines and the section 5 questions. No engine or runtime change.
+Live replicates (2026-10-11, commit after `41563d2a`): bench variations
+`evidence-gap-{none,processing,development,copycheck,marked,all}-3c` (new
+`entry_facts` key starts 3C with chosen gaps true), script `exposure-and-escape`,
+3 replicates each, results in `bench/results/evidence-gap-*` (ignored by git).
+All 18 runs completed, 0 rejected turns.
+- Selection works: the turn-4 and turn-10 pacing events picked the right line in
+  every run (P/D at turn 4, M/C at turn 10; `all` gave P then M; `none` gave the
+  two defaults). 18/18 gap states, 6/6 no-gap controls. The line is in the
+  recorded prompt as "This happens now. Show it in the scene: ...".
+- Display fails: Michelle's quoted gap line reached the player in 0 of 18 gap
+  events. The narrator instead wrote its own scene around the command. No gap
+  phrase appears in any of the 216 narrations, and no no-gap control got an
+  invented penalty (0/36).
+- The no-gap defaults are also mostly dropped (water echoed in 2 of 6 control
+  events, 0 of 6 `all` events), so the weak link is the complication channel in
+  3C, not the penalty text. Not yet probed: whether the quoted line competes with
+  the command, or whether a reveal turn on the same step crowds it out.
+
+Resume here: the penalty is recorded and selected but invisible to the player.
+Next, per the scene-fix procedure: read the failing prompts beside plot.md, then
+probe arms (e.g. line framed as a broadcast heard on the turn, line placed as
+delivery text rather than a narrator instruction) with 10-15 samples each.
+Do not add a narrator rule first.
 
 Use four gaps in supporting evidence. Preserve the evidence that makes the
 ending possible. A gap records what Kristin missed at that earlier moment;
