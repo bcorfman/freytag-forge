@@ -1094,13 +1094,13 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
             for entity in (*world.locations, *world.npcs, *world.groups, *world.items)
             for form in (entity.name, *entity.aliases)
         }
-        for group in world.groups:
-            for scoped_alias in group.scoped_aliases:
+        for entity, kind in (*((group, "group") for group in world.groups), *((item, "item") for item in world.items)):
+            for scoped_alias in entity.scoped_aliases:
                 if not scoped_alias.strip():
-                    raise StoryPackageError(f"group '{group.id}' scoped alias must be a non-blank string")
+                    raise StoryPackageError(f"{kind} '{entity.id}' scoped alias must be a non-blank string")
                 if scoped_alias.casefold() in declared_names:
                     raise StoryPackageError(
-                        f"group '{group.id}' scoped alias '{scoped_alias}' duplicates a declared entity name or alias"
+                        f"{kind} '{entity.id}' scoped alias '{scoped_alias}' duplicates a declared entity name or alias"
                     )
         declared_ids = {entity.id for entity in (*world.locations, *world.npcs, *world.groups, *world.items)}
         for fact_id, effects in world.fact_effects.items():
