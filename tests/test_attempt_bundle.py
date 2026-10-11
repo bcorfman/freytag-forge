@@ -88,6 +88,76 @@ def test_real_staged_handoff_is_recorded_as_forced() -> None:
     assert engine.last_attempt.transition_cause == "forced"
 
 
+def test_late_earned_exit_is_recorded_as_earned() -> None:
+    state = _state()
+    for predicate in ("michelle_lead_actionable", "patrol_return_pressure"):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
+    state.turn_index = window.handoff_after_turns + 1
+    state.scene_entered_at_turn = 0
+    knowledge = PACKAGE.knowledge_indexes.by_id["k_sl_1a_b_r0"]
+
+    def provider(_command: str) -> dict[str, object]:
+        return {
+            "segments": [
+                {
+                    "kind": "narration",
+                    "text": knowledge.delivery_text or knowledge.statement,
+                    "grounding_ids": ["k_sl_1a_b_r0"],
+                }
+            ],
+            "selected_knowledge_ids": ["k_sl_1a_b_r0"],
+        }
+
+    engine = RuntimeEngine(state, provider)
+
+    engine.turn("Search the gap beneath the drawer.")
+
+    assert state.current_scene_id == "1B"
+    assert engine.last_attempt.transition_cause == "earned"
+    assert engine.last_attempt.committed_delta.scene_from == "1A"
+    assert engine.last_attempt.committed_delta.scene_to == "1B"
+
+    forced_state = _state()
+    for predicate in (
+        "michelle_lead_actionable",
+        "patrol_return_pressure",
+        "memory_card_recovered",
+    ):
+        forced_state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+    forced_state.turn_index = window.handoff_after_turns + 1
+    forced_state.scene_entered_at_turn = 0
+    forced_state.staged_handoff_fact_ids = ("continuity_initiative_known",)
+    forced_engine = RuntimeEngine(forced_state, _provider("The patrol closes in."))
+
+    forced_engine.turn("Search the kitchen.")
+
+    assert forced_state.current_scene_id == "1B"
+    assert forced_engine.last_attempt.transition_cause == "forced"
+
+
+def test_deadline_backstop_exit_is_recorded_as_timer() -> None:
+    state = _state()
+    for predicate in (
+        "continuity_initiative_known",
+        "michelle_lead_actionable",
+        "patrol_return_pressure",
+        "memory_card_recovered",
+    ):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
+    state.turn_index = window.handoff_after_turns
+    state.scene_entered_at_turn = 0
+    engine = RuntimeEngine(state, _provider("The house is watched."))
+
+    engine.turn("Inspect the kitchen.")
+
+    assert state.current_scene_id == "1B"
+    assert engine.last_attempt.transition_cause == "timer"
+    assert engine.last_attempt.committed_delta.scene_from == "1A"
+    assert engine.last_attempt.committed_delta.scene_to == "1B"
+
+
 class _WebProvider:
     last_prompt = {"system": "system prompt", "user": "user prompt"}
 

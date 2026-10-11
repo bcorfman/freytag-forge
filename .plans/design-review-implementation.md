@@ -1,10 +1,10 @@
 # Design review: implementation plan
 
-Status (2026-10-11, branch `design-review-step1` off main e8722548): Step 1 done and verified, not pushed or merged; Steps 2-10 not started. Source: [chatgpt-design-review-answer.md](chatgpt-design-review-answer.md) (reviewed at `45a35cc3`, 10-step sequence). This plan turns that sequence into Ringer-sized tasks with gates. Update this file after each step is completed and tested (commit, what the check showed, what is untested), and refresh "Resume here".
+Status (2026-10-11): Step 1 merged (PR #592). Step 2 Python side done on branch `design-review-step2` (bundle, engine, gated web exposure, replay tests), not pushed; blind-player JS side and live smoke still open; Steps 3-10 not started. Source: [chatgpt-design-review-answer.md](chatgpt-design-review-answer.md) (reviewed at `45a35cc3`, 10-step sequence). This plan turns that sequence into Ringer-sized tasks with gates. Update this file after each step is completed and tested (commit, what the check showed, what is untested), and refresh "Resume here".
 
 ## Resume here
 
-Start at Step 2 (Step 1 is on branch `design-review-step1`, awaiting Brandon's go to open and merge its PR). Branch per step, one PR per step, merge commit only on Brandon's per-PR instruction, delete the branch after green CI.
+Finish Step 2: (a) blind-player.js stores `attempt_bundle` beside the old prompt slot and `analyseRun` takes exit cause from the bundle's `transition_cause` (fallback to the old turn-count rule for old captures), with node tests; (b) live smoke (one success, one rejection, one short forced continuation), needs Brandon's go since it is billed. Then open the Step 2 PR. Branch per step, one PR per step, merge commit only on Brandon's per-PR instruction, delete the branch after green CI.
 
 ## Ground rules (from AGENTS.md and memory)
 
@@ -113,3 +113,11 @@ Deterministic replay on every affected change; targeted live arms when a model b
 - Remaining limit: the package has no scene after 3C, so the skipped reveal is an earlier reveal within the final scene, not one skipped across a scene boundary. Five-eligible fixture uses real 1A data (`k_sl_1a_c_r2` dropped by the 4-cap).
 - Untested: live behaviour; coverage gate.
 
+
+### Step 2, Python side (2026-10-11, branch `design-review-step2`)
+- Ringer runs `design-review-step2` (codex, 1 attempt, PASS, 405 s; full suite 1412 passed, ruff clean) and `design-review-step2b` (tests only, PASS, 212 s). Manifests in `scripts/ringer/design-review-step2/`.
+- Added `storygame/runtime/attempt_bundle.py` (frozen, `schema_version` 1, unknown versions refused), `RuntimeEngine.attempts` / `last_attempt` (last 24; recorded on committed, rejected, game-break and provider-failure paths, snapshot restored before recording), and `attempt_bundle` in `/api/v1/turn` responses behind `FREYTAG_EXPOSE_PROMPT=1` (409 body carries it; `detail` and rejection header unchanged; absent when gate is off).
+- `transition_cause` is observed from the branch that moved the scene: staged handoff = `forced`, resolution-deadline backstop = `timer`, otherwise `earned`. Not a turn-count comparison, so late earned exits are no longer `timer`.
+- Tests (`tests/test_attempt_bundle.py`, 8): round-trip and version refusal, accepted and rejected, operational failure apart from rejection, forced handoff, late earned 1A to 1B (`k_sl_1a_b_r0`), same late state forced, deadline timer, gated web rejection. No engine logic change was needed in the second run.
+- Limit: `timer` currently means only the resolution-deadline backstop; a timed route event that moves the scene without a selected reveal is classed `earned`. Unverified whether any route does that.
+- Untested: blind-player.js integration, live behaviour, coverage gate.
