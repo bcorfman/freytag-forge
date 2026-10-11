@@ -52,7 +52,7 @@ except (json.JSONDecodeError, TypeError, AttributeError):
           echo "FAIL: deployment $deployment_id status $status"
           return 1
           ;;
-        SUCCESS)
+        SUCCESS|SLEEPING)  # an idle service reports SLEEPING; the version check below wakes it
           for attempt in $(seq 1 6); do
             confirmation=$(curl -sf --max-time 15 "${E2E_API_BASE_URL:-}/api/v1/version" 2>/dev/null) || confirmation=""
             if [ -n "$confirmation" ] && python3 -c 'import json, os, sys
