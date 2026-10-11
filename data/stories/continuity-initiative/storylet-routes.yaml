@@ -134,10 +134,16 @@ new_fact_ids:
   definition: Kristin has recovered Michelle's memory card.
   used_by_storylets:
   - SL-1A-E
+  - SL-1A-F
   - SL-1A-B
   - SL-1A-D
   used_by_transitions:
   - t_1a_1b
+- id: drawer_gap_pointed_out
+  definition: Kristin has been pointed toward the thin gap beneath Michelle's workstation drawer.
+  used_by_storylets:
+  - SL-1A-F
+  used_by_transitions: []
 - id: official_interest_in_michelle_known
   definition: Kristin knows the welfare patrol was specifically interested in Dr. McGehee’s research.
   used_by_storylets:
@@ -633,6 +639,54 @@ storylets:
     abort_when:
     - scene_id_not: 1A
   non_coercion_note: Offer as a consequence of free-text investigation. Do not present it as a choice or required command; equivalent careful searches may validate the same operation.
+- id: SL-1A-F
+  scene_id: 1A
+  title: The Drawer Points to the Gap
+  activation:
+    scene_id: 1A
+    conditions:
+    - fact_id: memory_card_recovered
+      equals: false
+    pacing:
+      earliest_turn: 0
+      target_turn: 3
+      latest_turn: 12
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let opening the drawer or examining its carved initials point Kristin back to the thin gap without recovering the memory card.
+  realization_options:
+  - id: SL-1A-F-R1
+    dramatic_intent: Kristin pulls or opens the drawer and notices the thin gap beneath its lower edge without finding the memory card.
+    source_beats: [scene-1a1--michelle-is-gone]
+    operations:
+    - op: assert
+      fact_id: drawer_gap_pointed_out
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - brandon_history
+    - phase_two
+  - id: SL-1A-F-R2
+    dramatic_intent: Kristin examines the carved initials and notices the thin gap beneath the drawer without finding the memory card.
+    source_beats: [scene-1a1--michelle-is-gone]
+    operations:
+    - op: assert
+      fact_id: drawer_gap_pointed_out
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - brandon_history
+    - phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: drawer_gap_pointed_out
+      equals: true
+    abort_when:
+    - scene_id_not: 1A
+  non_coercion_note: Offer as a consequence of free-text investigation. Do not present it as a choice or required command; equivalent drawer searches may validate the same operation.
 - id: SL-1A-B
   scene_id: 1A
   title: Michelle Hid Something for Kristin

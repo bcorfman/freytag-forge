@@ -253,7 +253,7 @@ items:
   aliases: [medical records, survivor records]
 - id: rebecca_desk
   name: executive desk
-  aliases: [Rebecca's desk]
+  aliases: [Rebecca's executive desk]
   kind: desk
   owner: rebecca
 - id: drainage_pump_controls
@@ -292,6 +292,7 @@ facts:
   on_assert:
   - {move: memory_card, parent: kristin, text: with Kristin}
   - {reveal: memory_card}
+- drawer_gap_pointed_out
 - official_interest_in_michelle_known
 - house_marked_for_return
 - transport_route_identified

@@ -25,6 +25,8 @@ facts:
   purpose: Kristin has recovered Michelle’s warning not to trust emergency broadcasts.
 - id: memory_card_recovered
   purpose: Kristin has recovered Michelle’s memory card.
+- id: drawer_gap_pointed_out
+  purpose: Kristin has been pointed toward the thin gap beneath Michelle’s workstation drawer.
 - id: official_interest_in_michelle_known
   purpose: Kristin knows the welfare patrol was specifically interested in Michelle’s
     research and findings.
@@ -251,7 +253,7 @@ scene_frames:
   situation: A damaged public park with an ordinary bench near the service path. Checkpoints and emergency patrols make a simple search feel exposed.
   pressure: Follow Michelle's lead and survive the park
 - scene_id: 1C
-  situation: A supposedly abandoned freight terminal whose fresh tire tracks, humming air vents, and heavy electrical service show that it is active. Its loading docks sit above ground. A service level lies below them.
+  situation: A supposedly abandoned freight terminal whose fresh tire tracks, humming air vents, and heavy electrical service show that it is active. Its loading docks sit above ground. A service level lies below them. The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.
   pressure: Confirm the facility and its purpose
 - scene_id: 2A
   situation: Brandon's fortified hideout inside an abandoned communications center, stocked with servers and leaked Initiative documents. The facility's strained cooling-water and ventilation systems offer a narrow pretext for an unscheduled inspection.
@@ -336,6 +338,60 @@ knowledge:
   - [beneath the KMS drawer, under the KMS drawer, beneath the drawer]
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
   delivery_text: "Kristin finds Michelle's memory card taped beneath the drawer. She takes it with her. Her laptop is in her truck outside."
+- id: k_sl_1a_f_r1
+  statement: "Kristin opens the drawer and is pointed toward the thin gap beneath its lower edge."
+  earn_when: pulls or opens the drawer
+  action_evidence:
+  - [pull open, pull out, pull the, pull my, pull michelle, "pull michelle's", slide open, slide out, tug, yank, open the, open my, open michelle, open her]
+  - [drawer]
+  entity_ids: [kristin, michelle_drawer]
+  aliases:
+  - drawer gap pointed out
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: drawer_gap_pointed_out
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-F
+    realization_id: SL-1A-F-R1
+  relevance:
+    entity_ids: [kristin, michelle_drawer]
+    priority: 0
+  delivery_text: "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
+- id: k_sl_1a_f_r2
+  statement: "Kristin examines the carved initials and is pointed toward the thin gap beneath the drawer."
+  earn_when: examines the carved initials
+  action_evidence:
+  - [examine, inspect, study, read, look at, check, trace, run my fingers]
+  - [initials, carved initials, carving, my initials]
+  entity_ids: [kristin, michelle_drawer]
+  aliases:
+  - drawer gap pointed out
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: drawer_gap_pointed_out
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-F
+    realization_id: SL-1A-F-R2
+  relevance:
+    entity_ids: [kristin, michelle_drawer]
+    priority: 0
+  delivery_text: "The initials are fresh, deep cuts. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
 - id: k_sl_1a_b_r1
   statement: "Kristin reads Michelle's memory card. Its damaged recording warns her not to trust emergency broadcasts, and the Continuity Initiative files point to a dead drop at a bench in the park."
   earn_when: reads the files on Michelle's recovered memory card
@@ -1088,7 +1144,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks. A supervisor questions why their inspection was not scheduled."
+  delivery_text: "Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks. A supervisor questions why their inspection was not scheduled. Kristin can explain the unscheduled inspection to the supervisor."
 - id: k_sl_2a_c_r1
   statement: 'Kristin persuades a doubtful supervisor that a cooling-water imbalance and ventilation fault could disable the service level, gaining corridor access.'
   earn_when: explains or warns the supervisor about cooling, ventilation, warning, unscheduled inspection, cooling-water, or cooling-system faults
@@ -1124,6 +1180,7 @@ knowledge:
   - [ventilation fault, ventilation monitor, service-level shutdown, sensor fault, ventilation warning]
   - [corridor access, access, restricted access, infrastructure access, corridor entrance]
   - [supervisor, security supervisor, facility supervisor, security officer, inspection supervisor]
+  leak_terms: [cooling failure, cooling leak, cooling-system risk, cooling-water imbalance, corridor access, corridor entrance, facility supervisor, infrastructure access, inspection supervisor, restricted access, restricted corridor access, security supervisor, sensor fault, service-level shutdown, ventilation fault, ventilation monitor, ventilation warning, water system problem, water-pressure fault]
   delivery_text: >-
     Kristin convinces the supervisor that a cooling-water imbalance and ventilation fault could shut down the service level. He grants corridor access.
 - id: k_sl_2a_c_r1_rebecca_observes
@@ -1560,7 +1617,7 @@ knowledge:
   statement: 'Kristin and Brandon secure enough evidence to expose the conspiracy, but sending it now would reveal their position and seal the detention sectors.'
   earn_when: "checks, secures, or copies the copied files"
   action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer", "examine", "analyze", "eject", "monitor"]
+  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer", "examine", "analyze", "eject", "monitor", "take", "retrieve", "get", "grab", "pick up", "pull up", "use", "access", "view", "look at", "load", "plug in", "bring up", "show"]
   - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence", "JANUS evidence", "JANUS files", "copied JANUS files", "portable drive", "JANUS records", "copied JANUS records", "development records", "JANUS development records", "USB drive", "my USB drive", "USB drive transfer", "USB drive's"]
   entity_ids: []
   aliases:
@@ -1644,6 +1701,25 @@ knowledge:
   - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office]
   - [open the detention cells, open the cells, rescue the prisoners, release the prisoners]
   - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
+  leak_terms:
+  - Michelle's coded note
+  - maintenance access route
+  - maintenance path
+  - local access route
+  - route to Michelle
+  - Rebecca's secured office
+  - Rebecca's office
+  - secured office
+  - Rebecca's locked office
+  - open the detention cells
+  - open the cells
+  - rescue the prisoners
+  - release the prisoners
+  - broadcast the evidence
+  - transmit the evidence
+  - broadcast proof
+  - send the evidence
+  - combined broadcast rescue plan known
   delivery_text: "Michelle's encrypted message marks a maintenance access route into her holding block. Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
 - id: k_sl_2c_d_r2
   statement: "Kristin traces Michelle's maintenance code route into her holding block, then to Rebecca's office, and learns the plan can rescue the captives only if they seize the controls to broadcast the evidence."
@@ -1670,6 +1746,27 @@ knowledge:
   - [Rebecca's office, secured office, Rebecca's secured office, Rebecca's locked office]
   - [open the detention cells, rescue the captives, release the prisoners, open the cells]
   - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
+  leak_terms:
+  - Michelle's maintenance code
+  - maintenance code
+  - Michelle's code
+  - maintenance code route
+  - maintenance path
+  - local access route
+  - coded path
+  - Rebecca's office
+  - secured office
+  - Rebecca's secured office
+  - Rebecca's locked office
+  - open the detention cells
+  - rescue the captives
+  - release the prisoners
+  - open the cells
+  - broadcast the evidence
+  - transmit the evidence
+  - broadcast proof
+  - send the evidence
+  - combined broadcast rescue plan known
   delivery_text: "Kristin traces Michelle's maintenance code route into her holding block, then to Rebecca's office. Kristin and Brandon can rescue the captives only by seizing the controls to broadcast the evidence."
 - id: k_sl_3a_a_r1
   statement: 'Kristin reaches Michelle alive, only to find her directing prisoners through stolen radios and coded announcements.'
@@ -2627,6 +2724,7 @@ knowledge:
   statement: "The archive crisis is understood: the evidence, betrayal, and Michelle's resistance converge here."
   entity_ids: [kristin, michelle, brandon, janus_archive]
   aliases: [archive crisis, Michelle's resistance]
+  leak_terms: [Michelle's resistance]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2B]
   establishes: [{op: assert, fact_id: archive_crisis_understood, value: true}]
@@ -2683,6 +2781,7 @@ knowledge:
   statement: Kristin has joined the wider rescue effort to find remaining detention sites.
   entity_ids: [kristin]
   aliases: [rescue efforts, remaining detention sites]
+  leak_terms: [remaining detention sites]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3C]
   establishes: [{op: assert, fact_id: kristin_joined_rescue_efforts, value: true}]
@@ -2764,6 +2863,7 @@ knowledge:
   statement: Exposure and escape are both immediate under the collapsing operation.
   entity_ids: [kristin, facility_escape]
   aliases: [escape route, exposure]
+  leak_terms: []
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3C]
   establishes: [{op: assert, fact_id: scene_3c_entry_known, value: true}]

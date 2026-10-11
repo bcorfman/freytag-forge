@@ -140,6 +140,9 @@ character_placements:
   "stranger" that would match text in scenes where the character is not
   allowed. If two things share a noun and trip an ambiguity check, rename one
   of them in the fiction instead of loosening the check.
+- **Review knowledge leak terms separately.** An item's optional `leak_terms`
+  list names the phrases narration must guard before the item is earned. An
+  empty list means it has no guarded phrases.
 - **Learned names persist.** When the match call maps a new name to an
   entity, the bench stores it as a `wk_alias` fact. A wrong mapping therefore
   repeats in every later turn. That is one more reason to declare the right

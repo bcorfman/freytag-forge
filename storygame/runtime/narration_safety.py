@@ -91,7 +91,7 @@ class NarrationSafetyValidator:
             term.casefold()
             for terms in indexes.audience_to_known_terms.values()
             for term in terms
-            if len(term.split()) > 1 and term.casefold() in indexes.term_to_knowledge
+            if len(term.split()) > 1 and term.casefold() in indexes.leak_term_to_knowledge
         }
         handoff_terms = {
             term.casefold()
@@ -220,7 +220,7 @@ class NarrationSafetyValidator:
                     for alias, entity_ids in indexes.entity_alias_to_entities.items()
                 ):
                     continue
-                knowledge_ids = set(indexes.term_to_knowledge.get(form, ()))
+                knowledge_ids = set(indexes.leak_term_to_knowledge.get(form, ()))
                 if (
                     self._contains(handoff_text, form)
                     or any(self._contains(handoff_form, form) for handoff_form in handoff_terms)

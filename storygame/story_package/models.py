@@ -120,6 +120,7 @@ class KnowledgeDefinition(_Model):
     earn_when: str | None = Field(default=None, min_length=1)
     action_evidence: tuple[tuple[str, ...], ...] = ()
     must_convey: tuple[tuple[str, ...], ...] = ()
+    leak_terms: tuple[str, ...] | None = None
     delivery_text: str | None = None
 
 
@@ -152,6 +153,7 @@ class KnowledgeIndexes(_Model):
     prerequisite_dependents: Mapping[str, tuple[str, ...]]
     entity_alias_to_entities: Mapping[str, tuple[str, ...]] = {}
     term_to_knowledge: Mapping[str, tuple[str, ...]] = {}
+    leak_term_to_knowledge: Mapping[str, tuple[str, ...]] = {}
     protected_terms: tuple[str, ...] = ()
 
 

@@ -63,6 +63,15 @@ def test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone
     assert set(term_to_knowledge.get("michelle's encrypted note", ())) == set()
     assert set(term_to_knowledge.get("coded message", ())) == {"k_sl_2c_d_r1", "k_sl_2c_d_r2"}
 
+    leak_term_to_knowledge = PACKAGE.knowledge_indexes.leak_term_to_knowledge
+    assert set(leak_term_to_knowledge.get("michelle's encrypted message", ())) == set()
+    assert set(leak_term_to_knowledge.get("encrypted message from michelle", ())) == set()
+    assert set(leak_term_to_knowledge.get("coded message", ())) == set()
+    assert set(leak_term_to_knowledge.get("rescue efforts", ())) == set()
+    assert set(leak_term_to_knowledge.get("security officer", ())) == set()
+    assert set(term_to_knowledge.get("rescue efforts", ())) == {"k_resolution_kristin_rescue"}
+    assert set(term_to_knowledge.get("security officer", ())) == {"k_sl_2a_c_r1"}
+
 
 @pytest.mark.parametrize(
     ("audience", "kind", "player_visible", "expected"),
@@ -336,10 +345,10 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
     engine = RuntimeEngine(state, lambda _: next(responses))
 
     expected_candidates = (
-        {"k_sl_1a_a_r1"},
-        {"k_sl_1a_b_r0"},
-        {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
-        {"k_sl_1a_c_r1", "k_sl_1a_c_r2"},
+        {"k_sl_1a_a_r1", "k_sl_1a_f_r1", "k_sl_1a_f_r2"},
+        {"k_sl_1a_b_r0", "k_sl_1a_f_r1", "k_sl_1a_f_r2"},
+        {"k_sl_1a_b_r1", "k_sl_1a_b_r2", "k_sl_1a_f_r1", "k_sl_1a_f_r2"},
+        {"k_sl_1a_f_r1", "k_sl_1a_f_r2"},
     )
     for player_input, expected in zip(
         (

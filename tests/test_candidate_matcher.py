@@ -44,6 +44,33 @@ FILES_HANDOFF = RevealCandidate(
 )
 
 
+SCENE_2C_CANDIDATES = tuple(
+    RevealCandidate(
+        id=item.id,
+        statement=item.statement,
+        earn_when=item.earn_when,
+        must_convey=item.must_convey,
+        action_evidence=item.action_evidence,
+        delivery_text=item.delivery_text,
+    )
+    for item in PACKAGE.knowledge.knowledge
+    if "2C" in item.available_in_scenes and item.action_evidence
+)
+
+SCENE_2A_CANDIDATES = tuple(
+    RevealCandidate(
+        id=item.id,
+        statement=item.statement,
+        earn_when=item.earn_when,
+        must_convey=item.must_convey,
+        action_evidence=item.action_evidence,
+        delivery_text=item.delivery_text,
+    )
+    for item in PACKAGE.knowledge.knowledge
+    if "2A" in item.available_in_scenes and item.action_evidence
+)
+
+
 @pytest.mark.parametrize(
     ("player_input",),
     [
@@ -182,6 +209,89 @@ def test_scene_1a_card_reveal_accepts_natural_synonyms(player_input: str) -> Non
 
     assert handoff is not None
     assert handoff.candidate.id == "k_sl_1a_b_r0"
+
+
+@pytest.mark.parametrize(
+    ("player_input",),
+    [
+        ("Retrieve my copied JANUS files.",),
+        ("Take the copied files.",),
+        ("Use my copied files on the purge-control console.",),
+        ("Copy Michelle's prisoner status records to my USB drive.",),
+        ("Take the evidence.",),
+        ("Show the proof.",),
+    ],
+)
+def test_scene_2c_c_r1_matches_natural_player_actions(player_input: str) -> None:
+    handoff = uniquely_matched_authored_handoff(player_input, SCENE_2C_CANDIDATES)
+
+    assert handoff is not None
+    assert handoff.candidate.id == "k_sl_2c_c_r1"
+
+
+def test_scene_2c_c_r2_matches_sending_the_copied_files() -> None:
+    handoff = uniquely_matched_authored_handoff("Send the copied files.", SCENE_2C_CANDIDATES)
+
+    assert handoff is not None
+    assert handoff.candidate.id == "k_sl_2c_c_r2"
+
+
+@pytest.mark.parametrize(
+    ("player_input",),
+    [
+        ("Open the purge-control console.",),
+        ("Check Michelle's transfer order.",),
+    ],
+)
+def test_scene_2c_unrelated_actions_match_neither_evidence_candidate(player_input: str) -> None:
+    handoff = uniquely_matched_authored_handoff(player_input, SCENE_2C_CANDIDATES)
+
+    assert handoff is None or handoff.candidate.id not in {
+        "k_sl_2c_c_r1",
+        "k_sl_2c_c_r2",
+    }
+
+
+def test_scene_2c_asking_brandon_to_retrieve_files_stays_tied() -> None:
+    handoff = uniquely_matched_authored_handoff("Ask Brandon to retrieve the copied files.", SCENE_2C_CANDIDATES)
+
+    assert handoff is None
+
+
+@pytest.mark.parametrize(
+    ("player_input",),
+    [
+        ("Explain the unscheduled inspection to the supervisor.",),
+        ("Warn the supervisor about the cooling-water fault.",),
+    ],
+)
+def test_scene_2a_c_r1_matches_natural_player_actions(player_input: str) -> None:
+    handoff = uniquely_matched_authored_handoff(player_input, SCENE_2A_CANDIDATES)
+
+    assert handoff is not None
+    assert handoff.candidate.id == "k_sl_2a_c_r1"
+
+
+@pytest.mark.parametrize(
+    ("player_input",),
+    [
+        ("Present my inspection forms to the supervisor.",),
+        ("Follow the supervisor through the nearby door.",),
+    ],
+)
+def test_scene_2a_unrelated_actions_match_neither_evidence_candidate(player_input: str) -> None:
+    handoff = uniquely_matched_authored_handoff(player_input, SCENE_2A_CANDIDATES)
+
+    assert handoff is None or handoff.candidate.id not in {
+        "k_sl_2a_c_r1",
+        "k_sl_2a_c_r2",
+    }
+
+
+def test_scene_2a_e_r1_delivery_text_points_to_the_supervisor_action() -> None:
+    item = next(item for item in PACKAGE.knowledge.knowledge if item.id == "k_sl_2a_e_r1")
+
+    assert item.delivery_text.endswith("Kristin can explain the unscheduled inspection to the supervisor.")
 
 
 def test_authored_handoff_returns_the_projected_candidate_and_delivery() -> None:

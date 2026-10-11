@@ -27,7 +27,8 @@ def test_loader_rejects_an_uncommitted_guarded_term_in_scene_frame_situation(tmp
     contents = contents.replace(
         "situation: A supposedly abandoned freight terminal whose fresh tire tracks, humming air vents, and heavy "
         "electrical service show that it is active. Its loading docks sit above ground. A service level lies below "
-        "them.",
+        "them. The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms "
+        "below.",
         "situation: A supposedly abandoned freight terminal above a dead drop.",
         1,
     )

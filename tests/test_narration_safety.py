@@ -120,6 +120,175 @@ def test_earned_memory_card_accepts_determiner_but_unearned_term_is_rejected() -
 
 
 @pytest.mark.parametrize(
+    "text",
+    [
+        "Kristin opens the encrypted message from Michelle on her laptop.",
+        "Kristin opens Michelle's encrypted message, but the screen shows only scrambled symbols.",
+    ],
+)
+def test_scene_2c_accepts_encrypted_message_wording_before_reveal(text: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2C"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2C")
+    state._assert_scene_entry_fact("2C")
+    for predicate in ("janus_evidence", "evidence_ready_to_transmit"):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+    assert Fact(predicate="purge_clock_started", subject="story", value="true") not in state.facts.asserted
+
+    def provider(_player_input: str) -> dict[str, object]:
+        return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
+
+    proposal = RuntimeEngine(state, provider).turn("Open Michelle's message.")
+    assert proposal.segments[0].text == text
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Kristin opens the coded message from Michelle.",
+    ],
+)
+def test_scene_2c_accepts_coded_message_wording_before_reveal(text: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2C"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2C")
+    state._assert_scene_entry_fact("2C")
+    for predicate in ("janus_evidence", "evidence_ready_to_transmit"):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+
+    proposal = RuntimeEngine(
+        state,
+        lambda _: {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []},
+    ).turn("Open Michelle's message.")
+    assert proposal.segments[0].text == text
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Kristin follows the maintenance access route into the holding block.",
+        "Kristin sees that Rebecca's secured office can broadcast the evidence.",
+        "Kristin hears the cells can be opened. Open the detention cells.",
+    ],
+)
+def test_scene_2c_still_rejects_reviewed_knowledge_terms_before_reveal(text: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2C"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2C")
+    state._assert_scene_entry_fact("2C")
+    for predicate in ("janus_evidence", "evidence_ready_to_transmit"):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+
+    with pytest.raises(ProposalValidationError) as caught:
+        RuntimeEngine(
+            state,
+            lambda _: {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []},
+        ).turn("Open Michelle's message.")
+    assert caught.value.code == "narration_known_term_leak"
+
+
+@pytest.mark.parametrize(
+    ("scene", "command", "text"),
+    [
+        (
+            "2B",
+            "Read the maintenance reports.",
+            "Kristin opens a coded message on the terminal, but the screen shows only static.",
+        ),
+        ("2B", "Search the archive.", "The archive crisis presses on Kristin as the lights flicker."),
+        ("1B", "Search the park.", "Kristin looks for an escape route past the checkpoint."),
+        (
+            "2C",
+            "Confront Rebecca about the broadcast controls.",
+            "Rebecca stands behind Rebecca's desk and does not answer.",
+        ),
+        (
+            "3C",
+            "Support the independent rescue efforts.",
+            "Kristin joins the people organizing rescue efforts outside the gates.",
+        ),
+        (
+            "2A",
+            "Examine the security checkpoint.",
+            "A security officer waves a line of staff through the checkpoint.",
+        ),
+    ],
+)
+def test_ordinary_scene_wording_is_not_a_leak(scene: str, command: str, text: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = scene
+    state.phase = next(
+        scene_data.metadata.freytag_phase for scene_data in PACKAGE.scenes if scene_data.metadata.scene_id == scene
+    )
+    state._assert_scene_entry_fact(scene)
+
+    def provider(_player_input: str) -> dict[str, object]:
+        return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
+
+    proposal = RuntimeEngine(state, provider).turn(command)
+    assert proposal.segments[0].text == text
+
+
+def test_scene_2a_still_rejects_guard_leak_terms() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2A"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2A")
+    state._assert_scene_entry_fact("2A")
+
+    with pytest.raises(ProposalValidationError) as caught:
+        RuntimeEngine(
+            state,
+            lambda _: {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": "The ventilation monitor shows a sensor fault in the cooling system.",
+                    }
+                ],
+                "selected_knowledge_ids": [],
+            },
+        ).turn("Examine the security checkpoint.")
+
+    assert caught.value.code == "narration_known_term_leak"
+
+
+def test_scene_1b_rejects_unearned_person_name() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "1B"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "1B")
+    state._assert_scene_entry_fact("1B")
+
+    def provider(_player_input: str) -> dict[str, object]:
+        return {
+            "segments": [{"kind": "narration", "text": "Rebecca waits beside the door."}],
+            "selected_knowledge_ids": [],
+        }
+
+    with pytest.raises(ProposalValidationError):
+        RuntimeEngine(state, provider).turn("Search the park.")
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["Kristin follows the maintenance access route into the holding block."],
+)
+def test_scene_2c_rejects_unearned_reveal_content(text: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2C"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2C")
+    state._assert_scene_entry_fact("2C")
+    for predicate in ("janus_evidence", "evidence_ready_to_transmit"):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+    assert Fact(predicate="purge_clock_started", subject="story", value="true") not in state.facts.asserted
+
+    def provider(_player_input: str) -> dict[str, object]:
+        return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
+
+    with pytest.raises(ProposalValidationError):
+        RuntimeEngine(state, provider).turn("Open Michelle's message.")
+
+
+@pytest.mark.parametrize(
     ("text", "expected_codes"),
     [
         pytest.param(
