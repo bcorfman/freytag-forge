@@ -34,6 +34,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.reveal_eligibility import ALREADY_ESTABLISHED, STORYLET_SPENT, explain_reveal
+from storygame.runtime.state import CueStage as RuntimeCueStage
 from storygame.runtime.state import RuntimeState, TurnDelivery, TurnRecord
 from storygame.runtime.validation import (
     ProgressionValidator,
@@ -206,6 +207,7 @@ class RuntimeEngine(CanonicalEventMixin):
             forced_handoff = True
             proposal, canonical_event_id = self._prepare_handoff(proposal)
         staged_cue_fact_id = self.state.staged_cue_fact_id
+        staged_cue_stage = self.state.staged_cue_stage
         self.state.apply_proposal(proposal, canonical_event_ids=(canonical_event_id,) if canonical_event_id else ())
         if self.capture:
             context = self.capture.context()
@@ -262,15 +264,27 @@ class RuntimeEngine(CanonicalEventMixin):
             and not (self.last_projection and self.last_projection.handoff_deliveries)
             and getattr(self.provider, "authored_handoff", None) is None
         ):
-            self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)
+            if staged_cue_fact_id not in self.state.delivered_cue_ids:
+                self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)
+            self.state.cue_stages = (
+                *(stage for stage in self.state.cue_stages if stage.fact_id != staged_cue_fact_id),
+                RuntimeCueStage(
+                    fact_id=staged_cue_fact_id,
+                    stage=staged_cue_stage,
+                    last_turn=self.state.turn_index,
+                    visit_entered_at=before.scene_entered_at_turn,
+                ),
+            )
             self.state.staged_cue_fact_id = None
+            self.state.staged_cue_stage = 1
         elif staged_cue_fact_id and self.state.current_scene_id != before.current_scene_id:
             self.state.staged_cue_fact_id = staged_cue_fact_id
             cue_text = next(
                 (
-                    delivery.cue_text
+                    delivery.escalation_text if staged_cue_stage == 2 else delivery.cue_text
                     for delivery in self.state.package.deliveries
-                    if delivery.fact_id == staged_cue_fact_id and delivery.cue_text
+                    if delivery.fact_id == staged_cue_fact_id
+                    and (delivery.escalation_text if staged_cue_stage == 2 else delivery.cue_text)
                 ),
                 None,
             )
@@ -367,7 +381,10 @@ class RuntimeEngine(CanonicalEventMixin):
             ),
             cue_stage=CueStage(
                 fact_id=before.staged_cue_fact_id,
-                delivered=before.staged_cue_fact_id in self.state.delivered_cue_ids,
+                delivered=before.staged_cue_fact_id in self.state.delivered_cue_ids
+                or any(
+                    stage.fact_id == before.staged_cue_fact_id and stage.stage == 2 for stage in self.state.cue_stages
+                ),
                 consumed=before.staged_cue_fact_id is not None
                 and before.staged_cue_fact_id not in self.state.delivered_cue_ids
                 and delivery.cue_fact_id != before.staged_cue_fact_id,
@@ -633,10 +650,13 @@ class RuntimeEngine(CanonicalEventMixin):
         staged = self.state.staged_cue_fact_id
         if not (
             staged
-            and staged not in self.state.delivered_cue_ids
+            and (
+                (self.state.staged_cue_stage == 1 and staged not in self.state.delivered_cue_ids)
+                or (self.state.staged_cue_stage == 2 and staged in self.state.delivered_cue_ids)
+            )
             and staged in missing
             and deliveries.get(staged) is not None
-            and deliveries[staged].cue_text
+            and (deliveries[staged].cue_text if self.state.staged_cue_stage == 1 else True)
             and self._cue_reveal_available(staged)
         ):
             self.state.staged_cue_fact_id = next(
@@ -650,6 +670,18 @@ class RuntimeEngine(CanonicalEventMixin):
                 ),
                 None,
             )
+            self.state.staged_cue_stage = 1
+        if self._should_stage_escalation(window, turns_since_entry, deliveries):
+            self.state.staged_cue_fact_id = next(
+                (
+                    fact_id
+                    for fact_id in self.state.delivered_cue_ids
+                    if self._cue_escalation_available(fact_id, deliveries, turns_since_entry)
+                ),
+                None,
+            )
+            if self.state.staged_cue_fact_id is not None:
+                self.state.staged_cue_stage = 2
         if self._escalation_eligible() and turns_since_entry >= window.handoff_after_turns:
             self.state.staged_handoff_fact_ids = missing or self._bridge_missing_fact_ids()
         elif not self._escalation_eligible():
@@ -713,6 +745,39 @@ class RuntimeEngine(CanonicalEventMixin):
             scene for scene in self.state.package.scenes if scene.metadata.scene_id == self.state.current_scene_id
         )
         return scene.metadata.freytag_phase != "resolution"
+
+    def _should_stage_escalation(self, window, turns_since_entry: int, deliveries: dict[str, FactDelivery]) -> bool:
+        return (
+            self.state.staged_cue_fact_id is None
+            and turns_since_entry >= window.nudge_after_turns
+            and any(
+                self._cue_escalation_available(fact_id, deliveries, turns_since_entry)
+                for fact_id in self.state.delivered_cue_ids
+            )
+        )
+
+    def _cue_escalation_available(
+        self, fact_id: str, deliveries: dict[str, FactDelivery], turns_since_entry: int
+    ) -> bool:
+        delivery = deliveries.get(fact_id)
+        if delivery is None or delivery.scene_id != self.state.current_scene_id:
+            return False
+        if any(fact.predicate == fact_id and str(fact.value).lower() == "true" for fact in self.state.facts.asserted):
+            return False
+        stage = next((stage for stage in self.state.cue_stages if stage.fact_id == fact_id), None)
+        if stage is not None:
+            if stage.visit_entered_at != self.state.scene_entered_at_turn or stage.stage >= 2:
+                return False
+        elif fact_id not in self.state.delivered_cue_ids:
+            return False
+        return self._cue_reveal_available(fact_id) and turns_since_entry >= self._nudge_after_turns()
+
+    def _nudge_after_turns(self) -> int:
+        return next(
+            window.nudge_after_turns
+            for window in self.state.package.pacing.scenes
+            if window.scene_id == self.state.current_scene_id
+        )
 
     def _bridge_delivery_fact_ids(self) -> tuple[str, ...]:
         """Cue ranking only foregrounds content whose activation conditions already hold.

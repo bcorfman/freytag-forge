@@ -42,7 +42,7 @@ def test_personas_cover_the_escalation_ladder_without_stranding(
             if scene_id != SCENE_IDS[-1]:
                 assert window.min_turns <= row["turns_to_exit"]
             assert row["turns_to_exit"] <= window.handoff_after_turns
-            assert len(row["cue_fact_ids"]) == len(set(row["cue_fact_ids"]))
+            assert all(row["cue_fact_ids"].count(fact_id) <= 2 for fact_id in set(row["cue_fact_ids"]))
 
     for row in _rows(summaries["thorough"]).values():
         assert row["cue_count"] == len(row["cue_fact_ids"])

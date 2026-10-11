@@ -1152,13 +1152,18 @@ class CloudflareTurnProvider:
             (
                 delivery
                 for delivery in self.state.package.deliveries
-                if delivery.fact_id == self.state.staged_cue_fact_id and delivery.cue_text
+                if delivery.fact_id == self.state.staged_cue_fact_id
             ),
             None,
         )
         if cue is None:
             return proposal
-        delivery = NarrationSegment(kind="narration", text=cue.cue_text)
+        text = cue.escalation_text if self.state.staged_cue_stage == 2 else cue.cue_text
+        if text is None:
+            text = cue.cue_text
+        if text is None:
+            return proposal
+        delivery = NarrationSegment(kind="narration", text=text)
         return proposal.model_copy(update={"segments": (*proposal.segments, delivery)})
 
     def _character_lines(self) -> list[str]:
