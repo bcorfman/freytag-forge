@@ -1,3 +1,5 @@
+Latest (2026-10-11, branch `1a-gap-pointer`, PR 577 open, not merged, not measured live): 1A gap pointer (storylet SL-1A-F); see 'Resume here (2026-10-11, 1A)'. Brandon: 1A must be solved, it is the player's opening.
+
 # Scene affordance E2E tests: plan
 
 Latest (2026-10-10, timer-ending-audit): evidence-penalty lines reworded after the ChatGPT read; see 'Penalty lines read by ChatGPT' at the end.
@@ -249,6 +251,19 @@ L2 1A-3B x3 on a6f3fbd (2026-10-08, PR 533 merged as first written: bridge text 
 3B d_r1 widening (2026-10-08, from the a6f3fbd r1 turn-by-turn; suite passed, ruff clean; scorer `3b-wording-score.py` 37/37 with five new cases; not measured live). r1 reached the office by the semantic fallback matching a_r2 on 'Disable the JANUS drones through the maintenance panel.' (turn 4), then e_r1 (5), b_r2 (7), then stalled: 'Access Rebecca's remote Charles channel.' missed d_r1 (the matcher needs the unbroken phrase 'remote channel'; the player said 'remote Charles channel'), 'Confront Charles through Rebecca's remote channel.' missed (no confront verb), 'Demand Charles's surrender.' missed. d_r1 gates charles_abandoned_rebecca, which gates c_r1/c_r2, so r1 timed out. Fix: d_r1 verbs gain confront, demand, message, use, connect to, patch into, tune into, dial; nouns gain remote Charles channel, Charles channel(s), channel to Charles. 'Transmit ... through Rebecca's remote channel' still fires nothing, on purpose (c_r2 owns transmit and requires the chain). Next: merge, redeploy, rerun L2 1A-3B x3.
 
 L2 1A-3B x3 on 2ee09ec (2026-10-08, PR 535 merged, staging confirmed 2ee09ec; Ringer `freytag-affordance-live`). First launch FAILED: replicate 2 hit a one-off 'Failed to fetch' (CORS) on staging /api/v1/turn, no reports written (the numbers I printed straight after were the previous run's stale files; disregard). Rerun per the runbook (health 200, sha 2ee09ec): pass, but only r3 reached 3B. r1: 1A P, 1B P, 1C T, 2A T, 2B P, 2C T, then 3A never transitioned in 15 turns with 3 rejected turns ('Search the detention sector for Rebecca's office.', 'Locate/Find the secured office.', each 'narration mentions an unavailable entity rebecca'); r2: 1A T, then 1B stopped on rejections (6 of 10 turns 'Show/Hand/Give Michelle's photograph to the man.' -> 'narration mentions unavailable knowledge park bench'); r3: 1A P, 1B P, 1C P, 2A T, 2B P, 2C P, 3A P (9), 3B P (9). The one 3B sample played the intended chain in order: 'Trace the water-pressure warnings on my inspection console.', enter the office, approvals, site list, 'Open the remote channel marked Charles.', broadcast controls, left on turn 9. So 3B is 1 of 1 where reached, but n=1; the 3B bar is not yet measured. New faults, not diagnosed: the 1B 'park bench' leak rejection loop (stops a replicate), the 3A 'rebecca' leak rejection on office searches, and 1C/2A/2C timers in r1. Next: rerun for more 3B samples; read the two rejection loops against the leak scan.
+
+## Resume here (2026-10-11, 1A)
+
+State: main is 022a0f2. Branch `1a-gap-pointer` (pushed) is PR 577: optional storylet SL-1A-F, reveals `k_sl_1a_f_r1` (pull or open the drawer) and `k_sl_1a_f_r2` (examine the carved initials), each answering with an authored line that restates the gap beneath the drawer. The card is still earned only through the gap (Brandon's decision). Suite 1345 passed, ruff clean. Not merged: Brandon gives the merge instruction per PR (merge commit, only after the latest commit's checks are green).
+
+Why: 1A play exits are 8/12 on 022a0f2 (swinging 1/3 to 3/3 between runs). The timer exits pulled the drawer open, saw only its contents, examined the KMS initials or narrator-invented papers, and drifted to an invented receipt and warehouse. The gap sentence is shown once, on turn 1. See the entry 'A gap pointer' at the end of this file.
+
+Open, in order:
+1. Merge PR 577, wait for the main CI staging deploy, confirm `/api/v1/version`.
+2. Hosted L2 1A,1B,1C in three runs of three (output is overwritten per call; copy it aside). Measure: 1A timer exits (was 4 of 21 recent), how often f_r1 and f_r2 fire, whether the card follows on the next turns, and read every 1A turn for invented paper or a warehouse.
+3. Not covered by this fix: a player who never touches the drawer (the couch, laptop and email run) sees the gap only on turn 1. If timers persist there, the next probe is the recorded turn-1 prompt against plot.md, because the narrator invents 'scattered papers' there (the 1A SCENE carries none). Candidates are a probe arm that removes that pull, not a rule.
+4. If f_r1 or f_r2 steals a command that used to reach the card, tighten its phrases; the test file `tests/test_1a_gap_pointer.py` pins the known commands.
+5. The branch `plan-1c-hosted-l2` carries an unmerged 'Resume here (2026-10-11)' for 1B/1C and the penalty lines; its plan edits will conflict with this file at the top and the end, keep both.
 
 ## Resume here (2026-10-10, late)
 
