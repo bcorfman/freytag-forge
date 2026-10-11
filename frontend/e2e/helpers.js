@@ -127,7 +127,10 @@ export async function submitTurn(page, action) {
   const payload = await apiResponse.json().catch(() => ({}));
   if (!apiResponse.ok()) {
     const detail = typeof payload.detail === "string" ? payload.detail : JSON.stringify(payload);
-    throw new Error(`Turn API returned HTTP ${apiResponse.status()}: ${detail}`);
+    const error = new Error(`Turn API returned HTTP ${apiResponse.status()}: ${detail}`);
+    error.payload = payload;
+    error.status = apiResponse.status();
+    throw error;
   }
   const controller = packageClockControllers.get(page);
   if (controller) {
