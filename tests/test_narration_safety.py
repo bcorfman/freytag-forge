@@ -143,6 +143,51 @@ def test_scene_2c_accepts_encrypted_message_wording_before_reveal(text: str) -> 
 
 
 @pytest.mark.parametrize(
+    "text",
+    [
+        "Kristin opens the coded message from Michelle.",
+    ],
+)
+def test_scene_2c_accepts_coded_message_wording_before_reveal(text: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2C"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2C")
+    state._assert_scene_entry_fact("2C")
+    for predicate in ("janus_evidence", "evidence_ready_to_transmit"):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+
+    proposal = RuntimeEngine(
+        state,
+        lambda _: {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []},
+    ).turn("Open Michelle's message.")
+    assert proposal.segments[0].text == text
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Kristin follows the maintenance access route into the holding block.",
+        "Kristin sees that Rebecca's secured office can broadcast the evidence.",
+        "Kristin hears the cells can be opened. Open the detention cells.",
+    ],
+)
+def test_scene_2c_still_rejects_reviewed_knowledge_terms_before_reveal(text: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2C"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2C")
+    state._assert_scene_entry_fact("2C")
+    for predicate in ("janus_evidence", "evidence_ready_to_transmit"):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+
+    with pytest.raises(ProposalValidationError) as caught:
+        RuntimeEngine(
+            state,
+            lambda _: {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []},
+        ).turn("Open Michelle's message.")
+    assert caught.value.code == "narration_known_term_leak"
+
+
+@pytest.mark.parametrize(
     ("scene", "command", "text"),
     [
         (

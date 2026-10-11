@@ -1695,11 +1695,30 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R1}
   relevance: {entity_ids: [], priority: 0}
   must_convey:
-  - [message, Michelle's coded note]
+  - [Michelle's encrypted message, coded message, message, Michelle's coded note, encrypted message from Michelle]
   - [maintenance access route, maintenance path, local access route, route to Michelle]
   - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office]
   - [open the detention cells, open the cells, rescue the prisoners, release the prisoners]
   - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
+  leak_terms:
+  - Michelle's coded note
+  - maintenance access route
+  - maintenance path
+  - local access route
+  - route to Michelle
+  - Rebecca's secured office
+  - Rebecca's office
+  - secured office
+  - Rebecca's locked office
+  - open the detention cells
+  - open the cells
+  - rescue the prisoners
+  - release the prisoners
+  - broadcast the evidence
+  - transmit the evidence
+  - broadcast proof
+  - send the evidence
+  - combined broadcast rescue plan known
   delivery_text: "Michelle's encrypted message marks a maintenance access route into her holding block. Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
 - id: k_sl_2c_d_r2
   statement: "Kristin traces Michelle's maintenance code route into her holding block, then to Rebecca's office, and learns the plan can rescue the captives only if they seize the controls to broadcast the evidence."
@@ -1721,11 +1740,32 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R2}
   relevance: {entity_ids: [], priority: 0}
   must_convey:
-  - [Michelle's maintenance code, maintenance code, Michelle's code]
+  - [Michelle's maintenance code, maintenance code, coded message, Michelle's code]
   - [maintenance code route, maintenance path, local access route, coded path]
   - [Rebecca's office, secured office, Rebecca's secured office, Rebecca's locked office]
   - [open the detention cells, rescue the captives, release the prisoners, open the cells]
   - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
+  leak_terms:
+  - Michelle's maintenance code
+  - maintenance code
+  - Michelle's code
+  - maintenance code route
+  - maintenance path
+  - local access route
+  - coded path
+  - Rebecca's office
+  - secured office
+  - Rebecca's secured office
+  - Rebecca's locked office
+  - open the detention cells
+  - rescue the captives
+  - release the prisoners
+  - open the cells
+  - broadcast the evidence
+  - transmit the evidence
+  - broadcast proof
+  - send the evidence
+  - combined broadcast rescue plan known
   delivery_text: "Kristin traces Michelle's maintenance code route into her holding block, then to Rebecca's office. Kristin and Brandon can rescue the captives only by seizing the controls to broadcast the evidence."
 - id: k_sl_3a_a_r1
   statement: 'Kristin reaches Michelle alive, only to find her directing prisoners through stolen radios and coded announcements.'
@@ -2682,7 +2722,8 @@ knowledge:
 - id: k_bridge_2b_archive_crisis
   statement: "The archive crisis is understood: the evidence, betrayal, and Michelle's resistance converge here."
   entity_ids: [kristin, michelle, brandon, janus_archive]
-  aliases: [Michelle's resistance]
+  aliases: [archive crisis, Michelle's resistance]
+  leak_terms: [Michelle's resistance]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2B]
   establishes: [{op: assert, fact_id: archive_crisis_understood, value: true}]
@@ -2819,7 +2860,8 @@ knowledge:
 - id: k_scene_3c_entry
   statement: Exposure and escape are both immediate under the collapsing operation.
   entity_ids: [kristin, facility_escape]
-  aliases: [exposure]
+  aliases: [escape route, exposure]
+  leak_terms: []
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3C]
   establishes: [{op: assert, fact_id: scene_3c_entry_known, value: true}]
