@@ -37,13 +37,27 @@ def turn(session_id, text):
             break
         time.sleep(65)
     headers = {key.lower(): value for key, value in headers.items()}
-    return {"input": text, "status": status, "bundle": body.get("attempt_bundle"), "detail": body.get("detail"),
-            "scene": (body.get("state") or {}).get("scene_id"), "code": headers.get("x-freytag-rejection-code")}
+    return {
+        "input": text,
+        "status": status,
+        "bundle": body.get("attempt_bundle"),
+        "detail": body.get("detail"),
+        "scene": (body.get("state") or {}).get("scene_id"),
+        "code": headers.get("x-freytag-rejection-code"),
+    }
 
 
 report = {"forced": [], "reject": []}
-idle = ["Examine the ceiling.", "Look under the rug.", "Check the window latch.", "Inspect the light switch.",
-        "Examine the floor.", "Look behind the door.", "Check the wall outlet.", "Inspect the baseboard."]
+idle = [
+    "Examine the ceiling.",
+    "Look under the rug.",
+    "Check the window latch.",
+    "Inspect the light switch.",
+    "Examine the floor.",
+    "Look behind the door.",
+    "Check the wall outlet.",
+    "Inspect the baseboard.",
+]
 sid = session()
 for index in range(20):
     row = turn(sid, idle[index % len(idle)])
@@ -52,15 +66,22 @@ for index in range(20):
         break
     time.sleep(0.5)
 
-asks = ["Ask about Phase Two.", "Say JANUS out loud.", "Ask about the cooling-water imbalance.", "Ask for Rebecca.",
-        "Tell everyone about Phase Two.", "Read the Phase Two file."]
+asks = [
+    "Ask about Phase Two.",
+    "Say JANUS out loud.",
+    "Ask about the cooling-water imbalance.",
+    "Ask for Rebecca.",
+    "Tell everyone about Phase Two.",
+    "Read the Phase Two file.",
+]
 sid = session()  # rejected turns restore state, so one session serves every ask
 for text in asks:
     row = turn(sid, text)
     report["reject"].append(row)
     if sum(1 for item in report["reject"] if item["status"] == 409) >= 2:
         break
-json.dump(report, open(out, "w"), indent=1)
+with open(out, "w") as handle:
+    json.dump(report, handle, indent=1)
 
 problems = []
 for name in report:
@@ -70,7 +91,9 @@ for name in report:
 forced = [r for r in report["forced"] if r["bundle"] and r["bundle"]["transition_cause"] == "forced"]
 rejected = [r for r in report["reject"] if r["status"] == 409]
 print("forced turns", len(report["forced"]), "scene end", report["forced"][-1]["scene"])
-print("causes", [(r["status"], r["bundle"]["outcome"], r["bundle"]["transition_cause"]) for r in report["forced"] if r["bundle"]])
+bundled = [r for r in report["forced"] if r["bundle"]]
+causes = [(r["status"], r["bundle"]["outcome"], r["bundle"]["transition_cause"]) for r in bundled]
+print("causes", causes)
 print("rejections", [(r["input"], r["code"], r["bundle"] and r["bundle"]["rejection"]) for r in rejected])
 print("reject statuses", [r["status"] for r in report["reject"]])
 if not forced:

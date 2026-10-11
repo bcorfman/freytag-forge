@@ -111,7 +111,6 @@ class RuntimeEngine(CanonicalEventMixin):
         entry_segments = None
         resolution_segments = None
         forced_handoff = False
-        timer_transition = False
         try:
             self.state.last_turn_delivery = TurnDelivery()
             self.state.turn_index += 1
@@ -252,8 +251,11 @@ class RuntimeEngine(CanonicalEventMixin):
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
-        resolution_segments = self._apply_resolution_deadline_backstop()
-        timer_transition = bool(resolution_segments)
+        resolution_segments, deadline_event_ids = self._apply_resolution_deadline_backstop()
+        if deadline_event_ids:
+            self.state.turn_records[-1] = self.state.turn_records[-1].model_copy(
+                update={"deadline_event_ids": deadline_event_ids}
+            )
         if (
             staged_cue_fact_id
             and self.state.current_scene_id == before.current_scene_id
@@ -290,7 +292,6 @@ class RuntimeEngine(CanonicalEventMixin):
             provider_proposal=provider_proposal,
             outcome="game_break" if result.game_break else "committed",
             forced_handoff=forced_handoff,
-            timer_transition=timer_transition,
         )
         return result
 
@@ -306,13 +307,15 @@ class RuntimeEngine(CanonicalEventMixin):
         rejection: AttemptError | None = None,
         operational_failure: AttemptError | None = None,
         forced_handoff: bool = False,
-        timer_transition: bool = False,
     ) -> None:
-        """Record cause from the branch that changed the scene, not from its turn count.
+        """Record whether a scene exit was earned or opened by a deadline event.
 
-        A staged handoff that changes the scene is forced. Route events and
-        authored transitions fire from facts the player earned, so they are
-        earned. Only the resolution deadline backstop is timer-driven.
+        A staged handoff that changes the scene is forced. For other exits,
+        compare the taken transition with the pre-exit facts after removing
+        facts asserted by deadline events in the current scene visit. If the
+        transition would not have been eligible without those facts, it is
+        timer-driven. The decision comes only from bounded turn history and
+        the immutable story package.
         """
         after_scene = self.state.current_scene_id
         changed = after_scene != before.current_scene_id
@@ -320,10 +323,8 @@ class RuntimeEngine(CanonicalEventMixin):
             cause = "none"
         elif forced_handoff:
             cause = "forced"
-        elif timer_transition:
-            cause = "timer"
         else:
-            cause = "earned"
+            cause = self._deadline_transition_cause(before)
         before_facts = {fact.predicate for fact in before.facts.asserted}
         after_facts = {fact.predicate for fact in self.state.facts.asserted}
         delivery = self.state.last_turn_delivery
@@ -379,6 +380,41 @@ class RuntimeEngine(CanonicalEventMixin):
         self.last_attempt = bundle
         self.attempts.append(bundle)
         del self.attempts[:-24]
+
+    def _deadline_transition_cause(self, before) -> str:
+        """Return the cause of an authored exit using only the current visit history."""
+
+        visit_length = self.state.turn_index - before.scene_entered_at_turn
+        if visit_length <= 0 or visit_length > 24 or visit_length > len(self.state.turn_records):
+            return "earned"
+        visit_records = self.state.turn_records[-visit_length:]
+        if len(visit_records) != visit_length:
+            return "earned"
+        deadline_ids = {event_id for record in visit_records for event_id in record.deadline_event_ids}
+        if not deadline_ids:
+            return "earned"
+        transition_id = self.state.turn_records[-1].transition_id
+        if transition_id is None:
+            return "earned"
+        transition = next(
+            (item for item in self.state.package.pacing.transitions if item.id == transition_id),
+            None,
+        )
+        if transition is None:
+            return "earned"
+        facts = self.state.facts.clone()
+        resolution_events = {event.id: event for event in self.state.package.storylet_routes.resolution_events}
+        asserted_fact_ids = {
+            operation.fact_id
+            for event_id in deadline_ids
+            if (event := resolution_events.get(event_id)) is not None
+            for operation in event.operations
+            if operation.op == "assert"
+        }
+        facts.asserted = {fact for fact in facts.asserted if fact.predicate not in asserted_fact_ids}
+        if all(predicate_matches(trigger, facts) for trigger in transition.triggers):
+            return "earned"
+        return "timer"
 
     def _attempt_stages(self, provider_reply) -> tuple[ModelStage, ...]:
         stages: list[ModelStage] = []
@@ -516,6 +552,10 @@ class RuntimeEngine(CanonicalEventMixin):
                     transition={"transition_id": transition.id},
                 )
             )
+            if self.state.turn_records:
+                self.state.turn_records[-1] = self.state.turn_records[-1].model_copy(
+                    update={"transition_id": transition.id}
+                )
             return bridge, entry
         return None
 

@@ -27,6 +27,7 @@ class TurnRecord(BaseModel):
     reveal_ids: tuple[str, ...] = ()
     affected_entity_ids: tuple[str, ...] = ()
     event_ids: tuple[str, ...] = ()
+    deadline_event_ids: tuple[str, ...] = ()
     transition_id: str | None = None
     fact_keys: tuple[str, ...] = ()
 

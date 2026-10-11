@@ -44,21 +44,24 @@ class CanonicalEventMixin:
             self.state._apply_operation(self.state.facts, operation)
         self.state.fired_event_ids.add(event.id)
 
-    def _apply_resolution_deadline_backstop(self) -> tuple[NarrationSegment, ...]:
+    def _apply_resolution_deadline_backstop(
+        self,
+    ) -> tuple[tuple[NarrationSegment, ...], tuple[str, ...]]:
         """Show and commit ready resolution events when their scene reaches its Deadline."""
 
         routes = self.state.package.storylet_routes
         events = tuple(event for event in routes.resolution_events if event.scene_id == self.state.current_scene_id)
         if not events:
-            return ()
+            return (), ()
         window = next(
             window for window in self.state.package.pacing.scenes if window.scene_id == self.state.current_scene_id
         )
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
         if turns_since_entry < window.handoff_after_turns:
-            return ()
+            return (), ()
 
         segments: list[NarrationSegment] = []
+        committed_ids: list[str] = []
         while True:
             for event in events:
                 if event.id in self.state.fired_event_ids:
@@ -69,10 +72,11 @@ class CanonicalEventMixin:
                 self.state.fired_event_ids.update(event.realization_storylets)
                 self.state.active_event_ids.difference_update(event.realization_storylets)
                 segments.append(NarrationSegment(kind="narration", text=event.fallback_text or ""))
+                committed_ids.append(event.id)
                 break
             else:
                 apply_world_effects(self.state.package, self.state.facts)
-                return tuple(segments)
+                return tuple(segments), tuple(committed_ids)
 
     @staticmethod
     def _true_facts(facts) -> frozenset[str]:
