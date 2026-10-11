@@ -381,9 +381,17 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog, world: WorldSource) ->
 
     entity_alias_to_entities: dict[str, list[str]] = {}
     for entity in (*world.locations, *world.npcs, *world.items):
+        if entity.disclosure == "public":
+            continue
         for form in entity_surface_forms(entity):
             for lookup_form in term_lookup_forms(form):
                 entity_alias_to_entities.setdefault(lookup_form, []).append(entity.id)
+
+    disclosure_guards: dict[str, list[str]] = {}
+    for guard in world.disclosure_guards:
+        for term in guard.terms:
+            for form in term_lookup_forms(term):
+                disclosure_guards.setdefault(form, []).append(guard.id)
 
     protected_terms: set[str] = set()
     entity_forms = {
@@ -413,7 +421,41 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog, world: WorldSource) ->
         term_to_knowledge=frozen_term_index(term_to_knowledge),
         leak_term_to_knowledge=frozen_term_index(leak_term_to_knowledge),
         protected_terms=tuple(sorted(protected_terms)),
+        disclosure_guards=frozen_term_index(disclosure_guards),
     )
+
+
+def _validate_disclosure_guards(package: StoryPackage) -> None:
+    guards = package.world.disclosure_guards
+    guard_ids = [guard.id for guard in guards]
+    if len(guard_ids) != len(set(guard_ids)):
+        duplicate = next(guard_id for guard_id in guard_ids if guard_ids.count(guard_id) > 1)
+        raise StoryPackageError(f"duplicate disclosure guard ID '{duplicate}'")
+
+    knowledge_ids = {item.id for item in package.knowledge.knowledge}
+    public_forms = {
+        form
+        for entity in (*package.world.locations, *package.world.npcs, *package.world.groups, *package.world.items)
+        if entity.disclosure == "public"
+        for value in (entity.name, *entity.aliases, *entity.scoped_aliases)
+        for form in term_lookup_forms(value)
+    }
+    for guard in guards:
+        if guard.unlock_fact is not None and guard.unlock_fact not in package.world.facts:
+            raise StoryPackageError(f"disclosure guard '{guard.id}' references unknown fact '{guard.unlock_fact}'")
+        if guard.unlock_knowledge_id is not None and guard.unlock_knowledge_id not in knowledge_ids:
+            raise StoryPackageError(
+                f"disclosure guard '{guard.id}' references unknown knowledge '{guard.unlock_knowledge_id}'"
+            )
+        if any(form in public_forms for term in guard.terms for form in term_lookup_forms(term)):
+            raise StoryPackageError(f"disclosure guard '{guard.id}' overlaps a public entity form")
+
+    for item in package.world.items:
+        if item.disclosure == "public" and item.hidden:
+            raise StoryPackageError(f"item '{item.id}' cannot be disclosure='public' when hidden")
+    for entity in (*package.world.locations, *package.world.npcs, *package.world.groups, *package.world.items):
+        if entity.disclosure == "public" and entity.named_by is not None:
+            raise StoryPackageError(f"entity '{entity.id}' cannot be disclosure='public' when named_by is set")
 
 
 def _validate_knowledge(package: StoryPackage) -> None:
@@ -1252,6 +1294,7 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
         knowledge_indexes=_compile_knowledge_indexes(knowledge, world),
         deliveries=deliveries,
     )
+    _validate_disclosure_guards(package)
     _validate_knowledge(package)
     _validate(package)
     _validate_authored_handoffs(package)

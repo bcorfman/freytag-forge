@@ -1,5 +1,29 @@
 [
   {
+    "check": 2,
+    "scene_id": "1A",
+    "gate": "t_1a_1b:michelle_lead_actionable",
+    "subject": "copied_janus_files"
+  },
+  {
+    "check": 3,
+    "scene_id": "1A",
+    "gate": "t_1a_1b:michelle_lead_actionable",
+    "subject": "copied_janus_files"
+  },
+  {
+    "check": 2,
+    "scene_id": "1A",
+    "gate": "t_1a_1b:patrol_return_pressure",
+    "subject": "copied_janus_files"
+  },
+  {
+    "check": 3,
+    "scene_id": "1A",
+    "gate": "t_1a_1b:patrol_return_pressure",
+    "subject": "copied_janus_files"
+  },
+  {
     "check": 3,
     "scene_id": "2A",
     "gate": "t_2a_2b:restricted_corridor_access",

@@ -39,8 +39,15 @@ groups:
   - {id: prisoners, name: Prisoners, aliases: [prisoners]}
 character_placements:
   prisoners: {parent: yard}
-  michelle: {parent: prisoners}
+michelle: {parent: prisoners}
 ```
+
+### Disclosure policy
+
+An entity without `disclosure` uses the legacy policy. `public` makes its name and
+aliases ordinary words. A secret should use a `disclosure_guards` entry with its
+terms and an unlock fact or knowledge ID. Choose the policy deliberately for each
+new declaration.
 
 The optional `companions` list names NPC participants who start with the
 protagonist. A companion cannot be the protagonist. Each scene resets the

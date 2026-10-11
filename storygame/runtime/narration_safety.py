@@ -137,6 +137,7 @@ class NarrationSafetyValidator:
                 for delivery in state.package.deliveries
             )
         }
+        guards_by_id = {guard.id: guard for guard in state.package.world.disclosure_guards}
         staged_handoff_deliveries = tuple(
             delivery
             for delivery in state.package.deliveries
@@ -266,6 +267,24 @@ class NarrationSafetyValidator:
                             f"narration mentions protected knowledge '{form}'",
                             code="protected_narration_leak",
                         )
+
+            for form, guard_ids in indexes.disclosure_guards.items():
+                if self._contains(text, form) and not (
+                    self._contains(handoff_text, form)
+                    or all(
+                        (
+                            guard.unlock_fact is not None
+                            and guard.unlock_fact in true_fact_ids
+                            or guard.unlock_knowledge_id is not None
+                            and guard.unlock_knowledge_id in earned_ids
+                        )
+                        for guard_id in guard_ids
+                        for guard in (guards_by_id[guard_id],)
+                    )
+                ):
+                    raise ProposalValidationError(
+                        f"narration mentions guarded term '{form}'", code="disclosure_guard_leak"
+                    )
 
     @staticmethod
     def _contains(text: str, form: str) -> bool:

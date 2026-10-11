@@ -11,6 +11,7 @@ from worldkeeper import MemoryBackend, World, WorldSchema
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
+from storygame.runtime.knowledge import scoped_alias_entity_ids
 from storygame.runtime.seating import _command_names_thing
 from storygame.runtime.validation import ProgressionValidator
 from storygame.runtime.world_model import _true, apply_scene_placements, apply_world_effects
@@ -682,14 +683,17 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return self._resolve_scoped_entity(world, key)
 
     def _resolve_scoped_entity(self, world, name):
-        wanted = _normalize_refer(name)
-        matches = []
-        for entity in (*self.state.package.world.groups, *self.state.package.world.items):
-            if any(_normalize_refer(alias) == wanted for alias in entity.scoped_aliases) and (
-                world.area(entity.id) is not None and self._name_in_scene_scope(world, world.name(entity.id))
-            ):
-                matches.append(entity.id)
-        return matches[0] if len(matches) == 1 else None
+        scene = next(
+            item for item in self.state.package.scenes if item.metadata.scene_id == self.state.current_scene_id
+        )
+        matches = scoped_alias_entity_ids(
+            self.state.package.world,
+            name,
+            scene=scene,
+            protagonist_id=self.state.package.world.protagonist_id,
+            scope_world=world,
+        )
+        return matches[0] if matches else None
 
     def _resolve_scoped_group(self, world, name):
         """Resolve the legacy group-only entry point through the shared resolver."""
