@@ -4658,15 +4658,15 @@
     },
     {
       "available_scenes": [],
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "owner_ids": [
         "detention_medical_records"
       ],
       "requires": [],
-      "suggested_class": "public_candidate",
+      "suggested_class": "needs_review",
       "term": "medical records",
       "unlock_fact_ids": [],
-      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
     },
     {
       "available_scenes": [
@@ -8192,15 +8192,15 @@
     },
     {
       "available_scenes": [],
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "owner_ids": [
         "detention_medical_records"
       ],
       "requires": [],
-      "suggested_class": "public_candidate",
+      "suggested_class": "needs_review",
       "term": "survivor records",
       "unlock_fact_ids": [],
-      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
     },
     {
       "available_scenes": [

@@ -255,7 +255,7 @@ items:
   fixed: true
 - id: detention_medical_records
   name: detention medical records
-  aliases: [medical records, survivor records]
+  scoped_aliases: [medical records, survivor records]
 - id: rebecca_desk
   name: executive desk
   aliases: [Rebecca's executive desk]
