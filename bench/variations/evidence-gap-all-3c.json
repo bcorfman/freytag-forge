@@ -1,0 +1,44 @@
+{
+  "name": "evidence-gap-all-3c",
+  "entry_facts": [
+    "evidence_gap_processing_numbers",
+    "evidence_gap_development_record",
+    "evidence_gap_copy_check",
+    "evidence_gap_marked_site_list"
+  ],
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 12,
+  "entry_state": "thorough",
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "runtime": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "system_prompt": {
+    "constant_rules_in_system": true,
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+  },
+  "scripts": {
+    "3C": [
+      {
+        "name": "exposure-and-escape",
+        "inputs": [
+          "Play the captives' video on the national broadcast.",
+          "Walk out into the executive office.",
+          "Take the portable data case from Rebecca.",
+          "Copy the archive to the independent networks.",
+          "Radio Brandon at the relay.",
+          "Restore power to the drainage pumps.",
+          "Follow Michelle and the prisoners into the maintenance tunnel.",
+          "Give Michelle the emergency override codes.",
+          "Climb out of the maintenance tunnel to the surface.",
+          "Read the reports of facilities surrendering.",
+          "Open the recovered JANUS file.",
+          "Hand Michelle the data case."
+        ]
+      }
+    ]
+  }
+}

@@ -186,6 +186,9 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     entry_state = variation.get("entry_state", "bare")
     if not isinstance(entry_state, str) or entry_state not in {"bare", "thorough"}:
         raise ValueError("entry_state must be bare or thorough")
+    entry_facts = variation.get("entry_facts", [])
+    if not isinstance(entry_facts, list) or any(not isinstance(fact_id, str) for fact_id in entry_facts):
+        raise ValueError("entry_facts must be a list of fact ids")
     variation["_entry_state"] = entry_state
     variation["_fixed_turns"] = fixed_turns
     variation["_fact_tracking_judge"] = fact_tracking_judge
@@ -194,8 +197,13 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     variation["_path"] = str(path.resolve())
     package_path = resolve_package(path, package_value)
     variation["_package_path"] = str(materialize_package(package_path, variation.get("overrides")))
+    package = load_story_package(Path(variation["_package_path"]))
+    known_facts = set(package.world.facts)
+    for fact_id in entry_facts:
+        if fact_id not in known_facts:
+            raise ValueError(f"entry_facts contains unknown fact id: {fact_id}")
+    variation["_entry_facts"] = tuple(entry_facts)
     if item_facts is not None:
-        package = load_story_package(Path(variation["_package_path"]))
         known_names = set(item_facts[1])
         known_names.update(
             entity.name
@@ -444,7 +452,10 @@ def seeded_state_for_scene(variation: dict[str, Any], scene_id: str) -> tuple[An
     """Build the configured entry state without making a narration request."""
 
     if variation.get("_entry_state", variation.get("entry_state", "bare")) == "bare":
-        return package_and_state(variation, scene_id)
+        package, state = package_and_state(variation, scene_id)
+        for fact_id in variation.get("_entry_facts", variation.get("entry_facts", ())):
+            state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+        return package, state
 
     package = load_story_package(Path(variation["_package_path"]))
     scene_ids = {scene.metadata.scene_id for scene in package.scenes}
@@ -452,9 +463,13 @@ def seeded_state_for_scene(variation: dict[str, Any], scene_id: str) -> tuple[An
         raise ValueError(f"scene {scene_id} is not in package {package.story_id}")
     state = RuntimeState.bootstrap(package)
     if state.current_scene_id == scene_id:
+        for fact_id in variation.get("_entry_facts", variation.get("entry_facts", ())):
+            state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
         return package, state
 
     advance_state_to_scene(package, state, scene_id)
+    for fact_id in variation.get("_entry_facts", variation.get("entry_facts", ())):
+        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
     return package, state
 
 
