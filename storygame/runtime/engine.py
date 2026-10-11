@@ -4,9 +4,22 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from copy import deepcopy
+from os import getenv
 
+from storygame.runtime.attempt_bundle import (
+    AttemptBundle,
+    AttemptCommand,
+    AttemptError,
+    AttemptIdentity,
+    AttemptPreState,
+    CommittedDelta,
+    CueStage,
+    ModelStage,
+    SelectedReveal,
+)
 from storygame.runtime.canonical_events import CanonicalEventMixin
 from storygame.runtime.capture import WorldCapture
+from storygame.runtime.cloudflare import NarrationProviderError
 from storygame.runtime.command_split import split_command
 from storygame.runtime.contracts import (
     FactOperation,
@@ -55,6 +68,8 @@ class RuntimeEngine(CanonicalEventMixin):
         self.last_projection: TurnKnowledgeContext | None = None
         self.last_player_command: str | None = None
         self.capture = capture
+        self.attempts: list[AttemptBundle] = []
+        self.last_attempt: AttemptBundle | None = None
 
     def opening(self) -> ResolvedTurnProposal:
         """Open on the authored entry text, then the provider's embellishment; an opening commits no canon.
@@ -90,6 +105,13 @@ class RuntimeEngine(CanonicalEventMixin):
         self.state.require_turn_allowed()
         already = set(self.validator.unsatisfied_dependencies(self.state.current_scene_id, self.state.facts))
         before = self.state.snapshot()
+        provider_reply = None
+        provider_proposal = None
+        canonical_event_id = None
+        entry_segments = None
+        resolution_segments = None
+        forced_handoff = False
+        timer_transition = False
         try:
             self.state.last_turn_delivery = TurnDelivery()
             self.state.turn_index += 1
@@ -109,7 +131,8 @@ class RuntimeEngine(CanonicalEventMixin):
                 }
             )
             self.last_projection = self.projector.project(self.state, "player", command_text)
-            provider_proposal = parse_turn_proposal(self.provider(command_text))
+            provider_reply = self.provider(command_text)
+            provider_proposal = parse_turn_proposal(provider_reply)
             self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                 update={"handoff_staged": bool(self.state.staged_handoff_fact_ids)}
             )
@@ -132,10 +155,28 @@ class RuntimeEngine(CanonicalEventMixin):
             candidate_state = deepcopy(self.state)
             candidate_state.apply_proposal(proposal, apply_world=False)
             self.narration_validator.validate(self.state, candidate_state, proposal, self.projector, command_text)
-        except (ProposalValidationError, RuntimeContractError):
+        except NarrationProviderError as error:
+            self._record_attempt(
+                player_input,
+                command_text,
+                before,
+                provider_reply=provider_reply,
+                outcome="operational_failure",
+                operational_failure=AttemptError(code=error.error_code or type(error).__name__, message=error.message),
+            )
+            raise
+        except (ProposalValidationError, RuntimeContractError) as error:
             if self.capture:
                 self.capture.discard()
             self.state.restore_snapshot(before)
+            self._record_attempt(
+                player_input,
+                command_text,
+                before,
+                provider_reply=provider_reply,
+                outcome="rejected",
+                rejection=AttemptError(code=getattr(error, "code", None) or type(error).__name__, message=str(error)),
+            )
             raise
         # Keep the package's existing future-dependency analysis as the final
         # pre-commit check, after narration safety has accepted the candidate.
@@ -153,9 +194,17 @@ class RuntimeEngine(CanonicalEventMixin):
                 proposal=proposal,
                 capture=self.capture.context() if self.capture else None,
             )
+            self._record_attempt(
+                player_input,
+                command_text,
+                before,
+                provider_reply=provider_reply,
+                provider_proposal=provider_proposal,
+                outcome="game_break",
+            )
             return proposal.model_copy(update={"game_break": warning})
-        canonical_event_id = None
         if self.state.staged_handoff_fact_ids and not provider_proposal.selected_knowledge_ids:
+            forced_handoff = True
             proposal, canonical_event_id = self._prepare_handoff(proposal)
         staged_cue_fact_id = self.state.staged_cue_fact_id
         self.state.apply_proposal(proposal, canonical_event_ids=(canonical_event_id,) if canonical_event_id else ())
@@ -204,6 +253,7 @@ class RuntimeEngine(CanonicalEventMixin):
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
         resolution_segments = self._apply_resolution_deadline_backstop()
+        timer_transition = bool(resolution_segments)
         if (
             staged_cue_fact_id
             and self.state.current_scene_id == before.current_scene_id
@@ -227,10 +277,139 @@ class RuntimeEngine(CanonicalEventMixin):
                     update={"segments": tuple(segment for segment in proposal.segments if segment.text != cue_text)}
                 )
         if entry_segments or resolution_segments:
-            return proposal.model_copy(
+            result = proposal.model_copy(
                 update={"segments": (*proposal.segments, *(entry_segments or ()), *resolution_segments)}
             )
-        return proposal
+        else:
+            result = proposal
+        self._record_attempt(
+            player_input,
+            command_text,
+            before,
+            provider_reply=provider_reply,
+            provider_proposal=provider_proposal,
+            outcome="game_break" if result.game_break else "committed",
+            forced_handoff=forced_handoff,
+            timer_transition=timer_transition,
+        )
+        return result
+
+    def _record_attempt(
+        self,
+        raw_input: str,
+        command_text: str,
+        before,
+        *,
+        provider_reply=None,
+        provider_proposal=None,
+        outcome: str,
+        rejection: AttemptError | None = None,
+        operational_failure: AttemptError | None = None,
+        forced_handoff: bool = False,
+        timer_transition: bool = False,
+    ) -> None:
+        """Record cause from the branch that changed the scene, not from its turn count.
+
+        A staged handoff that changes the scene is forced. A resolution deadline
+        or timed route event that changes it is timer-driven. Every other scene
+        change committed with the player's selected reveal or proposal is earned.
+        """
+        after_scene = self.state.current_scene_id
+        changed = after_scene != before.current_scene_id
+        if not changed:
+            cause = "none"
+        elif forced_handoff:
+            cause = "forced"
+        elif timer_transition or not (
+            getattr(provider_proposal, "selected_knowledge_ids", ()) or getattr(provider_proposal, "transition", None)
+        ):
+            cause = "timer"
+        else:
+            cause = "earned"
+        before_facts = {fact.predicate for fact in before.facts.asserted}
+        after_facts = {fact.predicate for fact in self.state.facts.asserted}
+        delivery = self.state.last_turn_delivery
+        selected = tuple(getattr(provider_proposal, "selected_knowledge_ids", ()))
+        delivery_ids: list[str] = []
+        for knowledge_id in selected:
+            knowledge = self.state.package.knowledge_indexes.by_id.get(knowledge_id)
+            if knowledge is not None:
+                delivery_ids.extend(
+                    effect.fact_id
+                    for effect in knowledge.establishes
+                    if any(delivery.fact_id == effect.fact_id for delivery in self.state.package.deliveries)
+                )
+        stages = self._attempt_stages(provider_reply)
+        bundle = AttemptBundle(
+            identity=AttemptIdentity(
+                code_sha=getenv("FREYTAG_DEPLOYMENT_SHA", "").strip()
+                or getenv("RAILWAY_GIT_COMMIT_SHA", "").strip()
+                or None,
+                package_id=self.state.package.story_id,
+                semantic_fallback=getenv("FREYTAG_SEMANTIC_REVEAL", "1") != "0",
+                projection_cap=getattr(self.projector, "max_candidates", None),
+            ),
+            pre_state=AttemptPreState(
+                scene_id=before.current_scene_id,
+                turn_index=before.turn_index,
+                turns_since_scene_entry=before.turn_index - before.scene_entered_at_turn,
+                staged_cue_fact_id=before.staged_cue_fact_id,
+                staged_handoff_fact_ids=tuple(before.staged_handoff_fact_ids),
+                delivered_cue_ids=tuple(sorted(before.delivered_cue_ids)),
+                fact_predicates=tuple(sorted(before_facts)),
+            ),
+            command=AttemptCommand(raw=raw_input, normalized=command_text),
+            stages=stages,
+            selected_reveal=SelectedReveal(knowledge_ids=selected, delivery_fact_ids=tuple(delivery_ids)),
+            committed_delta=CommittedDelta(
+                fact_predicates=tuple(sorted(after_facts - before_facts)),
+                scene_from=before.current_scene_id if changed else None,
+                scene_to=after_scene if changed else None,
+            ),
+            cue_stage=CueStage(
+                fact_id=before.staged_cue_fact_id,
+                delivered=before.staged_cue_fact_id in self.state.delivered_cue_ids,
+                consumed=before.staged_cue_fact_id is not None
+                and before.staged_cue_fact_id not in self.state.delivered_cue_ids
+                and delivery.cue_fact_id != before.staged_cue_fact_id,
+            ),
+            transition_cause=cause,
+            outcome=outcome,
+            rejection=rejection,
+            operational_failure=operational_failure,
+        )
+        self.last_attempt = bundle
+        self.attempts.append(bundle)
+        del self.attempts[:-24]
+
+    def _attempt_stages(self, provider_reply) -> tuple[ModelStage, ...]:
+        stages: list[ModelStage] = []
+        prompt = getattr(self.provider, "last_prompt", None)
+        stages.append(ModelStage(kind="narration", request=prompt, reply=self._stage_value(provider_reply)))
+        semantic = getattr(self.provider, "last_semantic_match", None)
+        if semantic is not None:
+            stages.append(ModelStage(kind="semantic_match", reply=self._stage_value(semantic)))
+        if self.capture is not None:
+            before = getattr(self.capture, "last_before", None)
+            after = getattr(self.capture, "last_after", None)
+            if before is not None or after is not None:
+                stages.append(
+                    ModelStage(
+                        kind="capture",
+                        request=self._stage_value(before),
+                        reply=self._stage_value(after),
+                    )
+                )
+        return tuple(stages)
+
+    @staticmethod
+    def _stage_value(value):
+        if value is None or isinstance(value, (str, dict, list)):
+            return deepcopy(value)
+        model_dump = getattr(value, "model_dump", None)
+        if callable(model_dump):
+            return model_dump(mode="json")
+        return None
 
     def _record_turn(self, proposal: ResolvedTurnProposal) -> None:
         event_ids = tuple(sorted(event.event_id for event in proposal.events))

@@ -336,18 +336,50 @@ def create_demo_app(
             engine = engine_for(state, provider)
             proposal = engine.turn(body.input_text, clock_seconds=test_clock)
         except NarrationProviderError as error:
-            raise _narration_http_error(error) from error
+            http_error = _narration_http_error(error)
+            if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1":
+                return JSONResponse(
+                    status_code=http_error.status_code,
+                    content={
+                        "detail": http_error.detail,
+                        "attempt_bundle": engine.last_attempt.model_dump(mode="json"),
+                    },
+                    headers=http_error.headers,
+                )
+            raise http_error from error
         except RuntimeContractError as error:
-            raise HTTPException(status_code=422, detail=_contract_error_detail(error)) from error
+            http_error = HTTPException(status_code=422, detail=_contract_error_detail(error))
+            if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1":
+                return JSONResponse(
+                    status_code=422,
+                    content={
+                        "detail": http_error.detail,
+                        "attempt_bundle": engine.last_attempt.model_dump(mode="json"),
+                    },
+                )
+            raise http_error from error
         except ProposalValidationError as error:
             headers = {"X-Freytag-Rejection-Code": error.code} if error.code else {}
-            raise HTTPException(status_code=409, detail=str(error), headers=headers) from error
+            http_error = HTTPException(status_code=409, detail=str(error), headers=headers)
+            if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1":
+                return JSONResponse(
+                    status_code=409,
+                    content={
+                        "detail": http_error.detail,
+                        "attempt_bundle": engine.last_attempt.model_dump(mode="json"),
+                    },
+                    headers=headers,
+                )
+            raise http_error from error
         except RuntimeStateError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         store.save(body.session_id, state)
         warning = proposal.game_break.model_dump(mode="json") if proposal.game_break else None
-        prompt = getattr(provider, "last_prompt", None) if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1" else None
+        expose_prompt = getenv("FREYTAG_EXPOSE_PROMPT", "") == "1"
+        prompt = getattr(provider, "last_prompt", None) if expose_prompt else None
         payload = _turn_payload(state, proposal, warning, prompt)
+        if expose_prompt:
+            payload["attempt_bundle"] = engine.last_attempt.model_dump(mode="json") if engine.last_attempt else None
         if prompt is not None:
             semantic_match = getattr(provider, "last_semantic_match", None)
             if semantic_match is not None:
