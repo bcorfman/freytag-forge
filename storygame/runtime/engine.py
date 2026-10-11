@@ -310,9 +310,9 @@ class RuntimeEngine(CanonicalEventMixin):
     ) -> None:
         """Record cause from the branch that changed the scene, not from its turn count.
 
-        A staged handoff that changes the scene is forced. A resolution deadline
-        or timed route event that changes it is timer-driven. Every other scene
-        change committed with the player's selected reveal or proposal is earned.
+        A staged handoff that changes the scene is forced. Route events and
+        authored transitions fire from facts the player earned, so they are
+        earned. Only the resolution deadline backstop is timer-driven.
         """
         after_scene = self.state.current_scene_id
         changed = after_scene != before.current_scene_id
@@ -320,9 +320,7 @@ class RuntimeEngine(CanonicalEventMixin):
             cause = "none"
         elif forced_handoff:
             cause = "forced"
-        elif timer_transition or not (
-            getattr(provider_proposal, "selected_knowledge_ids", ()) or getattr(provider_proposal, "transition", None)
-        ):
+        elif timer_transition:
             cause = "timer"
         else:
             cause = "earned"

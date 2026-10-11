@@ -136,7 +136,7 @@ def test_late_earned_exit_is_recorded_as_earned() -> None:
     assert forced_engine.last_attempt.transition_cause == "forced"
 
 
-def test_deadline_backstop_exit_is_recorded_as_timer() -> None:
+def test_authored_exit_at_deadline_is_recorded_as_earned() -> None:
     state = _state()
     for predicate in (
         "continuity_initiative_known",
@@ -153,7 +153,37 @@ def test_deadline_backstop_exit_is_recorded_as_timer() -> None:
     engine.turn("Inspect the kitchen.")
 
     assert state.current_scene_id == "1B"
-    assert engine.last_attempt.transition_cause == "timer"
+    # The authored transition runs before the deadline backstop. This fixture
+    # satisfies that transition, so the observed branch is earned.
+    assert engine.last_attempt.transition_cause == "earned"
+    assert engine.last_attempt.committed_delta.scene_from == "1A"
+    assert engine.last_attempt.committed_delta.scene_to == "1B"
+
+
+def test_authored_transition_on_a_no_reveal_turn_is_earned() -> None:
+    state = _state()
+    for predicate in (
+        "drawer_gap_pointed_out",
+        "memory_card_recovered",
+        "continuity_initiative_known",
+        "michelle_lead_actionable",
+        "michelle_warning_known",
+        "patrol_return_pressure",
+    ):
+        state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
+    state.turn_index = 8
+    state.scene_entered_at_turn = 0
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
+    assert state.turn_index - state.scene_entered_at_turn < window.handoff_after_turns
+    assert state.turn_index - state.scene_entered_at_turn >= window.min_turns
+
+    engine = RuntimeEngine(state, _provider("The room stays quiet."))
+
+    engine.turn("Search the kitchen.")
+
+    assert state.current_scene_id == "1B"
+    assert engine.last_attempt.transition_cause == "earned"
+    assert engine.last_attempt.selected_reveal.knowledge_ids == ()
     assert engine.last_attempt.committed_delta.scene_from == "1A"
     assert engine.last_attempt.committed_delta.scene_to == "1B"
 
