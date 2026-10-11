@@ -8,7 +8,9 @@ import textwrap
 import time
 import urllib.request
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from statistics import median
 from typing import Any
 
 import pytest
@@ -195,6 +197,65 @@ def _quality_tier_for_path(path: Path) -> str:
     return "runtime_safety"
 
 
+def _test_file_key(path: str | Path) -> str:
+    """Return the repository-relative key used by the duration report."""
+    path = Path(path)
+    parts = path.parts
+    if "tests" in parts:
+        return Path(*parts[parts.index("tests") :]).as_posix()
+    return path.as_posix()
+
+
+def assign_test_nodes_to_shards(
+    file_nodes: Mapping[str, Sequence[str]], shard_count: int, durations: Mapping[str, float]
+) -> dict[str, int]:
+    """Assign collected node IDs to deterministic, duration-balanced shards."""
+    if shard_count < 1:
+        raise ValueError("shard_count must be at least 1")
+    if not file_nodes:
+        return {}
+
+    normalized_nodes = {_test_file_key(path): tuple(sorted(nodeids)) for path, nodeids in file_nodes.items()}
+    normalized_durations = {_test_file_key(path): float(weight) for path, weight in durations.items()}
+    listed_weights = tuple(normalized_durations.values())
+    default_weight = float(median(listed_weights)) if listed_weights else 1.0
+    weights = {path: normalized_durations.get(path, default_weight) for path in normalized_nodes}
+    total_weight = sum(weights.values())
+    heavy_path = max(normalized_nodes, key=lambda path: (weights[path], path))
+    split_path = heavy_path if total_weight and weights[heavy_path] > total_weight * 0.4 else None
+
+    if split_path is None:
+        whole_file_loads = [0.0] * shard_count
+        for path in sorted(normalized_nodes, key=lambda path: (-weights[path], path)):
+            shard = min(range(shard_count), key=lambda index: (whole_file_loads[index], index))
+            whole_file_loads[shard] += weights[path]
+        if min(whole_file_loads) and (max(whole_file_loads) - min(whole_file_loads)) / min(whole_file_loads) >= 0.15:
+            # A dominant file can be below 40% yet still make the requested balance impossible.
+            split_path = heavy_path
+
+    assignments: dict[str, int] = {}
+    loads = [0.0] * shard_count
+    if split_path is not None:
+        # A very large file would dominate one shard, so spread its node IDs round-robin.
+        split_nodes = normalized_nodes[split_path]
+        for position, nodeid in enumerate(split_nodes):
+            assignments[nodeid] = position % shard_count
+            loads[position % shard_count] += weights[split_path] / len(split_nodes)
+
+    files = sorted((path for path in normalized_nodes if path != split_path), key=lambda path: (-weights[path], path))
+    for path in files:
+        shard = min(range(shard_count), key=lambda index: (loads[index], index))
+        for nodeid in normalized_nodes[path]:
+            assignments[nodeid] = shard
+        loads[shard] += weights[path]
+    return assignments
+
+
+def _load_shard_durations() -> dict[str, float]:
+    report = json.loads(Path(__file__).with_name("shard_durations.json").read_text(encoding="utf-8"))
+    return {str(path): float(weight) for path, weight in report["files"].items()}
+
+
 def pytest_addoption(parser: pytest.Parser) -> None:
     group = parser.getgroup("test-suite-health")
     group.addoption("--tier-report", default="", help="Write tier, timing, and construction counts as JSON.")
@@ -282,10 +343,11 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     if shard_index not in range(shard_count):
         raise pytest.UsageError("--shard-index must be in range(--shard-count)")
     if shard_count > 1:
-        sorted_items = sorted(items, key=lambda item: item.nodeid)
-        kept_nodeids = {
-            item.nodeid for position, item in enumerate(sorted_items) if position % shard_count == shard_index
-        }
+        file_nodes: dict[str, list[str]] = {}
+        for item in items:
+            file_nodes.setdefault(_test_file_key(item.fspath), []).append(item.nodeid)
+        assignments = assign_test_nodes_to_shards(file_nodes, shard_count, _load_shard_durations())
+        kept_nodeids = {nodeid for nodeid, assigned_shard in assignments.items() if assigned_shard == shard_index}
         deselected = [item for item in items if item.nodeid not in kept_nodeids]
         if deselected:
             config.hook.pytest_deselected(items=deselected)
