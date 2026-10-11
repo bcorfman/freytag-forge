@@ -155,6 +155,28 @@ class KnowledgeIndexes(_Model):
     term_to_knowledge: Mapping[str, tuple[str, ...]] = {}
     leak_term_to_knowledge: Mapping[str, tuple[str, ...]] = {}
     protected_terms: tuple[str, ...] = ()
+    disclosure_guards: Mapping[str, tuple[str, ...]] = {}
+
+
+class DisclosureGuard(_Model):
+    id: str = Field(pattern=_ID)
+    terms: tuple[str, ...] = Field(min_length=1)
+    audience: Literal["player"] = "player"
+    unlock_fact: str | None = None
+    unlock_knowledge_id: str | None = Field(default=None, pattern=_ID)
+
+    @field_validator("terms")
+    @classmethod
+    def non_blank_terms(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if any(not term.strip() for term in value):
+            raise ValueError("disclosure guard terms must be non-blank")
+        return value
+
+    @model_validator(mode="after")
+    def exactly_one_unlock(self):
+        if (self.unlock_fact is None) == (self.unlock_knowledge_id is None):
+            raise ValueError("disclosure guard must set exactly one unlock_fact or unlock_knowledge_id")
+        return self
 
 
 class Entity(_Model):
@@ -162,6 +184,7 @@ class Entity(_Model):
     name: str = Field(min_length=1)
     aliases: tuple[str, ...] = ()
     scoped_aliases: tuple[str, ...] = ()
+    disclosure: Literal["legacy", "public"] = "legacy"
     fallback_ids: tuple[str, ...] = ()
     unnamed_label: str | None = None
     named_by: str | None = Field(default=None, pattern=_ID)
@@ -385,6 +408,7 @@ class WorldSource(_Model):
     facts: tuple[str, ...] = ()
     fact_effects: Mapping[str, tuple[WorldEffect, ...]] = {}
     protected_knowledge: tuple[str, ...] = ()
+    disclosure_guards: tuple[DisclosureGuard, ...] = ()
 
     @model_validator(mode="after")
     def validate_character_name_facts(self):

@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import world_for
 from storygame.story_package.models import FactDelivery, KnowledgeDefinition, entity_surface_forms
 
 
@@ -66,16 +67,80 @@ def _entity_surface_forms(entity) -> tuple[str, ...]:
     return entity_surface_forms(entity)
 
 
-def _input_referenced_entity_ids(world, player_input: str) -> frozenset[str]:
+def _normalize_scoped_alias(value: str) -> str:
+    value = value.strip().lower().rstrip(".,;:!? ").strip()
+    for article in ("the", "my", "a", "an"):
+        if value.startswith(article + " "):
+            return value[len(article) + 1 :]
+    return value
+
+
+def _entity_in_scene_scope(scope_world, entity_id: str, *, scene, protagonist_id: str) -> bool:
+    if scope_world.area(entity_id) is None:
+        return False
+    if entity_id in {protagonist_id, *scene.metadata.participant_ids, *scene.metadata.item_ids}:
+        return True
+
+    entity_area = scope_world.area(entity_id)
+    scene_area = scope_world.area(scene.metadata.location_id)
+    protagonist_area = scope_world.area(protagonist_id)
+
+    def at_or_below(area_id, ancestor_id):
+        return area_id == ancestor_id or ancestor_id in scope_world.chain(area_id)
+
+    return any(
+        ancestor_id is not None and at_or_below(entity_area, ancestor_id)
+        for ancestor_id in (scene_area, protagonist_area)
+    )
+
+
+def scoped_alias_entity_ids(world, alias: str, *, scene, protagonist_id: str, scope_world=None) -> tuple[str, ...]:
+    """Return the uniquely eligible group or item for one scoped alias."""
+
+    scope_world = world if scope_world is None else scope_world
+    wanted = _normalize_scoped_alias(alias)
+    matches = [
+        entity.id
+        for entity in (*world.groups, *world.items)
+        if any(_normalize_scoped_alias(candidate) == wanted for candidate in entity.scoped_aliases)
+        and _entity_in_scene_scope(scope_world, entity.id, scene=scene, protagonist_id=protagonist_id)
+    ]
+    return tuple(matches) if len(matches) == 1 else ()
+
+
+def _input_referenced_entity_ids(
+    world,
+    player_input: str,
+    *,
+    scope_world=None,
+    scene=None,
+    protagonist_id: str | None = None,
+) -> frozenset[str]:
     """Find the world entities the player named in their own words."""
 
     folded_input = player_input.casefold()
-    return frozenset(
+    referenced = {
         entity.id
         for entities in (world.locations, world.npcs, world.groups, world.items)
         for entity in entities
         if any(re.search(rf"(?<!\w){re.escape(form)}(?!\w)", folded_input) for form in _entity_surface_forms(entity))
-    )
+    }
+    if scope_world is None or scene is None or protagonist_id is None:
+        return frozenset(referenced)
+    for entity in (*world.groups, *world.items):
+        for alias in entity.scoped_aliases:
+            normalized_alias = _normalize_scoped_alias(alias)
+            if re.search(rf"(?<!\w){re.escape(normalized_alias)}(?!\w)", folded_input):
+                referenced.update(
+                    scoped_alias_entity_ids(
+                        world,
+                        alias,
+                        scene=scene,
+                        protagonist_id=protagonist_id,
+                        scope_world=scope_world,
+                    )
+                )
+    return frozenset(referenced)
 
 
 class KnowledgeProjector:
@@ -208,7 +273,13 @@ class KnowledgeProjector:
         ]
         in_scene = [item for item in visible if state.current_scene_id in item.available_in_scenes]
         scene_ids = {item.id for item in in_scene}
-        referenced_entity_ids = _input_referenced_entity_ids(state.package.world, player_input)
+        referenced_entity_ids = _input_referenced_entity_ids(
+            state.package.world,
+            player_input,
+            scope_world=world_for(state.package, state.facts),
+            scene=next(scene for scene in state.package.scenes if scene.metadata.scene_id == state.current_scene_id),
+            protagonist_id=state.package.world.protagonist_id,
+        )
         character_ids = {entity.id for entity in state.package.world.npcs}
         character_ids.add(state.package.world.protagonist_id)
         recalled = [
@@ -259,7 +330,13 @@ class KnowledgeProjector:
     def _referenced_established_ids(
         self, state: RuntimeState, player_input: str, established_ids: Iterable[str]
     ) -> tuple[str, ...]:
-        referenced = _input_referenced_entity_ids(state.package.world, player_input)
+        referenced = _input_referenced_entity_ids(
+            state.package.world,
+            player_input,
+            scope_world=world_for(state.package, state.facts),
+            scene=next(scene for scene in state.package.scenes if scene.metadata.scene_id == state.current_scene_id),
+            protagonist_id=state.package.world.protagonist_id,
+        )
         return tuple(sorted(entity_id for entity_id in established_ids if entity_id in referenced))
 
     def _candidates(
