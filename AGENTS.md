@@ -62,8 +62,11 @@ comparing a turn against a deliberate null control, or ask the LLM judge.
 
 The narrator is a small, non-reasoning Llama-class model. Every string that
 reaches it as an instruction — `_turn_rules` entries, the system prompt, the
-opening, and any retry hint — must be written at an 8th-grade reading level,
-or it will not reliably hold.
+opening, and any retry hint — must be written in plain language, or it will
+not reliably hold. New material (written after 2026-10-11) targets a
+12th-grade reading level; existing 8th-grade strings stay as they are. The
+rules below on short words, short sentences, no jargon and concrete nouns
+apply at either level.
 
 - **Short, common words.** `thing`/`object`, not `entity`. `say who owns it`,
   not `attribute ownership`. `the story says`, not `the authored material
