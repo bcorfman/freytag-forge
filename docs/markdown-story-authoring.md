@@ -28,7 +28,7 @@ protagonist may be listed; this replaces where the protagonist starts. The
 scene's `location_id` does not change.
 
 The optional `groups` list in `world.yaml` declares crowds with the same `id`,
-`name`, and `aliases` fields as NPCs. A group may also declare
+`name`, and `aliases` fields as NPCs. A group or item may also declare
 `scoped_aliases`, plain words that name it only while it is placed and in
 scene scope; they are not world aliases. A `character_placements` key may name
 a declared group; group keys need not be participants. A character placement

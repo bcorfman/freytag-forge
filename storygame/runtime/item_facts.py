@@ -679,15 +679,24 @@ class ItemFactsProvider(CloudflareTurnProvider):
             target = world.resolve(refer)
             if target:
                 return target
-        return self._resolve_scoped_group(world, key)
+        return self._resolve_scoped_entity(world, key)
+
+    def _resolve_scoped_entity(self, world, name):
+        wanted = _normalize_refer(name)
+        matches = []
+        for entity in (*self.state.package.world.groups, *self.state.package.world.items):
+            if any(_normalize_refer(alias) == wanted for alias in entity.scoped_aliases) and (
+                world.area(entity.id) is not None and self._name_in_scene_scope(world, world.name(entity.id))
+            ):
+                matches.append(entity.id)
+        return matches[0] if len(matches) == 1 else None
 
     def _resolve_scoped_group(self, world, name):
-        wanted = _normalize_refer(name)
-        for group in self.state.package.world.groups:
-            if any(_normalize_refer(alias) == wanted for alias in group.scoped_aliases) and (
-                world.area(group.id) is not None and self._name_in_scene_scope(world, world.name(group.id))
-            ):
-                return group.id
+        """Resolve the legacy group-only entry point through the shared resolver."""
+
+        entity_id = self._resolve_scoped_entity(world, name)
+        if entity_id is not None and world.is_a(entity_id, "group"):
+            return entity_id
         return None
 
     def _name_in_scene_scope(self, world, name):
@@ -1602,9 +1611,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     continue
                 resolved = _resolve_refer(name, self.item_facts)
                 if resolved is None:
-                    group_id = self._resolve_scoped_group(self._world(), name)
-                    if group_id is not None:
-                        tracked_name = self._world().name(group_id)
+                    entity_id = self._resolve_scoped_entity(self._world(), name)
+                    if entity_id is not None:
+                        tracked_name = self._world().name(entity_id)
                         if tracked_name in self.item_facts:
                             resolved = tracked_name
                 if resolved is not None and resolved not in refers:

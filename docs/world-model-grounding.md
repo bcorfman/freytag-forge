@@ -71,6 +71,7 @@ issue.
 
 ### Things
 
+- To name a thing with common words in one scene without guarding those words in every other scene, give it a unique name and put the common words in `scoped_aliases`.
 - **Declare every physical thing the story text names that a player could act
   on, or that a reply could use as a place.** Look in the entry text, bridge
   text, Details lines, beats, delivery text and cue text. The test is simple:

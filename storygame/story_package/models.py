@@ -161,6 +161,7 @@ class Entity(_Model):
     id: str = Field(pattern=_ID)
     name: str = Field(min_length=1)
     aliases: tuple[str, ...] = ()
+    scoped_aliases: tuple[str, ...] = ()
     fallback_ids: tuple[str, ...] = ()
     unnamed_label: str | None = None
     named_by: str | None = Field(default=None, pattern=_ID)
@@ -200,7 +201,7 @@ def _validate_axes(value):
 
 
 class Group(Entity):
-    scoped_aliases: tuple[str, ...] = ()
+    pass
 
 
 class Location(Entity):
