@@ -253,7 +253,7 @@ scene_frames:
   situation: A damaged public park with an ordinary bench near the service path. Checkpoints and emergency patrols make a simple search feel exposed.
   pressure: Follow Michelle's lead and survive the park
 - scene_id: 1C
-  situation: A supposedly abandoned freight terminal whose fresh tire tracks, humming air vents, and heavy electrical service show that it is active. Its loading docks sit above ground. A service level lies below them.
+  situation: A supposedly abandoned freight terminal whose fresh tire tracks, humming air vents, and heavy electrical service show that it is active. Its loading docks sit above ground. A service level lies below them. The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.
   pressure: Confirm the facility and its purpose
 - scene_id: 2A
   situation: Brandon's fortified hideout inside an abandoned communications center, stocked with servers and leaked Initiative documents. The facility's strained cooling-water and ventilation systems offer a narrow pretext for an unscheduled inspection.

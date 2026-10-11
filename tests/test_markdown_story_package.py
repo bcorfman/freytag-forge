@@ -33,6 +33,17 @@ def test_scene_frame_situation_may_be_omitted() -> None:
     assert SceneFrame(scene_id="3C", pressure="Expose the network and escape").situation == ""
 
 
+def test_scene_1c_frame_situation_names_the_processing_line() -> None:
+    package = load_story_package(PACKAGE)
+    frame = next(item for item in package.knowledge.scene_frames if item.scene_id == "1C")
+
+    assert frame.situation == (
+        "A supposedly abandoned freight terminal whose fresh tire tracks, humming air vents, and heavy electrical "
+        "service show that it is active. Its loading docks sit above ground. A service level lies below them. The "
+        "observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below."
+    )
+
+
 def test_scene_2b_applies_archive_and_companion_placements() -> None:
     package = load_story_package(PACKAGE)
     state = RuntimeState.bootstrap(package)

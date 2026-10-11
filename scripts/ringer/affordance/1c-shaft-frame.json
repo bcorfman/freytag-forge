@@ -1,0 +1,21 @@
+{
+  "run_name": "freytag-1c-shaft-frame",
+  "workdir": "/home/bcorfman/dev/ringer-work/1c-shaft-frame",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "worktrees": true,
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "1c-shaft-frame",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": ["-c", "model_reasoning_effort=high"],
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. NEVER touch /home/bcorfman/dev/freytag-forge itself (the main checkout). Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. The sandbox cannot run uv: run tests with `TMPDIR=/tmp PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q` and confirm storygame.__file__ is inside this worktree. You own only: data/stories/continuity-initiative/knowledge.yaml and files under tests/ (only existing tests that pin the old 1C frame text). Edit nothing else.\n\nPROBLEM. In scene 1C the narrator's SCENE block says nothing about what the observation shaft overlooks, so when the player climbs the shaft the narrator invents a console or monitor (7 of 12 and 3 of 12 samples in a probe) and players follow it until the timer. Adding the 1C cue sentence to the scene frame made the narrator describe the processing line in 11 of 12 and 12 of 12 samples with 0-1 inventions. The same technique was used for 2C (the frame names the detention level).\n\nCHANGE. In data/stories/continuity-initiative/knowledge.yaml, under scene_frames, scene_id 1C, change ONLY the `situation` value. It is now: A supposedly abandoned freight terminal whose fresh tire tracks, humming air vents, and heavy electrical service show that it is active. Its loading docks sit above ground. A service level lies below them.\nAppend a space and this sentence pair, byte for byte: The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.\nNothing else changes: not `pressure`, not any other scene's frame, not handoffs.yaml (the cue_text there stays as it is), not plot.md. Keep the YAML scalar style the line already uses. If a test pins the old 1C situation text, update that test to the new text and list it in notes.md. Add one test in an existing suitable test file (find where 2C's frame text is pinned and copy that style) that the 1C situation equals the new text exactly.\n\nFinish: run the full suite and `.venv/bin/ruff check` and `.venv/bin/ruff format --check` on any Python file you changed. Write notes.md at the worktree root listing every file changed and why.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/1c-shaft-frame-check.sh",
+      "verified": "The 1C scene frame names what the observation shaft overlooks, using the existing cue sentence unchanged; suite and ruff pass"
+    }
+  ]
+}
