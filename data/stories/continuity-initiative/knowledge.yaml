@@ -1180,6 +1180,7 @@ knowledge:
   - [ventilation fault, ventilation monitor, service-level shutdown, sensor fault, ventilation warning]
   - [corridor access, access, restricted access, infrastructure access, corridor entrance]
   - [supervisor, security supervisor, facility supervisor, security officer, inspection supervisor]
+  leak_terms: [cooling failure, cooling leak, cooling-system risk, cooling-water imbalance, corridor access, corridor entrance, facility supervisor, infrastructure access, inspection supervisor, restricted access, restricted corridor access, security supervisor, sensor fault, service-level shutdown, ventilation fault, ventilation monitor, ventilation warning, water system problem, water-pressure fault]
   delivery_text: >-
     Kristin convinces the supervisor that a cooling-water imbalance and ventilation fault could shut down the service level. He grants corridor access.
 - id: k_sl_2a_c_r1_rebecca_observes
@@ -2780,6 +2781,7 @@ knowledge:
   statement: Kristin has joined the wider rescue effort to find remaining detention sites.
   entity_ids: [kristin]
   aliases: [rescue efforts, remaining detention sites]
+  leak_terms: [remaining detention sites]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3C]
   establishes: [{op: assert, fact_id: kristin_joined_rescue_efforts, value: true}]

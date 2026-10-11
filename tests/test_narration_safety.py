@@ -202,6 +202,16 @@ def test_scene_2c_still_rejects_reviewed_knowledge_terms_before_reveal(text: str
             "Confront Rebecca about the broadcast controls.",
             "Rebecca stands behind Rebecca's desk and does not answer.",
         ),
+        (
+            "3C",
+            "Support the independent rescue efforts.",
+            "Kristin joins the people organizing rescue efforts outside the gates.",
+        ),
+        (
+            "2A",
+            "Examine the security checkpoint.",
+            "A security officer waves a line of staff through the checkpoint.",
+        ),
     ],
 )
 def test_ordinary_scene_wording_is_not_a_leak(scene: str, command: str, text: str) -> None:
@@ -217,6 +227,29 @@ def test_ordinary_scene_wording_is_not_a_leak(scene: str, command: str, text: st
 
     proposal = RuntimeEngine(state, provider).turn(command)
     assert proposal.segments[0].text == text
+
+
+def test_scene_2a_still_rejects_guard_leak_terms() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = "2A"
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "2A")
+    state._assert_scene_entry_fact("2A")
+
+    with pytest.raises(ProposalValidationError) as caught:
+        RuntimeEngine(
+            state,
+            lambda _: {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": "The ventilation monitor shows a sensor fault in the cooling system.",
+                    }
+                ],
+                "selected_knowledge_ids": [],
+            },
+        ).turn("Examine the security checkpoint.")
+
+    assert caught.value.code == "narration_known_term_leak"
 
 
 def test_scene_1b_rejects_unearned_person_name() -> None:

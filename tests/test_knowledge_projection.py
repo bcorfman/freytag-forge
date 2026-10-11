@@ -67,6 +67,10 @@ def test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone
     assert set(leak_term_to_knowledge.get("michelle's encrypted message", ())) == set()
     assert set(leak_term_to_knowledge.get("encrypted message from michelle", ())) == set()
     assert set(leak_term_to_knowledge.get("coded message", ())) == set()
+    assert set(leak_term_to_knowledge.get("rescue efforts", ())) == set()
+    assert set(leak_term_to_knowledge.get("security officer", ())) == set()
+    assert set(term_to_knowledge.get("rescue efforts", ())) == {"k_resolution_kristin_rescue"}
+    assert set(term_to_knowledge.get("security officer", ())) == {"k_sl_2a_c_r1"}
 
 
 @pytest.mark.parametrize(
