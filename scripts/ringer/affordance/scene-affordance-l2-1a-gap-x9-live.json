@@ -1,0 +1,52 @@
+{
+ "run_name": "freytag-affordance-live",
+ "workdir": "/home/bcorfman/dev/ringer-work/affordance-live",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "l2-1a-gap-run1",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 6000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted L2 @blind-player test on staging over scenes 1A, 1B and 1C in one continuous session, 3 replicate(s) in parallel, against staging sha cf5dcdb (PR 577: 1A gap pointer storylet SL-1A-F). Reply with the single word: ready.",
+   "check": "bash -c 'bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C && rm -rf /home/bcorfman/dev/ringer-work/gap-run1 && cp -r /home/bcorfman/dev/ringer-work/affordance-live-all /home/bcorfman/dev/ringer-work/gap-run1'",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/gap-run1/e2e-blind-player.json"
+   ],
+   "verified": "l2-1a-gap-run1: continuous replicates over 1A, 1B and 1C wrote a report."
+  },
+  {
+   "key": "l2-1a-gap-run2",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 6000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted L2 @blind-player test on staging over scenes 1A, 1B and 1C in one continuous session, 3 replicate(s) in parallel, against staging sha cf5dcdb (PR 577: 1A gap pointer storylet SL-1A-F). Reply with the single word: ready.",
+   "check": "bash -c 'bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C && rm -rf /home/bcorfman/dev/ringer-work/gap-run2 && cp -r /home/bcorfman/dev/ringer-work/affordance-live-all /home/bcorfman/dev/ringer-work/gap-run2'",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/gap-run2/e2e-blind-player.json"
+   ],
+   "verified": "l2-1a-gap-run2: continuous replicates over 1A, 1B and 1C wrote a report."
+  },
+  {
+   "key": "l2-1a-gap-run3",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 6000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted L2 @blind-player test on staging over scenes 1A, 1B and 1C in one continuous session, 3 replicate(s) in parallel, against staging sha cf5dcdb (PR 577: 1A gap pointer storylet SL-1A-F). Reply with the single word: ready.",
+   "check": "bash -c 'bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C && rm -rf /home/bcorfman/dev/ringer-work/gap-run3 && cp -r /home/bcorfman/dev/ringer-work/affordance-live-all /home/bcorfman/dev/ringer-work/gap-run3'",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/gap-run3/e2e-blind-player.json"
+   ],
+   "verified": "l2-1a-gap-run3: continuous replicates over 1A, 1B and 1C wrote a report."
+  }
+ ]
+}

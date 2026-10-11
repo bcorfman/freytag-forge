@@ -1,0 +1,22 @@
+{
+ "run_name": "freytag-affordance-live",
+ "workdir": "/home/bcorfman/dev/ringer-work/affordance-live",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "l2-1a-gap-smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 6000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted L2 @blind-player test on staging over scenes 1A, 1B and 1C in one continuous session, 1 replicate(s) in parallel, against staging sha cf5dcdb (PR 577: 1A gap pointer storylet SL-1A-F). Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 1 1A,1B,1C",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/affordance-live-all/e2e-blind-player.json"
+   ],
+   "verified": "l2-1a-gap-smoke: continuous replicates over 1A, 1B and 1C wrote a report."
+  }
+ ]
+}
