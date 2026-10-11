@@ -1,0 +1,23 @@
+{
+ "run_name": "evidence-penalty-matrix",
+ "workdir": "/home/bcorfman/dev/ringer-work/evidence-penalty-matrix",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "matrix",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "max_attempts": 2,
+   "timeout_s": 1800,
+   "check_timeout_s": 900,
+   "spec": "You are a code worker. Edit the freytag-forge repo checkout at /home/bcorfman/dev/freytag-forge directly (absolute paths; no worktree). Do NOT git commit, push, or touch .git. Tests are hermetic: no live model, no network.\n\nOWNED FILES: tests/test_evidence_penalty.py only. Do not edit anything else (no story data, no runtime code). Keep every existing test unchanged; only ADD tests.\n\nTASK: finish the offline scoring matrix from section 4 of .plans/chatgpt-evidence-penalty-response.md (read that section). Existing tests already cover: forced delivery asserts its gap, earned delivery leaves it unset, the 16-combination 3C realization selection, and the no-gap defaults. ADD tests for the rows still missing:\n1. Forced delivery while the narrator ALREADY satisfies must_convey: the gap is still asserted (the penalty must not depend on the fallback text being shown). Parametrize over the four deliveries in FORCED_DELIVERIES. Look at tests/test_pacing_handoff.py and tests/test_must_convey.py for how a staged handoff with a satisfied must_convey is driven; make the narration contain one phrase from each must_convey group of that delivery (read them from PACKAGE.handoffs / the delivery object).\n2. Spent event: after the turn-4 collapse_3c payoff, a later 3C turn gives no second payoff from that event (complication_text is not the gap or default collapse text again). Same for routes_collapse_3c after turn 10.\n3. Pacing collision: if another complication already occupies the due turn (see engine.py around the realize_complications / last_turn_delivery.complication_text check near line 370), the gap line is not shown, the event is still marked spent (in state.fired_event_ids), and a later turn does not retry it.\n4. Reachability: for all 16 gap combinations, the set of activated/eligible 3C resolution and bridge events and reveal eligibility is identical to the no-gap state with every other fact held constant. Use whatever eligibility queries tests/test_resolution_cascade.py and tests/test_3c_cue_chain.py use. With all gaps true, resolution_complete is still reachable by the same steps those tests use for the no-gap case.\n5. Static: no gap fact id appears in any transition trigger, bridge/resolution activation, reveal `requires`, or storylet activation in the loaded PACKAGE (walk the loaded package objects, e.g. via model_dump, and search for the four ids; they may appear only in world facts, knowledge facts, new_fact_ids declarations, handoff costs, and pacing realization `when` predicates).\n\nHOW TO RUN (sandbox cannot run uv): PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_evidence_penalty.py ; then ruff via the same interpreter: -m ruff check --fix tests/test_evidence_penalty.py and -m ruff format tests/test_evidence_penalty.py. If a new test exposes a real defect in story data or runtime, do NOT weaken the test or edit other files: leave that test failing is NOT allowed either; instead mark it with pytest.mark.xfail(strict=True, reason=<what is wrong>) and say so in your reply. Finish by replying with the tests added and any xfail.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && bad=$(git status --short | grep -v 'tests/test_evidence_penalty.py' || true); [ -z \"$bad\" ] || { echo FAIL outside owned files:; echo \"$bad\"; exit 1; }; git diff --numstat tests/test_evidence_penalty.py | awk '{ if ($2 != 0) { print \"FAIL: deleted lines:\", $2; exit 1 } }' || exit 1; n=$(grep -c '^def test' tests/test_evidence_penalty.py); [ \"$n\" -ge 9 ] || { echo \"FAIL: only $n test functions\"; exit 1; }; TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_evidence_penalty.py 2>&1 | tail -8 || exit 1; .venv/bin/python -m ruff check . && .venv/bin/python -m ruff format --check . && echo PASS",
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/tests/test_evidence_penalty.py"
+   ],
+   "verified": "matrix tests added, no lines deleted, pytest and ruff pass, only the owned test file changed"
+  }
+ ]
+}
