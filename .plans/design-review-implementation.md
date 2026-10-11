@@ -138,3 +138,8 @@ Deterministic replay on every affected change; targeted live arms when a model b
 - Hand edit after review: the re-test uses the post-exit facts (the worker used the pre-turn facts, which would miss a trigger fact earned on the exit turn itself and call that exit `timer`). No test pins that case yet.
 - Tests: 13 in `tests/test_attempt_bundle.py`; full suite 1419 passed. The real package has resolution events only in 3C (terminal, no transition), so the timer test patches a package copy; no real scene can show `timer` live.
 - Untested: a real-package `timer` exit; the exit-turn-earned-fact case above; live earned exit (needs this deployed).
+
+### Step 2 closeout (2026-10-11, staging at f324cc17)
+- Re-ran the 1A blind-player smoke (3 replicates, Ringer `design-review-step2-smoke`, PASS): 25 of 25 turns carried a bundle; 3 exits `earned` (reported `exit_cause` play, at turns 8, 9, 8 of a 13-turn handoff), 21 committed with cause `none`, 1 rejected attempt with its bundle. The earlier `timer` mislabel is gone.
+- Live evidence for Step 2's three required cases: success (smoke), rejection (probe: JANUS and Rebecca, plus one in this smoke), forced continuation (probe: idle 1A, turn 13 `forced`). Earned exits confirmed live. Not observed live: `timer` (the real package gives no scene that can produce it; replay test with a patched package only).
+- Step 2 gate met. PR #594 (earlier smoke note) is superseded by this entry.
