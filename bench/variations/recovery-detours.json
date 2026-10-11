@@ -1,0 +1,70 @@
+{
+ "name": "recovery-detours",
+ "story_package": "data/stories/continuity-initiative",
+ "entry_state": "thorough",
+ "continuity_judge": false,
+ "fact_tracking_judge": false,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "system_prompt": {
+  "constant_rules_in_system": true,
+  "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "laptop-detour",
+    "inputs": [
+     "Go out to the truck.",
+     "Open my laptop.",
+     "Search my email for Michelle's name.",
+     "Read the newest email.",
+     "Search my laptop for the Continuity Initiative.",
+     "Check my laptop for messages from Michelle.",
+     "Search the kitchen for signs of a struggle.",
+     "Inspect the back door.",
+     "Search the bedroom closet.",
+     "Check the front door.",
+     "Search the gap beneath the drawer.",
+     "Look at the books on the shelf."
+    ]
+   }
+  ],
+  "2A": [
+   {
+    "name": "ignore-forms",
+    "inputs": [
+     "Study the facility from the service road.",
+     "Check the gate for a guard.",
+     "Search the hideout for a map of the facility.",
+     "Ask Brandon about the facility layout.",
+     "Search the servers for the facility schedule.",
+     "Photograph the facility fence.",
+     "Count the cameras on the fence.",
+     "Ask Brandon how to reach the gate.",
+     "Ask Brandon about the inspection forms.",
+     "Check the truck for supplies."
+    ]
+   }
+  ],
+  "2C": [
+   {
+    "name": "michelle-first-long",
+    "inputs": [
+     "Search the command levels for Michelle.",
+     "Retrieve Michelle's current location from the medical terminal.",
+     "Search the cell block corridor for Michelle.",
+     "Ask Brandon where Michelle is held.",
+     "Check the map of the command levels.",
+     "Search the guard station for keys.",
+     "Ask Brandon about the guard rotation.",
+     "Search the lower stairwell for a route.",
+     "Check the door at the end of the corridor.",
+     "Check my copied JANUS files."
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,20 @@
+{
+ "run_name": "design-review-step6-2a-forms-verb",
+ "workdir": "/home/bcorfman/dev/ringer-work/2a-forms-verb",
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "worktrees": true,
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "2a-forms-verb",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "timeout_s": 1800,
+   "check_timeout_s": 900,
+   "spec": "You are a code worker. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files here directly. Do NOT git commit, push or touch .git. Do NOT run a formatter on YAML or markdown. You own only data/stories/continuity-initiative/knowledge.yaml and files under tests/. Edit nothing else. If `uv` is unavailable, use the main checkout's venv: PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest.\n\nBACKGROUND. In scene 2A the cue says 'Brandon has laid out blank inspector forms beside the servers in the hideout.' A player who types 'Ask Brandon about the inspection forms.' earns nothing, because the verb group of knowledge item k_sl_2a_b_r2 has no 'ask'.\n\nEDIT, knowledge.yaml, item `id: k_sl_2a_b_r2` only. Its first action_evidence line is `  - [prepare, draft, assemble, review, build, make, create, forge, complete, fill out, fill in, finish, fill, show, present, flash, hand over]`. Append `, ask` before the closing bracket. Change no other line, and no other item.\n\nTESTS. Add tests/test_2a_forms_words.py (hermetic, no network). Use the real matcher exactly as tests/test_1a_drawer_words.py does (RuntimeState.bootstrap(PACKAGE), KnowledgeProjector().project, uniquely_matched_authored_handoff), but build a 2A state: find how tests/test_candidate_matcher.py already prepares a 2A state for k_sl_2a_b_r2 (active event id for storylet SL-2A-B, the fact facility_infiltration_needed asserted) and copy that setup. Parametrize two groups.\n1) These commands must select k_sl_2a_b_r2: 'Ask Brandon about the inspection forms.', 'Ask Brandon about the blank inspector forms.', 'Ask Brandon about the credentials.', 'Fill out the blank inspector forms with Brandon.' (already worked), 'Show Brandon the inspector forms.'.\n2) These must NOT select k_sl_2a_b_r2 (the result may be None or another item): 'Ask Brandon how to reach the gate.', 'Ask Brandon about the facility layout.', 'Ask Brandon about the cooling system.', 'Search the hideout for a map of the facility.', 'Study the facility from the service road.'.\nAlso assert that 'Ask Brandon about the inspection forms.' returns a unique match (not a tie) in that state. If it ties with another item, STOP and report the tie in notes.md instead of changing other items.\nIf an existing test pins the old verb line, update only that assertion.\n\nWrite a short notes.md in the worktree root saying what you changed and any surprise. Do not put it in the patch.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/design-review-step6/2a-forms-verb-check.sh",
+   "verified": "'Ask Brandon about the inspection forms.' uniquely selects k_sl_2a_b_r2; unrelated Brandon questions do not; suite and ruff pass"
+  }
+ ]
+}

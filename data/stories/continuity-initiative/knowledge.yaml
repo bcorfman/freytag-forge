@@ -1090,7 +1090,7 @@ knowledge:
   statement: 'Brandon prepares technical credentials while Kristin chooses how much of the real cooling-water and ventilation risk to put in their lie.'
   earn_when: completes, fills out, fills in, finishes, fills, shows, presents, flashes, or hands over the inspector forms or credentials with Brandon
   action_evidence:
-  - [prepare, draft, assemble, review, build, make, create, forge, complete, fill out, fill in, finish, fill, show, present, flash, hand over]
+  - [prepare, draft, assemble, review, build, make, create, forge, complete, fill out, fill in, finish, fill, show, present, flash, hand over, ask]
   - [technical credentials, inspector credentials, inspection credentials, credentials, inspector forms, blank inspector forms, completed inspector forms, inspection forms, forms]
   entity_ids: []
   aliases:
