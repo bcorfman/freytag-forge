@@ -59,21 +59,21 @@ R = {
     "collapse_3c": [
         (
             "evidence_gap_processing_numbers",
-            'Water seeps under the outer doors. On the broadcast, Michelle says, "Kristin could not copy the full set of prisoner numbers from the processing line."',
+            "Water seeps under the outer doors. Kristin could not copy the full set of prisoner numbers from the processing line.",
         ),
         (
             "evidence_gap_development_record",
-            'Water seeps under the outer doors. On the broadcast, Michelle says, "Kristin left without a copy of the development record bearing Brandon\'s name."',
+            "Water seeps under the outer doors. Kristin left without a copy of the development record bearing Brandon's name.",
         ),
     ],
     "routes_collapse_3c": [
         (
             "evidence_gap_marked_site_list",
-            'Rising water is closing routes through the facility. On the broadcast, Michelle says, "Rebecca gave us the locations, but Kristin left without a copy of her marked site list."',
+            "Rising water is closing routes through the facility. Rebecca gave Kristin the locations, but Kristin left without a copy of her marked site list.",
         ),
         (
             "evidence_gap_copy_check",
-            'Rising water is closing routes through the facility. On the broadcast, Michelle says, "Kristin had no time to check her copied evidence against the original files."',
+            "Rising water is closing routes through the facility. Kristin had no time to check her copied evidence against the original files.",
         ),
     ],
 }

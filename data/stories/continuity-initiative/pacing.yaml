@@ -58,12 +58,12 @@ events:
     - {fact_id: evidence_gap_processing_numbers, equals: true}
     verbatim: true
     text: >-
-      Water seeps under the outer doors. On the broadcast, Michelle says, "Kristin could not copy the full set of prisoner numbers from the processing line."
+      Water seeps under the outer doors. Kristin could not copy the full set of prisoner numbers from the processing line.
   - when:
     - {fact_id: evidence_gap_development_record, equals: true}
     verbatim: true
     text: >-
-      Water seeps under the outer doors. On the broadcast, Michelle says, "Kristin left without a copy of the development record bearing Brandon's name."
+      Water seeps under the outer doors. Kristin left without a copy of the development record bearing Brandon's name.
   - text: Water seeps under the outer doors. Charles's emergency deluge is becoming real.
 - id: purge_2c
   scene_id: 2C
@@ -170,12 +170,12 @@ events:
     - {fact_id: evidence_gap_marked_site_list, equals: true}
     verbatim: true
     text: >-
-      Rising water is closing routes through the facility. On the broadcast, Michelle says, "Rebecca gave us the locations, but Kristin left without a copy of her marked site list."
+      Rising water is closing routes through the facility. Rebecca gave Kristin the locations, but Kristin left without a copy of her marked site list.
   - when:
     - {fact_id: evidence_gap_copy_check, equals: true}
     verbatim: true
     text: >-
-      Rising water is closing routes through the facility. On the broadcast, Michelle says, "Kristin had no time to check her copied evidence against the original files."
+      Rising water is closing routes through the facility. Kristin had no time to check her copied evidence against the original files.
   - text: Rising water is closing routes through the facility. The remaining routes are narrowing fast.
 scenes:
 - scene_id: 1A
