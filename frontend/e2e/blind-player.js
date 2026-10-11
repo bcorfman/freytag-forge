@@ -128,6 +128,7 @@ export function turnRecord({ turn, input, payload = {}, text }) {
     delivery: payload.delivery || {},
     semantic_match: payload.semantic_match || null,
     prompt: payload.prompt || null,
+    attempt_bundle: payload.attempt_bundle || null,
   };
 }
 
@@ -146,8 +147,16 @@ export function promptsCategory(category) {
   return category === "blind-player" ? "blind-player-prompts" : category.replace(/^blind-player(?=-r\d+$)/, "blind-player-prompts");
 }
 
+export function collectBundles(turns = []) {
+  return turns.flatMap((turn) => turn?.attempt_bundle ? [{ turn: turn.turn, attempt_bundle: turn.attempt_bundle }] : []);
+}
+
+export function bundlesCategory(category) {
+  return category === "blind-player" ? "blind-player-bundles" : category.replace(/^blind-player(?=-r\d+$)/, "blind-player-bundles");
+}
+
 export function turnLog(turns = []) {
-  return turns.map(({ turn, input, text, state, grounding_ids, semantic_match, rejected, rejection }) => ({
+  return turns.map(({ turn, input, text, state, grounding_ids, semantic_match, rejected, rejection, attempt_bundle }) => ({
     turn,
     input,
     text,
@@ -156,6 +165,8 @@ export function turnLog(turns = []) {
     scene_id: state?.scene_id ?? null,
     semantic_match: semantic_match ?? null,
     grounding_ids: grounding_ids || [],
+    transition_cause: attempt_bundle?.transition_cause ?? null,
+    outcome: attempt_bundle?.outcome ?? null,
   }));
 }
 
@@ -176,8 +187,12 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
   const committedTurns = turns.filter((turn) => turn.state != null && turn.rejected !== true);
   const transitionIndex = committedTurns.findIndex((turn) => turn.state.scene_id && turn.state.scene_id !== sceneEntry?.scene_id);
   const transitionTurn = transitionIndex < 0 ? null : committedTurns[transitionIndex].turn;
+  const transitionBundle = transitionIndex < 0 ? null : committedTurns[transitionIndex].attempt_bundle;
   const handoffAfterTurns = typeof sceneEntry?.handoff_after_turns === "number" ? sceneEntry.handoff_after_turns : null;
-  const exitCause = transitionTurn == null
+  const bundleExitCauses = { earned: "play", forced: "forced", timer: "timer" };
+  const exitCause = transitionBundle?.transition_cause in bundleExitCauses
+    ? bundleExitCauses[transitionBundle.transition_cause]
+    : transitionTurn == null
     ? "none"
     : handoffAfterTurns == null
       ? "unknown"
@@ -256,7 +271,7 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
     pacing_realizations: pacing,
     transition: { turn: transitionTurn, final_segment_matches_entry: finalSegmentMatches, prior_contains_entry: priorContainsEntry, earlier_segment_contains_entry: transitionPrefixContainsEntry, no_skip_or_restart: finalSegmentMatches && !priorContainsEntry && !transitionPrefixContainsEntry },
   };
-  return { stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, handoff_after_turns: handoffAfterTurns, exit_cause: exitCause, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
+  return { stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, bundle_rejected_turns: turns.filter((turn) => turn.rejected === true && turn.attempt_bundle != null).length, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, handoff_after_turns: handoffAfterTurns, exit_cause: exitCause, exit_transition_cause: transitionBundle?.transition_cause ?? null, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
 }
 
 export function aggregate(runs = []) {
@@ -269,6 +284,7 @@ export function aggregate(runs = []) {
     replicates: runs.length,
     transition_rate: runs.filter((run) => run.transition_fired).length / count,
     play_exit_rate: runs.filter((run) => run.exit_cause === "play").length / count,
+    forced_exit_rate: runs.filter((run) => run.exit_cause === "forced").length / count,
     timer_exit_rate: runs.filter((run) => run.exit_cause === "timer").length / count,
     mean_transition_turn: runs.filter((run) => run.transition_turn != null).reduce((sum, run) => sum + run.transition_turn, 0) / (runs.filter((run) => run.transition_turn != null).length || 1),
     affordances_shown_by_deadline_rate: Object.fromEntries(shown.map((id) => [id, runs.filter((run) => run.affordances?.find((item) => item.entity_id === id)?.deadline_met).length / count])),
@@ -327,7 +343,7 @@ export function formatMarkdown(report) {
   });
   const markdownReport = {
     ...report,
-    replicates: runs.map(({ prompts, ...run }) => run),
+    replicates: runs.map(({ prompts, bundles, ...run }) => run),
   };
-  return `# blind-player E2E evaluation\n\nRejected turns: ${rejectedCount}\n\nPlay exit rate: ${aggregate.play_exit_rate ?? "unknown"}\nTimer exit rate: ${aggregate.timer_exit_rate ?? "unknown"}\n\n## Exits\n\n${exitLines.length ? exitLines.join("\n") : "None"}\n\n## Unseen commands\n\n${unseen.length ? unseen.join("\n") : "None"}\n\n${turnSections.length ? turnSections.join("\n\n") : "## Turns\n\nNone"}\n\n${semanticSections.length ? semanticSections.join("\n\n") : "## Semantic reveal fallback\n\nThe server did not return it."}\n\n${JSON.stringify(markdownReport, null, 2)}\n`;
+  return `# blind-player E2E evaluation\n\nRejected turns: ${rejectedCount}\n\nPlay exit rate: ${aggregate.play_exit_rate ?? "unknown"}\nForced exit rate: ${aggregate.forced_exit_rate ?? "unknown"}\nTimer exit rate: ${aggregate.timer_exit_rate ?? "unknown"}\n\n## Exits\n\n${exitLines.length ? exitLines.join("\n") : "None"}\n\n## Unseen commands\n\n${unseen.length ? unseen.join("\n") : "None"}\n\n${turnSections.length ? turnSections.join("\n\n") : "## Turns\n\nNone"}\n\n${semanticSections.length ? semanticSections.join("\n\n") : "## Semantic reveal fallback\n\nThe server did not return it."}\n\n${JSON.stringify(markdownReport, null, 2)}\n`;
 }

@@ -1,10 +1,10 @@
 # Design review: implementation plan
 
-Status (2026-10-11): Step 1 merged (PR #592). Step 2 Python side done on branch `design-review-step2` (bundle, engine, gated web exposure, replay tests), not pushed; blind-player JS side and live smoke still open; Steps 3-10 not started. Source: [chatgpt-design-review-answer.md](chatgpt-design-review-answer.md) (reviewed at `45a35cc3`, 10-step sequence). This plan turns that sequence into Ringer-sized tasks with gates. Update this file after each step is completed and tested (commit, what the check showed, what is untested), and refresh "Resume here".
+Status (2026-10-11): Step 1 merged (PR #592). Step 2 code done (bundle, engine, gated web exposure, blind-player.js), PR open; live smoke still open (needs the PR merged and staging redeployed); Steps 3-10 not started. Source: [chatgpt-design-review-answer.md](chatgpt-design-review-answer.md) (reviewed at `45a35cc3`, 10-step sequence). This plan turns that sequence into Ringer-sized tasks with gates. Update this file after each step is completed and tested (commit, what the check showed, what is untested), and refresh "Resume here".
 
 ## Resume here
 
-Finish Step 2: (a) blind-player.js stores `attempt_bundle` beside the old prompt slot and `analyseRun` takes exit cause from the bundle's `transition_cause` (fallback to the old turn-count rule for old captures), with node tests; (b) live smoke (one success, one rejection, one short forced continuation), needs Brandon's go since it is billed. Then open the Step 2 PR. Branch per step, one PR per step, merge commit only on Brandon's per-PR instruction, delete the branch after green CI.
+Finish Step 2: after the Step 2 PR merges and the `main` staging deploy succeeds, run the live smoke (one success, one rejection, one short forced continuation), needs Brandon's go since it is billed. Then open the Step 2 PR. Branch per step, one PR per step, merge commit only on Brandon's per-PR instruction, delete the branch after green CI.
 
 ## Ground rules (from AGENTS.md and memory)
 
@@ -121,3 +121,8 @@ Deterministic replay on every affected change; targeted live arms when a model b
 - Tests (`tests/test_attempt_bundle.py`, 8): round-trip and version refusal, accepted and rejected, operational failure apart from rejection, forced handoff, late earned 1A to 1B (`k_sl_1a_b_r0`), same late state forced, deadline timer, gated web rejection. No engine logic change was needed in the second run.
 - Limit: `timer` currently means only the resolution-deadline backstop; a timed route event that moves the scene without a selected reveal is classed `earned`. Unverified whether any route does that.
 - Untested: blind-player.js integration, live behaviour, coverage gate.
+
+### Step 2, blind-player.js (2026-10-11)
+- Ringer run `design-review-step2c` (PASS, 197 s, 1 attempt). `turnRecord` carries `attempt_bundle`; `collectBundles` and `bundlesCategory` write a `blind-player-bundles` report beside the untouched prompts report; `analyseRun` takes `exit_cause` from the bundle (earned=play, forced, timer) with the old turn-count rule as fallback, and adds `exit_transition_cause`, `bundle_rejected_turns`, `forced_exit_rate`. `helpers.js` submitTurn attaches `error.payload` and `error.status` to a non-ok error; the spec reads the bundle from it on a 409.
+- Frontend node tests 85 pass locally. `error.payload` has no unit test (needs Playwright).
+- Untested: live smoke (one success, one rejection, one short forced continuation). Hosted staging serves main, so this waits for the merge and SHA-bound staging deploy.

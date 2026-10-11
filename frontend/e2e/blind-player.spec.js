@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadAffordanceMap, firstStepAffordances, laterAffordances, exploreInput } from "./affordances.js";
-import { askPlayer, analyseRun, aggregate, aggregateByScene, collectPrompts, formatMarkdown, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
+import { askPlayer, analyseRun, aggregate, aggregateByScene, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
 import { startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { walkScenes } from "./scene-walk.js";
@@ -55,7 +55,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
     } catch (error) {
       const rejection = String(error?.message || "").match(/HTTP 409:\s*([\s\S]*)$/);
       if (!rejection) throw error;
-      turns.push({ turn, input, rejected: true, rejection: rejection[1], text: "", state: null, grounding_ids: [], delivery: {}, semantic_match: null, prompt: null });
+      turns.push({ turn, input, rejected: true, rejection: rejection[1], text: "", state: null, grounding_ids: [], delivery: {}, semantic_match: null, prompt: null, attempt_bundle: error.payload?.attempt_bundle || null });
       consecutiveRejections += 1;
       if (consecutiveRejections >= MAX_CONSECUTIVE_REJECTIONS) {
         stoppedOnRejections = true;
@@ -77,6 +77,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
     opening_text: openingText,
     commands: turns.map((turn) => turn.input),
     prompts: collectPrompts(turns),
+    bundles: collectBundles(turns),
     turns: turnLog(turns),
     turn_count: turns.length,
     ...analyseRun({ sceneEntry, nextSceneEntry, turns, firstStep, later, openingText, stopped_on_rejections: stoppedOnRejections, sceneMapSources: sceneEntry.gates?.flatMap((gate) => gate.sources || []) || [] }),
@@ -156,11 +157,22 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
     })),
   };
   await writeCategoryReport(promptsCategory(category), promptReport);
+  const bundleReport = {
+    story_id: report.story_id,
+    scene: report.scene,
+    replicates: report.replicates.map((replicate) => ({
+      replicate: replicate.replicate,
+      scenes: allMode
+        ? replicate.scenes.map(({ scene, bundles }) => ({ scene, bundles }))
+        : [{ scene: replicate.scene, bundles: replicate.bundles }],
+    })),
+  };
+  await writeCategoryReport(bundlesCategory(category), bundleReport);
   const mainReport = {
     ...report,
     replicates: report.replicates.map((replicate) => {
-      if (allMode) return { ...replicate, scenes: replicate.scenes.map(({ prompts, ...scene }) => scene) };
-      const { prompts, ...scene } = replicate;
+      if (allMode) return { ...replicate, scenes: replicate.scenes.map(({ prompts, bundles, ...scene }) => scene) };
+      const { prompts, bundles, ...scene } = replicate;
       return scene;
     }),
   };
