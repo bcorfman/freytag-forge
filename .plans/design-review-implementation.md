@@ -1,10 +1,10 @@
 # Design review: implementation plan
 
-Status (2026-10-11): Step 1 merged (PR #592). Step 2 code done (bundle, engine, gated web exposure, blind-player.js), PR open; live smoke still open (needs the PR merged and staging redeployed); Steps 3-10 not started. Source: [chatgpt-design-review-answer.md](chatgpt-design-review-answer.md) (reviewed at `45a35cc3`, 10-step sequence). This plan turns that sequence into Ringer-sized tasks with gates. Update this file after each step is completed and tested (commit, what the check showed, what is untested), and refresh "Resume here".
+Status (2026-10-11): Steps 1-3 done (Step 2 gate met on staging at f324cc17; Step 3 matrix and Brandon's decisions recorded). The two source conflicts Step 3 found (2A and 2C entry knowledge) are fixed and live-checked (PRs #599, #600). Step 4 in progress; Steps 5-10 not started. Source: [chatgpt-design-review-answer.md](chatgpt-design-review-answer.md) (reviewed at `45a35cc3`, 10-step sequence). This plan turns that sequence into Ringer-sized tasks with gates. Update this file after each step is completed and tested (commit, what the check showed, what is untested), and refresh "Resume here".
 
 ## Resume here
 
-Finish Step 2: after the Step 2 PR merges and the `main` staging deploy succeeds, run the live smoke (one success, one rejection, one short forced continuation), needs Brandon's go since it is billed. Then open the Step 2 PR. Branch per step, one PR per step, merge commit only on Brandon's per-PR instruction, delete the branch after green CI.
+Step 4 (opt-in disclosure guards, 2C copied-files pilot) on branch `design-review-step4`. Before writing the spec, re-read `.plans/world-model.md` section 12, `docs/world-model-grounding.md` and `.plans/disclosure-decisions.md`. Branch per step, one PR per step, merge commit only on Brandon's per-PR instruction, delete the branch after green CI. Open question carried from the entry-knowledge fix: `k_scene_1b_entry` ("immediate place of pursuit") was left unchanged on purpose.
 
 ## Ground rules (from AGENTS.md and memory)
 
@@ -150,3 +150,6 @@ Deterministic replay on every affected change; targeted live arms when a model b
 - Tables: earned-rejected 80; early-rejected public candidates 18; early-accepted secret candidates 26.
 - Things to check before trusting the tables: (1) `memory card` and `michelle's memory card` are rejected in the 'earned' state of 1A and 1B, and `infrastructure corridor` in 2A and 3B; the earned state asserts only the owning reveal's establishes facts, so this may be how the state was built rather than an engine fault; (2) `janus`, `phase`, `phase two` are rejected in every scene's earned state, probably correct since the reveal sits in 3C; (3) `phase` is guarded only through the identifier fragment of `phase_two` (the review's Finding 1 example), which the data confirms.
 - Brandon's decisions for the contested terms are recorded in `.plans/disclosure-decisions.md`. Correction: the earlier note here that `janus` family releases in 3C was wrong; JANUS is revealed in 2B (`janus_evidence`). Two entry-knowledge items assert reveals too early (2C purge clock, 2A false identities), confirmed in knowledge.yaml. The 'earned rejected' table may reflect how the states were built, not engine behaviour. No engine change. Step 3 gate met.
+
+### Entry-knowledge fix (2026-10-11, PRs #599 and #600)
+- Fixed the two source conflicts from Step 3 (2C purge clock, 2A false identities) plus spoiling objectives and pressure lines in 2B, 2C, 3B. Details, matrix effect and the live check (4 replicates each of 2A and 2C, 0 premature assertions) are in `.plans/disclosure-decisions.md`. Untested: reveals still landing after the fix, rejected-turn counts, 1B.
