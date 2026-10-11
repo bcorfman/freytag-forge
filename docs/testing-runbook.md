@@ -34,7 +34,7 @@ TMPDIR=/tmp uv run pytest -q                                  # full suite witho
 TMPDIR=/tmp uv run pytest -q --cov                           # full suite + 90% coverage gate
 TMPDIR=/tmp uv run pytest -q --no-cov -m "(unit or component) and not authoring_quality"  # CI fast feedback
 TMPDIR=/tmp uv run pytest -q --no-cov -m authoring_quality    # package authoring checks
-TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index N --shard-count 4  # one CI coverage shard
+TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index N --shard-count 4  # one CI coverage shard; files are assigned by tests/shard_durations.json
 uv run coverage combine coverage-data && uv run coverage report  # CI required gate
 uv run ruff check --fix . && uv run ruff format .
 cd frontend && npm test && npm run build
