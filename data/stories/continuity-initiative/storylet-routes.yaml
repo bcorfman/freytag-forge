@@ -424,10 +424,6 @@ new_fact_ids:
   definition: Kristin missed copying the development record bearing Brandon's name when time ran out.
   used_by_storylets: []
   used_by_transitions: []
-- id: evidence_gap_copy_check
-  definition: Kristin missed checking the copied evidence against the original files when time ran out.
-  used_by_storylets: []
-  used_by_transitions: []
 - id: evidence_gap_marked_site_list
   definition: Kristin missed copying Rebecca's marked site list when time ran out.
   used_by_storylets: []

@@ -89,5 +89,5 @@ def test_expect_override(tmp_path: Path) -> None:
 
 
 def test_real_pacing_has_four_distinct_keys() -> None:
-    assert set(GAPS) == {"processing", "development", "marked", "copycheck"}
-    assert len({line.key for line in GAPS.values()}) == 4
+    assert set(GAPS) == {"processing", "development", "marked"}
+    assert len({line.key for line in GAPS.values()}) == 3

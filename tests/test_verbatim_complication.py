@@ -73,11 +73,11 @@ def test_verbatim_defaults_false_and_loader_rejects_non_boolean(tmp_path: Path) 
 def test_continuity_gap_realizations_are_verbatim_but_defaults_are_not() -> None:
     expected = {
         "collapse_3c": {"evidence_gap_processing_numbers", "evidence_gap_development_record"},
-        "routes_collapse_3c": {"evidence_gap_marked_site_list", "evidence_gap_copy_check"},
+        "routes_collapse_3c": {"evidence_gap_marked_site_list"},
     }
     for event_id, gap_ids in expected.items():
         event = next(event for event in PACKAGE.pacing.events if event.id == event_id)
-        assert [realization.verbatim for realization in event.realizations] == [True, True, False]
+        assert [realization.verbatim for realization in event.realizations] == [True] * len(gap_ids) + [False]
         assert {realization.when[0].fact_id for realization in event.realizations if realization.verbatim} == gap_ids
 
 

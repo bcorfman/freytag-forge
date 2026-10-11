@@ -22,12 +22,11 @@ except ImportError:  # pragma: no cover - the repository has PyYAML installed
     yaml = None
 
 
-STATES = ("none", "processing", "development", "marked", "copycheck", "all")
+STATES = ("none", "processing", "development", "marked", "all")
 FACT_STATES = {
     "evidence_gap_processing_numbers": "processing",
     "evidence_gap_development_record": "development",
     "evidence_gap_marked_site_list": "marked",
-    "evidence_gap_copy_check": "copycheck",
 }
 GENERIC_PENALTY = re.compile(
     r"without a copy|could not copy|no time to check|did not copy|unchecked|"

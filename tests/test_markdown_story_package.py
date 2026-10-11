@@ -288,7 +288,6 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     pacing_only_facts = {
         "evidence_gap_processing_numbers",
         "evidence_gap_development_record",
-        "evidence_gap_copy_check",
         "evidence_gap_marked_site_list",
     }
     assert mapped_facts <= set(package.world.facts)

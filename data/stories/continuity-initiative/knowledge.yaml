@@ -148,8 +148,6 @@ facts:
   purpose: Kristin missed copying the full set of prisoner numbers from the processing line when time ran out.
 - id: evidence_gap_development_record
   purpose: Kristin missed copying the development record bearing Brandon's name when time ran out.
-- id: evidence_gap_copy_check
-  purpose: Kristin missed checking the copied evidence against the original files when time ran out.
 - id: evidence_gap_marked_site_list
   purpose: Kristin missed copying Rebecca's marked site list when time ran out.
 - id: facility_infiltration_needed

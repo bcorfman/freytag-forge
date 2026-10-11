@@ -19,13 +19,11 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 GAPS = (
     "evidence_gap_processing_numbers",
     "evidence_gap_development_record",
-    "evidence_gap_copy_check",
     "evidence_gap_marked_site_list",
 )
 FORCED_DELIVERIES = (
     ("1C", "captives_confirmed_alive", "evidence_gap_processing_numbers"),
     ("2B", "brandon_janus_role_known", "evidence_gap_development_record"),
-    ("2C", "evidence_ready_to_transmit", "evidence_gap_copy_check"),
     ("3B", "detention_locations_secured", "evidence_gap_marked_site_list"),
 )
 EARNED_DELIVERIES = (
@@ -153,8 +151,8 @@ def _resolution_reachability(gap_ids: tuple[str, ...]) -> tuple[object, ...]:
     return tuple(sorted(state.active_event_ids)), canonical, reveal_ids, reveal_reasons
 
 
-@pytest.mark.parametrize("gap_ids", product((False, True), repeat=4))
-def test_all_gap_combinations_preserve_3c_reachability(gap_ids: tuple[bool, bool, bool, bool]) -> None:
+@pytest.mark.parametrize("gap_ids", product((False, True), repeat=3))
+def test_all_gap_combinations_preserve_3c_reachability(gap_ids: tuple[bool, bool, bool]) -> None:
     selected = tuple(fact_id for fact_id, present in zip(GAPS, gap_ids, strict=True) if present)
 
     assert _resolution_reachability(selected) == _resolution_reachability(())
@@ -235,9 +233,9 @@ def _pacing_texts(gap_ids: tuple[str, ...]) -> tuple[str | None, str | None]:
     return collapse_text, state.last_turn_delivery.complication_text
 
 
-@pytest.mark.parametrize("gap_ids", product((False, True), repeat=4))
+@pytest.mark.parametrize("gap_ids", product((False, True), repeat=3))
 def test_3c_pacing_prioritizes_records_over_check_for_all_gap_combinations(
-    gap_ids: tuple[bool, bool, bool, bool],
+    gap_ids: tuple[bool, bool, bool],
 ) -> None:
     selected = tuple(fact_id for fact_id, present in zip(GAPS, gap_ids, strict=True) if present)
     collapse_text, routes_text = _pacing_texts(selected)
@@ -250,13 +248,7 @@ def test_3c_pacing_prioritizes_records_over_check_for_all_gap_combinations(
         if gap_ids[1]
         else collapse.realizations[-1].text
     )
-    expected_routes = (
-        routes.realizations[0].text
-        if gap_ids[3]
-        else routes.realizations[1].text
-        if gap_ids[2]
-        else routes.realizations[-1].text
-    )
+    expected_routes = routes.realizations[0].text if gap_ids[2] else routes.realizations[-1].text
 
     assert collapse_text == expected_collapse
     assert routes_text == expected_routes

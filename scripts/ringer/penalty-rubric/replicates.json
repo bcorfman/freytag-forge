@@ -51,21 +51,6 @@
    "verified": "3 live 3C replicates ran for the development gap state"
   },
   {
-   "key": "gap-copycheck",
-   "task_type": "probe",
-   "engine": "codex",
-   "model": "gpt-5.6-luna",
-   "max_attempts": 1,
-   "timeout_s": 300,
-   "check_timeout_s": 3600,
-   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live benchmark itself. Reply with the single word: ready.",
-   "check": "cd /home/bcorfman/dev/freytag-forge && set -a && . ./.env && set +a && TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/evidence-gap-copycheck-3c.json --scene 3C --script exposure-and-escape --replicates 3 --out bench/results/evidence-gap-w2-copycheck --confirm",
-   "expect_files": [
-    "/home/bcorfman/dev/freytag-forge/bench/results/evidence-gap-w2-copycheck/all-turn-records.json"
-   ],
-   "verified": "3 live 3C replicates ran for the copycheck gap state"
-  },
-  {
    "key": "gap-marked",
    "task_type": "probe",
    "engine": "codex",

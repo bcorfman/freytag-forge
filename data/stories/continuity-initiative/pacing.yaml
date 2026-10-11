@@ -171,11 +171,6 @@ events:
     verbatim: true
     text: >-
       Rising water is closing routes through the facility. Rebecca gave Kristin the locations, but Kristin left without a copy of her marked site list.
-  - when:
-    - {fact_id: evidence_gap_copy_check, equals: true}
-    verbatim: true
-    text: >-
-      Rising water is closing routes through the facility. Kristin had no time to check her copied evidence against the original files.
   - text: Rising water is closing routes through the facility. The remaining routes are narrowing fast.
 scenes:
 - scene_id: 1A

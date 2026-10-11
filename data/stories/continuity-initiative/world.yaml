@@ -356,7 +356,6 @@ facts:
 - facility_collapse_escalating
 - evidence_gap_processing_numbers
 - evidence_gap_development_record
-- evidence_gap_copy_check
 - evidence_gap_marked_site_list
 - facility_infiltration_needed
 - detention_uprising_started

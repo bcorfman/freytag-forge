@@ -18,10 +18,6 @@ GAPS = {
         "evidence_gap_development_record",
         "Time runs out before Kristin can copy the development record bearing Brandon's name.",
     ),
-    "evidence_ready_to_transmit": (
-        "evidence_gap_copy_check",
-        "Time runs out before Kristin can check the copied evidence against the original files.",
-    ),
     "detention_locations_secured": (
         "evidence_gap_marked_site_list",
         "Time runs out before Kristin can copy Rebecca's marked site list.",
@@ -41,10 +37,12 @@ def load(path: str, head: bool):
 old, new = load(D + "handoffs.yaml", True), load(D + "handoffs.yaml", False)
 expect = copy.deepcopy(old)
 for d in expect["deliveries"]:
-    if d["fact_id"] in GAPS:
-        gap, sentence = GAPS[d["fact_id"]]
-        d["fallback_text"] = d["fallback_text"].rstrip("\n") + " " + sentence
-        d["costs"] = list(d.get("costs", [])) + [{"op": "assert", "fact_id": gap, "value": True}]
+    if d["fact_id"] == "evidence_ready_to_transmit":
+        d["fallback_text"] = (
+            "Kristin and Brandon obtain enough evidence to expose the conspiracy, leaving the evidence in hand. "
+            "It is ready to transmit, but sending proof will reveal their position."
+        )
+        d.pop("costs", None)
 for e, n in zip(expect["deliveries"], new["deliveries"], strict=False):
     if e != n:
         for k in sorted(set(e) | set(n)):
@@ -71,17 +69,15 @@ R = {
             "evidence_gap_marked_site_list",
             "Rising water is closing routes through the facility. Rebecca gave Kristin the locations, but Kristin left without a copy of her marked site list.",
         ),
-        (
-            "evidence_gap_copy_check",
-            "Rising water is closing routes through the facility. Kristin had no time to check her copied evidence against the original files.",
-        ),
     ],
 }
 expect = copy.deepcopy(old)
 for ev in expect["events"]:
     if ev["id"] in R:
-        default = ev["realizations"][0]
-        ev["realizations"] = [{"when": [{"fact_id": f, "equals": True}], "text": t} for f, t in R[ev["id"]]] + [default]
+        default = ev["realizations"][-1]
+        ev["realizations"] = [
+            {"when": [{"fact_id": f, "equals": True}], "verbatim": True, "text": t} for f, t in R[ev["id"]]
+        ] + [default]
 if expect != new:
     errors.append("pacing.yaml differs from the expected realizations (or changed elsewhere)")
 

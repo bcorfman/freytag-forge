@@ -588,11 +588,9 @@ Their disagreement creates the story’s central **crisis choice**:
 
 ### Scene 2C.4 — Living With the Choice
 
-**Details:** copied evidence; sealed detention sectors; transfer carts; Brandon's guilt; Rebecca's offer; maintenance network; chance to compare the copied evidence with the original files
+**Details:** copied evidence; sealed detention sectors; transfer carts; Brandon's guilt; Rebecca's offer; maintenance network
 
 The apparent choice cannot be solved by a quick argument. Kristin and Brandon have time to test what each path would cost, but not enough time to pretend the costs are theoretical.
-
-Kristin can still check her copied evidence against the original files, but each moment spent on the comparison leaves less time to reach the captives.
 
 Sending the evidence would make the national case harder for Charles to bury, yet it would expose their position while transfer carts begin moving below. A direct rescue might save Michelle and the nearby captives, yet it could leave Charles free to repeat the operation elsewhere.
 

@@ -3,7 +3,6 @@
   "entry_facts": [
     "evidence_gap_processing_numbers",
     "evidence_gap_development_record",
-    "evidence_gap_copy_check",
     "evidence_gap_marked_site_list"
   ],
   "story_package": "data/stories/continuity-initiative",
