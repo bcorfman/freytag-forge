@@ -81,6 +81,10 @@ def test_package_without_ending_is_unchanged():
     assert state.story_complete is False
 
 
+def test_loader_accepts_protected_terms_in_authored_ending():
+    _validate_ending(ending_package(text="Phase Two was stopped.", marker="Phase Two is over."))
+
+
 @pytest.mark.parametrize(
     ("ending", "message"),
     [
@@ -97,10 +101,24 @@ def test_package_without_ending_is_unchanged():
             StoryEnding(scene_id="3C", when=(FactPredicate(fact_id="not_a_fact"),), text="x", marker="m"),
             "unknown predicate",
         ),
+        (
+            StoryEnding(
+                scene_id="3C",
+                when=(FactPredicate(fact_id="phase_two_conflict_plan_known"),),
+                text="x",
+                marker="m",
+            ),
+            "outgoing transition",
+        ),
     ],
 )
 def test_loader_rejects_invalid_ending_references(ending, message):
-    package = PACKAGE.model_copy(update={"pacing": PACKAGE.pacing.model_copy(update={"ending": ending})})
+    transitions = PACKAGE.pacing.transitions
+    if message == "outgoing transition":
+        transitions = transitions + (transitions[0].model_copy(update={"source_scene_id": "3C"}),)
+    package = PACKAGE.model_copy(
+        update={"pacing": PACKAGE.pacing.model_copy(update={"ending": ending, "transitions": transitions})}
+    )
     with pytest.raises(StoryPackageError, match=message):
         _validate_ending(package)
 
@@ -113,3 +131,13 @@ def test_ending_model_rejects_blank_text_and_old_attempt_bundles_load():
     assert "ending_marker" not in _state_summary(state)
     payload = _turn_payload(state, "Continue.")
     assert payload["story_complete"] is False
+
+
+def test_shipped_package_declares_the_authored_ending():
+    ending = PACKAGE.pacing.ending
+    assert ending is not None
+    assert ending.scene_id == "3C"
+    assert ending.marker == "The story ends here."
+    assert ending.when == (FactPredicate(fact_id="phase_two_conflict_plan_known", equals=True),)
+    assert ending.text
+    assert "Phase Two" in ending.text
