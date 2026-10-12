@@ -6154,7 +6154,7 @@
       "available_scenes": [
         "1B"
       ],
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "owner_ids": [
         "michelle_photograph"
       ],
@@ -6168,7 +6168,7 @@
       "available_scenes": [
         "1B"
       ],
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "owner_ids": [
         "michelle_photograph"
       ],
@@ -11166,7 +11166,7 @@
         "error_code": "",
         "verdict": "accepted"
       },
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "scene": "1B",
       "skipped": {
         "error_code": "",
@@ -11183,7 +11183,7 @@
         "error_code": "",
         "verdict": "accepted"
       },
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "scene": "1B",
       "skipped": {
         "error_code": "",
