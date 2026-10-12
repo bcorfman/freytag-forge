@@ -1,0 +1,22 @@
+{
+ "run_name": "canon-judge-smoke",
+ "workdir": "/home/bcorfman/dev/ringer-work/canon-smoke-run",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "canon-smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs one hosted @llm-canon canon-judge run on staging and keeps it only if it is a complete record (nine scenes, 30 or more turns). Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/playthrough-quality/canon-check.sh /home/bcorfman/dev/ringer-work/canon-smoke/out",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/canon-smoke/out/e2e-llm-canon.json"
+   ],
+   "verified": "one complete hosted canon-judge run was recorded."
+  }
+ ]
+}
