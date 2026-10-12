@@ -835,7 +835,7 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running. The observation shaft overlooks the processing line, where people in uniforms pass below.
+    Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running. The observation shaft overlooks the processing line. Kristin can read the identification numbers on the uniforms below.
 - id: k_sl_1c_a_r2
   statement: 'Michelle’s transit token opens a service entrance beneath the terminal, confirming an active facility below. The service schematic marks a dry maintenance ascent that joins the drainage spine, too exposed to use now but worth remembering.'
   earn_when: uses the transit token at the service entrance
@@ -868,14 +868,14 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    The transit token opens a service entrance to an active facility below. A service map shows a dry maintenance climb to the drainage spine. Kristin sees that route is too exposed to use now. The observation shaft overlooks the processing line, where people in uniforms pass below.
+    The transit token opens a service entrance to an active facility below. A service map shows a dry maintenance climb to the drainage spine. Kristin sees that route is too exposed to use now. The observation shaft overlooks the processing line. Kristin can read the identification numbers on the uniforms below.
 - id: k_sl_1c_b_r1
   statement: 'From the processing area, Kristin matches sedated prisoners to missing-person records and knows they are alive.'
   earn_when: compares the prisoners with missing-person records or reads, examines, records, copies, photographs, captures, writes down, or logs the identification numbers on the prisoners' uniforms
   action_evidence:
   - [compare, match, cross-check, check, read, examine, inspect, observe, look at, record, copy, photograph, capture, write down, log]
   - [prisoners, captives, people in the processing area, uniforms, uniform, workers' uniforms, identification numbers, ID numbers]
-  - [missing-person records, missing people records, missing records, records, identification numbers, ID numbers]
+  - [missing-person records, missing people records, missing records, records, identification numbers, ID numbers, numbers]
   entity_ids: []
   aliases:
   - captives confirmed alive

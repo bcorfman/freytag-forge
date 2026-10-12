@@ -212,7 +212,7 @@ items:
   unavailable: destroyed
 - id: michelle_photograph
   name: Michelle's photograph
-  aliases: [photograph, photo]
+  scoped_aliases: [photograph, photo]
 - id: number_sequence
   name: handwritten number sequence
   aliases: [number sequence, handwritten sequence]
