@@ -235,7 +235,8 @@ items:
   name: service entrance
   fixed: true
 - id: hideout_servers
-  name: servers
+  name: hideout servers
+  scoped_aliases: [servers]
   fixed: true
 - id: inspection_console
   name: inspection console
@@ -397,4 +398,4 @@ facts:
 protected_knowledge:
 - janus_selection_system
 - brandon_history
-- phase_two
+- janus_phase_two

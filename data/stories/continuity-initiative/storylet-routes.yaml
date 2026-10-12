@@ -593,7 +593,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: michelle_abduction_suspicion
@@ -631,7 +631,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: memory_card_recovered
@@ -666,7 +666,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   - id: SL-1A-F-R2
     dramatic_intent: Kristin examines the carved initials and notices the thin gap beneath the drawer without finding the memory card.
     source_beats: [scene-1a1--michelle-is-gone]
@@ -679,7 +679,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: drawer_gap_pointed_out
@@ -726,7 +726,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   - id: SL-1A-B-R2
     dramatic_intent: Kristin plays the recovered card's damaged warning before reading the remaining files.
     source_beats: [scene-1a3--the-interrupted-message]
@@ -742,7 +742,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
@@ -782,7 +782,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   - id: SL-1A-C-R2
     dramatic_intent: Notice the gate marker after the patrol leaves, establishing a concrete return threat and a
       reason to move on.
@@ -798,7 +798,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
@@ -848,7 +848,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: michelle_lead_actionable
@@ -884,7 +884,7 @@ storylets:
     protected_knowledge_boundaries:
     - brandon_history
     - janus_selection_system
-    - phase_two
+    - janus_phase_two
   - id: SL-1B-A-R2
     dramatic_intent: Identify the photographed stranger as a live lead while preserving uncertainty about his allegiance.
     operations:
@@ -896,7 +896,7 @@ storylets:
     protected_knowledge_boundaries:
     - brandon_history
     - janus_selection_system
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
@@ -943,7 +943,7 @@ storylets:
     protected_knowledge_boundaries:
     - brandon_history
     - janus_selection_system
-    - phase_two
+    - janus_phase_two
   - id: SL-1B-B-R2
     dramatic_intent: Kristin confronts him with the photograph; Brandon admits prior Initiative work and that the
       missing may still be alive, but withholds the protected JANUS role.
@@ -960,7 +960,7 @@ storylets:
     protected_knowledge_boundaries:
     - brandon_history
     - janus_selection_system
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: brandon_identified
@@ -1005,7 +1005,7 @@ storylets:
     protected_knowledge_boundaries:
     - brandon_history
     - janus_selection_system
-    - phase_two
+    - janus_phase_two
   - id: SL-1B-C-R2
     dramatic_intent: Kristin notices Brandon’s practiced system access during the maintenance-route escape and carries
       that unresolved suspicion forward while the transport route toward the freight terminal becomes clear.
@@ -1024,7 +1024,7 @@ storylets:
     protected_knowledge_boundaries:
     - brandon_history
     - janus_selection_system
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: brandon_retains_system_access
@@ -1060,7 +1060,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   - id: SL-1C-A-R2
     dramatic_intent: Confirm the active underground facility and a service-level route. Kristin also maps a dry
       maintenance ascent into the drainage spine, too exposed to use now, while establishing that the main installation
@@ -1078,7 +1078,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: facility_proof
@@ -1116,7 +1116,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   - id: SL-1C-B-R2
     dramatic_intent: Confirm the sedated captives are alive and catch an obscured possible glimpse of Michelle without
       converting uncertainty into confirmed location.
@@ -1133,7 +1133,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
@@ -1175,7 +1175,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   - id: SL-1C-C-R2
     dramatic_intent: Understand Charles and Rebecca’s reconstruction strategy and conclude that exposing and disrupting
       the operation requires deeper access than a local rescue attempt can provide.
@@ -1190,7 +1190,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
@@ -1225,7 +1225,7 @@ storylets:
     helps_transition_triggers: []
     protected_knowledge_boundaries:
     - brandon_history
-    - phase_two
+    - janus_phase_two
   - id: SL-2A-A-R2
     dramatic_intent: Notice retained professional resources without resolving whether they indicate foresight, guilt,
       or both.
@@ -1237,7 +1237,7 @@ storylets:
     helps_transition_triggers: []
     protected_knowledge_boundaries:
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: brandon_prepared_before_event
@@ -1274,7 +1274,7 @@ storylets:
     protected_knowledge_boundaries:
     - brandon_history
     - janus_selection_system
-    - phase_two
+    - janus_phase_two
   - id: SL-2A-B-R2
     dramatic_intent: 'Use more truth in the cover story: the real cooling-system danger justifies an unscheduled
       specialist visit.'
@@ -1287,7 +1287,7 @@ storylets:
     protected_knowledge_boundaries:
     - brandon_history
     - janus_selection_system
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: false_identities_ready
@@ -1322,7 +1322,7 @@ storylets:
     protected_knowledge_boundaries:
     - brandon_history
     - janus_selection_system
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: facility_perimeter_reached
@@ -1365,7 +1365,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   - id: SL-2A-C-R2
     dramatic_intent: An imperfect explanation still gets conditional corridor and inspection-console access while quietly
       increasing observation pressure.
@@ -1383,7 +1383,7 @@ storylets:
     protected_knowledge_boundaries:
     - janus_selection_system
     - brandon_history
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: restricted_corridor_access
@@ -1423,7 +1423,7 @@ storylets:
     helps_transition_triggers:
     - t_2b_2c
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-2B-A-R2
     dramatic_intent: Discover Kristin’s own record and learn that being left behind was deliberate; the record
       itself is sufficient JANUS evidence.
@@ -1438,7 +1438,7 @@ storylets:
     helps_transition_triggers:
     - t_2b_2c
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: janus_evidence
@@ -1478,7 +1478,7 @@ storylets:
     helps_transition_triggers:
     - t_2b_2c
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-2B-B-R2
     dramatic_intent: Delay confrontation long enough to corroborate his name, then establish both authorship and
       his claimed break with Charles.
@@ -1494,7 +1494,7 @@ storylets:
     helps_transition_triggers:
     - t_2b_2c
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-2B-B-R3
     dramatic_intent: Reveal that Charles expected Kristin to seek Brandon and left Michelle’s evidence accessible to expose Brandon’s hidden network.
     source_beats: [scene-2b2--kristin-was-bait]
@@ -1506,7 +1506,7 @@ storylets:
     helps_transition_triggers:
     - t_2b_2c
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
@@ -1546,7 +1546,7 @@ storylets:
     helps_transition_triggers:
     - t_2b_2c
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-2B-C-R2
     dramatic_intent: Infer organized sabotage from altered classifications and delayed transfers even before its
       full scale is known.
@@ -1558,7 +1558,7 @@ storylets:
     helps_transition_triggers:
     - t_2b_2c
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: michelle_resistance_known
@@ -1591,7 +1591,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-2C-A-R2
     dramatic_intent: Kristin becomes legitimately aware of the offer and interprets it as evidence that the antagonist
       coalition is fracturing.
@@ -1605,7 +1605,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: rebecca_offer_active
@@ -1637,7 +1637,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-2C-B-R2
     dramatic_intent: Infer the same order from coordinated transfer movement and broadcast preparation, then verify
       enough to treat the purge as active.
@@ -1648,7 +1648,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: purge_clock_started
@@ -1681,7 +1681,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-2C-C-R2
     dramatic_intent: 'Kristin and Brandon confront the real cost of either action: proof may save the national story,
       while a rescue may save the people nearest to them.'
@@ -1692,7 +1692,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: evidence_ready_to_transmit
@@ -1731,7 +1731,7 @@ storylets:
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: [t_2c_3a]
-    protected_knowledge_boundaries: [phase_two]
+    protected_knowledge_boundaries: [janus_phase_two]
   - id: SL-2C-D-R2
     dramatic_intent: Kristin traces Michelle’s maintenance code into her holding block, then to the broadcast controls,
       and realizes the plan combines exposure and rescue only if the group reaches Rebecca’s office before the purge
@@ -1745,7 +1745,7 @@ storylets:
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: [t_2c_3a]
-    protected_knowledge_boundaries: [phase_two]
+    protected_knowledge_boundaries: [janus_phase_two]
   completion_or_abort:
     complete_when:
     - fact_id: combined_broadcast_rescue_plan_known
@@ -1780,7 +1780,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-3A-A-R2
     dramatic_intent: The reunion is interrupted as Michelle reveals that her small sabotage network has become coordinated
       resistance, establishing contact and a prepared uprising without requiring an extended reunion scene.
@@ -1794,7 +1794,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: michelle_reached
@@ -1832,7 +1832,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-3A-B-R2
     dramatic_intent: Inspect treatment setup, establish the behavioral-experiment program without claiming guaranteed
       mind control, without yet resolving how the group will leave the facility.
@@ -1843,7 +1843,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - any_fact_true:
@@ -1884,7 +1884,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: conditioned_release_plan_known
@@ -1927,7 +1927,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-3A-D-R2
     dramatic_intent: The official proves the gate authorization is real with a limited system response, making its
       approaching expiry visible while leaving the final escape to the group.
@@ -1944,7 +1944,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: military_override_codes_available
@@ -1984,7 +1984,7 @@ storylets:
     helps_transition_triggers:
     - t_3a_3b
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-3A-C-R2
     dramatic_intent: The expiring gate authorization makes further delay untenable; Michelle launches the coordinated
       disturbances while the authorization is still useful.
@@ -1996,7 +1996,7 @@ storylets:
     helps_transition_triggers:
     - t_3a_3b
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: detention_uprising_started
@@ -2029,7 +2029,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-3B-A-R2
     dramatic_intent: Pair deliberately irrational movement with harmless door and light cycles to reach the same
       human-control threshold.
@@ -2040,7 +2040,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: human_security_control
@@ -2073,7 +2073,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: rebecca_office_reached
@@ -2116,7 +2116,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-3B-B-R2
     dramatic_intent: Rebecca tries to bargain before the confrontation is complete, offering the national detention-site
       locations; Michelle secures them without treating Rebecca as trustworthy.
@@ -2130,7 +2130,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: detention_locations_secured
@@ -2170,7 +2170,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-3B-D-R2
     dramatic_intent: A remote order proves Charles has chosen to flood the access level rather than lose control of the
       evidence, leaving Rebecca trapped with the people she endangered.
@@ -2184,7 +2184,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - all_facts_true:
@@ -2228,7 +2228,7 @@ storylets:
     helps_transition_triggers:
     - t_3b_3c
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-3B-C-R2
     dramatic_intent: Brandon opens the relay and transmits his confession as authentication; Michelle and Kristin
       immediately begin the broadcast while he keeps the path open.
@@ -2243,7 +2243,7 @@ storylets:
     helps_transition_triggers:
     - t_3b_3c
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: relay_open
@@ -2281,7 +2281,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-3C-A-R2
     dramatic_intent: Counter Charles’s terrorist claim with live or independently checkable facility evidence until
       suppression by a single channel is no longer plausible.
@@ -2292,7 +2292,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: truth_no_longer_containable
@@ -2336,7 +2336,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   - id: SL-3C-B-R2
     dramatic_intent: Duplicate the archive to independent networks rather than leave sole custody with either Rebecca
       or the protagonists.
@@ -2356,7 +2356,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - all_facts_true:
@@ -2396,7 +2396,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: evacuation_route_open
@@ -2434,7 +2434,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: los_angeles_facility_lost
@@ -2471,7 +2471,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: national_network_fragmenting
@@ -2507,7 +2507,7 @@ storylets:
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries:
-    - phase_two
+    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: community_rescue_efforts_begun

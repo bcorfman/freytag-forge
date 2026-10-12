@@ -299,6 +299,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  leak_terms: [michelle abduction suspicion]
   must_convey:
   - [phone]
   - [tablet]
@@ -332,6 +333,16 @@ knowledge:
   relevance:
     entity_ids: [memory_card, michelle_drawer]
     priority: 10
+  leak_terms:
+  - memory card
+  - hidden memory card
+  - hidden card
+  - Michelle's card
+  - the card
+  - taped beneath the drawer
+  - taped under the drawer
+  - taped to the drawer
+  - memory card recovered
   must_convey:
   - [memory card, card, Michelle's card, the card, hidden card, hidden memory card]
   - [taped]
@@ -2730,6 +2741,7 @@ knowledge:
   statement: Direct observation is no longer enough; the facility must be entered.
   entity_ids: [kristin, brandon, regional_facility]
   aliases: [enter the facility, deeper access]
+  leak_terms: [deeper access]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [1C]
   establishes: [{op: assert, fact_id: facility_infiltration_needed, value: true}]
