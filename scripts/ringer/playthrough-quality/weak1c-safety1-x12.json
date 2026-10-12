@@ -1,0 +1,67 @@
+{
+ "run_name": "weak1c-safety1-x12",
+ "workdir": "/home/bcorfman/dev/ringer-work/weak1c-safety1-run",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "safety1-batch1",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted blind-player test on staging, raw profile, 3 continuous replicates through scenes 1A, 1B, 1C, and checks it wrote its merged report. Reply with the single word: ready.",
+   "check": "SKIP_CAP_CHANGE=1 BLIND_PLAYER_PROFILE=raw OUT_DIR=/home/bcorfman/dev/ringer-work/weak1c-safety1/batch1 bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/weak1c-safety1/batch1/e2e-blind-player.json"
+   ],
+   "verified": "3 raw replicates 1A-1C wrote a merged report."
+  },
+  {
+   "key": "safety1-batch2",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted blind-player test on staging, raw profile, 3 continuous replicates through scenes 1A, 1B, 1C, and checks it wrote its merged report. Reply with the single word: ready.",
+   "check": "SKIP_CAP_CHANGE=1 BLIND_PLAYER_PROFILE=raw OUT_DIR=/home/bcorfman/dev/ringer-work/weak1c-safety1/batch2 bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/weak1c-safety1/batch2/e2e-blind-player.json"
+   ],
+   "verified": "3 raw replicates 1A-1C wrote a merged report."
+  },
+  {
+   "key": "safety1-batch3",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted blind-player test on staging, raw profile, 3 continuous replicates through scenes 1A, 1B, 1C, and checks it wrote its merged report. Reply with the single word: ready.",
+   "check": "SKIP_CAP_CHANGE=1 BLIND_PLAYER_PROFILE=raw OUT_DIR=/home/bcorfman/dev/ringer-work/weak1c-safety1/batch3 bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/weak1c-safety1/batch3/e2e-blind-player.json"
+   ],
+   "verified": "3 raw replicates 1A-1C wrote a merged report."
+  },
+  {
+   "key": "safety1-batch4",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted blind-player test on staging, raw profile, 3 continuous replicates through scenes 1A, 1B, 1C, and checks it wrote its merged report. Reply with the single word: ready.",
+   "check": "SKIP_CAP_CHANGE=1 BLIND_PLAYER_PROFILE=raw OUT_DIR=/home/bcorfman/dev/ringer-work/weak1c-safety1/batch4 bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C",
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/weak1c-safety1/batch4/e2e-blind-player.json"
+   ],
+   "verified": "3 raw replicates 1A-1C wrote a merged report."
+  }
+ ]
+}
