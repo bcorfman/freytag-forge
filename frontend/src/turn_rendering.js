@@ -9,3 +9,7 @@ export function turnBlocks(payload) {
   }
   return segments.filter((segment) => segment && typeof segment.text === "string" && segment.text.length > 0);
 }
+
+export function inputAllowed({ busy = false, storyComplete = false, pendingGameBreak = false, sessionId = "" } = {}) {
+  return Boolean(sessionId) && !busy && !storyComplete && !pendingGameBreak;
+}

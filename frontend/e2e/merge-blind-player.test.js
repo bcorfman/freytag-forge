@@ -48,6 +48,16 @@ test("mergeReports renumbers runs and recomputes aggregate and markdown", () => 
   assert.throws(() => mergeReports([{ story_id: "x", scene: "1A" }]), /replicates array/);
 });
 
+test("mergeReports carries ending fields and defaults old reports", () => {
+  const ended = { ...run(7), ending_reached: true, exit_cause: "ending", exit_transition_cause: null };
+  const merged = mergeReports([{ story_id: "continuity_initiative", scene: "1A", replicates: [ended], aggregate: {} }]);
+  assert.equal(merged.ending_reached, true);
+  assert.equal(merged.replicates[0].ending_reached, true);
+  const old = mergeReports([report(8)]);
+  assert.equal(old.ending_reached, false);
+  assert.equal(old.aggregate.ending_reached, false);
+});
+
 test("mergeReports combines all-mode scenes and preserves an early stop", () => {
   const merged = mergeReports([allReport(9), allReport(8, true)]);
   assert.deepEqual(merged.replicates.map((item) => item.replicate), [1, 2]);

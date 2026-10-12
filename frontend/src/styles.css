@@ -129,6 +129,13 @@ body {
   color: var(--text);
 }
 
+.entry-ending {
+  margin-top: 28px;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 0.12em;
+}
+
 .entry-speech {
   border-left: 2px solid var(--accent);
   padding-left: 14px;

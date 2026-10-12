@@ -30,8 +30,8 @@ export function mergeReports(reports) {
   }
   const replicates = reports.flatMap((report) => report.replicates).map((replicate, index) => ({ ...replicate, replicate: index + 1 }));
   const report = first.scene === "all"
-    ? { story_id: first.story_id, scene: "all", replicates, by_scene: aggregateByScene(replicates) }
-    : { story_id: first.story_id, scene: first.scene, replicates, aggregate: aggregate(replicates) };
+    ? { story_id: first.story_id, scene: "all", ending_reached: replicates.some((run) => run.ending_reached === true), replicates, by_scene: aggregateByScene(replicates) }
+    : { story_id: first.story_id, scene: first.scene, ending_reached: replicates.some((run) => run.ending_reached === true), replicates, aggregate: aggregate(replicates) };
   return { ...report, markdown: formatMarkdown(report) };
 }
 
