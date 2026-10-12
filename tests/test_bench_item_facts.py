@@ -1495,10 +1495,10 @@ def test_echo_keeps_authored_place_text(monkeypatch):
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda _provider, payload: calls.append(payload))
     provider = _seeded_provider()
     facts, issues = provider.apply_item_facts(
-        {"Kristin's laptop": {"place": "Kristin's truck"}}, player_input="Look at my laptop."
+        {"Kristin's laptop": {"place": "passenger seat"}}, player_input="Look at my laptop."
     )
     assert not issues
-    assert facts["Kristin's laptop"]["place"] == "Kristin's truck"
+    assert facts["Kristin's laptop"]["place"] == "on the passenger seat of Kristin's truck"
     assert calls == []
 
 
