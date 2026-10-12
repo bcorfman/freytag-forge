@@ -114,10 +114,15 @@ restore() {
   fi
   echo "restored: staging turn cap variable deleted (default 10 applies after next deploy)"
 }
-trap restore EXIT
-prev=$(latest_deployment_id)
-"${rw[@]}" variable set FREYTAG_RATE_LIMIT_PER_MINUTE=60 "${scope[@]}" || { echo "FAIL: could not raise the cap"; exit 1; }
-wait_for_new_deployment "$prev" || exit 1
+if [ "${SKIP_CAP_CHANGE:-}" = 1 ]; then
+  # The cap is already raised by hand: no variable change, no redeploy, no restore.
+  echo "SKIP_CAP_CHANGE=1: leaving the staging turn cap and deployments alone"
+else
+  trap restore EXIT
+  prev=$(latest_deployment_id)
+  "${rw[@]}" variable set FREYTAG_RATE_LIMIT_PER_MINUTE=60 "${scope[@]}" || { echo "FAIL: could not raise the cap"; exit 1; }
+  wait_for_new_deployment "$prev" || exit 1
+fi
 cd frontend
 rm -f ../artifacts/e2e-blind-player-r*.json ../artifacts/e2e-blind-player.json ../artifacts/e2e-blind-player.md ../artifacts/e2e-blind-player-prompts*.json ../artifacts/e2e-blind-player-prompts*.md
 tmp_root=$(mktemp -d)
