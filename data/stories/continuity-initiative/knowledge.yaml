@@ -338,9 +338,11 @@ knowledge:
   - hidden memory card
   - hidden card
   - Michelle's card
+  - the card
   - taped beneath the drawer
   - taped under the drawer
   - taped to the drawer
+  - memory card recovered
   must_convey:
   - [memory card, card, Michelle's card, the card, hidden card, hidden memory card]
   - [taped]

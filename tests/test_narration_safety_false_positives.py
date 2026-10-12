@@ -50,6 +50,13 @@ def test_1a_drawer_pointer_does_not_guard_the_gap() -> None:
     assert error.code == "narration_known_term_leak"
 
 
+def test_1a_card_remains_guarded_while_drawer_gap_wording_is_allowed() -> None:
+    _narrate(_scene_state("1A"), "Kristin notices the thin gap beneath the drawer.")
+
+    error = _rejects(_scene_state("1A"), "Kristin picks up the card.")
+    assert error.code == "narration_known_term_leak"
+
+
 def test_1c_alias_and_phase_boundaries_are_narrow() -> None:
     _narrate(
         _scene_state("1C"),

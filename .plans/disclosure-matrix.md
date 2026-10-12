@@ -1,26 +1,27 @@
 # Disclosure vocabulary matrix
 
-Inventory terms: 494. Matrix rows: 678.
+Inventory terms: 496. Matrix rows: 680.
 
 ## Counts
 
 - entity_name: 98
 - identifier_fragment: 8
 - knowledge_alias: 107
-- leak_term: 68
+- leak_term: 70
 - must_convey_phrase: 201
 - scoped_alias: 12
 
 Suggested classes:
 - needs_review: 11
-- public_candidate: 126
-- secret_with_unlock_fact: 357
+- public_candidate: 127
+- secret_with_unlock_fact: 358
 
 ### Earned rejected
 
 | Scene | Term | Guard | Error |
 | --- | --- | --- | --- |
 | 1A | brandon history | identifier_fragment | narration_known_term_leak |
+| 1A | card she is carrying | must_convey_phrase | narration_known_term_leak |
 | 1A | janus | identifier_fragment | protected_narration_leak |
 | 1A | janus phase | identifier_fragment | protected_narration_leak |
 | 1A | janus phase two | identifier_fragment | protected_narration_leak |
@@ -119,6 +120,8 @@ Suggested classes:
 
 | Scene | Term | Guard | Error |
 | --- | --- | --- | --- |
+| 1A | card | leak_term | narration_known_term_leak |
+| 1A | card | must_convey_phrase | narration_known_term_leak |
 | 1A | janus | identifier_fragment | protected_narration_leak |
 | 1A | memory card | entity_name | narration_known_term_leak |
 | 1A | memory card | leak_term | narration_known_term_leak |

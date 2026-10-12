@@ -64,16 +64,18 @@ def test_scene_1a_deadline_fallback_is_accepted_and_exits_scene(monkeypatch) -> 
     assert Fact(predicate="memory_card_recovered", subject="story", value="true") in state.facts.asserted
 
 
-def test_card_word_is_ordinary_before_a_staged_handoff() -> None:
+def test_card_is_still_unavailable_before_a_staged_handoff() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(
         state,
         lambda _input: {"segments": [{"kind": "narration", "text": "Kristin picks up the card."}]},
     )
 
-    proposal = engine.turn("Search the kitchen.")
+    with pytest.raises(ProposalValidationError) as caught:
+        engine.turn("Search the kitchen.")
 
-    assert proposal.segments[0].text == "Kristin picks up the card."
+    assert caught.value.code == "narration_known_term_leak"
+    assert "unavailable knowledge" in str(caught.value)
 
 
 def test_staged_fallback_text_licenses_only_terms_it_contains() -> None:

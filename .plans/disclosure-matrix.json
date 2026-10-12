@@ -1177,6 +1177,22 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r0"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "card",
+      "unlock_fact_ids": [
+        "memory_card_recovered"
+      ],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_b_r0"
@@ -4853,6 +4869,22 @@
         "1A"
       ],
       "guard_kind": "knowledge_alias",
+      "owner_ids": [
+        "k_sl_1a_b_r0"
+      ],
+      "requires": [],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "memory card recovered",
+      "unlock_fact_ids": [
+        "memory_card_recovered"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
       "owner_ids": [
         "k_sl_1a_b_r0"
       ],
@@ -9131,18 +9163,18 @@
     },
     {
       "early": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "earned": {
         "error_code": "",
         "verdict": "accepted"
       },
-      "guard_kind": "must_convey_phrase",
+      "guard_kind": "leak_term",
       "scene": "1A",
       "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "term": "card"
     },
@@ -9154,6 +9186,23 @@
       "earned": {
         "error_code": "",
         "verdict": "accepted"
+      },
+      "guard_kind": "must_convey_phrase",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "card"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
@@ -10008,8 +10057,25 @@
       "guard_kind": "knowledge_alias",
       "scene": "1A",
       "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "memory card recovered"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
         "error_code": "",
         "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "term": "memory card recovered"
     },
@@ -10025,8 +10091,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "term": "memory card recovered"
     },
