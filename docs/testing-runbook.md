@@ -86,7 +86,7 @@ an authored-handoff turn it contains no candidate ID, candidate statement,
 `delivery_text`, `must_convey`, or grounding instruction.
 
 **Notes:** Player inputs in scripts and examples are imperative commands
-("Search the kitchen."), never first person. See `AGENTS.md`.
+("Search the kitchen."), never first person. See the [player-input guide](player-input-guide.md).
 
 ## 4. Live narration bench (billed)
 

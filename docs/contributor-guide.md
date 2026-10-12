@@ -30,6 +30,9 @@ changed: [Markdown story authoring](markdown-story-authoring.md),
 - Put opening setup, public presentation, protected knowledge, relationships,
   location, custody, pacing, and scene purpose in validated package declarations.
   Correct authoring sources, never generated projections.
+- Do not add story- or genre-specific runtime branches, fixed action tables,
+  hand-edit generated artifacts, accept unvalidated provider output, leak
+  protected knowledge, or change facts after rendering.
 - Keep the hosted adapter as a thin boundary when it is rebuilt. Share code
   only below that boundary and preserve fail-closed behavior.
 
