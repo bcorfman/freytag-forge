@@ -85,7 +85,7 @@ item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, worksta
 item_placements:
   memory_card: {parent: michelle_drawer, under: true}
   michelle_phone: {parent: kitchen, text: on the kitchen floor}
-  kristin_laptop: {parent: kristin_truck, text: in Kristin's truck outside the house}
+  kristin_laptop: {parent: truck_passenger_seat, text: on the passenger seat of Kristin's truck}
   truck_driver_seat: {parent: kristin_truck}
   truck_passenger_seat: {parent: kristin_truck}
   kristin_truck: {parent: outside_house}

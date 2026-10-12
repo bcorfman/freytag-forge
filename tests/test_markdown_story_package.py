@@ -284,7 +284,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     assert package.scenes[0].metadata.item_placements == {
         "memory_card": ItemPlacement(parent="michelle_drawer", under=True),
         "michelle_phone": ItemPlacement(parent="kitchen", text="on the kitchen floor"),
-        "kristin_laptop": ItemPlacement(parent="kristin_truck", text="in Kristin's truck outside the house"),
+        "kristin_laptop": ItemPlacement(parent="truck_passenger_seat", text="on the passenger seat of Kristin's truck"),
         "truck_driver_seat": ItemPlacement(parent="kristin_truck"),
         "truck_passenger_seat": ItemPlacement(parent="kristin_truck"),
         "kristin_truck": ItemPlacement(parent="outside_house"),
