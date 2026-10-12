@@ -669,8 +669,8 @@
       "guard_kind": "identifier_fragment",
       "owner_ids": [
         "brandon_history",
-        "janus_selection_system",
-        "phase_two"
+        "janus_phase_two",
+        "janus_selection_system"
       ],
       "requires": [],
       "suggested_class": "needs_review",
@@ -2062,6 +2062,22 @@
       "available_scenes": [
         "1C"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_bridge_1c_infiltration"
+      ],
+      "requires": [],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "deeper access",
+      "unlock_fact_ids": [
+        "facility_infiltration_needed"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1C"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_bridge_1c_infiltration"
@@ -3406,6 +3422,22 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r0"
+      ],
+      "requires": [],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "hidden card",
+      "unlock_fact_ids": [
+        "memory_card_recovered"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_b_r0"
@@ -3413,6 +3445,22 @@
       "requires": [],
       "suggested_class": "secret_with_unlock_fact",
       "term": "hidden card",
+      "unlock_fact_ids": [
+        "memory_card_recovered"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r0"
+      ],
+      "requires": [],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "hidden memory card",
       "unlock_fact_ids": [
         "memory_card_recovered"
       ],
@@ -3445,6 +3493,20 @@
       "requires": [],
       "suggested_class": "public_candidate",
       "term": "hideout",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
+      "guard_kind": "entity_name",
+      "owner_ids": [
+        "hideout_servers"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "hideout servers",
       "unlock_fact_ids": [],
       "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
     },
@@ -3849,8 +3911,8 @@
       "guard_kind": "identifier_fragment",
       "owner_ids": [
         "brandon_history",
-        "janus_selection_system",
-        "phase_two"
+        "janus_phase_two",
+        "janus_selection_system"
       ],
       "requires": [],
       "suggested_class": "public_candidate",
@@ -3987,8 +4049,56 @@
       "guard_kind": "identifier_fragment",
       "owner_ids": [
         "brandon_history",
-        "janus_selection_system",
-        "phase_two"
+        "janus_phase_two",
+        "janus_selection_system"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "janus phase",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
+    },
+    {
+      "available_scenes": [
+        "1A",
+        "1B",
+        "1C",
+        "2A",
+        "2B",
+        "2C",
+        "3A",
+        "3B",
+        "3C"
+      ],
+      "guard_kind": "identifier_fragment",
+      "owner_ids": [
+        "brandon_history",
+        "janus_phase_two",
+        "janus_selection_system"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "janus phase two",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
+    },
+    {
+      "available_scenes": [
+        "1A",
+        "1B",
+        "1C",
+        "2A",
+        "2B",
+        "2C",
+        "3A",
+        "3B",
+        "3C"
+      ],
+      "guard_kind": "identifier_fragment",
+      "owner_ids": [
+        "brandon_history",
+        "janus_phase_two",
+        "janus_selection_system"
       ],
       "requires": [],
       "suggested_class": "needs_review",
@@ -4011,8 +4121,8 @@
       "guard_kind": "identifier_fragment",
       "owner_ids": [
         "brandon_history",
-        "janus_selection_system",
-        "phase_two"
+        "janus_phase_two",
+        "janus_selection_system"
       ],
       "requires": [],
       "suggested_class": "needs_review",
@@ -4701,6 +4811,22 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r0"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "memory card",
+      "unlock_fact_ids": [
+        "memory_card_recovered"
+      ],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_b_r0",
@@ -4821,6 +4947,22 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_a_r1"
+      ],
+      "requires": [],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "michelle abduction suspicion",
+      "unlock_fact_ids": [
+        "michelle_abduction_suspicion"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_a_r1",
@@ -5118,6 +5260,22 @@
         "michelle_abduction_suspicion",
         "michelle_lead_actionable",
         "michelle_warning_known"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r0"
+      ],
+      "requires": [],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "michelle's card",
+      "unlock_fact_ids": [
+        "memory_card_recovered"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
@@ -6014,30 +6172,6 @@
     },
     {
       "available_scenes": [
-        "1A",
-        "1B",
-        "1C",
-        "2A",
-        "2B",
-        "2C",
-        "3A",
-        "3B",
-        "3C"
-      ],
-      "guard_kind": "identifier_fragment",
-      "owner_ids": [
-        "brandon_history",
-        "janus_selection_system",
-        "phase_two"
-      ],
-      "requires": [],
-      "suggested_class": "needs_review",
-      "term": "phase",
-      "unlock_fact_ids": [],
-      "why": "no public-text or knowledge-unlock rule produced a suggestion"
-    },
-    {
-      "available_scenes": [
         "3C"
       ],
       "guard_kind": "knowledge_alias",
@@ -6095,8 +6229,8 @@
       "guard_kind": "identifier_fragment",
       "owner_ids": [
         "brandon_history",
-        "janus_selection_system",
-        "phase_two"
+        "janus_phase_two",
+        "janus_selection_system"
       ],
       "requires": [],
       "suggested_class": "needs_review",
@@ -7772,8 +7906,8 @@
       "guard_kind": "identifier_fragment",
       "owner_ids": [
         "brandon_history",
-        "janus_selection_system",
-        "phase_two"
+        "janus_phase_two",
+        "janus_selection_system"
       ],
       "requires": [],
       "suggested_class": "needs_review",
@@ -7901,7 +8035,7 @@
       "available_scenes": [
         "2A"
       ],
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "owner_ids": [
         "hideout_servers"
       ],
@@ -8218,6 +8352,54 @@
       "unlock_fact_ids": [
         "house_marked_for_return",
         "patrol_return_pressure"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r0"
+      ],
+      "requires": [],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "taped beneath the drawer",
+      "unlock_fact_ids": [
+        "memory_card_recovered"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r0"
+      ],
+      "requires": [],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "taped to the drawer",
+      "unlock_fact_ids": [
+        "memory_card_recovered"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r0"
+      ],
+      "requires": [],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "taped under the drawer",
+      "unlock_fact_ids": [
+        "memory_card_recovered"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
@@ -8898,8 +9080,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -8908,15 +9090,15 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "beneath the drawer"
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -8925,8 +9107,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "beneath the kms drawer"
     },
@@ -8949,8 +9131,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -8959,8 +9141,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "card"
     },
@@ -8970,8 +9152,8 @@
         "verdict": "rejected"
       },
       "earned": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
@@ -9323,8 +9505,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -9381,6 +9563,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "hidden card"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
@@ -9388,6 +9587,23 @@
         "verdict": "rejected"
       },
       "term": "hidden card"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "hidden memory card"
     },
     {
       "early": {
@@ -9524,6 +9740,40 @@
         "verdict": "rejected"
       },
       "term": "janus"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase two"
     },
     {
       "early": {
@@ -9721,6 +9971,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "memory card"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
@@ -9741,8 +10008,8 @@
       "guard_kind": "knowledge_alias",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "memory card recovered"
     },
@@ -9758,8 +10025,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "memory card recovered"
     },
@@ -9806,6 +10073,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "michelle abduction suspicion"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
@@ -9915,6 +10199,23 @@
         "verdict": "accepted"
       },
       "term": "michelle warning known"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "michelle's card"
     },
     {
       "early": {
@@ -10186,23 +10487,6 @@
         "error_code": "protected_narration_leak",
         "verdict": "rejected"
       },
-      "term": "phase"
-    },
-    {
-      "early": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "guard_kind": "identifier_fragment",
-      "scene": "1A",
-      "skipped": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
       "term": "phase two"
     },
     {
@@ -10394,8 +10678,59 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "taped beneath the drawer"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "taped to the drawer"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "taped under the drawer"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -10404,8 +10739,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "under the kms drawer"
     },
@@ -10832,6 +11167,40 @@
         "error_code": "protected_narration_leak",
         "verdict": "rejected"
       },
+      "term": "janus phase"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "1B",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase two"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "1B",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
       "term": "janus selection"
     },
     {
@@ -11122,23 +11491,6 @@
         "verdict": "accepted"
       },
       "term": "park pursuit resolved"
-    },
-    {
-      "early": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "guard_kind": "identifier_fragment",
-      "scene": "1B",
-      "skipped": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "term": "phase"
     },
     {
       "early": {
@@ -11591,6 +11943,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "1C",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "deeper access"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "1C",
       "skipped": {
@@ -11635,8 +12004,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -11645,15 +12014,15 @@
       "guard_kind": "knowledge_alias",
       "scene": "1C",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "enter the facility"
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -11662,8 +12031,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1C",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "enter the facility"
     },
@@ -11751,6 +12120,40 @@
         "verdict": "rejected"
       },
       "term": "janus"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "1C",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "1C",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase two"
     },
     {
       "early": {
@@ -11989,23 +12392,6 @@
         "verdict": "accepted"
       },
       "term": "observation shaft"
-    },
-    {
-      "early": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "guard_kind": "identifier_fragment",
-      "scene": "1C",
-      "skipped": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "term": "phase"
     },
     {
       "early": {
@@ -12808,6 +13194,23 @@
     },
     {
       "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "entity_name",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "hideout servers"
+    },
+    {
+      "early": {
         "error_code": "narration_known_term_leak",
         "verdict": "rejected"
       },
@@ -13025,6 +13428,40 @@
         "error_code": "protected_narration_leak",
         "verdict": "rejected"
       },
+      "term": "janus phase"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase two"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
       "term": "janus selection"
     },
     {
@@ -13094,23 +13531,6 @@
         "verdict": "accepted"
       },
       "term": "opened access"
-    },
-    {
-      "early": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "guard_kind": "identifier_fragment",
-      "scene": "2A",
-      "skipped": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "term": "phase"
     },
     {
       "early": {
@@ -13427,7 +13847,7 @@
         "error_code": "",
         "verdict": "accepted"
       },
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "scene": "2A",
       "skipped": {
         "error_code": "",
@@ -14042,6 +14462,40 @@
       "guard_kind": "identifier_fragment",
       "scene": "2B",
       "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase two"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "2B",
+      "skipped": {
         "error_code": "",
         "verdict": "accepted"
       },
@@ -14301,23 +14755,6 @@
         "verdict": "rejected"
       },
       "term": "michelle's resistance"
-    },
-    {
-      "early": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "guard_kind": "identifier_fragment",
-      "scene": "2B",
-      "skipped": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "term": "phase"
     },
     {
       "early": {
@@ -15045,6 +15482,40 @@
       "guard_kind": "identifier_fragment",
       "scene": "2C",
       "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase two"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "2C",
+      "skipped": {
         "error_code": "",
         "verdict": "accepted"
       },
@@ -15644,23 +16115,6 @@
         "verdict": "accepted"
       },
       "term": "open the detention cells"
-    },
-    {
-      "early": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "guard_kind": "identifier_fragment",
-      "scene": "2C",
-      "skipped": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "term": "phase"
     },
     {
       "early": {
@@ -17136,6 +17590,40 @@
       "guard_kind": "identifier_fragment",
       "scene": "3A",
       "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "3A",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase two"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "3A",
+      "skipped": {
         "error_code": "",
         "verdict": "accepted"
       },
@@ -17344,23 +17832,6 @@
         "verdict": "accepted"
       },
       "term": "override codes deadline known"
-    },
-    {
-      "early": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "guard_kind": "identifier_fragment",
-      "scene": "3A",
-      "skipped": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "term": "phase"
     },
     {
       "early": {
@@ -18173,6 +18644,40 @@
       "guard_kind": "identifier_fragment",
       "scene": "3B",
       "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "3B",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase two"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "3B",
+      "skipped": {
         "error_code": "",
         "verdict": "accepted"
       },
@@ -18313,23 +18818,6 @@
         "verdict": "rejected"
       },
       "term": "nationwide broadcast"
-    },
-    {
-      "early": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "guard_kind": "identifier_fragment",
-      "scene": "3B",
-      "skipped": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "term": "phase"
     },
     {
       "early": {
@@ -19261,6 +19749,40 @@
       "guard_kind": "identifier_fragment",
       "scene": "3C",
       "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "3C",
+      "skipped": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "term": "janus phase two"
+    },
+    {
+      "early": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "protected_narration_leak",
+        "verdict": "rejected"
+      },
+      "guard_kind": "identifier_fragment",
+      "scene": "3C",
+      "skipped": {
         "error_code": "",
         "verdict": "accepted"
       },
@@ -19554,23 +20076,6 @@
         "verdict": "rejected"
       },
       "term": "national network fragmenting"
-    },
-    {
-      "early": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
-        "error_code": "protected_narration_leak",
-        "verdict": "rejected"
-      },
-      "guard_kind": "identifier_fragment",
-      "scene": "3C",
-      "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
-      },
-      "term": "phase"
     },
     {
       "early": {
