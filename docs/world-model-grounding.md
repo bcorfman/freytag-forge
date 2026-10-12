@@ -168,8 +168,8 @@ character_placements:
 
 These rules cover every string that reaches a model about places or things:
 the narrator's THINGS and PLAYER lines, its rules and examples, the match call
-and the bench judges. They add to the narrator rules in `AGENTS.md`: an 8th-grade
-reading level, one idea per sentence, and every path that narrates.
+and the bench judges. They add to the [narrator-writing guide](narrator-writing-guide.md): a 12th-grade
+reading level for new text, one idea per sentence, and every path that narrates.
 
 ### What a model is shown
 

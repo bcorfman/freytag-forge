@@ -1,11 +1,27 @@
 import { laterAffordances, firstStepAffordances, mentions, normalizeText } from "./affordances.js";
 
-const PLAYER_SYSTEM =
+const CANONICAL_PLAYER_SYSTEM =
   "You are a player at a text adventure. You only know what you have read on the screen. " +
   "Write one active command for the next turn. Use an imperative verb and a direct object. " +
   "Name your own things with first-person possessive words such as my laptop. " +
   "Do not write I, do not refuse or restrain an action, and do not wait or merely listen. " +
-  "End the command with a period. Reply with one command.";
+    "End the command with a period. Reply with one command.";
+
+const RAW_PLAYER_SYSTEM =
+  "You are a player at a text adventure. You only know what you have read on the screen. " +
+  "Write one natural command as a person would type it. Polite requests, pronouns, corrections of an earlier command, and listening when there is something to hear are allowed. " +
+  "Do not write JSON or explain your command. Reply with one command.";
+
+export const PROFILES = {
+  canonical: { name: "canonical", system: CANONICAL_PLAYER_SYSTEM },
+  raw: { name: "raw", system: RAW_PLAYER_SYSTEM },
+};
+
+export function profileInfo(profile = process.env.BLIND_PLAYER_PROFILE) {
+  const requested = profile == null || profile === "" ? "canonical" : String(profile);
+  const known = Object.hasOwn(PROFILES, requested);
+  return { profile: known ? requested : "canonical", requested, warning: known ? null : `Unknown blind-player profile ${requested}; using canonical.` };
+}
 
 const PLAYER_SCHEMA = {
   type: "object",
@@ -14,9 +30,10 @@ const PLAYER_SCHEMA = {
   additionalProperties: false,
 };
 
-export function playerPrompt({ transcript = "", status = "" } = {}) {
+export function playerPrompt({ transcript = "", status = "", profile } = {}) {
+  const selected = profileInfo(profile);
   return {
-    system: PLAYER_SYSTEM,
+    system: selected.profile === "raw" ? RAW_PLAYER_SYSTEM : CANONICAL_PLAYER_SYSTEM,
     user: `Screen transcript:\n${String(transcript)}\n\nStatus line:\n${String(status)}`,
   };
 }
@@ -31,9 +48,16 @@ function outputText(response) {
   return "";
 }
 
-export function validateCommand(command) {
+export function validateCommand(command, profile = "canonical") {
+  const selected = profileInfo(profile).profile;
   const problems = [];
   if (typeof command !== "string" || !command.trim()) return { ok: false, problems: ["command must be text"] };
+  if (selected === "raw") {
+    if (command.includes("\n")) problems.push("command must not contain a newline");
+    const words = command.trim().match(/\S+/g) || [];
+    if (words.length < 1 || words.length > 40) problems.push("use 1 to 40 words");
+    return { ok: problems.length === 0, problems };
+  }
   const value = command.trim();
   const words = value.match(/\S+/g) || [];
   if (/^I\b/i.test(value)) problems.push("start with an imperative, not I");
@@ -46,10 +70,11 @@ export function validateCommand(command) {
   return { ok: problems.length === 0, problems };
 }
 
-export async function askPlayer({ transcript, status, environment = process.env, fetchImpl = fetch, cap = 20, counter = { calls: 0 }, totalCounter = null, totalCap = cap } = {}) {
+export async function askPlayer({ transcript, status, profile, environment = process.env, fetchImpl = fetch, cap = 20, counter = { calls: 0 }, totalCounter = null, totalCap = cap } = {}) {
   if (!environment.OPENAI_API_KEY) throw new Error("Blind player requires OPENAI_API_KEY.");
+  const selected = profileInfo(profile === undefined ? environment.BLIND_PLAYER_PROFILE : profile);
   const billedCounter = totalCounter || counter;
-  const prompt = playerPrompt({ transcript, status });
+  const prompt = playerPrompt({ transcript, status, profile: selected.profile });
   let retry = false;
   let problems = [];
   while (true) {
@@ -74,8 +99,8 @@ export async function askPlayer({ transcript, status, environment = process.env,
     const payload = await response.json();
     let result;
     try { result = JSON.parse(outputText(payload)); } catch (error) { throw new Error("Blind player returned invalid JSON.", { cause: error }); }
-    const checked = validateCommand(result?.command);
-    if (checked.ok) return result.command.trim();
+    const checked = validateCommand(result?.command, selected.profile);
+    if (checked.ok) return selected.profile === "raw" ? result.command : result.command.trim();
     if (retry) throw new Error(`Blind player returned an invalid command twice: ${checked.problems.join("; ")}`);
     retry = true;
     problems = checked.problems;
@@ -118,17 +143,27 @@ export function unseenTerms({ command = "", readText = "" } = {}) {
   return [...new Set(words.filter((word) => !unseenStopWords.has(word) && !unseenWordMatch(word, readWords)))];
 }
 
-export function turnRecord({ turn, input, payload = {}, text }) {
+export function turnRecord({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, payload = {}, text }) {
+  const selected = profileInfo(profile);
+  const requested = profile_requested ?? selected.requested;
+  const warning = profile_warning ?? selected.warning;
+  const attemptBundle = payload.attempt_bundle
+    ? { ...payload.attempt_bundle, profile: selected.profile, ...(warning ? { profile_warning: warning } : {}) }
+    : null;
   return {
     turn,
     input,
+    raw_input,
+    profile: selected.profile,
+    ...(requested !== selected.profile ? { profile_requested: requested } : {}),
+    ...(warning ? { profile_warning: warning } : {}),
     text,
     state: payload.state,
     grounding_ids: (payload.segments || []).flatMap((segment) => segment.grounding_ids || []),
     delivery: payload.delivery || {},
     semantic_match: payload.semantic_match || null,
     prompt: payload.prompt || null,
-    attempt_bundle: payload.attempt_bundle || null,
+    attempt_bundle: attemptBundle,
   };
 }
 
@@ -156,9 +191,13 @@ export function bundlesCategory(category) {
 }
 
 export function turnLog(turns = []) {
-  return turns.map(({ turn, input, text, state, grounding_ids, semantic_match, rejected, rejection, attempt_bundle }) => ({
+  return turns.map(({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, text, state, grounding_ids, semantic_match, rejected, rejection, attempt_bundle }) => ({
     turn,
     input,
+    raw_input,
+    profile,
+    ...(profile_requested ? { profile_requested } : {}),
+    ...(profile_warning ? { profile_warning } : {}),
     text,
     rejected: Boolean(rejected),
     rejection: rejection ?? null,
@@ -181,7 +220,9 @@ function entryText(scene) {
   return scene?.entry_text || scene?.entry_material?.text || scene?.entry_material?.bridge_text || scene?.entry_material?.entry_text || "";
 }
 
-export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep = [], later = [], sceneMapSources = [], openingText = "", stopped_on_rejections = false } = {}) {
+export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep = [], later = [], sceneMapSources = [], openingText = "", stopped_on_rejections = false, profile } = {}) {
+  const profiles = [...new Set(turns.map((turn) => turn.profile).filter(Boolean))];
+  const runProfile = profile || (profiles.length > 1 ? "mixed" : profiles[0] || "canonical");
   const affordances = [...new Map([...firstStep, ...later].map((item) => [item.entity_id, item])).values()];
   const rejectedTurns = turns.filter((turn) => turn.rejected === true).map(({ turn, input, rejection }) => ({ turn, input, rejection }));
   const committedTurns = turns.filter((turn) => turn.state != null && turn.rejected !== true);
@@ -271,7 +312,7 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
     pacing_realizations: pacing,
     transition: { turn: transitionTurn, final_segment_matches_entry: finalSegmentMatches, prior_contains_entry: priorContainsEntry, earlier_segment_contains_entry: transitionPrefixContainsEntry, no_skip_or_restart: finalSegmentMatches && !priorContainsEntry && !transitionPrefixContainsEntry },
   };
-  return { stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, bundle_rejected_turns: turns.filter((turn) => turn.rejected === true && turn.attempt_bundle != null).length, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, handoff_after_turns: handoffAfterTurns, exit_cause: exitCause, exit_transition_cause: transitionBundle?.transition_cause ?? null, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
+  return { profile: runProfile, stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, bundle_rejected_turns: turns.filter((turn) => turn.rejected === true && turn.attempt_bundle != null).length, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, handoff_after_turns: handoffAfterTurns, exit_cause: exitCause, exit_transition_cause: transitionBundle?.transition_cause ?? null, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
 }
 
 export function aggregate(runs = []) {
@@ -282,6 +323,7 @@ export function aggregate(runs = []) {
   const commandCount = runs.reduce((sum, run) => sum + (run.commands?.length ?? run.turns?.length ?? run.turn_count ?? 0), 0);
   return {
     replicates: runs.length,
+    profile: [...new Set(runs.map((run) => run.profile).filter(Boolean))].length > 1 ? "mixed" : (runs[0]?.profile || "canonical"),
     transition_rate: runs.filter((run) => run.transition_fired).length / count,
     play_exit_rate: runs.filter((run) => run.exit_cause === "play").length / count,
     forced_exit_rate: runs.filter((run) => run.exit_cause === "forced").length / count,
@@ -345,5 +387,5 @@ export function formatMarkdown(report) {
     ...report,
     replicates: runs.map(({ prompts, bundles, ...run }) => run),
   };
-  return `# blind-player E2E evaluation\n\nRejected turns: ${rejectedCount}\n\nPlay exit rate: ${aggregate.play_exit_rate ?? "unknown"}\nForced exit rate: ${aggregate.forced_exit_rate ?? "unknown"}\nTimer exit rate: ${aggregate.timer_exit_rate ?? "unknown"}\n\n## Exits\n\n${exitLines.length ? exitLines.join("\n") : "None"}\n\n## Unseen commands\n\n${unseen.length ? unseen.join("\n") : "None"}\n\n${turnSections.length ? turnSections.join("\n\n") : "## Turns\n\nNone"}\n\n${semanticSections.length ? semanticSections.join("\n\n") : "## Semantic reveal fallback\n\nThe server did not return it."}\n\n${JSON.stringify(markdownReport, null, 2)}\n`;
+  return `# blind-player E2E evaluation\n\nProfile: ${aggregate.profile ?? "unknown"}${aggregate.profile === "mixed" ? " (run contains multiple profiles)" : ""}\n\nRejected turns: ${rejectedCount}\n\nPlay exit rate: ${aggregate.play_exit_rate ?? "unknown"}\nForced exit rate: ${aggregate.forced_exit_rate ?? "unknown"}\nTimer exit rate: ${aggregate.timer_exit_rate ?? "unknown"}\n\n## Exits\n\n${exitLines.length ? exitLines.join("\n") : "None"}\n\n${unseen.length ? `## Unseen commands\n\n${unseen.join("\n")}\n\n` : ""}${turnSections.length ? turnSections.join("\n\n") : "## Turns\n\nNone"}\n\n${semanticSections.length ? semanticSections.join("\n\n") : "## Semantic reveal fallback\n\nThe server did not return it."}\n\n${JSON.stringify(markdownReport, null, 2)}\n`;
 }

@@ -33,7 +33,9 @@ gameplay code stays story-agnostic. Commands are in [README.md](../README.md).
 - The runtime alone decides whether an action earned a reveal. The exact
   matcher needs every evidence group, rejects negations and never composes two
   matches. Missed phrasings get author-reviewed aliases, never similarity
-  scoring or model intent.
+  scoring. When the exact matcher finds nothing, a bounded model question may
+  propose one reveal from a short list. The runtime still validates the
+  proposal, and a tie or a refusal commits nothing.
 - Exactly one match inserts the delivery sentence and validates the composed
   turn. Grounding repair cites a multi-word term's single committed owner, else
   the handed-off candidate; an ambiguous term, a tie or a miss commits nothing.

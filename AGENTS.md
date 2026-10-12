@@ -2,145 +2,38 @@
 
 ## Tech Stack
 
-- Python 3.12 / FastAPI / React / Cloudflare hosted adapter
+- Use Python 3.12, FastAPI, React, and the Cloudflare hosted adapter.
+
 ## Running Tests
 
-- `TMPDIR=/tmp uv run pytest -q` runs the full suite in parallel without coverage; add `--cov` for the 90% coverage gate CI enforces. Finish feature work with `uv run ruff check --fix . && uv run ruff format .`.
-- Ringer kills a task's check after 60 s by default, and manifest `timeout_s` covers only the worker. The full suite takes under a minute on an idle machine but longer when other checks share the cores, so any Ringer check that runs it (or a replay or build) needs a raised limit: put `"check_timeout_s": 900` on the task, or set `RINGER_CHECK_TIMEOUT_S=900` for a whole run. Time the check once against the unmodified build and set the limit well above that. Both settings arrived with `~/dev/ringer` commit 6b3f85e, which is merged locally but not upstream, so on any other machine verify `check_timeout_for` exists in `ringer.py` before relying on them.
+- Follow the [testing runbook](docs/testing-runbook.md) for commands and verification procedures.
+
 ## Tooling
 
-- Prefer Serena MCP tools over `grep`/`sed`/`cat` for anything code-shaped:
-  `find_symbol`, `get_symbols_overview`, `find_declaration` to locate
-  functions/classes; `find_referencing_symbols`, `find_implementations` to
-  find call sites; `search_for_pattern` for a textual sweep;
-  `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`,
-  `rename_symbol` to edit a whole symbol. Shell tools remain right for tests,
-  git, builds, and package managers — things Serena doesn't cover.
+- Use Serena for code discovery and symbol-level edits; use shell tools for tests, git, builds, and package managers.
 
 ## Architecture
 
 - Start with [the PRD](docs/PRD.md); use the focused runbook and [contributor guide](docs/contributor-guide.md) for the change.
 - Facts are the sole mutable truth; shared runtime stays story-agnostic and LLM-proposal-first.
 - Before declaring or placing any story thing, place or NPC, or writing any narrator, match-call or judge prompt line about places, read [the world-model grounding guide](docs/world-model-grounding.md).
-## Writing Player Input
 
-Player input is what a person types at the game. Every test, probe, bench
-script, and example must be written in that voice, because these strings are
-matched against world entity names to decide what knowledge is recalled and are
-handed to the narrator as the action to answer. Wrong-register inputs exercise a
-distribution the real game never sees, so a defect that only appears for real
-phrasing hides behind a green suite.
+## Player Input
 
-- **Imperative, not first person.** `Search the kitchen for signs of a
-  struggle.` Never `I search the kitchen...`. The second is the player writing
-  the story, which is the narrator's job.
-- Name the player's own things in the first person: `my laptop`, `my pocket`,
-  never `your laptop`. Use a plain article when ownership need not be said:
-  `Go out to the truck.`
-- **An active move, never a restraint.** Strip any `do not ...`, `without
-  ...`, `avoid ...` clause and keep the action that remains. Declining to do
-  something is not a turn.
-- **Verb plus direct object.** `Pursue the agent.`, `Park the truck.`,
-  `Photograph the evidence.` Not `Brace for the pursuit.` Ordinary
-  prepositions are fine (`Listen to the recording.`, `Look under the
-  workstation.`); the sentence should still be a verb acting on an object.
-- **No non-events.** `Wait.`, `Stand still and listen.`, `Keep watch.`,
-  `Continue waiting.`, `Think back to the memory card.` are all the same
-  mistake: nothing happens in the world because of them.
+- Write every player action in tests, probes, bench scripts, and examples to the [player-input guide](docs/player-input-guide.md).
 
-That last rule cannot be checked mechanically, and no lint should claim to. An
-action is active when it causes a world change that would not have happened
-anyway, so the *same verb* is active in one scene and passive in another:
-`Listen.` is a move when something is really there to hear and commits a fact,
-and a non-event when nothing is. A change that a Freytag beat or timed pacing
-event would have produced regardless does not count, and narrative colour that
-commits no fact is not an effect. Judge each input against the scene it runs
-in; if you want the question answered at scale, measure it in `bench` by
-comparing a turn against a deliberate null control, or ask the LLM judge.
+## Narrator Rules
 
-## Writing Narrator Rules
-
-The narrator is a small, non-reasoning Llama-class model. Every string that
-reaches it as an instruction — `_turn_rules` entries, the system prompt, the
-opening, and any retry hint — must be written in plain language, or it will
-not reliably hold. New material (written after 2026-10-11) targets a
-12th-grade reading level; existing 8th-grade strings stay as they are. The
-rules below on short words, short sentences, no jargon and concrete nouns
-apply at either level.
-
-- **Short, common words.** `thing`/`object`, not `entity`. `say who owns it`,
-  not `attribute ownership`. `the story says`, not `the authored material
-  states`.
-- **Short sentences, one idea each.** Never join two demands with `and`; the
-  model reliably obeys the first half and drops the second.
-- **No project jargon.** `authored`, `grounding`, `segment`, `candidate`,
-  `convey`, `durable evidence`, `container contents` are our vocabulary, not
-  the model's. Where a technical term is unavoidable because it names a JSON
-  field, keep the surrounding sentence plain.
-- **Name the thing, don't describe the category.** Hand the model the
-  concrete noun it must use, not a description of a class of situation.
-
-Apply any change to narrator instructions to *every* path that narrates, not
-just the turn path: `_turn_rules`, `opening()` (builds its own separate rule
-list — easiest to forget), `_system_prompt`, `_section_user_prompt`,
-`_scene_setting`, and `_recover_malformed_response`. Where two paths need the
-same rule, build it in one helper and call it from both.
+- Write and update narrator instructions according to the [narrator-writing guide](docs/narrator-writing-guide.md).
 
 ## Fixing a Scene
 
-**Recommend only proven techniques.** Before proposing any fix or design, find
-how this is already handled:
-- the decisions in `.plans/world-model.md` (the W decisions in section 12, and
-  "Brandon chose" entries);
-- `docs/world-model-grounding.md`;
-- the fixes that landed in earlier scenes.
+- Diagnose scene misses with the proven workflow in [the scene-fixing guide](docs/scene-fixing-guide.md).
 
-Recommend that. Propose something new only when none of them covers the case.
-Say so plainly, and name what you checked. Example: a companion split is
-already decided (W8, "a companion moves with the protagonist only while it is
-in the same place"). An invented split effect contradicted that decision.
+## Design Boundaries
 
-Each scene goes through the same steps: ground it (places, things,
-placements; payloads byte-identical except approved lines), add reveal
-handoffs, write a bench script, run three live replicates, then fix what they
-show. When a turn narrates the wrong thing, or misses what the plot says
-happens, follow these steps in order. Rules and engine changes made before
-step 1 have mostly cost time.
+- Follow the [contributor guide](docs/contributor-guide.md) for runtime boundaries, safety rules, and implementation practices.
 
-1. **Read the failing turn's recorded prompt in full, next to the scene in
-   `plot.md`.** Does the prompt carry the story's material for what should
-   happen? Does a line pull the other way (a SCENE line that frames it
-   differently, a talk line, stale recall)? Most misses so far were one of
-   these: 3B's office entry (no 3B.2 line), 3A's captives talk line, 2C's
-   silent stance, 2C's stale 1A recall.
-2. **Probe the recorded prompts before building anything.** Replay them live
-   with one arm per candidate cause. Add the missing plot sentence copied
-   unchanged, or remove the line that pulls. Use 10-15 samples per arm, run by
-   Ringer, and read every narration by hand. Score what the narration does, not
-   the reply's `item_facts`: they report moves the prose never made. On a
-   reveal turn, score the narration plus the appended delivery text. The
-   narrator is told to write only the lead-up, so a lead-up that stops short
-   is the handoff working.
-3. **Fix at the source the probe points to.**
-   - Missing story material is a reveal handoff or a statement written in
-     ChatGPT Desktop, then scored with the real matcher.
-   - A line that pulls wrong is scoped or removed, by Ringer.
-   - A narrator rule comes last. Use it only for a story-neutral behaviour,
-     and only if it wins its probe arm. Most rules tried have lost: the
-     go-into-a-place rule (1/15 vs 4/15), the plain-corridor rule and the copy-refers rule
-     (both made it worse). One won: "When the player talks to someone, that
-     person answers."
-4. **Rerun the same bench script and replicate count, and read it with the
-   scene check.** Then record in the plan what changed and what is still open.
+## Plans and Releases
 
-## Forbidden Patterns
-
-- No story/genre-specific runtime branches, fixed action tables, hand-edited generated artifacts, or prose as canonical truth.
-- No unvalidated provider output, protected-knowledge leak, or fact change after rendering.
-## Common Mistakes
-
-- Verify CLI, environment, CI, and endpoint behavior in source/help/workflows. When a verification procedure changes, edit its existing entry in `docs/testing-runbook.md` in place; add an entry only for a new verification boundary.
-- Never append results to the runbook: no dated observations, test counts, coverage figures, phase evidence, or diagnosis narratives. Record outcomes in the plan, PR, or commit message. The runbook must stay short enough to read whole.
-- Use `TMPDIR=/tmp` for pytest, never pin collection counts, and use `uv run python` rather than `python`.
-- Update the active plan in `.plans/` as soon as each feature is completed and tested, before starting the next one. Record the commit, what the verification showed, and what is still untested, and refresh the plan's top status line and "Resume here" section so a new session can pick up from the plan alone.
-- For a staging-verified change, merge the implementation PR first and poll the `main` CI workflow until its SHA-bound staging deployment succeeds before running staged E2E tests. Record the observed E2E outcome in the plan or PR; if the procedure itself changed, update its runbook entry as a final documentation-only commit, and do not rerun deployment/E2E for that commit.
+- Keep the active plan current and follow the [agent workflow guide](docs/agent-workflow-guide.md) and [production promotion guide](docs/railway-production-promotion.md) for staging requirements.
