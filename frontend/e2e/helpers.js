@@ -142,6 +142,11 @@ export async function submitTurn(page, action) {
       );
     }
   }
+  // After the story ends the page keeps the input disabled on purpose.
+  if (payload.story_complete === true || payload.state?.story_complete === true) {
+    await expect(page.locator("#command-input")).toBeDisabled({ timeout: TURN_TIMEOUT_MS });
+    return payload;
+  }
   await expect(page.locator("#command-input")).toBeEnabled({ timeout: TURN_TIMEOUT_MS });
   return payload;
 }
