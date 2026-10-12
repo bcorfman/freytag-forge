@@ -161,7 +161,9 @@ short sentences about a concrete thing the player can already see or has
 already been told in that scene. It points toward the missing fact without
 stating that fact. Keep it at an 8th-grade reading level. The runtime shows at
 most one cue after the scene's nudge turn, and records each cue once per scene
-visit. A fact asserted by a pacing event needs no `cue_text`; its Deadline
+visit. If the cue goes unanswered, the runtime may show one stronger pointer
+later in the same visit, from the optional `escalation_text` (the `cue_text`
+is reused when there is none). Write it at a 12th-grade reading level. A fact asserted by a pacing event needs no `cue_text`; its Deadline
 delivery remains the path that makes the fact true.
 
 ```yaml
