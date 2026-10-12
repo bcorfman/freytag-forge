@@ -248,6 +248,7 @@ class CloudflareTurnProvider:
         self.reply_keys_dropped: dict[str, int] = {}
         self.semantic_ask = semantic_ask
         self.semantic_fallback_calls = 0
+        self.contract_shadow_calls = 0
         # This is process-local session telemetry and resets when the process restarts.
         self.last_semantic_match: dict[str, object] = {"ran": False, "matched": None}
         self.last_reveal_selection: dict[str, object] = {
@@ -255,6 +256,15 @@ class CloudflareTurnProvider:
             "matched": None,
             "universe_size": 0,
             "shortlist_size": 0,
+        }
+        self.last_contract_shadow: dict[str, object] = {
+            "ran": False,
+            "answers": {},
+            "granted": None,
+            "ambiguous": False,
+            "live_matched": None,
+            "agrees": False,
+            "skipped": "disabled",
         }
 
     @classmethod
@@ -300,6 +310,15 @@ class CloudflareTurnProvider:
             "universe_size": 0,
             "shortlist_size": 0,
         }
+        self.last_contract_shadow = {
+            "ran": False,
+            "answers": {},
+            "granted": None,
+            "ambiguous": False,
+            "live_matched": None,
+            "agrees": False,
+            "skipped": "disabled",
+        }
         self.last_projection = self.projector.project(self.state, "player", player_input)
         universe = self._reveal_universe()
         self.last_reveal_selection["universe_size"] = len(universe)
@@ -312,6 +331,7 @@ class CloudflareTurnProvider:
             self.authored_handoff = self._semantic_authored_handoff(player_input)
         if self.last_reveal_selection["outcome"] == "no_eligible_action" and self._eligible_reveal_candidates(universe):
             self.last_reveal_selection["outcome"] = "semantic_refusal"
+        self._run_contract_shadow(player_input)
         self._prepare_turn_visibility()
         self.shadow_matched_candidate_id = self._shadow_matched_candidate_id(player_input)
         self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
@@ -479,6 +499,59 @@ class CloudflareTurnProvider:
         self.last_semantic_match["matched"] = candidate.id
         self.last_reveal_selection.update(outcome="semantic_match", matched=candidate.id)
         return AuthoredHandoff(candidate=candidate, delivery_text=candidate.delivery_text)
+
+    def _run_contract_shadow(self, player_input: str) -> None:
+        """Evaluate optional action contracts without affecting live selection."""
+
+        result = self.last_contract_shadow
+        result["live_matched"] = self.last_reveal_selection.get("matched")
+        if getenv("FREYTAG_CONTRACT_SHADOW", "0") != "1":
+            result["skipped"] = "disabled"
+            return
+        if self.semantic_ask is None:
+            result["skipped"] = "no_semantic_ask"
+            return
+        if not player_input.strip():
+            result["skipped"] = "empty"
+            return
+        if any(word in _NEGATIONS for word in _words(player_input)):
+            result["skipped"] = "negation"
+            return
+        candidates = tuple(
+            candidate
+            for candidate in self._eligible_reveal_candidates(self._reveal_universe())
+            if candidate.action_contract is not None
+        )[:4]
+        if not candidates:
+            result["skipped"] = "no_contract"
+            return
+        if self.contract_shadow_calls >= 40:
+            result["skipped"] = "budget_exhausted"
+            return
+        from storygame.runtime.jev_questions import reaches_reveal_contract
+
+        result["ran"] = True
+        result["skipped"] = None
+        answers = result["answers"]
+        for candidate in candidates:
+            if self.contract_shadow_calls >= 40:
+                break
+            self.contract_shadow_calls += 1
+            try:
+                answer = reaches_reveal_contract(
+                    self.semantic_ask,
+                    player_input,
+                    candidate.id,
+                    candidate.action_contract,
+                    candidate.earn_when or candidate.statement,
+                )
+            except Exception:
+                answer = None
+            answers[candidate.id] = answer
+        true_ids = [candidate_id for candidate_id, answer in answers.items() if answer is True]
+        result["ambiguous"] = len(true_ids) >= 2
+        result["granted"] = true_ids[0] if len(true_ids) == 1 else None
+        result["agrees"] = result["granted"] == result["live_matched"]
 
     def _reveal_universe(self) -> tuple[RevealCandidate, ...]:
         """Return all eligible reveals, with compatibility for old test doubles."""

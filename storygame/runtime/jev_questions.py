@@ -104,6 +104,34 @@ def reaches_reveals(ask, command: str, candidates) -> set[str]:
     return matched
 
 
+def reaches_reveal_contract(ask, command: str, candidate_id: str, contract, sentence: str) -> bool | None:
+    """Ask whether a command performs one authored reveal action."""
+
+    questions = {
+        candidate_id: {
+            "type": "noul",
+            "instructions": (
+                f"The required act is: {contract.act} "
+                f"The command must do that act to one of these names: {', '.join(contract.targets)}. "
+                f"The story says: {sentence}. "
+                f"These do it: {'; '.join(contract.positive)}. "
+                f"These do not: {'; '.join(contract.near_miss)}."
+            ),
+            "criteria": {
+                "true": (
+                    f"The command does this act to one of these names: {', '.join(contract.targets)}. "
+                    f"The act is: {contract.act}"
+                ),
+                "false": (
+                    f"The command does not do this act to one of these names: {', '.join(contract.targets)}. "
+                    f"The act is: {contract.act}"
+                ),
+            },
+        }
+    }
+    return _answer(ask, {"command": command}, questions, candidate_id)
+
+
 def needs_to_stand(ask, command: str, seat_name: str, within_reach) -> bool | None:
     questions = {
         "needs_to_stand": {

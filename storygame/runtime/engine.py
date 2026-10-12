@@ -363,6 +363,7 @@ class RuntimeEngine(CanonicalEventMixin):
                 universe_size=raw_reveal_selection.get("universe_size", 0),
                 shortlist_size=raw_reveal_selection.get("shortlist_size", 0),
             )
+        contract_shadow = getattr(self.provider, "last_contract_shadow", None)
         bundle = AttemptBundle(
             identity=AttemptIdentity(
                 code_sha=getenv("FREYTAG_DEPLOYMENT_SHA", "").strip()
@@ -385,6 +386,7 @@ class RuntimeEngine(CanonicalEventMixin):
             stages=stages,
             selected_reveal=SelectedReveal(knowledge_ids=selected, delivery_fact_ids=tuple(delivery_ids)),
             reveal_selection=reveal_selection,
+            contract_shadow=contract_shadow,
             committed_delta=CommittedDelta(
                 fact_predicates=tuple(sorted(after_facts - before_facts)),
                 scene_from=before.current_scene_id if changed else None,

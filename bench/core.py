@@ -501,6 +501,18 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
     item_facts = variation.get("_item_facts")
     if item_facts is None and "item_facts" in variation:
         item_facts = validate_item_facts(variation["item_facts"])
+    provider = _provider_with_item_facts(state, variation, item_facts)
+    if os.environ.get("FREYTAG_CONTRACT_SHADOW") == "1" and provider.semantic_ask is None:
+        # The hosted game runs the semantic reveal fallback; the shadow compares against it.
+        from storygame.runtime.jev import JevClient
+
+        provider.semantic_ask = JevClient.from_environment().ask
+    return provider
+
+
+def _provider_with_item_facts(
+    state: RuntimeState, variation: dict[str, Any], item_facts: Any
+) -> CloudflareTurnProvider:
     if item_facts is not None:
         mode, seed, state_axes = item_facts
         seed_issues: list[str] = []
@@ -1124,6 +1136,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     ),
                     "model_grounding_ids": list(getattr(provider, "model_grounding_ids", ())),
                     "shadow_matched_candidate_id": getattr(provider, "shadow_matched_candidate_id", None),
+                    "contract_shadow": getattr(provider, "last_contract_shadow", None),
                     "prompt_candidate_ids": list(getattr(provider, "prompt_candidate_ids", ())),
                     "candidates_offered": [candidate.id for candidate in provider.last_projection.candidates]
                     if provider.last_projection is not None

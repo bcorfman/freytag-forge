@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
-from storygame.story_package.models import FactDelivery, KnowledgeDefinition, entity_surface_forms
+from storygame.story_package.models import ActionContract, FactDelivery, KnowledgeDefinition, entity_surface_forms
 
 
 class _KnowledgeModel(BaseModel):
@@ -30,6 +30,7 @@ class RevealCandidate(_KnowledgeModel):
     must_convey: tuple[tuple[str, ...], ...]
     action_evidence: tuple[tuple[str, ...], ...] = Field(default=(), exclude=True)
     delivery_text: str | None = Field(default=None, exclude=True)
+    action_contract: ActionContract | None = Field(default=None, exclude=True)
 
 
 class TurnKnowledgeContext(_KnowledgeModel):
@@ -371,4 +372,5 @@ class KnowledgeProjector:
             must_convey=item.must_convey,
             action_evidence=item.action_evidence,
             delivery_text=item.delivery_text,
+            action_contract=item.action_contract,
         )
