@@ -92,7 +92,7 @@ case "$R" in
   1|2|3) ;;
   *) echo "FAIL: replicates must be 1 to 3"; exit 1 ;;
 esac
-OUT=/home/bcorfman/dev/ringer-work/affordance-live-all
+OUT="${OUT_DIR:-/home/bcorfman/dev/ringer-work/affordance-live-all}"
 scope=(--project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_STAGING_ENVIRONMENT_ID")
 restore() {
   local restore_prev restore_current

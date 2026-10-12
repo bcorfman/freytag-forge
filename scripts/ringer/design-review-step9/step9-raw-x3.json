@@ -1,0 +1,22 @@
+{
+  "run_name": "step9-raw-x3",
+  "workdir": "/home/bcorfman/dev/ringer-work/step9-raw-x3",
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "step9-raw-x3",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 6000,
+      "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted L2 @blind-player test on staging with the raw player profile (3 replicate(s), scenes 1A,1B,1C,2A,2B,2C) and checks it completed and wrote its merged report. Reply with the single word: ready.",
+      "check": "BLIND_PLAYER_PROFILE=raw OUT_DIR=/home/bcorfman/dev/ringer-work/step9-raw bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 3 1A,1B,1C,2A,2B,2C",
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/step9-raw/e2e-blind-player.json"
+      ],
+      "verified": "3 replicate(s) with the raw profile wrote a merged report."
+    }
+  ]
+}
