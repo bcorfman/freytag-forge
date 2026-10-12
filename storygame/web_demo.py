@@ -92,11 +92,12 @@ def _state_summary(state: RuntimeState) -> dict[str, object]:
             "place": display_name(state.package, state.facts, world, parent_id) if parent_id else None,
             "held_by": display_name(state.package, state.facts, world, holder_id) if holder_id else None,
         }
-    return {
+    summary = {
         "story_id": state.package.story_id,
         "scene_id": state.current_scene_id,
         "phase": state.phase,
         "pending_game_break": state.has_pending_break,
+        "story_complete": state.story_complete,
         "fired_storylet_ids": sorted(event_id for event_id in state.fired_event_ids if event_id.startswith("SL-")),
         "fired_pacing_event_ids": sorted(
             event.id for event in state.package.pacing.events if event.id in state.fired_event_ids
@@ -106,6 +107,9 @@ def _state_summary(state: RuntimeState) -> dict[str, object]:
         "turns_since_scene_entry": state.turn_index - state.scene_entered_at_turn,
         "things": dict(sorted(things.items())),
     }
+    if state.story_complete and state.package.pacing.ending is not None:
+        summary["ending_marker"] = state.package.pacing.ending.marker
+    return summary
 
 
 def _turn_payload(
@@ -138,7 +142,10 @@ def _turn_payload(
         "game_break": game_break,
         "delivery": delivery,
         "state": _state_summary(state),
+        "story_complete": state.story_complete,
     }
+    if state.story_complete and state.package.pacing.ending is not None:
+        payload["ending_marker"] = state.package.pacing.ending.marker
     if prompt is not None:
         payload["prompt"] = prompt
     return payload
@@ -331,9 +338,9 @@ def create_demo_app(
             if not fact.predicate.startswith("wk_") and fact.predicate != "world_effects_applied"
         }
         try:
-            provider = provider_for(state)
+            provider = None if state.story_complete else provider_for(state)
             test_clock = _test_clock_seconds(body, request)
-            engine = engine_for(state, provider)
+            engine = RuntimeEngine(state, lambda _command: {}) if provider is None else engine_for(state, provider)
             proposal = engine.turn(body.input_text, clock_seconds=test_clock)
         except NarrationProviderError as error:
             http_error = _narration_http_error(error)

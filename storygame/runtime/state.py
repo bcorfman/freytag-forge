@@ -76,6 +76,7 @@ class RuntimeSnapshot(BaseModel):
     staged_cue_stage: int = Field(default=1, ge=1, le=2)
     staged_handoff_fact_ids: tuple[str, ...] = ()
     last_turn_delivery: TurnDelivery = TurnDelivery()
+    story_complete: bool = False
 
 
 class RuntimeState(BaseModel):
@@ -101,6 +102,7 @@ class RuntimeState(BaseModel):
     staged_cue_stage: int = Field(default=1, ge=1, le=2)
     staged_handoff_fact_ids: tuple[str, ...] = ()
     last_turn_delivery: TurnDelivery = TurnDelivery()
+    story_complete: bool = False
 
     def __deepcopy__(self, memo: dict[int, Any] | None = None) -> RuntimeState:
         memo = {} if memo is None else memo
@@ -155,6 +157,7 @@ class RuntimeState(BaseModel):
             staged_cue_stage=self.staged_cue_stage,
             staged_handoff_fact_ids=self.staged_handoff_fact_ids,
             last_turn_delivery=self.last_turn_delivery,
+            story_complete=self.story_complete,
         )
 
     def restore_snapshot(self, snapshot: RuntimeSnapshot) -> None:
@@ -174,6 +177,7 @@ class RuntimeState(BaseModel):
         self.staged_cue_stage = snapshot.staged_cue_stage
         self.staged_handoff_fact_ids = snapshot.staged_handoff_fact_ids
         self.last_turn_delivery = snapshot.last_turn_delivery
+        self.story_complete = snapshot.story_complete
 
     def set_pending_break(
         self,

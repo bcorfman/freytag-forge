@@ -52,6 +52,20 @@ SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
 OPENING_ATTEMPTS = 3
 
 
+class StoryCompleteTurn:
+    """A fixed, provider-free response after the authored ending has fired."""
+
+    def __init__(self, marker: str) -> None:
+        self.segments = (NarrationSegment(kind="narration", text=marker),)
+        self.game_break = None
+        self.story_complete = True
+        self.ending_marker = marker
+
+    @property
+    def narration(self) -> str:
+        return self.segments[0].text
+
+
 class RuntimeEngine(CanonicalEventMixin):
     def __init__(
         self,
@@ -104,6 +118,12 @@ class RuntimeEngine(CanonicalEventMixin):
 
         command_text = " ".join(split_command(player_input))
         self.last_player_command = command_text
+        if self.state.story_complete:
+            before = self.state.snapshot()
+            marker = self.state.package.pacing.ending.marker
+            result = StoryCompleteTurn(marker)
+            self._record_attempt(player_input, command_text, before, outcome="committed")
+            return result
         self.state.require_turn_allowed()
         already = set(self.validator.unsatisfied_dependencies(self.state.current_scene_id, self.state.facts))
         before = self.state.snapshot()
@@ -299,6 +319,7 @@ class RuntimeEngine(CanonicalEventMixin):
             )
         else:
             result = proposal
+        result = self._finish_ending(result)
         self._record_attempt(
             player_input,
             command_text,
@@ -309,6 +330,22 @@ class RuntimeEngine(CanonicalEventMixin):
             forced_handoff=forced_handoff,
         )
         return result
+
+    def _finish_ending(self, proposal):
+        ending = self.state.package.pacing.ending
+        if (
+            ending is not None
+            and not self.state.story_complete
+            and self.state.current_scene_id == ending.scene_id
+            and all(self._predicate_matches(predicate) for predicate in ending.when)
+        ):
+            self.state.story_complete = True
+            return proposal.model_copy(
+                update={
+                    "segments": (*proposal.segments, NarrationSegment(kind="narration", text=ending.text)),
+                }
+            )
+        return proposal
 
     def _record_attempt(
         self,
@@ -406,6 +443,7 @@ class RuntimeEngine(CanonicalEventMixin):
             outcome=outcome,
             rejection=rejection,
             operational_failure=operational_failure,
+            story_complete=self.state.story_complete,
         )
         self.last_attempt = bundle
         self.attempts.append(bundle)
@@ -547,8 +585,8 @@ class RuntimeEngine(CanonicalEventMixin):
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
         if entry_segments:
-            return pending.model_copy(update={"segments": (*pending.segments, *entry_segments)})
-        return pending
+            pending = pending.model_copy(update={"segments": (*pending.segments, *entry_segments)})
+        return self._finish_ending(pending)
 
     def _apply_authored_transition(self) -> tuple[NarrationSegment, ...] | None:
         """Advance along the highest-priority authored transition once its declared triggers hold.

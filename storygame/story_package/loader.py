@@ -648,6 +648,48 @@ def _validate_authored_handoffs(package: StoryPackage) -> None:
             )
 
 
+def _validate_ending(package: StoryPackage) -> None:
+    ending = package.pacing.ending
+    if ending is None:
+        return
+    scenes = {scene.metadata.scene_id: scene for scene in package.scenes}
+    if ending.scene_id not in scenes:
+        raise StoryPackageError(f"ending references an unknown scene '{ending.scene_id}'")
+    if {predicate.fact_id for predicate in ending.when} - package.fact_ids:
+        raise StoryPackageError("ending has an unknown predicate fact")
+    if any(transition.source_scene_id == ending.scene_id for transition in package.pacing.transitions):
+        raise StoryPackageError(f"ending scene '{ending.scene_id}' cannot have an outgoing transition")
+
+    # Run authored ending prose through the same player-safety boundary used by
+    # authored cue prose, with the ending predicates committed at that point.
+    from storygame.runtime.contracts import NarrationSegment, ResolvedTurnProposal
+    from storygame.runtime.facts import Fact
+    from storygame.runtime.knowledge import KnowledgeProjector
+    from storygame.runtime.narration_safety import NarrationSafetyValidator
+    from storygame.runtime.state import RuntimeState
+    from storygame.runtime.validation import ProposalValidationError
+
+    scene = scenes[ending.scene_id]
+    state = RuntimeState(package=package, current_scene_id=ending.scene_id, phase=scene.metadata.freytag_phase)
+    state._assert_scene_entry_fact(ending.scene_id)
+    for predicate in ending.when:
+        state.facts.assert_fact(Fact(predicate=predicate.fact_id, subject="story", value=str(predicate.equals).lower()))
+    candidate = state.model_copy(deep=True)
+    proposal = ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text=ending.text),))
+    validator = NarrationSafetyValidator()
+    try:
+        validator.validate(state, candidate, proposal, KnowledgeProjector(), "")
+        validator.validate(
+            state,
+            candidate,
+            ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text=ending.marker),)),
+            KnowledgeProjector(),
+            "",
+        )
+    except ProposalValidationError as exc:
+        raise StoryPackageError(f"ending text is not player-safe: {exc}") from exc
+
+
 def _validate_narration_term_traps(package: StoryPackage) -> None:
     """Reject authored scene text that names knowledge not committed at scene entry."""
 
@@ -1304,6 +1346,7 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
     _validate_transition_trigger_sources(package)
     _validate_resolution_entry_guarantees(package)
     _validate_required_reveal_prerequisites(package)
+    _validate_ending(package)
     return package
 
 

@@ -98,6 +98,7 @@ class AttemptBundle(_BundleModel):
     outcome: Literal["committed", "rejected", "game_break", "operational_failure"]
     rejection: AttemptError | None = None
     operational_failure: AttemptError | None = None
+    story_complete: bool = False
 
     @model_validator(mode="after")
     def supported_version(self) -> AttemptBundle:
