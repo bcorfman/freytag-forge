@@ -1,5 +1,5 @@
 import "./styles.css";
-import { turnBlocks } from "./turn_rendering.js";
+import { inputAllowed, turnBlocks } from "./turn_rendering.js";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/+$/, "");
 const DEPLOYMENT_CHANNEL = (import.meta.env.VITE_DEPLOYMENT_CHANNEL || "production").trim();
@@ -20,6 +20,7 @@ const returnToSceneButtonElement = document.querySelector("#return-to-scene-butt
 let sessionId = "";
 let busy = false;
 let pendingGameBreak = null;
+let storyComplete = false;
 
 if (DEPLOYMENT_CHANNEL !== "production") {
   nonProductionBadgeElement.hidden = false;
@@ -27,8 +28,9 @@ if (DEPLOYMENT_CHANNEL !== "production") {
 
 function setBusy(nextBusy) {
   busy = nextBusy;
-  commandInputElement.disabled = nextBusy || Boolean(pendingGameBreak);
-  sendButtonElement.disabled = nextBusy || !sessionId;
+  const allowed = inputAllowed({ busy: nextBusy, storyComplete, pendingGameBreak, sessionId });
+  commandInputElement.disabled = !allowed;
+  sendButtonElement.disabled = !allowed;
   newGameButtonElement.disabled = nextBusy;
 }
 
@@ -89,6 +91,13 @@ function renderTurn(payload) {
       appendSegment(block);
     }
   });
+  const complete = Boolean(payload?.story_complete || payload?.state?.story_complete);
+  const marker = payload?.ending_marker || payload?.state?.ending_marker;
+  if (complete && typeof marker === "string" && marker.length > 0) {
+    appendEntry(marker, "ending");
+    storyComplete = true;
+    setStatus(marker);
+  }
   setGameBreak(payload.game_break);
 }
 
@@ -138,16 +147,24 @@ async function createSession() {
     }
     const payload = await apiRequest("/api/v1/session", DEFAULT_SESSION_PAYLOAD);
     sessionId = payload.session_id;
+    storyComplete = Boolean(payload.state?.story_complete || payload.story_complete);
     setStatus(`Scene ${payload.state.scene_id} • ${payload.state.phase.replaceAll("_", " ")}`);
     resetTranscript();
     renderOpening(payload.opening);
+    if (storyComplete) {
+      const marker = payload.state?.ending_marker || payload.ending_marker;
+      if (typeof marker === "string" && marker.length > 0) {
+        appendEntry(marker, "ending");
+        setStatus(marker);
+      }
+    }
     setGameBreak(null);
   } catch (error) {
     sessionId = "";
     setStatus(error instanceof Error ? error.message : "Session creation failed.", "error");
   } finally {
     setBusy(false);
-    commandInputElement.focus();
+    if (!storyComplete) commandInputElement.focus();
   }
 }
 
@@ -180,7 +197,7 @@ async function runCommand(command, echoInput = true) {
     setStatus(error instanceof Error ? error.message : "Command failed.", "error");
   } finally {
     setBusy(false);
-    commandInputElement.focus();
+    if (!storyComplete) commandInputElement.focus();
   }
 }
 
@@ -201,7 +218,7 @@ async function resolveGameBreak(decision) {
     setStatus(error instanceof Error ? error.message : "Could not resolve the warning.", "error");
   } finally {
     setBusy(false);
-    commandInputElement.focus();
+    if (!storyComplete) commandInputElement.focus();
   }
 }
 

@@ -1052,7 +1052,9 @@ def test_loader_rejects_a_pacing_event_scheduled_past_its_scene_minimum(tmp_path
 def test_loader_rejects_invalid_transition_graph(tmp_path: Path, transition: str, message: str) -> None:
     root = copied_package(tmp_path)
     source = root / "pacing.yaml"
-    source.write_text(source.read_text() + "\n" + transition)
+    # The ending mapping is last in the file, so the extra transitions go in before it.
+    head, ending = source.read_text().split("\nending:", 1)
+    source.write_text(head + "\n" + transition + "\nending:" + ending)
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 

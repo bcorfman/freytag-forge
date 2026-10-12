@@ -28,7 +28,7 @@ def summarise(directory):
     report = json.loads((Path(directory) / "e2e-blind-player.json").read_text())
     out = {"turns": 0, "rejected": 0, "reveals": Counter(), "exits": Counter(), "outcomes": Counter(), "universe5": 0}
     scene_turns = Counter()
-    for _rep, scene, t in turns(report):
+    for _rep, scene, _t in turns(report):
         out["turns"] += 1
         scene_turns[scene] += 1
     for scene, a in bundles(directory):
@@ -46,7 +46,7 @@ def summarise(directory):
 
 
 if __name__ == "__main__":
-    for label, d in zip(("canonical", "raw"), sys.argv[1:3]):
+    for label, d in zip(("canonical", "raw"), sys.argv[1:3], strict=False):
         s = summarise(d)
         print(f"== {label}: {s['turns']} turns, {s['rejected']} rejected, universe>=5 on {s['universe5']}")
         print("  turns per scene:", dict(sorted(s["scene_turns"].items())))

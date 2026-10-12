@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { turnBlocks } from "./turn_rendering.js";
+import { inputAllowed, turnBlocks } from "./turn_rendering.js";
+
+test("allows input only for an active session", () => {
+  assert.equal(inputAllowed({ sessionId: "session" }), true);
+  assert.equal(inputAllowed({ sessionId: "session", busy: true }), false);
+  assert.equal(inputAllowed({ sessionId: "session", storyComplete: true }), false);
+  assert.equal(inputAllowed({ sessionId: "session", pendingGameBreak: true }), false);
+  assert.equal(inputAllowed(), false);
+});
 
 test("preserves accepted narration and ordered speech and action blocks", () => {
   const blocks = turnBlocks({

@@ -21,10 +21,16 @@ test("validates player input rules", () => {
 test("turnRecord carries semantic fallback and prompt metadata", () => {
   const payload = { state: { scene_id: "A" }, segments: [{ grounding_ids: ["desk"] }], delivery: { x: 1 }, semantic_match: { ran: true, matched: "desk" }, prompt: "full prompt", attempt_bundle: { outcome: "committed" } };
   assert.deepEqual(turnRecord({ turn: 1, input: "Search the desk.", payload, text: "The desk is here." }), {
-    turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", state: { scene_id: "A" }, grounding_ids: ["desk"], delivery: { x: 1 }, semantic_match: { ran: true, matched: "desk" }, prompt: "full prompt", attempt_bundle: { outcome: "committed", profile: "canonical" },
+    turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", story_complete: false, state: { scene_id: "A" }, grounding_ids: ["desk"], delivery: { x: 1 }, semantic_match: { ran: true, matched: "desk" }, prompt: "full prompt", attempt_bundle: { outcome: "committed", profile: "canonical" },
   });
   assert.deepEqual(turnRecord({ turn: 2, input: "Search the room.", payload: {}, text: "Nothing." }).semantic_match, null);
   assert.equal(turnRecord({ turn: 2, input: "Search the room.", payload: {}, text: "Nothing." }).prompt, null);
+});
+
+test("turnRecord defaults and records story completion", () => {
+  assert.equal(turnRecord({ turn: 1, input: "Search the room.", payload: {}, text: "Nothing." }).story_complete, false);
+  assert.equal(turnRecord({ turn: 2, input: "Open the door.", payload: { story_complete: true }, text: "The door opens." }).story_complete, true);
+  assert.equal(turnRecord({ turn: 3, input: "Open the door.", payload: { state: { story_complete: true } }, text: "The door opens." }).story_complete, true);
 });
 
 test("raw profile accepts natural player commands and rejects only its boundaries", () => {
@@ -92,11 +98,11 @@ test("turnLog emits the contract without prompt, delivery, or state", () => {
   const withoutMatch = { turn: 3, input: "Open the door.", text: "The door opens.", state: { scene_id: "B" }, grounding_ids: ["door"], semantic_match: undefined };
   const result = turnLog([normal, rejectedTurn, withoutMatch]);
   assert.deepEqual(result, [
-    { turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", rejected: false, rejection: null, scene_id: "A", semantic_match: { ran: true, matched: "desk" }, grounding_ids: ["desk"], transition_cause: "earned", outcome: "committed" },
-    { turn: 2, input: "Search the room.", raw_input: "Search the room.", profile: "canonical", text: "", rejected: true, rejection: "bad response", scene_id: null, semantic_match: null, grounding_ids: [], transition_cause: "none", outcome: "rejected" },
-    { turn: 3, input: "Open the door.", raw_input: "Open the door.", profile: "canonical", text: "The door opens.", rejected: false, rejection: null, scene_id: "B", semantic_match: null, grounding_ids: ["door"], transition_cause: null, outcome: null },
+    { turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", rejected: false, story_complete: false, rejection: null, scene_id: "A", semantic_match: { ran: true, matched: "desk" }, grounding_ids: ["desk"], transition_cause: "earned", outcome: "committed" },
+    { turn: 2, input: "Search the room.", raw_input: "Search the room.", profile: "canonical", text: "", rejected: true, story_complete: false, rejection: "bad response", scene_id: null, semantic_match: null, grounding_ids: [], transition_cause: "none", outcome: "rejected" },
+    { turn: 3, input: "Open the door.", raw_input: "Open the door.", profile: "canonical", text: "The door opens.", rejected: false, story_complete: false, rejection: null, scene_id: "B", semantic_match: null, grounding_ids: ["door"], transition_cause: null, outcome: null },
   ]);
-  for (const entry of result) assert.deepEqual(Object.keys(entry).sort(), ["grounding_ids", "input", "outcome", "profile", "raw_input", "rejected", "rejection", "scene_id", "semantic_match", "text", "transition_cause", "turn"]);
+  for (const entry of result) assert.deepEqual(Object.keys(entry).sort(), ["grounding_ids", "input", "outcome", "profile", "raw_input", "rejected", "rejection", "scene_id", "semantic_match", "story_complete", "text", "transition_cause", "turn"]);
   assert.equal(JSON.stringify(result).includes("prompt"), false);
 });
 
@@ -121,6 +127,16 @@ test("reports play, timer, none, and unknown exit causes", () => {
   assert.equal(analyseRun({ sceneEntry: scene, turns: [committed(8, "B")] }).exit_cause, "unknown");
   assert.equal(analyseRun({ sceneEntry: handoffScene, turns: [committed(8, "B")] }).handoff_after_turns, 13);
   assert.equal(analyseRun({ sceneEntry: scene, turns: [committed(8, "B")] }).handoff_after_turns, null);
+});
+
+test("analysis marks ending scenes and leaves ordinary exits unchanged", () => {
+  const ending = analyseRun({ sceneEntry: scene, turns: [{ ...committed(1), story_complete: true }] });
+  assert.equal(ending.ending_reached, true);
+  assert.equal(ending.exit_cause, "ending");
+  assert.equal(ending.exit_transition_cause, null);
+  const ordinary = analyseRun({ sceneEntry: scene, turns: [committed(1)] });
+  assert.equal(ordinary.ending_reached, false);
+  assert.equal(ordinary.exit_cause, "none");
 });
 
 test("uses earned, forced, and timer bundle causes for exits", () => {

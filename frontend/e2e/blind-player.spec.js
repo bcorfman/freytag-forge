@@ -57,7 +57,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
       const rejection = String(error?.message || "").match(/HTTP 409:\s*([\s\S]*)$/);
       if (!rejection) throw error;
       const attemptBundle = error.payload?.attempt_bundle || null;
-      turns.push({ turn, input, raw_input: input, profile: selectedProfile.profile, ...(selectedProfile.warning ? { profile_requested: selectedProfile.requested, profile_warning: selectedProfile.warning } : {}), rejected: true, rejection: rejection[1], text: "", state: null, grounding_ids: [], delivery: {}, semantic_match: null, prompt: null, attempt_bundle: attemptBundle ? { ...attemptBundle, profile: selectedProfile.profile, ...(selectedProfile.warning ? { profile_warning: selectedProfile.warning } : {}) } : null });
+      turns.push({ turn, input, raw_input: input, profile: selectedProfile.profile, ...(selectedProfile.warning ? { profile_requested: selectedProfile.requested, profile_warning: selectedProfile.warning } : {}), rejected: true, rejection: rejection[1], text: "", state: null, story_complete: false, grounding_ids: [], delivery: {}, semantic_match: null, prompt: null, attempt_bundle: attemptBundle ? { ...attemptBundle, profile: selectedProfile.profile, ...(selectedProfile.warning ? { profile_warning: selectedProfile.warning } : {}) } : null });
       consecutiveRejections += 1;
       if (consecutiveRejections >= MAX_CONSECUTIVE_REJECTIONS) {
         stoppedOnRejections = true;
@@ -71,6 +71,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
       .filter((segment) => ["narration", "action", "dialogue", "speech"].includes(segment.kind))
       .map((segment) => segment.text).filter(Boolean).join(" ").trim();
     turns.push(turnRecord({ turn, input, raw_input: input, profile: selectedProfile.profile, profile_requested: selectedProfile.requested, profile_warning: selectedProfile.warning, payload, text }));
+    if (payload.story_complete === true || payload.state?.story_complete === true) break;
     if (payload.state?.scene_id !== sceneId) break;
   }
   return {
@@ -132,6 +133,10 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
         stoppedReason = `scene ${sceneId} rejected ${MAX_CONSECUTIVE_REJECTIONS} times in a row`;
         break;
       }
+      if (run.ending_reached) {
+        stoppedReason = "story ended";
+        break;
+      }
       if (!run.transition_fired) {
         stoppedReason = `scene ${sceneId} had no transition by its ceiling`;
         break;
@@ -143,12 +148,12 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
       }
       openingText = run.turns.find((turn) => turn.turn === run.transition_turn)?.text || "";
     }
-    if (allMode) runs.push({ replicate, scenes: sceneRuns, stopped_reason: stoppedReason });
+    if (allMode) runs.push({ replicate, scenes: sceneRuns, ending_reached: sceneRuns.at(-1)?.ending_reached === true, stopped_reason: stoppedReason });
     else runs.push(sceneRuns[0]);
   }
   const report = allMode
-    ? { story_id: map.story_id, scene: "all", profile: [...new Set(runs.flatMap((replicate) => replicate.scenes.map((run) => run.profile)).filter(Boolean))].length > 1 ? "mixed" : (runs[0]?.scenes[0]?.profile || "canonical"), replicates: runs, by_scene: aggregateByScene(runs) }
-    : { story_id: map.story_id, scene: requestedScene, profile: runs[0]?.profile || "canonical", replicates: runs, aggregate: aggregate(runs) };
+    ? { story_id: map.story_id, scene: "all", profile: [...new Set(runs.flatMap((replicate) => replicate.scenes.map((run) => run.profile)).filter(Boolean))].length > 1 ? "mixed" : (runs[0]?.scenes[0]?.profile || "canonical"), ending_reached: runs.some((replicate) => replicate.ending_reached === true || replicate.scenes.at(-1)?.ending_reached === true), replicates: runs, by_scene: aggregateByScene(runs) }
+    : { story_id: map.story_id, scene: requestedScene, profile: runs[0]?.profile || "canonical", ending_reached: runs.some((run) => run.ending_reached === true), replicates: runs, aggregate: aggregate(runs) };
   const promptReport = {
     story_id: report.story_id,
     scene: report.scene,

@@ -648,6 +648,21 @@ def _validate_authored_handoffs(package: StoryPackage) -> None:
             )
 
 
+def _validate_ending(package: StoryPackage) -> None:
+    ending = package.pacing.ending
+    if ending is None:
+        return
+    scenes = {scene.metadata.scene_id: scene for scene in package.scenes}
+    if ending.scene_id not in scenes:
+        raise StoryPackageError(f"ending references an unknown scene '{ending.scene_id}'")
+    if {predicate.fact_id for predicate in ending.when} - package.fact_ids:
+        raise StoryPackageError("ending has an unknown predicate fact")
+    if any(transition.source_scene_id == ending.scene_id for transition in package.pacing.transitions):
+        raise StoryPackageError(f"ending scene '{ending.scene_id}' cannot have an outgoing transition")
+
+    # The ending is shown after its `when` facts hold and is authored closing narrative, so protected terms are allowed.
+
+
 def _validate_narration_term_traps(package: StoryPackage) -> None:
     """Reject authored scene text that names knowledge not committed at scene entry."""
 
@@ -1304,6 +1319,7 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
     _validate_transition_trigger_sources(package)
     _validate_resolution_entry_guarantees(package)
     _validate_required_reveal_prerequisites(package)
+    _validate_ending(package)
     return package
 
 

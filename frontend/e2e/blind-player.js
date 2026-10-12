@@ -158,6 +158,7 @@ export function turnRecord({ turn, input, raw_input = input, profile = "canonica
     ...(requested !== selected.profile ? { profile_requested: requested } : {}),
     ...(warning ? { profile_warning: warning } : {}),
     text,
+    story_complete: Boolean(payload.story_complete || payload.state?.story_complete),
     state: payload.state,
     grounding_ids: (payload.segments || []).flatMap((segment) => segment.grounding_ids || []),
     delivery: payload.delivery || {},
@@ -191,7 +192,7 @@ export function bundlesCategory(category) {
 }
 
 export function turnLog(turns = []) {
-  return turns.map(({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, text, state, grounding_ids, semantic_match, rejected, rejection, attempt_bundle }) => ({
+  return turns.map(({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, text, state, grounding_ids, semantic_match, story_complete, rejected, rejection, attempt_bundle }) => ({
     turn,
     input,
     raw_input,
@@ -200,6 +201,7 @@ export function turnLog(turns = []) {
     ...(profile_warning ? { profile_warning } : {}),
     text,
     rejected: Boolean(rejected),
+    story_complete: Boolean(story_complete),
     rejection: rejection ?? null,
     scene_id: state?.scene_id ?? null,
     semantic_match: semantic_match ?? null,
@@ -229,9 +231,12 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
   const transitionIndex = committedTurns.findIndex((turn) => turn.state.scene_id && turn.state.scene_id !== sceneEntry?.scene_id);
   const transitionTurn = transitionIndex < 0 ? null : committedTurns[transitionIndex].turn;
   const transitionBundle = transitionIndex < 0 ? null : committedTurns[transitionIndex].attempt_bundle;
+  const ending_reached = turns.some((turn) => turn.story_complete === true);
   const handoffAfterTurns = typeof sceneEntry?.handoff_after_turns === "number" ? sceneEntry.handoff_after_turns : null;
   const bundleExitCauses = { earned: "play", forced: "forced", timer: "timer" };
-  const exitCause = transitionBundle?.transition_cause in bundleExitCauses
+  const exitCause = ending_reached
+    ? "ending"
+    : transitionBundle?.transition_cause in bundleExitCauses
     ? bundleExitCauses[transitionBundle.transition_cause]
     : transitionTurn == null
     ? "none"
@@ -312,7 +317,7 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
     pacing_realizations: pacing,
     transition: { turn: transitionTurn, final_segment_matches_entry: finalSegmentMatches, prior_contains_entry: priorContainsEntry, earlier_segment_contains_entry: transitionPrefixContainsEntry, no_skip_or_restart: finalSegmentMatches && !priorContainsEntry && !transitionPrefixContainsEntry },
   };
-  return { profile: runProfile, stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, bundle_rejected_turns: turns.filter((turn) => turn.rejected === true && turn.attempt_bundle != null).length, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, handoff_after_turns: handoffAfterTurns, exit_cause: exitCause, exit_transition_cause: transitionBundle?.transition_cause ?? null, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
+  return { profile: runProfile, ending_reached, stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, bundle_rejected_turns: turns.filter((turn) => turn.rejected === true && turn.attempt_bundle != null).length, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, handoff_after_turns: handoffAfterTurns, exit_cause: exitCause, exit_transition_cause: ending_reached ? null : transitionBundle?.transition_cause ?? null, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
 }
 
 export function aggregate(runs = []) {
@@ -333,6 +338,7 @@ export function aggregate(runs = []) {
     stuck_run_count: runs.reduce((sum, run) => sum + (run.stuck_runs?.length || 0), 0),
     silent_transition_rate: runs.filter((run) => run.silent_transition).length / count,
     rejected_count: rejectedCount,
+    ending_reached: runs.some((run) => run.ending_reached === true),
     rejected_turn_rate: rejectedCount / (turnCount || 1),
     stopped_on_rejections_count: runs.filter((run) => run.stopped_on_rejections).length,
     unseen_command_rate: runs.reduce((sum, run) => sum + (run.unseen_command_count || 0), 0) / (commandCount || 1),
@@ -371,7 +377,7 @@ export function formatMarkdown(report) {
   const rejectedCount = report.aggregate?.rejected_count ?? runs.reduce((sum, run) => sum + (run.rejected_count ?? run.rejected_turns?.length ?? 0), 0);
   const aggregate = report.aggregate || {};
   const unseen = runs.flatMap((run) => (run.unseen_commands || []).map((item) => `- Turn ${item.turn}: ${item.input} — unseen: ${item.unseen_terms.join(", ")}`));
-  const exitLines = runs.map((run, index) => `- Replicate ${run.replicate ?? index + 1}: exit=${run.exit_cause ?? "unknown"}, transition turn=${run.transition_turn ?? "none"}, timer turn=${run.handoff_after_turns ?? "unknown"}`);
+  const exitLines = runs.map((run, index) => `- Replicate ${run.replicate ?? index + 1}: exit=${run.exit_cause ?? "unknown"}, ending=${Boolean(run.ending_reached)}, transition turn=${run.transition_turn ?? "none"}, timer turn=${run.handoff_after_turns ?? "unknown"}`);
   const semanticSections = runs.map((run, index) => {
     const entries = run.semantic_matches || [];
     const lines = entries.length

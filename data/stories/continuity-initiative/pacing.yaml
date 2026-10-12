@@ -279,3 +279,22 @@ transitions:
   triggers:
   - fact_id: broadcast_started
     equals: true
+
+ending:
+  scene_id: 3C
+  when:
+    - {fact_id: phase_two_conflict_plan_known, equals: true}
+  text: >-
+    Kristin and Michelle were safe, but their old lives
+    were beyond recovery. The broadcast had exposed the detention
+    network. Some facilities released their prisoners; others
+    remained under Charles's control. Michelle began publishing the
+    full archive, including the plan to provoke conflict among
+    the survivors. Kristin joined the teams opening the remaining
+    facilities. Together, they brought freed prisoners and resistance
+    groups into contact so they could coordinate rescues and warn
+    one another of Charles's plans. He was still out there,
+    counting on fear to drive people back under his control.
+    Kristin and Michelle had begun organizing the people he meant
+    to divide. Stopping Phase Two would be their next fight, and they would do it together.
+  marker: "The story ends here."

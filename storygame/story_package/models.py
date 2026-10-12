@@ -528,6 +528,23 @@ class Transition(_Model):
     required_dependencies: tuple[str, ...] = ()
 
 
+class StoryEnding(_Model):
+    scene_id: str = Field(pattern=_SCENE_ID)
+    when: tuple[FactPredicate, ...] = Field(min_length=1)
+    text: str = Field(min_length=1)
+    marker: str = Field(min_length=1)
+
+    @field_validator("text", "marker")
+    @classmethod
+    def non_blank_text(cls, value: str, info) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError(f"ending {info.field_name} must not be empty")
+        if info.field_name == "marker" and any(character in value for character in "\r\n"):
+            raise ValueError("ending marker must be one line")
+        return value
+
+
 class ScenePacing(_Model):
     scene_id: str = Field(pattern=_SCENE_ID)
     min_turns: int = Field(ge=0)
@@ -575,6 +592,7 @@ class PacingSource(_Model):
     scenes: tuple[ScenePacing, ...]
     transitions: tuple[Transition, ...]
     events: tuple[PacingEvent, ...] = ()
+    ending: StoryEnding | None = None
 
 
 class Storylet(_Model):
