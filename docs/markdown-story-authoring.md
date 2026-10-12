@@ -108,7 +108,8 @@ moves again.
 
 The optional `setting_facts` list contains true, visible-state sentences. Each
 sentence is rendered verbatim as its own narrator rule after the placement
-rules. Use short sentences written at an 8th-grade reading level.
+rules. Use short sentences. Write new ones at a 12th-grade reading level;
+existing 8th-grade sentences stay as they are.
 
 ```yaml
 item_ids: [memory_card, michelle_phone]
@@ -159,12 +160,14 @@ behavior. An empty list means the item has no guarded vocabulary.
 Each `FactDelivery` may also have an optional `cue_text`. A cue is one or two
 short sentences about a concrete thing the player can already see or has
 already been told in that scene. It points toward the missing fact without
-stating that fact. Keep it at an 8th-grade reading level. The runtime shows at
+stating that fact. Write new cues at a 12th-grade reading level; existing
+8th-grade cues stay as they are. The runtime shows at
 most one cue after the scene's nudge turn, and records each cue once per scene
 visit. If the cue goes unanswered, the runtime may show one stronger pointer
 later in the same visit, from the optional `escalation_text` (the `cue_text`
-is reused when there is none). Write it at a 12th-grade reading level. A fact asserted by a pacing event needs no `cue_text`; its Deadline
-delivery remains the path that makes the fact true.
+is reused when there is none). Write it at a 12th-grade reading level. A fact
+asserted by a pacing event needs no `cue_text`; its Deadline delivery remains
+the path that makes the fact true.
 
 ```yaml
   cue_text: The marked gate stands beside the service path. Fresh tire tracks cross the mud.
