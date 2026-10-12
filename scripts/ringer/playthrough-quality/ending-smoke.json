@@ -1,0 +1,20 @@
+{
+  "run_name": "playthrough-ending-smoke",
+  "workdir": "/home/bcorfman/dev/ringer-work/playthrough-ending-smoke",
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "journey-smoke",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 6000,
+      "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the freytag-forge hosted blind-player test on staging for one continuous replicate through every scene 1A to 3C with the canonical profile, and checks it wrote its merged report. Reply with the single word: ready.",
+      "check": "SKIP_CAP_CHANGE=1 BLIND_PLAYER_PROFILE=canonical OUT_DIR=/home/bcorfman/dev/ringer-work/playthrough-ending-smoke/out bash /home/bcorfman/dev/freytag-forge/scripts/ringer/affordance/scene-affordance-l2-all-live.sh 1 all",
+      "expect_files": ["/home/bcorfman/dev/ringer-work/playthrough-ending-smoke/out/e2e-blind-player.json"],
+      "verified": "One continuous canonical replicate 1A to 3C wrote a merged report."
+    }
+  ]
+}
