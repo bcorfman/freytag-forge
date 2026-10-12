@@ -31,6 +31,12 @@ The two alternatives deliver these lines (your closing must read well after eith
 
 Do not invent new people, places, objects, or events. Do not name anything outside this list and the lines above.
 
+Hard limits, learned from a first attempt (start a fresh answer; do not patch the old one):
+
+- Use only actions and groups that appear in the list above. Do NOT add groups such as "resistance groups" or "survivor networks". Do NOT add things Kristin and Michelle "organize", "coordinate", "warn", "unite" or "plan to do next". The list says what they did: reunited, published the archive (Michelle), opened remaining facilities (Kristin). Nothing more.
+- Do NOT write the words "Phase", "Phase One", "Phase Two" or "JANUS". The engine's safety scan rejects them in this text. Say "a second plan to provoke conflict among survivors" or "the plan to turn survivors against each other" instead.
+- End on the open threat (Charles still believes frightened people may ask him to restore order). Do not promise a "next fight" or a victory to come.
+
 ## What to write
 
 1. **Closing text.** One paragraph, 90 to 130 words, third person past tense, in the voice of the delivery lines above (short sentences, concrete, plain words, no melodrama). It must:
@@ -40,7 +46,7 @@ Do not invent new people, places, objects, or events. Do not name anything outsi
    - leave Brandon's fate unstated.
    Reading level: 12th grade or lower. One idea per sentence. Do not use the words "authored", "grounding", "segment", "scene", "player", "game" or "turn".
 2. **End marker.** One short line (under 8 words) the engine shows after the paragraph, for example "The story ends here." Offer two alternatives.
-3. **Self-check.** Confirm in one line each: no new people or places; Brandon's fate unstated; reads correctly after the file route alone, after the Charles route alone, and after both; every sentence is plain English a 12th grader reads easily.
+3. **Self-check.** Confirm in one line each: none of the words Phase, Phase One, Phase Two or JANUS appear; no group, action or plan appears that is not in the facts list; no new people or places; Brandon's fate unstated; reads correctly after the file route alone, after the Charles route alone, and after both; every sentence is plain English a 12th grader reads easily.
 
 ## Format
 
