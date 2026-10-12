@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadAffordanceMap, firstStepAffordances, laterAffordances, exploreInput } from "./affordances.js";
-import { askPlayer, analyseRun, aggregate, aggregateByScene, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
+import { askPlayer, analyseRun, aggregate, aggregateByScene, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
 import { startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { walkScenes } from "./scene-walk.js";
@@ -35,7 +35,8 @@ async function requireStaging(baseUrl) {
 // A real player retries a rejected turn, so one bad streak should not end a replicate.
 const MAX_CONSECUTIVE_REJECTIONS = 5;
 
-async function playScene({ page, map, pacing, sceneId, openingText, totalCounter }) {
+async function playScene({ page, map, pacing, sceneId, openingText, totalCounter, profile }) {
+  const selectedProfile = profileInfo(profile);
   const sceneEntry = map.scenes.find((scene) => scene.scene_id === sceneId);
   const nextSceneEntry = map.scenes.find((scene) => scene.scene_id === pacing.sceneOrder[pacing.sceneOrder.indexOf(sceneId) + 1]);
   const ceiling = Math.min(20, pacing.scenePoint(sceneId, "handoff").target_turn + 2);
@@ -48,14 +49,15 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
   for (let turn = 1; turn <= ceiling; turn += 1) {
     const transcript = (await page.locator("#transcript").textContent()) || "";
     const status = (await page.locator("#status-line").textContent()) || "";
-    const input = await askPlayer({ transcript, status, counter, totalCounter, totalCap: 200 });
+    const input = await askPlayer({ transcript, status, profile: selectedProfile.profile, counter, totalCounter, totalCap: 200 });
     let payload;
     try {
       payload = await submitTurn(page, input);
     } catch (error) {
       const rejection = String(error?.message || "").match(/HTTP 409:\s*([\s\S]*)$/);
       if (!rejection) throw error;
-      turns.push({ turn, input, rejected: true, rejection: rejection[1], text: "", state: null, grounding_ids: [], delivery: {}, semantic_match: null, prompt: null, attempt_bundle: error.payload?.attempt_bundle || null });
+      const attemptBundle = error.payload?.attempt_bundle || null;
+      turns.push({ turn, input, raw_input: input, profile: selectedProfile.profile, ...(selectedProfile.warning ? { profile_requested: selectedProfile.requested, profile_warning: selectedProfile.warning } : {}), rejected: true, rejection: rejection[1], text: "", state: null, grounding_ids: [], delivery: {}, semantic_match: null, prompt: null, attempt_bundle: attemptBundle ? { ...attemptBundle, profile: selectedProfile.profile, ...(selectedProfile.warning ? { profile_warning: selectedProfile.warning } : {}) } : null });
       consecutiveRejections += 1;
       if (consecutiveRejections >= MAX_CONSECUTIVE_REJECTIONS) {
         stoppedOnRejections = true;
@@ -68,7 +70,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
     const text = (payload.segments || [])
       .filter((segment) => ["narration", "action", "dialogue", "speech"].includes(segment.kind))
       .map((segment) => segment.text).filter(Boolean).join(" ").trim();
-    turns.push(turnRecord({ turn, input, payload, text }));
+    turns.push(turnRecord({ turn, input, raw_input: input, profile: selectedProfile.profile, profile_requested: selectedProfile.requested, profile_warning: selectedProfile.warning, payload, text }));
     if (payload.state?.scene_id !== sceneId) break;
   }
   return {
@@ -80,7 +82,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
     bundles: collectBundles(turns),
     turns: turnLog(turns),
     turn_count: turns.length,
-    ...analyseRun({ sceneEntry, nextSceneEntry, turns, firstStep, later, openingText, stopped_on_rejections: stoppedOnRejections, sceneMapSources: sceneEntry.gates?.flatMap((gate) => gate.sources || []) || [] }),
+    ...analyseRun({ sceneEntry, nextSceneEntry, turns, firstStep, later, openingText, profile: selectedProfile.profile, stopped_on_rejections: stoppedOnRejections, sceneMapSources: sceneEntry.gates?.flatMap((gate) => gate.sources || []) || [] }),
   };
 }
 
@@ -93,6 +95,7 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
   const { indices: replicateIndices, category } = replicatePlan(process.env);
   test.setTimeout(allMode ? 60 * 60_000 : 20 * 60_000);
   const map = loadAffordanceMap(await storyPackageDir());
+  const profile = process.env.BLIND_PLAYER_PROFILE;
   const pacing = loadPackagePacing({ storyId });
   const sceneIds = allMode ? sceneIdsForRun(pacing.sceneOrder, process.env.E2E_BLIND_SCENES) : [requestedScene];
   for (const sceneId of sceneIds) {
@@ -122,7 +125,7 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
     const sceneRuns = [];
     let stoppedReason = null;
     for (const sceneId of sceneIds) {
-      const run = await playScene({ page, map, pacing, sceneId, openingText, totalCounter });
+      const run = await playScene({ page, map, pacing, sceneId, openingText, totalCounter, profile });
       run.replicate = replicate;
       sceneRuns.push(run);
       if (run.stopped_on_rejections) {
@@ -144,8 +147,8 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
     else runs.push(sceneRuns[0]);
   }
   const report = allMode
-    ? { story_id: map.story_id, scene: "all", replicates: runs, by_scene: aggregateByScene(runs) }
-    : { story_id: map.story_id, scene: requestedScene, replicates: runs, aggregate: aggregate(runs) };
+    ? { story_id: map.story_id, scene: "all", profile: [...new Set(runs.flatMap((replicate) => replicate.scenes.map((run) => run.profile)).filter(Boolean))].length > 1 ? "mixed" : (runs[0]?.scenes[0]?.profile || "canonical"), replicates: runs, by_scene: aggregateByScene(runs) }
+    : { story_id: map.story_id, scene: requestedScene, profile: runs[0]?.profile || "canonical", replicates: runs, aggregate: aggregate(runs) };
   const promptReport = {
     story_id: report.story_id,
     scene: report.scene,
