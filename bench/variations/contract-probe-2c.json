@@ -31,6 +31,30 @@
   {
    "command": "Throw away the copied JANUS files.",
    "label": "near-miss"
+  },
+  {
+   "command": "Confirm the files are copied.",
+   "label": "state-claim"
+  },
+  {
+   "command": "Make sure the JANUS records are backed up.",
+   "label": "state-claim"
+  },
+  {
+   "command": "Check that the evidence is saved.",
+   "label": "state-claim"
+  },
+  {
+   "command": "Verify the files are on my drive.",
+   "label": "state-claim"
+  },
+  {
+   "command": "Ensure the transfer finished.",
+   "label": "state-claim"
+  },
+  {
+   "command": "Say the files are copied.",
+   "label": "state-claim"
   }
  ]
 }
