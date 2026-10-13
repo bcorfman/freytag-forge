@@ -7,7 +7,7 @@ import pytest
 
 from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.cloudflare import CloudflareTurnProvider
-from storygame.runtime.fixed_refusal import refuse_fixed_move
+from storygame.runtime.fixed_refusal import _fixed_article_name, refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev_questions import relocates_thing
 from storygame.runtime.state import RuntimeState
@@ -54,6 +54,20 @@ def _real_scene_1a(monkeypatch: pytest.MonkeyPatch):
     provider = build_capture_provider(state)
     provider._ensure_scene_seeded()
     return provider, provider._world()
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("driver's seat", "the driver's seat"),
+        ("workstation", "the workstation"),
+        ("back door", "the back door"),
+        ("Michelle's phone", "Michelle's phone"),
+        ("Kristin's truck", "Kristin's truck"),
+    ],
+)
+def test_fixed_article_name(name, expected):
+    assert _fixed_article_name(name) == expected
 
 
 def test_fixed_move_is_refused_without_changing_world():
@@ -152,7 +166,7 @@ def test_real_scene_1a_same_area_is_the_legacy_fixed_scope(monkeypatch: pytest.M
         (
             "Detach the driver's seat from the truck.",
             "driver's seat",
-            ("Kristin tried to move driver's seat. It is fixed in place and did not move.",),
+            ("Kristin tried to move the driver's seat. It is fixed in place and did not move.",),
         ),
         (
             "Extract the drawer from the workstation.",

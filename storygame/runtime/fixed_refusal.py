@@ -9,6 +9,12 @@ from storygame.runtime.seating import _command_names_thing
 from storygame.runtime.taking import _protagonist_name, _with_article
 
 
+def _fixed_article_name(name: str) -> str:
+    if name[0].islower():
+        return f"the {name}"
+    return _with_article(name)
+
+
 @dataclass(frozen=True)
 class FixedRefusalResult:
     command: str
@@ -61,7 +67,7 @@ def refuse_fixed_move(
             continue
         if answer:
             steps.append(
-                f"{_protagonist_name(package)} tried to move {_with_article(name)}. "
+                f"{_protagonist_name(package)} tried to move {_fixed_article_name(name)}. "
                 "It is fixed in place and did not move."
             )
             refused.append(name)
