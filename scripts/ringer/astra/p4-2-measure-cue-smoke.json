@@ -1,0 +1,18 @@
+{
+ "run_name": "astra-p4-2-measure-cue",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure-cue",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "smoke-cue",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live refusal measurement for the 'renarrate' arm with authored cue text preserved: four fixed-thing commands in scene 1A, 1 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/cue-smoke; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 1 renarrate > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "renarrate arm ran all turns"
+  }
+ ]
+}
