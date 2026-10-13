@@ -66,6 +66,19 @@ class StoryCompleteTurn:
         return self.segments[0].text
 
 
+class EngineRefusalTurn:
+    """A fixed, provider-free response for an engine-owned refusal."""
+
+    def __init__(self, text: str) -> None:
+        self.segments = (NarrationSegment(kind="narration", text=text),)
+        self.game_break = None
+        self.story_complete = False
+
+    @property
+    def narration(self) -> str:
+        return self.segments[0].text
+
+
 class RuntimeEngine(CanonicalEventMixin):
     def __init__(
         self,
@@ -144,6 +157,19 @@ class RuntimeEngine(CanonicalEventMixin):
             self.state.last_turn_delivery = TurnDelivery()
             self.state.turn_index += 1
             capture_record = self.capture.before_turn(command_text) if self.capture else {}
+            if capture_record.get("engine_refusal"):
+                refusal = capture_record["engine_refusal"]
+                if self.capture:
+                    self.capture.discard()
+                self.state.restore_snapshot(before)
+                result = EngineRefusalTurn(refusal)
+                self._record_attempt(
+                    player_input,
+                    command_text,
+                    before,
+                    outcome="rejected",
+                )
+                return result
             if self.capture:
                 self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                     update={

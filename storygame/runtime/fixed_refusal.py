@@ -15,6 +15,13 @@ def _fixed_article_name(name: str) -> str:
     return _with_article(name)
 
 
+def fixed_refusal_text(package, names: tuple[str, ...]) -> str:
+    things = " and ".join(_fixed_article_name(name) for name in names)
+    if len(names) == 1:
+        return f"{_protagonist_name(package)} tries to move {things}, but it is fixed in place and does not budge."
+    return f"{_protagonist_name(package)} tries to move {things}, but they are fixed in place and do not budge."
+
+
 @dataclass(frozen=True)
 class FixedRefusalResult:
     command: str

@@ -7,6 +7,7 @@ import pytest
 
 from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.cloudflare import CloudflareTurnProvider
+from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.fixed_refusal import _fixed_article_name, refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev_questions import relocates_thing
@@ -229,3 +230,91 @@ def test_real_scene_1a_false_fixed_refusal_does_not_prepend_prompt(monkeypatch: 
     prompt = provider.assemble_turn_prompt("Examine the workstation.")
     rendered = prompt.get("user") or provider._section_user_prompt(prompt["context"])
     assert "Just before this:" not in rendered
+
+
+def _engine_1a(monkeypatch: pytest.MonkeyPatch, classifier, *, engine_refusal: bool):
+    provider, _ = _real_scene_1a(monkeypatch)
+    assert provider._world().move("kristin", "kitchen").ok
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": [], "same_as": {}})
+    capture = WorldCapture(provider, classifier, fixed_refusal=True, engine_refusal=engine_refusal)
+    calls: list[str] = []
+
+    def narrator(command: str) -> dict[str, object]:
+        calls.append(command)
+        return {"segments": [{"kind": "narration", "text": "The search continues."}]}
+
+    return RuntimeEngine(provider.state, narrator, capture=capture), calls, provider
+
+
+def test_engine_refusal_makes_no_provider_call(monkeypatch: pytest.MonkeyPatch):
+    engine, calls, _ = _engine_1a(
+        monkeypatch,
+        lambda _state, questions: {next(iter(questions)): {"noul": 1.0}},
+        engine_refusal=True,
+    )
+
+    result = engine.turn("Carry the workstation to the truck.")
+
+    assert calls == []
+    assert result.narration == "Kristin tries to move the workstation, but it is fixed in place and does not budge."
+    assert result.game_break is None
+    assert result.story_complete is False
+
+
+def test_engine_refusal_consumes_no_turn(monkeypatch: pytest.MonkeyPatch):
+    engine, calls, _ = _engine_1a(
+        monkeypatch,
+        lambda _state, questions: {next(iter(questions)): {"noul": 1.0}},
+        engine_refusal=True,
+    )
+    engine.state.staged_cue_fact_id = "continuity_initiative_known"
+    before = engine.state.snapshot()
+
+    engine.turn("Carry the workstation to the truck.")
+
+    assert engine.state.turn_index == before.turn_index
+    assert engine.state.facts == before.facts
+    engine.turn("Search the kitchen.")
+    assert calls == ["Search the kitchen."]
+    assert engine.state.last_turn_delivery.cue_fact_id == "continuity_initiative_known"
+    assert engine.state.delivered_cue_ids.count("continuity_initiative_known") == 1
+
+
+def test_engine_refusal_unanswered_classifier_narrates_normally(monkeypatch: pytest.MonkeyPatch):
+    engine, calls, _ = _engine_1a(
+        monkeypatch,
+        lambda _state, questions: {},
+        engine_refusal=True,
+    )
+
+    result = engine.turn("Carry the workstation to the truck.")
+
+    assert calls == ["Carry the workstation to the truck."]
+    assert result.narration == "The search continues."
+    assert "fixed move question unanswered" in engine.capture.last_before["fixed_refusal_issues"][0]
+
+
+def test_engine_refusal_off_by_default(monkeypatch: pytest.MonkeyPatch):
+    engine, calls, _ = _engine_1a(
+        monkeypatch,
+        lambda _state, questions: {next(iter(questions)): {"noul": 1.0}},
+        engine_refusal=False,
+    )
+
+    engine.turn("Carry the workstation to the truck.")
+
+    assert calls == ["Carry the workstation to the truck."]
+    assert engine.capture.last_before["steps"][0].startswith("Kristin tried to move the workstation.")
+
+
+def test_relocates_thing_criteria_cover_lift_then_lower_and_source():
+    captured: dict[str, object] = {}
+
+    def ask(_state, questions):
+        captured.update(questions)
+        return {"relocates_thing": {"noul": 0.0}}
+
+    relocates_thing(ask, "Lift the workstation, then lower it back into place.", "workstation")
+    criteria = captured["relocates_thing"]["criteria"]
+    assert "puts it back where it was" in criteria["true"]
+    assert "taken from or put on" in criteria["false"]

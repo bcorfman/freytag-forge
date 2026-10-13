@@ -80,11 +80,17 @@ def relocates_thing(ask, command: str, thing_name: str) -> bool | None:
                 "slides it, takes it out or off of where it is, removes it, detaches it, or puts it somewhere else."
             ),
             "criteria": {
-                "true": "The command makes the player relocate this thing.",
+                "true": (
+                    "The command makes the player relocate this thing. A command that lifts this thing and then puts "
+                    "it back where it was, or lowers it back into place, still relocates it."
+                ),
                 "false": (
                     "The command uses the thing where it is: opening, closing, sitting in, looking at, reading, or "
                     "searching it. It also covers a command that moves some other thing onto, into, off, or out of "
-                    "this thing."
+                    "this thing. If this thing is only "
+                    "the place another thing is taken from or put on, such as "
+                    "retrieving a laptop from the passenger seat or putting a laptop on the workstation, it does not "
+                    "count as relocating this thing."
                 ),
             },
         }

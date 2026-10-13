@@ -6,7 +6,7 @@ import copy
 from collections.abc import Callable
 from typing import Any
 
-from storygame.runtime.fixed_refusal import refuse_fixed_move
+from storygame.runtime.fixed_refusal import fixed_refusal_text, refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev_questions import (
     goes_to_vehicle,
@@ -39,11 +39,17 @@ def _json_value(value):
 
 class WorldCapture:
     def __init__(
-        self, provider: ItemFactsProvider, ask: Callable[[object, object], dict | None], fixed_refusal: bool = False
+        self,
+        provider: ItemFactsProvider,
+        ask: Callable[[object, object], dict | None],
+        fixed_refusal: bool = False,
+        *,
+        engine_refusal: bool = False,
     ) -> None:
         self.provider = provider
         self.ask = ask
         self.fixed_refusal = fixed_refusal
+        self.engine_refusal = engine_refusal
         self._command = ""
         self.last_before: dict[str, Any] | None = None
         self.last_after: dict[str, Any] | None = None
@@ -64,7 +70,10 @@ class WorldCapture:
             if self.fixed_refusal
             else None
         )
-        if fixed and fixed.steps:
+        engine_refusal = (
+            fixed_refusal_text(package, fixed.refused) if self.engine_refusal and fixed and fixed.refused else ""
+        )
+        if fixed and fixed.refused:
             standing = SeatingResult(command, (), False, ())
             taking = TakingResult(command, (), False, ())
             boarding = SeatingResult(command, (), False, ())
@@ -84,7 +93,7 @@ class WorldCapture:
         provider_steps = (*fixed_steps, *standing.steps, *boarding_steps, *taking.steps, *seating_steps)
         self.provider.prior_steps = provider_steps
         match_info = {}
-        if self.provider.item_facts_mode == "single_call":
+        if self.provider.item_facts_mode == "single_call" and not engine_refusal:
             match_info = self.provider.prepare_turn(command)
         record = {
             "command": " ".join((*provider_steps, command)),
@@ -92,6 +101,7 @@ class WorldCapture:
             "fixed_refusal_steps": list(fixed_steps),
             "fixed_refusal_asked": fixed.asked if fixed else False,
             "fixed_refusal_issues": list(fixed.issues if fixed else ()),
+            "engine_refusal": engine_refusal,
             "standing_steps": list(standing.steps),
             "boarding_steps": list(boarding_steps),
             "taking_steps": list(taking.steps),
