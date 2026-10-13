@@ -1,4 +1,5 @@
 """Ringer check helper: the runtime bench path must hand mark_fixed to build_capture_provider."""
+
 import sys
 
 core = open("bench/core.py").read()

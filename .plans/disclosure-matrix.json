@@ -397,7 +397,7 @@
       "available_scenes": [
         "1B"
       ],
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "owner_ids": [
         "park_bench"
       ],
@@ -1229,7 +1229,7 @@
       "available_scenes": [
         "1A"
       ],
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "owner_ids": [
         "workstation_chair"
       ],
@@ -2405,7 +2405,7 @@
       "available_scenes": [
         "1B"
       ],
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "owner_ids": [
         "storm_drain"
       ],
@@ -8682,15 +8682,15 @@
       "available_scenes": [
         "1B"
       ],
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "owner_ids": [
         "storm_drain"
       ],
       "requires": [],
-      "suggested_class": "public_candidate",
+      "suggested_class": "needs_review",
       "term": "tunnel",
       "unlock_fact_ids": [],
-      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
     },
     {
       "available_scenes": [
@@ -9221,7 +9221,7 @@
         "error_code": "",
         "verdict": "accepted"
       },
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "scene": "1A",
       "skipped": {
         "error_code": "",
@@ -10921,7 +10921,7 @@
         "error_code": "",
         "verdict": "accepted"
       },
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "scene": "1B",
       "skipped": {
         "error_code": "",
@@ -11159,7 +11159,7 @@
         "error_code": "",
         "verdict": "accepted"
       },
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "scene": "1B",
       "skipped": {
         "error_code": "",
@@ -11839,7 +11839,7 @@
         "error_code": "",
         "verdict": "accepted"
       },
-      "guard_kind": "entity_name",
+      "guard_kind": "scoped_alias",
       "scene": "1B",
       "skipped": {
         "error_code": "",

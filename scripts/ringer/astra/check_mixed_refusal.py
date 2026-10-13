@@ -1,4 +1,5 @@
 """Ringer check helper: mixed-command clarification must be wired and tested."""
+
 import os
 import re
 import sys

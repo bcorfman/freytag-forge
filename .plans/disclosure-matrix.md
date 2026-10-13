@@ -4,16 +4,16 @@ Inventory terms: 496. Matrix rows: 680.
 
 ## Counts
 
-- entity_name: 98
+- entity_name: 94
 - identifier_fragment: 8
 - knowledge_alias: 107
 - leak_term: 70
 - must_convey_phrase: 201
-- scoped_alias: 12
+- scoped_alias: 16
 
 Suggested classes:
-- needs_review: 11
-- public_candidate: 127
+- needs_review: 12
+- public_candidate: 126
 - secret_with_unlock_fact: 358
 
 ### Earned rejected

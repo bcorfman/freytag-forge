@@ -1,4 +1,5 @@
 """Ringer check helper: the web path must enable the refusal by default with a kill switch, and the multi-turn API tests must exist."""
+
 import os
 import re
 import sys

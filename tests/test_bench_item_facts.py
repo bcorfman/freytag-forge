@@ -17,6 +17,7 @@ from storygame.runtime.item_facts import (
     package_seed,
     validate_item_facts,
 )
+from storygame.runtime.knowledge import scoped_alias_entity_ids
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
@@ -1379,7 +1380,15 @@ def test_park_bench_resolves_and_is_placed_in_scene_1b():
     apply_scene_placements(PACKAGE, state.facts, "1B")
     world = world_for(PACKAGE, state.facts)
 
-    assert world.resolve("bench") == "park_bench"
+    assert world.resolve("park bench") == "park_bench"
+    scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "1B")
+    assert scoped_alias_entity_ids(
+        PACKAGE.world,
+        "bench",
+        scene=scene,
+        protagonist_id=PACKAGE.world.protagonist_id,
+        scope_world=world,
+    ) == ("park_bench",)
     assert world.parent("park_bench") == "los_angeles_park"
 
 

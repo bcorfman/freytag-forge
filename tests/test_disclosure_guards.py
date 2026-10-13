@@ -45,14 +45,36 @@ def _with_guard(package, guard):
     )
 
 
+def _without_bench_knowledge_term(package):
+    knowledge = tuple(
+        item.model_copy(
+            update={
+                "entity_ids": tuple(entity_id for entity_id in item.entity_ids if entity_id != "park_bench"),
+                "must_convey": tuple(
+                    tuple(term for term in group if term not in {"bench in the park", "park bench"})
+                    for group in item.must_convey
+                ),
+            }
+        )
+        if item.id == "k_sl_1a_b_r1"
+        else item
+        for item in package.knowledge.knowledge
+    )
+    catalog = package.knowledge.model_copy(update={"knowledge": knowledge})
+    return package.model_copy(
+        update={"knowledge": catalog, "knowledge_indexes": _compile_knowledge_indexes(catalog, package.world)}
+    )
+
+
 def test_public_entity_is_not_a_global_narration_guard():
     bench = next(item for item in PACKAGE.world.items if item.id == "park_bench")
-    legacy = _state(_with_item(PACKAGE, bench.model_copy(update={"disclosure": "legacy"})))
+    package = _without_bench_knowledge_term(PACKAGE)
+    legacy = _state(_with_item(package, bench.model_copy(update={"disclosure": "legacy"})))
     with pytest.raises(ProposalValidationError, match="narration mentions an unavailable entity"):
-        _narrate(legacy, "The bench is dusty.")
+        _narrate(legacy, "The park bench is dusty.")
 
-    public = _state(_with_item(PACKAGE, bench.model_copy(update={"disclosure": "public"})))
-    _narrate(public, "The bench is dusty.")
+    public = _state(_with_item(package, bench.model_copy(update={"disclosure": "public"})))
+    _narrate(public, "The park bench is dusty.")
 
 
 def test_public_entity_does_not_change_unrelated_verdicts():
