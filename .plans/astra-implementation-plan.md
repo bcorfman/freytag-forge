@@ -218,6 +218,22 @@ Question: does a differently worded fixed-thing marker also stop the narrator cl
 - **Drop rule:** triggered ("drop this version if correctly classified destination or push commands still produce successful-move prose"). Per the pre-registration the next experiment is an engine-owned refusal for a wholly disallowed action (no narrator call), not more wording or more steering lines. Neither the candidate nor `renarrate` is adopted; both stay opt-in.
 - **Limits:** one scene, one narrator, near-deterministic replies, so 16 distinct commands, not 96; my own blind scoring (one reader); the candidate bars were screening bars, not reliability rates.
 
+### Phase 4 item 2, engine-owned refusal: result (2026-10-13; Ringer `astra-p4-2-engine-refusal`, `-bench-engine-refusal`, `astra-p4-2-measure-fe2`; frozen in `.plans/astra-engine-refusal-freeze.md`, code in 099e4e4a and 6c43c2a1)
+
+- **Built (opt-in, off by default):** `WorldCapture(fixed_refusal=True, engine_refusal=True)`; when `relocates_thing` says yes the engine returns fixed text ("Kristin tries to move the workstation, but it is fixed in place and does not budge.") with no narrator call, restores the pre-turn snapshot and consumes no turn. An unanswered classifier narrates normally and records an issue. Bench key `engine_refusal`; refused turns record `narrator_called` false and no stale prompt or item facts. The `relocates_thing` criteria were tightened for lift-then-lower and source/surface cases. The attempt record has no "refused" outcome, so refused turns are logged as `rejected`.
+- **Validity gates passed:** baseline arm had no refusal line and no classifier call; every engine-arm refusal had no narrator call, no prompt and unchanged facts; no non-refused turn carried a refusal line; classifier asked on 16 of 16, none unanswered.
+- **Scoring (32 replies, shuffled, arm labels removed, one reader; the fixed sentence makes the engine arm recognisable, so blinding is partial):**
+
+| Arm (1 reply x 16 fresh commands) | Refusal commands (9): honest refusal / claims the move | Controls (5): success | Mixed (2) | Narrator calls on refused turns |
+|---|---|---|---|---|
+| Baseline | 0 / 9 | 5 of 5 | 2 of 2 narrated the fixed move | n/a |
+| Engine-owned refusal | 9 / 0 | 5 of 5 | 2 of 2 refused the whole command | 0 of 11 |
+
+- **Bars (set before the run):** 9 of 9 refusals met; 5 of 5 controls met; zero prohibited-success claims, false refusals or mutations on the engine arm met; zero narrator calls on refused turns met. Destination and push commands (Carry the driver's seat into the kitchen, Move the workstation beside the truck, Slide the workstation across the kitchen, Push the passenger seat out of the truck, Carry the drawer and the passenger seat into the kitchen) all refused, which the prompt-line step could not do (0 of 6). The 2 mixed-action clarifications in ChatGPT's bar are not testable: clarification is not built.
+- **Known cost:** a mixed command loses its harmless part. "Hoist the workstation, then open my laptop." and "Carry the drawer and my laptop into the truck." were refused whole, so the laptop action did not happen.
+- **Limits:** one scene, 16 distinct commands, one reply each, my own single-reader scoring, no classifier false positive seen in 5 controls (the earlier "Retrieve my laptop from the passenger seat" case was not re-run). This is a screen, not a reliability rate. Not yet checked: save/load across a refused turn, cue delivery on the next accepted turn in a live run, a second story package, multi-turn sequences.
+- **Decision:** the narrator was the blocker, and the engine path holds. Next is a second, separate experiment: mixed commands (refuse only the fixed part or ask which to do), cue deferral and save/load, plus a fresh command set. The path stays opt-in; `renarrate` stays off by default.
+
 ## Phase 5: Three-arm comparison
 
 Arms: (A) current pipeline with Phases 1-4 fixes; (B) same pipeline, stronger model; (C) smallest outcome-first prototype (resolve once, validate proposals, narrate from the accepted outcome, check, publish atomically), reusing existing machinery, on the drawer-to-truck sequence only. Do not rewrite all nine scenes.
