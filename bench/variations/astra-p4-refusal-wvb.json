@@ -1,0 +1,184 @@
+{
+ "name": "astra-p4-refusal-wvb",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "refusal_mode": "off",
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true,
+  "mark_fixed": "anywhere"
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "d1",
+    "inputs": [
+     "Carry the workstation to the truck."
+    ]
+   },
+   {
+    "name": "d2",
+    "inputs": [
+     "Pick up the back door."
+    ]
+   },
+   {
+    "name": "d3",
+    "inputs": [
+     "Put the workstation inside the truck."
+    ]
+   },
+   {
+    "name": "d4",
+    "inputs": [
+     "Take the workstation outside."
+    ]
+   },
+   {
+    "name": "h1",
+    "inputs": [
+     "Lift the workstation."
+    ]
+   },
+   {
+    "name": "h2",
+    "inputs": [
+     "Take the drawer out of the workstation."
+    ]
+   },
+   {
+    "name": "h3",
+    "inputs": [
+     "Drag the workstation to my truck."
+    ]
+   },
+   {
+    "name": "h4",
+    "inputs": [
+     "Set the back door on the kitchen floor."
+    ]
+   },
+   {
+    "name": "h5",
+    "inputs": [
+     "Push the workstation against the wall."
+    ]
+   },
+   {
+    "name": "h6",
+    "inputs": [
+     "Carry the drawer to my truck."
+    ]
+   },
+   {
+    "name": "h7",
+    "inputs": [
+     "Bring the back door to the truck."
+    ]
+   },
+   {
+    "name": "h8",
+    "inputs": [
+     "Remove the passenger seat from the truck."
+    ]
+   },
+   {
+    "name": "g1",
+    "inputs": [
+     "Pick up the drawer."
+    ]
+   },
+   {
+    "name": "g2",
+    "inputs": [
+     "Take the back door off its hinges."
+    ]
+   },
+   {
+    "name": "g3",
+    "inputs": [
+     "Slide the workstation across the kitchen."
+    ]
+   },
+   {
+    "name": "g4",
+    "inputs": [
+     "Put the drawer in my truck."
+    ]
+   },
+   {
+    "name": "g5",
+    "inputs": [
+     "Haul the workstation outside."
+    ]
+   },
+   {
+    "name": "g6",
+    "inputs": [
+     "Set the driver's seat on the kitchen floor."
+    ]
+   },
+   {
+    "name": "g7",
+    "inputs": [
+     "Roll the workstation to the back door."
+    ]
+   },
+   {
+    "name": "g8",
+    "inputs": [
+     "Carry the back door outside."
+    ]
+   },
+   {
+    "name": "c1",
+    "inputs": [
+     "Open the back door."
+    ]
+   },
+   {
+    "name": "c2",
+    "inputs": [
+     "Examine the workstation."
+    ]
+   },
+   {
+    "name": "c3",
+    "inputs": [
+     "Open the drawer."
+    ]
+   },
+   {
+    "name": "c4",
+    "inputs": [
+     "Close the drawer."
+    ]
+   },
+   {
+    "name": "c5",
+    "inputs": [
+     "Look at the passenger seat."
+    ]
+   },
+   {
+    "name": "c6",
+    "inputs": [
+     "Sit in the driver's seat."
+    ]
+   },
+   {
+    "name": "c7",
+    "inputs": [
+     "Pick up my laptop."
+    ]
+   },
+   {
+    "name": "c8",
+    "inputs": [
+     "Carry my laptop to the workstation."
+    ]
+   }
+  ]
+ }
+}
