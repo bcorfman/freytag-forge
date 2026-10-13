@@ -1,0 +1,20 @@
+{
+ "run_name": "astra-early-1a-photo",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-early-1a-photo",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "early1a",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "max_attempts": 2,
+   "timeout_s": 1800,
+   "check_timeout_s": 600,
+   "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files ONLY under the current working directory; NEVER edit anything under /home/bcorfman/dev/freytag-forge directly. Do NOT git commit, do NOT git add -A, do NOT touch .git. Write short notes to /home/bcorfman/dev/ringer-work/astra-early-1a-photo-notes/notes.md (create the directory).\n\nOWNED FILES: tests/test_early_1a_photo_sentences.py (new). Edit nothing else. Do not change production code, story data or other tests.\n\nGOAL: add a small hermetic test that fixes the early scene-1A narration verdicts for the photograph words. The existing tests/test_photo_scoped_alias.py already has a helper `_verdict(scene_id, text)` (builds a real RuntimeState at the scene and runs RuntimeEngine.turn with a stub narrator, returning ('accepted','') or ('rejected', error.code)). Copy that approach into the new file (import the helpers from test_photo_scoped_alias is NOT allowed; duplicate the few lines). \n\nASSERT, for scene 1A with the real package data/stories/continuity-initiative:\n- 'Kristin looks at a photo.' -> ('accepted', '')\n- 'The phone shows a photograph.' -> ('accepted', '')\n- 'Kristin sees a picture on the wall.' -> ('accepted', '')\n- 'The phone shows a photo of the two friends.' -> ('accepted', '')\n- \"Michelle's photograph is on the screen.\" -> ('rejected', 'narration_known_term_leak')  (the full name stays guarded)\nUse pytest.mark.parametrize. These verdicts were verified by hand on the current main; if one differs when you run it, report it in notes and do not force it.\n\nHOW TO RUN: confirm `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` prints a path inside the cwd. Test: PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_early_1a_photo_sentences.py. Ruff: /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check --fix tests/test_early_1a_photo_sentences.py and -m ruff format on it. Reply with the file changed.\n",
+   "check": "bash -c 'set -u; N=/home/bcorfman/dev/ringer-work/astra-early-1a-photo-notes/notes.md; [ -s $N ] || { echo FAIL no notes; exit 1; }; git add -A -- tests; bad=$(git status --porcelain | grep -v -E \"^A  tests/test_early_1a_photo_sentences.py$\" || true); [ -z \"$bad\" ] || { echo \"FAIL stray files:\"; echo \"$bad\"; exit 1; }; OUT=/home/bcorfman/dev/ringer-work/astra-patches; mkdir -p $OUT; git diff --cached > $OUT/early1a.patch; [ -s $OUT/early1a.patch ] || { echo FAIL empty patch; exit 1; }; grep -c \"narration_known_term_leak\" tests/test_early_1a_photo_sentences.py >/dev/null || { echo FAIL missing full-name rejection case; exit 1; }; PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_early_1a_photo_sentences.py 2>&1 | tail -15; [ ${PIPESTATUS[0]} -eq 0 ] || { echo FAIL new tests; exit 1; }; /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check tests/test_early_1a_photo_sentences.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format --check tests/test_early_1a_photo_sentences.py || exit 1; echo PASS'",
+   "verified": "new test passes against the real package and ruff is clean"
+  }
+ ]
+}
