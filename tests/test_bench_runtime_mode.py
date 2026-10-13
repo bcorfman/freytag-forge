@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -301,11 +302,13 @@ def test_runtime_mode_passes_fixed_refusal_to_capture(monkeypatch: pytest.Monkey
     calls: list[bool] = []
     original = core.WorldCapture
 
-    def capture(provider, ask, fixed_refusal=False):
+    def capture(provider, ask, fixed_refusal=False, *, engine_refusal=False):
         calls.append(fixed_refusal)
-        return original(provider, ask, fixed_refusal=fixed_refusal)
+        return original(provider, ask, fixed_refusal=fixed_refusal, engine_refusal=engine_refusal)
 
     monkeypatch.setattr(core, "WorldCapture", capture)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.invalid/turn")
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", _narration_reply)
     enabled = _variation(RUNTIME, turns=1)
     enabled["fixed_refusal"] = True
     assert _run(monkeypatch, RUNTIME, turns=1)["status"] == "ok"
@@ -313,6 +316,74 @@ def test_runtime_mode_passes_fixed_refusal_to_capture(monkeypatch: pytest.Monkey
     result = core.run_scene(enabled, "1A", enabled["scripts"]["1A"][0])
     assert result["status"] == "ok"
     assert calls[-1] is True
+
+
+def test_runtime_mode_passes_engine_refusal_to_capture(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
+    calls: list[tuple[bool, bool]] = []
+    original = core.WorldCapture
+
+    def capture(provider, ask, fixed_refusal=False, *, engine_refusal=False):
+        calls.append((fixed_refusal, engine_refusal))
+        return original(provider, ask, fixed_refusal=fixed_refusal, engine_refusal=engine_refusal)
+
+    monkeypatch.setattr(core, "WorldCapture", capture)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.invalid/turn")
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", _narration_reply)
+    enabled = _variation(RUNTIME, turns=1)
+    enabled["fixed_refusal"] = True
+    enabled["engine_refusal"] = True
+    assert core.run_scene(enabled, "1A", enabled["scripts"]["1A"][0])["status"] == "ok"
+    assert calls == [(True, True), (True, True)]
+
+
+def test_bench_engine_refused_turn_has_no_prompt_and_no_stale_item_facts(
+    monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]
+) -> None:
+    narrator_calls = []
+
+    def narrator(self, payload):
+        narrator_calls.append(payload)
+        return _narration_reply(self, payload)
+
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.invalid/turn")
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", narrator)
+    monkeypatch.setattr(core.RuntimeEngine, "opening", lambda _engine: SimpleNamespace(narration="Opening."))
+    variation = _variation(
+        RUNTIME,
+        turns=2,
+        inputs=["Search the kitchen.", "Carry the workstation to the truck."],
+    )
+    variation["fixed_refusal"] = True
+    variation["engine_refusal"] = True
+    result = core.run_scene(variation, "1A", variation["scripts"]["1A"][0])
+
+    assert result["status"] == "ok"
+    normal, refused = result["turns"]
+    assert normal["narrator_called"] is True
+    assert refused["narrator_called"] is False
+    assert refused["prompt_system"] is None
+    assert refused["prompt_user"] is None
+    assert refused["item_facts_raw"] == {}
+    assert refused["item_facts_unplaced"] == []
+    assert refused["item_facts_after"] == refused["item_facts_before"]
+    assert refused["engine_refusal"]
+    assert refused["narration"] == refused["engine_refusal"]
+    assert len([call for call in narrator_calls if call["system"].startswith("You are the narrator")]) == 1
+
+
+def test_engine_refusal_variation_hash() -> None:
+    baseline = core.load_variation(RUNTIME)
+    absent = core.load_variation(RUNTIME)
+    disabled = copy.deepcopy(json.loads(RUNTIME.read_text()))
+    disabled["engine_refusal"] = False
+    disabled = core.resolve_variation(disabled, RUNTIME)
+    enabled = copy.deepcopy(json.loads(RUNTIME.read_text()))
+    enabled["engine_refusal"] = True
+    enabled = core.resolve_variation(enabled, RUNTIME)
+
+    assert absent["_variation_hash"] == baseline["_variation_hash"]
+    assert disabled["_variation_hash"] == baseline["_variation_hash"]
+    assert enabled["_variation_hash"] != baseline["_variation_hash"]
 
 
 def test_runtime_mode_records_rejected_turn(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:

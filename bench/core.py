@@ -327,6 +327,8 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
         hash_payload["item_facts_mark_fixed"] = True if mark_fixed_variant == "carry_away" else mark_fixed_variant
     if variation.get("fixed_refusal", False) is True:
         hash_payload["fixed_refusal"] = True
+    if variation.get("engine_refusal", False) is True:
+        hash_payload["engine_refusal"] = True
     variation["_variation_hash"] = stable_hash(hash_payload)
     variation["_story_package_value"] = package_value
     return variation
@@ -761,7 +763,12 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         else provider_for(state, variation)
     )
     capture = (
-        WorldCapture(provider, runtime_ask, fixed_refusal=bool(variation.get("fixed_refusal", False)))
+        WorldCapture(
+            provider,
+            runtime_ask,
+            fixed_refusal=bool(variation.get("fixed_refusal", False)),
+            engine_refusal=bool(variation.get("engine_refusal", False)),
+        )
         if runtime
         else None
     )
@@ -871,6 +878,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     loaded_provider,
                     runtime_ask,
                     fixed_refusal=bool(variation.get("fixed_refusal", False)),
+                    engine_refusal=bool(variation.get("engine_refusal", False)),
                 )
                 context["engine"] = RuntimeEngine(
                     loaded_state,
@@ -891,10 +899,17 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     capture = engine.capture
                 else:
                     proposal = result
+                engine_refusal_text = (
+                    (capture.last_before or {}).get("engine_refusal", "") if runtime and capture else ""
+                )
                 last_prompt = (
-                    capture.last_after.get("narration_prompt")
-                    if runtime and capture.last_after and "narration_prompt" in capture.last_after
-                    else getattr(provider, "last_prompt", None)
+                    None
+                    if engine_refusal_text
+                    else (
+                        capture.last_after.get("narration_prompt")
+                        if runtime and capture.last_after and "narration_prompt" in capture.last_after
+                        else getattr(provider, "last_prompt", None)
+                    )
                 )
                 turn_prompt = dict(last_prompt) if last_prompt is not None else None
             except NarrationProviderError as error:
@@ -1043,7 +1058,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             item_facts_record: dict[str, Any] | None = None
             if runtime:
                 before_record = capture.last_before or {}
-                after_record = capture.last_after or {}
+                engine_refusal_text = before_record.get("engine_refusal", "")
+                after_record = {} if engine_refusal_text else (capture.last_after or {})
                 things_given = list(before_record.get("things_given", ()))
                 facts_before = before_record.get("item_facts_before", {})
                 standing_steps = tuple(before_record.get("standing_steps", ()))
@@ -1062,13 +1078,33 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     (*fixed_refusal_steps, *standing_steps, *taking_steps, *seating_steps, typed_input)
                 )
                 raw_item_facts = after_record.get("raw", {})
-                fact_issues = after_record.get("issues", [])
-                match_info = after_record.get("match_info", match_info)
+                fact_issues = (
+                    list(before_record.get("fixed_refusal_issues", ()))
+                    if engine_refusal_text
+                    else after_record.get("issues", [])
+                )
+                match_info = (
+                    {
+                        "match_call": False,
+                        "match_raw": None,
+                        "match_issues": [],
+                        "resolutions": {},
+                        "place_resolutions": {},
+                        "mapping_checks": [],
+                        "engine_resolutions": {},
+                    }
+                    if engine_refusal_text
+                    else after_record.get("match_info", match_info)
+                )
                 after_names = set(things_given) | set(provider._changed_last_turn)
                 facts_after = (
-                    after_record["facts_after"]
-                    if entered and "facts_after" in after_record
-                    else provider.facts_for_names(after_names, structural=True)
+                    facts_before
+                    if engine_refusal_text
+                    else (
+                        after_record["facts_after"]
+                        if entered and "facts_after" in after_record
+                        else provider.facts_for_names(after_names, structural=True)
+                    )
                 )
                 item_facts_names: dict[str, list[str]] = {}
                 world = provider._world()
@@ -1091,10 +1127,10 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "item_facts_axes": declared_axes_for_world(world, {*facts_before, *facts_after}),
                     "item_facts_raw": raw_item_facts,
                     "item_facts_issues": fact_issues,
-                    "item_facts_unplaced": after_record.get("unplaced", []),
+                    "item_facts_unplaced": [] if engine_refusal_text else after_record.get("unplaced", []),
                     "item_facts_source": provider.item_facts_mode,
                     "item_facts_held": list(provider._held_item_facts),
-                    "match_call": match_info["match_call"],
+                    "match_call": False if engine_refusal_text else match_info["match_call"],
                     "match_raw": match_info["match_raw"],
                     "match_issues": match_info["match_issues"],
                     "item_facts_resolutions": match_info["resolutions"],
@@ -1192,7 +1228,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "left_scene": entered,
                     "scene_id": prior_scene,
                     "beats_projected": list(delivery.beats_projected),
-                    "selected_knowledge_ids": list(proposal.selected_knowledge_ids),
+                    "selected_knowledge_ids": list(getattr(proposal, "selected_knowledge_ids", ())),
                     "authored_handoff_candidate_id": handoff.candidate.id if handoff is not None else None,
                     "model_selected_knowledge_ids": list(getattr(provider, "model_selected_knowledge_ids", ())),
                     "grounding_ids": sorted(
@@ -1215,6 +1251,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     ),
                     "refusal_extra_calls": getattr(engine, "refusal_extra_calls", 0),
                 }
+                if runtime:
+                    turn_record["engine_refusal"] = engine_refusal_text
+                    turn_record["narrator_called"] = not bool(engine_refusal_text)
                 if item_facts_record is not None:
                     turn_record.update(item_facts_record)
                 turn_record["turn_number"] = turn_number
