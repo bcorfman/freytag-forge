@@ -145,6 +145,23 @@ Exit: each item has a bench result; regressions checked against Phase 3's set.
 - **Limits:** four commands, one scene, one narrator; the destination-phrased failures suggest the wording matches verbs ("pick up", "carry away") more than intent. No wording variant was tried, and I did not tune the sentence to these four commands (that would overfit without held-out commands). The marker plus `renarrate` combination is not measured.
 - **Reading across item 2:** the marker alone is not enough (19 of 40 still claim the move); `renarrate` with cue-restore handles the rest at one call each. The combination would cut `renarrate` calls by about 40 percent on these commands. Neither is the default; both are Brandon's call.
 
+### Phase 4 item 2, marker wording variants on held-out commands: pre-registration (2026-10-13, written before any code or run)
+
+Question: does a differently worded fixed-thing marker also stop the narrator claiming moves for destination-phrased commands, without making ordinary play refuse?
+
+- **Variants** (`item_facts.mark_fixed`; `true` stays the first):
+  - `carry_away` (current): " It is fixed in place. It cannot be picked up or carried away. If the player tries, the attempt fails."
+  - `anywhere`: " It is fixed in place. It cannot be picked up, carried, pushed, or put anywhere else. If the player tries, the attempt fails."
+  - `stays`: " It is fixed in place. It always stays exactly where it is. If the player tries to take it anywhere, the attempt fails."
+- **Dev set (already seen, not used to choose):** Carry the workstation to the truck. / Pick up the back door. / Put the workstation inside the truck. / Take the workstation outside.
+- **Held-out set H1 (chooses the variant; none of these has been run):** Lift the workstation. / Take the drawer out of the workstation. / Drag the workstation to my truck. / Set the back door on the kitchen floor. / Push the workstation against the wall. / Carry the drawer to my truck. / Bring the back door to the truck. / Remove the passenger seat from the truck.
+- **Held-out set H2 (locked; run only after the choice, never used to choose):** Pick up the drawer. / Take the back door off its hinges. / Slide the workstation across the kitchen. / Put the drawer in my truck. / Haul the workstation outside. / Set the driver's seat on the kitchen floor. / Roll the workstation to the back door. / Carry the back door outside.
+- **Over-refusal controls (the action should succeed):** Open the back door. / Examine the workstation. / Open the drawer. / Close the drawer. / Look at the passenger seat. / Sit in the driver's seat. / Pick up my laptop. / Carry my laptop to the workstation. (the last two are movable things next to fixed ones.)
+- **Arms on H1:** baseline (no marker), `carry_away`, `anywhere`, `stays`; n=4 per command (replies barely vary across replicates, so more commands beat more replicates). Dev set: `anywhere` and `stays` at n=4 for context. Controls: all four arms at n=3.
+- **Metric:** claim rate = turns where capture refused the move the narrator wrote, over turns. I read every refused-in-prose and every control reply; a control reply that says the thing is fixed, does not budge, or cannot be done counts as an over-refusal.
+- **Rule, fixed now:** the winner is the variant with the lowest H1 claim rate that has zero control over-refusals. If two variants are within 5 percentage points, keep `carry_away` (shortest, already built). Then run H2 for the winner, `carry_away` and baseline at n=4. Report H1 and H2 separately; do not pool them. No wording is changed after seeing H1 results; a new wording would need a new held-out set.
+- **Validity gate, learned the hard way:** before reading any outcome, check that the variant's exact sentence is in the recorded `prompt_user` of every turn that renders a fixed thing, and absent from the baseline arm.
+
 ## Phase 5: Three-arm comparison
 
 Arms: (A) current pipeline with Phases 1-4 fixes; (B) same pipeline, stronger model; (C) smallest outcome-first prototype (resolve once, validate proposals, narrate from the accepted outcome, check, publish atomically), reusing existing machinery, on the drawer-to-truck sequence only. Do not rewrite all nine scenes.
