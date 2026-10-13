@@ -1,0 +1,40 @@
+{
+ "run_name": "astra-p4-1aexit",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-1aexit",
+ "max_parallel": 3,
+ "tasks": [
+  {
+   "key": "smoke-old",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 600,
+   "check_timeout_s": 3300,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live scene-1A exit measurement, arm 'old main fbba76f0', 1 replicate(s) of 8 turns. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-1aexit/smoke-old; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-1aexit-check.sh $O /home/bcorfman/dev/ringer-work/oldmain-fbba76f0 /home/bcorfman/dev/freytag-forge/bench/variations/astra-p4-1aexit-base.json 1 > $O.out 2>&1; rc=$?; cat $O.out | tail -8; exit $rc'",
+   "verified": "bench ran the 8-turn 1A script for every replicate"
+  },
+  {
+   "key": "smoke-newdefault",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 600,
+   "check_timeout_s": 3300,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live scene-1A exit measurement, arm 'new main, refusal off', 1 replicate(s) of 8 turns. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-1aexit/smoke-newdefault; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-1aexit-check.sh $O /home/bcorfman/dev/freytag-forge /home/bcorfman/dev/freytag-forge/bench/variations/astra-p4-1aexit-base.json 1 > $O.out 2>&1; rc=$?; cat $O.out | tail -8; exit $rc'",
+   "verified": "bench ran the 8-turn 1A script for every replicate"
+  },
+  {
+   "key": "smoke-newhosted",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 600,
+   "check_timeout_s": 3300,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live scene-1A exit measurement, arm 'new main, refusal on', 1 replicate(s) of 8 turns. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-1aexit/smoke-newhosted; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-1aexit-check.sh $O /home/bcorfman/dev/freytag-forge /home/bcorfman/dev/freytag-forge/bench/variations/astra-p4-1aexit-hosted.json 1 > $O.out 2>&1; rc=$?; cat $O.out | tail -8; exit $rc'",
+   "verified": "bench ran the 8-turn 1A script for every replicate"
+  }
+ ]
+}
