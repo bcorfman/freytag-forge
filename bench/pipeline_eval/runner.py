@@ -83,14 +83,26 @@ def prepare_state(case: EvalCase, package: StoryPackage) -> RuntimeState:
     return state
 
 
-def run_arm(arm: Arm, cases: tuple[EvalCase, ...], package: StoryPackage) -> dict[str, list[TurnScore]]:
+def run_arm(
+    arm: Arm,
+    cases: tuple[EvalCase, ...],
+    package: StoryPackage,
+    claim_judge: Callable[[str, str], bool] | None = None,
+) -> dict[str, list[TurnScore]]:
     return {
-        case.id: [score_turn(case.expect, observation) for observation in arm.play(case, prepare_state(case, package))]
+        case.id: [
+            score_turn(case.expect, observation, claim_judge=claim_judge)
+            for observation in arm.play(case, prepare_state(case, package))
+        ]
         for case in cases
     }
 
 
-def render_report(results: Mapping[str, Mapping[str, list[TurnScore]]], cases: tuple[EvalCase, ...]) -> str:
+def render_report(
+    results: Mapping[str, Mapping[str, list[TurnScore]]],
+    cases: tuple[EvalCase, ...],
+    claim_judge: Callable[[str, str], bool] | None = None,
+) -> str:
     lines = ["Pipeline evaluation report"]
     by_id = {case.id: case for case in cases}
     all_scores: dict[str, list[TurnScore]] = {}
@@ -101,6 +113,8 @@ def render_report(results: Mapping[str, Mapping[str, list[TurnScore]]], cases: t
             case = by_id[case_id]
             for turn, score in enumerate(scores, 1):
                 lines.append(f"{case.id} [{case.split}] turn {turn}: {score}")
+                if case.expect.prose_must_not_assert and claim_judge is None:
+                    lines.append("prose unchecked (no claim judge)")
             arm_scores.extend(scores)
         all_scores[arm_name] = arm_scores
         lines.append(f"aggregate: {aggregate(arm_scores, arm_name)}")

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from statistics import mean, median
 from typing import Any
@@ -28,12 +29,22 @@ class TurnScore:
     tokens: int
 
 
-def score_turn(expectation: Expectation, observation: TurnObservation) -> TurnScore:
+def score_turn(
+    expectation: Expectation,
+    observation: TurnObservation,
+    *,
+    claim_judge: Callable[[str, str], bool] | None = None,
+) -> TurnScore:
     prose_ok = None
-    if expectation.prose_includes or expectation.prose_excludes:
+    if expectation.prose_must_not_assert and claim_judge is None:
+        prose_ok = None
+    elif expectation.prose_includes or expectation.prose_excludes or expectation.prose_must_not_assert:
         prose_ok = all(text in observation.prose for text in expectation.prose_includes) and all(
             text not in observation.prose for text in expectation.prose_excludes
         )
+        if claim_judge is not None:
+            claims_asserted = [claim_judge(observation.prose, claim) for claim in expectation.prose_must_not_assert]
+            prose_ok = prose_ok and all(not asserted for asserted in claims_asserted)
     reveal_checked = bool(expectation.allowed_reveals or expectation.required_reveals)
     false_reveal = None
     if reveal_checked:

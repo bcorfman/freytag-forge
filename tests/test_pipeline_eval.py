@@ -80,6 +80,51 @@ def test_loading_and_validation(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="non-empty"):
         load_cases(empty)
 
+    unknown_state = _write_json(
+        tmp_path,
+        [
+            {
+                "id": "unknown-state",
+                "category": "x",
+                "split": "diagnostic",
+                "scene": "1A",
+                "commands": ["Search the drawer."],
+                "expect": {"state": {"mystery": "value"}},
+            }
+        ],
+    )
+    with pytest.raises(ValueError, match="unknown state key"):
+        load_cases(unknown_state)
+    unknown_value = _write_json(
+        tmp_path,
+        [
+            {
+                "id": "unknown-value",
+                "category": "x",
+                "split": "diagnostic",
+                "scene": "1A",
+                "commands": ["Search the drawer."],
+                "expect": {"state": {"memory_card": "floating"}},
+            }
+        ],
+    )
+    with pytest.raises(ValueError, match="invalid value for state"):
+        load_cases(unknown_value)
+    accepted_state = _write_json(
+        tmp_path,
+        [
+            {
+                "id": "accepted-state",
+                "category": "x",
+                "split": "diagnostic",
+                "scene": "1A",
+                "commands": ["Search the drawer."],
+                "expect": {"state": {"memory_card": "beneath_michelle_drawer"}},
+            }
+        ],
+    )
+    assert load_cases(accepted_state)[0].expect.state == {"memory_card": "beneath_michelle_drawer"}
+
 
 def _write_json(tmp_path: Path, payload: object) -> Path:
     path = tmp_path / f"case-{len(list(tmp_path.iterdir()))}.json"
@@ -120,6 +165,29 @@ def test_false_reveal_is_independent_of_forced_progress() -> None:
     )
     assert score.false_reveal is True
     assert score.forced_progress is True
+
+
+def test_claim_judge_controls_prose_assertion_and_is_called_per_claim() -> None:
+    expectation = Expectation(prose_must_not_assert=("the truck leaves", "the truck reaches the park"))
+    calls: list[tuple[str, str]] = []
+
+    def judge(prose: str, claim: str) -> bool:
+        calls.append((prose, claim))
+        return claim == "the truck leaves"
+
+    assert score_turn(expectation, TurnObservation(prose="The truck leaves."), claim_judge=judge).prose_correct is False
+    assert calls == [
+        ("The truck leaves.", "the truck leaves"),
+        ("The truck leaves.", "the truck reaches the park"),
+    ]
+    calls.clear()
+    assert (
+        score_turn(
+            expectation, TurnObservation(prose="The truck stays put."), claim_judge=lambda *_: False
+        ).prose_correct
+        is True
+    )
+    assert score_turn(expectation, TurnObservation(prose="The truck stays put.")).prose_correct is None
 
 
 def test_clarification_unchanged_uses_real_snapshots() -> None:
@@ -176,6 +244,12 @@ def test_render_report_lists_successes_and_held_out() -> None:
     assert "diagnostic [diagnostic] turn 1" in report
     assert "held [held_out] turn 1" in report
     assert "reference_correct=True" in report
+
+
+def test_render_report_marks_claim_prose_without_judge() -> None:
+    case = _case(expect=Expectation(prose_must_not_assert=("the truck leaves",)))
+    results = {"stub": {case.id: [score_turn(case.expect, TurnObservation())]}}
+    assert "prose unchecked (no claim judge)" in render_report(results, (case,))
 
 
 def test_smoke_cli_main(capsys: pytest.CaptureFixture[str]) -> None:

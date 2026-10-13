@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bench.pipeline_eval.model import load_cases
+from bench.pipeline_eval.model import STATE_VOCABULARY, load_cases
 from storygame.story_package.loader import load_story_package
 
 ROOT = Path(__file__).parents[1]
@@ -32,6 +32,22 @@ def test_pipeline_fixture_contract_is_grounded_and_split() -> None:
     assert all(
         {case.split for case in cases if case.category == category} == {"diagnostic", "held_out"}
         for category in REQUIRED_CATEGORIES
+    )
+    assert all(
+        len([case for case in cases if case.category == category and case.split == split]) >= 3
+        for category in REQUIRED_CATEGORIES
+        for split in ("diagnostic", "held_out")
+    )
+    assert all(
+        key in STATE_VOCABULARY and value in STATE_VOCABULARY[key]
+        for case in cases
+        if case.expect.state
+        for key, value in case.expect.state.items()
+    )
+    assert all(
+        not any(word in phrase.lower() for word in ("cannot", "can't", "unable", "refuse"))
+        for case in cases
+        for phrase in case.expect.prose_includes
     )
 
     commands_by_split = {

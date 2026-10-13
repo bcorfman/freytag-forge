@@ -1,4 +1,8 @@
-"""Data contracts and JSON loading for pipeline evaluations."""
+"""Data contracts and JSON loading for pipeline evaluations.
+
+``STATE_VOCABULARY`` is the contract arms report against. Mapping it to engine
+facts is a Phase 5 task.
+"""
 
 from __future__ import annotations
 
@@ -9,6 +13,16 @@ from typing import Any, Literal
 
 Split = Literal["diagnostic", "held_out"]
 CreationKind = Literal["none", "descriptive", "interactable", "route_clue_person_capability"]
+
+# This is the contract arms report against. Mapping these labels to engine facts
+# is intentionally deferred to the Phase 5 task; the Phase 3 harness only
+# accepts state claims that have been explicitly grounded here.
+STATE_VOCABULARY: dict[str, tuple[str, ...]] = {
+    "memory_card": ("beneath_michelle_drawer", "with_kristin", "not_with_kristin"),
+    "kristin": ("truck_driver_seat",),
+    "kristin_truck": ("at_workstation", "away"),
+    "kristin_laptop": ("truck_passenger_seat",),
+}
 
 
 def _tuple(value: Any, field: str) -> tuple[Any, ...]:
@@ -26,6 +40,7 @@ class Expectation:
     state: dict[str, str] | None = None
     prose_includes: tuple[str, ...] = ()
     prose_excludes: tuple[str, ...] = ()
+    prose_must_not_assert: tuple[str, ...] = ()
     required_reveals: tuple[str, ...] = ()
     allowed_reveals: tuple[str, ...] = ()
     creation: CreationKind | None = None
@@ -82,12 +97,23 @@ class TurnObservation:
 
 def _expectation(raw: dict[str, Any]) -> Expectation:
     values = dict(raw)
-    for key in ("prose_includes", "prose_excludes", "required_reveals", "allowed_reveals"):
+    for key in (
+        "prose_includes",
+        "prose_excludes",
+        "prose_must_not_assert",
+        "required_reveals",
+        "allowed_reveals",
+    ):
         values[key] = _tuple(values.get(key), key)
     if values.get("state") is not None:
         if not isinstance(values["state"], dict):
             raise ValueError("expect.state must be an object")
         values["state"] = {str(key): str(value) for key, value in values["state"].items()}
+        for key, value in values["state"].items():
+            if key not in STATE_VOCABULARY:
+                raise ValueError(f"unknown state key: {key}")
+            if value not in STATE_VOCABULARY[key]:
+                raise ValueError(f"invalid value for state {key}: {value}")
     return Expectation(**values)
 
 
