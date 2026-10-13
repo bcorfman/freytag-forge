@@ -152,10 +152,11 @@ is never sent to the narrator or exposed in the narrator's serialized context.
 Keep aliases narrow and author-reviewed. A candidate without `delivery_text`
 keeps the legacy narrator-proposal path.
 
-An optional `leak_terms` list is the complete vocabulary that may be blocked
-from narration before the knowledge is earned. If it is absent, the item is
-not reviewed and aliases plus multi-word `must_convey` phrases keep the old
-behavior. An empty list means the item has no guarded vocabulary.
+An optional `leak_terms` list names vocabulary that narration must guard before
+the knowledge is earned. Every multi-word phrase in the list is blocked;
+single-word entries are not enforced. If the field is absent, the old behavior
+remains: aliases and multi-word `must_convey` phrases are guarded. An empty list
+means the item has no guarded vocabulary.
 
 Each `FactDelivery` may also have an optional `cue_text`. A cue is one or two
 short sentences about a concrete thing the player can already see or has

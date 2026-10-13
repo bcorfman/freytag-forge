@@ -8,6 +8,7 @@ from storygame.runtime.contracts import NarrationSegment, ResolvedTurnProposal
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
+from storygame.story_package.loader import guarded_narration_terms
 
 _WORD_BOUNDARY = r"(?<!\w){form}(?!\w)"
 
@@ -87,12 +88,7 @@ class NarrationSafetyValidator:
         allowed_entities.update(self._scene_entity_ids(state.package, scene))
         allowed_entities.update(self._entered_scene_entity_ids(state.package, candidate_state))
         npc_ids = {npc.id for npc in state.package.world.npcs}
-        known_terms = {
-            term.casefold()
-            for terms in indexes.audience_to_known_terms.values()
-            for term in terms
-            if len(term.split()) > 1 and term.casefold() in indexes.leak_term_to_knowledge
-        }
+        known_terms = guarded_narration_terms(indexes)
         handoff_terms = {
             term.casefold()
             for delivery in state.package.deliveries

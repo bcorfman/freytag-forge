@@ -154,9 +154,6 @@ Suggested classes:
 | 1A | forced entry | must_convey_phrase |  |
 | 1A | kitchen floor | knowledge_alias |  |
 | 1A | kitchen floor | must_convey_phrase |  |
-| 1A | taped beneath the drawer | leak_term |  |
-| 1A | taped to the drawer | leak_term |  |
-| 1A | taped under the drawer | leak_term |  |
 | 1A | under the kms drawer | must_convey_phrase |  |
 | 1B | pursuit | knowledge_alias |  |
 | 1B | stranger | knowledge_alias |  |

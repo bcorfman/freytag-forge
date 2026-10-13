@@ -10744,8 +10744,8 @@
     },
     {
       "early": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "earned": {
         "error_code": "",
@@ -10754,15 +10754,15 @@
       "guard_kind": "leak_term",
       "scene": "1A",
       "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "term": "taped beneath the drawer"
     },
     {
       "early": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "earned": {
         "error_code": "",
@@ -10771,15 +10771,15 @@
       "guard_kind": "leak_term",
       "scene": "1A",
       "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "term": "taped to the drawer"
     },
     {
       "early": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "earned": {
         "error_code": "",
@@ -10788,8 +10788,8 @@
       "guard_kind": "leak_term",
       "scene": "1A",
       "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
       },
       "term": "taped under the drawer"
     },
