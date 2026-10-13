@@ -1,7 +1,7 @@
 # Astra review implementation plan
 
 Sources: `.plans/astra-weak-spots-review.md` (material fixes) and `.plans/astra-arch-review.md` (turn pipeline).
-Status: **Phase 0 done (2026-10-12); Phase 1 not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
+Status: **Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); Phase 1 billed runs not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
 
 ## Findings that shape the order
 
@@ -39,6 +39,15 @@ Billed (smoke test first, ringer, one task per run unit):
 Decision rule (from the review): drop or revise the pointer if early B reveals and forced exits do not improve or disclosure failures appear. Revise the alias if `photo`/`photograph` still reject, the full-name guard weakens, or 1B regresses.
 
 Exit: results table in this file; fixes kept, revised or reverted.
+
+### Phase 1 offline result (2026-10-12, no billed calls; 618 staged as `787f56d1`)
+
+- **Suites:** `test_scoped_aliases`, `test_scoped_alias_recall`, `test_leak_terms`, `test_design_review_fixtures`, `test_narration_corpus`, `test_photo_scoped_alias`, `test_1c_reading_pointer`: 35 passed.
+- **Matcher scoring (real `_matches_all`, 1C with `facility_proof` true):** all 11 failing commands match no reveal, as the review said. The 6 controls match as predicted: unique `b_r1` x3, unique `b_r2` x1, none for "Inspect the uniforms.", and the one known `b_r1`+`b_r2` tie for the mixed command. No new tie.
+- **Disclosure matrix:** regenerated output equals the committed matrix. Across `5d45afcf` the only classification changes are `photo` and `photograph` going from `entity_name` to `scoped_alias` (two entries each).
+- **Early 1A sentences (real validator):** "photo", "photograph", "picture" and "Examine Michelle's phone." are accepted. "Michelle's photograph is on the screen." is still rejected (`narration_known_term_leak`): the full-name guard is intact, as intended.
+- **1B scoped aliases:** with the photograph placed, "Inspect the photo.", "Examine the photograph." and the Examine-beneath-the-bench command match `k_sl_1b_a_r2`; "Show the photo to the man.", "Show the man the photograph.", "Ask the man about the photo." and "Show Michelle's photograph to the man." match `k_sl_1b_b_r1`. No 1B regression.
+- **Not done:** a committed early-1A fixed-sentence test. The run above used a scratch probe only; adding it is a code change and goes through Ringer. The billed runs (phone aliases, 1C pointer) need the pre-`5d45afcf` baseline arm described in Phase 0.
 
 ## Phase 2: Warehouse drift (conditional)
 
