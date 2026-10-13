@@ -43,7 +43,7 @@ test("walks 1A then 1B and opens the destination from the final segment", async 
   const openings = [];
   const turns = [];
   await walkScenes({ page: fakePage(), pacing, sceneIds: ["1A", "1B"], exploreFor: (id) => `Search the ${id}.`, ...h, onOpening: (opening) => openings.push(opening), onTurn: (turn) => turns.push(turn) });
-  assert.deepEqual(h.inputs, ["Search the 1A.", "Look for anything Michelle hid deliberately, checking under the drawers and behind her work area for materials she did not want found.", "Search the 1B."]);
+  assert.deepEqual(h.inputs, ["Search the 1A.", "Search under the drawer in her workstation.", "Search the 1B."]);
   assert.equal(openings[0].via, "entry-output");
   assert.equal(openings[1].text, "1B opening.");
   assert.equal(turns[1].text, "departure leaves.");

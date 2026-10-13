@@ -1,0 +1,29 @@
+{
+  "name": "astra-p4-1aexit-readcard",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 8,
+  "runtime": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "1A": [
+      {
+        "name": "s1",
+        "inputs": [
+          "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "Search under the drawer in her workstation.",
+          "Read the files on Michelle's memory card.",
+          "Play the damaged recording on Michelle's memory card.",
+          "Look at the park bench on the card's map.",
+          "Leave the house with the memory card.",
+          "Look around.",
+          "Look around."
+        ]
+      }
+    ]
+  },
+  "fixed_refusal": true,
+  "engine_refusal": true
+}

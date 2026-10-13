@@ -11,11 +11,12 @@
 // on the first turn of 1A failed exactly that way, because the patrol has not
 // visited and marked it until 1A.4.
 export const scenePrompts = {
-  // 1A.1 empty house -> 1A.2 hidden research -> 1A.3 damaged recording -> 1A.4 patrol and gate marker
+  // 1A.1 empty house -> 1A.2 hidden card -> read its files -> 1A.3 damaged recording -> 1A.4 patrol and gate marker
   "1A": [
     "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
-    "Look for anything Michelle hid deliberately, checking under the drawers and behind her work area for materials she did not want found.",
-    "Recover the interrupted message she was recording, and listen to whatever survives of it.",
+    "Search under the drawer in her workstation.",
+    "Read the files on Michelle's memory card.",
+    "Play the damaged recording on Michelle's memory card.",
     "Hide what you found from the official asking questions about Michelle's work, then watch what they do at the gate as they leave.",
   ],
   // 1B.1 dead drop -> 1B.2 the man following -> 1B.3 his warning -> 1B.4 ambush and escape
@@ -84,11 +85,3 @@ export function promptFor(sceneId, usedCount) {
   if (!prompts) throw new Error(`No authored prompts for scene ${sceneId}.`);
   return prompts[usedCount % prompts.length];
 }
-
-// The unclocked spine run advances 60 authored seconds per turn and cannot skip
-// ahead, so it walks the same prompts in authored scene order.
-export const spineJourney = [
-  scenePrompts["1A"][0],
-  "Search the room for anything you have not yet accounted for.",
-  ...Object.values(scenePrompts).flat(),
-];

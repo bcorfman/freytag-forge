@@ -11,11 +11,12 @@ import {
 import { loadPackagePacing } from "./package-clock.js";
 import { buildKnowledgeTimelineReport, recordTurnOutcome } from "./knowledge-timeline-record.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
-import { promptFor, scenePrompts, spineJourney } from "./canon-journey.js";
+import { promptFor, scenePrompts } from "./canon-journey.js";
 
 // Nine scenes needing up to three earned reveals each, with headroom for a turn
 // the model spends on a non-progressing but valid candidate.
 const MAX_CANON_TURNS = 45;
+const SPINE_MAX_TURNS = 120;
 
 // A scene has at most three authored reveals, so more consecutive empty turns than
 // that means the scene is not progressing rather than merely taking its time.
@@ -78,15 +79,22 @@ test("judges free-text roleplay quality with OpenAI @llm-judge", async ({ page }
 });
 
 test("drives the main spine and reports reachability and pressure @spine", async ({ page }) => {
-  test.setTimeout(20 * 60_000);
+  test.setTimeout(45 * 60_000);
   await startSceneSession(page);
   const turns = [];
   const deliveryRecords = [];
-  for (const action of spineJourney) {
-    const payload = await submitTurn(page, action);
+  const promptsUsed = new Map();
+  let sceneId = "1A";
+  for (let index = 0; index < SPINE_MAX_TURNS; index += 1) {
+    const used = promptsUsed.get(sceneId) || 0;
+    const input = promptFor(sceneId, used);
+    const payload = await submitTurn(page, input);
     turns.push({ scene_id: payload.state?.scene_id, elapsed_seconds: payload.state?.story_elapsed_seconds });
     deliveryRecords.push(payload.delivery || {});
     await resolveWarningIfPresent(page);
+    promptsUsed.set(sceneId, used + 1);
+    sceneId = payload.state?.scene_id;
+    if (sceneId === "3C" && (promptsUsed.get(sceneId) || 0) >= scenePrompts[sceneId].length) break;
   }
   const sceneOrder = turns.map((turn) => turn.scene_id).filter(Boolean);
   const delivery = {
