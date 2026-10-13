@@ -173,7 +173,7 @@ items:
   owner: michelle
 - id: workstation_chair
   name: workstation chair
-  aliases: [chair]
+  scoped_aliases: [chair]
   kind: seat
   axes:
   - {overturned: [], upright: [standing]}
@@ -184,7 +184,7 @@ items:
   leave_text: Kristin stood up from the workstation chair.
 - id: park_bench
   name: park bench
-  aliases: [bench]
+  scoped_aliases: [bench]
   kind: seat
   fixed: true
 - id: service_gate
@@ -193,7 +193,8 @@ items:
   fixed: true
 - id: storm_drain
   name: storm drain
-  aliases: [storm-drain, drain, tunnel]
+  aliases: [storm-drain]
+  scoped_aliases: [drain, tunnel]
   fixed: true
 - id: truck_driver_seat
   name: driver's seat

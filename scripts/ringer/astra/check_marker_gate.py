@@ -1,4 +1,5 @@
 """Ringer check helper: fail if the fixed-thing marker gate still depends on the match call's referred names."""
+
 import sys
 
 src = open("storygame/runtime/item_facts.py").read()

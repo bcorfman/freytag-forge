@@ -609,7 +609,9 @@ def check_affordance_map(package: Any, amap: dict[str, Any]) -> list[dict[str, A
                             ),
                             None,
                         )
-                        forms = (entity.name, *entity.aliases) if entity else (affordance["name"],)
+                        forms = (
+                            (entity.name, *entity.aliases, *entity.scoped_aliases) if entity else (affordance["name"],)
+                        )
                         if not any(
                             re.search(r"(?<!\w)" + re.escape(form) + r"(?!\w)", material, re.IGNORECASE)
                             for form in forms

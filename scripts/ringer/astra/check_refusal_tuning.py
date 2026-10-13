@@ -1,4 +1,5 @@
 """Ringer check helper: both classifier questions must carry the tuned wording, and the fresh commands must not leak into source."""
+
 import os
 import sys
 
@@ -15,7 +16,20 @@ if "slid" not in reloc and "slide" not in reloc:
     sys.exit("FAIL relocates_thing lacks the sliding-part use note")
 if "and" not in other or "one verb" not in other:
     sys.exit("FAIL names_other_action lacks the shared-verb note")
-frozen = ["Drag the workstation and my laptop", "Lift the passenger seat and the back door", "Push the driver's seat and my laptop", "Rotate the workstation, then", "Turn the workstation around", "Reposition the passenger seat.", "Roll the workstation toward", "Nudge the back door", "Swing the back door open", "Press on the drawer to check", "Tilt my laptop screen back", "Slide the drawer open, then close"]
+frozen = [
+    "Drag the workstation and my laptop",
+    "Lift the passenger seat and the back door",
+    "Push the driver's seat and my laptop",
+    "Rotate the workstation, then",
+    "Turn the workstation around",
+    "Reposition the passenger seat.",
+    "Roll the workstation toward",
+    "Nudge the back door",
+    "Swing the back door open",
+    "Press on the drawer to check",
+    "Tilt my laptop screen back",
+    "Slide the drawer open, then close",
+]
 tests = open("tests/test_fixed_refusal.py").read()
 leaks = [c for c in frozen if c in src or c in tests]
 if leaks:

@@ -1,4 +1,5 @@
 """Ringer check helper: refuse_fixed_move must accept an in_scope callable and capture must pass the provider scope."""
+
 import sys
 from pathlib import Path
 
