@@ -56,7 +56,10 @@ def test_recall_alias_is_not_a_leak_when_reviewed() -> None:
 
 
 def test_explicit_leak_term_rejects_before_its_item_is_earned() -> None:
-    package = _package_for(leak_terms=("silver tunnel password",))
+    package = _package_for(
+        leak_terms=("silver tunnel password",),
+        must_convey=(("silver tunnel password", "harmless delivery phrase"),),
+    )
 
     state, before, error = _run(package, "Kristin finds the silver tunnel password.")
 
