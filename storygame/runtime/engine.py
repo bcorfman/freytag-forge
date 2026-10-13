@@ -392,11 +392,14 @@ class RuntimeEngine(CanonicalEventMixin):
             replacement = self._refusal_rewrite(proposal, command_text, names, provider_proposal)
             if replacement is not None:
                 label = "repaired" if self.refusal_mode == "repair" else "re-narrated"
+                authored_texts = self._authored_delivery_texts()
+                authored_preserved = any(segment.text in authored_texts for segment in proposal.segments)
                 self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                     update={
                         "capture_issues": (
                             *self.state.last_turn_delivery.capture_issues,
                             *(f"refusal {label} for {name}" for name in names),
+                            *(("refusal kept authored text",) if authored_preserved else ()),
                         )
                     }
                 )
@@ -449,6 +452,14 @@ class RuntimeEngine(CanonicalEventMixin):
             self._refusal_failure_reason = str(error) or type(error).__name__
             return None
 
+    def _authored_delivery_texts(self):
+        return {
+            text
+            for delivery in self.state.package.deliveries
+            for text in (delivery.cue_text, delivery.escalation_text, delivery.fallback_text)
+            if text is not None
+        }
+
     def _build_refusal_payload(self, command_text, names, proposal, provider_proposal=None):
         assembler = getattr(self.provider, "assemble_turn_prompt", None)
         base = assembler(command_text) if callable(assembler) else {"system": "", "user": command_text}
@@ -460,10 +471,15 @@ class RuntimeEngine(CanonicalEventMixin):
             user = render(base["context"]) if callable(render) else str(base["context"])
         provider_proposal = provider_proposal or proposal
         provider_segments = {(segment.kind, segment.text) for segment in provider_proposal.segments}
+        authored_texts = self._authored_delivery_texts()
         original = "\n".join(
             segment.text
             for segment in proposal.segments
-            if (segment.kind, segment.text) in provider_segments and segment.kind in {"narration", "dialogue"}
+            if (
+                (segment.kind, segment.text) in provider_segments
+                and segment.kind in {"narration", "dialogue"}
+                and segment.text not in authored_texts
+            )
         )
         joined = " and ".join(names)
         if self.refusal_mode == "repair":
@@ -495,13 +511,16 @@ class RuntimeEngine(CanonicalEventMixin):
             if previous_prompt is not missing:
                 self.provider.last_prompt = previous_prompt
 
-    @staticmethod
-    def _splice_refusal_segments(proposal, provider_proposal, replacement):
+    def _splice_refusal_segments(self, proposal, provider_proposal, replacement):
         provider_segments = {(segment.kind, segment.text) for segment in provider_proposal.segments}
+        authored_texts = self._authored_delivery_texts()
+        preserved_authored_texts = {segment.text for segment in proposal.segments if segment.text in authored_texts}
+        replacement = tuple(segment for segment in replacement if segment.text not in preserved_authored_texts)
         result = []
         inserted = False
         for segment in proposal.segments:
-            if (segment.kind, segment.text) in provider_segments:
+            replaceable = (segment.kind, segment.text) in provider_segments and segment.text not in authored_texts
+            if replaceable:
                 if not inserted:
                     result.extend(replacement)
                     inserted = True

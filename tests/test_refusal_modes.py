@@ -126,25 +126,43 @@ def test_rewrite_falls_back_when_replacement_fails_validation():
 @pytest.mark.parametrize("mode", ["renarrate", "repair"])
 def test_rewrite_splices_only_provider_segments(mode):
     engine, _calls, _state = _engine(mode, {})
+    cue_text = next(delivery.cue_text for delivery in PACKAGE.deliveries if delivery.cue_text)
     proposal = parse_turn_proposal(
         {
             "segments": [
                 {"kind": "narration", "text": "The drawer leaves the room."},
+                {"kind": "narration", "text": cue_text},
                 {"kind": "narration", "text": "The engine-authored complication survives."},
             ]
         }
     )
     provider_proposal = parse_turn_proposal(
-        {"segments": [{"kind": "narration", "text": "The drawer leaves the room."}]}
+        {
+            "segments": [
+                {"kind": "narration", "text": "The drawer leaves the room."},
+                {"kind": "narration", "text": cue_text},
+            ]
+        }
     )
-    replacement = parse_turn_proposal({"segments": [{"kind": "narration", "text": "It stays put."}]})
+    replacement = parse_turn_proposal(
+        {
+            "segments": [
+                {"kind": "narration", "text": "It stays put."},
+                {"kind": "narration", "text": cue_text},
+            ]
+        }
+    )
 
     result = engine._splice_refusal_segments(proposal, provider_proposal, replacement.segments)
 
     assert [segment.text for segment in result] == [
         "It stays put.",
+        cue_text,
         "The engine-authored complication survives.",
     ]
+    assert result[0].text != cue_text
+    assert [segment.text for segment in result].count("It stays put.") == 1
+    assert [segment.text for segment in result].count(cue_text) == 1
 
 
 def test_extra_refusal_call_discards_pending_item_facts_and_restores_prompt():
