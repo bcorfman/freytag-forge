@@ -1,0 +1,40 @@
+{
+ "name": "astra-p4-refusal-off",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "refusal_mode": "off",
+ "fact_tracking_judge": true,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "s1",
+    "inputs": [
+     "Carry the workstation to the truck."
+    ]
+   },
+   {
+    "name": "s2",
+    "inputs": [
+     "Pick up the back door."
+    ]
+   },
+   {
+    "name": "s3",
+    "inputs": [
+     "Put the workstation inside the truck."
+    ]
+   },
+   {
+    "name": "s4",
+    "inputs": [
+     "Take the workstation outside."
+    ]
+   }
+  ]
+ }
+}

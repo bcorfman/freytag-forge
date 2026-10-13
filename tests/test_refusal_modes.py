@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from storygame.runtime.capture import WorldCapture
+from storygame.runtime.contracts import parse_turn_proposal
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.state import RuntimeState
@@ -120,6 +121,56 @@ def test_rewrite_falls_back_when_replacement_fails_validation():
 
     assert result.narration.endswith("Drawer has not moved.")
     assert len(calls) == 2
+
+
+@pytest.mark.parametrize("mode", ["renarrate", "repair"])
+def test_rewrite_splices_only_provider_segments(mode):
+    engine, _calls, _state = _engine(mode, {})
+    proposal = parse_turn_proposal(
+        {
+            "segments": [
+                {"kind": "narration", "text": "The drawer leaves the room."},
+                {"kind": "narration", "text": "The engine-authored complication survives."},
+            ]
+        }
+    )
+    provider_proposal = parse_turn_proposal(
+        {"segments": [{"kind": "narration", "text": "The drawer leaves the room."}]}
+    )
+    replacement = parse_turn_proposal({"segments": [{"kind": "narration", "text": "It stays put."}]})
+
+    result = engine._splice_refusal_segments(proposal, provider_proposal, replacement.segments)
+
+    assert [segment.text for segment in result] == [
+        "It stays put.",
+        "The engine-authored complication survives.",
+    ]
+
+
+def test_extra_refusal_call_discards_pending_item_facts_and_restores_prompt():
+    state = RuntimeState.bootstrap(PACKAGE)
+
+    class Provider:
+        last_prompt = "original prompt"
+        _pending_item_facts = {"drawer": {"place": "truck"}}
+        _pending_item_facts_present = True
+
+        def discard_pending_item_facts(self):
+            self._pending_item_facts = None
+            self._pending_item_facts_present = False
+
+        def __call__(self, _command):
+            self.last_prompt = "refusal prompt"
+            return {"segments": [{"kind": "narration", "text": "It stays put."}]}
+
+    provider = Provider()
+    engine = RuntimeEngine(state, provider, refusal_mode="renarrate")
+
+    engine._call_refusal_provider({"user": "rewrite this"})
+
+    assert provider._pending_item_facts is None
+    assert provider._pending_item_facts_present is False
+    assert provider.last_prompt == "original prompt"
 
 
 def test_invalid_refusal_mode_raises():

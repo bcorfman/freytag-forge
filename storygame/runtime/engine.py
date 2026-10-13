@@ -255,7 +255,7 @@ class RuntimeEngine(CanonicalEventMixin):
                     ),
                 }
             )
-            proposal, refusal_segment = self._handle_refusal(proposal, capture_record, command_text)
+            proposal, refusal_segment = self._handle_refusal(proposal, capture_record, command_text, provider_proposal)
             newly = (
                 set(self.validator.unsatisfied_dependencies(self.state.current_scene_id, self.state.facts)) - already
             )
@@ -384,12 +384,12 @@ class RuntimeEngine(CanonicalEventMixin):
         verb = "has" if len(names) == 1 else "have"
         return NarrationSegment(kind="narration", text=f"{joined} {verb} not moved.")
 
-    def _handle_refusal(self, proposal, capture_record, command_text):
+    def _handle_refusal(self, proposal, capture_record, command_text, provider_proposal=None):
         names = self._refusal_names(capture_record)
         if not names:
             return proposal, None
         if self.refusal_mode in {"repair", "renarrate"}:
-            replacement = self._refusal_rewrite(proposal, command_text, names)
+            replacement = self._refusal_rewrite(proposal, command_text, names, provider_proposal)
             if replacement is not None:
                 label = "repaired" if self.refusal_mode == "repair" else "re-narrated"
                 self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
@@ -431,22 +431,25 @@ class RuntimeEngine(CanonicalEventMixin):
         )
         return proposal, refusal_segment
 
-    def _refusal_rewrite(self, proposal, command_text, names):
+    def _refusal_rewrite(self, proposal, command_text, names, provider_proposal=None):
         try:
-            payload = self._build_refusal_payload(command_text, names, proposal)
+            provider_proposal = provider_proposal or proposal
+            payload = self._build_refusal_payload(command_text, names, proposal, provider_proposal)
             response = self._call_refusal_provider(payload)
             replacement = parse_turn_proposal(response)
             segments = tuple(segment for segment in replacement.segments if segment.kind in {"narration", "dialogue"})
             if not segments:
                 raise RuntimeContractError("replacement contains no narration or dialogue")
-            candidate = proposal.model_copy(update={"segments": self._splice_refusal_segments(proposal, segments)})
+            candidate = proposal.model_copy(
+                update={"segments": self._splice_refusal_segments(proposal, provider_proposal, segments)}
+            )
             self.narration_validator.validate(self.state, self.state, candidate, self.projector, command_text)
             return candidate
         except Exception as error:  # fallback is intentionally local to this arm
             self._refusal_failure_reason = str(error) or type(error).__name__
             return None
 
-    def _build_refusal_payload(self, command_text, names, proposal):
+    def _build_refusal_payload(self, command_text, names, proposal, provider_proposal=None):
         assembler = getattr(self.provider, "assemble_turn_prompt", None)
         base = assembler(command_text) if callable(assembler) else {"system": "", "user": command_text}
         if not isinstance(base, dict):
@@ -455,7 +458,13 @@ class RuntimeEngine(CanonicalEventMixin):
         if user is None and "context" in base:
             render = getattr(self.provider, "_section_user_prompt", None)
             user = render(base["context"]) if callable(render) else str(base["context"])
-        original = "\n".join(segment.text for segment in proposal.segments if segment.kind in {"narration", "dialogue"})
+        provider_proposal = provider_proposal or proposal
+        provider_segments = {(segment.kind, segment.text) for segment in provider_proposal.segments}
+        original = "\n".join(
+            segment.text
+            for segment in proposal.segments
+            if (segment.kind, segment.text) in provider_segments and segment.kind in {"narration", "dialogue"}
+        )
         joined = " and ".join(names)
         if self.refusal_mode == "repair":
             instruction = (
@@ -472,24 +481,34 @@ class RuntimeEngine(CanonicalEventMixin):
 
     def _call_refusal_provider(self, payload):
         self.refusal_extra_calls += 1
-        request = getattr(self.provider, "_request_allowing_one_transient_retry", None)
-        if callable(request):
-            return request(payload)
-        return self.provider(payload["user"])
+        missing = object()
+        previous_prompt = getattr(self.provider, "last_prompt", missing)
+        try:
+            request = getattr(self.provider, "_request_allowing_one_transient_retry", None)
+            if callable(request):
+                return request(payload)
+            return self.provider(payload["user"])
+        finally:
+            discard = getattr(self.provider, "discard_pending_item_facts", None)
+            if callable(discard):
+                discard()
+            if previous_prompt is not missing:
+                self.provider.last_prompt = previous_prompt
 
     @staticmethod
-    def _splice_refusal_segments(proposal, replacement):
+    def _splice_refusal_segments(proposal, provider_proposal, replacement):
+        provider_segments = {(segment.kind, segment.text) for segment in provider_proposal.segments}
         result = []
         inserted = False
         for segment in proposal.segments:
-            if segment.kind in {"narration", "dialogue"}:
+            if (segment.kind, segment.text) in provider_segments:
                 if not inserted:
                     result.extend(replacement)
                     inserted = True
             else:
                 result.append(segment)
         if not inserted:
-            result.extend(replacement)
+            raise RuntimeContractError("no provider segments")
         return tuple(result)
 
     def _record_attempt(
@@ -723,7 +742,9 @@ class RuntimeEngine(CanonicalEventMixin):
                     ),
                 }
             )
-            pending, refusal_segment = self._handle_refusal(pending, capture_record, pending_capture.get("command", ""))
+            pending, refusal_segment = self._handle_refusal(
+                pending, capture_record, pending_capture.get("command", ""), pending
+            )
         else:
             refusal_segment = None
         self._record_turn(pending)
