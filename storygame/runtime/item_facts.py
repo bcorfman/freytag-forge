@@ -746,6 +746,28 @@ class ItemFactsProvider(CloudflareTurnProvider):
         npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
         return _character_label(self.state.facts, npc, world.name(entity_id), shortest=shortest) if npc else None
 
+    def _existing_unnamed_person(self, world, key):
+        wanted = _normalize_refer(key).split()
+        if not wanted:
+            return None
+        protagonist_id = self.state.package.world.protagonist_id
+        protagonist_area = world.area(protagonist_id)
+        matches = []
+        for npc in self.state.package.world.npcs:
+            if (
+                npc.id == protagonist_id
+                or not npc.unnamed_label
+                or not npc.named_by
+                or _true(self.state.facts, npc.named_by)
+                or not self._name_in_scene_scope(world, npc.name)
+                or world.area(npc.id) != protagonist_area
+            ):
+                continue
+            label_words = _normalize_refer(npc.unnamed_label).split()
+            if label_words[: len(wanted)] == wanted:
+                matches.append(npc.id)
+        return matches[0] if len(matches) == 1 else None
+
     def _referred_lines_for_command(self, player_input):
         world = self._world()
         protagonist_id = self.state.package.world.protagonist_id
@@ -1454,17 +1476,23 @@ class ItemFactsProvider(CloudflareTurnProvider):
                             if target != world.name(entity_id):
                                 engine_resolutions[target] = world.name(entity_id)
             if entity_id is None:
-                kind = new_kind(key, reply_key=True)
-                player_area = world.area(protagonist_id)
-                parent = player_area if kind == "area" else None
-                created = world.create(key, parent=parent, kind=kind, owner=item["owner_id"])
-                if not created.ok:
-                    issues.append(f"item_facts for {key!r} could not be created: {created.reason}")
-                    continue
-                entity_id = created.id
-                resolutions[key] = "new"
-                if key in player_character_names:
-                    place_ids[key] = entity_id
+                existing_id = self._existing_unnamed_person(world, key)
+                if existing_id is not None:
+                    entity_id = existing_id
+                    resolutions[key] = world.name(entity_id)
+                    issues.append(f"item_facts name {key!r} mapped to existing {world.name(entity_id)!r}; not created")
+                else:
+                    kind = new_kind(key, reply_key=True)
+                    player_area = world.area(protagonist_id)
+                    parent = player_area if kind == "area" else None
+                    created = world.create(key, parent=parent, kind=kind, owner=item["owner_id"])
+                    if not created.ok:
+                        issues.append(f"item_facts for {key!r} could not be created: {created.reason}")
+                        continue
+                    entity_id = created.id
+                    resolutions[key] = "new"
+                    if key in player_character_names:
+                        place_ids[key] = entity_id
             elif item["candidate"] and key not in resolutions:
                 resolutions[key] = world.name(entity_id)
                 if key != world.name(entity_id):

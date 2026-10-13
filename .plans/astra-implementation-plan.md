@@ -1,7 +1,7 @@
 # Astra review implementation plan
 
 Sources: `.plans/astra-weak-spots-review.md` (material fixes) and `.plans/astra-arch-review.md` (turn pipeline).
-Status: **Phase 3 done offline (2026-10-13, branch `astra-phase3-eval-harness`, not merged); Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); phone-alias probe run, inconclusive (2026-10-13); 1C pointer already measured (see its section; no new run); hosted 1A-1B phone smoke not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
+Status: **Phase 4 item 1 done offline (2026-10-13, branch `astra-phase4-cheap-fixes`, not merged); Phase 3 done offline (2026-10-13, branch `astra-phase3-eval-harness`, not merged); Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); phone-alias probe run, inconclusive (2026-10-13); 1C pointer already measured (see its section; no new run); hosted 1A-1B phone smoke not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
 
 ## Findings that shape the order
 
@@ -97,6 +97,13 @@ Each is small, tested alone and measured before the next. These do not need the 
 4. **Keep possession, knowledge and concealment distinct.** Do not reuse the discovery-hidden state for concealment of an already-found item.
 
 Exit: each item has a bench result; regressions checked against Phase 3's set.
+
+### Phase 4 item 1 result (2026-10-13, no billed calls; Ringer `astra-p4-1-unknown-identity`, pass on attempt 1)
+
+- **Cause of the duplicate man:** Brandon stays unnamed until `brandon_identified`, and the engine knows him as `unnamed_label` "the man watching Kristin". A narrated "man" did not resolve to that label, the match call said "new", and `apply_item_facts` created a second man.
+- **Fix:** `ItemFactsProvider._existing_unnamed_person` (`storygame/runtime/item_facts.py`). Before creating, a key whose words are a leading word-prefix of exactly one still-unnamed, in-scene, same-area character's unnamed label maps to that character, with an issue note and no creation. Deterministic, no LLM call. Ambiguous matches, longer descriptions ("man in the hoodie"), unrelated names, named Brandon and the protagonist all keep the old behaviour.
+- **Tests:** `tests/test_unknown_identity_not_creation.py` (5 cases, real package, scene 1B; the knock-out is asserted on the `conscious` axis); neighbouring item-fact suites 285 passed.
+- **Limit:** this covers characters that declare `unnamed_label`; any other unresolved-but-existing person is not covered. Live measurement against the old r1 failure is not run (needs a hosted run); Phase 3's unresolved-NPC case is the offline check. Items 2-4 not started.
 
 ## Phase 5: Three-arm comparison
 
