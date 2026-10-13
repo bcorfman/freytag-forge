@@ -153,6 +153,7 @@ items:
   - {closed: [shut], open: []}
   use_seated: true
   take_text: Kristin picked up her laptop.
+  notice_text: Kristin's laptop sat on the passenger seat.
 - id: michelle_drawer
   name: drawer
   fixed: true

@@ -2044,7 +2044,7 @@ def test_turn_rules_derive_owner_name_from_the_package() -> None:
             id="turn_rules_include_authored_item_placement",
         ),
         pytest.param(
-            "Kristin's laptop is in Kristin's truck outside the house.",
+            "Kristin's laptop is on the passenger seat of Kristin's truck.",
             id="turn_rules_include_kristins_laptop_placement",
         ),
     ],

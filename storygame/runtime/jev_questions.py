@@ -37,6 +37,20 @@ def uses_thing(ask, command: str, thing_name: str) -> bool | None:
     return _answer(ask, {"command": command, "thing": thing_name}, questions, "uses_thing")
 
 
+def goes_to_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
+    questions = {
+        "goes_to_vehicle": {
+            "type": "noul",
+            "instructions": "Decide whether the command takes the player to, into, or in control of the vehicle.",
+            "criteria": {
+                "true": "The command means going to the vehicle, getting into it, or driving it.",
+                "false": "The command only looks at, touches, or talks about the vehicle, or leaves it.",
+            },
+        }
+    }
+    return _answer(ask, {"command": command, "vehicle": vehicle_name}, questions, "goes_to_vehicle")
+
+
 def moves_thing(ask, command: str, thing_name: str) -> bool | None:
     questions = {
         "moves_thing": {

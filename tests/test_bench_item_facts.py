@@ -244,10 +244,10 @@ def test_structural_facts_do_not_change_narrator_view():
     provider = _seeded_provider()
     structural = provider.facts_for_names(["Kristin's laptop"], structural=True)
 
-    assert structural["Kristin's laptop"]["place"] == "Kristin's truck"
+    assert structural["Kristin's laptop"]["place"] == "passenger seat"
     assert (
         provider.facts_for_names(["Kristin's laptop"])["Kristin's laptop"]["place"]
-        == "in Kristin's truck outside the house"
+        == "on the passenger seat of Kristin's truck"
     )
 
 
@@ -282,7 +282,7 @@ def test_authored_text_remains_for_thing_not_held_by_person():
         seed_from_package=True,
     )
 
-    assert provider.item_facts["Kristin's laptop"]["place"] == "in Kristin's truck outside the house"
+    assert provider.item_facts["Kristin's laptop"]["place"] == "on the passenger seat of Kristin's truck"
 
 
 def test_revealed_hidden_thing_can_move_without_being_hidden_again():
@@ -1495,10 +1495,10 @@ def test_echo_keeps_authored_place_text(monkeypatch):
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda _provider, payload: calls.append(payload))
     provider = _seeded_provider()
     facts, issues = provider.apply_item_facts(
-        {"Kristin's laptop": {"place": "Kristin's truck"}}, player_input="Look at my laptop."
+        {"Kristin's laptop": {"place": "passenger seat"}}, player_input="Look at my laptop."
     )
     assert not issues
-    assert facts["Kristin's laptop"]["place"] == "in Kristin's truck outside the house"
+    assert facts["Kristin's laptop"]["place"] == "on the passenger seat of Kristin's truck"
     assert calls == []
 
 
@@ -2392,7 +2392,7 @@ def test_package_seed_scene_1a_matches_authored_things():
     assert things == {
         "Kristin": {"place": "Michelle's house", "condition": []},
         "Michelle's phone": {"place": "on the kitchen floor", "condition": []},
-        "Kristin's laptop": {"place": "in Kristin's truck outside the house", "condition": ["closed"]},
+        "Kristin's laptop": {"place": "on the passenger seat of Kristin's truck", "condition": ["closed"]},
         "drawer": {
             "place": "in Michelle's workstation",
             "condition": ["closed"],

@@ -98,7 +98,7 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
         "turns_since_scene_entry": 0,
         "things": {
             "Michelle's phone": {"place": "kitchen", "held_by": None},
-            "Kristin's laptop": {"place": "Kristin's truck", "held_by": None},
+            "Kristin's laptop": {"place": "passenger seat", "held_by": None},
             "drawer": {"place": "workstation", "held_by": None},
             "back door": {"place": "kitchen", "held_by": None},
             "Kristin's truck": {"place": "outside the house", "held_by": None},

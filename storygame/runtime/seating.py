@@ -105,6 +105,57 @@ def seat_before_use(world, package, player_input: str, uses_thing: Callable[[str
     return SeatingResult(player_input, (), asked, tuple(issues))
 
 
+def board_vehicle(
+    world, package, player_input: str, goes_to_vehicle: Callable[[str, str], bool | None]
+) -> SeatingResult:
+    protagonist = package.protagonist_id
+    items = {item.id: item for item in package.world.items}
+    candidates = []
+    for item in package.world.items:
+        if not world.is_a(item.id, "vehicle") or not world.is_visible(item.id):
+            continue
+        seats = sorted(
+            seat.id for seat in package.world.items if seat.seat_for == item.id and world.is_visible(seat.id)
+        )
+        if not seats:
+            continue
+        parent = world.parent(protagonist)
+        if parent and world.schema.entities.get(parent) and world.schema.entities[parent].seat_for == item.id:
+            continue
+        candidates.append((item.id, seats))
+
+    asked = False
+    issues: list[str] = []
+    for vehicle_id, seats in sorted(candidates):
+        if not _command_names_thing(player_input, world.names(vehicle_id)):
+            continue
+        answer = goes_to_vehicle(player_input, world.name(vehicle_id))
+        asked = True
+        if answer is None:
+            issues.append(f"boarding question unanswered for '{world.name(vehicle_id)}'")
+            continue
+        if answer is False:
+            continue
+        seat = seats[0]
+        result = world.move(protagonist, seat)
+        if not result.ok:
+            issues.append(f"could not move protagonist into '{world.name(seat)}': {result.reason}")
+            return SeatingResult(player_input, (), asked, tuple(issues))
+        steps = [items[seat].enter_text]
+        for item_id in sorted(items):
+            item = items[item_id]
+            if (
+                item_id != protagonist
+                and world.is_visible(item_id)
+                and world.holder(item_id) != protagonist
+                and item.notice_text
+                and vehicle_id in world.chain(item_id)
+            ):
+                steps.append(item.notice_text)
+        return SeatingResult(" ".join((*steps, player_input)), tuple(steps), asked, tuple(issues))
+    return SeatingResult(player_input, (), asked, tuple(issues))
+
+
 def stand_before_leave(
     world, package, player_input: str, needs_to_stand: Callable[[str, str, tuple[str, ...]], bool | None]
 ) -> SeatingResult:
