@@ -1,0 +1,18 @@
+{
+ "run_name": "astra-p4-2-measure-n10",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure-n10",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "n10-clause-rerun",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 2,
+   "timeout_s": 300,
+   "check_timeout_s": 3600,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check reruns the live refusal measurement for the 'clause' arm on two fixed-thing commands (s3, s4) in scene 1A, 10 replicates each, after a network outage cut the first attempt. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh /home/bcorfman/dev/ringer-work/astra-p4-2-measure/n10b 10 clause 's3 s4' > /home/bcorfman/dev/ringer-work/astra-p4-2-measure/n10b.out 2>&1; rc=$?; tail -3 /home/bcorfman/dev/ringer-work/astra-p4-2-measure/n10b.out; exit $rc",
+   "verified": "clause arm s3 and s4 completed 10 replicates"
+  }
+ ]
+}

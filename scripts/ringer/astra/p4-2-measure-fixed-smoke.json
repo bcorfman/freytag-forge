@@ -1,0 +1,18 @@
+{
+ "run_name": "astra-p4-2-measure-fixed",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure-fixed",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "smoke-mark",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live fixed-thing marker measurement, arm 'fixedmark', scripts s1 s2 s3 s4 c1 c2 c3, 1 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/fixed-smoke; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 1 fixedmark \"s1 s2 s3 s4 c1 c2 c3\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  }
+ ]
+}

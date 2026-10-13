@@ -1,0 +1,20 @@
+{
+ "run_name": "astra-p4-2-fixed-article",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-fixed-article",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "p42art",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "max_attempts": 2,
+   "timeout_s": 1800,
+   "check_timeout_s": 900,
+   "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files ONLY under the current working directory; NEVER edit anything under /home/bcorfman/dev/freytag-forge directly. Do NOT git commit, do NOT git add -A, do NOT touch .git. Write short notes to /home/bcorfman/dev/ringer-work/astra-p4-2-fixed-article-notes/notes.md (create the directory; this exact path).\n\nOWNED FILES: storygame/runtime/fixed_refusal.py (edit), tests/test_fixed_refusal.py (edit). Edit nothing else; do NOT edit storygame/runtime/taking.py.\n\nDEFECT: refuse_fixed_move builds its sentence with `_with_article` imported from storygame/runtime/taking.py. That helper leaves any name containing \"'s \" without an article (it is meant for owner names like \"Michelle's phone\"), so the driver's seat produces the broken sentence \"Kristin tried to move driver's seat. It is fixed in place and did not move.\"\n\nFIX: in fixed_refusal.py add a module-level function `_fixed_article_name(name: str) -> str` and use it for the sentence instead of `_with_article`. Rule: if the name's first character is lowercase, return f\"the {name}\" (so \"driver's seat\" gives \"the driver's seat\", \"workstation\" gives \"the workstation\", \"back door\" gives \"the back door\"); otherwise (a capitalised name such as \"Michelle's phone\" or \"Kristin's truck\") return `_with_article(name)` unchanged (keep importing it for that branch). Everything else stays the same; the sentence template is unchanged: f\"{protagonist} tried to move {name}. It is fixed in place and did not move.\"\n\nTESTS (edit tests/test_fixed_refusal.py): unit-test `_fixed_article_name` for the four names above; update any existing expected sentence that involved the driver's seat to the new text 'Kristin tried to move the driver's seat. It is fixed in place and did not move.'; keep every other assertion.\n\nHOW TO RUN: confirm `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` prints a path inside the cwd. Tests: PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_fixed_refusal.py tests/test_runtime_capture.py tests/test_bench_runtime_mode.py. Ruff: /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check --fix and -m ruff format on both files. Reply with the files changed.\n",
+   "check": "bash -c 'set -u; N=/home/bcorfman/dev/ringer-work/astra-p4-2-fixed-article-notes/notes.md; [ -s $N ] || { echo FAIL no notes at the exact path; exit 1; }; git add -A -- storygame tests; bad=$(git status --porcelain | grep -v -E \"^[AM]  (storygame/runtime/fixed_refusal.py|tests/test_fixed_refusal.py)$\" || true); [ -z \"$bad\" ] || { echo \"FAIL stray files:\"; echo \"$bad\"; exit 1; }; OUT=/home/bcorfman/dev/ringer-work/astra-patches; mkdir -p $OUT; git diff --cached > $OUT/p4-2-fixed-article.patch; [ -s $OUT/p4-2-fixed-article.patch ] || { echo FAIL empty patch; exit 1; }; export PYTHONPATH=$PWD TMPDIR=/tmp; unset CLOUDFLARE_WORKER_URL CLOUDFLARE_WORKER_TOKEN; PY=/home/bcorfman/dev/freytag-forge/.venv/bin/python; $PY /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_fixed_refusal_article.py || exit 1; $PY -m pytest -q -p no:cacheprovider --no-cov tests/test_fixed_refusal.py tests/test_runtime_capture.py tests/test_bench_runtime_mode.py 2>&1 | tail -15; [ ${PIPESTATUS[0]} -eq 0 ] || { echo FAIL tests; exit 1; }; F=$(git diff --cached --name-only); $PY -m ruff check $F && $PY -m ruff format --check $F || exit 1; echo PASS'",
+   "verified": "refusal sentence says 'the driver's seat'; owner-named things unchanged; tests and ruff pass"
+  }
+ ]
+}

@@ -1,0 +1,113 @@
+{
+ "name": "astra-p4-refusal-fe2eng",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "g1",
+    "inputs": [
+     "Hoist the workstation overhead."
+    ]
+   },
+   {
+    "name": "g2",
+    "inputs": [
+     "Lift the passenger seat briefly, then set it back."
+    ]
+   },
+   {
+    "name": "g3",
+    "inputs": [
+     "Remove the back door from its frame."
+    ]
+   },
+   {
+    "name": "g4",
+    "inputs": [
+     "Pull the drawer completely free of the workstation."
+    ]
+   },
+   {
+    "name": "g5",
+    "inputs": [
+     "Carry the driver's seat into the kitchen."
+    ]
+   },
+   {
+    "name": "g6",
+    "inputs": [
+     "Move the workstation beside the truck."
+    ]
+   },
+   {
+    "name": "g7",
+    "inputs": [
+     "Slide the workstation across the kitchen."
+    ]
+   },
+   {
+    "name": "g8",
+    "inputs": [
+     "Push the passenger seat out of the truck."
+    ]
+   },
+   {
+    "name": "g9",
+    "inputs": [
+     "Carry the drawer and the passenger seat into the kitchen."
+    ]
+   },
+   {
+    "name": "g10",
+    "inputs": [
+     "Lay my laptop on the workstation."
+    ]
+   },
+   {
+    "name": "g11",
+    "inputs": [
+     "Put my laptop on the passenger seat."
+    ]
+   },
+   {
+    "name": "g12",
+    "inputs": [
+     "Collect my laptop from the workstation."
+    ]
+   },
+   {
+    "name": "g13",
+    "inputs": [
+     "Slide the drawer closed."
+    ]
+   },
+   {
+    "name": "g14",
+    "inputs": [
+     "Pull the back door shut."
+    ]
+   },
+   {
+    "name": "g15",
+    "inputs": [
+     "Hoist the workstation, then open my laptop."
+    ]
+   },
+   {
+    "name": "g16",
+    "inputs": [
+     "Carry the drawer and my laptop into the truck."
+    ]
+   }
+  ]
+ },
+ "refusal_mode": "off",
+ "fixed_refusal": true,
+ "engine_refusal": true
+}

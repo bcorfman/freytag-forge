@@ -1,0 +1,40 @@
+{
+ "run_name": "astra-p4-2-measure-fixed",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure-fixed",
+ "max_parallel": 2,
+ "tasks": [
+  {
+   "key": "n10-mark",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live fixed-thing marker measurement, arm 'fixedmark', scripts s1 s2 s3 s4, 10 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/fixed-n10; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 10 fixedmark \"s1 s2 s3 s4\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "n5-mark-ctrl",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live fixed-thing marker measurement, arm 'fixedmark', scripts c1 c2 c3, 5 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/fixed-ctrl-mark; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 5 fixedmark \"c1 c2 c3\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "n5-base-ctrl",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live fixed-thing marker measurement, arm 'ctrlbase', scripts c1 c2 c3, 5 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/fixed-ctrl-base; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 5 ctrlbase \"c1 c2 c3\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  }
+ ]
+}

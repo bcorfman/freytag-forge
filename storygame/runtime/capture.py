@@ -6,10 +6,19 @@ import copy
 from collections.abc import Callable
 from typing import Any
 
+from storygame.runtime.fixed_refusal import fixed_refusal_text, refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
-from storygame.runtime.jev_questions import goes_to_vehicle, moves_thing, needs_to_stand, same_or_part, uses_thing
-from storygame.runtime.seating import board_vehicle, seat_before_use, stand_before_leave
-from storygame.runtime.taking import take_before_put
+from storygame.runtime.jev_questions import (
+    goes_to_vehicle,
+    moves_thing,
+    names_other_action,
+    needs_to_stand,
+    relocates_thing,
+    same_or_part,
+    uses_thing,
+)
+from storygame.runtime.seating import SeatingResult, board_vehicle, seat_before_use, stand_before_leave
+from storygame.runtime.taking import TakingResult, take_before_put
 from storygame.runtime.world_model import apply_scene_placements
 
 
@@ -30,9 +39,18 @@ def _json_value(value):
 
 
 class WorldCapture:
-    def __init__(self, provider: ItemFactsProvider, ask: Callable[[object, object], dict | None]) -> None:
+    def __init__(
+        self,
+        provider: ItemFactsProvider,
+        ask: Callable[[object, object], dict | None],
+        fixed_refusal: bool = False,
+        *,
+        engine_refusal: bool = False,
+    ) -> None:
         self.provider = provider
         self.ask = ask
+        self.fixed_refusal = fixed_refusal
+        self.engine_refusal = engine_refusal
         self._command = ""
         self.last_before: dict[str, Any] | None = None
         self.last_after: dict[str, Any] | None = None
@@ -42,24 +60,58 @@ class WorldCapture:
         package = self.provider.state.package
         world = self.provider._world()
         adapter = _ask_adapter(self.ask)
-        standing = stand_before_leave(world, package, command, lambda c, s, r: needs_to_stand(adapter, c, s, r))
-        taking = take_before_put(world, package, command, lambda c, t: moves_thing(adapter, c, t))
-        boarding = board_vehicle(world, package, command, lambda c, v: goes_to_vehicle(adapter, c, v))
-        seating = (
-            seat_before_use(world, package, command, lambda c, t: uses_thing(adapter, c, t))
-            if not standing.steps and not boarding.steps
+        fixed = (
+            refuse_fixed_move(
+                world,
+                package,
+                command,
+                lambda c, t: relocates_thing(adapter, c, t),
+                in_scope=lambda item_id: self.provider._name_in_scene_scope(world, world.name(item_id)),
+            )
+            if self.fixed_refusal
             else None
         )
+        refusal_issues = list(fixed.issues if fixed else ())
+        other_action = False
+        if self.engine_refusal and fixed and fixed.refused:
+            joined = " and ".join(fixed.refused)
+            other_action = names_other_action(adapter, command, joined)
+            if other_action is None:
+                refusal_issues.append("other-action question unanswered")
+        engine_refusal = (
+            fixed_refusal_text(package, fixed.refused, other_action)
+            if self.engine_refusal and fixed and fixed.refused
+            else ""
+        )
+        if fixed and fixed.refused:
+            standing = SeatingResult(command, (), False, ())
+            taking = TakingResult(command, (), False, ())
+            boarding = SeatingResult(command, (), False, ())
+            seating = SeatingResult(command, (), False, ())
+        else:
+            standing = stand_before_leave(world, package, command, lambda c, s, r: needs_to_stand(adapter, c, s, r))
+            taking = take_before_put(world, package, command, lambda c, t: moves_thing(adapter, c, t))
+            boarding = board_vehicle(world, package, command, lambda c, v: goes_to_vehicle(adapter, c, v))
+            seating = (
+                seat_before_use(world, package, command, lambda c, t: uses_thing(adapter, c, t))
+                if not standing.steps and not boarding.steps
+                else None
+            )
+        fixed_steps = fixed.steps if fixed else ()
         boarding_steps = boarding.steps
         seating_steps = seating.steps if seating else ()
-        provider_steps = (*standing.steps, *boarding_steps, *taking.steps, *seating_steps)
+        provider_steps = (*fixed_steps, *standing.steps, *boarding_steps, *taking.steps, *seating_steps)
         self.provider.prior_steps = provider_steps
         match_info = {}
-        if self.provider.item_facts_mode == "single_call":
+        if self.provider.item_facts_mode == "single_call" and not engine_refusal:
             match_info = self.provider.prepare_turn(command)
         record = {
             "command": " ".join((*provider_steps, command)),
             "steps": list(provider_steps),
+            "fixed_refusal_steps": list(fixed_steps),
+            "fixed_refusal_asked": fixed.asked if fixed else False,
+            "fixed_refusal_issues": refusal_issues,
+            "engine_refusal": engine_refusal,
             "standing_steps": list(standing.steps),
             "boarding_steps": list(boarding_steps),
             "taking_steps": list(taking.steps),
@@ -77,8 +129,10 @@ class WorldCapture:
                 "boarding": boarding.asked,
                 "taking": taking.asked,
                 "seating": seating.asked if seating else False,
+                "fixed_refusal": fixed.asked if fixed else False,
             },
             "issues": [
+                *refusal_issues,
                 *standing.issues,
                 *boarding.issues,
                 *taking.issues,
@@ -120,6 +174,7 @@ class WorldCapture:
         record = {
             "issues": _json_value(issues),
             "unplaced": _json_value(self.provider.last_item_facts_unplaced()),
+            "refused": _json_value(self.provider.last_item_facts_refused()),
             "changed": sorted(self.provider._changed_last_turn),
             "raw": _json_value(raw),
             "match_info": _json_value(self.provider.last_item_facts_match()),
@@ -148,6 +203,7 @@ class WorldCapture:
             "_match_offered_names",
             "_fact_effect_snapshot",
             "_last_item_facts_unplaced",
+            "_last_item_facts_refused",
             "_last_item_facts_match",
         )
         result = {name: _json_value(getattr(self.provider, name)) for name in names}
@@ -169,6 +225,7 @@ class WorldCapture:
             "_match_offered_names",
             "_fact_effect_snapshot",
             "_last_item_facts_unplaced",
+            "_last_item_facts_refused",
             "_last_item_facts_match",
         ):
             if name in context:
@@ -183,6 +240,7 @@ class WorldCapture:
                     "_referred_names",
                     "_referred_lines",
                     "_last_item_facts_unplaced",
+                    "_last_item_facts_refused",
                 }:
                     value = value or []
                 setattr(self.provider, name, value)
@@ -209,7 +267,7 @@ def capture_prompt_variant(package) -> dict[str, Any]:
     }
 
 
-def build_capture_provider(state) -> ItemFactsProvider:
+def build_capture_provider(state, *, mark_fixed=False) -> ItemFactsProvider:
     return ItemFactsProvider.from_environment(
         state,
         prompt_variant=capture_prompt_variant(state.package),
@@ -217,4 +275,5 @@ def build_capture_provider(state) -> ItemFactsProvider:
         mode="single_call",
         seed_from_package=True,
         held_by=True,
+        mark_fixed=mark_fixed,
     )

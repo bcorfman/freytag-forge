@@ -71,6 +71,55 @@ def moves_thing(ask, command: str, thing_name: str) -> bool | None:
     return _answer(ask, {"command": command, "thing": thing_name}, questions, "moves_thing")
 
 
+def relocates_thing(ask, command: str, thing_name: str) -> bool | None:
+    questions = {
+        "relocates_thing": {
+            "type": "noul",
+            "instructions": (
+                "Relocating a thing means the command lifts it, picks it up, carries it, drags it, pushes it, "
+                "slides it, takes it out or off of where it is, removes it, detaches it, or puts it somewhere else. "
+                "It also means it tilts it, tips it over, rotates it, turns it around, rolls it, nudges it, shifts it, "
+                "or repositions it."
+            ),
+            "criteria": {
+                "true": (
+                    "The command makes the player relocate this thing. A command that lifts this thing and then puts "
+                    "it back where it was, or lowers it back into place, still relocates it."
+                ),
+                "false": (
+                    "The command uses the thing where it is: opening, closing, sitting in, looking at, reading, or "
+                    "searching it. It also covers a command that moves some other thing onto, into, off, or out of "
+                    "this thing. If this thing is only "
+                    "the place another thing is taken from or put on, such as "
+                    "retrieving a laptop from the passenger seat or putting a laptop on the workstation, it does not "
+                    "count as relocating this thing. A part used as designed is not relocating the thing: a door swung "
+                    "open or shut, a drawer slid open or shut, a lid opened, or a screen tilted back on its own hinge."
+                ),
+            },
+        }
+    }
+    return _answer(ask, {"command": command, "thing": thing_name}, questions, "relocates_thing")
+
+
+def names_other_action(ask, command: str, things_text: str) -> bool | None:
+    questions = {
+        "names_other_action": {
+            "type": "noul",
+            "instructions": (
+                "Decide whether the command asks the player to do anything besides moving the named fixed things, "
+                'such as another action or another object. A second object joined by "and" counts as something '
+                'other than moving these fixed things, even when one verb covers both objects, as in "Carry the '
+                'crate and my bag outside."'
+            ),
+            "criteria": {
+                "true": "The command also asks for something other than moving these fixed things.",
+                "false": "The command only asks to move these fixed things.",
+            },
+        }
+    }
+    return _answer(ask, {"command": command, "thing": things_text}, questions, "names_other_action")
+
+
 def reaches_reveals(ask, command: str, candidates) -> set[str]:
     """Return reveal ids whose authored action the command clearly performs."""
 

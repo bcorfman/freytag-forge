@@ -1,0 +1,89 @@
+{
+ "name": "astra-p4-refusal-fe4eng",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "k1",
+    "inputs": [
+     "Drag the workstation and my laptop into the kitchen."
+    ]
+   },
+   {
+    "name": "k2",
+    "inputs": [
+     "Lift the passenger seat and the back door, then open my laptop."
+    ]
+   },
+   {
+    "name": "k3",
+    "inputs": [
+     "Push the driver's seat and my laptop out of the truck."
+    ]
+   },
+   {
+    "name": "k4",
+    "inputs": [
+     "Rotate the workstation, then open my laptop."
+    ]
+   },
+   {
+    "name": "k5",
+    "inputs": [
+     "Turn the workstation around."
+    ]
+   },
+   {
+    "name": "k6",
+    "inputs": [
+     "Reposition the passenger seat."
+    ]
+   },
+   {
+    "name": "k7",
+    "inputs": [
+     "Roll the workstation toward the window."
+    ]
+   },
+   {
+    "name": "k8",
+    "inputs": [
+     "Nudge the back door a foot to the left."
+    ]
+   },
+   {
+    "name": "k9",
+    "inputs": [
+     "Swing the back door open."
+    ]
+   },
+   {
+    "name": "k10",
+    "inputs": [
+     "Press on the drawer to check that it is closed."
+    ]
+   },
+   {
+    "name": "k11",
+    "inputs": [
+     "Tilt my laptop screen back."
+    ]
+   },
+   {
+    "name": "k12",
+    "inputs": [
+     "Slide the drawer open, then close the drawer."
+    ]
+   }
+  ]
+ },
+ "refusal_mode": "off",
+ "fixed_refusal": true,
+ "engine_refusal": true
+}

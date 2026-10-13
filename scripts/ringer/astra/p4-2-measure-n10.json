@@ -1,0 +1,51 @@
+{
+ "run_name": "astra-p4-2-measure-n10",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure-n10",
+ "max_parallel": 2,
+ "tasks": [
+  {
+   "key": "n10-off",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live refusal measurement for the 'off' arm: four fixed-thing commands in scene 1A, 10 replicates each, no judge. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh /home/bcorfman/dev/ringer-work/astra-p4-2-measure/n10 10 'off' 2>&1 | tail -3",
+   "verified": "arm ran all 40 turns"
+  },
+  {
+   "key": "n10-clause",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live refusal measurement for the 'clause' arm: four fixed-thing commands in scene 1A, 10 replicates each, no judge. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh /home/bcorfman/dev/ringer-work/astra-p4-2-measure/n10 10 'clause' 2>&1 | tail -3",
+   "verified": "arm ran all 40 turns"
+  },
+  {
+   "key": "n10-repair",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live refusal measurement for the 'repair' arm: four fixed-thing commands in scene 1A, 10 replicates each, no judge. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh /home/bcorfman/dev/ringer-work/astra-p4-2-measure/n10 10 'repair' 2>&1 | tail -3",
+   "verified": "arm ran all 40 turns"
+  },
+  {
+   "key": "n10-renarrate",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live refusal measurement for the 'renarrate' arm: four fixed-thing commands in scene 1A, 10 replicates each, no judge. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh /home/bcorfman/dev/ringer-work/astra-p4-2-measure/n10 10 'renarrate' 2>&1 | tail -3",
+   "verified": "arm ran all 40 turns"
+  }
+ ]
+}

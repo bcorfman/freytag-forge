@@ -1,0 +1,68 @@
+{
+ "name": "astra-p4-refusal-probe",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "r1",
+    "inputs": [
+     "Drive the truck from the workstation."
+    ]
+   },
+   {
+    "name": "r2",
+    "inputs": [
+     "Park the truck inside the workstation."
+    ]
+   },
+   {
+    "name": "r3",
+    "inputs": [
+     "Send the truck across the workstation."
+    ]
+   },
+   {
+    "name": "r4",
+    "inputs": [
+     "Place the truck inside the drawer."
+    ]
+   },
+   {
+    "name": "r5",
+    "inputs": [
+     "Carry the workstation to the truck."
+    ]
+   },
+   {
+    "name": "r6",
+    "inputs": [
+     "Pick up the back door."
+    ]
+   },
+   {
+    "name": "r7",
+    "inputs": [
+     "Put the workstation inside the truck."
+    ]
+   },
+   {
+    "name": "r8",
+    "inputs": [
+     "Move the truck onto the workstation."
+    ]
+   },
+   {
+    "name": "r9",
+    "inputs": [
+     "Take the workstation outside."
+    ]
+   }
+  ]
+ }
+}

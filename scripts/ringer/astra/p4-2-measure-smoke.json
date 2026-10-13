@@ -1,0 +1,18 @@
+{
+ "run_name": "astra-p4-2-measure",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 1500,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs a live smoke test of the local narration bench: nine refusal-prone player commands in scene 1A, 1 replicate each, and prints how many turns produced a capture refusal and the narration for each. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-probe-check.sh /home/bcorfman/dev/ringer-work/astra-p4-2-measure/smoke 1",
+   "verified": "bench ran and per-turn refusal report printed"
+  }
+ ]
+}

@@ -18,6 +18,23 @@ from storygame.runtime.world_model import _true, apply_scene_placements, apply_w
 from storygame.story_package.models import item_placement_is_visible, placement_text
 from storygame.story_package.world_schema import world_source_schema_data
 
+_FIXED_MARKERS = {
+    "carry_away": " It is fixed in place. It cannot be picked up or carried away. If the player tries, the attempt fails.",
+    "anywhere": " It is fixed in place. It cannot be picked up, carried, pushed, or put anywhere else. If the player tries, the attempt fails.",
+    "stays": " It is fixed in place. It always stays exactly where it is. If the player tries to take it anywhere, the attempt fails.",
+}
+
+
+def fixed_marker_variant(value):
+    if value is False or value is None:
+        return None
+    if value is True:
+        return "carry_away"
+    if isinstance(value, str) and value in _FIXED_MARKERS:
+        return value
+    names = ", ".join(_FIXED_MARKERS)
+    raise ValueError(f"item_facts mark_fixed must be a boolean or one of: {names}")
+
 
 def _resolve_refer(name: str, tracked) -> str | None:
     names = list(tracked)
@@ -249,6 +266,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seed_from_package=False,
         drop_rules=(),
         held_by=True,
+        mark_fixed=False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -259,6 +277,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.seed_from_package = seed_from_package
         self.drop_rules = frozenset(drop_rules)
         self.held_by = held_by
+        self.mark_fixed = mark_fixed
+        self.mark_fixed_variant = fixed_marker_variant(mark_fixed)
         self._pending_item_facts = None
         self._pending_item_facts_present = False
         self._held_item_facts = {}
@@ -272,6 +292,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._schema_cache = {}
         self.prior_steps: tuple[str, ...] = ()
         self._last_item_facts_unplaced = []
+        self._last_item_facts_refused = []
         self._fact_effect_snapshot = None
         self._last_item_facts_match = {
             "match_call": False,
@@ -307,6 +328,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seed_from_package=False,
         drop_rules=(),
         held_by=True,
+        mark_fixed=False,
     ):
         base = CloudflareTurnProvider.from_environment(state, prompt_variant=prompt_variant)
         return cls(
@@ -322,6 +344,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             seed_from_package=seed_from_package,
             drop_rules=drop_rules,
             held_by=held_by,
+            mark_fixed=mark_fixed,
         )
 
     def _world(self, *, axes=None):
@@ -442,6 +465,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 rendered = [condition for condition in facts["condition"] if condition not in axis_values.values()]
                 if rendered:
                     line += f" Condition: {', '.join(rendered)}."
+            if (
+                self.mark_fixed_variant is not None
+                and narration
+                and entity_id
+                and not world.is_a(entity_id, "area")
+                and world.schema.is_fixed(entity_id)
+            ):
+                line += _FIXED_MARKERS[self.mark_fixed_variant]
             if narration and entity_id and world.is_a(entity_id, "group") and name in self._referred_names:
                 members = [
                     member_id
@@ -616,6 +647,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def last_item_facts_unplaced(self):
         return copy.deepcopy(self._last_item_facts_unplaced)
 
+    def last_item_facts_refused(self):
+        return copy.deepcopy(self._last_item_facts_refused)
+
+    def _record_refused_move(self, world, entity_id):
+        if any(entry.get("id") == entity_id for entry in self._last_item_facts_refused):
+            return
+        self._last_item_facts_refused.append({"name": self._entity_label(world, entity_id), "id": entity_id})
+
     def dependency_names(self):
         ids = {
             dependency
@@ -745,6 +784,28 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def _character_label(self, world, entity_id, *, shortest=False):
         npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
         return _character_label(self.state.facts, npc, world.name(entity_id), shortest=shortest) if npc else None
+
+    def _existing_unnamed_person(self, world, key):
+        wanted = _normalize_refer(key).split()
+        if not wanted:
+            return None
+        protagonist_id = self.state.package.world.protagonist_id
+        protagonist_area = world.area(protagonist_id)
+        matches = []
+        for npc in self.state.package.world.npcs:
+            if (
+                npc.id == protagonist_id
+                or not npc.unnamed_label
+                or not npc.named_by
+                or _true(self.state.facts, npc.named_by)
+                or not self._name_in_scene_scope(world, npc.name)
+                or world.area(npc.id) != protagonist_area
+            ):
+                continue
+            label_words = _normalize_refer(npc.unnamed_label).split()
+            if label_words[: len(wanted)] == wanted:
+                matches.append(npc.id)
+        return matches[0] if len(matches) == 1 else None
 
     def _referred_lines_for_command(self, player_input):
         world = self._world()
@@ -978,6 +1039,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 self._last_item_facts_unplaced.append(entry)
             issues.append(f"item_facts for {name!r} left unplaced: {place!r} cannot hold things")
         if not result.ok:
+            self._record_refused_move(world, entity_id)
             issues.append(f"item_facts for {name!r} refused place {place!r}: {result.reason}")
 
     def _apply_state(self, world, entity_id, name, value, place_pole, issues):
@@ -1064,6 +1126,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         issues = []
         changed = set()
         self._last_item_facts_unplaced = []
+        self._last_item_facts_refused = []
         if not isinstance(raw, dict):
             self._held_item_facts = {}
             self._changed_last_turn = set()
@@ -1454,17 +1517,23 @@ class ItemFactsProvider(CloudflareTurnProvider):
                             if target != world.name(entity_id):
                                 engine_resolutions[target] = world.name(entity_id)
             if entity_id is None:
-                kind = new_kind(key, reply_key=True)
-                player_area = world.area(protagonist_id)
-                parent = player_area if kind == "area" else None
-                created = world.create(key, parent=parent, kind=kind, owner=item["owner_id"])
-                if not created.ok:
-                    issues.append(f"item_facts for {key!r} could not be created: {created.reason}")
-                    continue
-                entity_id = created.id
-                resolutions[key] = "new"
-                if key in player_character_names:
-                    place_ids[key] = entity_id
+                existing_id = self._existing_unnamed_person(world, key)
+                if existing_id is not None:
+                    entity_id = existing_id
+                    resolutions[key] = world.name(entity_id)
+                    issues.append(f"item_facts name {key!r} mapped to existing {world.name(entity_id)!r}; not created")
+                else:
+                    kind = new_kind(key, reply_key=True)
+                    player_area = world.area(protagonist_id)
+                    parent = player_area if kind == "area" else None
+                    created = world.create(key, parent=parent, kind=kind, owner=item["owner_id"])
+                    if not created.ok:
+                        issues.append(f"item_facts for {key!r} could not be created: {created.reason}")
+                        continue
+                    entity_id = created.id
+                    resolutions[key] = "new"
+                    if key in player_character_names:
+                        place_ids[key] = entity_id
             elif item["candidate"] and key not in resolutions:
                 resolutions[key] = world.name(entity_id)
                 if key != world.name(entity_id):
@@ -1545,6 +1614,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             )
             if unresolved_place:
                 if world.schema.is_fixed(entity_id):
+                    self._record_refused_move(world, entity_id)
                     issues.append(f"item_facts for {name!r} refused place {place!r}: fixed things cannot move")
                 else:
                     world.set_unplaced(entity_id, place[:80])
@@ -1675,6 +1745,8 @@ def validate_item_facts(value, *, known_names=None):
     held_by = value.get("held_by", False)
     if not isinstance(held_by, bool):
         raise ValueError("item_facts held_by must be a boolean")
+    mark_fixed = value.get("mark_fixed", False)
+    fixed_marker_variant(mark_fixed)
     seed = value.get("seed", {})
     if not isinstance(seed, dict) or (not seed and not seed_from_package):
         raise ValueError("item_facts must have a non-empty seed unless seed_from_package is enabled")

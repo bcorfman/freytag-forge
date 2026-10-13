@@ -1,0 +1,29 @@
+{
+ "run_name": "astra-p4-2-measure-fe2",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure-fe2",
+ "max_parallel": 2,
+ "tasks": [
+  {
+   "key": "smoke-fe2base",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 600,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live engine-refusal measurement, arm 'fe2base', scripts g1 g10 g15, 1 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/fe2-smoke-fe2base; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 1 fe2base \"g1 g10 g15\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "bench ran every scheduled script for the arm without error"
+  },
+  {
+   "key": "smoke-fe2eng",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 600,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live engine-refusal measurement, arm 'fe2eng', scripts g1 g10 g15, 1 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/fe2-smoke-fe2eng; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 1 fe2eng \"g1 g10 g15\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "bench ran every scheduled script for the arm without error"
+  }
+ ]
+}
