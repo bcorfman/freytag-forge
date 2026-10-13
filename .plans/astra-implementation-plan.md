@@ -47,7 +47,8 @@ Exit: results table in this file; fixes kept, revised or reverted.
 - **Disclosure matrix:** regenerated output equals the committed matrix. Across `5d45afcf` the only classification changes are `photo` and `photograph` going from `entity_name` to `scoped_alias` (two entries each).
 - **Early 1A sentences (real validator):** "photo", "photograph", "picture" and "Examine Michelle's phone." are accepted. "Michelle's photograph is on the screen." is still rejected (`narration_known_term_leak`): the full-name guard is intact, as intended.
 - **1B scoped aliases:** with the photograph placed, "Inspect the photo.", "Examine the photograph." and the Examine-beneath-the-bench command match `k_sl_1b_a_r2`; "Show the photo to the man.", "Show the man the photograph.", "Ask the man about the photo." and "Show Michelle's photograph to the man." match `k_sl_1b_b_r1`. No 1B regression.
-- **Not done:** a committed early-1A fixed-sentence test. The run above used a scratch probe only; adding it is a code change and goes through Ringer. The billed runs (phone aliases, 1C pointer) need the pre-`5d45afcf` baseline arm described in Phase 0.
+- **Early-1A test:** added as `tests/test_early_1a_photo_sentences.py` (Ringer `astra-early-1a-photo`, pass on attempt 2; 5 cases).
+- **Not done:** the billed runs (phone aliases, 1C pointer) need the pre-`5d45afcf` baseline arm described in Phase 0.
 
 ## Phase 2: Warehouse drift (conditional)
 
