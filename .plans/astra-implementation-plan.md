@@ -162,6 +162,30 @@ Question: does a differently worded fixed-thing marker also stop the narrator cl
 - **Rule, fixed now:** the winner is the variant with the lowest H1 claim rate that has zero control over-refusals. If two variants are within 5 percentage points, keep `carry_away` (shortest, already built). Then run H2 for the winner, `carry_away` and baseline at n=4. Report H1 and H2 separately; do not pool them. No wording is changed after seeing H1 results; a new wording would need a new held-out set.
 - **Validity gate, learned the hard way:** before reading any outcome, check that the variant's exact sentence is in the recorded `prompt_user` of every turn that renders a fixed thing, and absent from the baseline arm.
 
+### Phase 4 item 2, marker wording variants: result (2026-10-13; Ringer `astra-p4-2-marker-variants`, `astra-p4-2-measure-wv`; pre-registration above)
+
+- **Validity:** every marker-arm turn carried its own sentence and no other (0 turns without it; baseline none); the movable laptop was unmarked. No failed replicates. H1 = 8 held-out commands x 4 arms x n=4 (32 turns per arm); controls = 8 commands x 4 arms x n=3 (24 turns per arm); dev set for `anywhere` and `stays` at n=4 (not analysed beyond the pattern below).
+- **Scoring:** claims were counted by reading the replies, not from the capture flag (capture misses claims where no place changes, for example "Kristin lifts the workstation"). A substring screen sorted replies into refusal / not-refusal piles and I read every not-refusal reply.
+
+| H1 (32 turns) | Baseline | carry_away | anywhere | stays |
+|---|---|---|---|---|
+| Reply claims the move | 32 | 14 (44%) | 15 (47%) | 19 (59%) |
+
+- **By command shape the three wordings behave alike.** All three fix: Lift the workstation. / Take the drawer out of the workstation. / Bring the back door to the truck. (4 of 4 honest refusals each). All three fail: Drag the workstation to my truck. / Push the workstation against the wall. / Carry the drawer to my truck. (4 of 4 claims each). Mixed: Set the back door on the kitchen floor. (`carry_away` and `anywhere` refuse, `stays` claims 4 of 4) and Remove the passenger seat from the truck. (all partial). The dev-set pattern is the same: pick-up and take-out forms pass, carry-to and put-inside forms fail. A named destination or displacement beats the marker whatever the wording.
+- **Over-refusal controls (the action should succeed; a reply that says the thing is fixed or does not budge counts):**
+
+| Control (n=3 each) | carry_away | anywhere | stays |
+|---|---|---|---|
+| Open the drawer. | 1 over-refusal | 1 | 0 |
+| Sit in the driver's seat. | 1 | 3 | 1 |
+| Open the back door. (reply says "stuck" first, then opens) | 1 | 3 | 0 |
+| Other 5 controls (examine, close drawer, look at seat, pick up / carry my laptop) | 0 | 0 | 0 |
+
+  Over-refusals total: `carry_away` 2 of 24, `anywhere` 4 of 24, `stays` 1 of 24; baseline 0. The collateral is on fixed things the player is meant to use: the seats and the drawer are `fixed`, so the marker tells the narrator they cannot be handled. Baseline "Sit in the driver's seat." already has the narrator claiming a seat move in 3 of 3, so that command is also a pre-existing defect.
+- **Decision under the pre-registered rule:** no variant has zero control over-refusals, so none qualifies as the winner. By claim rate alone `carry_away` (44%) and `anywhere` (47%) are within the 5-point tie band and `stays` is worse. **H2 was not run** (the rule runs it only for a winner). The marker is not adopted; `mark_fixed` stays an opt-in bench option.
+- **What the evidence supports:** wording is not the lever. Two distinct limits remain: (1) commands with a destination override the marker; (2) the marker also fires on fixed things that are used rather than carried (seats, the openable drawer), causing refusals of normal play. A different design would be to mark only fixed things the player cannot use in place (exclude seats and openable containers), which is a new hypothesis needing its own held-out check (H2 is still unused and could serve, declared in advance). `renarrate` with cue-restore remains the only measured arm that handles the destination-phrased failures.
+- **Limits:** one scene, one narrator, near-deterministic replies, so n=4 per command is closer to one or two distinct samples; counts above are directional.
+
 ## Phase 5: Three-arm comparison
 
 Arms: (A) current pipeline with Phases 1-4 fixes; (B) same pipeline, stronger model; (C) smallest outcome-first prototype (resolve once, validate proposals, narrate from the accepted outcome, check, publish atomically), reusing existing machinery, on the drawer-to-truck sequence only. Do not rewrite all nine scenes.
