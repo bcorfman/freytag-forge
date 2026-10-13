@@ -18,6 +18,23 @@ from storygame.runtime.world_model import _true, apply_scene_placements, apply_w
 from storygame.story_package.models import item_placement_is_visible, placement_text
 from storygame.story_package.world_schema import world_source_schema_data
 
+_FIXED_MARKERS = {
+    "carry_away": " It is fixed in place. It cannot be picked up or carried away. If the player tries, the attempt fails.",
+    "anywhere": " It is fixed in place. It cannot be picked up, carried, pushed, or put anywhere else. If the player tries, the attempt fails.",
+    "stays": " It is fixed in place. It always stays exactly where it is. If the player tries to take it anywhere, the attempt fails.",
+}
+
+
+def fixed_marker_variant(value):
+    if value is False or value is None:
+        return None
+    if value is True:
+        return "carry_away"
+    if isinstance(value, str) and value in _FIXED_MARKERS:
+        return value
+    names = ", ".join(_FIXED_MARKERS)
+    raise ValueError(f"item_facts mark_fixed must be a boolean or one of: {names}")
+
 
 def _resolve_refer(name: str, tracked) -> str | None:
     names = list(tracked)
@@ -261,6 +278,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.drop_rules = frozenset(drop_rules)
         self.held_by = held_by
         self.mark_fixed = mark_fixed
+        self.mark_fixed_variant = fixed_marker_variant(mark_fixed)
         self._pending_item_facts = None
         self._pending_item_facts_present = False
         self._held_item_facts = {}
@@ -448,13 +466,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 if rendered:
                     line += f" Condition: {', '.join(rendered)}."
             if (
-                self.mark_fixed
+                self.mark_fixed_variant is not None
                 and narration
                 and entity_id
                 and not world.is_a(entity_id, "area")
                 and world.schema.is_fixed(entity_id)
             ):
-                line += " It is fixed in place. It cannot be picked up or carried away. If the player tries, the attempt fails."
+                line += _FIXED_MARKERS[self.mark_fixed_variant]
             if narration and entity_id and world.is_a(entity_id, "group") and name in self._referred_names:
                 members = [
                     member_id
@@ -1728,8 +1746,7 @@ def validate_item_facts(value, *, known_names=None):
     if not isinstance(held_by, bool):
         raise ValueError("item_facts held_by must be a boolean")
     mark_fixed = value.get("mark_fixed", False)
-    if not isinstance(mark_fixed, bool):
-        raise ValueError("item_facts mark_fixed must be a boolean")
+    fixed_marker_variant(mark_fixed)
     seed = value.get("seed", {})
     if not isinstance(seed, dict) or (not seed and not seed_from_package):
         raise ValueError("item_facts must have a non-empty seed unless seed_from_package is enabled")

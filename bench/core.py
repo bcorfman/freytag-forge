@@ -35,6 +35,7 @@ from storygame.runtime.item_facts import (
     ItemFactsProvider,
     _protagonist_name,
     declared_axes_for_world,
+    fixed_marker_variant,
     package_seed,
     validate_item_facts,
 )
@@ -321,8 +322,9 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     if drop_rules:
         hash_payload["item_facts_drop_rules"] = sorted(drop_rules)
     hash_payload["item_facts_held_by"] = bool(variation.get("item_facts", {}).get("held_by", True))
-    if variation.get("item_facts", {}).get("mark_fixed", False):
-        hash_payload["item_facts_mark_fixed"] = True
+    mark_fixed_variant = fixed_marker_variant(variation.get("item_facts", {}).get("mark_fixed", False))
+    if mark_fixed_variant is not None:
+        hash_payload["item_facts_mark_fixed"] = True if mark_fixed_variant == "carry_away" else mark_fixed_variant
     variation["_variation_hash"] = stable_hash(hash_payload)
     variation["_story_package_value"] = package_value
     return variation
@@ -528,7 +530,7 @@ def _provider_with_item_facts(
             seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
             drop_rules=tuple(variation.get("item_facts", {}).get("drop_rules", [])),
             held_by=bool(variation.get("item_facts", {}).get("held_by", True)),
-            mark_fixed=bool(variation.get("item_facts", {}).get("mark_fixed", False)),
+            mark_fixed=variation.get("item_facts", {}).get("mark_fixed", False),
         )
     return CloudflareTurnProvider.from_environment(state, prompt_variant=variation["_prompt_variant"])
 
@@ -640,7 +642,7 @@ def prompt_for(
             seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
             drop_rules=tuple(variation.get("item_facts", {}).get("drop_rules", [])),
             held_by=bool(variation.get("item_facts", {}).get("held_by", True)),
-            mark_fixed=bool(variation.get("item_facts", {}).get("mark_fixed", False)),
+            mark_fixed=variation.get("item_facts", {}).get("mark_fixed", False),
         )
     else:
         provider = CloudflareTurnProvider(
@@ -752,7 +754,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
     )
     arrival_entry_state = entry_state(state, seeded_by=seeded_by)
     provider = (
-        build_capture_provider(state, mark_fixed=bool(variation.get("item_facts", {}).get("mark_fixed", False)))
+        build_capture_provider(state, mark_fixed=variation.get("item_facts", {}).get("mark_fixed", False))
         if runtime
         else provider_for(state, variation)
     )
@@ -849,7 +851,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 runtime_store.save(runtime_session, current_state)
                 loaded_state = runtime_store.load(runtime_session, package)
                 loaded_provider = build_capture_provider(
-                    loaded_state, mark_fixed=bool(variation.get("item_facts", {}).get("mark_fixed", False))
+                    loaded_state, mark_fixed=variation.get("item_facts", {}).get("mark_fixed", False)
                 )
                 loaded_capture = WorldCapture(loaded_provider, runtime_ask)
                 context["engine"] = RuntimeEngine(

@@ -266,7 +266,7 @@ def test_runtime_mode_builds_fresh_provider_each_turn(monkeypatch: pytest.Monkey
 def test_runtime_mode_passes_mark_fixed_to_capture_provider(
     monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]
 ) -> None:
-    calls: list[bool] = []
+    calls: list[object] = []
     original = core.build_capture_provider
 
     def build(state, *, mark_fixed=False):
@@ -278,12 +278,12 @@ def test_runtime_mode_passes_mark_fixed_to_capture_provider(
     monkeypatch.setattr(CloudflareTurnProvider, "_request", _narration_reply)
 
     marked = _variation(RUNTIME, turns=1)
-    marked["item_facts"]["mark_fixed"] = True
+    marked["item_facts"]["mark_fixed"] = "anywhere"
     marked_result = core.run_scene(marked, "1A", marked["scripts"]["1A"][0])
     assert marked_result["status"] == "ok"
     marked_call_count = len(calls)
     assert marked_call_count > 0
-    assert all(calls[:marked_call_count])
+    assert all(value == "anywhere" for value in calls[:marked_call_count])
 
     unmarked = _variation(RUNTIME, turns=1)
     unmarked_result = core.run_scene(unmarked, "1A", unmarked["scripts"]["1A"][0])
@@ -293,6 +293,8 @@ def test_runtime_mode_passes_mark_fixed_to_capture_provider(
     state = RuntimeState.bootstrap(PACKAGE)
     assert build_capture_provider(state).mark_fixed is False
     assert build_capture_provider(state, mark_fixed=True).mark_fixed is True
+    assert build_capture_provider(state, mark_fixed=True).mark_fixed_variant == "carry_away"
+    assert build_capture_provider(state, mark_fixed="anywhere").mark_fixed_variant == "anywhere"
 
 
 def test_runtime_mode_records_rejected_turn(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:

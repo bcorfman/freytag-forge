@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from storygame.runtime.item_facts import ItemFactsProvider, validate_item_facts
+from storygame.runtime.item_facts import _FIXED_MARKERS, ItemFactsProvider, fixed_marker_variant, validate_item_facts
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
-MARKER = " It is fixed in place. It cannot be picked up or carried away. If the player tries, the attempt fails."
+MARKER = _FIXED_MARKERS["carry_away"]
 
 
 def _provider(*, mark_fixed=False, selected_name="workstation"):
@@ -41,6 +41,18 @@ def test_fixed_workstation_gets_marker_even_when_not_referred():
 
 def test_fixed_marker_is_off_when_mark_fixed_is_false():
     assert MARKER not in _provider(mark_fixed=False)._things_block(narration=True)
+    assert _provider(mark_fixed=None)._things_block(narration=True).find(" It is fixed in place.") == -1
+
+
+@pytest.mark.parametrize("variant, marker", _FIXED_MARKERS.items())
+def test_fixed_marker_variants_render_exact_sentence(variant, marker):
+    line = _line(_provider(mark_fixed=variant)._things_block(narration=True), "workstation")
+    assert line.endswith(marker)
+    assert " move" not in marker
+
+
+def test_fixed_marker_variants_are_distinct():
+    assert len(set(_FIXED_MARKERS.values())) == 3
 
 
 def test_fixed_thing_not_in_rendered_things_gets_no_marker():
@@ -65,8 +77,18 @@ def test_validate_item_facts_mark_fixed_is_boolean():
     base = {"mode": "single_call", "seed_from_package": True}
     validate_item_facts({**base, "mark_fixed": True})
     validate_item_facts({**base, "mark_fixed": False})
-    with pytest.raises(ValueError, match="mark_fixed must be a boolean"):
-        validate_item_facts({**base, "mark_fixed": "yes"})
+    for value in ("yes", "false", 1.5):
+        with pytest.raises(ValueError, match="mark_fixed must be a boolean or one of"):
+            fixed_marker_variant(value)
+        with pytest.raises(ValueError, match="mark_fixed must be a boolean or one of"):
+            validate_item_facts({**base, "mark_fixed": value})
+
+
+@pytest.mark.parametrize(
+    "value, expected", [(False, None), (None, None), (True, "carry_away"), ("anywhere", "anywhere")]
+)
+def test_fixed_marker_variant(value, expected):
+    assert fixed_marker_variant(value) == expected
 
 
 @pytest.mark.parametrize("mark_fixed, expected", [(True, True), (False, False)])
