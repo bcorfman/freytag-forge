@@ -19,7 +19,12 @@ class FixedRefusalResult:
 
 
 def refuse_fixed_move(
-    world, package, player_input: str, relocates_thing: Callable[[str, str], bool | None]
+    world,
+    package,
+    player_input: str,
+    relocates_thing: Callable[[str, str], bool | None],
+    *,
+    in_scope: Callable[[str], bool] | None = None,
 ) -> FixedRefusalResult:
     protagonist_area = world.area(package.protagonist_id)
     candidates = []
@@ -29,9 +34,15 @@ def refuse_fixed_move(
             (world.schema.is_fixed(item_id) or item.fixed)
             and world.is_visible(item_id)
             and not world.is_a(item_id, "area")
-            and protagonist_area is not None
-            and world.area(item_id) is not None
-            and world.area(item_id) == protagonist_area
+            and (
+                in_scope(item_id)
+                if in_scope is not None
+                else (
+                    protagonist_area is not None
+                    and world.area(item_id) is not None
+                    and world.area(item_id) == protagonist_area
+                )
+            )
         ):
             candidates.append(item_id)
 

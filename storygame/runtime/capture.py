@@ -54,7 +54,13 @@ class WorldCapture:
         world = self.provider._world()
         adapter = _ask_adapter(self.ask)
         fixed = (
-            refuse_fixed_move(world, package, command, lambda c, t: relocates_thing(adapter, c, t))
+            refuse_fixed_move(
+                world,
+                package,
+                command,
+                lambda c, t: relocates_thing(adapter, c, t),
+                in_scope=lambda item_id: self.provider._name_in_scene_scope(world, world.name(item_id)),
+            )
             if self.fixed_refusal
             else None
         )
