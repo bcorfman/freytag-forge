@@ -4,7 +4,7 @@
  "fixed_turns": 1,
  "runtime": true,
  "refusal_mode": "repair",
- "fact_tracking_judge": true,
+ "fact_tracking_judge": false,
  "item_facts": {
   "mode": "single_call",
   "seed_from_package": true

@@ -1,0 +1,18 @@
+{
+ "run_name": "astra-p4-2-measure",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "smoke4",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs a live smoke test of the four refusal arms (off, clause, repair, renarrate) on four fixed-thing commands in scene 1A, 1 replicate each, with the fact-tracking judge, and prints each reply and the per-arm refusal and extra-call counts. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh /home/bcorfman/dev/ringer-work/astra-p4-2-measure/smoke4 1",
+   "verified": "all four arms ran and printed replies"
+  }
+ ]
+}
