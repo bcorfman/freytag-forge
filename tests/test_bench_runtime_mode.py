@@ -15,13 +15,17 @@ import pytest
 
 import bench.core as core
 import bench.jev_use as jev_use
+from storygame.runtime.capture import build_capture_provider
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.contracts import NarrationSegment
+from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
+from storygame.story_package.loader import load_story_package
 
 ROOT = Path(__file__).resolve().parents[1]
 NORMAL = ROOT / "bench/variations/item-facts-world-two-scene.json"
 RUNTIME = ROOT / "bench/variations/item-facts-world-two-scene-runtime.json"
+PACKAGE = load_story_package(ROOT / "data/stories/continuity-initiative")
 
 
 def _variation(path: Path, turns: int = 3, inputs: list[str] | None = None) -> dict:
@@ -238,9 +242,9 @@ def test_runtime_mode_builds_fresh_provider_each_turn(monkeypatch: pytest.Monkey
     calls = []
     original = core.build_capture_provider
 
-    def build(state):
-        calls.append(state)
-        return original(state)
+    def build(state, *, mark_fixed=False):
+        calls.append(mark_fixed)
+        return original(state, mark_fixed=mark_fixed)
 
     loads = []
     original_load = core.RuntimeStateSqliteStore.load
@@ -257,6 +261,38 @@ def test_runtime_mode_builds_fresh_provider_each_turn(monkeypatch: pytest.Monkey
     assert result["status"] == "ok"
     assert len(calls) == 1 + len(result["turns"])
     assert len(loads) == len(result["turns"])
+
+
+def test_runtime_mode_passes_mark_fixed_to_capture_provider(
+    monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]
+) -> None:
+    calls: list[bool] = []
+    original = core.build_capture_provider
+
+    def build(state, *, mark_fixed=False):
+        calls.append(mark_fixed)
+        return original(state, mark_fixed=mark_fixed)
+
+    monkeypatch.setattr(core, "build_capture_provider", build)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.invalid/turn")
+    monkeypatch.setattr(CloudflareTurnProvider, "_request", _narration_reply)
+
+    marked = _variation(RUNTIME, turns=1)
+    marked["item_facts"]["mark_fixed"] = True
+    marked_result = core.run_scene(marked, "1A", marked["scripts"]["1A"][0])
+    assert marked_result["status"] == "ok"
+    marked_call_count = len(calls)
+    assert marked_call_count > 0
+    assert all(calls[:marked_call_count])
+
+    unmarked = _variation(RUNTIME, turns=1)
+    unmarked_result = core.run_scene(unmarked, "1A", unmarked["scripts"]["1A"][0])
+    assert unmarked_result["status"] == "ok"
+    assert all(not value for value in calls[marked_call_count:])
+
+    state = RuntimeState.bootstrap(PACKAGE)
+    assert build_capture_provider(state).mark_fixed is False
+    assert build_capture_provider(state, mark_fixed=True).mark_fixed is True
 
 
 def test_runtime_mode_records_rejected_turn(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:

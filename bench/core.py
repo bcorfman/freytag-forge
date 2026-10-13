@@ -751,7 +751,11 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         "thorough" if variation.get("_entry_state", variation.get("entry_state", "bare")) == "thorough" else "none"
     )
     arrival_entry_state = entry_state(state, seeded_by=seeded_by)
-    provider = build_capture_provider(state) if runtime else provider_for(state, variation)
+    provider = (
+        build_capture_provider(state, mark_fixed=bool(variation.get("item_facts", {}).get("mark_fixed", False)))
+        if runtime
+        else provider_for(state, variation)
+    )
     capture = WorldCapture(provider, runtime_ask) if runtime else None
     engine = RuntimeEngine(
         state,
@@ -844,7 +848,9 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             def runtime_engine_factory(current_state=state, context=runtime_context) -> RuntimeEngine:
                 runtime_store.save(runtime_session, current_state)
                 loaded_state = runtime_store.load(runtime_session, package)
-                loaded_provider = build_capture_provider(loaded_state)
+                loaded_provider = build_capture_provider(
+                    loaded_state, mark_fixed=bool(variation.get("item_facts", {}).get("mark_fixed", False))
+                )
                 loaded_capture = WorldCapture(loaded_provider, runtime_ask)
                 context["engine"] = RuntimeEngine(
                     loaded_state,

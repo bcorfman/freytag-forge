@@ -213,7 +213,7 @@ def capture_prompt_variant(package) -> dict[str, Any]:
     }
 
 
-def build_capture_provider(state) -> ItemFactsProvider:
+def build_capture_provider(state, *, mark_fixed=False) -> ItemFactsProvider:
     return ItemFactsProvider.from_environment(
         state,
         prompt_variant=capture_prompt_variant(state.package),
@@ -221,4 +221,5 @@ def build_capture_provider(state) -> ItemFactsProvider:
         mode="single_call",
         seed_from_package=True,
         held_by=True,
+        mark_fixed=mark_fixed,
     )
