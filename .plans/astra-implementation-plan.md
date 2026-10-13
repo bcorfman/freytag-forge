@@ -1,7 +1,7 @@
 # Astra review implementation plan
 
 Sources: `.plans/astra-weak-spots-review.md` (material fixes) and `.plans/astra-arch-review.md` (turn pipeline).
-Status: **Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); phone-alias probe run, inconclusive (2026-10-13); 1C pointer and hosted smoke runs not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
+Status: **Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); phone-alias probe run, inconclusive (2026-10-13); 1C pointer already measured (see its section; no new run); hosted 1A-1B phone smoke not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
 
 ## Findings that shape the order
 
@@ -53,6 +53,15 @@ Exit: results table in this file; fixes kept, revised or reverted.
 ### Phase 1 phone-alias probe (2026-10-13, local narration bench; Ringer `astra-phone-alias`)
 
 Fixed prompt "Examine Michelle's phone.", scene 1A, 12 replicates per arm. Baseline arm = current package with the `michelle_photograph` block reverted to global `aliases` (variation override); current arm = shipped scoped aliases. Smoke first (2 per arm, 44 neurons), then n=12. Result: **0 rejected turns and 0 recovery requests in both arms, and no narration in either arm (0 of 24) used photo, photograph or picture.** The probe never elicited the failure, so it cannot separate the arms. The decision rule (revise if `photo` still rejects) is not triggered, but the improvement is also unmeasured. Offline checks (above) remain the evidence for this fix. A rejection needs the narrator to write the word; the one recorded case came from a longer 1A run. Next, if wanted: a probe whose prompt makes a photo likely (for example a longer 1A script), still player-guide-conformant, or fold phone-alias into the linked hosted 1A-1B smoke runs. Files: `bench/variations/astra-phone-{baseline,current}.json`, `scripts/ringer/astra/phone-alias-*`.
+
+### Phase 1 1C pointer: already measured, no new billed run (2026-10-13)
+
+**Correction to Phase 0 item 3.** Phase 0 said no baseline was recorded for the 1C fix. That was wrong: `.plans/playthrough-quality.md` records exactly the planned comparison (hosted L2, 12 paired raw starts of 1A-1C, 4 batches of 3, same starts both arms).
+- Baseline, staging `ef75c854` (Ringer `weak1c-baseline-x12`): 1C 10 of 12 by play (2 forced); `b_r*` reveal on turn 3 (7 runs) or 4 (3 runs); 1A 12/12, 1B 12/12; 0 rejected turns.
+- Treatment, staging `49d7126b` (#613/#614, which carry `5d45afcf`), two runs of the same 12 starts: 1C 11 of 12 in both; `b_r*` on turn 2-4; 1A 11 and 12 of 12; rejected turns 5 and 1, which the sibling run shows is mostly variance. Later narration-safety fix on `2e90fd97`: 1C 11 and 12 of 12, 0 and 1 rejected.
+- Reading against the decision rule (drop or revise if early B reveals and forced exits do not improve, or disclosure failures appear): forced exits 2 -> 1 and 1 (not worse), B reveal about one turn earlier, and the rejections traced to five narration-safety terms (fixed), not to the pointer. The baseline arm had little headroom (at most 2 of 12 could move), so this is "no harm, small and unproven gain", the same limit that file states. **Keep the pointer.** A rerun now would spend the same budget to answer the same question at the same power; not run.
+- The 1C figures quoted earlier (2 of 6 earned by play; 3 of 3 on `99029cc6`) are other draws; this paired set is the one to cite.
+- Remaining Phase 1 item: 3 linked hosted 1A-1B smoke runs for the phone alias, which only matter if a probe can elicit the photo word (see the phone-alias probe above).
 
 ## Phase 2: Warehouse drift (conditional)
 
