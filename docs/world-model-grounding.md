@@ -147,8 +147,13 @@ character_placements:
 - **Public items may use scoped aliases.** Place the item in the scene where it
   appears so those aliases resolve only while the item is in play.
 - **Review knowledge leak terms separately.** An item's optional `leak_terms`
-  list names the phrases narration must guard before the item is earned. An
-  empty list means it has no guarded phrases.
+  list names vocabulary that narration must guard before the item is earned.
+  Every multi-word phrase in the list is blocked, even when it is not an alias
+  or a `must_convey` phrase; single-word entries are not enforced. If the field
+  is absent, the item's aliases and multi-word `must_convey` phrases are guarded
+  as before. An empty list means it has no guarded phrases. The package loader
+  also rejects scene prose that contains a guarded phrase its scene has not
+  earned.
 - **Learned names persist.** When the match call maps a new name to an
   entity, the bench stores it as a `wk_alias` fact. A wrong mapping therefore
   repeats in every later turn. That is one more reason to declare the right

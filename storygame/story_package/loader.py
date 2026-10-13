@@ -425,6 +425,12 @@ def _compile_knowledge_indexes(catalog: KnowledgeCatalog, world: WorldSource) ->
     )
 
 
+def guarded_narration_terms(indexes: KnowledgeIndexes) -> frozenset[str]:
+    """Return the case-folded multi-word vocabulary guarded before earning."""
+
+    return frozenset(term.casefold() for term in indexes.leak_term_to_knowledge if len(term.split()) > 1)
+
+
 def _validate_disclosure_guards(package: StoryPackage) -> None:
     guards = package.world.disclosure_guards
     guard_ids = [guard.id for guard in guards]
@@ -670,12 +676,7 @@ def _validate_narration_term_traps(package: StoryPackage) -> None:
     from storygame.runtime.state import RuntimeState
 
     indexes = package.knowledge_indexes
-    guarded_terms = {
-        term.casefold()
-        for terms in indexes.audience_to_known_terms.values()
-        for term in terms
-        if len(term.split()) > 1 and term.casefold() in indexes.leak_term_to_knowledge
-    }
+    guarded_terms = guarded_narration_terms(indexes)
     projector = KnowledgeProjector()
     for scene in package.scenes:
         state = RuntimeState(

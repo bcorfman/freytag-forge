@@ -1,0 +1,18 @@
+{
+ "run_name": "astra-p4-1aexit",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-1aexit",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "leakterms-newhosted",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 600,
+   "check_timeout_s": 2400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live scene-1A drawer-search journey (8 turns, 2 replicates) with leak_terms now authoritative and the refusal on. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-1aexit/leakterms-newhosted; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-1aexit-check.sh $O /home/bcorfman/dev/freytag-forge /home/bcorfman/dev/freytag-forge/bench/variations/astra-p4-1aexit-hostedcard.json 2 > $O.out 2>&1; rc=$?; tail -5 $O.out; exit $rc'",
+   "verified": "bench ran the drawer-search journey for both replicates"
+  }
+ ]
+}
