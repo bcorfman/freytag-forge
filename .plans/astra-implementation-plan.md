@@ -1,7 +1,7 @@
 # Astra review implementation plan
 
 Sources: `.plans/astra-weak-spots-review.md` (material fixes) and `.plans/astra-arch-review.md` (turn pipeline).
-Status: **Phase 4 item 1 done offline (2026-10-13, branch `astra-phase4-cheap-fixes`, not merged); Phase 3 done offline (2026-10-13, branch `astra-phase3-eval-harness`, not merged); Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); phone-alias probe run, inconclusive (2026-10-13); 1C pointer already measured (see its section; no new run); hosted 1A-1B phone smoke not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
+Status: **Phase 4 items 1 and 2 measured (2026-10-13, branch `astra-phase4-cheap-fixes`, not merged; items 3-4 not started); Phase 4 item 1 done offline (2026-10-13, branch `astra-phase4-cheap-fixes`, not merged); Phase 3 done offline (2026-10-13, branch `astra-phase3-eval-harness`, not merged); Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); phone-alias probe run, inconclusive (2026-10-13); 1C pointer already measured (see its section; no new run); hosted 1A-1B phone smoke not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
 
 ## Findings that shape the order
 
@@ -104,6 +104,26 @@ Exit: each item has a bench result; regressions checked against Phase 3's set.
 - **Fix:** `ItemFactsProvider._existing_unnamed_person` (`storygame/runtime/item_facts.py`). Before creating, a key whose words are a leading word-prefix of exactly one still-unnamed, in-scene, same-area character's unnamed label maps to that character, with an issue note and no creation. Deterministic, no LLM call. Ambiguous matches, longer descriptions ("man in the hoodie"), unrelated names, named Brandon and the protagonist all keep the old behaviour.
 - **Tests:** `tests/test_unknown_identity_not_creation.py` (5 cases, real package, scene 1B; the knock-out is asserted on the `conscious` axis); neighbouring item-fact suites 285 passed.
 - **Limit:** this covers characters that declare `unnamed_label`; any other unresolved-but-existing person is not covered. Live measurement against the old r1 failure is not run (needs a hosted run); Phase 3's unresolved-NPC case is the offline check. Items 2-4 not started.
+
+### Phase 4 item 2 result (2026-10-13; four arms measured live on the local bench; Ringer `astra-p4-2-*`)
+
+- **Setup:** `RuntimeEngine(refusal_mode=...)` with `off` (default, unchanged behaviour), `clause`, `repair`, `renarrate`; the bench passes `variation["refusal_mode"]`. Set: four fixed-thing commands in 1A ("Carry the workstation to the truck.", "Pick up the back door.", "Put the workstation inside the truck.", "Take the workstation outside."), 10 replicates each, judge off, scored by deterministic counts plus a hand read of every refused reply. The Phase 3 truck "refused move" cases never produce a live refusal (the truck is movable), so they are not the measurement set.
+- **Fact-tracking judge dropped:** in the smoke it flagged one of four asserted moves in the `off` arm.
+- **Reading rubric (strict):** clean = the reply does not claim the move and shows the attempt failing; off-topic = ignores the command; contradictory = a phrase that undercuts itself; asserts = still claims the move.
+
+| Arm | Refused / 40 | Extra calls | Clean | Asserts the move | Authored cue kept on refused turns |
+|---|---|---|---|---|---|
+| off | 32 | 0 | 0 of 32 | 32 of 32 | 32 of 32 |
+| clause | 29 | 0 | 0 of 29 | 29 of 29 (a "X has not moved." clause follows prose that claims it) | 29 of 29 |
+| repair | 29 | 29 | about 4 of 29 | most; several self-contradict | 10 of 29 |
+| renarrate (first build) | 36 | 36 | about 31 of 36 | 0 | 1 of 36 |
+| renarrate + cue-restore | 33 | 33 | 23 of 33 | 1 of 33 | 33 of 33 |
+
+- **Cue loss found and fixed:** the drawer cue is authored delivery text that `CloudflareTurnProvider._compose_staged_cue` appends inside the narrator's own proposal, so the first splice replaced it while the engine still counted it delivered. The engine now keeps any segment whose text is an authored `cue_text`, `escalation_text` or `fallback_text` (`RuntimeEngine._authored_delivery_texts`).
+- **Cue-restore round (n=10):** 33 of 33 refused turns keep the cue. Of the 33: 23 clean, 6 off-topic (the narrator ignores the command, for example "gets out of her truck and walks toward the house"), 3 contradictory ("remains in the kitchen, still carried"), 1 asserts the move ("moves the workstation into the passenger seat"). The first build's 31 of 36 clean and this 23 of 33 are within the noise of n=10; `s3` ("put the workstation inside the truck") produced 3 of the 6 off-topic replies.
+- **Reading:** `renarrate` with cue-restore is the only arm that removes the false claim, at one extra narrator call per refused turn (refusals only happen on commands aimed at fixed things). `clause` is cheap but leaves a contradiction on the page. `repair` fails its job; drop it.
+- **Limits:** one scene, four commands, one narrator model. No hold-out commands. The `refusal kept authored text` issue string was never recorded in the bench turn records (the cue check above is the real evidence); the bench does not expose that field. Pending-resume path: a re-narration there uses the pending proposal as its own source and can replace authored segments. The first `clause` pass lost a replicate and `s4` to an SSL timeout; `s3` and `s4` were rerun in full (about 9 duplicate turns billed).
+- **Default stays `off`.** Adopting `renarrate` as the web default is a cost and behaviour decision for Brandon.
 
 ## Phase 5: Three-arm comparison
 
