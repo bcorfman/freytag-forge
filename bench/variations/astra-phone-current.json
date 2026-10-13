@@ -1,0 +1,15 @@
+{
+  "name": "astra-phone-current",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 1,
+  "scripts": {
+    "1A": [
+      {
+        "name": "phone",
+        "inputs": [
+          "Examine Michelle's phone."
+        ]
+      }
+    ]
+  }
+}

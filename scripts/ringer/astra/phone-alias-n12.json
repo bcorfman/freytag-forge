@@ -1,0 +1,20 @@
+{
+ "run_name": "astra-phone-alias",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-phone-alias-12",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "phone-12",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs a live probe of the local narration bench: the fixed prompt \"Examine Michelle's phone.\" in scene 1A, 12 replicates for each of two arms (the current scoped photograph aliases and the baseline with global aliases), and prints the rejection counts. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/phone-alias-check.sh /home/bcorfman/dev/ringer-work/astra-phone-alias/n12 12",
+   "expect_files": ["/home/bcorfman/dev/ringer-work/astra-phone-alias/n12/summary.json"],
+   "verified": "both arms ran live and produced records"
+  }
+ ]
+}
