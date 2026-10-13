@@ -234,6 +234,21 @@ Question: does a differently worded fixed-thing marker also stop the narrator cl
 - **Limits:** one scene, 16 distinct commands, one reply each, my own single-reader scoring, no classifier false positive seen in 5 controls (the earlier "Retrieve my laptop from the passenger seat" case was not re-run). This is a screen, not a reliability rate. Not yet checked: save/load across a refused turn, cue delivery on the next accepted turn in a live run, a second story package, multi-turn sequences.
 - **Decision:** the narrator was the blocker, and the engine path holds. Next is a second, separate experiment: mixed commands (refuse only the fixed part or ask which to do), cue deferral and save/load, plus a fresh command set. The path stays opt-in; `renarrate` stays off by default.
 
+### Phase 4 item 2, honest mixed-command refusal: result (2026-10-13; Ringer `astra-p4-2-mixed-refusal`, `astra-p4-2-measure-fe3`; frozen in `.plans/astra-engine-refusal-mixed-freeze.md`, code fe0d9cee)
+
+- **Built (opt-in):** a refused command that also asks for something else ends with "Nothing else in that command was done. Say what you want to do next." A new yes/no question `names_other_action` (asked once, only on a refused turn; yes or unanswered appends the sentence) decides it. No splitter change (judged too brittle). Unit tests cover the sentence, its absence on a simple refusal, the unanswered case, one question per turn, and save/load after a refused turn.
+- **Validity:** all 12 live turns ran; refused turns had no narrator call and no prompt; no unanswered question; no refusal line on non-refused turns.
+
+| Group (1 reply each, engine arm) | Bar | Result |
+|---|---|---|
+| Mixed (4) refused with the clarification | 4 of 4 | **3 of 4**: "Carry the driver's seat and my laptop into the kitchen." was refused without the sentence (`names_other_action` said no) |
+| Simple refusals (4) refused without it | 4 of 4 | **3 of 4**: "Tilt the workstation onto its side." was not refused and the narrator tilted it (`relocates_thing` said no) |
+| Controls (4) succeed, no refusal | 4 of 4 | 4 of 4, including "Retrieve my laptop from the passenger seat." (the earlier false positive did not recur) |
+| Narrator calls on refused turns | 0 | 0 of 9 |
+
+- **Reading:** the engine path held; both misses are classifier misses. `names_other_action` missed the shared-verb shape (one verb, two objects), the same shape that defeated the splitter. `relocates_thing` missed "Tilt ... onto its side", a repositioning verb not in its list. Bars were missed (3 of 4 twice), so this version is not adopted.
+- **Per the frozen stop rule:** tune that question once on the same bars with fresh commands, not these twelve. Still needed before any default: another story package and multi-turn play.
+
 ## Phase 5: Three-arm comparison
 
 Arms: (A) current pipeline with Phases 1-4 fixes; (B) same pipeline, stronger model; (C) smallest outcome-first prototype (resolve once, validate proposals, narrate from the accepted outcome, check, publish atomically), reusing existing machinery, on the drawer-to-truck sequence only. Do not rewrite all nine scenes.
