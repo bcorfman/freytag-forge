@@ -1,0 +1,117 @@
+{
+ "run_name": "astra-p4-2-measure-wv",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure-wv",
+ "max_parallel": 3,
+ "tasks": [
+  {
+   "key": "h1-wvbase",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live marker-wording measurement, arm 'wvbase', scripts h1 h2 h3 h4 h5 h6 h7 h8, 4 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/wv-h1-wvbase; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 4 wvbase \"h1 h2 h3 h4 h5 h6 h7 h8\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "h1-wva",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live marker-wording measurement, arm 'wva', scripts h1 h2 h3 h4 h5 h6 h7 h8, 4 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/wv-h1-wva; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 4 wva \"h1 h2 h3 h4 h5 h6 h7 h8\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "h1-wvb",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live marker-wording measurement, arm 'wvb', scripts h1 h2 h3 h4 h5 h6 h7 h8, 4 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/wv-h1-wvb; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 4 wvb \"h1 h2 h3 h4 h5 h6 h7 h8\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "h1-wvc",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live marker-wording measurement, arm 'wvc', scripts h1 h2 h3 h4 h5 h6 h7 h8, 4 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/wv-h1-wvc; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 4 wvc \"h1 h2 h3 h4 h5 h6 h7 h8\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "ctl-wvbase",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live marker-wording measurement, arm 'wvbase', scripts c1 c2 c3 c4 c5 c6 c7 c8, 3 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/wv-ctl-wvbase; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 3 wvbase \"c1 c2 c3 c4 c5 c6 c7 c8\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "ctl-wva",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live marker-wording measurement, arm 'wva', scripts c1 c2 c3 c4 c5 c6 c7 c8, 3 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/wv-ctl-wva; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 3 wva \"c1 c2 c3 c4 c5 c6 c7 c8\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "ctl-wvb",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live marker-wording measurement, arm 'wvb', scripts c1 c2 c3 c4 c5 c6 c7 c8, 3 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/wv-ctl-wvb; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 3 wvb \"c1 c2 c3 c4 c5 c6 c7 c8\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "ctl-wvc",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live marker-wording measurement, arm 'wvc', scripts c1 c2 c3 c4 c5 c6 c7 c8, 3 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/wv-ctl-wvc; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 3 wvc \"c1 c2 c3 c4 c5 c6 c7 c8\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "dev-wvb",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live marker-wording measurement, arm 'wvb', scripts d1 d2 d3 d4, 4 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/wv-dev-wvb; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 4 wvb \"d1 d2 d3 d4\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  },
+  {
+   "key": "dev-wvc",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 5400,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live marker-wording measurement, arm 'wvc', scripts d1 d2 d3 d4, 4 replicate(s) each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/wv-dev-wvc; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 4 wvc \"d1 d2 d3 d4\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "arm ran all turns"
+  }
+ ]
+}
