@@ -1,7 +1,7 @@
 # Astra review implementation plan
 
 Sources: `.plans/astra-weak-spots-review.md` (material fixes) and `.plans/astra-arch-review.md` (turn pipeline).
-Status: **draft, nothing started.** Update this file after each phase (see memory: update-plan-after-each-feature).
+Status: **Phase 0 done (2026-10-12); Phase 1 not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
 
 ## Findings that shape the order
 
@@ -17,6 +17,12 @@ Status: **draft, nothing started.** Update this file after each phase (see memor
 3. Record what the 1C and phone fixes were measured against (find the baseline in `scene-affordance-e2e.md` / `design-review-implementation.md`). If none exists, that becomes Phase 1's baseline arm.
 
 Exit: a one-paragraph warehouse diagnosis in this file; baselines located.
+
+### Phase 0 result (2026-10-12, no billed calls)
+
+1. **Untracked files:** none. The review and prompt files were already committed in `26373e56`; the tree is clean.
+2. **Warehouse diagnosis: no source line.** The saved failing run is `~/dev/ringer-work/playthrough-ending-x3/out/e2e-blind-player-r1.md` (canonical profile). `grep -i warehouse` over `data/stories/continuity-initiative` finds nothing. The word first appears on turn 6, command "Read Michelle's text messages.": the narrator invented a phone text ("Meet me at the old warehouse at midnight. Come alone.") with only `k_scene_1a_entry` as grounding. The player then followed that invented lead ("Visit/Search the old warehouse", then boxes, equipment, a leather-bound book), and the narrator accepted each. The drawer cue was delivered later (it is appended to the turn-10 text) but the player was already inside the invented place. So this is narrator invention on a phone-read command, not a pointer or escalation defect. It is the same class as the earlier r1 phone text and r3 "old warehouse" email in `scene-affordance-e2e.md` (L2 on aa52889). Verdict: not a diagnosed authoring defect; **Phase 2 closed**; Phase 4 item 1 (unknown identity is not authorized creation) and the Phase 3 harmless-vs-plot-bypassing invention cases cover it.
+3. **Baselines:** none was recorded for the two landed fixes (`5d45afcf` added only offline tests `test_1c_reading_pointer.py`, `test_photo_scoped_alias.py` and Ringer manifests `weak-1c.json`, `weak-photo.json`). Closest 1C history: the weak-spots prompt cites 2 of 6 canonical-or-raw runs earning the chain by play; the later L2 all-nine on `99029cc6` shows 1C P7 P7 P7 (3 of 3, canonical profile). These disagree, so **Phase 1 runs its own baseline arm** (pre-`5d45afcf` material vs current) rather than trusting either. Phone: one rejection ("unavailable entity 'photo'") is the only recorded evidence; baseline arm needed there too.
 
 ## Phase 1: Verify the landed material fixes
 
