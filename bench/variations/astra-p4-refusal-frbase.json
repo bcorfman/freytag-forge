@@ -1,0 +1,111 @@
+{
+ "name": "astra-p4-refusal-frbase",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "f1",
+    "inputs": [
+     "Raise the workstation off the floor."
+    ]
+   },
+   {
+    "name": "f2",
+    "inputs": [
+     "Detach the driver's seat from the truck."
+    ]
+   },
+   {
+    "name": "f3",
+    "inputs": [
+     "Extract the drawer from the workstation."
+    ]
+   },
+   {
+    "name": "f4",
+    "inputs": [
+     "Transport the workstation into the truck."
+    ]
+   },
+   {
+    "name": "f5",
+    "inputs": [
+     "Bring the drawer to the passenger seat."
+    ]
+   },
+   {
+    "name": "f6",
+    "inputs": [
+     "Shove the workstation toward the back door."
+    ]
+   },
+   {
+    "name": "f7",
+    "inputs": [
+     "Lift the drawer and the back door together."
+    ]
+   },
+   {
+    "name": "f8",
+    "inputs": [
+     "Lift the workstation, then lower it back into place."
+    ]
+   },
+   {
+    "name": "f9",
+    "inputs": [
+     "Place my laptop on the workstation."
+    ]
+   },
+   {
+    "name": "f10",
+    "inputs": [
+     "Set my laptop on the passenger seat."
+    ]
+   },
+   {
+    "name": "f11",
+    "inputs": [
+     "Retrieve my laptop from the passenger seat."
+    ]
+   },
+   {
+    "name": "f12",
+    "inputs": [
+     "Pull the drawer open."
+    ]
+   },
+   {
+    "name": "f13",
+    "inputs": [
+     "Push the drawer shut."
+    ]
+   },
+   {
+    "name": "f14",
+    "inputs": [
+     "Push the back door open."
+    ]
+   },
+   {
+    "name": "f15",
+    "inputs": [
+     "Get into the driver's seat."
+    ]
+   },
+   {
+    "name": "f16",
+    "inputs": [
+     "Move the workstation chair beside the workstation."
+    ]
+   }
+  ]
+ },
+ "refusal_mode": "off"
+}
