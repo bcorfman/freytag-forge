@@ -1,7 +1,7 @@
 # Astra review implementation plan
 
 Sources: `.plans/astra-weak-spots-review.md` (material fixes) and `.plans/astra-arch-review.md` (turn pipeline).
-Status: **Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); phone-alias probe run, inconclusive (2026-10-13); 1C pointer already measured (see its section; no new run); hosted 1A-1B phone smoke not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
+Status: **Phase 3 done offline (2026-10-13, branch `astra-phase3-eval-harness`, not merged); Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); phone-alias probe run, inconclusive (2026-10-13); 1C pointer already measured (see its section; no new run); hosted 1A-1B phone smoke not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
 
 ## Findings that shape the order
 
@@ -78,6 +78,14 @@ No pipeline code yet. Build what the decision needs.
 5. Player input written to `docs/player-input-guide.md` (imperative, first-person possessives).
 
 Exit: harness runs hermetically with stubs for unit tests; a smoke run passes.
+
+### Phase 3 result (2026-10-13, no billed calls; Ringer runs `astra-pipeline-eval` core + cases)
+
+- **Built:** `bench/pipeline_eval/` (`model.py` cases and loader with diagnostic/held_out split; `metrics.py` eight metrics scored separately plus latency, requests, tokens, no combined key; `runner.py` `ScriptedArm`, `PipelineArm` (stub-narrator driven `RuntimeEngine`, save/load between commands), per-turn report showing successes too; `__main__.py` offline `smoke` and `report --cases`). Fixture `bench/pipeline_eval/cases.json`: 14 categories (the 13 from the arch review plus `clarification_invariance`), one diagnostic and one held-out case each, on the drawer-to-truck sequence only. Held-out commands share no string with diagnostic ones.
+- **Clarification test:** `clarification_unchanged(before, after)` compares `turn_index`, fired and active events and `turn_records`. There is no separate patrol-clock field in `RuntimeSnapshot`; it is covered through events and turn index. Decision 2 (clarifications cost no turn) is what it checks.
+- **Tests:** `tests/test_pipeline_eval.py` and `tests/test_pipeline_eval_cases.py`, 9 passed; smoke exits 0; ruff clean.
+- **Known weak spots:** each category has only one case per split, so Phase 5 needs more samples per category before any rate means anything. The refused-move cases check prose for the literal words "cannot" / "can't", which is brittle; replace with a judge or engine-composed refusal clause when Phase 4 item 2 is chosen. `PipelineArm` leaves reference/action/state/created empty because the current pipeline does not report them; Phase 5 must fill them, so those metrics read as unchecked-or-failing until then. Live (billed) arms are not built.
+- **Process note:** the core worker also wrote an unverified copy into the main checkout against its spec. It was deleted and the verified patch applied; the cases check now fails on that.
 
 ## Phase 4: Cheap architectural fixes that are valid under either design
 
