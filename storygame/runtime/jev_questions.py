@@ -98,6 +98,23 @@ def relocates_thing(ask, command: str, thing_name: str) -> bool | None:
     return _answer(ask, {"command": command, "thing": thing_name}, questions, "relocates_thing")
 
 
+def names_other_action(ask, command: str, things_text: str) -> bool | None:
+    questions = {
+        "names_other_action": {
+            "type": "noul",
+            "instructions": (
+                "Decide whether the command asks the player to do anything besides moving the named fixed things, "
+                "such as another action or another object."
+            ),
+            "criteria": {
+                "true": "The command also asks for something other than moving these fixed things.",
+                "false": "The command only asks to move these fixed things.",
+            },
+        }
+    }
+    return _answer(ask, {"command": command, "thing": things_text}, questions, "names_other_action")
+
+
 def reaches_reveals(ask, command: str, candidates) -> set[str]:
     """Return reveal ids whose authored action the command clearly performs."""
 

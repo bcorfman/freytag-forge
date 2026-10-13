@@ -15,11 +15,15 @@ def _fixed_article_name(name: str) -> str:
     return _with_article(name)
 
 
-def fixed_refusal_text(package, names: tuple[str, ...]) -> str:
+def fixed_refusal_text(package, names: tuple[str, ...], other_action: bool | None = False) -> str:
     things = " and ".join(_fixed_article_name(name) for name in names)
     if len(names) == 1:
-        return f"{_protagonist_name(package)} tries to move {things}, but it is fixed in place and does not budge."
-    return f"{_protagonist_name(package)} tries to move {things}, but they are fixed in place and do not budge."
+        text = f"{_protagonist_name(package)} tries to move {things}, but it is fixed in place and does not budge."
+    else:
+        text = f"{_protagonist_name(package)} tries to move {things}, but they are fixed in place and do not budge."
+    if other_action is not False:
+        text += " Nothing else in that command was done. Say what you want to do next."
+    return text
 
 
 @dataclass(frozen=True)

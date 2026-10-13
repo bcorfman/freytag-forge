@@ -1,0 +1,18 @@
+{
+ "run_name": "astra-p4-2-measure-fe3",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure-fe3",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "full-fe3eng",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 600,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live mixed-refusal measurement, arm 'fe3eng', scripts h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12, 1 replicate each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/fe3-full-fe3eng; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 1 fe3eng \"h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "bench ran every scheduled script without error"
+  }
+ ]
+}

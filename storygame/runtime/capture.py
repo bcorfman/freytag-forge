@@ -11,6 +11,7 @@ from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev_questions import (
     goes_to_vehicle,
     moves_thing,
+    names_other_action,
     needs_to_stand,
     relocates_thing,
     same_or_part,
@@ -70,8 +71,17 @@ class WorldCapture:
             if self.fixed_refusal
             else None
         )
+        refusal_issues = list(fixed.issues if fixed else ())
+        other_action = False
+        if self.engine_refusal and fixed and fixed.refused:
+            joined = " and ".join(fixed.refused)
+            other_action = names_other_action(adapter, command, joined)
+            if other_action is None:
+                refusal_issues.append("other-action question unanswered")
         engine_refusal = (
-            fixed_refusal_text(package, fixed.refused) if self.engine_refusal and fixed and fixed.refused else ""
+            fixed_refusal_text(package, fixed.refused, other_action)
+            if self.engine_refusal and fixed and fixed.refused
+            else ""
         )
         if fixed and fixed.refused:
             standing = SeatingResult(command, (), False, ())
@@ -100,7 +110,7 @@ class WorldCapture:
             "steps": list(provider_steps),
             "fixed_refusal_steps": list(fixed_steps),
             "fixed_refusal_asked": fixed.asked if fixed else False,
-            "fixed_refusal_issues": list(fixed.issues if fixed else ()),
+            "fixed_refusal_issues": refusal_issues,
             "engine_refusal": engine_refusal,
             "standing_steps": list(standing.steps),
             "boarding_steps": list(boarding_steps),
@@ -122,7 +132,7 @@ class WorldCapture:
                 "fixed_refusal": fixed.asked if fixed else False,
             },
             "issues": [
-                *(fixed.issues if fixed else ()),
+                *refusal_issues,
                 *standing.issues,
                 *boarding.issues,
                 *taking.issues,

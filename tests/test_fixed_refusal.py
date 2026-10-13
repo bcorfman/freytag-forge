@@ -11,6 +11,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.fixed_refusal import _fixed_article_name, refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev_questions import relocates_thing
+from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
@@ -249,7 +250,7 @@ def _engine_1a(monkeypatch: pytest.MonkeyPatch, classifier, *, engine_refusal: b
 def test_engine_refusal_makes_no_provider_call(monkeypatch: pytest.MonkeyPatch):
     engine, calls, _ = _engine_1a(
         monkeypatch,
-        lambda _state, questions: {next(iter(questions)): {"noul": 1.0}},
+        lambda _state, questions: {next(iter(questions)): {"noul": 0.0 if "names_other_action" in questions else 1.0}},
         engine_refusal=True,
     )
 
@@ -264,7 +265,7 @@ def test_engine_refusal_makes_no_provider_call(monkeypatch: pytest.MonkeyPatch):
 def test_engine_refusal_consumes_no_turn(monkeypatch: pytest.MonkeyPatch):
     engine, calls, _ = _engine_1a(
         monkeypatch,
-        lambda _state, questions: {next(iter(questions)): {"noul": 1.0}},
+        lambda _state, questions: {next(iter(questions)): {"noul": 0.0 if "names_other_action" in questions else 1.0}},
         engine_refusal=True,
     )
     engine.state.staged_cue_fact_id = "continuity_initiative_known"
@@ -305,6 +306,102 @@ def test_engine_refusal_off_by_default(monkeypatch: pytest.MonkeyPatch):
 
     assert calls == ["Carry the workstation to the truck."]
     assert engine.capture.last_before["steps"][0].startswith("Kristin tried to move the workstation.")
+
+
+def test_mixed_refusal_appends_clarification(monkeypatch: pytest.MonkeyPatch):
+    engine, calls, _ = _engine_1a(
+        monkeypatch,
+        lambda _state, questions: {next(iter(questions)): {"noul": 1.0}},
+        engine_refusal=True,
+    )
+
+    result = engine.turn("Hoist the workstation, then open my laptop.")
+
+    assert calls == []
+    assert result.narration.endswith("Nothing else in that command was done. Say what you want to do next.")
+
+
+def test_simple_refusal_has_no_clarification(monkeypatch: pytest.MonkeyPatch):
+    engine, calls, _ = _engine_1a(
+        monkeypatch,
+        lambda _state, questions: {next(iter(questions)): {"noul": 0.0 if "names_other_action" in questions else 1.0}},
+        engine_refusal=True,
+    )
+
+    result = engine.turn("Carry the workstation to the truck.")
+
+    assert calls == []
+    assert result.narration == "Kristin tries to move the workstation, but it is fixed in place and does not budge."
+
+
+def test_unanswered_other_action_appends_clarification(monkeypatch: pytest.MonkeyPatch):
+    engine, calls, _ = _engine_1a(
+        monkeypatch,
+        lambda _state, questions: {"relocates_thing": {"noul": 1.0}} if "relocates_thing" in questions else {},
+        engine_refusal=True,
+    )
+
+    result = engine.turn("Hoist the workstation, then open my laptop.")
+
+    assert calls == []
+    assert result.narration.endswith("Nothing else in that command was done. Say what you want to do next.")
+    assert "other-action question unanswered" in engine.capture.last_before["fixed_refusal_issues"]
+
+
+def test_names_other_action_question_joins_refused_names(monkeypatch: pytest.MonkeyPatch):
+    provider, _ = _real_scene_1a(monkeypatch)
+    assert provider._world().move("kristin", "kitchen").ok
+    requested: list[tuple[str, dict, dict]] = []
+
+    def ask(state, questions):
+        key = next(iter(questions))
+        requested.append((key, questions, state))
+        return {key: {"noul": 1.0 if key == "relocates_thing" and "Extract" in state["command"] else 0.0}}
+
+    capture = WorldCapture(provider, ask, fixed_refusal=True, engine_refusal=True)
+    capture.before_turn("Extract the drawer from the workstation.")
+    assert [key for key, _, _ in requested].count("names_other_action") == 1
+    key, payload, question_state = requested[-1]
+    assert key == "names_other_action"
+    assert payload[key]["type"] == "noul"
+    assert question_state["thing"] == "drawer and workstation"
+
+    requested.clear()
+    capture.before_turn("Open the workstation.")
+    assert "names_other_action" not in [key for key, _, _ in requested]
+
+
+def test_refused_turn_survives_save_and_load(monkeypatch: pytest.MonkeyPatch, tmp_path):
+    engine, calls, _provider = _engine_1a(
+        monkeypatch,
+        lambda _state, questions: {next(iter(questions)): {"noul": 0.0 if "names_other_action" in questions else 1.0}},
+        engine_refusal=True,
+    )
+    before = engine.state.snapshot()
+    engine.turn("Carry the workstation to the truck.")
+    assert engine.state.snapshot() == before
+
+    store = RuntimeStateSqliteStore(tmp_path / "runtime.sqlite")
+    store.save("session", engine.state)
+    restored = store.load("session", PACKAGE)
+    assert restored.facts == before.facts
+    assert restored.turn_index == before.turn_index
+
+    next_provider = build_capture_provider(restored)
+    next_capture = WorldCapture(
+        next_provider,
+        lambda _state, questions: {next(iter(questions)): {"noul": 0.0}},
+        fixed_refusal=True,
+        engine_refusal=True,
+    )
+    next_engine = RuntimeEngine(
+        restored,
+        lambda _command: {"segments": [{"kind": "narration", "text": "The search continues."}]},
+        capture=next_capture,
+    )
+    next_engine.turn("Search the kitchen.")
+    assert calls == []
+    assert next_engine.state.turn_index == before.turn_index + 1
 
 
 def test_relocates_thing_criteria_cover_lift_then_lower_and_source():
