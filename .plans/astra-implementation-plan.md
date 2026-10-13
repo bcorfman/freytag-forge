@@ -125,6 +125,26 @@ Exit: each item has a bench result; regressions checked against Phase 3's set.
 - **Limits:** one scene, four commands, one narrator model. No hold-out commands. The `refusal kept authored text` issue string was never recorded in the bench turn records (the cue check above is the real evidence); the bench does not expose that field. Pending-resume path: a re-narration there uses the pending proposal as its own source and can replace authored segments. The first `clause` pass lost a replicate and `s4` to an SSL timeout; `s3` and `s4` were rerun in full (about 9 duplicate turns billed).
 - **Default stays `off`.** Adopting `renarrate` as the web default is a cost and behaviour decision for Brandon.
 
+### Phase 4 item 2, prevention arm: the fixed-thing marker (2026-10-13; Ringer `astra-p4-2-fixed-marker*`, `astra-p4-2-runtime-mark`, `astra-p4-2-measure-fixed`)
+
+- **Built:** `ItemFactsProvider(mark_fixed=...)`, default off; bench option `item_facts.mark_fixed`. When on, every rendered fixed non-area thing in the narrator's THINGS block gets " It is fixed in place. It cannot be picked up or carried away. If the player tries, the attempt fails." (no "move", so opening a door is not read as moving it). `build_capture_provider(state, mark_fixed=False)` carries it on the runtime path. Production is unchanged.
+- **Three invalid smokes before the real one**, each a harness-path defect, not a model result: (1) my spec gated the marker on `_referred_names`, which only the live match call fills, so it never rendered; (2) the runtime bench builds its provider with `build_capture_provider`, which dropped the option; (3) a Ringer check I wrote was too rigid. Lesson: confirm the sentence is in the recorded `prompt_user` before reading outcomes (fields `prompt_user`, 39 of 40 turns carried it; the one without was a "Pick up the back door." turn where the match call left the back door out of THINGS).
+- **Result (n=10 per command, 1A, `refusal_mode=off`, count = capture refused the move the narrator claimed):**
+
+| Command | Baseline (off) | With marker |
+|---|---|---|
+| Carry the workstation to the truck. | 8 / 10 | 10 / 10 |
+| Pick up the back door. | 6 / 10 | 1 / 10 |
+| Put the workstation inside the truck. | 8 / 10 | 8 / 10 |
+| Take the workstation outside. | 10 / 10 | 0 / 10 |
+| All | 32 / 40 | 19 / 40 |
+
+- **Reading:** the marker fully fixes "take outside" and nearly "pick up" (honest replies such as "tries to lift the workstation, but it doesn't budge. It's fixed in place."). It does nothing for destination-phrased commands ("carry ... to the truck", "put ... inside the truck"): those still claim the move 18 of 20 times. Replies are near-identical across replicates, so n=10 is closer to 4 distinct samples per command than 40.
+- **Controls (ordinary play, n=5 each, with and without the marker):** no over-refusal. The back door opened 5 of 5, the drawer opened 5 of 5, examining the workstation was normal, and capture refused 0 of 15 in both arms. Two side effects with the marker: the door was "stuck" before opening in 3 of 5 replies (0 of 5 without), and one examine reply said "The workstation is a fixed, stationary object".
+- **Cost:** zero extra calls; one sentence per rendered fixed thing.
+- **Limits:** four commands, one scene, one narrator; the destination-phrased failures suggest the wording matches verbs ("pick up", "carry away") more than intent. No wording variant was tried, and I did not tune the sentence to these four commands (that would overfit without held-out commands). The marker plus `renarrate` combination is not measured.
+- **Reading across item 2:** the marker alone is not enough (19 of 40 still claim the move); `renarrate` with cue-restore handles the rest at one call each. The combination would cut `renarrate` calls by about 40 percent on these commands. Neither is the default; both are Brandon's call.
+
 ## Phase 5: Three-arm comparison
 
 Arms: (A) current pipeline with Phases 1-4 fixes; (B) same pipeline, stronger model; (C) smallest outcome-first prototype (resolve once, validate proposals, narrate from the accepted outcome, check, publish atomically), reusing existing machinery, on the drawer-to-truck sequence only. Do not rewrite all nine scenes.
