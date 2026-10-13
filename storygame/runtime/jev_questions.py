@@ -77,7 +77,9 @@ def relocates_thing(ask, command: str, thing_name: str) -> bool | None:
             "type": "noul",
             "instructions": (
                 "Relocating a thing means the command lifts it, picks it up, carries it, drags it, pushes it, "
-                "slides it, takes it out or off of where it is, removes it, detaches it, or puts it somewhere else."
+                "slides it, takes it out or off of where it is, removes it, detaches it, or puts it somewhere else. "
+                "It also means it tilts it, tips it over, rotates it, turns it around, rolls it, nudges it, shifts it, "
+                "or repositions it."
             ),
             "criteria": {
                 "true": (
@@ -90,7 +92,8 @@ def relocates_thing(ask, command: str, thing_name: str) -> bool | None:
                     "this thing. If this thing is only "
                     "the place another thing is taken from or put on, such as "
                     "retrieving a laptop from the passenger seat or putting a laptop on the workstation, it does not "
-                    "count as relocating this thing."
+                    "count as relocating this thing. A part used as designed is not relocating the thing: a door swung "
+                    "open or shut, a drawer slid open or shut, a lid opened, or a screen tilted back on its own hinge."
                 ),
             },
         }
@@ -104,7 +107,9 @@ def names_other_action(ask, command: str, things_text: str) -> bool | None:
             "type": "noul",
             "instructions": (
                 "Decide whether the command asks the player to do anything besides moving the named fixed things, "
-                "such as another action or another object."
+                'such as another action or another object. A second object joined by "and" counts as something '
+                'other than moving these fixed things, even when one verb covers both objects, as in "Carry the '
+                'crate and my bag outside."'
             ),
             "criteria": {
                 "true": "The command also asks for something other than moving these fixed things.",

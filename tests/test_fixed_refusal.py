@@ -10,7 +10,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.fixed_refusal import _fixed_article_name, refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
-from storygame.runtime.jev_questions import relocates_thing
+from storygame.runtime.jev_questions import names_other_action, relocates_thing
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, world_for
@@ -415,3 +415,32 @@ def test_relocates_thing_criteria_cover_lift_then_lower_and_source():
     criteria = captured["relocates_thing"]["criteria"]
     assert "puts it back where it was" in criteria["true"]
     assert "taken from or put on" in criteria["false"]
+
+
+def test_relocates_thing_wording_covers_repositioning_and_use():
+    captured: dict[str, object] = {}
+
+    def ask(_state, questions):
+        captured.update(questions)
+        return {"relocates_thing": {"noul": 0.0}}
+
+    relocates_thing(ask, "Reposition the workstation.", "workstation")
+    payload = captured["relocates_thing"]
+    instructions = payload["instructions"]
+    false_criterion = payload["criteria"]["false"]
+    for word in ("tilts", "rotates", "rolls", "nudges", "repositions"):
+        assert word in instructions
+    assert "a door swung open or shut" in false_criterion
+    assert "a drawer slid open or shut" in false_criterion
+
+
+def test_names_other_action_wording_covers_shared_verb():
+    captured: dict[str, object] = {}
+
+    def ask(_state, questions):
+        captured.update(questions)
+        return {"names_other_action": {"noul": 1.0}}
+
+    names_other_action(ask, "Carry the workstation and my bag outside.", "workstation")
+    payload = captured["names_other_action"]
+    assert "one verb" in payload["instructions"]

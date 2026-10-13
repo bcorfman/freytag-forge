@@ -1,0 +1,18 @@
+{
+ "run_name": "astra-p4-2-measure-fe4",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-p4-2-measure-fe4",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "full-fe4eng",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 600,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs the live tuning-round measurement, arm 'fe4eng', scripts k1 k2 k3 k4 k5 k6 k7 k8 k9 k10 k11 k12, 1 replicate each. Reply with the single word: ready.",
+   "check": "bash -c 'O=/home/bcorfman/dev/ringer-work/astra-p4-2-measure/fe4-full-fe4eng; bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/p4-refusal-measure-check.sh $O 1 fe4eng \"k1 k2 k3 k4 k5 k6 k7 k8 k9 k10 k11 k12\" > $O.out 2>&1; rc=$?; tail -2 $O.out; exit $rc'",
+   "verified": "bench ran every scheduled script without error"
+  }
+ ]
+}
