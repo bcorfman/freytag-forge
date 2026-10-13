@@ -452,7 +452,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 and narration
                 and entity_id
                 and not world.is_a(entity_id, "area")
-                and name in self._referred_names
                 and world.schema.is_fixed(entity_id)
             ):
                 line += " It is fixed in place. It cannot be picked up or carried away. If the player tries, the attempt fails."

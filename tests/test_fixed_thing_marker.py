@@ -25,7 +25,6 @@ def _provider(*, mark_fixed=False, selected_name="workstation"):
         mark_fixed=mark_fixed,
     )
     provider._selected_names = [selected_name]
-    provider._referred_names = [selected_name]
     return provider
 
 
@@ -33,22 +32,25 @@ def _line(block, name):
     return next(line for line in block.splitlines() if line.startswith(f"- {name}."))
 
 
-def test_fixed_referred_workstation_gets_marker():
-    line = _line(_provider(mark_fixed=True)._things_block(narration=True), "workstation")
+def test_fixed_workstation_gets_marker_even_when_not_referred():
+    provider = _provider(mark_fixed=True)
+    provider._referred_names = []
+    line = _line(provider._things_block(narration=True), "workstation")
     assert line.endswith(MARKER)
 
 
-def test_fixed_marker_is_off_by_default():
-    assert MARKER not in _provider()._things_block(narration=True)
+def test_fixed_marker_is_off_when_mark_fixed_is_false():
+    assert MARKER not in _provider(mark_fixed=False)._things_block(narration=True)
 
 
-def test_fixed_workstation_not_referred_gets_no_marker():
-    provider = _provider(mark_fixed=True)
-    provider._referred_names = []
-    assert MARKER not in provider._things_block(narration=True)
+def test_fixed_thing_not_in_rendered_things_gets_no_marker():
+    provider = _provider(mark_fixed=True, selected_name="Kristin's laptop")
+    block = provider._things_block(narration=True)
+    assert "- workstation." not in block
+    assert MARKER not in block
 
 
-@pytest.mark.parametrize("name", ["Kristin's laptop", "Kristin's truck"])
+@pytest.mark.parametrize("name", ["Kristin's laptop"])
 def test_non_fixed_referred_thing_gets_no_marker(name):
     assert MARKER not in _provider(mark_fixed=True, selected_name=name)._things_block(narration=True)
 
@@ -65,3 +67,16 @@ def test_validate_item_facts_mark_fixed_is_boolean():
     validate_item_facts({**base, "mark_fixed": False})
     with pytest.raises(ValueError, match="mark_fixed must be a boolean"):
         validate_item_facts({**base, "mark_fixed": "yes"})
+
+
+@pytest.mark.parametrize("mark_fixed, expected", [(True, True), (False, False)])
+def test_assemble_turn_prompt_includes_fixed_marker_without_prepare_turn(mark_fixed, expected):
+    provider = _provider(mark_fixed=mark_fixed)
+    provider._selected_names = ["workstation", *provider.dependency_names()]
+    provider._select_protagonist()
+    prompt = provider.assemble_turn_prompt("Carry the workstation to the truck.")
+    user_text = provider._section_user_prompt(prompt["context"])
+    if expected:
+        assert "- workstation. Place: kitchen." + MARKER in user_text
+    else:
+        assert MARKER not in user_text
