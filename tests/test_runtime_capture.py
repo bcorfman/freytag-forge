@@ -340,7 +340,7 @@ def test_web_capture_flag(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
     class SpyCapture:
         made = 0
 
-        def __init__(self, *_args: object) -> None:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
             type(self).made += 1
 
         def before_turn(self, _command: str) -> dict[str, object]:

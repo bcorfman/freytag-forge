@@ -256,7 +256,8 @@ def create_demo_app(
             capture_ask = JevClient.from_environment().ask
             provider.semantic_ask = capture_ask
             capture_provider.semantic_ask = capture_ask
-            capture = WorldCapture(capture_provider, capture_ask)
+            enabled = getenv("FREYTAG_FIXED_REFUSAL", "") != "0"
+            capture = WorldCapture(capture_provider, capture_ask, fixed_refusal=enabled, engine_refusal=enabled)
         return RuntimeEngine(state, provider, capture=capture)
 
     def require_turn_rate_limit(body: TurnRequest, request: Request) -> None:

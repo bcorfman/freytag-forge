@@ -257,6 +257,15 @@ Question: does a differently worded fixed-thing marker also stop the narrator cl
 - **Limits:** a screen. 12 distinct commands, one reply each, one scene, one reader, and the classifier is still a small model with wording tuned to the failures found. It passed on commands it was not tuned on, but two rounds of tuning on one scene is not evidence of reliability.
 - **Decision:** the engine-owned refusal with the honest clarification meets its bars and stays opt-in. Before any default: a second story package, multi-turn play (cue delivery live, refusal followed by normal turns), and a larger fresh command set. `renarrate` stays off by default.
 
+### Phase 4 item 2, engine-owned refusal enabled in the hosted path (2026-10-13; Ringer `astra-p4-2-enable-refusal`)
+
+- **Decision (Brandon):** turn the refusal on for the hosted path. The earlier "second story package" gate is dropped: there is one package and it must work in staging, and the mechanism reads only the story's own fixed flags. Multi-turn behaviour is covered by tests instead.
+- **Change:** `engine_for` in `storygame/web_demo.py` builds `WorldCapture(..., fixed_refusal=enabled, engine_refusal=enabled)` whenever `FREYTAG_WORLD_CAPTURE=1`. `enabled` is True unless `FREYTAG_FIXED_REFUSAL` is exactly `0` (kill switch for staging rollback; set it on the service, no deploy needed). `renarrate` stays off.
+- **Defect fixed on the way:** `EngineRefusalTurn` lacked `selected_knowledge_ids` and `events`, so a refused turn would have crashed `FREYTAG_EXPOSE_KNOWLEDGE_AUDIT=1` (the hosted debug/E2E mode). Both are now empty tuples; no other turn-result attribute is read on the hosted path.
+- **Tests (hermetic, through the real API with sessions saved and reloaded between requests):** on by default; kill switch; refused turn with audit and prompt exposure; five-request sequence (normal, refused, normal, refused, normal) with the narrator called 3 times, turn index advancing only on normal turns, facts unchanged across refusals and a staged cue delivered once; mixed refusal then normal turn. Full local suite passed (1696 tests), ruff clean.
+- **Billed calls:** each refused-or-checked turn adds classifier (Jev) calls only when the command names a fixed thing in scope: one `relocates_thing` per such thing, plus one `names_other_action` on a refusal. No narrator call on a refusal.
+- **Untested until staging:** the real classifier on live traffic. Staged E2E needs the change on `main` and the SHA-bound staging deploy first (do not merge mid-run). Roll back with `FREYTAG_FIXED_REFUSAL=0` if staging shows false refusals.
+
 ## Phase 5: Three-arm comparison
 
 Arms: (A) current pipeline with Phases 1-4 fixes; (B) same pipeline, stronger model; (C) smallest outcome-first prototype (resolve once, validate proposals, narrate from the accepted outcome, check, publish atomically), reusing existing machinery, on the drawer-to-truck sequence only. Do not rewrite all nine scenes.

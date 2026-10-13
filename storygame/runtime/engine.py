@@ -71,6 +71,8 @@ class EngineRefusalTurn:
 
     def __init__(self, text: str) -> None:
         self.segments = (NarrationSegment(kind="narration", text=text),)
+        self.selected_knowledge_ids = ()
+        self.events = ()
         self.game_break = None
         self.story_complete = False
 
