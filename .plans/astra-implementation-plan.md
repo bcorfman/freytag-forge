@@ -1,7 +1,7 @@
 # Astra review implementation plan
 
 Sources: `.plans/astra-weak-spots-review.md` (material fixes) and `.plans/astra-arch-review.md` (turn pipeline).
-Status: **Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); Phase 1 billed runs not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
+Status: **Phase 0 done (2026-10-12); Phase 1 offline checks done (2026-10-12, on 618 staged as 787f56d1); phone-alias probe run, inconclusive (2026-10-13); 1C pointer and hosted smoke runs not started.** Update this file after each phase (see memory: update-plan-after-each-feature).
 
 ## Findings that shape the order
 
@@ -49,6 +49,10 @@ Exit: results table in this file; fixes kept, revised or reverted.
 - **1B scoped aliases:** with the photograph placed, "Inspect the photo.", "Examine the photograph." and the Examine-beneath-the-bench command match `k_sl_1b_a_r2`; "Show the photo to the man.", "Show the man the photograph.", "Ask the man about the photo." and "Show Michelle's photograph to the man." match `k_sl_1b_b_r1`. No 1B regression.
 - **Early-1A test:** added as `tests/test_early_1a_photo_sentences.py` (Ringer `astra-early-1a-photo`, pass on attempt 2; 5 cases).
 - **Not done:** the billed runs (phone aliases, 1C pointer) need the pre-`5d45afcf` baseline arm described in Phase 0.
+
+### Phase 1 phone-alias probe (2026-10-13, local narration bench; Ringer `astra-phone-alias`)
+
+Fixed prompt "Examine Michelle's phone.", scene 1A, 12 replicates per arm. Baseline arm = current package with the `michelle_photograph` block reverted to global `aliases` (variation override); current arm = shipped scoped aliases. Smoke first (2 per arm, 44 neurons), then n=12. Result: **0 rejected turns and 0 recovery requests in both arms, and no narration in either arm (0 of 24) used photo, photograph or picture.** The probe never elicited the failure, so it cannot separate the arms. The decision rule (revise if `photo` still rejects) is not triggered, but the improvement is also unmeasured. Offline checks (above) remain the evidence for this fix. A rejection needs the narrator to write the word; the one recorded case came from a longer 1A run. Next, if wanted: a probe whose prompt makes a photo likely (for example a longer 1A script), still player-guide-conformant, or fold phone-alias into the linked hosted 1A-1B smoke runs. Files: `bench/variations/astra-phone-{baseline,current}.json`, `scripts/ringer/astra/phone-alias-*`.
 
 ## Phase 2: Warehouse drift (conditional)
 

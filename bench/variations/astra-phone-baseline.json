@@ -1,0 +1,18 @@
+{
+  "name": "astra-phone-baseline",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 1,
+  "overrides": {
+    "world.yaml": {
+      "replacements": [
+        {
+          "old": "  name: Michelle's photograph\n  scoped_aliases: [photograph, photo]",
+          "new": "  name: Michelle's photograph\n  aliases: [photograph, photo]"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "1A": [{"name": "phone", "inputs": ["Examine Michelle's phone."]}]
+  }
+}
