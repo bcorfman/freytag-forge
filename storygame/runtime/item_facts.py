@@ -272,6 +272,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._schema_cache = {}
         self.prior_steps: tuple[str, ...] = ()
         self._last_item_facts_unplaced = []
+        self._last_item_facts_refused = []
         self._fact_effect_snapshot = None
         self._last_item_facts_match = {
             "match_call": False,
@@ -615,6 +616,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def last_item_facts_unplaced(self):
         return copy.deepcopy(self._last_item_facts_unplaced)
+
+    def last_item_facts_refused(self):
+        return copy.deepcopy(self._last_item_facts_refused)
+
+    def _record_refused_move(self, world, entity_id):
+        if any(entry.get("id") == entity_id for entry in self._last_item_facts_refused):
+            return
+        self._last_item_facts_refused.append({"name": self._entity_label(world, entity_id), "id": entity_id})
 
     def dependency_names(self):
         ids = {
@@ -1000,6 +1009,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 self._last_item_facts_unplaced.append(entry)
             issues.append(f"item_facts for {name!r} left unplaced: {place!r} cannot hold things")
         if not result.ok:
+            self._record_refused_move(world, entity_id)
             issues.append(f"item_facts for {name!r} refused place {place!r}: {result.reason}")
 
     def _apply_state(self, world, entity_id, name, value, place_pole, issues):
@@ -1086,6 +1096,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         issues = []
         changed = set()
         self._last_item_facts_unplaced = []
+        self._last_item_facts_refused = []
         if not isinstance(raw, dict):
             self._held_item_facts = {}
             self._changed_last_turn = set()
@@ -1573,6 +1584,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             )
             if unresolved_place:
                 if world.schema.is_fixed(entity_id):
+                    self._record_refused_move(world, entity_id)
                     issues.append(f"item_facts for {name!r} refused place {place!r}: fixed things cannot move")
                 else:
                     world.set_unplaced(entity_id, place[:80])

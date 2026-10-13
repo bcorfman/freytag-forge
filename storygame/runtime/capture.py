@@ -120,6 +120,7 @@ class WorldCapture:
         record = {
             "issues": _json_value(issues),
             "unplaced": _json_value(self.provider.last_item_facts_unplaced()),
+            "refused": _json_value(self.provider.last_item_facts_refused()),
             "changed": sorted(self.provider._changed_last_turn),
             "raw": _json_value(raw),
             "match_info": _json_value(self.provider.last_item_facts_match()),
@@ -148,6 +149,7 @@ class WorldCapture:
             "_match_offered_names",
             "_fact_effect_snapshot",
             "_last_item_facts_unplaced",
+            "_last_item_facts_refused",
             "_last_item_facts_match",
         )
         result = {name: _json_value(getattr(self.provider, name)) for name in names}
@@ -169,6 +171,7 @@ class WorldCapture:
             "_match_offered_names",
             "_fact_effect_snapshot",
             "_last_item_facts_unplaced",
+            "_last_item_facts_refused",
             "_last_item_facts_match",
         ):
             if name in context:
@@ -183,6 +186,7 @@ class WorldCapture:
                     "_referred_names",
                     "_referred_lines",
                     "_last_item_facts_unplaced",
+                    "_last_item_facts_refused",
                 }:
                     value = value or []
                 setattr(self.provider, name, value)

@@ -132,6 +132,7 @@ class RuntimeEngine(CanonicalEventMixin):
         canonical_event_id = None
         entry_segments = None
         resolution_segments = None
+        refusal_segment = None
         forced_handoff = False
         try:
             self.state.last_turn_delivery = TurnDelivery()
@@ -248,6 +249,16 @@ class RuntimeEngine(CanonicalEventMixin):
                     ),
                 }
             )
+            refusal_segment = self._refusal_segment(capture_record)
+            if refusal_segment:
+                self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                    update={
+                        "capture_issues": (
+                            *self.state.last_turn_delivery.capture_issues,
+                            *(f"refusal clause added for {name}" for name in self._refusal_names(capture_record)),
+                        )
+                    }
+                )
             newly = (
                 set(self.validator.unsatisfied_dependencies(self.state.current_scene_id, self.state.facts)) - already
             )
@@ -313,9 +324,16 @@ class RuntimeEngine(CanonicalEventMixin):
                 proposal = proposal.model_copy(
                     update={"segments": tuple(segment for segment in proposal.segments if segment.text != cue_text)}
                 )
-        if entry_segments or resolution_segments:
+        if entry_segments or resolution_segments or refusal_segment:
             result = proposal.model_copy(
-                update={"segments": (*proposal.segments, *(entry_segments or ()), *resolution_segments)}
+                update={
+                    "segments": (
+                        *proposal.segments,
+                        *(entry_segments or ()),
+                        *(resolution_segments or ()),
+                        *((refusal_segment,) if refusal_segment else ()),
+                    )
+                }
             )
         else:
             result = proposal
@@ -346,6 +364,28 @@ class RuntimeEngine(CanonicalEventMixin):
                 }
             )
         return proposal
+
+    def _refusal_names(self, capture_record):
+        provider = getattr(self.capture, "provider", None) if self.capture else None
+        if provider is None:
+            return ()
+        world = provider._world()
+        names = []
+        for entry in capture_record.get("refused", ()):
+            entity_id = entry.get("id") if isinstance(entry, dict) else None
+            if entity_id and not world.is_hidden(entity_id):
+                label = provider._entity_label(world, entity_id)
+                if label not in names:
+                    names.append(label[:1].upper() + label[1:])
+        return tuple(names)
+
+    def _refusal_segment(self, capture_record):
+        names = self._refusal_names(capture_record)
+        if not names:
+            return None
+        joined = " and ".join(names)
+        verb = "has" if len(names) == 1 else "have"
+        return NarrationSegment(kind="narration", text=f"{joined} {verb} not moved.")
 
     def _record_attempt(
         self,
@@ -577,6 +617,18 @@ class RuntimeEngine(CanonicalEventMixin):
                     ),
                 }
             )
+            refusal_segment = self._refusal_segment(capture_record)
+            if refusal_segment:
+                self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                    update={
+                        "capture_issues": (
+                            *self.state.last_turn_delivery.capture_issues,
+                            *(f"refusal clause added for {name}" for name in self._refusal_names(capture_record)),
+                        )
+                    }
+                )
+        else:
+            refusal_segment = None
         self._record_turn(pending)
         self._advance_pacing(pending.narrative_seconds)
         self._activate_pacing()
@@ -586,6 +638,8 @@ class RuntimeEngine(CanonicalEventMixin):
         self._activate_pacing()
         if entry_segments:
             pending = pending.model_copy(update={"segments": (*pending.segments, *entry_segments)})
+        if refusal_segment:
+            pending = pending.model_copy(update={"segments": (*pending.segments, refusal_segment)})
         return self._finish_ending(pending)
 
     def _apply_authored_transition(self) -> tuple[NarrationSegment, ...] | None:
