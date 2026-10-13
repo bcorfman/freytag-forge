@@ -297,6 +297,24 @@ def test_runtime_mode_passes_mark_fixed_to_capture_provider(
     assert build_capture_provider(state, mark_fixed="anywhere").mark_fixed_variant == "anywhere"
 
 
+def test_runtime_mode_passes_fixed_refusal_to_capture(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
+    calls: list[bool] = []
+    original = core.WorldCapture
+
+    def capture(provider, ask, fixed_refusal=False):
+        calls.append(fixed_refusal)
+        return original(provider, ask, fixed_refusal=fixed_refusal)
+
+    monkeypatch.setattr(core, "WorldCapture", capture)
+    enabled = _variation(RUNTIME, turns=1)
+    enabled["fixed_refusal"] = True
+    assert _run(monkeypatch, RUNTIME, turns=1)["status"] == "ok"
+    assert calls[-1] is False
+    result = core.run_scene(enabled, "1A", enabled["scripts"]["1A"][0])
+    assert result["status"] == "ok"
+    assert calls[-1] is True
+
+
 def test_runtime_mode_records_rejected_turn(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
     calls = 0
 

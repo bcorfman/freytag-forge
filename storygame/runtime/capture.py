@@ -6,10 +6,18 @@ import copy
 from collections.abc import Callable
 from typing import Any
 
+from storygame.runtime.fixed_refusal import refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
-from storygame.runtime.jev_questions import goes_to_vehicle, moves_thing, needs_to_stand, same_or_part, uses_thing
-from storygame.runtime.seating import board_vehicle, seat_before_use, stand_before_leave
-from storygame.runtime.taking import take_before_put
+from storygame.runtime.jev_questions import (
+    goes_to_vehicle,
+    moves_thing,
+    needs_to_stand,
+    relocates_thing,
+    same_or_part,
+    uses_thing,
+)
+from storygame.runtime.seating import SeatingResult, board_vehicle, seat_before_use, stand_before_leave
+from storygame.runtime.taking import TakingResult, take_before_put
 from storygame.runtime.world_model import apply_scene_placements
 
 
@@ -30,9 +38,12 @@ def _json_value(value):
 
 
 class WorldCapture:
-    def __init__(self, provider: ItemFactsProvider, ask: Callable[[object, object], dict | None]) -> None:
+    def __init__(
+        self, provider: ItemFactsProvider, ask: Callable[[object, object], dict | None], fixed_refusal: bool = False
+    ) -> None:
         self.provider = provider
         self.ask = ask
+        self.fixed_refusal = fixed_refusal
         self._command = ""
         self.last_before: dict[str, Any] | None = None
         self.last_after: dict[str, Any] | None = None
@@ -42,17 +53,29 @@ class WorldCapture:
         package = self.provider.state.package
         world = self.provider._world()
         adapter = _ask_adapter(self.ask)
-        standing = stand_before_leave(world, package, command, lambda c, s, r: needs_to_stand(adapter, c, s, r))
-        taking = take_before_put(world, package, command, lambda c, t: moves_thing(adapter, c, t))
-        boarding = board_vehicle(world, package, command, lambda c, v: goes_to_vehicle(adapter, c, v))
-        seating = (
-            seat_before_use(world, package, command, lambda c, t: uses_thing(adapter, c, t))
-            if not standing.steps and not boarding.steps
+        fixed = (
+            refuse_fixed_move(world, package, command, lambda c, t: relocates_thing(adapter, c, t))
+            if self.fixed_refusal
             else None
         )
+        if fixed and fixed.steps:
+            standing = SeatingResult(command, (), False, ())
+            taking = TakingResult(command, (), False, ())
+            boarding = SeatingResult(command, (), False, ())
+            seating = SeatingResult(command, (), False, ())
+        else:
+            standing = stand_before_leave(world, package, command, lambda c, s, r: needs_to_stand(adapter, c, s, r))
+            taking = take_before_put(world, package, command, lambda c, t: moves_thing(adapter, c, t))
+            boarding = board_vehicle(world, package, command, lambda c, v: goes_to_vehicle(adapter, c, v))
+            seating = (
+                seat_before_use(world, package, command, lambda c, t: uses_thing(adapter, c, t))
+                if not standing.steps and not boarding.steps
+                else None
+            )
+        fixed_steps = fixed.steps if fixed else ()
         boarding_steps = boarding.steps
         seating_steps = seating.steps if seating else ()
-        provider_steps = (*standing.steps, *boarding_steps, *taking.steps, *seating_steps)
+        provider_steps = (*fixed_steps, *standing.steps, *boarding_steps, *taking.steps, *seating_steps)
         self.provider.prior_steps = provider_steps
         match_info = {}
         if self.provider.item_facts_mode == "single_call":
@@ -60,6 +83,9 @@ class WorldCapture:
         record = {
             "command": " ".join((*provider_steps, command)),
             "steps": list(provider_steps),
+            "fixed_refusal_steps": list(fixed_steps),
+            "fixed_refusal_asked": fixed.asked if fixed else False,
+            "fixed_refusal_issues": list(fixed.issues if fixed else ()),
             "standing_steps": list(standing.steps),
             "boarding_steps": list(boarding_steps),
             "taking_steps": list(taking.steps),
@@ -77,8 +103,10 @@ class WorldCapture:
                 "boarding": boarding.asked,
                 "taking": taking.asked,
                 "seating": seating.asked if seating else False,
+                "fixed_refusal": fixed.asked if fixed else False,
             },
             "issues": [
+                *(fixed.issues if fixed else ()),
                 *standing.issues,
                 *boarding.issues,
                 *taking.issues,

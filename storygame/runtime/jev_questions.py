@@ -71,6 +71,27 @@ def moves_thing(ask, command: str, thing_name: str) -> bool | None:
     return _answer(ask, {"command": command, "thing": thing_name}, questions, "moves_thing")
 
 
+def relocates_thing(ask, command: str, thing_name: str) -> bool | None:
+    questions = {
+        "relocates_thing": {
+            "type": "noul",
+            "instructions": (
+                "Relocating a thing means the command lifts it, picks it up, carries it, drags it, pushes it, "
+                "slides it, takes it out or off of where it is, removes it, detaches it, or puts it somewhere else."
+            ),
+            "criteria": {
+                "true": "The command makes the player relocate this thing.",
+                "false": (
+                    "The command uses the thing where it is: opening, closing, sitting in, looking at, reading, or "
+                    "searching it. It also covers a command that moves some other thing onto, into, off, or out of "
+                    "this thing."
+                ),
+            },
+        }
+    }
+    return _answer(ask, {"command": command, "thing": thing_name}, questions, "relocates_thing")
+
+
 def reaches_reveals(ask, command: str, candidates) -> set[str]:
     """Return reveal ids whose authored action the command clearly performs."""
 
