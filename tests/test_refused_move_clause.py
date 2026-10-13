@@ -30,7 +30,7 @@ def _engine(item_facts: dict[str, dict[str, str]]) -> tuple[RuntimeEngine, World
         return {"segments": [{"kind": "narration", "text": "The move is complete."}]}
 
     capture = WorldCapture(provider, lambda _state, questions: {next(iter(questions)): True})
-    return RuntimeEngine(state, narrator, capture=capture), capture, state
+    return RuntimeEngine(state, narrator, capture=capture, refusal_mode="clause"), capture, state
 
 
 def test_refused_move_appends_deterministic_final_clause() -> None:

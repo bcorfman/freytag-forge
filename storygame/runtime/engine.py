@@ -74,7 +74,10 @@ class RuntimeEngine(CanonicalEventMixin):
         *,
         projector: KnowledgeProjector | None = None,
         capture: WorldCapture | None = None,
+        refusal_mode: str = "off",
     ) -> None:
+        if refusal_mode not in {"off", "clause", "repair", "renarrate"}:
+            raise ValueError("refusal_mode must be off, clause, repair, or renarrate")
         self.state = state
         self.provider = provider
         self.validator = ProgressionValidator(state.package)
@@ -84,6 +87,8 @@ class RuntimeEngine(CanonicalEventMixin):
         self.last_projection: TurnKnowledgeContext | None = None
         self.last_player_command: str | None = None
         self.capture = capture
+        self.refusal_mode = refusal_mode
+        self.refusal_extra_calls = 0
         self.attempts: list[AttemptBundle] = []
         self.last_attempt: AttemptBundle | None = None
 
@@ -117,6 +122,7 @@ class RuntimeEngine(CanonicalEventMixin):
         """Call the provider once, then validate before any canonical mutation."""
 
         command_text = " ".join(split_command(player_input))
+        self.refusal_extra_calls = 0
         self.last_player_command = command_text
         if self.state.story_complete:
             before = self.state.snapshot()
@@ -249,16 +255,7 @@ class RuntimeEngine(CanonicalEventMixin):
                     ),
                 }
             )
-            refusal_segment = self._refusal_segment(capture_record)
-            if refusal_segment:
-                self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
-                    update={
-                        "capture_issues": (
-                            *self.state.last_turn_delivery.capture_issues,
-                            *(f"refusal clause added for {name}" for name in self._refusal_names(capture_record)),
-                        )
-                    }
-                )
+            proposal, refusal_segment = self._handle_refusal(proposal, capture_record, command_text)
             newly = (
                 set(self.validator.unsatisfied_dependencies(self.state.current_scene_id, self.state.facts)) - already
             )
@@ -386,6 +383,114 @@ class RuntimeEngine(CanonicalEventMixin):
         joined = " and ".join(names)
         verb = "has" if len(names) == 1 else "have"
         return NarrationSegment(kind="narration", text=f"{joined} {verb} not moved.")
+
+    def _handle_refusal(self, proposal, capture_record, command_text):
+        names = self._refusal_names(capture_record)
+        if not names:
+            return proposal, None
+        if self.refusal_mode in {"repair", "renarrate"}:
+            replacement = self._refusal_rewrite(proposal, command_text, names)
+            if replacement is not None:
+                label = "repaired" if self.refusal_mode == "repair" else "re-narrated"
+                self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                    update={
+                        "capture_issues": (
+                            *self.state.last_turn_delivery.capture_issues,
+                            *(f"refusal {label} for {name}" for name in names),
+                        )
+                    }
+                )
+                return replacement, None
+            reason = getattr(self, "_refusal_failure_reason", "unknown error")
+            self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                update={
+                    "capture_issues": (
+                        *self.state.last_turn_delivery.capture_issues,
+                        f"refusal re-narration failed: {reason}",
+                    )
+                }
+            )
+        if self.refusal_mode == "off":
+            self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                update={
+                    "capture_issues": (
+                        *self.state.last_turn_delivery.capture_issues,
+                        *(f"refusal detected for {name}" for name in names),
+                    )
+                }
+            )
+            return proposal, None
+        refusal_segment = self._refusal_segment(capture_record)
+        self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+            update={
+                "capture_issues": (
+                    *self.state.last_turn_delivery.capture_issues,
+                    *(f"refusal clause added for {name}" for name in names),
+                )
+            }
+        )
+        return proposal, refusal_segment
+
+    def _refusal_rewrite(self, proposal, command_text, names):
+        try:
+            payload = self._build_refusal_payload(command_text, names, proposal)
+            response = self._call_refusal_provider(payload)
+            replacement = parse_turn_proposal(response)
+            segments = tuple(segment for segment in replacement.segments if segment.kind in {"narration", "dialogue"})
+            if not segments:
+                raise RuntimeContractError("replacement contains no narration or dialogue")
+            candidate = proposal.model_copy(update={"segments": self._splice_refusal_segments(proposal, segments)})
+            self.narration_validator.validate(self.state, self.state, candidate, self.projector, command_text)
+            return candidate
+        except Exception as error:  # fallback is intentionally local to this arm
+            self._refusal_failure_reason = str(error) or type(error).__name__
+            return None
+
+    def _build_refusal_payload(self, command_text, names, proposal):
+        assembler = getattr(self.provider, "assemble_turn_prompt", None)
+        base = assembler(command_text) if callable(assembler) else {"system": "", "user": command_text}
+        if not isinstance(base, dict):
+            base = {"system": "", "user": str(base)}
+        user = base.get("user")
+        if user is None and "context" in base:
+            render = getattr(self.provider, "_section_user_prompt", None)
+            user = render(base["context"]) if callable(render) else str(base["context"])
+        original = "\n".join(segment.text for segment in proposal.segments if segment.kind in {"narration", "dialogue"})
+        joined = " and ".join(names)
+        if self.refusal_mode == "repair":
+            instruction = (
+                f"Rewrite ONLY the sentences that say {joined} moved or changed so they say it stayed put. "
+                "Keep every other sentence word for word. Return the same JSON shape.\n"
+                f"ORIGINAL REPLY:\n{original}"
+            )
+        else:
+            instruction = (
+                f"CORRECTION: {joined} cannot be moved or changed that way and did not move. Narrate the attempt "
+                "as it actually ends: the player tries, and the thing stays where it was. Do not claim the move."
+            )
+        return {"system": base.get("system", ""), "user": f"{user}\n\n{instruction}"}
+
+    def _call_refusal_provider(self, payload):
+        self.refusal_extra_calls += 1
+        request = getattr(self.provider, "_request_allowing_one_transient_retry", None)
+        if callable(request):
+            return request(payload)
+        return self.provider(payload["user"])
+
+    @staticmethod
+    def _splice_refusal_segments(proposal, replacement):
+        result = []
+        inserted = False
+        for segment in proposal.segments:
+            if segment.kind in {"narration", "dialogue"}:
+                if not inserted:
+                    result.extend(replacement)
+                    inserted = True
+            else:
+                result.append(segment)
+        if not inserted:
+            result.extend(replacement)
+        return tuple(result)
 
     def _record_attempt(
         self,
@@ -593,6 +698,7 @@ class RuntimeEngine(CanonicalEventMixin):
         del self.state.turn_records[:-24]
 
     def resolve_break(self, decision: str) -> ResolvedTurnProposal | None:
+        self.refusal_extra_calls = 0
         pending = self.state.pending_proposal
         pending_capture = self.state.pending_capture
         pending_scene = self.state.pending_snapshot.current_scene_id if self.state.pending_snapshot else None
@@ -617,16 +723,7 @@ class RuntimeEngine(CanonicalEventMixin):
                     ),
                 }
             )
-            refusal_segment = self._refusal_segment(capture_record)
-            if refusal_segment:
-                self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
-                    update={
-                        "capture_issues": (
-                            *self.state.last_turn_delivery.capture_issues,
-                            *(f"refusal clause added for {name}" for name in self._refusal_names(capture_record)),
-                        )
-                    }
-                )
+            pending, refusal_segment = self._handle_refusal(pending, capture_record, pending_capture.get("command", ""))
         else:
             refusal_segment = None
         self._record_turn(pending)

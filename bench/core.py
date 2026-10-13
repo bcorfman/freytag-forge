@@ -749,7 +749,12 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
     arrival_entry_state = entry_state(state, seeded_by=seeded_by)
     provider = build_capture_provider(state) if runtime else provider_for(state, variation)
     capture = WorldCapture(provider, runtime_ask) if runtime else None
-    engine = RuntimeEngine(state, provider, capture=capture)
+    engine = RuntimeEngine(
+        state,
+        provider,
+        capture=capture,
+        refusal_mode=variation.get("refusal_mode", "off"),
+    )
     try:
         opening = engine.opening()
         if isinstance(provider, ItemFactsProvider):
@@ -837,7 +842,12 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 loaded_state = runtime_store.load(runtime_session, package)
                 loaded_provider = build_capture_provider(loaded_state)
                 loaded_capture = WorldCapture(loaded_provider, runtime_ask)
-                context["engine"] = RuntimeEngine(loaded_state, loaded_provider, capture=loaded_capture)
+                context["engine"] = RuntimeEngine(
+                    loaded_state,
+                    loaded_provider,
+                    capture=loaded_capture,
+                    refusal_mode=variation.get("refusal_mode", "off"),
+                )
                 return context["engine"]
 
             try:
@@ -1145,6 +1155,11 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "cue_text": cue_text,
                     "complication_text": getattr(delivery, "complication_text", None),
                     "handoff_staged": delivery.handoff_staged,
+                    "refusal_handled": bool(
+                        getattr(engine, "refusal_extra_calls", 0)
+                        or any("refusal" in issue for issue in delivery.capture_issues)
+                    ),
+                    "refusal_extra_calls": getattr(engine, "refusal_extra_calls", 0),
                 }
                 if item_facts_record is not None:
                     turn_record.update(item_facts_record)
@@ -1206,6 +1221,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         "script": script["name"],
         "scene_id": scene_id,
         "runtime": bool(variation.get("_runtime", variation.get("runtime", False))),
+        "refusal_mode": variation.get("refusal_mode", "off"),
         "opening": opening.narration,
         "turns": turns,
         "completed": quota is None and bool(turns),
@@ -1267,6 +1283,7 @@ def _failed_scene_record(
         "script": script["name"],
         "scene_id": scene_id,
         "runtime": bool(variation.get("_runtime", variation.get("runtime", False))),
+        "refusal_mode": variation.get("refusal_mode", "off"),
         "opening": opening,
         "turns": turns or [],
         "completed": False,
