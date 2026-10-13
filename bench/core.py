@@ -321,6 +321,8 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     if drop_rules:
         hash_payload["item_facts_drop_rules"] = sorted(drop_rules)
     hash_payload["item_facts_held_by"] = bool(variation.get("item_facts", {}).get("held_by", True))
+    if variation.get("item_facts", {}).get("mark_fixed", False):
+        hash_payload["item_facts_mark_fixed"] = True
     variation["_variation_hash"] = stable_hash(hash_payload)
     variation["_story_package_value"] = package_value
     return variation
@@ -526,6 +528,7 @@ def _provider_with_item_facts(
             seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
             drop_rules=tuple(variation.get("item_facts", {}).get("drop_rules", [])),
             held_by=bool(variation.get("item_facts", {}).get("held_by", True)),
+            mark_fixed=bool(variation.get("item_facts", {}).get("mark_fixed", False)),
         )
     return CloudflareTurnProvider.from_environment(state, prompt_variant=variation["_prompt_variant"])
 
@@ -637,6 +640,7 @@ def prompt_for(
             seed_from_package=variation.get("item_facts", {}).get("seed_from_package", False),
             drop_rules=tuple(variation.get("item_facts", {}).get("drop_rules", [])),
             held_by=bool(variation.get("item_facts", {}).get("held_by", True)),
+            mark_fixed=bool(variation.get("item_facts", {}).get("mark_fixed", False)),
         )
     else:
         provider = CloudflareTurnProvider(

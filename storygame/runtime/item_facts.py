@@ -249,6 +249,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seed_from_package=False,
         drop_rules=(),
         held_by=True,
+        mark_fixed=False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -259,6 +260,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.seed_from_package = seed_from_package
         self.drop_rules = frozenset(drop_rules)
         self.held_by = held_by
+        self.mark_fixed = mark_fixed
         self._pending_item_facts = None
         self._pending_item_facts_present = False
         self._held_item_facts = {}
@@ -308,6 +310,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seed_from_package=False,
         drop_rules=(),
         held_by=True,
+        mark_fixed=False,
     ):
         base = CloudflareTurnProvider.from_environment(state, prompt_variant=prompt_variant)
         return cls(
@@ -323,6 +326,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             seed_from_package=seed_from_package,
             drop_rules=drop_rules,
             held_by=held_by,
+            mark_fixed=mark_fixed,
         )
 
     def _world(self, *, axes=None):
@@ -443,6 +447,15 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 rendered = [condition for condition in facts["condition"] if condition not in axis_values.values()]
                 if rendered:
                     line += f" Condition: {', '.join(rendered)}."
+            if (
+                self.mark_fixed
+                and narration
+                and entity_id
+                and not world.is_a(entity_id, "area")
+                and name in self._referred_names
+                and world.schema.is_fixed(entity_id)
+            ):
+                line += " It is fixed in place. It cannot be picked up or carried away. If the player tries, the attempt fails."
             if narration and entity_id and world.is_a(entity_id, "group") and name in self._referred_names:
                 members = [
                     member_id
@@ -1715,6 +1728,9 @@ def validate_item_facts(value, *, known_names=None):
     held_by = value.get("held_by", False)
     if not isinstance(held_by, bool):
         raise ValueError("item_facts held_by must be a boolean")
+    mark_fixed = value.get("mark_fixed", False)
+    if not isinstance(mark_fixed, bool):
+        raise ValueError("item_facts mark_fixed must be a boolean")
     seed = value.get("seed", {})
     if not isinstance(seed, dict) or (not seed and not seed_from_package):
         raise ValueError("item_facts must have a non-empty seed unless seed_from_package is enabled")
