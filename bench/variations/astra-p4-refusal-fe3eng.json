@@ -1,0 +1,89 @@
+{
+ "name": "astra-p4-refusal-fe3eng",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "h1",
+    "inputs": [
+     "Drag the workstation toward the door, then check my laptop."
+    ]
+   },
+   {
+    "name": "h2",
+    "inputs": [
+     "Heave the passenger seat out of the truck and open my laptop."
+    ]
+   },
+   {
+    "name": "h3",
+    "inputs": [
+     "Carry the driver's seat and my laptop into the kitchen."
+    ]
+   },
+   {
+    "name": "h4",
+    "inputs": [
+     "Hoist the back door off its hinges, then open my laptop."
+    ]
+   },
+   {
+    "name": "h5",
+    "inputs": [
+     "Tilt the workstation onto its side."
+    ]
+   },
+   {
+    "name": "h6",
+    "inputs": [
+     "Wrench the drawer out of the workstation."
+    ]
+   },
+   {
+    "name": "h7",
+    "inputs": [
+     "Haul the driver's seat out of the truck."
+    ]
+   },
+   {
+    "name": "h8",
+    "inputs": [
+     "Shove the back door off its frame."
+    ]
+   },
+   {
+    "name": "h9",
+    "inputs": [
+     "Retrieve my laptop from the passenger seat."
+    ]
+   },
+   {
+    "name": "h10",
+    "inputs": [
+     "Close the back door."
+    ]
+   },
+   {
+    "name": "h11",
+    "inputs": [
+     "Look at the drawer."
+    ]
+   },
+   {
+    "name": "h12",
+    "inputs": [
+     "Put my laptop on the workstation, then open my laptop."
+    ]
+   }
+  ]
+ },
+ "refusal_mode": "off",
+ "fixed_refusal": true,
+ "engine_refusal": true
+}
