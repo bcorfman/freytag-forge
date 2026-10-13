@@ -249,6 +249,14 @@ Question: does a differently worded fixed-thing marker also stop the narrator cl
 - **Reading:** the engine path held; both misses are classifier misses. `names_other_action` missed the shared-verb shape (one verb, two objects), the same shape that defeated the splitter. `relocates_thing` missed "Tilt ... onto its side", a repositioning verb not in its list. Bars were missed (3 of 4 twice), so this version is not adopted.
 - **Per the frozen stop rule:** tune that question once on the same bars with fresh commands, not these twelve. Still needed before any default: another story package and multi-turn play.
 
+### Phase 4 item 2, refusal tuning round: result (2026-10-13; Ringer `astra-p4-2-refusal-tuning`, `astra-p4-2-measure-fe4`; frozen in `.plans/astra-engine-refusal-tuning-freeze.md`, code c6b5f3dd)
+
+- **Tuning (wording only, one pass):** `relocates_thing` lists the repositioning verbs (tilt, tip, rotate, turn around, roll, nudge, shift, reposition) and says a part used as designed (door swung, drawer slid, lid opened, screen tilted back) is not relocation. `names_other_action` says a second object joined by "and" counts even when one verb covers both. The check failed the task if any fresh command appeared in source or tests.
+- **Result on 12 fresh commands (engine arm, 1 reply each; I read the replies and the records):** mixed 4 of 4 refused with the clarification; simple refusals 4 of 4 refused without it; controls 4 of 4 succeeded with no refusal, including three that use fixed things in place (swing the back door open, press on the drawer, slide the drawer open then closed); 0 narrator calls and no prompt on the 8 refused turns; no unanswered question. All frozen bars met.
+- **Flaw seen:** "Lift the passenger seat and the back door, then open my laptop." named only the passenger seat in the refusal ("Kristin tries to move the passenger seat, ..."). The clarification sentence still said nothing else was done, so the reply is honest, but it does not mention the back door.
+- **Limits:** a screen. 12 distinct commands, one reply each, one scene, one reader, and the classifier is still a small model with wording tuned to the failures found. It passed on commands it was not tuned on, but two rounds of tuning on one scene is not evidence of reliability.
+- **Decision:** the engine-owned refusal with the honest clarification meets its bars and stays opt-in. Before any default: a second story package, multi-turn play (cue delivery live, refusal followed by normal turns), and a larger fresh command set. `renarrate` stays off by default.
+
 ## Phase 5: Three-arm comparison
 
 Arms: (A) current pipeline with Phases 1-4 fixes; (B) same pipeline, stronger model; (C) smallest outcome-first prototype (resolve once, validate proposals, narrate from the accepted outcome, check, publish atomically), reusing existing machinery, on the drawer-to-truck sequence only. Do not rewrite all nine scenes.
