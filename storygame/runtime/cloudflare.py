@@ -249,6 +249,7 @@ class CloudflareTurnProvider:
         self.semantic_ask = semantic_ask
         self.semantic_fallback_calls = 0
         self.contract_shadow_calls = 0
+        self._rejection_note: str | None = None
         # This is process-local session telemetry and resets when the process restarts.
         self.last_semantic_match: dict[str, object] = {"ran": False, "matched": None}
         self.last_reveal_selection: dict[str, object] = {
@@ -296,8 +297,18 @@ class CloudflareTurnProvider:
         )
 
     def __call__(self, player_input: str) -> object:
+        rejection_note = self._rejection_note
+        self._rejection_note = None
         prompt = self.assemble_turn_prompt(player_input)
+        if rejection_note is not None:
+            prompt["system"] = (
+                f"{prompt['system']}\n\n"
+                f"Your last reply was rejected: {rejection_note}. Write this turn again and do not use that wording."
+            )
         return self._dispatch(prompt["system"], prompt["context"])
+
+    def note_rejection(self, message: str) -> None:
+        self._rejection_note = message
 
     def assemble_turn_prompt(self, player_input: str) -> dict[str, object]:
         """Build the exact turn prompt without contacting the narration worker."""
