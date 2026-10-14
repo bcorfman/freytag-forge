@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from copy import deepcopy
 from os import getenv
+from typing import Protocol, runtime_checkable
 
 from storygame.runtime.attempt_bundle import (
     AttemptBundle,
@@ -20,7 +20,7 @@ from storygame.runtime.attempt_bundle import (
 )
 from storygame.runtime.canonical_events import CanonicalEventMixin
 from storygame.runtime.capture import WorldCapture
-from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
+from storygame.runtime.cloudflare import NarrationProviderError
 from storygame.runtime.command_split import split_command
 from storygame.runtime.contracts import (
     FactOperation,
@@ -51,6 +51,31 @@ from storygame.story_package.obligations import required_storylet_ids
 SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
 OPENING_ATTEMPTS = 3
 TURN_NARRATION_ATTEMPTS = 2
+
+
+class TurnProvider(Protocol):
+    def __call__(self, player_input: str) -> object: ...
+
+
+@runtime_checkable
+class TurnProviderHandoff(Protocol):
+    authored_handoff: object | None
+
+    def authored_handoff_id(self) -> str | None: ...
+
+    def clear_authored_handoff(self) -> None: ...
+
+
+@runtime_checkable
+class TurnProviderRejection(Protocol):
+    def note_rejection(self, code: str | None) -> None: ...
+
+
+@runtime_checkable
+class TurnProviderBudget(Protocol):
+    def begin_turn(self) -> None: ...
+
+    def request_budget_remaining(self) -> int: ...
 
 
 class StoryCompleteTurn:
@@ -86,7 +111,7 @@ class RuntimeEngine(CanonicalEventMixin):
     def __init__(
         self,
         state: RuntimeState,
-        provider: Callable[[str], object],
+        provider: TurnProvider,
         *,
         projector: KnowledgeProjector | None = None,
         capture: WorldCapture | None = None,
@@ -108,10 +133,28 @@ class RuntimeEngine(CanonicalEventMixin):
         self.attempts: list[AttemptBundle] = []
         self.last_attempt: AttemptBundle | None = None
 
+    def _provider_handoff(self) -> TurnProviderHandoff | None:
+        return self.provider if isinstance(self.provider, TurnProviderHandoff) else None
+
+    def _provider_rejection(self) -> TurnProviderRejection | None:
+        return self.provider if isinstance(self.provider, TurnProviderRejection) else None
+
+    def _provider_budget(self) -> TurnProviderBudget | None:
+        return self.provider if isinstance(self.provider, TurnProviderBudget) else None
+
+    def _begin_provider_turn(self) -> None:
+        budget = self._provider_budget()
+        if budget is not None:
+            budget.begin_turn()
+
+    def _provider_has_active_handoff(self) -> bool:
+        handoff = self._provider_handoff()
+        return handoff is not None and handoff.authored_handoff is not None
+
     def _clear_provider_handoff(self) -> None:
-        clear = getattr(self.provider, "clear_authored_handoff", None)
-        if callable(clear):
-            clear()
+        handoff = self._provider_handoff()
+        if handoff is not None:
+            handoff.clear_authored_handoff()
 
     def opening(self) -> ResolvedTurnProposal:
         """Open on the authored entry text, then the provider's embellishment; an opening commits no canon.
@@ -145,6 +188,7 @@ class RuntimeEngine(CanonicalEventMixin):
         command_text = " ".join(split_command(player_input))
         self.refusal_extra_calls = 0
         self.last_player_command = command_text
+        self._begin_provider_turn()
         self._clear_provider_handoff()
         if self.state.story_complete:
             before = self.state.snapshot()
@@ -201,9 +245,8 @@ class RuntimeEngine(CanonicalEventMixin):
                 self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                     update={"handoff_staged": bool(self.state.staged_handoff_fact_ids)}
                 )
-                authored_handoff_id = (
-                    self.provider.authored_handoff_id() if isinstance(self.provider, CloudflareTurnProvider) else None
-                )
+                handoff = self._provider_handoff()
+                authored_handoff_id = handoff.authored_handoff_id() if handoff is not None else None
                 proposal, _ = self.reveal_resolver.resolve(
                     self.state,
                     self.last_projection,
@@ -234,15 +277,19 @@ class RuntimeEngine(CanonicalEventMixin):
                 except ProposalValidationError as error:
                     if attempt == TURN_NARRATION_ATTEMPTS - 1:
                         raise
-                    note_rejection = getattr(self.provider, "note_rejection", None)
-                    if callable(note_rejection):
-                        note_rejection(str(error))
+                    budget = self._provider_budget()
+                    if budget is not None and budget.request_budget_remaining() <= 0:
+                        raise
+                    rejection = self._provider_rejection()
+                    if rejection is not None:
+                        rejection.note_rejection(error.code)
                     self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                         update={"guard_retry_used": True}
                     )
                     continue
                 break
         except NarrationProviderError as error:
+            self.state.restore_snapshot(before)
             self._clear_provider_handoff()
             self._record_attempt(
                 player_input,
@@ -353,7 +400,7 @@ class RuntimeEngine(CanonicalEventMixin):
             staged_cue_fact_id
             and self.state.current_scene_id == before.current_scene_id
             and not (self.last_projection and self.last_projection.handoff_deliveries)
-            and getattr(self.provider, "authored_handoff", None) is None
+            and not self._provider_has_active_handoff()
         ):
             if staged_cue_fact_id not in self.state.delivered_cue_ids:
                 self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)

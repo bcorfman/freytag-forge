@@ -1,7 +1,7 @@
 # Astra assessment follow-up: implementation plan
 
 Source: `.plans/astra-plan-assessment-answer.md` (outside review of `astra-implementation-plan.md`).
-Status: **not started (2026-10-13).** Branch for A1-A3: continue `astra-established-reveal-409` or cut a new one from main. Update this file after each step (memory: update-plan-after-each-feature).
+Status: **A1 done and committed (08a925ac, Option 1); A2 built and applied to the working tree, not committed (2026-10-14); A3, B, C, D, E not started.** Branch for A1-A3: continue `astra-established-reveal-409` or cut a new one from main. Update this file after each step (memory: update-plan-after-each-feature).
 
 Ground rules: every code change goes through Ringer (one task per run unit); unit tests stay hermetic (no live worker); no billed run before a smoke test; measure each step before the next; keep the repo ruff-formatted. Findings are numbered as in the assessment (F1-F8).
 
@@ -13,6 +13,8 @@ Ground rules: every code change goes through Ringer (one task per run unit); uni
 - Not rechecked here (taken from the assessment, verify when each step starts): F4 (`bench/pipeline_eval/runner.py:57`), F5, F6 (`p4-refusal-measure-check.sh:25`), F7, F8, and the D-section items.
 
 ## Step A1: Settle handoff authority (F1) — highest priority, trust boundary
+
+**Result (2026-10-14, Ringer `astra-handoff-authority`, commit 08a925ac):** Brandon chose Option 1. `AuthoredHandoff.source` (default `semantic`); only `exact` gets the beyond-cap exception; the semantic shortlist is limited to model-visible candidates (at cap 4 it asks Jev about at most 4, not 6); handoff cleared at prompt assembly, turn start, and every failure/rollback path. Four new hermetic tests (semantic, tie, forged JSON, provider reuse). Full suite 1728 passed. The worker reports the semantic and reuse tests failed before the fix; the tie test was not shown failing. Not measured live.
 
 Decision needed from Brandon first (blocks the code): which source may exceed the cap?
 - **Option 1 (recommended):** only a unique *exact* match. Semantic picks and tie-breaks stay inside `projection.candidates`. Matches the PRD ("exact match commits; a tie commits nothing") and the stated intent of `7345632d`.
@@ -28,6 +30,8 @@ Work (Option 1):
 Exit: new tests fail before the change, pass after; full suite and ruff green. No billed run.
 
 ## Step A2: Unify recovery accounting and sanitize retry feedback (F2, F3)
+
+**Result (2026-10-14, Ringer `astra-recovery-budget`, applied, not committed):** Brandon took the recommendation (keep the guide, make the budget real). `CloudflareTurnProvider._request` enforces 2 sends per engine turn (`begin_turn` resets it); exhaustion raises `NarrationProviderError` `NARRATION_REQUEST_BUDGET_EXHAUSTED` (503) and the engine now restores the snapshot on provider errors. The guard retry only fires if budget remains. `note_rejection(code)` sends a generic sentence chosen by code, never the validator text or the term. Explicit Protocols replace `isinstance`/`getattr` in `engine.py`. Runbook row updated. New `tests/test_recovery_budget.py` (8 tests). Full suite 1736 passed, ruff clean. Caveats: the worker says the new tests are "intended to fail" pre-fix, not shown; the budget stays set after a turn ends, so a provider call outside an engine turn (e.g. a later opening or probe on the same provider object) could hit an exhausted count until the next `begin_turn`; not yet measured live (rescue rate is the A2 billed measurement still to do).
 
 Decision needed: is the guard retry a *second* request inside the shared budget (so a guard retry consumes the recovery slot), or does the guard policy change the contributor guide? Recommended: keep the guide, make the budget real.
 

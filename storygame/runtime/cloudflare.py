@@ -49,6 +49,23 @@ from storygame.story_package.models import (
 logger = logging.getLogger(__name__)
 
 MAX_TURN_SEGMENTS = 5
+TURN_REQUEST_BUDGET = 2
+
+_GENERIC_REJECTION = (
+    "Your last reply did not follow the narration rules. "
+    "Write this turn again. "
+    "Use only the information in the current prompt."
+)
+_KNOWLEDGE_REJECTION = (
+    "Your last reply named something the player has not met yet. "
+    "Write this turn again. "
+    "Describe only what the player can see now."
+)
+_REJECTION_FEEDBACK = {
+    "narration_known_term_leak": _KNOWLEDGE_REJECTION,
+    "uncited_knowledge": _KNOWLEDGE_REJECTION,
+    "protected_narration_leak": _KNOWLEDGE_REJECTION,
+}
 
 DEFAULT_OUTPUT_EXAMPLE = (
     '{"segments":[{"kind":"narration","text":"She picks up the lantern. She carries it out to the porch."},'
@@ -245,6 +262,7 @@ class CloudflareTurnProvider:
         self.prompt_variant = prompt_variant
         self.request_count = 0
         self.recovery_count = 0
+        self._turn_request_count: int | None = None
         self.reply_keys_dropped: dict[str, int] = {}
         self.semantic_ask = semantic_ask
         self.semantic_fallback_calls = 0
@@ -302,11 +320,7 @@ class CloudflareTurnProvider:
         try:
             prompt = self.assemble_turn_prompt(player_input)
             if rejection_note is not None:
-                prompt["system"] = (
-                    f"{prompt['system']}\n\n"
-                    f"Your last reply was rejected: {rejection_note}. Write this turn again and do not use "
-                    "that wording."
-                )
+                prompt["system"] = f"{prompt['system']}\n\n{rejection_note}"
             return self._dispatch(prompt["system"], prompt["context"])
         except Exception:
             self.clear_authored_handoff()
@@ -326,8 +340,20 @@ class CloudflareTurnProvider:
 
         self.authored_handoff = None
 
-    def note_rejection(self, message: str) -> None:
-        self._rejection_note = message
+    def begin_turn(self) -> None:
+        """Reset the shared inference budget for one engine turn."""
+
+        self._turn_request_count = 0
+
+    def request_budget_remaining(self) -> int:
+        """Return the number of inference sends still allowed in this turn."""
+
+        if self._turn_request_count is None:
+            return TURN_REQUEST_BUDGET
+        return max(0, TURN_REQUEST_BUDGET - self._turn_request_count)
+
+    def note_rejection(self, code: str | None) -> None:
+        self._rejection_note = _REJECTION_FEEDBACK.get(code, _GENERIC_REJECTION)
 
     def assemble_turn_prompt(self, player_input: str) -> dict[str, object]:
         """Build the exact turn prompt without contacting the narration worker."""
@@ -1932,7 +1958,15 @@ class CloudflareTurnProvider:
                 raise error from first_failure
 
     def _request(self, payload: dict[str, object]) -> object:
+        if self._turn_request_count is not None and self._turn_request_count >= TURN_REQUEST_BUDGET:
+            raise NarrationProviderError(
+                "narration request budget exhausted",
+                503,
+                "NARRATION_REQUEST_BUDGET_EXHAUSTED",
+            )
         self.request_count += 1
+        if self._turn_request_count is not None:
+            self._turn_request_count += 1
         self.last_prompt = {"system": payload["system"], "user": payload["user"]}
         headers = {
             "Content-Type": "application/json",

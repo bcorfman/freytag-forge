@@ -21,7 +21,7 @@ class _ScriptedProvider:
         self.calls += 1
         return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
 
-    def note_rejection(self, _message: str) -> None:
+    def note_rejection(self, _code: str | None) -> None:
         pass
 
 
