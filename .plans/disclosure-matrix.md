@@ -1,20 +1,20 @@
 # Disclosure vocabulary matrix
 
-Inventory terms: 496. Matrix rows: 680.
+Inventory terms: 503. Matrix rows: 687.
 
 ## Counts
 
 - entity_name: 94
 - identifier_fragment: 8
 - knowledge_alias: 107
-- leak_term: 70
+- leak_term: 77
 - must_convey_phrase: 201
 - scoped_alias: 16
 
 Suggested classes:
 - needs_review: 12
 - public_candidate: 126
-- secret_with_unlock_fact: 358
+- secret_with_unlock_fact: 365
 
 ### Earned rejected
 
@@ -170,6 +170,7 @@ Suggested classes:
 | 2C | coded message | must_convey_phrase |  |
 | 2C | encrypted message from michelle | must_convey_phrase |  |
 | 2C | michelle's encrypted message | must_convey_phrase |  |
+| 2C | transmit the evidence | must_convey_phrase |  |
 | 3A | uprising | knowledge_alias |  |
 | 3C | escape route | knowledge_alias |  |
 | 3C | escape route | must_convey_phrase |  |

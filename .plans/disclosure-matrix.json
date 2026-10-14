@@ -905,6 +905,24 @@
       ],
       "guard_kind": "leak_term",
       "owner_ids": [
+        "k_sl_2c_c_r2"
+      ],
+      "requires": [
+        "janus_evidence"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "broadcast proof",
+      "unlock_fact_ids": [
+        "evidence_ready_to_transmit"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2C"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
         "k_sl_2c_d_r1"
       ],
       "requires": [
@@ -1349,6 +1367,24 @@
       "available_scenes": [
         "2C"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2c_c_r2"
+      ],
+      "requires": [
+        "janus_evidence"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "choose evidence",
+      "unlock_fact_ids": [
+        "evidence_ready_to_transmit"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2C"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_2c_c_r2"
@@ -1358,6 +1394,24 @@
       ],
       "suggested_class": "secret_with_unlock_fact",
       "term": "choose evidence",
+      "unlock_fact_ids": [
+        "evidence_ready_to_transmit"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2C"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2c_c_r2"
+      ],
+      "requires": [
+        "janus_evidence"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "choose rescue",
       "unlock_fact_ids": [
         "evidence_ready_to_transmit"
       ],
@@ -2801,6 +2855,24 @@
       "guard_kind": "knowledge_alias",
       "owner_ids": [
         "k_sl_2c_c_r1",
+        "k_sl_2c_c_r2"
+      ],
+      "requires": [
+        "janus_evidence"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "evidence ready to transmit",
+      "unlock_fact_ids": [
+        "evidence_ready_to_transmit"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2C"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
         "k_sl_2c_c_r2"
       ],
       "requires": [
@@ -6594,6 +6666,24 @@
       "available_scenes": [
         "2C"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2c_c_r2"
+      ],
+      "requires": [
+        "janus_evidence"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "ready to transmit",
+      "unlock_fact_ids": [
+        "evidence_ready_to_transmit"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2C"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_2c_c_r2"
@@ -7350,6 +7440,24 @@
       "available_scenes": [
         "2C"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2c_c_r2"
+      ],
+      "requires": [
+        "janus_evidence"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "rescue impossible",
+      "unlock_fact_ids": [
+        "evidence_ready_to_transmit"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2C"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_2c_c_r1",
@@ -7685,6 +7793,24 @@
       "available_scenes": [
         "2C"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2c_c_r2"
+      ],
+      "requires": [
+        "janus_evidence"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "risk the captives",
+      "unlock_fact_ids": [
+        "evidence_ready_to_transmit"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2C"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_2c_c_r1",
@@ -7753,6 +7879,24 @@
       ],
       "suggested_class": "secret_with_unlock_fact",
       "term": "seal the cells",
+      "unlock_fact_ids": [
+        "evidence_ready_to_transmit"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2C"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2c_c_r2"
+      ],
+      "requires": [
+        "janus_evidence"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "seal the detention sectors",
       "unlock_fact_ids": [
         "evidence_ready_to_transmit"
       ],
@@ -7946,6 +8090,24 @@
       "term": "selection system",
       "unlock_fact_ids": [],
       "why": "no public-text or knowledge-unlock rule produced a suggestion"
+    },
+    {
+      "available_scenes": [
+        "2C"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2c_c_r2"
+      ],
+      "requires": [
+        "janus_evidence"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "send the evidence",
+      "unlock_fact_ids": [
+        "evidence_ready_to_transmit"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
     {
       "available_scenes": [
@@ -8485,46 +8647,6 @@
       "term": "transmit proof",
       "unlock_fact_ids": [
         "evidence_ready_to_transmit"
-      ],
-      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
-    },
-    {
-      "available_scenes": [
-        "2C"
-      ],
-      "guard_kind": "leak_term",
-      "owner_ids": [
-        "k_sl_2c_d_r1"
-      ],
-      "requires": [
-        "evidence_ready_to_transmit",
-        "purge_clock_started"
-      ],
-      "suggested_class": "secret_with_unlock_fact",
-      "term": "transmit the evidence",
-      "unlock_fact_ids": [
-        "combined_broadcast_rescue_plan_known",
-        "rebecca_office_required_for_broadcast"
-      ],
-      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
-    },
-    {
-      "available_scenes": [
-        "2C"
-      ],
-      "guard_kind": "leak_term",
-      "owner_ids": [
-        "k_sl_2c_d_r2"
-      ],
-      "requires": [
-        "evidence_ready_to_transmit",
-        "purge_clock_started"
-      ],
-      "suggested_class": "secret_with_unlock_fact",
-      "term": "transmit the evidence",
-      "unlock_fact_ids": [
-        "combined_broadcast_rescue_plan_known",
-        "rebecca_office_required_for_broadcast"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
@@ -15069,6 +15191,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "broadcast proof"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2C",
       "skipped": {
@@ -15137,6 +15276,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "choose evidence"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2C",
       "skipped": {
@@ -15144,6 +15300,23 @@
         "verdict": "accepted"
       },
       "term": "choose evidence"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "choose rescue"
     },
     {
       "early": {
@@ -15410,6 +15583,23 @@
         "verdict": "accepted"
       },
       "guard_kind": "knowledge_alias",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "evidence ready to transmit"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
       "scene": "2C",
       "skipped": {
         "error_code": "",
@@ -16310,6 +16500,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "ready to transmit"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2C",
       "skipped": {
@@ -16616,6 +16823,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "rescue impossible"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2C",
       "skipped": {
@@ -16718,6 +16942,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "risk the captives"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2C",
       "skipped": {
@@ -16776,6 +17017,23 @@
         "verdict": "accepted"
       },
       "term": "seal the cells"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "seal the detention sectors"
     },
     {
       "early": {
@@ -16905,6 +17163,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "send the evidence"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2C",
       "skipped": {
@@ -16949,42 +17224,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
         "error_code": "",
         "verdict": "accepted"
-      },
-      "guard_kind": "leak_term",
-      "scene": "2C",
-      "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
-      },
-      "term": "transmit the evidence"
-    },
-    {
-      "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
-        "error_code": "",
-        "verdict": "accepted"
-      },
-      "guard_kind": "leak_term",
-      "scene": "2C",
-      "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
-      },
-      "term": "transmit the evidence"
-    },
-    {
-      "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
       },
       "earned": {
         "error_code": "",

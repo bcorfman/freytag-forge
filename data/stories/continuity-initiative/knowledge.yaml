@@ -1701,6 +1701,7 @@ knowledge:
   must_convey:
   - [evidence, proof, transmit the evidence, broadcast proof, send the evidence, ready to transmit]
   - [risk the captives, seal the detention sectors, rescue impossible, choose rescue, choose evidence]
+  leak_terms: [evidence ready to transmit, broadcast proof, send the evidence, ready to transmit, risk the captives, seal the detention sectors, rescue impossible, choose rescue, choose evidence]
   delivery_text: "Brandon says the proof must go out now. He will risk the captives, even if that makes rescue impossible. A message from Michelle is waiting."
 - id: k_sl_2c_d_r1
   statement: "Michelle's encrypted message marks a maintenance access route into her holding block and reveals that Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
@@ -1741,7 +1742,6 @@ knowledge:
   - rescue the prisoners
   - release the prisoners
   - broadcast the evidence
-  - transmit the evidence
   - broadcast proof
   - send the evidence
   - combined broadcast rescue plan known
@@ -1788,7 +1788,6 @@ knowledge:
   - release the prisoners
   - open the cells
   - broadcast the evidence
-  - transmit the evidence
   - broadcast proof
   - send the evidence
   - combined broadcast rescue plan known

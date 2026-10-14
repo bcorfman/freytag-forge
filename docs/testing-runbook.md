@@ -59,7 +59,7 @@ Use while editing; finish with section 1.
 | --- | --- |
 | Package loading and lints (`must_convey`, `delivery_text`, narration term traps, custody, placements) | `tests/test_markdown_story_package.py` |
 | Knowledge projection, save/load stability, leakage matrix | `tests/test_knowledge_projection.py tests/test_knowledge_leakage_matrix.py` |
-| Narration safety and reveal conveyance | `tests/test_narration_safety.py tests/test_must_convey.py tests/test_narration_corpus.py`; regenerate with `TMPDIR=/tmp uv run python scripts/regenerate_narration_corpus_verdicts.py`; add runs with `uv run python scripts/extract_narration_corpus.py RUN_DIR`. |
+| Narration safety, reviewed leak vocabulary and reveal conveyance | `tests/test_narration_safety.py tests/test_leak_terms.py tests/test_must_convey.py tests/test_narration_corpus.py`; regenerate with `TMPDIR=/tmp uv run python scripts/regenerate_narration_corpus_verdicts.py`; add runs with `uv run python scripts/extract_narration_corpus.py RUN_DIR`. |
 | Authored reveal handoff (matcher, composition, prompt exclusion) | `tests/test_candidate_matcher.py tests/test_cloudflare_transport.py` |
 | Pacing windows, handoff fallback, full canonical journeys | `tests/test_scene_relative_pacing.py tests/test_pacing_handoff.py tests/test_canon_journey.py` |
 | API payloads and player-visible segments | `tests/test_web_demo.py` |
