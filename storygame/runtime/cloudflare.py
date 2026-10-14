@@ -307,6 +307,11 @@ class CloudflareTurnProvider:
             )
         return self._dispatch(prompt["system"], prompt["context"])
 
+    def authored_handoff_id(self) -> str | None:
+        """Return the provider-owned exact-match ID for the current turn, if any."""
+
+        return self.authored_handoff.candidate.id if self.authored_handoff is not None else None
+
     def note_rejection(self, message: str) -> None:
         self._rejection_note = message
 

@@ -20,7 +20,7 @@ from storygame.runtime.attempt_bundle import (
 )
 from storygame.runtime.canonical_events import CanonicalEventMixin
 from storygame.runtime.capture import WorldCapture
-from storygame.runtime.cloudflare import NarrationProviderError
+from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.command_split import split_command
 from storygame.runtime.contracts import (
     FactOperation,
@@ -194,8 +194,16 @@ class RuntimeEngine(CanonicalEventMixin):
                 self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                     update={"handoff_staged": bool(self.state.staged_handoff_fact_ids)}
                 )
+                authored_handoff_id = (
+                    self.provider.authored_handoff_id() if isinstance(self.provider, CloudflareTurnProvider) else None
+                )
                 proposal, _ = self.reveal_resolver.resolve(
-                    self.state, self.last_projection, provider_proposal, self.projector, command_text
+                    self.state,
+                    self.last_projection,
+                    provider_proposal,
+                    self.projector,
+                    command_text,
+                    authored_handoff_id=authored_handoff_id,
                 )
                 if self.state.last_turn_delivery.complication_verbatim:
                     proposal = proposal.model_copy(
