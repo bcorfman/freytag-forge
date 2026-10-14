@@ -108,6 +108,11 @@ class RuntimeEngine(CanonicalEventMixin):
         self.attempts: list[AttemptBundle] = []
         self.last_attempt: AttemptBundle | None = None
 
+    def _clear_provider_handoff(self) -> None:
+        clear = getattr(self.provider, "clear_authored_handoff", None)
+        if callable(clear):
+            clear()
+
     def opening(self) -> ResolvedTurnProposal:
         """Open on the authored entry text, then the provider's embellishment; an opening commits no canon.
 
@@ -140,6 +145,7 @@ class RuntimeEngine(CanonicalEventMixin):
         command_text = " ".join(split_command(player_input))
         self.refusal_extra_calls = 0
         self.last_player_command = command_text
+        self._clear_provider_handoff()
         if self.state.story_complete:
             before = self.state.snapshot()
             marker = self.state.package.pacing.ending.marker
@@ -165,6 +171,7 @@ class RuntimeEngine(CanonicalEventMixin):
                 if self.capture:
                     self.capture.discard()
                 self.state.restore_snapshot(before)
+                self._clear_provider_handoff()
                 result = EngineRefusalTurn(refusal)
                 self._record_attempt(
                     player_input,
@@ -236,6 +243,7 @@ class RuntimeEngine(CanonicalEventMixin):
                     continue
                 break
         except NarrationProviderError as error:
+            self._clear_provider_handoff()
             self._record_attempt(
                 player_input,
                 command_text,
@@ -249,6 +257,7 @@ class RuntimeEngine(CanonicalEventMixin):
             if self.capture:
                 self.capture.discard()
             self.state.restore_snapshot(before)
+            self._clear_provider_handoff()
             self._record_attempt(
                 player_input,
                 command_text,
@@ -319,6 +328,7 @@ class RuntimeEngine(CanonicalEventMixin):
                     snapshot_id=self.state.new_snapshot_id(),
                 )
                 self.state.restore_snapshot(before)
+                self._clear_provider_handoff()
                 self.state.set_pending_break(
                     warning,
                     snapshot=before,
@@ -794,6 +804,7 @@ class RuntimeEngine(CanonicalEventMixin):
         pending_scene = self.state.pending_snapshot.current_scene_id if self.state.pending_snapshot else None
         self.state.resolve_break(decision)
         if decision != "proceed" or pending is None:
+            self._clear_provider_handoff()
             return None
         if self.capture and pending_capture is not None:
             self.capture.resume(pending_capture)

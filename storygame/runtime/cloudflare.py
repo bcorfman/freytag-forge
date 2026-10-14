@@ -299,18 +299,32 @@ class CloudflareTurnProvider:
     def __call__(self, player_input: str) -> object:
         rejection_note = self._rejection_note
         self._rejection_note = None
-        prompt = self.assemble_turn_prompt(player_input)
-        if rejection_note is not None:
-            prompt["system"] = (
-                f"{prompt['system']}\n\n"
-                f"Your last reply was rejected: {rejection_note}. Write this turn again and do not use that wording."
-            )
-        return self._dispatch(prompt["system"], prompt["context"])
+        try:
+            prompt = self.assemble_turn_prompt(player_input)
+            if rejection_note is not None:
+                prompt["system"] = (
+                    f"{prompt['system']}\n\n"
+                    f"Your last reply was rejected: {rejection_note}. Write this turn again and do not use "
+                    "that wording."
+                )
+            return self._dispatch(prompt["system"], prompt["context"])
+        except Exception:
+            self.clear_authored_handoff()
+            raise
 
     def authored_handoff_id(self) -> str | None:
-        """Return the provider-owned exact-match ID for the current turn, if any."""
+        """Return an exact-match ID eligible for the beyond-cap exception."""
 
-        return self.authored_handoff.candidate.id if self.authored_handoff is not None else None
+        return (
+            self.authored_handoff.candidate.id
+            if self.authored_handoff is not None and self.authored_handoff.source == "exact"
+            else None
+        )
+
+    def clear_authored_handoff(self) -> None:
+        """Discard the current turn's runtime-owned reveal after failure or rollback."""
+
+        self.authored_handoff = None
 
     def note_rejection(self, message: str) -> None:
         self._rejection_note = message
@@ -318,6 +332,7 @@ class CloudflareTurnProvider:
     def assemble_turn_prompt(self, player_input: str) -> dict[str, object]:
         """Build the exact turn prompt without contacting the narration worker."""
 
+        self.clear_authored_handoff()
         self._example_player_input = player_input
         self.last_semantic_match = {"ran": False, "matched": None}
         self.last_reveal_selection = {
@@ -454,6 +469,8 @@ class CloudflareTurnProvider:
             }
         universe = self._reveal_universe()
         eligible_candidates = self._eligible_reveal_candidates(universe)
+        visible_ids = {candidate.id for candidate in self.last_projection.candidates}
+        eligible_candidates = tuple(candidate for candidate in eligible_candidates if candidate.id in visible_ids)
         self.last_reveal_selection["shortlist_size"] = min(6, len(eligible_candidates))
         if (
             self.semantic_ask is None
@@ -514,7 +531,7 @@ class CloudflareTurnProvider:
             return None
         self.last_semantic_match["matched"] = candidate.id
         self.last_reveal_selection.update(outcome="semantic_match", matched=candidate.id)
-        return AuthoredHandoff(candidate=candidate, delivery_text=candidate.delivery_text)
+        return AuthoredHandoff(candidate=candidate, delivery_text=candidate.delivery_text, source="semantic")
 
     def _run_contract_shadow(self, player_input: str) -> None:
         """Evaluate optional action contracts without affecting live selection."""
