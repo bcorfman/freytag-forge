@@ -187,14 +187,27 @@ class SelectedRevealResolver:
         self._validator = ProgressionValidator(package)
         self._routes = {route.id: route for route in package.storylet_routes.storylets}
 
-    def resolve(self, state, projection, provider_proposal: TurnProposal, projector, player_input: str):
+    def resolve(
+        self,
+        state,
+        projection,
+        provider_proposal: TurnProposal,
+        projector,
+        player_input: str,
+        *,
+        authored_handoff_id: str | None = None,
+    ):
         selected = provider_proposal.selected_knowledge_ids
         if len(selected) > 1:
             raise ProposalValidationError(
                 "at most one knowledge selection is allowed per turn", code="multiple_knowledge_selection"
             )
         candidate_ids = {item.id for item in projection.candidates}
-        if any(item_id not in candidate_ids for item_id in selected):
+        reveal_universe_ids = {item.id for item in projection.reveal_universe}
+        if any(
+            item_id not in candidate_ids and (item_id != authored_handoff_id or item_id not in reveal_universe_ids)
+            for item_id in selected
+        ):
             raise ProposalValidationError(
                 "selected knowledge is not eligible for this turn", code="ineligible_selection"
             )
