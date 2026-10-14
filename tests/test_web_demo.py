@@ -223,6 +223,7 @@ def test_knowledge_audit_is_off_by_default_and_redacted_when_enabled(monkeypatch
         "result",
         "rejection_code",
         "recovery_used",
+        "guard_retry_used",
     }
     assert audit["accepted_segments"][0]["character_count"] == len("The latch catches.")
     assert audit["accepted_segments"][0]["sha256"] == sha256(b"The latch catches.").hexdigest()

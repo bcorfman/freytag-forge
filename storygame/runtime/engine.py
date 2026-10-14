@@ -223,7 +223,7 @@ class RuntimeEngine(CanonicalEventMixin):
                     if callable(note_rejection):
                         note_rejection(str(error))
                     self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
-                        update={"recovery_used": True}
+                        update={"guard_retry_used": True}
                     )
                     continue
                 break
