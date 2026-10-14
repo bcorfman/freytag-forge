@@ -1,7 +1,7 @@
 # Astra assessment follow-up: implementation plan
 
 Source: `.plans/astra-plan-assessment-answer.md` (outside review of `astra-implementation-plan.md`).
-Status: **A1 done and committed (08a925ac, Option 1); A2 committed (8901f3c0) with the budget-reset fix (Ringer `astra-budget-reset`: `end_turn()` called in a `finally`, 3 tests, suite 1739 passed; the stale-budget caveat below is closed); A3, B, C, D, E not started.** Branch for A1-A3: continue `astra-established-reveal-409` or cut a new one from main. Update this file after each step (memory: update-plan-after-each-feature).
+Status: **A1 done and committed (08a925ac, Option 1); A2 committed (8901f3c0) with the budget-reset fix (Ringer `astra-budget-reset`: `end_turn()` called in a `finally`, 3 tests, suite 1739 passed; the stale-budget caveat below is closed); A3 done and committed (2026-10-14); B, C, D, E not started.** Branch for A1-A3: continue `astra-established-reveal-409` or cut a new one from main. Update this file after each step (memory: update-plan-after-each-feature).
 
 Ground rules: every code change goes through Ringer (one task per run unit); unit tests stay hermetic (no live worker); no billed run before a smoke test; measure each step before the next; keep the repo ruff-formatted. Findings are numbered as in the assessment (F1-F8).
 
@@ -45,6 +45,8 @@ Work:
 Exit: tests green. Then one billed measurement (smoke test first): replay known rejection cases (the 1B `bench`/`michelle's files` style prompts) N times, report retry rescue rate and whether the second reply avoids the phrase. Report every turn, successes included.
 
 ## Step A3: Evidence gates before any further billed spending (F6, F4, F5)
+
+**Result (2026-10-14, Ringer `astra-a3-gates` x3 + `astra-a3-merge`, suite 1759 passed):** (1) `refusal_summary.py` (new, replaces the checker's heredoc) counts `engine_refusal` turns; on the saved engine-arm record it now reports refused=1 where the old summary said 0. New gates: `--expect-turns`, `--expect-refused-min`, provenance (git SHA and variation sha256 into the output), dirty-tree refusal unless `ALLOW_DIRTY=1`. (2) `bench/jev_use.py`: call cap (400, `FREYTAG_BENCH_JEV_MAX_CALLS`), stop on 429/AI_QUOTA_EXCEEDED/AI_DAILY_BUDGET_EXCEEDED, stop after 5 consecutive failures, `jev_stats()`; callers still get None. `bench/core.py` does not yet put `jev_stats()` in its summary. (3) Phase 3 `PipelineArm` reports real request and token counts (0 for an engine-refused turn) and real grounded state; ungrounded state keys are "unmeasured", counted in the aggregate. Process note: the first A3 run failed on my own brief (told workers to put tests under `bench/`, which `testpaths` never collects, and the check script collected `bench/` into the shard-balance test); the merge task moved all tests into `tests/`. Open: wire `jev_stats()` into the bench summary; the refusal-refused-via-stub test in the runner uses a stub engine seam, not the real fixed-refusal path.
 
 1. `p4-refusal-measure-check.sh`: count refusals from the current telemetry field, not old capture messages; assert the treatment is active (engine-refusal arm shows refusals > 0 where scheduled), assert expected turn counts, and bind the artifact to the build SHA. Add a self-test fixture of a known engine-arm output.
 2. `bench/jev_use.py` / the refusal wrapper: add a per-endpoint budget guard and stop swallowing request errors (memory: guard-every-billed-model-endpoint).

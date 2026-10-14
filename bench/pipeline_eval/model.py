@@ -1,28 +1,91 @@
-"""Data contracts and JSON loading for pipeline evaluations.
-
-``STATE_VOCABULARY`` is the contract arms report against. Mapping it to engine
-facts is a Phase 5 task.
-"""
+"""Data contracts, state grounding, and JSON loading for pipeline evaluations."""
 
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from storygame.runtime.state import RuntimeState
+
 Split = Literal["diagnostic", "held_out"]
 CreationKind = Literal["none", "descriptive", "interactable", "route_clue_person_capability"]
 
-# This is the contract arms report against. Mapping these labels to engine facts
-# is intentionally deferred to the Phase 5 task; the Phase 3 harness only
-# accepts state claims that have been explicitly grounded here.
 STATE_VOCABULARY: dict[str, tuple[str, ...]] = {
     "memory_card": ("beneath_michelle_drawer", "with_kristin", "not_with_kristin"),
     "kristin": ("truck_driver_seat",),
     "kristin_truck": ("at_workstation", "away"),
     "kristin_laptop": ("truck_passenger_seat",),
 }
+
+StatePredicate = Callable[[RuntimeState], bool | None]
+
+
+def _world_fact_value(state: RuntimeState, predicate: str, subject: str) -> str | None:
+    for fact in state.facts.matching(predicate, subject):
+        value = fact.value if fact.value is not None else fact.object
+        if isinstance(value, str):
+            return value
+    return None
+
+
+def _parent_is(item: str, parent: str) -> StatePredicate:
+    def predicate(state: RuntimeState) -> bool | None:
+        current = _world_fact_value(state, "wk_parent", item)
+        return None if current is None else current == parent
+
+    return predicate
+
+
+def _parent_is_not(item: str, parent: str) -> StatePredicate:
+    def predicate(state: RuntimeState) -> bool | None:
+        current = _world_fact_value(state, "wk_parent", item)
+        return None if current is None else current != parent
+
+    return predicate
+
+
+def _parent_and_relation(item: str, parent: str, relation: str) -> StatePredicate:
+    def predicate(state: RuntimeState) -> bool | None:
+        current_parent = _world_fact_value(state, "wk_parent", item)
+        current_relation = _world_fact_value(state, "wk_relation", item)
+        if current_parent is None or current_relation is None:
+            return None
+        return current_parent == parent and current_relation == relation
+
+    return predicate
+
+
+# This is deliberately an eval-only, story-specific declaration. The runtime
+# remains story-agnostic; these predicates read the canonical world facts that
+# RuntimeState maintains for the continuity-initiative cases.
+STATE_PREDICATES: dict[str, dict[str, StatePredicate]] = {
+    "memory_card": {
+        "beneath_michelle_drawer": _parent_and_relation("memory_card", "michelle_drawer", "under"),
+        "with_kristin": _parent_is("memory_card", "kristin"),
+        "not_with_kristin": _parent_is_not("memory_card", "kristin"),
+    },
+    "kristin": {"truck_driver_seat": _parent_is("kristin", "truck_driver_seat")},
+    "kristin_truck": {
+        "at_workstation": _parent_is("kristin_truck", "michelle_workstation"),
+        "away": _parent_is_not("kristin_truck", "michelle_workstation"),
+    },
+    "kristin_laptop": {"truck_passenger_seat": _parent_is("kristin_laptop", "truck_passenger_seat")},
+}
+
+
+def grounded_state(state: RuntimeState) -> dict[str, str]:
+    """Return the currently grounded vocabulary labels, omitting unknown keys."""
+
+    grounded: dict[str, str] = {}
+    for key, predicates in STATE_PREDICATES.items():
+        for label, predicate in predicates.items():
+            if predicate(state) is True:
+                grounded[key] = label
+                break
+    return grounded
 
 
 def _tuple(value: Any, field: str) -> tuple[Any, ...]:

@@ -2,8 +2,46 @@ from __future__ import annotations
 
 import io
 import json
+import urllib.error
 
-from bench.jev_use import ask_moves_thing, ask_needs_to_stand, ask_same_or_part, ask_uses_thing
+import pytest
+
+from bench.jev_use import (
+    ask_moves_thing,
+    ask_needs_to_stand,
+    ask_same_or_part,
+    ask_uses_thing,
+    jev_stats,
+    reset_jev_stats,
+)
+
+ENVIRONMENT = {"CLOUDFLARE_ACCOUNT_ID": "account", "CLOUDFLARE_AI_TOKEN": "token"}
+
+
+class Response(io.BytesIO):
+    def __init__(self, payload, *, status=None, headers=None):
+        super().__init__(json.dumps(payload).encode() if not isinstance(payload, bytes) else payload)
+        self.status = status
+        self.headers = headers or {}
+
+
+def completed_response(value=0.9):
+    return Response(
+        {
+            "success": True,
+            "result": {
+                "state": "Completed",
+                "result": {"answers": {"uses_thing": {"type": "noul", "noul": value}}},
+            },
+        }
+    )
+
+
+@pytest.fixture(autouse=True)
+def clean_jev_stats():
+    reset_jev_stats()
+    yield
+    reset_jev_stats()
 
 
 def test_jev_moves_thing_request_and_answers():
@@ -37,8 +75,9 @@ def test_jev_moves_thing_request_and_answers():
 
 
 def test_jev_moves_thing_failures_give_none():
-    environment = {"CLOUDFLARE_ACCOUNT_ID": "account", "CLOUDFLARE_AI_TOKEN": "token"}
+    environment = ENVIRONMENT
     assert ask_moves_thing("Put the photograph in my pocket.", "photograph", environment={}) is None
+    assert jev_stats()["calls"] == 0
 
     def bad_opener(*_args, **_kwargs):
         raise OSError("offline")
@@ -47,6 +86,7 @@ def test_jev_moves_thing_failures_give_none():
         ask_moves_thing("Put the photograph in my pocket.", "photograph", environment=environment, opener=bad_opener)
         is None
     )
+    assert jev_stats()["failures"] == {"request": 1}
 
 
 def test_jev_use_request_and_answers():
@@ -87,7 +127,7 @@ def test_jev_use_request_and_answers():
 
 
 def test_jev_use_failures_give_none():
-    environment = {"CLOUDFLARE_ACCOUNT_ID": "account", "CLOUDFLARE_AI_TOKEN": "token"}
+    environment = ENVIRONMENT
 
     assert ask_uses_thing("Read the files on my laptop.", "Kristin's laptop", environment={}) is None
 
@@ -98,6 +138,7 @@ def test_jev_use_failures_give_none():
         ask_uses_thing("Read the files on my laptop.", "Kristin's laptop", environment=environment, opener=bad_opener)
         is None
     )
+    assert jev_stats()["failures"] == {"request": 1}
     for payload in (
         {"success": False},
         {"success": True, "result": {"state": "Running"}},
@@ -317,3 +358,169 @@ def test_same_or_part_request_and_answers():
         )
         is None
     )
+
+
+def ask(opener, environment=None):
+    return ask_uses_thing(
+        "Read the files on the laptop.",
+        "the laptop",
+        environment=ENVIRONMENT if environment is None else environment,
+        opener=opener,
+    )
+
+
+def test_call_cap_does_not_invoke_opener_after_cap():
+    calls = []
+
+    def opener(*args, **kwargs):
+        calls.append((args, kwargs))
+        return completed_response()
+
+    environment = {**ENVIRONMENT, "FREYTAG_BENCH_JEV_MAX_CALLS": "1"}
+    assert ask(opener, environment) is True
+    assert ask(opener, environment) is None
+
+    assert len(calls) == 1
+    assert jev_stats() == {"calls": 1, "ok": 1, "failures": {}, "stopped": None, "cap_reached": True}
+
+
+def test_http_429_stops_later_calls():
+    calls = []
+
+    def opener(*args, **kwargs):
+        calls.append((args, kwargs))
+        return Response({"error": "rate limited"}, status=429)
+
+    assert ask(opener) is None
+    assert ask(opener) is None
+
+    stats = jev_stats()
+    assert len(calls) == 1
+    assert stats["calls"] == 1
+    assert stats["failures"] == {"http_status": 1}
+    assert stats["stopped"] == "http_429"
+
+
+def test_quota_error_in_body_stops_later_calls():
+    calls = []
+
+    def opener(*args, **kwargs):
+        calls.append((args, kwargs))
+        return Response({"success": False, "error": "AI_QUOTA_EXCEEDED"})
+
+    assert ask(opener) is None
+    assert ask(opener) is None
+
+    stats = jev_stats()
+    assert len(calls) == 1
+    assert stats["failures"] == {"spend_limit": 1}
+    assert stats["stopped"] == "AI_QUOTA_EXCEEDED"
+
+
+def test_consecutive_failures_stop_requests():
+    calls = []
+
+    def opener(*args, **kwargs):
+        calls.append((args, kwargs))
+        raise OSError("offline")
+
+    environment = {**ENVIRONMENT, "FREYTAG_BENCH_JEV_MAX_CONSECUTIVE_FAILURES": "2"}
+    assert ask(opener, environment) is None
+    assert ask(opener, environment) is None
+    assert ask(opener, environment) is None
+
+    stats = jev_stats()
+    assert len(calls) == 2
+    assert stats["calls"] == 2
+    assert stats["failures"] == {"request": 2}
+    assert stats["stopped"] == "max_consecutive_failures"
+
+
+def test_success_resets_consecutive_failure_counter():
+    calls = []
+    responses = iter([OSError("offline"), completed_response(), OSError("offline"), OSError("offline")])
+
+    def opener(*args, **kwargs):
+        calls.append((args, kwargs))
+        response = next(responses)
+        if isinstance(response, Exception):
+            raise response
+        return response
+
+    environment = {**ENVIRONMENT, "FREYTAG_BENCH_JEV_MAX_CONSECUTIVE_FAILURES": "2"}
+    assert ask(opener, environment) is None
+    assert ask(opener, environment) is True
+    assert ask(opener, environment) is None
+    assert ask(opener, environment) is None
+
+    stats = jev_stats()
+    assert len(calls) == 4
+    assert stats["ok"] == 1
+    assert stats["failures"] == {"request": 3}
+    assert stats["stopped"] == "max_consecutive_failures"
+
+
+def test_stats_record_failure_kinds():
+    responses = iter(
+        [
+            Response({"error": "server"}, status=500),
+            TimeoutError("timed out"),
+            b"not json",
+            Response({"success": True, "result": {"state": "Running"}}),
+            completed_response(),
+        ]
+    )
+
+    def opener(*args, **kwargs):
+        response = next(responses)
+        if isinstance(response, Exception):
+            raise response
+        return response
+
+    environment = {**ENVIRONMENT, "FREYTAG_BENCH_JEV_MAX_CONSECUTIVE_FAILURES": "10"}
+    assert ask(opener, environment) is None
+    assert ask(opener, environment) is None
+    assert ask(opener, environment) is None
+    assert ask(opener, environment) is None
+    assert ask(opener, environment) is True
+
+    stats = jev_stats()
+    assert stats["calls"] == 5
+    assert stats["ok"] == 1
+    assert stats["failures"] == {
+        "http_status": 1,
+        "timeout": 1,
+        "bad_payload": 1,
+        "not_completed": 1,
+    }
+
+
+def test_http_error_429_stops_without_retry():
+    calls = []
+
+    def opener(*args, **kwargs):
+        calls.append((args, kwargs))
+        raise urllib.error.HTTPError(
+            "https://example.test",
+            429,
+            "rate limited",
+            {},
+            io.BytesIO(b'{"error":"rate limited"}'),
+        )
+
+    assert ask(opener) is None
+    assert ask(opener) is None
+    assert len(calls) == 1
+    assert jev_stats()["stopped"] == "http_429"
+
+
+def test_missing_credentials_do_not_count_as_calls():
+    calls = []
+
+    def opener(*args, **kwargs):
+        calls.append((args, kwargs))
+        return completed_response()
+
+    assert ask(opener, {}) is None
+    assert calls == []
+    assert jev_stats() == {"calls": 0, "ok": 0, "failures": {}, "stopped": None, "cap_reached": False}

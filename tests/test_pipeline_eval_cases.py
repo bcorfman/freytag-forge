@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bench.pipeline_eval.model import STATE_VOCABULARY, load_cases
+from bench.pipeline_eval.model import STATE_PREDICATES, STATE_VOCABULARY, load_cases
 from storygame.story_package.loader import load_story_package
 
 ROOT = Path(__file__).parents[1]
@@ -78,4 +78,19 @@ def test_pipeline_fixture_contract_is_grounded_and_split() -> None:
     assert all(
         case.expect.clarification is True and case.expect.clarification_leaves_clock_unchanged is True
         for case in clarification_cases
+    )
+
+
+def test_state_vocabulary_has_explicit_runtime_grounding() -> None:
+    assert set(STATE_PREDICATES) == set(STATE_VOCABULARY)
+    assert all(set(predicates) == set(STATE_VOCABULARY[key]) for key, predicates in STATE_PREDICATES.items())
+
+
+def test_pipeline_fixture_state_claims_use_declared_vocabulary() -> None:
+    cases = load_cases(CASES)
+    assert all(
+        key in STATE_VOCABULARY and value in STATE_VOCABULARY[key]
+        for case in cases
+        if case.expect.state
+        for key, value in case.expect.state.items()
     )

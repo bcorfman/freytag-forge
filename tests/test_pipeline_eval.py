@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from bench.pipeline_eval.__main__ import main
 from bench.pipeline_eval.metrics import aggregate, clarification_unchanged, score_turn
-from bench.pipeline_eval.model import EvalCase, Expectation, TurnObservation, load_cases
+from bench.pipeline_eval.model import EvalCase, Expectation, TurnObservation, grounded_state, load_cases
 from bench.pipeline_eval.runner import PipelineArm, render_report
+from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -225,7 +228,12 @@ def test_pipeline_arm_save_load_and_second_command() -> None:
     observations = arm.play(case, RuntimeState.bootstrap(PACKAGE))
     assert len(observations) == 2
     assert calls == list(case.commands)
-    assert all(observation.state == {} for observation in observations)
+    expected_state = {
+        "memory_card": "beneath_michelle_drawer",
+        "kristin_truck": "away",
+        "kristin_laptop": "truck_passenger_seat",
+    }
+    assert all(observation.state == expected_state for observation in observations)
     assert all(observation.tokens == 7 for observation in observations)
 
 
@@ -255,3 +263,128 @@ def test_render_report_marks_claim_prose_without_judge() -> None:
 def test_smoke_cli_main(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["smoke"]) == 0
     assert "Pipeline evaluation report" in capsys.readouterr().out
+
+
+def test_pipeline_arm_counts_guard_retry_and_sums_tokens(monkeypatch: pytest.MonkeyPatch) -> None:
+    case = _case(commands=("Search the gap beneath the drawer.",))
+
+    class RetryEngine(RuntimeEngine):
+        def __init__(self, state: RuntimeState, provider) -> None:  # type: ignore[no-untyped-def]
+            super().__init__(state, provider)
+            self.state.active_event_ids.add("SL-1A-E")
+            original_validate = self.narration_validator.validate
+            first_validation = True
+
+            def validate(*args, **kwargs):  # type: ignore[no-untyped-def]
+                nonlocal first_validation
+                if first_validation:
+                    first_validation = False
+                    raise ProposalValidationError("test guard retry", code="test_guard_retry")
+                return original_validate(*args, **kwargs)
+
+            self.narration_validator.validate = validate
+
+    monkeypatch.setattr("bench.pipeline_eval.runner.RuntimeEngine", RetryEngine)
+    replies = iter(
+        (
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": "Kristin finds Michelle's memory card taped beneath the drawer. "
+                        "She takes it with her. Her laptop is in her truck outside.",
+                        "grounding_ids": ["k_sl_1a_b_r0"],
+                    }
+                ],
+                "selected_knowledge_ids": ["k_sl_1a_b_r0"],
+                "usage": 5,
+            },
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": "Kristin finds Michelle's memory card taped beneath the drawer. "
+                        "She takes it with her. Her laptop is in her truck outside.",
+                        "grounding_ids": ["k_sl_1a_b_r0"],
+                    }
+                ],
+                "selected_knowledge_ids": ["k_sl_1a_b_r0"],
+                "usage": 3,
+            },
+        )
+    )
+
+    observations = PipelineArm(lambda _command: next(replies)).play(case, RuntimeState.bootstrap(PACKAGE))
+
+    assert observations[0].requests == 2
+    assert observations[0].tokens == 8
+
+
+def test_pipeline_arm_counts_provider_free_engine_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
+    case = _case(commands=("Drive the truck from the workstation.",))
+    calls: list[str] = []
+
+    class RefusingEngine:
+        def __init__(self, state: RuntimeState, provider) -> None:  # type: ignore[no-untyped-def]
+            self.state = state
+            self.refusal_extra_calls = 0
+            self.last_attempt = SimpleNamespace(outcome="rejected")
+
+        def turn(self, _command: str):  # type: ignore[no-untyped-def]
+            return SimpleNamespace(narration="The truck stays put.", selected_knowledge_ids=())
+
+    monkeypatch.setattr("bench.pipeline_eval.runner.RuntimeEngine", RefusingEngine)
+    observations = PipelineArm(lambda command: calls.append(command) or {}).play(case, RuntimeState.bootstrap(PACKAGE))
+
+    assert calls == []
+    assert observations[0].requests == 0
+
+
+def test_pipeline_arm_reports_state_after_real_world_effect(monkeypatch: pytest.MonkeyPatch) -> None:
+    case = _case(commands=("Search the gap beneath the drawer.",))
+
+    class MemoryRecoveryEngine(RuntimeEngine):
+        def __init__(self, state: RuntimeState, provider) -> None:  # type: ignore[no-untyped-def]
+            super().__init__(state, provider)
+            self.state.active_event_ids.add("SL-1A-E")
+
+    monkeypatch.setattr("bench.pipeline_eval.runner.RuntimeEngine", MemoryRecoveryEngine)
+
+    def narrator(_command: str) -> dict[str, object]:
+        return {
+            "segments": [
+                {
+                    "kind": "narration",
+                    "text": "Kristin finds Michelle's memory card taped beneath the drawer. "
+                    "She takes it with her. Her laptop is in her truck outside.",
+                    "grounding_ids": ["k_sl_1a_b_r0"],
+                }
+            ],
+            "selected_knowledge_ids": ["k_sl_1a_b_r0"],
+        }
+
+    observation = PipelineArm(narrator).play(case, RuntimeState.bootstrap(PACKAGE))[0]
+    score = score_turn(Expectation(state={"memory_card": "with_kristin"}), observation)
+
+    assert observation.state["memory_card"] == "with_kristin"
+    assert score.state_correct is True
+
+
+def test_ungrounded_state_is_unmeasured_and_reported() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.asserted = {
+        fact
+        for fact in state.facts.asserted
+        if not (fact.predicate == "wk_parent" and fact.subject == "kristin_laptop")
+    }
+    observation = TurnObservation(state=grounded_state(state), requests=2)
+    expectation = Expectation(state={"kristin_laptop": "truck_passenger_seat"})
+    score = score_turn(expectation, observation)
+    cases = (_case(expect=expectation),)
+    report = render_report({"stub": {cases[0].id: [score]}}, cases)
+
+    assert "kristin_laptop" not in observation.state
+    assert score.state_correct is None
+    assert score.state_unmeasured is True
+    assert "'requests': {'mean': 2" in report
+    assert "'state_unmeasured': 1" in report
