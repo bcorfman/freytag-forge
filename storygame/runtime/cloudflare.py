@@ -345,6 +345,11 @@ class CloudflareTurnProvider:
 
         self._turn_request_count = 0
 
+    def end_turn(self) -> None:
+        """Disable the per-turn inference budget outside an engine turn."""
+
+        self._turn_request_count = None
+
     def request_budget_remaining(self) -> int:
         """Return the number of inference sends still allowed in this turn."""
 

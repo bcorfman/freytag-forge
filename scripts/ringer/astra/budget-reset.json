@@ -1,0 +1,24 @@
+{
+ "run_name": "astra-budget-reset",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-budget-reset",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "fix",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=\"high\""
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 1800,
+   "spec": "You are a code worker on the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Run `pwd` first: it is under /home/bcorfman/dev/ringer-work/astra-budget-reset/. Use RELATIVE paths; NEVER edit anything under the absolute path /home/bcorfman/dev/freytag-forge (the protected main checkout; the check fails if it changes). Do NOT git commit, do NOT git add -A, do NOT touch .git. Write notes to /home/bcorfman/dev/ringer-work/astra-budget-reset-notes/notes.md (create the directory; exact path): the change, files changed, test results. Read first (read-only): AGENTS.md, docs/contributor-guide.md.\n\nOWNED FILES: storygame/runtime/cloudflare.py, storygame/runtime/engine.py, tests/test_recovery_budget.py. Edit nothing else.\n\nPROBLEM: CloudflareTurnProvider (cloudflare.py) enforces a 2-send per-turn inference budget with `_turn_request_count`, set to 0 by `begin_turn()` (called from RuntimeEngine.turn in engine.py) and enforced in `_request`. Nothing ever sets it back to None when the turn ends, so any provider call made after a turn but outside an engine turn (a later opening(), a bench or probe call on the same provider object) can hit an already-spent budget and fail with NARRATION_REQUEST_BUDGET_EXHAUSTED.\n\nREQUIRED: the budget must be active only during an engine turn. Add an explicit `end_turn()` to the provider that sets `_turn_request_count = None`, add it to the existing budget Protocol in engine.py (TurnProviderBudget) next to begin_turn, and have RuntimeEngine.turn call it in a `finally` so it runs on success, on every failure path and on early returns (story-complete turn, engine refusal, game-break pause). Do not change the budget size, the guard-retry rule, or request_budget_remaining semantics while no turn is active (it returns the full budget). Make sure opening() is unaffected. Keep it small.\n\nTESTS (add to tests/test_recovery_budget.py; test names must contain the word reset or outside): (a) after a successful engine turn that used both sends, a direct provider call outside a turn is not blocked by the budget; (b) the same after a turn that failed closed with budget exhausted; (c) the next engine turn gets a fresh budget of 2. Hermetic, stub the transport, no network. Each must fail on the current code where it exercises the defect; say which in the notes.\n\nHOW TO RUN: PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_recovery_budget.py; then tests/test_narration_retry.py tests/test_guard_retry_flag.py tests/test_web_demo.py. Confirm `python -c \"import storygame; print(storygame.__file__)\"` prints a path inside the worktree. Ruff: /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check --fix and -m ruff format on files you touched. Finally try bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_budget_reset.sh (it may fail on read-only .git inside the sandbox; if so run its pytest and ruff steps by hand). Reply with the files changed.\n",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_budget_reset.sh",
+   "verified": "budget is active only during an engine turn; full suite passes"
+  }
+ ]
+}

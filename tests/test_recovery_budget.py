@@ -159,3 +159,41 @@ def test_budget_guard_retry_feedback_is_sanitized(monkeypatch: pytest.MonkeyPatc
     assert "Your last reply named something the player has not met yet." in prompts[1]
     assert "Rebecca's secured office" not in "\n".join(prompts)
     assert "narration mentions an unavailable entity" not in "\n".join(prompts)
+
+
+def test_budget_reset_allows_provider_call_outside_successful_turn(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, _state, _prompts = _engine_with_transport(monkeypatch, LEAK, CLEAN, CLEAN)
+
+    engine.turn(COMMAND)
+    reply = engine.provider(COMMAND)
+
+    assert reply["segments"][0]["text"] == CLEAN
+    assert engine.provider.request_count == 3
+
+
+def test_budget_reset_allows_provider_call_outside_failed_turn(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, _state, _prompts = _engine_with_transport(monkeypatch, LEAK, LEAK, CLEAN)
+
+    with pytest.raises(ProposalValidationError):
+        engine.turn(COMMAND)
+    reply = engine.provider(COMMAND)
+
+    assert reply["segments"][0]["text"] == CLEAN
+    assert engine.provider.request_count == 3
+
+
+def test_budget_reset_gives_next_engine_turn_two_requests(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, _state, _prompts = _engine_with_transport(monkeypatch, LEAK, CLEAN, LEAK, CLEAN)
+
+    engine.turn(COMMAND)
+    engine.provider(COMMAND)
+    result = engine.turn(COMMAND)
+
+    assert result.segments[0].text == CLEAN
+    assert engine.provider.request_count == 4

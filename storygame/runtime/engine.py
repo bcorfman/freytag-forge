@@ -75,6 +75,8 @@ class TurnProviderRejection(Protocol):
 class TurnProviderBudget(Protocol):
     def begin_turn(self) -> None: ...
 
+    def end_turn(self) -> None: ...
+
     def request_budget_remaining(self) -> int: ...
 
 
@@ -185,10 +187,20 @@ class RuntimeEngine(CanonicalEventMixin):
     def turn(self, player_input: str, *, clock_seconds: int | None = None) -> ResolvedTurnProposal:
         """Call the provider once, then validate before any canonical mutation."""
 
+        budget = self._provider_budget()
+        try:
+            self._begin_provider_turn()
+            return self._turn_active(player_input, clock_seconds=clock_seconds)
+        finally:
+            if budget is not None:
+                budget.end_turn()
+
+    def _turn_active(self, player_input: str, *, clock_seconds: int | None = None) -> ResolvedTurnProposal:
+        """Call the provider once, then validate before any canonical mutation."""
+
         command_text = " ".join(split_command(player_input))
         self.refusal_extra_calls = 0
         self.last_player_command = command_text
-        self._begin_provider_turn()
         self._clear_provider_handoff()
         if self.state.story_complete:
             before = self.state.snapshot()

@@ -1,7 +1,7 @@
 # Astra assessment follow-up: implementation plan
 
 Source: `.plans/astra-plan-assessment-answer.md` (outside review of `astra-implementation-plan.md`).
-Status: **A1 done and committed (08a925ac, Option 1); A2 built and applied to the working tree, not committed (2026-10-14); A3, B, C, D, E not started.** Branch for A1-A3: continue `astra-established-reveal-409` or cut a new one from main. Update this file after each step (memory: update-plan-after-each-feature).
+Status: **A1 done and committed (08a925ac, Option 1); A2 committed (8901f3c0) with the budget-reset fix (Ringer `astra-budget-reset`: `end_turn()` called in a `finally`, 3 tests, suite 1739 passed; the stale-budget caveat below is closed); A3, B, C, D, E not started.** Branch for A1-A3: continue `astra-established-reveal-409` or cut a new one from main. Update this file after each step (memory: update-plan-after-each-feature).
 
 Ground rules: every code change goes through Ringer (one task per run unit); unit tests stay hermetic (no live worker); no billed run before a smoke test; measure each step before the next; keep the repo ruff-formatted. Findings are numbered as in the assessment (F1-F8).
 
