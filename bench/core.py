@@ -970,6 +970,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         ),
                         "rejection_code": "INVALID_PROPOSAL",
                         "rejection_reason": str(error),
+                        "guard_retry_used": bool(getattr(engine, "last_guard_rejections", [])),
+                        "guard_rejections": copy.deepcopy(getattr(engine, "last_guard_rejections", [])),
                     }
                 )
                 if runtime:
@@ -1033,6 +1035,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         ),
                         "rejection_code": getattr(error, "code", None) or getattr(error, "error_code", ""),
                         "rejection_reason": str(error),
+                        "guard_retry_used": bool(getattr(engine, "last_guard_rejections", [])),
+                        "guard_rejections": copy.deepcopy(getattr(engine, "last_guard_rejections", [])),
                     }
                 )
                 if runtime:
@@ -1250,6 +1254,14 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         or any("refusal" in issue for issue in delivery.capture_issues)
                     ),
                     "refusal_extra_calls": getattr(engine, "refusal_extra_calls", 0),
+                    "guard_retry_used": bool(
+                        getattr(
+                            getattr(getattr(engine, "state", None), "last_turn_delivery", None),
+                            "guard_retry_used",
+                            False,
+                        )
+                    ),
+                    "guard_rejections": copy.deepcopy(getattr(engine, "last_guard_rejections", [])),
                 }
                 if runtime:
                     turn_record["engine_refusal"] = engine_refusal_text

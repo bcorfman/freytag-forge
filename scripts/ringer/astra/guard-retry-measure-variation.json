@@ -1,0 +1,32 @@
+{
+ "name": "astra-guard-retry-measure",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "g1",
+    "inputs": [
+     "At the bench her files pointed to, search underneath for what she left."
+    ]
+   },
+   {
+    "name": "g2",
+    "inputs": [
+     "Search the park bench for Michelle's files."
+    ]
+   },
+   {
+    "name": "g3",
+    "inputs": [
+     "Follow the trail from the bench to Michelle's files and read them."
+    ]
+   }
+  ]
+ }
+}

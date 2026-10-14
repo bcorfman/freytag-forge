@@ -134,6 +134,7 @@ class RuntimeEngine(CanonicalEventMixin):
         self.refusal_extra_calls = 0
         self.attempts: list[AttemptBundle] = []
         self.last_attempt: AttemptBundle | None = None
+        self.last_guard_rejections: list[dict[str, object]] = []
 
     def _provider_handoff(self) -> TurnProviderHandoff | None:
         return self.provider if isinstance(self.provider, TurnProviderHandoff) else None
@@ -187,6 +188,7 @@ class RuntimeEngine(CanonicalEventMixin):
     def turn(self, player_input: str, *, clock_seconds: int | None = None) -> ResolvedTurnProposal:
         """Call the provider once, then validate before any canonical mutation."""
 
+        self.last_guard_rejections = []
         budget = self._provider_budget()
         try:
             self._begin_provider_turn()
@@ -292,6 +294,13 @@ class RuntimeEngine(CanonicalEventMixin):
                     budget = self._provider_budget()
                     if budget is not None and budget.request_budget_remaining() <= 0:
                         raise
+                    self.last_guard_rejections.append(
+                        {
+                            "code": error.code,
+                            "message": str(error),
+                            "rejected_narration": getattr(proposal, "narration", None),
+                        }
+                    )
                     rejection = self._provider_rejection()
                     if rejection is not None:
                         rejection.note_rejection(error.code)
