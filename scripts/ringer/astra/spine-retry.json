@@ -11,11 +11,11 @@
    "timeout_s": 2400,
    "check_timeout_s": 120,
    "spec": "You are a one-task Ringer probe worker running a hosted staging E2E test. Never modify any tracked file and never commit. First delete any old artifact: rm -f /home/bcorfman/dev/freytag-forge/artifacts/e2e-spine.json /home/bcorfman/dev/freytag-forge/artifacts/e2e-spine.md . Then run exactly this command and let it finish (it takes about 7 minutes, allow 25): bash -c 'cd /home/bcorfman/dev/freytag-forge && source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @spine' . Save the full raw output to /home/bcorfman/dev/ringer-work/astra-spine-retry/output.txt (create the directory). If it fails with a single HTTP 503 or CORS error, rerun once; otherwise do not rerun. Do not hide failures; report what happened.",
-   "check": "bash -c 'cd /home/bcorfman/dev/freytag-forge && .venv/bin/python scripts/ringer/astra/check_spine_staging.py /home/bcorfman/dev/freytag-forge e664351d'",
+   "check": "bash -c 'cd /home/bcorfman/dev/freytag-forge && .venv/bin/python scripts/ringer/astra/check_spine_staging.py /home/bcorfman/dev/freytag-forge 3e2404fa'",
    "expect_files": [
     "/home/bcorfman/dev/ringer-work/astra-spine-retry/output.txt"
    ],
-   "verified": "spine passes on e664351d and telemetry is printed"
+   "verified": "spine passes on 3e2404fa and telemetry is printed"
   }
  ]
 }

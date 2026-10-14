@@ -30,9 +30,12 @@ def test_2c_assess_and_evaluate_verbs_match_unique_reveals() -> None:
         "Assess the executive channel's private offer and whether the people running this are turning on each other.": {
             "k_sl_2c_a_r1"
         },
-        "Assess the cost of transmitting our evidence right now to the people still held here.": {"k_sl_2c_c_r2"},
+        # k_sl_2c_c_r2 is deliberately not widened to "assess"/"our evidence": once
+        # evidence_ready_to_transmit is established an exact match on it became a
+        # 409 ineligible_selection on staging (3e2404fa, @spine turn 48).
+        "Assess the cost of transmitting our evidence right now to the people still held here.": set(),
         "Weigh the private offer.": {"k_sl_2c_a_r1"},
-        "Evaluate the cost of sending our evidence now.": {"k_sl_2c_c_r2"},
+        "Evaluate the cost of sending our evidence now.": set(),
         "Read the private message and discuss the offer.": {"k_sl_2c_a_r1"},
         "Assess the weather.": set(),
         "Weigh my laptop.": set(),
@@ -44,7 +47,7 @@ def test_2c_assess_and_evaluate_verbs_match_unique_reveals() -> None:
 
 def test_2c_action_contract_positives_remain_unique() -> None:
     knowledge = _knowledge()
-    for item_id in ("k_sl_2c_a_r1", "k_sl_2c_c_r2"):
+    for item_id in ("k_sl_2c_a_r1",):
         for command in knowledge[item_id].get("action_contract", {}).get("positive", []):
             assert _matches(knowledge, command) == {item_id}, (item_id, command)
 
