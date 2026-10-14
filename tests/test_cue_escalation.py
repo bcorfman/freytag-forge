@@ -236,6 +236,8 @@ def test_rejected_nudge_restores_state_then_accepted_nudge_records_stage_two(mon
         monkeypatch,
         state,
         *(["The room remains quiet."] * 9),
+        # The engine retries a rejected narration once, so the turn fails only when both replies are rejected.
+        "Phase Two is active.",
         "Phase Two is active.",
         "The room remains quiet.",
     )

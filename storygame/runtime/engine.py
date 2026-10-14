@@ -50,6 +50,7 @@ from storygame.story_package.obligations import required_storylet_ids
 
 SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
 OPENING_ATTEMPTS = 3
+TURN_NARRATION_ATTEMPTS = 2
 
 
 class StoryCompleteTurn:
@@ -187,30 +188,45 @@ class RuntimeEngine(CanonicalEventMixin):
                 }
             )
             self.last_projection = self.projector.project(self.state, "player", command_text)
-            provider_reply = self.provider(command_text)
-            provider_proposal = parse_turn_proposal(provider_reply)
-            self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
-                update={"handoff_staged": bool(self.state.staged_handoff_fact_ids)}
-            )
-            proposal, _ = self.reveal_resolver.resolve(
-                self.state, self.last_projection, provider_proposal, self.projector, command_text
-            )
-            if self.state.last_turn_delivery.complication_verbatim:
-                proposal = proposal.model_copy(
-                    update={
-                        "segments": (
-                            *proposal.segments,
-                            NarrationSegment(
-                                kind="narration",
-                                text=self.state.last_turn_delivery.complication_text or "",
-                            ),
-                        )
-                    }
+            for attempt in range(TURN_NARRATION_ATTEMPTS):
+                provider_reply = self.provider(command_text)
+                provider_proposal = parse_turn_proposal(provider_reply)
+                self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                    update={"handoff_staged": bool(self.state.staged_handoff_fact_ids)}
                 )
-            self.validator.validate_effects(self.state, proposal)
-            candidate_state = deepcopy(self.state)
-            candidate_state.apply_proposal(proposal, apply_world=False)
-            self.narration_validator.validate(self.state, candidate_state, proposal, self.projector, command_text)
+                proposal, _ = self.reveal_resolver.resolve(
+                    self.state, self.last_projection, provider_proposal, self.projector, command_text
+                )
+                if self.state.last_turn_delivery.complication_verbatim:
+                    proposal = proposal.model_copy(
+                        update={
+                            "segments": (
+                                *proposal.segments,
+                                NarrationSegment(
+                                    kind="narration",
+                                    text=self.state.last_turn_delivery.complication_text or "",
+                                ),
+                            )
+                        }
+                    )
+                self.validator.validate_effects(self.state, proposal)
+                candidate_state = deepcopy(self.state)
+                candidate_state.apply_proposal(proposal, apply_world=False)
+                try:
+                    self.narration_validator.validate(
+                        self.state, candidate_state, proposal, self.projector, command_text
+                    )
+                except ProposalValidationError as error:
+                    if attempt == TURN_NARRATION_ATTEMPTS - 1:
+                        raise
+                    note_rejection = getattr(self.provider, "note_rejection", None)
+                    if callable(note_rejection):
+                        note_rejection(str(error))
+                    self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                        update={"recovery_used": True}
+                    )
+                    continue
+                break
         except NarrationProviderError as error:
             self._record_attempt(
                 player_input,
