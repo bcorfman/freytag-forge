@@ -236,6 +236,7 @@ class CloudflareTurnProvider:
     """Send only bounded, scene-safe context to the configured Worker."""
 
     allowed_reply_keys = {"segments", "selected_knowledge_ids"}
+    absent_thing_rule: bool = False
 
     def __init__(
         self,
@@ -747,10 +748,19 @@ class CloudflareTurnProvider:
     def _object_place_rule(self) -> str:
         return "Keep each object where the scene puts it."
 
+    def _absent_thing_rules(self) -> tuple[str, ...]:
+        if not self.absent_thing_rule:
+            return ()
+        return (
+            "If the player asks for something the SCENE does not give, Kristin looks around and finds nothing like it.",
+            "Do not use the player's name for that thing in your reply.",
+        )
+
     def _turn_rules_before_grounding(self) -> list[str]:
         return [
             "Show what happens right after the player acts.",
             "Use only what the SCENE section tells you.",
+            *self._absent_thing_rules(),
             "Use the places and details the story gives you.",
             self._object_place_rule(),
             "Finish each action the player gives.",

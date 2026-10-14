@@ -1,0 +1,21 @@
+{
+ "run_name": "astra-absent-thing-rule",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-absent-thing-rule",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "flag",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "engine_args": ["-c", "model_reasoning_effort=\"high\""],
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 1800,
+   "spec": "You are a code worker on the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Run `pwd` first: it is under /home/bcorfman/dev/ringer-work/astra-absent-thing-rule/. Use RELATIVE paths; NEVER edit anything under the absolute path /home/bcorfman/dev/freytag-forge (the protected main checkout; the check fails if it changes). Do NOT git commit, do NOT git add -A, do NOT touch .git. No network or model calls; tests stay hermetic. Write notes to /home/bcorfman/dev/ringer-work/astra-absent-thing-rule-notes/notes.md (create the directory): design, files changed, test results. Read first (read-only): AGENTS.md, docs/narrator-writing-guide.md (follow it exactly, including 'apply each narrator-instruction change to every narration path' and 'build it in one helper'), docs/scene-fixing-guide.md, docs/contributor-guide.md.\n\nOWNED FILES: storygame/runtime/cloudflare.py, bench/core.py (only to read a new variation key and set the flag on the provider, exactly the way the existing `refusal_mode` variation key is wired - find it and mirror it), tests/test_absent_thing_rule.py (NEW). Edit nothing else.\n\nGOAL: add ONE experimental narrator rule, OFF BY DEFAULT, so a live probe can test it as one arm. This is a probe arm, not a production change: with the flag off, every narration prompt must be byte-identical to today.\n\nTHE RULE (12th-grade reading level, short common words, one idea per sentence, no project terms; use these exact two sentences): 'If the player asks for something the SCENE does not give, Kristin looks around and finds nothing like it.' and 'Do not use the player's name for that thing in your reply.' Insert them as two consecutive bullets in the turn rules, right after 'Use only what the SCENE section tells you.' (see _turn_rules_before_grounding and _turn_rules in cloudflare.py), through one helper used by every path that builds turn rules for a player command (_turn_rules, and any other builder in the narrator-writing guide's list that carries a player command; opening() has no player command, so leave it unchanged and say so in the notes).\n\nFLAG: provider attribute `absent_thing_rule: bool = False` on CloudflareTurnProvider, set from a new boolean variation key `absent_thing_rule` in bench/core.py (default False; mirror how `refusal_mode` is read from the variation and handed to the provider/engine). No environment variable, no production default.\n\nTESTS (tests/test_absent_thing_rule.py, hermetic): (a) flag off: the assembled turn prompt for a sample command equals the prompt built by the same call before the change (assert the two new sentences are absent and that the rule list is unchanged); (b) flag on: both sentences present, in order, directly after the 'Use only what the SCENE section tells you.' line, and nowhere else; (c) every other prompt section is identical between flag on and off apart from those two lines; (d) the bench reads `absent_thing_rule` from a variation dict and defaults to False. Use the words absent and flag in test names. Run full tests/ and ruff check/format on changed files.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_absent_thing_rule.sh",
+   "verified": "flag off leaves prompts byte-identical; flag on inserts exactly the two approved sentences after the use-only-the-scene rule; bench reads the variation key; suite and ruff pass"
+  }
+ ]
+}
