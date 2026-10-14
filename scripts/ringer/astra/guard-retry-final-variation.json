@@ -1,0 +1,38 @@
+{
+ "name": "astra-guard-retry-final",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "p5",
+    "inputs": [
+     "Look for a maintenance access route into the facility."
+    ]
+   },
+   {
+    "name": "p9",
+    "inputs": [
+     "Look for Michelle's coded note in the kitchen."
+    ]
+   },
+   {
+    "name": "q1",
+    "inputs": [
+     "Search the kitchen for a maintenance access route."
+    ]
+   },
+   {
+    "name": "q2",
+    "inputs": [
+     "Read Michelle's coded note aloud."
+    ]
+   }
+  ]
+ }
+}

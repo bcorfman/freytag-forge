@@ -82,11 +82,7 @@ def _turn_report(
     first_code = first_rejection.get("code")
     narration = record.get("narration")
     if rejected:
-        outcome = (
-            "failed_after_retry"
-            if record.get("rejection_code") == "INVALID_PROPOSAL" and rejections
-            else "failed_other"
-        )
+        outcome = "failed_after_retry" if rejections else "failed_other"
     else:
         outcome = "committed_after_retry" if retry_fired else "committed_clean"
 

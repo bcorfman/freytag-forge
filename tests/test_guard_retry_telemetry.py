@@ -86,7 +86,7 @@ def test_guard_retry_report_classifies_turns_and_rescue_rate() -> None:
                         {
                             "turn_number": 4,
                             "typed_input": "failed retry",
-                            "rejection_code": "INVALID_PROPOSAL",
+                            "rejection_code": "narration_known_term_leak",
                             "guard_rejections": [
                                 {"code": "narration_known_term_leak", "message": "blocked 'protected term'"}
                             ],
