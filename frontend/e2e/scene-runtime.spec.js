@@ -101,6 +101,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
     total_turns: deliveryRecords.length,
     turns_with_misses: deliveryRecords.filter((record) => (record.must_convey_misses || []).length > 0).length,
     recovery_turns: deliveryRecords.filter((record) => record.recovery_used === true).length,
+    guard_retry_turns: deliveryRecords.filter((record) => record.guard_retry_used === true).length,
     fallback_turns: deliveryRecords.filter((record) => record.fallback_used === true).length,
     miss_tally: {},
   };

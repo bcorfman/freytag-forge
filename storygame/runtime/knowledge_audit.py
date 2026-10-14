@@ -44,4 +44,5 @@ def build_knowledge_audit(
         "result": "committed",
         "rejection_code": None,
         "recovery_used": engine.state.last_turn_delivery.recovery_used,
+        "guard_retry_used": engine.state.last_turn_delivery.guard_retry_used,
     }

@@ -1,0 +1,24 @@
+{
+ "run_name": "astra-guard-retry-flag",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-guard-retry-flag",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "flag",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=\"medium\""
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 1500,
+   "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Run `pwd` first: it is under /home/bcorfman/dev/ringer-work/astra-guard-retry-flag/. Use RELATIVE paths; NEVER edit the absolute path /home/bcorfman/dev/freytag-forge (the protected main checkout - the check fails if it changes). Do NOT git commit, do NOT git add -A, do NOT touch .git. Write short notes to /home/bcorfman/dev/ringer-work/astra-guard-retry-flag-notes/notes.md (create the directory; exact path): what you changed and the test results.\n\nOWNED FILES: storygame/runtime/state.py, storygame/runtime/engine.py, storygame/runtime/knowledge_audit.py, frontend/e2e/scene-runtime.spec.js, frontend/e2e/knowledge-timeline-record.js, frontend/e2e/knowledge-timeline-record.test.js, and test files under tests/ (a new tests/test_guard_retry_flag.py and any existing test that must change). Edit nothing else. Read first (read-only): AGENTS.md, docs/contributor-guide.md.\n\nPROBLEM: TurnDelivery.recovery_used is set by two unrelated things. (a) storygame/runtime/cloudflare.py _record_recovery() sets it when the provider re-asks or salvages a truncated reply (do NOT change cloudflare.py). (b) storygame/runtime/engine.py (the narration-validator rejection branch inside RuntimeEngine.turn, where it calls note_rejection and then sets update={\"recovery_used\": True}) sets it when the engine retries a turn after the narration guard rejected the first reply. The @spine telemetry counts both as `recovery_turns`, so a guard retry cannot be told apart from a truncation salvage.\n\nCHANGE:\n1. state.py: add `guard_retry_used: bool = False` to TurnDelivery (next to recovery_used).\n2. engine.py: in that rejection branch set guard_retry_used True INSTEAD of recovery_used, so recovery_used keeps its meaning from before the retry existed (provider re-asks and truncation salvage only). Keep every other behaviour (one retry, note_rejection, state restore) exactly as is.\n3. knowledge_audit.py: expose `guard_retry_used` in the audit dict next to recovery_used.\n4. frontend/e2e/knowledge-timeline-record.js: record `guard_retry_used` (null when audit lacks it) next to recovery_used; update its node test.\n5. frontend/e2e/scene-runtime.spec.js: in the @spine delivery summary add `guard_retry_turns` = count of delivery records with guard_retry_used === true, next to recovery_turns. Do not change anything else in that spec, and do not change any prompt.\n6. tests: a new hermetic tests/test_guard_retry_flag.py that scripts a stub narrator whose first reply is rejected by the narration validator and second is accepted (copy the approach of the existing guard-retry test: grep tests/ for `TURN_NARRATION_ATTEMPTS` and for `test_rejected_nudge_restores_state_then_accepted_nudge_records_stage_two`), and asserts last_turn_delivery.guard_retry_used is True and recovery_used is False; and a second case where a reply is accepted first time and both flags are False. Update any existing test that asserted recovery_used True for the guard retry.\n\nHOW TO RUN: PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <tests>. Ruff: /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check --fix and -m ruff format on files you touched. Finally run bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_guard_retry_flag.sh yourself (full suite, node tests, ruff). Reply with the files changed.\n",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_guard_retry_flag.sh",
+   "verified": "guard retries set guard_retry_used, not recovery_used; spine telemetry reports guard_retry_turns; full suite and node tests pass"
+  }
+ ]
+}

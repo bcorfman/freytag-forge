@@ -29,6 +29,7 @@ export function recordTurnOutcome({ input, status, headers, body, version }) {
     result: audit?.result ?? null,
     rejection_code: audit?.rejection_code ?? headerValue(headers, "X-Freytag-Rejection-Code"),
     recovery_used: audit?.recovery_used ?? null,
+    guard_retry_used: audit?.guard_retry_used ?? null,
     status: status ?? null,
   };
 }

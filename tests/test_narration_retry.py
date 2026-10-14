@@ -49,7 +49,8 @@ def test_narration_leak_is_retried_once_and_the_turn_commits() -> None:
     assert result.segments[0].text == CLEAN
     assert provider.calls == 2
     assert state.turn_index == before_index + 1
-    assert state.last_turn_delivery.recovery_used is True
+    assert state.last_turn_delivery.guard_retry_used is True
+    assert state.last_turn_delivery.recovery_used is False
 
 
 def test_retry_passes_the_rejection_to_the_provider_once() -> None:

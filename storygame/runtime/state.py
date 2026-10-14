@@ -38,6 +38,7 @@ class TurnDelivery(BaseModel):
     beats_projected: tuple[str, ...] = ()
     must_convey_misses: tuple[str, ...] = ()
     recovery_used: bool = False
+    guard_retry_used: bool = False
     fallback_used: bool = False
     cue_fact_id: str | None = None
     complication_text: str | None = None

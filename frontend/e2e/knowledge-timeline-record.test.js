@@ -17,6 +17,7 @@ test("records a committed redacted audit without segment text", () => {
         result: "committed",
         rejection_code: null,
         recovery_used: false,
+        guard_retry_used: false,
       },
     },
     version: { sha: "abc", channel: "staging" },
@@ -45,5 +46,6 @@ test("records diagnostic-off responses with empty and null audit values", () => 
   assert.deepEqual(record.accepted_segments, []);
   assert.equal(record.rejection_code, null);
   assert.equal(record.recovery_used, null);
+  assert.equal(record.guard_retry_used, null);
   assert.deepEqual(buildKnowledgeTimelineReport({}, [record]).records, [record]);
 });
