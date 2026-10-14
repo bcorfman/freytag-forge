@@ -20,6 +20,9 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 LEAK = "Rebecca's secured office can broadcast the evidence."
 CLEAN = "Kristin considers whether to transmit the evidence."
 COMMAND = "Assess the cost of transmitting our evidence."
+TYPED_TERM = "maintenance access route"
+TYPED_LEAK = "The maintenance access route appears ahead."
+TYPED_COMMAND = "Look for a maintenance access route into the facility."
 
 
 class _Response:
@@ -34,6 +37,21 @@ class _Response:
 
     def read(self) -> bytes:
         return self.body
+
+
+class _LegacyRejectionProvider:
+    def __init__(self, *texts: str) -> None:
+        self.texts = list(texts)
+        self.calls = 0
+        self.rejections: list[str] = []
+
+    def __call__(self, _command: str) -> dict[str, object]:
+        text = self.texts[self.calls]
+        self.calls += 1
+        return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
+
+    def note_rejection(self, code: str | None) -> None:
+        self.rejections.append(code or "")
 
 
 def _proposal(text: str) -> dict[str, object]:
@@ -275,6 +293,61 @@ def test_budget_guard_retry_feedback_is_sanitized(monkeypatch: pytest.MonkeyPatc
     assert "Your last reply named something the player has not met yet." in prompts[1]
     assert "Rebecca's secured office" not in "\n".join(prompts)
     assert "narration mentions an unavailable entity" not in "\n".join(prompts)
+
+
+def test_budget_guard_typed_term_feedback_names_player_phrase(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine, _state, prompts = _engine_with_transport(monkeypatch, TYPED_LEAK, CLEAN)
+
+    engine.turn(TYPED_COMMAND)
+
+    note = (
+        f'The player wrote "{TYPED_TERM}". '
+        "Do not use that exact phrase in your reply. "
+        "Describe what happens in other words."
+    )
+    assert prompts[1].count(TYPED_TERM) == 1
+    assert note in prompts[1]
+
+
+def test_budget_guard_typed_term_feedback_is_case_insensitive(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine, _state, prompts = _engine_with_transport(monkeypatch, TYPED_LEAK, CLEAN)
+
+    engine.turn("LOOK FOR A MAINTENANCE ACCESS ROUTE INTO THE FACILITY.")
+
+    assert f'The player wrote "{TYPED_TERM}".' in prompts[1]
+
+
+def test_budget_guard_typed_term_inside_longer_word_stays_sanitized(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, _state, prompts = _engine_with_transport(monkeypatch, TYPED_LEAK, CLEAN)
+
+    engine.turn("Look for a maintenance access routekeeper into the facility.")
+
+    assert TYPED_TERM not in prompts[1]
+
+
+def test_budget_guard_sanitized_typed_note_is_cleared_after_retry_prompt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, _state, prompts = _engine_with_transport(monkeypatch, TYPED_LEAK, CLEAN, CLEAN)
+
+    engine.turn(TYPED_COMMAND)
+    engine.provider(TYPED_COMMAND)
+
+    assert f'The player wrote "{TYPED_TERM}".' in prompts[1]
+    assert f'The player wrote "{TYPED_TERM}".' not in prompts[2]
+
+
+def test_budget_guard_retry_supports_provider_without_optional_typed_argument() -> None:
+    state = _scene_2c_state()
+    provider = _LegacyRejectionProvider(LEAK, CLEAN)
+
+    result = RuntimeEngine(state, provider).turn(COMMAND)
+
+    assert result.segments[0].text == CLEAN
+    assert provider.calls == 2
+    assert provider.rejections == ["narration_known_term_leak"]
 
 
 def test_budget_reset_allows_provider_call_outside_successful_turn(

@@ -56,6 +56,7 @@ changed: [Markdown story authoring](markdown-story-authoring.md),
   failure. The item-facts name-matching request has its own cap of two and does
   not share the narration budget. Exhaustion is a typed fail-closed error,
   never fabricated success. Target under ten seconds on the normal path.
+- A guard retry may name a rejected term only when the player typed that term; otherwise rejection feedback remains generic.
 - Generate NPC dialogue only from the addressed NPC's permitted current
   context. Reject parroting, wrong speakers, off-scene or role violations, and
   unavailable-model fallbacks rather than fabricating a response.

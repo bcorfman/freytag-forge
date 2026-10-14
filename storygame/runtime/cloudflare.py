@@ -369,8 +369,15 @@ class CloudflareTurnProvider:
             return ITEM_FACTS_REQUEST_BUDGET
         return max(0, ITEM_FACTS_REQUEST_BUDGET - self._turn_item_facts_request_count)
 
-    def note_rejection(self, code: str | None) -> None:
-        self._rejection_note = _REJECTION_FEEDBACK.get(code, _GENERIC_REJECTION)
+    def note_rejection(self, code: str | None, term: str | None = None) -> None:
+        feedback = _REJECTION_FEEDBACK.get(code, _GENERIC_REJECTION)
+        if code == "narration_known_term_leak" and term:
+            feedback = (
+                f'{feedback} The player wrote "{term}". '
+                "Do not use that exact phrase in your reply. "
+                "Describe what happens in other words."
+            )
+        self._rejection_note = feedback
 
     def assemble_turn_prompt(self, player_input: str) -> dict[str, object]:
         """Build the exact turn prompt without contacting the narration worker."""

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 from os import getenv
 from typing import Protocol, runtime_checkable
@@ -68,7 +69,7 @@ class TurnProviderHandoff(Protocol):
 
 @runtime_checkable
 class TurnProviderRejection(Protocol):
-    def note_rejection(self, code: str | None) -> None: ...
+    def note_rejection(self, code: str | None, term: str | None = None) -> None: ...
 
 
 @runtime_checkable
@@ -303,7 +304,21 @@ class RuntimeEngine(CanonicalEventMixin):
                     )
                     rejection = self._provider_rejection()
                     if rejection is not None:
-                        rejection.note_rejection(error.code)
+                        typed_term = (
+                            error.term
+                            if error.term
+                            and error.term.casefold() in command_text.casefold()
+                            and re.search(
+                                rf"(?<!\w){re.escape(error.term)}(?!\w)",
+                                command_text,
+                                flags=re.IGNORECASE,
+                            )
+                            else None
+                        )
+                        if typed_term is None:
+                            rejection.note_rejection(error.code)
+                        else:
+                            rejection.note_rejection(error.code, typed_term)
                     self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                         update={"guard_retry_used": True}
                     )
