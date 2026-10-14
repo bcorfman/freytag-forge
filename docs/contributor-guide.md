@@ -51,10 +51,11 @@ changed: [Markdown story authoring](markdown-story-authoring.md),
   typed structured-output adapter; normalize supported envelopes; parse and
   validate locally before commit. Provider JSON-object mode is syntax help, not
   semantic validation.
-- A normal turn makes at most one inference request plus one shared recovery
-  request for JSON-mode fallback, malformed output, or transient failure.
-  Exhaustion is a typed fail-closed error, never fabricated success. Target
-  under ten seconds on the normal path.
+- A normal turn makes at most one narration inference request plus one shared
+  recovery request for JSON-mode fallback, malformed output, or transient
+  failure. The item-facts name-matching request has its own cap of two and does
+  not share the narration budget. Exhaustion is a typed fail-closed error,
+  never fabricated success. Target under ten seconds on the normal path.
 - Generate NPC dialogue only from the addressed NPC's permitted current
   context. Reject parroting, wrong speakers, off-scene or role violations, and
   unavailable-model fallbacks rather than fabricating a response.

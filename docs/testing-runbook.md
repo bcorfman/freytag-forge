@@ -181,8 +181,9 @@ source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --gr
 
 **Interpretation:**
 
-- `E2E_TURN_TIMEOUT_MS` defaults to 30 000. A turn that spends its one recovery
-  makes two model calls, so use 90 000 for any multi-turn category.
+- `E2E_TURN_TIMEOUT_MS` defaults to 30 000. A narration turn that spends its
+  one recovery makes two model calls; an item-facts match can add up to two
+  separate calls, so use 90 000 for any multi-turn category.
 - In `@spine` telemetry, `fallback_turns` counts turns where the player read
   authored fallback prose instead of responsive narration. Watch it when
   changing `must_convey` groups.

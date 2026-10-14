@@ -1281,11 +1281,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
             match_called = True
             self.item_facts_match_calls += 1
             try:
-                match_reply = CloudflareTurnProvider._request(
+                match_reply = CloudflareTurnProvider._request_item_facts(
                     self,
                     self._match_payload(player_input, match_names, include_places=bool(place_names), story=story),
                 )
             except Exception as error:
+                if _is_item_facts_budget_error(error):
+                    raise
                 match_issues.append(f"item_facts match failed: {error}")
                 issues.append(match_issues[-1])
             match_raw = copy.deepcopy(match_reply)
@@ -1668,8 +1670,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
         payload = self._match_payload(player_input, [])
         issues = []
         try:
-            reply = CloudflareTurnProvider._request(self, payload)
+            reply = CloudflareTurnProvider._request_item_facts(self, payload)
         except Exception as error:
+            if _is_item_facts_budget_error(error):
+                raise
             reply = None
             issues.append(f"item_facts match failed: {error}")
         valid = (
@@ -1725,6 +1729,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
         except (HTTPError, URLError, OSError, TimeoutError, ValueError) as error:
             raise NarrationProviderError("narration service is unavailable") from error
         return copy.deepcopy(self._pending_item_facts) if self._pending_item_facts_present else response
+
+
+def _is_item_facts_budget_error(error: Exception) -> bool:
+    return isinstance(error, NarrationProviderError) and error.error_code == "ITEM_FACTS_REQUEST_BUDGET_EXHAUSTED"
 
 
 def validate_item_facts(value, *, known_names=None):

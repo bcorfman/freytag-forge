@@ -50,6 +50,8 @@ logger = logging.getLogger(__name__)
 
 MAX_TURN_SEGMENTS = 5
 TURN_REQUEST_BUDGET = 2
+ITEM_FACTS_REQUEST_BUDGET = 2
+_REQUEST_BUDGET_FIELD = "__freytag_request_budget"
 
 _GENERIC_REJECTION = (
     "Your last reply did not follow the narration rules. "
@@ -263,6 +265,7 @@ class CloudflareTurnProvider:
         self.request_count = 0
         self.recovery_count = 0
         self._turn_request_count: int | None = None
+        self._turn_item_facts_request_count: int | None = None
         self.reply_keys_dropped: dict[str, int] = {}
         self.semantic_ask = semantic_ask
         self.semantic_fallback_calls = 0
@@ -341,14 +344,16 @@ class CloudflareTurnProvider:
         self.authored_handoff = None
 
     def begin_turn(self) -> None:
-        """Reset the shared inference budget for one engine turn."""
+        """Reset the narration and item-facts budgets for one engine turn."""
 
         self._turn_request_count = 0
+        self._turn_item_facts_request_count = 0
 
     def end_turn(self) -> None:
-        """Disable the per-turn inference budget outside an engine turn."""
+        """Disable the per-turn budgets outside an engine turn."""
 
         self._turn_request_count = None
+        self._turn_item_facts_request_count = None
 
     def request_budget_remaining(self) -> int:
         """Return the number of inference sends still allowed in this turn."""
@@ -356,6 +361,13 @@ class CloudflareTurnProvider:
         if self._turn_request_count is None:
             return TURN_REQUEST_BUDGET
         return max(0, TURN_REQUEST_BUDGET - self._turn_request_count)
+
+    def item_facts_request_budget_remaining(self) -> int:
+        """Return the number of item-facts match sends still allowed this turn."""
+
+        if self._turn_item_facts_request_count is None:
+            return ITEM_FACTS_REQUEST_BUDGET
+        return max(0, ITEM_FACTS_REQUEST_BUDGET - self._turn_item_facts_request_count)
 
     def note_rejection(self, code: str | None) -> None:
         self._rejection_note = _REJECTION_FEEDBACK.get(code, _GENERIC_REJECTION)
@@ -1962,24 +1974,49 @@ class CloudflareTurnProvider:
             except (TimeoutError, URLError, OSError) as error:
                 raise error from first_failure
 
+    def _request_item_facts(self, payload: dict[str, object]) -> object:
+        """Send a name-matching request against the separate item-facts budget."""
+
+        return CloudflareTurnProvider._request(
+            self,
+            {**payload, _REQUEST_BUDGET_FIELD: "item_facts"},
+        )
+
     def _request(self, payload: dict[str, object]) -> object:
-        if self._turn_request_count is not None and self._turn_request_count >= TURN_REQUEST_BUDGET:
-            raise NarrationProviderError(
-                "narration request budget exhausted",
-                503,
-                "NARRATION_REQUEST_BUDGET_EXHAUSTED",
-            )
+        request_budget = payload.get(_REQUEST_BUDGET_FIELD, "narration")
+        wire_payload = {key: value for key, value in payload.items() if key != _REQUEST_BUDGET_FIELD}
+        if request_budget == "item_facts":
+            if (
+                self._turn_item_facts_request_count is not None
+                and self._turn_item_facts_request_count >= ITEM_FACTS_REQUEST_BUDGET
+            ):
+                raise NarrationProviderError(
+                    "item-facts request budget exhausted",
+                    503,
+                    "ITEM_FACTS_REQUEST_BUDGET_EXHAUSTED",
+                )
+        elif request_budget == "narration":
+            if self._turn_request_count is not None and self._turn_request_count >= TURN_REQUEST_BUDGET:
+                raise NarrationProviderError(
+                    "narration request budget exhausted",
+                    503,
+                    "NARRATION_REQUEST_BUDGET_EXHAUSTED",
+                )
+        else:
+            raise ValueError(f"unknown request budget: {request_budget!r}")
         self.request_count += 1
-        if self._turn_request_count is not None:
+        if request_budget == "item_facts" and self._turn_item_facts_request_count is not None:
+            self._turn_item_facts_request_count += 1
+        elif self._turn_request_count is not None:
             self._turn_request_count += 1
-        self.last_prompt = {"system": payload["system"], "user": payload["user"]}
+        self.last_prompt = {"system": wire_payload["system"], "user": wire_payload["user"]}
         headers = {
             "Content-Type": "application/json",
             "User-Agent": BROWSER_USER_AGENT,
         }
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
-        request = Request(self.worker_url, data=json.dumps(payload).encode(), headers=headers, method="POST")
+        request = Request(self.worker_url, data=json.dumps(wire_payload).encode(), headers=headers, method="POST")
         with urlopen(request, timeout=float(getenv("CLOUDFLARE_TIMEOUT", "15"))) as response:  # noqa: S310
             body = json.loads(response.read())
         if isinstance(body, dict) and body.get("status") == "error":

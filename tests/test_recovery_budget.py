@@ -8,8 +8,10 @@ from urllib.error import URLError
 
 import pytest
 
+from storygame.runtime.capture import WorldCapture
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.item_facts import _MATCH_SYSTEM, ItemFactsProvider
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
@@ -69,6 +71,38 @@ def _engine_with_transport(
     return RuntimeEngine(state, provider), state, prompts
 
 
+def _item_facts_engine_with_transport(
+    monkeypatch: pytest.MonkeyPatch, *script: object
+) -> tuple[RuntimeEngine, RuntimeState, list[str], ItemFactsProvider]:
+    state = _scene_2c_state()
+    prompts: list[str] = []
+    remaining = list(script)
+
+    def open_request(request: object, **_kwargs: object) -> _Response:
+        payload = json.loads(request.data)  # type: ignore[attr-defined]
+        prompts.append(payload["system"])
+        response = remaining.pop(0)
+        if isinstance(response, BaseException):
+            raise response
+        if response == "malformed":
+            return _Response({"narration": "not valid json"})
+        if response == "itemfacts":
+            return _Response({"refers": [], "same_as": {}})
+        return _Response({"narration": json.dumps(_proposal(response))})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+    )
+    capture = WorldCapture(provider, lambda _state, _questions: None)
+    return RuntimeEngine(state, provider, capture=capture), state, prompts, provider
+
+
 def test_budget_good_reply_uses_one_http_request(monkeypatch: pytest.MonkeyPatch) -> None:
     engine, state, _prompts = _engine_with_transport(monkeypatch, CLEAN)
 
@@ -107,6 +141,88 @@ def test_budget_guard_retry_uses_two_http_requests_and_sets_guard_telemetry(
     assert result.segments[0].text == CLEAN
     assert engine.provider.request_count == 2
     assert state.last_turn_delivery.guard_retry_used is True
+
+
+def test_budget_itemfacts_guard_retry_reaches_clean_reply_and_sanitized_prompt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, state, prompts, provider = _item_facts_engine_with_transport(monkeypatch, "itemfacts", LEAK, CLEAN)
+
+    result = engine.turn(COMMAND)
+
+    assert result.segments[0].text == CLEAN
+    assert provider.request_count == 3
+    assert sum(system != _MATCH_SYSTEM for system in prompts) == 2
+    assert state.turn_index == 1
+    assert state.last_turn_delivery.guard_retry_used is True
+    assert "Your last reply named something the player has not met yet." in prompts[2]
+    assert "Rebecca's secured office" not in "\n".join(prompts)
+
+
+def test_budget_item_facts_guard_cap_survives_match_and_restores_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, state, prompts, provider = _item_facts_engine_with_transport(monkeypatch, "itemfacts", LEAK, LEAK)
+    before = state.snapshot()
+
+    with pytest.raises(ProposalValidationError) as caught:
+        engine.turn(COMMAND)
+
+    assert caught.value.code == "narration_known_term_leak"
+    assert provider.request_count == 3
+    assert sum(system != _MATCH_SYSTEM for system in prompts) == 2
+    assert state.snapshot() == before
+
+
+def test_budget_item_facts_counter_exhaustion_fails_closed_without_narration_budget_use(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _engine, _state, _prompts, provider = _item_facts_engine_with_transport(
+        monkeypatch, "itemfacts", "itemfacts", "itemfacts"
+    )
+    provider.begin_turn()
+
+    provider._request_item_facts({"system": "match", "user": "Search the desk."})
+    provider._request_item_facts({"system": "match", "user": "Search the desk."})
+    with pytest.raises(NarrationProviderError) as caught:
+        provider._request_item_facts({"system": "match", "user": "Search the desk."})
+
+    assert caught.value.error_code == "ITEM_FACTS_REQUEST_BUDGET_EXHAUSTED"
+    assert provider.request_budget_remaining() == 2
+    assert provider.item_facts_request_budget_remaining() == 0
+    provider.end_turn()
+
+
+def test_budget_item_facts_begin_turn_resets_both_counters_and_sanitized_guard_prompt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _engine, _state, _prompts, provider = _item_facts_engine_with_transport(monkeypatch, "itemfacts", CLEAN)
+
+    provider.begin_turn()
+    provider._request_item_facts({"system": "match", "user": "Search the desk."})
+    provider._request({"system": "narration", "user": "Search the desk."})
+    assert provider.item_facts_request_budget_remaining() == 1
+    assert provider.request_budget_remaining() == 1
+
+    provider.begin_turn()
+
+    assert provider.item_facts_request_budget_remaining() == 2
+    assert provider.request_budget_remaining() == 2
+    provider.end_turn()
+
+
+def test_budget_item_facts_guard_malformed_recovery_stays_at_two_narration_sends(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, state, _prompts = _engine_with_transport(monkeypatch, "malformed", LEAK)
+    before = state.snapshot()
+
+    with pytest.raises(ProposalValidationError) as caught:
+        engine.turn(COMMAND)
+
+    assert caught.value.code == "narration_known_term_leak"
+    assert engine.provider.request_count == 2
+    assert state.snapshot() == before
 
 
 def test_budget_transient_then_guard_rejection_fails_closed_and_rolls_back(
