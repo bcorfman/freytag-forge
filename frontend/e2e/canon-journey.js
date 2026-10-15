@@ -50,7 +50,7 @@ export const scenePrompts = {
   "2C": [
     "Assess the executive channel's private offer and whether the people running this are turning on each other.",
     "Assess the cost of transmitting our evidence right now to the people still held here.",
-    "Follow Michelle's coded message through the maintenance network and commit to the plan it describes.",
+    "Read Michelle's coded message and commit to the plan it describes.",
   ],
   // 3A.1 reach Michelle -> 3A.2 experiments -> 3A.3 override codes -> 3A.4 uprising
   "3A": [

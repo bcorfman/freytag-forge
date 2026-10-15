@@ -1,7 +1,7 @@
 # Astra assessment follow-up: implementation plan
 
 Source: `.plans/astra-plan-assessment-answer.md` (outside review of `astra-implementation-plan.md`).
-Status: **A1 done and committed (08a925ac, Option 1); A2 committed (8901f3c0) with the budget-reset fix (Ringer `astra-budget-reset`: `end_turn()` called in a `finally`, 3 tests, suite 1739 passed; the stale-budget caveat below is closed); A3 done and committed (2026-10-14); engine-error line merged (PR 633, 5060b584); B1-B2 done offline (2026-10-14, branch `astra-step-b-assess-c-r2`, not merged; B3 hosted `@spine` not run); C, D, E not started.** Branch for A1-A3: continue `astra-established-reveal-409` or cut a new one from main. Update this file after each step (memory: update-plan-after-each-feature).
+Status: **A1 done and committed (08a925ac, Option 1); A2 committed (8901f3c0) with the budget-reset fix (Ringer `astra-budget-reset`: `end_turn()` called in a `finally`, 3 tests, suite 1739 passed; the stale-budget caveat below is closed); A3 done and committed (2026-10-14); engine-error line merged (PR 633, 5060b584); B1-B2 done offline (2026-10-14, branch `astra-step-b-assess-c-r2`, not merged; B3 hosted `@spine` not run); C1 done offline (branch `astra-step-c1-2c-prompt`, PR open, not merged); C2-C5, D, E not started.** Branch for A1-A3: continue `astra-established-reveal-409` or cut a new one from main. Update this file after each step (memory: update-plan-after-each-feature).
 
 Ground rules: every code change goes through Ringer (one task per run unit); unit tests stay hermetic (no live worker); no billed run before a smoke test; measure each step before the next; keep the repo ruff-formatted. Findings are numbered as in the assessment (F1-F8).
 
@@ -66,6 +66,8 @@ Exit: checker rejects the old zero-refusal summary on the saved engine-arm outpu
 3. Hosted `@spine` on a build that includes `7345632d` (the 813d0751 pass predates it and cannot validate it). Assert in the spec that the 2C turn earns the reveal, not only that 3C is reached.
 
 ## Step C: Spine and authoring gaps (value/cost order from the assessment)
+
+**Result C1 (2026-10-14, Ringer `astra-step-c1-2c-prompt`, suite 1789 passed):** reproduced on the real matcher: the third 2C prompt matched no reveal (`follow` is only in D-R2, whose nouns need "maintenance route/report"; "Michelle's coded" is only in D-R1, whose verbs are reading verbs). Prompt changed to "Read Michelle's coded message and commit to the plan it describes." (matches exactly `k_sl_2c_d_r1`; "... and follow the maintenance route" would tie D-R1 with D-R2). New `tests/test_2c_spine_prompts.py` parses the three 2C prompts from `canon-journey.js` and asserts a_r1, c_r2, d_r1 each match alone. Not measured live: needs merge, staging deploy and a `@spine` run; look at whether 2C exits on play before the turn-63 fallback. Caveat: D-R1 and the prompt cycle (three prompts reused in order) mean the reading prompt is typed at turns 50, 53, 56 and so on, and its `requires` (`purge_clock_started`, `evidence_ready_to_transmit`) must already hold; unverified.
 
 1. Third 2C spine command ("Follow Michelle's coded message..."): first reproduce the semantic path on the real matcher; D-R1 says "decodes or reads", so do not award the reveal on a bare missing `follow`. Fix the prompt to the authored reading action, or add `follow` only if the contract supports it.
 2. Phase 4.3 recent-cue reference resolution: narrow test; the record is a bounded projection of accepted facts, not transcript memory (PRD).
