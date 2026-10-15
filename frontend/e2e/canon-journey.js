@@ -55,16 +55,17 @@ export const scenePrompts = {
   // 3A.1 reach Michelle -> 3A.2 experiments -> 3A.3 override codes -> 3A.4 uprising
   "3A": [
     "Get down into the detention sector and find Michelle where she is running her network.",
-    "Follow Michelle through the medical level and document what was done to the prisoners there.",
-    "Find the imprisoned official among the captives and secure the authorization he is carrying before it lapses.",
-    "With that window closing, Michelle gives the signal and we move with the prisoners toward the upper levels.",
+    "Go to the medical level and document what was done to the prisoners there.",
+    "Meet the imprisoned official and request the emergency gate authorization.",
+    "Signal the prisoners to start the uprising at the checkpoints.",
   ],
   // 3B.1 overload JANUS -> 3B.2 Rebecca's office -> 3B.3 betrayal -> 3B.4 relay
   "3B": [
-    "Set off contradictory emergencies across the infrastructure until the system predicting you has to hand control back to people.",
+    "Set off false alarms across the infrastructure.",
     "Reach the executive office and confront her with what she personally approved.",
     "Take the detention-site locations she is suddenly willing to trade after her own side locks her out and writes off this site.",
-    "He goes for the relay chamber to cut it loose from the network and put his own confession on the wire.",
+    "Check Charles's remote channel on the executive screen.",
+    "Tell Brandon to send his confession through the relay chamber.",
   ],
   // 3C.1 transmission -> 3C.2 archive and confrontation -> 3C.3 collapse -> 3C.4 resolution
   "3C": [
