@@ -13,6 +13,7 @@ import { buildKnowledgeTimelineReport, recordTurnOutcome } from "./knowledge-tim
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts } from "./canon-journey.js";
 import { attributeNarration, eligibleAuthoredTexts, loadAuthoredText } from "./authored-spans.js";
+import { classifyFailure, evaluateSpine, loadExpectedReveals } from "./spine-record.js";
 
 const SPINE_MAX_TURNS = 120;
 
@@ -96,18 +97,82 @@ test("drives the main spine and reports reachability and pressure @spine", async
   const deliveryRecords = [];
   const perTurn = [];
   const promptsUsed = new Map();
+  const expected = await loadExpectedReveals();
+  const identity = { sha: null, runtime: null, channel: null };
+  try {
+    const response = await page.request.get(`${process.env.E2E_API_BASE_URL}/api/v1/version`);
+    if (response.ok()) {
+      const version = await response.json();
+      identity.sha = version.sha ?? null;
+      identity.runtime = version.runtime ?? null;
+      identity.channel = version.channel ?? null;
+    }
+  } catch {
+    // Identity is diagnostic metadata; a version endpoint failure must not hide the run evidence.
+  }
   let sceneId = "1A";
-  for (let index = 0; index < SPINE_MAX_TURNS; index += 1) {
-    const used = promptsUsed.get(sceneId) || 0;
-    const input = promptFor(sceneId, used);
-    const payload = await submitTurn(page, input);
-    turns.push({ scene_id: payload.state?.scene_id, elapsed_seconds: payload.state?.story_elapsed_seconds });
-    deliveryRecords.push(payload.delivery || {});
-    perTurn.push({ n: index + 1, scene_in: sceneId, input, scene_out: payload.state?.scene_id, delivery: payload.delivery || {} });
-    await resolveWarningIfPresent(page);
-    promptsUsed.set(sceneId, used + 1);
-    sceneId = payload.state?.scene_id;
-    if (sceneId === "3C" && (promptsUsed.get(sceneId) || 0) >= scenePrompts[sceneId].length) break;
+  let attemptedTurn = 0;
+  let failure = null;
+  let failedError = null;
+  try {
+    for (let index = 0; index < SPINE_MAX_TURNS; index += 1) {
+      attemptedTurn = index + 1;
+      const used = promptsUsed.get(sceneId) || 0;
+      const input = promptFor(sceneId, used);
+      const startedAt = Date.now();
+      let payload;
+      try {
+        payload = await submitTurn(page, input);
+      } catch (error) {
+        const errorPayload = error?.payload;
+        if (errorPayload) {
+          const latency_ms = Date.now() - startedAt;
+          const sceneOut = errorPayload.state?.scene_id;
+          turns.push({ scene_id: sceneOut, elapsed_seconds: errorPayload.state?.story_elapsed_seconds });
+          deliveryRecords.push(errorPayload.delivery || {});
+          perTurn.push({
+            n: index + 1,
+            scene_in: sceneId,
+            input,
+            scene_out: sceneOut,
+            bundle: errorPayload.attempt_bundle ? bundleSummary(errorPayload.attempt_bundle) : null,
+            state_story_complete: errorPayload.state?.story_complete === true,
+            latency_ms,
+            delivery: errorPayload.delivery || {},
+          });
+        }
+        throw error;
+      }
+      const latency_ms = Date.now() - startedAt;
+      const sceneOut = payload.state?.scene_id;
+      const bundle = payload.attempt_bundle ? bundleSummary(payload.attempt_bundle) : null;
+      turns.push({ scene_id: sceneOut, elapsed_seconds: payload.state?.story_elapsed_seconds });
+      deliveryRecords.push(payload.delivery || {});
+      perTurn.push({
+        n: index + 1,
+        scene_in: sceneId,
+        input,
+        scene_out: sceneOut,
+        bundle,
+        state_story_complete: payload.state?.story_complete === true,
+        latency_ms,
+        delivery: payload.delivery || {},
+      });
+      await resolveWarningIfPresent(page);
+      promptsUsed.set(sceneId, used + 1);
+      sceneId = sceneOut;
+      if (payload.story_complete === true || payload.state?.story_complete === true || bundle?.story_complete === true) break;
+      if (sceneId === "3C" && (promptsUsed.get(sceneId) || 0) >= scenePrompts[sceneId].length + 6) break;
+    }
+  } catch (error) {
+    const classified = classifyFailure(error);
+    failure = {
+      ...classified,
+      message: error instanceof Error ? error.message : String(error),
+      turn: attemptedTurn || perTurn.length + 1,
+      quotaStop: classified.quotaStop === true,
+    };
+    failedError = error;
   }
   const sceneOrder = turns.map((turn) => turn.scene_id).filter(Boolean);
   const delivery = {
@@ -123,6 +188,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
       delivery.miss_tally[factId] = (delivery.miss_tally[factId] || 0) + 1;
     }
   }
+  const chains = evaluateSpine({ sceneOrder, perTurn, expected });
   await writeCategoryReport("spine", {
     ending_reachable: sceneOrder.at(-1) === "3C",
     dead_end: !sceneOrder.length,
@@ -131,9 +197,18 @@ test("drives the main spine and reports reachability and pressure @spine", async
     distinct_paths_to_climax: [sceneOrder.join(">")],
     delivery,
     per_turn: perTurn,
+    story_complete: chains.story_complete,
+    chains,
+    identity,
+    latency: chains.latency,
+    attempt: { failure, turns_completed: perTurn.length },
   });
+  if (failedError) throw failedError;
   expect(sceneOrder.every((scene) => /^[123][ABC]$/.test(scene))).toBe(true);
   expect(sceneOrder.at(-1)).toBe("3C");
+  expect(chains.story_complete, "the story must actually complete; reaching 3C is not the ending").toBe(true);
+  expect(Object.keys(chains.chain_misses), `missing expected reveal chains: ${JSON.stringify(chains.chain_misses)}`).toHaveLength(0);
+  expect(chains.c_r2_committed, "2C must commit k_sl_2c_c_r2").toBe(true);
 });
 
 test("judges every reached scene against its committed knowledge canon @llm-canon", async ({ page }) => {
