@@ -172,9 +172,9 @@ Series B: 3 attempted, 2 completed the story, 0 infrastructure failures, 1
 gameplay failure (a rejected turn). Delivery: 0 must_convey misses, 0 fallback,
 0 guard retries in all attempts; recovery 2 turns in B1, 0 elsewhere. 2C C-R2
 committed in both full runs. Exits in a full run: 8 earned handoffs, 67 turns
-with none. Both full runs miss the same five intended reveals, which also
+with none. Both full runs miss the same six intended reveals, which also
 missed in all of series A: `k_sl_1a_b_r2`, `k_sl_1a_d_r1`, `k_sl_1b_a_r1`,
-`k_sl_1c_c_r2`, `k_sl_2b_a_r2`, `k_sl_2c_a_r1` (six ids). Each of these was the
+`k_sl_1c_c_r2`, `k_sl_2b_a_r2`, `k_sl_2c_a_r1`. Each of these was the
 action of a scripted prompt that matches offline (`_matches_all`), yet the
 runtime committed no reveal that turn. NOT diagnosed: some may be one-reveal-
 per-turn displacement (1A prompt 3 matches both b_r1 and b_r2) rather than a
