@@ -9,8 +9,8 @@ experiment previously put on hold.
 
 ## Resume here
 
-Start with **1. Budget-service reliability**, then finish the measurement gaps
-in **2** before repeating the hosted spine in **3**. Continue with reference
+Start with **1. Budget-service reliability**. The measurement gaps in **2** are
+closed and the hosted spine baseline in **3** is recorded (items 3-4 open). Continue with reference
 resolution (**4**), reproduced correctness gaps (**5**), authoring visibility
 (**6**), and playthrough qualification (**7**). Revisit the pipeline experiment
 (**8**) only after its decision gate is met. Operational cleanup (**9**) can
@@ -131,13 +131,17 @@ stated question without another harness repair.
 
 Sources: assessment latest/Step B, Astra latest, playthrough quality.
 
-- [ ] Repeat hosted `@spine` on a stable, identified staged build. Choose and
+- [x] Repeat hosted `@spine` on a stable, identified staged build. Choose and
   record the replicate count and stopping rule first; include failed attempts
   in the denominator. Report infrastructure failure rate separately from
   gameplay failures and recovery/fallback rates.
-- [ ] Preserve assertions that the intended reveal chains commit, including
+  Done 2026-10-15, see Stage 3 status below.
+- [x] Preserve assertions that the intended reveal chains commit, including
   2C C-R2, and that the story actually completes. Reaching 3C alone is not
   the ending. A transition at `min_turns` need not commit another reveal.
+  Done (commits `d22cb1da`, `a2f985f8`): `@spine` records attempt bundles, asserts
+  story completion, 2C C-R2 and the intended chains (`spine-expected-reveals.json`,
+  drift-guarded by `tests/test_spine_expected_reveals.py`) after writing its report.
 - [ ] Verify the merged player-facing engine-error line on staging: rejected
   turns do not expose protected terms, state remains unchanged, and provider
   outages retain their separate error contract.
@@ -148,6 +152,46 @@ Sources: assessment latest/Step B, Astra latest, playthrough quality.
 
 Exit: a current baseline table with artifact links, attempted/completed runs,
 reveals, exits, ending, failures, requests, latency, and evidence limitations.
+
+Stage 3 status (2026-10-15): items 1-2 done, items 3-4 NOT done. Staging
+`b6761c9e` (runtime `scene-v1`, channel staging) for every attempt; code under
+test `d22cb1da`/`a2f985f8` on `astra-step-d`. Ringer `stage3-spine-baseline`
+(harness) and `stage3-hosted-spine` (attempts); artifacts in gitignored
+`bench/results/stage3-spine-series-a/` and `bench/results/stage3-spine/`.
+Stopping rule fixed before running: exactly 3 attempts per series, failures
+counted, no replacements, stop on quota stop or staging sha change.
+
+| Series | Attempt | Turns | Reached | Story complete | Result | Median / total latency |
+|---|---|---|---|---|---|---|
+| A (3C cap 11 turns, harness bug) | 1, 2, 3 | 75 each | 3C | no | identical commits in all three; ending needs 3C scene turns 13-14, so cap was too small | 3.1 / 258 s, 2.9 / 257 s, 2.8 / 249 s |
+| B (3C cap 24) | 1 | 78 | 3C | yes | ending reached; chain assertion failed | 3.2 / 283 s |
+| B | 2 | 30 | 2A | no | gameplay failure, HTTP 409 `narration mentions unavailable knowledge 'front gate'` at turn 30 | 2.8 / 92 s |
+| B | 3 | 78 | 3C | yes | ending reached; chain assertion failed | 3.2 / 290 s |
+
+Series B: 3 attempted, 2 completed the story, 0 infrastructure failures, 1
+gameplay failure (a rejected turn). Delivery: 0 must_convey misses, 0 fallback,
+0 guard retries in all attempts; recovery 2 turns in B1, 0 elsewhere. 2C C-R2
+committed in both full runs. Exits in a full run: 8 earned handoffs, 67 turns
+with none. Both full runs miss the same five intended reveals, which also
+missed in all of series A: `k_sl_1a_b_r2`, `k_sl_1a_d_r1`, `k_sl_1b_a_r1`,
+`k_sl_1c_c_r2`, `k_sl_2b_a_r2`, `k_sl_2c_a_r1` (six ids). Each of these was the
+action of a scripted prompt that matches offline (`_matches_all`), yet the
+runtime committed no reveal that turn. NOT diagnosed: some may be one-reveal-
+per-turn displacement (1A prompt 3 matches both b_r1 and b_r2) rather than a
+defect, so the assertion is currently over-strict for those; others (1B a_r1,
+2B a_r2, 2C a_r1 have no `requires`) look like real misses. Carried to
+Stage 5, not fixed. Limits: three attempts are a smoke sample, not a
+reliability rate; scripted prompts are not unscripted play; narration requests,
+tokens and cost are not recorded (no source exposes them to the test); the
+`stage3-hosted-spine` Ringer verdicts read FAIL only because `expect_files`
+resolves against the Ringer workdir, while every check passed.
+
+Not done: (3) staging engine-error line check - needs the destructive
+`scripts/knowledge_timeline_probe.sh` (switches all of staging to scripted
+narration), awaiting Brandon's go-ahead; attempt B2's 409 is an unverified
+sighting of a rejected turn, since the test did not capture the player-visible
+line or post-rejection state. (4) 1A-to-1B phone-alias smoke - no script that
+elicits the ordinary photo words has been written.
 
 ## 4. Resolve references from accepted context
 
