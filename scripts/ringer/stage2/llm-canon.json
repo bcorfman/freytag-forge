@@ -1,0 +1,28 @@
+{
+  "run_name": "stage2-llm-canon",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage2-canon",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "llm-canon",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "timeout_s": 5400,
+      "check_timeout_s": 120,
+      "spec": "You are a hosted-E2E operator on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (Cloudflare neurons and OpenAI judge calls), so read the hard rules first.\n\nHARD RULES. Change nothing except: files under artifacts/e2e-* and frontend/test-results/ (generated, gitignored), the output directory /home/bcorfman/dev/freytag-forge/bench/results/stage2-llm-canon/, and your own report /home/bcorfman/dev/freytag-forge/bench/results/stage2-llm-canon/canon-report.md. Do not edit or create any tracked file. No git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Run staging only: if the API reports any channel other than staging, stop and report. Do NOT run the canon test more than TWICE in total, and run the second time only if the first run is aborted (see below). Do not run anything else billed. Do not edit code to make a run pass.\n\nWHAT THIS RUN IS FOR. The hosted @llm-canon test (nine-scene canon judge over a scripted playthrough, frontend/e2e/scene-runtime.spec.js using frontend/e2e/canon-journey.js prompts) stalled in scene 1A on 2026-10-12 ('committed nothing for 5 turns running') because its fixed script was stale. The 1A/1B/2C/3A/3B prompts were repaired on 2026-10-13/14. We want to know whether the stall is gone and what the judge says. The result is quality evidence only, never runtime authority.\n\nSTEPS, in order:\n1. Identity: `source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\"`. Record sha, runtime and channel in the report. Required: channel 'staging' and runtime 'scene-v1'. (Expected sha today: b6761c9e9a2fa54f35b6cad6fa5e078216050dcb. If different, record it and continue; if channel is not staging, stop.)\n2. Smoke (cheap): `rm -f artifacts/e2e-smoke-loaded.png; source .env && cd frontend && npm run test:e2e -- --grep @smoke`. If it fails once, rerun once; if it still fails, stop and report the output verbatim. Do not run the canon test after a failed smoke.\n3. Delete stale canon artifacts (runbook section 7): `rm -f artifacts/e2e-llm-canon.json artifacts/e2e-llm-canon-progress.json artifacts/e2e-llm-canon.md artifacts/e2e-llm-canon-progress.md`.\n4. Canon run: `source .env && cd frontend && E2E_PACKAGE_CLOCK=1 E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @llm-canon` (use a command timeout of at least 50 minutes; it is long). The command normally exits NONZERO because scenes fail the judge on narration quality; that is not a failure signal.\n5. Decide whether the run counts: artifacts/e2e-llm-canon-progress.json (key `by_scene` and `completed_turn`) must hold nine scenes and 30 or more turns. If not, it is aborted: record the exact failure text (for example 'Scene 2A exceeded its handoff turn 4', or 'committed nothing for N turns running' and which scene) and, only if this was your first canon attempt, delete the four artifacts again and make ONE retry. Never report an aborted run's artifacts as a result.\n6. Copy artifacts/e2e-llm-canon*.json and .md (only the ones that exist) into /home/bcorfman/dev/freytag-forge/bench/results/stage2-llm-canon/ (create it), together with any playwright error output you saw saved as canon-run.log (command output tail, secrets stripped).\n7. Write bench/results/stage2-llm-canon/canon-report.md with headings '# Stage 2 hosted canon judge', '## Identity' (sha/runtime/channel, smoke result), '## Attempts' (each attempt: counted or aborted, scenes completed, turns, verbatim failure text), '## Did the 1A stall recur?' (plain yes/no with the evidence), '## Scene verdicts' (a table: scene, verdict, the seven booleans protected_safe, exit_motivated, rewards_investigation, scene_local, progressive, canon_consistent, rich; total out of 63), '## Failure reasons' (for each scene that failed, quote the judge's first two reasons verbatim), '## Limits' (one run is a sample, not a reliability claim; within-run judge noise is as large as a one- or two-point difference; this judge may charge authored runtime text as disclosure). Be strictly factual; an honest aborted or failed result is a good result. Under 700 words.\n",
+      "check": "cd /home/bcorfman/dev/freytag-forge && /home/bcorfman/dev/freytag-forge/.venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && /home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/stage2/check_llm_canon.py /home/bcorfman/dev/freytag-forge /home/bcorfman/dev/freytag-forge/artifacts /home/bcorfman/dev/freytag-forge/bench/results/stage2-llm-canon/canon-report.md",
+      "expect_files": [
+        "bench/results/stage2-llm-canon/canon-report.md"
+      ],
+      "verified": "run counts only if nine scenes and 30+ turns, artifacts are fresh, staging identity and smoke are reported, and no tracked source changed"
+    }
+  ]
+}
