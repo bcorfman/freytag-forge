@@ -1,0 +1,30 @@
+{
+  "run_name": "stage2-prompt-compare",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage2-prompt-compare-run",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "prompt-compare",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "timeout_s": 2400,
+      "check_timeout_s": 120,
+      "spec": "You are a benchmark operator on freytag-forge. This task runs WITHOUT a sandbox and makes REAL, BILLED OpenAI judge calls, so read the hard rules first.\n\nHARD RULES. Work ONLY inside /home/bcorfman/dev/ringer-work/stage2-prompt-compare/ (create files there) and write nothing under /home/bcorfman/dev/freytag-forge (the repository must stay byte-for-byte unchanged). No git commands that change anything. Never print, echo or copy .env or any API key; load it only with `set -a; . /home/bcorfman/dev/freytag-forge/.env; set +a` inside the command that needs it. Make EXACTLY 30 judge calls in the full run plus at most 1 smoke call. Never retry a failed call more than once and never loop on errors: if a call fails twice, record the verbatim error and stop. Do not edit simple-prompt.txt, run5-progress.json, run5-verdicts.json or roleplay-judge-run5.js.\n\nWHY. The canon judge prompt in roleplay-judge-run5.js is one dense 550-word paragraph and the judge's exit_motivated verdict flips between repeats on identical input. This experiment tests whether a simpler prompt (same rules, short plain sentences, one definition per check) gives steadier verdicts. The INPUT is frozen and identical in both arms; ONLY the system prompt differs.\n\nFILES ALREADY IN /home/bcorfman/dev/ringer-work/stage2-prompt-compare: roleplay-judge-run5.js (arm old_prompt, used unchanged; exports judgeSceneNarration and sceneCanon), simple-prompt.txt (the new system prompt text, final), run5-progress.json (key by_scene: list of [sceneId, {opening, turns, revealedKnowledgeIds}]), run5-verdicts.json (original run 5 verdicts in .judgments), node_modules (symlink; leave it).\n\nSTEPS:\n1. Build `judge-simple.js` as a copy of roleplay-judge-run5.js in which ONLY the system-message `content` string of judgeSceneNarration (the string-concatenation expression starting \"You are a strict interactive-fiction acceptance judge\") is replaced by the text of simple-prompt.txt, read once at module load with readFileSync relative to import.meta.dirname (the file already imports readFileSync). The judgeRoleplayTurn function, the schemas, the user message, the model and everything else stay byte-identical. Write `arm-diff.txt` = output of `diff roleplay-judge-run5.js judge-simple.js`.\n2. Verify the module offline (no billing): run `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/stage2/check_prompt_compare.py /home/bcorfman/dev/ringer-work/stage2-prompt-compare`. At this point it must report ONLY problems about results.json/report.md/cells/rows (not about the module probe); if it reports a module-probe problem (system prompt differs, user message differs, schema differs, model differs), fix judge-simple.js and rerun.\n3. Write `run.mjs`. For scenes 1A, 1C, 2A, 3A, 3B it takes that scene's entry from by_scene and calls judgeSceneNarration({ sceneId, opening, turns, revealedKnowledgeIds }, { canon }) from the old module (arm old_prompt = ./roleplay-judge-run5.js) or the new module (arm simple_prompt = ./judge-simple.js), with canon = sceneCanon(sceneId, revealedKnowledgeIds, '/home/bcorfman/dev/freytag-forge') from the same module and process.env loaded. Order the 30 calls INTERLEAVED: for repeat in 1..3, for scene in [1A,1C,2A,3A,3B], for arm in [old_prompt, simple_prompt]. Append every result as one row {scene, arm, repeat, original_run5_exit_motivated, exit_motivated, protected_safe, rewards_investigation, scene_local, progressive, canon_consistent, rich, verdict, reasons, missing_or_wrong} (an error row is {scene, arm, repeat, error} and counts toward the 30) to results.partial.jsonl as it goes, and write the array to results.json at the end.\n4. SMOKE FIRST: a `--smoke` flag makes ONE call (scene 1A, simple_prompt) and prints only the verdict keys; it must not write results.json. If it errors, stop and report.\n5. Run the full 30 once: `set -a; . /home/bcorfman/dev/freytag-forge/.env; set +a; cd /home/bcorfman/dev/ringer-work/stage2-prompt-compare && node run.mjs`.\n6. Write `report.md` with headings '# Prompt comparison' (two sentences), '## Design' (scenes, arms, repeats, the arm-diff proof, interleaving, model name), '## Verdicts' (for each of the 7 checks: true count out of 15 per arm), '## exit_motivated' (table: scene | run 5 original | old_prompt true/3 | simple_prompt true/3), '## Limits' (n=3 per cell; one fixed input per scene; the judge is not deterministic; the new prompt names authored_delivery because this frozen input predates span labels). Be strictly factual and under 400 words. Do NOT compute or claim a flip rate or a winner; the orchestrator recomputes from results.json.\n",
+      "check": "cd /home/bcorfman/dev/freytag-forge && git status --porcelain | grep -v '^??' | wc -l | grep -qx 0 && /home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/stage2/check_prompt_compare.py /home/bcorfman/dev/ringer-work/stage2-prompt-compare",
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/stage2-prompt-compare/report.md",
+        "/home/bcorfman/dev/ringer-work/stage2-prompt-compare/results.json",
+        "/home/bcorfman/dev/ringer-work/stage2-prompt-compare/judge-simple.js"
+      ],
+      "verified": "faithful new-prompt module (only system prompt differs), 30 valid verdicts in 10 cells of 3, repository unchanged"
+    }
+  ]
+}
