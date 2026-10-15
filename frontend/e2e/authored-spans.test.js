@@ -54,6 +54,38 @@ test("eligibility includes only committed, turn-local authored sources", () => {
   assert.deepEqual(eligibleAuthoredTexts(bundle({ committed_delta: { fact_predicates: ["other"], scene_from: "A", scene_to: "B" } }), authored).map((x) => x.source.kind), ["bridge", "entry"]);
 });
 
+test("forced 1A handoff fallback is eligible from a committed fact predicate", () => {
+  const real = loadAuthoredText();
+  const forced = bundle({
+    transition_cause: "forced",
+    selected_reveal: { knowledge_ids: [], delivery_fact_ids: [] },
+    pre_state: { staged_handoff_fact_ids: [] },
+    committed_delta: { fact_predicates: ["continuity_initiative_known"], scene_from: null, scene_to: null },
+  });
+  const eligible = eligibleAuthoredTexts(forced, real);
+  assert.deepEqual(eligible.filter((item) => item.source.kind === "handoff_fallback").map((item) => item.source.id), ["continuity_initiative_known"]);
+  assert.match(eligible.find((item) => item.source.id === "continuity_initiative_known").text, /Continuity Initiative/);
+  assert.deepEqual(eligibleAuthoredTexts({ ...forced, committed_delta: { fact_predicates: [] } }, real), []);
+  assert.deepEqual(eligibleAuthoredTexts({ ...forced, outcome: "rejected" }, real), []);
+});
+
+test("eligibility de-duplicates authored text and keeps its first source", () => {
+  const duplicate = "The same authored sentence.";
+  const result = eligibleAuthoredTexts(bundle({
+    selected_reveal: { knowledge_ids: ["knowledge"], delivery_fact_ids: ["handoff"] },
+    committed_delta: { fact_predicates: ["handoff", "knowledge"], scene_from: null, scene_to: null },
+  }), {
+    knowledgeDeliveryTexts: new Map([["knowledge", duplicate]]),
+    handoffFallbackTexts: new Map([["handoff", duplicate]]),
+    cueTexts: new Map(),
+    bridgeTextsByScenePair: new Map(),
+    entryTexts: new Map(),
+    routeFallbackTexts: new Map(),
+    routeFallbacks: [],
+  });
+  assert.deepEqual(result, [{ text: duplicate, source: { kind: "delivery", id: "knowledge" } }]);
+});
+
 test("attributes normalized quotes and whitespace, preferring the longer overlap", () => {
   const narration = "Before. A  “secret delivery.” After.";
   const spans = attributeNarration(narration, [

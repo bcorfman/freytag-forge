@@ -79,7 +79,7 @@ export function loadAuthoredText(root = resolve(import.meta.dirname, "../..")) {
 
 function add(map, id, kind, result) {
   const text = map?.get(id);
-  if (text) result.push({ text, source: { kind, id } });
+  if (text && !result.some((item) => item.text === text)) result.push({ text, source: { kind, id } });
 }
 
 export function eligibleAuthoredTexts(bundle, authored) {
@@ -98,6 +98,7 @@ export function eligibleAuthoredTexts(bundle, authored) {
     ...(bundle.pre_state?.staged_handoff_fact_ids || []),
   ]);
   for (const id of handoffIds) add(fallbacks, id, "handoff_fallback", result);
+  for (const id of new Set(bundle.committed_delta?.fact_predicates || [])) add(fallbacks, id, "handoff_fallback", result);
   const delta = bundle.committed_delta || {};
   const changed = delta.scene_from && delta.scene_to && delta.scene_from !== delta.scene_to;
   if (changed || bundle.transition_cause !== "none") {
@@ -110,7 +111,7 @@ export function eligibleAuthoredTexts(bundle, authored) {
     const seen = new Set();
     for (const route of authored.routeFallbacks || []) {
       if (!bundle.story_complete && !route.fact_ids.some((id) => factPredicates.has(id))) continue;
-      if (seen.has(route.text)) continue;
+      if (seen.has(route.text) || result.some((item) => item.text === route.text)) continue;
       seen.add(route.text);
       result.push({ text: route.text, source: { kind: "route_fallback", id: route.event_id } });
     }

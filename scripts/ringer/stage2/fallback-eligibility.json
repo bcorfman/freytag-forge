@@ -1,0 +1,21 @@
+{
+  "run_name": "stage2-canon-spans",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage2-spans",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "fallback-eligibility",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge; edit files here directly and ONLY the files you own. Never edit /home/bcorfman/dev/freytag-forge itself. Do NOT git commit and do NOT touch .git. No network calls, no billed runs, never call the OpenAI API.\n\nOWNED FILES: frontend/e2e/authored-spans.js, frontend/e2e/authored-spans.test.js, frontend/e2e/attribution-audit.test.js (only if an expectation must change). Nothing else.\n\nBACKGROUND: eligibleAuthoredTexts(bundle, authored) decides which authored texts a committed turn may legitimately contain, so attributeNarration can label them 'authored'. Handoff fallback texts (handoffs.yaml `fallback_text`, keyed by `fact_id`) are currently eligible only when the fact id is in bundle.selected_reveal.delivery_fact_ids or bundle.pre_state.staged_handoff_fact_ids. That misses forced handoffs: in the saved bundle for canonical rep 1, scene 1A, turn 14 (transition_cause 'forced'), both lists are empty, yet the turn text contains the exact `fallback_text` of handoff fact `continuity_initiative_known`, and bundle.committed_delta.fact_predicates (the facts committed on THAT turn) contains 'continuity_initiative_known' (also memory_card_recovered, michelle_lead_actionable, scene_1b_entry_known, world_effects_applied). So the turn's own committed facts identify which handoff delivery fired.\n\nCHANGE: in eligibleAuthoredTexts, also make a handoff fallback text eligible when its fact_id appears in bundle.committed_delta.fact_predicates (a text stays eligible only for its own fact; never eligible for facts not committed on this turn; still only for outcome 'committed'). Apply the same committed-this-turn rule to cue texts (handoffs.yaml `cue_text` by fact_id) ONLY if a cue can be delivered without bundle.cue_stage.delivered being true -- read storygame/runtime/engine.py and storygame/runtime/cloudflare.py (_compose_authored_handoff and where cue_stage is built in engine.py) to decide; if cue_stage already covers it, leave cues as they are and say so in your notes. De-duplicate when the same text is eligible by several rules (one entry per text, keeping the first source). Add tests: the 1A forced-handoff case with synthetic empty staged/delivery lists and the fact in fact_predicates yields the fallback as eligible with source kind 'handoff_fallback' and id equal to the fact id; the same bundle without the predicate yields nothing; a rejected bundle yields []; de-duplication. Then run the audit CLI on /home/bcorfman/dev/ringer-work/keep/canonical-x3/ (`node e2e/attribution-audit.js /home/bcorfman/dev/ringer-work/keep/canonical-x3/`) and put the printed totals (found/not found by kind, fraction authored, suspicious list) in your notes, plus a one-sentence statement whether the 1A turn 14 forced handoff now attributes the 'The card identifies the federal emergency program as the Continuity Initiative' sentence as authored.\n\nHOW TO RUN: from the worktree `ln -s /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules` if missing (gitignored), then `cd frontend && node --test e2e/authored-spans.test.js e2e/attribution-audit.test.js e2e/judge-journeys.test.js && node --check e2e/authored-spans.js`. Match surrounding style. Notes to /home/bcorfman/dev/ringer-work/stage2-notes/fallback-eligibility-notes.md.\n",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage2/check_js.sh fallback-eligibility '^frontend/e2e/(authored-spans|attribution-audit)(\\.test)?\\.js$' e2e/authored-spans.test.js e2e/attribution-audit.test.js e2e/judge-journeys.test.js",
+      "verified": "forced-handoff fallback text is attributed as authored when its own fact was committed on that turn"
+    }
+  ]
+}
