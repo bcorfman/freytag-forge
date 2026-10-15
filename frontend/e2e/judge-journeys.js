@@ -14,25 +14,43 @@ const CHECKS = [
   "rich",
 ];
 
-function usableTurns(scene) {
+function authoredDeliveryReasons(bundle) {
+  if (bundle?.outcome !== "committed") return [];
+  const reasons = [];
+  if (bundle.transition_cause === "forced") reasons.push("forced_handoff");
+  if (bundle.transition_cause === "timer") reasons.push("timer_handoff");
+  if (bundle.story_complete === true) reasons.push("ending");
+  if (bundle.cue_stage?.delivered === true) reasons.push("cue_delivered");
+  if (Array.isArray(bundle.selected_reveal?.delivery_fact_ids) && bundle.selected_reveal.delivery_fact_ids.length) {
+    reasons.push("delivery_facts");
+  }
+  return reasons;
+}
+
+function usableTurns(scene, bundlesByTurn) {
   return (scene.turns || [])
     .filter((turn) => turn?.rejected !== true && typeof turn?.text === "string" && turn.text.trim())
-    .map((turn) => ({
-      player_input: turn.input,
-      narration: turn.text,
-      left_scene: turn.turn === scene.transition_turn,
-      beats_projected: [],
-    }));
+    .map((turn) => {
+      const attemptBundle = turn.attempt_bundle || bundlesByTurn.get(turn.turn);
+      const reasons = authoredDeliveryReasons(attemptBundle);
+      return {
+        player_input: turn.input,
+        narration: turn.text,
+        left_scene: turn.turn === scene.transition_turn,
+        beats_projected: [],
+        ...(reasons.length ? { authored_delivery: reasons } : {}),
+      };
+    });
 }
 
 export function buildSceneJudgments(report) {
   return (report.replicates || []).flatMap((replicate) =>
     (replicate.scenes || []).map((scene) => {
-      const turns = usableTurns(scene);
       const bundlesByTurn = new Map();
       for (const bundle of scene.bundles || []) {
         if (!bundlesByTurn.has(bundle?.turn)) bundlesByTurn.set(bundle.turn, bundle?.attempt_bundle);
       }
+      const turns = usableTurns(scene, bundlesByTurn);
       const evidenceTurns = (scene.turns || [])
         .map((turn) => turn?.attempt_bundle || bundlesByTurn.get(turn?.turn) ? {
           ...turn,

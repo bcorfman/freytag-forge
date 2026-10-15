@@ -88,6 +88,10 @@ test("scene canon judge distinguishes protected facts from ordinary invented det
   assert.match(systemMessage, /revealed_knowledge is the set of authored facts the player has earned by committed reveal/);
   assert.match(systemMessage, /authored protected fact that is NOT in revealed_knowledge/);
   assert.match(systemMessage, /ordinary invented detail.*color, a minor object, or a bit of atmosphere/);
+  assert.match(systemMessage, /A turn carrying authored_delivery contains story text inserted by the game runtime itself/);
+  assert.match(systemMessage, /That text is the story's own authored content.*does not fail protected_safe/);
+  assert.match(systemMessage, /Still judge authored_delivery for exit_motivated/);
+  assert.match(systemMessage, /Text the narrator wrote itself that states an authored protected fact not in revealed_knowledge is still premature disclosure/);
   assert.match(systemMessage, /Contradiction of established canon still fails canon_consistent/);
   assert.deepEqual(request.text.format.schema, {
     type: "object",

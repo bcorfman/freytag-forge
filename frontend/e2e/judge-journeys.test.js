@@ -54,6 +54,38 @@ test("uses committed bundle knowledge ids, ignores rejected and non-committed tu
   assert.equal(scene.reveal_evidence, "committed_bundles");
 });
 
+test("marks runtime-authored delivery reasons and omits them otherwise", () => {
+  const [scene] = buildSceneJudgments({ replicates: [{ replicate: 1, scenes: [{ scene: "1A", turns: [
+    { turn: 1, input: "forced", text: "forced", attempt_bundle: { outcome: "committed", transition_cause: "forced" } },
+    { turn: 2, input: "timer", text: "timer", attempt_bundle: { outcome: "committed", transition_cause: "timer" } },
+    { turn: 3, input: "end", text: "end", attempt_bundle: { outcome: "committed", story_complete: true } },
+    { turn: 4, input: "cue", text: "cue", attempt_bundle: { outcome: "committed", cue_stage: { delivered: true } } },
+    { turn: 5, input: "delivery", text: "delivery", attempt_bundle: { outcome: "committed", selected_reveal: { delivery_fact_ids: ["fact-1"] } } },
+    { turn: 6, input: "plain", text: "plain", attempt_bundle: { outcome: "committed" } },
+    { turn: 7, input: "rejected", text: "rejected", attempt_bundle: { outcome: "rejected", transition_cause: "forced", cue_stage: { delivered: true } } },
+    { turn: 8, input: "broken", text: "broken", attempt_bundle: { outcome: "game_break", story_complete: true } },
+    { turn: 9, input: "legacy", text: "legacy" },
+  ] }] }] });
+  assert.deepEqual(scene.turns.slice(0, 5).map((turn) => turn.authored_delivery), [
+    ["forced_handoff"],
+    ["timer_handoff"],
+    ["ending"],
+    ["cue_delivered"],
+    ["delivery_facts"],
+  ]);
+  assert.equal("authored_delivery" in scene.turns[5], false);
+  assert.equal("authored_delivery" in scene.turns[6], false);
+  assert.equal("authored_delivery" in scene.turns[7], false);
+  assert.equal("authored_delivery" in scene.turns[8], false);
+});
+
+test("marks authored delivery on a joined bundle", () => {
+  const [scene] = buildSceneJudgments({ replicates: [{ replicate: 1, scenes: [{ scene: "1A", turns: [
+    { turn: 1, input: "leave", text: "Leaving" },
+  ], bundles: [{ turn: 1, attempt_bundle: { outcome: "committed", transition_cause: "forced" } }] }] }] });
+  assert.deepEqual(scene.turns[0].authored_delivery, ["forced_handoff"]);
+});
+
 test("falls back to grounding ids without bundles and marks mixed reports", () => {
   const [scene] = buildSceneJudgments({ replicates: [{ replicate: 1, scenes: [{ scene: "1A", turns: [
     { text: "bundled", attempt_bundle: { outcome: "committed", selected_reveal: { knowledge_ids: ["committed"] } }, grounding_ids: ["not-knowledge"] },
