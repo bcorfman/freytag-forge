@@ -1,0 +1,20 @@
+{
+ "run_name": "astra-step-c1-2c-prompt",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-step-c1",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "c1",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "max_attempts": 2,
+   "timeout_s": 1500,
+   "check_timeout_s": 600,
+   "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files ONLY under the current working directory; NEVER edit /home/bcorfman/dev/freytag-forge directly. Do NOT git commit, do NOT git add -A, do NOT touch .git. Write short notes (changes and test results) to /home/bcorfman/dev/ringer-work/astra-step-c1-notes/notes.md.\n\nOWNED FILES: frontend/e2e/canon-journey.js (ONLY the third string of the \"2C\" array in scenePrompts) and tests/test_2c_spine_prompts.py (new). Nothing else.\n\nBACKGROUND: The hosted e2e spine types three prompts in scene 2C. The third, \"Follow Michelle's coded message through the maintenance network and commit to the plan it describes.\", matches no reveal in the real matcher: the verb 'follow' exists only in k_sl_2c_d_r2 (whose nouns need 'maintenance route/report' and 'route/marker'), and the phrase \"Michelle's coded\" exists only in k_sl_2c_d_r1 (whose verbs are decode, read, check, study, open, search, inspect, decrypt, examine, analyze, compare). So 2C exit never happened by play on staging. k_sl_2c_d_r1 is described as 'decodes or reads Michelle's coded message'.\n\nTHE EDIT: replace the third 2C prompt with exactly: Read Michelle's coded message and commit to the plan it describes.\n(The first two 2C prompts stay unchanged.) Keep the file's quoting and comment style.\n\nTHE TEST tests/test_2c_spine_prompts.py (hermetic, no network): parse the three 2C prompts out of frontend/e2e/canon-journey.js with a regex or small parser over the \"2C\": [ ... ] array (fail with a clear message if the array is not found or does not hold exactly three strings). Load data/stories/continuity-initiative/knowledge.yaml with yaml.safe_load and, with storygame.runtime.candidate_matcher._matches_all(tuple(tuple(g) for g in item['action_evidence']), command) over every knowledge id starting with 'k_sl_2c' that has action_evidence, assert the exact set of matching ids per prompt: prompt 1 -> {'k_sl_2c_a_r1'}, prompt 2 -> {'k_sl_2c_c_r2'}, prompt 3 -> {'k_sl_2c_d_r1'}. Model it on tests/test_2c_assess_verbs.py. Add a one-line comment saying prompt 3 uses 'Read' because D-R1 is the authored reading action and 'follow' alone matches nothing.\n\nHOW TO RUN: confirm `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` prints a path inside the cwd. Check: bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_step_c1.sh. Run ruff check --fix and ruff format on the new test with /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff. Reply with the files changed.\n",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_step_c1.sh",
+   "verified": "2C spine prompts each match exactly one intended reveal, ruff and neighbouring suites pass"
+  }
+ ]
+}
