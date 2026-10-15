@@ -1,0 +1,20 @@
+{
+ "run_name": "astra-1b-spine-prompts",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-1b",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "p1b",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "max_attempts": 2,
+   "timeout_s": 1500,
+   "check_timeout_s": 600,
+   "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Edit files ONLY under the current working directory; NEVER edit /home/bcorfman/dev/freytag-forge directly. Do NOT git commit, do NOT git add -A, do NOT touch .git. Write short notes (changes and test results) to /home/bcorfman/dev/ringer-work/astra-1b-notes/notes.md.\n\nOWNED FILES: frontend/e2e/canon-journey.js (ONLY the four strings of the \"1B\" array in scenePrompts) and tests/test_1b_spine_prompts.py (new). Nothing else.\n\nBACKGROUND: In the hosted e2e spine, scene 1B ran 13 turns, committed no reveal, and left only by a forced handoff on a fallback turn. Through the real matcher (storygame.runtime.candidate_matcher._matches_all(tuple(tuple(g) for g in item['action_evidence']), command) over every knowledge id starting with 'k_sl_1b' that has action_evidence) prompts 1-3 match nothing, and prompt 4 matches k_sl_1b_c_r1, which requires brandon_identified and missing_may_be_alive (set only by k_sl_1b_b_r1 or k_sl_1b_b_r2). The 1B exit bridge needs park_pursuit_resolved, transport_route_identified, brandon_identified and missing_may_be_alive.\n\nTHE EDIT: replace the four 1B prompts, in this order, with exactly:\n1. Examine the photograph beneath the bench.   (target: only k_sl_1b_a_r2)\n2. Show Michelle's photograph to the man and ask who he is.   (target: only k_sl_1b_b_r1)\n3. Match the transit token to the handwritten number sequence.   (target: only k_sl_1b_a_r1)\n4. Get out through the storm drains and watch how he opens the secured gate.   (unchanged; target: only k_sl_1b_c_r1)\nKeep the file's quoting and comment style and the existing comment above the array. If any of prompts 1-3 does not give exactly its target set through the real matcher, do not edit data to force it: change only the wording of that prompt minimally (keep it an imperative sentence in plain player voice, first-person possessives such as 'my' when the player's own thing is meant) until the set is exactly the target, and report the final wording in the notes.\n\nTHE TEST tests/test_1b_spine_prompts.py (hermetic, no network; model it on tests/test_2c_spine_prompts.py if it exists, else on tests/test_2c_assess_verbs.py): parse the four 1B prompts from frontend/e2e/canon-journey.js (clear failure if the array is missing or does not hold exactly four strings), load data/stories/continuity-initiative/knowledge.yaml, and assert the exact matching id set per prompt over all k_sl_1b ids: {k_sl_1b_a_r2}, {k_sl_1b_b_r1}, {k_sl_1b_a_r1}, {k_sl_1b_c_r1}. Also assert, from the YAML, that the facts required by k_sl_1b_c_r1 (its requires list) are all established by the earlier prompts' matched items (union of their establishes fact_ids), so the sequence is eligible in order.\n\nHOW TO RUN: confirm `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` prints a path inside the cwd. Check: bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_step_1b.sh. Run ruff check --fix and ruff format on the new test with /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff. Reply with the files changed.\n",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_step_1b.sh",
+   "verified": "each 1B spine prompt matches exactly its intended reveal and the sequence satisfies c_r1's requirements"
+  }
+ ]
+}

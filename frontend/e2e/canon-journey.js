@@ -21,9 +21,9 @@ export const scenePrompts = {
   ],
   // 1B.1 dead drop -> 1B.2 the man following -> 1B.3 his warning -> 1B.4 ambush and escape
   "1B": [
-    "At the bench her files pointed to, search underneath for whatever she left there and study every item of it.",
-    "Break for the service tunnels when the man watching from across the park moves, then demand to know who he is when he intervenes.",
-    "Press him on what actually happened to the missing people, and whether any of them are still alive.",
+    "Examine the photograph beneath the bench.",
+    "Show Michelle's photograph to the man and ask who he is.",
+    "Match the transit token to the handwritten number sequence.",
     "Get out through the storm drains and watch how he opens the secured gate.",
   ],
   // 1C.1 transport route -> 1C.2 captives -> 1C.3 nationwide network -> 1C.4 architects
