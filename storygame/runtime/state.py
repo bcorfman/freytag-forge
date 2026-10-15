@@ -49,6 +49,7 @@ class TurnDelivery(BaseModel):
     capture_steps: tuple[str, ...] = ()
     capture_issues: tuple[str, ...] = ()
     capture_unplaced: tuple[str, ...] = ()
+    revealed_knowledge_ids: tuple[str, ...] = ()
 
 
 class CueStage(BaseModel):
