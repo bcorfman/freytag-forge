@@ -86,6 +86,8 @@ Exit: checker rejects the old zero-refusal summary on the saved engine-arm outpu
 
 ## Step D: Plan hygiene (F5, F7, F8)
 
+**Result (2026-10-15, docs only, branch `astra-step-d`):** D1 done: the marker over-refusal totals are 3, 7 and 1 of 24 (baseline 0), checked against the saved control records. D2 done: the four stale "not merged" entries in `astra-implementation-plan.md` now name their PRs (626, 628, 629/631/634, 632/633) and the status line was refreshed in PR 643. D3 done: the `renarrate` and marker-wording claims are narrowed and the 40 percent estimate is marked unmeasured. D4 was already done in Step B (the stale comment in `tests/test_2c_assess_verbs.py` now points at the engine-turn test). D5 done: the 1C pointer is kept as a small authoring repair, improvement not demonstrated.
+
 1. Fix the marker control totals in `astra-implementation-plan.md:185` (3/24, 7/24, 1/24 if "stuck, then opens" counts; check the saved control).
 2. Rewrite the opening status line and the stale "not merged" entries to match the later ones.
 3. Correct the "renarrate removes the false claim" wording (the cue-restored run still had one success claim and three contradictions); narrow "wording is not the lever" to "these variants failed"; drop or measure the "40% combined saving" estimate.
