@@ -44,6 +44,7 @@ from bench.core import (
     unknown_scale_ledger_rows,
     welch_t_test,
 )
+from bench.jev_use import jev_stats, reset_jev_stats
 from storygame.runtime.cloudflare import NarrationProviderError
 from storygame.runtime.engine import RuntimeEngine
 
@@ -390,6 +391,7 @@ def _confirm(args: argparse.Namespace, projected: float, script_count: int) -> N
 
 
 def _run(args: argparse.Namespace) -> int:
+    reset_jev_stats()
     if args.replicates < 1:
         raise ValueError("--replicates must be at least 1")
     if args.replicates == 1:
@@ -598,6 +600,7 @@ def _run(args: argparse.Namespace) -> int:
     if fact_tracking is not None:
         aggregate["fact_tracking"] = fact_tracking
     aggregate["judge_failure_reason"] = judge_failure_reason
+    jev = jev_stats()
     aggregate["budget"] = {
         "projected_workers_ai_neurons": projected,
         "actual_narration_turns": sum(run["narration_turns"] for run in runs),
@@ -610,6 +613,14 @@ def _run(args: argparse.Namespace) -> int:
         "actual_jev_judge_requests": (fact_tracking or {}).get("judge_calls", 0)
         if fact_tracking_backend == "jev"
         else 0,
+        "jev": {
+            "calls": jev["calls"],
+            "ok": jev["ok"],
+            "failures": jev["failures"],
+            "stopped": jev["stopped"],
+            "cap_reached": jev["cap_reached"],
+            "requests": jev["calls"],
+        },
         "quota": quota,
     }
     if args.baseline and aggregate["replicate_scores"]:

@@ -145,7 +145,10 @@ export async function judgeSceneNarration(
             "Require characters, items, plot events, dialogue, and setting to remain consistent with the five source files. " +
             "When an opening is supplied, require substantial sensory scene establishment; always require responsive consequences on ordinary turns, " +
             "and progressive revelation rather than dumping future beats or racing a transition. Protected knowledge must " +
-            "never be revealed early. Do not require every optional storylet or every beat in a single turn. " +
+            "never be revealed early. revealed_knowledge is the set of authored facts the player has earned by committed reveal. " +
+            "Premature disclosure means narration states an authored protected fact that is NOT in revealed_knowledge; only that fails protected_safe. " +
+            "An ordinary invented detail that is not an authored protected fact, such as a color, a minor object, or a bit of atmosphere, is not premature disclosure and must not fail protected_safe. " +
+            "Contradiction of established canon still fails canon_consistent. Do not require every optional storylet or every beat in a single turn. " +
             "Judge each TURN against the beat it was actually given. A turn that dramatises its assigned beat poorly still fails; being given a beat is not credit for using it. " +
             "Judge the SCENE on whether its authored beats were covered in order across its turns. A scene that skips beats entirely still fails. " +
             "A turn marked left_scene is the one the story departed on: fail unless the narration the player actually " +

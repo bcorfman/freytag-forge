@@ -1,0 +1,21 @@
+{
+  "run_name": "stage2-measurement-correctness",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage2",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "jev-summary",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge; edit files here directly and ONLY the files you own. Never edit /home/bcorfman/dev/freytag-forge itself. Do NOT git commit and do NOT touch .git. Do not run network calls or billed bench runs.\n\nOWNED FILES: bench/cli.py, tests/test_jev_summary.py (new). Add tests to tests/test_bench.py only if an existing test there asserts the exact summary budget dict and breaks.\n\nGOAL: the live bench writes bench summary.json (bench/cli.py, the `aggregate[\"budget\"]` dict near the line `summary_path = args.out / \"summary.json\"`). It currently reports judge call counts but never exposes bench.jev_use.jev_stats() (calls, ok, failures dict by kind, stopped reason, cap_reached), so a capped, failing or quota-stopped Jev judge is invisible next to the narration metrics. Add a `jev` object to aggregate[\"budget\"] built from jev_stats(): keys calls, ok, failures (dict), stopped, cap_reached. Requests and cost: also include `requests` (= calls) and note nothing invented for cost; if no cost source exists, do NOT add a cost number. Reset the stats at the start of the run command (reset_jev_stats) so the snapshot covers only this run. The snapshot must be present (all zero / None / False) even when Jev is not the fact-tracking backend, so readers can tell 'no Jev use' from 'field missing'. Also add the same `jev` object to the per-failed-replicate failure_budget dict only if that can be done truthfully with the same process-level snapshot; otherwise leave it out and say so in your notes.\n\nTESTS: tests/test_jev_summary.py must run hermetically (no network, no live worker; see existing tests/test_jev_use.py for how stats are manipulated and how the bench command is exercised in tests/test_bench.py). Cover: (1) summary budget contains `jev` with zero values when Jev unused; (2) after recorded failures, a cap hit and a quota stop, the summary shows the failure kinds, cap_reached True and stopped reason verbatim; (3) a second run in the same process does not carry over the first run's counts. Never pin collection counts.\n\nHOW TO RUN: the sandbox cannot use uv. Use PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_jev_summary.py tests/test_jev_use.py tests/test_bench.py . First confirm `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` prints a path inside the current worktree. Ruff: /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check bench tests/test_jev_summary.py and `-m ruff format` on the same paths. Match surrounding code style and comment density.\n\nWrite short notes (what changed, test results) to /home/bcorfman/dev/ringer-work/stage2-notes/jev-summary-notes.md.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage2/check_jev_summary.sh",
+      "verified": "bench summary.json budget carries a truthful per-run jev snapshot, tested hermetically, with only owned files changed"
+    }
+  ]
+}

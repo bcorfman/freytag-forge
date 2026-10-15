@@ -28,6 +28,13 @@ class TurnScore:
     requests: int
     tokens: int
     state_unmeasured: bool = False
+    reference_unmeasured: bool = False
+    action_unmeasured: bool = False
+    prose_unmeasured: bool = False
+    false_reveal_unmeasured: bool = False
+    unauthorized_creation_unmeasured: bool = False
+    forced_progress_unmeasured: bool = False
+    clarification_asked_unmeasured: bool = False
 
 
 def score_turn(
@@ -36,10 +43,12 @@ def score_turn(
     *,
     claim_judge: Callable[[str, str], bool] | None = None,
 ) -> TurnScore:
+    prose_expected = bool(expectation.prose_includes or expectation.prose_excludes or expectation.prose_must_not_assert)
+    prose_unmeasured = bool(expectation.prose_must_not_assert and claim_judge is None)
     prose_ok = None
-    if expectation.prose_must_not_assert and claim_judge is None:
+    if prose_unmeasured:
         prose_ok = None
-    elif expectation.prose_includes or expectation.prose_excludes or expectation.prose_must_not_assert:
+    elif prose_expected:
         prose_ok = all(text in observation.prose for text in expectation.prose_includes) and all(
             text not in observation.prose for text in expectation.prose_excludes
         )
@@ -47,14 +56,16 @@ def score_turn(
             claims_asserted = [claim_judge(observation.prose, claim) for claim in expectation.prose_must_not_assert]
             prose_ok = prose_ok and all(not asserted for asserted in claims_asserted)
     reveal_checked = bool(expectation.allowed_reveals or expectation.required_reveals)
+    false_reveal_unmeasured = reveal_checked and observation.revealed_ids is None
     false_reveal = None
-    if reveal_checked:
+    if reveal_checked and not false_reveal_unmeasured:
         permitted = set(expectation.allowed_reveals) | set(expectation.required_reveals)
-        false_reveal = any(item not in permitted for item in observation.revealed_ids)
+        false_reveal = any(item not in permitted for item in observation.revealed_ids or ())
+    unauthorized_creation_unmeasured = expectation.creation is not None and observation.created is None
     unauthorized = None
-    if expectation.creation is not None:
+    if expectation.creation is not None and not unauthorized_creation_unmeasured:
         limit = _CREATION_LEVEL[expectation.creation]
-        unauthorized = any(_CREATION_LEVEL[kind] > limit for _, kind in observation.created)
+        unauthorized = any(_CREATION_LEVEL[kind] > limit for _, kind in observation.created or ())
     state_unmeasured = False
     if expectation.state is not None:
         missing_state = set(expectation.state) - set(observation.state or {})
@@ -67,22 +78,33 @@ def score_turn(
     else:
         state_correct = None
     return TurnScore(
-        reference_correct=None if expectation.reference is None else observation.reference == expectation.reference,
-        action_correct=None if expectation.action is None else observation.action == expectation.action,
+        reference_correct=None
+        if expectation.reference is None or observation.reference is None
+        else observation.reference == expectation.reference,
+        action_correct=None
+        if expectation.action is None or observation.action is None
+        else observation.action == expectation.action,
         state_correct=state_correct,
         prose_correct=prose_ok,
         false_reveal=false_reveal,
         unauthorized_creation=unauthorized,
         forced_progress=None
-        if expectation.forced_progress is None
+        if expectation.forced_progress is None or observation.forced_progress is None
         else observation.forced_progress == expectation.forced_progress,
         clarification_asked=None
-        if expectation.clarification is None
+        if expectation.clarification is None or observation.clarified is None
         else observation.clarified == expectation.clarification,
         latency_s=observation.latency_s,
         requests=observation.requests,
         tokens=observation.tokens,
         state_unmeasured=state_unmeasured,
+        reference_unmeasured=expectation.reference is not None and observation.reference is None,
+        action_unmeasured=expectation.action is not None and observation.action is None,
+        prose_unmeasured=prose_unmeasured,
+        false_reveal_unmeasured=false_reveal_unmeasured,
+        unauthorized_creation_unmeasured=unauthorized_creation_unmeasured,
+        forced_progress_unmeasured=expectation.forced_progress is not None and observation.forced_progress is None,
+        clarification_asked_unmeasured=expectation.clarification is not None and observation.clarified is None,
     )
 
 
@@ -120,7 +142,17 @@ def aggregate(scores: list[TurnScore], arm_name: str) -> dict[str, Any]:
     )
     for name in metric_names:
         result[name] = _rate([value for score in scores if (value := getattr(score, name)) is not None])
-    result["state_unmeasured"] = sum(score.state_unmeasured for score in scores)
+    for name in (
+        "reference",
+        "action",
+        "state",
+        "prose",
+        "false_reveal",
+        "unauthorized_creation",
+        "forced_progress",
+        "clarification_asked",
+    ):
+        result[f"{name}_unmeasured"] = sum(getattr(score, f"{name}_unmeasured") for score in scores)
     for name in ("false_reveal", "unauthorized_creation"):
         values = [value for score in scores if (value := getattr(score, name)) is not None]
         result[name] = {

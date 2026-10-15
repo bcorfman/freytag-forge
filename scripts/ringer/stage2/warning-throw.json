@@ -1,0 +1,21 @@
+{
+  "run_name": "stage2-measurement-correctness",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage2",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "warning-throw",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge; edit files here directly and ONLY the files you own. Never edit /home/bcorfman/dev/freytag-forge itself. Do NOT git commit and do NOT touch .git. No network calls, no billed runs.\n\nOWNED FILES: frontend/e2e/helpers.js, frontend/e2e/blind-player.test.js.\n\nBACKGROUND: frontend/e2e/helpers.js resolveWarningIfPresent(page) used to click 'Return to scene' and then `await expect(warning).toBeHidden()` -- it THREW if the panel stayed visible. It was reimplemented on top of handleGameBreak (frontend/e2e/blind-player.js), which never throws on a panel timeout and returns a record with outcome 'timeout'; resolveWarningIfPresent currently returns `record != null`, i.e. TRUE even when the panel never closed, so other callers (scene-walk, canon journeys) would carry on with a stuck panel and fail later with a confusing error.\n\nCHANGE: keep the boolean contract (false when there was no panel, true when it was resolved) but THROW an Error with a clear message ('game-break panel did not close ...' including the record's warning_id and outcome) when the returned record's outcome is 'timeout'. Add a node:test case in blind-player.test.js using the existing fake page helper for game breaks (fakeGameBreakPage) that checks: no panel -> false; resolved -> true; timeout -> rejects with that message. helpers.js imports @playwright/test; if importing it in the test is a problem, test via a small exported pure helper you add to helpers.js or blind-player.js instead, and keep resolveWarningIfPresent a thin wrapper.\n\nHOW TO RUN: from the worktree `ln -s /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules` if missing (gitignored), then `cd frontend && node --test e2e/blind-player.test.js e2e/scene-walk.test.js && node --check e2e/helpers.js`. Notes to /home/bcorfman/dev/ringer-work/stage2-notes/warning-throw-notes.md.\n",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage2/check_js.sh warning-throw '^frontend/e2e/(helpers|blind-player\\.test)\\.js$' e2e/blind-player.test.js e2e/scene-walk.test.js",
+      "verified": "owned files only; hermetic tests pass"
+    }
+  ]
+}

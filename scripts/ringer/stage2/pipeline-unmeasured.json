@@ -1,0 +1,21 @@
+{
+  "run_name": "stage2-measurement-correctness",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage2",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "pipeline-unmeasured",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge; edit files here directly and ONLY the files you own. Never edit /home/bcorfman/dev/freytag-forge itself. Do NOT git commit and do NOT touch .git. No network calls, no billed runs.\n\nOWNED FILES: bench/pipeline_eval/metrics.py, bench/pipeline_eval/model.py, bench/pipeline_eval/runner.py (render_report only), bench/pipeline_eval/__main__.py, tests/test_pipeline_eval.py (add tests; keep existing passing).\n\nGOAL: Complete the evaluation vocabulary-to-facts mapping where metrics still report `unmeasured`. Today only `state_unmeasured` exists (metrics.py TurnScore/score_turn/aggregate); other metrics silently return None when their observation is unavailable, and the report cannot tell 'not expected' from 'expected but not observable'. Study bench/pipeline_eval/model.py (Expectation, TurnObservation, grounded_state: the vocabulary-to-facts mapping), cases.json, metrics.py, and the existing tests. Then:\n1. Find every Expectation field whose TurnObservation counterpart can be missing/unavailable (e.g. reference, action, forced_progress, clarified, revealed_ids, created, prose claims without a claim judge) and for each add an explicit `<metric>_unmeasured` counter (same pattern as state_unmeasured) that counts turns where the case EXPECTED the metric but the observation could not supply it. The score value for those turns stays None: never manufacture a pass/fail. Where the mapping from a vocabulary name to a fact is incomplete (grounded_state skips names it cannot map), make the missing mapping explicit and counted rather than dropped.\n2. aggregate() reports each metric independently (reference, action, state, prose, invention/unauthorized_creation, disclosure/false_reveal, forced progress, clarification burden, latency, requests, tokens) plus the new unmeasured counts; NO combined quality score. render_report must print the unmeasured counts per arm so unmeasured is visible, using the word 'unmeasured'.\n3. Look at what the real PipelineArm populates versus what ScriptedArm/cases.json expect; where the PipelineArm could truthfully fill an observation field from engine data it already has (check storygame/runtime for the real source) and does not, either fill it (only if clearly correct) or leave it unmeasured and counted. Do not touch the refusal wiring in PipelineArm (another task owns it).\n4. Tests: one per new unmeasured counter proving expected-but-unobservable turns count and score None, expected-and-observed turns do not count, and not-expected turns do not count; a report test asserting 'unmeasured' appears with the right numbers; existing aggregate keys stay backward compatible.\nHOW TO RUN: the sandbox cannot use uv. Use PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider <tests>. First confirm `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` prints a path inside the current worktree. Ruff: /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check/format on the files you changed. Match surrounding style and comment density; never pin test collection counts. Tests must be hermetic (no live worker, no network). Write short notes to /home/bcorfman/dev/ringer-work/stage2-notes/pipeline-unmeasured-notes.md.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage2/check_owned.sh pipeline-unmeasured '^(bench/pipeline_eval/[a-z_]+\\.py|tests/test_pipeline_eval\\.py)$' tests/test_pipeline_eval.py",
+      "verified": "owned files only; hermetic tests and ruff pass"
+    }
+  ]
+}

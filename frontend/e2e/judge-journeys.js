@@ -29,9 +29,26 @@ export function buildSceneJudgments(report) {
   return (report.replicates || []).flatMap((replicate) =>
     (replicate.scenes || []).map((scene) => {
       const turns = usableTurns(scene);
-      const revealedKnowledgeIds = [...new Set(
-        (scene.turns || []).flatMap((turn) => Array.isArray(turn?.grounding_ids) ? turn.grounding_ids : []),
-      )].sort();
+      const bundlesByTurn = new Map();
+      for (const bundle of scene.bundles || []) {
+        if (!bundlesByTurn.has(bundle?.turn)) bundlesByTurn.set(bundle.turn, bundle?.attempt_bundle);
+      }
+      const evidenceTurns = (scene.turns || [])
+        .map((turn) => turn?.attempt_bundle || bundlesByTurn.get(turn?.turn) ? {
+          ...turn,
+          attempt_bundle: turn?.attempt_bundle || bundlesByTurn.get(turn?.turn),
+        } : turn)
+        .filter((turn) => turn?.rejected !== true);
+      const revealedKnowledgeIds = [...new Set(evidenceTurns.flatMap((turn) => {
+        if (turn?.attempt_bundle) {
+          return turn.attempt_bundle.outcome === "committed" && Array.isArray(turn.attempt_bundle.selected_reveal?.knowledge_ids)
+            ? turn.attempt_bundle.selected_reveal.knowledge_ids
+            : [];
+        }
+        return Array.isArray(turn?.grounding_ids) ? turn.grounding_ids : [];
+      }))].sort();
+      const hasBundleEvidence = evidenceTurns.some((turn) => turn?.attempt_bundle);
+      const hasGroundingFallback = evidenceTurns.some((turn) => !turn?.attempt_bundle);
       return {
         replicate: replicate.replicate,
         scene_id: scene.scene,
@@ -39,6 +56,9 @@ export function buildSceneJudgments(report) {
         opening: scene.opening_text || "",
         turns,
         revealedKnowledgeIds,
+        reveal_evidence: hasBundleEvidence
+          ? (hasGroundingFallback ? "mixed" : "committed_bundles")
+          : "grounding_fallback",
         ...(turns.length ? {} : { skipped: true, skip_reason: "no usable turns" }),
       };
     }),

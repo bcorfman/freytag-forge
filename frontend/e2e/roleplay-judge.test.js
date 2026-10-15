@@ -71,6 +71,46 @@ test("scene canon judge sends only the current scene canon and parses its verdic
   assert.deepEqual(requestContent.canon.revealed_knowledge, [{ id: "k_sl_1a_a_r1", statement: "The entry clue is committed." }]);
 });
 
+test("scene canon judge distinguishes protected facts from ordinary invented details", async () => {
+  let request;
+  await judgeSceneNarration(
+    { sceneId: "1A", opening: "A tense house.", turns: [] },
+    {
+      environment: { OPENAI_API_KEY: "test-key" },
+      canon: { scene_id: "1A", situation: "A tense house.", pressure: "Find evidence.", revealed_knowledge: [] },
+      fetchImpl: async (_url, options) => {
+        request = JSON.parse(options.body);
+        return new Response(JSON.stringify({ output_text: JSON.stringify({ verdict: "pass", canon_consistent: true, scene_local: true, progressive: true, rich: true, protected_safe: true, exit_motivated: true, rewards_investigation: true, missing_or_wrong: [], reasons: [] }) }), { status: 200 });
+      },
+    },
+  );
+  const systemMessage = request.input[0].content;
+  assert.match(systemMessage, /revealed_knowledge is the set of authored facts the player has earned by committed reveal/);
+  assert.match(systemMessage, /authored protected fact that is NOT in revealed_knowledge/);
+  assert.match(systemMessage, /ordinary invented detail.*color, a minor object, or a bit of atmosphere/);
+  assert.match(systemMessage, /Contradiction of established canon still fails canon_consistent/);
+  assert.deepEqual(request.text.format.schema, {
+    type: "object",
+    properties: {
+      verdict: { type: "string", enum: ["pass", "fail"] },
+      canon_consistent: { type: "boolean" },
+      scene_local: { type: "boolean" },
+      progressive: { type: "boolean" },
+      rich: { type: "boolean" },
+      protected_safe: { type: "boolean" },
+      exit_motivated: { type: "boolean" },
+      rewards_investigation: { type: "boolean" },
+      missing_or_wrong: { type: "array", items: { type: "string" } },
+      reasons: { type: "array", items: { type: "string" } },
+    },
+    required: [
+      "verdict", "canon_consistent", "scene_local", "progressive", "rich", "protected_safe",
+      "exit_motivated", "rewards_investigation", "missing_or_wrong", "reasons",
+    ],
+    additionalProperties: false,
+  });
+});
+
 test("sceneCanon returns only revealed knowledge for the current scene", () => {
   const canon = sceneCanon("1A", ["k_sl_1a_a_r1", "k_sl_1a_b_r1", "k_sl_1b_a_r1", "scene:1A"]);
   const require = createRequire(import.meta.url);

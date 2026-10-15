@@ -142,16 +142,16 @@ class TurnObservation:
     action: str | None = None
     state: dict[str, str] | None = None
     prose: str = ""
-    revealed_ids: tuple[str, ...] = ()
-    created: tuple[tuple[str, CreationKind], ...] = ()
-    forced_progress: bool = False
-    clarified: bool = False
+    revealed_ids: tuple[str, ...] | None = None
+    created: tuple[tuple[str, CreationKind], ...] | None = None
+    forced_progress: bool | None = None
+    clarified: bool | None = None
     latency_s: float = 0.0
     requests: int = 0
     tokens: int = 0
 
     def __post_init__(self) -> None:
-        for _, kind in self.created:
+        for _, kind in self.created or ():
             if kind not in ("none", "descriptive", "interactable", "route_clue_person_capability"):
                 raise ValueError(f"invalid creation kind: {kind}")
             if kind == "none":

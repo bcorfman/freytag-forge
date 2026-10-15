@@ -1,0 +1,33 @@
+{
+  "run_name": "stage2-measurement-correctness",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage2",
+  "max_parallel": 2,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/ringer-work/stage2-base",
+  "tasks": [
+    {
+      "key": "journey-join",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of a scratch copy of the repo; edit files here directly and ONLY the files you own. Do NOT git commit and do NOT touch .git. No network calls, no billed runs.\n\nOWNED FILES: frontend/e2e/judge-journeys.js, frontend/e2e/judge-journeys.test.js.\n\nBACKGROUND: buildSceneJudgments(report) computes `revealedKnowledgeIds` for the canon judge from committed reveal evidence: for a turn with `attempt_bundle` it uses attempt_bundle.outcome === 'committed' && attempt_bundle.selected_reveal.knowledge_ids; turns without a bundle fall back to grounding_ids and mark scene.reveal_evidence ('committed_bundles' | 'mixed' | 'grounding_fallback'). BUT real saved reports do not put the bundle on the turn: frontend/e2e/blind-player.js turnLog() emits turns WITHOUT attempt_bundle (it keeps only `outcome` and `transition_cause`), while the SAME scene object carries a separate `bundles` array from collectBundles(): [{turn: <number>, attempt_bundle: {...}}]. So on real reports every turn takes the grounding fallback and the fix has no effect.\n\nCHANGE: in buildSceneJudgments, before computing evidence, attach bundles to turns by joining scene.bundles to scene.turns on the `turn` number (a turn's own inline `attempt_bundle`, if present, wins; a bundle whose turn number matches no turn is ignored; duplicate turn numbers: use the first). Everything else, including rejected-turn handling and the reveal_evidence marker, stays as is. Do not change turn text or any other output field. Add tests: a report shaped like the real one (turns from turnLog shape with no attempt_bundle + scene.bundles) yields committed ids and 'committed_bundles'; a bundle with outcome 'rejected' or 'game_break' contributes nothing; a partial bundles list gives 'mixed'; inline bundle wins over the joined one; unmatched bundle turn numbers are ignored. Also add one test that loads a real saved report pair if present at artifacts/e2e-blind-player.json (+ artifacts/e2e-blind-player-bundles-r1.json) -- skip it when absent -- but ONLY if you can tell from the files how they join; otherwise omit it and say so in your notes.\n\nHOW TO RUN: from the worktree `ln -s /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules` if missing (gitignored), then run the node tests named below from `cd frontend`, and `node --check` every .js file you changed. Match surrounding style. Notes to /home/bcorfman/dev/ringer-work/stage2-notes/journey-join-notes.md.\nTests to run: e2e/judge-journeys.test.js e2e/roleplay-judge.test.js e2e/blind-player.test.js",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage2/check_js.sh journey-join '^frontend/e2e/judge-journeys(\\.test)?\\.js$' e2e/judge-journeys.test.js e2e/roleplay-judge.test.js e2e/blind-player.test.js",
+      "verified": "owned files only; node tests pass"
+    },
+    {
+      "key": "warning-throw",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of a scratch copy of the repo; edit files here directly and ONLY the files you own. Do NOT git commit and do NOT touch .git. No network calls, no billed runs.\n\nOWNED FILES: frontend/e2e/helpers.js, frontend/e2e/blind-player.test.js.\n\nBACKGROUND: frontend/e2e/helpers.js resolveWarningIfPresent(page) used to click 'Return to scene' and then `await expect(warning).toBeHidden()` -- it THREW if the panel stayed visible. It is now implemented on top of handleGameBreak (frontend/e2e/blind-player.js), which never throws on a panel timeout and returns a record with outcome 'timeout'; resolveWarningIfPresent returns `record != null`, i.e. TRUE even when the panel never closed, so other callers (scene-walk, canon journeys) would carry on with a stuck panel and fail later with a confusing error.\n\nCHANGE: keep the boolean contract (false when there was no panel, true when it was resolved) but THROW an Error with a clear message ('game-break panel did not close ...' including the record's warning_id and outcome) when the returned record's outcome is 'timeout'. Add a node:test case in blind-player.test.js using the existing fakeGameBreakPage helper that checks: no panel -> false; resolved -> true; timeout -> rejects with that message. helpers.js imports @playwright/test; if importing it in a node test is a problem, test via a small exported pure helper you add (in helpers.js or blind-player.js -- you may only edit helpers.js, so put it there) and keep resolveWarningIfPresent a thin wrapper.\n\nHOW TO RUN: from the worktree `ln -s /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules` if missing (gitignored), then run the node tests named below from `cd frontend`, and `node --check` every .js file you changed. Match surrounding style. Notes to /home/bcorfman/dev/ringer-work/stage2-notes/warning-throw-notes.md.\nTests to run: e2e/blind-player.test.js e2e/scene-walk.test.js",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage2/check_js.sh warning-throw '^frontend/e2e/(helpers|blind-player\\.test)\\.js$' e2e/blind-player.test.js e2e/scene-walk.test.js",
+      "verified": "owned files only; node tests pass"
+    }
+  ]
+}

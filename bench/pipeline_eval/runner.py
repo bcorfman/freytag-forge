@@ -6,6 +6,7 @@ import time
 from collections.abc import Callable, Mapping
 from typing import Any, Protocol
 
+from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
@@ -35,12 +36,27 @@ class ScriptedArm:
 class PipelineArm:
     name = "current"
 
-    def __init__(self, narrator: Callable[[str], dict[str, Any]]) -> None:
+    def __init__(
+        self,
+        narrator: Callable[[str], dict[str, Any]],
+        *,
+        refusal_ask: Callable[[object, object], dict | None] | None = None,
+    ) -> None:
         self.narrator = narrator
+        self.refusal_ask = refusal_ask
 
     def play(self, case: EvalCase, state: RuntimeState) -> list[TurnObservation]:
         observations: list[TurnObservation] = []
         engine: RuntimeEngine | None = None
+
+        def classifier(state: object, questions: object) -> dict | None:
+            nonlocal turn_requests, turn_tokens
+            turn_requests += 1
+            answer = self.refusal_ask(state, questions) if self.refusal_ask is not None else None
+            usage = answer.get("usage") if isinstance(answer, dict) else None
+            if isinstance(usage, int):
+                turn_tokens += usage
+            return answer
 
         def provider(command: str) -> dict[str, Any]:
             nonlocal turn_requests, turn_tokens, engine_extra_calls_seen
@@ -53,7 +69,15 @@ class PipelineArm:
             turn_tokens += usage
             return {key: value for key, value in reply.items() if key != "usage"}
 
-        engine = RuntimeEngine(state, provider)
+        capture = None
+        if self.refusal_ask is not None:
+            capture = WorldCapture(
+                build_capture_provider(state, mark_fixed=True),
+                classifier,
+                fixed_refusal=True,
+                engine_refusal=True,
+            )
+        engine = RuntimeEngine(state, provider, capture=capture) if capture else RuntimeEngine(state, provider)
         for index, command in enumerate(case.commands):
             turn_requests = 0
             turn_tokens = 0
@@ -79,6 +103,9 @@ class PipelineArm:
                     state=grounded_state(engine.state),
                     prose=result.narration,
                     revealed_ids=tuple(result.selected_knowledge_ids),
+                    forced_progress=(
+                        getattr(attempt, "transition_cause", None) == "forced" if attempt is not None else None
+                    ),
                     latency_s=elapsed,
                     requests=requests,
                     tokens=turn_tokens,
@@ -89,7 +116,15 @@ class PipelineArm:
                 restored = RuntimeState.bootstrap(state.package)
                 restored.restore_snapshot(snapshot)
                 state = restored
-                engine = RuntimeEngine(state, provider)
+                capture = None
+                if self.refusal_ask is not None:
+                    capture = WorldCapture(
+                        build_capture_provider(state, mark_fixed=True),
+                        classifier,
+                        fixed_refusal=True,
+                        engine_refusal=True,
+                    )
+                engine = RuntimeEngine(state, provider, capture=capture) if capture else RuntimeEngine(state, provider)
         return observations
 
 
