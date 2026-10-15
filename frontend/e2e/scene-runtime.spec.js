@@ -17,6 +17,10 @@ import { classifyFailure, evaluateSpine, loadExpectedReveals } from "./spine-rec
 
 const SPINE_MAX_TURNS = 120;
 
+// The 3C resolution is route-driven: its escape, consequence and Phase Two events land around
+// scene turns 13-14, so the spine keeps cycling prompts in 3C until the story completes or this cap.
+const SPINE_MAX_3C_TURNS = 24;
+
 // A scene has at most three authored reveals, so more consecutive empty turns than
 // that means the scene is not progressing rather than merely taking its time.
 const MAX_STALLED_TURNS = 5;
@@ -162,7 +166,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
       promptsUsed.set(sceneId, used + 1);
       sceneId = sceneOut;
       if (payload.story_complete === true || payload.state?.story_complete === true || bundle?.story_complete === true) break;
-      if (sceneId === "3C" && (promptsUsed.get(sceneId) || 0) >= scenePrompts[sceneId].length + 6) break;
+      if (sceneId === "3C" && (promptsUsed.get(sceneId) || 0) >= SPINE_MAX_3C_TURNS) break;
     }
   } catch (error) {
     const classified = classifyFailure(error);
