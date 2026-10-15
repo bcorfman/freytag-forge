@@ -71,6 +71,65 @@ test("scene canon judge sends only the current scene canon and parses its verdic
   assert.deepEqual(requestContent.canon.revealed_knowledge, [{ id: "k_sl_1a_a_r1", statement: "The entry clue is committed." }]);
 });
 
+test("scene canon judge omits artifact evidence without mutating turns", async () => {
+  let request;
+  const turn = {
+    prompt: "Search the desk.",
+    player_input: "Search the desk.",
+    narration: "You find a note.",
+    left_scene: false,
+    beats_projected: ["beat-1"],
+    authored_spans: [{ text: "You find a note." }],
+    knowledge_available: ["k-1"],
+    segments: [{ kind: "narration", text: "You find a note.", grounding_ids: ["k-1"] }],
+    bundle: {
+      outcome: "continue",
+      transition_cause: null,
+      story_complete: false,
+      selected_reveal: null,
+      cue_stage: "none",
+      committed_delta: {},
+    },
+  };
+
+  await judgeSceneNarration(
+    { sceneId: "1A", opening: "A tense house.", turns: [turn] },
+    {
+      environment: { OPENAI_API_KEY: "test-key" },
+      canon: {
+        scene_id: "1A",
+        situation: "A tense house.",
+        pressure: "Find evidence.",
+        revealed_knowledge: [],
+      },
+      fetchImpl: async (_url, options) => {
+        request = JSON.parse(options.body);
+        return new Response(JSON.stringify({ output_text: JSON.stringify({ verdict: "pass", reasons: [] }) }), { status: 200 });
+      },
+    },
+  );
+
+  const sentTurn = JSON.parse(request.input[1].content).turns[0];
+  assert.deepEqual(sentTurn, {
+    prompt: "Search the desk.",
+    player_input: "Search the desk.",
+    narration: "You find a note.",
+    left_scene: false,
+    beats_projected: ["beat-1"],
+    authored_spans: [{ text: "You find a note." }],
+    knowledge_available: ["k-1"],
+  });
+  assert.deepEqual(turn.segments, [{ kind: "narration", text: "You find a note.", grounding_ids: ["k-1"] }]);
+  assert.deepEqual(turn.bundle, {
+    outcome: "continue",
+    transition_cause: null,
+    story_complete: false,
+    selected_reveal: null,
+    cue_stage: "none",
+    committed_delta: {},
+  });
+});
+
 test("scene canon judge distinguishes protected facts from ordinary invented details", async () => {
   let request;
   await judgeSceneNarration(

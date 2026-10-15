@@ -127,10 +127,15 @@ export async function judgeSceneNarration(
   { environment = process.env, fetchImpl = fetch, canon = sceneCanon(sceneId, revealedKnowledgeIds) } = {},
 ) {
   const { apiKey, model } = judgeConfiguration(environment);
-  const turnsWithBeatContext = turns.map((turn) => ({
-    ...turn,
-    beats_projected: turn.beats_projected || [],
-  }));
+  const turnsWithBeatContext = turns.map((turn) => {
+    const turnForJudge = { ...turn };
+    delete turnForJudge.segments;
+    delete turnForJudge.bundle;
+    return {
+      ...turnForJudge,
+      beats_projected: turn.beats_projected || [],
+    };
+  });
   const response = await fetchImpl("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },

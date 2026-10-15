@@ -1,0 +1,21 @@
+{
+  "run_name": "stage2-canon-spans",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage2-spans",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "judge-omit",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 2,
+      "timeout_s": 1500,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge; edit files here directly and ONLY the files you own. Never edit /home/bcorfman/dev/freytag-forge itself. Do NOT git commit and do NOT touch .git. No network calls, no billed runs, never call the OpenAI API (tests use injected fetch fakes).\n\nOWNED FILES: frontend/e2e/roleplay-judge.js, frontend/e2e/roleplay-judge.test.js. Nothing else.\n\nBACKGROUND: judgeSceneNarration in roleplay-judge.js builds the judge request from `turns.map((turn) => ({ ...turn, beats_projected: turn.beats_projected || [] }))`, i.e. it sends EVERY field of each turn. The hosted @llm-canon test (scene-runtime.spec.js) now stores extra evidence on each turn for the saved artifact: `segments` (array of {kind, text, grounding_ids}) and `bundle` (a summary of the runtime attempt bundle: outcome, transition_cause, story_complete, selected_reveal, cue_stage, committed_delta). Those are evidence for people reading the artifact; they must NOT reach the judge: `segments` duplicates the narration text and inflates tokens, and `bundle` exposes runtime internals the judge should not weigh. The judge should keep receiving exactly the fields it receives today plus the intended new ones (`authored_spans`, `knowledge_available`).\n\nCHANGE: in judgeSceneNarration, drop the two keys `segments` and `bundle` from each turn before building the request (a small explicit omit list, not an allowlist, so every other existing field such as `prompt`, `player_input`, `narration`, `left_scene`, `beats_projected`, `authored_spans`, `knowledge_available` is sent exactly as before). Do not mutate the caller's turn objects. Do not change the system prompt, the schema or anything else. Add a node:test case with the injected fetchImpl: turns carrying segments and bundle are sent without those keys, with all other keys intact, and the original turn objects still hold segments and bundle afterwards.\n\nHOW TO RUN: from the worktree `ln -s /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules` if missing (gitignored), then `cd frontend && node --test e2e/roleplay-judge.test.js e2e/judge-journeys.test.js && node --check e2e/roleplay-judge.js`. Match surrounding style.\n",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage2/check_js.sh judge-omit '^frontend/e2e/roleplay-judge(\\.test)?\\.js$' e2e/roleplay-judge.test.js e2e/judge-journeys.test.js",
+      "verified": "judge request omits stored evidence keys segments and bundle"
+    }
+  ]
+}
