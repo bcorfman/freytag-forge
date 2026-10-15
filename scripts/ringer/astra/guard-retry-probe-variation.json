@@ -1,0 +1,74 @@
+{
+ "name": "astra-guard-retry-probe",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "p1",
+    "inputs": [
+     "Look for the memory card Michelle hid."
+    ]
+   },
+   {
+    "name": "p2",
+    "inputs": [
+     "Search under the drawer for a hidden card."
+    ]
+   },
+   {
+    "name": "p3",
+    "inputs": [
+     "Read the coded note Michelle left."
+    ]
+   },
+   {
+    "name": "p4",
+    "inputs": [
+     "Decode Michelle's maintenance code."
+    ]
+   },
+   {
+    "name": "p5",
+    "inputs": [
+     "Look for a maintenance access route into the facility."
+    ]
+   },
+   {
+    "name": "p6",
+    "inputs": [
+     "Ask Brandon about Michelle's card."
+    ]
+   },
+   {
+    "name": "p7",
+    "inputs": [
+     "Check my phone for Michelle's last message."
+    ]
+   },
+   {
+    "name": "p8",
+    "inputs": [
+     "Search the workstation for anything Michelle hid."
+    ]
+   },
+   {
+    "name": "p9",
+    "inputs": [
+     "Look for Michelle's coded note in the kitchen."
+    ]
+   },
+   {
+    "name": "p10",
+    "inputs": [
+     "Search the bench for the card Michelle left."
+    ]
+   }
+  ]
+ }
+}

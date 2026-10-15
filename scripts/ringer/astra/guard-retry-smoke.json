@@ -1,0 +1,18 @@
+{
+ "run_name": "astra-guard-retry-measurement",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-guard-retry-smoke",
+ "max_parallel": 1,
+ "tasks": [
+  {
+   "key": "smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "max_attempts": 1,
+   "timeout_s": 300,
+   "check_timeout_s": 3000,
+   "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs a live billed bench of three known knowledge-guard rejection prompts in scene 1A of the continuity-initiative story (1 replicate each) and prints every turn with its guard-retry outcome plus the rescue-rate summary. Reply with the single word: ready.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/guard-retry-measure-check.sh /home/bcorfman/dev/ringer-work/astra-guard-retry-smoke/out 1",
+   "verified": "bench ran, every turn classified, rescue rate reported from the records"
+  }
+ ]
+}

@@ -1,8 +1,8 @@
 # Scene-fixing guide
 
 Recommend only techniques already supported by the project. Before proposing
-a fix, check the decisions in section 12 of `.plans/world-model.md` (including
-the “Brandon chose” entries), [the world-model grounding guide](world-model-grounding.md),
+a fix, check [the world-model grounding guide](world-model-grounding.md),
+the historical decisions referenced in the [world-model checklist](../.plans/world-model.md#decisions-and-evidence),
 and fixes that landed in earlier scenes. Name what you checked; propose a new
 technique only when none covers the case.
 
