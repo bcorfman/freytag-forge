@@ -11,7 +11,7 @@ from storygame.runtime.cloudflare import NarrationProviderError
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState, TurnRecord
-from storygame.runtime.validation import ProposalValidationError
+from storygame.runtime.validation import REJECTED_TURN_MESSAGE, ProposalValidationError
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ActivationRule, CanonicalRouteEvent, FactPredicate, RouteOperation
 from storygame.web_demo import create_demo_app
@@ -330,5 +330,6 @@ def test_web_rejection_exposes_bundle_only_with_prompt_gate(monkeypatch, tmp_pat
         )
     assert response.status_code == 409
     assert response.headers["X-Freytag-Rejection-Code"] == "narration_known_term_leak"
-    assert response.json()["detail"] == "narration mentions an unavailable entity 'rebecca'"
+    expected_detail = "narration mentions an unavailable entity 'rebecca'" if enabled else REJECTED_TURN_MESSAGE
+    assert response.json()["detail"] == expected_detail
     assert ("attempt_bundle" in response.json()) is enabled

@@ -20,6 +20,8 @@ from storygame.runtime.state import RuntimeState, RuntimeStateError
 from storygame.runtime.world_model import WORLD_EFFECTS_APPLIED, world_for
 from storygame.story_package.models import FactPredicate, StoryPackage, Transition
 
+REJECTED_TURN_MESSAGE = "I don't understand. Can you try something else?"
+
 
 class ProposalValidationError(RuntimeStateError):
     """An untrusted provider proposal violates the loaded package contract."""

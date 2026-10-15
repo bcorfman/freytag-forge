@@ -27,9 +27,11 @@ from storygame.runtime.knowledge_audit import build_knowledge_audit
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.scripted_provider import ScriptedTurnProvider
 from storygame.runtime.state import RuntimeState, RuntimeStateError
-from storygame.runtime.validation import ProposalValidationError
+from storygame.runtime.validation import REJECTED_TURN_MESSAGE, ProposalValidationError
 from storygame.runtime.world_model import display_name, world_for
 from storygame.story_package.loader import StoryPackageError, load_story_package
+
+logger = logging.getLogger(__name__)
 
 
 class _Request(BaseModel):
@@ -338,6 +340,7 @@ def create_demo_app(
             for fact in state.facts.asserted
             if not fact.predicate.startswith("wk_") and fact.predicate != "world_effects_applied"
         }
+        engine: RuntimeEngine | None = None
         try:
             provider = None if state.story_complete else provider_for(state)
             test_clock = _test_clock_seconds(body, request)
@@ -356,31 +359,65 @@ def create_demo_app(
                 )
             raise http_error from error
         except RuntimeContractError as error:
-            http_error = HTTPException(status_code=422, detail=_contract_error_detail(error))
+            raw_detail = _contract_error_detail(error)
+            logger.warning("turn rejected [runtime_contract_error]: %s", str(error))
             if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1":
                 return JSONResponse(
                     status_code=422,
                     content={
-                        "detail": http_error.detail,
+                        "detail": raw_detail,
                         "attempt_bundle": engine.last_attempt.model_dump(mode="json"),
                     },
                 )
-            raise http_error from error
+            # Keep engine diagnostics in server logs; the player only needs a safe recovery line.
+            raise HTTPException(status_code=422, detail=REJECTED_TURN_MESSAGE) from error
         except ProposalValidationError as error:
             headers = {"X-Freytag-Rejection-Code": error.code} if error.code else {}
-            http_error = HTTPException(status_code=409, detail=str(error), headers=headers)
+            raw_detail = str(error)
+            logger.warning("turn rejected [%s]: %s", error.code or "unknown", raw_detail)
             if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1":
                 return JSONResponse(
                     status_code=409,
                     content={
-                        "detail": http_error.detail,
+                        "detail": raw_detail,
                         "attempt_bundle": engine.last_attempt.model_dump(mode="json"),
                     },
                     headers=headers,
                 )
-            raise http_error from error
+            raise HTTPException(status_code=409, detail=REJECTED_TURN_MESSAGE, headers=headers) from error
         except RuntimeStateError as error:
-            raise HTTPException(status_code=409, detail=str(error)) from error
+            raw_detail = str(error)
+            logger.warning("turn rejected [runtime_state_error]: %s", raw_detail)
+            if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1":
+                return JSONResponse(
+                    status_code=409,
+                    content={
+                        "detail": raw_detail,
+                        "attempt_bundle": (
+                            engine.last_attempt.model_dump(mode="json")
+                            if engine is not None and engine.last_attempt is not None
+                            else None
+                        ),
+                    },
+                )
+            raise HTTPException(status_code=409, detail=REJECTED_TURN_MESSAGE) from error
+        except HTTPException:
+            raise
+        except Exception as error:
+            logger.exception("Unhandled engine error during turn: %s", error)
+            if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1":
+                return JSONResponse(
+                    status_code=500,
+                    content={
+                        "detail": str(error),
+                        "attempt_bundle": (
+                            engine.last_attempt.model_dump(mode="json")
+                            if engine is not None and engine.last_attempt is not None
+                            else None
+                        ),
+                    },
+                )
+            raise HTTPException(status_code=500, detail=REJECTED_TURN_MESSAGE) from error
         store.save(body.session_id, state)
         warning = proposal.game_break.model_dump(mode="json") if proposal.game_break else None
         expose_prompt = getenv("FREYTAG_EXPOSE_PROMPT", "") == "1"
