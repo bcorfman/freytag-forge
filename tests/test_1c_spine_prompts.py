@@ -42,6 +42,12 @@ def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
 
 def test_1c_spine_prompts_match_their_authored_reveals_in_order() -> None:
     prompts = _scene_prompts()
+    assert prompts[:3] == [
+        "Inspect the electrical load and fresh ventilation at the loading docks.",
+        "Compare the identification numbers on the uniforms in the processing area against the missing-person records.",
+        "Read the logistics computer to trace the transports beyond this site.",
+    ]
+    assert prompts[3] == "Play the recording the logistics computer has stored."
     expected = [
         {"k_sl_1c_a_r1"},
         {"k_sl_1c_b_r1"},

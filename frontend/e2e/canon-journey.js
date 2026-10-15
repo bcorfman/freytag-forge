@@ -31,7 +31,7 @@ export const scenePrompts = {
     "Inspect the electrical load and fresh ventilation at the loading docks.",
     "Compare the identification numbers on the uniforms in the processing area against the missing-person records.",
     "Read the logistics computer to trace the transports beyond this site.",
-    "Play the recording of Charles and Rebecca.",
+    "Play the recording the logistics computer has stored.",
   ],
   // 2A.1 hideout -> 2A.2 infiltration plan -> 2A.3 entering under cover
   "2A": [
