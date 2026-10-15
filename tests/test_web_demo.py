@@ -136,6 +136,7 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
     assert delivery["segments_truncated"] is False
     assert delivery["segments_dropped"] == 0
     assert delivery["beats_projected"] == []
+    assert delivery["revealed_knowledge_ids"] == []
     json.dumps(turn.json())
 
 

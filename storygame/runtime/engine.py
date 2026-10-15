@@ -381,6 +381,10 @@ class RuntimeEngine(CanonicalEventMixin):
         staged_cue_fact_id = self.state.staged_cue_fact_id
         staged_cue_stage = self.state.staged_cue_stage
         self.state.apply_proposal(proposal, canonical_event_ids=(canonical_event_id,) if canonical_event_id else ())
+        if proposal.selected_knowledge_ids:
+            self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
+                update={"revealed_knowledge_ids": proposal.selected_knowledge_ids}
+            )
         if self.capture:
             context = self.capture.context()
             capture_record = self.capture.after_commit(
