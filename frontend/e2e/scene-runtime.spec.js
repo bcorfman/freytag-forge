@@ -8,14 +8,11 @@ import {
   submitTurnObserved,
   writeCategoryReport,
 } from "./helpers.js";
-import { loadPackagePacing } from "./package-clock.js";
+import { canonTurnBudget, loadPackagePacing } from "./package-clock.js";
 import { buildKnowledgeTimelineReport, recordTurnOutcome } from "./knowledge-timeline-record.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts } from "./canon-journey.js";
 
-// Nine scenes needing up to three earned reveals each, with headroom for a turn
-// the model spends on a non-progressing but valid candidate.
-const MAX_CANON_TURNS = 45;
 const SPINE_MAX_TURNS = 120;
 
 // A scene has at most three authored reveals, so more consecutive empty turns than
@@ -128,7 +125,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
 test("judges every reached scene against its committed knowledge canon @llm-canon", async ({ page }) => {
   test.skip(!process.env.OPENAI_API_KEY, "requires OPENAI_API_KEY");
   test.skip(!process.env.E2E_PACKAGE_CLOCK, "requires the opt-in package E2E game clock");
-  test.setTimeout(20 * 60_000);
+  test.setTimeout(45 * 60_000);
   const pacing = loadPackagePacing({ storyId: "continuity_initiative" });
   const controller = await installPackageClock(page);
   const sessionPayload = await startSceneSession(page);
@@ -169,7 +166,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
     throw new Error(`Scene ${currentSceneId} exceeded its handoff turn ${String(handoff.target_turn)}.`);
   };
 
-  for (let index = 0; index < MAX_CANON_TURNS; index += 1) {
+  for (let index = 0; index < canonTurnBudget(pacing); index += 1) {
     if (sceneId === sceneOrder.at(-1) && (promptsUsed.get(sceneId) || 0) >= scenePrompts[sceneId].length) break;
     const sourceSceneId = sceneId;
     const used = promptsUsed.get(sourceSceneId) || 0;

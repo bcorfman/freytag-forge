@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { loadPackagePacing } from "./package-clock.js";
+import { canonTurnBudget, loadPackagePacing } from "./package-clock.js";
 
 const repoRoot = join(import.meta.dirname, "../..");
 
@@ -115,6 +115,33 @@ test("loads the real package and resolves turn milestones", () => {
       "routes_collapse_3c",
     ],
   );
+});
+
+test("calculates the canon turn budget from scene handoffs", () => {
+  const pacing = {
+    sceneOrder: ["A", "B"],
+    scenePoint(sceneId, point) {
+      return point === "handoff" ? { scene_id: sceneId, target_turn: sceneId === "A" ? 2 : 4 } : undefined;
+    },
+  };
+
+  assert.equal(canonTurnBudget(pacing), 13);
+  assert.equal(canonTurnBudget(pacing, 2), 10);
+  assert.throws(
+    () => canonTurnBudget({ sceneOrder: ["A"], scenePoint: () => undefined }),
+    /Scene "A" has no handoff point/,
+  );
+});
+
+test("budgets every scene in the real package pacing", () => {
+  const pacing = loadPackagePacing({ storyId: "continuity_initiative", repoRoot });
+  const handoffTotal = pacing.sceneOrder.reduce(
+    (total, sceneId) => total + pacing.scenePoint(sceneId, "handoff").target_turn,
+    0,
+  );
+
+  assert.ok(canonTurnBudget(pacing) >= handoffTotal);
+  assert.ok(canonTurnBudget(pacing) > 45);
 });
 
 test("reports unknown story, scene, event, and point identifiers", () => {

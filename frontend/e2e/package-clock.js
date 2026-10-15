@@ -5,6 +5,21 @@ import YAML from "yaml";
 
 const PACING_POINTS = new Set(["min", "nudge", "handoff"]);
 
+export function canonTurnBudget(pacing, margin = 5) {
+  return pacing.sceneOrder.reduce((total, sceneId) => {
+    let handoff;
+    try {
+      handoff = pacing.scenePoint(sceneId, "handoff");
+    } catch {
+      throw new Error(`Scene "${sceneId}" has no handoff point in package pacing.`);
+    }
+    if (!handoff || !Number.isSafeInteger(handoff.target_turn)) {
+      throw new Error(`Scene "${sceneId}" has no handoff point in package pacing.`);
+    }
+    return total + handoff.target_turn + 1;
+  }, margin);
+}
+
 function pacingError(storyId, pacingPath, identifier, detail) {
   return new Error(
     `Invalid pacing for story "${storyId}" in "${pacingPath}" (identifier "${identifier}"): ${detail}`,
