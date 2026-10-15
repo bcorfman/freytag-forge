@@ -83,6 +83,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
   await startSceneSession(page);
   const turns = [];
   const deliveryRecords = [];
+  const perTurn = [];
   const promptsUsed = new Map();
   let sceneId = "1A";
   for (let index = 0; index < SPINE_MAX_TURNS; index += 1) {
@@ -91,6 +92,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
     const payload = await submitTurn(page, input);
     turns.push({ scene_id: payload.state?.scene_id, elapsed_seconds: payload.state?.story_elapsed_seconds });
     deliveryRecords.push(payload.delivery || {});
+    perTurn.push({ n: index + 1, scene_in: sceneId, input, scene_out: payload.state?.scene_id, delivery: payload.delivery || {} });
     await resolveWarningIfPresent(page);
     promptsUsed.set(sceneId, used + 1);
     sceneId = payload.state?.scene_id;
@@ -117,6 +119,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
     pressure_trajectory: turns,
     distinct_paths_to_climax: [sceneOrder.join(">")],
     delivery,
+    per_turn: perTurn,
   });
   expect(sceneOrder.every((scene) => /^[123][ABC]$/.test(scene))).toBe(true);
   expect(sceneOrder.at(-1)).toBe("3C");
