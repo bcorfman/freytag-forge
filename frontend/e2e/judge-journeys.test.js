@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 
 import { buildSceneJudgments, judgeJourneys } from "./judge-journeys.js";
+import { loadAuthoredText } from "./authored-spans.js";
 
 const fixed = {
   verdict: "pass",
@@ -34,8 +35,8 @@ test("builds scene judge inputs from committed reveal evidence and skips scenes 
   assert.deepEqual(first, {
     replicate: 1, scene_id: "1A", sceneId: "1A", opening: "Opening",
     turns: [
-      { player_input: "look", narration: "Looked", left_scene: false, beats_projected: [] },
-      { player_input: "leave", narration: "Leaving", left_scene: true, beats_projected: [] },
+      { player_input: "look", narration: "Looked", left_scene: false, beats_projected: [], knowledge_available: ["a", "z"] },
+      { player_input: "leave", narration: "Leaving", left_scene: true, beats_projected: [], knowledge_available: ["a", "z"] },
     ],
     revealedKnowledgeIds: ["a", "c", "z"],
     reveal_evidence: "mixed",
@@ -54,36 +55,36 @@ test("uses committed bundle knowledge ids, ignores rejected and non-committed tu
   assert.equal(scene.reveal_evidence, "committed_bundles");
 });
 
-test("marks runtime-authored delivery reasons and omits them otherwise", () => {
+test("attributes only matching authored spans and makes knowledge temporal", () => {
+  const authored = loadAuthoredText();
   const [scene] = buildSceneJudgments({ replicates: [{ replicate: 1, scenes: [{ scene: "1A", turns: [
-    { turn: 1, input: "forced", text: "forced", attempt_bundle: { outcome: "committed", transition_cause: "forced" } },
-    { turn: 2, input: "timer", text: "timer", attempt_bundle: { outcome: "committed", transition_cause: "timer" } },
-    { turn: 3, input: "end", text: "end", attempt_bundle: { outcome: "committed", story_complete: true } },
-    { turn: 4, input: "cue", text: "cue", attempt_bundle: { outcome: "committed", cue_stage: { delivered: true } } },
-    { turn: 5, input: "delivery", text: "delivery", attempt_bundle: { outcome: "committed", selected_reveal: { delivery_fact_ids: ["fact-1"] } } },
-    { turn: 6, input: "plain", text: "plain", attempt_bundle: { outcome: "committed" } },
-    { turn: 7, input: "rejected", text: "rejected", attempt_bundle: { outcome: "rejected", transition_cause: "forced", cue_stage: { delivered: true } } },
-    { turn: 8, input: "broken", text: "broken", attempt_bundle: { outcome: "game_break", story_complete: true } },
-    { turn: 9, input: "legacy", text: "legacy" },
+    { turn: 1, input: "first", text: "first", attempt_bundle: { outcome: "committed", selected_reveal: { knowledge_ids: ["early"] } } },
+    { turn: 2, input: "later", text: "later", attempt_bundle: { outcome: "committed", selected_reveal: { knowledge_ids: ["late"] } } },
   ] }] }] });
-  assert.deepEqual(scene.turns.slice(0, 5).map((turn) => turn.authored_delivery), [
-    ["forced_handoff"],
-    ["timer_handoff"],
-    ["ending"],
-    ["cue_delivered"],
-    ["delivery_facts"],
-  ]);
-  assert.equal("authored_delivery" in scene.turns[5], false);
-  assert.equal("authored_delivery" in scene.turns[6], false);
-  assert.equal("authored_delivery" in scene.turns[7], false);
-  assert.equal("authored_delivery" in scene.turns[8], false);
+  assert.deepEqual(scene.turns[0].knowledge_available, ["early"]);
+  assert.deepEqual(scene.turns[1].knowledge_available, ["early", "late"]);
+  assert.equal("authored_delivery" in scene.turns[0], false);
+  assert.equal(Object.hasOwn(scene.turns[0], "authored_spans"), false);
+  assert.equal(authored.knowledgeDeliveryTexts.size > 0, true);
 });
 
-test("marks authored delivery on a joined bundle", () => {
+test("attributes a real 3B bridge and excludes narrator-written text", () => {
+  const authored = loadAuthoredText();
+  const bridge = authored.bridgeTextsByScenePair.get("3B>3C");
+  const [scene] = buildSceneJudgments({ replicates: [{ replicate: 1, scenes: [{ scene: "3B", turns: [
+    { turn: 1, input: "leave", text: `${bridge} The narrator adds an unearned observation.`, attempt_bundle: {
+      outcome: "committed", transition_cause: "forced", committed_delta: { scene_from: "3B", scene_to: "3C" },
+    } },
+  ] }] }] });
+  assert.deepEqual(scene.turns[0].authored_spans, [{ text: bridge, source_kind: "bridge", source_id: "3B>3C" }]);
+});
+
+test("omits authored spans and temporal knowledge without bundle evidence", () => {
   const [scene] = buildSceneJudgments({ replicates: [{ replicate: 1, scenes: [{ scene: "1A", turns: [
-    { turn: 1, input: "leave", text: "Leaving" },
-  ], bundles: [{ turn: 1, attempt_bundle: { outcome: "committed", transition_cause: "forced" } }] }] }] });
-  assert.deepEqual(scene.turns[0].authored_delivery, ["forced_handoff"]);
+    { turn: 1, text: "legacy", grounding_ids: ["legacy"] },
+  ] }] }] });
+  assert.equal("authored_spans" in scene.turns[0], false);
+  assert.equal("knowledge_available" in scene.turns[0], false);
 });
 
 test("falls back to grounding ids without bundles and marks mixed reports", () => {

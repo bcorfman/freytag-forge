@@ -12,7 +12,7 @@ import { canonTurnBudget, loadPackagePacing } from "./package-clock.js";
 import { buildKnowledgeTimelineReport, recordTurnOutcome } from "./knowledge-timeline-record.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts } from "./canon-journey.js";
-import { authoredDeliveryReasons } from "./authored-delivery.js";
+import { attributeNarration, eligibleAuthoredTexts, loadAuthoredText } from "./authored-spans.js";
 
 const SPINE_MAX_TURNS = 120;
 
@@ -28,9 +28,22 @@ function narrationText(payload) {
   return turnText.join(" ").trim();
 }
 
-function recordRevealedKnowledge(scene, segments) {
-  const groundingIds = segments.flatMap((segment) => segment.grounding_ids || []);
-  scene.revealedKnowledgeIds = [...new Set([...scene.revealedKnowledgeIds, ...groundingIds])];
+function recordRevealedKnowledge(scene, segments, bundle) {
+  const ids = bundle
+    ? bundle.outcome === "committed" ? bundle.selected_reveal?.knowledge_ids || [] : []
+    : segments.flatMap((segment) => segment.grounding_ids || []);
+  scene.revealedKnowledgeIds = [...new Set([...scene.revealedKnowledgeIds, ...ids])];
+}
+
+function bundleSummary(bundle) {
+  return {
+    outcome: bundle.outcome,
+    transition_cause: bundle.transition_cause,
+    story_complete: bundle.story_complete,
+    selected_reveal: bundle.selected_reveal,
+    cue_stage: bundle.cue_stage,
+    committed_delta: bundle.committed_delta,
+  };
 }
 
 async function exerciseDistinctFreeTextActions(page) {
@@ -145,8 +158,12 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
   const promptsUsed = new Map();
   const progress = [];
   const firedPacingEventIds = new Set();
-  let authoredDeliveryTurns = 0;
+  let authoredSpanTurns = 0;
   let bundlesSeen = 0;
+  let revealEvidenceFallbackTurns = 0;
+  let storyCompleteSeen = false;
+  let authored;
+  const knowledgeAvailableByScene = new Map();
 
   const turnMilestoneFor = (currentSceneId, currentTurns) => {
     const pendingEvent = pacing.eventOrder
@@ -180,9 +197,9 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       const turnsUntilMilestone = milestone ? controller.turnsUntilMilestone() : null;
       const payload = await submitTurn(page, input);
       await resolveWarningIfPresent(page);
-      const reasons = authoredDeliveryReasons(payload.attempt_bundle);
-      if (payload.attempt_bundle) bundlesSeen += 1;
-      if (reasons.length) authoredDeliveryTurns += 1;
+      const bundle = payload.attempt_bundle;
+      if (bundle) bundlesSeen += 1;
+      if (payload.state?.story_complete === true || bundle?.story_complete === true) storyCompleteSeen = true;
       const timing = milestone ? controller.history().at(-1) : null;
       const observedTurns = payload.state?.turns_since_scene_entry;
       const reachedSameScene = payload.state?.scene_id === sourceSceneId;
@@ -241,16 +258,31 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       // and the judge only ever read it as the park's odd first line.
       const departure = entered ? segments.slice(0, -1) : segments;
       const sceneNarration = departure.map((segment) => segment.text).join(" ").trim();
-      recordRevealedKnowledge(byScene.get(sourceSceneId), departure);
+      recordRevealedKnowledge(byScene.get(sourceSceneId), departure, bundle);
+      const available = knowledgeAvailableByScene.get(sourceSceneId) || new Set();
+      if (bundle?.outcome === "committed") {
+        for (const id of bundle.selected_reveal?.knowledge_ids || []) available.add(id);
+      }
+      knowledgeAvailableByScene.set(sourceSceneId, available);
       if (sceneNarration) {
-        byScene.get(sourceSceneId).turns.push({
+        const eligible = bundle && !authored ? (authored = loadAuthoredText(), eligibleAuthoredTexts(bundle, authored)) : eligibleAuthoredTexts(bundle, authored);
+        const authoredSpans = attributeNarration(sceneNarration, eligible)
+          .filter((span) => span.origin === "authored")
+          .map((span) => ({ text: span.text, source_kind: span.source.kind, source_id: span.source.id }));
+        if (authoredSpans.length) authoredSpanTurns += 1;
+        const turn = {
           player_input: input,
           narration: sceneNarration,
           left_scene: entered,
           beats_projected: payload.delivery?.beats_projected || [],
           ...(payload.prompt ? { prompt: payload.prompt } : {}),
-          ...(reasons.length && payload.attempt_bundle ? { authored_delivery: reasons } : {}),
-        });
+          segments: departure.map((segment) => ({ kind: segment.kind, text: segment.text, grounding_ids: segment.grounding_ids || [] })),
+          ...(bundle ? { bundle: bundleSummary(bundle) } : {}),
+          ...(authoredSpans.length ? { authored_spans: authoredSpans } : {}),
+          knowledge_available: [...available].sort(),
+        };
+        byScene.get(sourceSceneId).turns.push(turn);
+        if (!bundle) revealEvidenceFallbackTurns += 1;
       }
       if (entered && !byScene.has(reachedSceneId)) {
         const openingSegment = segments.at(-1);
@@ -278,8 +310,10 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
         current_scene: sceneId,
         by_scene: [...byScene],
         progress,
-        authored_delivery_turns: authoredDeliveryTurns,
+        story_complete_seen: storyCompleteSeen,
+        authored_span_turns: authoredSpanTurns,
         bundles_seen: bundlesSeen,
+        reveal_evidence_fallback_turns: revealEvidenceFallbackTurns,
       });
     });
   }
@@ -297,8 +331,10 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
   await writeCategoryReport("llm-canon", {
     judgments,
     reached_scenes: [...byScene.keys()],
-    authored_delivery_turns: authoredDeliveryTurns,
+    story_complete_seen: storyCompleteSeen,
+    authored_span_turns: authoredSpanTurns,
     bundles_seen: bundlesSeen,
+    reveal_evidence_fallback_turns: revealEvidenceFallbackTurns,
   });
 
   const failures = judgments.filter((judgment) => judgment.verdict !== "pass");

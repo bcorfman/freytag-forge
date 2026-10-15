@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
 import { judgeSceneNarration } from "./roleplay-judge.js";
-import { authoredDeliveryReasons } from "./authored-delivery.js";
+import { attributeNarration, eligibleAuthoredTexts, knowledgeAvailableByTurn, loadAuthoredText } from "./authored-spans.js";
 
 const CHECKS = [
   "protected_safe",
@@ -15,30 +15,41 @@ const CHECKS = [
   "rich",
 ];
 
-function usableTurns(scene, bundlesByTurn) {
+function usableTurns(scene, bundlesByTurn, authored, knowledgeByTurn) {
   return (scene.turns || [])
     .filter((turn) => turn?.rejected !== true && typeof turn?.text === "string" && turn.text.trim())
     .map((turn) => {
       const attemptBundle = turn.attempt_bundle || bundlesByTurn.get(turn.turn);
-      const reasons = authoredDeliveryReasons(attemptBundle);
+      const authoredSpans = attemptBundle && authored
+        ? attributeNarration(turn.text, eligibleAuthoredTexts(attemptBundle, authored))
+          .filter((span) => span.origin === "authored")
+          .map((span) => ({ text: span.text, source_kind: span.source.kind, source_id: span.source.id }))
+        : [];
+      const knowledgeAvailable = knowledgeByTurn?.get(turn.turn);
       return {
         player_input: turn.input,
         narration: turn.text,
         left_scene: turn.turn === scene.transition_turn,
         beats_projected: [],
-        ...(reasons.length ? { authored_delivery: reasons } : {}),
+        ...(authoredSpans.length ? { authored_spans: authoredSpans } : {}),
+        ...(knowledgeAvailable ? { knowledge_available: knowledgeAvailable } : {}),
       };
     });
 }
 
 export function buildSceneJudgments(report) {
+  const hasAnyBundle = (report.replicates || []).some((replicate) =>
+    (replicate.scenes || []).some((scene) =>
+      (scene.bundles || []).length > 0 || (scene.turns || []).some((turn) => turn?.attempt_bundle),
+    ),
+  );
+  const authored = hasAnyBundle ? loadAuthoredText() : null;
   return (report.replicates || []).flatMap((replicate) =>
     (replicate.scenes || []).map((scene) => {
       const bundlesByTurn = new Map();
       for (const bundle of scene.bundles || []) {
         if (!bundlesByTurn.has(bundle?.turn)) bundlesByTurn.set(bundle.turn, bundle?.attempt_bundle);
       }
-      const turns = usableTurns(scene, bundlesByTurn);
       const evidenceTurns = (scene.turns || [])
         .map((turn) => turn?.attempt_bundle || bundlesByTurn.get(turn?.turn) ? {
           ...turn,
@@ -52,9 +63,14 @@ export function buildSceneJudgments(report) {
             : [];
         }
         return Array.isArray(turn?.grounding_ids) ? turn.grounding_ids : [];
-      }))].sort();
+        }))].sort();
       const hasBundleEvidence = evidenceTurns.some((turn) => turn?.attempt_bundle);
       const hasGroundingFallback = evidenceTurns.some((turn) => !turn?.attempt_bundle);
+      const hasSceneBundle = bundlesByTurn.size > 0 || hasBundleEvidence;
+      const knowledgeByTurn = hasSceneBundle
+        ? new Map(knowledgeAvailableByTurn(evidenceTurns.map((turn) => ({ turn: turn?.turn, bundle: turn?.attempt_bundle }))).map((item) => [item.turn, item.available]))
+        : null;
+      const turns = usableTurns(scene, bundlesByTurn, authored, knowledgeByTurn);
       return {
         replicate: replicate.replicate,
         scene_id: scene.scene,
