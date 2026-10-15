@@ -12,6 +12,7 @@ import { canonTurnBudget, loadPackagePacing } from "./package-clock.js";
 import { buildKnowledgeTimelineReport, recordTurnOutcome } from "./knowledge-timeline-record.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts } from "./canon-journey.js";
+import { authoredDeliveryReasons } from "./authored-delivery.js";
 
 const SPINE_MAX_TURNS = 120;
 
@@ -144,6 +145,8 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
   const promptsUsed = new Map();
   const progress = [];
   const firedPacingEventIds = new Set();
+  let authoredDeliveryTurns = 0;
+  let bundlesSeen = 0;
 
   const turnMilestoneFor = (currentSceneId, currentTurns) => {
     const pendingEvent = pacing.eventOrder
@@ -177,6 +180,9 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       const turnsUntilMilestone = milestone ? controller.turnsUntilMilestone() : null;
       const payload = await submitTurn(page, input);
       await resolveWarningIfPresent(page);
+      const reasons = authoredDeliveryReasons(payload.attempt_bundle);
+      if (payload.attempt_bundle) bundlesSeen += 1;
+      if (reasons.length) authoredDeliveryTurns += 1;
       const timing = milestone ? controller.history().at(-1) : null;
       const observedTurns = payload.state?.turns_since_scene_entry;
       const reachedSameScene = payload.state?.scene_id === sourceSceneId;
@@ -243,6 +249,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
           left_scene: entered,
           beats_projected: payload.delivery?.beats_projected || [],
           ...(payload.prompt ? { prompt: payload.prompt } : {}),
+          ...(reasons.length && payload.attempt_bundle ? { authored_delivery: reasons } : {}),
         });
       }
       if (entered && !byScene.has(reachedSceneId)) {
@@ -271,6 +278,8 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
         current_scene: sceneId,
         by_scene: [...byScene],
         progress,
+        authored_delivery_turns: authoredDeliveryTurns,
+        bundles_seen: bundlesSeen,
       });
     });
   }
@@ -285,7 +294,12 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
     const judgment = await judgeSceneNarration({ sceneId: id, ...scene });
     judgments.push({ scene_id: id, ...judgment });
   }
-  await writeCategoryReport("llm-canon", { judgments, reached_scenes: [...byScene.keys()] });
+  await writeCategoryReport("llm-canon", {
+    judgments,
+    reached_scenes: [...byScene.keys()],
+    authored_delivery_turns: authoredDeliveryTurns,
+    bundles_seen: bundlesSeen,
+  });
 
   const failures = judgments.filter((judgment) => judgment.verdict !== "pass");
   expect(
