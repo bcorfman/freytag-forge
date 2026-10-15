@@ -202,7 +202,9 @@ class NarrationSafetyValidator:
                     and not self._contains(handoff_text, form)
                 ):
                     raise ProposalValidationError(
-                        f"narration mentions an unavailable entity '{form}'", code="narration_known_term_leak"
+                        f"narration mentions an unavailable entity '{form}'",
+                        code="narration_known_term_leak",
+                        term=form,
                     )
 
             for form in known_terms:
@@ -237,6 +239,7 @@ class NarrationSafetyValidator:
                     raise ProposalValidationError(
                         f"narration mentions unavailable knowledge '{form}'",
                         code="narration_known_term_leak",
+                        term=form,
                     )
                 if not knowledge_ids & grounding and not statement_covers_term:
                     raise ProposalValidationError(

@@ -20,13 +20,16 @@ from storygame.runtime.state import RuntimeState, RuntimeStateError
 from storygame.runtime.world_model import WORLD_EFFECTS_APPLIED, world_for
 from storygame.story_package.models import FactPredicate, StoryPackage, Transition
 
+REJECTED_TURN_MESSAGE = "I don't understand. Can you try something else?"
+
 
 class ProposalValidationError(RuntimeStateError):
     """An untrusted provider proposal violates the loaded package contract."""
 
-    def __init__(self, message: str, *, code: str | None = None) -> None:
+    def __init__(self, message: str, *, code: str | None = None, term: str | None = None) -> None:
         super().__init__(message)
         self.code = code
+        self.term = term
 
 
 def unavailable_entity_ids(package: StoryPackage, facts: FactStore) -> set[str]:

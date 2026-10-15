@@ -49,6 +49,25 @@ from storygame.story_package.models import (
 logger = logging.getLogger(__name__)
 
 MAX_TURN_SEGMENTS = 5
+TURN_REQUEST_BUDGET = 2
+ITEM_FACTS_REQUEST_BUDGET = 2
+_REQUEST_BUDGET_FIELD = "__freytag_request_budget"
+
+_GENERIC_REJECTION = (
+    "Your last reply did not follow the narration rules. "
+    "Write this turn again. "
+    "Use only the information in the current prompt."
+)
+_KNOWLEDGE_REJECTION = (
+    "Your last reply named something the player has not met yet. "
+    "Write this turn again. "
+    "Describe only what the player can see now."
+)
+_REJECTION_FEEDBACK = {
+    "narration_known_term_leak": _KNOWLEDGE_REJECTION,
+    "uncited_knowledge": _KNOWLEDGE_REJECTION,
+    "protected_narration_leak": _KNOWLEDGE_REJECTION,
+}
 
 DEFAULT_OUTPUT_EXAMPLE = (
     '{"segments":[{"kind":"narration","text":"She picks up the lantern. She carries it out to the porch."},'
@@ -217,6 +236,7 @@ class CloudflareTurnProvider:
     """Send only bounded, scene-safe context to the configured Worker."""
 
     allowed_reply_keys = {"segments", "selected_knowledge_ids"}
+    absent_thing_rule: bool = False
 
     def __init__(
         self,
@@ -245,6 +265,8 @@ class CloudflareTurnProvider:
         self.prompt_variant = prompt_variant
         self.request_count = 0
         self.recovery_count = 0
+        self._turn_request_count: int | None = None
+        self._turn_item_facts_request_count: int | None = None
         self.reply_keys_dropped: dict[str, int] = {}
         self.semantic_ask = semantic_ask
         self.semantic_fallback_calls = 0
@@ -299,25 +321,69 @@ class CloudflareTurnProvider:
     def __call__(self, player_input: str) -> object:
         rejection_note = self._rejection_note
         self._rejection_note = None
-        prompt = self.assemble_turn_prompt(player_input)
-        if rejection_note is not None:
-            prompt["system"] = (
-                f"{prompt['system']}\n\n"
-                f"Your last reply was rejected: {rejection_note}. Write this turn again and do not use that wording."
-            )
-        return self._dispatch(prompt["system"], prompt["context"])
+        try:
+            prompt = self.assemble_turn_prompt(player_input)
+            if rejection_note is not None:
+                prompt["system"] = f"{prompt['system']}\n\n{rejection_note}"
+            return self._dispatch(prompt["system"], prompt["context"])
+        except Exception:
+            self.clear_authored_handoff()
+            raise
 
     def authored_handoff_id(self) -> str | None:
-        """Return the provider-owned exact-match ID for the current turn, if any."""
+        """Return an exact-match ID eligible for the beyond-cap exception."""
 
-        return self.authored_handoff.candidate.id if self.authored_handoff is not None else None
+        return (
+            self.authored_handoff.candidate.id
+            if self.authored_handoff is not None and self.authored_handoff.source == "exact"
+            else None
+        )
 
-    def note_rejection(self, message: str) -> None:
-        self._rejection_note = message
+    def clear_authored_handoff(self) -> None:
+        """Discard the current turn's runtime-owned reveal after failure or rollback."""
+
+        self.authored_handoff = None
+
+    def begin_turn(self) -> None:
+        """Reset the narration and item-facts budgets for one engine turn."""
+
+        self._turn_request_count = 0
+        self._turn_item_facts_request_count = 0
+
+    def end_turn(self) -> None:
+        """Disable the per-turn budgets outside an engine turn."""
+
+        self._turn_request_count = None
+        self._turn_item_facts_request_count = None
+
+    def request_budget_remaining(self) -> int:
+        """Return the number of inference sends still allowed in this turn."""
+
+        if self._turn_request_count is None:
+            return TURN_REQUEST_BUDGET
+        return max(0, TURN_REQUEST_BUDGET - self._turn_request_count)
+
+    def item_facts_request_budget_remaining(self) -> int:
+        """Return the number of item-facts match sends still allowed this turn."""
+
+        if self._turn_item_facts_request_count is None:
+            return ITEM_FACTS_REQUEST_BUDGET
+        return max(0, ITEM_FACTS_REQUEST_BUDGET - self._turn_item_facts_request_count)
+
+    def note_rejection(self, code: str | None, term: str | None = None) -> None:
+        feedback = _REJECTION_FEEDBACK.get(code, _GENERIC_REJECTION)
+        if code == "narration_known_term_leak" and term:
+            feedback = (
+                f'{feedback} The player wrote "{term}". '
+                "Do not use that exact phrase in your reply. "
+                "Describe what happens in other words."
+            )
+        self._rejection_note = feedback
 
     def assemble_turn_prompt(self, player_input: str) -> dict[str, object]:
         """Build the exact turn prompt without contacting the narration worker."""
 
+        self.clear_authored_handoff()
         self._example_player_input = player_input
         self.last_semantic_match = {"ran": False, "matched": None}
         self.last_reveal_selection = {
@@ -454,6 +520,8 @@ class CloudflareTurnProvider:
             }
         universe = self._reveal_universe()
         eligible_candidates = self._eligible_reveal_candidates(universe)
+        visible_ids = {candidate.id for candidate in self.last_projection.candidates}
+        eligible_candidates = tuple(candidate for candidate in eligible_candidates if candidate.id in visible_ids)
         self.last_reveal_selection["shortlist_size"] = min(6, len(eligible_candidates))
         if (
             self.semantic_ask is None
@@ -514,7 +582,7 @@ class CloudflareTurnProvider:
             return None
         self.last_semantic_match["matched"] = candidate.id
         self.last_reveal_selection.update(outcome="semantic_match", matched=candidate.id)
-        return AuthoredHandoff(candidate=candidate, delivery_text=candidate.delivery_text)
+        return AuthoredHandoff(candidate=candidate, delivery_text=candidate.delivery_text, source="semantic")
 
     def _run_contract_shadow(self, player_input: str) -> None:
         """Evaluate optional action contracts without affecting live selection."""
@@ -680,10 +748,19 @@ class CloudflareTurnProvider:
     def _object_place_rule(self) -> str:
         return "Keep each object where the scene puts it."
 
+    def _absent_thing_rules(self) -> tuple[str, ...]:
+        if not self.absent_thing_rule:
+            return ()
+        return (
+            "If the player asks for something the SCENE does not give, Kristin looks around and finds nothing like it.",
+            "Do not use the player's name for that thing in your reply.",
+        )
+
     def _turn_rules_before_grounding(self) -> list[str]:
         return [
             "Show what happens right after the player acts.",
             "Use only what the SCENE section tells you.",
+            *self._absent_thing_rules(),
             "Use the places and details the story gives you.",
             self._object_place_rule(),
             "Finish each action the player gives.",
@@ -1914,16 +1991,49 @@ class CloudflareTurnProvider:
             except (TimeoutError, URLError, OSError) as error:
                 raise error from first_failure
 
+    def _request_item_facts(self, payload: dict[str, object]) -> object:
+        """Send a name-matching request against the separate item-facts budget."""
+
+        return CloudflareTurnProvider._request(
+            self,
+            {**payload, _REQUEST_BUDGET_FIELD: "item_facts"},
+        )
+
     def _request(self, payload: dict[str, object]) -> object:
+        request_budget = payload.get(_REQUEST_BUDGET_FIELD, "narration")
+        wire_payload = {key: value for key, value in payload.items() if key != _REQUEST_BUDGET_FIELD}
+        if request_budget == "item_facts":
+            if (
+                self._turn_item_facts_request_count is not None
+                and self._turn_item_facts_request_count >= ITEM_FACTS_REQUEST_BUDGET
+            ):
+                raise NarrationProviderError(
+                    "item-facts request budget exhausted",
+                    503,
+                    "ITEM_FACTS_REQUEST_BUDGET_EXHAUSTED",
+                )
+        elif request_budget == "narration":
+            if self._turn_request_count is not None and self._turn_request_count >= TURN_REQUEST_BUDGET:
+                raise NarrationProviderError(
+                    "narration request budget exhausted",
+                    503,
+                    "NARRATION_REQUEST_BUDGET_EXHAUSTED",
+                )
+        else:
+            raise ValueError(f"unknown request budget: {request_budget!r}")
         self.request_count += 1
-        self.last_prompt = {"system": payload["system"], "user": payload["user"]}
+        if request_budget == "item_facts" and self._turn_item_facts_request_count is not None:
+            self._turn_item_facts_request_count += 1
+        elif self._turn_request_count is not None:
+            self._turn_request_count += 1
+        self.last_prompt = {"system": wire_payload["system"], "user": wire_payload["user"]}
         headers = {
             "Content-Type": "application/json",
             "User-Agent": BROWSER_USER_AGENT,
         }
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
-        request = Request(self.worker_url, data=json.dumps(payload).encode(), headers=headers, method="POST")
+        request = Request(self.worker_url, data=json.dumps(wire_payload).encode(), headers=headers, method="POST")
         with urlopen(request, timeout=float(getenv("CLOUDFLARE_TIMEOUT", "15"))) as response:  # noqa: S310
             body = json.loads(response.read())
         if isinstance(body, dict) and body.get("status") == "error":

@@ -1,5 +1,7 @@
 #!/bin/bash
 # Ringer check (runs outside the worker sandbox): live bench of the four refusal arms on fixed-thing commands in 1A.
+# Optional environment: EXPECT_TURNS (turns per arm), EXPECT_REFUSED_MIN (minimum
+# refusals per arm), and ALLOW_DIRTY=1 (allow changes under storygame/ or bench/).
 # Usage: p4-refusal-measure-check.sh OUT_DIR REPLICATES "ARMS" ["SCRIPTS"]
 set -u
 OUT=$1; REPS=$2; ARMS=${3:-"off clause repair renarrate"}; SCRIPTS=${4:-"s1 s2 s3 s4"}
@@ -14,29 +16,7 @@ for arm in $ARMS; do
       --replicates "$REPS" --out "$OUT/$arm/$s" --confirm > "$OUT/$arm-$s.log" 2>&1 || { echo "FAIL bench $arm $s"; tail -20 "$OUT/$arm-$s.log"; exit 1; }
   done
 done
-"$PY" - "$OUT" "$ARMS" "$SCRIPTS" <<'PYEOF'
-import json, sys
-from pathlib import Path
-out = Path(sys.argv[1])
-for arm in sys.argv[2].split():
-    tot = ref = extra = fallback = 0
-    miss = judged = 0
-    for s in sys.argv[3].split():
-        f = out / arm / s / "all-turn-records.json"
-        if not f.exists():
-            print("FAIL no records", arm, s); sys.exit(1)
-        for run in json.loads(f.read_text())["runs"]:
-            for t in run.get("turns", []):
-                tot += 1
-                cap = [i for i in (t.get("capture_issues") or []) + (t.get("item_facts_issues") or [])]
-                r = [i for i in cap if "refused place" in i]
-                ref += bool(r)
-                extra += t.get("refusal_extra_calls", 0) or 0
-                fallback += any("re-narration failed" in i for i in cap)
-                print(f"== {arm} {s} refused={bool(r)} extra_calls={t.get('refusal_extra_calls')}\n  notes: {[i for i in cap if 'refusal' in i]}\n  narr: {(t.get('narration') or '').replace(chr(10),' ')}")
-        sm = out / arm / s / "summary.json"
-        if sm.exists():
-            ft = (json.loads(sm.read_text()).get("fact_tracking") or {})
-            print(f"  judge[{arm} {s}]: {json.dumps(ft)[:400]}")
-    print(f"SUMMARY arm={arm} turns={tot} refused={ref} extra_calls={extra} fallbacks={fallback}")
-PYEOF
+SUMMARY_ARGS=()
+if [[ -n "${EXPECT_TURNS:-}" ]]; then SUMMARY_ARGS+=(--expect-turns "$EXPECT_TURNS"); fi
+if [[ -n "${EXPECT_REFUSED_MIN:-}" ]]; then SUMMARY_ARGS+=(--expect-refused-min "$EXPECT_REFUSED_MIN"); fi
+"$PY" scripts/ringer/astra/refusal_summary.py "$OUT" "$ARMS" "$SCRIPTS" --repo "$REPO" "${SUMMARY_ARGS[@]}"

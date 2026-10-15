@@ -27,6 +27,7 @@ class TurnScore:
     latency_s: float
     requests: int
     tokens: int
+    state_unmeasured: bool = False
 
 
 def score_turn(
@@ -54,12 +55,21 @@ def score_turn(
     if expectation.creation is not None:
         limit = _CREATION_LEVEL[expectation.creation]
         unauthorized = any(_CREATION_LEVEL[kind] > limit for _, kind in observation.created)
+    state_unmeasured = False
+    if expectation.state is not None:
+        missing_state = set(expectation.state) - set(observation.state or {})
+        state_unmeasured = bool(missing_state)
+        state_correct = (
+            None
+            if state_unmeasured
+            else all(observation.state[key] == value for key, value in expectation.state.items())
+        )
+    else:
+        state_correct = None
     return TurnScore(
         reference_correct=None if expectation.reference is None else observation.reference == expectation.reference,
         action_correct=None if expectation.action is None else observation.action == expectation.action,
-        state_correct=None
-        if expectation.state is None
-        else all((observation.state or {}).get(key) == value for key, value in expectation.state.items()),
+        state_correct=state_correct,
         prose_correct=prose_ok,
         false_reveal=false_reveal,
         unauthorized_creation=unauthorized,
@@ -72,6 +82,7 @@ def score_turn(
         latency_s=observation.latency_s,
         requests=observation.requests,
         tokens=observation.tokens,
+        state_unmeasured=state_unmeasured,
     )
 
 
@@ -109,6 +120,7 @@ def aggregate(scores: list[TurnScore], arm_name: str) -> dict[str, Any]:
     )
     for name in metric_names:
         result[name] = _rate([value for score in scores if (value := getattr(score, name)) is not None])
+    result["state_unmeasured"] = sum(score.state_unmeasured for score in scores)
     for name in ("false_reveal", "unauthorized_creation"):
         values = [value for score in scores if (value := getattr(score, name)) is not None]
         result[name] = {

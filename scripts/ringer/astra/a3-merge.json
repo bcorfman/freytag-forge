@@ -1,0 +1,24 @@
+{
+ "run_name": "astra-a3-merge",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-a3-merge",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "merge",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=\"high\""
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2700,
+   "check_timeout_s": 1800,
+   "spec": "You are a code worker on the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge. Run `pwd` first: it is under /home/bcorfman/dev/ringer-work/astra-a3-merge/. Use RELATIVE paths; NEVER edit anything under the absolute path /home/bcorfman/dev/freytag-forge (the protected main checkout; the check fails if it changes). Do NOT git commit, do NOT git add -A, do NOT touch .git. No network, no billed calls. Write notes to /home/bcorfman/dev/ringer-work/astra-a3-merge-notes/notes.md (create the directory; exact path): what you moved/merged, every file changed, test results. Read first (read-only): AGENTS.md, docs/contributor-guide.md.\n\nBACKGROUND: three earlier workers produced one combined patch, /home/bcorfman/dev/ringer-work/astra-patches/a3-combined.patch, touching bench/jev_use.py, bench/pipeline_eval/{metrics,model,runner}.py, scripts/ringer/astra/p4-refusal-measure-check.sh, a new scripts/ringer/astra/refusal_summary.py, and four NEW test files under bench/pipeline_eval/ (test_jev_use.py, test_pipeline_eval.py, test_pipeline_eval_cases.py, test_refusal_checker.py). That was a mistake in the original brief: this repo's pytest `testpaths` is [\"tests\"], so tests under bench/ never run in the normal suite, and three of those names collide with EXISTING tracked tests (tests/test_jev_use.py, tests/test_pipeline_eval.py, tests/test_pipeline_eval_cases.py). The existing tests also include an assertion of the old fake behaviour that now fails: tests/test_pipeline_eval.py::test_pipeline_arm_save_load_and_second_command asserts `observation.state == {}`.\n\nSTEPS:\n1. `git apply /home/bcorfman/dev/ringer-work/astra-patches/a3-combined.patch` in this worktree.\n2. Move every test from the four new bench/pipeline_eval/test_*.py files into tests/: the new jev tests into tests/test_jev_use.py, the new pipeline-eval tests into tests/test_pipeline_eval.py and tests/test_pipeline_eval_cases.py (merge into the existing files, reuse their fixtures/imports, drop duplicated helpers; no duplicate test names), and test_refusal_checker.py becomes tests/test_refusal_checker.py (fix its HELPER_PATH, which currently uses Path(__file__).parents[2]; from tests/ it is parents[1]). Delete the four bench/pipeline_eval/test_*.py files. Do not weaken any test.\n3. Update existing tests in tests/ that relied on the old behaviour (the `state == {}` assertion above; any test that assumed silent Jev failure, or `requests == 1` for a refused/retried turn). Update them to assert the new, correct behaviour; explain each change in the notes.\n4. Do not change the production files from the patch except to fix a real bug you find (say so in the notes).\n5. Make sure tests/test_shard_balance.py still passes (it assumes every collected file is under tests/).\n\nHOW TO RUN: PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_jev_use.py tests/test_pipeline_eval.py tests/test_pipeline_eval_cases.py tests/test_refusal_checker.py tests/test_shard_balance.py; then the full `tests` directory. Confirm `python -c \"import storygame; print(storygame.__file__)\"` prints a path inside the worktree. Ruff: /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check --fix and -m ruff format on files you touched (also bench and scripts/ringer/astra/refusal_summary.py). Finally try bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_a3_merge.sh (it may fail on the read-only .git in the sandbox; if so run its pytest/ruff steps by hand and say so). Reply with the files changed.\n",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/astra/check_a3_merge.sh",
+   "verified": "A3 patch applied; all tests live under tests/; suite passes"
+  }
+ ]
+}

@@ -501,6 +501,7 @@ def preview_rules(variation: dict[str, Any], scene_id: str | None = None) -> lis
 
     _, state = package_and_state(variation, scene_id)
     provider = CloudflareTurnProvider(worker_url="", token="", state=state, prompt_variant=variation["_prompt_variant"])
+    provider.absent_thing_rule = bool(variation.get("absent_thing_rule", False))
     provider.assemble_turn_prompt("")
     return list(provider._turn_rules())
 
@@ -510,6 +511,7 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
     if item_facts is None and "item_facts" in variation:
         item_facts = validate_item_facts(variation["item_facts"])
     provider = _provider_with_item_facts(state, variation, item_facts)
+    provider.absent_thing_rule = bool(variation.get("absent_thing_rule", False))
     if os.environ.get("FREYTAG_CONTRACT_SHADOW") == "1" and provider.semantic_ask is None:
         # The hosted game runs the semantic reveal fallback; the shadow compares against it.
         from storygame.runtime.jev import JevClient
@@ -652,6 +654,7 @@ def prompt_for(
         provider = CloudflareTurnProvider(
             worker_url="", token="", state=state, prompt_variant=variation["_prompt_variant"]
         )
+    provider.absent_thing_rule = bool(variation.get("absent_thing_rule", False))
     RuntimeEngine(state, provider)._activate_pacing()
     if beat is not None and storylet is not None:
         raise ValueError("--beat and --storylet select the turn in different ways; name only one")
@@ -762,6 +765,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         if runtime
         else provider_for(state, variation)
     )
+    provider.absent_thing_rule = bool(variation.get("absent_thing_rule", False))
     capture = (
         WorldCapture(
             provider,
@@ -970,6 +974,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         ),
                         "rejection_code": "INVALID_PROPOSAL",
                         "rejection_reason": str(error),
+                        "guard_retry_used": bool(getattr(engine, "last_guard_rejections", [])),
+                        "guard_rejections": copy.deepcopy(getattr(engine, "last_guard_rejections", [])),
                     }
                 )
                 if runtime:
@@ -1033,6 +1039,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         ),
                         "rejection_code": getattr(error, "code", None) or getattr(error, "error_code", ""),
                         "rejection_reason": str(error),
+                        "guard_retry_used": bool(getattr(engine, "last_guard_rejections", [])),
+                        "guard_rejections": copy.deepcopy(getattr(engine, "last_guard_rejections", [])),
                     }
                 )
                 if runtime:
@@ -1250,6 +1258,14 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         or any("refusal" in issue for issue in delivery.capture_issues)
                     ),
                     "refusal_extra_calls": getattr(engine, "refusal_extra_calls", 0),
+                    "guard_retry_used": bool(
+                        getattr(
+                            getattr(getattr(engine, "state", None), "last_turn_delivery", None),
+                            "guard_retry_used",
+                            False,
+                        )
+                    ),
+                    "guard_rejections": copy.deepcopy(getattr(engine, "last_guard_rejections", [])),
                 }
                 if runtime:
                     turn_record["engine_refusal"] = engine_refusal_text

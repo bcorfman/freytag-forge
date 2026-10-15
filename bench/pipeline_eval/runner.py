@@ -12,7 +12,7 @@ from storygame.runtime.state import RuntimeState
 from storygame.story_package.models import StoryPackage
 
 from .metrics import TurnScore, aggregate, score_turn
-from .model import EvalCase, TurnObservation
+from .model import EvalCase, TurnObservation, grounded_state
 
 
 class Arm(Protocol):
@@ -40,27 +40,48 @@ class PipelineArm:
 
     def play(self, case: EvalCase, state: RuntimeState) -> list[TurnObservation]:
         observations: list[TurnObservation] = []
-        usage = 0
+        engine: RuntimeEngine | None = None
 
         def provider(command: str) -> dict[str, Any]:
-            nonlocal usage
+            nonlocal turn_requests, turn_tokens, engine_extra_calls_seen
+            turn_requests += 1
+            if engine is not None:
+                reported_extra_calls = max(0, getattr(engine, "refusal_extra_calls", 0))
+                engine_extra_calls_seen = max(engine_extra_calls_seen, reported_extra_calls)
             reply = self.narrator(command)
             usage = reply.get("usage", 0) if isinstance(reply.get("usage", 0), int) else 0
+            turn_tokens += usage
             return {key: value for key, value in reply.items() if key != "usage"}
 
         engine = RuntimeEngine(state, provider)
         for index, command in enumerate(case.commands):
+            turn_requests = 0
+            turn_tokens = 0
+            engine_extra_calls_seen = 0
             started = time.perf_counter()
             result = engine.turn(command)
             elapsed = time.perf_counter() - started
+            attempt = engine.last_attempt
+            attempts = getattr(engine, "attempts", ())
+            if attempt is None and attempts:
+                attempt = attempts[-1]
+            delivery = engine.state.last_turn_delivery
+            refused_without_provider = (
+                turn_requests == 0
+                and attempt is not None
+                and attempt.outcome == "rejected"
+                and not delivery.guard_retry_used
+            )
+            extra_calls = max(0, engine.refusal_extra_calls - engine_extra_calls_seen)
+            requests = 0 if refused_without_provider else turn_requests + extra_calls
             observations.append(
                 TurnObservation(
-                    state={},
+                    state=grounded_state(engine.state),
                     prose=result.narration,
                     revealed_ids=tuple(result.selected_knowledge_ids),
                     latency_s=elapsed,
-                    requests=1,
-                    tokens=usage,
+                    requests=requests,
+                    tokens=turn_tokens,
                 )
             )
             if case.save_load_after == index:

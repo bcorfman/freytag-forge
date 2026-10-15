@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from storygame.runtime.knowledge import RevealCandidate
@@ -35,6 +35,8 @@ class AuthoredHandoff:
 
     candidate: RevealCandidate
     delivery_text: str
+    # Unmarked handoffs are deliberately treated as semantic for privilege checks.
+    source: Literal["exact", "semantic"] = "semantic"
 
 
 _NEGATIONS = frozenset({"avoid", "cannot", "can't", "do", "don't", "never", "no", "not", "without"})
@@ -122,7 +124,7 @@ def uniquely_matched_authored_handoff(
     if len(matches) != 1:
         return None
     candidate, delivery_text = matches[0]
-    return AuthoredHandoff(candidate=candidate, delivery_text=delivery_text)
+    return AuthoredHandoff(candidate=candidate, delivery_text=delivery_text, source="exact")
 
 
 def _matches_all(groups: tuple[tuple[str, ...], ...], player_input: str) -> bool:

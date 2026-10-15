@@ -181,8 +181,9 @@ source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --gr
 
 **Interpretation:**
 
-- `E2E_TURN_TIMEOUT_MS` defaults to 30 000. A turn that spends its one recovery
-  makes two model calls, so use 90 000 for any multi-turn category.
+- `E2E_TURN_TIMEOUT_MS` defaults to 30 000. A narration turn that spends its
+  one recovery makes two model calls; an item-facts match can add up to two
+  separate calls, so use 90 000 for any multi-turn category.
 - In `@spine` telemetry, `fallback_turns` counts turns where the player read
   authored fallback prose instead of responsive narration. Watch it when
   changing `must_convey` groups.
@@ -322,8 +323,8 @@ real player or protected story data, and never print
 | 429, header `X-Narration-Error-Code: AI_QUOTA_EXCEEDED`, body `narration service is at capacity` | Workers AI daily quota spent | Stop until 00:00 UTC |
 | 429, header `X-Narration-Error-Code: AI_DAILY_BUDGET_EXCEEDED` | The $5 daily model budget is spent | Stop until 00:00 UTC |
 | 429, body `{"detail": "rate limit exceeded"}` | App limiters (`FREYTAG_RATE_LIMIT_PER_MINUTE` turns per session per minute; `FREYTAG_SESSIONS_PER_IP_PER_DAY` new sessions per IP per day) | Slow down and retry |
-| 409 `uncited_knowledge`, `narration_known_term_leak`, `ineligible_selection` | Narration safety or selection rejected the turn before commit; no state changed | A real finding. The turn is lost, not retried. Reproduce locally with `bench` before spending more hosted runs |
+| 409 `uncited_knowledge`, `narration_known_term_leak`, `ineligible_selection` | Narration safety or selection rejected the turn before commit; no state changed | The player receives a fixed recovery line while the rejection code remains in the header and the raw reason is logged at WARNING; knowledge-guard rejection retries once within the two-request turn budget, while other 409 causes are not retried. |
 | 403, plain text `error code: 1010`, no Worker headers | Cloudflare Browser Integrity Check rejected the client | Keep the adapter's browser `User-Agent`; do not disable the check |
-| Single 503, or a browser CORS/`Failed to fetch` error | Worker or API briefly unavailable, or an unhandled API error whose 500 carried no CORS header | Read the staging service log for a 500 and its traceback first; a traceback is a real bug, not noise. With none, rerun once and check `/api/v1/version` before changing CORS |
+| Single 503, or a browser CORS/`Failed to fetch` error | Worker or API briefly unavailable, or an unhandled API error whose 500 carried no CORS header | Typed 503 service failures retain their diagnostic response, while an unexpected engine error returns the fixed recovery line and logs a traceback at ERROR; read the staging service log before rerunning once and checking `/api/v1/version`. |
 | 502 with `X-Narration-Error-Code` | Typed Worker failure | Classify by that code; `UNKNOWN` means an untyped upstream failure |
 | Aborted `@llm-canon` | Infrastructure noise or a real stall | Apply section 7's counting rules before reading anything into it |

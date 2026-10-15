@@ -278,7 +278,7 @@ def test_provider_authored_operations_are_rejected_before_session_mutation(tmp_p
         session_id = client.post("/api/v1/session", json={"story_id": "continuity_initiative"}).json()["session_id"]
         warning = client.post("/api/v1/turn", json={"session_id": session_id, "player_input": "Attack Brandon."})
     assert warning.status_code == 422
-    assert "operations" in warning.json()["detail"]
+    assert warning.json()["detail"] == "I don't understand. Can you try something else?"
 
 
 def test_session_opening_rejection_returns_409_and_does_not_save_session(monkeypatch, tmp_path) -> None:
@@ -631,7 +631,7 @@ def test_adapter_returns_cors_safe_invalid_provider_contract(tmp_path) -> None:
         )
 
     assert response.status_code == 422
-    assert response.json() == {"detail": "provider response violates the turn contract"}
+    assert response.json() == {"detail": "I don't understand. Can you try something else?"}
     assert response.headers["access-control-allow-origin"] == "*"
 
 

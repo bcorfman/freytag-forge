@@ -35,8 +35,8 @@ class _ScriptedProvider:
         self.calls += 1
         return {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
 
-    def note_rejection(self, message: str) -> None:
-        self.rejections.append(message)
+    def note_rejection(self, code: str | None) -> None:
+        self.rejections.append(code or "")
 
 
 def test_narration_leak_is_retried_once_and_the_turn_commits() -> None:
@@ -60,8 +60,7 @@ def test_retry_passes_the_rejection_to_the_provider_once() -> None:
     RuntimeEngine(state, provider).turn("Assess the cost of transmitting our evidence.")
 
     assert len(provider.rejections) == 1
-    # The leak sentence holds two guarded phrases; which one the validator reports first varies by run.
-    assert any(phrase in provider.rejections[0].casefold() for phrase in ("secured office", "broadcast the evidence"))
+    assert provider.rejections == ["narration_known_term_leak"]
 
 
 def test_two_rejections_still_fail_the_turn_and_restore_state() -> None:
@@ -112,10 +111,12 @@ def test_cloudflare_note_reaches_only_the_next_prompt(monkeypatch: pytest.Monkey
         return {"segments": [{"kind": "narration", "text": "ok"}]}
 
     monkeypatch.setattr(provider, "_dispatch", dispatch)
-    provider.note_rejection("narration mentions unavailable knowledge 'x y'")
+    provider.note_rejection("narration_known_term_leak")
 
     provider("Assess the cost of transmitting our evidence.")
     provider("Assess the cost of transmitting our evidence.")
 
-    assert "x y" in prompts[0]
-    assert "x y" not in prompts[1]
+    assert "Your last reply named something the player has not met yet." in prompts[0]
+    assert "secured office" not in prompts[0].casefold()
+    assert "narration mentions unavailable knowledge" not in prompts[0]
+    assert "Your last reply named something the player has not met yet." not in prompts[1]

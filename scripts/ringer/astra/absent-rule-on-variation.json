@@ -1,0 +1,21 @@
+{
+ "name": "astra-absent-thing-rule-on",
+ "story_package": "data/stories/continuity-initiative",
+ "fixed_turns": 1,
+ "runtime": true,
+ "item_facts": {
+  "mode": "single_call",
+  "seed_from_package": true
+ },
+ "scripts": {
+  "1A": [
+   {
+    "name": "p5",
+    "inputs": [
+     "Look for a maintenance access route into the facility."
+    ]
+   }
+  ]
+ },
+ "absent_thing_rule": true
+}
