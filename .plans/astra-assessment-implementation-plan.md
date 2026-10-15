@@ -1,7 +1,7 @@
 # Astra assessment follow-up: implementation plan
 
 Source: `.plans/astra-plan-assessment-answer.md` (outside review of `astra-implementation-plan.md`).
-Status: **A1 done and committed (08a925ac, Option 1); A2 committed (8901f3c0) with the budget-reset fix (Ringer `astra-budget-reset`: `end_turn()` called in a `finally`, 3 tests, suite 1739 passed; the stale-budget caveat below is closed); A3 done and committed (2026-10-14); B, C, D, E not started.** Branch for A1-A3: continue `astra-established-reveal-409` or cut a new one from main. Update this file after each step (memory: update-plan-after-each-feature).
+Status: **A1 done and committed (08a925ac, Option 1); A2 committed (8901f3c0) with the budget-reset fix (Ringer `astra-budget-reset`: `end_turn()` called in a `finally`, 3 tests, suite 1739 passed; the stale-budget caveat below is closed); A3 done and committed (2026-10-14); engine-error line merged (PR 633, 5060b584); B1-B2 done offline (2026-10-14, branch `astra-step-b-assess-c-r2`, not merged; B3 hosted `@spine` not run); C, D, E not started.** Branch for A1-A3: continue `astra-established-reveal-409` or cut a new one from main. Update this file after each step (memory: update-plan-after-each-feature).
 
 Ground rules: every code change goes through Ringer (one task per run unit); unit tests stay hermetic (no live worker); no billed run before a smoke test; measure each step before the next; keep the repo ruff-formatted. Findings are numbered as in the assessment (F1-F8).
 
@@ -58,6 +58,8 @@ Exit: tests green. Then one billed measurement (smoke test first): replay known 
 Exit: checker rejects the old zero-refusal summary on the saved engine-arm output; runner reports non-empty state.
 
 ## Step B: Re-add `assess` to C-R2 (only after A1)
+
+**Result B1-B2 (2026-10-14, Ringer `astra-step-b-assess-c-r2`, suite 1788 passed):** `tests/test_2c_assess_engine_turn.py` (new) drives a real engine turn at 2C with a fifth eligible candidate and a stubbed provider: before the data edit the first test selected no reveal (failed as intended), after it `k_sl_2c_c_r2` is earned and committed. The already-established case passes (no 409-class error), so no runtime defect found. `assess`, `evaluate` and "our evidence" added to `k_sl_2c_c_r2` only; real matcher: the assess-cost and evaluate-cost commands match exactly `c_r2` (no tie with `c_r1`), the executive-offer command still matches exactly `a_r1`, contract positives stay unique. `test_2c_assess_verbs.py` updated (stale comment replaced). Process: the Ringer check failed because the worker sandbox cannot write the worktree git index; I ran the check's substance in the kept worktree (PASS) and applied the patch. Not done: B3, the hosted `@spine` on a build with the cap fix, which is billed and needs the merge and a staging deploy.
 
 1. Add a hermetic stubbed-provider *engine-turn* test at the 2C state with a fifth eligible candidate: matcher -> projection -> eligibility -> commit, not just YAML evidence groups (replaces the logic gap in `tests/test_2c_assess_verbs.py`).
 2. Re-add `assess`/`evaluate` and "our evidence" to `k_sl_2c_c_r2`; confirm no tie with `c_r1` through the real matcher.
