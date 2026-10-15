@@ -3,6 +3,8 @@
 Source: `.plans/astra-plan-assessment-answer.md` (outside review of `astra-implementation-plan.md`).
 Status: **A1-A3 done and committed; engine-error line merged (PR 633); B1-B2 merged (PR 634, 78babc8d); B3 hosted `@spine` passed (reveal not shown earned, see Step B); C1 merged (PR 635, 8cd9bf5f) and measured live: 2C now exits on play in 8 turns; C2-C5, D, E not started.** Update this file after each step (memory: update-plan-after-each-feature).
 
+**Latest and next (2026-10-15):** hosted `@spine` on staging 9ec05da2 passed clean (73 turns, no fallback or recovery); 1B, 2C, 3A, 3B spine prompts and the committed-reveal field are merged. Next: (1) diagnose `BUDGET_UNAVAILABLE` and the 502-vs-503 mismatch; (2) repeat `@spine` for a rate; (3) C2 recent-cue reference resolution, then C3 (reproduce first); (4) Step D hygiene; (5) Step E stays on hold. Same list is mirrored in `astra-implementation-plan.md`.
+
 Ground rules: every code change goes through Ringer (one task per run unit); unit tests stay hermetic (no live worker); no billed run before a smoke test; measure each step before the next; keep the repo ruff-formatted. Findings are numbered as in the assessment (F1-F8).
 
 ## Checked against the code before planning
