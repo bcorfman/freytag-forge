@@ -306,6 +306,20 @@ scene affordances (`scene-affordance-e2e.md`, historical), “resolve a bare nou
   through the same resolution boundary, avoiding a competing matching path.
   Unique in-scope referents resolve; multiple referents produce the agreed
   fixed system question without narration, facts, or clock advancement.
+  Reconciliation finding (2026-10-16, read-only, before any build): the
+  2026-10-06 design put the pending question on `RuntimeState`, excluded from the
+  snapshot. That does not work hosted. `POST /api/v1/turn` calls `load_state`
+  on every request and rebuilds `RuntimeState` from the SQLite snapshot
+  (`storygame/web_demo.py`, `RuntimeStateSqliteStore`), so an in-memory field
+  would be lost between the question and the answer. The app runs as one
+  uvicorn process (`railway.toml`), so the pending question must live in a
+  bounded, TTL'd in-process map in the API layer keyed by session id, outside
+  `RuntimeState` and the snapshot, cleared on scene change and process restart.
+  A second process would not see it. The engine would take the pending record as
+  an argument so it stays testable and story-neutral. Not built; awaiting
+  Brandon's go-ahead on this changed lifecycle. Also unchanged by research: no
+  disambiguation code exists yet; entities are matched by exact name/alias across
+  all scenes (`knowledge._input_referenced_entity_ids`).
 - [ ] Preserve the October 6 answer policy: splice a recognized answer into
   the original command; unrelated input cancels the pending question and runs
   normally; cap clarification rounds at two. Clear pending questions on scene
