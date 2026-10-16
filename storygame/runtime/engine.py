@@ -35,6 +35,12 @@ from storygame.runtime.contracts import (
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.narration_safety import NarrationSafetyValidator
+from storygame.runtime.reference_resolution import (
+    Clarification,
+    ReferenceResult,
+    clarification_text,
+    resolve_references,
+)
 from storygame.runtime.reveal_eligibility import ALREADY_ESTABLISHED, STORYLET_SPENT, explain_reveal
 from storygame.runtime.state import CueStage as RuntimeCueStage
 from storygame.runtime.state import RuntimeState, TurnDelivery, TurnRecord
@@ -110,6 +116,22 @@ class EngineRefusalTurn:
         return self.segments[0].text
 
 
+class ClarificationTurn:
+    """A fixed, provider-free response when a scene-local noun is ambiguous."""
+
+    def __init__(self, clarification: Clarification) -> None:
+        self.segments = (NarrationSegment(kind="narration", text=clarification_text(clarification)),)
+        self.selected_knowledge_ids = ()
+        self.events = ()
+        self.game_break = None
+        self.story_complete = False
+        self.clarification = clarification
+
+    @property
+    def narration(self) -> str:
+        return self.segments[0].text
+
+
 class RuntimeEngine(CanonicalEventMixin):
     def __init__(
         self,
@@ -136,6 +158,7 @@ class RuntimeEngine(CanonicalEventMixin):
         self.attempts: list[AttemptBundle] = []
         self.last_attempt: AttemptBundle | None = None
         self.last_guard_rejections: list[dict[str, object]] = []
+        self.last_reference_resolution: ReferenceResult | None = None
 
     def _provider_handoff(self) -> TurnProviderHandoff | None:
         return self.provider if isinstance(self.provider, TurnProviderHandoff) else None
@@ -186,10 +209,29 @@ class RuntimeEngine(CanonicalEventMixin):
         entry = NarrationSegment(kind="narration", text=scene.metadata.entry_text)
         return ResolvedTurnProposal(segments=(entry, *proposal.segments))
 
-    def turn(self, player_input: str, *, clock_seconds: int | None = None) -> ResolvedTurnProposal:
+    def turn(
+        self,
+        player_input: str,
+        *,
+        clock_seconds: int | None = None,
+        clarifies: str | None = None,
+        clarification_round: int = 0,
+    ) -> ResolvedTurnProposal:
         """Call the provider once, then validate before any canonical mutation."""
 
         self.last_guard_rejections = []
+        self.last_reference_resolution = None
+        if not self.state.story_complete and not self.state.has_pending_break:
+            reference = resolve_references(
+                self.state,
+                player_input,
+                clarifies=clarifies,
+                clarification_round=clarification_round,
+            )
+            self.last_reference_resolution = reference
+            if reference.question is not None:
+                return ClarificationTurn(reference.question)
+            player_input = reference.command
         budget = self._provider_budget()
         try:
             self._begin_provider_turn()
