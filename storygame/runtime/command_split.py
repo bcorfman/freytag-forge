@@ -183,12 +183,29 @@ def _coordinated_verbs(parsed_root: Token, quoted: set[int]) -> list[Token]:
     pending = [child for child in parsed_root.children if child.dep_ == "conj"]
     while pending:
         candidate = pending.pop(0)
-        if candidate.dep_ != "conj":
+        if candidate.dep_ != "conj" and not _is_then_verb(candidate):
             continue
-        if candidate.pos_ == "VERB" and candidate.i not in quoted:
-            action_roots.append(candidate)
-            pending.extend(child for child in candidate.children if child.dep_ == "conj")
+        if candidate.pos_ != "VERB" or candidate.i in quoted:
+            continue
+        if _contains_negation(candidate):
+            continue
+        action_roots.append(candidate)
+        pending.extend(child for child in candidate.children if child.dep_ == "conj" or _is_then_verb(child))
     return sorted(action_roots, key=lambda token: token.i)
+
+
+def _is_then_verb(token: Token) -> bool:
+    return (
+        token.pos_ == "VERB"
+        and token.dep_ == "dep"
+        and token.i > 0
+        and token.doc[token.i - 1].text.casefold() == "then"
+    )
+
+
+def _contains_negation(token: Token) -> bool:
+    negation_words = {"not", "n't", "never", "no", "without"}
+    return any(child.dep_ == "neg" or child.text.casefold() in negation_words for child in token.subtree)
 
 
 def _quoted_token_indexes(sentence: Span) -> set[int]:
