@@ -1,0 +1,25 @@
+{
+  "run_name": "stage4-references",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage4-references",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "reference-ask-only",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 5400,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own ONLY: storygame/runtime/reference_resolution.py, storygame/runtime/engine.py, tests/test_reference_resolution.py, tests/test_reference_clarification.py. Touch nothing else. Never weaken or delete an existing test outside your files.\n\nPROBLEM. The engine core already in the tree (read reference_resolution.py and the engine.turn hook first) rewrites the player's command whenever a bare head noun matches exactly one thing in the scene. That broke 12 older tests and is wrong: \"Go out to the truck.\" became \"Go out to the Kristin's truck.\", \"Read the files on my laptop.\" became \"my Kristin's laptop\", \"Send the evidence.\" lost its reveal. A unique noun already works with the existing matchers, so the command must reach the provider EXACTLY as the player typed it.\n\nCHANGE.\n1. In reference_resolution.py, a unique scene-local match must NOT change the command text. `ReferenceResult.command` for a fresh command with no ambiguity equals the player's input byte for byte. Keep recording the unique matches in `resolutions` (noun, entity_id) for later measurement, and keep outcome \"resolved\" when there is at least one.\n2. Only real ambiguity (two or more scene things sharing the head, no full-name/precedence hit) produces a question, exactly as now. The answered path still splices the chosen option's full name into the ORIGINAL command at the ambiguous noun (that is the one place text is changed), and must not substitute any other unique noun in the same command. After the splice, re-check for a second ambiguous noun as now (round cap 2 unchanged).\n3. If the ambiguity check also fires on commands where the noun is part of a longer name the player typed in full, or on a possessive or article form that already matches an entity name, leave it alone (full-name precedence). Fix any such false question you find; add a test for it.\n4. Update tests/test_reference_resolution.py and tests/test_reference_clarification.py so no test expects a silent rewrite of a unique noun; add tests: (a) \"Go out to the truck.\" and \"Read the files on my laptop.\" come back unchanged in a state where those nouns are unique; (b) a command with a unique noun and an ambiguous noun asks only about the ambiguous one and, once answered, leaves the unique noun's text unchanged.\n5. Do not touch the 12 older tests that failed (tests/test_2c_assess_engine_turn.py, test_bench.py, test_command_split.py, test_deadline_protected_license.py, test_fixed_refusal.py, test_established_reveal_match.py, test_revealed_knowledge_ids.py, test_runtime_capture.py, test_web_demo_fixed_refusal.py): they must pass unchanged. If one still fails because a real ask fires on its command, report the noun and scene in your final message and make the minimal precedence fix in reference_resolution.py rather than editing the test.\n\nHOW TO RUN. PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider -n 4 . Ruff: /home/bcorfman/dev/freytag-forge/.venv/bin/ruff check and ruff format on your four files. No uv. Hermetic tests only, no live worker.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage4/check_reference_ask_only.sh",
+      "verified": "unique bare nouns leave the command exactly as typed; only real ambiguity asks; full suite green"
+    }
+  ]
+}
