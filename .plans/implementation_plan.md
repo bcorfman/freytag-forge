@@ -386,6 +386,18 @@ scene affordances (`scene-affordance-e2e.md`, historical), “resolve a bare nou
   call. Limits: one run, one story, two commands; offline only, not measured hosted;
   bare 'file' was never added to the 2C authored evidence and no recorded reason was
   found either way.
+  HOSTED CHECK 2026-10-16, staging `3c2f9ad3` (runtime `scene-v1`, verified before each
+  run; tests `@reference-copy` and `@reference-gate` in `frontend/e2e/reference-copy.spec.js`,
+  Ringer `stage4-hosted-2c-copy`; reports `artifacts/e2e-reference-copy.json` and
+  `artifacts/e2e-reference-gate.json`, gitignored). 2C: after a 38-turn spine walk,
+  'Copy the encrypted Project Echelon file to my laptop.' committed `k_sl_2c_c_r1` with
+  `semantic_match.ran` false (exact path; no semantic call). 3A: after a 49-turn walk
+  including the first three 3A spine prompts, 'Lead the captives through the emergency
+  gate.' committed `k_sl_3a_c_r1`, `ran` false (exact path), not rejected. 'Project
+  Echelon' is not a story term (absent from the package); it is the blind player's
+  invention. Limits: one run per command, one story; 'Guide the captives through the
+  open emergency gate.' was not run; the `reached_2c` field name in the 3A report is
+  inherited from the 2C summary.
 
 Exit: bounded references improve the reproduced cases without false grants,
 leaks, duplicate entities, or advancing a turn to ask a question.

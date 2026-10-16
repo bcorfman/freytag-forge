@@ -43,11 +43,17 @@ function isRejected(payload) {
     || payload?.attempt_bundle?.outcome === "rejected";
 }
 
-export function summarizeReferenceCopy({ identity, walkTurns = [], copyPayload = {} } = {}) {
+export function summarizeReferenceCopy({
+  identity,
+  walkTurns = [],
+  copyPayload = {},
+  targetRevealId = TARGET_REVEAL_ID,
+  sceneIn = null,
+} = {}) {
   const copy = copyPayload || {};
   const committedIds = committedRevealIds(copy);
   const semanticMatch = copy.semantic_match ?? null;
-  const earned = committedIds.includes(TARGET_REVEAL_ID);
+  const earned = committedIds.includes(targetRevealId);
   const path = !earned
     ? "none"
     : semanticMatch == null
@@ -58,17 +64,25 @@ export function summarizeReferenceCopy({ identity, walkTurns = [], copyPayload =
           ? "semantic"
           : "unknown";
 
-  return {
+  const summary = {
     identity,
     walk_turn_count: walkTurns.length,
     reached_2c: walkTurns.some((turn) => sceneOutFor(turn) === "2C"),
     input: copy.input ?? copy.player_input ?? null,
-    scene_in: copy.scene_in ?? null,
+    scene_in: copy.scene_in ?? sceneIn,
     committed_reveal_ids: [...new Set(committedIds)],
-    earned_c_r1: earned,
+    earned_target: earned,
     semantic_match: semanticMatch,
     path,
     rejected: isRejected(copy),
     narration: narrationFor(copy),
   };
+
+  if (targetRevealId === TARGET_REVEAL_ID) {
+    summary.earned_c_r1 = earned;
+  } else {
+    summary.target_reveal_id = targetRevealId;
+  }
+
+  return summary;
 }

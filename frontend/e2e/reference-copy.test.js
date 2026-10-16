@@ -35,6 +35,7 @@ test("summarizes the exact-match path", () => {
   });
 
   assert.equal(summary.path, "exact");
+  assert.equal(summary.earned_target, true);
   assert.equal(summary.earned_c_r1, true);
   assert.equal(summary.reached_2c, true);
   assert.deepEqual(summary.committed_reveal_ids, ["k_sl_2c_c_r1"]);
@@ -60,6 +61,7 @@ test("reports none when the target reveal was not earned", () => {
   });
 
   assert.equal(summary.path, "none");
+  assert.equal(summary.earned_target, false);
   assert.equal(summary.earned_c_r1, false);
 });
 
@@ -68,6 +70,80 @@ test("reports unknown when a committed target has no semantic-match field", () =
 
   assert.equal(summary.path, "unknown");
   assert.equal(summary.semantic_match, null);
+});
+
+test("summarizes the 3A target exact-match path", () => {
+  const summary = summarizeReferenceCopy({
+    copyPayload: payload({
+      scene_in: undefined,
+      attempt_bundle: {
+        outcome: "committed",
+        selected_reveal: { knowledge_ids: ["k_sl_3a_c_r1"] },
+        committed_delta: {},
+      },
+      semantic_match: { ran: false, matched: "k_sl_3a_c_r1" },
+    }),
+    targetRevealId: "k_sl_3a_c_r1",
+    sceneIn: "3A",
+  });
+
+  assert.equal(summary.path, "exact");
+  assert.equal(summary.earned_target, true);
+  assert.equal(summary.target_reveal_id, "k_sl_3a_c_r1");
+  assert.equal(summary.scene_in, "3A");
+});
+
+test("summarizes the 3A target semantic-match path", () => {
+  const summary = summarizeReferenceCopy({
+    copyPayload: payload({
+      attempt_bundle: {
+        outcome: "committed",
+        selected_reveal: { knowledge_ids: ["k_sl_3a_c_r1"] },
+        committed_delta: {},
+      },
+      semantic_match: { ran: true, matched: "k_sl_3a_c_r1" },
+    }),
+    targetRevealId: "k_sl_3a_c_r1",
+  });
+
+  assert.equal(summary.path, "semantic");
+  assert.equal(summary.earned_target, true);
+});
+
+test("reports none for the 3A target when another reveal was earned", () => {
+  const summary = summarizeReferenceCopy({
+    copyPayload: payload({
+      attempt_bundle: {
+        outcome: "committed",
+        selected_reveal: { knowledge_ids: ["other"] },
+        committed_delta: {},
+      },
+      semantic_match: { ran: true, matched: "other" },
+    }),
+    targetRevealId: "k_sl_3a_c_r1",
+  });
+
+  assert.equal(summary.path, "none");
+  assert.equal(summary.earned_target, false);
+  assert.equal(summary.target_reveal_id, "k_sl_3a_c_r1");
+});
+
+test("reports unknown for the 3A target without a semantic-match field", () => {
+  const summary = summarizeReferenceCopy({
+    copyPayload: payload({
+      attempt_bundle: {
+        outcome: "committed",
+        selected_reveal: { knowledge_ids: ["k_sl_3a_c_r1"] },
+        committed_delta: {},
+      },
+      semantic_match: undefined,
+    }),
+    targetRevealId: "k_sl_3a_c_r1",
+  });
+
+  assert.equal(summary.path, "unknown");
+  assert.equal(summary.earned_target, true);
+  assert.equal(summary.target_reveal_id, "k_sl_3a_c_r1");
 });
 
 test("reports a rejected payload and does not count its selected reveal", () => {
