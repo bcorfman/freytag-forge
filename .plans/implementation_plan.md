@@ -273,11 +273,35 @@ hosted runs are a smoke sample.
 Sources: assessment C2 / Astra Phase 4.3;
 scene affordances (`scene-affordance-e2e.md`, historical), “resolve a bare noun” decision.
 
-- [ ] Reproduce the recent-cue follow-up miss with a narrow engine test. Add a
+- [x] Reproduce the recent-cue follow-up miss with a narrow engine test. Add a
   bounded projection of the last accepted authored cue's referents, entity
   links and source spans to reference matching. Do not add transcript memory
   or a permanent alias for an incidental cue phrase. Rejected turns must not
   update the record; test expiration, scene changes, ambiguity and save/load.
+  Done 2026-10-16 on `stage4-references` (not merged; Ringer `stage4-references`,
+  manifests in `scripts/ringer/stage4/`; commits `bd6b3bce` reproduction,
+  `8e1d40eb` projection, `dfcf21ae` scene-check fix). Reproduced: after
+  'Open the drawer.' commits the gap pointer `k_sl_1a_f_r1`, 'Search the gap.'
+  (also 'Feel along the gap.', 'Check the gap.') earned nothing with semantic
+  matching on or off, because `k_sl_1a_b_r0` needs a drawer word. Fix:
+  `storygame/runtime/recent_cue.py::recent_cue_referent_text` derives one owner
+  name from the LAST accepted `TurnRecord` (no new state, nothing persisted,
+  rejected turns write no record) and `CloudflareTurnProvider._evidence_input`
+  appends it to the text seen by the exact/shadow evidence matchers only; the
+  narrator prompt, negation check and semantic matcher keep the original input.
+  Rules: one accepted turn of life, current scene only (turn_index versus
+  scene_entered_at_turn and no transition record), exactly one non-protagonist
+  owner, a shared non-verb content word with the cue's delivery text, owner not
+  already named; it never grants a reveal alone. Review caught that the first
+  version parsed `TurnRecord.id`, which stays `turn_25` after 24 accepted turns
+  and would have disabled the cue in every late scene; fixed and covered by a
+  saturation test that fails on the old code. Verification: full suite 1848
+  passed, new tests `tests/test_recent_cue_reference.py` (reproduction no longer
+  xfail) and `tests/test_recent_cue_unit.py`. Limits: offline only, one story
+  and one cue (1A gap); not measured on a hosted run; pronoun follow-ups ('it')
+  are out of scope; the cue life of one turn is a choice, not a measured
+  optimum; the repo's `ruff check .` still reports 47 findings in older
+  `scripts/ringer/*` check scripts (not touched here).
 - [ ] Reconcile and implement the still-unbuilt scene-local bare-noun decision
   through the same resolution boundary, avoiding a competing matching path.
   Unique in-scope referents resolve; multiple referents produce the agreed
