@@ -1,0 +1,25 @@
+{
+  "run_name": "stage5-negation-scope",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage5-negation-scope",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "negation-retraction",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 1500,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own ONLY storygame/runtime/candidate_matcher.py and tests/test_negation_scope.py. Touch nothing else; never remove or weaken an existing assertion. Never run anything billed.\n\nCONTEXT. storygame/runtime/candidate_matcher.py::negation_scoped_command (just added, read it first) lets a negated TRAILING clause be dropped so 'Open the drawer, but do not take anything yet.' still matches. A review found a safety regression: a trailing clause that RETRACTS the whole command is also dropped, so these now match although today (before the helper) they were blocked and must stay blocked: 'Open the drawer, never mind.', 'Open the drawer, no wait.', 'Open the drawer, no stop.', 'Open the drawer, don't bother.', 'Open the drawer, nevermind.'. Verified by running the helper: each returns 'Open the drawer'.\n\nFIX. In negation_scoped_command, when a restraint (negated) trailing clause contains any retraction word, return None (block the whole command). Define a module-level frozenset _RETRACTION_WORDS = {'mind', 'nevermind', 'wait', 'stop', 'bother', 'cancel', 'forget', 'undo', 'hold', 'kidding', 'joking', 'scratch'} compared against the casefolded words of that clause, and check it BEFORE the existing 'content word' tests so a clause such as 'no wait' or 'never mind' blocks even though 'wait'/'mind' would otherwise count as new content. Do not change any other behavior: 'Open the drawer, but do not take anything yet.' -> 'Open the drawer', 'Check the copied JANUS files, but do not send anything yet.', 'Open the drawer but not the cabinet.', 'Search the room without touching the safe.' must still be trimmed and returned as before; every currently blocked example must stay blocked.\n\nTESTS. In tests/test_negation_scope.py add the five retraction examples above plus 'Open the drawer, no, cancel that.', 'Open the drawer, don't, hold on.' and 'Open the drawer, no kidding.' as BLOCKED cases (they must return None), through both negation_scoped_command and the real matcher on scene 1A (uniquely_matched_authored_handoff earns nothing). Confirm the new blocked cases fail on the code before your fix (git stash the source file) and say so in your final message.\n\nHOW TO RUN. Confirm `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` prints a path inside this worktree. Iterate with `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_negation_scope.py tests/test_raw_language_corpus.py tests/test_candidate_matcher.py`, then the whole `tests` directory, and ruff check / ruff format --check (line length 120) via /home/bcorfman/dev/freytag-forge/.venv/bin/ruff on your two files.\n\nCOMPLETION RULE: do not stop until the fix and tests pass, the full suite is green and ruff is clean. Finish by listing files changed and pasting the pytest summary.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage5/check_negation_retraction.sh",
+      "verified": "retraction clauses such as never mind or no wait keep the whole command blocked"
+    }
+  ]
+}
