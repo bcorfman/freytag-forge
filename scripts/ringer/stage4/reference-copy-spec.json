@@ -1,0 +1,25 @@
+{
+  "run_name": "stage4-hosted-2c-copy",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage4-hosted-2c-copy",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "reference-copy-spec",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own ONLY three NEW files: frontend/e2e/reference-copy.spec.js, frontend/e2e/reference-copy.js and frontend/e2e/reference-copy.test.js. Touch nothing else (do not edit scene-runtime.spec.js, helpers.js or canon-journey.js; import from them). You cannot reach the hosted API from here; do not try. Never run anything billed.\n\nGOAL. A hosted Playwright test tagged @reference-copy that walks the scripted spine on staging to scene 2C, then types the single command 'Copy the encrypted Project Echelon file to my laptop.' as the FIRST turn after entering 2C, and records how the engine matched it. Purpose: confirm the evidence-append feature (merged as 3c2f9ad3) earns k_sl_2c_c_r1 on the EXACT path. Before the feature the exact matcher missed this command and the semantic matcher (an LLM call) rescued it; the saved payload field semantic_match = {ran, matched} tells which path won: ran false plus k_sl_2c_c_r1 committed means exact matched.\n\nMODEL IT ON the @spine test in frontend/e2e/scene-runtime.spec.js (lines ~98-218): startSceneSession(page), a loop that picks input = promptFor(sceneId, used) from ./canon-journey.js and calls submitTurn(page, input) from ./helpers.js, tracks promptsUsed per scene, calls resolveWarningIfPresent(page) after each turn, and follows payload.state.scene_id. Differences: stop the loop the moment the scene becomes '2C' (cap 90 turns; if 2C is not reached, fail with a clear message). Then submit the Echelon command with submitTurn. Do not run any further turns. Refuse to run unless GET {E2E_API_BASE_URL}/api/v1/version reports channel 'staging' (copy the requireStaging pattern from frontend/e2e/affordances.spec.js); record sha/runtime/channel. test.setTimeout(20 * 60_000). Skip (test.skip) when E2E_API_BASE_URL is unset. If a walk turn throws a rejection, record it and continue up to 4 consecutive rejections, then fail with a clear message.\n\nPURE HELPER in reference-copy.js (this is what node tests cover): export summarizeReferenceCopy({ identity, walkTurns, copyPayload }) returning { identity, walk_turn_count, reached_2c, input, scene_in, committed_reveal_ids (from copyPayload.attempt_bundle?.committed_delta and selected_reveal: look at bundleSummary in scene-runtime.spec.js and the fields used by frontend/e2e/spine-record.js to extract committed reveal ids; also use payload.grounding_ids), earned_c_r1 (bool), semantic_match (copyPayload.semantic_match or null), path ('exact' when earned_c_r1 and semantic_match?.ran === false; 'semantic' when earned_c_r1 and ran === true; 'none' when not earned; 'unknown' when semantic_match is absent), rejected (bool), narration (concatenate segments of kind narration/action/dialogue like narrationFor in the alias-smoke test) }. Write the report with writeCategoryReport('reference-copy', summary) from helpers.js. The test asserts earned_c_r1 is true and prints the path; it must not assert which path (the path is the finding).\n\nTESTS in reference-copy.test.js (node:test, offline, same style as frontend/e2e/alias-smoke-record.test.js): exact path, semantic path, none, unknown (no semantic_match), rejected payload, identity passthrough.\n\nHOW TO RUN. A symlink to node_modules is created by the check; for your own runs do `ln -sfn /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules` (remove it at the end; never commit it) then `cd frontend && node --test e2e/reference-copy.test.js` and `node --check e2e/reference-copy.spec.js`. Playwright listing: `cd frontend && E2E_API_BASE_URL= npx playwright test --list --grep @reference-copy`.\n\nCOMPLETION RULE: do not stop until the node tests pass and both files parse. Finish by listing files changed and pasting the node test output.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage4/check_reference_copy_spec.sh",
+      "verified": "a staging-guarded @reference-copy Playwright test with a tested pure summary helper"
+    }
+  ]
+}
