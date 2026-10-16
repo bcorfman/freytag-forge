@@ -1,0 +1,25 @@
+{
+  "run_name": "stage4-references",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage4-references",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "reference-frontend",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own ONLY: frontend/src/clarification.js (new), frontend/src/clarification.test.js (new), frontend/src/main.js, frontend/e2e/blind-player.js, frontend/e2e/blind-player.spec.js, frontend/e2e/blind-player.test.js. Touch nothing else (no Python, no other e2e files). Never weaken an existing test.\n\nBACKGROUND. POST /api/v1/turn now supports a client-held clarification question (already built, do not change the server). When the player's command names something ambiguous in the scene, the response is a normal turn payload (segments/lines hold one fixed \"Do you mean the archive terminals or the medical terminal?\" line, state unchanged) plus a `clarification` object {original_command, noun, options:[{id,name}], round}. To answer, the client sends the next turn with `clarifies` (= clarification.original_command) and `clarification_round` (= clarification.round) alongside `player_input` (the answer). The server stores nothing: if the page reloads, the question is simply gone. Unrelated input after a question is handled by the server as a fresh command, so the client always sends the pair while a question is pending.\n\nCHANGES.\n1. frontend/src/clarification.js: small pure ES module (no DOM) exporting: `turnRequestBody(sessionId, command, pending)` -> {session_id, player_input} plus {clarifies, clarification_round} only when `pending` is set; `nextPending(payload)` -> {original_command, round} from payload.clarification, or null when absent or malformed (also null whenever the payload has no clarification, so a normal turn clears it); `isQuestionTurn(payload)` -> boolean. frontend/src/clarification.test.js: node:test cases for all three, including the shapes above and malformed input.\n2. frontend/src/main.js: keep `let pendingClarification = null` in JS memory only (never localStorage/sessionStorage/cookies/URL). runCommand builds its request with turnRequestBody and after a successful response sets pendingClarification = nextPending(payload). Clear it in createSession (new game) and on any request error. The question line renders through the existing renderTurn path as an ordinary output entry; keep that. Nothing else in the UI changes.\n3. frontend/e2e/blind-player.js: turnRecord gains `clarification: payload.clarification || null` and a boolean `question_turn`. analyseRun and turnLog must not count a question turn as an attempted story command in turn_count or as a rejection (read both, keep behavior for turns without clarification byte-identical). Extend frontend/e2e/blind-player.test.js with node tests for that.\n4. frontend/e2e/blind-player.spec.js: in playScene, a turn whose payload has `clarification` is recorded but does not consume the turn budget (decrement `turn` so the loop retries), at most 2 such repeats in a row; the player sees the question in the transcript on the next loop and answers through the normal page input. No server calls bypass the page.\n\nHOW TO RUN. cd frontend && npm test (node --test src/*.test.js e2e/*.test.js). The Playwright specs need a hosted API and API keys: do NOT run them. The check also runs a vite build. node_modules is provided by the check via symlink; if you need it while working run `ln -sfn /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules` and do not stage it. No network access to the hosted demo.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage4/check_reference_frontend.sh",
+      "verified": "browser and blind player hold, return and drop the client-held clarification; ask turns are not counted as story turns"
+    }
+  ]
+}
