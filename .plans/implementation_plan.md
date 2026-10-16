@@ -306,20 +306,25 @@ scene affordances (`scene-affordance-e2e.md`, historical), “resolve a bare nou
   through the same resolution boundary, avoiding a competing matching path.
   Unique in-scope referents resolve; multiple referents produce the agreed
   fixed system question without narration, facts, or clock advancement.
-  Reconciliation finding (2026-10-16, read-only, before any build): the
-  2026-10-06 design put the pending question on `RuntimeState`, excluded from the
-  snapshot. That does not work hosted. `POST /api/v1/turn` calls `load_state`
-  on every request and rebuilds `RuntimeState` from the SQLite snapshot
-  (`storygame/web_demo.py`, `RuntimeStateSqliteStore`), so an in-memory field
-  would be lost between the question and the answer. The app runs as one
-  uvicorn process (`railway.toml`), so the pending question must live in a
-  bounded, TTL'd in-process map in the API layer keyed by session id, outside
-  `RuntimeState` and the snapshot, cleared on scene change and process restart.
-  A second process would not see it. The engine would take the pending record as
-  an argument so it stays testable and story-neutral. Not built; awaiting
-  Brandon's go-ahead on this changed lifecycle. Also unchanged by research: no
-  disambiguation code exists yet; entities are matched by exact name/alias across
-  all scenes (`knowledge._input_referenced_entity_ids`).
+  Lifecycle decision (Brandon, 2026-10-16): the pending question is
+  client-held. The 2026-10-06 design (a `RuntimeState` field outside the
+  snapshot) cannot work hosted because `POST /api/v1/turn` rebuilds state from
+  SQLite on every request, and SQLite or an API-layer map would survive a
+  reload, which confuses the player. The server stores nothing: the response
+  carries the fixed line plus a `clarification` object, and the next request
+  may carry `clarifies` (original command) and a round counter.
+  Engine core done (2026-10-16): `storygame/runtime/reference_resolution.py`
+  and `RuntimeEngine.turn(..., clarifies=None, clarification_round=0)`. Scope
+  reuses `knowledge._entity_in_scene_scope`. Two or more scene things sharing a
+  head noun return a `ClarificationTurn` before any provider call, state change
+  or clock tick. A unique noun leaves the command exactly as typed (a first
+  attempt rewrote it to a full name and broke 12 older tests such as "the
+  Kristin's truck"; fixed). Tests: `tests/test_reference_resolution.py`,
+  `tests/test_reference_clarification.py`. One older test changed:
+  `test_deadline_protected_license` now reads "the archive terminals", since bare
+  "terminal" in 2B is a real question. Full suite 1868 passed. Not yet built:
+  API field/response (`web_demo.py`), frontend and blind player. Limits:
+  engine-only, offline, not measured hosted.
 - [ ] Preserve the October 6 answer policy: splice a recognized answer into
   the original command; unrelated input cancels the pending question and runs
   normally; cap clarification rounds at two. Clear pending questions on scene
