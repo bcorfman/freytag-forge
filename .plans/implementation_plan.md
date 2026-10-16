@@ -142,7 +142,7 @@ Sources: assessment latest/Step B, Astra latest, playthrough quality.
   Done (commits `d22cb1da`, `a2f985f8`): `@spine` records attempt bundles, asserts
   story completion, 2C C-R2 and the intended chains (`spine-expected-reveals.json`,
   drift-guarded by `tests/test_spine_expected_reveals.py`) after writing its report.
-- [ ] Verify the merged player-facing engine-error line on staging: rejected
+- [x] Verify the merged player-facing engine-error line on staging (partly: see Stage 3 status): rejected
   turns do not expose protected terms, state remains unchanged, and provider
   outages retain their separate error contract.
 - [ ] Fold the remaining linked 1A-to-1B phone-alias smoke into this work only
@@ -153,7 +153,7 @@ Sources: assessment latest/Step B, Astra latest, playthrough quality.
 Exit: a current baseline table with artifact links, attempted/completed runs,
 reveals, exits, ending, failures, requests, latency, and evidence limitations.
 
-Stage 3 status (2026-10-15): items 1-2 done, item 3 attempted and failed on a stale probe script, item 4 not done. Staging
+Stage 3 status (2026-10-15): items 1-2 done, item 3 done for the hosted rejection (fixed line and outage contract still local-only), item 4 not done. Staging
 `b6761c9e` (runtime `scene-v1`, channel staging) for every attempt; code under
 test `d22cb1da`/`a2f985f8` on `astra-step-d`. Ringer `stage3-spine-baseline`
 (harness) and `stage3-hosted-spine` (attempts); artifacts in gitignored
@@ -212,9 +212,21 @@ raw reason ('selected knowledge is not eligible for this turn'), not the fixed
 line; the fixed line `I don't understand. Can you try something else?` is
 verified only by `tests/test_engine_error_line.py` (local). Hosted verification
 of the fixed line would need that flag unset on staging, which is not done.
-The repaired probe has NOT been rerun yet (needs Brandon to run
-`! source .env && bash scripts/knowledge_timeline_probe.sh` at the terminal;
-Claude's classifier blocks delegated staging-variable changes). Item 4: no script that elicits the ordinary
+RERUN PASSED 2026-10-15 22:12 on staging `e3f66225` (PR 645 merge plus dependabot
+bumps; run by Brandon at the terminal): `@knowledge-timeline` passed. Report
+`artifacts/e2e-knowledge-timeline.json` (gitignored): 5 committed turns, drawer
+turn selected `k_sl_1a_b_r0` (resolved `SL-1A-E/SL-1A-E-R1`); the future-lead
+turn was rejected HTTP 409 with `X-Freytag-Rejection-Code: ineligible_selection`
+after committed turn_index 5; visible line 'selected knowledge is not eligible for
+this turn' (no id or protected term; `diagnostic_detail_exposed` true because
+staging sets `FREYTAG_EXPOSE_PROMPT=1`). Verified hosted: status, code, visible
+line leak-free. Verified only locally: state unchanged after rejection
+(`tests/test_knowledge_timeline_script.py`) and the fixed engine-error line
+(`tests/test_engine_error_line.py`). NOT verified anywhere hosted: the fixed line
+itself, an unexpected-engine-error 500, the provider-outage contract. Revert note:
+the probe printed 'staging did not show a live opening after the revert'; the
+first of three sessions opened minutes later still showed the scripted opening,
+the next two were live, so the revert lagged its 60 s wait and then completed. Item 4: no script that elicits the ordinary
 photo words has been written.
 
 ## 4. Resolve references from accepted context
