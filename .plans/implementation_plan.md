@@ -145,15 +145,16 @@ Sources: assessment latest/Step B, Astra latest, playthrough quality.
 - [x] Verify the merged player-facing engine-error line on staging (partly: see Stage 3 status): rejected
   turns do not expose protected terms, state remains unchanged, and provider
   outages retain their separate error contract.
-- [ ] Fold the remaining linked 1A-to-1B phone-alias smoke into this work only
+- [x] Fold the remaining linked 1A-to-1B phone-alias smoke into this work only
   with a script that actually elicits the relevant ordinary photo words.
   The existing 0-versus-0 probe did not exercise the defect; do not repeat it
   unchanged or claim it measured an improvement.
+  Done 2026-10-16, see Item 4 below.
 
 Exit: a current baseline table with artifact links, attempted/completed runs,
 reveals, exits, ending, failures, requests, latency, and evidence limitations.
 
-Stage 3 status (2026-10-15): items 1-2 done, item 3 done for the hosted rejection (fixed line and outage contract still local-only), item 4 not done. Staging
+Stage 3 status (2026-10-15): items 1-2 done, item 3 done for the hosted rejection (fixed line and outage contract still local-only), item 4 done. Staging
 `b6761c9e` (runtime `scene-v1`, channel staging) for every attempt; code under
 test `d22cb1da`/`a2f985f8` on `astra-step-d`. Ringer `stage3-spine-baseline`
 (harness) and `stage3-hosted-spine` (attempts); artifacts in gitignored
@@ -226,8 +227,31 @@ line leak-free. Verified only locally: state unchanged after rejection
 itself, an unexpected-engine-error 500, the provider-outage contract. Revert note:
 the probe printed 'staging did not show a live opening after the revert'; the
 first of three sessions opened minutes later still showed the scripted opening,
-the next two were live, so the revert lagged its 60 s wait and then completed. Item 4: no script that elicits the ordinary
-photo words has been written.
+the next two were live, so the revert lagged its 60 s wait and then completed.
+
+Item 4 (done 2026-10-16): the old probe asked only 'Examine Michelle's phone.',
+which never made the narrator write a photo word (0 of 24). New prompts ask about
+photos on the phone, so the word appears: 'Look through the photos on Michelle's
+phone.', 'Search Michelle's phone for her last picture.', 'Check Michelle's phone
+for a recent photograph.' Local narration bench (Ringer `stage3-photo-alias`,
+smoke n=2 then n=12 per cell; `bench/variations/stage3-photo-{baseline,current}.json`,
+artifacts `~/dev/ringer-work/stage3-photo-alias/`): global-alias baseline rejected
+6 of 36 turns, every one 'narration mentions an unavailable entity photo/photograph'
+(`narration_known_term_leak`: picture prompt 3/12, photograph prompt 3/12, photos
+prompt 0/12); the shipped scoped aliases rejected 0 of 36 (exact one-sided
+p = 0.012, single package pair, one story). The narrator wrote a photo word in
+33 of 36 current-arm and 21 of 30 narrated baseline turns. Hosted linked smoke
+(`@alias-smoke`, Ringer `stage3-alias-smoke`, staging `e3f66225`, exactly 3
+attempts, stopping rule fixed first): 3 of 3 passed; in each, both 1A photo
+prompts were accepted and the narration used a photo word, 1A reached 1B, and
+'Examine the photograph beneath the bench.' and 'Show Michelle's photograph to
+the man and ask who he is.' committed `k_sl_1b_a_r2` and `k_sl_1b_b_r1` with 0
+rejections (10 turns each, bundles visible). Limits: the hosted run has no
+global-alias arm (staging cannot run the old package), so it shows the shipped
+fix works end to end and does not regress 1B, while the improvement estimate
+comes from the local bench alone; the photograph prompt contains the photo word
+itself, so this tests ordinary photo words, not an unprompted narrator; three
+hosted runs are a smoke sample.
 
 ## 4. Resolve references from accepted context
 
