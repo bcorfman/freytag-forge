@@ -153,7 +153,7 @@ Sources: assessment latest/Step B, Astra latest, playthrough quality.
 Exit: a current baseline table with artifact links, attempted/completed runs,
 reveals, exits, ending, failures, requests, latency, and evidence limitations.
 
-Stage 3 status (2026-10-15): items 1-2 done, items 3-4 NOT done. Staging
+Stage 3 status (2026-10-15): items 1-2 done, item 3 attempted and failed on a stale probe script, item 4 not done. Staging
 `b6761c9e` (runtime `scene-v1`, channel staging) for every attempt; code under
 test `d22cb1da`/`a2f985f8` on `astra-step-d`. Ringer `stage3-spine-baseline`
 (harness) and `stage3-hosted-spine` (attempts); artifacts in gitignored
@@ -186,12 +186,24 @@ tokens and cost are not recorded (no source exposes them to the test); the
 `stage3-hosted-spine` Ringer verdicts read FAIL only because `expect_files`
 resolves against the Ringer workdir, while every check passed.
 
-Not done: (3) staging engine-error line check - needs the destructive
-`scripts/knowledge_timeline_probe.sh` (switches all of staging to scripted
-narration), awaiting Brandon's go-ahead; attempt B2's 409 is an unverified
-sighting of a rejected turn, since the test did not capture the player-visible
-line or post-rejection state. (4) 1A-to-1B phone-alias smoke - no script that
-elicits the ordinary photo words has been written.
+Item 3 (ran 2026-10-15, run by Brandon at the terminal; staging sha `b6761c9e`,
+verified back on live narration afterwards): `scripts/knowledge_timeline_probe.sh`
+switched staging to scripted narration and the `@knowledge-timeline` test FAILED
+at its third turn, before reaching its designed future-lead rejection. The probe
+script is stale: `deployment/knowledge-timeline-script.json` turn 3 selects
+`k_sl_1a_b_r2` for 'Search the drawer for Michelle's research and a damaged
+recording', but b_r2 now requires `memory_card_recovered` (earned by the
+`k_sl_1a_b_r0` drawer search first), so the runtime rejected it. Evidence from the
+page snapshot only (`frontend/test-results/`, gitignored): the player-visible line
+for that rejected turn was 'selected knowledge is not eligible for this turn' with
+no knowledge id or protected term; the turn input was echoed. NOT verified: the
+HTTP status and `X-Freytag-Rejection-Code` header (the snapshot does not show
+them), that state was unchanged, the fixed engine-error line for an unexpected
+engine error, and the provider-outage contract. Next: repair the script and the
+test's third input to follow the current 1A chain (b_r0 first), through Ringer,
+then rerun the probe (needs Brandon to run it; Claude's classifier blocks
+delegated staging-variable changes). Item 4: no script that elicits the ordinary
+photo words has been written.
 
 ## 4. Resolve references from accepted context
 
