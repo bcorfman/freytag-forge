@@ -9,9 +9,10 @@ experiment previously put on hold.
 
 ## Resume here
 
-Start with **1. Budget-service reliability**. The measurement gaps in **2** are
-closed and the hosted spine baseline in **3** is recorded (items 3-4 open). Continue with reference
-resolution (**4**), reproduced correctness gaps (**5**), authoring visibility
+**1. Budget-service reliability is DNF (dropped by Brandon, 2026-10-15); do not
+start or retry it.** The measurement gaps in **2** are closed and the hosted
+spine baseline in **3** is complete. Start with reference
+resolution (**4**), then reproduced correctness gaps (**5**), authoring visibility
 (**6**), and playthrough qualification (**7**). Revisit the pipeline experiment
 (**8**) only after its decision gate is met. Operational cleanup (**9**) can
 accompany the relevant earlier phase.
@@ -56,6 +57,20 @@ was inspected or changed for this consolidation.
   runbook procedures in place only when procedures change.
 
 ## 1. Diagnose and repair budget-service reliability
+
+**Status: DNF (did not finish; dropped by Brandon 2026-10-15). Do not attempt
+this stage again unless Brandon reopens it.** The boxes below stay unchecked on
+purpose and are not an open queue. Only a read-only diagnosis was done, nothing
+was changed or merged, and the Ringer manifest, run and branch were discarded.
+Findings, for the record: the client-side 502 comes from
+`CloudflareTurnProvider._narration_error` (`storygame/runtime/cloudflare.py`),
+which maps every Worker 5xx without a special case to 502, while the Worker
+(`worker/src/index.js`) returns 503 for `BUDGET_UNAVAILABLE` and
+`docs/cloudflare-narration-worker.md` lists 503; no test covers that mapping.
+The client never retries an answered `HTTPError`, and the Worker makes no AI
+call when the counter fails (covered by its test). The turn-58 Durable Object
+failure was not reproduced and is carried as an unresolved operational risk;
+per-IP isolation and the trusted-proxy check were not verified.
 
 Sources: assessment follow-up (`astra-assessment-implementation-plan.md`, historical),
 rate limits (`rate-limits.md`, historical).
