@@ -1,0 +1,27 @@
+{
+  "name": "stage3-photo-current",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 1,
+  "scripts": {
+    "1A": [
+      {
+        "name": "photos",
+        "inputs": [
+          "Look through the photos on Michelle's phone."
+        ]
+      },
+      {
+        "name": "picture",
+        "inputs": [
+          "Search Michelle's phone for her last picture."
+        ]
+      },
+      {
+        "name": "photograph",
+        "inputs": [
+          "Check Michelle's phone for a recent photograph."
+        ]
+      }
+    ]
+  }
+}

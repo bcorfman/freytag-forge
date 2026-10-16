@@ -1,0 +1,19 @@
+{
+  "run_name": "stage3-photo-alias",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage3-photo-n12",
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "photo-n12",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 5400,
+      "spec": "Do nothing. Do not edit, create or delete any file, and do not run any command. The check runs a live probe of the local narration bench (billed Cloudflare neurons): three photo-eliciting 1A prompts ('Look through the photos on Michelle's phone.', 'Search Michelle's phone for her last picture.', 'Check Michelle's phone for a recent photograph.') x two package arms (shipped scoped photograph aliases vs the baseline with global aliases), 12 replicates each, and prints per-arm counts of narrations that used a photo word and of rejected turns. Reply with the single word: ready.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage3/photo-elicit-check.sh /home/bcorfman/dev/ringer-work/stage3-photo-alias/n12 12",
+      "verified": "records exist for every arm x prompt with the expected replicate count"
+    }
+  ]
+}

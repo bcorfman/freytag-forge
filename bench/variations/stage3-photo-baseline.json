@@ -1,0 +1,37 @@
+{
+  "name": "stage3-photo-baseline",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 1,
+  "overrides": {
+    "world.yaml": {
+      "replacements": [
+        {
+          "old": "  name: Michelle's photograph\n  scoped_aliases: [photograph, photo]",
+          "new": "  name: Michelle's photograph\n  aliases: [photograph, photo]"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "1A": [
+      {
+        "name": "photos",
+        "inputs": [
+          "Look through the photos on Michelle's phone."
+        ]
+      },
+      {
+        "name": "picture",
+        "inputs": [
+          "Search Michelle's phone for her last picture."
+        ]
+      },
+      {
+        "name": "photograph",
+        "inputs": [
+          "Check Michelle's phone for a recent photograph."
+        ]
+      }
+    ]
+  }
+}
