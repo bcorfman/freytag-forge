@@ -14,5 +14,5 @@ PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m
 /home/bcorfman/dev/freytag-forge/.venv/bin/ruff check tests/test_knowledge_timeline_script.py && /home/bcorfman/dev/freytag-forge/.venv/bin/ruff format --check tests/test_knowledge_timeline_script.py || { echo ruff; exit 1; }
 git diff --cached -- frontend/e2e/scene-runtime.spec.js | grep -E '^[-+]' | grep -vE '^(\+\+\+|---)' > /tmp/timeline-spec-diff.txt
 grep -qE 'drives the main spine|llm-canon' /tmp/timeline-spec-diff.txt && { echo "diff touches another test"; exit 1; }
-git diff --cached > /home/bcorfman/dev/ringer-work/stage3-notes/timeline.patch
+git diff --cached > /home/bcorfman/dev/ringer-work/stage3-notes/${PATCH_NAME:-timeline}.patch
 test -s /home/bcorfman/dev/ringer-work/stage3-notes/timeline.patch || { echo "empty patch"; exit 1; }
