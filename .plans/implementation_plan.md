@@ -302,7 +302,7 @@ scene affordances (`scene-affordance-e2e.md`, historical), “resolve a bare nou
   are out of scope; the cue life of one turn is a choice, not a measured
   optimum; the repo's `ruff check .` still reports 47 findings in older
   `scripts/ringer/*` check scripts (not touched here).
-- [ ] Reconcile and implement the still-unbuilt scene-local bare-noun decision
+- [x] Reconcile and implement the still-unbuilt scene-local bare-noun decision
   through the same resolution boundary, avoiding a competing matching path.
   Unique in-scope referents resolve; multiple referents produce the agreed
   fixed system question without narration, facts, or clock advancement.
@@ -327,20 +327,46 @@ scene affordances (`scene-affordance-e2e.md`, historical), “resolve a bare nou
   `clarification_round` and returns a `clarification` object
   (original_command, noun, options, round) plus the fixed line; an ask turn
   does not save state, call the provider or advance the clock
-  (`tests/test_web_demo_clarification.py`, suite 1874 passed). Not yet built:
-  frontend and blind player. Limits: offline, not measured hosted.
-- [ ] Preserve the October 6 answer policy: splice a recognized answer into
+  (`tests/test_web_demo_clarification.py`, suite 1874 passed). Frontend done:
+  `frontend/src/clarification.js` holds the question in JS memory only (never
+  storage), main.js sends `clarifies`/round; blind player records ask turns
+  without counting them as story turns or rejections (139 node tests, vite build
+  clean; Playwright specs not run, they need the hosted API). Limits: offline,
+  not measured hosted.
+- [x] Preserve the October 6 answer policy: splice a recognized answer into
   the original command; unrelated input cancels the pending question and runs
   normally; cap clarification rounds at two. Clear pending questions on scene
   change and reload. Pending interaction context is transient, not a world
   fact and not narrator knowledge. Verify the hosted request lifecycle can
   retain it between requests without making it durable save state.
-- [ ] Test full-name precedence, scoped aliases, collisions, wrong-target
+  Done 2026-10-16: answer by full name, distinguishing word or ordinal; unrelated
+  input drops the question; cap of two rounds forces a normal turn; a fresh
+  session given only the answer runs it fresh (models a reload). The server
+  stores nothing, so the lifecycle holds by construction; tested through the API
+  with a fresh session, not on a hosted deployment.
+- [x] Test full-name precedence, scoped aliases, collisions, wrong-target
   negatives, and no reveal granted solely by reference resolution. Make the
   browser and blind player handle the system question.
+  Done 2026-10-16 in `tests/test_reference_resolution.py`,
+  `tests/test_reference_clarification.py`, `tests/test_web_demo_clarification.py`.
+  Not separately verified: a scoped-alias collision in a real scene (only 2B
+  `terminal` and 1A-1C `seat` collide in the shipped story).
 - [ ] Measure the targeted follow-ups and the previously identified 3B relay
   cases, including clarification burden and false resolutions, before moving
   to the next behavioral fix.
+  Offline measurement done 2026-10-16 (`.plans/stage4-reference-sim-2026-10-16.md`,
+  script `scripts/ringer/stage4/reference_sim.py`, 250 recorded commands from the
+  2026-10-11 all-scenes run): 3 asked (1.2 per 100), all in 2B on "the next
+  terminal" / "the maintenance reports terminal", where asking is correct; 36
+  commands resolve to one thing and now pass through unchanged. The 3B relay
+  gain from the 2026-10-06 sim is gone: those commands are no longer in the
+  corpus and the engine no longer rewrites unique nouns. Hypothetical (not
+  built): appending the resolved full name to the evidence input only would
+  change 3 of 250 commands (2C "Copy the encrypted Project Echelon file" would
+  earn `k_sl_2c_c_r1`, which is a reveal granted by reference alone and looks
+  doubtful; 3A "Lead the captives through the emergency gate" x2 would earn
+  `k_sl_3a_c_r1`). Too small a gain to build without Brandon's call. Hosted
+  measurement not run (needs Brandon's go-ahead and a smoke test first).
 
 Exit: bounded references improve the reproduced cases without false grants,
 leaks, duplicate entities, or advancing a turn to ask a question.
