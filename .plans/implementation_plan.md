@@ -240,7 +240,7 @@ artifacts `~/dev/ringer-work/stage3-photo-alias/`): global-alias baseline reject
 (`narration_known_term_leak`: picture prompt 3/12, photograph prompt 3/12, photos
 prompt 0/12); the shipped scoped aliases rejected 0 of 36 (exact one-sided
 p = 0.012, single package pair, one story). The narrator wrote a photo word in
-33 of 36 current-arm and 21 of 33 narrated baseline turns. Hosted linked smoke
+33 of 36 current-arm and 21 of 30 narrated baseline turns. Hosted linked smoke
 (`@alias-smoke`, Ringer `stage3-alias-smoke`, staging `e3f66225`, exactly 3
 attempts, stopping rule fixed first): 3 of 3 passed; in each, both 1A photo
 prompts were accepted and the narration used a photo word, 1A reached 1B, and
