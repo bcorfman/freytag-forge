@@ -29,6 +29,7 @@ from storygame.runtime.contracts import (
 )
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
+from storygame.runtime.recent_cue import recent_cue_referent_text
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import (
     derive_grounding,
@@ -279,6 +280,7 @@ class CloudflareTurnProvider:
             "matched": None,
             "universe_size": 0,
             "shortlist_size": 0,
+            "recent_cue_owner": None,
         }
         self.last_contract_shadow: dict[str, object] = {
             "ran": False,
@@ -391,6 +393,7 @@ class CloudflareTurnProvider:
             "matched": None,
             "universe_size": 0,
             "shortlist_size": 0,
+            "recent_cue_owner": None,
         }
         self.last_contract_shadow = {
             "ran": False,
@@ -404,10 +407,11 @@ class CloudflareTurnProvider:
         self.last_projection = self.projector.project(self.state, "player", player_input)
         universe = self._reveal_universe()
         self.last_reveal_selection["universe_size"] = len(universe)
-        self.authored_handoff = uniquely_matched_authored_handoff(player_input, universe)
+        evidence_input = self._evidence_input(player_input)
+        self.authored_handoff = uniquely_matched_authored_handoff(evidence_input, universe)
         if self.authored_handoff is not None:
             self.last_reveal_selection.update(outcome="exact_match", matched=self.authored_handoff.candidate.id)
-        elif self._exact_match_count(player_input, universe) > 1:
+        elif self._exact_match_count(evidence_input, universe) > 1:
             self.last_reveal_selection["outcome"] = "exact_tie"
         if self.authored_handoff is None:
             self.authored_handoff = self._semantic_authored_handoff(player_input)
@@ -415,7 +419,7 @@ class CloudflareTurnProvider:
             self.last_reveal_selection["outcome"] = "semantic_refusal"
         self._run_contract_shadow(player_input)
         self._prepare_turn_visibility()
-        self.shadow_matched_candidate_id = self._shadow_matched_candidate_id(player_input)
+        self.shadow_matched_candidate_id = self._shadow_matched_candidate_id(evidence_input)
         self.prompt_candidate_ids = tuple(candidate.id for candidate in self._model_candidates())
         self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
             update={
@@ -441,6 +445,11 @@ class CloudflareTurnProvider:
         }
         context["_rules"] = self._turn_rules()
         return {"system": self._system_prompt(), "context": context}
+
+    def _evidence_input(self, player_input: str) -> str:
+        owner = recent_cue_referent_text(self.state, player_input)
+        self.last_reveal_selection["recent_cue_owner"] = owner or None
+        return f"{player_input} {owner}" if owner else player_input
 
     def _prepare_turn_visibility(self) -> None:
         """Give subclasses a chance to track items newly visible this turn."""
@@ -517,6 +526,7 @@ class CloudflareTurnProvider:
                 "matched": None,
                 "universe_size": 0,
                 "shortlist_size": 0,
+                "recent_cue_owner": None,
             }
         universe = self._reveal_universe()
         eligible_candidates = self._eligible_reveal_candidates(universe)

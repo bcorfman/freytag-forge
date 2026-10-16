@@ -87,7 +87,6 @@ def test_gap_without_prior_cue_earns_nothing(monkeypatch: pytest.MonkeyPatch, se
 
 @pytest.mark.parametrize("semantic", ("0", "1"))
 @pytest.mark.parametrize("command", ("Search the gap.", "Feel along the gap.", "Check the gap."))
-@pytest.mark.xfail(strict=True, reason="Stage 4: no recent-cue referent projection yet")
 def test_recent_cue_referent_follow_up_earns_memory_card(
     monkeypatch: pytest.MonkeyPatch, semantic: str, command: str
 ) -> None:
