@@ -48,6 +48,14 @@ NEGATION_CASES = (
     pytest.param("Search the hideout, do not search the lab.", None, id="overlapping-verb-restraint"),
     pytest.param("Open the drawer, but no drawer.", None, id="overlapping-noun-restraint"),
     pytest.param("Open the drawer without opening the drawer.", None, id="without-overlap"),
+    pytest.param("Open the drawer, never mind.", None, id="retraction-never-mind"),
+    pytest.param("Open the drawer, no wait.", None, id="retraction-no-wait"),
+    pytest.param("Open the drawer, no stop.", None, id="retraction-no-stop"),
+    pytest.param("Open the drawer, don't bother.", None, id="retraction-dont-bother"),
+    pytest.param("Open the drawer, nevermind.", None, id="retraction-nevermind"),
+    pytest.param("Open the drawer, no, cancel that.", None, id="retraction-cancel"),
+    pytest.param("Open the drawer, don't, hold on.", None, id="retraction-hold"),
+    pytest.param("Open the drawer, no kidding.", None, id="retraction-kidding"),
 )
 
 
@@ -68,6 +76,14 @@ def _scene_1a_candidates():
         ("Open the drawer, but do not take anything yet.", "k_sl_1a_f_r1"),
         ("Do not open the drawer.", None),
         ("Open the drawer, but don't open it.", None),
+        ("Open the drawer, never mind.", None),
+        ("Open the drawer, no wait.", None),
+        ("Open the drawer, no stop.", None),
+        ("Open the drawer, don't bother.", None),
+        ("Open the drawer, nevermind.", None),
+        ("Open the drawer, no, cancel that.", None),
+        ("Open the drawer, don't, hold on.", None),
+        ("Open the drawer, no kidding.", None),
     ],
 )
 def test_scene_1a_authored_match_uses_scoped_command(player_input: str, expected: str | None) -> None:

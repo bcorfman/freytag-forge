@@ -40,6 +40,9 @@ class AuthoredHandoff:
 
 
 _NEGATIONS = frozenset({"avoid", "cannot", "can't", "do", "don't", "never", "no", "not", "without"})
+_RETRACTION_WORDS = frozenset(
+    {"mind", "nevermind", "wait", "stop", "bother", "cancel", "forget", "undo", "hold", "kidding", "joking", "scratch"}
+)
 
 _SYNONYM_CLASSES = (
     frozenset(
@@ -96,7 +99,8 @@ _NEGATION_IGNORED_WORDS = frozenset(
 def negation_scoped_command(player_input: str) -> str | None:
     """Return the unnegated action clauses, or block the whole command."""
 
-    if not any(word in _NEGATIONS for word in _words(player_input)):
+    input_words = _words(player_input)
+    if not any(word in _NEGATIONS for word in input_words) and "nevermind" not in input_words:
         return player_input
 
     from storygame.runtime.recent_cue import _STOPWORDS
@@ -128,7 +132,13 @@ def negation_scoped_command(player_input: str) -> str | None:
     kept = [first_clause]
     kept_content = content_words(first_clause)
     for clause, clause_negated in clauses[1:]:
-        if not clause_negated and not any(word in _NEGATIONS for word in _words(clause)):
+        clause_words = _words(clause)
+        is_negated_clause = clause_negated or any(word in _NEGATIONS for word in clause_words)
+        if any(word in _RETRACTION_WORDS for word in clause_words) and (
+            is_negated_clause or "nevermind" in clause_words
+        ):
+            return None
+        if not is_negated_clause:
             kept.append(clause)
             kept_content = kept_content | content_words(clause)
             continue

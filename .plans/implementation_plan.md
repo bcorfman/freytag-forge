@@ -416,6 +416,23 @@ scene-affordance open cases and raw-language corpus.
   runtime behavior. Use author-reviewed evidence changes for proven authoring
   misses; preserve ties and negation safety. Do not widen matching solely to
   turn corpus entries green.
+  Corpus check done 2026-10-16 on `stage5-raw-language` (Ringer `stage5-negation-scope`,
+  manifests in `scripts/ringer/stage5/`): 31 entries, 6 gaps, all reproduced on the
+  exact matcher and, for restraint, live (the same negation set blocked the semantic
+  path at four `cloudflare.py` sites). Fixed: (1) three unrelated-restraint gaps
+  (`Open the drawer, but do not take anything yet.`) via `negation_scoped_command` in
+  `candidate_matcher.py`, shared by the exact matcher and the four semantic checks. A
+  negated trailing clause is dropped only when the leading clause has no negation, the
+  restraint clause adds content words and shares none with the kept clauses, and it holds
+  no retraction word; everything else stays blocked as before. Review caught a regression
+  the first patch introduced ('Open the drawer, never mind.', 'no wait', 'no stop',
+  'don't bother' would have granted); fixed with `_RETRACTION_WORDS` and covered by tests.
+  'nevermind' as one word now also blocks, which is stricter than before. (2) `2c-near-
+  miss-2` was a mislabel (the command is `k_sl_2c_b_r2`'s own act) and is now canonical.
+  Still honest gaps: `2a-near-miss-1` (a hideout search for a weapon earns the hideout
+  reveal; label judgment pending) and `2c-pronoun` (pronoun-only object; out of scope).
+  Suite 1921 passed, 1 skipped. Limits: offline only; clause splitting is a small
+  heuristic, not a parser; not measured hosted.
 - [ ] Reassess the remaining narration-quality failures using accepted turn
   evidence: invented routes/clues, unrequested plot-changing actions, repeated
   scene tails, contradictory custody or rescue state, and unmotivated exits.
