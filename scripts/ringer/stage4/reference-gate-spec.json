@@ -1,0 +1,25 @@
+{
+  "run_name": "stage4-hosted-2c-copy",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage4-hosted-2c-copy",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "reference-gate-spec",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own ONLY frontend/e2e/reference-copy.spec.js, frontend/e2e/reference-copy.js and frontend/e2e/reference-copy.test.js (all three already exist; extend them, never remove or weaken an existing test or assertion). Touch nothing else. You cannot reach the hosted API from here; never run anything billed.\n\nGOAL. Add a second hosted Playwright test tagged @reference-gate beside the existing @reference-copy one. It walks the scripted spine on staging into scene 3A, plays the first three 3A spine prompts, and then, instead of the fourth 3A spine prompt, types 'Lead the captives through the emergency gate.' as ONE turn, and records how the engine matched it. Purpose: confirm the evidence-append feature (merged as 3c2f9ad3) earns k_sl_3a_c_r1 on the EXACT path. The reveal needs facts michelle_reached, uprising_prepared and military_override_codes_available (see k_sl_3a_c_r1 in data/stories/continuity-initiative/knowledge.yaml); the first three 3A spine prompts in frontend/e2e/canon-journey.js ('Get down into the detention sector...', 'Go to the medical level...', 'Meet the imprisoned official...') are the ones the spine uses before its fourth prompt ('Signal the prisoners to start the uprising at the checkpoints.') earns k_sl_3a_c_r1. The command matches via verb 'lead' plus the appended resolved name 'emergency surface gates' (the bare noun 'gate' resolves to that thing); 'captives' alone does not match the evidence. In 3A the saved semantic_match field {ran, matched} says which path won: ran false plus k_sl_3a_c_r1 committed means the exact matcher caught it.\n\nHOW. Generalize, do not duplicate. In reference-copy.js make summarizeReferenceCopy accept an optional targetRevealId (default 'k_sl_2c_c_r1', so every existing call and test behaves exactly as now) and an optional sceneIn, and return earned_target (bool) plus the existing earned_c_r1 field kept for the 2C case (earned_c_r1 must stay exactly as before for the default target; for another target also set target_reveal_id). path keeps its meaning relative to the target. In reference-copy.spec.js factor the shared walk (startSceneSession, promptFor loop, per-scene promptsUsed, rejection handling with the 4-consecutive-rejection stop, resolveWarningIfPresent, staging guard) into a function parameterized by target scene; the 2C test keeps its behavior. The 3A test: walk until scene is '3A' (cap 90 turns), then submit the first three 3A spine prompts through promptFor('3A', 0..2) (if a rejection happens, record it and keep going with the next prompt; if scene leaves 3A, fail with a clear message), then submit the gate command once. Do not retry the gate command. Report with writeCategoryReport('reference-gate', summary) and console.log '@reference-gate path=<path>'. The test asserts reached 3A and that k_sl_3a_c_r1 was earned; it must not assert which path (the path is the finding). test.setTimeout(30 * 60_000). Same staging guard and E2E_API_BASE_URL skip as the existing test.\n\nTESTS in reference-copy.test.js (node:test, offline): the new target cases exact, semantic, none, unknown for k_sl_3a_c_r1, and that the default-target outputs are unchanged.\n\nHOW TO RUN. For your own runs create the symlink `ln -sfn /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules` (remove it at the end; never leave it), then `cd frontend && node --test e2e/reference-copy.test.js`, `node --check e2e/reference-copy.spec.js`, and `E2E_API_BASE_URL= npx playwright test --list --grep \"@reference-copy|@reference-gate\"` which must list 2 tests.\n\nCOMPLETION RULE: do not stop until node tests pass, both files parse and Playwright lists both tests. Finish by listing files changed and pasting the node test output.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage4/check_reference_gate_spec.sh",
+      "verified": "a staging-guarded @reference-gate Playwright test, sharing a tested summary helper with @reference-copy"
+    }
+  ]
+}
