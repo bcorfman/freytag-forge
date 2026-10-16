@@ -40,6 +40,9 @@ class AuthoredHandoff:
 
 
 _NEGATIONS = frozenset({"avoid", "cannot", "can't", "do", "don't", "never", "no", "not", "without"})
+_RETRACTION_WORDS = frozenset(
+    {"mind", "nevermind", "wait", "stop", "bother", "cancel", "forget", "undo", "hold", "kidding", "joking", "scratch"}
+)
 
 _SYNONYM_CLASSES = (
     frozenset(
@@ -87,6 +90,69 @@ _SYNONYM_CLASSES = (
     frozenset({"talk", "ask", "question", "speak", "tell", "interrogate", "talk to", "speak to", "speak with"}),
 )
 _LOOK_OPERATIONS = frozenset({"flip over", "turn over"})
+_CLAUSE_BREAKS = re.compile(r"[,;.]+|\b(?:and|but|then|yet|without)\b", re.IGNORECASE)
+_NEGATION_IGNORED_WORDS = frozenset(
+    {"anything", "something", "yet", "it", "that", "this", "them", "again", "actually", "just", "now"}
+)
+
+
+def negation_scoped_command(player_input: str) -> str | None:
+    """Return the unnegated action clauses, or block the whole command."""
+
+    input_words = _words(player_input)
+    if not any(word in _NEGATIONS for word in input_words) and "nevermind" not in input_words:
+        return player_input
+
+    from storygame.runtime.recent_cue import _STOPWORDS
+
+    clauses: list[tuple[str, bool]] = []
+    start = 0
+    next_clause_negated = False
+    for match in _CLAUSE_BREAKS.finditer(player_input):
+        clause = player_input[start : match.start()].strip()
+        if clause:
+            clauses.append((clause, next_clause_negated))
+        next_clause_negated = match.group(0).casefold().strip() == "without"
+        start = match.end()
+    clause = player_input[start:].strip()
+    if clause:
+        clauses.append((clause, next_clause_negated))
+
+    if not clauses:
+        return None
+    first_clause, first_clause_negated = clauses[0]
+    if first_clause_negated or any(word in _NEGATIONS for word in _words(first_clause)):
+        return None
+
+    ignored_words = _NEGATION_IGNORED_WORDS | _STOPWORDS
+
+    def content_words(value: str) -> frozenset[str]:
+        return frozenset(word for word in _words(value) if word not in _NEGATIONS and word not in ignored_words)
+
+    kept = [first_clause]
+    kept_content = content_words(first_clause)
+    for clause, clause_negated in clauses[1:]:
+        clause_words = _words(clause)
+        is_negated_clause = clause_negated or any(word in _NEGATIONS for word in clause_words)
+        if any(word in _RETRACTION_WORDS for word in clause_words) and (
+            is_negated_clause or "nevermind" in clause_words
+        ):
+            return None
+        if not is_negated_clause:
+            kept.append(clause)
+            kept_content = kept_content | content_words(clause)
+            continue
+        restraint_content = content_words(clause)
+        if not restraint_content:
+            return None
+        if any(
+            left == right or _singular_plural_match(left, right) or _singular_plural_match(right, left)
+            for left in restraint_content
+            for right in kept_content
+        ):
+            return None
+
+    return " ".join(kept) or None
 
 
 def uniquely_matched_candidate(
@@ -128,12 +194,11 @@ def uniquely_matched_authored_handoff(
 
 
 def _matches_all(groups: tuple[tuple[str, ...], ...], player_input: str) -> bool:
-    action_words = _words(player_input)
-    return (
-        bool(groups)
-        and not any(word in _NEGATIONS for word in action_words)
-        and all(_matches_one_group(group, action_words) for group in groups)
-    )
+    scoped_input = negation_scoped_command(player_input)
+    if scoped_input is None:
+        return False
+    action_words = _words(scoped_input)
+    return bool(groups) and all(_matches_one_group(group, action_words) for group in groups)
 
 
 def _matches_one_group(phrases: tuple[str, ...], action_words: tuple[str, ...]) -> bool:
