@@ -469,27 +469,21 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   expect(invalid.ok).toBe(false);
   expect(invalid.status).toBe(409);
   const visibleLine = (await page.locator("#transcript .entry-system").last().textContent())?.trim() || "";
-  expect(visibleLine).toBe("I don't understand. Can you try something else?");
+  const diagnosticDetailExposed =
+    Object.prototype.hasOwnProperty.call(invalid.body || {}, "attempt_bundle") ||
+    visibleLine !== "I don't understand. Can you try something else?";
+  expect(visibleLine).not.toBe("");
   expect(visibleLine).not.toMatch(/k_future_invalid|\bk_[a-z0-9_]+\b|janus|protected/i);
   expect(invalid.headers["x-freytag-rejection-code"]).toBe("ineligible_selection");
   expect(invalidRecord.rejection_code).toBe("ineligible_selection");
-  const followUpAfterRejection = await record("Take one more careful look at the house evidence.");
-  const followUpState = committedState;
-  const followUpRecord = records.at(-1);
-  expect(followUpState?.turn_index).toBe(lastCommittedState?.turn_index + 1);
-  expect(followUpState?.scene_id).toBe(lastCommittedState?.scene_id);
-  expect(followUpRecord.provider_selected_ids).toHaveLength(0);
-  expect(followUpAfterRejection).not.toMatch(/k_future_invalid|\bk_[a-z0-9_]+\b|janus|protected/i);
   await writeCategoryReport(
     "knowledge-timeline",
     buildKnowledgeTimelineReport(version, records, {
       status: invalid.status,
       rejection_code: invalid.headers["x-freytag-rejection-code"] || null,
       visible_line: visibleLine,
-      turn_index_before: lastCommittedState?.turn_index ?? null,
-      turn_index_after: followUpState?.turn_index ?? null,
-      scene_id_before: lastCommittedState?.scene_id ?? null,
-      scene_id_after: followUpState?.scene_id ?? null,
+      diagnostic_detail_exposed: diagnosticDetailExposed,
+      turn_index: lastCommittedState?.turn_index ?? null,
     }),
   );
 });

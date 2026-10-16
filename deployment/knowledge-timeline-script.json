@@ -9,7 +9,6 @@
     {"segments": [{"kind": "narration", "text": "The memory card taped beneath the drawer is evidence Michelle left behind.", "grounding_ids": ["k_sl_1a_b_r0"]}], "selected_knowledge_ids": ["k_sl_1a_b_r0"]},
     {"segments": [{"kind": "narration", "text": "A patrol vehicle approaches and begins searching the property.", "grounding_ids": []}], "selected_knowledge_ids": []},
     {"segments": [{"kind": "narration", "text": "The house evidence points toward a concrete local lead."}], "selected_knowledge_ids": []},
-    {"segments": [{"kind": "narration", "text": "The invalid probe leaves the local evidence unchanged.", "grounding_ids": []}], "selected_knowledge_ids": ["k_future_invalid"]},
-    {"segments": [{"kind": "narration", "text": "The house evidence remains available for the next careful step.", "grounding_ids": []}], "selected_knowledge_ids": []}
+    {"segments": [{"kind": "narration", "text": "The invalid probe leaves the local evidence unchanged.", "grounding_ids": []}], "selected_knowledge_ids": ["k_future_invalid"]}
   ]
 }

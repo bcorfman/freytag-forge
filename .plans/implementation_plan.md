@@ -199,10 +199,22 @@ for that rejected turn was 'selected knowledge is not eligible for this turn' wi
 no knowledge id or protected term; the turn input was echoed. NOT verified: the
 HTTP status and `X-Freytag-Rejection-Code` header (the snapshot does not show
 them), that state was unchanged, the fixed engine-error line for an unexpected
-engine error, and the provider-outage contract. Next: repair the script and the
-test's third input to follow the current 1A chain (b_r0 first), through Ringer,
-then rerun the probe (needs Brandon to run it; Claude's classifier blocks
-delegated staging-variable changes). Item 4: no script that elicits the ordinary
+engine error, and the provider-outage contract. REPAIRED 2026-10-15 (Ringer `stage3-timeline-repair`, commits after `59c46fb2`):
+the script and test follow the current 1A chain (drawer turn selects
+`k_sl_1a_b_r0`); `tests/test_knowledge_timeline_script.py` replays the eligible
+prefix through the real engine and proves the deliberate `k_future_invalid`
+selection is rejected `ineligible_selection` with turn index, facts and scene
+unchanged (state-unchanged is proven locally, not hosted, because a rejected
+turn restores the scripted index so a hosted follow-up cannot work). The hosted
+test records status, rejection code, visible line and `diagnostic_detail_exposed`.
+FINDING: staging runs with `FREYTAG_EXPOSE_PROMPT=1`, so a hosted 409 shows the
+raw reason ('selected knowledge is not eligible for this turn'), not the fixed
+line; the fixed line `I don't understand. Can you try something else?` is
+verified only by `tests/test_engine_error_line.py` (local). Hosted verification
+of the fixed line would need that flag unset on staging, which is not done.
+The repaired probe has NOT been rerun yet (needs Brandon to run
+`! source .env && bash scripts/knowledge_timeline_probe.sh` at the terminal;
+Claude's classifier blocks delegated staging-variable changes). Item 4: no script that elicits the ordinary
 photo words has been written.
 
 ## 4. Resolve references from accepted context

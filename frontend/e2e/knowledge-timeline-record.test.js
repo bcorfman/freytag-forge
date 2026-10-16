@@ -57,10 +57,8 @@ test("includes the rejected-turn contract without changing timeline records", ()
     status: record.status,
     rejection_code: record.rejection_code,
     visible_line: "I don't understand. Can you try something else?",
-    turn_index_before: 5,
-    turn_index_after: 6,
-    scene_id_before: "1A",
-    scene_id_after: "1A",
+    diagnostic_detail_exposed: true,
+    turn_index: 5,
   };
   const report = buildKnowledgeTimelineReport({}, [record], contract);
   assert.deepEqual(report.records, [record]);

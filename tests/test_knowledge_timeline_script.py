@@ -2,9 +2,8 @@
 
 The committed prefix and deliberate rejection are replayed through the real
 engine and ``ScriptedTurnProvider``.  The provider indexes entries by the
-persisted turn, and rejected turns restore that index, so a same-session
-follow-up cannot reach a later entry; the remainder is therefore checked as a
-static script contract rather than pretending that branch is executable.
+persisted turn, and rejected turns restore that index, so the script ends at
+the deliberate rejection.
 """
 
 from __future__ import annotations
@@ -32,12 +31,11 @@ PLAYER_INPUTS = (
     "Check the front gate for an arriving patrol.",
     "Reassess the house evidence for a concrete local consequence.",
     "Probe the future lead for a response.",
-    "Take one more careful look at the house evidence.",
 )
 
 
 def test_knowledge_timeline_script_replays_eligible_prefix_and_rejects_future_selection() -> None:
-    """Replay the reachable prefix, then prove the rejected and follow-up script contract."""
+    """Replay the reachable prefix, then prove the rejected script contract."""
 
     script = json.loads(SCRIPT_PATH.read_text())
     package = load_story_package(PACKAGE_ROOT)
@@ -47,7 +45,7 @@ def test_knowledge_timeline_script_replays_eligible_prefix_and_rejects_future_se
     engine.opening()
 
     committed_turns = script["turns"][:5]
-    assert len(committed_turns) == len(PLAYER_INPUTS) - 2
+    assert len(committed_turns) == len(PLAYER_INPUTS) - 1
     for player_input in PLAYER_INPUTS[:5]:
         engine.turn(player_input)
 
@@ -70,7 +68,3 @@ def test_knowledge_timeline_script_replays_eligible_prefix_and_rejects_future_se
         item = package.knowledge_indexes.by_id[item_id]
         assert {predicate.fact_id for predicate in item.requires} <= established
         established.update(effect.fact_id for effect in item.establishes if effect.op == "assert")
-
-    follow_up = script["turns"][6]
-    assert follow_up["selected_knowledge_ids"] == []
-    assert state.turn_index == before_rejection.turn_index
