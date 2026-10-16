@@ -231,7 +231,8 @@ class RuntimeEngine(CanonicalEventMixin):
             self.last_reference_resolution = reference
             if reference.question is not None:
                 return ClarificationTurn(reference.question)
-            player_input = reference.command
+            if reference.outcome in {"answered", "capped"}:
+                player_input = reference.command
         budget = self._provider_budget()
         try:
             self._begin_provider_turn()

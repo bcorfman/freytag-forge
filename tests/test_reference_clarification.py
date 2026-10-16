@@ -83,7 +83,7 @@ def test_resolution_is_not_restored_by_state_round_trip(tmp_path) -> None:
     assert restored.turn_index == state.turn_index
 
 
-def test_unique_resolution_reaches_provider_without_granting_a_reveal() -> None:
+def test_unique_resolution_reaches_provider_without_rewriting_the_command() -> None:
     state = _state("1A")
     calls: list[str] = []
     engine = RuntimeEngine(state, _provider(calls))
@@ -91,9 +91,40 @@ def test_unique_resolution_reaches_provider_without_granting_a_reveal() -> None:
     result = engine.turn("Search the chair.")
 
     assert result.selected_knowledge_ids == ()
-    assert calls == ["Search the workstation chair."]
+    assert calls == ["Search the chair."]
     assert engine.last_reference_resolution is not None
-    assert engine.last_reference_resolution.command == "Search the workstation chair."
+    assert engine.last_reference_resolution.command == "Search the chair."
+
+
+def test_unique_head_commands_reach_provider_unchanged() -> None:
+    state = _state("1C")
+    calls: list[str] = []
+    engine = RuntimeEngine(state, _provider(calls))
+
+    for command in ("Go out to the truck.", "Read the files on my laptop."):
+        engine.turn(command)
+
+    assert calls == ["Go out to the truck.", "Read the files on my laptop."]
+
+
+def test_answer_splices_only_the_ambiguous_noun() -> None:
+    state = _state("2B")
+    calls: list[str] = []
+    engine = RuntimeEngine(state, _provider(calls))
+    command = "Read the card and the terminal."
+
+    question = engine.turn(command)
+    result = engine.turn("medical", clarifies=command, clarification_round=0)
+
+    assert isinstance(question, ClarificationTurn)
+    assert question.clarification.noun == "terminal"
+    assert result.narration == "The scene continues."
+    assert calls == ["Read the card and the medical terminal."]
+    assert engine.last_reference_resolution is not None
+    assert engine.last_reference_resolution.resolutions == (
+        ("terminal", "medical_terminal"),
+        ("card", "memory_card"),
+    )
 
 
 def test_story_complete_and_pending_break_skip_resolution() -> None:

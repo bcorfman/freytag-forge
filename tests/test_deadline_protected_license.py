@@ -88,7 +88,7 @@ def test_pre_deadline_janus_narration_is_still_rejected(monkeypatch) -> None:
     response_text = "Kristin reads about JANUS on a terminal."
 
     with pytest.raises(ProposalValidationError) as caught:
-        engine.turn("Read the terminal.")
+        engine.turn("Read the archive terminals.")
 
     assert caught.value.code == "protected_narration_leak"
     assert state.current_scene_id == "2B"

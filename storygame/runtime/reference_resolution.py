@@ -200,13 +200,10 @@ def _fresh_result(
             original=original,
             resolutions=(),
         )
-    replacements = {
-        match.noun: _options(state, match.entity_ids)[0][1] for match in matches if len(match.entity_ids) == 1
-    }
     resolutions = tuple((match.noun, match.entity_ids[0]) for match in matches if len(match.entity_ids) == 1)
     resolved_outcome = "resolved" if outcome == "passthrough" and resolutions else outcome
     return ReferenceResult(
-        command=_replace_matches(command, matches, replacements),
+        command=command,
         question=None,
         outcome=resolved_outcome,
         original=original,

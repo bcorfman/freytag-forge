@@ -14,12 +14,22 @@ def _state(scene_id: str) -> RuntimeState:
     return state
 
 
-def test_unique_scoped_alias_resolves_to_the_full_name() -> None:
+def test_unique_scoped_alias_is_recorded_without_rewriting_the_command() -> None:
     result = resolve_references(_state("1A"), "Inspect the chair.")
 
     assert result.outcome == "resolved"
-    assert result.command == "Inspect the workstation chair."
+    assert result.command == "Inspect the chair."
     assert result.resolutions == (("chair", "workstation_chair"),)
+
+
+def test_unique_heads_preserve_the_player_command() -> None:
+    for command in ("Go out to the truck.", "Read the files on my laptop."):
+        result = resolve_references(_state("1C"), command)
+
+        assert result.outcome == "resolved"
+        assert result.command == command
+
+    assert result.resolutions == (("laptop", "kristin_laptop"),)
 
 
 def test_terminal_collision_asks_in_deterministic_order() -> None:
@@ -36,9 +46,21 @@ def test_terminal_collision_asks_in_deterministic_order() -> None:
 
 def test_full_name_precedence_and_negative_scope_cases() -> None:
     state = _state("2B")
-    assert resolve_references(state, "Read the messages on the medical terminal.").question is None
+    full_name = resolve_references(state, "Read the messages on the medical terminal.")
+    assert full_name.question is None
+    assert full_name.command == "Read the messages on the medical terminal."
     assert resolve_references(_state("1A"), "Read the terminal.").command == "Read the terminal."
-    assert resolve_references(_state("2B"), "Read the archive terminal.").question is None
+    archive_alias = resolve_references(_state("2B"), "Read the archive terminal.")
+    assert archive_alias.question is None
+    assert archive_alias.command == "Read the archive terminal."
+
+
+def test_possessive_and_article_full_names_precede_shared_heads() -> None:
+    for command in ("Sit in the driver's seat.", "Sit in the passenger seat."):
+        result = resolve_references(_state("1C"), command)
+
+        assert result.question is None
+        assert result.command == command
 
 
 def test_scoped_alias_counts_but_plain_alias_does_not() -> None:
