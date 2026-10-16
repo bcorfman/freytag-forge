@@ -13,10 +13,10 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from storygame.runtime.candidate_matcher import (
-    _NEGATIONS,
+    _NEGATIONS,  # noqa: F401 - compatibility import for callers of cloudflare._NEGATIONS
     ActionEvidenceCandidate,
     AuthoredHandoff,
-    _words,
+    negation_scoped_command,
     uniquely_matched_authored_handoff,
     uniquely_matched_candidate,
 )
@@ -450,6 +450,7 @@ class CloudflareTurnProvider:
         return {"system": self._system_prompt(), "context": context}
 
     def _evidence_input(self, player_input: str) -> str:
+        scoped_input = negation_scoped_command(player_input)
         reference_names = resolved_reference_names(self.state, player_input)
         owner = recent_cue_referent_text(self.state, player_input)
         appended = [*reference_names]
@@ -457,7 +458,8 @@ class CloudflareTurnProvider:
             appended.append(owner)
         self.last_reveal_selection["reference_names"] = list(reference_names)
         self.last_reveal_selection["recent_cue_owner"] = owner or None
-        return " ".join((player_input, *appended))
+        evidence_input = player_input if scoped_input is None else scoped_input
+        return " ".join((evidence_input, *appended))
 
     def _prepare_turn_visibility(self) -> None:
         """Give subclasses a chance to track items newly visible this turn."""
@@ -547,7 +549,7 @@ class CloudflareTurnProvider:
             or getenv("FREYTAG_SEMANTIC_REVEAL", "1") == "0"
             or not player_input.strip()
             or self.semantic_fallback_calls >= 40
-            or any(word in _NEGATIONS for word in _words(player_input))
+            or negation_scoped_command(player_input) is None
         ):
             if (
                 self.semantic_fallback_calls >= 40
@@ -555,7 +557,7 @@ class CloudflareTurnProvider:
                 and self.semantic_ask is not None
                 and getenv("FREYTAG_SEMANTIC_REVEAL", "1") != "0"
                 and player_input.strip()
-                and not any(word in _NEGATIONS for word in _words(player_input))
+                and negation_scoped_command(player_input) is not None
             ):
                 self.last_reveal_selection["outcome"] = "budget_exhausted"
             return None
@@ -617,7 +619,7 @@ class CloudflareTurnProvider:
         if not player_input.strip():
             result["skipped"] = "empty"
             return
-        if any(word in _NEGATIONS for word in _words(player_input)):
+        if negation_scoped_command(player_input) is None:
             result["skipped"] = "negation"
             return
         candidates = tuple(
@@ -721,7 +723,7 @@ class CloudflareTurnProvider:
             or getattr(self, "semantic_ask", None) is None
             or getenv("FREYTAG_SEMANTIC_REVEAL", "1") == "0"
             or getattr(self, "semantic_fallback_calls", 0) >= 40
-            or any(word in _NEGATIONS for word in _words(player_input))
+            or negation_scoped_command(player_input) is None
             or getattr(self, "last_semantic_match", {}).get("matched") is not None
         ):
             return []
