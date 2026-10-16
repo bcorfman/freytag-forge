@@ -34,10 +34,11 @@ export function recordTurnOutcome({ input, status, headers, body, version }) {
   };
 }
 
-export function buildKnowledgeTimelineReport(version, records) {
+export function buildKnowledgeTimelineReport(version, records, rejectionContract = null) {
   return {
     deployment_sha: version && typeof version === "object" ? version.sha ?? null : null,
     channel: version && typeof version === "object" ? version.channel ?? null : null,
     records: asArray(records),
+    rejection_contract: rejectionContract,
   };
 }

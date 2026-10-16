@@ -48,4 +48,21 @@ test("records diagnostic-off responses with empty and null audit values", () => 
   assert.equal(record.recovery_used, null);
   assert.equal(record.guard_retry_used, null);
   assert.deepEqual(buildKnowledgeTimelineReport({}, [record]).records, [record]);
+  assert.equal(buildKnowledgeTimelineReport({}, [record]).rejection_contract, null);
+});
+
+test("includes the rejected-turn contract without changing timeline records", () => {
+  const record = recordTurnOutcome({ input: "Probe the future lead.", status: 409, headers: {}, body: {}, version: {} });
+  const contract = {
+    status: record.status,
+    rejection_code: record.rejection_code,
+    visible_line: "I don't understand. Can you try something else?",
+    turn_index_before: 5,
+    turn_index_after: 6,
+    scene_id_before: "1A",
+    scene_id_after: "1A",
+  };
+  const report = buildKnowledgeTimelineReport({}, [record], contract);
+  assert.deepEqual(report.records, [record]);
+  assert.deepEqual(report.rejection_contract, contract);
 });

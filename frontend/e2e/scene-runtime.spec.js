@@ -436,12 +436,14 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   await startSceneSession(page);
   const version = await (await versionResponse).json();
   const records = [];
+  let committedState = null;
   const forbiddenBeforeRecording = /michelle(?:'s)? warning|do not trust.*broadcast|janus/i;
   const record = async (input) => {
     const outcome = await submitTurnObserved(page, input);
     expect(outcome.ok, `expected committed turn for ${input}`).toBe(true);
     const narration = narrationText(outcome.body);
     records.push(recordTurnOutcome({ input, status: outcome.status, headers: outcome.headers, body: outcome.body, version }));
+    committedState = outcome.body?.state ?? null;
     await resolveWarningIfPresent(page);
     return narration;
   };
@@ -450,7 +452,7 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   expect(physicalSearch).not.toMatch(forbiddenBeforeRecording);
   const phone = await record("Examine Michelle's phone for useful evidence.");
   expect(phone).not.toMatch(forbiddenBeforeRecording);
-  const investigation = await record("Search the drawer for Michelle's research and a damaged recording.");
+  const investigation = await record("Search under the drawer in her workstation.");
   expect(investigation).toMatch(/warning|broadcast|recording|research|evidence|continuity|lead/i);
   const drawerRecord = records.at(-1);
   expect(drawerRecord.provider_selected_ids).toHaveLength(1);
@@ -460,13 +462,36 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   const followUp = await record("Reassess the house evidence for a concrete local consequence.");
   expect(followUp).not.toMatch(/nothing but silence|someone is watching/i);
   const invalidInput = "Probe the future lead for a response.";
+  const lastCommittedState = committedState;
   const invalid = await submitTurnObserved(page, invalidInput);
   const invalidRecord = recordTurnOutcome({ input: invalidInput, status: invalid.status, headers: invalid.headers, body: invalid.body, version });
   records.push(invalidRecord);
   expect(invalid.ok).toBe(false);
-  expect(invalid.headers["x-freytag-rejection-code"]).toBeTruthy();
-  expect(invalidRecord.rejection_code).toBeTruthy();
-  await writeCategoryReport("knowledge-timeline", buildKnowledgeTimelineReport(version, records));
+  expect(invalid.status).toBe(409);
+  const visibleLine = (await page.locator("#transcript .entry-system").last().textContent())?.trim() || "";
+  expect(visibleLine).toBe("I don't understand. Can you try something else?");
+  expect(visibleLine).not.toMatch(/k_future_invalid|\bk_[a-z0-9_]+\b|janus|protected/i);
+  expect(invalid.headers["x-freytag-rejection-code"]).toBe("ineligible_selection");
+  expect(invalidRecord.rejection_code).toBe("ineligible_selection");
+  const followUpAfterRejection = await record("Take one more careful look at the house evidence.");
+  const followUpState = committedState;
+  const followUpRecord = records.at(-1);
+  expect(followUpState?.turn_index).toBe(lastCommittedState?.turn_index + 1);
+  expect(followUpState?.scene_id).toBe(lastCommittedState?.scene_id);
+  expect(followUpRecord.provider_selected_ids).toHaveLength(0);
+  expect(followUpAfterRejection).not.toMatch(/k_future_invalid|\bk_[a-z0-9_]+\b|janus|protected/i);
+  await writeCategoryReport(
+    "knowledge-timeline",
+    buildKnowledgeTimelineReport(version, records, {
+      status: invalid.status,
+      rejection_code: invalid.headers["x-freytag-rejection-code"] || null,
+      visible_line: visibleLine,
+      turn_index_before: lastCommittedState?.turn_index ?? null,
+      turn_index_after: followUpState?.turn_index ?? null,
+      scene_id_before: lastCommittedState?.scene_id ?? null,
+      scene_id_after: followUpState?.scene_id ?? null,
+    }),
+  );
 });
 
 test("samples optional storylets without presenting a menu @storylets", async ({ page }) => {
