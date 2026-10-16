@@ -367,6 +367,25 @@ scene affordances (`scene-affordance-e2e.md`, historical), “resolve a bare nou
   doubtful; 3A "Lead the captives through the emergency gate" x2 would earn
   `k_sl_3a_c_r1`). Too small a gain to build without Brandon's call. Hosted
   measurement not run (needs Brandon's go-ahead and a smoke test first).
+  Evidence append BUILT 2026-10-16 on `stage4-references` (Brandon's call; Ringer
+  `stage4-references` task `reference-evidence-append`, manifest
+  `scripts/ringer/stage4/reference-evidence.json`): a uniquely resolved bare noun
+  appends the thing's full name to the exact/shadow evidence input only
+  (`resolved_reference_names`, `CloudflareTurnProvider._evidence_input`; recorded as
+  `last_reveal_selection['reference_names']`). The narrator prompt, negation check
+  and semantic matcher keep the original command; no persisted state. Full suite
+  1880 passed, 1 skipped; ruff clean; `tests/test_reference_evidence_append.py`
+  fails on the old code. Live-record check (saved hosted run `1c10272f`, 2026-10-11,
+  no new spend): the offline sim ignores the semantic path. 2C 'Copy the encrypted
+  Project Echelon file to my laptop.' already earned `k_sl_2c_c_r1` live through the
+  semantic matcher (1 sample), so the 2C gain is redundant live and the earlier
+  'reveal by reference alone' worry carries no live cost. 3A is the real gain: the
+  semantic matcher missed 'Lead the captives through the emergency gate.' (turn 11,
+  no reveal) and matched the retry 'Guide the captives through the open emergency
+  gate.' (turn 12, `k_sl_3a_c_r1`), so the exact path saves a turn and a semantic
+  call. Limits: one run, one story, two commands; offline only, not measured hosted;
+  bare 'file' was never added to the 2C authored evidence and no recorded reason was
+  found either way.
 
 Exit: bounded references improve the reproduced cases without false grants,
 leaks, duplicate entities, or advancing a turn to ask a question.

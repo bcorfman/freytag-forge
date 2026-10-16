@@ -30,6 +30,7 @@ from storygame.runtime.contracts import (
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
 from storygame.runtime.recent_cue import recent_cue_referent_text
+from storygame.runtime.reference_resolution import resolved_reference_names
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import (
     derive_grounding,
@@ -280,6 +281,7 @@ class CloudflareTurnProvider:
             "matched": None,
             "universe_size": 0,
             "shortlist_size": 0,
+            "reference_names": [],
             "recent_cue_owner": None,
         }
         self.last_contract_shadow: dict[str, object] = {
@@ -393,6 +395,7 @@ class CloudflareTurnProvider:
             "matched": None,
             "universe_size": 0,
             "shortlist_size": 0,
+            "reference_names": [],
             "recent_cue_owner": None,
         }
         self.last_contract_shadow = {
@@ -447,9 +450,14 @@ class CloudflareTurnProvider:
         return {"system": self._system_prompt(), "context": context}
 
     def _evidence_input(self, player_input: str) -> str:
+        reference_names = resolved_reference_names(self.state, player_input)
         owner = recent_cue_referent_text(self.state, player_input)
+        appended = [*reference_names]
+        if owner and owner.casefold() not in {name.casefold() for name in appended}:
+            appended.append(owner)
+        self.last_reveal_selection["reference_names"] = list(reference_names)
         self.last_reveal_selection["recent_cue_owner"] = owner or None
-        return f"{player_input} {owner}" if owner else player_input
+        return " ".join((player_input, *appended))
 
     def _prepare_turn_visibility(self) -> None:
         """Give subclasses a chance to track items newly visible this turn."""
@@ -526,6 +534,7 @@ class CloudflareTurnProvider:
                 "matched": None,
                 "universe_size": 0,
                 "shortlist_size": 0,
+                "reference_names": [],
                 "recent_cue_owner": None,
             }
         universe = self._reveal_universe()

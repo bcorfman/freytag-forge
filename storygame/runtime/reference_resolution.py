@@ -301,3 +301,23 @@ def resolve_references(
         original=player_input,
         resolutions=((pending_match.noun, option_id),),
     )
+
+
+def resolved_reference_names(state: RuntimeState, command: str) -> tuple[str, ...]:
+    """Return unique resolved display names not already written in the command."""
+
+    result = resolve_references(state, command)
+    if result.question is not None:
+        return ()
+
+    world = world_for(state.package, state.facts)
+    names: list[str] = []
+    seen: set[str] = set()
+    for _noun, entity_id in result.resolutions:
+        name = display_name(state.package, state.facts, world, entity_id)
+        folded = name.casefold()
+        if folded in seen or _whole_form_pattern(name).search(command):
+            continue
+        seen.add(folded)
+        names.append(name)
+    return tuple(names)
