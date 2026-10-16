@@ -1,0 +1,25 @@
+{
+  "run_name": "stage4-references",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage4-references",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "reference-sim",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own ONLY scripts/ringer/stage4/reference_sim.py (new). Touch nothing else. No network, no billed calls, no model calls.\n\nGOAL. A free offline measurement of the Stage 4 reference resolver over recorded hosted player journeys. Usage: `python scripts/ringer/stage4/reference_sim.py <e2e-blind-player.json>`; it prints a Markdown report to stdout.\n\nINPUT. The JSON has `replicates[].scenes[]` with `scene` (id like \"2B\") and `turns[]` each with `turn`, `input` (the command), `rejected` (bool). Example file: /home/bcorfman/.ringer/artifacts/deliverables/freytag-affordance-live-20261011T122828Z-p2193795/l2-all-x3/e2e-blind-player.json. Skip rejected turns.\n\nMETHOD. Load the package with `load_story_package(Path(\"data/stories/continuity-initiative\"))`. For each scene id seen, build a state at that scene: `state = RuntimeState.bootstrap(PACKAGE); advance_state_to_scene(PACKAGE, state, scene_id)` (from bench.core; see tests/test_established_reveal_match.py `_state_at_2c` for the pattern; cache one state per scene and never mutate it). For each command call `storygame.runtime.reference_resolution.resolve_references(state, command)` (read reference_resolution.py first; it returns ReferenceResult with .outcome, .question, .resolutions, .command). Classify: asked (question is not None; record the noun and option names), unique (resolutions non-empty, no question), untouched.\nFor every unique resolution also compute the EVIDENCE EFFECT: let `full` be the resolved entity's display name (`options` do not exist for unique; take it from the entity via the package world, e.g. entity.name from state.package.world items/npcs/groups). Compute the scene's reveals with action_evidence the way scripts/ringer/affordance/bare_name_sim.py does (knowledge.yaml entries whose `available_in_scenes` include the scene), and compare `_matches_all(evidence, command)` against `_matches_all(evidence, command + \" \" + full)` using storygame.runtime.candidate_matcher._matches_all. Count a command as \"evidence would change\" when the set of matching reveal ids differs; list those commands with before/after ids. This is a hypothetical (the engine does NOT do it today); say so in the report.\n\nREPORT (Markdown, stdout). Sections with these exact phrases somewhere in them: \"commands measured\" (total non-rejected commands and per scene), \"asked\" (count, rate per 100 commands, each asked command with scene, noun, options), \"unique\" (count, listing noun->entity per command, grouped by scene), \"evidence would change\" (the hypothetical count and the commands with before/after ids), \"scenes with a collision\" (for each scene, head nouns that map to two or more things in that scene, from the same scope the resolver uses; call the resolver's scope helper or derive scene things the way reference_resolution._scene_things does; do not duplicate matching rules in a second implementation if a reusable function exists). Finish with a one-paragraph plain-language summary: clarification burden, false-resolution risk (commands where a unique resolution points at a thing that is not the one the command's other words name, flag any you can see), and whether the evidence hypothetical is worth building. Do not invent numbers: compute everything.\n\nHOW TO RUN. PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/stage4/reference_sim.py <json>. Ruff: /home/bcorfman/dev/freytag-forge/.venv/bin/ruff check and ruff format on your file. No uv.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage4/check_reference_sim.sh",
+      "verified": "offline measurement of the real resolver over recorded blind-player journeys"
+    }
+  ]
+}

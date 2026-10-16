@@ -1,0 +1,25 @@
+{
+  "run_name": "stage4-references",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage4-references",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "recent-cue-scene-fix",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own ONLY storygame/runtime/recent_cue.py and tests/test_recent_cue_unit.py. Touch nothing else; never remove or weaken an existing assertion.\n\nBUG (verified by reproduction, do not re-diagnose). storygame/runtime/recent_cue.py::_current_scene_record decides whether the last TurnRecord belongs to the current scene by parsing its id with re.fullmatch(r'turn_(\\d+)'). But RuntimeEngine._record_turn (storygame/runtime/engine.py, read-only for you) builds the id as f'turn_{len(self.state.turn_records) + 1}' and then trims the list to 24 entries, so after 24 accepted turns EVERY new record has the id 'turn_25'. Verified: after 30 accepted turns the last three ids are ['turn_25','turn_25','turn_25'] with turn_index 30. Consequently once scene_entered_at_turn >= 25 (any late scene) the parsed id never exceeds it and the recent-cue referent is silently disabled for the rest of the game.\n\nFIX. Do not parse or rely on TurnRecord.id at all. The last record is the last ACCEPTED turn. It belongs to the current scene when BOTH hold: state.turn_index > state.scene_entered_at_turn, and the record has no transition_id (a transition turn's record describes the scene being left). Keep every other rule of recent_cue_referent_text unchanged (reveal_ids with delivery_text, exactly one non-protagonist owner, shared content word, owner not already named, one accepted turn of life because any later accepted turn appends a newer record). Read RuntimeState.scene_entered_at_turn handling in storygame/runtime/engine.py and bench/core.py::advance_state_to_scene to make sure the rule matches how scene entry sets turn_index/scene_entered_at_turn; if it does not, adjust the rule and explain in a docstring comment.\n\nTESTS to ADD in tests/test_recent_cue_unit.py (offline, same provider helper style already in that file):\n1. Late-scene survival: drive the engine 30 accepted unrelated turns (for example 'Look around.') so the ids have saturated, then set state.scene_entered_at_turn = state.turn_index to simulate entering a scene late (keep current_scene_id valid), then 'Open the drawer.' followed by 'Search the gap.' earns k_sl_1a_b_r0 and sets memory_card_recovered. Assert up front that the saturation is real (len(set of last 3 record ids) == 1) so the test would catch a regression to id parsing.\n2. A last record carrying a transition_id yields '' (build it with model_copy on the last TurnRecord or a synthetic state tweak; the record is frozen).\n3. turn_index == scene_entered_at_turn yields '' even when the last record has a matching reveal.\nRun the first test against the OLD code mentally or by git stash to confirm it would fail there; say in your final message whether you confirmed it.\n\nHOW TO RUN. First confirm `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` prints a path inside this worktree. Then `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_recent_cue_reference.py tests/test_recent_cue_unit.py tests/test_1a_gap_pointer.py tests/test_established_reveal_match.py tests/test_semantic_reveal_match.py tests/test_cloudflare_transport.py` and ruff check / ruff format --check (line length 120) via /home/bcorfman/dev/freytag-forge/.venv/bin/ruff on both files.\n\nCOMPLETION RULE: do not stop until the fix and the three tests pass with ruff clean. Finish by listing files changed and pasting the pytest output.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage4/check_recent_cue_fix.sh",
+      "verified": "the recent-cue scene check no longer depends on TurnRecord ids and works in late scenes"
+    }
+  ]
+}

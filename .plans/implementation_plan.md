@@ -9,9 +9,10 @@ experiment previously put on hold.
 
 ## Resume here
 
-Start with **1. Budget-service reliability**. The measurement gaps in **2** are
-closed and the hosted spine baseline in **3** is recorded (items 3-4 open). Continue with reference
-resolution (**4**), reproduced correctness gaps (**5**), authoring visibility
+**1. Budget-service reliability is DNF (dropped by Brandon, 2026-10-15); do not
+start or retry it.** The measurement gaps in **2** are closed and the hosted
+spine baseline in **3** is complete. Start with reference
+resolution (**4**), then reproduced correctness gaps (**5**), authoring visibility
 (**6**), and playthrough qualification (**7**). Revisit the pipeline experiment
 (**8**) only after its decision gate is met. Operational cleanup (**9**) can
 accompany the relevant earlier phase.
@@ -56,6 +57,20 @@ was inspected or changed for this consolidation.
   runbook procedures in place only when procedures change.
 
 ## 1. Diagnose and repair budget-service reliability
+
+**Status: DNF (did not finish; dropped by Brandon 2026-10-15). Do not attempt
+this stage again unless Brandon reopens it.** The boxes below stay unchecked on
+purpose and are not an open queue. Only a read-only diagnosis was done, nothing
+was changed or merged, and the Ringer manifest, run and branch were discarded.
+Findings, for the record: the client-side 502 comes from
+`CloudflareTurnProvider._narration_error` (`storygame/runtime/cloudflare.py`),
+which maps every Worker 5xx without a special case to 502, while the Worker
+(`worker/src/index.js`) returns 503 for `BUDGET_UNAVAILABLE` and
+`docs/cloudflare-narration-worker.md` lists 503; no test covers that mapping.
+The client never retries an answered `HTTPError`, and the Worker makes no AI
+call when the counter fails (covered by its test). The turn-58 Durable Object
+failure was not reproduced and is carried as an unresolved operational risk;
+per-IP isolation and the trusted-proxy check were not verified.
 
 Sources: assessment follow-up (`astra-assessment-implementation-plan.md`, historical),
 rate limits (`rate-limits.md`, historical).
@@ -258,27 +273,119 @@ hosted runs are a smoke sample.
 Sources: assessment C2 / Astra Phase 4.3;
 scene affordances (`scene-affordance-e2e.md`, historical), “resolve a bare noun” decision.
 
-- [ ] Reproduce the recent-cue follow-up miss with a narrow engine test. Add a
+- [x] Reproduce the recent-cue follow-up miss with a narrow engine test. Add a
   bounded projection of the last accepted authored cue's referents, entity
   links and source spans to reference matching. Do not add transcript memory
   or a permanent alias for an incidental cue phrase. Rejected turns must not
   update the record; test expiration, scene changes, ambiguity and save/load.
-- [ ] Reconcile and implement the still-unbuilt scene-local bare-noun decision
+  Done 2026-10-16 on `stage4-references` (not merged; Ringer `stage4-references`,
+  manifests in `scripts/ringer/stage4/`; commits `bd6b3bce` reproduction,
+  `8e1d40eb` projection, `dfcf21ae` scene-check fix). Reproduced: after
+  'Open the drawer.' commits the gap pointer `k_sl_1a_f_r1`, 'Search the gap.'
+  (also 'Feel along the gap.', 'Check the gap.') earned nothing with semantic
+  matching on or off, because `k_sl_1a_b_r0` needs a drawer word. Fix:
+  `storygame/runtime/recent_cue.py::recent_cue_referent_text` derives one owner
+  name from the LAST accepted `TurnRecord` (no new state, nothing persisted,
+  rejected turns write no record) and `CloudflareTurnProvider._evidence_input`
+  appends it to the text seen by the exact/shadow evidence matchers only; the
+  narrator prompt, negation check and semantic matcher keep the original input.
+  Rules: one accepted turn of life, current scene only (turn_index versus
+  scene_entered_at_turn and no transition record), exactly one non-protagonist
+  owner, a shared non-verb content word with the cue's delivery text, owner not
+  already named; it never grants a reveal alone. Review caught that the first
+  version parsed `TurnRecord.id`, which stays `turn_25` after 24 accepted turns
+  and would have disabled the cue in every late scene; fixed and covered by a
+  saturation test that fails on the old code. Verification: full suite 1848
+  passed, new tests `tests/test_recent_cue_reference.py` (reproduction no longer
+  xfail) and `tests/test_recent_cue_unit.py`. Limits: offline only, one story
+  and one cue (1A gap); not measured on a hosted run; pronoun follow-ups ('it')
+  are out of scope; the cue life of one turn is a choice, not a measured
+  optimum; the repo's `ruff check .` still reports 47 findings in older
+  `scripts/ringer/*` check scripts (not touched here).
+- [x] Reconcile and implement the still-unbuilt scene-local bare-noun decision
   through the same resolution boundary, avoiding a competing matching path.
   Unique in-scope referents resolve; multiple referents produce the agreed
   fixed system question without narration, facts, or clock advancement.
-- [ ] Preserve the October 6 answer policy: splice a recognized answer into
+  Lifecycle decision (Brandon, 2026-10-16): the pending question is
+  client-held. The 2026-10-06 design (a `RuntimeState` field outside the
+  snapshot) cannot work hosted because `POST /api/v1/turn` rebuilds state from
+  SQLite on every request, and SQLite or an API-layer map would survive a
+  reload, which confuses the player. The server stores nothing: the response
+  carries the fixed line plus a `clarification` object, and the next request
+  may carry `clarifies` (original command) and a round counter.
+  Engine core done (2026-10-16): `storygame/runtime/reference_resolution.py`
+  and `RuntimeEngine.turn(..., clarifies=None, clarification_round=0)`. Scope
+  reuses `knowledge._entity_in_scene_scope`. Two or more scene things sharing a
+  head noun return a `ClarificationTurn` before any provider call, state change
+  or clock tick. A unique noun leaves the command exactly as typed (a first
+  attempt rewrote it to a full name and broke 12 older tests such as "the
+  Kristin's truck"; fixed). Tests: `tests/test_reference_resolution.py`,
+  `tests/test_reference_clarification.py`. One older test changed:
+  `test_deadline_protected_license` now reads "the archive terminals", since bare
+  "terminal" in 2B is a real question. Full suite 1868 passed.
+  API done (2026-10-16): `POST /api/v1/turn` accepts optional `clarifies` and
+  `clarification_round` and returns a `clarification` object
+  (original_command, noun, options, round) plus the fixed line; an ask turn
+  does not save state, call the provider or advance the clock
+  (`tests/test_web_demo_clarification.py`, suite 1874 passed). Frontend done:
+  `frontend/src/clarification.js` holds the question in JS memory only (never
+  storage), main.js sends `clarifies`/round; blind player records ask turns
+  without counting them as story turns or rejections (139 node tests, vite build
+  clean; Playwright specs not run, they need the hosted API). Limits: offline,
+  not measured hosted.
+- [x] Preserve the October 6 answer policy: splice a recognized answer into
   the original command; unrelated input cancels the pending question and runs
   normally; cap clarification rounds at two. Clear pending questions on scene
   change and reload. Pending interaction context is transient, not a world
   fact and not narrator knowledge. Verify the hosted request lifecycle can
   retain it between requests without making it durable save state.
-- [ ] Test full-name precedence, scoped aliases, collisions, wrong-target
+  Done 2026-10-16: answer by full name, distinguishing word or ordinal; unrelated
+  input drops the question; cap of two rounds forces a normal turn; a fresh
+  session given only the answer runs it fresh (models a reload). The server
+  stores nothing, so the lifecycle holds by construction; tested through the API
+  with a fresh session, not on a hosted deployment.
+- [x] Test full-name precedence, scoped aliases, collisions, wrong-target
   negatives, and no reveal granted solely by reference resolution. Make the
   browser and blind player handle the system question.
+  Done 2026-10-16 in `tests/test_reference_resolution.py`,
+  `tests/test_reference_clarification.py`, `tests/test_web_demo_clarification.py`.
+  Not separately verified: a scoped-alias collision in a real scene (only 2B
+  `terminal` and 1A-1C `seat` collide in the shipped story).
 - [ ] Measure the targeted follow-ups and the previously identified 3B relay
   cases, including clarification burden and false resolutions, before moving
   to the next behavioral fix.
+  Offline measurement done 2026-10-16 (`.plans/stage4-reference-sim-2026-10-16.md`,
+  script `scripts/ringer/stage4/reference_sim.py`, 250 recorded commands from the
+  2026-10-11 all-scenes run): 3 asked (1.2 per 100), all in 2B on "the next
+  terminal" / "the maintenance reports terminal", where asking is correct; 36
+  commands resolve to one thing and now pass through unchanged. The 3B relay
+  gain from the 2026-10-06 sim is gone: those commands are no longer in the
+  corpus and the engine no longer rewrites unique nouns. Hypothetical (not
+  built): appending the resolved full name to the evidence input only would
+  change 3 of 250 commands (2C "Copy the encrypted Project Echelon file" would
+  earn `k_sl_2c_c_r1`, which is a reveal granted by reference alone and looks
+  doubtful; 3A "Lead the captives through the emergency gate" x2 would earn
+  `k_sl_3a_c_r1`). Too small a gain to build without Brandon's call. Hosted
+  measurement not run (needs Brandon's go-ahead and a smoke test first).
+  Evidence append BUILT 2026-10-16 on `stage4-references` (Brandon's call; Ringer
+  `stage4-references` task `reference-evidence-append`, manifest
+  `scripts/ringer/stage4/reference-evidence.json`): a uniquely resolved bare noun
+  appends the thing's full name to the exact/shadow evidence input only
+  (`resolved_reference_names`, `CloudflareTurnProvider._evidence_input`; recorded as
+  `last_reveal_selection['reference_names']`). The narrator prompt, negation check
+  and semantic matcher keep the original command; no persisted state. Full suite
+  1880 passed, 1 skipped; ruff clean; `tests/test_reference_evidence_append.py`
+  fails on the old code. Live-record check (saved hosted run `1c10272f`, 2026-10-11,
+  no new spend): the offline sim ignores the semantic path. 2C 'Copy the encrypted
+  Project Echelon file to my laptop.' already earned `k_sl_2c_c_r1` live through the
+  semantic matcher (1 sample), so the 2C gain is redundant live and the earlier
+  'reveal by reference alone' worry carries no live cost. 3A is the real gain: the
+  semantic matcher missed 'Lead the captives through the emergency gate.' (turn 11,
+  no reveal) and matched the retry 'Guide the captives through the open emergency
+  gate.' (turn 12, `k_sl_3a_c_r1`), so the exact path saves a turn and a semantic
+  call. Limits: one run, one story, two commands; offline only, not measured hosted;
+  bare 'file' was never added to the 2C authored evidence and no recorded reason was
+  found either way.
 
 Exit: bounded references improve the reproduced cases without false grants,
 leaks, duplicate entities, or advancing a turn to ask a question.

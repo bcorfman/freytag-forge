@@ -73,7 +73,7 @@ test("validates player input rules", () => {
 test("turnRecord carries semantic fallback and prompt metadata", () => {
   const payload = { state: { scene_id: "A" }, segments: [{ grounding_ids: ["desk"] }], delivery: { x: 1 }, semantic_match: { ran: true, matched: "desk" }, prompt: "full prompt", attempt_bundle: { outcome: "committed" } };
   assert.deepEqual(turnRecord({ turn: 1, input: "Search the desk.", payload, text: "The desk is here." }), {
-    turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", story_complete: false, state: { scene_id: "A" }, grounding_ids: ["desk"], delivery: { x: 1 }, semantic_match: { ran: true, matched: "desk" }, prompt: "full prompt", attempt_bundle: { outcome: "committed", profile: "canonical" },
+    turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", clarification: null, question_turn: false, story_complete: false, state: { scene_id: "A" }, grounding_ids: ["desk"], delivery: { x: 1 }, semantic_match: { ran: true, matched: "desk" }, prompt: "full prompt", attempt_bundle: { outcome: "committed", profile: "canonical" },
     game_break: null,
   });
   assert.deepEqual(turnRecord({ turn: 2, input: "Search the room.", payload: {}, text: "Nothing." }).semantic_match, null);
@@ -157,6 +157,22 @@ test("turnLog emits the contract without prompt, delivery, or state", () => {
   ]);
   for (const entry of result) assert.deepEqual(Object.keys(entry).sort(), ["game_break", "grounding_ids", "input", "outcome", "profile", "raw_input", "rejected", "rejection", "scene_id", "semantic_match", "story_complete", "text", "transition_cause", "turn"]);
   assert.equal(JSON.stringify(result).includes("prompt"), false);
+});
+
+test("records clarification turns without treating them as rejected story commands", () => {
+  const clarification = { original_command: "Open the terminal.", noun: "terminal", options: [{ id: "archive", name: "archive terminals" }], round: 1 };
+  const question = turnRecord({ turn: 1, input: "Open the terminal.", payload: { clarification, state: { scene_id: "A" } }, text: "Do you mean the archive terminals?" });
+  assert.deepEqual(question.clarification, clarification);
+  assert.equal(question.question_turn, true);
+
+  const logged = turnLog([{ ...question, rejected: true, rejection: "should not count" }]);
+  assert.deepEqual(logged[0].clarification, clarification);
+  assert.equal(logged[0].question_turn, true);
+  assert.equal(logged[0].rejected, false);
+  const result = analyseRun({ sceneEntry: scene, turns: [question, committed(2, "B")] });
+  assert.equal(result.turn_count, 1);
+  assert.equal(result.rejected_count, 0);
+  assert.equal(result.transition_turn, 2);
 });
 
 test("askPlayer handles key, cap, retry, and invalid responses", async () => {

@@ -1,0 +1,25 @@
+{
+  "run_name": "stage4-references",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage4-references",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "reference-api",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own ONLY: storygame/web_demo.py and tests/test_web_demo_clarification.py (new). Touch nothing else (not the engine, not reference_resolution.py, not the frontend). Never weaken or delete an existing test.\n\nGOAL. Expose the engine's client-held clarification question (Stage 4 of .plans/implementation_plan.md) through POST /api/v1/turn. The engine already supports it: read storygame/runtime/engine.py (`RuntimeEngine.turn(player_input, *, clock_seconds=None, clarifies=None, clarification_round=0)`, class `ClarificationTurn` with `.clarification`, `.narration`, `.segments`, `.game_break=None`, `.story_complete=False`) and storygame/runtime/reference_resolution.py (`Clarification` dataclass: original_command, noun, options (tuple of (entity_id, name)), round). The server must store NOTHING about a pending question.\n\nCHANGES in web_demo.py.\n1. TurnRequest gets two optional fields: `clarifies: str | None` (min_length 1, max_length 12000, default None) and `clarification_round: int` (default 0, ge 0, le 2). Existing requests without them behave exactly as before. A `clarification_round` > 0 without `clarifies` is accepted and ignored.\n2. In the turn handler pass them to `engine.turn(..., clarifies=body.clarifies, clarification_round=body.clarification_round)`.\n3. If the result is a `ClarificationTurn` (isinstance check; import it from storygame.runtime.engine): do NOT call store.save (state is unchanged), return the normal `_turn_payload(state, proposal)` plus a key `clarification` = {\"original_command\": ..., \"noun\": ..., \"options\": [{\"id\": entity_id, \"name\": name}, ...], \"round\": int}. The fixed question text is the single narration segment already, so `segments`/`lines` carry it. Never add prompt/attempt_bundle/knowledge_audit prompt data that needs a provider attempt for this turn if engine.last_attempt is None (guard the existing expose-prompt lines so they do not crash on an ask turn). Normal turns must have NO `clarification` key.\n4. An ask turn must not call the narration provider and must not advance turn_index or the clock. Rate limiting stays as it is.\n\nTESTS (tests/test_web_demo_clarification.py, hermetic, no live worker; follow the style of tests/test_web_demo.py for building the app and a fake provider, and use the real continuity-initiative package). Use scene 2B where \"terminal\" is ambiguous between the archive terminals and the medical terminal (see tests/test_reference_clarification.py for how the engine tests reach that state). Prove: (a) an ambiguous command returns 200 with `clarification` and the fixed \"Do you mean ...\" line, the provider was called zero times, and the SQLite/store state is byte-identical afterward (turn_index unchanged); (b) a follow-up request with `clarifies` set to the original command and player_input \"the medical one\" (or the form the engine tests use) runs a normal turn and the provider receives the spliced full-name command; (c) unrelated input after `clarifies` drops the question and runs as a fresh command; (d) a normal turn response has no `clarification` key; (e) after two rounds the cap forces a normal turn; (f) a fresh session (new session id from POST /api/v1/session) given only the answer, with no `clarifies`, runs it as a fresh command, which models a browser reload.\n\nHOW TO RUN. PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider -n 4 . Ruff: /home/bcorfman/dev/freytag-forge/.venv/bin/ruff check and ruff format on your two files. No uv.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage4/check_reference_api.sh",
+      "verified": "turn API carries a client-held clarification without saving state or advancing the clock"
+    }
+  ]
+}
