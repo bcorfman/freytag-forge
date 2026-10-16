@@ -433,6 +433,21 @@ scene-affordance open cases and raw-language corpus.
   reveal; label judgment pending) and `2c-pronoun` (pronoun-only object; out of scope).
   Suite 1921 passed, 1 skipped. Limits: offline only; clause splitting is a small
   heuristic, not a parser; not measured hosted.
+  HOSTED CHECK FAILED then fixed 2026-10-16: on staging `42e3a424` the 1A test
+  `@negation-scope` (`frontend/e2e/negation-scope.spec.js`) showed the two blocked
+  commands blocked but 'Open the drawer, but do not take anything yet.' earned nothing.
+  Cause: the engine's spaCy `split_command` ran first and cut it into 'Open the drawer,
+  but do not.' and 'Take anything yet.' (the restraint became a positive command; a
+  defect that predates this stage). The corpus tests call the matcher directly and the
+  first engine test used a semicolon, so neither saw it; the corpus therefore overstated
+  engine behavior for the comma-and-but form. Fix (Ringer `split-negation`): the splitter
+  no longer splits at a negated coordinated verb; engine-level tests use the comma form.
+  Differential over 916 recorded and corpus inputs: only the 3 restraint commands changed,
+  plus 'Open the drawer, take the key, then search the room.' now splits in three pieces
+  instead of two (an incidental `then` fix). Engine-path note
+  `~/dev/ringer-work/stage5-notes/corpus-engine-path.md`: all 31 corpus entries agree with
+  their recorded result after the fix. Suite 1938 passed, 1 skipped. Hosted recheck pending
+  merge and deploy.
 - [ ] Reassess the remaining narration-quality failures using accepted turn
   evidence: invented routes/clues, unrequested plot-changing actions, repeated
   scene tails, contradictory custody or rescue state, and unmotivated exits.

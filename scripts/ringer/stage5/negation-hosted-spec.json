@@ -1,0 +1,25 @@
+{
+  "run_name": "stage5-negation-scope",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage5-negation-scope",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "negation-hosted-spec",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own ONLY three NEW files: frontend/e2e/negation-scope.spec.js, frontend/e2e/negation-scope.js and frontend/e2e/negation-scope.test.js. Touch nothing else (import from frontend/e2e/reference-copy.js, helpers.js; do not edit them). You cannot reach the hosted API from here; never run anything billed.\n\nGOAL. A hosted Playwright test tagged @negation-scope that checks, on staging, that a trailing restraint clause no longer blocks an unnegated act while leading and retracting negations still block. Scene 1A, the first turns of a fresh session. Reveal k_sl_1a_f_r1 is earned by 'open the' + 'drawer'. Three turns in this exact order, one fresh session: (1) 'Do not open the drawer.' must NOT commit k_sl_1a_f_r1; (2) 'Open the drawer, never mind.' must NOT commit it; (3) 'Open the drawer, but do not take anything yet.' MUST commit k_sl_1a_f_r1, and its saved semantic_match field {ran, matched} shows which path won (ran false plus committed = exact path). Type each command exactly once; never retry.\n\nMODEL IT ON frontend/e2e/reference-copy.spec.js (the @reference-copy and @reference-gate tests): the requireStaging guard (fetch GET {E2E_API_BASE_URL}/api/v1/version and refuse unless channel is 'staging'), identity {sha, runtime, channel}, startSceneSession, submitTurn, rejection handling via error.payload/error.status, resolveWarningIfPresent, writeCategoryReport. test.skip when E2E_API_BASE_URL is unset. test.setTimeout(10 * 60_000). A rejected turn (HTTP 4xx with payload) is recorded, not thrown.\n\nPURE HELPER in negation-scope.js (covered by node tests): export summarizeNegationScope({ identity, turns }) where turns is a list of { input, expect: 'blocked' | 'earned', payload } (payload as returned or the error payload). Reuse summarizeReferenceCopy from ./reference-copy.js with targetRevealId 'k_sl_1a_f_r1' and sceneIn '1A' for each turn to get earned_target, semantic_match and path; read its current signature first. Return { identity, turns: [{ input, expect, earned_target, semantic_match, path, rejected, ok }], all_ok } where ok is true when (expect==='earned') === earned_target and the turn was not rejected. The test writes writeCategoryReport('negation-scope', summary), console.logs '@negation-scope all_ok=<bool> path3=<path of turn 3>', and asserts every turn ok.\n\nTESTS in negation-scope.test.js (node:test, offline, same style as reference-copy.test.js): all three ok; a blocked turn that wrongly earns is not ok; the earned turn that earns nothing is not ok; a rejected turn is not ok; identity passthrough.\n\nHOW TO RUN. For your own runs: `ln -sfn /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules` (remove it at the end; never leave it), then `cd frontend && node --test e2e/negation-scope.test.js e2e/reference-copy.test.js`, `node --check e2e/negation-scope.spec.js`, and `E2E_API_BASE_URL= npx playwright test --list --grep @negation-scope` which must list 1 test.\n\nCOMPLETION RULE: do not stop until node tests pass, files parse and Playwright lists the test. Finish by listing files changed and pasting the node test output.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage5/check_negation_spec.sh",
+      "verified": "a staging-guarded @negation-scope test with a tested summary helper"
+    }
+  ]
+}
