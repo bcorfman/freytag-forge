@@ -1,4 +1,5 @@
 import "./styles.css";
+import { nextPending, turnRequestBody } from "./clarification.js";
 import { inputAllowed, turnBlocks } from "./turn_rendering.js";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/+$/, "");
@@ -19,6 +20,7 @@ const returnToSceneButtonElement = document.querySelector("#return-to-scene-butt
 
 let sessionId = "";
 let busy = false;
+let pendingClarification = null;
 let pendingGameBreak = null;
 let storyComplete = false;
 
@@ -138,6 +140,7 @@ async function apiGet(path) {
 }
 
 async function createSession() {
+  pendingClarification = null;
   setBusy(true);
   setStatus("Creating session...");
   try {
@@ -186,13 +189,12 @@ async function runCommand(command, echoInput = true) {
   setBusy(true);
   setStatus("Awaiting reply...");
   try {
-    const payload = await apiRequest("/api/v1/turn", {
-      session_id: sessionId,
-      player_input: command,
-    });
+    const payload = await apiRequest("/api/v1/turn", turnRequestBody(sessionId, command, pendingClarification));
+    pendingClarification = nextPending(payload);
     renderTurn(payload);
     setStatus(`Scene ${payload.state.scene_id} • ${payload.state.phase.replaceAll("_", " ")}`);
   } catch (error) {
+    pendingClarification = null;
     appendEntry(error instanceof Error ? error.message : "Command failed.", "system");
     setStatus(error instanceof Error ? error.message : "Command failed.", "error");
   } finally {
@@ -215,6 +217,7 @@ async function resolveGameBreak(decision) {
     renderTurn(payload);
     setStatus(`Scene ${payload.state.scene_id} • ${payload.state.phase.replaceAll("_", " ")}`);
   } catch (error) {
+    pendingClarification = null;
     setStatus(error instanceof Error ? error.message : "Could not resolve the warning.", "error");
   } finally {
     setBusy(false);

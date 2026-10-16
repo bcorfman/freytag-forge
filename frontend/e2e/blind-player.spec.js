@@ -45,6 +45,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
   const turns = [];
   const counter = { calls: 0 };
   let consecutiveRejections = 0;
+  let consecutiveClarifications = 0;
   let stoppedOnRejections = false;
   let stoppedOnGameBreakTimeout = false;
   const breakPolicy = gameBreakPolicy();
@@ -61,6 +62,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
       const attemptBundle = error.payload?.attempt_bundle || null;
       turns.push({ turn, input, raw_input: input, profile: selectedProfile.profile, ...(selectedProfile.warning ? { profile_requested: selectedProfile.requested, profile_warning: selectedProfile.warning } : {}), rejected: true, rejection: rejection[1], text: "", state: null, story_complete: false, grounding_ids: [], delivery: {}, semantic_match: null, prompt: null, attempt_bundle: attemptBundle ? { ...attemptBundle, profile: selectedProfile.profile, ...(selectedProfile.warning ? { profile_warning: selectedProfile.warning } : {}) } : null });
       consecutiveRejections += 1;
+      consecutiveClarifications = 0;
       if (consecutiveRejections >= MAX_CONSECUTIVE_REJECTIONS) {
         stoppedOnRejections = true;
         break;
@@ -73,6 +75,12 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
       .filter((segment) => ["narration", "action", "dialogue", "speech"].includes(segment.kind))
       .map((segment) => segment.text).filter(Boolean).join(" ").trim();
     turns.push(turnRecord({ turn, input, raw_input: input, profile: selectedProfile.profile, profile_requested: selectedProfile.requested, profile_warning: selectedProfile.warning, payload, text, game_break: gameBreak }));
+    if (payload.clarification) {
+      consecutiveClarifications += 1;
+      if (consecutiveClarifications <= 2) turn -= 1;
+    } else {
+      consecutiveClarifications = 0;
+    }
     if (gameBreak?.outcome === "timeout") {
       stoppedOnGameBreakTimeout = true;
       break;
@@ -88,7 +96,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
     prompts: collectPrompts(turns),
     bundles: collectBundles(turns),
     turns: turnLog(turns),
-    turn_count: turns.length,
+    turn_count: turns.filter((entry) => entry.question_turn !== true).length,
     stopped_on_game_break_timeout: stoppedOnGameBreakTimeout,
     ...analyseRun({ sceneEntry, nextSceneEntry, turns, firstStep, later, openingText, profile: selectedProfile.profile, stopped_on_rejections: stoppedOnRejections, sceneMapSources: sceneEntry.gates?.flatMap((gate) => gate.sources || []) || [] }),
   };
