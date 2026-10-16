@@ -14,6 +14,7 @@ import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts } from "./canon-journey.js";
 import { attributeNarration, eligibleAuthoredTexts, loadAuthoredText } from "./authored-spans.js";
 import { classifyFailure, evaluateSpine, loadExpectedReveals } from "./spine-record.js";
+import { summarizeAliasSmoke } from "./alias-smoke-record.js";
 
 const SPINE_MAX_TURNS = 120;
 
@@ -571,4 +572,116 @@ test("handles aggressive and chaotic-but-legal policies without an accidental de
     states,
   });
   expect(states.every((state) => state?.scene_id)).toBe(true);
+});
+
+test("keeps ordinary photo words safe in 1A and resolving in 1B @alias-smoke", async ({ page }) => {
+  test.setTimeout(20 * 60_000);
+  await startSceneSession(page);
+  const identity = { sha: null, runtime: null, channel: null };
+  try {
+    const response = await page.request.get(`${process.env.E2E_API_BASE_URL}/api/v1/version`);
+    if (response.ok()) {
+      const version = await response.json();
+      identity.sha = version.sha ?? null;
+      identity.runtime = version.runtime ?? null;
+      identity.channel = version.channel ?? null;
+    }
+  } catch {
+    // Identity is diagnostic metadata; a version endpoint failure must not hide the run evidence.
+  }
+
+  const photoTurns = [];
+  const oneBTurns = [];
+  let turnsTotal = 0;
+  const narrationFor = (body) => (body?.segments || [])
+    .filter((segment) => ["narration", "action", "dialogue"].includes(segment.kind))
+    .map((segment) => segment.text)
+    .join(" ")
+    .trim();
+  const rejectionCodeFor = (outcome) => outcome.headers["x-freytag-rejection-code"] ?? null;
+
+  for (const input of [
+    "Look through the photos on Michelle's phone.",
+    "Check Michelle's phone for a recent photograph.",
+  ]) {
+    const outcome = await submitTurnObserved(page, input);
+    turnsTotal += 1;
+    photoTurns.push({
+      input,
+      status: outcome.status,
+      rejection_code: rejectionCodeFor(outcome),
+      narration: narrationFor(outcome.body),
+      scene_id: outcome.body?.state?.scene_id ?? null,
+    });
+    if (outcome.ok) await resolveWarningIfPresent(page);
+  }
+
+  let sceneId = "1A";
+  let consecutiveWalkRejections = 0;
+  let walkFailure = null;
+  let walkTurns = 0;
+  for (let n = 0; n < 14; n += 1) {
+    const outcome = await submitTurnObserved(page, promptFor("1A", n));
+    turnsTotal += 1;
+    walkTurns += 1;
+    sceneId = outcome.body?.state?.scene_id ?? sceneId;
+    if (!outcome.ok) {
+      consecutiveWalkRejections += 1;
+      if (consecutiveWalkRejections >= 4) {
+        walkFailure = "1B was not reached because 4 consecutive 1A walk turns were rejected.";
+        break;
+      }
+      continue;
+    }
+    consecutiveWalkRejections = 0;
+    await resolveWarningIfPresent(page);
+    if (sceneId === "1B") break;
+  }
+  if (sceneId !== "1B" && !walkFailure) {
+    walkFailure = `1B was not reached after ${walkTurns} further 1A turns.`;
+  }
+
+  let bundlesVisible = false;
+  if (sceneId === "1B") {
+    bundlesVisible = true;
+    for (const input of [scenePrompts["1B"][0], scenePrompts["1B"][1]]) {
+      const sceneIn = sceneId;
+      const outcome = await submitTurnObserved(page, input);
+      turnsTotal += 1;
+      const attemptBundle = outcome.body?.attempt_bundle;
+      bundlesVisible = bundlesVisible && Boolean(attemptBundle);
+      oneBTurns.push({
+        input,
+        status: outcome.status,
+        rejection_code: rejectionCodeFor(outcome),
+        scene_in: sceneIn,
+        scene_out: outcome.body?.state?.scene_id ?? null,
+        committed_knowledge_ids: attemptBundle?.outcome === "committed"
+          ? attemptBundle.selected_reveal?.knowledge_ids ?? []
+          : [],
+      });
+      sceneId = outcome.body?.state?.scene_id ?? sceneId;
+      if (outcome.ok) await resolveWarningIfPresent(page);
+    }
+  }
+
+  const summary = summarizeAliasSmoke({ photoTurns, oneBTurns });
+  await writeCategoryReport("alias-smoke", {
+    identity,
+    summary,
+    photo_turns: photoTurns,
+    one_b_turns: oneBTurns,
+    turns_total: turnsTotal,
+    bundles_visible: bundlesVisible,
+  });
+
+  expect(walkFailure, walkFailure || "1A walk reached 1B").toBeNull();
+  expect(photoTurns.every((turn) => turn.status < 400), "every 1A photo prompt must be accepted").toBe(true);
+  expect([...photoTurns, ...oneBTurns].every((turn) => turn.rejection_code !== "narration_known_term_leak"), "photo prompts must not leak unavailable terms").toBe(true);
+  expect(oneBTurns).toHaveLength(2);
+  expect(oneBTurns.every((turn) => turn.status < 400), "both 1B photo turns must be accepted").toBe(true);
+  if (bundlesVisible) {
+    expect(summary.one_b_a_r2_committed, "1B photograph reveal must commit k_sl_1b_a_r2").toBe(true);
+    expect(summary.one_b_b_r1_committed, "1B photograph reveal must commit k_sl_1b_b_r1").toBe(true);
+  }
 });
