@@ -1,0 +1,60 @@
+{
+  "run_name": "stage3-alias-smoke",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage3-alias-hosted",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "alias-attempt-1",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 3000,
+      "check_timeout_s": 120,
+      "spec": "You are a hosted-E2E operator on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (Cloudflare neurons).\n\nHARD RULES. Change nothing except artifacts/e2e-* and frontend/test-results/ (generated, gitignored) and bench/results/stage3-alias/attempt-1/ . No tracked-file edits; no git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Staging only: stop if the API channel is not 'staging'. Run `@alias-smoke` AT MOST ONCE - never retry a failed run, because every attempt counts. Nothing else billed. Do not edit code to make a run pass.\n\nWHAT THIS IS: attempt 1 of 3 in the linked hosted 1A-to-1B photo-word smoke (frontend/e2e/scene-runtime.spec.js, test tagged @alias-smoke): ordinary photo words in 1A, then the photograph in 1B, one session. Stopping rule fixed in advance: exactly 3 attempts, failures counted, no replacements.\n\nSTEPS:\n1. `mkdir -p bench/results/stage3-alias/attempt-1 && source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\" > bench/results/stage3-alias/attempt-1/identity.json` (required channel staging, runtime scene-v1; the check enforces it).\n2. (first attempt: no series gate.)\n3. `rm -f artifacts/e2e-alias-smoke.json artifacts/e2e-alias-smoke.md`\n4. `source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @alias-smoke` (command timeout at least 25 minutes). A nonzero exit is data. Save the last 60 lines of output, secrets stripped, to attempt-1/run-tail.txt.\n5. Copy artifacts/e2e-alias-smoke.json and .md (if they exist) into bench/results/stage3-alias/attempt-1/. If no report was written, put the verbatim failure text in attempt-1/run-failure.txt. Never copy a report older than step 3.\n6. Write attempt-1/operator-note.md (about 120 words, strictly factual): sha, whether the test passed, the report summary fields (photo_prompts, photo_prompts_rejected, photo_rejections_term_leak, narrations_with_photo_word, elicited, one_b_a_r2_committed, one_b_b_r1_committed, one_b_rejected), bundles_visible, turns_total, and any failure text verbatim. Quote; do not interpret.\n",
+      "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && .venv/bin/python scripts/ringer/stage3/check_alias_attempt.py /home/bcorfman/dev/freytag-forge bench/results/stage3-alias/attempt-1",
+      "verified": "attempt recorded with staging identity and a fresh report or verbatim failure"
+    },
+    {
+      "key": "alias-attempt-2",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 3000,
+      "check_timeout_s": 120,
+      "spec": "You are a hosted-E2E operator on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (Cloudflare neurons).\n\nHARD RULES. Change nothing except artifacts/e2e-* and frontend/test-results/ (generated, gitignored) and bench/results/stage3-alias/attempt-2/ . No tracked-file edits; no git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Staging only: stop if the API channel is not 'staging'. Run `@alias-smoke` AT MOST ONCE - never retry a failed run, because every attempt counts. Nothing else billed. Do not edit code to make a run pass.\n\nWHAT THIS IS: attempt 2 of 3 in the linked hosted 1A-to-1B photo-word smoke (frontend/e2e/scene-runtime.spec.js, test tagged @alias-smoke): ordinary photo words in 1A, then the photograph in 1B, one session. Stopping rule fixed in advance: exactly 3 attempts, failures counted, no replacements.\n\nSTEPS:\n1. `mkdir -p bench/results/stage3-alias/attempt-2 && source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\" > bench/results/stage3-alias/attempt-2/identity.json` (required channel staging, runtime scene-v1; the check enforces it).\n2. Series gate (step 2): read bench/results/stage3-alias/ . If attempt-1/identity.json has a different sha than the sha from step 1, or any earlier attempt-*/run-failure.txt contains AI_QUOTA_EXCEEDED or AI_DAILY_BUDGET_EXCEEDED, DO NOT run the test: write operator-note.md explaining the stop and put 'NOT RUN: <reason>' in run-failure.txt.\n\n3. `rm -f artifacts/e2e-alias-smoke.json artifacts/e2e-alias-smoke.md`\n4. `source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @alias-smoke` (command timeout at least 25 minutes). A nonzero exit is data. Save the last 60 lines of output, secrets stripped, to attempt-2/run-tail.txt.\n5. Copy artifacts/e2e-alias-smoke.json and .md (if they exist) into bench/results/stage3-alias/attempt-2/. If no report was written, put the verbatim failure text in attempt-2/run-failure.txt. Never copy a report older than step 3.\n6. Write attempt-2/operator-note.md (about 120 words, strictly factual): sha, whether the test passed, the report summary fields (photo_prompts, photo_prompts_rejected, photo_rejections_term_leak, narrations_with_photo_word, elicited, one_b_a_r2_committed, one_b_b_r1_committed, one_b_rejected), bundles_visible, turns_total, and any failure text verbatim. Quote; do not interpret.\n",
+      "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && .venv/bin/python scripts/ringer/stage3/check_alias_attempt.py /home/bcorfman/dev/freytag-forge bench/results/stage3-alias/attempt-2",
+      "verified": "attempt recorded with staging identity and a fresh report or verbatim failure"
+    },
+    {
+      "key": "alias-attempt-3",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 3000,
+      "check_timeout_s": 120,
+      "spec": "You are a hosted-E2E operator on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (Cloudflare neurons).\n\nHARD RULES. Change nothing except artifacts/e2e-* and frontend/test-results/ (generated, gitignored) and bench/results/stage3-alias/attempt-3/ . No tracked-file edits; no git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Staging only: stop if the API channel is not 'staging'. Run `@alias-smoke` AT MOST ONCE - never retry a failed run, because every attempt counts. Nothing else billed. Do not edit code to make a run pass.\n\nWHAT THIS IS: attempt 3 of 3 in the linked hosted 1A-to-1B photo-word smoke (frontend/e2e/scene-runtime.spec.js, test tagged @alias-smoke): ordinary photo words in 1A, then the photograph in 1B, one session. Stopping rule fixed in advance: exactly 3 attempts, failures counted, no replacements.\n\nSTEPS:\n1. `mkdir -p bench/results/stage3-alias/attempt-3 && source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\" > bench/results/stage3-alias/attempt-3/identity.json` (required channel staging, runtime scene-v1; the check enforces it).\n2. Series gate (step 2): read bench/results/stage3-alias/ . If attempt-1/identity.json has a different sha than the sha from step 1, or any earlier attempt-*/run-failure.txt contains AI_QUOTA_EXCEEDED or AI_DAILY_BUDGET_EXCEEDED, DO NOT run the test: write operator-note.md explaining the stop and put 'NOT RUN: <reason>' in run-failure.txt.\n\n3. `rm -f artifacts/e2e-alias-smoke.json artifacts/e2e-alias-smoke.md`\n4. `source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @alias-smoke` (command timeout at least 25 minutes). A nonzero exit is data. Save the last 60 lines of output, secrets stripped, to attempt-3/run-tail.txt.\n5. Copy artifacts/e2e-alias-smoke.json and .md (if they exist) into bench/results/stage3-alias/attempt-3/. If no report was written, put the verbatim failure text in attempt-3/run-failure.txt. Never copy a report older than step 3.\n6. Write attempt-3/operator-note.md (about 120 words, strictly factual): sha, whether the test passed, the report summary fields (photo_prompts, photo_prompts_rejected, photo_rejections_term_leak, narrations_with_photo_word, elicited, one_b_a_r2_committed, one_b_b_r1_committed, one_b_rejected), bundles_visible, turns_total, and any failure text verbatim. Quote; do not interpret.\n",
+      "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && .venv/bin/python scripts/ringer/stage3/check_alias_attempt.py /home/bcorfman/dev/freytag-forge bench/results/stage3-alias/attempt-3",
+      "verified": "attempt recorded with staging identity and a fresh report or verbatim failure"
+    }
+  ]
+}
