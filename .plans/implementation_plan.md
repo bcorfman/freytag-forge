@@ -322,9 +322,13 @@ scene affordances (`scene-affordance-e2e.md`, historical), “resolve a bare nou
   Kristin's truck"; fixed). Tests: `tests/test_reference_resolution.py`,
   `tests/test_reference_clarification.py`. One older test changed:
   `test_deadline_protected_license` now reads "the archive terminals", since bare
-  "terminal" in 2B is a real question. Full suite 1868 passed. Not yet built:
-  API field/response (`web_demo.py`), frontend and blind player. Limits:
-  engine-only, offline, not measured hosted.
+  "terminal" in 2B is a real question. Full suite 1868 passed.
+  API done (2026-10-16): `POST /api/v1/turn` accepts optional `clarifies` and
+  `clarification_round` and returns a `clarification` object
+  (original_command, noun, options, round) plus the fixed line; an ask turn
+  does not save state, call the provider or advance the clock
+  (`tests/test_web_demo_clarification.py`, suite 1874 passed). Not yet built:
+  frontend and blind player. Limits: offline, not measured hosted.
 - [ ] Preserve the October 6 answer policy: splice a recognized answer into
   the original command; unrelated input cancels the pending question and runs
   normally; cap clarification rounds at two. Clear pending questions on scene
