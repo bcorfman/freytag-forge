@@ -82,6 +82,39 @@ def test_accepted_unrelated_turn_expires_cue(monkeypatch: pytest.MonkeyPatch) ->
     assert state.turn_records[-1].reveal_ids == ()
 
 
+def test_late_scene_cue_survives_saturated_turn_record_ids(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", "0")
+    state = _state()
+    engine, _provider = _engine(monkeypatch, state)
+    monkeypatch.setattr(engine, "_activate_pacing", lambda **_kwargs: None)
+
+    for _ in range(30):
+        engine.turn("Look around.")
+
+    assert len({record.id for record in state.turn_records[-3:]}) == 1
+    state.scene_entered_at_turn = state.turn_index
+
+    engine.turn("Open the drawer.")
+    result = engine.turn("Search the gap.")
+
+    assert result.selected_knowledge_ids == (CARD_REVEAL,)
+    assert _has_fact(state, "memory_card_recovered")
+
+
+def test_transition_record_does_not_provide_recent_cue(monkeypatch: pytest.MonkeyPatch) -> None:
+    state, _engine, _provider = _cue_state(monkeypatch)
+    state.turn_records[-1] = state.turn_records[-1].model_copy(update={"transition_id": "t_1a_1b"})
+
+    assert recent_cue_referent_text(state, "Search the gap.") == ""
+
+
+def test_scene_entry_turn_does_not_provide_recent_cue(monkeypatch: pytest.MonkeyPatch) -> None:
+    state, _engine, _provider = _cue_state(monkeypatch)
+    state.scene_entered_at_turn = state.turn_index
+
+    assert recent_cue_referent_text(state, "Search the gap.") == ""
+
+
 def test_rejected_turn_does_not_expire_cue(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", "0")
     state = _state()

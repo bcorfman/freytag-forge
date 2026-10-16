@@ -64,14 +64,12 @@ def _content_words(value: str) -> frozenset[str]:
 
 
 def _current_scene_record(state):
+    """Return the latest accepted non-transition turn after the current scene entry."""
+
     if not state.turn_records:
         return None
     record = state.turn_records[-1]
-    match = re.fullmatch(r"turn_(\d+)", record.id)
-    if match is None:
-        return None
-    record_turn = int(match.group(1))
-    if record_turn <= state.scene_entered_at_turn or record_turn > state.turn_index:
+    if state.turn_index <= state.scene_entered_at_turn or getattr(record, "transition_id", None) is not None:
         return None
     return record
 
