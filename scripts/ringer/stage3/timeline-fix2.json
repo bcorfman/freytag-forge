@@ -1,0 +1,25 @@
+{
+  "run_name": "stage3-timeline-repair",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage3-timeline-repair",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "timeline-fix2",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge; edit files here directly and ONLY the files you own. Never edit /home/bcorfman/dev/freytag-forge itself. Do NOT git commit and do NOT touch .git. No network, no billed runs, no Playwright browser runs, no staging commands, no model calls. Use /home/bcorfman/dev/freytag-forge/.venv/bin/python (never uv) with PYTHONPATH set to your cwd.\n\nOWNED FILES: deployment/knowledge-timeline-script.json; frontend/e2e/scene-runtime.spec.js (edit ONLY the test 'preserves the Scene 1A knowledge timeline @knowledge-timeline'); frontend/e2e/knowledge-timeline-record.js and .test.js (only if needed); tests/test_knowledge_timeline_script.py.\n\nCONTEXT: A previous worker repaired the stale timeline script (good: the drawer turn now selects k_sl_1a_b_r0) but made two mistakes you must correct.\n(1) The test hard-asserts that the player-visible line after the rejected turn is exactly \"I don't understand. Can you try something else?\" (REJECTED_TURN_MESSAGE in storygame/runtime/validation.py). That is wrong for the hosted target: staging runs with FREYTAG_EXPOSE_PROMPT=1 (see storygame/web_demo.py turn handler: with that flag the 409 body carries the RAW reason plus attempt_bundle, e.g. 'selected knowledge is not eligible for this turn'; without it the fixed line is returned). The fixed line is already covered hermetically by tests/test_engine_error_line.py. So the hosted test must NOT assert the fixed line. Instead: read the player-visible line from the page (keep the same locator but verify it by reading frontend/src to be sure it is the right element for system/error entries; if unsure use a locator that finds the last story-feed entry text), record it verbatim in the report, add a report field `diagnostic_detail_exposed` = true when the 409 JSON body contains `attempt_bundle` (or the visible line is not the fixed line), and assert only that the line is non-empty and contains none of: 'k_future_invalid', any /\\bk_[a-z0-9_]+\\b/ id, 'janus', 'protected'.\n(2) The test sends a follow-up turn after the rejection to prove state is unchanged, but the scripted provider indexes entries by the persisted turn index and a rejected turn restores that index, so the follow-up would be served the SAME entry (k_future_invalid) and be rejected again. Remove the follow-up turn from the test, remove the trailing extra script entry (the script must end with the k_future_invalid entry), and remove the follow-up assertions/report fields. State-unchanged-after-rejection stays proven by the hermetic replay in tests/test_knowledge_timeline_script.py (turn_index, facts and scene unchanged after the ProposalValidationError); keep that, drop the follow-up parts of that test (PLAYER_INPUTS entry for the follow-up, the `follow_up` assertions), and adjust the counts/docstring. Also add to that test an assertion that the hosted-visible diagnostic path is understood: nothing more, keep it simple.\nKeep: status 409 assertion, rejection code 'ineligible_selection' in header and record, the b_r0 drawer turn, all earlier assertions. The report's `rejection_contract` should carry status, rejection_code, visible_line, diagnostic_detail_exposed, and the turn index of the last committed turn (from the last committed payload state) - no 'after' fields.\n\nHOW TO VERIFY (the check runs these; run them first): `cd frontend && node --test e2e/knowledge-timeline-record.test.js e2e/spine-record.test.js`; `node --input-type=module --check < frontend/e2e/scene-runtime.spec.js`; `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_knowledge_timeline_script.py tests/test_engine_error_line.py`; ruff check and ruff format --check on tests/test_knowledge_timeline_script.py.\nCOMPLETION RULE: finish by listing changed files and pasting verification output.\n",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage3/check_timeline.sh && ! grep -q \"Can you try something else\" frontend/e2e/scene-runtime.spec.js && ! grep -q 'Take one more careful look' frontend/e2e/scene-runtime.spec.js",
+      "verified": "timeline test no longer hard-asserts the fixed line or sends an unreachable follow-up"
+    }
+  ]
+}

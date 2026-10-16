@@ -28,23 +28,24 @@ export const scenePrompts = {
   ],
   // 1C.1 transport route -> 1C.2 captives -> 1C.3 nationwide network -> 1C.4 architects
   "1C": [
-    "Use the transit token at the freight terminal and work down into the service level, reading the site for signs it is still active.",
-    "From the observation shaft, watch the processing floor and match what you see against the missing-person records.",
-    "Get into a logistics computer and follow where the transports actually go beyond this site.",
-    "Play back the recorded conference between the people directing this operation and listen to what they intend next.",
+    "Inspect the electrical load and fresh ventilation at the loading docks.",
+    "Compare the identification numbers on the uniforms in the processing area against the missing-person records.",
+    "Read the logistics computer to trace the transports beyond this site.",
+    "Play the recording the logistics computer has stored.",
   ],
   // 2A.1 hideout -> 2A.2 infiltration plan -> 2A.3 entering under cover
   "2A": [
-    "At his hideout, take stock of the servers, the salvaged hardware, and how long he has been preparing for this.",
-    "Work the facility's cooling and support-column weakness into credentials that present you as the inspectors it would have to admit.",
-    "Go in under that cover, and when a supervisor challenges the unscheduled inspection, make the collapse risk sound imminent enough to earn the restricted corridors.",
+    "Search the servers and leaked documents in Brandon's hideout.",
+    "Build the inspector credentials and complete the inspection forms.",
+    "Drive Brandon to the facility checkpoint and show the guard.",
+    "Tell the supervisor about the cooling-water problem during the unscheduled inspection.",
   ],
   // 2B.1 selection algorithm -> 2B.2 Kristin was bait -> 2B.3 his role -> 2B.4 Michelle's resistance
   "2B": [
     "In the records archive, open the selection files and read how people were sorted, and why Michelle was among them.",
-    "Look for your own name in those records and find out what they expected you to do.",
-    "Put his name in the development records in front of him and demand the truth about what he built.",
-    "Trace the corrupted prisoner files and equipment failures until you recognize whose hand is behind them.",
+    "Read my own record in the archive.",
+    "Read the JANUS development records and Brandon's records.",
+    "Inspect the corrupted prisoner files on the medical terminal.",
   ],
   // 2C.1 the offer -> 2C.3 evidence or rescue -> 2C.4 Michelle's combined plan
   "2C": [

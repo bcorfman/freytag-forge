@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
 import { judgeSceneNarration } from "./roleplay-judge.js";
+import { attributeNarration, eligibleAuthoredTexts, knowledgeAvailableByTurn, loadAuthoredText } from "./authored-spans.js";
 
 const CHECKS = [
   "protected_safe",
@@ -14,24 +15,62 @@ const CHECKS = [
   "rich",
 ];
 
-function usableTurns(scene) {
+function usableTurns(scene, bundlesByTurn, authored, knowledgeByTurn) {
   return (scene.turns || [])
     .filter((turn) => turn?.rejected !== true && typeof turn?.text === "string" && turn.text.trim())
-    .map((turn) => ({
-      player_input: turn.input,
-      narration: turn.text,
-      left_scene: turn.turn === scene.transition_turn,
-      beats_projected: [],
-    }));
+    .map((turn) => {
+      const attemptBundle = turn.attempt_bundle || bundlesByTurn.get(turn.turn);
+      const authoredSpans = attemptBundle && authored
+        ? attributeNarration(turn.text, eligibleAuthoredTexts(attemptBundle, authored))
+          .filter((span) => span.origin === "authored")
+          .map((span) => ({ text: span.text, source_kind: span.source.kind, source_id: span.source.id }))
+        : [];
+      const knowledgeAvailable = knowledgeByTurn?.get(turn.turn);
+      return {
+        player_input: turn.input,
+        narration: turn.text,
+        left_scene: turn.turn === scene.transition_turn,
+        beats_projected: [],
+        ...(authoredSpans.length ? { authored_spans: authoredSpans } : {}),
+        ...(knowledgeAvailable ? { knowledge_available: knowledgeAvailable } : {}),
+      };
+    });
 }
 
 export function buildSceneJudgments(report) {
+  const hasAnyBundle = (report.replicates || []).some((replicate) =>
+    (replicate.scenes || []).some((scene) =>
+      (scene.bundles || []).length > 0 || (scene.turns || []).some((turn) => turn?.attempt_bundle),
+    ),
+  );
+  const authored = hasAnyBundle ? loadAuthoredText() : null;
   return (report.replicates || []).flatMap((replicate) =>
     (replicate.scenes || []).map((scene) => {
-      const turns = usableTurns(scene);
-      const revealedKnowledgeIds = [...new Set(
-        (scene.turns || []).flatMap((turn) => Array.isArray(turn?.grounding_ids) ? turn.grounding_ids : []),
-      )].sort();
+      const bundlesByTurn = new Map();
+      for (const bundle of scene.bundles || []) {
+        if (!bundlesByTurn.has(bundle?.turn)) bundlesByTurn.set(bundle.turn, bundle?.attempt_bundle);
+      }
+      const evidenceTurns = (scene.turns || [])
+        .map((turn) => turn?.attempt_bundle || bundlesByTurn.get(turn?.turn) ? {
+          ...turn,
+          attempt_bundle: turn?.attempt_bundle || bundlesByTurn.get(turn?.turn),
+        } : turn)
+        .filter((turn) => turn?.rejected !== true);
+      const revealedKnowledgeIds = [...new Set(evidenceTurns.flatMap((turn) => {
+        if (turn?.attempt_bundle) {
+          return turn.attempt_bundle.outcome === "committed" && Array.isArray(turn.attempt_bundle.selected_reveal?.knowledge_ids)
+            ? turn.attempt_bundle.selected_reveal.knowledge_ids
+            : [];
+        }
+        return Array.isArray(turn?.grounding_ids) ? turn.grounding_ids : [];
+        }))].sort();
+      const hasBundleEvidence = evidenceTurns.some((turn) => turn?.attempt_bundle);
+      const hasGroundingFallback = evidenceTurns.some((turn) => !turn?.attempt_bundle);
+      const hasSceneBundle = bundlesByTurn.size > 0 || hasBundleEvidence;
+      const knowledgeByTurn = hasSceneBundle
+        ? new Map(knowledgeAvailableByTurn(evidenceTurns.map((turn) => ({ turn: turn?.turn, bundle: turn?.attempt_bundle }))).map((item) => [item.turn, item.available]))
+        : null;
+      const turns = usableTurns(scene, bundlesByTurn, authored, knowledgeByTurn);
       return {
         replicate: replicate.replicate,
         scene_id: scene.scene,
@@ -39,6 +78,9 @@ export function buildSceneJudgments(report) {
         opening: scene.opening_text || "",
         turns,
         revealedKnowledgeIds,
+        reveal_evidence: hasBundleEvidence
+          ? (hasGroundingFallback ? "mixed" : "committed_bundles")
+          : "grounding_fallback",
         ...(turns.length ? {} : { skipped: true, skip_reason: "no usable turns" }),
       };
     }),

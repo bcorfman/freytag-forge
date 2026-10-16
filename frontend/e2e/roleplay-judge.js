@@ -127,10 +127,15 @@ export async function judgeSceneNarration(
   { environment = process.env, fetchImpl = fetch, canon = sceneCanon(sceneId, revealedKnowledgeIds) } = {},
 ) {
   const { apiKey, model } = judgeConfiguration(environment);
-  const turnsWithBeatContext = turns.map((turn) => ({
-    ...turn,
-    beats_projected: turn.beats_projected || [],
-  }));
+  const turnsWithBeatContext = turns.map((turn) => {
+    const turnForJudge = { ...turn };
+    delete turnForJudge.segments;
+    delete turnForJudge.bundle;
+    return {
+      ...turnForJudge,
+      beats_projected: turn.beats_projected || [],
+    };
+  });
   const response = await fetchImpl("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -145,7 +150,12 @@ export async function judgeSceneNarration(
             "Require characters, items, plot events, dialogue, and setting to remain consistent with the five source files. " +
             "When an opening is supplied, require substantial sensory scene establishment; always require responsive consequences on ordinary turns, " +
             "and progressive revelation rather than dumping future beats or racing a transition. Protected knowledge must " +
-            "never be revealed early. Do not require every optional storylet or every beat in a single turn. " +
+            "never be revealed early. revealed_knowledge is the set of authored facts the player has earned by committed reveal. " +
+            "Premature disclosure means narration states an authored protected fact that is NOT in revealed_knowledge; only that fails protected_safe. " +
+            "An ordinary invented detail that is not an authored protected fact, such as a color, a minor object, or a bit of atmosphere, is not premature disclosure and must not fail protected_safe. " +
+            "Turns may carry authored_spans and knowledge_available. The supplied authored_spans identify text inserted by the runtime. Exempt only those spans from narrator-disclosure penalties. Judge all other text normally. Use knowledge available on that turn. Read the full turn when judging exit motivation and other quality checks. " +
+            "Text the narrator wrote itself that states an authored protected fact not in revealed_knowledge is still premature disclosure. " +
+            "Contradiction of established canon still fails canon_consistent. Do not require every optional storylet or every beat in a single turn. " +
             "Judge each TURN against the beat it was actually given. A turn that dramatises its assigned beat poorly still fails; being given a beat is not credit for using it. " +
             "Judge the SCENE on whether its authored beats were covered in order across its turns. A scene that skips beats entirely still fails. " +
             "A turn marked left_scene is the one the story departed on: fail unless the narration the player actually " +

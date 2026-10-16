@@ -1,0 +1,69 @@
+{
+  "run_name": "stage3-hosted-spine",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage3-hosted",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "spine-attempt-1",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 4500,
+      "check_timeout_s": 120,
+      "spec": "You are a hosted-E2E operator on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (Cloudflare neurons), so read the hard rules first.\n\nHARD RULES. Change nothing except: files under artifacts/e2e-* and frontend/test-results/ (generated, gitignored) and the output directory /home/bcorfman/dev/freytag-forge/bench/results/stage3-spine/attempt-1/ . Do not edit or create any tracked file. No git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Staging only: if the API reports any channel other than staging, stop and report. Run `@spine` AT MOST ONCE in this task - never retry a failed or aborted run, because every attempt counts in the denominator of a baseline. Do not run anything else billed. Do not edit code to make a run pass.\n\nWHAT THIS IS: attempt 1 of 3 in a hosted `@spine` baseline series on one staged build (frontend/e2e/scene-runtime.spec.js; scripted traversal 1A->3C; the test now records committed reveals, story completion, failure class and latency in artifacts/e2e-spine.json). Stopping rule fixed in advance: exactly 3 attempts, failures counted, no replacements; stop early on a quota/budget stop or a staging sha change.\n\nSTEPS, in order:\n1. Identity: `mkdir -p bench/results/stage3-spine/attempt-1 && source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\" > bench/results/stage3-spine/attempt-1/identity.json`. Required channel 'staging' and runtime 'scene-v1' (the check enforces it; stop if not). Expected sha b6761c9e9a2fa54f35b6cad6fa5e078216050dcb; if different, record it and continue (the series gate in step 2 compares against attempt 1).\n2. Smoke (cheap, ONLY in this first attempt): `rm -f artifacts/e2e-smoke-loaded.png; source .env && cd frontend && npm run test:e2e -- --grep @smoke`. If it fails once rerun once; if it still fails write the verbatim output to bench/results/stage3-spine/smoke-failure.txt, write operator-note.md saying the series stopped at smoke, and do NOT run @spine. Record the smoke outcome in operator-note.md.\n3. Delete stale spine artifacts: `rm -f artifacts/e2e-spine.json artifacts/e2e-spine.md`.\n4. Spine run: `source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @spine` with a command timeout of at least 50 minutes. The command may exit nonzero (a failed assertion or an infrastructure error is data, not a reason to rerun). Save the last 80 lines of the command output, secrets stripped, to bench/results/stage3-spine/attempt-1/run-tail.txt.\n5. Copy artifacts/e2e-spine.json and artifacts/e2e-spine.md (if they exist) into bench/results/stage3-spine/attempt-1/. If the run died before writing a report, write the verbatim failure text to attempt-1/run-failure.txt instead. Never copy a report that predates step 3.\n6. Write attempt-1/operator-note.md (about 150 words, strictly factual): sha, smoke result if applicable, whether @spine passed, turns completed, scenes reached, story_complete, attempt.failure (class/code/message verbatim), chain_misses, delivery counts (fallback/recovery/guard_retry/must_convey misses), latency median and total from the report. Quote, do not interpret. An honest failed or skipped attempt is a good result.\n",
+      "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && .venv/bin/python scripts/ringer/stage3/check_attempt.py /home/bcorfman/dev/freytag-forge bench/results/stage3-spine/attempt-1",
+      "expect_files": [
+        "bench/results/stage3-spine/attempt-1/operator-note.md"
+      ],
+      "verified": "attempt recorded with staging identity and a fresh report or verbatim failure; no tracked source changed"
+    },
+    {
+      "key": "spine-attempt-2",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 4500,
+      "check_timeout_s": 120,
+      "spec": "You are a hosted-E2E operator on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (Cloudflare neurons), so read the hard rules first.\n\nHARD RULES. Change nothing except: files under artifacts/e2e-* and frontend/test-results/ (generated, gitignored) and the output directory /home/bcorfman/dev/freytag-forge/bench/results/stage3-spine/attempt-2/ . Do not edit or create any tracked file. No git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Staging only: if the API reports any channel other than staging, stop and report. Run `@spine` AT MOST ONCE in this task - never retry a failed or aborted run, because every attempt counts in the denominator of a baseline. Do not run anything else billed. Do not edit code to make a run pass.\n\nWHAT THIS IS: attempt 2 of 3 in a hosted `@spine` baseline series on one staged build (frontend/e2e/scene-runtime.spec.js; scripted traversal 1A->3C; the test now records committed reveals, story completion, failure class and latency in artifacts/e2e-spine.json). Stopping rule fixed in advance: exactly 3 attempts, failures counted, no replacements; stop early on a quota/budget stop or a staging sha change.\n\nSTEPS, in order:\n1. Identity: `mkdir -p bench/results/stage3-spine/attempt-2 && source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\" > bench/results/stage3-spine/attempt-2/identity.json`. Required channel 'staging' and runtime 'scene-v1' (the check enforces it; stop if not). Expected sha b6761c9e9a2fa54f35b6cad6fa5e078216050dcb; if different, record it and continue (the series gate in step 2 compares against attempt 1).\n2. Series gate: read bench/results/stage3-spine/ . If any earlier attempt-*/e2e-spine.json has attempt.failure.quotaStop true, or bench/results/stage3-spine/smoke-failure.txt exists, or the staging sha from step 1 differs from attempt-1/identity.json, DO NOT run @spine: write operator-note.md explaining the stop (sha, reason) and in run-failure.txt write 'NOT RUN: <reason>'. This is a recorded skipped attempt, not a failure to hide.\n3. Delete stale spine artifacts: `rm -f artifacts/e2e-spine.json artifacts/e2e-spine.md`.\n4. Spine run: `source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @spine` with a command timeout of at least 50 minutes. The command may exit nonzero (a failed assertion or an infrastructure error is data, not a reason to rerun). Save the last 80 lines of the command output, secrets stripped, to bench/results/stage3-spine/attempt-2/run-tail.txt.\n5. Copy artifacts/e2e-spine.json and artifacts/e2e-spine.md (if they exist) into bench/results/stage3-spine/attempt-2/. If the run died before writing a report, write the verbatim failure text to attempt-2/run-failure.txt instead. Never copy a report that predates step 3.\n6. Write attempt-2/operator-note.md (about 150 words, strictly factual): sha, smoke result if applicable, whether @spine passed, turns completed, scenes reached, story_complete, attempt.failure (class/code/message verbatim), chain_misses, delivery counts (fallback/recovery/guard_retry/must_convey misses), latency median and total from the report. Quote, do not interpret. An honest failed or skipped attempt is a good result.\n",
+      "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && .venv/bin/python scripts/ringer/stage3/check_attempt.py /home/bcorfman/dev/freytag-forge bench/results/stage3-spine/attempt-2",
+      "expect_files": [
+        "bench/results/stage3-spine/attempt-2/operator-note.md"
+      ],
+      "verified": "attempt recorded with staging identity and a fresh report or verbatim failure; no tracked source changed"
+    },
+    {
+      "key": "spine-attempt-3",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 4500,
+      "check_timeout_s": 120,
+      "spec": "You are a hosted-E2E operator on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (Cloudflare neurons), so read the hard rules first.\n\nHARD RULES. Change nothing except: files under artifacts/e2e-* and frontend/test-results/ (generated, gitignored) and the output directory /home/bcorfman/dev/freytag-forge/bench/results/stage3-spine/attempt-3/ . Do not edit or create any tracked file. No git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Staging only: if the API reports any channel other than staging, stop and report. Run `@spine` AT MOST ONCE in this task - never retry a failed or aborted run, because every attempt counts in the denominator of a baseline. Do not run anything else billed. Do not edit code to make a run pass.\n\nWHAT THIS IS: attempt 3 of 3 in a hosted `@spine` baseline series on one staged build (frontend/e2e/scene-runtime.spec.js; scripted traversal 1A->3C; the test now records committed reveals, story completion, failure class and latency in artifacts/e2e-spine.json). Stopping rule fixed in advance: exactly 3 attempts, failures counted, no replacements; stop early on a quota/budget stop or a staging sha change.\n\nSTEPS, in order:\n1. Identity: `mkdir -p bench/results/stage3-spine/attempt-3 && source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\" > bench/results/stage3-spine/attempt-3/identity.json`. Required channel 'staging' and runtime 'scene-v1' (the check enforces it; stop if not). Expected sha b6761c9e9a2fa54f35b6cad6fa5e078216050dcb; if different, record it and continue (the series gate in step 2 compares against attempt 1).\n2. Series gate: read bench/results/stage3-spine/ . If any earlier attempt-*/e2e-spine.json has attempt.failure.quotaStop true, or bench/results/stage3-spine/smoke-failure.txt exists, or the staging sha from step 1 differs from attempt-1/identity.json, DO NOT run @spine: write operator-note.md explaining the stop (sha, reason) and in run-failure.txt write 'NOT RUN: <reason>'. This is a recorded skipped attempt, not a failure to hide.\n3. Delete stale spine artifacts: `rm -f artifacts/e2e-spine.json artifacts/e2e-spine.md`.\n4. Spine run: `source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @spine` with a command timeout of at least 50 minutes. The command may exit nonzero (a failed assertion or an infrastructure error is data, not a reason to rerun). Save the last 80 lines of the command output, secrets stripped, to bench/results/stage3-spine/attempt-3/run-tail.txt.\n5. Copy artifacts/e2e-spine.json and artifacts/e2e-spine.md (if they exist) into bench/results/stage3-spine/attempt-3/. If the run died before writing a report, write the verbatim failure text to attempt-3/run-failure.txt instead. Never copy a report that predates step 3.\n6. Write attempt-3/operator-note.md (about 150 words, strictly factual): sha, smoke result if applicable, whether @spine passed, turns completed, scenes reached, story_complete, attempt.failure (class/code/message verbatim), chain_misses, delivery counts (fallback/recovery/guard_retry/must_convey misses), latency median and total from the report. Quote, do not interpret. An honest failed or skipped attempt is a good result.\n",
+      "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && .venv/bin/python scripts/ringer/stage3/check_attempt.py /home/bcorfman/dev/freytag-forge bench/results/stage3-spine/attempt-3",
+      "expect_files": [
+        "bench/results/stage3-spine/attempt-3/operator-note.md"
+      ],
+      "verified": "attempt recorded with staging identity and a fresh report or verbatim failure; no tracked source changed"
+    }
+  ]
+}

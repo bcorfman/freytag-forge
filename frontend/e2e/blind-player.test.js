@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aggregate, aggregateByScene, analyseRun, askPlayer, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, playerPrompt, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord, unseenTerms, validateCommand } from "./blind-player.js";
+import { aggregate, aggregateByScene, analyseRun, askPlayer, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, gameBreakPolicy, handleGameBreak, playerPrompt, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord, unseenTerms, validateCommand } from "./blind-player.js";
+import { resolveWarningIfPresent } from "./helpers.js";
 
 const response = (command) => ({ ok: true, status: 200, json: async () => ({ output_text: JSON.stringify({ command }) }) });
 const fakeMap = { scenes: [{ scene_id: "SECRET", location: { name: "Vault" }, gates: [{ sources: [{ id: "SECRET_SOURCE", player_earned: true }] }] }] };
@@ -13,6 +14,57 @@ test("player prompt contains only screen data", () => {
   assert.equal(JSON.stringify(fakeMap).includes("SECRET"), true);
 });
 
+test("game-break policy defaults, accepts proceed, and rejects unknown values", () => {
+  assert.equal(gameBreakPolicy({}), "return");
+  assert.equal(gameBreakPolicy({ BLIND_PLAYER_BREAK_POLICY: "proceed" }), "proceed");
+  assert.throws(() => gameBreakPolicy({ BLIND_PLAYER_BREAK_POLICY: "sometimes" }), /must be "return" or "proceed"/);
+});
+
+function fakeGameBreakPage({ visible = true, reason = "A future dependency is at risk.", clickError = false, hideOnClick = true } = {}) {
+  let panelVisible = visible;
+  const clicks = [];
+  return {
+    clicks,
+    locator(selector) {
+      if (selector === "#game-break-panel") return { isVisible: async () => panelVisible };
+      if (selector === "#game-break-reason") return { textContent: async () => reason };
+      return {
+        click: async () => {
+          clicks.push(selector);
+          if (clickError) throw new Error("click failed");
+          if (hideOnClick) panelVisible = false;
+        },
+      };
+    },
+  };
+}
+
+test("handles returned, proceeded, and timed-out game breaks", async () => {
+  const returnedPage = fakeGameBreakPage();
+  assert.deepEqual(await handleGameBreak(returnedPage, { game_break: { warning_id: "w1" }, state: { scene_id: "A", pending_game_break: true } }, { policy: "return", timeoutMs: 10 }), {
+    warning_id: "w1", reason: "A future dependency is at risk.", policy: "return", decision: "return_to_scene", outcome: "returned",
+    before: { scene_id: "A", pending_game_break: true }, after: null,
+  });
+  assert.deepEqual(returnedPage.clicks, ["#return-to-scene-button"]);
+  const proceededPage = fakeGameBreakPage();
+  const proceeded = await handleGameBreak(proceededPage, { game_break: { warning_id: "w2", reason: "Proceed?" }, state: { scene_id: "A", turn_index: 2, pending_game_break: true } }, { policy: "proceed", timeoutMs: 10, nextPayload: { state: { scene_id: "A", turn_index: 3, pending_game_break: false } } });
+  assert.equal(proceeded.outcome, "proceeded");
+  assert.deepEqual(proceeded.after, { scene_id: "A", turn_index: 3, pending_game_break: false });
+  assert.deepEqual(proceededPage.clicks, ["#proceed-button"]);
+  const timeoutPage = fakeGameBreakPage({ hideOnClick: false });
+  const timeout = await handleGameBreak(timeoutPage, { game_break: { warning_id: "w3", reason: "Stuck." }, state: { scene_id: "A", pending_game_break: true } }, { policy: "return", timeoutMs: 0 });
+  assert.equal(timeout.outcome, "timeout");
+});
+
+test("resolves warnings and rejects a game-break timeout", async () => {
+  assert.equal(await resolveWarningIfPresent(fakeGameBreakPage({ visible: false })), false);
+  assert.equal(await resolveWarningIfPresent(fakeGameBreakPage()), true);
+  await assert.rejects(
+    () => resolveWarningIfPresent(fakeGameBreakPage({ clickError: true })),
+    /game-break panel did not close .*warning_id=null.*outcome=timeout/,
+  );
+});
+
 test("validates player input rules", () => {
   for (const command of ["Search the desk.", "Open my laptop."]) assert.equal(validateCommand(command).ok, true);
   for (const command of ["I search the desk.", "Wait.", "Keep watch.", "Search without touching.", "Search the desk"]) assert.equal(validateCommand(command).ok, false);
@@ -22,6 +74,7 @@ test("turnRecord carries semantic fallback and prompt metadata", () => {
   const payload = { state: { scene_id: "A" }, segments: [{ grounding_ids: ["desk"] }], delivery: { x: 1 }, semantic_match: { ran: true, matched: "desk" }, prompt: "full prompt", attempt_bundle: { outcome: "committed" } };
   assert.deepEqual(turnRecord({ turn: 1, input: "Search the desk.", payload, text: "The desk is here." }), {
     turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", story_complete: false, state: { scene_id: "A" }, grounding_ids: ["desk"], delivery: { x: 1 }, semantic_match: { ran: true, matched: "desk" }, prompt: "full prompt", attempt_bundle: { outcome: "committed", profile: "canonical" },
+    game_break: null,
   });
   assert.deepEqual(turnRecord({ turn: 2, input: "Search the room.", payload: {}, text: "Nothing." }).semantic_match, null);
   assert.equal(turnRecord({ turn: 2, input: "Search the room.", payload: {}, text: "Nothing." }).prompt, null);
@@ -98,11 +151,11 @@ test("turnLog emits the contract without prompt, delivery, or state", () => {
   const withoutMatch = { turn: 3, input: "Open the door.", text: "The door opens.", state: { scene_id: "B" }, grounding_ids: ["door"], semantic_match: undefined };
   const result = turnLog([normal, rejectedTurn, withoutMatch]);
   assert.deepEqual(result, [
-    { turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", rejected: false, story_complete: false, rejection: null, scene_id: "A", semantic_match: { ran: true, matched: "desk" }, grounding_ids: ["desk"], transition_cause: "earned", outcome: "committed" },
-    { turn: 2, input: "Search the room.", raw_input: "Search the room.", profile: "canonical", text: "", rejected: true, story_complete: false, rejection: "bad response", scene_id: null, semantic_match: null, grounding_ids: [], transition_cause: "none", outcome: "rejected" },
-    { turn: 3, input: "Open the door.", raw_input: "Open the door.", profile: "canonical", text: "The door opens.", rejected: false, story_complete: false, rejection: null, scene_id: "B", semantic_match: null, grounding_ids: ["door"], transition_cause: null, outcome: null },
+    { turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", rejected: false, story_complete: false, rejection: null, scene_id: "A", semantic_match: { ran: true, matched: "desk" }, grounding_ids: ["desk"], transition_cause: "earned", outcome: "committed", game_break: null },
+    { turn: 2, input: "Search the room.", raw_input: "Search the room.", profile: "canonical", text: "", rejected: true, story_complete: false, rejection: "bad response", scene_id: null, semantic_match: null, grounding_ids: [], transition_cause: "none", outcome: "rejected", game_break: null },
+    { turn: 3, input: "Open the door.", raw_input: "Open the door.", profile: "canonical", text: "The door opens.", rejected: false, story_complete: false, rejection: null, scene_id: "B", semantic_match: null, grounding_ids: ["door"], transition_cause: null, outcome: null, game_break: null },
   ]);
-  for (const entry of result) assert.deepEqual(Object.keys(entry).sort(), ["grounding_ids", "input", "outcome", "profile", "raw_input", "rejected", "rejection", "scene_id", "semantic_match", "story_complete", "text", "transition_cause", "turn"]);
+  for (const entry of result) assert.deepEqual(Object.keys(entry).sort(), ["game_break", "grounding_ids", "input", "outcome", "profile", "raw_input", "rejected", "rejection", "scene_id", "semantic_match", "story_complete", "text", "transition_cause", "turn"]);
   assert.equal(JSON.stringify(result).includes("prompt"), false);
 });
 
@@ -168,6 +221,26 @@ test("aggregates play and timer exit rates", () => {
   assert.equal(aggregate(runs).timer_exit_rate, 1 / 3);
   assert.equal(aggregate([...runs, { exit_cause: "forced" }]).forced_exit_rate, 1 / 4);
   assert.match(formatMarkdown({ replicates: [{ exit_cause: "forced" }], aggregate: { forced_exit_rate: 1 } }), /Forced exit rate: 1/);
+});
+
+test("counts game-break outcomes separately without creating stuck turns", () => {
+  const runs = ["returned", "proceeded", "timeout"].map((outcome, index) => analyseRun({
+    sceneEntry: scene,
+    turns: [{ ...committed(index + 1), game_break: { warning_id: `w${index}`, reason: "reason", policy: "return", decision: outcome === "proceeded" ? "proceed" : "return_to_scene", outcome } }],
+  }));
+  for (const run of runs) {
+    assert.equal(run.game_break_count, 1);
+    assert.equal(run.stuck_turns.length, 0);
+    assert.equal(run.stuck_runs.length, 0);
+  }
+  const summary = aggregate(runs);
+  assert.equal(summary.game_break_count, 3);
+  assert.equal(summary.game_break_returned_count, 1);
+  assert.equal(summary.game_break_proceeded_count, 1);
+  assert.equal(summary.game_break_timeout_count, 1);
+  assert.equal(summary.game_break_rate, 1);
+  assert.equal(summary.stuck_run_count, 0);
+  assert.equal(summary.rejected_count, 0);
 });
 
 test("aggregates all-mode runs by scene", () => {

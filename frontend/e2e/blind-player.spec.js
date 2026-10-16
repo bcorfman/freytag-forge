@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadAffordanceMap, firstStepAffordances, laterAffordances, exploreInput } from "./affordances.js";
-import { askPlayer, analyseRun, aggregate, aggregateByScene, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
+import { askPlayer, analyseRun, aggregate, aggregateByScene, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, gameBreakPolicy, handleGameBreak, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
 import { startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { walkScenes } from "./scene-walk.js";
@@ -46,6 +46,8 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
   const counter = { calls: 0 };
   let consecutiveRejections = 0;
   let stoppedOnRejections = false;
+  let stoppedOnGameBreakTimeout = false;
+  const breakPolicy = gameBreakPolicy();
   for (let turn = 1; turn <= ceiling; turn += 1) {
     const transcript = (await page.locator("#transcript").textContent()) || "";
     const status = (await page.locator("#status-line").textContent()) || "";
@@ -65,12 +67,16 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
       }
       continue;
     }
-    await resolveWarningIfPresent(page);
+    const gameBreak = await handleGameBreak(page, payload, { policy: breakPolicy });
     consecutiveRejections = 0;
     const text = (payload.segments || [])
       .filter((segment) => ["narration", "action", "dialogue", "speech"].includes(segment.kind))
       .map((segment) => segment.text).filter(Boolean).join(" ").trim();
-    turns.push(turnRecord({ turn, input, raw_input: input, profile: selectedProfile.profile, profile_requested: selectedProfile.requested, profile_warning: selectedProfile.warning, payload, text }));
+    turns.push(turnRecord({ turn, input, raw_input: input, profile: selectedProfile.profile, profile_requested: selectedProfile.requested, profile_warning: selectedProfile.warning, payload, text, game_break: gameBreak }));
+    if (gameBreak?.outcome === "timeout") {
+      stoppedOnGameBreakTimeout = true;
+      break;
+    }
     if (payload.story_complete === true || payload.state?.story_complete === true) break;
     if (payload.state?.scene_id !== sceneId) break;
   }
@@ -83,6 +89,7 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
     bundles: collectBundles(turns),
     turns: turnLog(turns),
     turn_count: turns.length,
+    stopped_on_game_break_timeout: stoppedOnGameBreakTimeout,
     ...analyseRun({ sceneEntry, nextSceneEntry, turns, firstStep, later, openingText, profile: selectedProfile.profile, stopped_on_rejections: stoppedOnRejections, sceneMapSources: sceneEntry.gates?.flatMap((gate) => gate.sources || []) || [] }),
   };
 }
@@ -131,6 +138,10 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
       sceneRuns.push(run);
       if (run.stopped_on_rejections) {
         stoppedReason = `scene ${sceneId} rejected ${MAX_CONSECUTIVE_REJECTIONS} times in a row`;
+        break;
+      }
+      if (run.stopped_on_game_break_timeout) {
+        stoppedReason = `scene ${sceneId} stopped on game-break timeout`;
         break;
       }
       if (run.ending_reached) {

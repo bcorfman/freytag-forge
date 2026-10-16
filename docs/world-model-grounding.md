@@ -2,8 +2,9 @@
 
 Read this before you add or place anything in a story package, or before you
 write any prompt line that tells a model about places or things. Field syntax
-lives in [markdown-story-authoring.md](markdown-story-authoring.md). The design
-and its decisions (W1-W13) live in `.plans/world-model.md`.
+lives in [markdown-story-authoring.md](markdown-story-authoring.md). The [world-model checklist](../.plans/world-model.md) tracks the remaining
+conditional work and explains how to retrieve the historical decisions
+(W1–W14) and their amendments from git.
 
 The world model (`packages/worldkeeper`, adapted by
 `storygame/runtime/world_model.py`) is a tree of typed entities held as facts.

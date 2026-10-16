@@ -6,8 +6,8 @@
   "turns": [
     {"segments": [{"kind": "narration", "text": "The back door and floor show ordinary signs of a hurried departure.", "grounding_ids": []}], "selected_knowledge_ids": []},
     {"segments": [{"kind": "narration", "text": "Michelle's phone holds a drained battery and no immediate answer.", "grounding_ids": []}], "selected_knowledge_ids": []},
-    {"segments": [{"kind": "narration", "text": "The damaged voice recording on Michelle's memory card crackles with a warning not to trust emergency broadcasts.", "grounding_ids": ["k_sl_1a_b_r2"]}], "selected_knowledge_ids": ["k_sl_1a_b_r2"]},
-    {"segments": [{"kind": "narration", "text": "A patrol vehicle approaches the front gate and begins searching the property.", "grounding_ids": []}], "selected_knowledge_ids": []},
+    {"segments": [{"kind": "narration", "text": "The memory card taped beneath the drawer is evidence Michelle left behind.", "grounding_ids": ["k_sl_1a_b_r0"]}], "selected_knowledge_ids": ["k_sl_1a_b_r0"]},
+    {"segments": [{"kind": "narration", "text": "A patrol vehicle approaches and begins searching the property.", "grounding_ids": []}], "selected_knowledge_ids": []},
     {"segments": [{"kind": "narration", "text": "The house evidence points toward a concrete local lead."}], "selected_knowledge_ids": []},
     {"segments": [{"kind": "narration", "text": "The invalid probe leaves the local evidence unchanged.", "grounding_ids": []}], "selected_knowledge_ids": ["k_future_invalid"]}
   ]

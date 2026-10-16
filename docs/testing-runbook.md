@@ -233,8 +233,8 @@ source .env && cd frontend && E2E_PACKAGE_CLOCK=1 E2E_TURN_TIMEOUT_MS=90000 npm 
 2. Delete all four artifacts before every attempt. An aborted run leaves the
    previous run's files in place, and they look like a fresh result.
 3. A run counts only if `e2e-llm-canon-progress.json` holds nine scenes and 30
-   or more turns. Anything less is aborted: discard it and retry, never record
-   it.
+   or more turns. The loop bound is derived from the package pacing. Anything
+   less is aborted: discard it and retry, never record it.
 4. About one run in three dies on infrastructure, most often
    `Scene 2A exceeded its handoff turn 4`. Retry; it is not a configuration
    difference.

@@ -5,6 +5,7 @@ import { dirname, resolve } from "node:path";
 import { isTurnRequest } from "./package-clock-request.js";
 import { createPackageClockController } from "./package-clock-controller.js";
 import { installApiToken } from "./api-token.js";
+import { handleGameBreak } from "./blind-player.js";
 
 const TURN_TIMEOUT_MS = Number.parseInt(process.env.E2E_TURN_TIMEOUT_MS || "30000", 10);
 const packageClockControllers = new WeakMap();
@@ -169,11 +170,11 @@ export async function submitTurnObserved(page, action) {
 }
 
 export async function resolveWarningIfPresent(page) {
-  const warning = page.locator("#game-break-panel");
-  if (!(await warning.isVisible())) return false;
-  await page.getByRole("button", { name: "Return to scene" }).click();
-  await expect(warning).toBeHidden();
-  return true;
+  const record = await handleGameBreak(page, {}, { policy: "return" });
+  if (record?.outcome === "timeout") {
+    throw new Error(`game-break panel did not close (warning_id=${record.warning_id}, outcome=${record.outcome}).`);
+  }
+  return record != null;
 }
 
 export async function writeCategoryReport(category, evidence) {

@@ -8,15 +8,18 @@ import {
   submitTurnObserved,
   writeCategoryReport,
 } from "./helpers.js";
-import { loadPackagePacing } from "./package-clock.js";
+import { canonTurnBudget, loadPackagePacing } from "./package-clock.js";
 import { buildKnowledgeTimelineReport, recordTurnOutcome } from "./knowledge-timeline-record.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts } from "./canon-journey.js";
+import { attributeNarration, eligibleAuthoredTexts, loadAuthoredText } from "./authored-spans.js";
+import { classifyFailure, evaluateSpine, loadExpectedReveals } from "./spine-record.js";
 
-// Nine scenes needing up to three earned reveals each, with headroom for a turn
-// the model spends on a non-progressing but valid candidate.
-const MAX_CANON_TURNS = 45;
 const SPINE_MAX_TURNS = 120;
+
+// The 3C resolution is route-driven: its escape, consequence and Phase Two events land around
+// scene turns 13-14, so the spine keeps cycling prompts in 3C until the story completes or this cap.
+const SPINE_MAX_3C_TURNS = 24;
 
 // A scene has at most three authored reveals, so more consecutive empty turns than
 // that means the scene is not progressing rather than merely taking its time.
@@ -30,9 +33,22 @@ function narrationText(payload) {
   return turnText.join(" ").trim();
 }
 
-function recordRevealedKnowledge(scene, segments) {
-  const groundingIds = segments.flatMap((segment) => segment.grounding_ids || []);
-  scene.revealedKnowledgeIds = [...new Set([...scene.revealedKnowledgeIds, ...groundingIds])];
+function recordRevealedKnowledge(scene, segments, bundle) {
+  const ids = bundle
+    ? bundle.outcome === "committed" ? bundle.selected_reveal?.knowledge_ids || [] : []
+    : segments.flatMap((segment) => segment.grounding_ids || []);
+  scene.revealedKnowledgeIds = [...new Set([...scene.revealedKnowledgeIds, ...ids])];
+}
+
+function bundleSummary(bundle) {
+  return {
+    outcome: bundle.outcome,
+    transition_cause: bundle.transition_cause,
+    story_complete: bundle.story_complete,
+    selected_reveal: bundle.selected_reveal,
+    cue_stage: bundle.cue_stage,
+    committed_delta: bundle.committed_delta,
+  };
 }
 
 async function exerciseDistinctFreeTextActions(page) {
@@ -85,18 +101,82 @@ test("drives the main spine and reports reachability and pressure @spine", async
   const deliveryRecords = [];
   const perTurn = [];
   const promptsUsed = new Map();
+  const expected = await loadExpectedReveals();
+  const identity = { sha: null, runtime: null, channel: null };
+  try {
+    const response = await page.request.get(`${process.env.E2E_API_BASE_URL}/api/v1/version`);
+    if (response.ok()) {
+      const version = await response.json();
+      identity.sha = version.sha ?? null;
+      identity.runtime = version.runtime ?? null;
+      identity.channel = version.channel ?? null;
+    }
+  } catch {
+    // Identity is diagnostic metadata; a version endpoint failure must not hide the run evidence.
+  }
   let sceneId = "1A";
-  for (let index = 0; index < SPINE_MAX_TURNS; index += 1) {
-    const used = promptsUsed.get(sceneId) || 0;
-    const input = promptFor(sceneId, used);
-    const payload = await submitTurn(page, input);
-    turns.push({ scene_id: payload.state?.scene_id, elapsed_seconds: payload.state?.story_elapsed_seconds });
-    deliveryRecords.push(payload.delivery || {});
-    perTurn.push({ n: index + 1, scene_in: sceneId, input, scene_out: payload.state?.scene_id, delivery: payload.delivery || {} });
-    await resolveWarningIfPresent(page);
-    promptsUsed.set(sceneId, used + 1);
-    sceneId = payload.state?.scene_id;
-    if (sceneId === "3C" && (promptsUsed.get(sceneId) || 0) >= scenePrompts[sceneId].length) break;
+  let attemptedTurn = 0;
+  let failure = null;
+  let failedError = null;
+  try {
+    for (let index = 0; index < SPINE_MAX_TURNS; index += 1) {
+      attemptedTurn = index + 1;
+      const used = promptsUsed.get(sceneId) || 0;
+      const input = promptFor(sceneId, used);
+      const startedAt = Date.now();
+      let payload;
+      try {
+        payload = await submitTurn(page, input);
+      } catch (error) {
+        const errorPayload = error?.payload;
+        if (errorPayload) {
+          const latency_ms = Date.now() - startedAt;
+          const sceneOut = errorPayload.state?.scene_id;
+          turns.push({ scene_id: sceneOut, elapsed_seconds: errorPayload.state?.story_elapsed_seconds });
+          deliveryRecords.push(errorPayload.delivery || {});
+          perTurn.push({
+            n: index + 1,
+            scene_in: sceneId,
+            input,
+            scene_out: sceneOut,
+            bundle: errorPayload.attempt_bundle ? bundleSummary(errorPayload.attempt_bundle) : null,
+            state_story_complete: errorPayload.state?.story_complete === true,
+            latency_ms,
+            delivery: errorPayload.delivery || {},
+          });
+        }
+        throw error;
+      }
+      const latency_ms = Date.now() - startedAt;
+      const sceneOut = payload.state?.scene_id;
+      const bundle = payload.attempt_bundle ? bundleSummary(payload.attempt_bundle) : null;
+      turns.push({ scene_id: sceneOut, elapsed_seconds: payload.state?.story_elapsed_seconds });
+      deliveryRecords.push(payload.delivery || {});
+      perTurn.push({
+        n: index + 1,
+        scene_in: sceneId,
+        input,
+        scene_out: sceneOut,
+        bundle,
+        state_story_complete: payload.state?.story_complete === true,
+        latency_ms,
+        delivery: payload.delivery || {},
+      });
+      await resolveWarningIfPresent(page);
+      promptsUsed.set(sceneId, used + 1);
+      sceneId = sceneOut;
+      if (payload.story_complete === true || payload.state?.story_complete === true || bundle?.story_complete === true) break;
+      if (sceneId === "3C" && (promptsUsed.get(sceneId) || 0) >= SPINE_MAX_3C_TURNS) break;
+    }
+  } catch (error) {
+    const classified = classifyFailure(error);
+    failure = {
+      ...classified,
+      message: error instanceof Error ? error.message : String(error),
+      turn: attemptedTurn || perTurn.length + 1,
+      quotaStop: classified.quotaStop === true,
+    };
+    failedError = error;
   }
   const sceneOrder = turns.map((turn) => turn.scene_id).filter(Boolean);
   const delivery = {
@@ -112,6 +192,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
       delivery.miss_tally[factId] = (delivery.miss_tally[factId] || 0) + 1;
     }
   }
+  const chains = evaluateSpine({ sceneOrder, perTurn, expected });
   await writeCategoryReport("spine", {
     ending_reachable: sceneOrder.at(-1) === "3C",
     dead_end: !sceneOrder.length,
@@ -120,15 +201,24 @@ test("drives the main spine and reports reachability and pressure @spine", async
     distinct_paths_to_climax: [sceneOrder.join(">")],
     delivery,
     per_turn: perTurn,
+    story_complete: chains.story_complete,
+    chains,
+    identity,
+    latency: chains.latency,
+    attempt: { failure, turns_completed: perTurn.length },
   });
+  if (failedError) throw failedError;
   expect(sceneOrder.every((scene) => /^[123][ABC]$/.test(scene))).toBe(true);
   expect(sceneOrder.at(-1)).toBe("3C");
+  expect(chains.story_complete, "the story must actually complete; reaching 3C is not the ending").toBe(true);
+  expect(Object.keys(chains.chain_misses), `missing expected reveal chains: ${JSON.stringify(chains.chain_misses)}`).toHaveLength(0);
+  expect(chains.c_r2_committed, "2C must commit k_sl_2c_c_r2").toBe(true);
 });
 
 test("judges every reached scene against its committed knowledge canon @llm-canon", async ({ page }) => {
   test.skip(!process.env.OPENAI_API_KEY, "requires OPENAI_API_KEY");
   test.skip(!process.env.E2E_PACKAGE_CLOCK, "requires the opt-in package E2E game clock");
-  test.setTimeout(20 * 60_000);
+  test.setTimeout(45 * 60_000);
   const pacing = loadPackagePacing({ storyId: "continuity_initiative" });
   const controller = await installPackageClock(page);
   const sessionPayload = await startSceneSession(page);
@@ -147,6 +237,12 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
   const promptsUsed = new Map();
   const progress = [];
   const firedPacingEventIds = new Set();
+  let authoredSpanTurns = 0;
+  let bundlesSeen = 0;
+  let revealEvidenceFallbackTurns = 0;
+  let storyCompleteSeen = false;
+  let authored;
+  const knowledgeAvailableByScene = new Map();
 
   const turnMilestoneFor = (currentSceneId, currentTurns) => {
     const pendingEvent = pacing.eventOrder
@@ -169,7 +265,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
     throw new Error(`Scene ${currentSceneId} exceeded its handoff turn ${String(handoff.target_turn)}.`);
   };
 
-  for (let index = 0; index < MAX_CANON_TURNS; index += 1) {
+  for (let index = 0; index < canonTurnBudget(pacing); index += 1) {
     if (sceneId === sceneOrder.at(-1) && (promptsUsed.get(sceneId) || 0) >= scenePrompts[sceneId].length) break;
     const sourceSceneId = sceneId;
     const used = promptsUsed.get(sourceSceneId) || 0;
@@ -180,6 +276,9 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       const turnsUntilMilestone = milestone ? controller.turnsUntilMilestone() : null;
       const payload = await submitTurn(page, input);
       await resolveWarningIfPresent(page);
+      const bundle = payload.attempt_bundle;
+      if (bundle) bundlesSeen += 1;
+      if (payload.state?.story_complete === true || bundle?.story_complete === true) storyCompleteSeen = true;
       const timing = milestone ? controller.history().at(-1) : null;
       const observedTurns = payload.state?.turns_since_scene_entry;
       const reachedSameScene = payload.state?.scene_id === sourceSceneId;
@@ -238,15 +337,31 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       // and the judge only ever read it as the park's odd first line.
       const departure = entered ? segments.slice(0, -1) : segments;
       const sceneNarration = departure.map((segment) => segment.text).join(" ").trim();
-      recordRevealedKnowledge(byScene.get(sourceSceneId), departure);
+      recordRevealedKnowledge(byScene.get(sourceSceneId), departure, bundle);
+      const available = knowledgeAvailableByScene.get(sourceSceneId) || new Set();
+      if (bundle?.outcome === "committed") {
+        for (const id of bundle.selected_reveal?.knowledge_ids || []) available.add(id);
+      }
+      knowledgeAvailableByScene.set(sourceSceneId, available);
       if (sceneNarration) {
-        byScene.get(sourceSceneId).turns.push({
+        const eligible = bundle && !authored ? (authored = loadAuthoredText(), eligibleAuthoredTexts(bundle, authored)) : eligibleAuthoredTexts(bundle, authored);
+        const authoredSpans = attributeNarration(sceneNarration, eligible)
+          .filter((span) => span.origin === "authored")
+          .map((span) => ({ text: span.text, source_kind: span.source.kind, source_id: span.source.id }));
+        if (authoredSpans.length) authoredSpanTurns += 1;
+        const turn = {
           player_input: input,
           narration: sceneNarration,
           left_scene: entered,
           beats_projected: payload.delivery?.beats_projected || [],
           ...(payload.prompt ? { prompt: payload.prompt } : {}),
-        });
+          segments: departure.map((segment) => ({ kind: segment.kind, text: segment.text, grounding_ids: segment.grounding_ids || [] })),
+          ...(bundle ? { bundle: bundleSummary(bundle) } : {}),
+          ...(authoredSpans.length ? { authored_spans: authoredSpans } : {}),
+          knowledge_available: [...available].sort(),
+        };
+        byScene.get(sourceSceneId).turns.push(turn);
+        if (!bundle) revealEvidenceFallbackTurns += 1;
       }
       if (entered && !byScene.has(reachedSceneId)) {
         const openingSegment = segments.at(-1);
@@ -274,6 +389,10 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
         current_scene: sceneId,
         by_scene: [...byScene],
         progress,
+        story_complete_seen: storyCompleteSeen,
+        authored_span_turns: authoredSpanTurns,
+        bundles_seen: bundlesSeen,
+        reveal_evidence_fallback_turns: revealEvidenceFallbackTurns,
       });
     });
   }
@@ -288,7 +407,14 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
     const judgment = await judgeSceneNarration({ sceneId: id, ...scene });
     judgments.push({ scene_id: id, ...judgment });
   }
-  await writeCategoryReport("llm-canon", { judgments, reached_scenes: [...byScene.keys()] });
+  await writeCategoryReport("llm-canon", {
+    judgments,
+    reached_scenes: [...byScene.keys()],
+    story_complete_seen: storyCompleteSeen,
+    authored_span_turns: authoredSpanTurns,
+    bundles_seen: bundlesSeen,
+    reveal_evidence_fallback_turns: revealEvidenceFallbackTurns,
+  });
 
   const failures = judgments.filter((judgment) => judgment.verdict !== "pass");
   expect(
@@ -310,12 +436,14 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   await startSceneSession(page);
   const version = await (await versionResponse).json();
   const records = [];
+  let committedState = null;
   const forbiddenBeforeRecording = /michelle(?:'s)? warning|do not trust.*broadcast|janus/i;
   const record = async (input) => {
     const outcome = await submitTurnObserved(page, input);
     expect(outcome.ok, `expected committed turn for ${input}`).toBe(true);
     const narration = narrationText(outcome.body);
     records.push(recordTurnOutcome({ input, status: outcome.status, headers: outcome.headers, body: outcome.body, version }));
+    committedState = outcome.body?.state ?? null;
     await resolveWarningIfPresent(page);
     return narration;
   };
@@ -324,7 +452,7 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   expect(physicalSearch).not.toMatch(forbiddenBeforeRecording);
   const phone = await record("Examine Michelle's phone for useful evidence.");
   expect(phone).not.toMatch(forbiddenBeforeRecording);
-  const investigation = await record("Search the drawer for Michelle's research and a damaged recording.");
+  const investigation = await record("Search under the drawer in her workstation.");
   expect(investigation).toMatch(/warning|broadcast|recording|research|evidence|continuity|lead/i);
   const drawerRecord = records.at(-1);
   expect(drawerRecord.provider_selected_ids).toHaveLength(1);
@@ -334,13 +462,30 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   const followUp = await record("Reassess the house evidence for a concrete local consequence.");
   expect(followUp).not.toMatch(/nothing but silence|someone is watching/i);
   const invalidInput = "Probe the future lead for a response.";
+  const lastCommittedState = committedState;
   const invalid = await submitTurnObserved(page, invalidInput);
   const invalidRecord = recordTurnOutcome({ input: invalidInput, status: invalid.status, headers: invalid.headers, body: invalid.body, version });
   records.push(invalidRecord);
   expect(invalid.ok).toBe(false);
-  expect(invalid.headers["x-freytag-rejection-code"]).toBeTruthy();
-  expect(invalidRecord.rejection_code).toBeTruthy();
-  await writeCategoryReport("knowledge-timeline", buildKnowledgeTimelineReport(version, records));
+  expect(invalid.status).toBe(409);
+  const visibleLine = (await page.locator("#transcript .entry-system").last().textContent())?.trim() || "";
+  const diagnosticDetailExposed =
+    Object.prototype.hasOwnProperty.call(invalid.body || {}, "attempt_bundle") ||
+    visibleLine !== "I don't understand. Can you try something else?";
+  expect(visibleLine).not.toBe("");
+  expect(visibleLine).not.toMatch(/k_future_invalid|\bk_[a-z0-9_]+\b|janus|protected/i);
+  expect(invalid.headers["x-freytag-rejection-code"]).toBe("ineligible_selection");
+  expect(invalidRecord.rejection_code).toBe("ineligible_selection");
+  await writeCategoryReport(
+    "knowledge-timeline",
+    buildKnowledgeTimelineReport(version, records, {
+      status: invalid.status,
+      rejection_code: invalid.headers["x-freytag-rejection-code"] || null,
+      visible_line: visibleLine,
+      diagnostic_detail_exposed: diagnosticDetailExposed,
+      turn_index: lastCommittedState?.turn_index ?? null,
+    }),
+  );
 });
 
 test("samples optional storylets without presenting a menu @storylets", async ({ page }) => {

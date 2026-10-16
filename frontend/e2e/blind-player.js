@@ -1,5 +1,67 @@
 import { laterAffordances, firstStepAffordances, mentions, normalizeText } from "./affordances.js";
 
+// BLIND_PLAYER_BREAK_POLICY controls game-break choices: "return" (the default)
+// preserves the non-destructive behavior, while "proceed" commits the consequence.
+
+export function gameBreakPolicy(env = process.env) {
+  const policy = env.BLIND_PLAYER_BREAK_POLICY == null || env.BLIND_PLAYER_BREAK_POLICY === ""
+    ? "return"
+    : String(env.BLIND_PLAYER_BREAK_POLICY);
+  if (policy !== "return" && policy !== "proceed") {
+    throw new Error(`BLIND_PLAYER_BREAK_POLICY must be "return" or "proceed"; got ${policy}.`);
+  }
+  return policy;
+}
+
+function stateEvidence(state) {
+  if (!state || typeof state !== "object") return null;
+  return Object.fromEntries(["scene_id", "turn_index", "pending_game_break"]
+    .filter((field) => Object.hasOwn(state, field))
+    .map((field) => [field, state[field]]));
+}
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export async function handleGameBreak(page, payload = {}, { policy = "return", timeoutMs = 30_000, nextPayload = null } = {}) {
+  if (policy !== "return" && policy !== "proceed") throw new Error(`Game-break policy must be "return" or "proceed"; got ${policy}.`);
+  const panel = page.locator("#game-break-panel");
+  let visible = false;
+  try { visible = await panel.isVisible(); } catch { visible = false; }
+  if (!payload.game_break && !visible) return null;
+  const reasonLocator = page.locator("#game-break-reason");
+  const reason = (await reasonLocator.textContent().catch(() => "")) || payload.game_break?.reason || null;
+  const decision = policy === "proceed" ? "proceed" : "return_to_scene";
+  const before = stateEvidence(payload.state);
+  const record = {
+    warning_id: payload.game_break?.warning_id ?? null,
+    reason,
+    policy,
+    decision,
+    outcome: "timeout",
+    before,
+    after: stateEvidence(nextPayload?.state),
+  };
+  try {
+    await page.locator(policy === "proceed" ? "#proceed-button" : "#return-to-scene-button").click({ timeout: Math.max(0, timeoutMs) });
+  } catch {
+    return record;
+  }
+  const deadline = Date.now() + Math.max(0, timeoutMs);
+  while (true) {
+    try {
+      if (!(await panel.isVisible())) {
+        record.outcome = policy === "proceed" ? "proceeded" : "returned";
+        record.after = stateEvidence(nextPayload?.state);
+        return record;
+      }
+    } catch {
+      return record;
+    }
+    if (Date.now() >= deadline) return record;
+    await delay(Math.min(10, Math.max(1, deadline - Date.now())));
+  }
+}
+
 const CANONICAL_PLAYER_SYSTEM =
   "You are a player at a text adventure. You only know what you have read on the screen. " +
   "Write one active command for the next turn. Use an imperative verb and a direct object. " +
@@ -143,7 +205,7 @@ export function unseenTerms({ command = "", readText = "" } = {}) {
   return [...new Set(words.filter((word) => !unseenStopWords.has(word) && !unseenWordMatch(word, readWords)))];
 }
 
-export function turnRecord({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, payload = {}, text }) {
+export function turnRecord({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, payload = {}, text, game_break = null }) {
   const selected = profileInfo(profile);
   const requested = profile_requested ?? selected.requested;
   const warning = profile_warning ?? selected.warning;
@@ -165,6 +227,7 @@ export function turnRecord({ turn, input, raw_input = input, profile = "canonica
     semantic_match: payload.semantic_match || null,
     prompt: payload.prompt || null,
     attempt_bundle: attemptBundle,
+    game_break,
   };
 }
 
@@ -192,7 +255,7 @@ export function bundlesCategory(category) {
 }
 
 export function turnLog(turns = []) {
-  return turns.map(({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, text, state, grounding_ids, semantic_match, story_complete, rejected, rejection, attempt_bundle }) => ({
+  return turns.map(({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, text, state, grounding_ids, semantic_match, story_complete, rejected, rejection, attempt_bundle, game_break = null }) => ({
     turn,
     input,
     raw_input,
@@ -208,6 +271,7 @@ export function turnLog(turns = []) {
     grounding_ids: grounding_ids || [],
     transition_cause: attempt_bundle?.transition_cause ?? null,
     outcome: attempt_bundle?.outcome ?? null,
+    game_break,
   }));
 }
 
@@ -258,7 +322,7 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
   const stuckTurns = [];
   let previous = null;
   for (const turn of turns) {
-    if (turn.rejected === true || turn.state == null) continue;
+    if (turn.rejected === true || turn.state == null || turn.game_break != null) continue;
     const names = [...firstStep, ...later];
     const mentionsAffordance = names.some((item) => mentions(turn.input, item.terms || [item.name, ...(item.aliases || [])]));
     const addedStorylet = newIds(turn, previous, "fired_storylet_ids").length > 0;
@@ -317,15 +381,21 @@ export function analyseRun({ sceneEntry, nextSceneEntry, turns = [], firstStep =
     pacing_realizations: pacing,
     transition: { turn: transitionTurn, final_segment_matches_entry: finalSegmentMatches, prior_contains_entry: priorContainsEntry, earlier_segment_contains_entry: transitionPrefixContainsEntry, no_skip_or_restart: finalSegmentMatches && !priorContainsEntry && !transitionPrefixContainsEntry },
   };
-  return { profile: runProfile, ending_reached, stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, bundle_rejected_turns: turns.filter((turn) => turn.rejected === true && turn.attempt_bundle != null).length, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, handoff_after_turns: handoffAfterTurns, exit_cause: exitCause, exit_transition_cause: ending_reached ? null : transitionBundle?.transition_cause ?? null, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
+  const gameBreaks = turns.map((turn) => turn.game_break).filter(Boolean);
+  const gameBreakCount = gameBreaks.length;
+  return { profile: runProfile, turn_count: turns.length, ending_reached, stopped_on_rejections, rejected_count: rejectedTurns.length, rejected_turns: rejectedTurns, bundle_rejected_turns: turns.filter((turn) => turn.rejected === true && turn.attempt_bundle != null).length, game_break_count: gameBreakCount, game_break_returned_count: gameBreaks.filter((breakRecord) => breakRecord.outcome === "returned").length, game_break_proceeded_count: gameBreaks.filter((breakRecord) => breakRecord.outcome === "proceeded").length, game_break_timeout_count: gameBreaks.filter((breakRecord) => breakRecord.outcome === "timeout").length, transition_fired: transitionIndex >= 0, transition_turn: transitionTurn, handoff_after_turns: handoffAfterTurns, exit_cause: exitCause, exit_transition_cause: ending_reached ? null : transitionBundle?.transition_cause ?? null, affordances: shown, stuck_turns: stuckTurns.map((turn) => turn.turn), stuck_runs: stuckRuns, silent_transition: silentTransition, unseen_commands: unseenCommands, unseen_command_count: unseenCommands.length, semantic_matches, l3 };
 }
 
 export function aggregate(runs = []) {
   const count = runs.length || 1;
   const shown = [...new Set(runs.flatMap((run) => (run.affordances || []).map((item) => item.entity_id)))];
   const rejectedCount = runs.reduce((sum, run) => sum + (run.rejected_count ?? run.rejected_turns?.length ?? 0), 0);
-  const turnCount = runs.reduce((sum, run) => sum + (run.turn_count ?? 0), 0);
+  const turnCount = runs.reduce((sum, run) => sum + (run.turn_count ?? run.turns?.length ?? 0), 0);
   const commandCount = runs.reduce((sum, run) => sum + (run.commands?.length ?? run.turns?.length ?? run.turn_count ?? 0), 0);
+  const gameBreakCount = runs.reduce((sum, run) => sum + (run.game_break_count ?? 0), 0);
+  const gameBreakReturnedCount = runs.reduce((sum, run) => sum + (run.game_break_returned_count ?? 0), 0);
+  const gameBreakProceededCount = runs.reduce((sum, run) => sum + (run.game_break_proceeded_count ?? 0), 0);
+  const gameBreakTimeoutCount = runs.reduce((sum, run) => sum + (run.game_break_timeout_count ?? 0), 0);
   return {
     replicates: runs.length,
     profile: [...new Set(runs.map((run) => run.profile).filter(Boolean))].length > 1 ? "mixed" : (runs[0]?.profile || "canonical"),
@@ -340,6 +410,14 @@ export function aggregate(runs = []) {
     rejected_count: rejectedCount,
     ending_reached: runs.some((run) => run.ending_reached === true),
     rejected_turn_rate: rejectedCount / (turnCount || 1),
+    game_break_count: gameBreakCount,
+    game_break_returned_count: gameBreakReturnedCount,
+    game_break_proceeded_count: gameBreakProceededCount,
+    game_break_timeout_count: gameBreakTimeoutCount,
+    game_break_rate: gameBreakCount / (turnCount || 1),
+    game_break_returned_rate: gameBreakReturnedCount / (turnCount || 1),
+    game_break_proceeded_rate: gameBreakProceededCount / (turnCount || 1),
+    game_break_timeout_rate: gameBreakTimeoutCount / (turnCount || 1),
     stopped_on_rejections_count: runs.filter((run) => run.stopped_on_rejections).length,
     unseen_command_rate: runs.reduce((sum, run) => sum + (run.unseen_command_count || 0), 0) / (commandCount || 1),
   };
