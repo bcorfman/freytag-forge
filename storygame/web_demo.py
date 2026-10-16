@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.contracts import ResolvedTurnProposal, RuntimeContractError, contract_error_summary
-from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.engine import ClarificationTurn, RuntimeEngine
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev import JevClient
 from storygame.runtime.knowledge_audit import build_knowledge_audit
@@ -46,6 +46,8 @@ class TurnRequest(_Request):
     session_id: str = Field(min_length=1)
     player_input: str | None = Field(default=None, min_length=1, max_length=12000)
     command: str | None = Field(default=None, min_length=1, max_length=12000)
+    clarifies: str | None = Field(default=None, min_length=1, max_length=12000)
+    clarification_round: int = Field(default=0, ge=0, le=2)
     test_clock_seconds: int | None = Field(default=None, ge=0, le=3600)
     test_clock_token: str | None = None
 
@@ -345,7 +347,12 @@ def create_demo_app(
             provider = None if state.story_complete else provider_for(state)
             test_clock = _test_clock_seconds(body, request)
             engine = RuntimeEngine(state, lambda _command: {}) if provider is None else engine_for(state, provider)
-            proposal = engine.turn(body.input_text, clock_seconds=test_clock)
+            clarification_args = (
+                {"clarifies": body.clarifies, "clarification_round": body.clarification_round}
+                if body.clarifies is not None
+                else {}
+            )
+            proposal = engine.turn(body.input_text, clock_seconds=test_clock, **clarification_args)
         except NarrationProviderError as error:
             http_error = _narration_http_error(error)
             if getenv("FREYTAG_EXPOSE_PROMPT", "") == "1":
@@ -418,6 +425,15 @@ def create_demo_app(
                     },
                 )
             raise HTTPException(status_code=500, detail=REJECTED_TURN_MESSAGE) from error
+        if isinstance(proposal, ClarificationTurn):
+            payload = _turn_payload(state, proposal)
+            payload["clarification"] = {
+                "original_command": proposal.clarification.original_command,
+                "noun": proposal.clarification.noun,
+                "options": [{"id": entity_id, "name": name} for entity_id, name in proposal.clarification.options],
+                "round": proposal.clarification.round,
+            }
+            return payload
         store.save(body.session_id, state)
         warning = proposal.game_break.model_dump(mode="json") if proposal.game_break else None
         expose_prompt = getenv("FREYTAG_EXPOSE_PROMPT", "") == "1"
