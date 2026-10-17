@@ -574,6 +574,27 @@ scene-affordance open cases and raw-language corpus.
   Suite 2009 passed, 1 skipped; payload capture diff shows only the two new THINGS lines. Limits: offline,
   scripted probes; hosted narrator behavior unchecked (a hosted rerun of the series B 2A turn 30 path is the
   real test); bare `card` unchanged.
+  HOSTED CHECK 2026-10-17, staging `bd17d3b8` (PR 660 merge; version verified before the run; `@smoke` passed,
+  then `@spine` once, Ringer `stage5-vocab-hosted-spine`, artifacts in gitignored
+  `bench/results/stage5-vocab-spine/attempt-1/`): 78 turns, all nine scenes, `story_complete` true, 0 turns
+  rejected (the series B 2A turn-30 `front gate` 409 did not recur), 0 fallback/recovery/guard retries/
+  must_convey misses, latency 2.8 s median, 253 s total. The test still failed on the same six missed intended
+  reveals as series B (`k_sl_1a_b_r2`, `k_sl_1a_d_r1`, `k_sl_1b_a_r1`, `k_sl_1c_c_r2`, `k_sl_2b_a_r2`,
+  `k_sl_2c_a_r1`), unchanged and still undiagnosed. The Ringer verdict read FAIL only because the untracked
+  manifest tripped the no-source-drift check, not because of the run. Limits: one run, scripted prompts, so it
+  shows the 2A path no longer hits the gate rejection on this sample and does not test unscripted play or
+  `park bench`/`infrastructure corridor` wording from a live narrator.
+  SIX MISSED REVEALS DIAGNOSED 2026-10-17 (offline, read-only; Ringer `stage5-missed-reveals`; note and probe
+  `~/dev/ringer-work/stage5-notes/{missed-reveals.md,missed_reveals.py}`, spot-checked against
+  `reveal_eligibility.py` and `knowledge.yaml`): none is a runtime or matcher defect. `k_sl_1a_b_r2`,
+  `k_sl_1b_a_r1`, `k_sl_1c_c_r2` and `k_sl_2b_a_r2` are alternative realizations of a storylet whose sibling
+  already committed in the same walk (`SL-1A-B`, `SL-1B-A`, `SL-1C-C`, `SL-2B-A`; a fired storylet is spent,
+  `STORYLET_SPENT`). `k_sl_1a_d_r1` lost the real raw tie on 1A prompt 3 to `k_sl_1a_b_r1` (the semantic reason
+  is not recoverable offline). `k_sl_2c_a_r1` is `world_only` and not player-visible, so the player never earns
+  it. The assertion list in `spine-expected-reveals.json` is over-strict: it asks one walk to commit sibling
+  alternatives. NOT done: the fix. The drift test recomputes the list from prompt matches, so the change is to
+  derive the expected list from storylet eligibility (one realization per storylet, player-visible only) or
+  to script a distinct 1A D-R1 prompt, not to delete ids by hand. Needs Brandon's choice.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.
