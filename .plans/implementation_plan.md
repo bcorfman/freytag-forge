@@ -488,8 +488,26 @@ scene-affordance open cases and raw-language corpus.
   and the world holding the card as `carried_by` Kristin, so text and facts agree; the same
   script reaches 3C through forced handoffs from every scene. Limits: scripted provider, so
   live narrator wording is unchecked; the replay shows reachability by forced exits, not
-  earned play. Still open in this bullet: skipped-copy and Michelle-first 2C paths, late-scene
-  disclosure/custody cases, the 3A medical-records item and scene-scoped place vocabulary.
+  earned play.
+  2C paths, 3A medical records, place vocabulary and custody replayed 2026-10-17 (offline,
+  scripted provider; Ringer `stage5-2c-replays`, manifest `scripts/ringer/stage5/2c-replays.json`;
+  tests `tests/test_2c_paths_repro.py`, `tests/test_late_scene_repro.py`; notes
+  `~/dev/ringer-work/stage5-notes/{2c-paths,late-scene}-repro.md`; 35 passed, 5 strict xfail).
+  Michelle-first: coherent. D-R1/D-R2 are rejected `prerequisite_missing` until the copy, then
+  2C exits earned. Skipped-copy: REPRODUCED. With no copy command, the forced 2C-to-3A handoff at
+  turn 16 asserts `evidence_ready_to_transmit` and `rebecca_office_required_for_broadcast` and
+  delivers 'obtain enough evidence...' although nothing was copied (xfail
+  `test_skipped_copy_must_not_assert_copy_facts_or_exit_2c`). This is the same forced-handoff
+  pattern as the 1A card; there the text and facts agree, here the facts are asserted without the
+  act, so it may be intended pacing and needs Brandon's call before any fix. 3A medical records:
+  declared with scoped aliases, placed in `medical_level` by `k_sl_3a_b_r1`; the exact entity name
+  is rejected before placement; no collision with the 2B medical terminal (ambiguity prompt is
+  correct). Custody 2A to 3C stays consistent with authored text. Vocabulary defects pinned as
+  xfail, NOT yet diagnosed or confirmed by hand: future `broadcast chamber` accepted in 2C
+  narration; declared alias `infrastructure corridor` rejected in its own scenes 2A/3B; 3C
+  `captives`/`prisoners` do not resolve. Limits: scripted provider, so live narrator wording is
+  unchecked. Still open in this bullet: late-scene disclosure complaints reviewed against
+  disclosure-decisions.md.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.
