@@ -407,10 +407,25 @@ leaks, duplicate entities, or advancing a turn to ask a question.
 Sources: assessment C3, Astra Phase 4, playthrough quality, world model,
 scene-affordance open cases and raw-language corpus.
 
-- [ ] Reproduce concealment after discovery and a subsequent NPC encounter.
+- [x] Reproduce concealment after discovery and a subsequent NPC encounter.
   If the discovery-hidden state is being reused for concealment, separate
   possession, observer knowledge and concealment through validated facts.
   If no confusion is reproduced, close the implementation item with evidence.
+  Closed 2026-10-16 as NOT REPRODUCED at the state layer (Ringer `stage5-repro`,
+  `tests/test_concealment_repro.py`, 5 tests; note `~/dev/ringer-work/stage5-notes/concealment-repro.md`).
+  `wk_hidden` is worldkeeper's one-way discovery flag: seeded from `hidden: true`
+  (`model.py:353`), cleared by `World.reveal()` (`:854-860`), and nothing re-sets it; moves
+  of a hidden thing and narrated `item_facts` for one are refused (`model.py:664`,
+  `item_facts.py:1552`). After the 1A discovery the card is `wk_parent` kristin,
+  `carried_by`, visible. A narrated hide ('under the passenger seat', 'in the glovebox') is
+  an ordinary validated place move, never `wk_hidden`; no concealed/pocket axis exists.
+  The 1B narrator request after discovery has no THINGS line for the carried card and
+  Brandon's speaker context is `sayable_knowledge: []`, so nothing treats a carried card
+  as seen by the NPC. Possession (`wk_parent`/`wk_relation`), observer knowledge
+  (knowledge entries) and discovery (`wk_hidden`) are separate facts; there is no
+  concealment fact, so an item carried but not shown is concealed only by omission from
+  the prompt. NOT checked: whether a live narrator describes an NPC seeing a pocketed
+  card (needs a billed probe; not run).
 - [ ] Check the raw-language corpus's documented false grants, pronoun misses,
   correction/compound-action and unrelated-restraint cases against current
   runtime behavior. Use author-reviewed evidence changes for proven authoring
@@ -464,6 +479,17 @@ scene-affordance open cases and raw-language corpus.
   [disclosure decisions](disclosure-decisions.md); ordinary vocabulary and
   earned secrets must not be conflated. Do not weaken a correct guard because
   a player's command asks for protected knowledge.
+  1A-avoiding-the-drawer part done 2026-10-16 (NOT REPRODUCED; `tests/test_drawer_avoidance_repro.py`,
+  2 tests; note `~/dev/ringer-work/stage5-notes/drawer-avoidance-repro.md`): eight 1A reveals
+  and eight facts depend only on the drawer path; no later-scene reveal, storylet, handoff or
+  route depends on them. Scripted non-drawer play ('Look around.', 'Examine Michelle's
+  phone.', 'Search the truck.', 'Walk around the building.') leaves 1A on turn 13, 1B on turn
+  13 and 1C on turn 11, all forced, with the forced delivery asserting `memory_card_recovered`
+  and the world holding the card as `carried_by` Kristin, so text and facts agree; the same
+  script reaches 3C through forced handoffs from every scene. Limits: scripted provider, so
+  live narrator wording is unchecked; the replay shows reachability by forced exits, not
+  earned play. Still open in this bullet: skipped-copy and Michelle-first 2C paths, late-scene
+  disclosure/custody cases, the 3A medical-records item and scene-scoped place vocabulary.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.
