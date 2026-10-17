@@ -39,7 +39,7 @@ expect = copy.deepcopy(old)
 for d in expect["deliveries"]:
     if d["fact_id"] == "evidence_ready_to_transmit":
         d["fallback_text"] = (
-            "Kristin and Brandon obtain enough evidence to expose the conspiracy, leaving the evidence in hand. "
+            "Kristin and Brandon have enough evidence to expose the conspiracy, leaving the evidence in hand. "
             "It is ready to transmit, but sending proof will reveal their position."
         )
         d.pop("costs", None)

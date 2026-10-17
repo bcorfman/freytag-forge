@@ -2,11 +2,12 @@
 
 import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.getcwd())
 from storygame.runtime import fixed_refusal  # noqa: E402
 
-text = open("storygame/runtime/fixed_refusal.py").read()
+text = Path("storygame/runtime/fixed_refusal.py").read_text()
 if "def _fixed_article_name" not in text:
     sys.exit("FAIL helper _fixed_article_name missing in fixed_refusal.py")
 helper = fixed_refusal._fixed_article_name

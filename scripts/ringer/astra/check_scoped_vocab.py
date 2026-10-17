@@ -3,11 +3,12 @@
 import os
 import re
 import sys
+from pathlib import Path
 
 import yaml
 
 sys.path.insert(0, os.getcwd())
-w = yaml.safe_load(open("data/stories/continuity-initiative/world.yaml"))
+w = yaml.safe_load(Path("data/stories/continuity-initiative/world.yaml").read_text())
 items = {i["id"]: i for i in w["items"]}
 bench = items["park_bench"]
 drain = items["storm_drain"]
@@ -20,7 +21,7 @@ for word in ("drain", "tunnel"):
         a.casefold() for a in drain.get("scoped_aliases", [])
     ]:
         sys.exit(f"FAIL storm_drain must have scoped alias '{word}' and not keep it in aliases")
-t = open("tests/test_scene_vocabulary_isolation.py").read()
+t = Path("tests/test_scene_vocabulary_isolation.py").read_text()
 need = [
     "test_bare_later_scene_words_do_not_reject_earlier_narration",
     "test_specific_later_scene_names_are_still_guarded_earlier",

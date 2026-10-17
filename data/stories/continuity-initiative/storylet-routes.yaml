@@ -1672,7 +1672,7 @@ storylets:
     remains real. Do not solve it for them yet.
   realization_options:
   - id: SL-2C-C-R1
-    dramatic_intent: Kristin and Brandon secure enough evidence to expose the conspiracy, but learn that sending it now
+    dramatic_intent: Kristin and Brandon have enough evidence to expose the conspiracy, but learn that sending it now
       will reveal their position and seal the detention sectors.
     operations:
     - op: assert

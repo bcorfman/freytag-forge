@@ -273,7 +273,7 @@ def test_skipped_copy_current_forced_handoff_is_characterized(monkeypatch: pytes
         "evidence_ready_to_transmit": True,
         "rebecca_office_required_for_broadcast": True,
     }
-    assert "obtain enough evidence" in result.narration
+    assert "have enough evidence" in result.narration
     assert "combined mission" in result.narration
 
     selected_3a, result_3a = _continue_3a(state, engine)

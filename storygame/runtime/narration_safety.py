@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from storygame.runtime.contracts import NarrationSegment, ResolvedTurnProposal
-from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
+from storygame.runtime.knowledge import KnowledgeGuards, KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import guarded_narration_terms
@@ -97,11 +97,8 @@ class NarrationSafetyValidator:
             for term in group
             if len(term.split()) > 1
         }
-        earned_ids = {
-            item.id
-            for item in state.package.knowledge.knowledge
-            if KnowledgeProjector._established(item, candidate_state) and KnowledgeProjector._visible_to(item, "player")
-        }
+        guards = KnowledgeGuards(candidate_state)
+        earned_ids = guards.earned_ids
         earned_entity_ids = {
             entity_id for knowledge_id in earned_ids for entity_id in indexes.by_id[knowledge_id].entity_ids
         }
@@ -113,11 +110,7 @@ class NarrationSafetyValidator:
         fixed_entity_ids = {item.id for item in state.package.world.items if item.fixed is True}
         available_entity_ids = nameable_entity_ids & fixed_entity_ids
         nameable_npc_ids = nameable_entity_ids & npc_ids
-        true_fact_ids = {
-            fact.predicate
-            for fact in candidate_state.facts.asserted
-            if (fact.value if fact.value is not None else fact.object) == "true"
-        }
+        true_fact_ids = guards.true_fact_ids
         earned_protected_terms = {
             form
             for form in indexes.protected_terms
@@ -133,7 +126,6 @@ class NarrationSafetyValidator:
                 for delivery in state.package.deliveries
             )
         }
-        guards_by_id = {guard.id: guard for guard in state.package.world.disclosure_guards}
         staged_handoff_deliveries = tuple(
             delivery
             for delivery in state.package.deliveries
@@ -223,7 +215,7 @@ class NarrationSafetyValidator:
                 if (
                     self._contains(handoff_text, form)
                     or any(self._contains(handoff_form, form) for handoff_form in handoff_terms)
-                    or knowledge_ids & earned_ids
+                    or not guards.unearned(knowledge_ids)
                 ):
                     continue
                 statement_covers_term = any(
@@ -259,7 +251,7 @@ class NarrationSafetyValidator:
                         (not knowledge_ids or not knowledge_ids & grounding)
                         and not statement_covers_term
                         and not self._contains(handoff_text, form)
-                        and not knowledge_ids & earned_ids
+                        and guards.unearned(knowledge_ids)
                         and form not in earned_protected_terms
                     ):
                         raise ProposalValidationError(
@@ -269,17 +261,7 @@ class NarrationSafetyValidator:
 
             for form, guard_ids in indexes.disclosure_guards.items():
                 if self._contains(text, form) and not (
-                    self._contains(handoff_text, form)
-                    or all(
-                        (
-                            guard.unlock_fact is not None
-                            and guard.unlock_fact in true_fact_ids
-                            or guard.unlock_knowledge_id is not None
-                            and guard.unlock_knowledge_id in earned_ids
-                        )
-                        for guard_id in guard_ids
-                        for guard in (guards_by_id[guard_id],)
-                    )
+                    self._contains(handoff_text, form) or not guards.disclosure_locked(guard_ids)
                 ):
                     raise ProposalValidationError(
                         f"narration mentions guarded term '{form}'", code="disclosure_guard_leak"

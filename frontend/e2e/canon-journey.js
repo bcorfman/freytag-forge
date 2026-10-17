@@ -15,6 +15,7 @@ export const scenePrompts = {
   "1A": [
     "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
     "Search under the drawer in her workstation.",
+    "Read the remaining research fragments on Michelle's memory card.",
     "Read the files on Michelle's memory card.",
     "Play the damaged recording on Michelle's memory card.",
     "Hide what you found from the official asking questions about Michelle's work, then watch what they do at the gate as they leave.",

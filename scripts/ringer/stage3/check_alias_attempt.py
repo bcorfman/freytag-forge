@@ -1,4 +1,7 @@
-"""usage: check_alias_attempt.py REPO ATTEMPT_DIR -- an @alias-smoke attempt counts if recorded with staging identity and a fresh report or verbatim failure."""
+"""usage: check_alias_attempt.py REPO ATTEMPT_DIR -- an @alias-smoke attempt counts if recorded with
+staging identity and a fresh report or verbatim failure.
+"""
+
 import json
 import sys
 from pathlib import Path

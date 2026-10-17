@@ -5,12 +5,13 @@ from __future__ import annotations
 import collections
 import json
 import sys
+from pathlib import Path
 
 REFUSAL_WORDS = ("cannot", "can't", "unable", "refuse")
 
 
 def main(path: str) -> int:
-    cases = json.load(open(path))["cases"]
+    cases = json.loads(Path(path).read_text())["cases"]
     counts = collections.Counter((c["category"], c["split"]) for c in cases)
     categories = {c["category"] for c in cases}
     if len(categories) != 14:

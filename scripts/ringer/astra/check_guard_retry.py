@@ -2,10 +2,11 @@
 
 import re
 import sys
+from pathlib import Path
 
-engine = open("storygame/runtime/engine.py").read()
-cloud = open("storygame/runtime/cloudflare.py").read()
-tests = open("tests/test_narration_retry.py").read()
+engine = Path("storygame/runtime/engine.py").read_text()
+cloud = Path("storygame/runtime/cloudflare.py").read_text()
+tests = Path("tests/test_narration_retry.py").read_text()
 if not re.search(r"^TURN_NARRATION_ATTEMPTS\s*=\s*2\b", engine, re.M):
     sys.exit("FAIL engine.py needs TURN_NARRATION_ATTEMPTS = 2")
 if "note_rejection" not in engine:

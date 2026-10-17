@@ -27,15 +27,22 @@ for (const [name, file] of [["old", "./roleplay-judge-run5.js"], ["new", "./judg
   let body = null;
   const fetchImpl = async (_url, init) => {
     body = JSON.parse(init.body);
-    return { ok: true, json: async () => ({ output_text: JSON.stringify({ verdict: "pass", canon_consistent: true, scene_local: true, progressive: true, rich: true, protected_safe: true, exit_motivated: true, rewards_investigation: true, missing_or_wrong: [], reasons: [] }) }) };
+    return { ok: true, json: async () => ({ output_text: JSON.stringify({
+      verdict: "pass", canon_consistent: true, scene_local: true, progressive: true,
+      rich: true, protected_safe: true, exit_motivated: true, rewards_investigation: true,
+      missing_or_wrong: [], reasons: []
+    }) }) };
   };
-  await mod.judgeSceneNarration({ sceneId: "1A", opening: data.opening, turns: data.turns, revealedKnowledgeIds: data.revealedKnowledgeIds }, { environment: { OPENAI_API_KEY: "x" }, fetchImpl, canon });
+  await mod.judgeSceneNarration({
+    sceneId: "1A", opening: data.opening, turns: data.turns, revealedKnowledgeIds: data.revealedKnowledgeIds
+  }, { environment: { OPENAI_API_KEY: "x" }, fetchImpl, canon });
   bodies[name] = body;
 }
 const out = [];
 if (bodies.new.input[0].content.trim() !== prompt.trim()) out.push("new system prompt differs from simple-prompt.txt");
 if (bodies.new.input[1].content !== bodies.old.input[1].content) out.push("user message differs between old and new");
-if (JSON.stringify(bodies.new.text) !== JSON.stringify(bodies.old.text)) out.push("schema/format differs between old and new");
+if (JSON.stringify(bodies.new.text) !== JSON.stringify(bodies.old.text))
+  out.push("schema/format differs between old and new");
 if (bodies.new.model !== bodies.old.model) out.push("model differs between old and new");
 console.log(JSON.stringify(out));
 """

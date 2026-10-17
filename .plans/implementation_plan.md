@@ -7,7 +7,40 @@ unchecked boxes and opening status lines are not additional queues. This consoli
 pipeline migration, experimental default, production promotion, or billed
 experiment previously put on hold.
 
+## Offline consistency fixes (2026-10-17)
+
+Spine expectations now select player-visible
+realizations in prompt order and spend each source storylet once; 1A has a separate
+research-fragments prompt before file reading: reversing that order makes D-R1
+already established by B-R1. Shared KnowledgeGuards keeps
+entity and narrator earning/unlock checks together; existing reference, vocabulary
+and narration suites pass. Required offline verification is complete:
+
+- `TMPDIR=/tmp uv run pytest -q`: 2386 passed in 277.64s.
+- `TMPDIR=/tmp uv run pytest -q -m authoring_quality`: 90 passed in 40.31s.
+- Ruff check and format check pass; all 155 frontend Node tests and Vite build pass.
+- `.plans/world-model-s1/prompt_capture.py` before/after captures are byte-identical
+  (four 1A opening/turn payloads, with and without custody). Additional stubbed
+  2C captures were identical too. Captures and logs are in `/tmp/freytag-*`.
+- `TMPDIR=/tmp uv run pytest -q --cov`: 2386 passed in 493.95s;
+  92.63% coverage clears the 90% gate.
+
+No billed/hosted validation, live narration behavior, or staging qualification was
+attempted. The spine calculation is an offline expectation, not proof of a live
+walk. No promotion was made. Independently rechecked 2026-10-17 before commit: full suite 2386 passed, ruff clean, 155 node tests, payload capture identical.
+
+The held-transit-card characterization preserves the current inconsistency:
+`card` is not a multi-word leak term and passes when the transit card is available;
+`the card` belongs to unearned `k_sl_1a_b_r0.leak_terms` and fails with
+`narration_known_term_leak`. Recommend removing the generic `the card` entry from
+that reveal's leak terms, keeping specific memory-card phrases. Review other
+generic article phrases for collisions before applying that separate data fix.
+No guard vocabulary or decision-table change is part of this work.
+
 ## Resume here
+
+The offline consistency fixes above are complete and all local gates pass.
+Resume the broader queue only under its existing authorization constraints.
 
 **1. Budget-service reliability is DNF (dropped by Brandon, 2026-10-15); do not
 start or retry it.** The measurement gaps in **2** are closed and the hosted
@@ -498,9 +531,9 @@ scene-affordance open cases and raw-language corpus.
   `copied_janus_files` with Kristin ('She could check them now', plot.md 2C item_placements) and
   `janus_evidence` comes from 2B, so `k_sl_2c_c_r1` acknowledges files she carries rather than copying
   them. With no such command the forced turn-16 handoff asserts `evidence_ready_to_transmit` and
-  delivers 'obtain enough evidence...', which matches the world; the xfail premise (nothing copied)
-  was false and it is now a characterization test. No fix designed or needed. Cosmetic only: the
-  cue/fallback wording says 'obtain' where 'have' would be exact. 3A medical records:
+  delivers 'have enough evidence...', which matches the world; the xfail premise (nothing copied)
+  was false and it is now a characterization test. No runtime fix was needed. The cosmetic
+  possession wording now uses 'have' consistently. 3A medical records:
   declared with scoped aliases, placed in `medical_level` by `k_sl_3a_b_r1`; the exact entity name
   is rejected before placement; no collision with the 2B medical terminal (ambiguity prompt is
   correct). Custody 2A to 3C stays consistent with authored text. The three vocabulary xfails were diagnosed by hand
