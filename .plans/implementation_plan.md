@@ -574,6 +574,16 @@ scene-affordance open cases and raw-language corpus.
   Suite 2009 passed, 1 skipped; payload capture diff shows only the two new THINGS lines. Limits: offline,
   scripted probes; hosted narrator behavior unchecked (a hosted rerun of the series B 2A turn 30 path is the
   real test); bare `card` unchanged.
+  HOSTED CHECK 2026-10-17, staging `bd17d3b8` (PR 660 merge; version verified before the run; `@smoke` passed,
+  then `@spine` once, Ringer `stage5-vocab-hosted-spine`, artifacts in gitignored
+  `bench/results/stage5-vocab-spine/attempt-1/`): 78 turns, all nine scenes, `story_complete` true, 0 turns
+  rejected (the series B 2A turn-30 `front gate` 409 did not recur), 0 fallback/recovery/guard retries/
+  must_convey misses, latency 2.8 s median, 253 s total. The test still failed on the same six missed intended
+  reveals as series B (`k_sl_1a_b_r2`, `k_sl_1a_d_r1`, `k_sl_1b_a_r1`, `k_sl_1c_c_r2`, `k_sl_2b_a_r2`,
+  `k_sl_2c_a_r1`), unchanged and still undiagnosed. The Ringer verdict read FAIL only because the untracked
+  manifest tripped the no-source-drift check, not because of the run. Limits: one run, scripted prompts, so it
+  shows the 2A path no longer hits the gate rejection on this sample and does not test unscripted play or
+  `park bench`/`infrastructure corridor` wording from a live narrator.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.
