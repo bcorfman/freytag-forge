@@ -9,46 +9,35 @@ experiment previously put on hold.
 
 ## Offline consistency fixes (2026-10-17)
 
-Spine expectations now select player-visible
-realizations in prompt order and spend each source storylet once; 1A has a separate
-research-fragments prompt before file reading: reversing that order makes D-R1
-already established by B-R1. Shared KnowledgeGuards keeps
-entity and narrator earning/unlock checks together; existing reference, vocabulary
-and narration suites pass. Required offline verification is complete:
-
-- `TMPDIR=/tmp uv run pytest -q`: 2386 passed in 277.64s.
-- `TMPDIR=/tmp uv run pytest -q -m authoring_quality`: 90 passed in 40.31s.
-- Ruff check and format check pass; all 155 frontend Node tests and Vite build pass.
-- `.plans/world-model-s1/prompt_capture.py` before/after captures are byte-identical
-  (four 1A opening/turn payloads, with and without custody). Additional stubbed
-  2C captures were identical too. Captures and logs are in `/tmp/freytag-*`.
-- `TMPDIR=/tmp uv run pytest -q --cov`: 2386 passed in 493.95s;
-  92.63% coverage clears the 90% gate.
-
-No billed/hosted validation, live narration behavior, or staging qualification was
-attempted. The spine calculation is an offline expectation, not proof of a live
-walk. No promotion was made. Independently rechecked 2026-10-17 before commit: full suite 2386 passed, ruff clean, 155 node tests, payload capture identical.
-
-The held-transit-card characterization preserves the current inconsistency:
-`card` is not a multi-word leak term and passes when the transit card is available;
-`the card` belongs to unearned `k_sl_1a_b_r0.leak_terms` and fails with
-`narration_known_term_leak`. Recommend removing the generic `the card` entry from
-that reveal's leak terms, keeping specific memory-card phrases. Review other
-generic article phrases for collisions before applying that separate data fix.
-No guard vocabulary or decision-table change is part of this work.
+Done and merged (PR 662): spine expectations are achievable (player-visible, one
+realization per storylet, prompt order), a distinct 1A research-fragments prompt
+precedes file reading, `KnowledgeGuards` is shared by the entity and narrator
+guards, and ruff debt is cleared. Offline gates passed (2386 tests, payload capture
+identical). Not verified hosted: the new 1A prompt order. The bare `card` versus
+`the card` guard inconsistency is being closed by removing `the card` from
+`k_sl_1a_b_r0.leak_terms` (Brandon, 2026-10-17).
 
 ## Resume here
 
-The offline consistency fixes above are complete and all local gates pass.
-Resume the broader queue only under its existing authorization constraints.
+**FOCUS CHANGE (Brandon, 2026-10-17): the goal is a quality free-text playthrough
+as soon as possible. Go to Stage 7 now.** Stage 5's remaining boxes, Stage 6 and
+Stage 9 are PARKED: do not work them ahead of Stage 7. They return only when a
+Stage 7 run shows they break a real playthrough, and then only the smallest fix
+for that failure. Stage 8 stays on hold. The earlier "fix everything reproducible
+first" ordering is withdrawn; it delivered hygiene, not a measured playthrough.
+
+Stage 7 step 1 (needs Brandon's go-ahead; billed: OpenAI blind player plus
+Cloudflare narration): smoke, then one raw-profile all-scenes blind-player run on
+a verified staging SHA, `source .env && cd frontend && E2E_BLIND_SCENE=all
+BLIND_PLAYER_PROFILE=raw E2E_BLIND_REPLICATES=1 E2E_TURN_TIMEOUT_MS=90000 npm run
+test:e2e -- --grep @blind-player`. One Ringer run per attempt, every attempt
+recorded, stopping rule fixed first. Then read the transcript, list what broke
+the play, and fix those things.
 
 **1. Budget-service reliability is DNF (dropped by Brandon, 2026-10-15); do not
 start or retry it.** The measurement gaps in **2** are closed and the hosted
-spine baseline in **3** is complete. Start with reference
-resolution (**4**), then reproduced correctness gaps (**5**), authoring visibility
-(**6**), and playthrough qualification (**7**). Revisit the pipeline experiment
-(**8**) only after its decision gate is met. Operational cleanup (**9**) can
-accompany the relevant earlier phase.
+spine baseline in **3** is complete. Reference
+resolution (**4**) is built. See the focus change above for the order now.
 
 The last recorded hosted spine on `9ec05da2` completed in 73 turns with no
 `must_convey` misses, recovery, guard retry, or fallback. An earlier attempt
@@ -437,6 +426,8 @@ leaks, duplicate entities, or advancing a turn to ask a question.
 
 ## 5. Reproduce remaining correctness gaps, then fix individually
 
+**Status: remaining open boxes PARKED 2026-10-17 (focus change in Resume here); reopen one only when a Stage 7 run shows it breaking play.**
+
 Sources: assessment C3, Astra Phase 4, playthrough quality, world model,
 scene-affordance open cases and raw-language corpus.
 
@@ -642,6 +633,8 @@ that remain; a clean scripted spine cannot close these cases.
 
 ## 6. Build the read-only scene contract report
 
+**Status: PARKED 2026-10-17 (focus change in Resume here).**
+
 Source: design review (`design-review-implementation.md`, historical), Step 10.
 
 - [ ] Assemble plot metadata, knowledge, action evidence/contracts, routes,
@@ -719,6 +712,8 @@ more near misses, and a decision on state-check versus state-claim semantics.
 work on the failed measurements.
 
 ## 9. Operational and historical closure
+
+**Status: PARKED 2026-10-17 (focus change in Resume here).**
 
 - [ ] Remove the HTTP test-clock seconds field, header, CORS entry and route
   plumbing as specified in rate limits (`rate-limits.md`, historical). It is still present
