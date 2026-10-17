@@ -410,3 +410,7 @@ protected_knowledge:
 - janus_selection_system
 - brandon_history
 - janus_phase_two
+disclosure_guards:
+- id: memory_card_word_guard
+  terms: [card]
+  unlock_fact: memory_card_recovered

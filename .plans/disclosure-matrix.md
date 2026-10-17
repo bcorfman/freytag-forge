@@ -30,6 +30,7 @@ Suggested classes:
 | 1A | memory card | entity_name | narration_known_term_leak |
 | 1A | michelle's memory card | entity_name | narration_known_term_leak |
 | 1A | phase two | identifier_fragment | protected_narration_leak |
+| 1A | recovered card | must_convey_phrase | disclosure_guard_leak |
 | 1A | selection system | identifier_fragment | protected_narration_leak |
 | 1B | brandon history | identifier_fragment | protected_narration_leak |
 | 1B | janus | identifier_fragment | protected_narration_leak |
