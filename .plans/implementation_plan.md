@@ -446,8 +446,13 @@ scene-affordance open cases and raw-language corpus.
   plus 'Open the drawer, take the key, then search the room.' now splits in three pieces
   instead of two (an incidental `then` fix). Engine-path note
   `~/dev/ringer-work/stage5-notes/corpus-engine-path.md`: all 31 corpus entries agree with
-  their recorded result after the fix. Suite 1938 passed, 1 skipped. Hosted recheck pending
-  merge and deploy.
+  their recorded result after the fix. Suite 1938 passed, 1 skipped. Hosted recheck PASSED 2026-10-16 on
+  staging `95490ef7` (PRs 654 and 655, `scene-v1`, verified before the run;
+  `artifacts/e2e-negation-scope.json`, gitignored): in one fresh 1A session 'Do not open
+  the drawer.' and 'Open the drawer, never mind.' earned nothing, and 'Open the drawer, but
+  do not take anything yet.' committed `k_sl_1a_f_r1` on the exact path (`semantic_match.ran`
+  false). Limits: one run, one scene, three commands; the 2A and 2C restraint commands were
+  not run hosted; `2a-near-miss-1` (label judgment) and `2c-pronoun` remain open gaps.
 - [ ] Reassess the remaining narration-quality failures using accepted turn
   evidence: invented routes/clues, unrequested plot-changing actions, repeated
   scene tails, contradictory custody or rescue state, and unmotivated exits.
