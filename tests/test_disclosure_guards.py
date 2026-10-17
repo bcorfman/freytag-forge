@@ -177,3 +177,29 @@ def test_public_item_restrictions_name_the_entity():
     package = _with_item(PACKAGE, hidden.model_copy(update={"disclosure": "public"}))
     with pytest.raises(StoryPackageError, match="memory_card"):
         _validate_disclosure_guards(package)
+
+
+@pytest.mark.parametrize("text", ("card", "the card", "a card", "memory card", "hidden card", "Michelle's card"))
+def test_memory_card_words_are_guarded_before_recovery(text):
+    with pytest.raises(ProposalValidationError, match="narration"):
+        _narrate(_state(), f"Kristin notices {text}.")
+
+
+def test_memory_card_word_guard_allows_card_after_recovery():
+    state = _state()
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
+
+    _narrate(state, "Kristin notices the card.")
+    _narrate(state, "Kristin notices card.")
+
+
+def test_memory_card_word_guard_does_not_match_discard():
+    _narrate(_state(), "Kristin notices the discard pile.")
+
+
+def test_memory_card_word_guard_allows_transit_card_in_scene_1b_after_recovery():
+    state = _state(scene_id="1B")
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
+
+    _narrate(state, "Kristin examines the transit card.")
+    _narrate(state, "Kristin examines the card.")

@@ -99,6 +99,7 @@ def test_earned_memory_card_accepts_determiner_but_unearned_term_is_rejected() -
     state = RuntimeState.bootstrap(PACKAGE)
     for effect in knowledge.establishes:
         state.facts.assert_fact(Fact(predicate=effect.fact_id, subject="story", value=str(effect.value).lower()))
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
 
     proposal = RuntimeEngine(
         state,

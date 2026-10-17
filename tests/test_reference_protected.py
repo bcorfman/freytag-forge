@@ -127,8 +127,11 @@ def test_existing_terminal_and_seat_ambiguities_remain_fixed() -> None:
     assert clarification_text(seat.question) == "Do you mean the driver's seat or the passenger seat?"
 
 
-def test_characterization_held_transit_card_bare_and_article_guard_disagree() -> None:
-    """Characterization only: the memory-card leak term includes the article."""
+def test_characterization_held_transit_card_bare_and_article_are_guarded() -> None:
+    """Synthetic state: narration refuses both forms.
+
+    Reference resolution still resolves bare card to the transit card.
+    """
     import pytest
 
     from storygame.runtime.contracts import NarrationSegment, ResolvedTurnProposal
@@ -143,16 +146,20 @@ def test_characterization_held_transit_card_bare_and_article_guard_disagree() ->
     from storygame.story_package.loader import guarded_narration_terms
 
     assert "card" not in guarded_narration_terms(indexes)
+    assert "card" in indexes.disclosure_guards
+    assert "memory_card_word_guard" in indexes.disclosure_guards["card"]
     assert "k_sl_1a_b_r0" in indexes.leak_term_to_knowledge["the card"]
     assert KnowledgeGuards(state).unearned(indexes.leak_term_to_knowledge["the card"])
     validator = NarrationSafetyValidator()
-    validator.validate(
-        state,
-        state,
-        ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text="card"),)),
-        KnowledgeProjector(),
-        "Use the transit card.",
-    )
+    with pytest.raises(ProposalValidationError, match="guarded term 'card'") as rejected:
+        validator.validate(
+            state,
+            state,
+            ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text="card"),)),
+            KnowledgeProjector(),
+            "Use the transit card.",
+        )
+    assert rejected.value.code == "disclosure_guard_leak"
     with pytest.raises(ProposalValidationError, match="unavailable knowledge 'the card'") as rejected:
         validator.validate(
             state,

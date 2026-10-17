@@ -7,7 +7,7 @@ Received 2026-10-11 after review of `.plans/disclosure-matrix.md`. These are aut
 | Term | Decision | Boundary |
 |---|---|---|
 | memory card, Michelle's memory card | Secret until found; name allowed afterward, including in 1B | `memory_card_recovered`. Finding it does not reveal its contents. Settled by W7 (custody is not secrecy) |
-| card | Public | Must not disclose the hidden card or the dead drop contents before discovery |
+| card | Guarded until found; allowed afterward, including the 1B transit card | `memory_card_recovered`; this guards the bare word without changing the existing `k_sl_1a_b_r0` leak terms |
 | park bench | Public | The secret is which bench Michelle used and what she left, revealed through Michelle's files |
 | infrastructure corridor | Public as a place | Knowing it exists does not give access, reveal its security advantages, or move Kristin there. Access is earned in 2A.3 |
 
@@ -67,6 +67,7 @@ Still untested: legitimate reveals landing after the fix (the scripts avoid them
 
 ### Resolved 2026-10-17 (guard vocabulary)
 
+- 2026-10-17: The bare word `card` is guarded until `memory_card_recovered`.
 - The visible 1A house gate and visible 2A facility gate are fixed, scene-placed items with scene-local aliases.
 - Park bench is public ordinary vocabulary; its 1A reveal keeps the dead-drop, recording, and emergency-broadcast phrases guarded.
 - Infrastructure corridor is public as a place in 2A and 3B; the singular phrase no longer guards the corridor-access reveal, whose enter-corridor action evidence remains required.

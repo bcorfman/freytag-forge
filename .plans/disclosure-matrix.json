@@ -10868,8 +10868,8 @@
       "guard_kind": "leak_term",
       "scene": "1A",
       "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "disclosure_guard_leak",
+        "verdict": "rejected"
       },
       "term": "memory card"
     },
@@ -10885,8 +10885,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "disclosure_guard_leak",
+        "verdict": "rejected"
       },
       "term": "memory card"
     },
@@ -11123,8 +11123,8 @@
       "guard_kind": "leak_term",
       "scene": "1A",
       "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "disclosure_guard_leak",
+        "verdict": "rejected"
       },
       "term": "michelle's card"
     },
@@ -11140,8 +11140,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "disclosure_guard_leak",
+        "verdict": "rejected"
       },
       "term": "michelle's card"
     },
@@ -11440,8 +11440,8 @@
         "verdict": "rejected"
       },
       "earned": {
-        "error_code": "",
-        "verdict": "accepted"
+        "error_code": "disclosure_guard_leak",
+        "verdict": "rejected"
       },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
