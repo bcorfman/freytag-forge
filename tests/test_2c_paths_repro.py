@@ -14,6 +14,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -280,17 +281,16 @@ def test_skipped_copy_current_forced_handoff_is_characterized(monkeypatch: pytes
     assert "evidence" not in result_3a.narration.casefold()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Skipped-copy reaches 3A through the forced 2C handoff and asserts copy-path facts; "
-        "correct behavior keeps evidence_ready_to_transmit false and leaves the scene in 2C."
-    ),
-)
-def test_skipped_copy_must_not_assert_copy_facts_or_exit_2c(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_skipped_copy_forced_exit_matches_the_world_because_kristin_already_carries_the_files(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """2C entry places copied_janus_files with Kristin ('She could check them now'); k_sl_2c_c_r1 only
+    acknowledges them, so the forced handoff's 'evidence in hand' text agrees with the world."""
+
     state, engine, _provider = _engine(monkeypatch)
     _run_until_exit(state, engine, ("Read the transfer orders.",), assert_no_copy_match=True)
 
-    assert state.current_scene_id == "2C"
-    assert not _has_fact(state, "evidence_ready_to_transmit")
-    assert not _has_fact(state, "rebecca_office_required_for_broadcast")
+    assert state.current_scene_id == "3A"
+    assert _has_fact(state, "janus_evidence")
+    world = world_for(state.package, state.facts)
+    assert world.parent("copied_janus_files") == "kristin"

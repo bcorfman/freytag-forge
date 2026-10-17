@@ -492,14 +492,15 @@ scene-affordance open cases and raw-language corpus.
   2C paths, 3A medical records, place vocabulary and custody replayed 2026-10-17 (offline,
   scripted provider; Ringer `stage5-2c-replays`, manifest `scripts/ringer/stage5/2c-replays.json`;
   tests `tests/test_2c_paths_repro.py`, `tests/test_late_scene_repro.py`; notes
-  `~/dev/ringer-work/stage5-notes/{2c-paths,late-scene}-repro.md`; 35 passed after the vocabulary xfails became characterizations; 1 strict xfail remains, the skipped-copy one).
+  `~/dev/ringer-work/stage5-notes/{2c-paths,late-scene}-repro.md`; 35 passed after the vocabulary xfails became characterizations; no xfail remains).
   Michelle-first: coherent. D-R1/D-R2 are rejected `prerequisite_missing` until the copy, then
-  2C exits earned. Skipped-copy: REPRODUCED. With no copy command, the forced 2C-to-3A handoff at
-  turn 16 asserts `evidence_ready_to_transmit` and `rebecca_office_required_for_broadcast` and
-  delivers 'obtain enough evidence...' although nothing was copied (xfail
-  `test_skipped_copy_must_not_assert_copy_facts_or_exit_2c`). This is the same forced-handoff
-  pattern as the 1A card; there the text and facts agree, here the facts are asserted without the
-  act, so it may be intended pacing and needs Brandon's call before any fix. 3A medical records:
+  2C exits earned. Skipped-copy: NOT A DEFECT (the earlier REPRODUCED call was wrong; diagnosed 2026-10-17). 2C entry already places
+  `copied_janus_files` with Kristin ('She could check them now', plot.md 2C item_placements) and
+  `janus_evidence` comes from 2B, so `k_sl_2c_c_r1` acknowledges files she carries rather than copying
+  them. With no such command the forced turn-16 handoff asserts `evidence_ready_to_transmit` and
+  delivers 'obtain enough evidence...', which matches the world; the xfail premise (nothing copied)
+  was false and it is now a characterization test. No fix designed or needed. Cosmetic only: the
+  cue/fallback wording says 'obtain' where 'have' would be exact. 3A medical records:
   declared with scoped aliases, placed in `medical_level` by `k_sl_3a_b_r1`; the exact entity name
   is rejected before placement; no collision with the 2B medical terminal (ambiguity prompt is
   correct). Custody 2A to 3C stays consistent with authored text. The three vocabulary xfails were diagnosed by hand
