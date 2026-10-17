@@ -1,5 +1,9 @@
-"""usage: check_attempt.py REPO ATTEMPT_DIR  -- an attempt counts as recorded if it holds a fresh spine report or a verbatim failure."""
-import json, sys
+"""usage: check_attempt.py REPO ATTEMPT_DIR  -- an attempt counts as recorded if it holds a fresh spine
+report or a verbatim failure.
+"""
+
+import json
+import sys
 from pathlib import Path
 
 repo, d = Path(sys.argv[1]), Path(sys.argv[2])
@@ -35,5 +39,6 @@ elif fail.is_file() and fail.stat().st_size > 20:
 else:
     errs.append("neither e2e-spine.json nor a non-empty run-failure.txt")
 if errs:
-    print("\n".join(errs)); sys.exit(1)
+    print("\n".join(errs))
+    sys.exit(1)
 print("attempt recorded")

@@ -165,10 +165,10 @@ deliveries:
   source_kind: observation
   source_entity_id: kristin
   must_convey:
-  - [Kristin and Brandon obtain evidence, evidence in hand, Kristin's evidence, they have the evidence, proof in hand, the gathered evidence]
+  - [Kristin and Brandon have evidence, evidence in hand, Kristin's evidence, they have the evidence, proof in hand, the gathered evidence]
   - [ready to transmit, transmit the evidence, send proof, ready for broadcast, send the evidence, broadcast the proof]
   fallback_text: >-
-    Kristin and Brandon obtain enough evidence to expose the conspiracy, leaving the evidence in hand. It is ready to
+    Kristin and Brandon have enough evidence to expose the conspiracy, leaving the evidence in hand. It is ready to
     transmit, but sending proof will reveal their position.
   cue_text: The copied files are close at hand. Kristin can check the copied files. Sending them could expose her and Brandon.
 - fact_id: rebecca_office_required_for_broadcast

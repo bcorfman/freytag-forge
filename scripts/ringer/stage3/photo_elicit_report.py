@@ -1,4 +1,7 @@
-"""Summarize the photo-eliciting bench: per arm x prompt, how often the narrator wrote a photo word and how often a turn was rejected."""
+"""Summarize the photo-eliciting bench: per arm x prompt, how often the narrator wrote a photo word and
+how often a turn was rejected.
+"""
+
 import json
 import re
 import sys
@@ -14,7 +17,15 @@ for arm in ("baseline", "current"):
             bad.append(f"missing records for {arm}-{script}")
             continue
         runs = json.loads(f.read_text())["runs"]
-        row = {"runs": len(runs), "statuses": sorted({str(r.get("status")) for r in runs}), "narrated": 0, "photo_word": 0, "rejected": 0, "photo_rejected": 0, "reasons": []}
+        row = {
+            "runs": len(runs),
+            "statuses": sorted({str(r.get("status")) for r in runs}),
+            "narrated": 0,
+            "photo_word": 0,
+            "rejected": 0,
+            "photo_rejected": 0,
+            "reasons": [],
+        }
         for run in runs:
             for t in run.get("turns", []):
                 row["narrated"] += 1
@@ -24,7 +35,11 @@ for arm in ("baseline", "current"):
                 row["rejected"] += 1
                 text = json.dumps(r)
                 row["reasons"].append(text[:240])
-                if re.search(r"photo|picture|photograph", str(r.get("rejection_reason", "")) + str(r.get("guard_rejections", "")), re.I):
+                if re.search(
+                    r"photo|picture|photograph",
+                    str(r.get("rejection_reason", "")) + str(r.get("guard_rejections", "")),
+                    re.I,
+                ):
                     row["photo_rejected"] += 1
         if row["runs"] != reps:
             bad.append(f"{arm}-{script}: {row['runs']} runs, expected {reps}")

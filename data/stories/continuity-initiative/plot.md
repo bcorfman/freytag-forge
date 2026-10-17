@@ -579,7 +579,7 @@ At the same time, Charles prepares a national broadcast in which he will claim t
 
 **Details:** conspiracy evidence; exposed position; sealed detention sectors; transmitting evidence; thousands of captives; crisis choice
 
-Kristin and Brandon obtain enough evidence to expose the conspiracy, but transmitting it will reveal their position and seal the detention sectors.
+Kristin and Brandon have enough evidence to expose the conspiracy, but transmitting it will reveal their position and seal the detention sectors.
 
 Brandon argues that they must send the evidence immediately, even if doing so makes a rescue impossible. Without proof, freeing one group of prisoners will not stop the national operation.
 

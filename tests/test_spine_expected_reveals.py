@@ -1,48 +1,15 @@
-from __future__ import annotations
-
 import json
-import re
-from pathlib import Path
 
-import yaml
-
-from storygame.runtime.candidate_matcher import _matches_all
-
-FRONTEND_ROOT = Path("frontend/e2e")
-PACKAGE_ROOT = Path("data/stories/continuity-initiative")
-SCENE_IDS = ("1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C")
-
-
-def _scene_prompts() -> dict[str, list[str]]:
-    source = (FRONTEND_ROOT / "canon-journey.js").read_text()
-    scenes: dict[str, list[str]] = {}
-    scene_block = re.search(r"export const scenePrompts = \{(?P<body>.*?)\n\};", source, re.DOTALL)
-    assert scene_block, "Could not find scenePrompts in canon-journey.js."
-    arrays = list(re.finditer(r'"(?P<scene>[123][ABC])"\s*:\s*\[(?P<body>.*?)\]', scene_block.group("body"), re.DOTALL))
-    assert {match.group("scene") for match in arrays} == set(SCENE_IDS)
-    for match in arrays:
-        scene = match.group("scene")
-        body = match.group("body")
-        strings = list(re.finditer(r'"(?:\\.|[^"\\])*"', body))
-        remainder = re.sub(r'"(?:\\.|[^"\\])*"', "", body)
-        assert not remainder.strip(" \t\r\n,"), f'The "{scene}" array contains non-string content.'
-        scenes[scene] = [json.loads(string.group(0)) for string in strings]
-    return scenes
-
-
-def _knowledge() -> dict[str, dict]:
-    raw = yaml.safe_load((PACKAGE_ROOT / "knowledge.yaml").read_text())
-    return {item["id"]: item for item in raw["knowledge"]}
-
-
-def _matches(knowledge: dict[str, dict], scene: str, command: str) -> set[str]:
-    return {
-        item_id
-        for item_id, item in knowledge.items()
-        if item_id.startswith(f"k_sl_{scene.lower()}")
-        and item.get("action_evidence")
-        and _matches_all(tuple(tuple(group) for group in item["action_evidence"]), command)
-    }
+from scripts.generate_spine_expected_reveals import (
+    FRONTEND_ROOT,
+    expected_reveals,
+)
+from scripts.generate_spine_expected_reveals import (
+    knowledge_items as _knowledge,
+)
+from scripts.generate_spine_expected_reveals import (
+    scene_prompts as _scene_prompts,
+)
 
 
 def test_expected_reveal_mapping_has_current_scene_ids_and_matches_prompts() -> None:
@@ -51,10 +18,7 @@ def test_expected_reveal_mapping_has_current_scene_ids_and_matches_prompts() -> 
     knowledge = _knowledge()
 
     assert set(expected) == set(prompts)
-    recomputed = {
-        scene: sorted({item_id for prompt in scene_prompts for item_id in _matches(knowledge, scene, prompt)})
-        for scene, scene_prompts in prompts.items()
-    }
+    recomputed = expected_reveals(prompts, knowledge)
     assert expected == recomputed
 
 
@@ -64,3 +28,24 @@ def test_expected_reveal_ids_exist_and_include_2c_c_r2() -> None:
 
     assert all(item_id in knowledge for ids in expected.values() for item_id in ids)
     assert "k_sl_2c_c_r2" in expected["2C"]
+
+
+def test_expected_reveals_spend_sibling_storylets_once() -> None:
+    expected = expected_reveals(_scene_prompts(), _knowledge())
+    ids = {item_id for scene in expected.values() for item_id in scene}
+    assert not ids & {"k_sl_1a_b_r2", "k_sl_1b_a_r1", "k_sl_1c_c_r2", "k_sl_2b_a_r2"}
+    knowledge = _knowledge()
+    sources = [knowledge[item_id]["source"]["storylet_id"] for item_id in ids]
+    assert len(sources) == len(set(sources))
+
+
+def test_world_only_matches_are_not_expected() -> None:
+    assert "k_sl_2c_a_r1" not in expected_reveals(_scene_prompts(), _knowledge())["2C"]
+
+
+def test_prompt_three_tie_needs_a_separate_prompt() -> None:
+    prompts = _scene_prompts()["1A"]
+    expected = expected_reveals({"1A": [*prompts[:2], prompts[3]]}, _knowledge())["1A"]
+    assert "k_sl_1a_b_r1" in expected
+    assert "k_sl_1a_d_r1" not in expected
+    assert "k_sl_1a_d_r1" in expected_reveals({"1A": prompts}, _knowledge())["1A"]

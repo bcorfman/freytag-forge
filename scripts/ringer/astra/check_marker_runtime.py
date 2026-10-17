@@ -1,9 +1,10 @@
 """Ringer check helper: the runtime bench path must hand mark_fixed to build_capture_provider."""
 
 import sys
+from pathlib import Path
 
-core = open("bench/core.py").read()
-cap = open("storygame/runtime/capture.py").read()
+core = Path("bench/core.py").read_text()
+cap = Path("storygame/runtime/capture.py").read_text()
 if core.count("build_capture_provider(") < 3:
     sys.exit("FAIL expected the import plus two call sites of build_capture_provider in bench/core.py")
 calls = [line for line in core.splitlines() if "build_capture_provider(" in line and "import" not in line]

@@ -1,10 +1,13 @@
-"""Ringer check helper: both classifier questions must carry the tuned wording, and the fresh commands must not leak into source."""
+"""Ringer check helper: both classifier questions must carry the tuned wording, and the fresh commands
+must not leak into source.
+"""
 
 import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.getcwd())
-src = open("storygame/runtime/jev_questions.py").read()
+src = Path("storygame/runtime/jev_questions.py").read_text()
 reloc = src.split("def relocates_thing")[1].split("def names_other_action")[0].lower()
 other = src.split("def names_other_action")[1].split("\ndef ")[0].lower()
 for verb in ("tilt", "rotate", "roll", "nudge", "reposition"):
@@ -30,7 +33,7 @@ frozen = [
     "Tilt my laptop screen back",
     "Slide the drawer open, then close",
 ]
-tests = open("tests/test_fixed_refusal.py").read()
+tests = Path("tests/test_fixed_refusal.py").read_text()
 leaks = [c for c in frozen if c in src or c in tests]
 if leaks:
     sys.exit(f"FAIL fresh measurement commands leaked into source or tests: {leaks}")

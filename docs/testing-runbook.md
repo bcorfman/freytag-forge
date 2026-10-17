@@ -36,7 +36,9 @@ TMPDIR=/tmp uv run pytest -q --no-cov -m "(unit or component) and not authoring_
 TMPDIR=/tmp uv run pytest -q --no-cov -m authoring_quality    # package authoring checks
 TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index N --shard-count 4  # one CI coverage shard; files are assigned by tests/shard_durations.json
 uv run coverage combine coverage-data && uv run coverage report  # CI required gate
-uv run ruff check --fix . && uv run ruff format .
+uv run ruff check . && uv run ruff format --check .
+# Repair lint/format debt when needed: uv run ruff check --fix . && uv run ruff format .
+(cd frontend && node --test e2e/*.test.js src/*.test.js)
 cd frontend && npm test && npm run build
 ```
 
@@ -60,6 +62,8 @@ Use while editing; finish with section 1.
 | Package loading and lints (`must_convey`, `delivery_text`, narration term traps, custody, placements) | `tests/test_markdown_story_package.py` |
 | Knowledge projection, save/load stability, leakage matrix | `tests/test_knowledge_projection.py tests/test_knowledge_leakage_matrix.py` |
 | Narration safety, reviewed leak vocabulary and reveal conveyance | `tests/test_narration_safety.py tests/test_leak_terms.py tests/test_must_convey.py tests/test_narration_corpus.py`; regenerate with `TMPDIR=/tmp uv run python scripts/regenerate_narration_corpus_verdicts.py`; add runs with `uv run python scripts/extract_narration_corpus.py RUN_DIR`. |
+| Spine expectation and prompt order | `tests/test_spine_expected_reveals.py tests/test_1a_spine_prompts.py`; regenerate the JSON with `uv run python -m scripts.generate_spine_expected_reveals`. Expectations keep player-visible matches in prompt order, spend each source storylet once, and retain 2C C-R2. They do not simulate pacing or provider behavior. |
+| Shared guard earning and card characterization | `tests/test_shared_knowledge_guards.py tests/test_reference_protected.py tests/test_guard_vocabulary.py`; each package leak term is tested independently at scene start and after its owning knowledge effects. The held-transit-card test records the existing bare/article difference; it does not approve a data fix. |
 | Authored reveal handoff (matcher, composition, prompt exclusion) | `tests/test_candidate_matcher.py tests/test_cloudflare_transport.py` |
 | Pacing windows, handoff fallback, full canonical journeys | `tests/test_scene_relative_pacing.py tests/test_pacing_handoff.py tests/test_canon_journey.py` |
 | API payloads and player-visible segments | `tests/test_web_demo.py` |
@@ -76,10 +80,19 @@ TMPDIR=/tmp uv run pytest -q --no-cov <tests from the table>
 **Purpose:** See exactly what the narrator receives, without a model call.
 
 ```bash
+uv run python .plans/world-model-s1/prompt_capture.py /tmp/payload-before.json
+# After the package edit:
+uv run python .plans/world-model-s1/prompt_capture.py /tmp/payload-after.json
+diff -u /tmp/payload-before.json /tmp/payload-after.json
 uv run python -m bench prompt --scene 1A --text
 uv run python -m bench prompt --scene 1A --beat 1A.2 --text --player-input "Search under the drawer in her workstation."
 uv run python -m bench describe --variation bench/variations/authored-handoff-phase1.json --json
 ```
+
+The capture script stubs the network and records 1A opening/turn payloads with
+and without card custody. Unrelated scene edits should leave those captures
+identical; inspect the affected scene separately. Delete the `/tmp/payload-*.json`
+files after reviewing the diff.
 
 **Pass:** the prompt contains only material the scene has made available. For
 an authored-handoff turn it contains no candidate ID, candidate statement,

@@ -3,12 +3,13 @@
 import os
 import re
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.getcwd())
-core = open("bench/core.py").read()
+core = Path("bench/core.py").read_text()
 if core.count("engine_refusal") < 4:
     sys.exit("FAIL bench/core.py mentions engine_refusal fewer than 4 times (two WorldCapture builds, hash, record)")
-text = open("tests/test_bench_runtime_mode.py").read()
+text = Path("tests/test_bench_runtime_mode.py").read_text()
 need = [
     "test_runtime_mode_passes_engine_refusal_to_capture",
     "test_bench_engine_refused_turn_has_no_prompt_and_no_stale_item_facts",

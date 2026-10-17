@@ -1,8 +1,11 @@
-"""Ringer check helper: 'transmit the evidence' is no longer guarded; C-R2 keeps its other phrases; nothing else in the three items changed."""
+"""Ringer check helper: 'transmit the evidence' is no longer guarded; C-R2 keeps its other phrases;
+nothing else in the three items changed.
+"""
 
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import yaml
 
@@ -17,7 +20,7 @@ def items(text):
     return {row["id"]: row for row in rows}
 
 
-new = items(open(PATH).read())
+new = items(Path(PATH).read_text())
 old = items(subprocess.check_output(["git", "show", f"HEAD:{PATH}"], text=True))
 for key in OWNERS:
     leak = new[key].get("leak_terms")
@@ -35,7 +38,16 @@ for key in OWNERS:
             sys.exit(f"FAIL k_sl_2c_c_r2 leak_terms lost {sorted(missing)}")
     if leak and PHRASE in {t.casefold() for t in leak}:
         sys.exit(f"FAIL {key} still lists '{PHRASE}' in leak_terms")
-    for field in ("statement", "delivery_text", "must_convey", "requires", "establishes", "action_evidence", "aliases", "earn_when"):
+    for field in (
+        "statement",
+        "delivery_text",
+        "must_convey",
+        "requires",
+        "establishes",
+        "action_evidence",
+        "aliases",
+        "earn_when",
+    ):
         if new[key].get(field) != old[key].get(field):
             sys.exit(f"FAIL {key}.{field} changed; only leak_terms may change")
 for key, row in old.items():

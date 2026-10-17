@@ -3,9 +3,10 @@
 import os
 import re
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.getcwd())
-t = open("tests/test_leak_terms_enforced.py").read()
+t = Path("tests/test_leak_terms_enforced.py").read_text()
 need = [
     "test_leak_term_alone_rejects_narration_before_the_item_is_earned",
     "test_single_word_leak_term_is_not_enforced",
@@ -15,7 +16,7 @@ need = [
 missing = [n for n in need if not re.search(rf"def {n}\b", t)]
 if missing:
     sys.exit(f"FAIL required tests missing: {missing}")
-docs = open("docs/markdown-story-authoring.md").read()
+docs = Path("docs/markdown-story-authoring.md").read_text()
 if "complete vocabulary that may be blocked" in docs:
     sys.exit("FAIL docs/markdown-story-authoring.md still says leak_terms may be blocked")
 print("leak terms structure ok")
