@@ -551,7 +551,17 @@ scene-affordance open cases and raw-language corpus.
   Follow-up (1) DONE 2026-10-17 (Ringer `stage5-refusal-e2e-line`): `isFixedRefusalLine` in
   `frontend/e2e/knowledge-timeline-record.js` now decides `diagnosticDetailExposed` in
   `scene-runtime.spec.js`; node tests pass, spec syntax-checked only (Playwright not run). Follow-up (2)
-  waits on Brandon's `card` ruling and the ChatGPT Desktop wording round.
+  waits on the ChatGPT Desktop wording round.
+  `card` RULING 2026-10-17 (Brandon): bare nouns resolve against in-scope, UNPROTECTED things only. One
+  match resolves; several ask the fixed templated question ('Do you mean A or B?'); protected things are out
+  of scope, so with nothing else left the command passes through and the guard shows 'I don't see the item
+  you're referring to.' BUILT (Ringer `stage5-protected-refs`): `knowledge.entity_is_protected` (mirrors the
+  validator's earned-knowledge, disclosure-guard and protected-term checks) is applied in
+  `reference_resolution._scene_things`; `tests/test_reference_protected.py`; suite 2001 passed, 1 skipped.
+  Result: bare `card` is unresolved in 1A until `k_sl_1a_b_r0` is earned, then resolves to the memory card.
+  Limits: the predicate duplicates a few validator lines rather than sharing them; offline, one story; the
+  narration guard was not changed (it accepts exact bare 'card' in the transit-card case but still refuses
+  'the card'), so `card` leak terms stay as `22f818ad` left them.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.

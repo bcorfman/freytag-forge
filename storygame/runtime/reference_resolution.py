@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 
 from storygame.runtime.fixed_refusal import _fixed_article_name
-from storygame.runtime.knowledge import _entity_in_scene_scope
+from storygame.runtime.knowledge import _entity_in_scene_scope, entity_is_protected
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import display_name, world_for
 
@@ -133,8 +133,10 @@ def _scene_things(state: RuntimeState) -> tuple[_Thing, ...]:
     scene = next(scene for scene in state.package.scenes if scene.metadata.scene_id == state.current_scene_id)
     things = []
     for entity in (*state.package.world.items, *state.package.world.npcs, *state.package.world.groups):
-        if entity.id == state.package.protagonist_id or not _entity_in_scene_scope(
-            world, entity.id, scene=scene, protagonist_id=state.package.protagonist_id
+        if (
+            entity.id == state.package.protagonist_id
+            or entity_is_protected(state, entity.id)
+            or not _entity_in_scene_scope(world, entity.id, scene=scene, protagonist_id=state.package.protagonist_id)
         ):
             continue
         name = display_name(state.package, state.facts, world, entity.id)
