@@ -513,8 +513,19 @@ scene-affordance open cases and raw-language corpus.
   the command levels, outside the 3C scene area and Kristin's, so they are out of reference scope;
   the command passes through unchanged and no reveal depends on it. Reopen any of the three only
   if live play shows drift or a rejected ordinary command. Limits: scripted provider, so live narrator wording is
-  unchecked. Still open in this bullet: late-scene disclosure complaints reviewed against
-  disclosure-decisions.md.
+  unchecked.
+  DISCLOSURE REVIEW 2026-10-17 (read-only; `scripts/disclosure_matrix.py` rerun on current code gives a
+  byte-identical matrix to `.plans/disclosure-matrix.md`, and a per-scene probe of the decision-table terms):
+  the 8 'early reveals' and the never-released secrets (JANUS, Phase Two, purge clock, memory card) all behave
+  as decided. Three terms the decisions call PUBLIC are still rejected in their own scene with an unearned
+  state: bare `card` in 1A (leak_term and must_convey on the memory-card reveals; `22f818ad` kept it guarded
+  on 2026-10-12, a day after the decision, so this may be deliberate), `park bench` in 1A (must_convey), and
+  singular `infrastructure corridor` in 2A and 3B (alias of `k_sl_2a_c_r2`; the plural place name passes).
+  This corrects the earlier 'by design' reading of the corridor, which ignored the decision table. Also
+  rejected everywhere with no decision on record: `front gate` (the series B 409 at turn 30). Recorded older
+  rejections of `park bench` (6) and `front gate` (4) show it bites in play. NOT done: any guard change; each
+  needs Brandon's ruling (card: public or guarded after 22f818ad?), then an author-reviewed alias edit, not a
+  validator change. Remaining open: narration-quality reassessment, pointer placement, unknown identity.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.

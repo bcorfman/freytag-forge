@@ -266,7 +266,11 @@ def test_future_facility_place_is_nameable_in_2C_by_design(monkeypatch: pytest.M
 
 @pytest.mark.parametrize("scene_id", ("2A", "3B"))
 def test_corridor_place_name_is_accepted_and_the_singular_is_a_guarded_reveal_term(scene_id: str) -> None:
-    """The place name is plural; singular 'infrastructure corridor' is the guarded alias of reveal k_sl_2a_c_r2."""
+    """Characterizes today: the plural passes, the singular is the guarded alias of reveal k_sl_2a_c_r2.
+
+    disclosure-decisions.md calls the corridor public as a place, so rejecting the singular is an open
+    question for Brandon, not an endorsed behavior.
+    """
 
     state = _scene_state(scene_id)
 
