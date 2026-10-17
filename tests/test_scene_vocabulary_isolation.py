@@ -44,15 +44,14 @@ def test_bare_later_scene_words_do_not_reject_earlier_narration() -> None:
     )
 
 
-@pytest.mark.parametrize("text", ("The park bench is empty.", "The storm drain is dark."))
-def test_specific_later_scene_names_are_still_guarded_earlier(text: str) -> None:
+def test_specific_later_scene_name_is_still_guarded_earlier() -> None:
     state = _state("1A")
 
     with pytest.raises(ProposalValidationError) as caught:
         NarrationSafetyValidator().validate(
             state,
             deepcopy(state),
-            _proposal(text),
+            _proposal("The storm drain is dark."),
             KnowledgeProjector(),
             "Look around.",
         )

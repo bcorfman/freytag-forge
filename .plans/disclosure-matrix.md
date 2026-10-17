@@ -1,20 +1,20 @@
 # Disclosure vocabulary matrix
 
-Inventory terms: 503. Matrix rows: 687.
+Inventory terms: 531. Matrix rows: 715.
 
 ## Counts
 
-- entity_name: 94
+- entity_name: 95
 - identifier_fragment: 8
-- knowledge_alias: 107
-- leak_term: 77
+- knowledge_alias: 106
+- leak_term: 101
 - must_convey_phrase: 201
-- scoped_alias: 16
+- scoped_alias: 20
 
 Suggested classes:
-- needs_review: 12
-- public_candidate: 126
-- secret_with_unlock_fact: 365
+- needs_review: 14
+- public_candidate: 128
+- secret_with_unlock_fact: 389
 
 ### Earned rejected
 
@@ -52,7 +52,6 @@ Suggested classes:
 | 2A | brandon history | identifier_fragment | protected_narration_leak |
 | 2A | infiltrators watched | knowledge_alias | narration_known_term_leak |
 | 2A | infiltrators watched | must_convey_phrase | narration_known_term_leak |
-| 2A | infrastructure corridor | entity_name | narration_known_term_leak |
 | 2A | janus | identifier_fragment | protected_narration_leak |
 | 2A | janus phase | identifier_fragment | protected_narration_leak |
 | 2A | janus phase two | identifier_fragment | protected_narration_leak |
@@ -93,7 +92,6 @@ Suggested classes:
 | 3A | phase two | identifier_fragment | protected_narration_leak |
 | 3A | selection system | identifier_fragment | protected_narration_leak |
 | 3B | brandon history | identifier_fragment | protected_narration_leak |
-| 3B | infrastructure corridor | entity_name | narration_known_term_leak |
 | 3B | janus evidence | scoped_alias | narration_known_term_leak |
 | 3B | janus phase | identifier_fragment | protected_narration_leak |
 | 3B | janus phase two | identifier_fragment | protected_narration_leak |
@@ -127,33 +125,39 @@ Suggested classes:
 | 1A | memory card | leak_term | narration_known_term_leak |
 | 1A | memory card | must_convey_phrase | narration_known_term_leak |
 | 1A | michelle's memory card | entity_name | narration_known_term_leak |
-| 1A | park bench | must_convey_phrase | narration_known_term_leak |
 | 1B | janus | identifier_fragment | protected_narration_leak |
 | 1B | memory card | entity_name | narration_known_term_leak |
 | 1B | michelle's memory card | entity_name | narration_known_term_leak |
 | 1C | janus | identifier_fragment | protected_narration_leak |
-| 2A | infrastructure corridor | entity_name | narration_known_term_leak |
-| 2A | infrastructure corridor | knowledge_alias | narration_known_term_leak |
-| 2A | infrastructure corridor | must_convey_phrase | narration_known_term_leak |
 | 2A | janus | identifier_fragment | protected_narration_leak |
 | 2B | janus | identifier_fragment | protected_narration_leak |
 | 2C | janus | identifier_fragment | protected_narration_leak |
 | 2C | janus files | scoped_alias | protected_narration_leak |
 | 3A | janus | identifier_fragment | protected_narration_leak |
 | 3A | janus files | scoped_alias | protected_narration_leak |
-| 3B | infrastructure corridor | entity_name | narration_known_term_leak |
 
 ### Early accepted secret candidates
 
 | Scene | Term | Guard | Error |
 | --- | --- | --- | --- |
+| 1A | bench in the park | must_convey_phrase |  |
 | 1A | beneath the drawer | must_convey_phrase |  |
 | 1A | beneath the kms drawer | must_convey_phrase |  |
+| 1A | continuity initiative known | knowledge_alias |  |
+| 1A | continuity initiative known | must_convey_phrase |  |
 | 1A | empty house | knowledge_alias |  |
 | 1A | empty house | must_convey_phrase |  |
 | 1A | forced entry | must_convey_phrase |  |
+| 1A | front gate | must_convey_phrase |  |
+| 1A | house marked for return | knowledge_alias |  |
+| 1A | house marked for return | must_convey_phrase |  |
 | 1A | kitchen floor | knowledge_alias |  |
 | 1A | kitchen floor | must_convey_phrase |  |
+| 1A | michelle lead actionable | knowledge_alias |  |
+| 1A | michelle lead actionable | must_convey_phrase |  |
+| 1A | park bench | must_convey_phrase |  |
+| 1A | patrol return pressure | knowledge_alias |  |
+| 1A | patrol return pressure | must_convey_phrase |  |
 | 1A | under the kms drawer | must_convey_phrase |  |
 | 1B | pursuit | knowledge_alias |  |
 | 1B | stranger | knowledge_alias |  |

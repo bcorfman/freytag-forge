@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildKnowledgeTimelineReport, recordTurnOutcome } from "./knowledge-timeline-record.js";
+import {
+  buildKnowledgeTimelineReport,
+  isFixedRefusalLine,
+  recordTurnOutcome,
+} from "./knowledge-timeline-record.js";
 
 test("records a committed redacted audit without segment text", () => {
   const record = recordTurnOutcome({
@@ -38,6 +42,15 @@ test("records a rejected turn from its rejection header", () => {
   assert.equal(record.rejection_code, "UNKNOWN_KNOWLEDGE_SELECTION");
   assert.deepEqual(record.context_candidate_ids, []);
   assert.equal(record.result, null);
+});
+
+test("recognizes only the fixed refusal lines", () => {
+  assert.equal(isFixedRefusalLine("I don't understand. Can you try something else?"), true);
+  assert.equal(isFixedRefusalLine("I don't see the item you're referring to."), true);
+  assert.equal(isFixedRefusalLine("Nothing comes of that. Try something else."), true);
+  assert.equal(isFixedRefusalLine("  Nothing comes of that. Try something else.  \n"), true);
+  assert.equal(isFixedRefusalLine("selected knowledge is not eligible for this turn"), false);
+  assert.equal(isFixedRefusalLine(""), false);
 });
 
 test("records diagnostic-off responses with empty and null audit values", () => {

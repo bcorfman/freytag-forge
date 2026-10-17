@@ -163,6 +163,10 @@ items:
 - id: back_door
   name: back door
   fixed: true
+- id: house_gate
+  name: house gate
+  scoped_aliases: [front gate, gate]
+  fixed: true
 - id: kristin_truck
   name: Kristin's truck
   kind: vehicle
@@ -185,7 +189,12 @@ items:
 - id: park_bench
   name: park bench
   scoped_aliases: [bench]
+  disclosure: public
   kind: seat
+  fixed: true
+- id: facility_gate
+  name: facility gate
+  scoped_aliases: [gate, front gate]
   fixed: true
 - id: service_gate
   name: service gate

@@ -110,6 +110,59 @@ def scoped_alias_entity_ids(world, alias: str, *, scene, protagonist_id: str, sc
     return tuple(matches) if len(matches) == 1 else ()
 
 
+def entity_is_protected(state: RuntimeState, entity_id: str) -> bool:
+    """Return whether the narration guard still blocks this entity's authored terms."""
+
+    indexes = state.package.knowledge_indexes
+    scene = next(scene for scene in state.package.scenes if scene.metadata.scene_id == state.current_scene_id)
+    fixed_scene_item = entity_id in scene.metadata.item_ids and any(
+        item.id == entity_id and item.fixed is True for item in state.package.world.items
+    )
+    earned_ids = {
+        item.id
+        for item in state.package.knowledge.knowledge
+        if KnowledgeProjector._established(item, state) and KnowledgeProjector._visible_to(item, "player")
+    }
+    entity_terms = {term for term, entity_ids in indexes.entity_alias_to_entities.items() if entity_id in entity_ids}
+    leak_knowledge_ids = {
+        knowledge_id for term in entity_terms for knowledge_id in indexes.leak_term_to_knowledge.get(term, ())
+    }
+    if not fixed_scene_item and leak_knowledge_ids and not leak_knowledge_ids & earned_ids:
+        return True
+
+    entity_forms = {
+        form.casefold()
+        for entity in (*state.package.world.locations, *state.package.world.npcs, *state.package.world.items)
+        if entity.id == entity_id
+        for form in (entity.name, *entity.aliases)
+    }
+    guard_ids = {guard_id for form in entity_forms for guard_id in indexes.disclosure_guards.get(form, ())}
+    guards_by_id = {guard.id: guard for guard in state.package.world.disclosure_guards}
+    true_fact_ids = {
+        fact.predicate
+        for fact in state.facts.asserted
+        if (fact.value if fact.value is not None else fact.object) == "true"
+    }
+    if guard_ids and not all(
+        (
+            guard.unlock_fact is not None
+            and guard.unlock_fact in true_fact_ids
+            or guard.unlock_knowledge_id is not None
+            and guard.unlock_knowledge_id in earned_ids
+        )
+        for guard_id in guard_ids
+        for guard in (guards_by_id[guard_id],)
+    ):
+        return True
+
+    protected_knowledge_ids = {
+        knowledge_id
+        for term in entity_terms & set(indexes.protected_terms)
+        for knowledge_id in indexes.term_to_knowledge.get(term, ())
+    }
+    return bool(protected_knowledge_ids and not protected_knowledge_ids & earned_ids)
+
+
 def _input_referenced_entity_ids(
     world,
     player_input: str,

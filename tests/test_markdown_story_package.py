@@ -292,6 +292,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "michelle_drawer": ItemPlacement(parent="michelle_workstation", part_of=True, text="in Michelle's workstation"),
         "workstation_chair": ItemPlacement(parent="kitchen", text="at Michelle's workstation"),
         "back_door": ItemPlacement(parent="kitchen"),
+        "house_gate": ItemPlacement(parent="outside_house", text="at the front of the house"),
     }
     assert package.scenes[0].metadata.setting_facts == ()
     pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
@@ -402,10 +403,10 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
     contents = contents.replace(
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
         "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
-        "michelle_workstation, back_door]\n",
+        "michelle_workstation, back_door, house_gate]\n",
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
         "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
-        "michelle_workstation, back_door, test_item]\n",
+        "michelle_workstation, back_door, house_gate, test_item]\n",
         1,
     )
     contents = contents.replace(

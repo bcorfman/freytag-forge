@@ -444,6 +444,12 @@ knowledge:
   relevance:
     entity_ids: [memory_card, kristin_laptop]
     priority: 10
+  leak_terms:
+  - damaged recording
+  - voice recording
+  - emergency broadcasts
+  - dead drop
+  - exchange point
   must_convey:
   - [memory card, card]
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
@@ -600,6 +606,17 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
+  leak_terms:
+  - reflective tape
+  - gate marker
+  - reflective gate tape
+  - tape marker
+  - strip of reflective tape
+  - marked home
+  - federal emergency patrol
+  - welfare patrol
+  - emergency officers
+  - federal patrol
   must_convey:
   - [reflective tape, gate marker, marker, reflective gate tape, tape marker, strip of reflective tape]
   - [gate, house, home, front gate, the house gate, marked home]
@@ -1229,7 +1246,7 @@ knowledge:
   - [restricted infrastructure corridor, infrastructure corridor, service corridor, access corridor, restricted infrastructure corridors, infrastructure corridors, service corridors]
   entity_ids: [kristin, brandon, regional_facility, infrastructure_corridors, inspection_console]
   aliases:
-  - infrastructure corridor
+  - restricted corridor access
   audience:
     kind: public
     player_visible: true
@@ -1255,6 +1272,16 @@ knowledge:
   - [opened, open, access, gained access, opened access, corridor opened]
   - [restricted infrastructure corridor, infrastructure corridor, service corridor, access corridor, restricted passage]
   - [they have access to the facility]
+  leak_terms:
+  - restricted corridor access
+  - opened access
+  - gained access
+  - corridor opened
+  - restricted infrastructure corridor
+  - service corridor
+  - access corridor
+  - restricted passage
+  - they have access to the facility
   delivery_text: >-
     Kristin and Brandon open a restricted infrastructure corridor. They have access to the facility and its limited inspection console.
 - id: k_sl_2a_c_r2_rebecca_observes
