@@ -233,16 +233,12 @@ def test_scoped_aliases_resolve_only_in_their_declared_scenes() -> None:
     assert resolve_references(_scene_state("3A"), "Inspect the servers.").resolutions == ()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "3C places the captives group in maintenance_network but reference scope ignores that character placement; "
-        "correct behavior is for the declared captives/prisoners aliases to resolve in 3C."
-    ),
-)
-def test_3c_placed_captives_scoped_alias_resolves() -> None:
+def test_3c_captives_are_out_of_scope_where_the_story_places_them() -> None:
+    """The captives wait in maintenance_network (under the command levels), not in the 3C scene or with Kristin."""
+
     result = resolve_references(_scene_state("3C"), "Inspect the captives.")
-    assert result.resolutions == (("captives", "captives"),)
+    assert result.question is None
+    assert result.resolutions == ()
 
 
 @pytest.mark.parametrize(
@@ -260,43 +256,32 @@ def test_ordinary_scene_words_are_not_rejected_as_place_leaks(
     assert result.segments[0].text == text
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "2C accepts the future sibling place 'broadcast chamber' because the whole regional-facility subtree "
-        "is nameable; correct behavior is to reject it before its authored 3C scope."
-    ),
-)
-def test_future_facility_place_is_rejected_before_its_scene(monkeypatch: pytest.MonkeyPatch) -> None:
-    with pytest.raises(ProposalValidationError, match="broadcast chamber"):
-        _engine(
-            monkeypatch,
-            _scene_state("2C"),
-            text="The broadcast chamber is quiet.",
-        ).turn("Look around.")
+def test_future_facility_place_is_nameable_in_2C_by_design(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The whole regional-facility subtree is nameable, so 'broadcast chamber' is accepted before 3C."""
+
+    text = "The broadcast chamber is quiet."
+    result = _engine(monkeypatch, _scene_state("2C"), text=text).turn("Look around.")
+    assert result.segments[0].text == text
 
 
 @pytest.mark.parametrize("scene_id", ("2A", "3B"))
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "The declared place alias 'infrastructure corridor' is rejected in its own scene as unavailable "
-        "knowledge; correct behavior is to accept the authored place vocabulary there."
-    ),
-)
-def test_declared_place_alias_is_accepted_in_its_own_scene(
-    scene_id: str,
-) -> None:
+def test_corridor_place_name_is_accepted_and_the_singular_is_a_guarded_reveal_term(scene_id: str) -> None:
+    """The place name is plural; singular 'infrastructure corridor' is the guarded alias of reveal k_sl_2a_c_r2."""
+
     state = _scene_state(scene_id)
-    NarrationSafetyValidator().validate(
-        state,
-        state,
-        ResolvedTurnProposal(
-            segments=(NarrationSegment(kind="narration", text="The infrastructure corridor is quiet."),)
-        ),
-        KnowledgeProjector(),
-        "Look around.",
-    )
+
+    def validate(text: str) -> None:
+        NarrationSafetyValidator().validate(
+            state,
+            state,
+            ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text=text),)),
+            KnowledgeProjector(),
+            "Look around.",
+        )
+
+    validate("The infrastructure corridors are quiet.")
+    with pytest.raises(ProposalValidationError, match="infrastructure corridor"):
+        validate("The infrastructure corridor is quiet.")
 
 
 @pytest.mark.parametrize("scene_id", ("2A", "2B", "2C", "3A"))

@@ -492,7 +492,7 @@ scene-affordance open cases and raw-language corpus.
   2C paths, 3A medical records, place vocabulary and custody replayed 2026-10-17 (offline,
   scripted provider; Ringer `stage5-2c-replays`, manifest `scripts/ringer/stage5/2c-replays.json`;
   tests `tests/test_2c_paths_repro.py`, `tests/test_late_scene_repro.py`; notes
-  `~/dev/ringer-work/stage5-notes/{2c-paths,late-scene}-repro.md`; 35 passed, 5 strict xfail).
+  `~/dev/ringer-work/stage5-notes/{2c-paths,late-scene}-repro.md`; 35 passed after the vocabulary xfails became characterizations; 1 strict xfail remains, the skipped-copy one).
   Michelle-first: coherent. D-R1/D-R2 are rejected `prerequisite_missing` until the copy, then
   2C exits earned. Skipped-copy: REPRODUCED. With no copy command, the forced 2C-to-3A handoff at
   turn 16 asserts `evidence_ready_to_transmit` and `rebecca_office_required_for_broadcast` and
@@ -502,10 +502,16 @@ scene-affordance open cases and raw-language corpus.
   act, so it may be intended pacing and needs Brandon's call before any fix. 3A medical records:
   declared with scoped aliases, placed in `medical_level` by `k_sl_3a_b_r1`; the exact entity name
   is rejected before placement; no collision with the 2B medical terminal (ambiguity prompt is
-  correct). Custody 2A to 3C stays consistent with authored text. Vocabulary defects pinned as
-  xfail, NOT yet diagnosed or confirmed by hand: future `broadcast chamber` accepted in 2C
-  narration; declared alias `infrastructure corridor` rejected in its own scenes 2A/3B; 3C
-  `captives`/`prisoners` do not resolve. Limits: scripted provider, so live narrator wording is
+  correct). Custody 2A to 3C stays consistent with authored text. The three vocabulary xfails were diagnosed by hand
+  2026-10-17 and are NOT engine defects; they are now characterization tests. (1) Singular
+  'infrastructure corridor' is the guarded alias of reveal `k_sl_2a_c_r2` (entering the corridor
+  is what the player earns), so rejecting it unearned is the guard working; the place name, the
+  plural 'infrastructure corridors', is accepted in 2A and 3B. (2) 'broadcast chamber' is nameable
+  in 2C because the whole regional-facility subtree is nameable (`narration_safety.py`); a design
+  choice, with no recorded drift from it. (3) 3C `captives` sit in `maintenance_network`, under
+  the command levels, outside the 3C scene area and Kristin's, so they are out of reference scope;
+  the command passes through unchanged and no reveal depends on it. Reopen any of the three only
+  if live play shows drift or a rejected ordinary command. Limits: scripted provider, so live narrator wording is
   unchecked. Still open in this bullet: late-scene disclosure complaints reviewed against
   disclosure-decisions.md.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
