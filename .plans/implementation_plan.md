@@ -488,8 +488,44 @@ scene-affordance open cases and raw-language corpus.
   and the world holding the card as `carried_by` Kristin, so text and facts agree; the same
   script reaches 3C through forced handoffs from every scene. Limits: scripted provider, so
   live narrator wording is unchecked; the replay shows reachability by forced exits, not
-  earned play. Still open in this bullet: skipped-copy and Michelle-first 2C paths, late-scene
-  disclosure/custody cases, the 3A medical-records item and scene-scoped place vocabulary.
+  earned play.
+  2C paths, 3A medical records, place vocabulary and custody replayed 2026-10-17 (offline,
+  scripted provider; Ringer `stage5-2c-replays`, manifest `scripts/ringer/stage5/2c-replays.json`;
+  tests `tests/test_2c_paths_repro.py`, `tests/test_late_scene_repro.py`; notes
+  `~/dev/ringer-work/stage5-notes/{2c-paths,late-scene}-repro.md`; 35 passed after the vocabulary xfails became characterizations; no xfail remains).
+  Michelle-first: coherent. D-R1/D-R2 are rejected `prerequisite_missing` until the copy, then
+  2C exits earned. Skipped-copy: NOT A DEFECT (the earlier REPRODUCED call was wrong; diagnosed 2026-10-17). 2C entry already places
+  `copied_janus_files` with Kristin ('She could check them now', plot.md 2C item_placements) and
+  `janus_evidence` comes from 2B, so `k_sl_2c_c_r1` acknowledges files she carries rather than copying
+  them. With no such command the forced turn-16 handoff asserts `evidence_ready_to_transmit` and
+  delivers 'obtain enough evidence...', which matches the world; the xfail premise (nothing copied)
+  was false and it is now a characterization test. No fix designed or needed. Cosmetic only: the
+  cue/fallback wording says 'obtain' where 'have' would be exact. 3A medical records:
+  declared with scoped aliases, placed in `medical_level` by `k_sl_3a_b_r1`; the exact entity name
+  is rejected before placement; no collision with the 2B medical terminal (ambiguity prompt is
+  correct). Custody 2A to 3C stays consistent with authored text. The three vocabulary xfails were diagnosed by hand
+  2026-10-17 and are NOT engine defects; they are now characterization tests. (1) Singular
+  'infrastructure corridor' is the guarded alias of reveal `k_sl_2a_c_r2` (entering the corridor
+  is what the player earns), so rejecting it unearned is the guard working; the place name, the
+  plural 'infrastructure corridors', is accepted in 2A and 3B. (2) 'broadcast chamber' is nameable
+  in 2C because the whole regional-facility subtree is nameable (`narration_safety.py`); a design
+  choice, with no recorded drift from it. (3) 3C `captives` sit in `maintenance_network`, under
+  the command levels, outside the 3C scene area and Kristin's, so they are out of reference scope;
+  the command passes through unchanged and no reveal depends on it. Reopen any of the three only
+  if live play shows drift or a rejected ordinary command. Limits: scripted provider, so live narrator wording is
+  unchecked.
+  DISCLOSURE REVIEW 2026-10-17 (read-only; `scripts/disclosure_matrix.py` rerun on current code gives a
+  byte-identical matrix to `.plans/disclosure-matrix.md`, and a per-scene probe of the decision-table terms):
+  the 8 'early reveals' and the never-released secrets (JANUS, Phase Two, purge clock, memory card) all behave
+  as decided. Three terms the decisions call PUBLIC are still rejected in their own scene with an unearned
+  state: bare `card` in 1A (leak_term and must_convey on the memory-card reveals; `22f818ad` kept it guarded
+  on 2026-10-12, a day after the decision, so this may be deliberate), `park bench` in 1A (must_convey), and
+  singular `infrastructure corridor` in 2A and 3B (alias of `k_sl_2a_c_r2`; the plural place name passes).
+  This corrects the earlier 'by design' reading of the corridor, which ignored the decision table. Also
+  rejected everywhere with no decision on record: `front gate` (the series B 409 at turn 30). Recorded older
+  rejections of `park bench` (6) and `front gate` (4) show it bites in play. NOT done: any guard change; each
+  needs Brandon's ruling (card: public or guarded after 22f818ad?), then an author-reviewed alias edit, not a
+  validator change. Remaining open: narration-quality reassessment, pointer placement, unknown identity.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.
