@@ -562,6 +562,18 @@ scene-affordance open cases and raw-language corpus.
   Limits: the predicate duplicates a few validator lines rather than sharing them; offline, one story; the
   narration guard was not changed (it accepts exact bare 'card' in the transit-card case but still refuses
   'the card'), so `card` leak terms stay as `22f818ad` left them.
+  Follow-up (2) BUILT 2026-10-17 (Ringer `stage5-guard-vocab`; data only, no prose rewrite was needed):
+  fixed items `house_gate` (1A, scoped aliases front gate, gate) and `facility_gate` (2A, same aliases);
+  `k_sl_1a_b_r1` and `k_sl_1a_f_r2` got explicit `leak_terms` that leave `park bench`, `bench in the park` and
+  `front gate` unguarded while `dead drop`, `exchange point` and the recording phrases stay guarded; singular
+  `infrastructure corridor` left the guarded vocabulary of `k_sl_2a_c_r2` (the reveal still needs the enter
+  command). Probes: house/front gate 1A, facility gate 2A, park bench 1A and corridor 2A/3B refused -> accepted;
+  house gate in 2A, dead drop, JANUS, Phase Two, purge clock and memory card still refused. Regenerated
+  `.plans/disclosure-matrix.{md,json}` and updated the older tests that encoded the old vocabulary
+  (affordance map, item facts, markdown package, scene vocabulary isolation, web demo, late-scene repro).
+  Suite 2009 passed, 1 skipped; payload capture diff shows only the two new THINGS lines. Limits: offline,
+  scripted probes; hosted narrator behavior unchecked (a hosted rerun of the series B 2A turn 30 path is the
+  real test); bare `card` unchanged.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.

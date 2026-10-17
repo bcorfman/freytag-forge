@@ -68,7 +68,7 @@ EXPECTED_PLACE_FORMS_BY_SCENE = {
 }
 
 EXPECTED_SCOPED_ALIASES_BY_SCENE = {
-    "1A": {"chair": "workstation_chair"},
+    "1A": {"chair": "workstation_chair", "front gate": "house_gate", "gate": "house_gate"},
     "1B": {
         "bench": "park_bench",
         "drain": "storm_drain",
@@ -77,7 +77,7 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
         "photo": "michelle_photograph",
     },
     "1C": {},
-    "2A": {"servers": "hideout_servers"},
+    "2A": {"servers": "hideout_servers", "gate": "facility_gate", "front gate": "facility_gate"},
     "2B": {},
     "2C": {
         "copied files": "copied_janus_files",
@@ -206,8 +206,6 @@ def test_declared_place_forms_are_nameable_in_their_scene(scene_id: str) -> None
     state = _scene_state(scene_id)
     validator = NarrationSafetyValidator()
     for form in EXPECTED_PLACE_FORMS_BY_SCENE[scene_id]:
-        if (scene_id, form) in {("2A", "infrastructure corridor"), ("3B", "infrastructure corridor")}:
-            continue
         validator.validate(
             state,
             state,
@@ -265,12 +263,8 @@ def test_future_facility_place_is_nameable_in_2C_by_design(monkeypatch: pytest.M
 
 
 @pytest.mark.parametrize("scene_id", ("2A", "3B"))
-def test_corridor_place_name_is_accepted_and_the_singular_is_a_guarded_reveal_term(scene_id: str) -> None:
-    """Characterizes today: the plural passes, the singular is the guarded alias of reveal k_sl_2a_c_r2.
-
-    disclosure-decisions.md calls the corridor public as a place, so rejecting the singular is an open
-    question for Brandon, not an endorsed behavior.
-    """
+def test_corridor_place_names_are_accepted_before_the_access_reveal(scene_id: str) -> None:
+    """The corridor is public vocabulary; naming it does not satisfy the access action evidence."""
 
     state = _scene_state(scene_id)
 
@@ -284,8 +278,7 @@ def test_corridor_place_name_is_accepted_and_the_singular_is_a_guarded_reveal_te
         )
 
     validate("The infrastructure corridors are quiet.")
-    with pytest.raises(ProposalValidationError, match="infrastructure corridor"):
-        validate("The infrastructure corridor is quiet.")
+    validate("The infrastructure corridor is quiet.")
 
 
 @pytest.mark.parametrize("scene_id", ("2A", "2B", "2C", "3A"))

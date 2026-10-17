@@ -64,3 +64,9 @@ Still untested: legitimate reveals landing after the fix (the scripts avoid them
 
 - The matrix's "earned rejected" table does not prove a guard never releases: its synthetic earned states may omit preceding discoveries or required world effects.
 - The matrix heuristic's `suggested_class` is not a decision; these decisions supersede it. `janus` appeared under "public candidate" by heuristic error.
+
+### Resolved 2026-10-17 (guard vocabulary)
+
+- The visible 1A house gate and visible 2A facility gate are fixed, scene-placed items with scene-local aliases.
+- Park bench is public ordinary vocabulary; its 1A reveal keeps the dead-drop, recording, and emergency-broadcast phrases guarded.
+- Infrastructure corridor is public as a place in 2A and 3B; the singular phrase no longer guards the corridor-access reveal, whose enter-corridor action evidence remains required.

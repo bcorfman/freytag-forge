@@ -18,6 +18,25 @@
       "available_scenes": [
         "2A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2a_c_r2"
+      ],
+      "requires": [
+        "facility_perimeter_reached",
+        "false_identities_ready"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "access corridor",
+      "unlock_fact_ids": [
+        "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_2a_c_r2"
@@ -2040,6 +2059,25 @@
       "available_scenes": [
         "2A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2a_c_r2"
+      ],
+      "requires": [
+        "facility_perimeter_reached",
+        "false_identities_ready"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "corridor opened",
+      "unlock_fact_ids": [
+        "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_2a_c_r2"
@@ -2052,6 +2090,27 @@
       "term": "corridor opened",
       "unlock_fact_ids": [
         "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r1"
+      ],
+      "requires": [
+        "memory_card_recovered"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "damaged recording",
+      "unlock_fact_ids": [
+        "continuity_initiative_known",
+        "michelle_abduction_suspicion",
+        "michelle_lead_actionable",
+        "michelle_warning_known"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
@@ -2090,6 +2149,27 @@
       "term": "data case",
       "unlock_fact_ids": [],
       "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r1"
+      ],
+      "requires": [
+        "memory_card_recovered"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "dead drop",
+      "unlock_fact_ids": [
+        "continuity_initiative_known",
+        "michelle_abduction_suspicion",
+        "michelle_lead_actionable",
+        "michelle_warning_known"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
     {
       "available_scenes": [
@@ -2549,6 +2629,27 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r1"
+      ],
+      "requires": [
+        "memory_card_recovered"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "emergency broadcasts",
+      "unlock_fact_ids": [
+        "continuity_initiative_known",
+        "michelle_abduction_suspicion",
+        "michelle_lead_actionable",
+        "michelle_warning_known"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_b_r1",
@@ -2608,6 +2709,25 @@
         "charles_framed_officials_known",
         "military_override_codes_available",
         "override_codes_deadline_known"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_c_r2"
+      ],
+      "requires": [
+        "michelle_warning_known"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "emergency officers",
+      "unlock_fact_ids": [
+        "house_marked_for_return",
+        "patrol_return_pressure"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
@@ -2926,6 +3046,27 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r1"
+      ],
+      "requires": [
+        "memory_card_recovered"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "exchange point",
+      "unlock_fact_ids": [
+        "continuity_initiative_known",
+        "michelle_abduction_suspicion",
+        "michelle_lead_actionable",
+        "michelle_warning_known"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_b_r1",
@@ -3088,6 +3229,20 @@
         "scene_2a_entry_known"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
+      "guard_kind": "entity_name",
+      "owner_ids": [
+        "facility_gate"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "facility gate",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
     },
     {
       "available_scenes": [
@@ -3287,6 +3442,25 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_c_r2"
+      ],
+      "requires": [
+        "michelle_warning_known"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "federal emergency patrol",
+      "unlock_fact_ids": [
+        "house_marked_for_return",
+        "patrol_return_pressure"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_c_r2"
@@ -3296,6 +3470,25 @@
       ],
       "suggested_class": "secret_with_unlock_fact",
       "term": "federal emergency patrol",
+      "unlock_fact_ids": [
+        "house_marked_for_return",
+        "patrol_return_pressure"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_c_r2"
+      ],
+      "requires": [
+        "michelle_warning_known"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "federal patrol",
       "unlock_fact_ids": [
         "house_marked_for_return",
         "patrol_return_pressure"
@@ -3416,6 +3609,53 @@
       "available_scenes": [
         "2A"
       ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "facility_gate"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "front gate",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "house_gate"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "front gate",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2a_c_r2"
+      ],
+      "requires": [
+        "facility_perimeter_reached",
+        "false_identities_ready"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "gained access",
+      "unlock_fact_ids": [
+        "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_2a_c_r2"
@@ -3428,6 +3668,53 @@
       "term": "gained access",
       "unlock_fact_ids": [
         "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "facility_gate"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "gate",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "house_gate"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "gate",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_c_r2"
+      ],
+      "requires": [
+        "michelle_warning_known"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "gate marker",
+      "unlock_fact_ids": [
+        "house_marked_for_return",
+        "patrol_return_pressure"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
@@ -3630,6 +3917,20 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "entity_name",
+      "owner_ids": [
+        "house_gate"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "house gate",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_c_r2"
@@ -3637,13 +3938,13 @@
       "requires": [
         "michelle_warning_known"
       ],
-      "suggested_class": "secret_with_unlock_fact",
+      "suggested_class": "public_candidate",
       "term": "house gate",
       "unlock_fact_ids": [
         "house_marked_for_return",
         "patrol_return_pressure"
       ],
-      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
     },
     {
       "available_scenes": [
@@ -3876,25 +4177,6 @@
       "suggested_class": "public_candidate",
       "term": "infrastructure corridor",
       "unlock_fact_ids": [],
-      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
-    },
-    {
-      "available_scenes": [
-        "2A"
-      ],
-      "guard_kind": "knowledge_alias",
-      "owner_ids": [
-        "k_sl_2a_c_r2"
-      ],
-      "requires": [
-        "facility_perimeter_reached",
-        "false_identities_ready"
-      ],
-      "suggested_class": "public_candidate",
-      "term": "infrastructure corridor",
-      "unlock_fact_ids": [
-        "restricted_corridor_access"
-      ],
       "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
     },
     {
@@ -4820,6 +5102,25 @@
       "term": "maintenance tunnels",
       "unlock_fact_ids": [],
       "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_c_r2"
+      ],
+      "requires": [
+        "michelle_warning_known"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "marked home",
+      "unlock_fact_ids": [
+        "house_marked_for_return",
+        "patrol_return_pressure"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
     {
       "available_scenes": [
@@ -6056,6 +6357,25 @@
       "available_scenes": [
         "2A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2a_c_r2"
+      ],
+      "requires": [
+        "facility_perimeter_reached",
+        "false_identities_ready"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "opened access",
+      "unlock_fact_ids": [
+        "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_2a_c_r2"
@@ -6145,20 +6465,6 @@
     },
     {
       "available_scenes": [
-        "1B"
-      ],
-      "guard_kind": "entity_name",
-      "owner_ids": [
-        "park_bench"
-      ],
-      "requires": [],
-      "suggested_class": "public_candidate",
-      "term": "park bench",
-      "unlock_fact_ids": [],
-      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
-    },
-    {
-      "available_scenes": [
         "1A"
       ],
       "guard_kind": "must_convey_phrase",
@@ -6168,7 +6474,7 @@
       "requires": [
         "memory_card_recovered"
       ],
-      "suggested_class": "public_candidate",
+      "suggested_class": "secret_with_unlock_fact",
       "term": "park bench",
       "unlock_fact_ids": [
         "continuity_initiative_known",
@@ -6176,7 +6482,7 @@
         "michelle_lead_actionable",
         "michelle_warning_known"
       ],
-      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
     {
       "available_scenes": [
@@ -7165,6 +7471,25 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_c_r2"
+      ],
+      "requires": [
+        "michelle_warning_known"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "reflective gate tape",
+      "unlock_fact_ids": [
+        "house_marked_for_return",
+        "patrol_return_pressure"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_c_r2"
@@ -7174,6 +7499,25 @@
       ],
       "suggested_class": "secret_with_unlock_fact",
       "term": "reflective gate tape",
+      "unlock_fact_ids": [
+        "house_marked_for_return",
+        "patrol_return_pressure"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_c_r2"
+      ],
+      "requires": [
+        "michelle_warning_known"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "reflective tape",
       "unlock_fact_ids": [
         "house_marked_for_return",
         "patrol_return_pressure"
@@ -7653,7 +7997,8 @@
       ],
       "guard_kind": "knowledge_alias",
       "owner_ids": [
-        "k_sl_2a_c_r1"
+        "k_sl_2a_c_r1",
+        "k_sl_2a_c_r2"
       ],
       "requires": [
         "facility_perimeter_reached",
@@ -7689,9 +8034,9 @@
       "available_scenes": [
         "2A"
       ],
-      "guard_kind": "must_convey_phrase",
+      "guard_kind": "leak_term",
       "owner_ids": [
-        "k_sl_2a_c_r1"
+        "k_sl_2a_c_r2"
       ],
       "requires": [
         "facility_perimeter_reached",
@@ -7699,6 +8044,45 @@
       ],
       "suggested_class": "secret_with_unlock_fact",
       "term": "restricted corridor access",
+      "unlock_fact_ids": [
+        "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
+      "guard_kind": "must_convey_phrase",
+      "owner_ids": [
+        "k_sl_2a_c_r1",
+        "k_sl_2a_c_r2"
+      ],
+      "requires": [
+        "facility_perimeter_reached",
+        "false_identities_ready"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "restricted corridor access",
+      "unlock_fact_ids": [
+        "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2a_c_r2"
+      ],
+      "requires": [
+        "facility_perimeter_reached",
+        "false_identities_ready"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "restricted infrastructure corridor",
       "unlock_fact_ids": [
         "restricted_corridor_access"
       ],
@@ -7737,6 +8121,25 @@
       "term": "restricted infrastructure corridors",
       "unlock_fact_ids": [],
       "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2a_c_r2"
+      ],
+      "requires": [
+        "facility_perimeter_reached",
+        "false_identities_ready"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "restricted passage",
+      "unlock_fact_ids": [
+        "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
     {
       "available_scenes": [
@@ -8243,6 +8646,25 @@
       "available_scenes": [
         "2A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2a_c_r2"
+      ],
+      "requires": [
+        "facility_perimeter_reached",
+        "false_identities_ready"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "service corridor",
+      "unlock_fact_ids": [
+        "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_2a_c_r2"
@@ -8455,6 +8877,25 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_c_r2"
+      ],
+      "requires": [
+        "michelle_warning_known"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "strip of reflective tape",
+      "unlock_fact_ids": [
+        "house_marked_for_return",
+        "patrol_return_pressure"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_c_r2"
@@ -8534,6 +8975,25 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_c_r2"
+      ],
+      "requires": [
+        "michelle_warning_known"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "tape marker",
+      "unlock_fact_ids": [
+        "house_marked_for_return",
+        "patrol_return_pressure"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_c_r2"
@@ -8594,6 +9054,25 @@
       "term": "taped under the drawer",
       "unlock_fact_ids": [
         "memory_card_recovered"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_2a_c_r2"
+      ],
+      "requires": [
+        "facility_perimeter_reached",
+        "false_identities_ready"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "they have access to the facility",
+      "unlock_fact_ids": [
+        "restricted_corridor_access"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
@@ -9015,6 +9494,27 @@
       "available_scenes": [
         "1A"
       ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_b_r1"
+      ],
+      "requires": [
+        "memory_card_recovered"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "voice recording",
+      "unlock_fact_ids": [
+        "continuity_initiative_known",
+        "michelle_abduction_suspicion",
+        "michelle_lead_actionable",
+        "michelle_warning_known"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_b_r1",
@@ -9106,6 +9606,25 @@
       "term": "water-pressure fault",
       "unlock_fact_ids": [
         "restricted_corridor_access"
+      ],
+      "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "1A"
+      ],
+      "guard_kind": "leak_term",
+      "owner_ids": [
+        "k_sl_1a_c_r2"
+      ],
+      "requires": [
+        "michelle_warning_known"
+      ],
+      "suggested_class": "secret_with_unlock_fact",
+      "term": "welfare patrol",
+      "unlock_fact_ids": [
+        "house_marked_for_return",
+        "patrol_return_pressure"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
     },
@@ -9217,8 +9736,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -9353,14 +9872,31 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
         "verdict": "accepted"
       },
       "guard_kind": "knowledge_alias",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "continuity initiative known"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
         "error_code": "",
@@ -9377,13 +9913,13 @@
         "error_code": "",
         "verdict": "accepted"
       },
-      "guard_kind": "must_convey_phrase",
+      "guard_kind": "leak_term",
       "scene": "1A",
       "skipped": {
         "error_code": "",
         "verdict": "accepted"
       },
-      "term": "continuity initiative known"
+      "term": "damaged recording"
     },
     {
       "early": {
@@ -9401,6 +9937,23 @@
         "verdict": "accepted"
       },
       "term": "damaged recording"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "dead drop"
     },
     {
       "early": {
@@ -9564,6 +10117,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "emergency broadcasts"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
@@ -9571,6 +10141,23 @@
         "verdict": "accepted"
       },
       "term": "emergency broadcasts"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "emergency officers"
     },
     {
       "early": {
@@ -9632,7 +10219,7 @@
         "error_code": "",
         "verdict": "accepted"
       },
-      "guard_kind": "must_convey_phrase",
+      "guard_kind": "leak_term",
       "scene": "1A",
       "skipped": {
         "error_code": "",
@@ -9652,10 +10239,61 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "exchange point"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
         "error_code": "narration_known_term_leak",
         "verdict": "rejected"
       },
       "term": "federal emergency patrol"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "must_convey_phrase",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "federal emergency patrol"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "federal patrol"
     },
     {
       "early": {
@@ -9693,8 +10331,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -9703,10 +10341,61 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "front gate"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "front gate"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "gate"
+    },
+    {
+      "early": {
         "error_code": "narration_known_term_leak",
         "verdict": "rejected"
       },
-      "term": "front gate"
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "gate marker"
     },
     {
       "early": {
@@ -9812,8 +10501,25 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "entity_name",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "house gate"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -9822,15 +10528,15 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "house gate"
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -9839,15 +10545,15 @@
       "guard_kind": "knowledge_alias",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "house marked for return"
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -9856,8 +10562,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "house marked for return"
     },
@@ -10108,6 +10814,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "marked home"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
@@ -10288,8 +11011,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -10305,8 +11028,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -10594,8 +11317,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -10628,8 +11351,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -10638,15 +11361,15 @@
       "guard_kind": "knowledge_alias",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "patrol return pressure"
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
         "error_code": "",
@@ -10655,8 +11378,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "patrol return pressure"
     },
@@ -10737,6 +11460,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "reflective gate tape"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
@@ -10744,6 +11484,23 @@
         "verdict": "rejected"
       },
       "term": "reflective gate tape"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "reflective tape"
     },
     {
       "early": {
@@ -10839,6 +11596,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "strip of reflective tape"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
@@ -10846,6 +11620,23 @@
         "verdict": "rejected"
       },
       "term": "strip of reflective tape"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "tape marker"
     },
     {
       "early": {
@@ -10941,6 +11732,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "voice recording"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
@@ -10948,6 +11756,23 @@
         "verdict": "accepted"
       },
       "term": "voice recording"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "1A",
+      "skipped": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "term": "welfare patrol"
     },
     {
       "early": {
@@ -11628,23 +12453,6 @@
         "verdict": "accepted"
       },
       "term": "park"
-    },
-    {
-      "early": {
-        "error_code": "",
-        "verdict": "accepted"
-      },
-      "earned": {
-        "error_code": "",
-        "verdict": "accepted"
-      },
-      "guard_kind": "entity_name",
-      "scene": "1B",
-      "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
-      },
-      "term": "park bench"
     },
     {
       "early": {
@@ -12777,6 +13585,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "access corridor"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2A",
       "skipped": {
@@ -13134,6 +13959,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "corridor opened"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2A",
       "skipped": {
@@ -13192,6 +14034,23 @@
         "verdict": "accepted"
       },
       "term": "facility entrance"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "entity_name",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "facility gate"
     },
     {
       "early": {
@@ -13348,6 +14207,40 @@
     },
     {
       "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "front gate"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "gained access"
+    },
+    {
+      "early": {
         "error_code": "narration_known_term_leak",
         "verdict": "rejected"
       },
@@ -13362,6 +14255,23 @@
         "verdict": "accepted"
       },
       "term": "gained access"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "gate"
     },
     {
       "early": {
@@ -13467,12 +14377,12 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "guard_kind": "entity_name",
       "scene": "2A",
@@ -13484,25 +14394,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
         "error_code": "",
         "verdict": "accepted"
-      },
-      "guard_kind": "knowledge_alias",
-      "scene": "2A",
-      "skipped": {
-        "error_code": "",
-        "verdict": "accepted"
-      },
-      "term": "infrastructure corridor"
-    },
-    {
-      "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
       },
       "earned": {
         "error_code": "",
@@ -13712,6 +14605,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "opened access"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2A",
       "skipped": {
@@ -13865,6 +14775,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "restricted corridor access"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2A",
       "skipped": {
@@ -13872,6 +14799,23 @@
         "verdict": "accepted"
       },
       "term": "restricted corridor access"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "restricted infrastructure corridor"
     },
     {
       "early": {
@@ -13906,6 +14850,23 @@
         "verdict": "accepted"
       },
       "term": "restricted infrastructure corridors"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "restricted passage"
     },
     {
       "early": {
@@ -14052,6 +15013,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "leak_term",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "service corridor"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "must_convey_phrase",
       "scene": "2A",
       "skipped": {
@@ -14093,6 +15071,23 @@
         "verdict": "accepted"
       },
       "term": "service-level shutdown"
+    },
+    {
+      "early": {
+        "error_code": "narration_known_term_leak",
+        "verdict": "rejected"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "leak_term",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "they have access to the facility"
     },
     {
       "early": {
@@ -18822,12 +19817,12 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "earned": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "guard_kind": "entity_name",
       "scene": "3B",

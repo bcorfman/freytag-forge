@@ -2419,6 +2419,7 @@ def test_package_seed_scene_1a_matches_authored_things():
         "Kristin's truck": {"place": "outside the house", "condition": []},
         "workstation": {"place": "kitchen", "condition": []},
         "back door": {"place": "kitchen", "condition": []},
+        "house gate": {"place": "at the front of the house", "condition": []},
     }
     assert issues == []
 

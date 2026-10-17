@@ -81,7 +81,7 @@ location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle]
-item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door]
+item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door, house_gate]
 item_placements:
   memory_card: {parent: michelle_drawer, under: true}
   michelle_phone: {parent: kitchen, text: on the kitchen floor}
@@ -91,6 +91,7 @@ item_placements:
   kristin_truck: {parent: outside_house}
   michelle_workstation: {parent: kitchen}
   back_door: {parent: kitchen}
+  house_gate: {parent: outside_house, text: at the front of the house}
   michelle_drawer: {parent: michelle_workstation, part_of: true, text: in Michelle's workstation}
   workstation_chair: {parent: kitchen, text: at Michelle's workstation}
 entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
@@ -349,10 +350,11 @@ freytag_phase: rising_action
 objective: Enter the facility under false identities
 participant_ids: [kristin, brandon]
 companions: [brandon]
-item_ids: [transit_card, hideout_servers, inspection_console]
+item_ids: [transit_card, hideout_servers, inspection_console, facility_gate]
 item_placements:
   hideout_servers: {parent: brandon_hideout}
   inspection_console: {parent: infrastructure_corridors}
+  facility_gate: {parent: facility_perimeter, text: at the facility perimeter}
 character_placements:
   kristin: {parent: brandon_hideout}
   brandon: {parent: brandon_hideout}
