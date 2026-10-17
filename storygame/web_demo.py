@@ -27,7 +27,7 @@ from storygame.runtime.knowledge_audit import build_knowledge_audit
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.scripted_provider import ScriptedTurnProvider
 from storygame.runtime.state import RuntimeState, RuntimeStateError
-from storygame.runtime.validation import REJECTED_TURN_MESSAGE, ProposalValidationError
+from storygame.runtime.validation import REJECTED_TURN_MESSAGE, ProposalValidationError, rejection_message
 from storygame.runtime.world_model import display_name, world_for
 from storygame.story_package.loader import StoryPackageError, load_story_package
 
@@ -391,7 +391,11 @@ def create_demo_app(
                     },
                     headers=headers,
                 )
-            raise HTTPException(status_code=409, detail=REJECTED_TURN_MESSAGE, headers=headers) from error
+            raise HTTPException(
+                status_code=409,
+                detail=rejection_message(error.code, error.term, body.input_text),
+                headers=headers,
+            ) from error
         except RuntimeStateError as error:
             raw_detail = str(error)
             logger.warning("turn rejected [runtime_state_error]: %s", raw_detail)

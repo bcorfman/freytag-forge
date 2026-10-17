@@ -490,6 +490,16 @@ scene-affordance open cases and raw-language corpus.
   live narrator wording is unchecked; the replay shows reachability by forced exits, not
   earned play. Still open in this bullet: skipped-copy and Michelle-first 2C paths, late-scene
   disclosure/custody cases, the 3A medical-records item and scene-scoped place vocabulary.
+- [x] Split the player-facing refusal line (Brandon, 2026-10-17; Ringer `stage5-refusal-lines`, branch
+  `stage5-refusal-lines`): a narration-guard rejection whose term the player typed says 'I don't see the
+  item you're referring to.'; a guard rejection of a term only the narrator used (after the existing single
+  guard retry) says 'Nothing comes of that. Try something else.'; every other failure keeps 'I don't
+  understand. Can you try something else?'. `rejection_message` in `storygame/runtime/validation.py`, used
+  by the 409 branch of `web_demo.py`; suite 1955 passed, 1 skipped. Limits: offline; the typed-term test
+  duplicates the engine's regex instead of sharing it; hosted e2e specs that quote the old line were not
+  run; guard vocabulary for `card`, `park bench`, `infrastructure corridor` and `front gate` is a separate
+  open ruling (Brandon's rule: a visible item may be referred to, so declare the 1A house gate as a
+  1A-scoped thing).
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.

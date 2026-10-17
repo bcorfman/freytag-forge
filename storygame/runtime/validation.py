@@ -21,6 +21,38 @@ from storygame.runtime.world_model import WORLD_EFFECTS_APPLIED, world_for
 from storygame.story_package.models import FactPredicate, StoryPackage, Transition
 
 REJECTED_TURN_MESSAGE = "I don't understand. Can you try something else?"
+ITEM_NOT_VISIBLE_MESSAGE = "I don't see the item you're referring to."
+NARRATION_RETRY_MESSAGE = "Nothing comes of that. Try something else."
+
+_NARRATION_GUARD_CODES = frozenset(
+    {
+        "narration_known_term_leak",
+        "protected_narration_leak",
+        "disclosure_guard_leak",
+    }
+)
+
+
+def _term_was_typed(term: str | None, player_input: str) -> bool:
+    return bool(
+        term
+        and term.casefold() in player_input.casefold()
+        and re.search(
+            rf"(?<!\w){re.escape(term)}(?!\w)",
+            player_input,
+            flags=re.IGNORECASE,
+        )
+    )
+
+
+def rejection_message(code: str | None, term: str | None, player_input: str) -> str:
+    """Return a safe player-facing line for a rejected turn."""
+
+    if code not in _NARRATION_GUARD_CODES:
+        return REJECTED_TURN_MESSAGE
+    if _term_was_typed(term, player_input):
+        return ITEM_NOT_VISIBLE_MESSAGE
+    return NARRATION_RETRY_MESSAGE
 
 
 class ProposalValidationError(RuntimeStateError):
