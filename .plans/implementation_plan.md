@@ -526,6 +526,28 @@ scene-affordance open cases and raw-language corpus.
   rejections of `park bench` (6) and `front gate` (4) show it bites in play. NOT done: any guard change; each
   needs Brandon's ruling (card: public or guarded after 22f818ad?), then an author-reviewed alias edit, not a
   validator change. Remaining open: narration-quality reassessment, pointer placement, unknown identity.
+- [x] Split the player-facing refusal line (Brandon, 2026-10-17; Ringer `stage5-refusal-lines`, branch
+  `stage5-refusal-lines`): a narration-guard rejection whose term the player typed says 'I don't see the
+  item you're referring to.'; a guard rejection of a term only the narrator used (after the existing single
+  guard retry) says 'Nothing comes of that. Try something else.'; every other failure keeps 'I don't
+  understand. Can you try something else?'. `rejection_message` in `storygame/runtime/validation.py`, used
+  by the 409 branch of `web_demo.py`; suite 1955 passed, 1 skipped. Limits: offline; the typed-term test
+  duplicates the engine's regex instead of sharing it; hosted e2e specs that quote the old line were not
+  run; guard vocabulary for `card`, `park bench`, `infrastructure corridor` and `front gate` is a separate
+  open ruling (Brandon's rule: a visible item may be referred to, so declare the 1A house gate as a
+  1A-scoped thing).
+- [ ] Follow-ups to the refusal-line split (recorded 2026-10-17, not started). (1) Hosted e2e:
+  `frontend/e2e/scene-runtime.spec.js:475` computes `diagnosticDetailExposed` as 'visible line is not the
+  generic line', which stops meaning 'rejection' now that a guard rejection shows a different line; update
+  it (and review `knowledge-timeline-record.test.js:59`) before the next hosted run. (2) Guard vocabulary,
+  by Brandon's rule 'if an item is visible in the scene it can be referred to': `front gate` belongs to
+  1A (the patrol's reflective tape, plot.md 156-160, `k_sl_1a_f_r2`) but is only a reveal phrase, not a
+  declared thing, so the guard also rejects the facility gate in 2A (series B 409, turn 30). Declare the
+  house gate as a 1A-placed thing with `front gate` as a scoped alias (grounding guide: Things, Names), then
+  give the 2A facility gate its own name. Apply the same approach to `park bench` (1A, must_convey) and
+  singular `infrastructure corridor` (2A/3B, alias of `k_sl_2a_c_r2`); bare `card` in 1A needs Brandon's
+  ruling first (decision table says public, `22f818ad` re-guarded it). Story wording goes through the
+  ChatGPT Desktop round; run a package-payload capture diff after any package change.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.

@@ -10,7 +10,7 @@ from storygame.runtime.cloudflare import NarrationProviderError
 from storygame.runtime.contracts import RuntimeContractError
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeStateError
-from storygame.runtime.validation import REJECTED_TURN_MESSAGE
+from storygame.runtime.validation import NARRATION_RETRY_MESSAGE, REJECTED_TURN_MESSAGE
 from storygame.story_package.loader import load_story_package
 from storygame.web_demo import create_demo_app
 
@@ -44,13 +44,14 @@ def _session_id(client: TestClient) -> str:
 
 
 @pytest.mark.parametrize(
-    ("payload", "code", "raw_detail", "protected_term"),
+    ("payload", "code", "raw_detail", "protected_term", "expected_detail"),
     [
         pytest.param(
             _payload("Rebecca is in the room."),
             "narration_known_term_leak",
             "narration mentions an unavailable entity 'rebecca'",
             "rebecca",
+            NARRATION_RETRY_MESSAGE,
             id="narration-known-term",
         ),
         pytest.param(
@@ -58,6 +59,7 @@ def _session_id(client: TestClient) -> str:
             "ineligible_selection",
             "selected knowledge is not eligible for this turn",
             "selected knowledge is not eligible",
+            REJECTED_TURN_MESSAGE,
             id="ineligible-selection",
         ),
     ],
@@ -69,6 +71,7 @@ def test_rejected_turn_returns_safe_line_without_raw_reason(
     code: str,
     raw_detail: str,
     protected_term: str,
+    expected_detail: str,
 ) -> None:
     app = create_demo_app(
         store_path=tmp_path / f"{code}.sqlite",
@@ -83,7 +86,7 @@ def test_rejected_turn_returns_safe_line_without_raw_reason(
         )
 
     assert response.status_code == 409
-    assert response.json()["detail"] == REJECTED_TURN_MESSAGE
+    assert response.json()["detail"] == expected_detail
     assert response.headers["X-Freytag-Rejection-Code"] == code
     response_headers = "\n".join(f"{key}: {value}" for key, value in response.headers.items())
     assert protected_term not in response.text.casefold()
