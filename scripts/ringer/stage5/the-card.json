@@ -1,0 +1,25 @@
+{
+  "run_name": "stage5-the-card",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage5-the-card",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "the-card",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 1500,
+      "spec": "You are a story-data worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own the story data (data/stories/continuity-initiative/*), every existing test, fixture and checked-in generated artifact that encodes the old behavior (tests/, .plans/disclosure-matrix.md and .json, .plans/disclosure-decisions.md with one dated note, docs/ only if a doc states the old behavior). Do NOT edit storygame/, bench/, frontend/ or scripts/. Nothing billed or networked. Keep it simple.\n\nDECISION (Brandon, 2026-10-17): remove the generic phrase 'the card' from the guarded vocabulary of reveal k_sl_1a_b_r0 in data/stories/continuity-initiative/knowledge.yaml (its leak_terms list, currently around line 341: memory card, hidden memory card, hidden card, Michelle's card, the card, taped beneath the drawer, ...). Keep every specific memory-card phrase guarded (memory card, hidden memory card, hidden card, Michelle's card, taped phrases, memory card recovered). Do not touch must_convey, aliases, action_evidence or delivery_text of that reveal. Do not change bare 'card' behavior, any decision-table ruling, or any other reveal.\n\nWHY: tests/test_reference_protected.py has a characterization test showing that in the held-transit-card case bare 'card' passes NarrationSafetyValidator (a single word escapes the multi-word leak scan) while 'the card' is refused through the unearned leak term of k_sl_1a_b_r0 (narration_known_term_leak). Removing 'the card' makes the two consistent.\n\nDO:\n1. Make the edit. First grep the whole package for any other leak_terms/aliases entry that is exactly 'the card' or another bare article+card phrase ('a card') and REPORT them without changing them.\n2. Update that characterization test to the new behavior: both 'card' and 'the card' pass in the held-transit-card case, and add assertions that 'memory card', 'hidden card' and 'Michelle's card' are still refused in 1A before k_sl_1a_b_r0 is earned. Rename the test if its name states the old inconsistency. Add the same still-refused assertions for 'taped beneath the drawer'.\n3. Regenerate .plans/disclosure-matrix.md and .json with scripts/disclosure_matrix.py exactly as tests/test_disclosure_matrix.py does, and update every other test, fixture or doc that encodes the old behavior (find them by running the whole suite). Add one dated line to .plans/disclosure-decisions.md recording the ruling.\n4. Run the package payload capture before and after (.plans/world-model-s1/prompt_capture.py, usage in its header, network stubbed) and report whether any payload changed.\n\nHOW TO RUN. Confirm `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` is inside this worktree. Iterate with `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_reference_protected.py tests/test_disclosure_matrix.py tests/test_guard_vocabulary.py tests/test_shared_knowledge_guards.py tests/test_leak_terms.py`, then the whole tests directory, then ruff check and ruff format --check (line length 120) on changed .py files.\n\nCOMPLETION RULE: the full suite must be green and ruff clean; never leave a failing test as out of scope. Finish by listing every pre-existing file you changed with a one-line reason, the pytest summary, the other 'the card'-style phrases found, and the payload capture result.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage5/check_the_card.sh",
+      "verified": "'the card' is no longer a guarded leak term of the memory-card reveal while the specific memory-card phrases stay guarded"
+    }
+  ]
+}

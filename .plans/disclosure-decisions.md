@@ -67,6 +67,7 @@ Still untested: legitimate reveals landing after the fix (the scripts avoid them
 
 ### Resolved 2026-10-17 (guard vocabulary)
 
+- 2026-10-17: `the card` is public in 1A; keep specific memory-card and taped-drawer phrases guarded until `k_sl_1a_b_r0` is earned.
 - The visible 1A house gate and visible 2A facility gate are fixed, scene-placed items with scene-local aliases.
 - Park bench is public ordinary vocabulary; its 1A reveal keeps the dead-drop, recording, and emergency-broadcast phrases guarded.
 - Infrastructure corridor is public as a place in 2A and 3B; the singular phrase no longer guards the corridor-access reveal, whose enter-corridor action evidence remains required.

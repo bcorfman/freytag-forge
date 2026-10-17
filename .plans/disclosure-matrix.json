@@ -1214,22 +1214,6 @@
       "available_scenes": [
         "1A"
       ],
-      "guard_kind": "leak_term",
-      "owner_ids": [
-        "k_sl_1a_b_r0"
-      ],
-      "requires": [],
-      "suggested_class": "public_candidate",
-      "term": "card",
-      "unlock_fact_ids": [
-        "memory_card_recovered"
-      ],
-      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
-    },
-    {
-      "available_scenes": [
-        "1A"
-      ],
       "guard_kind": "must_convey_phrase",
       "owner_ids": [
         "k_sl_1a_b_r0"
@@ -9804,25 +9788,8 @@
     },
     {
       "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
-      },
-      "earned": {
         "error_code": "",
         "verdict": "accepted"
-      },
-      "guard_kind": "leak_term",
-      "scene": "1A",
-      "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
-      },
-      "term": "card"
-    },
-    {
-      "early": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
       },
       "earned": {
         "error_code": "",
@@ -9831,8 +9798,8 @@
       "guard_kind": "must_convey_phrase",
       "scene": "1A",
       "skipped": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "term": "card"
     },
@@ -9842,8 +9809,8 @@
         "verdict": "rejected"
       },
       "earned": {
-        "error_code": "narration_known_term_leak",
-        "verdict": "rejected"
+        "error_code": "",
+        "verdict": "accepted"
       },
       "guard_kind": "must_convey_phrase",
       "scene": "1A",

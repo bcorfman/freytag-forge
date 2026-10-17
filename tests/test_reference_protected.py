@@ -127,12 +127,12 @@ def test_existing_terminal_and_seat_ambiguities_remain_fixed() -> None:
     assert clarification_text(seat.question) == "Do you mean the driver's seat or the passenger seat?"
 
 
-def test_characterization_held_transit_card_bare_and_article_guard_disagree() -> None:
-    """Characterization only: the memory-card leak term includes the article."""
+def test_held_transit_card_narration_allows_public_card_terms() -> None:
+    """A public transit card is not blocked by the hidden memory-card vocabulary."""
     import pytest
 
     from storygame.runtime.contracts import NarrationSegment, ResolvedTurnProposal
-    from storygame.runtime.knowledge import KnowledgeGuards, KnowledgeProjector
+    from storygame.runtime.knowledge import KnowledgeProjector
     from storygame.runtime.narration_safety import NarrationSafetyValidator
     from storygame.runtime.validation import ProposalValidationError
     from storygame.runtime.world_model import world_for
@@ -143,22 +143,25 @@ def test_characterization_held_transit_card_bare_and_article_guard_disagree() ->
     from storygame.story_package.loader import guarded_narration_terms
 
     assert "card" not in guarded_narration_terms(indexes)
-    assert "k_sl_1a_b_r0" in indexes.leak_term_to_knowledge["the card"]
-    assert KnowledgeGuards(state).unearned(indexes.leak_term_to_knowledge["the card"])
+    assert "the card" not in indexes.leak_term_to_knowledge
     validator = NarrationSafetyValidator()
-    validator.validate(
-        state,
-        state,
-        ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text="card"),)),
-        KnowledgeProjector(),
-        "Use the transit card.",
-    )
-    with pytest.raises(ProposalValidationError, match="unavailable knowledge 'the card'") as rejected:
+
+    for text in ("card", "the card"):
         validator.validate(
             state,
             state,
-            ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text="the card"),)),
+            ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text=text),)),
             KnowledgeProjector(),
             "Use the transit card.",
         )
-    assert rejected.value.code == "narration_known_term_leak"
+
+    for text in ("memory card", "hidden card", "Michelle's card", "taped beneath the drawer"):
+        with pytest.raises(ProposalValidationError, match="unavailable knowledge") as rejected:
+            validator.validate(
+                state,
+                state,
+                ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text=text),)),
+                KnowledgeProjector(),
+                "Use the transit card.",
+            )
+        assert rejected.value.code == "narration_known_term_leak"
