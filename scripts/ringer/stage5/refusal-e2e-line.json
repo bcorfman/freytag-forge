@@ -1,0 +1,22 @@
+{
+  "run_name": "stage5-refusal-e2e-line",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage5-refusal-e2e-line",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "e2e-fixed-lines",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": ["-c", "model_reasoning_effort=high"],
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 600,
+      "spec": "You are a code worker. Your current working directory IS a git worktree of freytag-forge; edit files here directly. Do NOT git commit. You own ONLY frontend/e2e/scene-runtime.spec.js, frontend/e2e/knowledge-timeline-record.js (the module imported by frontend/e2e/knowledge-timeline-record.test.js; find it by reading that test's imports) and frontend/e2e/knowledge-timeline-record.test.js. Touch nothing else. Never run Playwright or anything billed or networked.\n\nBACKGROUND. The player-facing refusal line was split in commit 04fbd28e (storygame/runtime/validation.py): three fixed lines now exist: \"I don't understand. Can you try something else?\" (generic), \"I don't see the item you're referring to.\" (guard rejection of a term the player typed) and \"Nothing comes of that. Try something else.\" (guard rejection of a narrator-only term after retry). In frontend/e2e/scene-runtime.spec.js (~line 475) the @knowledge-timeline test computes `diagnosticDetailExposed` as `attempt_bundle in body || visibleLine !== \"I don't understand. Can you try something else?\"`. That now misreports a guard rejection showing one of the other two fixed lines as 'detail exposed'. Its meaning must be: the visible line is NOT one of the three fixed lines (or the body carries attempt_bundle).\n\nFIX. Add and export in the record module a constant FIXED_REFUSAL_LINES (the three exact strings above) and a function isFixedRefusalLine(line) (trimmed exact match). Use it in scene-runtime.spec.js: diagnosticDetailExposed = has attempt_bundle || !isFixedRefusalLine(visibleLine). Keep the existing leak-free assertions. Then review knowledge-timeline-record.test.js (~line 59): its contract fixture hard-codes the generic line and diagnostic_detail_exposed true; keep it valid and add node tests for isFixedRefusalLine: each of the three lines true, a trimmed-with-whitespace variant true, 'selected knowledge is not eligible for this turn' false, empty string false. Grep frontend/e2e and frontend/src for any other place that compares a visible refusal line to the generic string and report (do not change files you do not own; list them in your final message).\n\nHOW TO RUN. cd frontend && node --test e2e/knowledge-timeline-record.test.js, then npm test is NOT required (node_modules may be absent); use node --check frontend/e2e/scene-runtime.spec.js for syntax. Finish by listing files changed, pasting the node test summary and any other hard-coded-line locations found.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/stage5/check_refusal_e2e_line.sh",
+      "verified": "the hosted timeline test no longer treats a guard-rejection fixed line as exposed detail"
+    }
+  ]
+}

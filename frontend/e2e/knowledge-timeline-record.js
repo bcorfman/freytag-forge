@@ -1,3 +1,13 @@
+export const FIXED_REFUSAL_LINES = [
+  "I don't understand. Can you try something else?",
+  "I don't see the item you're referring to.",
+  "Nothing comes of that. Try something else.",
+];
+
+export function isFixedRefusalLine(line) {
+  return typeof line === "string" && FIXED_REFUSAL_LINES.includes(line.trim());
+}
+
 function asArray(value) {
   return Array.isArray(value) ? value : [];
 }

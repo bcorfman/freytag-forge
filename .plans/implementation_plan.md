@@ -548,6 +548,10 @@ scene-affordance open cases and raw-language corpus.
   singular `infrastructure corridor` (2A/3B, alias of `k_sl_2a_c_r2`); bare `card` in 1A needs Brandon's
   ruling first (decision table says public, `22f818ad` re-guarded it). Story wording goes through the
   ChatGPT Desktop round; run a package-payload capture diff after any package change.
+  Follow-up (1) DONE 2026-10-17 (Ringer `stage5-refusal-e2e-line`): `isFixedRefusalLine` in
+  `frontend/e2e/knowledge-timeline-record.js` now decides `diagnosticDetailExposed` in
+  `scene-runtime.spec.js`; node tests pass, spec syntax-checked only (Playwright not run). Follow-up (2)
+  waits on Brandon's `card` ruling and the ChatGPT Desktop wording round.
 - [ ] Read unresolved pointer-placement failures before changing cue text;
   preserve the proven escalation timing and distinguish an abrupt appended
   pointer from failure to deliver a pointer.

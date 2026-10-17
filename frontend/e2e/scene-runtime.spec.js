@@ -9,7 +9,7 @@ import {
   writeCategoryReport,
 } from "./helpers.js";
 import { canonTurnBudget, loadPackagePacing } from "./package-clock.js";
-import { buildKnowledgeTimelineReport, recordTurnOutcome } from "./knowledge-timeline-record.js";
+import { buildKnowledgeTimelineReport, isFixedRefusalLine, recordTurnOutcome } from "./knowledge-timeline-record.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts } from "./canon-journey.js";
 import { attributeNarration, eligibleAuthoredTexts, loadAuthoredText } from "./authored-spans.js";
@@ -472,7 +472,7 @@ test("preserves the Scene 1A knowledge timeline @knowledge-timeline", async ({ p
   const visibleLine = (await page.locator("#transcript .entry-system").last().textContent())?.trim() || "";
   const diagnosticDetailExposed =
     Object.prototype.hasOwnProperty.call(invalid.body || {}, "attempt_bundle") ||
-    visibleLine !== "I don't understand. Can you try something else?";
+    !isFixedRefusalLine(visibleLine);
   expect(visibleLine).not.toBe("");
   expect(visibleLine).not.toMatch(/k_future_invalid|\bk_[a-z0-9_]+\b|janus|protected/i);
   expect(invalid.headers["x-freytag-rejection-code"]).toBe("ineligible_selection");
