@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
@@ -7,7 +8,7 @@ from types import SimpleNamespace
 import door_transition
 import pytest
 from check_door_probe import check
-from door_probe import EXPERIMENTS, dry_run
+from door_probe import EXPERIMENTS, dry_run, live_run
 from door_transport import SpendBudget
 
 
@@ -150,3 +151,54 @@ def test_transition_caps_and_existing_configs_are_unchanged():
 def test_transition_dry_artifacts_validate(tmp_path):
     dry_run(tmp_path, 1, "transition")
     assert check(tmp_path, 1, "dry", "transition") == []
+
+
+def test_transition_live_artifacts_validate_with_stubs(monkeypatch, tmp_path):
+    """Exercise live_run end to end without a provider, player, or network call."""
+    import door_probe
+
+    monkeypatch.setenv("DOOR_LEDGER_PATH", str(tmp_path / "ledger.jsonl"))
+
+    class Provider:
+        semantic_ask = None
+        request_count = 0
+        recovery_count = 0
+
+        def _request(self, payload):  # pragma: no cover - raw request is stubbed
+            return payload
+
+    def raw_request_stub(provider, system, user, budget):
+        budget.reserve("cloudflare", "raw_2A")
+        budget.acknowledge("cloudflare", True)
+        return SimpleNamespace(proposal=SimpleNamespace(narration="stub narration"), item_facts=[])
+
+    def ask_player_stub(screen, budget):
+        budget.reserve("raw_player")
+        budget.acknowledge("raw_player", True)
+        return "stub command"
+
+    def continuation_stub(variation_path, first_command, screen, budget, max_commands):
+        return {
+            "final_scene": "2B",
+            "ended_by": "none",
+            "transition_turn": None,
+            "commands": [first_command],
+            "responses": ["stub response"],
+            "clarification_turns": [],
+            "committed_reveals_by_turn": [[]],
+            "panel_named": False,
+            "turn_statuses": ["unearned"],
+            "request_count": 0,
+            "recovery_count": 0,
+        }
+
+    monkeypatch.setattr(door_probe, "raw_request", raw_request_stub)
+    monkeypatch.setattr(door_probe, "_ask_player", ask_player_stub)
+    monkeypatch.setattr(door_probe, "provider_for", lambda state, variation: Provider())
+    monkeypatch.setattr("door_transition.run_continuation", continuation_stub)
+
+    live_run(tmp_path, 1, "transition")
+
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["max_commands"] == 20
+    assert check(tmp_path, 1, "artifacts", "transition") == []

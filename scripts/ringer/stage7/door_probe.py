@@ -524,6 +524,7 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
             "raw_player_attempts": budget.raw_player_attempts,
             "acknowledged": budget.acknowledged,
             "caps": caps,
+            **({"max_commands": config["max_commands"]} if experiment == "transition" else {}),
             "cap_arithmetic": {
                 "cloudflare_remaining": caps["cloudflare"] - budget.cloudflare_requests,
                 "player_remaining": caps["player"] - budget.raw_player_attempts,
