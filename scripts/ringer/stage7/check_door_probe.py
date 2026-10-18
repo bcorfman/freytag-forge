@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
 from door_continuation import _matches_all
-from door_prompt import ARMS, patch_prompt, select_prompt
+from door_probe import EXPERIMENTS
+from door_prompt import patch_prompt, select_prompt
 
 from bench.core import ledger_rows
 
@@ -21,11 +23,11 @@ def _spend(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def _check_rows(rows: list[dict[str, Any]], n: int, live: bool, errors: list[str]) -> None:
-    expected = len(ARMS) * n
+def _check_rows(rows: list[dict[str, Any]], n: int, live: bool, arms: tuple[str, ...], errors: list[str]) -> None:
+    expected = len(arms) * n
     if len(rows) != expected:
         errors.append(f"results.json: expected {expected} rows, found {len(rows)}")
-    expected_order = [(rep, arm) for rep in range(1, n + 1) for arm in ARMS]
+    expected_order = [(rep, arm) for rep in range(1, n + 1) for arm in arms]
     if [(row.get("rep"), row.get("arm")) for row in rows] != expected_order:
         errors.append("results.json: rows are not unique rep-major rows in the required arm order")
     if len({row.get("row_id") for row in rows}) != len(rows):
@@ -56,8 +58,161 @@ def _check_rows(rows: list[dict[str, Any]], n: int, live: bool, errors: list[str
                 errors.append(f"{row.get('row_id')}: turn {index + 1} matcher result differs from saved evidence")
 
 
-def check(out: Path, n: int, mode: str) -> list[str]:
+def _canonical_row_hash(row: dict[str, Any]) -> str:
+    body = json.dumps(row, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+POSITIVE_FIELDS = (
+    "upstream_invention",
+    "downstream_new_invention",
+    "inherited_invention",
+    "player_pursuit",
+    "premature_disclosure",
+    "contradictory_delivery",
+)
+REVIEW_FIELDS = POSITIVE_FIELDS + ("earned_by_command_2",)
+
+
+def _row_text(row: dict[str, Any]) -> str:
+    values = [row.get("screen", ""), row.get("responses", []), row.get("commands", [])]
+    return json.dumps(values, ensure_ascii=False)
+
+
+def _check_reviewed(out: Path, rows: list[dict[str, Any]], n: int, arms: tuple[str, ...], errors: list[str]) -> None:
+    verdicts: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        path = out / "verdicts" / f"{row['row_id']}.json"
+        if not path.exists():
+            errors.append(f"{path}: missing review verdict")
+            continue
+        try:
+            verdict = _read(path)
+        except Exception as exc:
+            errors.append(f"{path}: malformed verdict: {exc}")
+            continue
+        verdicts[row["row_id"]] = verdict
+        if verdict.get("row_id") != row["row_id"]:
+            errors.append(f"{path}: row_id field does not match row")
+        if verdict.get("row_hash") != _canonical_row_hash(row):
+            errors.append(f"{path}: row_hash field does not match canonical row")
+        if not isinstance(verdict.get("reviewer"), str) or not verdict["reviewer"]:
+            errors.append(f"{path}: reviewer field must be a nonempty string")
+        evidence = verdict.get("evidence")
+        if not isinstance(evidence, dict):
+            errors.append(f"{path}: evidence field must be an object")
+            evidence = {}
+        text = _row_text(row)
+        for field in REVIEW_FIELDS:
+            value = verdict.get(field)
+            if value not in (True, False, "needs_review"):
+                errors.append(f"{path}: {field} field must be true, false, or needs_review")
+            if value is True and field in POSITIVE_FIELDS:
+                quote = evidence.get(field)
+                if not isinstance(quote, str) or not quote or quote not in text:
+                    errors.append(f"{path}: evidence.{field} must be a nonempty exact quote in row text")
+        earned = any(turn.get("status") == "earned" for turn in row.get("continuation", {}).get("turns", [])[:2])
+        if verdict.get("earned_by_command_2") is not earned:
+            errors.append(f"{path}: earned_by_command_2 field disagrees with continuation turns")
+    if errors:
+        return
+    counts = {
+        arm: {field: 0 for field in ("earned", "unsupported_access", "premature_disclosure", "contradictory_delivery")}
+        for arm in arms
+    }
+    for row in rows:
+        verdict = verdicts[row["row_id"]]
+        arm_counts = counts[row["arm"]]
+        if verdict["earned_by_command_2"]:
+            arm_counts["earned"] += 1
+        if any(verdict[field] for field in ("upstream_invention", "downstream_new_invention", "player_pursuit")):
+            arm_counts["unsupported_access"] += 1
+        if verdict["premature_disclosure"]:
+            arm_counts["premature_disclosure"] += 1
+        if verdict["contradictory_delivery"]:
+            arm_counts["contradictory_delivery"] += 1
+    summary_path = out / "review-summary.json"
+    if not summary_path.exists():
+        return
+    try:
+        review_summary = _read(summary_path)
+    except Exception as exc:
+        errors.append(f"{summary_path}: malformed review summary: {exc}")
+        return
+    saved = review_summary.get("arms")
+    if not isinstance(saved, dict):
+        errors.append(f"{summary_path}: arms field must be an object")
+        return
+    for arm in arms:
+        entry = saved.get(arm)
+        if not isinstance(entry, dict):
+            errors.append(f"{summary_path}: arms.{arm} field is missing or not an object")
+            continue
+        for field, value in counts[arm].items():
+            if entry.get(field) != value:
+                errors.append(f"{summary_path}: arms.{arm}.{field} disagrees with verdicts")
+        decision = entry.get("decision")
+        if n != 12:
+            expected_decision = "not_decided"
+        else:
+            control_earned = counts["control"]["earned"]
+            expected_decision = (
+                "wins"
+                if counts[arm]["earned"] >= 10
+                and counts[arm]["unsupported_access"] <= 2
+                and counts[arm]["premature_disclosure"] == 0
+                and counts[arm]["contradictory_delivery"] == 0
+                and counts[arm]["earned"] > control_earned
+                else "does_not_win"
+            )
+        if decision != expected_decision:
+            errors.append(f"{summary_path}: arms.{arm}.decision disagrees with screen rule")
+
+
+def _check_completion(source: dict[str, Any], rows: list[dict[str, Any]], live: bool, errors: list[str]) -> None:
+    prompts = source.get("prompts", {})
+    control = prompts.get("control", {})
+    no_finish = prompts.get("no-finish", {})
+    line = "Finish each action the player gives.\n"
+    control_system = control.get("system")
+    no_finish_system = no_finish.get("system")
+    if not isinstance(control_system, str) or not isinstance(no_finish_system, str):
+        errors.append("completion prompts: control and no-finish systems must be strings")
+        return
+    if control.get("hashes", {}).get("system") != control.get("hashes", {}).get("original_system"):
+        errors.append("completion control: system hash differs from original_system hash")
+    if control_system.count(line) != 1:
+        errors.append("completion control: finish instruction does not occur exactly once")
+    if no_finish.get("original_system") != control.get("original_system"):
+        errors.append("completion: original systems differ across arms")
+    expected_no_finish = control_system.replace(line, "", 1)
+    if no_finish_system != expected_no_finish:
+        errors.append("completion no-finish: system is not exactly control minus the finish instruction")
+    if no_finish.get("system_diff") == control.get("system_diff"):
+        errors.append("completion no-finish: system diff is not distinct from control")
+    for field in ("user", "original_user"):
+        if control.get("hashes", {}).get(field) != no_finish.get("hashes", {}).get(field):
+            errors.append(f"completion: {field} hashes differ across arms")
+    bridge = source.get("bridge", {})
+    if not isinstance(bridge.get("bridge"), str) or not isinstance(bridge.get("entry"), str):
+        errors.append("completion: bridge and entry must be strings")
+    if live:
+        fixed = bridge.get("fixed")
+        if not isinstance(fixed, str):
+            errors.append("completion: fixed bridge/entry suffix is missing")
+        else:
+            for row in rows:
+                if not isinstance(row.get("screen"), str) or not row["screen"].endswith(fixed):
+                    errors.append(f"{row.get('row_id')}: authored bridge/entry differs from completion control")
+
+
+def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
     errors: list[str] = []
+    try:
+        config = EXPERIMENTS[experiment]
+    except KeyError:
+        return [f"run.json: unknown experiment {experiment}"]
+    arms = config["arms"]
     required = (
         "run.json",
         "prompts",
@@ -80,13 +235,17 @@ def check(out: Path, n: int, mode: str) -> list[str]:
         events = _spend(out / "spend.jsonl")
     except Exception as exc:
         return [f"{out}: malformed artifact: {exc}"]
-    live = mode != "dry"
+    live = mode == "artifacts" or (mode == "reviewed" and run.get("mode") == "live")
     if mode == "dry" and run.get("mode") != "dry":
         errors.append("run.json: expected dry mode for dry checker")
-    if live and run.get("mode") != "live":
+    if mode == "artifacts" and run.get("mode") != "live":
         errors.append("run.json: expected live mode for artifacts checker")
-    _check_rows(rows, n, live, errors)
-    expected = len(ARMS) * n
+    if run.get("experiment", "door") != experiment:
+        errors.append("run.json: experiment field does not match selected experiment")
+    if run.get("arms") != list(arms):
+        errors.append("run.json: arms field does not match selected experiment")
+    _check_rows(rows, n, live, arms, errors)
+    expected = len(arms) * n
     if summary.get("n") != n or summary.get("rows", summary.get("planned_rows")) != len(rows):
         errors.append("summary.json: row count disagrees with N/results")
     if mode == "dry" and summary.get("planned_rows") != expected:
@@ -119,15 +278,14 @@ def check(out: Path, n: int, mode: str) -> list[str]:
     selection = select_prompt()
     source = _read(out / "source-before.json")
     prompts = source.get("prompts", {})
-    for arm in ("control", "review", "stale-scene", "wording"):
-        expected_prompt = patch_prompt(selection, arm)
+    for arm in arms:
+        expected_prompt = patch_prompt(selection, arm, experiment)
         if prompts.get(arm, {}).get("hashes") != expected_prompt["hashes"]:
             errors.append(f"prompts/{arm}: prompt hashes differ from fixture")
+    if experiment == "completion":
+        _check_completion(source, rows, live, errors)
     if mode == "reviewed":
-        for row in rows:
-            verdict = out / "verdicts" / f"{row['row_id']}.json"
-            if not verdict.exists():
-                errors.append(f"{verdict}: missing review verdict")
+        _check_reviewed(out, rows, n, arms, errors)
     return errors
 
 
@@ -136,12 +294,13 @@ def main() -> int:
     parser.add_argument("out", type=Path)
     parser.add_argument("n", type=int)
     parser.add_argument("--mode", choices=("dry", "artifacts", "reviewed"), required=True)
+    parser.add_argument("--experiment", choices=tuple(EXPERIMENTS), default="door")
     args = parser.parse_args()
-    errors = check(args.out, args.n, args.mode)
+    errors = check(args.out, args.n, args.mode, args.experiment)
     if errors:
         print("\n".join(errors))
         return 1
-    print(f"door probe {args.mode} artifacts valid: {len(ARMS) * args.n} rows")
+    print(f"door probe {args.mode} artifacts valid: {len(EXPERIMENTS[args.experiment]['arms']) * args.n} rows")
     return 0
 
 

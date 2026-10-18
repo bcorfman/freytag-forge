@@ -16,7 +16,15 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from door_continuation import action_groups, score_command  # noqa: E402
-from door_prompt import ARMS, PROMPT_FIXTURE, patch_prompt, prompt_plan, recorded_transition, select_prompt  # noqa: E402
+from door_prompt import (  # noqa: E402
+    ARMS,
+    PROMPT_EXPERIMENTS,
+    PROMPT_FIXTURE,
+    patch_prompt,
+    prompt_plan,
+    recorded_transition,
+    select_prompt,
+)  # noqa: E402
 from door_transport import RawRequestError, SpendBudget, counted_provider, raw_request  # noqa: E402
 
 from bench.core import (  # noqa: E402
@@ -29,6 +37,8 @@ from storygame.runtime.contracts import NarrationSegment, join_narration  # noqa
 from storygame.runtime.engine import RuntimeEngine  # noqa: E402
 
 CAPS = {1: {"raw": 4, "cloudflare": 28, "player": 12}, 12: {"raw": 48, "cloudflare": 336, "player": 144}}
+SOURCE_CAPS = {1: {"raw": 3, "cloudflare": 15, "player": 6}, 12: {"raw": 36, "cloudflare": 180, "player": 72}}
+COMPLETION_CAPS = {1: {"raw": 2, "cloudflare": 10, "player": 4}, 12: {"raw": 24, "cloudflare": 120, "player": 48}}
 VARIATIONS = {
     "control": "stage7-door-control.json",
     "review": "stage7-door-review.json",
@@ -37,6 +47,28 @@ VARIATIONS = {
     "fixed-control": "stage7-door-control.json",
     "bridge": "stage7-door-bridge.json",
 }
+SOURCE_VARIATIONS = {
+    "control": "stage7-door-control.json",
+    "location": "stage7-door-source-location.json",
+    "limits": "stage7-door-source-limits.json",
+}
+COMPLETION_VARIATIONS = {"control": "stage7-door-control.json", "no-finish": "stage7-door-control.json"}
+EXPERIMENTS = {
+    "door": {"arms": ARMS, "variations": VARIATIONS, "caps": CAPS},
+    "source": {"arms": PROMPT_EXPERIMENTS["source"]["arms"], "variations": SOURCE_VARIATIONS, "caps": SOURCE_CAPS},
+    "completion": {
+        "arms": PROMPT_EXPERIMENTS["completion"]["arms"],
+        "variations": COMPLETION_VARIATIONS,
+        "caps": COMPLETION_CAPS,
+    },
+}
+
+
+def experiment_config(experiment: str) -> dict[str, Any]:
+    try:
+        return EXPERIMENTS[experiment]
+    except KeyError as error:
+        raise ValueError(f"unknown experiment {experiment}") from error
 
 
 def atomic_json(path: Path, value: Any) -> None:
@@ -94,13 +126,15 @@ def bridge_material() -> dict[str, Any]:
     }
 
 
-def build_source(out: Path) -> dict[str, Any]:
+def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
+    config = experiment_config(experiment)
     selection = select_prompt()
-    prompts = {arm: patch_prompt(selection, arm) for arm in ("control", "review", "stale-scene", "wording")}
+    prompts = {arm: patch_prompt(selection, arm, experiment) for arm in config["arms"]}
     bridge = bridge_material()
     source = {
         "prompt_fixture": str(PROMPT_FIXTURE),
         "prompt_hash": hashlib.sha256(PROMPT_FIXTURE.read_bytes()).hexdigest(),
+        "experiment": experiment,
         "prompts": prompts,
         "bridge": bridge,
     }
@@ -109,16 +143,18 @@ def build_source(out: Path) -> dict[str, Any]:
     return source
 
 
-def dry_run(out: Path, n: int) -> None:
-    source = build_source(out)
+def dry_run(out: Path, n: int, experiment: str = "door") -> None:
+    config = experiment_config(experiment)
+    caps = config["caps"][n]
+    source = build_source(out, experiment)
     (out / "prompts").mkdir(exist_ok=True)
     for arm, value in source["prompts"].items():
         atomic_json(out / "prompts" / f"{arm}.json", value)
     groups = action_groups()
     plans = []
-    for rep, arm in prompt_plan():
-        variation = VARIATIONS[arm]
-        if arm in ("fixed-control", "bridge"):
+    for rep, arm in prompt_plan(experiment, n):
+        variation = config["variations"][arm]
+        if experiment == "door" and arm in ("fixed-control", "bridge"):
             screen = source["bridge"]["control_screen" if arm == "fixed-control" else "bridge_screen"]
         else:
             screen = f"<generated narrator screen for {arm}>"
@@ -139,9 +175,10 @@ def dry_run(out: Path, n: int) -> None:
         {
             "mode": "dry",
             "n": n,
-            "arms": list(ARMS),
+            "experiment": experiment,
+            "arms": list(config["arms"]),
             "order": "rep-major",
-            "caps": CAPS[n],
+            "caps": caps,
             "experiment_id": str(uuid.uuid4()),
         },
     )
@@ -151,15 +188,17 @@ def dry_run(out: Path, n: int) -> None:
             "mode": "dry",
             "planned_rows": len(plans),
             "n": n,
-            "caps": CAPS[n],
-            "cloudflare_max": CAPS[n]["cloudflare"],
-            "raw_player_max": CAPS[n]["player"],
+            "experiment": experiment,
+            "caps": caps,
+            "cloudflare_max": caps["cloudflare"],
+            "raw_player_max": caps["player"],
         },
     )
     (out / "spend.jsonl").write_text("", encoding="utf-8")
     (out / "verdicts").mkdir(exist_ok=True)
     notes = (
-        "Offline dry run only. Six arms are planned in rep-major order; no provider, player, credentials, or network "
+        f"Offline dry run only. {len(config['arms'])} arms are planned in rep-major order; no provider, player, "
+        "credentials, or network "
         "call is used. Prompt hashes, exact diffs, fixed bridge reconstruction, bridge deletion, eligible 2B evidence "
         "IDs, and cap arithmetic are recorded in source and plan artifacts. Live execution remains outside this free "
         "artifact.\n"
@@ -232,21 +271,23 @@ def _continue(
         provider.semantic_ask = previous
 
 
-def live_run(out: Path, n: int) -> None:
-    source = build_source(out)
+def live_run(out: Path, n: int, experiment: str = "door") -> None:
+    config = experiment_config(experiment)
+    caps = config["caps"][n]
+    source = build_source(out, experiment)
     (out / "prompts").mkdir(exist_ok=True)
     for arm, value in source["prompts"].items():
         atomic_json(out / "prompts" / f"{arm}.json", value)
-    budget = SpendBudget(CAPS[n]["cloudflare"], cloudflare_limit=CAPS[n]["cloudflare"], player_limit=CAPS[n]["player"])
+    budget = SpendBudget(caps["cloudflare"], cloudflare_limit=caps["cloudflare"], player_limit=caps["player"])
     rows = []
     for rep in range(1, n + 1):
-        for arm in ARMS:
-            if arm in ("fixed-control", "bridge"):
+        for arm in config["arms"]:
+            if experiment == "door" and arm in ("fixed-control", "bridge"):
                 screen = source["bridge"]["control_screen" if arm == "fixed-control" else "bridge_screen"]
                 continuation_path = ROOT / "bench/variations/stage7-door-control.json"
             else:
                 prompt = source["prompts"][arm]
-                variation_path = ROOT / "bench/variations" / VARIATIONS[arm]
+                variation_path = ROOT / "bench/variations" / config["variations"][arm]
                 variation = load_variation(variation_path)
                 _, state = package_and_state(variation, "2A")
                 try:
@@ -297,7 +338,9 @@ def live_run(out: Path, n: int) -> None:
                     "after_facts": continuation["final_facts"],
                     "recovery_status": [turn.get("status") for turn in continuation["turns"]],
                     "continuation": continuation,
-                    "item_facts": raw.item_facts if arm not in ("fixed-control", "bridge") else None,
+                    "item_facts": raw.item_facts
+                    if not (experiment == "door" and arm in ("fixed-control", "bridge"))
+                    else None,
                     "status": "ok",
                 }
             )
@@ -309,9 +352,10 @@ def live_run(out: Path, n: int) -> None:
         {
             "mode": "live",
             "n": n,
-            "arms": list(ARMS),
+            "experiment": experiment,
+            "arms": list(config["arms"]),
             "order": "rep-major",
-            "caps": CAPS[n],
+            "caps": caps,
             "experiment_id": experiment_id,
             "ledger_path": str(ledger_path),
             "hashes": {
@@ -328,16 +372,16 @@ def live_run(out: Path, n: int) -> None:
             "experiment_id": experiment_id,
             "status": "ok",
             "rows": len(rows),
-            "planned_rows": len(ARMS) * n,
+            "planned_rows": len(config["arms"]) * n,
             "cloudflare_requests": budget.cloudflare_requests,
             "raw_player_attempts": budget.raw_player_attempts,
             "acknowledged": budget.acknowledged,
-            "caps": CAPS[n],
+            "caps": caps,
             "cap_arithmetic": {
-                "cloudflare_remaining": CAPS[n]["cloudflare"] - budget.cloudflare_requests,
-                "player_remaining": CAPS[n]["player"] - budget.raw_player_attempts,
+                "cloudflare_remaining": caps["cloudflare"] - budget.cloudflare_requests,
+                "player_remaining": caps["player"] - budget.raw_player_attempts,
             },
-            "arms": {arm: {"rows": sum(row["arm"] == arm for row in rows)} for arm in ARMS},
+            "arms": {arm: {"rows": sum(row["arm"] == arm for row in rows)} for arm in config["arms"]},
         },
     )
     (out / "spend.jsonl").write_text("\n".join(json.dumps(event) for event in budget.events) + "\n", encoding="utf-8")
@@ -352,8 +396,8 @@ def live_run(out: Path, n: int) -> None:
             "score_metric": "door_prompt_screen",
             "cloudflare_requests": budget.cloudflare_requests,
             "raw_player_attempts": budget.raw_player_attempts,
-            "request_cap": CAPS[n]["cloudflare"],
-            "player_cap": CAPS[n]["player"],
+            "request_cap": caps["cloudflare"],
+            "player_cap": caps["player"],
         },
         ledger_path,
     )
@@ -371,20 +415,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--confirm", action="store_true")
+    parser.add_argument("--experiment", choices=tuple(EXPERIMENTS), default="door")
     args = parser.parse_args(argv)
-    if args.n not in CAPS:
+    if args.n not in EXPERIMENTS[args.experiment]["caps"]:
         parser.error("--n must be 1 or 12")
     out = args.out if args.out.is_absolute() else ROOT / args.out
     if out.exists() and any(out.iterdir()):
         raise SystemExit(f"output directory must be absent or empty: {out}")
     out.mkdir(parents=True, exist_ok=True)
     if args.dry_run:
-        dry_run(out, args.n)
+        dry_run(out, args.n, args.experiment)
         return 0
     if not args.confirm:
         raise SystemExit("--confirm is mandatory for live execution")
     try:
-        live_run(out, args.n)
+        live_run(out, args.n, args.experiment)
     except Exception as error:
         (out / "run-failure.txt").write_text(str(error) + "\n", encoding="utf-8")
         raise

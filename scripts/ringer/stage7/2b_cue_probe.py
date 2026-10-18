@@ -20,9 +20,21 @@ from storygame.runtime.candidate_matcher import _matches_all
 from storygame.runtime.engine import RuntimeEngine
 
 ARMS = (
-    ("stage7-2b-cue-control", ROOT / "bench/variations/stage7-2b-cue-control.json", "Selection files fill the archive terminals. Government and financial records sit open beside them."),
-    ("stage7-2b-cue-b", ROOT / "bench/variations/stage7-2b-cue-b.json", "Selection files fill the archive terminals. Michelle's file is one of them."),
-    ("stage7-2b-cue-c", ROOT / "bench/variations/stage7-2b-cue-c.json", "Selection files fill the archive terminals. One file carries Michelle's name, and another carries Kristin's."),
+    (
+        "stage7-2b-cue-control",
+        ROOT / "bench/variations/stage7-2b-cue-control.json",
+        "Selection files fill the archive terminals. Government and financial records sit open beside them.",
+    ),
+    (
+        "stage7-2b-cue-b",
+        ROOT / "bench/variations/stage7-2b-cue-b.json",
+        "Selection files fill the archive terminals. Michelle's file is one of them.",
+    ),
+    (
+        "stage7-2b-cue-c",
+        ROOT / "bench/variations/stage7-2b-cue-c.json",
+        "Selection files fill the archive terminals. One file carries Michelle's name, and another carries Kristin's.",
+    ),
 )
 COMMAND = "Examine the unmarked door, keycard reader, and ventilation grille."
 PLAYER_SCRIPT = ROOT / "scripts/ringer/stage7/2b_ask_player.mjs"
@@ -80,7 +92,9 @@ def narration_for(variation_path: Path) -> str:
     return proposal.narration
 
 
-def write_summary(out: Path, n: int, rows: list[dict[str, Any]], narration_calls: int, player_calls: int) -> dict[str, Any]:
+def write_summary(
+    out: Path, n: int, rows: list[dict[str, Any]], narration_calls: int, player_calls: int
+) -> dict[str, Any]:
     arms: dict[str, Any] = {}
     for arm, _, _ in ARMS:
         arm_rows = [row for row in rows if row["arm"] == arm]
@@ -128,14 +142,20 @@ def main() -> int:
     screen = f"{transcript}\n\n> {COMMAND}\n\n"
     if args.dry_run:
         arm, variation, cue = ARMS[0]
-        print(json.dumps({
-            "arm": arm,
-            "bench_prompt_path_plan": str(variation),
-            "scene": "2B",
-            "entry_state": "bare",
-            "script_input": COMMAND,
-            "player_prompt": {"transcript": screen + f"<narration from {arm}; cue: {cue}>", "status": ""},
-        }, indent=2, ensure_ascii=False))
+        print(
+            json.dumps(
+                {
+                    "arm": arm,
+                    "bench_prompt_path_plan": str(variation),
+                    "scene": "2B",
+                    "entry_state": "bare",
+                    "script_input": COMMAND,
+                    "player_prompt": {"transcript": screen + f"<narration from {arm}; cue: {cue}>", "status": ""},
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
         return 0
 
     rows: list[dict[str, Any]] = []
@@ -156,17 +176,26 @@ def main() -> int:
                 # One invocation is one player call from this probe's point of
                 # view. The helper itself owns its permitted validation retry.
                 player_calls += 1
-                matched = sorted(identifier for identifier, evidence in groups.items() if _matches_all(evidence, command))
-                rows.append({
-                    "arm": arm,
-                    "rep": rep,
-                    "narration": narration,
-                    "cue_visible": visible,
-                    "command": command,
-                    "matched": matched,
-                    "mentions_invention": any(word in command.casefold() for word in ("door", "keycard", "grille", "inspector", "credentials")),
-                })
-                (out / "results.json").write_text(json.dumps(rows, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+                matched = sorted(
+                    identifier for identifier, evidence in groups.items() if _matches_all(evidence, command)
+                )
+                rows.append(
+                    {
+                        "arm": arm,
+                        "rep": rep,
+                        "narration": narration,
+                        "cue_visible": visible,
+                        "command": command,
+                        "matched": matched,
+                        "mentions_invention": any(
+                            word in command.casefold()
+                            for word in ("door", "keycard", "grille", "inspector", "credentials")
+                        ),
+                    }
+                )
+                (out / "results.json").write_text(
+                    json.dumps(rows, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+                )
     except Exception as error:
         (out / "results.json").write_text(json.dumps(rows, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         (out / "run-failure.txt").write_text(str(error), encoding="utf-8")

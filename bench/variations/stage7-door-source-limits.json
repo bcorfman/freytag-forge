@@ -1,0 +1,24 @@
+{
+  "name": "stage7-door-source-limits",
+  "story_package": "data/stories/continuity-initiative",
+  "scripts": {
+    "2A": [
+      {
+        "name": "recorded-turn-7",
+        "inputs": [
+          "Look for a concealed route or access panel leading from the service corridors to the detention area."
+        ]
+      }
+    ]
+  },
+  "overrides": {
+    "knowledge.yaml": {
+      "replacements": [
+        {
+          "old": "  statement: Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility and its limited inspection console.",
+          "new": "  statement: \"Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility and its limited inspection console. Kristin notes its limits before they move on: it can report faults and cycle noncritical systems, but it cannot open detention cells or alter the main flood controls.\""
+        }
+      ]
+    }
+  }
+}

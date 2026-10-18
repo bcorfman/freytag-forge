@@ -7,10 +7,11 @@ from pathlib import Path
 import pytest
 from check_door_probe import check
 from door_continuation import action_groups, matched_ids
-from door_probe import bridge_material, dry_run, write_failed_response
-from door_prompt import ARMS, COMMAND, patch_prompt, prompt_plan, select_prompt
+from door_probe import EXPERIMENTS, bridge_material, dry_run, write_failed_response
+from door_prompt import ARMS, COMMAND, PromptSelection, patch_prompt, prompt_plan, select_prompt
 from door_transport import RawRequestError, SpendBudget, raw_request
 
+from bench.core import load_variation, package_and_state
 from storygame.runtime.contracts import RuntimeContractError, parse_turn_proposal
 
 
@@ -45,6 +46,66 @@ def test_dry_run_is_complete_and_checker_friendly(tmp_path: Path) -> None:
     data = json.loads((tmp_path / "results.json").read_text())
     assert len(data["rows"]) == 6
     assert (tmp_path / "spend.jsonl").read_text() == ""
+
+
+def test_source_experiment_config_prompt_diffs_and_variation_overrides(tmp_path: Path) -> None:
+    assert EXPERIMENTS["source"]["arms"] == ("control", "location", "limits")
+    assert EXPERIMENTS["source"]["caps"] == {
+        1: {"raw": 3, "cloudflare": 15, "player": 6},
+        12: {"raw": 36, "cloudflare": 180, "player": 72},
+    }
+    selection = select_prompt()
+    location = patch_prompt(selection, "location", "source")
+    limits = patch_prompt(selection, "limits", "source")
+    assert location["system"] == selection.system
+    assert location["user"].split("PLAYER:\n", 1)[1] == selection.user.split("PLAYER:\n", 1)[1]
+    assert location["user"].count("Their false identities have passed the first security checks.") == 1
+    assert limits["user"].count("Kristin notes its limits before they move on") == 2
+    assert limits["user"].split("PLAYER:\n", 1)[1] == selection.user.split("PLAYER:\n", 1)[1]
+    dry_run(tmp_path, 1, "source")
+    results = json.loads((tmp_path / "results.json").read_text())
+    assert [(row["rep"], row["arm"]) for row in results["rows"]] == [
+        (1, "control"),
+        (1, "location"),
+        (1, "limits"),
+    ]
+    for arm, filename in EXPERIMENTS["source"]["variations"].items():
+        variation = load_variation(Path("bench/variations") / filename)
+        package, _ = package_and_state(variation, "2A")
+        knowledge = "\n".join(item.statement for item in package.knowledge_indexes.by_id.values())
+        if arm == "location":
+            assert knowledge.count("Their false identities have passed the first security checks.") == 1
+        if arm == "limits":
+            assert knowledge.count("Kristin notes its limits before they move on") == 1
+
+
+def test_completion_system_ablation_is_exact_and_checker_friendly(tmp_path: Path) -> None:
+    assert EXPERIMENTS["completion"]["arms"] == ("control", "no-finish")
+    assert EXPERIMENTS["completion"]["caps"] == {
+        1: {"raw": 2, "cloudflare": 10, "player": 4},
+        12: {"raw": 24, "cloudflare": 120, "player": 48},
+    }
+    selection = select_prompt()
+    control = patch_prompt(selection, "control", "completion")
+    no_finish = patch_prompt(selection, "no-finish", "completion")
+    line = "Finish each action the player gives.\n"
+    assert control["system"] == selection.system
+    assert control["hashes"]["system"] == control["hashes"]["original_system"]
+    assert no_finish["system"] == selection.system.replace(line, "", 1)
+    assert no_finish["system_diff"]
+    assert no_finish["user"] == control["user"]
+    assert no_finish["hashes"]["user"] == control["hashes"]["user"]
+    assert no_finish["hashes"]["original_user"] == control["hashes"]["original_user"]
+    for system in (selection.system.replace(line, "", 1), selection.system + line):
+        synthetic = PromptSelection(system, selection.user, selection.source_path)
+        with pytest.raises(AssertionError, match="finish instruction count"):
+            patch_prompt(synthetic, "no-finish", "completion")
+    dry_run(tmp_path, 1, "completion")
+    assert len(json.loads((tmp_path / "results.json").read_text())["rows"]) == 2
+    run = json.loads((tmp_path / "run.json").read_text())
+    assert run["experiment"] == "completion"
+    assert run["caps"] == EXPERIMENTS["completion"]["caps"][1]
+    assert check(tmp_path, 1, "dry", "completion") == []
 
 
 def test_budget_reserves_before_request_and_parser_rejects_bad_envelope() -> None:

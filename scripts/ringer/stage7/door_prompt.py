@@ -15,8 +15,19 @@ PROMPT_FIXTURE = ROOT / "bench/results/stage7-blind-raw/attempt-1/e2e-blind-play
 TRANSCRIPT_FIXTURE = ROOT / "bench/results/stage7-blind-raw/attempt-1/e2e-blind-player.json"
 SECTIONS = ("CHARACTERS", "SCENE", "THINGS", "CONSTRAINTS", "PLAYER")
 COMMAND = "Look for a concealed route or access panel leading from the service corridors to the detention area."
+PERIMETER_SENTENCE = (
+    "Kristin and Brandon are at the facility perimeter. Their false identities have passed the first security checks."
+)
+CORRIDOR_SENTENCE = (
+    "Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility and its "
+    "limited inspection console."
+)
+LIMITS_SENTENCE = (
+    "Kristin notes its limits before they move on: it can report faults and cycle noncritical systems, "
+    "but it cannot open detention cells or alter the main flood controls."
+)
 ARMS = ("control", "review", "stale-scene", "wording", "fixed-control", "bridge")
-REPLACEMENTS = {
+DOOR_REPLACEMENTS = {
     "review": (
         (
             "CONSTRAINTS",
@@ -46,6 +57,35 @@ REPLACEMENTS = {
     ),
     "wording": (("PLAYER", COMMAND, "Search the service corridors for a route to the detention area."),),
 }
+
+SOURCE_REPLACEMENTS = {
+    "location": (
+        (
+            "CONSTRAINTS",
+            f"Brandon Corfman may say this aloud: {PERIMETER_SENTENCE}",
+            "Brandon Corfman may say this aloud: Their false identities have passed the first security checks.",
+        ),
+    ),
+    "limits": (
+        (
+            "SCENE",
+            CORRIDOR_SENTENCE,
+            f"{CORRIDOR_SENTENCE} {LIMITS_SENTENCE}",
+        ),
+        (
+            "CONSTRAINTS",
+            f"Brandon Corfman may say this aloud: {CORRIDOR_SENTENCE}",
+            f"Brandon Corfman may say this aloud: {CORRIDOR_SENTENCE} {LIMITS_SENTENCE}",
+        ),
+    ),
+}
+
+PROMPT_EXPERIMENTS = {
+    "door": {"arms": ARMS, "replacements": DOOR_REPLACEMENTS},
+    "source": {"arms": ("control", "location", "limits"), "replacements": SOURCE_REPLACEMENTS},
+    "completion": {"arms": ("control", "no-finish"), "replacements": {}},
+}
+REPLACEMENTS = DOOR_REPLACEMENTS
 
 
 @dataclass(frozen=True)
@@ -108,16 +148,26 @@ def _replace_line(section: str, text: str, old: str, new: str) -> str:
     return "".join(lines)
 
 
-def patch_prompt(selection: PromptSelection, arm: str) -> dict[str, Any]:
-    if arm not in ARMS:
+def patch_prompt(selection: PromptSelection, arm: str, experiment: str = "door") -> dict[str, Any]:
+    if experiment not in PROMPT_EXPERIMENTS:
+        raise ValueError(f"unknown experiment {experiment}")
+    if arm not in PROMPT_EXPERIMENTS[experiment]["arms"]:
         raise ValueError(f"unknown arm {arm}")
     original = selection.user
     sections = _sections(original)
-    global_credential = original.count("Brandon prepares technical credentials while Kristin chooses")
-    if global_credential != 2:
-        raise AssertionError(f"credential sentence global count is {global_credential}, expected 2")
+    if experiment == "door":
+        global_credential = original.count("Brandon prepares technical credentials while Kristin chooses")
+        if global_credential != 2:
+            raise AssertionError(f"credential sentence global count is {global_credential}, expected 2")
+    elif experiment == "source":
+        perimeter = original.count(PERIMETER_SENTENCE)
+        corridor = original.count(CORRIDOR_SENTENCE)
+        if perimeter != 1:
+            raise AssertionError(f"perimeter sentence global count is {perimeter}, expected 1")
+        if corridor != 2:
+            raise AssertionError(f"opened-corridor sentence global count is {corridor}, expected 2")
     patched_sections = dict(sections)
-    for section, old, new in REPLACEMENTS.get(arm, ()):
+    for section, old, new in PROMPT_EXPERIMENTS[experiment]["replacements"].get(arm, ()):
         patched_sections[section] = _replace_line(patched_sections[section], section, old, new)
     # Replace section bodies at their original offsets, preserving all separators.
     patched = original
@@ -126,16 +176,34 @@ def patch_prompt(selection: PromptSelection, arm: str) -> dict[str, Any]:
         patched_body = patched_sections[section]
         if old_body != patched_body:
             patched = patched.replace(old_body, patched_body, 1)
+    original_system = selection.system
+    patched_system = original_system
+    if experiment == "completion" and arm == "no-finish":
+        removed = "Finish each action the player gives.\n"
+        occurrences = original_system.count(removed)
+        if occurrences != 1:
+            raise AssertionError(f"finish instruction count is {occurrences}, expected 1")
+        patched_system = original_system.replace(removed, "", 1)
     return {
         "arm": arm,
-        "system": selection.system,
+        "system": patched_system,
         "user": patched,
+        "original_system": original_system,
         "original_user": original,
         "hashes": {
-            "system": sha256_text(selection.system),
+            "original_system": sha256_text(original_system),
+            "system": sha256_text(patched_system),
             "original_user": sha256_text(original),
             "user": sha256_text(patched),
         },
+        "system_diff": "".join(
+            difflib.unified_diff(
+                original_system.splitlines(True),
+                patched_system.splitlines(True),
+                fromfile="original_system",
+                tofile=arm,
+            )
+        ),
         "diff": "".join(
             difflib.unified_diff(original.splitlines(True), patched.splitlines(True), fromfile="original", tofile=arm)
         ),
@@ -161,5 +229,7 @@ def recorded_transition() -> dict[str, Any]:
     return row
 
 
-def prompt_plan() -> list[tuple[int, str]]:
-    return [(rep, arm) for rep in range(1, 13) for arm in ARMS]
+def prompt_plan(experiment: str = "door", n: int = 12) -> list[tuple[int, str]]:
+    if experiment not in PROMPT_EXPERIMENTS:
+        raise ValueError(f"unknown experiment {experiment}")
+    return [(rep, arm) for rep in range(1, n + 1) for arm in PROMPT_EXPERIMENTS[experiment]["arms"]]

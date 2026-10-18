@@ -109,6 +109,17 @@ two-command continuation with spend accounting, live checker). Artifacts: `bench
 (`review-summary.json`, `verdicts/`), smoke in `bench/results/stage7-door-smoke/`; failed attempts kept in
 `stage7-door-smoke-attempt1..3`.
 
+**Stage 7 door SOURCE screen RESULT (2026-10-18, N=12, 36 rows; NEGATIVE on the earned-reveal bar, review of
+invention not run).** Harness: `door_probe.py --experiment source` (arms control / location / limits, all generated,
+freshly sampled control). Spend: 109 of 180 Cloudflare calls, 72 of 72 player calls. Reveal earned by command 2
+(machine count from the real matcher): control 7/12; location (stale perimeter sentence removed) 5/12; limits
+(console limits restored to the 2A.3 knowledge statement) 6/12. Bar is at least 10/12 and beating control: neither
+arm meets it, and neither beats control, so the decision is DROP both candidates (A and B) as fixes. A one-row-per-arm
+smoke showed the same invented panel/seam in all three arms. Next: the plan's remaining untested lead, a
+story-neutral ablation of the "Finish each action the player gives" instruction against search-to-discovery, or
+accept the invented-route pull and guard it at the 2B side. Artifacts: `bench/results/stage7-door-source-n12/`
+(smoke: `stage7-door-source-smoke/`, reviewed). Build/run manifests: `scripts/ringer/stage7/door-source-*.json`.
+
 **Stage 7 door probe harness (2026-10-17, built and run; see RESULT above).** Added the
 offline prompt, bridge, transport, continuation, probe, checker and player modules,
 bridge variation, five Ringer manifests, and factual build notes under the owned

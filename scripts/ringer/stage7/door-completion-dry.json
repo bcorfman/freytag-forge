@@ -1,0 +1,30 @@
+{
+  "run_name": "door-completion-dry",
+  "workdir": "/home/bcorfman/dev/ringer-work/door-completion-dry",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "completion-dry",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 900,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/stage7-door-completion-dry/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment completion --dry-run --out bench/results/stage7-door-completion-dry",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-completion-dry 1 --mode dry --experiment completion",
+      "verified": "The dry artifacts exist for 2 rows with completion-experiment caps and the checker accepts them.",
+      "spec": "Run one free offline dry run of the Stage 7 COMPLETION-ablation door screen (arms control, no-finish). Own only bench/results/stage7-door-completion-dry/. Run the command exactly as given; make no network or provider calls, no code edits, no git mutation. Report the rows and caps written."
+    }
+  ]
+}
