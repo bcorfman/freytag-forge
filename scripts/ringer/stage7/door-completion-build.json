@@ -1,0 +1,32 @@
+{
+  "run_name": "stage7-door-completion-build",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-door-completion-build",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "completion-build",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 5400,
+      "check_timeout_s": 900,
+      "ownership": [
+        "scripts/ringer/stage7/door_prompt.py",
+        "scripts/ringer/stage7/door_probe.py",
+        "scripts/ringer/stage7/check_door_probe.py",
+        "scripts/ringer/stage7/test_door_probe.py"
+      ],
+      "spec": "You are an implementation worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge (no worktree). Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv. NO billed or network calls, no credentials, no .env.\n\nHARD RULES. You own ONLY scripts/ringer/stage7/door_prompt.py, door_probe.py, check_door_probe.py, test_door_probe.py. Touch nothing else (untracked .plans files and bench/variations files are intentionally present; leave them). No git add/commit/reset/clean/checkout/stash/push. No production, story or fixture edits (do NOT edit storygame/runtime/cloudflare.py). Existing door and source experiments must stay byte-for-byte reproducible and every existing test must pass unchanged.\n\nBACKGROUND. The Stage 7 door probe replays the recorded 2A turn-7 narrator prompt with an edit per arm, then continues in 2B with a raw player. Experiments 'door' and 'source' already exist (config tables in door_prompt.py PROMPT_EXPERIMENTS and door_probe.py EXPERIMENTS; read all four files first). Add a third experiment 'completion': a diagnostic ablation that deletes one instruction from the recorded SYSTEM string.\n\nTASK (test-first).\n1. `--experiment completion` on door_probe.py and check_door_probe.py (choices now door, source, completion). Arms in rep-major order: control, no-finish. Both are generated arms (one raw 2A narrator request each, then narration + authored bridge + 2B entry, raw player, real 2B continuation of at most two commands, as the source experiment does). Both map to the existing bench/variations/stage7-door-control.json; create no new variation files.\n2. Prompt patch: control = recorded system and user unchanged. no-finish = recorded system with exactly the text \"Finish each action the player gives.\\n\" removed once (assert it occurs exactly once in the system string, preserving every other byte); user string identical to control in both arms. patch_prompt must add a system-only path; the returned dict must keep the existing keys and additionally record original_system, hashes.original_system and hashes.system (patched), and a system_diff (unified diff of system text). User hash/diff fields stay as today (unchanged user). The existing perimeter/corridor global-count assertions currently run for every non-door experiment; scope them to experiment == 'source' only; the completion experiment needs neither them nor the credential assertion.\n3. Caps: completion N=1: raw 2, cloudflare 10, player 4. N=12: raw 24, cloudflare 120, player 48. Dry-run, live and summary use the selected caps; run.json records the experiment name.\n4. Checker: for completion validate row counts/order (2*N rows, control then no-finish per rep), that control hashes.system == original_system hash, no-finish system differs from control by exactly the one deleted line, user hashes identical across arms, bridge/entry identical across arms, prompt-hash comparison against source-before.json as for other experiments. Reviewed mode: reuse the source experiment's verdict/summary checks unchanged if they exist (the verdict schema: row_id, row_hash, reviewer, evidence quotes, upstream_invention, downstream_new_invention, inherited_invention, player_pursuit, premature_disclosure, contradictory_delivery, earned_by_command_2; summary per-arm counts and decision, N=12 only). If source reviewed mode is missing, report that in your final message instead of inventing it. The win rule for summary decisions: no-finish wins only if earned>=10/12, unsupported_access<=2, premature_disclosure==0, contradictory_delivery==0 and earned exceeds control's earned; N!=12 must be 'not_decided'. Never classify by keyword or regex gates.\n5. Tests (offline): config (arms/order/caps), exact system diff for no-finish with hash assertions and control unchanged, exactly-once assertion failing when the line is absent or duplicated (use a synthetic selection), user identical across arms, dry run with --experiment completion writes 2*N rows and right caps and passes `check_door_probe.py <out> 1 --mode dry --experiment completion`, and that door/source behavior is unchanged.\n\nVERIFY before finishing: `.venv/bin/python -m pytest scripts/ringer/stage7/test_door_probe.py -q`; `.venv/bin/ruff format` and `.venv/bin/ruff check` on changed files; dry runs plus checker for completion, source and door. Final message: files changed, test counts, deviations.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest scripts/ringer/stage7/test_door_probe.py -q 2>&1 | tail -15 && .venv/bin/ruff check scripts/ringer/stage7 && .venv/bin/ruff format --check scripts/ringer/stage7 && for e in completion source; do rm -rf /tmp/$e-dry && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment $e --dry-run --out /tmp/$e-dry && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/$e-dry 1 --mode dry --experiment $e; done && rm -rf /tmp/door-dry && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --dry-run --out /tmp/door-dry && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/door-dry 1 --mode dry && git diff --stat -- storygame data | tail -3",
+      "verified": "Tests pass, ruff clean, and dry runs for completion, source and door are accepted by the checker."
+    }
+  ]
+}

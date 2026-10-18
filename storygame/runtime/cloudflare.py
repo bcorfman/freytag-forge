@@ -76,6 +76,10 @@ DEFAULT_OUTPUT_EXAMPLE = (
     '{"kind":"narration","text":"She lights it with a match, and it glows with a warm light. She hands it to her '
     'neighbor, who takes it with a nod."}],"selected_knowledge_ids":[]}'
 )
+NARRATION_ONLY_RULE = (
+    "Every paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. "
+    "Do not use any other kind."
+)
 
 # Cloudflare's Browser Integrity Check rejects urllib's default bot-like signature
 # before a request can reach the Worker at all, so every caller must send this.
@@ -1066,6 +1070,7 @@ class CloudflareTurnProvider:
             f"The player is {self._protagonist_name()}.",
             *self._system_rules(opening),
             "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.",
+            NARRATION_ONLY_RULE,
         ]
         example = self._output_example()
         if example is not None:
@@ -1639,6 +1644,10 @@ class CloudflareTurnProvider:
     def _segment_shape(value: object) -> str:
         if isinstance(value, dict):
             keys = ",".join(sorted(str(key) for key in value))
+            kind = value.get("kind")
+            if isinstance(kind, str) and kind not in {"narration", "dialogue", "action"}:
+                safe_kind = re.sub(r"[\s\x00-\x1f\x7f-\x9f]+", " ", kind)[:40]
+                return f"object(keys={keys};kind={safe_kind!r})"
             return f"object(keys={keys})"
         return type(value).__name__
 

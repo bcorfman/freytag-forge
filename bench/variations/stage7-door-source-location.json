@@ -1,0 +1,24 @@
+{
+  "name": "stage7-door-source-location",
+  "story_package": "data/stories/continuity-initiative",
+  "scripts": {
+    "2A": [
+      {
+        "name": "recorded-turn-7",
+        "inputs": [
+          "Look for a concealed route or access panel leading from the service corridors to the detention area."
+        ]
+      }
+    ]
+  },
+  "overrides": {
+    "knowledge.yaml": {
+      "replacements": [
+        {
+          "old": "  statement: \"Kristin and Brandon are at the facility perimeter. Their false identities have passed the first security checks.\"",
+          "new": "  statement: \"Their false identities have passed the first security checks.\""
+        }
+      ]
+    }
+  }
+}

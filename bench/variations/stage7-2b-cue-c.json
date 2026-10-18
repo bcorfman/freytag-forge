@@ -1,0 +1,14 @@
+{
+  "name": "stage7-2b-cue-c",
+  "story_package": "data/stories/continuity-initiative",
+  "overrides": {
+    "handoffs.yaml": {
+      "replacements": [
+        {
+          "old": "cue_text: Selection files fill the archive terminals. Government and financial records sit open beside them.",
+          "new": "cue_text: Selection files fill the archive terminals. One file carries Michelle's name, and another carries Kristin's."
+        }
+      ]
+    }
+  }
+}

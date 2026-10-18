@@ -1,0 +1,57 @@
+{
+ "run_name": "stage7-segment-kind",
+ "workdir": "/home/bcorfman/dev/ringer-work/segment-kind-build",
+ "max_parallel": 2,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "log-dropped-kind",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 600,
+   "ownership": [
+    "storygame/runtime/cloudflare.py",
+    "tests/test_cloudflare_transport.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py"
+   ],
+   "spec": "You are an implementation worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. NO billed or network calls, no credentials, no .env. No git add/commit/reset/clean/checkout/stash/push. Untracked .plans files and bench/results are intentionally present; do NOT modify anything under bench/results or any file you do not own. You own ONLY storygame/runtime/cloudflare.py and tests/test_cloudflare_transport.py.\n\nBACKGROUND. CloudflareTurnProvider._salvage_malformed_segments (storygame/runtime/cloudflare.py) drops provider segments that fail NarrationSegment validation and logs one warning via _log_segment_salvage with shapes from _segment_shape, which today prints only keys, e.g. object(keys=kind,text) with underlying 'segments.1.kind:literal_error'. The invalid kind VALUE is not logged, so we cannot tell what the model sent. Brandon approved logging a capped kind string. CHANGE. In _segment_shape, when the value is a dict whose 'kind' key holds a str that is NOT one of narration, dialogue, action, append the kind value to the shape string, e.g. object(keys=kind,text;kind='thought'). The kind text must be sanitised and capped: use repr of the first 40 characters after replacing every control character or whitespace run (newline, tab, etc.) with a single space, so it can never span lines or inject log lines. Never log any other provider value (text, speaker_id, grounding_ids stay unlogged). Dicts with a valid kind, a missing kind, or a non-str kind keep the existing keys-only shape. Non-dict values keep type(value).__name__. Do not change salvage behaviour, return values, segments_dropped, or the log message format string. ADD tests in tests/test_cloudflare_transport.py (read the existing salvage tests near line 270 for style and the _Response helper): (1) an invalid kind such as 'thought' appears in the caplog warning text; (2) a 200-character kind with embedded newlines is truncated to the 40-character cap with no newline in the log record; (3) text and grounding_ids content of the dropped segment never appears in the log; (4) a dropped segment with a valid kind but missing text logs keys only, no kind value; (5) a dict with a non-str kind logs keys only. Existing tests must still pass.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest tests/test_cloudflare_transport.py tests/test_web_demo.py -q -n0 > /tmp/lk.out 2>&1; tail -4 /tmp/lk.out; grep -q ' passed' /tmp/lk.out && ! grep -q ' failed\\| error' /tmp/lk.out && grep -q 'thought' tests/test_cloudflare_transport.py && .venv/bin/ruff check storygame/runtime/cloudflare.py tests/test_cloudflare_transport.py && .venv/bin/ruff format --check storygame/runtime/cloudflare.py tests/test_cloudflare_transport.py && test \"$(git status --short | grep -v '^??' | grep -v -e 'storygame/runtime/cloudflare.py' -e 'tests/test_cloudflare_transport.py' | wc -l)\" = 0 || { echo 'FAIL: see output above'; exit 1; }",
+   "verified": "The dropped segment's capped, sanitised kind string is logged, nothing else from the provider is, and salvage behaviour is unchanged."
+  },
+  {
+   "key": "record-segments-dropped",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 600,
+   "ownership": [
+    "scripts/ringer/stage7/door_transition.py",
+    "scripts/ringer/stage7/test_door_transition.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7/door_transition.py"
+   ],
+   "spec": "You are an implementation worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. NO billed or network calls, no credentials, no .env. No git add/commit/reset/clean/checkout/stash/push. Untracked .plans files and bench/results are intentionally present; do NOT modify anything under bench/results or any file you do not own. You own ONLY scripts/ringer/stage7/door_transition.py and scripts/ringer/stage7/test_door_transition.py.\n\nBACKGROUND. The Stage 7 transition/details probe rows (results.json) do not record how many provider segments the runtime dropped as malformed on each turn, although state.last_turn_delivery.segments_dropped (storygame/runtime/state.py TurnDelivery) holds it after every turn. In the details N=12 run the worker logged 8 'dropped 1 segment(s)' warnings and we cannot tell which rows were affected.\n\nCHANGE. In run_continuation (door_transition.py), after each score_command call append int(state.last_turn_delivery.segments_dropped) to a new list segments_dropped_by_turn (one entry per command, including clarification turns, so it lines up with commands), and return it as a new key 'segments_dropped_by_turn' in the result dict. Add a test in test_door_transition.py (follow the existing fake-engine style there) proving the list is returned, lines up with commands, and shows a nonzero entry when the fake sets state.last_turn_delivery to a TurnDelivery with segments_dropped=1 on one turn. Do not edit check_door_probe.py or door_probe.py; first confirm with grep that check_door_probe.py does not reject unknown row keys, and if it does, STOP and report instead of editing.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest scripts/ringer/stage7 -q -n0 > /tmp/sd.out 2>&1; tail -4 /tmp/sd.out; grep -q ' passed' /tmp/sd.out && ! grep -q ' failed\\| error' /tmp/sd.out && grep -q segments_dropped_by_turn scripts/ringer/stage7/door_transition.py && .venv/bin/ruff check scripts/ringer/stage7/door_transition.py scripts/ringer/stage7/test_door_transition.py && .venv/bin/ruff format --check scripts/ringer/stage7/door_transition.py scripts/ringer/stage7/test_door_transition.py && for e in transition details; do rm -rf /tmp/$e-dry8 && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment $e --dry-run --out /tmp/$e-dry8 && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/$e-dry8 1 --mode dry --experiment $e; done || { echo 'FAIL: see output above'; exit 1; }",
+   "verified": "Probe rows carry a per-turn segments_dropped list aligned with commands, and the dry-run checker still passes for transition and details."
+  }
+ ]
+}

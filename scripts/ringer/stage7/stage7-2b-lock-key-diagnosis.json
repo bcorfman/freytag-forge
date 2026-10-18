@@ -1,0 +1,32 @@
+{
+ "run_name": "stage7-2b-lock-key-diagnosis",
+ "workdir": "/home/bcorfman/dev/ringer-work/prompt-diagnosis-run",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "prompt-diagnosis",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 1,
+   "timeout_s": 2400,
+   "check_timeout_s": 120,
+   "ownership": [
+    "/home/bcorfman/dev/ringer-work/prompt-diagnosis/"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/prompt-diagnosis/report.md"
+   ],
+   "spec": "You are a read-only diagnostic worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv. ABSOLUTELY NO network or billed model calls: do not source .env, do not read credentials, and in any script you run first make sockets fail (monkeypatch socket.socket.connect and socket.create_connection to raise) and stub the provider's HTTP request function so nothing is sent. You MUST NOT modify any repository file, run git add/commit/reset/clean/checkout/stash, or edit anything under data/, storygame/, bench/, scripts/. Write ONLY inside /home/bcorfman/dev/ringer-work/prompt-diagnosis/ (create it): scripts, prompt dumps and the report.\n\nQUESTION. In a saved live smoke (bench/results/stage7-door-grounded-smoke4/results.json, row arm 'grounded'), the 2B turn-1 narration for the player command 'Move the maintenance cart aside and open the access panel.' contained: 'The panel is locked, but Kristin quickly finds a small key hidden in her pocket and unlocks it.' That invents a lock and a key. The story declares in 2A setting_facts (data/stories/continuity-initiative/plot.md) that the cooling-service archive panel opens with a push, has no lock, no keypad, no screen and needs no further credentials, but the 2B scene has only its own three setting_facts. The 2B turn-1 narration prompt was NOT saved, so reconstruct it offline.\n\nHOW. Read scripts/ringer/stage7/door_probe.py (package_and_state, load_variation, provider_for, counted_provider, _continue) and scripts/ringer/stage7/door_continuation.py (score_command), and storygame/runtime/cloudflare.py near line 2050 where provider.last_prompt = {system, user} is set after the wire payload is built. For BOTH arms, build the 2B continuation state exactly as _continue does: control variation bench/variations/stage7-door-control.json? NO - use the grounded experiment's variations (see GROUNDED_VARIATIONS in door_probe.py: control arm = frozen pre-panel package, grounded arm = current package). Run ONE engine.turn for the command above with the provider's HTTP request stubbed to raise a sentinel after last_prompt is captured, then dump provider.last_prompt['system'] and ['user'] to prompt-<arm>.txt. If the prompt cannot be captured offline, say exactly what blocked you and stop.\n\nANALYZE (cite exact prompt lines):\n1. Diff the two arms' user prompts; list every added line in grounded.\n2. List every line in the grounded user and system prompts that mentions the panel, lock, key, credential, keypad, screen, 'closed', 'open', or access. State whether 'opens with a push', 'no lock' or 'no further credentials' appears anywhere in the 2B prompt.\n3. Show the THINGS block entry for the panel, including its State line and the 'If it changes, give \"state\": \"open\"' instruction, and say whether it mentions how the panel opens.\n4. Rank these hypotheses for the invented lock/key by how strongly the prompt text supports each, with the line that supports it: (a) the 2A facts that say it has no lock do not travel to 2B, so the prompt says nothing about how the panel opens; (b) 'State: closed' plus the player verb 'open' invites a barrier-then-solution story; (c) the player command itself ('Move the cart aside and open the panel') carries a hidden-panel framing; (d) the 2B bridge/entry text or CONSTRAINTS; (e) anything else you find.\n5. Name, for each ranked hypothesis, the smallest SUBTRACTIVE or material fix at the source (story text in plot.md setting_facts or item description) that the prompt evidence would support, quoting the proposed wording; do not propose a new narrator rule and do not edit anything. Read docs/world-model-grounding.md and docs/narrator-writing-guide.md first and respect them; write any proposed story wording at 12th grade level in plain words.\nWrite the report to /home/bcorfman/dev/ringer-work/prompt-diagnosis/report.md with sections: Reconstruction (how, and confirmation that no network was used), Prompt diff, Lock/key evidence, Ranked hypotheses, Proposed fixes. Final message: 5 lines of conclusions.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && R=/home/bcorfman/dev/ringer-work/prompt-diagnosis && test -s $R/report.md && test -s $R/prompt-grounded.txt && test -s $R/prompt-control.txt && for s in Reconstruction 'Prompt diff' 'Lock/key evidence' 'Ranked hypotheses' 'Proposed fixes'; do grep -qi \"$s\" $R/report.md || { echo \"missing section $s\"; exit 1; }; done && grep -q 'THINGS' $R/prompt-grounded.txt && test -z \"$(git status --short | grep -v '^??')\" && echo OK",
+   "verified": "Both arms' 2B turn-1 prompts were rebuilt offline with no network, the report has all five sections, and no tracked repo file changed."
+  }
+ ]
+}

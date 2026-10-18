@@ -1,0 +1,33 @@
+{
+ "run_name": "stage7-transition-screen",
+ "workdir": "/home/bcorfman/dev/ringer-work/summary-fix",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "summary-max-commands",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 600,
+   "ownership": [
+    "scripts/ringer/stage7/door_probe.py",
+    "scripts/ringer/stage7/test_door_transition.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7/door_probe.py"
+   ],
+   "spec": "You are an implementation worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. NO billed or network calls, no credentials, no .env. No git add/commit/reset/clean/checkout/stash/push. Untracked .plans files and bench/results are intentionally present; do NOT modify anything under bench/results.\n\nYou own ONLY scripts/ringer/stage7/door_probe.py and scripts/ringer/stage7/test_door_transition.py.\n\nBUG. For the 'transition' experiment, check_door_probe.py in --mode artifacts requires summary.json to contain max_commands == 20 (it errors 'transition: summary max_commands must be 20'), but door_probe.live_run writes summary.json without max_commands (the dry-run summary has it). The dry path uses: **({\"max_commands\": config[\"max_commands\"]} if experiment == \"transition\" else {}). Read live_run's summary.json construction and the checker's transition validation first.\n\nFIX (test-first). In live_run's summary dict add max_commands for the transition experiment only, the same way as the dry-run path; other experiments' summary.json must stay byte-identical in shape. Add a hermetic test in test_door_transition.py that drives live_run for experiment 'transition' with n=1 using stubs (stub the raw 2A request, the player and run_continuation; see how other tests stub; do NOT make network calls) and asserts the written summary.json contains max_commands == 20 and that check_door_probe.check(out, 1, 'artifacts', 'transition') returns no errors, or if a full live_run stub is impractical, a smaller test that exercises the summary construction path; say which you did. Do not edit check_door_probe.py.\nVERIFY: .venv/bin/python -m pytest scripts/ringer/stage7 -q -n0 passes; ruff check and ruff format --check on the two files; dry runs plus checker still validate for transition and grounded. Final message: the diff and test counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest scripts/ringer/stage7 -q -n0 > /tmp/mc.out 2>&1; tail -4 /tmp/mc.out; grep -q ' passed' /tmp/mc.out && ! grep -q ' failed\\| error' /tmp/mc.out && grep -c 'max_commands' scripts/ringer/stage7/door_probe.py | grep -qv '^[0-3]$' && .venv/bin/ruff check scripts/ringer/stage7/door_probe.py scripts/ringer/stage7/test_door_transition.py && .venv/bin/ruff format --check scripts/ringer/stage7/door_probe.py scripts/ringer/stage7/test_door_transition.py && for e in grounded transition; do rm -rf /tmp/$e-dry7 && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment $e --dry-run --out /tmp/$e-dry7 && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/$e-dry7 1 --mode dry --experiment $e; done && test \"$(git status --short | grep -v '^??' | wc -l)\" = 1 && git status --short | grep -q 'door_probe.py' ",
+   "verified": "The live summary for the transition experiment carries max_commands, a test proves the artifacts checker accepts it, and nothing else changed."
+  }
+ ]
+}

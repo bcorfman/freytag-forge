@@ -1,0 +1,20 @@
+{
+  "name": "stage7-door-grounded-control",
+  "story_package": "bench/frozen/continuity-pre-2a-panel",
+  "scripts": {
+    "2A": [
+      {
+        "name": "door-replay",
+        "inputs": [
+          "Search Brandon's hideout for documents or equipment that could help us pose as outside inspectors and enter the main facility.",
+          "Examine the Continuity files for inspector credentials, facility access procedures, and cooling-water or ventilation records.",
+          "Go to the facility checkpoint and show the inspector credentials.",
+          "Tell the supervisor this is an unscheduled emergency inspection prompted by the facility's cooling-water and ventilation anomalies.",
+          "Enter the facility and follow the supervisor into the service corridors.",
+          "Follow the supervisor deeper into the service corridors and look for a way to reach the detention area.",
+          "Look for a concealed route or access panel leading from the service corridors to the detention area."
+        ]
+      }
+    ]
+  }
+}

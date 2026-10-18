@@ -1,0 +1,34 @@
+{
+ "run_name": "stage7-quoted-name",
+ "workdir": "/home/bcorfman/dev/ringer-work/quoted-name-build",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "build-quoted-name",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 600,
+   "ownership": [
+    "scripts/ringer/stage7/quoted_name_probe.py",
+    "scripts/ringer/stage7/test_quoted_name_probe.py",
+    "bench/results/stage7-quoted-name-dry/"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/stage7-quoted-name-dry/arms/system.diff"
+   ],
+   "spec": "You are a probe-script author on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. THIS TASK MAKES NO NETWORK OR BILLED CALLS and uses no credentials: do not source .env. No git add/commit/reset/clean/checkout/stash/push. You own ONLY scripts/ringer/stage7/quoted_name_probe.py, scripts/ringer/stage7/test_quoted_name_probe.py and files under bench/results/stage7-quoted-name-dry/. Do NOT edit narration_only_probe.py or segment_replay_probe.py; import capture_prompts, classify_body, _is_truncated, _make_provider, ANCHOR, RULE (or the equivalents; read both files first) from them, following how test_narration_only_probe.py imports.\n\nQUESTION. With the narration-only rule in the system prompt, the 8B narrator still sometimes cuts its JSON off when a character names the program: it writes e.g. {\"kind\":\"narration\",\"text\":\"'It was called the \"  with an unescaped double quotation mark around the program name inside the JSON string, so the reply is truncated and the spoken line is lost (truncated 10/20 control, 1/20 and 7/20 with the rule in two runs, 16/20 when the rule asked for single quotation marks). Test whether one extra system line stops the quoted name.\n\nBUILD scripts/ringer/stage7/quoted_name_probe.py, run as `TMPDIR=/tmp PYTHONPATH=$PWD .venv/bin/python scripts/ringer/stage7/quoted_name_probe.py --n N --out DIR [--dry-run] [--confirm]`.\n1. Use ONLY the 'dialogue' payload from capture_prompts (user string identical in every arm). Three arms, each inserting lines immediately BEFORE the anchor line 'Write each paragraph as one segment and return only JSON in this form:' (assert the anchor occurs exactly once): 'rule' inserts only this line:\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.\n'no_name_quotes' inserts that line, then on the next line:\nWrite names and titles with no quotation marks.\n'speech_only' inserts the rule line, then on the next line:\nUse quotation marks only around spoken words.\nAssert each arm's system with its inserted lines removed equals the original system and the user strings are byte-identical. Save the three payloads to DIR/arms/<arm>.json and write DIR/arms/system.diff (each arm diffed against an unmodified-system baseline, with the arm name in the header).\n2. REPLAY (billed, only with --confirm): for rep in range(N), arm order rotates left by rep % 3, one POST per arm per rep built exactly like replay() in narration_only_probe.py (env vars read only inside the script, never printed, 60 s timeout). HARD CAP 60 worker calls, enforced before each call; refuse --n over 20; no retries; a row error is recorded and the run continues. Row fields: arm, rep, raw_body verbatim, error, truncated (reuse _is_truncated), plus classify_body fields (ok, invalid_kind, stray_selected_ids, bad_segments), kinds, and quoted_name = true when the raw inner narration text contains an escaped or unescaped double quotation mark immediately preceded by a space or by 'called' / 'named' / 'known as' within a segment text (keep this simple and document the rule in a comment; also count any double quote at all in the segment texts as double_quote_any). Write DIR/replies.jsonl and DIR/bad/<arm>-<rep>.txt for every non-ok or truncated row. DIR/summary.json: calls and per arm rows, ok, bad_rows, truncated, invalid_kind, quoted_name, double_quote_any, errors, mean_kept_chars (mean total characters of valid kept segments after the runtime's own repair, as narration_only_probe computes or can compute it).\n3. --dry-run: prompt capture and arm build only, no network, summary calls 0. Without --confirm and without --dry-run refuse.\n4. TESTS (no network): arm builder inserts exactly the intended lines in order and leaves user identical, fails on a missing or duplicated anchor; rotation gives each arm the first slot equally over 3 reps; cap stops at 60 with a fake sender; n over 20 refused; the quoted_name flag is true on a reply like `'It was called the \"` style text and false on a clean reply.\nHOW TO RUN AND VERIFY: pytest scripts/ringer/stage7 -n0, ruff check and ruff format --check on both files, then `TMPDIR=/tmp PYTHONPATH=$PWD .venv/bin/python scripts/ringer/stage7/quoted_name_probe.py --n 1 --dry-run --out bench/results/stage7-quoted-name-dry` and confirm DIR/arms/system.diff. Write DIR/notes.md (about 50 words). Do not run --confirm.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest scripts/ringer/stage7 -q -n0 > /tmp/qn.out 2>&1; tail -4 /tmp/qn.out; D=bench/results/stage7-quoted-name-dry/arms/system.diff; grep -q ' passed' /tmp/qn.out && ! grep -q ' failed\\| error' /tmp/qn.out && grep -q 'Write names and titles with no quotation marks.' $D && grep -q 'Use quotation marks only around spoken words.' $D && test \"$(grep -c '^-[^-]' $D)\" = 0 && git diff --quiet scripts/ringer/stage7/narration_only_probe.py scripts/ringer/stage7/segment_replay_probe.py -- 2>/dev/null; .venv/bin/ruff check scripts/ringer/stage7/quoted_name_probe.py scripts/ringer/stage7/test_quoted_name_probe.py && .venv/bin/ruff format --check scripts/ringer/stage7/quoted_name_probe.py scripts/ringer/stage7/test_quoted_name_probe.py || { echo 'FAIL: see output above'; exit 1; }",
+   "verified": "Three arms differ only by inserted lines; user prompt identical; caps, rotation and flags tested; no network."
+  }
+ ]
+}

@@ -350,11 +350,22 @@ freytag_phase: rising_action
 objective: Enter the facility under false identities
 participant_ids: [kristin, brandon]
 companions: [brandon]
-item_ids: [transit_card, hideout_servers, inspection_console, facility_gate]
+item_ids: [transit_card, hideout_servers, inspection_console, facility_gate, cooling_service_archive_panel]
 item_placements:
   hideout_servers: {parent: brandon_hideout}
   inspection_console: {parent: infrastructure_corridors}
   facility_gate: {parent: facility_perimeter, text: at the facility perimeter}
+  cooling_service_archive_panel:
+    parent: infrastructure_corridors
+    text: beside the inspection console in the infrastructure corridors
+setting_facts:
+- The cooling-service archive panel has a slotted face.
+- The cooling-service archive panel leads directly from the infrastructure corridors into the records archive.
+- The cooling-service archive panel opens with a push.
+- The cooling-service archive panel has no lock.
+- The cooling-service archive panel has no keypad.
+- The cooling-service archive panel has no screen.
+- Using the cooling-service archive panel requires no further credentials.
 character_placements:
   kristin: {parent: brandon_hideout}
   brandon: {parent: brandon_hideout}
@@ -362,9 +373,8 @@ entry_text: "Brandon's hideout was buried inside a dead communications center: s
 transition_ids: [t_2a_2b]
 bridge_text:
   t_2a_2b: >-
-    Their false credentials survived the initial checks, and Kristin's warning about unstable cooling-water pressure
-    won them access to restricted infrastructure corridors. Beyond those corridors, the records archive waited behind
-    another layer of security.
+    Kristin and Brandon gained access to the infrastructure corridors under their inspection cover.
+    They continued into the records archive.
 ---
 
 **Setting:** Brandon’s hidden operations base and the secret facility
@@ -433,10 +443,16 @@ freytag_phase: rising_action
 objective: Find evidence in the records archive
 participant_ids: [kristin, brandon, michelle]
 companions: [brandon]
-item_ids: [archive_terminals, medical_terminal]
+item_ids: [archive_terminals, medical_terminal, cooling_service_archive_panel]
 item_placements:
   archive_terminals: {parent: janus_archive}
   medical_terminal: {parent: janus_archive}
+  cooling_service_archive_panel: {parent: infrastructure_corridors}
+setting_facts:
+- The cooling-service archive panel connects the infrastructure corridors to the records archive.
+- The cooling-service archive panel opens with a push.
+- Kristin has already reached the records archive.
+- The archive terminals are available for investigation.
 entry_text: "Inside the records archive, the archive terminals are ready to search. They hold the Initiative's selection files, including Michelle's file.\n\n"
 transition_ids: [t_2b_2c]
 bridge_text:
@@ -459,7 +475,7 @@ bridge_text:
 
 ### Scene 2B.1 — The Selection Algorithm
 
-**Details:** restricted records archive; unfamiliar system files; government data; financial data; Michelle’s research
+**Details:** restricted records archive; Michelle’s research; the Initiative’s selection files
 
 Inside the records archive, Kristin discovers files describing an artificial-intelligence system called **JANUS**.
 

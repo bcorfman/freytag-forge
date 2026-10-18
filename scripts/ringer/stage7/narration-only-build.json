@@ -1,0 +1,35 @@
+{
+ "run_name": "stage7-narration-only",
+ "workdir": "/home/bcorfman/dev/ringer-work/narration-only-build",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "build-narration-only",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 600,
+   "ownership": [
+    "scripts/ringer/stage7/narration_only_probe.py",
+    "scripts/ringer/stage7/test_narration_only_probe.py",
+    "bench/results/stage7-narration-only-dry/"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7/narration_only_probe.py",
+    "/home/bcorfman/dev/freytag-forge/bench/results/stage7-narration-only-dry/notes.md"
+   ],
+   "spec": "You are a probe-script author on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. THIS TASK MAKES NO NETWORK OR BILLED CALLS and uses no credentials: do not source .env. No git add/commit/reset/clean/checkout/stash/push. You own ONLY scripts/ringer/stage7/narration_only_probe.py, scripts/ringer/stage7/test_narration_only_probe.py and files under bench/results/stage7-narration-only-dry/. Do NOT edit scripts/ringer/stage7/segment_replay_probe.py; import from it (it is importable with sys.path containing scripts/ringer/stage7 and the repo root; follow how test_segment_replay_probe.py imports it).\n\nQUESTION. The narrator is a small Llama model. When a character speaks, it writes the spoken line as a segment with kind 'character', which is not allowed (allowed: narration, dialogue, action), and the runtime drops that segment, so the player never sees the line. On the 'dialogue' prompt this happened in 14 of 20 replays (bench/results/stage7-segment-replay-n20/). Test one prompt change: a system-prompt rule that makes every paragraph kind narration.\n\nBUILD scripts/ringer/stage7/narration_only_probe.py, run as `TMPDIR=/tmp PYTHONPATH=$PWD .venv/bin/python scripts/ringer/stage7/narration_only_probe.py --n N --out DIR [--dry-run] [--confirm]`.\n1. PROMPT: reuse capture_prompts from segment_replay_probe.py (it writes DIR/prompts/<cell>.json for reveal, dialogue and plain); use ONLY the 'dialogue' payload. Two arms: 'control' = the payload unchanged; 'narration_only' = the payload whose system string has the following line inserted on its own line immediately BEFORE the line 'Write each paragraph as one segment and return only JSON in this form:' and nothing else changed:\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.\nAssert the anchor line occurs exactly once in the system string, that the arm's system differs from control only by that one inserted line, and that the user string is byte-identical in both arms. Save both payloads as DIR/arms/control.json and DIR/arms/narration_only.json and a unified diff of the two system strings as DIR/arms/system.diff.\n2. REPLAY (billed, only with --confirm). For rep in range(N), for arm in (control, narration_only): one POST to the worker built exactly like replay() in segment_replay_probe.py (same URL/token env vars read only inside the script, same headers, same payload fields, 60 s timeout, never print credentials). HARD CAP 40 worker calls in total enforced before each call; refuse --n over 20; no retries; a row error is recorded and the run continues. Interleaved arm order alternates by rep (control first on even reps, narration_only first on odd reps). Write DIR/replies.jsonl (one row per call: arm, rep, raw_body verbatim, error, plus classify_body fields ok, invalid_kind, stray_selected_ids, bad_segments; and kinds = list of each segment's kind string, speech_visible = true when the parsed segment texts contain a double quote, curly double quote or an apostrophe-quoted span, and brandon_named = true when the texts contain 'Brandon'). Reuse classify_body and the provider-unwrapping helper from segment_replay_probe.py; do not re-implement them. Write DIR/bad/<arm>-<rep>.txt with the raw body of every non-ok row.\n3. DIR/summary.json: calls, and per arm: rows, ok, bad_rows, invalid_kind, errors, rows_with_any_non_narration_kind, speech_visible (count of rows), distinct kinds seen with counts.\n4. --dry-run does prompt capture and the arm build only (writes DIR/arms/*, summary with calls 0), no network. Without --confirm and without --dry-run, refuse.\n5. TESTS in test_narration_only_probe.py (no network): arm builder inserts exactly the one rule line before the anchor and leaves the user string identical; builder fails loudly if the anchor is missing or duplicated; row classifier computes kinds, speech_visible and brandon_named correctly on a clean reply and on a 'character' reply; the cap stops at 40 calls with a fake sender and --n over 20 is refused.\nHOW TO RUN: run the tests, ruff check and ruff format --check on both files, then `--n 1 --dry-run --out bench/results/stage7-narration-only-dry` and read DIR/arms/system.diff to confirm exactly one added line. Write DIR/notes.md (about 60 words, factual). Do not run --confirm.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest scripts/ringer/stage7 -q -n0 > /tmp/no.out 2>&1; tail -4 /tmp/no.out; grep -q ' passed' /tmp/no.out && ! grep -q ' failed\\| error' /tmp/no.out && test \"$(grep -c '^+[^+]' bench/results/stage7-narration-only-dry/arms/system.diff)\" = 1 && grep -q 'Every paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.' bench/results/stage7-narration-only-dry/arms/system.diff && test \"$(grep -c '^-[^-]' bench/results/stage7-narration-only-dry/arms/system.diff)\" = 0 && .venv/bin/ruff check scripts/ringer/stage7/narration_only_probe.py scripts/ringer/stage7/test_narration_only_probe.py && .venv/bin/ruff format --check scripts/ringer/stage7/narration_only_probe.py scripts/ringer/stage7/test_narration_only_probe.py || { echo 'FAIL: see output above'; exit 1; }",
+   "verified": "Arms differ by exactly the one inserted rule line; user prompt identical; caps and --confirm enforced; no network call."
+  }
+ ]
+}

@@ -27,6 +27,12 @@
     "check": 3,
     "scene_id": "2A",
     "gate": "t_2a_2b:restricted_corridor_access",
+    "subject": "cooling_service_archive_panel"
+  },
+  {
+    "check": 3,
+    "scene_id": "2A",
+    "gate": "t_2a_2b:restricted_corridor_access",
     "subject": "facility_perimeter"
   },
   {

@@ -1,0 +1,597 @@
+"""Offline validation for dry and live Stage 7 door-probe artifacts."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+from typing import Any
+
+from door_continuation import _matches_all
+from door_probe import EXPERIMENTS, ROOT, TRANSITION_LIKE, _package_bridge_material
+from door_prompt import THINGS_ASSUMPTION, patch_prompt, select_prompt
+
+from bench.core import ledger_rows
+
+
+def _read(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _spend(path: Path) -> list[dict[str, Any]]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def _check_rows(
+    rows: list[dict[str, Any]],
+    n: int,
+    live: bool,
+    grounded: bool,
+    arms: tuple[str, ...],
+    errors: list[str],
+    transition: bool = False,
+) -> None:
+    expected = len(arms) * n
+    if len(rows) != expected:
+        errors.append(f"results.json: expected {expected} rows, found {len(rows)}")
+    expected_order = [(rep, arm) for rep in range(1, n + 1) for arm in arms]
+    if [(row.get("rep"), row.get("arm")) for row in rows] != expected_order:
+        errors.append("results.json: rows are not unique rep-major rows in the required arm order")
+    if len({row.get("row_id") for row in rows}) != len(rows):
+        errors.append("results.json: row_id values are not unique")
+    for row in rows:
+        if not live:
+            if transition and "max_commands" in row:
+                if type(row["max_commands"]) is not int or row["max_commands"] != 20:
+                    errors.append(f"{row.get('row_id')}: max_commands must be 20")
+            elif transition:
+                errors.append(f"{row.get('row_id')}: max_commands is missing")
+            continue
+        if transition:
+            ended_by = row.get("ended_by")
+            if ended_by not in {"earned", "forced", "timer", "none"}:
+                errors.append(f"{row.get('row_id')}: ended_by is invalid")
+            if type(row.get("final_scene")) is not str:
+                errors.append(f"{row.get('row_id')}: final_scene must be a string")
+            for field in ("commands", "responses", "clarification_turns", "committed_reveals_by_turn", "turn_statuses"):
+                if not isinstance(row.get(field), list):
+                    errors.append(f"{row.get('row_id')}: {field} must be a list")
+            commands = row.get("commands") if isinstance(row.get("commands"), list) else []
+            responses = row.get("responses") if isinstance(row.get("responses"), list) else []
+            clarification_turns = (
+                row.get("clarification_turns") if isinstance(row.get("clarification_turns"), list) else []
+            )
+            committed_by_turn = (
+                row.get("committed_reveals_by_turn") if isinstance(row.get("committed_reveals_by_turn"), list) else []
+            )
+            turn_statuses = row.get("turn_statuses") if isinstance(row.get("turn_statuses"), list) else []
+            if type(row.get("panel_named")) is not bool:
+                errors.append(f"{row.get('row_id')}: panel_named must be a boolean")
+            for field in ("request_count", "recovery_count"):
+                if type(row.get(field)) is not int or row[field] < 0:
+                    errors.append(f"{row.get('row_id')}: {field} must be a non-negative integer")
+            if any(type(command) is not str for command in commands):
+                errors.append(f"{row.get('row_id')}: commands must contain strings")
+            if any(type(response) is not str for response in responses):
+                errors.append(f"{row.get('row_id')}: responses must contain strings")
+            if any(
+                type(reveals) is not list or any(type(identifier) is not str for identifier in reveals)
+                for reveals in committed_by_turn
+            ):
+                errors.append(f"{row.get('row_id')}: committed reveals must be lists of strings")
+            if any(type(status) is not str for status in turn_statuses):
+                errors.append(f"{row.get('row_id')}: turn_statuses must contain strings")
+            for field in ("earned_exit", "timer_exit", "no_exit"):
+                if type(row.get(field)) is not bool:
+                    errors.append(f"{row.get('row_id')}: {field} must be a boolean")
+            expected_flags = {
+                "earned_exit": ended_by == "earned",
+                "timer_exit": ended_by in {"forced", "timer"},
+                "no_exit": ended_by == "none",
+            }
+            for field, expected_flag in expected_flags.items():
+                if row.get(field) is not expected_flag:
+                    errors.append(f"{row.get('row_id')}: {field} disagrees with ended_by")
+            transition_turn = row.get("transition_turn")
+            if ended_by == "none":
+                if transition_turn is not None:
+                    errors.append(f"{row.get('row_id')}: no_exit row has a transition_turn")
+                if row.get("final_scene") != "2B":
+                    errors.append(f"{row.get('row_id')}: no_exit row must remain in scene 2B")
+            elif type(transition_turn) is not int or transition_turn < 1:
+                errors.append(f"{row.get('row_id')}: exiting row needs a positive transition_turn")
+            if len(commands) != len(responses):
+                errors.append(f"{row.get('row_id')}: commands and responses must have equal length")
+            if len(commands) > 20:
+                errors.append(f"{row.get('row_id')}: more than twenty continuation commands")
+            if type(transition_turn) is int and transition_turn > len(commands):
+                errors.append(f"{row.get('row_id')}: transition_turn exceeds command count")
+            if len(committed_by_turn) != len(commands):
+                errors.append(f"{row.get('row_id')}: committed reveal turn count disagrees with commands")
+            if any(type(turn) is not int or turn < 1 or turn > len(commands) for turn in clarification_turns):
+                errors.append(f"{row.get('row_id')}: invalid clarification turn")
+            if len(set(clarification_turns)) != len(clarification_turns):
+                errors.append(f"{row.get('row_id')}: duplicate clarification turn")
+            expected_clarifications = [
+                index for index, status in enumerate(turn_statuses, 1) if status == "clarification"
+            ]
+            if clarification_turns != expected_clarifications:
+                errors.append(f"{row.get('row_id')}: clarification_turns disagree with turn_statuses")
+            continue
+        if grounded:
+            earned_by_command_2 = row.get("earned_by_command_2")
+            target_commit_turn = row.get("target_commit_turn")
+            clarification_turns = row.get("clarification_turns")
+            if type(earned_by_command_2) is not bool:
+                errors.append(f"{row.get('row_id')}: earned_by_command_2 must be a boolean")
+            if target_commit_turn not in (None, 1, 2):
+                errors.append(f"{row.get('row_id')}: target_commit_turn must be 1, 2, or null")
+            if not isinstance(clarification_turns, list) or any(
+                type(turn) is not int or turn not in (1, 2) for turn in clarification_turns
+            ):
+                errors.append(f"{row.get('row_id')}: clarification_turns must contain only 1 or 2")
+        commands = row.get("commands", [row.get("command")] if row.get("command") is not None else [])
+        if not isinstance(commands, list) or len(commands) > 2:
+            errors.append(f"{row.get('row_id')}: more than two continuation commands")
+        turns = row.get("continuation", {}).get("turns", [])
+        if len(turns) > 2:
+            errors.append(f"{row.get('row_id')}: continuation has more than two turn records")
+        for index, turn in enumerate(turns):
+            eligible = turn.get("eligible", [])
+            matched = turn.get("matched", [])
+            evidence = turn.get("evidence", {})
+            if not isinstance(eligible, list) or not isinstance(matched, list):
+                errors.append(f"{row.get('row_id')}: turn {index + 1} lacks eligible/matched lists")
+                continue
+            recomputed = sorted(
+                identifier
+                for identifier in eligible
+                if identifier in evidence
+                and _matches_all(tuple(tuple(group) for group in evidence[identifier]), turn.get("command", ""))
+            )
+            if recomputed != sorted(matched):
+                errors.append(f"{row.get('row_id')}: turn {index + 1} matcher result differs from saved evidence")
+        if grounded:
+            statuses = [turn.get("status") for turn in turns[:2]]
+            earned = any(status == "earned" for status in statuses)
+            if row.get("earned_by_command_2") is not earned:
+                errors.append(f"{row.get('row_id')}: earned_by_command_2 disagrees with turn statuses")
+            saved_clarifications = row.get("clarification_turns")
+            actual_clarifications = [index for index, status in enumerate(statuses, 1) if status == "clarification"]
+            if saved_clarifications != actual_clarifications:
+                errors.append(f"{row.get('row_id')}: clarification_turns disagrees with turn statuses")
+            committed_turns = [
+                index for index, turn in enumerate(turns[:2], 1) if "k_sl_2b_a_r1" in turn.get("committed_reveals", [])
+            ]
+            expected_commit_turn = committed_turns[0] if committed_turns else None
+            if row.get("target_commit_turn") != expected_commit_turn:
+                errors.append(f"{row.get('row_id')}: target_commit_turn disagrees with committed_reveals")
+
+
+def _canonical_row_hash(row: dict[str, Any]) -> str:
+    body = json.dumps(row, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+POSITIVE_FIELDS = (
+    "upstream_invention",
+    "downstream_new_invention",
+    "inherited_invention",
+    "player_pursuit",
+    "premature_disclosure",
+    "contradictory_delivery",
+)
+REVIEW_FIELDS = POSITIVE_FIELDS + ("earned_by_command_2",)
+
+
+def _row_text(row: dict[str, Any]) -> str:
+    values = [row.get("screen", ""), row.get("responses", []), row.get("commands", [])]
+    return json.dumps(values, ensure_ascii=False)
+
+
+def _check_reviewed(out: Path, rows: list[dict[str, Any]], n: int, arms: tuple[str, ...], errors: list[str]) -> None:
+    verdicts: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        path = out / "verdicts" / f"{row['row_id']}.json"
+        if not path.exists():
+            errors.append(f"{path}: missing review verdict")
+            continue
+        try:
+            verdict = _read(path)
+        except Exception as exc:
+            errors.append(f"{path}: malformed verdict: {exc}")
+            continue
+        verdicts[row["row_id"]] = verdict
+        if verdict.get("row_id") != row["row_id"]:
+            errors.append(f"{path}: row_id field does not match row")
+        if verdict.get("row_hash") != _canonical_row_hash(row):
+            errors.append(f"{path}: row_hash field does not match canonical row")
+        if not isinstance(verdict.get("reviewer"), str) or not verdict["reviewer"]:
+            errors.append(f"{path}: reviewer field must be a nonempty string")
+        evidence = verdict.get("evidence")
+        if not isinstance(evidence, dict):
+            errors.append(f"{path}: evidence field must be an object")
+            evidence = {}
+        text = _row_text(row)
+        fields = REVIEW_FIELDS
+        grounded_fields = (
+            "declared_panel_used",
+            "invented_access_object",
+            "reached_archive_without_new_credential",
+        )
+        if out.joinpath("run.json").exists() and _read(out / "run.json").get("experiment") == "grounded":
+            fields = fields + grounded_fields
+        for field in fields:
+            value = verdict.get(field)
+            if field in grounded_fields:
+                if type(value) is not bool:
+                    errors.append(f"{path}: {field} field must be true or false")
+            elif value not in (True, False, "needs_review"):
+                errors.append(f"{path}: {field} field must be true, false, or needs_review")
+            if value is True and field in POSITIVE_FIELDS:
+                quote = evidence.get(field)
+                if not isinstance(quote, str) or not quote or quote not in text:
+                    errors.append(f"{path}: evidence.{field} must be a nonempty exact quote in row text")
+        earned = any(turn.get("status") == "earned" for turn in row.get("continuation", {}).get("turns", [])[:2])
+        if verdict.get("earned_by_command_2") is not earned:
+            errors.append(f"{path}: earned_by_command_2 field disagrees with continuation turns")
+    if errors:
+        return
+    grounded = _read(out / "run.json").get("experiment") == "grounded"
+    count_fields = ("earned", "unsupported_access", "premature_disclosure", "contradictory_delivery")
+    if grounded:
+        count_fields += (
+            "declared_panel_used",
+            "invented_access_object",
+            "reached_archive_without_new_credential",
+            "door_appears",
+        )
+    counts = {arm: {field: 0 for field in count_fields} for arm in arms}
+    for row in rows:
+        verdict = verdicts[row["row_id"]]
+        arm_counts = counts[row["arm"]]
+        if verdict["earned_by_command_2"]:
+            arm_counts["earned"] += 1
+        if any(
+            verdict[field] is True for field in ("upstream_invention", "downstream_new_invention", "player_pursuit")
+        ):
+            arm_counts["unsupported_access"] += 1
+        if verdict["premature_disclosure"] is True:
+            arm_counts["premature_disclosure"] += 1
+        if verdict["contradictory_delivery"] is True:
+            arm_counts["contradictory_delivery"] += 1
+        if grounded:
+            for field in (
+                "declared_panel_used",
+                "invented_access_object",
+                "reached_archive_without_new_credential",
+            ):
+                if verdict[field] is True:
+                    arm_counts[field] += 1
+            if verdict["declared_panel_used"] is True or verdict["invented_access_object"] is True:
+                arm_counts["door_appears"] += 1
+    summary_path = out / "review-summary.json"
+    if not summary_path.exists():
+        return
+    try:
+        review_summary = _read(summary_path)
+    except Exception as exc:
+        errors.append(f"{summary_path}: malformed review summary: {exc}")
+        return
+    saved = review_summary.get("arms")
+    if not isinstance(saved, dict):
+        errors.append(f"{summary_path}: arms field must be an object")
+        return
+    for arm in arms:
+        entry = saved.get(arm)
+        if not isinstance(entry, dict):
+            errors.append(f"{summary_path}: arms.{arm} field is missing or not an object")
+            continue
+        for field, value in counts[arm].items():
+            if entry.get(field) != value:
+                errors.append(f"{summary_path}: arms.{arm}.{field} disagrees with verdicts")
+        decision = entry.get("decision")
+        if n != 12:
+            expected_decision = "not_decided"
+        else:
+            control_earned = counts["control"]["earned"]
+            if grounded:
+                expected_decision = (
+                    "wins"
+                    if arm == "grounded"
+                    and counts[arm]["reached_archive_without_new_credential"] >= 10
+                    and counts[arm]["earned"] >= 10
+                    and counts[arm]["invented_access_object"] <= 2
+                    and counts[arm]["premature_disclosure"] == 0
+                    and counts[arm]["contradictory_delivery"] == 0
+                    and counts[arm]["earned"] >= control_earned + 3
+                    else "does_not_win"
+                )
+            else:
+                expected_decision = (
+                    "wins"
+                    if counts[arm]["earned"] >= 10
+                    and counts[arm]["unsupported_access"] <= 2
+                    and counts[arm]["premature_disclosure"] == 0
+                    and counts[arm]["contradictory_delivery"] == 0
+                    and counts[arm]["earned"] > control_earned
+                    else "does_not_win"
+                )
+        if decision != expected_decision:
+            errors.append(f"{summary_path}: arms.{arm}.decision disagrees with screen rule")
+
+
+def _check_completion(source: dict[str, Any], rows: list[dict[str, Any]], live: bool, errors: list[str]) -> None:
+    prompts = source.get("prompts", {})
+    control = prompts.get("control", {})
+    no_finish = prompts.get("no-finish", {})
+    line = "Finish each action the player gives.\n"
+    control_system = control.get("system")
+    no_finish_system = no_finish.get("system")
+    if not isinstance(control_system, str) or not isinstance(no_finish_system, str):
+        errors.append("completion prompts: control and no-finish systems must be strings")
+        return
+    if control.get("hashes", {}).get("system") != control.get("hashes", {}).get("original_system"):
+        errors.append("completion control: system hash differs from original_system hash")
+    if control_system.count(line) != 1:
+        errors.append("completion control: finish instruction does not occur exactly once")
+    if no_finish.get("original_system") != control.get("original_system"):
+        errors.append("completion: original systems differ across arms")
+    expected_no_finish = control_system.replace(line, "", 1)
+    if no_finish_system != expected_no_finish:
+        errors.append("completion no-finish: system is not exactly control minus the finish instruction")
+    if no_finish.get("system_diff") == control.get("system_diff"):
+        errors.append("completion no-finish: system diff is not distinct from control")
+    for field in ("user", "original_user"):
+        if control.get("hashes", {}).get(field) != no_finish.get("hashes", {}).get(field):
+            errors.append(f"completion: {field} hashes differ across arms")
+    bridge = source.get("bridge", {})
+    if not isinstance(bridge.get("bridge"), str) or not isinstance(bridge.get("entry"), str):
+        errors.append("completion: bridge and entry must be strings")
+    if live:
+        fixed = bridge.get("fixed")
+        if not isinstance(fixed, str):
+            errors.append("completion: fixed bridge/entry suffix is missing")
+        else:
+            for row in rows:
+                if not isinstance(row.get("screen"), str) or not row["screen"].endswith(fixed):
+                    errors.append(f"{row.get('row_id')}: authored bridge/entry differs from completion control")
+
+
+def _check_grounded(source: dict[str, Any], errors: list[str], experiment: str = "grounded") -> None:
+    experiment_config = EXPERIMENTS[experiment]
+    first_arm, second_arm = experiment_config["arms"]
+    prompts = source.get("prompts", {})
+    control = prompts.get(first_arm, {})
+    grounded = prompts.get(second_arm, {})
+    if source.get("things_assumption") != THINGS_ASSUMPTION:
+        errors.append(f"{experiment}: things_assumption is missing or incorrect")
+    if grounded.get("things_assumption") != THINGS_ASSUMPTION:
+        errors.append(f"{experiment}: derived prompt assumption is missing or incorrect")
+    if experiment in ("details", "merged") and control.get("user") != grounded.get("user"):
+        errors.append(f"{experiment}: user prompts differ across arms")
+    if experiment == "grounded" and control.get("user") != control.get("original_user"):
+        errors.append("grounded control: user differs from original_user")
+    if grounded.get("original_user") != control.get("original_user"):
+        errors.append(f"{experiment}: original users differ across arms")
+    if control.get("system") != grounded.get("system"):
+        errors.append(f"{experiment}: system prompts differ across arms")
+    if experiment in ("details", "merged") and control.get("hashes", {}).get("user") != grounded.get("hashes", {}).get(
+        "user"
+    ):
+        errors.append(f"{experiment}: user hashes differ across arms")
+    if control.get("hashes", {}).get("system") != grounded.get("hashes", {}).get("system"):
+        errors.append(f"{experiment}: system hashes differ across arms")
+    if control.get("hashes", {}).get("system") != control.get("hashes", {}).get("original_system"):
+        errors.append("grounded control: system hash differs from original_system hash")
+    if grounded.get("hashes", {}).get("system") != grounded.get("hashes", {}).get("original_system"):
+        errors.append("grounded: system hash differs from original_system hash")
+    expected = patch_prompt(select_prompt(), second_arm, experiment_config.get("prompt_experiment", experiment))
+    if grounded.get("user") != expected["user"] or grounded.get("diff") != expected["diff"]:
+        errors.append(f"{experiment}: user is not exactly the derived THINGS/SCENE/CONSTRAINTS additions")
+    if experiment == "grounded" and grounded.get("diff") == control.get("diff"):
+        errors.append("grounded: user diff is not distinct from control")
+    bridges = source.get("bridges")
+    if not isinstance(bridges, dict):
+        errors.append("grounded: per-arm bridge material is missing")
+        return
+    prefix = source.get("bridge", {}).get("prefix")
+    if not isinstance(prefix, str):
+        errors.append("grounded: recorded narrator prefix is missing")
+        return
+    for arm in experiment_config["arms"]:
+        saved = bridges.get(arm)
+        if not isinstance(saved, dict):
+            errors.append(f"grounded: bridge material for {arm} is missing")
+            continue
+        path = ROOT / "bench/variations" / experiment_config["variations"][arm]
+        expected_bridge = _package_bridge_material(path, prefix)
+        for field in ("bridge", "entry", "fixed"):
+            if saved.get(field) != expected_bridge[field]:
+                errors.append(f"{experiment} {arm}: {field} does not match its variation package")
+
+
+def _check_merged(source: dict[str, Any], errors: list[str]) -> None:
+    assertions = source.get("merged_assertions")
+    if not isinstance(assertions, dict):
+        errors.append("merged: merged_assertions is missing")
+        return
+    if assertions.get("prompt_hashes_identical") is not True:
+        errors.append("merged: prompt_hashes_identical must be true")
+    package_delta = assertions.get("package_delta")
+    if (
+        not isinstance(package_delta, list)
+        or not package_delta
+        or any(type(name) is not str or not name for name in package_delta)
+    ):
+        errors.append("merged: package_delta must be a non-empty list of file names")
+    if type(assertions.get("bridge_fixed_differs")) is not bool:
+        errors.append("merged: bridge_fixed_differs must be a boolean")
+    for field in ("bridge_baseline_fixed", "bridge_details_fixed"):
+        if not isinstance(assertions.get(field), str):
+            errors.append(f"merged: {field} must be a string")
+    if isinstance(source.get("bridges"), dict):
+        baseline = source["bridges"].get("baseline", {})
+        details = source["bridges"].get("details", {})
+        if assertions.get("bridge_baseline_fixed") != baseline.get("fixed"):
+            errors.append("merged: baseline bridge text does not match bridge material")
+        if assertions.get("bridge_details_fixed") != details.get("fixed"):
+            errors.append("merged: details bridge text does not match bridge material")
+        if assertions.get("bridge_fixed_differs") != (baseline.get("fixed") != details.get("fixed")):
+            errors.append("merged: bridge_fixed_differs disagrees with bridge material")
+
+
+def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
+    errors: list[str] = []
+    try:
+        config = EXPERIMENTS[experiment]
+    except KeyError:
+        return [f"run.json: unknown experiment {experiment}"]
+    arms = config["arms"]
+    required = (
+        "run.json",
+        "prompts",
+        "results.json",
+        "spend.jsonl",
+        "summary.json",
+        "source-before.json",
+        "source-after.json",
+        "verdicts",
+        "notes.md",
+    )
+    for name in required:
+        if not (out / name).exists():
+            errors.append(f"{out / name}: missing required artifact")
+    if errors:
+        return errors
+    try:
+        run, results, summary = (_read(out / name) for name in ("run.json", "results.json", "summary.json"))
+        rows = results.get("rows", [])
+        events = _spend(out / "spend.jsonl")
+    except Exception as exc:
+        return [f"{out}: malformed artifact: {exc}"]
+    live = mode == "artifacts" or (mode == "reviewed" and run.get("mode") == "live")
+    if mode == "dry" and run.get("mode") != "dry":
+        errors.append("run.json: expected dry mode for dry checker")
+    if mode == "artifacts" and run.get("mode") != "live":
+        errors.append("run.json: expected live mode for artifacts checker")
+    if run.get("experiment", "door") != experiment:
+        errors.append("run.json: experiment field does not match selected experiment")
+    if run.get("arms") != list(arms):
+        errors.append("run.json: arms field does not match selected experiment")
+    _check_rows(
+        rows,
+        n,
+        live,
+        experiment in ("grounded", *TRANSITION_LIKE),
+        arms,
+        errors,
+        transition=experiment in TRANSITION_LIKE,
+    )
+    expected = len(arms) * n
+    if summary.get("n") != n or summary.get("rows", summary.get("planned_rows")) != len(rows):
+        errors.append("summary.json: row count disagrees with N/results")
+    if mode == "dry" and summary.get("planned_rows") != expected:
+        errors.append("summary.json: planned_rows disagrees with N")
+    if experiment in TRANSITION_LIKE:
+        caps = config["caps"][n]
+        if run.get("caps") != caps or summary.get("caps") != caps:
+            errors.append("transition: run and summary caps do not match the registered caps")
+        if summary.get("max_commands") != 20:
+            errors.append("transition: summary max_commands must be 20")
+        arithmetic = summary.get("cap_arithmetic")
+        if not isinstance(arithmetic, dict):
+            errors.append("transition: cap_arithmetic is missing")
+        else:
+            expected_arithmetic = {
+                "raw_remaining": caps["raw"] - expected,
+                "cloudflare_remaining": caps["cloudflare"],
+                "player_remaining": caps["player"],
+            }
+            if mode == "dry" and arithmetic != expected_arithmetic:
+                errors.append("transition: dry cap_arithmetic disagrees with registered caps")
+    if live:
+        experiment_id = run.get("experiment_id")
+        if not experiment_id or summary.get("experiment_id") != experiment_id:
+            errors.append("summary/run: experiment_id does not reconcile")
+        cloudflare = sum(event.get("kind") == "cloudflare" for event in events)
+        players = sum(event.get("kind") == "raw_player" for event in events)
+        if summary.get("cloudflare_requests") != cloudflare:
+            errors.append("summary.json: cloudflare_requests disagrees with spend events")
+        if summary.get("raw_player_attempts") != players:
+            errors.append("summary.json: raw_player_attempts disagrees with spend events")
+        caps = summary.get("caps", {})
+        if cloudflare > caps.get("cloudflare", -1) or players > caps.get("player", -1):
+            errors.append("summary.json: spend exceeds request or player cap")
+        if experiment in TRANSITION_LIKE:
+            # The raw 2A call is one successful narrator call per completed row;
+            # counted_provider records it in the same cloudflare stream as turns.
+            raw_requests = len(rows)
+            if raw_requests > caps.get("raw", -1):
+                errors.append("transition: raw request spend exceeds cap")
+            arithmetic = summary.get("cap_arithmetic", {})
+            if arithmetic.get("cloudflare_remaining") != caps.get("cloudflare", -1) - cloudflare:
+                errors.append("transition: cloudflare cap arithmetic disagrees with spend")
+            if arithmetic.get("player_remaining") != caps.get("player", -1) - players:
+                errors.append("transition: player cap arithmetic disagrees with spend")
+            if arithmetic.get("raw_remaining") != caps.get("raw", -1) - raw_requests:
+                errors.append("transition: raw cap arithmetic disagrees with spend")
+        ledger_path = Path(run.get("ledger_path", "bench/results/ledger.jsonl"))
+        if not ledger_path.exists():
+            errors.append("ledger: configured ledger path is missing")
+        else:
+            matching = [row for row in ledger_rows(ledger_path) if row.get("experiment_id") == experiment_id]
+            if not matching:
+                errors.append("ledger: experiment_id is missing")
+            elif (
+                matching[-1].get("cloudflare_requests") != cloudflare
+                or matching[-1].get("raw_player_attempts") != players
+            ):
+                errors.append("ledger: spend counts do not reconcile")
+    selection = select_prompt()
+    source = _read(out / "source-before.json")
+    prompts = source.get("prompts", {})
+    prompt_experiment = config.get("prompt_experiment", experiment)
+    for arm in arms:
+        expected_prompt = patch_prompt(selection, arm, prompt_experiment)
+        if prompts.get(arm, {}).get("hashes") != expected_prompt["hashes"]:
+            errors.append(f"prompts/{arm}: prompt hashes differ from fixture")
+    if experiment == "completion":
+        _check_completion(source, rows, live, errors)
+    elif experiment in ("grounded", *TRANSITION_LIKE):
+        _check_grounded(source, errors, experiment)
+        if experiment == "merged":
+            _check_merged(source, errors)
+    if experiment in TRANSITION_LIKE and live:
+        counts = {arm: {"earned_exit": 0, "timer_exit": 0, "no_exit": 0} for arm in arms}
+        for row in rows:
+            for field in counts[row["arm"]]:
+                counts[row["arm"]][field] += int(row[field])
+        for arm in arms:
+            saved = summary.get("arms", {}).get(arm, {})
+            for field, value in counts[arm].items():
+                if saved.get(field) != value:
+                    errors.append(f"summary.json: arms.{arm}.{field} disagrees with rows")
+    if mode == "reviewed":
+        _check_reviewed(out, rows, n, arms, errors)
+    return errors
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("out", type=Path)
+    parser.add_argument("n", type=int)
+    parser.add_argument("--mode", choices=("dry", "artifacts", "reviewed"), required=True)
+    parser.add_argument("--experiment", choices=tuple(EXPERIMENTS), default="door")
+    args = parser.parse_args()
+    errors = check(args.out, args.n, args.mode, args.experiment)
+    if errors:
+        print("\n".join(errors))
+        return 1
+    print(f"door probe {args.mode} artifacts valid: {len(EXPERIMENTS[args.experiment]['arms']) * args.n} rows")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

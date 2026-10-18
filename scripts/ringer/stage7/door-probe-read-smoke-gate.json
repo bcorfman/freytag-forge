@@ -1,0 +1,30 @@
+{
+  "run_name": "stage7-door-probe-read-smoke",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-door-read-smoke-gate",
+  "max_parallel": 1,
+  "worktrees": false,
+  "tasks": [
+    {
+      "key": "door-read-smoke-gate",
+      "task_type": "review",
+      "max_attempts": 1,
+      "timeout_s": 1800,
+      "check_timeout_s": 180,
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": false,
+      "ownership": [
+        "bench/results/stage7-door-smoke/verdicts/",
+        "bench/results/stage7-door-smoke/review-summary.json"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-smoke 1 --mode artifacts",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=$PWD TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /home/bcorfman/dev/freytag-forge/bench/results/stage7-door-smoke 1 --mode reviewed && python3 -c \"import json;s=json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/stage7-door-smoke/review-summary.json'))['n12_safe_to_run'];assert 'previous' in s and 'blocking_findings' in s and isinstance(s['safe'],bool),s\"",
+      "spec": "You are a read-only reviewer on freytag-forge. The real repository is /home/bcorfman/dev/freytag-forge; the smoke output is /home/bcorfman/dev/freytag-forge/bench/results/stage7-door-smoke/. Make no experiment API calls, no network calls, no .env access, no git add/commit/reset/clean/checkout/stash/push. Do not alter raw rows (results.json, run.json, summary.json, spend.jsonl, row-hashes.json, prompts/). You may edit ONLY files under /home/bcorfman/dev/freytag-forge/bench/results/stage7-door-smoke/verdicts/ and /home/bcorfman/dev/freytag-forge/bench/results/stage7-door-smoke/review-summary.json, always by those absolute paths (never write into your task directory).\n\nCONTEXT. Six rows (one per arm) from a live smoke run were reviewed once; verdicts and review-summary.json already exist. That review concluded n12_safe_to_run.safe=false. Your job is to re-judge ONLY that gate, from the evidence, and to correct any verdict you find wrong.\n\nTHE GATE (from the implementation plan, section 9 'Read smoke'). Record whether execution is sound enough for N=12. A losing arm does not invalidate the harness. Only these block full execution: missing output; invalid transport or schema behavior; wrong prompt/bridge/entry composition; unexplained spend. Not blockers: unsupported inventions or obstacles in the generated arms (that is the scientific result being measured); the smoke player-call total of 12 equalling its N=1 cap (6 rows x 2 commands is the design; the N=12 cap is 144 player and 336 Cloudflare calls, so check the arithmetic scales: 72 rows x 2 commands = 144 player attempts, 48 raw 2A + up to 288 two-turn requests = 336).\n\nSTEPS. 1) Run the artifact check: cd /home/bcorfman/dev/freytag-forge && PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python scripts/ringer/stage7/check_door_probe.py /home/bcorfman/dev/freytag-forge/bench/results/stage7-door-smoke 1 --mode artifacts. 2) Read spend.jsonl, summary.json and run.json and reconcile every request (4 raw 2A + continuation narration + player attempts) against the 15 Cloudflare and 12 player totals; explain any request you cannot account for. 3) Verify per row that the composed screen equals narration + bridge + entry (fixed arms use the recorded prefix) and that no row shows invalid JSON/schema failures. 4) Re-read each existing verdict against the saved evidence; fix any wrong one (keep row_hash and schema). 5) Update review-summary.json: keep the old decision under n12_safe_to_run.previous (with its reason), and set n12_safe_to_run.safe, .blocking_findings (list; empty if none) and .reason to your evidence-based judgment against the four blocking criteria above. Be honest: if one of the four criteria is violated, say safe=false and name it. 6) Run the reviewed check: cd /home/bcorfman/dev/freytag-forge && PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python scripts/ringer/stage7/check_door_probe.py /home/bcorfman/dev/freytag-forge/bench/results/stage7-door-smoke 1 --mode reviewed. Finish with a 5-line summary of your gate decision."
+    }
+  ]
+}

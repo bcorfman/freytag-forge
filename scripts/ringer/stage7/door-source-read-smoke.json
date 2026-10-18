@@ -1,0 +1,33 @@
+{
+  "run_name": "door-source-read-smoke",
+  "workdir": "/home/bcorfman/dev/ringer-work/door-source-read-smoke",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "source-read-smoke",
+      "task_type": "review",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 1800,
+      "check_timeout_s": 180,
+      "ownership": [
+        "bench/results/stage7-door-source-smoke/verdicts/",
+        "bench/results/stage7-door-source-smoke/review-summary.json"
+      ],
+      "expect_files": [
+        "bench/results/stage7-door-source-smoke/review-summary.json"
+      ],
+      "verified": "Each smoke row has a verdict whose row hash, evidence quotes, earned flag and the summary counts all reconcile with the saved results.",
+      "spec": "You are a read-only reviewer on freytag-forge. Working directory /home/bcorfman/dev/freytag-forge (no worktree). Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge, TMPDIR=/tmp; never use uv. NO model, network or provider calls; no .env. You may write ONLY bench/results/stage7-door-source-smoke/verdicts/*.json and bench/results/stage7-door-source-smoke/review-summary.json. Never edit results.json, code, story, fixtures or plans; no git mutation.\n\nCONTEXT. bench/results/stage7-door-source-smoke/results.json holds 3 rows (arms control, location, limits; N=1 smoke) of a Stage 7 screen: a narrator reply for scene 2A turn 7 (player command: 'Look for a concealed route or access panel leading from the service corridors to the detention area.'), composed with the authored bridge and 2B entry into a screen; a raw player then typed up to two commands in scene 2B and the real matcher scored them. Read each row's full screen, commands, responses and continuation turns, the saved prompt in bench/results/stage7-door-source-smoke/prompts/<arm>.json (declared THINGS and SCENE), and data/stories/continuity-initiative/plot.md Scenes 2A/2B and world.yaml. The story declares NO hidden door, panel, seam, grille, reader or keycard; 2B offers the archive terminals and selection files.\n\nTASK. First run: cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-source-smoke 1 --mode artifacts --experiment source (must print valid). Then for each row write bench/results/stage7-door-source-smoke/verdicts/<row_id>.json (row_id exactly as in results.json) with fields: row_id; row_hash = the value of check_door_probe._canonical_row_hash(row) (import it from scripts/ringer/stage7/check_door_probe.py with that dir on sys.path; compute it by script, never by hand); reviewer (a nonempty identity string such as 'ringer-codex-luna'); booleans upstream_invention (the narrator reply invented a physical route/obstacle/object not in the package, e.g. panel, seam, grille, door, reader), downstream_new_invention (a 2B reply after the player command invented something new), inherited_invention (an upstream invention carried into later text), player_pursuit (the player pursued an unsupported invention), premature_disclosure, contradictory_delivery (narration denies or contradicts an appended authored reveal), earned_by_command_2 (must equal whether any of the first two continuation turns has status 'earned'); and evidence: an object mapping each field that is TRUE among the first six to an exact quote that is a substring of json.dumps([row['screen'], row['responses'], row['commands']], ensure_ascii=False) (copy from that dump, keeping its escapes, e.g. a quote must not span a newline unescaped; short quotes are safest). Judge by reading, never by keyword matching. Use 'needs_review' only if truly undecidable; the reviewed check fails on it.\nThen write bench/results/stage7-door-source-smoke/review-summary.json: {\"integrity\": <one paragraph: did the harness behave soundly, spend vs caps, any anomaly>, \"n12_safe\": true/false, \"arms\": {<arm>: {\"earned\": int, \"unsupported_access\": int (rows where upstream_invention or downstream_new_invention or player_pursuit), \"premature_disclosure\": int, \"contradictory_delivery\": int, \"decision\": \"not_decided\"}}} with counts recomputed from your verdicts. Say in integrity that a one-row-per-arm smoke is not evidence about the fixes and that losing arms do not invalidate a sound harness. Final message: per-row one-line verdicts and n12_safe.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-source-smoke 1 --mode reviewed --experiment source"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+ "run_name": "stage7-zero-reveal-diagnosis",
+ "workdir": "/home/bcorfman/dev/ringer-work/zero-reveal-run",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "zero-reveal",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 1,
+   "timeout_s": 3000,
+   "check_timeout_s": 120,
+   "ownership": [
+    "/home/bcorfman/dev/ringer-work/zero-reveal-diagnosis/"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/zero-reveal-diagnosis/report.md"
+   ],
+   "spec": "You are a read-only diagnostic worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv. ABSOLUTELY NO network or billed model calls (do not source .env, no credentials). You MUST NOT modify any repository file or run git add/commit/reset/clean/checkout/stash. Write ONLY inside /home/bcorfman/dev/ringer-work/zero-reveal-diagnosis/ (create it).\n\nBACKGROUND. A saved screen, bench/results/stage7-transition-n12/results.json (24 rows; fields per row: arm, commands, responses, turn_statuses, committed_reveals_by_turn, ended_by, transition_turn, clarification_turns, panel_named, screen), ran full scene-2B continuations with a raw blind player. Rows that ended by a timer handoff ('forced', 8 rows: control r-01, r-02, r-06, r-09, r-10; grounded r-04, r-05, r-11) are exactly the rows where the player never earned k_sl_2b_a_r1 or earned only it. Rows that exited 'earned' all committed k_sl_2b_a_r1 and k_sl_2b_b_r1. In two sampled grounded timer rows the player pursued 'a way to the detention levels' through invented hardware (cable, junction box, keypad, keycard reader, access code) and searched the archive terminals only for access codes or keycard records, never for Michelle's selection file or Brandon's name. Context: the player's goal is set by the 2A screen; the 2B entry text is 'The records archive hummed behind the restricted corridor. The archive terminals held the Initiative's selection files. Those files held answers to why Michelle was taken and who helped build the system that chose her.'\n\nANALYZE with code (python/jq/rg), not by eyeballing; cite row ids and turn numbers:\n1. Table all 24 rows: arm, ended_by, number of commands, turn of first k_sl_2b_a_r1 commit (or None), whether any command mentions panel/keypad/keycard/code/detention.\n2. For the 8 timer rows, list every command (truncate to 140 chars) and flag which commands name the archive terminals or records. For each such command, evaluate it with the REAL matcher: storygame.runtime.candidate_matcher._matches_all against the action_evidence groups of k_sl_2b_a_r1 and k_sl_2b_b_r1 (load them from data/stories/continuity-initiative/knowledge.yaml; see scripts/ringer/stage7/door_continuation.py action_groups). State, for each such command, whether it matches and which required word group is missing. Report how many timer-row commands that target the archive terminals fail only because of vocabulary (for example 'access code', 'keycard record', 'highlighted record' instead of the selection files, Michelle, Brandon).\n3. For the 16 earned-exit rows that earned a_r1, extract the command that earned it and the command number; summarize what words it used. Compare to the timer rows: what does the earner say that the stalled player does not?\n4. Find where the player's goal comes from: read the 2A 'screen' text of the 8 timer rows and of 8 earned rows, the bridge sentence and the 2B entry text in each arm (control uses bench/frozen/continuity-pre-2a-panel/, grounded uses data/stories/continuity-initiative/), and the raw player prompt in frontend/e2e/blind-player.js (profile 'raw'; what it is told about the goal and what transcript it sees). Say whether the 'detention level / access code' goal is present in the 2A screen text of timer rows more often than in earned rows (count phrases like detention, access code, keycard, keypad in the screen).\n5. For the narrator's 2B responses on commands 1-3 of the timer rows, list the invented hardware nouns it introduced (keypad, keycard, console, junction box, ...) and the turn each first appeared, then say whether the player's next command chased that noun.\n6. Read docs/world-model-grounding.md, docs/narrator-writing-guide.md, and .plans/implementation_plan.md for earlier Stage 7 decisions (W decisions, scene fixes) and recommend ONLY techniques the repo already proved (story material at the source, subtractive fixes first; narrator rules last; never regex or keyword gates). Rank candidate causes (a) vocabulary mismatch between what the player types and the reveal's action_evidence, (b) goal set by the 2A screen/bridge, (c) invented hardware in 2B narration pulling the player, (d) 2B entry/cue not pointing at the selection files strongly enough, (e) other, each with the counts above as evidence. For the top two causes propose the smallest source change with exact quoted wording (12th grade, plain words) and the file/line it would touch; do not edit anything.\nWrite /home/bcorfman/dev/ringer-work/zero-reveal-diagnosis/report.md with sections: Row table, Matcher results, Earner commands, Where the goal comes from, Invented hardware, Ranked causes, Proposed fixes. Save your analysis script as analysis.py in the same folder. Final message: 6 lines of conclusions.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && R=/home/bcorfman/dev/ringer-work/zero-reveal-diagnosis && test -s $R/report.md && test -s $R/analysis.py && for s in 'Row table' 'Matcher results' 'Earner commands' 'Where the goal comes from' 'Invented hardware' 'Ranked causes' 'Proposed fixes'; do grep -qi \"$s\" $R/report.md || { echo \"missing section $s\"; exit 1; }; done && grep -q '_matches_all' $R/analysis.py && grep -q 'stage7-door-0[0-9]-grounded\\|door-04\\|r-04\\|grounded' $R/report.md && test -z \"$(git status --short | grep -v '^??')\" && echo OK",
+   "verified": "The report covers all 24 saved rows with real-matcher results for the timer-row commands, ranked causes with counts, and no tracked repo file changed."
+  }
+ ]
+}

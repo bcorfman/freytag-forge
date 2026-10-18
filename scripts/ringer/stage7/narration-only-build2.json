@@ -1,0 +1,34 @@
+{
+ "run_name": "stage7-narration-only-v2",
+ "workdir": "/home/bcorfman/dev/ringer-work/narration-only-build2",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "add-single-quote-arm",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 600,
+   "ownership": [
+    "scripts/ringer/stage7/narration_only_probe.py",
+    "scripts/ringer/stage7/test_narration_only_probe.py",
+    "bench/results/stage7-narration-only-dry3/"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/stage7-narration-only-dry3/arms/system.diff"
+   ],
+   "spec": "You are an implementation worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. NO network or billed calls, no credentials, no .env. No git add/commit/reset/clean/checkout/stash/push. Do not modify anything under bench/results except bench/results/stage7-narration-only-dry3/. You own ONLY scripts/ringer/stage7/narration_only_probe.py and scripts/ringer/stage7/test_narration_only_probe.py. Read both files first.\n\nCHANGE. The probe compares arms 'control' and 'narration_only' on the dialogue prompt (40 calls). Add a third arm 'single_quote' whose system string differs from control by the same one-line insertion before the same anchor, using this exact line:\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in single quotation marks. Do not use any other kind.\n(The existing narration_only line stays exactly as is: '...in quotation marks...'.) Requirements: (1) ARMS = ('control','narration_only','single_quote'); MAX_CALLS = 60; the refusal for --n over 20 stays; the live path sends one call per arm per rep, so n=20 is 60 calls. (2) Arm order rotates by rep: rep r uses ARMS rotated left by r % 3, so each arm leads equally often. (3) build_arms asserts for every non-control arm that removing its inserted line reproduces control's system string and that the user string is byte-identical; save all three payloads in DIR/arms/ and write DIR/arms/system.diff as the concatenated diffs of control vs each other arm, each with its own header naming the arm. (4) Each row gets a new boolean 'truncated' = true when the unwrapped narration string (the inner JSON text inside the worker's 'narration' field, before any runtime repair) fails strict json.loads; find how the existing code unwraps the body and reuse it; if the body has no narration string, truncated is false. (5) summary.json per arm gains 'truncated' (count of rows) alongside the existing fields; make_summary iterates over ARMS. (6) Update the dry-run notes text to name all three arms. (7) Update tests: three-arm builder, the new line is exactly inserted before the anchor in single_quote and narration_only is unchanged, the rotation gives every arm the first slot equally in 3 consecutive reps, the cap stops at 60 calls with a fake sender, n over 20 refused, 'truncated' true on a cut-off inner JSON and false on a clean one.\nHOW TO RUN AND VERIFY: pytest scripts/ringer/stage7 -n0, ruff check and ruff format --check on both files, then `TMPDIR=/tmp PYTHONPATH=$PWD .venv/bin/python scripts/ringer/stage7/narration_only_probe.py --n 1 --dry-run --out bench/results/stage7-narration-only-dry3` and confirm DIR/arms/system.diff shows two separate single-line additions. Do not run --confirm.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest scripts/ringer/stage7 -q -n0 > /tmp/sq.out 2>&1; tail -4 /tmp/sq.out; D=bench/results/stage7-narration-only-dry3/arms/system.diff; grep -q ' passed' /tmp/sq.out && ! grep -q ' failed\\| error' /tmp/sq.out && test \"$(grep -c '^+[^+]' $D)\" = 2 && test \"$(grep -c '^-[^-]' $D)\" = 0 && grep -q 'in single quotation marks. Do not use any other kind.' $D && grep -q 'inside the paragraph, in quotation marks. Do not use any other kind.' $D && grep -q 'MAX_CALLS = 60' scripts/ringer/stage7/narration_only_probe.py && .venv/bin/ruff check scripts/ringer/stage7/narration_only_probe.py scripts/ringer/stage7/test_narration_only_probe.py && .venv/bin/ruff format --check scripts/ringer/stage7/narration_only_probe.py scripts/ringer/stage7/test_narration_only_probe.py || { echo 'FAIL: see output above'; exit 1; }",
+   "verified": "Three arms differ from control by exactly one inserted line each; rotation, 60-call cap and the truncated field are tested; no network."
+  }
+ ]
+}

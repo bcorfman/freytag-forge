@@ -1,0 +1,32 @@
+{
+ "run_name": "astra-n12-fixes",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-gaps-update",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "gaps-update",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 1800,
+   "check_timeout_s": 600,
+   "ownership": [
+    "bench/affordance_known_gaps.json"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/affordance_known_gaps.json"
+   ],
+   "spec": "You are an implementation worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge (no worktree). Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. NO billed or network calls, no credentials. No git add/commit/reset/clean/checkout/stash/push. You own ONLY bench/affordance_known_gaps.json. Touch nothing else (not tests/, storygame/, data/, bench/frozen/). Untracked .plans files are intentionally present.\n\nCONTEXT. tests/test_affordance_map.py::test_whole_package_findings_match_recorded_gaps compares the live affordance findings for data/stories/continuity-initiative against bench/affordance_known_gaps.json (after dropping the test's hardcoded 'obsolete' tuple), sorted by (scene_id, gate, subject, check), comparing the four keys check, scene_id, gate, subject. It now fails because the story gained a declared cooling_service_archive_panel (commits 3692b4c0, ad8d0c76). Observed difference: a NEW finding {check 3, scene 2A, gate t_2a_2b:restricted_corridor_access, subject cooling_service_archive_panel}; the recorded {check 2, 2A, t_2a_2b:restricted_corridor_access, infrastructure_corridors} no longer appears; and the recorded {check 2, 2C, t_2c_3a:combined_broadcast_rescue_plan_known, maintenance_network} no longer appears (the 2C one is NOT obviously related to the panel: investigate it).\n\nTASK.\n1. Reproduce: compute the live findings exactly as the test does (load_story_package, build_affordance_map, check_affordance_map from the same modules the test imports) and diff against the recorded file after the test's obsolete filter. Print the full added/removed lists.\n2. For EACH added or removed finding, determine the cause from the code and story (e.g. which change in plot.md / storylet-routes / knowledge made the gap appear or vanish; for the 2C removal check whether it is a real fix, such as the 2C copied-JANUS-files pilot commit 471bad9b, or a regression/accident). Use git log -p on data/stories/continuity-initiative and git stash-free read-only commands only. Write the explanations in your final message.\n3. Update bench/affordance_known_gaps.json so the test passes: preserve the file's existing 2-space JSON formatting, key order (check, scene_id, gate, subject), and sort order; change ONLY the entries that differ. Do not edit the test or its obsolete tuple.\n4. If any removed finding looks like a REAL regression hidden by this update (a gate that the story previously made reachable and now does not), do NOT silently record it: still make the minimal edit, but flag it clearly at the top of your final message as 'NEEDS REVIEW'.\nVERIFY: .venv/bin/python -m pytest tests/test_affordance_map.py -q -n0 passes; git diff --stat shows only bench/affordance_known_gaps.json changed (besides the already-committed tree). Final message: the added/removed findings with causes, test result.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest tests/test_affordance_map.py -q -n0 > /tmp/gaps.out 2>&1; tail -5 /tmp/gaps.out; grep -q ' passed' /tmp/gaps.out && ! grep -q ' failed\\| error' /tmp/gaps.out && test \"$(git status --short | grep -v '^??' | wc -l)\" = 1 && git status --short | grep -q 'bench/affordance_known_gaps.json' && python3 -c \"import json;json.load(open('bench/affordance_known_gaps.json'))\" && git diff --stat bench/affordance_known_gaps.json",
+   "verified": "The affordance test passes and only the known-gaps file changed, with the cause of every added or removed finding explained."
+  }
+ ]
+}

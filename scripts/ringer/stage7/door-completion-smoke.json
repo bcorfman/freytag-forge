@@ -1,0 +1,31 @@
+{
+  "run_name": "door-completion-smoke",
+  "workdir": "/home/bcorfman/dev/ringer-work/door-completion-smoke",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "completion-smoke",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 1800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/stage7-door-completion-smoke/",
+        "bench/results/ledger.jsonl (append-only)"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment completion --confirm --out bench/results/stage7-door-completion-smoke",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-completion-smoke 1 --mode artifacts --experiment completion",
+      "verified": "The live smoke artifacts for 2 rows reconcile with spend events, caps, prompt hashes and the ledger row.",
+      "spec": "Run one billed Stage 7 COMPLETION-ablation door-screen smoke after the dry check passed: arms control, no-finish, one trial each, at most 10 Cloudflare requests and 4 raw-player attempts. Own only bench/results/stage7-door-completion-smoke/ plus append-only bench/results/ledger.jsonl. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report."
+    }
+  ]
+}

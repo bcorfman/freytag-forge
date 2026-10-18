@@ -122,6 +122,10 @@ cd /home/bcorfman/dev/ringer && ./ringer.py run /home/bcorfman/dev/freytag-forge
 
 The underlying command shape, for writing a new manifest:
 
+### Stage 7 door probe
+
+Free first: `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --experiment <door|source|completion|grounded|transition|details> --dry-run --out <dir>`, then `scripts/ringer/stage7/check_door_probe.py <dir> 12 --mode dry --experiment <same>` (the `door` experiment has no `--experiment` flag). Experiments: `door`, `source` and `completion` are two-command wording screens; `grounded` is the two-command panel screen with named-reveal scoring and clarification forwarding; `transition` and `details` run a full 2B continuation per row (raw player, 20-command cap) and count `earned_exit`, `timer_exit` and `no_exit` from the runtime's `transition_cause`, which is the adoption measure (earned exits at least 80%). `details` compares a frozen baseline package with the current one under identical 2A prompts. `scripts/ringer/stage7/payload_2b.py --out <dir>` rebuilds the 2B turn-1 prompts offline for both `details` arms and prints their diff. Live smoke and full runs are Ringer tasks that require `--confirm`, source `.env` only inside Ringer, check with `--mode artifacts`, and preserve partial artifacts without retries, replacement samples or pooling. Write the preregistration (arms, caps, keep rule) in `.plans/` before any billed run. These are source screens on a replayed 2A and a fresh 2B state, not hosted validation.
+
 ```bash
 uv run python -m bench run --variation bench/variations/authored-handoff-phase1.json \
   --scene 1A --replicates 4 --script candidate-selection-repro --out /tmp/bench-1a --confirm
