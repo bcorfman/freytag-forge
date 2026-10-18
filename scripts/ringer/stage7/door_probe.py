@@ -59,6 +59,10 @@ GROUNDED_VARIATIONS = {
     "control": "stage7-door-grounded-control.json",
     "grounded": "stage7-door-grounded.json",
 }
+DETAILS_VARIATIONS = {
+    "baseline": "stage7-details-control.json",
+    "details": "stage7-door-grounded.json",
+}
 EXPERIMENTS = {
     "door": {"arms": ARMS, "variations": VARIATIONS, "caps": CAPS},
     "source": {"arms": PROMPT_EXPERIMENTS["source"]["arms"], "variations": SOURCE_VARIATIONS, "caps": SOURCE_CAPS},
@@ -79,6 +83,13 @@ EXPERIMENTS = {
         "variations": GROUNDED_VARIATIONS,
         "caps": TRANSITION_CAPS,
         "prompt_experiment": "grounded",
+        "max_commands": 20,
+    },
+    "details": {
+        "arms": PROMPT_EXPERIMENTS["details"]["arms"],
+        "variations": DETAILS_VARIATIONS,
+        "caps": TRANSITION_CAPS,
+        "prompt_experiment": "details",
         "max_commands": 20,
     },
 }
@@ -176,8 +187,8 @@ def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
         "prompts": prompts,
         "bridge": bridge,
     }
-    if experiment in ("grounded", "transition"):
-        source["things_assumption"] = source["prompts"]["grounded"]["things_assumption"]
+    if experiment in ("grounded", "transition", "details"):
+        source["things_assumption"] = source["prompts"][config["arms"][-1]]["things_assumption"]
         source["bridges"] = {
             arm: _package_bridge_material(ROOT / "bench/variations" / config["variations"][arm], bridge["prefix"])
             for arm in config["arms"]
@@ -185,6 +196,34 @@ def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
         from door_prompt import things_emulation
 
         source["things_emulation"] = things_emulation()
+    if experiment == "details":
+        baseline = source["prompts"]["baseline"]
+        details = source["prompts"]["details"]
+        if baseline["hashes"] != details["hashes"]:
+            raise AssertionError("details arms do not have identical 2A prompt hashes")
+        frozen_root = ROOT / "bench/frozen/continuity-pre-details"
+        current_root = ROOT / "data/stories/continuity-initiative"
+        package_files = (
+            "handoffs.yaml",
+            "knowledge.yaml",
+            "pacing.yaml",
+            "plot.md",
+            "storylet-routes.yaml",
+            "storylets.md",
+            "world.yaml",
+        )
+        package_delta = [
+            name for name in package_files if (frozen_root / name).read_bytes() != (current_root / name).read_bytes()
+        ]
+        if package_delta != ["plot.md"]:
+            raise AssertionError(f"details continuation packages differ outside plot.md: {package_delta!r}")
+        if source["bridges"]["baseline"]["fixed"] != source["bridges"]["details"]["fixed"]:
+            raise AssertionError("details arms do not share authored bridge/entry text")
+        source["details_assertions"] = {
+            "prompt_hashes_identical": True,
+            "package_delta": package_delta,
+            "authored_bridge_identical": True,
+        }
     atomic_json(out / "source-before.json", source)
     atomic_json(out / "source-after.json", source)
     return source
@@ -213,7 +252,7 @@ def dry_run(out: Path, n: int, experiment: str = "door") -> None:
             "screen": screen,
             "eligible_ids": sorted(groups),
         }
-        if experiment == "transition":
+        if experiment in ("transition", "details"):
             plan["max_commands"] = config["max_commands"]
         plans.append(plan)
     plans = [x for x in plans if x["rep"] <= n]
@@ -240,7 +279,7 @@ def dry_run(out: Path, n: int, experiment: str = "door") -> None:
             "caps": caps,
             "cloudflare_max": caps["cloudflare"],
             "raw_player_max": caps["player"],
-            **({"max_commands": config["max_commands"]} if experiment == "transition" else {}),
+            **({"max_commands": config["max_commands"]} if experiment in ("transition", "details") else {}),
             **(
                 {
                     "cap_arithmetic": {
@@ -249,7 +288,7 @@ def dry_run(out: Path, n: int, experiment: str = "door") -> None:
                         "player_remaining": caps["player"],
                     }
                 }
-                if experiment == "transition"
+                if experiment in ("transition", "details")
                 else {}
             ),
         },
@@ -417,7 +456,7 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
                 )
                 continuation_path = variation_path
             commands = [_ask_player(screen, budget)]
-            if experiment == "transition":
+            if experiment in ("transition", "details"):
                 from door_transition import run_continuation
 
                 continuation = run_continuation(
@@ -484,7 +523,7 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
     experiment_id = str(uuid.uuid4())
     ledger_path = Path(os.environ.get("DOOR_LEDGER_PATH", ROOT / "bench/results/ledger.jsonl"))
     arm_summary = {arm: {"rows": sum(row["arm"] == arm for row in rows)} for arm in config["arms"]}
-    if experiment == "transition":
+    if experiment in ("transition", "details"):
         for arm in config["arms"]:
             arm_rows = [row for row in rows if row["arm"] == arm]
             arm_summary[arm].update(
@@ -524,11 +563,11 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
             "raw_player_attempts": budget.raw_player_attempts,
             "acknowledged": budget.acknowledged,
             "caps": caps,
-            **({"max_commands": config["max_commands"]} if experiment == "transition" else {}),
+            **({"max_commands": config["max_commands"]} if experiment in ("transition", "details") else {}),
             "cap_arithmetic": {
                 "cloudflare_remaining": caps["cloudflare"] - budget.cloudflare_requests,
                 "player_remaining": caps["player"] - budget.raw_player_attempts,
-                **({"raw_remaining": caps["raw"] - len(rows)} if experiment == "transition" else {}),
+                **({"raw_remaining": caps["raw"] - len(rows)} if experiment in ("transition", "details") else {}),
             },
             "arms": arm_summary,
         },

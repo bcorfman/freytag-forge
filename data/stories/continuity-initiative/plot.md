@@ -475,7 +475,7 @@ bridge_text:
 
 ### Scene 2B.1 — The Selection Algorithm
 
-**Details:** restricted records archive; unfamiliar system files; government data; financial data; Michelle’s research
+**Details:** restricted records archive; Michelle’s research; the Initiative’s selection files
 
 Inside the records archive, Kristin discovers files describing an artificial-intelligence system called **JANUS**.
 

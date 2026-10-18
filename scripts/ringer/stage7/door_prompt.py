@@ -92,6 +92,7 @@ PROMPT_EXPERIMENTS = {
     "source": {"arms": ("control", "location", "limits"), "replacements": SOURCE_REPLACEMENTS},
     "completion": {"arms": ("control", "no-finish"), "replacements": {}},
     "grounded": {"arms": ("control", "grounded"), "replacements": {}},
+    "details": {"arms": ("baseline", "details"), "replacements": {}},
 }
 REPLACEMENTS = DOOR_REPLACEMENTS
 
@@ -271,7 +272,7 @@ def patch_prompt(selection: PromptSelection, arm: str, experiment: str = "door")
             raise AssertionError(f"perimeter sentence global count is {perimeter}, expected 1")
         if corridor != 2:
             raise AssertionError(f"opened-corridor sentence global count is {corridor}, expected 2")
-    elif experiment == "grounded" and arm == "grounded":
+    elif (experiment == "grounded" and arm == "grounded") or experiment == "details":
         additions = grounded_additions()
         for section, lines in additions.items():
             body = sections[section]
@@ -330,7 +331,7 @@ def patch_prompt(selection: PromptSelection, arm: str, experiment: str = "door")
         ),
         "source_path": selection.source_path,
     }
-    if experiment == "grounded" and arm == "grounded":
+    if (experiment == "grounded" and arm == "grounded") or experiment == "details":
         result["things_assumption"] = THINGS_ASSUMPTION
     return result
 

@@ -359,28 +359,36 @@ def _check_completion(source: dict[str, Any], rows: list[dict[str, Any]], live: 
                     errors.append(f"{row.get('row_id')}: authored bridge/entry differs from completion control")
 
 
-def _check_grounded(source: dict[str, Any], errors: list[str]) -> None:
+def _check_grounded(source: dict[str, Any], errors: list[str], experiment: str = "grounded") -> None:
+    experiment_config = EXPERIMENTS[experiment]
+    first_arm, second_arm = experiment_config["arms"]
     prompts = source.get("prompts", {})
-    control = prompts.get("control", {})
-    grounded = prompts.get("grounded", {})
+    control = prompts.get(first_arm, {})
+    grounded = prompts.get(second_arm, {})
     if source.get("things_assumption") != THINGS_ASSUMPTION:
-        errors.append("grounded: things_assumption is missing or incorrect")
+        errors.append(f"{experiment}: things_assumption is missing or incorrect")
     if grounded.get("things_assumption") != THINGS_ASSUMPTION:
-        errors.append("grounded prompt: things_assumption is missing or incorrect")
-    if control.get("user") != control.get("original_user"):
+        errors.append(f"{experiment}: derived prompt assumption is missing or incorrect")
+    if experiment == "details" and control.get("user") != grounded.get("user"):
+        errors.append(f"{experiment}: user prompts differ across arms")
+    if experiment == "grounded" and control.get("user") != control.get("original_user"):
         errors.append("grounded control: user differs from original_user")
     if grounded.get("original_user") != control.get("original_user"):
-        errors.append("grounded: original users differ across arms")
+        errors.append(f"{experiment}: original users differ across arms")
     if control.get("system") != grounded.get("system"):
-        errors.append("grounded: system prompts differ across arms")
+        errors.append(f"{experiment}: system prompts differ across arms")
+    if experiment == "details" and control.get("hashes", {}).get("user") != grounded.get("hashes", {}).get("user"):
+        errors.append(f"{experiment}: user hashes differ across arms")
+    if control.get("hashes", {}).get("system") != grounded.get("hashes", {}).get("system"):
+        errors.append(f"{experiment}: system hashes differ across arms")
     if control.get("hashes", {}).get("system") != control.get("hashes", {}).get("original_system"):
         errors.append("grounded control: system hash differs from original_system hash")
     if grounded.get("hashes", {}).get("system") != grounded.get("hashes", {}).get("original_system"):
         errors.append("grounded: system hash differs from original_system hash")
-    expected = patch_prompt(select_prompt(), "grounded", "grounded")
+    expected = patch_prompt(select_prompt(), second_arm, experiment_config.get("prompt_experiment", experiment))
     if grounded.get("user") != expected["user"] or grounded.get("diff") != expected["diff"]:
-        errors.append("grounded: user is not exactly the derived THINGS/SCENE/CONSTRAINTS additions")
-    if grounded.get("diff") == control.get("diff"):
+        errors.append(f"{experiment}: user is not exactly the derived THINGS/SCENE/CONSTRAINTS additions")
+    if experiment == "grounded" and grounded.get("diff") == control.get("diff"):
         errors.append("grounded: user diff is not distinct from control")
     bridges = source.get("bridges")
     if not isinstance(bridges, dict):
@@ -390,16 +398,16 @@ def _check_grounded(source: dict[str, Any], errors: list[str]) -> None:
     if not isinstance(prefix, str):
         errors.append("grounded: recorded narrator prefix is missing")
         return
-    for arm in EXPERIMENTS["grounded"]["arms"]:
+    for arm in experiment_config["arms"]:
         saved = bridges.get(arm)
         if not isinstance(saved, dict):
             errors.append(f"grounded: bridge material for {arm} is missing")
             continue
-        path = ROOT / "bench/variations" / EXPERIMENTS["grounded"]["variations"][arm]
+        path = ROOT / "bench/variations" / experiment_config["variations"][arm]
         expected_bridge = _package_bridge_material(path, prefix)
         for field in ("bridge", "entry", "fixed"):
             if saved.get(field) != expected_bridge[field]:
-                errors.append(f"grounded {arm}: {field} does not match its variation package")
+                errors.append(f"{experiment} {arm}: {field} does not match its variation package")
 
 
 def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
@@ -444,17 +452,17 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
         rows,
         n,
         live,
-        experiment in ("grounded", "transition"),
+        experiment in ("grounded", "transition", "details"),
         arms,
         errors,
-        transition=experiment == "transition",
+        transition=experiment in ("transition", "details"),
     )
     expected = len(arms) * n
     if summary.get("n") != n or summary.get("rows", summary.get("planned_rows")) != len(rows):
         errors.append("summary.json: row count disagrees with N/results")
     if mode == "dry" and summary.get("planned_rows") != expected:
         errors.append("summary.json: planned_rows disagrees with N")
-    if experiment == "transition":
+    if experiment in ("transition", "details"):
         caps = config["caps"][n]
         if run.get("caps") != caps or summary.get("caps") != caps:
             errors.append("transition: run and summary caps do not match the registered caps")
@@ -484,7 +492,7 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
         caps = summary.get("caps", {})
         if cloudflare > caps.get("cloudflare", -1) or players > caps.get("player", -1):
             errors.append("summary.json: spend exceeds request or player cap")
-        if experiment == "transition":
+        if experiment in ("transition", "details"):
             # The raw 2A call is one successful narrator call per completed row;
             # counted_provider records it in the same cloudflare stream as turns.
             raw_requests = len(rows)
@@ -519,9 +527,9 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
             errors.append(f"prompts/{arm}: prompt hashes differ from fixture")
     if experiment == "completion":
         _check_completion(source, rows, live, errors)
-    elif experiment in ("grounded", "transition"):
-        _check_grounded(source, errors)
-    if experiment == "transition" and live:
+    elif experiment in ("grounded", "transition", "details"):
+        _check_grounded(source, errors, experiment)
+    if experiment in ("transition", "details") and live:
         counts = {arm: {"earned_exit": 0, "timer_exit": 0, "no_exit": 0} for arm in arms}
         for row in rows:
             for field in counts[row["arm"]]:

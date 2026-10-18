@@ -1,0 +1,431 @@
+story_id: continuity_initiative
+protagonist_id: kristin
+kinds:
+- id: desk
+  is: [furniture, supporter]
+- id: seat
+  is: [furniture, supporter]
+  fixed: false
+  enterable: true
+locations:
+- id: mcgehee_home
+  name: Michelle's house
+  aliases: [Michelle's home, the house]
+- id: kitchen
+  name: kitchen
+  parent: mcgehee_home
+- id: outside_house
+  name: outside the house
+- id: los_angeles_park
+  name: Los Angeles park
+- id: brandon_hideout
+  name: Brandon's hideout
+  aliases: [hideout, communications center]
+- id: regional_facility
+  name: Regional facility
+- id: facility_perimeter
+  name: Facility perimeter
+  parent: regional_facility
+- id: janus_archive
+  name: records archive
+  aliases: [restricted records archive]
+  parent: regional_facility
+- id: purge_chamber
+  name: command levels
+  aliases: [command level, upper command corridors]
+  parent: regional_facility
+- id: maintenance_network
+  name: maintenance network
+  aliases: [maintenance route, maintenance routes, maintenance tunnel, maintenance tunnels]
+  parent: purge_chamber
+- id: detention_level
+  name: detention level
+  parent: regional_facility
+- id: holding_block
+  name: holding block
+  parent: detention_level
+- id: medical_level
+  name: medical level
+  parent: detention_level
+- id: broadcast_relay
+  name: Broadcast relay
+  parent: regional_facility
+- id: security_corridors
+  name: security corridors
+  parent: regional_facility
+- id: executive_office
+  name: executive office
+  parent: regional_facility
+  owner: rebecca
+- id: broadcast_chamber
+  name: broadcast chamber
+  parent: executive_office
+- id: facility_escape
+  name: Los Angeles surface
+  parent: regional_facility
+- id: infrastructure_corridors
+  name: infrastructure corridors
+  aliases: [restricted infrastructure corridors, infrastructure corridor]
+  parent: regional_facility
+- id: freight_terminal
+  name: freight terminal
+  aliases: [abandoned freight terminal]
+  parent: regional_facility
+- id: loading_docks
+  name: loading docks
+  parent: freight_terminal
+- id: service_level
+  name: service level
+  parent: freight_terminal
+- id: observation_shaft
+  name: observation shaft
+  parent: service_level
+npcs:
+- id: kristin
+  name: Kristin Schweitzer
+  aliases:
+  - Kristin
+  - Kristin Schweitzer
+  # plot.md gives Kristin's expertise a future role in the conspiracy's facilities.
+  # This narrator-safe bio preserves her characterisation and immediate goal without previewing that role.
+  narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.
+- id: michelle
+  name: Dr. Michelle McGehee
+  aliases:
+  - Michelle
+  - Dr. McGehee
+  - Michelle McGehee
+  - Shelly
+  # plot.md gives Michelle's concealed discoveries and captivity to the narrator before the player earns them.
+  # This narrator-safe bio preserves her characterisation while keeping those revelations in plot.md alone.
+  narrator_bio: A 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her "Shelly", while everyone else addresses her as Dr. McGehee.
+- id: brandon
+  name: Brandon Corfman
+  aliases:
+  - Brandon
+  - Brandon Corfman
+  unnamed_label: the man watching Kristin
+  named_by: brandon_identified
+  axes:
+  - {conscious: [awake], unconscious: [knocked out]}
+  unavailable: unconscious
+  # plot.md states that Brandon conceals his own past involvement in the program.
+  # That is brandon_history, which is protected_knowledge, so the narrator is given
+  # a bio that stops short of it. plot.md remains the canonical characterisation.
+  narrator_bio: A 54-year-old former software developer who now lives as an isolated
+    conspiracy researcher estranged from his family. His warnings about a shadow emergency
+    program were widely dismissed before the disappearances. He helps Kristin, though
+    he is guarded about his own past.
+- id: charles
+  name: Charles Jenkins
+  # plot.md identifies Charles as the architect of the conspiracy and gives him future political aims.
+  # This narrator-safe bio keeps his public role, competence, temperament, and relationship to Rebecca without those revelations.
+  narrator_bio: A 58-year-old former senior government official with a forceful, disciplined manner and experience directing complex operations. He is Rebecca Jenkins's husband.
+- id: rebecca
+  name: Rebecca Jenkins
+  aliases: [Rebecca]
+  # This narrator-safe substitution preserves Rebecca's introduction while withholding later revelations.
+  narrator_bio: Charles's 56-year-old wife and the chief executive of a biotechnology and defense contractor. She is exacting and technically capable.
+- id: senior_official
+  name: Imprisoned senior official
+  aliases:
+  - senior official
+  - imprisoned official
+  - government prisoner
+  narrator_bio: A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
+groups:
+- id: captives
+  name: detention captives
+  scoped_aliases: [prisoners, prisoner, captives, captive]
+items:
+- id: memory_card
+  name: Michelle's memory card
+  aliases:
+  - memory card
+  fallback_ids:
+  - michelle_phone
+  hidden: true
+- id: michelle_phone
+  name: Michelle's phone
+- id: kristin_laptop
+  name: Kristin's laptop
+  axes:
+  - {closed: [shut], open: []}
+  use_seated: true
+  take_text: Kristin picked up her laptop.
+  notice_text: Kristin's laptop sat on the passenger seat.
+- id: michelle_drawer
+  name: drawer
+  fixed: true
+  kind: container
+  openable: true
+  contents: [pens, binder clips, stapler, spare batteries]
+- id: back_door
+  name: back door
+  fixed: true
+- id: house_gate
+  name: house gate
+  scoped_aliases: [front gate, gate]
+  fixed: true
+- id: kristin_truck
+  name: Kristin's truck
+  kind: vehicle
+  owner: kristin
+- id: michelle_workstation
+  name: workstation
+  kind: desk
+  owner: michelle
+- id: workstation_chair
+  name: workstation chair
+  scoped_aliases: [chair]
+  kind: seat
+  axes:
+  - {overturned: [], upright: [standing]}
+  enter_pole: upright
+  seat_for: michelle_workstation
+  right_text: Kristin set the workstation chair upright.
+  enter_text: Kristin sat down in the workstation chair.
+  leave_text: Kristin stood up from the workstation chair.
+- id: park_bench
+  name: park bench
+  scoped_aliases: [bench]
+  disclosure: public
+  kind: seat
+  fixed: true
+- id: facility_gate
+  name: facility gate
+  scoped_aliases: [gate, front gate]
+  fixed: true
+- id: service_gate
+  name: service gate
+  aliases: [secured gate]
+  fixed: true
+- id: storm_drain
+  name: storm drain
+  aliases: [storm-drain]
+  scoped_aliases: [drain, tunnel]
+  fixed: true
+- id: truck_driver_seat
+  name: driver's seat
+  kind: seat
+  fixed: true
+  seat_for: kristin_truck
+  enter_text: Kristin sat down in the driver's seat.
+  leave_text: Kristin got out of the truck.
+- id: truck_passenger_seat
+  name: passenger seat
+  kind: seat
+  fixed: true
+- id: transit_card
+  name: Transit token
+  axes:
+  - {intact: [], destroyed: [broken, snapped, crushed]}
+  unavailable: destroyed
+- id: michelle_photograph
+  name: Michelle's photograph
+  scoped_aliases: [photograph, photo]
+- id: number_sequence
+  name: handwritten number sequence
+  aliases: [number sequence, handwritten sequence]
+- id: override_codes
+  name: emergency override codes
+  hidden: true
+- id: stolen_radio
+  name: stolen radio
+- id: gate_status_panel
+  name: gate-status panel
+  fixed: true
+- id: portable_archive
+  name: Portable data case
+  aliases:
+  - data case
+- id: logistics_terminal
+  name: logistics computer
+  fixed: true
+- id: service_entrance
+  name: service entrance
+  fixed: true
+- id: hideout_servers
+  name: hideout servers
+  scoped_aliases: [servers]
+  fixed: true
+- id: inspection_console
+  name: inspection console
+  aliases: [corridor inspection console, diagnostic console]
+  fixed: true
+- id: cooling_service_archive_panel
+  name: cooling-service archive panel
+  kind: thing
+  fixed: true
+  openable: true
+  open: false
+  hidden: false
+  scoped_aliases:
+  - access panel
+  - hidden panel
+  - concealed panel
+  - panel
+  - grille
+  - ventilation grille
+  - seam
+- id: copied_janus_files
+  name: copied JANUS files
+  owner: kristin
+  disclosure: public
+  scoped_aliases: [copied files, JANUS files, JANUS evidence]
+- id: archive_terminals
+  name: archive terminals
+  aliases: [archive terminal]
+  fixed: true
+- id: medical_terminal
+  name: medical terminal
+  fixed: true
+- id: detention_medical_records
+  name: detention medical records
+  scoped_aliases: [medical records, survivor records]
+- id: rebecca_desk
+  name: executive desk
+  aliases: [Rebecca's executive desk]
+  kind: desk
+  owner: rebecca
+- id: drainage_pump_controls
+  name: drainage pump controls
+  fixed: true
+- id: emergency_surface_gates
+  name: emergency surface gates
+  aliases: [surface gates]
+  fixed: true
+facts:
+- scene_1a_entry_known
+- scene_1b_entry_known
+- scene_1c_entry_known
+- scene_2a_entry_known
+- scene_2b_entry_known
+- scene_2c_entry_known
+- scene_3a_entry_known
+- scene_3b_entry_known
+- scene_3c_entry_known
+- michelle_abduction_suspicion
+- facility_proof
+- false_identities_ready
+- id: facility_perimeter_reached
+  on_assert:
+  - {move: kristin, parent: facility_perimeter}
+- janus_evidence
+- purge_clock_started
+- michelle_reached
+- id: relay_open
+  on_assert:
+  - {move: brandon, parent: broadcast_relay}
+- broadcast_started
+- continuity_initiative_known
+- michelle_warning_known
+- id: memory_card_recovered
+  on_assert:
+  - {move: memory_card, parent: kristin, text: with Kristin}
+  - {reveal: memory_card}
+- drawer_gap_pointed_out
+- official_interest_in_michelle_known
+- house_marked_for_return
+- transport_route_identified
+- brandon_face_known
+- id: brandon_identified
+  on_assert:
+  - {accompany: brandon, with: kristin}
+- missing_may_be_alive
+- brandon_retains_system_access
+- service_level_access_known
+- captives_confirmed_alive
+- michelle_possible_sighting
+- national_detention_network_known
+- architects_strategy_known
+- brandon_prepared_before_event
+- restricted_corridor_access
+- rebecca_observing_infiltrators
+- kristin_deliberately_left_behind
+- kristin_was_bait
+- brandon_janus_role_known
+- brandon_claimed_reform_motive
+- michelle_resistance_known
+- rebecca_offer_active
+- antagonist_split_known
+- combined_broadcast_rescue_plan_known
+- uprising_prepared
+- conditioned_release_plan_known
+- id: behavioral_experiments_known
+  on_assert:
+  - {move: detention_medical_records, parent: medical_level, text: in the medical level}
+- id: military_override_codes_available
+  on_assert:
+  - {move: override_codes, parent: kristin}
+  - {reveal: override_codes}
+- human_security_control
+- id: rebecca_office_reached
+  on_assert:
+  - {move: kristin, parent: executive_office}
+  - {move: brandon, parent: security_corridors}
+- detention_locations_offer_known
+- charles_abandoned_rebecca
+- brandon_confession_available
+- truth_no_longer_containable
+- id: portable_archive_secured
+  on_assert:
+  - {move: portable_archive, parent: kristin}
+- archive_contains_prisoner_locations
+- archive_copies_distributed
+- evacuation_route_open
+- captives_reaching_surface
+- los_angeles_facility_lost
+- national_network_fragmenting
+- community_rescue_efforts_begun
+- phase_one_label_known
+- phase_two_conflict_plan_known
+- charles_at_large
+- michelle_lead_actionable
+- patrol_return_pressure
+- pursuit_closing_in
+- terminal_security_escalating
+- identity_scrutiny_visible
+- facility_collapse_escalating
+- evidence_gap_processing_numbers
+- evidence_gap_development_record
+- evidence_gap_marked_site_list
+- facility_infiltration_needed
+- detention_uprising_started
+- park_pursuit_resolved
+- transport_route_departure_ready
+- archive_crisis_understood
+- override_codes_deadline_known
+- command_levels_assault_underway
+- detention_locations_secured
+- rebecca_captured
+- resolution_complete
+- michelle_publishing_archive
+- kristin_joined_rescue_efforts
+- janus_known
+- trust_brandon
+- charles_framed_officials_known
+- evidence_ready_to_transmit
+- facility_destruction_threat
+- michelle_selected_for_resistance_influence
+- national_facility_locations_broadcast
+- prisoner_records_corrupted
+- rebecca_experiment_approval_confronted
+- rebecca_office_required_for_broadcast
+- home_search_window_narrowing
+- park_lockdown_spreading
+- terminal_sweep_closing
+- inspector_cover_under_review
+- archive_security_sweep
+- purge_transfers_underway
+- detention_lockdown_spreading
+- relay_power_failing
+- escape_routes_collapsing
+protected_knowledge:
+- janus_selection_system
+- brandon_history
+- janus_phase_two
+disclosure_guards:
+- id: memory_card_word_guard
+  terms: [card]
+  unlock_fact: memory_card_recovered
