@@ -15,6 +15,7 @@ from bench.core import advance_state_to_scene
 from storygame.runtime.cloudflare import (
     DEFAULT_OUTPUT_EXAMPLE,
     MAX_TURN_SEGMENTS,
+    NARRATION_ONLY_RULE,
     CloudflareTurnProvider,
     NarrationProviderError,
 )
@@ -146,8 +147,12 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert "k_sl_1a_b_r0" not in context
     assert "Show what happens right after the player acts." in captured["payload"]["user"]
     instruction = captured["payload"]["system"]
-    assert "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately." in instruction
-    assert "Write each paragraph as one segment and return only JSON in this form:" in instruction
+    instruction_lines = instruction.splitlines()
+    describe_line = "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately."
+    write_line = "Write each paragraph as one segment and return only JSON in this form:"
+    assert instruction_lines[instruction_lines.index(describe_line) + 1] == NARRATION_ONLY_RULE
+    assert instruction_lines[instruction_lines.index(NARRATION_ONLY_RULE) + 1] == write_line
+    assert instruction.count(NARRATION_ONLY_RULE) == 1
     # Arm C keeps Arm B's subtraction of beat prose AND Arm A's prohibitions.
     assert "Do not say anything that goes against the SCENE section." in captured["payload"]["user"]
     prohibition = "- Do not make up new objects, clues, or things inside containers."
@@ -286,6 +291,112 @@ def test_transport_salvages_valid_segments_around_malformed_entry(monkeypatch, b
         "selected_knowledge_ids": [],
     }
     assert state.last_turn_delivery.segments_dropped == 1
+
+
+def test_transport_logs_invalid_segment_kind(monkeypatch, caplog) -> None:
+    reply = {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            {"kind": "thought", "text": "A private thought."},
+        ]
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    with caplog.at_level(logging.WARNING, logger="storygame.runtime.cloudflare"):
+        provider("Search the drawer.")
+
+    assert "object(keys=kind,text;kind='thought')" in caplog.records[-1].getMessage()
+
+
+def test_transport_caps_and_sanitizes_invalid_segment_kind(monkeypatch, caplog) -> None:
+    kind = "x" * 20 + "\n\t" + "y" * 180
+    reply = {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            {"kind": kind, "text": "A private thought."},
+        ]
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    with caplog.at_level(logging.WARNING, logger="storygame.runtime.cloudflare"):
+        provider("Search the drawer.")
+
+    message = caplog.records[-1].getMessage()
+    expected_kind = "x" * 20 + " " + "y" * 19
+    assert f"kind={expected_kind!r}" in message
+    assert "\n" not in message
+    assert "\t" not in message
+    assert len(expected_kind) == 40
+
+
+def test_transport_does_not_log_dropped_segment_values(monkeypatch, caplog) -> None:
+    reply = {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            {
+                "kind": "thought",
+                "text": "NEVER_LOG_THIS_TEXT",
+                "grounding_ids": ["NEVER_LOG_THIS_GROUNDING_ID"],
+            },
+        ]
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    with caplog.at_level(logging.WARNING, logger="storygame.runtime.cloudflare"):
+        provider("Search the drawer.")
+
+    message = caplog.records[-1].getMessage()
+    assert "NEVER_LOG_THIS_TEXT" not in message
+    assert "NEVER_LOG_THIS_GROUNDING_ID" not in message
+
+
+def test_transport_logs_keys_only_for_valid_kind_missing_text(monkeypatch, caplog) -> None:
+    reply = {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            {"kind": "dialogue"},
+        ]
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    with caplog.at_level(logging.WARNING, logger="storygame.runtime.cloudflare"):
+        provider("Search the drawer.")
+
+    message = caplog.records[-1].getMessage()
+    assert "object(keys=kind)" in message
+    assert ";kind=" not in message
+
+
+def test_transport_logs_keys_only_for_non_string_kind(monkeypatch, caplog) -> None:
+    reply = {
+        "segments": [
+            {"kind": "narration", "text": "The drawer opens."},
+            {"kind": 7, "text": "A private thought."},
+        ]
+    }
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    with caplog.at_level(logging.WARNING, logger="storygame.runtime.cloudflare"):
+        provider("Search the drawer.")
+
+    message = caplog.records[-1].getMessage()
+    assert "object(keys=kind,text)" in message
+    assert ";kind=" not in message
 
 
 def test_transport_refuses_salvage_when_selected_reveal_is_in_malformed_segment(monkeypatch) -> None:
@@ -992,7 +1103,6 @@ def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) 
     assert candidate.id not in recovery_system
     assert candidate.statement not in recovery_system
     assert "grounding_ids" not in recovery_system
-    assert "Put" not in recovery_system
     assert "Do not select a fact." in recovery_system
     assert f"Right after your story, the game will add this: {AUTHORED_DELIVERY}" in recovery_system
     assert "Write only what leads up to it. Do not have Kristin find anything else." in recovery_system
@@ -1672,6 +1782,7 @@ def test_unsalvageable_worker_response_fails_closed_after_one_recovery_and_logs_
 
     assert len(payloads) == 2
     assert "Your last answer was not valid." in payloads[1]["system"]
+    assert payloads[1]["system"].count(NARRATION_ONLY_RULE) == 1
     assert any(
         record.levelno >= logging.WARNING and "JSONDecodeError" in record.getMessage() for record in caplog.records
     )
@@ -1709,8 +1820,12 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
         in captured["payload"]["user"]
     )
     opening_instruction = captured["payload"]["system"]
-    assert "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately." in opening_instruction
-    assert "Write each paragraph as one segment and return only JSON in this form:" in opening_instruction
+    opening_lines = opening_instruction.splitlines()
+    describe_line = "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately."
+    write_line = "Write each paragraph as one segment and return only JSON in this form:"
+    assert opening_lines[opening_lines.index(describe_line) + 1] == NARRATION_ONLY_RULE
+    assert opening_lines[opening_lines.index(NARRATION_ONLY_RULE) + 1] == write_line
+    assert opening_instruction.count(NARRATION_ONLY_RULE) == 1
     assert "Do not say anything that goes against the entry text or the beat details." in captured["payload"]["user"]
     assert "Do not make up new objects, clues, or things inside containers." in captured["payload"]["user"]
     assert "When the player gives a thing to someone, that person takes it." not in captured["payload"]["user"]
@@ -2628,8 +2743,12 @@ def test_omitting_the_output_example_drops_only_that_block() -> None:
 
     assert DEFAULT_OUTPUT_EXAMPLE in kept
     assert DEFAULT_OUTPUT_EXAMPLE not in dropped
+    assert dropped.count(NARRATION_ONLY_RULE) == 1
+    dropped_lines = dropped.splitlines()
+    describe_line = "Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately."
+    assert dropped_lines[dropped_lines.index(describe_line) + 1] == NARRATION_ONLY_RULE
     assert "Send back only JSON" not in dropped
-    assert dropped.splitlines() == kept.splitlines()[: len(dropped.splitlines())]
+    assert dropped_lines == kept.splitlines()[: len(dropped_lines)]
 
 
 def test_sections_prompt_introduces_only_the_characters_this_scene_involves() -> None:
