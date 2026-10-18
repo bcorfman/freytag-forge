@@ -1,0 +1,22 @@
+{
+  "run_name": "stage7-door-smoke",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-door-smoke",
+  "max_parallel": 1,
+  "worktrees": false,
+  "tasks": [{
+    "key": "door-smoke",
+    "task_type": "probe",
+    "max_attempts": 1,
+    "timeout_s": 1800,
+    "check_timeout_s": 180,
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=medium"],
+    "full_access": true,
+    "ownership": ["bench/results/stage7-door-smoke/", "bench/results/ledger.jsonl (append-only)"],
+    "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --confirm --out bench/results/stage7-door-smoke",
+    "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-smoke 1 --mode artifacts",
+    "spec": "Run one billed Stage 7 door-probe smoke, only after the offline dry check passes. Own only bench/results/stage7-door-smoke/ except verdicts/ and review-summary.json, plus append-only bench/results/ledger.jsonl. Source .env without echoing values; never print credentials. Use six arms in rep-major order control, review, stale-scene, wording, fixed-control, bridge, one trial each, at most 28 Cloudflare requests and 12 raw-player attempts. Reserve spend before each send, retain failed rows and partial artifacts, never retry or pool samples. Raw 2A uses one _request with max_tokens 1024 and JSON response format, real parse_turn_proposal, no selected knowledge IDs, no semantic fallback or contract shadow. Fixed arms use the reconstructed prefix/bridge/entry and no narrator request. Generated continuation uses a fresh bare 2B package/state, explain_reveal eligibility and real _matches_all before each command, RuntimeEngine.turn for command 1 and at most command 2, rollback-aware rejection records, and earned reveal only when state commits exactly one eligible reveal. Ask the existing frontend askPlayer adapter with profile raw and cap 1, preserving raw command bytes. Write the complete atomic artifact set, spend events, row hashes, factual notes and an experiment ledger row with scenes_scored 0, max_score 0, scores [], score_metric door_prompt_screen. A quota, malformed output, outage or cap error stops nonzero with run-failure.txt. Do not edit code, story data, fixtures, manifests, plans, or runbook."
+  }]
+}

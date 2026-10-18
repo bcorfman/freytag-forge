@@ -1,0 +1,24 @@
+{
+  "run_name": "stage7-2a-door-probe",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-door-probe",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "door-smoke-control",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": ["-c", "model_reasoning_effort=low"],
+      "max_attempts": 1,
+      "timeout_s": 1200,
+      "check_timeout_s": 120,
+      "spec": "You are a probe operator on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (Cloudflare narration), so read the hard rules first.\n\nHARD RULES. Edit NO tracked or untracked source file. You may only create files under bench/results/stage7-door-smoke/ (and append to the generated bench/results/ledger.jsonl). No git add/commit/checkout/stash/reset/clean/push. Never print, echo or copy .env or any token; `source .env` only inside the command. Run the live command exactly ONCE. If it fails, write the verbatim error to bench/results/stage7-door-smoke/run-failure.txt and stop; do not retry.\n\nQUESTION. Does the bench replay of Scene 2A (seven scripted commands, live narration, bare entry state) reach turn 7 and show the narrator the pacing line 'A second credential check threatens their inspector cover.'? Variation: bench/variations/stage7-door-control.json (script 'door-replay' for scene 2A, 7 inputs; the 7th is 'Look for a concealed route or access panel leading from the service corridors to the detention area.').\n\nHOW TO RUN: `cd /home/bcorfman/dev/freytag-forge && source .env && TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/stage7-door-control.json --scene 2A --script door-replay --replicates 1 --out bench/results/stage7-door-smoke` (run `-m bench run --help` first if an option is rejected; do not add --confirm unless the tool demands it, and if it demands confirmation because of the neuron estimate, rerun once with --confirm).\n\nThen write bench/results/stage7-door-smoke/notes.md (about 100 words, factual, no interpretation): the exact command used, how many turns were played, whether the 7th turn's recorded user prompt (find where the bench stores prompts) contains the text 'credential check', and the verbatim narration text of turn 7.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && test -s bench/results/stage7-door-smoke/notes.md && (test ! -e bench/results/stage7-door-smoke/run-failure.txt || (cat bench/results/stage7-door-smoke/run-failure.txt; exit 1)) && find bench/results/stage7-door-smoke -name 'summary.json' | grep -q . && grep -rl 'credential' bench/results/stage7-door-smoke --include=*.json | head -3 | grep -q . && git diff --stat -- . ':!.plans' | cat",
+      "expect_files": ["bench/results/stage7-door-smoke/notes.md"],
+      "verified": "bench run produced summary and turn records; no tracked source changed"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "run_name": "stage7-door-probe-build",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-door-probe-fix",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "door-fix-capture",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "spec": "You are an implementation worker on freytag-forge, working in the real repo /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never uv. NO billed or network calls, no .env.\n\nHARD RULES. You own ONLY scripts/ringer/stage7/door_transport.py, door_probe.py, check_door_probe.py (only if needed) and test_door_probe.py. Touch nothing else (the tree is dirty on purpose). No git add/commit/reset/clean/checkout/stash/push.\n\nPROBLEM. A live smoke run of the door probe stopped on its first Cloudflare request with the error 'provider response violates the turn contract', and the response body was not saved, so we cannot tell whether the model returned a bad reply or the harness mis-adapted the provider's output. raw_request() in door_transport.py calls provider._request(payload) and then parse_turn_proposal(normalized); on any exception it only records the exception text.\n\nCHANGE. On failure, preserve the evidence without any extra network call and without leaking credentials: (1) in raw_request, if _request returned a value but parse_turn_proposal raised, raise a small exception subclass (e.g. RawRequestError) that carries the stage ('request' or 'parse'), the original error text and the normalized value; if _request itself raised, mark stage 'request' and also carry any last-response attribute the provider exposes (inspect src/storygame/runtime/providers for such attributes; use none if absent). (2) in door_probe.py, when such an error ends a trial or run, write <out>/failed-response.json containing stage, error text, the SHA-256 of the full JSON-serialised body and the body truncated to 4000 characters (default=str serialisation), and mention the file name in run-failure.txt and the row's error field. (3) add offline tests with a fake provider covering: parse failure keeps the body, request failure has stage 'request', no extra request is made (budget.sent stays 1), and the file content. Existing behaviour (one request per trial, no retry, spend accounting) must not change.\n\nVERIFY: .venv/bin/python -m pytest -q scripts/ringer/stage7/test_door_probe.py tests/test_bench.py tests/test_cloudflare_transport.py; ruff check --fix and ruff format on your files; and the dry check must still pass: .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --dry-run --out /tmp/door-dry-recheck && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/door-dry-recheck 12 --mode dry. Write scripts/ringer/stage7/door-fix-notes.md (about 80 words, factual).",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=$PWD TMPDIR=/tmp && rm -rf /tmp/door-dry-recheck && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_door_probe.py tests/test_bench.py tests/test_cloudflare_transport.py && F='scripts/ringer/stage7/door_*.py scripts/ringer/stage7/check_door_probe.py scripts/ringer/stage7/test_door_probe.py' && .venv/bin/python -m ruff check $F && .venv/bin/python -m ruff format --check $F && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --dry-run --out /tmp/door-dry-recheck && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/door-dry-recheck 12 --mode dry && grep -q failed-response scripts/ringer/stage7/door_probe.py && test -s scripts/ringer/stage7/door-fix-notes.md",
+      "verified": "failure evidence is preserved offline; tests, lint and the dry check still pass"
+    }
+  ]
+}

@@ -34,6 +34,92 @@ test:e2e -- --grep @blind-player`. One Ringer run per attempt, every attempt
 recorded, stopping rule fixed first. Then read the transcript, list what broke
 the play, and fix those things.
 
+**Stage 7 step 1 RESULT (2026-10-17, attempt 1 of 1, staging `8aba3ba3`, `scene-v1`; Ringer
+`stage7-blind-raw`, manifest `scripts/ringer/stage7/blind-raw.json`; artifacts in gitignored
+`bench/results/stage7-blind-raw/attempt-1/`).** `@smoke` passed (1 attempt); `@blind-player` raw, all scenes,
+1 replicate PASSED in 7.9 min: 9 scenes, 84 turns, story ended, 0 rejections, 0 game breaks, 30 stuck turns.
+Exits: 1A, 1B, 1C, 2A, 2C, 3A, 3B earned; 2B FORCED (15 turns, turns 2-15 all stuck); 3C ended the story. Stuck
+turns by scene: 1A 2, 1C 1, 2A 3, 2B 14, 2C 4, 3B 3, 3C 3 (1B and 3A none). The Ringer verdict read FAIL only
+because my check looked for `e2e-blind-player-r1.json` while a single-replicate run writes the unsuffixed name
+(fixed in the check; the run is valid and was not repeated). What broke the play, from the transcript: **2B**.
+The 2A exit turn (t7) narrated "a small, unmarked door with a keycard reader and a ventilation grille", which no
+authored text declares; the blind player took it up and spent 2B asking for "inspector credentials" and searching
+"financial data" for an ID and password. The first 2B reveal `k_sl_2b_a_r1` needs a search of Michelle's
+record/selection file, and nothing in the 2B entry text or the 2A handoff points there, so no reveal was earned
+and 2B ended on the forced handoff (the JANUS delivery plays, but unearned). Also seen: the narrator repeats the
+same "sits down at one of the archive terminals" paragraph on every 2B turn, and the 1A exit was a silent
+transition. Limits: ONE raw-profile replicate, a smoke sample, not a success rate; the canonical profile and
+matched starts were not run; the stuck count is the harness's own measure; the transcript was read for 2A/2B only
+so far.
+
+2B DIAGNOSIS (2026-10-17, offline, scene-fixing guide steps 1; no billed call). Recorded prompts read beside
+`plot.md` 2B and `knowledge.yaml`/`handoffs.yaml`. (a) None of the 15 player commands matches ANY 2B reveal
+under the real `_matches_all`; the 2B reveals need the player to name Michelle's file/record
+(`k_sl_2b_a_r1`), "my record" (`k_sl_2b_a_r2`) or, after `janus_evidence`, development/security/corrupted
+files; "Search/Read the selection files." and "Search the archive terminals for Michelle's file." match
+`k_sl_2b_a_r1`, while "Read the open government and financial records." matches nothing. (b) The narrator
+prompt for 2B turns 2-14 carries no keycard-reader cue at all (the invented door survives only as a new
+`keycard reader` THING on turn 2), so the "inspector credentials" chase came from the player reading the
+2A exit narration. (c) What pulls the player toward financial records: the 2B Details lines ("government data;
+financial data") and the `janus_evidence` cue in `handoffs.yaml` ("Selection files fill the archive terminals.
+Government and financial records sit open beside them."), which makes "open records" the visible object while
+the evidence needs "selection files" or a named person's record. The nudge cue appears on turn 1 and again on
+turn 10, and the player still did not name selection files. NOT diagnosed: whether a player without the
+invented door finds the selection files unaided (one sample), and whether the repeated "sits down at one of the
+archive terminals" paragraph comes from the prompt or the model. Candidate fixes from supported techniques
+(none applied): reword the cue so the visible object is the selection files and Michelle's file (story wording,
+ChatGPT Desktop round, then the package payload diff); or author-review an evidence addition for the
+"open records" phrasing only if the probe shows it is a proven miss (not to turn the corpus green). The 2A
+exit-turn invention is a separate narrator-invention case. NEXT: Brandon's go for a billed probe of 2B
+(10-15 samples per arm through Ringer: current cue vs reworded cue) before changing the cue; then read the
+remaining stuck runs (2C, 3B, 3C).
+
+2B CUE PROBE (2026-10-17, billed; Ringer `stage7-2b-cue-probe`, manifests `scripts/ringer/stage7/2b-cue-{smoke,n12}.json`,
+script `2b_cue_probe.py`, arms `bench/variations/stage7-2b-cue-{control,b,c}.json`, artifacts gitignored in
+`bench/results/stage7-2b-probe-{smoke,n12}/`). Setup: live 2B turn 1 narration with the recorded first command
+('Examine the unmarked door, keycard reader, and ventilation grille.') after the recorded 2A exit text, then a raw
+Luna player picks command 2, scored with the real matcher (rows recounted by `check_2b_probe.py`). Smoke n=1 per arm
+(0/0/1), then n=12 per arm, 36 narration and 36 player calls, caps held. Hits (command 2 earns a 2B reveal):
+control (current cue) 0/12, B ('Michelle's file is one of them') 0/12, C ('One file carries Michelle's name, and
+another carries Kristin's') 2/12, both `k_sl_2b_a_r1`. Commands naming the invented door, keycard, grille or
+credentials: 12/12, 11/12, 10/12. The cue was visible in 36 of 36. Reading: the cue wording is a weak lever (C vs
+control 2/12 vs 0/12 is not distinguishable at this n); the pull is the invented keycard door that 2A's exit narration
+creates and 2B turn 1 elaborates. NOT changed: the shipped cue (no arm is adopted). Limits: one story, first cue
+exposure only (not the turn-10 nudge), the player sees only the 2A exit text as history, the 2A text is one recorded
+sample. The ledger-visible Ringer verdicts read FAIL for the smoke (my uncommitted plan edit tripped the drift guard)
+and for n12 only because `expect_files` resolves against the Ringer workdir; the n12 probe checker passed.
+NEXT: attack the source, the invented door in the 2A exit turn (read the 2A turn 7 prompt beside plot.md 2A for the
+line that pulls 'keycard reader' in, per scene-fixing guide step 1) before any more cue wording.
+
+**Stage 7 door probe RESULT (2026-10-17, N=12, 72 rows, all read; screen NEGATIVE).** Raw 2A turn-7 prompt
+wording screen, 6 arms x 12, exact-matcher 2B continuation of two raw-player commands, no semantic fallback.
+Spend: 196 of 336 Cloudflare calls, 144 of 144 player calls. Reveal earned by command 2 / unsupported access
+invention (of 12): control 7 / 12; review 3 / 12; stale-scene 3 / 12; wording 4 / 12 (all four generated arms
+invented access details in 12/12 rows); fixed-control 5 / 0; bridge 4 / 0. Bar was at least 10/12 reveals and at
+most 2/12 unsupported access: no arm meets either. Review, stale-scene and wording did not beat the generated
+control (fewer reveals, same invention); bridge deletion did not beat fixed-control and cannot prevent the inherited
+door, so no case to drop the security layer. One premature disclosure (review, command 1). The reviewer's summary
+marks the reveal threshold "met" from the 26/72 pooled count; by the per-arm bar it is NOT met (its overall
+"inconclusive" stands). Decision per the plan: drop these four edits as fixes; no three live replicates.
+Reading: generated 2A prose invents the door in every row whatever these edits, so the pull is in the framing of the
+2A turn-7 material (for example "concealed route or access panel"), not these lines. Next: fix the material at the
+source per the scene-fixing guide. Caveats: one prompt, one scene, temperature zero, bare-state continuation,
+no hosted pre-turn facts; the harness needed four fixes before a valid run (item_facts split, failure evidence,
+two-command continuation with spend accounting, live checker). Artifacts: `bench/results/stage7-door-n12/`
+(`review-summary.json`, `verdicts/`), smoke in `bench/results/stage7-door-smoke/`; failed attempts kept in
+`stage7-door-smoke-attempt1..3`.
+
+**Stage 7 door probe harness (2026-10-17, built and run; see RESULT above).** Added the
+offline prompt, bridge, transport, continuation, probe, checker and player modules,
+bridge variation, five Ringer manifests, and factual build notes under the owned
+paths. Verified free dry artifacts/check (72 planned rows), focused Stage 7 tests
+(6 passed), the broader runtime set (249 passed), Ruff, and Node syntax. The full
+coverage process completed and left the coverage database (93% total); no billed
+or network run had started at that point (smoke and N=12 have since run and been
+reviewed; see RESULT above). The screen threshold is at least 10/12 exactly-one eligible reveals by
+command 2 and at most 2/12 unsupported access requirements; it cannot establish
+hosted validation or adoption.
+
 **1. Budget-service reliability is DNF (dropped by Brandon, 2026-10-15); do not
 start or retry it.** The measurement gaps in **2** are closed and the hosted
 spine baseline in **3** is complete. Reference

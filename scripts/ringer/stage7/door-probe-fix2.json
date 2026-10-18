@@ -1,0 +1,26 @@
+{
+  "run_name": "stage7-door-probe-build",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-door-probe-fix2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "door-fix-item-facts",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "spec": "You are an implementation worker on freytag-forge, working in the real repo /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never uv. NO billed or network calls, no .env.\n\nHARD RULES. You own ONLY scripts/ringer/stage7/door_transport.py, door_probe.py, door_continuation.py (only if needed) and test_door_probe.py. Touch nothing else (the tree is dirty on purpose). No git add/commit/reset/clean/checkout/stash/push.\n\nPROBLEM (proven by a live failed-response.json at bench/results/stage7-door-smoke-attempt2/). The recorded hosted 2A prompt asks the model to return {\"segments\":[...],\"selected_knowledge_ids\":[],\"item_facts\":{...}}. In the hosted game ItemFactsProvider (storygame/runtime/item_facts.py around lines 600-635) lifts and removes item_facts before the reply reaches parse_turn_proposal. The door harness uses the plain provider, so raw_request() passes the whole reply, including a non-empty item_facts, to parse_turn_proposal. TurnProposal is a strict model (extra=forbid), so a perfectly good reply fails with 'provider response violates the turn contract'.\n\nCHANGE. In door_transport.raw_request, after provider._request returns, if the normalized value (after the same envelope unwrapping parse_turn_proposal does: 'response' then 'content', and JSON-decoding a string) is a dict containing 'item_facts', split it off: parse the remainder with parse_turn_proposal, and keep the removed item_facts value on RawProposal as telemetry (e.g. field item_facts) and in the row/results artifacts. Keep the original normalized reply in the saved raw proposal unchanged. item_facts must never decide any verdict or be applied as world state. Any OTHER unknown key must still fail as before, and a reply without item_facts behaves exactly as now. Keep one request per trial, no retry, same spend accounting and the failed-response.json evidence. Add offline tests: reply with item_facts parses and keeps telemetry; reply with another unknown key still fails with the evidence file; reply with empty item_facts parses.\n\nVERIFY: .venv/bin/python -m pytest -q scripts/ringer/stage7/test_door_probe.py tests/test_bench.py tests/test_cloudflare_transport.py; ruff check --fix and ruff format on your files; then .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --dry-run --out /tmp/door-dry-recheck2 && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/door-dry-recheck2 12 --mode dry. Write scripts/ringer/stage7/door-fix2-notes.md (about 80 words, factual).",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=$PWD TMPDIR=/tmp && rm -rf /tmp/door-dry-recheck2 && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_door_probe.py tests/test_bench.py tests/test_cloudflare_transport.py && F='scripts/ringer/stage7/door_*.py scripts/ringer/stage7/check_door_probe.py scripts/ringer/stage7/test_door_probe.py' && .venv/bin/python -m ruff check $F && .venv/bin/python -m ruff format --check $F && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --dry-run --out /tmp/door-dry-recheck2 && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/door-dry-recheck2 12 --mode dry && grep -q item_facts scripts/ringer/stage7/door_transport.py && test -s scripts/ringer/stage7/door-fix2-notes.md",
+      "verified": "failure evidence is preserved offline; tests, lint and the dry check still pass"
+    }
+  ]
+}

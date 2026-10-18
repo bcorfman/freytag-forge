@@ -1,0 +1,22 @@
+{
+  "run_name": "stage7-door-n12",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-door-n12",
+  "max_parallel": 1,
+  "worktrees": false,
+  "tasks": [{
+    "key": "door-n12",
+    "task_type": "probe",
+    "max_attempts": 1,
+    "timeout_s": 7200,
+    "check_timeout_s": 300,
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=medium"],
+    "full_access": true,
+    "ownership": ["bench/results/stage7-door-n12/", "bench/results/ledger.jsonl (append-only)"],
+    "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --confirm --out bench/results/stage7-door-n12",
+    "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-n12 12 --mode artifacts",
+    "spec": "Run the full billed Stage 7 door screen once after successful dry and reviewed-smoke checks. Own only bench/results/stage7-door-n12/ except verdicts/ and review-summary.json, plus append-only ledger lines. Source .env silently, use no uv and no git mutation. Run 12 trials per arm, exactly 72 rep-major rows in control, review, stale-scene, wording, fixed-control, bridge order. Hard maxima are 48 raw 2A requests, 288 continuation requests, 336 Cloudflare requests total and 144 raw-player attempts; no judges, retries, replacement samples or smoke pooling. Preserve all source prompt hashes, exact allowed diffs, fixed bridge reconstruction, raw proposals, parsed segments, narrator-only text, composed screens, package/state hashes, eligible/matched evidence IDs, commands, responses, rejection rollback, before/after facts, request reservations, row hashes and partial failure artifacts. The raw adapter uses provider_for then provider._request({system,user,max_tokens:1024,response_format:{type:json_object}}) and parse_turn_proposal; continuation uses the normal RuntimeEngine.turn path with semantic_ask=None and no ItemFacts/world-capture/name matching. Exactly one eligible matcher hit and a committed reveal by command 1 or 2 is required for an earned result. Stop on quota, outage, malformed player output or exhausted caps, write run-failure.txt, and exit nonzero. The result is a wording screen only: it cannot claim hosted validation, semantic grounding, transition invariance, adoption, or authorial approval."
+  }]
+}

@@ -1,0 +1,30 @@
+{
+  "run_name": "stage7-door-read-n12",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-door-read-n12",
+  "max_parallel": 1,
+  "worktrees": false,
+  "tasks": [
+    {
+      "key": "door-read-n12",
+      "task_type": "review",
+      "max_attempts": 1,
+      "timeout_s": 5400,
+      "check_timeout_s": 300,
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": false,
+      "ownership": [
+        "bench/results/stage7-door-n12/verdicts/",
+        "bench/results/stage7-door-n12/review-summary.json"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-n12 12 --mode artifacts",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-n12 12 --mode reviewed",
+      "spec": "PATHS: the repository is /home/bcorfman/dev/freytag-forge (your task directory is NOT the repo). Write every verdict to /home/bcorfman/dev/freytag-forge/bench/results/stage7-door-n12/verdicts/<row-id>.json and the summary to /home/bcorfman/dev/freytag-forge/bench/results/stage7-door-n12/review-summary.json, by absolute path. Do not alter raw rows. Reading all 72 rows is required; do not sample.\n\nRead every one of the 72 Stage 7 rows, including failed rows and both commands where present, without making API calls. Own only the n12 verdicts directory and review-summary.json. Run the artifact check before reading. Use row hashes and evidence quotes, never keyword or regex acceptance. Apply the full rubric: unsupported access and credential obstacles, starting place, responsiveness, actionable things, unsupported pursuit, premature disclosure, rejection and earned reveal by command 1/2; separate inherited fixed-pair door invention from downstream pursuit/new invention. Compare each generated arm to generated control and bridge only to fixed-control. Report absolute counts, denominators, failures, ambiguity and control differences. The screening threshold is at least 10/12 exactly-one eligible reveal by command 2, at most 2/12 unsupported access requirements, no weakened guard/premature reveal/changed transition eligibility, and clear matched-control improvement. This is not hosted adoption evidence; mixed or marginal results are inconclusive. The reviewed checker must require all verdict files and valid row hashes."
+    }
+  ]
+}

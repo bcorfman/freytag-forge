@@ -1,0 +1,22 @@
+{
+  "run_name": "stage7-door-dry",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-door-dry",
+  "max_parallel": 1,
+  "worktrees": false,
+  "tasks": [{
+    "key": "door-dry",
+    "task_type": "probe",
+    "max_attempts": 1,
+    "timeout_s": 900,
+    "check_timeout_s": 180,
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=medium"],
+    "full_access": false,
+    "ownership": ["bench/results/stage7-door-dry/"],
+    "command": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --dry-run --out bench/results/stage7-door-dry",
+    "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-dry 12 --mode dry",
+    "spec": "You are the offline Stage 7 door-probe operator. Work only in /home/bcorfman/dev/freytag-forge and create only bench/results/stage7-door-dry/. Do not use credentials, .env, network, billed calls, uv, or git mutation commands. Run the command exactly once and inspect every prompt diff and fixed-control reconstruction. The probe selects replicate 1, scene 2A, turn 7 by field values from bench/results/stage7-blind-raw/attempt-1/e2e-blind-player-prompts.json; it requires unique anchors and nonempty system/user strings. It keeps system bytes unchanged and patches only complete, uniquely scoped bullet lines: review changes the credential-check sentence; stale-scene changes two SCENE lines and the matching CONSTRAINTS line; wording changes the PLAYER command. The credential-preparation sentence must occur twice globally and each scoped occurrence once. It loads the recorded 2A turn-7 transcript, requires the exact input, non-rejection, scene_id 2B, and earned transition, then removes exactly the authored bridge plus 2B entry suffix using join_narration. The fixed-control and bridge screens share the recorded narrator prefix and entry; bridge removes only the sentence Beyond those corridors, the records archive waited behind another layer of security. Dry mode writes run.json, prompts/, results.json, spend.jsonl, summary.json, source-before.json, source-after.json, verdicts/, and notes.md; it plans 72 rows in rep-major order control, review, stale-scene, wording, fixed-control, bridge, records caps of 0 for dry, and makes no provider or subprocess request. The checker must report each missing path or invariant and reject wrong hashes/order/cap arithmetic. No story or fixture file may be changed."
+  }]
+}

@@ -122,6 +122,10 @@ cd /home/bcorfman/dev/ringer && ./ringer.py run /home/bcorfman/dev/freytag-forge
 
 The underlying command shape, for writing a new manifest:
 
+### Stage 7 door probe
+
+Run the free dry screen before any Ringer task: `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --dry-run --out bench/results/stage7-door-dry`, then `scripts/ringer/stage7/check_door_probe.py ... 12 --mode dry`. Live smoke/full runs use the serial `door-probe-{smoke,n12}.json` manifests, require explicit confirmation, source `.env` only inside Ringer, and preserve partial artifacts without retries or pooling. This is a wording screen, not hosted validation or adoption evidence.
+
 ```bash
 uv run python -m bench run --variation bench/variations/authored-handoff-phase1.json \
   --scene 1A --replicates 4 --script candidate-selection-repro --out /tmp/bench-1a --confirm

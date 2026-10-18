@@ -1,0 +1,22 @@
+{
+  "run_name": "stage7-door-read-smoke",
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-door-read-smoke",
+  "max_parallel": 1,
+  "worktrees": false,
+  "tasks": [{
+    "key": "door-read-smoke",
+    "task_type": "review",
+    "max_attempts": 1,
+    "timeout_s": 1800,
+    "check_timeout_s": 180,
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=medium"],
+    "full_access": false,
+    "ownership": ["bench/results/stage7-door-smoke/verdicts/", "bench/results/stage7-door-smoke/review-summary.json"],
+    "command": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-smoke 1 --mode artifacts",
+    "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-smoke 1 --mode reviewed",
+    "spec": "Read-only review of all six smoke rows; make no experiment API calls and edit only verdicts/ plus review-summary.json. First run the artifact check. For every row read the complete narration, composed exit, raw command and every continuation against the saved prompt, declared scene things and available knowledge. Write one verdict JSON with row hash, reviewer identity, evidence quotes and explicit booleans or needs_review for unsupported access obstacle, unsupported credential requirement, starting place, response, actionable things, unsupported player pursuit, premature disclosure, rejection, and earned reveal by command 1/2. Fixed arms label the upstream door invention inherited; generated arms distinguish upstream, downstream and player inventions. Do not use keyword presence as a verdict and do not alter raw rows. Record execution integrity, denominators and whether N=12 is safe to run; a losing scientific arm does not invalidate a sound harness. The reviewed checker must require every verdict and matching row hashes."
+  }]
+}
