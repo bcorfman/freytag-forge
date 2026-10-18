@@ -1,0 +1,34 @@
+{
+ "run_name": "stage7-json-schema",
+ "workdir": "/home/bcorfman/dev/ringer-work/json-schema-build",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "build-json-schema",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 600,
+   "ownership": [
+    "scripts/ringer/stage7/json_schema_probe.py",
+    "scripts/ringer/stage7/test_json_schema_probe.py",
+    "bench/results/stage7-json-schema-dry/"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/stage7-json-schema-dry/arms/schema.json"
+   ],
+   "spec": "You are a probe-script author on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. THIS TASK MAKES NO NETWORK OR BILLED CALLS and uses no credentials: do not source .env. No git add/commit/reset/clean/checkout/stash/push. You own ONLY scripts/ringer/stage7/json_schema_probe.py, scripts/ringer/stage7/test_json_schema_probe.py and files under bench/results/stage7-json-schema-dry/. Do NOT edit narration_only_probe.py, quoted_name_probe.py or segment_replay_probe.py; import capture_prompts, classify_body, _is_truncated, _make_provider, ANCHOR, RULE from them (read them first; follow how test_quoted_name_probe.py imports).\n\nQUESTION. The narrator reply is sometimes cut off or garbled when the model writes an unescaped double quotation mark inside a JSON string. The runtime asks Workers AI for plain JSON mode: response_format {\"type\":\"json_object\"}. Does asking for a JSON schema instead (response_format {\"type\":\"json_schema\",\"json_schema\": <schema>}) stop the broken replies, and does Workers AI accept it for the narrator model? Brandon believes an earlier attempt at json_schema caused many errors, so every rejection or error body must be recorded verbatim.\n\nBUILD scripts/ringer/stage7/json_schema_probe.py, run as `TMPDIR=/tmp PYTHONPATH=$PWD .venv/bin/python scripts/ringer/stage7/json_schema_probe.py --n N --out DIR [--dry-run] [--confirm]`.\n1. Use ONLY the 'dialogue' payload from capture_prompts. Both arms use the SAME system string = the original system with RULE inserted as its own line immediately before ANCHOR (assert ANCHOR occurs once) and the SAME user string. Arm 'json_object': payload response_format stays {\"type\":\"json_object\"} (as captured). Arm 'json_schema': response_format = {\"type\":\"json_schema\",\"json_schema\": storygame.runtime.cloudflare._PROVIDER_RESPONSE_SCHEMA}; print the schema into DIR/arms/schema.json. Assert the two payloads differ only in response_format. Save the payloads to DIR/arms/<arm>.json.\n2. REPLAY (billed, only with --confirm): for rep in range(N), arm order alternates by rep (json_object first on even reps), one POST per arm per rep built exactly like replay() in narration_only_probe.py (env vars read only inside the script, never printed, 60 s timeout). HARD CAP 40 worker calls, enforced before each call; refuse --n over 20; no retries; NO fallback without response_format. If a call raises urllib.error.HTTPError, record in the row: http_status, the verbatim response body text (read it from the error) and the X-Freytag-Rejection-Code or similar headers if present; any other exception goes in 'error'. STOP RULE: if the json_schema arm returns an HTTP error on 3 reps in a row, stop the run after finishing that rep, write DIR/run-stopped.txt explaining, and still write the summary. Row fields: arm, rep, raw_body verbatim (empty on error), http_status, error_body, error, truncated (reuse _is_truncated), plus classify_body fields (ok, invalid_kind, stray_selected_ids, bad_segments), kinds, double_quote_any (a double quote character occurs in any segment text). Write DIR/replies.jsonl and DIR/bad/<arm>-<rep>.txt for every row that is not ok, is truncated or errored. DIR/summary.json: calls, and per arm rows, ok, bad_rows, truncated, invalid_kind, double_quote_any, http_errors, other_errors, mean_kept_chars (valid kept segments after the runtime's own repair, as quoted_name_probe computes), distinct http_error_bodies (first 200 characters each) with counts.\n3. --dry-run: prompt capture and arm build only, no network, summary calls 0. Without --confirm and without --dry-run refuse.\n4. TESTS (no network): arms differ only in response_format; the schema arm uses the module's _PROVIDER_RESPONSE_SCHEMA; fails on a missing or duplicated anchor; cap stops at 40 with a fake sender; n over 20 refused; an HTTPError from a fake sender is recorded with status and body and does not abort the run; the 3-in-a-row stop rule triggers and writes run-stopped.txt.\nHOW TO RUN AND VERIFY: pytest scripts/ringer/stage7 -n0, ruff check and ruff format --check on both files, then `TMPDIR=/tmp PYTHONPATH=$PWD .venv/bin/python scripts/ringer/stage7/json_schema_probe.py --n 1 --dry-run --out bench/results/stage7-json-schema-dry` and confirm DIR/arms/*.json differ only in response_format. Write DIR/notes.md (about 50 words). Do not run --confirm.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest scripts/ringer/stage7 -q -n0 > /tmp/js.out 2>&1; tail -4 /tmp/js.out; D=bench/results/stage7-json-schema-dry/arms; grep -q ' passed' /tmp/js.out && ! grep -q ' failed\\| error' /tmp/js.out && .venv/bin/python -c \"import json;a=json.load(open('$D/json_object.json'));b=json.load(open('$D/json_schema.json'));assert a['system']==b['system'] and a['user']==b['user'];assert a['response_format']=={'type':'json_object'};assert b['response_format']['type']=='json_schema';d=[k for k in set(a)|set(b) if a.get(k)!=b.get(k)];assert d==['response_format'],d\" && .venv/bin/ruff check scripts/ringer/stage7/json_schema_probe.py scripts/ringer/stage7/test_json_schema_probe.py && .venv/bin/ruff format --check scripts/ringer/stage7/json_schema_probe.py scripts/ringer/stage7/test_json_schema_probe.py || { echo 'FAIL: see output above'; exit 1; }",
+   "verified": "Arms differ only in response_format; errors recorded verbatim; stop rule, caps and --confirm tested; no network."
+  }
+ ]
+}

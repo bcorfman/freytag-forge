@@ -1,0 +1,34 @@
+{
+ "run_name": "stage7-json-schema-n20",
+ "workdir": "/home/bcorfman/dev/ringer-work/json-schema-n20",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "json-schema-n20",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/stage7-json-schema-n20/",
+    "bench/results/ledger.jsonl (append-only)"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/stage7-json-schema-n20/summary.json"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/json_schema_probe.py --n 20 --confirm --out bench/results/stage7-json-schema-n20",
+   "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python -c \"import json;d='bench/results/stage7-json-schema-n20';s=json.load(open(d+'/summary.json'));rows=[json.loads(l) for l in open(d+'/replies.jsonl')];assert s['calls']==len(rows)<=40,(s['calls'],len(rows));print(json.dumps(s)[:1800])\"",
+   "verified": "At most 40 worker calls recorded; errors verbatim.",
+   "spec": "Run the ONE billed json_schema probe (n=20, at most 40 Cloudflare worker calls, hard cap 40 inside the script). Own only bench/results/stage7-json-schema-n20/ plus append-only bench/results/ledger.jsonl. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or resume. YOUR WORKING DIRECTORY IS A SCRATCH DIRECTORY; the repository is at /home/bcorfman/dev/freytag-forge. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/json_schema_probe.py --n 20 --confirm --out bench/results/stage7-json-schema-n20"
+  }
+ ]
+}

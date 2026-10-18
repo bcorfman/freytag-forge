@@ -34,6 +34,7 @@ def run_continuation(
     responses: list[str] = []
     clarification_turns: list[int] = []
     committed_reveals_by_turn: list[list[str]] = []
+    segments_dropped_by_turn: list[int] = []
     turn_statuses: list[str] = []
     ended_by = "none"
     transition_turn: int | None = None
@@ -54,6 +55,7 @@ def run_continuation(
                     already_committed=committed,
                 )
                 commands.append(command)
+                segments_dropped_by_turn.append(int(state.last_turn_delivery.segments_dropped))
                 responses.append(turn.get("response"))
                 status = turn.get("status")
                 turn_statuses.append(status)
@@ -82,6 +84,7 @@ def run_continuation(
             "responses": responses,
             "clarification_turns": clarification_turns,
             "committed_reveals_by_turn": committed_reveals_by_turn,
+            "segments_dropped_by_turn": segments_dropped_by_turn,
             "panel_named": any("panel" in command.lower() for command in commands),
             "turn_statuses": turn_statuses,
             "request_count": getattr(provider, "request_count", 0),

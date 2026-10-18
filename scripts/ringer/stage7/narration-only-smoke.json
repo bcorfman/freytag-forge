@@ -1,0 +1,34 @@
+{
+ "run_name": "stage7-narration-only-smoke",
+ "workdir": "/home/bcorfman/dev/ringer-work/narration-only-smoke",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "narration-only-smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/stage7-narration-only-smoke/",
+    "bench/results/ledger.jsonl (append-only)"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/stage7-narration-only-smoke/summary.json"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/narration_only_probe.py --n 1 --confirm --out bench/results/stage7-narration-only-smoke",
+   "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python -c \"import json;d='bench/results/stage7-narration-only-smoke';s=json.load(open(d+'/summary.json'));assert s['calls']==2,('calls',s['calls']);rows=[json.loads(l) for l in open(d+'/replies.jsonl')];assert len(rows)==2,len(rows);print(json.dumps(s)[:1500])\"",
+   "verified": "2 worker replies recorded verbatim; call count equals the cap arithmetic.",
+   "spec": "Run the ONE billed narration-only probe (n=1, 2 Cloudflare worker calls, hard cap 40 inside the script). Own only bench/results/stage7-narration-only-smoke/ plus append-only bench/results/ledger.jsonl. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or resume. YOUR WORKING DIRECTORY IS A SCRATCH DIRECTORY; the repository is at /home/bcorfman/dev/freytag-forge. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/narration_only_probe.py --n 1 --confirm --out bench/results/stage7-narration-only-smoke"
+  }
+ ]
+}

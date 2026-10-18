@@ -1,0 +1,31 @@
+{
+ "run_name": "stage7-details-n12",
+ "workdir": "/home/bcorfman/dev/ringer-work/stage7-details-n12",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "details-n12",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 7200,
+   "check_timeout_s": 600,
+   "ownership": [
+    "bench/results/stage7-details-n12/",
+    "bench/results/ledger.jsonl (append-only)"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --experiment details --confirm --out bench/results/stage7-details-n12",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-details-n12 12 --mode artifacts --experiment details",
+   "verified": "The live details N=12 artifacts for 24 rows reconcile with spend events, caps and per-arm exit counts.",
+   "spec": "Run the ONE billed Stage 7 DETAILS-screen N=12 per preregistration .plans/astra-2b-details-prereg.md: arms baseline and details, 12 interleaved reps, a full 2B continuation each, at most 480 Cloudflare requests and 408 raw-player attempts. Own only bench/results/stage7-details-n12/ plus append-only bench/results/ledger.jsonl. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry, resume or replace samples and never extend N; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt (partial results.json stay in place), which you must leave and report. YOUR WORKING DIRECTORY IS A SCRATCH DIRECTORY; the repository is at /home/bcorfman/dev/freytag-forge. Run exactly this single shell command and report its exit status and the contents of any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --experiment details --confirm --out bench/results/stage7-details-n12"
+  }
+ ]
+}

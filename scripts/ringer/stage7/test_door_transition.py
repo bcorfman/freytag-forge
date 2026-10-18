@@ -11,10 +11,13 @@ from check_door_probe import check
 from door_probe import EXPERIMENTS, dry_run, live_run
 from door_transport import SpendBudget
 
+from storygame.runtime.state import TurnDelivery
+
 
 class FakeState:
     current_scene_id = "2B"
     story_complete = False
+    last_turn_delivery = TurnDelivery()
 
 
 class FakeProvider:
@@ -47,6 +50,7 @@ def setup_run(monkeypatch, turns):
         item = turns.pop(0)
         state.current_scene_id = item.get("scene", state.current_scene_id)
         state.story_complete = item.get("complete", False)
+        state.last_turn_delivery = TurnDelivery(segments_dropped=item.get("segments_dropped", 0))
         engine.last_attempt = SimpleNamespace(transition_cause=item.get("cause", "none"))
         return {
             "status": item.get("status", "unearned"),
@@ -56,6 +60,15 @@ def setup_run(monkeypatch, turns):
 
     monkeypatch.setattr(door_transition, "score_command", score)
     return state, engine
+
+
+def test_segments_dropped_are_recorded_per_turn(monkeypatch):
+    result, _ = run(
+        monkeypatch,
+        [{}, {"status": "clarification", "segments_dropped": 1}, {"scene": "2C", "cause": "earned"}],
+    )
+    assert result["segments_dropped_by_turn"] == [0, 1, 0]
+    assert len(result["segments_dropped_by_turn"]) == len(result["commands"])
 
 
 def run(monkeypatch, turns, player=None, max_commands=20, *, setup=True):

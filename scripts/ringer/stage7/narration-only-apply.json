@@ -1,0 +1,34 @@
+{
+ "run_name": "stage7-narration-only-apply",
+ "workdir": "/home/bcorfman/dev/ringer-work/narration-only-apply",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "apply-narration-only-rule",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1500,
+   "ownership": [
+    "storygame/runtime/cloudflare.py",
+    "tests/test_cloudflare_transport.py",
+    "tests/ (only tests that pin the old system prompt text)"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py"
+   ],
+   "spec": "You are an implementation worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. NO billed or network calls, no credentials, no .env. No git add/commit/reset/clean/checkout/stash/push. Untracked .plans files and everything under bench/results are intentionally present; do NOT modify anything under bench/results or .plans, and do not touch scripts/ringer/.\n\nYou own storygame/runtime/cloudflare.py and tests/test_cloudflare_transport.py. You may ALSO edit another tests/ file ONLY if a test there fails solely because it pins the narrator system prompt text that this change adds; if you do, say which file and test in your final message.\n\nREAD FIRST: docs/narrator-writing-guide.md. Narrator instructions must be plain language, 12th-grade level for new text, one idea per sentence, and a rule shared by several narration paths is built in ONE helper that every path calls.\n\nBACKGROUND. Probes (Stage 7, 2026-10-18) showed the 8B narrator invents a segment kind such as 'character' for a spoken line; the runtime drops that segment, so the player never sees the line (invalid kind on 18-19 of 20 replays of a dialogue prompt). One extra system-prompt line fixed it (0 of 20 in two runs). The wording was tested exactly and must not be reworded:\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.\nWHERE. CloudflareTurnProvider._system_prompt (storygame/runtime/cloudflare.py, about line 1052) builds the system prompt for the turn path (line ~450) and for opening() (line ~1092); _recover_malformed_response reuses the payload's system string, so one change there covers all paths. In the tested arms the line sat immediately after 'Describe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.' and immediately before 'Write each paragraph as one segment and return only JSON in this form:'. Do the same: add a module-level constant NARRATION_ONLY_RULE with exactly the sentence above, and append it to `lines` in _system_prompt right after the 'Describe each scene' line, BEFORE the example block, and unconditionally (also when the variation omits the output example). Do not change _system_rules (it is a hook for bench variants) and do not touch any other prompt text.\n\nTESTS. (1) In tests/test_cloudflare_transport.py add tests proving: the line appears exactly once in the turn system prompt and in the opening system prompt, immediately between the 'Describe each scene' line and the 'Write each paragraph' line; it also appears (once) when the prompt variation omits the output example; and the malformed-reply recovery payload's system string still contains it exactly once. Follow how the tests near lines 149 and 1818 reach the instruction and the opening instruction. (2) Run the FULL suite: `.venv/bin/python -m pytest -q -n0 -p no:cacheprovider` (it can take several minutes) and fix only tests that fail because they pin the old system prompt text; any other failure must be reported, not fixed.\nVERIFY: ruff check and ruff format --check on every file you changed; the full suite green. Report the full-suite pass count.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q -n0 -p no:cacheprovider > /tmp/nor.out 2>&1; tail -5 /tmp/nor.out; grep -q ' passed' /tmp/nor.out && ! grep -q ' failed\\| error' /tmp/nor.out && test \"$(grep -c 'Every paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.' storygame/runtime/cloudflare.py)\" = 1 && grep -q 'NARRATION_ONLY_RULE' storygame/runtime/cloudflare.py && .venv/bin/ruff check storygame tests && .venv/bin/ruff format --check storygame tests || { echo 'FAIL: see output above'; exit 1; }",
+   "verified": "The tested rule line is in every narrator system prompt exactly once in the tested position; the full suite and ruff pass."
+  }
+ ]
+}
