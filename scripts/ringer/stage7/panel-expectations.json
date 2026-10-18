@@ -1,0 +1,34 @@
+{
+ "run_name": "stage7-panel-expectations",
+ "workdir": "/home/bcorfman/dev/ringer-work/panel-expectations",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "update-panel-expectations",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 900,
+   "ownership": [
+    "tests/test_late_scene_repro.py",
+    ".plans/disclosure-matrix.json",
+    ".plans/disclosure-matrix.md"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/.plans/disclosure-matrix.json"
+   ],
+   "spec": "You are an implementation worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge, currently in the middle of a git merge (do NOT run any git command that changes state: no add/commit/merge/reset/checkout/stash/push; `git diff` and `git status` are fine). Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. NO network, billed calls or credentials.\n\nYou own ONLY tests/test_late_scene_repro.py, .plans/disclosure-matrix.json and .plans/disclosure-matrix.md. Edit nothing else (in particular not data/stories/*, not the generator scripts/disclosure_matrix.py).\n\nBACKGROUND. The story package gained a declared thing, cooling_service_archive_panel (data/stories/continuity-initiative/plot.md, scenes 2A and 2B, with scoped aliases such as 'access panel', 'concealed panel', 'grille', 'hidden panel'). Two tests now fail only because their expectations predate it: (1) tests/test_late_scene_repro.py::test_late_scene_place_and_scoped_alias_declarations_are_characterized, whose EXPECTED_SCOPED_ALIASES_BY_SCENE lacks the panel's seven aliases; (2) tests/test_disclosure_matrix.py::test_matrix_is_deterministic_and_fresh, which compares the generator's output to the committed .plans/disclosure-matrix.json and .md.\n\nTASK. (1) Run the failing alias test, read the real declared aliases per scene from the package through the test's own _scoped_aliases helper, and update EXPECTED_SCOPED_ALIASES_BY_SCENE for exactly the scenes that differ (expect 2A and/or 2B), adding only the panel entries as the package declares them. Do not weaken the assertion. Also check EXPECTED_PLACE_FORMS_BY_SCENE still passes. (2) Regenerate the matrix with `.venv/bin/python scripts/disclosure_matrix.py --out-dir .plans` (read tests/test_disclosure_matrix.py for how the test calls it) so .plans/disclosure-matrix.json and .md match. Then run `git diff --stat -- .plans/disclosure-matrix.json .plans/disclosure-matrix.md` and `git diff -- .plans/disclosure-matrix.json | head -80` and describe in your final message what changed; if the diff touches anything not plausibly caused by the panel (cooling-service archive panel) or the merged-in main changes in knowledge.yaml and plot.md, say so explicitly.\nVERIFY: pytest -n0 tests/test_late_scene_repro.py tests/test_disclosure_matrix.py all pass; ruff check and ruff format --check on tests/test_late_scene_repro.py.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest tests/test_late_scene_repro.py tests/test_disclosure_matrix.py -q -n0 -p no:cacheprovider > /tmp/pe.out 2>&1; tail -4 /tmp/pe.out; grep -q ' passed' /tmp/pe.out && ! grep -q ' failed\\| error' /tmp/pe.out && .venv/bin/ruff check tests/test_late_scene_repro.py && .venv/bin/ruff format --check tests/test_late_scene_repro.py && test \"$(git status --short | grep -v '^??' | grep -v -e '^[AMUD ][AMUD ] ' | wc -l)\" = 0 && git diff --quiet -- data storygame || { echo 'FAIL: see output above'; exit 1; }",
+   "verified": "The two tests pass because their expectations now include the declared panel; no story data or generator was edited."
+  }
+ ]
+}

@@ -453,7 +453,7 @@ setting_facts:
 - The cooling-service archive panel opens with a push.
 - Kristin has already reached the records archive.
 - The archive terminals are available for investigation.
-entry_text: "The records archive hummed behind the restricted corridor. The archive terminals held the Initiative's selection files. Those files held answers to why Michelle was taken and who helped build the system that chose her.\n\n"
+entry_text: "Inside the records archive, the archive terminals are ready to search. They hold the Initiative's selection files, including Michelle's file.\n\n"
 transition_ids: [t_2b_2c]
 bridge_text:
   t_2b_2c: >-

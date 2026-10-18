@@ -1,19 +1,19 @@
 # Disclosure vocabulary matrix
 
-Inventory terms: 531. Matrix rows: 715.
+Inventory terms: 539. Matrix rows: 734.
 
 ## Counts
 
-- entity_name: 95
+- entity_name: 96
 - identifier_fragment: 8
 - knowledge_alias: 106
 - leak_term: 101
 - must_convey_phrase: 201
-- scoped_alias: 20
+- scoped_alias: 27
 
 Suggested classes:
-- needs_review: 14
-- public_candidate: 128
+- needs_review: 20
+- public_candidate: 130
 - secret_with_unlock_fact: 389
 
 ### Earned rejected

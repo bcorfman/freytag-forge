@@ -54,6 +54,21 @@
     },
     {
       "available_scenes": [
+        "2A",
+        "2B"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "cooling_service_archive_panel"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "access panel",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
+    },
+    {
+      "available_scenes": [
         "2C"
       ],
       "guard_kind": "knowledge_alias",
@@ -1713,6 +1728,21 @@
     },
     {
       "available_scenes": [
+        "2A",
+        "2B"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "cooling_service_archive_panel"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "concealed panel",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
+    },
+    {
+      "available_scenes": [
         "3A"
       ],
       "guard_kind": "knowledge_alias",
@@ -1870,6 +1900,21 @@
         "restricted_corridor_access"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A",
+        "2B"
+      ],
+      "guard_kind": "entity_name",
+      "owner_ids": [
+        "cooling_service_archive_panel"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "cooling-service archive panel",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
     },
     {
       "available_scenes": [
@@ -3767,6 +3812,21 @@
     },
     {
       "available_scenes": [
+        "2A",
+        "2B"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "cooling_service_archive_panel"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "grille",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
+    },
+    {
+      "available_scenes": [
         "1B"
       ],
       "guard_kind": "entity_name",
@@ -3856,6 +3916,21 @@
         "memory_card_recovered"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A",
+        "2B"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "cooling_service_archive_panel"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "hidden panel",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
     },
     {
       "available_scenes": [
@@ -4167,6 +4242,7 @@
     {
       "available_scenes": [
         "2A",
+        "2B",
         "3B"
       ],
       "guard_kind": "entity_name",
@@ -4201,6 +4277,7 @@
     {
       "available_scenes": [
         "2A",
+        "2B",
         "3B"
       ],
       "guard_kind": "entity_name",
@@ -6449,6 +6526,21 @@
     },
     {
       "available_scenes": [
+        "2A",
+        "2B"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "cooling_service_archive_panel"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "panel",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
         "1B"
       ],
       "guard_kind": "knowledge_alias",
@@ -8110,6 +8202,7 @@
     {
       "available_scenes": [
         "2A",
+        "2B",
         "3B"
       ],
       "guard_kind": "entity_name",
@@ -8323,6 +8416,21 @@
         "evidence_ready_to_transmit"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A",
+        "2B"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "cooling_service_archive_panel"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "seam",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
     },
     {
       "available_scenes": [
@@ -9413,6 +9521,21 @@
         "restricted_corridor_access"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "2A",
+        "2B"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "cooling_service_archive_panel"
+      ],
+      "requires": [],
+      "suggested_class": "needs_review",
+      "term": "ventilation grille",
+      "unlock_fact_ids": [],
+      "why": "no public-text or knowledge-unlock rule produced a suggestion"
     },
     {
       "available_scenes": [
@@ -13619,6 +13742,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "scoped_alias",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "access panel"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "entity_name",
       "scene": "2A",
       "skipped": {
@@ -13731,6 +13871,23 @@
     },
     {
       "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "concealed panel"
+    },
+    {
+      "early": {
         "error_code": "narration_known_term_leak",
         "verdict": "rejected"
       },
@@ -13796,6 +13953,23 @@
         "verdict": "accepted"
       },
       "term": "cooling leak"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "entity_name",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "cooling-service archive panel"
     },
     {
       "early": {
@@ -14282,6 +14456,40 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "scoped_alias",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "grille"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "hidden panel"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "entity_name",
       "scene": "2A",
       "skipped": {
@@ -14632,6 +14840,23 @@
     },
     {
       "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "panel"
+    },
+    {
+      "early": {
         "error_code": "protected_narration_leak",
         "verdict": "rejected"
       },
@@ -14884,6 +15109,23 @@
         "verdict": "accepted"
       },
       "term": "restricted passage"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "seam"
     },
     {
       "early": {
@@ -15159,6 +15401,23 @@
     },
     {
       "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2A",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "ventilation grille"
+    },
+    {
+      "early": {
         "error_code": "narration_known_term_leak",
         "verdict": "rejected"
       },
@@ -15292,6 +15551,23 @@
         "verdict": "accepted"
       },
       "term": "water-pressure fault"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "access panel"
     },
     {
       "early": {
@@ -15540,6 +15816,40 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "scoped_alias",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "concealed panel"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "entity_name",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "cooling-service archive panel"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "entity_name",
       "scene": "2B",
       "skipped": {
@@ -15581,6 +15891,74 @@
         "verdict": "accepted"
       },
       "term": "evidence"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "grille"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "hidden panel"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "entity_name",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "infrastructure corridor"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "entity_name",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "infrastructure corridors"
     },
     {
       "early": {
@@ -15941,6 +16319,23 @@
     },
     {
       "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "panel"
+    },
+    {
+      "early": {
         "error_code": "protected_narration_leak",
         "verdict": "rejected"
       },
@@ -16005,7 +16400,41 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "term": "restricted infrastructure corridors"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "entity_name",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "term": "restricted records archive"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "seam"
     },
     {
       "early": {
@@ -16040,6 +16469,23 @@
         "verdict": "accepted"
       },
       "term": "shelly"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "scoped_alias",
+      "scene": "2B",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "ventilation grille"
     },
     {
       "early": {

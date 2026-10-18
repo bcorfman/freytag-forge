@@ -2618,7 +2618,7 @@ knowledge:
   statement: 'Across the country, detention sites begin to surrender or release prisoners as the national network fractures.'
   earn_when: checks reports from detention sites
   action_evidence:
-  - [ask, talk to, check, read, watch, view, look at, review, inspect, scan, monitor, follow, search, listen to, track, confirm, count, list, tally, compare, scroll through, broadcast the reports, broadcast reports]
+  - [ask, talk to, check, read, watch, view, look at, review, inspect, scan, monitor, follow, search, listen to, track, confirm, count, list, tally, compare, scroll through, broadcast the reports, broadcast reports, broadcasting the reports, broadcasting reports, relay the reports, relaying the reports]
   - [other detention sites, other detention site, detention-site reports, detention site reports, facility reports, facility report, facilities surrendering, facility surrender, facility surrenders, site surrender, site surrenders, site releases, site release, prison releases, prison release, national network, national networks, network fracture, network fractures, network collapse, network collapses, country reports, national reports, other facilities, detention reports, news reports, site news, surrender reports, release reports, facility news, surrender, surrendered, the reports, detention sites, detention site]
   entity_ids: []
   aliases:
@@ -2839,7 +2839,7 @@ knowledge:
   establishes: [{op: assert, fact_id: kristin_joined_rescue_efforts, value: true}]
   source: {kind: canonical_route_event, canonical_event_id: resolution_network_consequences}
 - id: k_scene_1a_entry
-  statement: The house is quiet and Michelle is missing.
+  statement: Michelle is missing.
   entity_ids: [kristin, michelle, michelle_phone]
   aliases: [Michelle's phone, kitchen floor, empty house]
   audience: {kind: public, player_visible: true}
