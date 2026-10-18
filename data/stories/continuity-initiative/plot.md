@@ -359,10 +359,7 @@ item_placements:
     parent: infrastructure_corridors
     text: beside the inspection console in the infrastructure corridors
 setting_facts:
-- The cooling-service archive panel stands beside the inspection console in the infrastructure corridors.
-- The cooling-service archive panel looks like a ventilation grille.
-- The visible seam outlines the cooling-service archive panel.
-- The access panel beside the inspection console is the cooling-service archive panel.
+- The cooling-service archive panel has a slotted face.
 - The cooling-service archive panel leads directly from the infrastructure corridors into the records archive.
 - The cooling-service archive panel opens with a push.
 - The cooling-service archive panel has no lock.
@@ -455,7 +452,7 @@ setting_facts:
 - The cooling-service archive panel connects the infrastructure corridors to the records archive.
 - Kristin has already reached the records archive.
 - The archive terminals are available for investigation.
-entry_text: "The records archive hummed behind the restricted corridor. Rows of terminals held the Initiative's selection files - and, somewhere in them, the answers to why Michelle was taken and who helped build the system that chose her.\n\n"
+entry_text: "The records archive hummed behind the restricted corridor. The archive terminals held the Initiative's selection files. Those files held answers to why Michelle was taken and who helped build the system that chose her.\n\n"
 transition_ids: [t_2b_2c]
 bridge_text:
   t_2b_2c: >-

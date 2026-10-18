@@ -70,6 +70,8 @@ EXPERIMENTS = {
         "arms": PROMPT_EXPERIMENTS["grounded"]["arms"],
         "variations": GROUNDED_VARIATIONS,
         "caps": GROUNDED_CAPS,
+        "target_reveal": "k_sl_2b_a_r1",
+        "repair_clarification": True,
     },
 }
 
@@ -273,6 +275,8 @@ def _continue(
     commands: list[str],
     budget: SpendBudget,
     recovery_prompt: str | None = None,
+    target_reveal: str | None = None,
+    repair_clarification: bool = False,
 ) -> dict[str, Any]:
     variation = load_variation(variation_path)
     package, state = package_and_state(variation, "2B")
@@ -282,15 +286,37 @@ def _continue(
     engine = RuntimeEngine(state, provider)
     try:
         turns = []
+        committed = frozenset()
         with counted_provider(provider, budget):
             for command in commands:
-                turn = score_command(engine, state, command)
+                clarification = turns[-1] if turns and turns[-1]["status"] == "clarification" else None
+                turn = score_command(
+                    engine,
+                    state,
+                    command,
+                    target_reveal=target_reveal,
+                    clarifies=clarification["command"] if repair_clarification and clarification else None,
+                    clarification_round=1 if repair_clarification and clarification else 0,
+                    already_committed=committed,
+                )
                 turns.append(turn)
+                committed = frozenset((*committed, *turn.get("committed_reveals", [])))
                 if turn["status"] == "earned":
                     break
-            if turns and turns[-1]["status"] != "earned" and recovery_prompt is not None:
+            if turns and len(turns) < 2 and turns[-1]["status"] != "earned" and recovery_prompt is not None:
                 commands.append(_ask_player(recovery_prompt + "\n\n" + turns[-1].get("response", ""), budget))
-                turns.append(score_command(engine, state, commands[-1]))
+                clarification = turns[-1] if turns[-1]["status"] == "clarification" else None
+                turn = score_command(
+                    engine,
+                    state,
+                    commands[-1],
+                    target_reveal=target_reveal,
+                    clarifies=clarification["command"] if repair_clarification and clarification else None,
+                    clarification_round=1 if repair_clarification and clarification else 0,
+                    already_committed=committed,
+                )
+                turns.append(turn)
+                committed = frozenset((*committed, *turn.get("committed_reveals", [])))
         return {
             "turns": turns,
             "eligible": turns[0]["eligible"] if turns else [],
@@ -302,6 +328,20 @@ def _continue(
             "eligibility_reason": "fresh bare 2B state has no eligible entries"
             if turns and not turns[0]["eligible"]
             else None,
+            "earned_by_command_2": any(turn.get("status") == "earned" for turn in turns[:2]),
+            "target_commit_turn": next(
+                (
+                    index
+                    for index, turn in enumerate(turns[:2], 1)
+                    if target_reveal in turn.get("committed_reveals", [])
+                ),
+                None,
+            )
+            if target_reveal is not None
+            else None,
+            "clarification_turns": [
+                index for index, turn in enumerate(turns[:2], 1) if turn.get("status") == "clarification"
+            ],
         }
     finally:
         provider.semantic_ask = previous
@@ -355,7 +395,14 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
                 )
                 continuation_path = variation_path
             commands = [_ask_player(screen, budget)]
-            continuation = _continue(continuation_path, commands, budget, screen)
+            continuation = _continue(
+                continuation_path,
+                commands,
+                budget,
+                screen,
+                target_reveal=config.get("target_reveal") if experiment == "grounded" else None,
+                repair_clarification=config.get("repair_clarification", False) if experiment == "grounded" else False,
+            )
             rows.append(
                 {
                     "row_id": f"stage7-door-{rep:02d}-{arm}",
@@ -369,6 +416,9 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
                     "command_2": commands[1] if len(commands) > 1 else None,
                     "response_1": continuation["turns"][0].get("response") if continuation["turns"] else None,
                     "response_2": continuation["turns"][1].get("response") if len(continuation["turns"]) > 1 else None,
+                    "earned_by_command_2": continuation["earned_by_command_2"],
+                    "target_commit_turn": continuation["target_commit_turn"],
+                    "clarification_turns": continuation["clarification_turns"],
                     "eligible": continuation["eligible"],
                     "matched": continuation["matched"],
                     "before_facts": continuation["initial_facts"],

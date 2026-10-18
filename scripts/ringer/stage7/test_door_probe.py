@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 from check_door_probe import check
-from door_continuation import action_groups, matched_ids
-from door_probe import EXPERIMENTS, bridge_material, dry_run, write_failed_response
+from door_continuation import action_groups, matched_ids, score_command
+from door_probe import EXPERIMENTS, _continue, bridge_material, dry_run, write_failed_response
 from door_prompt import (
     ARMS,
     COMMAND,
@@ -24,6 +24,180 @@ from door_transport import RawRequestError, SpendBudget, raw_request
 
 from bench.core import load_variation, package_and_state
 from storygame.runtime.contracts import RuntimeContractError, parse_turn_proposal
+
+
+class _ScoreState:
+    def snapshot(self):
+        return self
+
+
+class _Turn:
+    def __init__(self, narration: str = "Done.", *, clarification: bool = False) -> None:
+        self.narration = narration
+        self.game_break = None
+        if clarification:
+            self.clarification = object()
+
+
+class _ScoreEngine:
+    def __init__(self, response: _Turn) -> None:
+        self.response = response
+        self.calls = []
+        self.last_attempt = None
+        self.last_reference_resolution = None
+
+    def turn(self, command: str, **kwargs):
+        self.calls.append((command, kwargs))
+        return self.response
+
+
+def _score_stub(monkeypatch: pytest.MonkeyPatch, groups: list[dict[str, dict[str, object]]], committed: list[str]):
+    import door_continuation
+
+    for group in groups:
+        for value in group.values():
+            value.setdefault("reason", None)
+    monkeypatch.setattr(door_continuation, "eligible_groups", lambda state, command: groups.pop(0))
+    monkeypatch.setattr(door_continuation, "committed_reveals", lambda before, after: committed)
+    monkeypatch.setattr(door_continuation, "fact_keys", lambda state: [])
+    return _ScoreState()
+
+
+def test_score_target_counts_first_turn_commit_after_empty_pre_turn(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine = _ScoreEngine(_Turn())
+    state = _score_stub(
+        monkeypatch,
+        [
+            {"target": {"evidence": (), "eligible": False, "matched": False}},
+            {"target": {"evidence": (), "eligible": True, "matched": True}},
+            {"target": {"evidence": (), "eligible": False, "matched": False}},
+            {"target": {"evidence": (), "eligible": False, "matched": False}},
+        ],
+        ["target"],
+    )
+    targeted = score_command(engine, state, "open the door", target_reveal="target")
+    assert targeted["status"] == "earned"
+    assert targeted["target_committed"] is True
+    assert targeted["eligible"] == []
+    assert (
+        score_command(
+            engine,
+            state,
+            "open the door",
+        )["status"]
+        == "unearned"
+    )
+
+
+def test_score_target_ignores_different_matched_reveal(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine = _ScoreEngine(_Turn())
+    state = _score_stub(
+        monkeypatch,
+        [
+            {"other": {"evidence": (), "eligible": True, "matched": True}},
+            {"other": {"evidence": (), "eligible": True, "matched": True}},
+        ],
+        ["other"],
+    )
+    result = score_command(engine, state, "search", target_reveal="target")
+    assert result["status"] == "unearned"
+    assert result["target_committed"] is False
+
+
+def test_target_already_committed_is_not_earned_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine = _ScoreEngine(_Turn())
+    state = _score_stub(
+        monkeypatch,
+        [
+            {"target": {"evidence": (), "eligible": True, "matched": True}},
+            {"target": {"evidence": (), "eligible": True, "matched": True}},
+        ],
+        ["target"],
+    )
+    result = score_command(engine, state, "search", target_reveal="target", already_committed=frozenset({"target"}))
+    assert result["status"] == "already_established"
+    assert result["target_committed"] is True
+
+
+def test_clarification_is_scored_and_repair_forwards_original_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine = _ScoreEngine(_Turn("Do you mean the archive terminals?", clarification=True))
+    state = _score_stub(
+        monkeypatch,
+        [
+            {"target": {"evidence": (), "eligible": False, "matched": False}},
+            {"target": {"evidence": (), "eligible": False, "matched": False}},
+        ],
+        [],
+    )
+    result = score_command(engine, state, "search the terminals", target_reveal="target")
+    assert result["status"] == "clarification"
+    assert result["clarification_question"] == "Do you mean the archive terminals?"
+
+    import door_probe
+
+    calls = []
+
+    def fake_score(engine, state, command, **kwargs):
+        calls.append((command, kwargs))
+        return {
+            "command": command,
+            "status": "clarification",
+            "response": "Choose one.",
+            "eligible": [],
+            "matched": [],
+            "before_facts": [],
+            "after_facts": [],
+            "committed_reveals": [],
+        }
+
+    class Provider:
+        semantic_ask = None
+
+    class Context:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(door_probe, "load_variation", lambda path: object())
+    monkeypatch.setattr(door_probe, "package_and_state", lambda variation, scene: (object(), object()))
+    monkeypatch.setattr(door_probe, "provider_for", lambda state, variation: Provider())
+    monkeypatch.setattr(door_probe, "RuntimeEngine", lambda state, provider: object())
+    monkeypatch.setattr(door_probe, "counted_provider", lambda provider, budget: Context())
+    monkeypatch.setattr(door_probe, "score_command", fake_score)
+    monkeypatch.setattr(door_probe, "_ask_player", lambda prompt, budget: "The archive terminals")
+    result = _continue(
+        Path("unused"), ["search the terminals"], object(), "screen", target_reveal="target", repair_clarification=True
+    )
+    assert calls[1][1]["clarifies"] == "search the terminals"
+    assert calls[1][1]["clarification_round"] == 1
+    assert result["clarification_turns"] == [1, 2]
+
+
+def test_grounded_config_is_the_only_targeted_experiment() -> None:
+    assert EXPERIMENTS["grounded"]["target_reveal"] == "k_sl_2b_a_r1"
+    assert EXPERIMENTS["grounded"]["repair_clarification"] is True
+    for experiment in ("door", "source", "completion"):
+        assert "target_reveal" not in EXPERIMENTS[experiment]
+        assert "repair_clarification" not in EXPERIMENTS[experiment]
+
+
+def test_saved_grounded_replay_artifact_has_structural_turn_fields() -> None:
+    path = Path("bench/results/stage7-door-grounded-n12-slotted/results.json")
+    if not path.exists():
+        pytest.skip("saved grounded replay artifact is absent")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for row in data.get("rows", []):
+        turns = row.get("continuation", {}).get("turns", [])
+        assert len(turns) <= 2
+        if "earned_by_command_2" in row:
+            assert isinstance(row["earned_by_command_2"], bool)
+            assert row["earned_by_command_2"] is any(turn.get("status") == "earned" for turn in turns[:2])
+        if "target_commit_turn" in row:
+            assert row["target_commit_turn"] in (None, 1, 2)
+        if "clarification_turns" in row:
+            assert all(turn in (1, 2) for turn in row["clarification_turns"])
 
 
 def _current_story_constraint_lines() -> tuple[str, ...]:

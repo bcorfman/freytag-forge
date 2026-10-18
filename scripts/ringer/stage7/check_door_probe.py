@@ -23,7 +23,9 @@ def _spend(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def _check_rows(rows: list[dict[str, Any]], n: int, live: bool, arms: tuple[str, ...], errors: list[str]) -> None:
+def _check_rows(
+    rows: list[dict[str, Any]], n: int, live: bool, grounded: bool, arms: tuple[str, ...], errors: list[str]
+) -> None:
     expected = len(arms) * n
     if len(rows) != expected:
         errors.append(f"results.json: expected {expected} rows, found {len(rows)}")
@@ -35,6 +37,18 @@ def _check_rows(rows: list[dict[str, Any]], n: int, live: bool, arms: tuple[str,
     for row in rows:
         if not live:
             continue
+        if grounded:
+            earned_by_command_2 = row.get("earned_by_command_2")
+            target_commit_turn = row.get("target_commit_turn")
+            clarification_turns = row.get("clarification_turns")
+            if type(earned_by_command_2) is not bool:
+                errors.append(f"{row.get('row_id')}: earned_by_command_2 must be a boolean")
+            if target_commit_turn not in (None, 1, 2):
+                errors.append(f"{row.get('row_id')}: target_commit_turn must be 1, 2, or null")
+            if not isinstance(clarification_turns, list) or any(
+                type(turn) is not int or turn not in (1, 2) for turn in clarification_turns
+            ):
+                errors.append(f"{row.get('row_id')}: clarification_turns must contain only 1 or 2")
         commands = row.get("commands", [row.get("command")] if row.get("command") is not None else [])
         if not isinstance(commands, list) or len(commands) > 2:
             errors.append(f"{row.get('row_id')}: more than two continuation commands")
@@ -56,6 +70,21 @@ def _check_rows(rows: list[dict[str, Any]], n: int, live: bool, arms: tuple[str,
             )
             if recomputed != sorted(matched):
                 errors.append(f"{row.get('row_id')}: turn {index + 1} matcher result differs from saved evidence")
+        if grounded:
+            statuses = [turn.get("status") for turn in turns[:2]]
+            earned = any(status == "earned" for status in statuses)
+            if row.get("earned_by_command_2") is not earned:
+                errors.append(f"{row.get('row_id')}: earned_by_command_2 disagrees with turn statuses")
+            saved_clarifications = row.get("clarification_turns")
+            actual_clarifications = [index for index, status in enumerate(statuses, 1) if status == "clarification"]
+            if saved_clarifications != actual_clarifications:
+                errors.append(f"{row.get('row_id')}: clarification_turns disagrees with turn statuses")
+            committed_turns = [
+                index for index, turn in enumerate(turns[:2], 1) if "k_sl_2b_a_r1" in turn.get("committed_reveals", [])
+            ]
+            expected_commit_turn = committed_turns[0] if committed_turns else None
+            if row.get("target_commit_turn") != expected_commit_turn:
+                errors.append(f"{row.get('row_id')}: target_commit_turn disagrees with committed_reveals")
 
 
 def _canonical_row_hash(row: dict[str, Any]) -> str:
@@ -329,7 +358,7 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
         errors.append("run.json: experiment field does not match selected experiment")
     if run.get("arms") != list(arms):
         errors.append("run.json: arms field does not match selected experiment")
-    _check_rows(rows, n, live, arms, errors)
+    _check_rows(rows, n, live, experiment == "grounded", arms, errors)
     expected = len(arms) * n
     if summary.get("n") != n or summary.get("rows", summary.get("planned_rows")) != len(rows):
         errors.append("summary.json: row count disagrees with N/results")
