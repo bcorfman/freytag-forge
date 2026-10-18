@@ -4,7 +4,7 @@ import hashlib
 from pathlib import Path
 
 from check_door_probe import check
-from door_probe import EXPERIMENTS, TRANSITION_CAPS, dry_run
+from door_probe import EXPERIMENTS, TRANSITION_CAPS, build_source, dry_run
 from door_prompt import patch_prompt, select_prompt
 from payload_2b import capture
 
@@ -37,7 +37,8 @@ def test_frozen_package_is_head_and_both_packages_load() -> None:
     assert load_story_package(frozen).story_id == load_story_package(current).story_id
     assert {name: hashlib.sha256((frozen / name).read_bytes()).hexdigest() for name in PACKAGE_FILES} == FROZEN_SHA256
     assert [name for name in PACKAGE_FILES if (frozen / name).read_bytes() != (current / name).read_bytes()] == [
-        "plot.md"
+        "knowledge.yaml",
+        "plot.md",
     ]
 
 
@@ -54,21 +55,37 @@ def test_details_payload_changes_only_authored_details_bullets() -> None:
     assert details["user"].index("- Michelle’s research") < details["user"].index("- the Initiative’s selection files")
 
 
-def test_details_dry_run_and_prompt_hashes(tmp_path: Path) -> None:
-    dry_run(tmp_path, 1, "details")
-    assert check(tmp_path, 1, "dry", "details") == []
+def test_details_still_rejects_current_merged_package(tmp_path: Path) -> None:
+    import pytest
+
+    with pytest.raises(AssertionError, match="details continuation packages differ outside plot.md"):
+        build_source(tmp_path, "details")
+
+
+def test_merged_dry_run_and_prompt_hashes(tmp_path: Path) -> None:
+    dry_run(tmp_path, 1, "merged")
+    assert check(tmp_path, 1, "dry", "merged") == []
     source = __import__("json").loads((tmp_path / "source-before.json").read_text(encoding="utf-8"))
-    assert source["details_assertions"] == {
-        "prompt_hashes_identical": True,
-        "package_delta": ["plot.md"],
-        "authored_bridge_identical": True,
-    }
+    assert source["merged_assertions"]["prompt_hashes_identical"] is True
+    assert "plot.md" in source["merged_assertions"]["package_delta"]
+    assert "knowledge.yaml" in source["merged_assertions"]["package_delta"]
     assert source["prompts"]["baseline"]["hashes"] == source["prompts"]["details"]["hashes"]
+
+
+def test_checker_rejects_merged_without_merged_assertions(tmp_path: Path) -> None:
+    dry_run(tmp_path, 1, "merged")
+    source_path = tmp_path / "source-before.json"
+    source = __import__("json").loads(source_path.read_text(encoding="utf-8"))
+    del source["merged_assertions"]
+    source_path.write_text(__import__("json").dumps(source), encoding="utf-8")
+    assert any("merged_assertions is missing" in error for error in check(tmp_path, 1, "dry", "merged"))
 
 
 def test_details_caps_and_existing_experiments_remain_registered() -> None:
     assert EXPERIMENTS["details"]["caps"] == TRANSITION_CAPS
     assert EXPERIMENTS["details"]["arms"] == ("baseline", "details")
+    assert EXPERIMENTS["merged"]["caps"] == TRANSITION_CAPS
+    assert EXPERIMENTS["merged"]["arms"] == ("baseline", "details")
     assert EXPERIMENTS["transition"]["arms"] == ("control", "grounded")
     assert EXPERIMENTS["grounded"]["caps"][1] == {"raw": 2, "cloudflare": 10, "player": 4}
     assert EXPERIMENTS["source"]["arms"] == ("control", "location", "limits")

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from door_continuation import _matches_all
-from door_probe import EXPERIMENTS, ROOT, _package_bridge_material
+from door_probe import EXPERIMENTS, ROOT, TRANSITION_LIKE, _package_bridge_material
 from door_prompt import THINGS_ASSUMPTION, patch_prompt, select_prompt
 
 from bench.core import ledger_rows
@@ -369,7 +369,7 @@ def _check_grounded(source: dict[str, Any], errors: list[str], experiment: str =
         errors.append(f"{experiment}: things_assumption is missing or incorrect")
     if grounded.get("things_assumption") != THINGS_ASSUMPTION:
         errors.append(f"{experiment}: derived prompt assumption is missing or incorrect")
-    if experiment == "details" and control.get("user") != grounded.get("user"):
+    if experiment in ("details", "merged") and control.get("user") != grounded.get("user"):
         errors.append(f"{experiment}: user prompts differ across arms")
     if experiment == "grounded" and control.get("user") != control.get("original_user"):
         errors.append("grounded control: user differs from original_user")
@@ -377,7 +377,9 @@ def _check_grounded(source: dict[str, Any], errors: list[str], experiment: str =
         errors.append(f"{experiment}: original users differ across arms")
     if control.get("system") != grounded.get("system"):
         errors.append(f"{experiment}: system prompts differ across arms")
-    if experiment == "details" and control.get("hashes", {}).get("user") != grounded.get("hashes", {}).get("user"):
+    if experiment in ("details", "merged") and control.get("hashes", {}).get("user") != grounded.get("hashes", {}).get(
+        "user"
+    ):
         errors.append(f"{experiment}: user hashes differ across arms")
     if control.get("hashes", {}).get("system") != grounded.get("hashes", {}).get("system"):
         errors.append(f"{experiment}: system hashes differ across arms")
@@ -408,6 +410,36 @@ def _check_grounded(source: dict[str, Any], errors: list[str], experiment: str =
         for field in ("bridge", "entry", "fixed"):
             if saved.get(field) != expected_bridge[field]:
                 errors.append(f"{experiment} {arm}: {field} does not match its variation package")
+
+
+def _check_merged(source: dict[str, Any], errors: list[str]) -> None:
+    assertions = source.get("merged_assertions")
+    if not isinstance(assertions, dict):
+        errors.append("merged: merged_assertions is missing")
+        return
+    if assertions.get("prompt_hashes_identical") is not True:
+        errors.append("merged: prompt_hashes_identical must be true")
+    package_delta = assertions.get("package_delta")
+    if (
+        not isinstance(package_delta, list)
+        or not package_delta
+        or any(type(name) is not str or not name for name in package_delta)
+    ):
+        errors.append("merged: package_delta must be a non-empty list of file names")
+    if type(assertions.get("bridge_fixed_differs")) is not bool:
+        errors.append("merged: bridge_fixed_differs must be a boolean")
+    for field in ("bridge_baseline_fixed", "bridge_details_fixed"):
+        if not isinstance(assertions.get(field), str):
+            errors.append(f"merged: {field} must be a string")
+    if isinstance(source.get("bridges"), dict):
+        baseline = source["bridges"].get("baseline", {})
+        details = source["bridges"].get("details", {})
+        if assertions.get("bridge_baseline_fixed") != baseline.get("fixed"):
+            errors.append("merged: baseline bridge text does not match bridge material")
+        if assertions.get("bridge_details_fixed") != details.get("fixed"):
+            errors.append("merged: details bridge text does not match bridge material")
+        if assertions.get("bridge_fixed_differs") != (baseline.get("fixed") != details.get("fixed")):
+            errors.append("merged: bridge_fixed_differs disagrees with bridge material")
 
 
 def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
@@ -452,17 +484,17 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
         rows,
         n,
         live,
-        experiment in ("grounded", "transition", "details"),
+        experiment in ("grounded", *TRANSITION_LIKE),
         arms,
         errors,
-        transition=experiment in ("transition", "details"),
+        transition=experiment in TRANSITION_LIKE,
     )
     expected = len(arms) * n
     if summary.get("n") != n or summary.get("rows", summary.get("planned_rows")) != len(rows):
         errors.append("summary.json: row count disagrees with N/results")
     if mode == "dry" and summary.get("planned_rows") != expected:
         errors.append("summary.json: planned_rows disagrees with N")
-    if experiment in ("transition", "details"):
+    if experiment in TRANSITION_LIKE:
         caps = config["caps"][n]
         if run.get("caps") != caps or summary.get("caps") != caps:
             errors.append("transition: run and summary caps do not match the registered caps")
@@ -492,7 +524,7 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
         caps = summary.get("caps", {})
         if cloudflare > caps.get("cloudflare", -1) or players > caps.get("player", -1):
             errors.append("summary.json: spend exceeds request or player cap")
-        if experiment in ("transition", "details"):
+        if experiment in TRANSITION_LIKE:
             # The raw 2A call is one successful narrator call per completed row;
             # counted_provider records it in the same cloudflare stream as turns.
             raw_requests = len(rows)
@@ -527,9 +559,11 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
             errors.append(f"prompts/{arm}: prompt hashes differ from fixture")
     if experiment == "completion":
         _check_completion(source, rows, live, errors)
-    elif experiment in ("grounded", "transition", "details"):
+    elif experiment in ("grounded", *TRANSITION_LIKE):
         _check_grounded(source, errors, experiment)
-    if experiment in ("transition", "details") and live:
+        if experiment == "merged":
+            _check_merged(source, errors)
+    if experiment in TRANSITION_LIKE and live:
         counts = {arm: {"earned_exit": 0, "timer_exit": 0, "no_exit": 0} for arm in arms}
         for row in rows:
             for field in counts[row["arm"]]:

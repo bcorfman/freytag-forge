@@ -41,6 +41,16 @@ SOURCE_CAPS = {1: {"raw": 3, "cloudflare": 15, "player": 6}, 12: {"raw": 36, "cl
 COMPLETION_CAPS = {1: {"raw": 2, "cloudflare": 10, "player": 4}, 12: {"raw": 24, "cloudflare": 120, "player": 48}}
 GROUNDED_CAPS = {1: {"raw": 2, "cloudflare": 10, "player": 4}, 12: {"raw": 24, "cloudflare": 120, "player": 48}}
 TRANSITION_CAPS = {1: {"raw": 2, "cloudflare": 40, "player": 36}, 12: {"raw": 24, "cloudflare": 480, "player": 408}}
+TRANSITION_LIKE = ("transition", "details", "merged")
+PACKAGE_FILES = (
+    "handoffs.yaml",
+    "knowledge.yaml",
+    "pacing.yaml",
+    "plot.md",
+    "storylet-routes.yaml",
+    "storylets.md",
+    "world.yaml",
+)
 VARIATIONS = {
     "control": "stage7-door-control.json",
     "review": "stage7-door-review.json",
@@ -86,6 +96,13 @@ EXPERIMENTS = {
         "max_commands": 20,
     },
     "details": {
+        "arms": PROMPT_EXPERIMENTS["details"]["arms"],
+        "variations": DETAILS_VARIATIONS,
+        "caps": TRANSITION_CAPS,
+        "prompt_experiment": "details",
+        "max_commands": 20,
+    },
+    "merged": {
         "arms": PROMPT_EXPERIMENTS["details"]["arms"],
         "variations": DETAILS_VARIATIONS,
         "caps": TRANSITION_CAPS,
@@ -174,6 +191,12 @@ def _package_bridge_material(variation_path: Path, prefix: str) -> dict[str, Any
     }
 
 
+def _package_delta(frozen_root: Path, current_root: Path) -> list[str]:
+    return sorted(
+        name for name in PACKAGE_FILES if (frozen_root / name).read_bytes() != (current_root / name).read_bytes()
+    )
+
+
 def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
     config = experiment_config(experiment)
     selection = select_prompt()
@@ -187,7 +210,7 @@ def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
         "prompts": prompts,
         "bridge": bridge,
     }
-    if experiment in ("grounded", "transition", "details"):
+    if experiment in ("grounded", *TRANSITION_LIKE):
         source["things_assumption"] = source["prompts"][config["arms"][-1]]["things_assumption"]
         source["bridges"] = {
             arm: _package_bridge_material(ROOT / "bench/variations" / config["variations"][arm], bridge["prefix"])
@@ -196,34 +219,32 @@ def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
         from door_prompt import things_emulation
 
         source["things_emulation"] = things_emulation()
-    if experiment == "details":
+    if experiment in ("details", "merged"):
         baseline = source["prompts"]["baseline"]
         details = source["prompts"]["details"]
         if baseline["hashes"] != details["hashes"]:
             raise AssertionError("details arms do not have identical 2A prompt hashes")
         frozen_root = ROOT / "bench/frozen/continuity-pre-details"
         current_root = ROOT / "data/stories/continuity-initiative"
-        package_files = (
-            "handoffs.yaml",
-            "knowledge.yaml",
-            "pacing.yaml",
-            "plot.md",
-            "storylet-routes.yaml",
-            "storylets.md",
-            "world.yaml",
-        )
-        package_delta = [
-            name for name in package_files if (frozen_root / name).read_bytes() != (current_root / name).read_bytes()
-        ]
-        if package_delta != ["plot.md"]:
-            raise AssertionError(f"details continuation packages differ outside plot.md: {package_delta!r}")
-        if source["bridges"]["baseline"]["fixed"] != source["bridges"]["details"]["fixed"]:
-            raise AssertionError("details arms do not share authored bridge/entry text")
-        source["details_assertions"] = {
-            "prompt_hashes_identical": True,
-            "package_delta": package_delta,
-            "authored_bridge_identical": True,
-        }
+        package_delta = _package_delta(frozen_root, current_root)
+        if experiment == "details":
+            if package_delta != ["plot.md"]:
+                raise AssertionError(f"details continuation packages differ outside plot.md: {package_delta!r}")
+            if source["bridges"]["baseline"]["fixed"] != source["bridges"]["details"]["fixed"]:
+                raise AssertionError("details arms do not share authored bridge/entry text")
+            source["details_assertions"] = {
+                "prompt_hashes_identical": True,
+                "package_delta": package_delta,
+                "authored_bridge_identical": True,
+            }
+        else:
+            source["merged_assertions"] = {
+                "prompt_hashes_identical": True,
+                "package_delta": package_delta,
+                "bridge_fixed_differs": source["bridges"]["baseline"]["fixed"] != source["bridges"]["details"]["fixed"],
+                "bridge_baseline_fixed": source["bridges"]["baseline"]["fixed"],
+                "bridge_details_fixed": source["bridges"]["details"]["fixed"],
+            }
     atomic_json(out / "source-before.json", source)
     atomic_json(out / "source-after.json", source)
     return source
@@ -252,7 +273,7 @@ def dry_run(out: Path, n: int, experiment: str = "door") -> None:
             "screen": screen,
             "eligible_ids": sorted(groups),
         }
-        if experiment in ("transition", "details"):
+        if experiment in TRANSITION_LIKE:
             plan["max_commands"] = config["max_commands"]
         plans.append(plan)
     plans = [x for x in plans if x["rep"] <= n]
@@ -279,7 +300,7 @@ def dry_run(out: Path, n: int, experiment: str = "door") -> None:
             "caps": caps,
             "cloudflare_max": caps["cloudflare"],
             "raw_player_max": caps["player"],
-            **({"max_commands": config["max_commands"]} if experiment in ("transition", "details") else {}),
+            **({"max_commands": config["max_commands"]} if experiment in TRANSITION_LIKE else {}),
             **(
                 {
                     "cap_arithmetic": {
@@ -288,20 +309,29 @@ def dry_run(out: Path, n: int, experiment: str = "door") -> None:
                         "player_remaining": caps["player"],
                     }
                 }
-                if experiment in ("transition", "details")
+                if experiment in TRANSITION_LIKE
                 else {}
             ),
         },
     )
     (out / "spend.jsonl").write_text("", encoding="utf-8")
     (out / "verdicts").mkdir(exist_ok=True)
-    notes = (
-        f"Offline dry run only. {len(config['arms'])} arms are planned in rep-major order; no provider, player, "
-        "credentials, or network "
-        "call is used. Prompt hashes, exact diffs, fixed bridge reconstruction, bridge deletion, eligible 2B evidence "
-        "IDs, and cap arithmetic are recorded in source and plan artifacts. Live execution remains outside this free "
-        "artifact.\n"
-    )
+    if experiment == "merged":
+        assertions = source["merged_assertions"]
+        notes = (
+            "Offline merged dry run only. The continuation package delta is "
+            f"{assertions['package_delta']!r}; the baseline and details authored bridge/entry text "
+            f"differs: {assertions['bridge_fixed_differs']}. Both arms have identical 2A prompt hashes. "
+            "No provider, player, credentials, or network call is used; live execution remains outside this artifact.\n"
+        )
+    else:
+        notes = (
+            f"Offline dry run only. {len(config['arms'])} arms are planned in rep-major order; no provider, player, "
+            "credentials, or network "
+            "call is used. Prompt hashes, exact diffs, fixed bridge reconstruction, bridge deletion, eligible 2B "
+            "evidence IDs, and cap arithmetic are recorded in source and plan artifacts. Live execution remains outside"
+            " artifact.\n"
+        )
     (out / "notes.md").write_text(notes, encoding="utf-8")
 
 
@@ -456,7 +486,7 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
                 )
                 continuation_path = variation_path
             commands = [_ask_player(screen, budget)]
-            if experiment in ("transition", "details"):
+            if experiment in TRANSITION_LIKE:
                 from door_transition import run_continuation
 
                 continuation = run_continuation(
@@ -523,7 +553,7 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
     experiment_id = str(uuid.uuid4())
     ledger_path = Path(os.environ.get("DOOR_LEDGER_PATH", ROOT / "bench/results/ledger.jsonl"))
     arm_summary = {arm: {"rows": sum(row["arm"] == arm for row in rows)} for arm in config["arms"]}
-    if experiment in ("transition", "details"):
+    if experiment in TRANSITION_LIKE:
         for arm in config["arms"]:
             arm_rows = [row for row in rows if row["arm"] == arm]
             arm_summary[arm].update(
@@ -563,11 +593,11 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
             "raw_player_attempts": budget.raw_player_attempts,
             "acknowledged": budget.acknowledged,
             "caps": caps,
-            **({"max_commands": config["max_commands"]} if experiment in ("transition", "details") else {}),
+            **({"max_commands": config["max_commands"]} if experiment in TRANSITION_LIKE else {}),
             "cap_arithmetic": {
                 "cloudflare_remaining": caps["cloudflare"] - budget.cloudflare_requests,
                 "player_remaining": caps["player"] - budget.raw_player_attempts,
-                **({"raw_remaining": caps["raw"] - len(rows)} if experiment in ("transition", "details") else {}),
+                **({"raw_remaining": caps["raw"] - len(rows)} if experiment in TRANSITION_LIKE else {}),
             },
             "arms": arm_summary,
         },

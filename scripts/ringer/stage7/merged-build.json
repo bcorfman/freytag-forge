@@ -1,0 +1,38 @@
+{
+ "run_name": "stage7-merged-screen",
+ "workdir": "/home/bcorfman/dev/ringer-work/merged-build",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "add-merged-experiment",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/stage7/door_probe.py",
+    "scripts/ringer/stage7/check_door_probe.py",
+    "scripts/ringer/stage7/door_prompt.py",
+    "scripts/ringer/stage7/test_door_probe.py",
+    "scripts/ringer/stage7/test_door_transition.py",
+    "scripts/ringer/stage7/test_details_probe.py",
+    "bench/results/stage7-merged-dry/"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/stage7-merged-dry/notes.md"
+   ],
+   "spec": "You are an implementation worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge, in the middle of a git merge: run NO git command that changes state (no add/commit/merge/reset/checkout/stash/push; `git diff`/`git status` are fine). Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. NO network, billed calls or credentials, no .env. Do not modify anything under bench/results except bench/results/stage7-merged-dry/.\n\nYou own ONLY scripts/ringer/stage7/door_probe.py, scripts/ringer/stage7/check_door_probe.py, scripts/ringer/stage7/door_prompt.py (only if a change is unavoidable), scripts/ringer/stage7/test_door_probe.py, scripts/ringer/stage7/test_door_transition.py, scripts/ringer/stage7/test_details_probe.py and bench/results/stage7-merged-dry/. Read .plans/astra-merged-state-prereg.md first: it is the contract.\n\nPROBLEM. The `details` experiment compares the frozen package bench/frozen/continuity-pre-details with the working tree package and ASSERTS in door_probe.build_source (about lines 199-225) that only plot.md differs and that the authored bridge/entry text is identical across arms. After merging main, knowledge.yaml differs too and the 2B entry text differs (main's #666), so `--experiment details --dry-run` now raises 'details continuation packages differ outside plot.md'. That is correct for the details experiment as preregistered; do NOT loosen or change `details`.\n\nBUILD a new experiment `merged`. Same as `details` in every respect (arm names baseline and details, variations DETAILS_VARIATIONS, caps TRANSITION_CAPS, prompt_experiment 'details', max_commands 20, same row shape, same summary fields, same checker validations of rows, spend and caps) EXCEPT in build_source: (a) still assert the two arms have identical 2A prompt hashes; (b) do NOT assert the package delta or equal bridge/entry text: instead record in source['merged_assertions'] = {prompt_hashes_identical: True, package_delta: <sorted list of package files that differ between bench/frozen/continuity-pre-details and data/stories/continuity-initiative, same file list as details uses>, bridge_fixed_differs: <bool: whether source['bridges']['baseline']['fixed'] != source['bridges']['details']['fixed']>, bridge_baseline_fixed and bridge_details_fixed: the two texts}. Many places test `experiment in ('transition', 'details')` (door_probe.py lines ~190, 255, 282, 291, 459, 526, 566, 570 and check_door_probe.py lines ~372-380, 455-535): introduce one module-level constant (for example TRANSITION_LIKE = ('transition', 'details', 'merged')) and use it everywhere a branch means 'full 2B continuation experiment', but keep every `experiment == 'details'` check that is about the details package assertions or user-prompt equality working for `details` and add the matching, relaxed variant for `merged` in the checker (the checker must accept a merged dry run and a merged live run directory, validate merged_assertions exists with prompt_hashes_identical true and a non-empty package_delta list, and must not require package_delta == ['plot.md']). Also include 'merged' in the argparse choices of door_probe.py and check_door_probe.py and in the experiment-specific naming of row ids if they depend on it.\nTESTS (no network): merged build_source succeeds on the current working tree and records a package_delta that includes plot.md and knowledge.yaml; `details` still raises on the same tree (add or keep a test that proves the details assertion is unchanged, using a monkeypatched or temporary package pair if needed); the checker accepts a merged dry run and rejects a merged dry run whose source lacks merged_assertions; existing tests all pass.\nVERIFY: pytest scripts/ringer/stage7 -n0 all pass; ruff check and ruff format --check on every file you changed; `TMPDIR=/tmp PYTHONPATH=$PWD .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment merged --dry-run --out bench/results/stage7-merged-dry` succeeds, then `.venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-merged-dry 1 --mode dry --experiment merged` passes; also run the same two commands for --n 12 into /tmp/merged-dry12 to confirm the 24-row plan and caps 480/408. Write bench/results/stage7-merged-dry/notes.md (about 60 words, factual: the package delta list and whether the bridge text differs).",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest scripts/ringer/stage7 -q -n0 -p no:cacheprovider > /tmp/me.out 2>&1; tail -4 /tmp/me.out; grep -q ' passed' /tmp/me.out && ! grep -q ' failed\\| error' /tmp/me.out && rm -rf /tmp/mchk && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --experiment merged --dry-run --out /tmp/mchk && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/mchk 12 --mode dry --experiment merged && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-merged-dry 1 --mode dry --experiment merged && .venv/bin/python -c \"import json;s=json.load(open('/tmp/mchk/source-before.json'));m=s['merged_assertions'];assert m['prompt_hashes_identical'] is True;assert 'plot.md' in m['package_delta'],m\" && ! .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment details --dry-run --out /tmp/dchk > /tmp/dchk.out 2>&1 && grep -q 'differ outside plot.md' /tmp/dchk.out && .venv/bin/ruff check scripts/ringer/stage7 && .venv/bin/ruff format --check scripts/ringer/stage7/door_probe.py scripts/ringer/stage7/check_door_probe.py scripts/ringer/stage7/test_door_probe.py scripts/ringer/stage7/test_door_transition.py scripts/ringer/stage7/test_details_probe.py || { echo 'FAIL: see output above'; exit 1; }",
+   "verified": "The merged experiment builds and passes its checker on the merged tree, details is unchanged and still rejects it, and no network was used."
+  }
+ ]
+}

@@ -417,9 +417,12 @@ def test_things_emulation_fails_when_current_stub_reply_is_not_consumed(monkeypa
 def test_normal_exit_guard_is_offline_and_current_transition_is_not_panel_gated() -> None:
     frozen = Path("bench/frozen/continuity-pre-2a-panel")
     current = Path("data/stories/continuity-initiative")
-    for name in ("pacing.yaml", "knowledge.yaml", "handoffs.yaml", "storylets.md", "storylet-routes.yaml"):
-        if (frozen / name).read_bytes() != (current / name).read_bytes():
-            pytest.fail(f"normal-exit guard: {name} differs between frozen and current packages")
+    differences = [
+        name
+        for name in ("pacing.yaml", "knowledge.yaml", "handoffs.yaml", "storylets.md", "storylet-routes.yaml")
+        if (frozen / name).read_bytes() != (current / name).read_bytes()
+    ]
+    assert differences == ["knowledge.yaml"], "unexpected package change in normal-exit guard fixture"
     package, _ = package_and_state(load_variation(Path("bench/variations/stage7-door-grounded.json")), "2A")
     transition = next(item for item in package.pacing.transitions if item.id == "t_2a_2b")
     blob = repr(transition.model_dump()).lower()
