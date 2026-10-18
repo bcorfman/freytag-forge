@@ -40,6 +40,7 @@ CAPS = {1: {"raw": 4, "cloudflare": 28, "player": 12}, 12: {"raw": 48, "cloudfla
 SOURCE_CAPS = {1: {"raw": 3, "cloudflare": 15, "player": 6}, 12: {"raw": 36, "cloudflare": 180, "player": 72}}
 COMPLETION_CAPS = {1: {"raw": 2, "cloudflare": 10, "player": 4}, 12: {"raw": 24, "cloudflare": 120, "player": 48}}
 GROUNDED_CAPS = {1: {"raw": 2, "cloudflare": 10, "player": 4}, 12: {"raw": 24, "cloudflare": 120, "player": 48}}
+TRANSITION_CAPS = {1: {"raw": 2, "cloudflare": 40, "player": 36}, 12: {"raw": 24, "cloudflare": 480, "player": 408}}
 VARIATIONS = {
     "control": "stage7-door-control.json",
     "review": "stage7-door-review.json",
@@ -72,6 +73,13 @@ EXPERIMENTS = {
         "caps": GROUNDED_CAPS,
         "target_reveal": "k_sl_2b_a_r1",
         "repair_clarification": True,
+    },
+    "transition": {
+        "arms": PROMPT_EXPERIMENTS["grounded"]["arms"],
+        "variations": GROUNDED_VARIATIONS,
+        "caps": TRANSITION_CAPS,
+        "prompt_experiment": "grounded",
+        "max_commands": 20,
     },
 }
 
@@ -158,7 +166,8 @@ def _package_bridge_material(variation_path: Path, prefix: str) -> dict[str, Any
 def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
     config = experiment_config(experiment)
     selection = select_prompt()
-    prompts = {arm: patch_prompt(selection, arm, experiment) for arm in config["arms"]}
+    prompt_experiment = config.get("prompt_experiment", experiment)
+    prompts = {arm: patch_prompt(selection, arm, prompt_experiment) for arm in config["arms"]}
     bridge = bridge_material()
     source = {
         "prompt_fixture": str(PROMPT_FIXTURE),
@@ -167,7 +176,7 @@ def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
         "prompts": prompts,
         "bridge": bridge,
     }
-    if experiment == "grounded":
+    if experiment in ("grounded", "transition"):
         source["things_assumption"] = source["prompts"]["grounded"]["things_assumption"]
         source["bridges"] = {
             arm: _package_bridge_material(ROOT / "bench/variations" / config["variations"][arm], bridge["prefix"])
@@ -190,22 +199,23 @@ def dry_run(out: Path, n: int, experiment: str = "door") -> None:
         atomic_json(out / "prompts" / f"{arm}.json", value)
     groups = action_groups()
     plans = []
-    for rep, arm in prompt_plan(experiment, n):
+    for rep, arm in prompt_plan(config.get("prompt_experiment", experiment), n):
         variation = config["variations"][arm]
         if experiment == "door" and arm in ("fixed-control", "bridge"):
             screen = source["bridge"]["control_screen" if arm == "fixed-control" else "bridge_screen"]
         else:
             screen = f"<generated narrator screen for {arm}>"
-        plans.append(
-            {
-                "row_id": f"stage7-door-{rep:02d}-{arm}",
-                "rep": rep,
-                "arm": arm,
-                "variation": variation,
-                "screen": screen,
-                "eligible_ids": sorted(groups),
-            }
-        )
+        plan = {
+            "row_id": f"stage7-door-{rep:02d}-{arm}",
+            "rep": rep,
+            "arm": arm,
+            "variation": variation,
+            "screen": screen,
+            "eligible_ids": sorted(groups),
+        }
+        if experiment == "transition":
+            plan["max_commands"] = config["max_commands"]
+        plans.append(plan)
     plans = [x for x in plans if x["rep"] <= n]
     atomic_json(out / "results.json", {"mode": "dry", "rows": plans})
     atomic_json(
@@ -230,6 +240,18 @@ def dry_run(out: Path, n: int, experiment: str = "door") -> None:
             "caps": caps,
             "cloudflare_max": caps["cloudflare"],
             "raw_player_max": caps["player"],
+            **({"max_commands": config["max_commands"]} if experiment == "transition" else {}),
+            **(
+                {
+                    "cap_arithmetic": {
+                        "raw_remaining": caps["raw"] - len(plans),
+                        "cloudflare_remaining": caps["cloudflare"],
+                        "player_remaining": caps["player"],
+                    }
+                }
+                if experiment == "transition"
+                else {}
+            ),
         },
     )
     (out / "spend.jsonl").write_text("", encoding="utf-8")
@@ -395,6 +417,33 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
                 )
                 continuation_path = variation_path
             commands = [_ask_player(screen, budget)]
+            if experiment == "transition":
+                from door_transition import run_continuation
+
+                continuation = run_continuation(
+                    continuation_path,
+                    commands[0],
+                    screen,
+                    budget,
+                    max_commands=config["max_commands"],
+                )
+                ended_by = continuation["ended_by"]
+                rows.append(
+                    {
+                        "row_id": f"stage7-door-{rep:02d}-{arm}",
+                        "rep": rep,
+                        "arm": arm,
+                        "screen": screen,
+                        **continuation,
+                        "earned_exit": ended_by == "earned",
+                        "timer_exit": ended_by in {"forced", "timer"},
+                        "no_exit": ended_by == "none",
+                        "item_facts": raw.item_facts,
+                        "status": "ok",
+                    }
+                )
+                atomic_json(out / "results.json", {"mode": "live", "rows": rows})
+                continue
             continuation = _continue(
                 continuation_path,
                 commands,
@@ -434,6 +483,17 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
             atomic_json(out / "results.json", {"mode": "live", "rows": rows})
     experiment_id = str(uuid.uuid4())
     ledger_path = Path(os.environ.get("DOOR_LEDGER_PATH", ROOT / "bench/results/ledger.jsonl"))
+    arm_summary = {arm: {"rows": sum(row["arm"] == arm for row in rows)} for arm in config["arms"]}
+    if experiment == "transition":
+        for arm in config["arms"]:
+            arm_rows = [row for row in rows if row["arm"] == arm]
+            arm_summary[arm].update(
+                {
+                    "earned_exit": sum(row["earned_exit"] for row in arm_rows),
+                    "timer_exit": sum(row["timer_exit"] for row in arm_rows),
+                    "no_exit": sum(row["no_exit"] for row in arm_rows),
+                }
+            )
     atomic_json(
         out / "run.json",
         {
@@ -467,8 +527,9 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
             "cap_arithmetic": {
                 "cloudflare_remaining": caps["cloudflare"] - budget.cloudflare_requests,
                 "player_remaining": caps["player"] - budget.raw_player_attempts,
+                **({"raw_remaining": caps["raw"] - len(rows)} if experiment == "transition" else {}),
             },
-            "arms": {arm: {"rows": sum(row["arm"] == arm for row in rows)} for arm in config["arms"]},
+            "arms": arm_summary,
         },
     )
     (out / "spend.jsonl").write_text("\n".join(json.dumps(event) for event in budget.events) + "\n", encoding="utf-8")

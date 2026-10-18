@@ -24,7 +24,13 @@ def _spend(path: Path) -> list[dict[str, Any]]:
 
 
 def _check_rows(
-    rows: list[dict[str, Any]], n: int, live: bool, grounded: bool, arms: tuple[str, ...], errors: list[str]
+    rows: list[dict[str, Any]],
+    n: int,
+    live: bool,
+    grounded: bool,
+    arms: tuple[str, ...],
+    errors: list[str],
+    transition: bool = False,
 ) -> None:
     expected = len(arms) * n
     if len(rows) != expected:
@@ -36,6 +42,82 @@ def _check_rows(
         errors.append("results.json: row_id values are not unique")
     for row in rows:
         if not live:
+            if transition and "max_commands" in row:
+                if type(row["max_commands"]) is not int or row["max_commands"] != 20:
+                    errors.append(f"{row.get('row_id')}: max_commands must be 20")
+            elif transition:
+                errors.append(f"{row.get('row_id')}: max_commands is missing")
+            continue
+        if transition:
+            ended_by = row.get("ended_by")
+            if ended_by not in {"earned", "forced", "timer", "none"}:
+                errors.append(f"{row.get('row_id')}: ended_by is invalid")
+            if type(row.get("final_scene")) is not str:
+                errors.append(f"{row.get('row_id')}: final_scene must be a string")
+            for field in ("commands", "responses", "clarification_turns", "committed_reveals_by_turn", "turn_statuses"):
+                if not isinstance(row.get(field), list):
+                    errors.append(f"{row.get('row_id')}: {field} must be a list")
+            commands = row.get("commands") if isinstance(row.get("commands"), list) else []
+            responses = row.get("responses") if isinstance(row.get("responses"), list) else []
+            clarification_turns = (
+                row.get("clarification_turns") if isinstance(row.get("clarification_turns"), list) else []
+            )
+            committed_by_turn = (
+                row.get("committed_reveals_by_turn") if isinstance(row.get("committed_reveals_by_turn"), list) else []
+            )
+            turn_statuses = row.get("turn_statuses") if isinstance(row.get("turn_statuses"), list) else []
+            if type(row.get("panel_named")) is not bool:
+                errors.append(f"{row.get('row_id')}: panel_named must be a boolean")
+            for field in ("request_count", "recovery_count"):
+                if type(row.get(field)) is not int or row[field] < 0:
+                    errors.append(f"{row.get('row_id')}: {field} must be a non-negative integer")
+            if any(type(command) is not str for command in commands):
+                errors.append(f"{row.get('row_id')}: commands must contain strings")
+            if any(type(response) is not str for response in responses):
+                errors.append(f"{row.get('row_id')}: responses must contain strings")
+            if any(
+                type(reveals) is not list or any(type(identifier) is not str for identifier in reveals)
+                for reveals in committed_by_turn
+            ):
+                errors.append(f"{row.get('row_id')}: committed reveals must be lists of strings")
+            if any(type(status) is not str for status in turn_statuses):
+                errors.append(f"{row.get('row_id')}: turn_statuses must contain strings")
+            for field in ("earned_exit", "timer_exit", "no_exit"):
+                if type(row.get(field)) is not bool:
+                    errors.append(f"{row.get('row_id')}: {field} must be a boolean")
+            expected_flags = {
+                "earned_exit": ended_by == "earned",
+                "timer_exit": ended_by in {"forced", "timer"},
+                "no_exit": ended_by == "none",
+            }
+            for field, expected_flag in expected_flags.items():
+                if row.get(field) is not expected_flag:
+                    errors.append(f"{row.get('row_id')}: {field} disagrees with ended_by")
+            transition_turn = row.get("transition_turn")
+            if ended_by == "none":
+                if transition_turn is not None:
+                    errors.append(f"{row.get('row_id')}: no_exit row has a transition_turn")
+                if row.get("final_scene") != "2B":
+                    errors.append(f"{row.get('row_id')}: no_exit row must remain in scene 2B")
+            elif type(transition_turn) is not int or transition_turn < 1:
+                errors.append(f"{row.get('row_id')}: exiting row needs a positive transition_turn")
+            if len(commands) != len(responses):
+                errors.append(f"{row.get('row_id')}: commands and responses must have equal length")
+            if len(commands) > 20:
+                errors.append(f"{row.get('row_id')}: more than twenty continuation commands")
+            if type(transition_turn) is int and transition_turn > len(commands):
+                errors.append(f"{row.get('row_id')}: transition_turn exceeds command count")
+            if len(committed_by_turn) != len(commands):
+                errors.append(f"{row.get('row_id')}: committed reveal turn count disagrees with commands")
+            if any(type(turn) is not int or turn < 1 or turn > len(commands) for turn in clarification_turns):
+                errors.append(f"{row.get('row_id')}: invalid clarification turn")
+            if len(set(clarification_turns)) != len(clarification_turns):
+                errors.append(f"{row.get('row_id')}: duplicate clarification turn")
+            expected_clarifications = [
+                index for index, status in enumerate(turn_statuses, 1) if status == "clarification"
+            ]
+            if clarification_turns != expected_clarifications:
+                errors.append(f"{row.get('row_id')}: clarification_turns disagree with turn_statuses")
             continue
         if grounded:
             earned_by_command_2 = row.get("earned_by_command_2")
@@ -358,12 +440,37 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
         errors.append("run.json: experiment field does not match selected experiment")
     if run.get("arms") != list(arms):
         errors.append("run.json: arms field does not match selected experiment")
-    _check_rows(rows, n, live, experiment == "grounded", arms, errors)
+    _check_rows(
+        rows,
+        n,
+        live,
+        experiment in ("grounded", "transition"),
+        arms,
+        errors,
+        transition=experiment == "transition",
+    )
     expected = len(arms) * n
     if summary.get("n") != n or summary.get("rows", summary.get("planned_rows")) != len(rows):
         errors.append("summary.json: row count disagrees with N/results")
     if mode == "dry" and summary.get("planned_rows") != expected:
         errors.append("summary.json: planned_rows disagrees with N")
+    if experiment == "transition":
+        caps = config["caps"][n]
+        if run.get("caps") != caps or summary.get("caps") != caps:
+            errors.append("transition: run and summary caps do not match the registered caps")
+        if summary.get("max_commands") != 20:
+            errors.append("transition: summary max_commands must be 20")
+        arithmetic = summary.get("cap_arithmetic")
+        if not isinstance(arithmetic, dict):
+            errors.append("transition: cap_arithmetic is missing")
+        else:
+            expected_arithmetic = {
+                "raw_remaining": caps["raw"] - expected,
+                "cloudflare_remaining": caps["cloudflare"],
+                "player_remaining": caps["player"],
+            }
+            if mode == "dry" and arithmetic != expected_arithmetic:
+                errors.append("transition: dry cap_arithmetic disagrees with registered caps")
     if live:
         experiment_id = run.get("experiment_id")
         if not experiment_id or summary.get("experiment_id") != experiment_id:
@@ -377,6 +484,19 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
         caps = summary.get("caps", {})
         if cloudflare > caps.get("cloudflare", -1) or players > caps.get("player", -1):
             errors.append("summary.json: spend exceeds request or player cap")
+        if experiment == "transition":
+            # The raw 2A call is one successful narrator call per completed row;
+            # counted_provider records it in the same cloudflare stream as turns.
+            raw_requests = len(rows)
+            if raw_requests > caps.get("raw", -1):
+                errors.append("transition: raw request spend exceeds cap")
+            arithmetic = summary.get("cap_arithmetic", {})
+            if arithmetic.get("cloudflare_remaining") != caps.get("cloudflare", -1) - cloudflare:
+                errors.append("transition: cloudflare cap arithmetic disagrees with spend")
+            if arithmetic.get("player_remaining") != caps.get("player", -1) - players:
+                errors.append("transition: player cap arithmetic disagrees with spend")
+            if arithmetic.get("raw_remaining") != caps.get("raw", -1) - raw_requests:
+                errors.append("transition: raw cap arithmetic disagrees with spend")
         ledger_path = Path(run.get("ledger_path", "bench/results/ledger.jsonl"))
         if not ledger_path.exists():
             errors.append("ledger: configured ledger path is missing")
@@ -392,14 +512,25 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
     selection = select_prompt()
     source = _read(out / "source-before.json")
     prompts = source.get("prompts", {})
+    prompt_experiment = config.get("prompt_experiment", experiment)
     for arm in arms:
-        expected_prompt = patch_prompt(selection, arm, experiment)
+        expected_prompt = patch_prompt(selection, arm, prompt_experiment)
         if prompts.get(arm, {}).get("hashes") != expected_prompt["hashes"]:
             errors.append(f"prompts/{arm}: prompt hashes differ from fixture")
     if experiment == "completion":
         _check_completion(source, rows, live, errors)
-    elif experiment == "grounded":
+    elif experiment in ("grounded", "transition"):
         _check_grounded(source, errors)
+    if experiment == "transition" and live:
+        counts = {arm: {"earned_exit": 0, "timer_exit": 0, "no_exit": 0} for arm in arms}
+        for row in rows:
+            for field in counts[row["arm"]]:
+                counts[row["arm"]][field] += int(row[field])
+        for arm in arms:
+            saved = summary.get("arms", {}).get(arm, {})
+            for field, value in counts[arm].items():
+                if saved.get(field) != value:
+                    errors.append(f"summary.json: arms.{arm}.{field} disagrees with rows")
     if mode == "reviewed":
         _check_reviewed(out, rows, n, arms, errors)
     return errors
