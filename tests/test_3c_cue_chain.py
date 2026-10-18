@@ -135,6 +135,24 @@ COMMAND_EXPECTATIONS = (
     ("Broadcast updates about the families.", "k_sl_3c_d_r2"),
     ("Broadcast updates about the detention sites.", None),
     ("Answer the families with updates about other detention sites.", "k_sl_3c_d_r2"),
+    ("Broadcasting the reports from the other detention sites.", "k_sl_3c_d_r1"),
+    ("Keep broadcasting the reports from other detention sites.", "k_sl_3c_d_r1"),
+    (
+        "Continue broadcasting the reports from all remaining detention sites and coordinate their rescue.",
+        "k_sl_3c_d_r1",
+    ),
+    ("Relay the reports from other detention sites.", "k_sl_3c_d_r1"),
+    ("Relaying the reports from other detention sites.", "k_sl_3c_d_r1"),
+    (
+        "Continue broadcasting the reports from the other detention sites and "
+        "coordinate rescue efforts for the remaining missing.",
+        None,
+    ),
+    ("Continue broadcasting the truth about JANUS.", None),
+    ("Keep broadcasting the evidence to independent networks.", None),
+    ("Relay the evidence to independent networks.", "k_sl_3c_a_r1"),
+    ("Relay the broadcast.", None),
+    ("Broadcasting updates to the detention sites.", None),
 )
 
 
