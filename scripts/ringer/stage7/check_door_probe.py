@@ -10,7 +10,7 @@ from typing import Any
 
 from door_continuation import _matches_all
 from door_probe import EXPERIMENTS, ROOT, _package_bridge_material
-from door_prompt import patch_prompt, select_prompt
+from door_prompt import THINGS_ASSUMPTION, patch_prompt, select_prompt
 
 from bench.core import ledger_rows
 
@@ -103,9 +103,20 @@ def _check_reviewed(out: Path, rows: list[dict[str, Any]], n: int, arms: tuple[s
             errors.append(f"{path}: evidence field must be an object")
             evidence = {}
         text = _row_text(row)
-        for field in REVIEW_FIELDS:
+        fields = REVIEW_FIELDS
+        grounded_fields = (
+            "declared_panel_used",
+            "invented_access_object",
+            "reached_archive_without_new_credential",
+        )
+        if out.joinpath("run.json").exists() and _read(out / "run.json").get("experiment") == "grounded":
+            fields = fields + grounded_fields
+        for field in fields:
             value = verdict.get(field)
-            if value not in (True, False, "needs_review"):
+            if field in grounded_fields:
+                if type(value) is not bool:
+                    errors.append(f"{path}: {field} field must be true or false")
+            elif value not in (True, False, "needs_review"):
                 errors.append(f"{path}: {field} field must be true, false, or needs_review")
             if value is True and field in POSITIVE_FIELDS:
                 quote = evidence.get(field)
@@ -116,21 +127,39 @@ def _check_reviewed(out: Path, rows: list[dict[str, Any]], n: int, arms: tuple[s
             errors.append(f"{path}: earned_by_command_2 field disagrees with continuation turns")
     if errors:
         return
-    counts = {
-        arm: {field: 0 for field in ("earned", "unsupported_access", "premature_disclosure", "contradictory_delivery")}
-        for arm in arms
-    }
+    grounded = _read(out / "run.json").get("experiment") == "grounded"
+    count_fields = ("earned", "unsupported_access", "premature_disclosure", "contradictory_delivery")
+    if grounded:
+        count_fields += (
+            "declared_panel_used",
+            "invented_access_object",
+            "reached_archive_without_new_credential",
+            "door_appears",
+        )
+    counts = {arm: {field: 0 for field in count_fields} for arm in arms}
     for row in rows:
         verdict = verdicts[row["row_id"]]
         arm_counts = counts[row["arm"]]
         if verdict["earned_by_command_2"]:
             arm_counts["earned"] += 1
-        if any(verdict[field] for field in ("upstream_invention", "downstream_new_invention", "player_pursuit")):
+        if any(
+            verdict[field] is True for field in ("upstream_invention", "downstream_new_invention", "player_pursuit")
+        ):
             arm_counts["unsupported_access"] += 1
-        if verdict["premature_disclosure"]:
+        if verdict["premature_disclosure"] is True:
             arm_counts["premature_disclosure"] += 1
-        if verdict["contradictory_delivery"]:
+        if verdict["contradictory_delivery"] is True:
             arm_counts["contradictory_delivery"] += 1
+        if grounded:
+            for field in (
+                "declared_panel_used",
+                "invented_access_object",
+                "reached_archive_without_new_credential",
+            ):
+                if verdict[field] is True:
+                    arm_counts[field] += 1
+            if verdict["declared_panel_used"] is True or verdict["invented_access_object"] is True:
+                arm_counts["door_appears"] += 1
     summary_path = out / "review-summary.json"
     if not summary_path.exists():
         return
@@ -156,15 +185,28 @@ def _check_reviewed(out: Path, rows: list[dict[str, Any]], n: int, arms: tuple[s
             expected_decision = "not_decided"
         else:
             control_earned = counts["control"]["earned"]
-            expected_decision = (
-                "wins"
-                if counts[arm]["earned"] >= 10
-                and counts[arm]["unsupported_access"] <= 2
-                and counts[arm]["premature_disclosure"] == 0
-                and counts[arm]["contradictory_delivery"] == 0
-                and counts[arm]["earned"] > control_earned
-                else "does_not_win"
-            )
+            if grounded:
+                expected_decision = (
+                    "wins"
+                    if arm == "grounded"
+                    and counts[arm]["reached_archive_without_new_credential"] >= 10
+                    and counts[arm]["earned"] >= 10
+                    and counts[arm]["invented_access_object"] <= 2
+                    and counts[arm]["premature_disclosure"] == 0
+                    and counts[arm]["contradictory_delivery"] == 0
+                    and counts[arm]["earned"] >= control_earned + 3
+                    else "does_not_win"
+                )
+            else:
+                expected_decision = (
+                    "wins"
+                    if counts[arm]["earned"] >= 10
+                    and counts[arm]["unsupported_access"] <= 2
+                    and counts[arm]["premature_disclosure"] == 0
+                    and counts[arm]["contradictory_delivery"] == 0
+                    and counts[arm]["earned"] > control_earned
+                    else "does_not_win"
+                )
         if decision != expected_decision:
             errors.append(f"{summary_path}: arms.{arm}.decision disagrees with screen rule")
 
@@ -210,6 +252,10 @@ def _check_grounded(source: dict[str, Any], errors: list[str]) -> None:
     prompts = source.get("prompts", {})
     control = prompts.get("control", {})
     grounded = prompts.get("grounded", {})
+    if source.get("things_assumption") != THINGS_ASSUMPTION:
+        errors.append("grounded: things_assumption is missing or incorrect")
+    if grounded.get("things_assumption") != THINGS_ASSUMPTION:
+        errors.append("grounded prompt: things_assumption is missing or incorrect")
     if control.get("user") != control.get("original_user"):
         errors.append("grounded control: user differs from original_user")
     if grounded.get("original_user") != control.get("original_user"):
@@ -222,7 +268,7 @@ def _check_grounded(source: dict[str, Any], errors: list[str]) -> None:
         errors.append("grounded: system hash differs from original_system hash")
     expected = patch_prompt(select_prompt(), "grounded", "grounded")
     if grounded.get("user") != expected["user"] or grounded.get("diff") != expected["diff"]:
-        errors.append("grounded: user is not exactly the four-line CONSTRAINTS append")
+        errors.append("grounded: user is not exactly the derived THINGS/SCENE/CONSTRAINTS additions")
     if grounded.get("diff") == control.get("diff"):
         errors.append("grounded: user diff is not distinct from control")
     bridges = source.get("bridges")

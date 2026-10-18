@@ -2,17 +2,38 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 import pytest
 from check_door_probe import check
 from door_continuation import action_groups, matched_ids
 from door_probe import EXPERIMENTS, bridge_material, dry_run, write_failed_response
-from door_prompt import ARMS, COMMAND, GROUNDED_LINES, PromptSelection, patch_prompt, prompt_plan, select_prompt
+from door_prompt import (
+    ARMS,
+    COMMAND,
+    THINGS_ASSUMPTION,
+    PromptSelection,
+    grounded_additions,
+    patch_prompt,
+    prompt_plan,
+    select_prompt,
+    things_emulation,
+)
 from door_transport import RawRequestError, SpendBudget, raw_request
 
 from bench.core import load_variation, package_and_state
 from storygame.runtime.contracts import RuntimeContractError, parse_turn_proposal
+
+
+def _current_story_constraint_lines() -> tuple[str, ...]:
+    """Current story state: update this assertion when plot.md changes."""
+
+    plot = Path("data/stories/continuity-initiative/plot.md").read_text()
+    scene = plot.split("## Scene 2A — False Identities\n", 1)[1].split("\n---\n", 1)[0]
+    placement = "- cooling-service archive panel is beside the inspection console in the infrastructure corridors."
+    facts = tuple(f"- {line}" for line in re.findall(r"^- (.+)$", scene, re.MULTILINE))
+    return (placement, *facts)
 
 
 def test_selects_unique_target_and_preserves_system() -> None:
@@ -121,10 +142,14 @@ def test_grounded_config_prompt_diff_variations_and_dry_checker(tmp_path: Path) 
     assert control["hashes"]["user"] == control["hashes"]["original_user"]
     assert grounded["system"] == control["system"]
     assert grounded["original_user"] == control["original_user"]
-    appended = "".join(f"- {line}\n" for line in GROUNDED_LINES)
-    anchor = "- This happens now. Show it in the scene: A second credential check threatens their inspector cover.\n"
-    assert grounded["user"] == control["user"].replace(anchor, anchor + appended, 1)
-    assert all(f"+- {line}" in grounded["diff"] for line in GROUNDED_LINES)
+    additions = grounded_additions()
+    assert grounded["things_assumption"] == THINGS_ASSUMPTION
+    assert (
+        grounded["user"]
+        .split("THINGS:\n", 1)[1]
+        .startswith(additions["THINGS"][0] + "\n- Kristin. Place: service corridors.\n\n")
+    )
+    assert all(f"+{line}" in grounded["diff"] for lines in additions.values() for line in lines)
     for arm, package_path in EXPERIMENTS["grounded"]["variations"].items():
         variation = load_variation(Path("bench/variations") / package_path)
         package, _ = package_and_state(variation, "2A")
@@ -142,15 +167,89 @@ def test_grounded_config_prompt_diff_variations_and_dry_checker(tmp_path: Path) 
 
 def test_grounded_rejects_missing_or_duplicate_anchor() -> None:
     selection = select_prompt()
-    anchor = "- This happens now. Show it in the scene: A second credential check threatens their inspector cover.\n"
-    missing = PromptSelection(selection.system, selection.user.replace(anchor, "", 1), selection.source_path)
-    with pytest.raises(AssertionError, match="facility-gate anchor"):
+    constraints = selection.user.split("CONSTRAINTS:\n", 1)[1].split("\n\nPLAYER:", 1)[0]
+    missing = PromptSelection(
+        selection.system, selection.user.replace(constraints + "\n\n", "", 1), selection.source_path
+    )
+    with pytest.raises(AssertionError, match="blank line"):
         patch_prompt(missing, "grounded", "grounded")
     duplicate = PromptSelection(
-        selection.system, selection.user + "\n".join(f"- {line}" for line in GROUNDED_LINES), selection.source_path
+        selection.system,
+        selection.user.replace(
+            "\n\nPLAYER:",
+            "\n" + "\n".join(grounded_additions()["CONSTRAINTS"]) + "\n\nPLAYER:",
+            1,
+        ),
+        selection.source_path,
     )
     with pytest.raises(AssertionError, match="already present"):
         patch_prompt(duplicate, "grounded", "grounded")
+
+
+def test_grounded_derivation_is_section_scoped_and_nonempty() -> None:
+    additions = grounded_additions()
+    assert set(additions) <= {"SCENE", "THINGS", "CONSTRAINTS"}
+    # Current story state: this is the one obvious update point for plot.md edits.
+    assert additions["CONSTRAINTS"] == _current_story_constraint_lines()
+    assert additions["THINGS"] == (
+        "- cooling-service archive panel. Place: beside the inspection console in the infrastructure corridors. "
+        'State: closed. If it changes, give "state": "open".',
+    )
+    with pytest.raises(AssertionError, match="removed"):
+        grounded_additions(
+            "CHARACTERS:\n\nSCENE:\n- old\n\nTHINGS:\n\nCONSTRAINTS:\n\nPLAYER:\n",
+            "CHARACTERS:\n\nSCENE:\n\nTHINGS:\n\nCONSTRAINTS:\n\nPLAYER:\n",
+        )
+    with pytest.raises(AssertionError, match="forbidden section"):
+        grounded_additions(
+            "CHARACTERS:\n- same\n\nSCENE:\n\nTHINGS:\n\nCONSTRAINTS:\n\nPLAYER:\n",
+            "CHARACTERS:\n- same\n- extra\n\nSCENE:\n\nTHINGS:\n\nCONSTRAINTS:\n- add\n\nPLAYER:\n",
+        )
+    with pytest.raises(AssertionError, match="no additions"):
+        grounded_additions(
+            "CHARACTERS:\n\nSCENE:\n\nTHINGS:\n\nCONSTRAINTS:\n\nPLAYER:\n",
+            "CHARACTERS:\n\nSCENE:\n\nTHINGS:\n\nCONSTRAINTS:\n\nPLAYER:\n",
+        )
+
+
+def test_grounded_patch_is_exact_and_things_emulation_is_recorded() -> None:
+    selection = select_prompt()
+    control = patch_prompt(selection, "control", "grounded")
+    grounded = patch_prompt(selection, "grounded", "grounded")
+    assert grounded["system"] == control["system"]
+    additions = grounded_additions()
+    things_body = grounded["user"].split("THINGS:\n", 1)[1].split("\n\nCONSTRAINTS:", 1)[0]
+    assert things_body.splitlines()[:2] == [additions["THINGS"][0], "- Kristin. Place: service corridors."]
+    assert all(f"{line}\n" in grounded["user"] for lines in additions.values() for line in lines)
+    assert things_emulation() == {
+        "frozen": ["THINGS:", "- Kristin. Place: infrastructure corridors."],
+        "current": [
+            "THINGS:",
+            "- cooling-service archive panel. Place: beside the inspection console in the infrastructure corridors. "
+            'State: closed. If it changes, give "state": "open".',
+            "- Kristin. Place: infrastructure corridors.",
+        ],
+    }
+
+
+def test_things_emulation_fails_when_current_stub_reply_is_not_consumed(monkeypatch: pytest.MonkeyPatch) -> None:
+    from storygame.runtime.item_facts import ItemFactsProvider
+
+    monkeypatch.setattr(ItemFactsProvider, "prepare_turn", lambda self, command: None)
+    with pytest.raises(AssertionError, match="stub reply was not consumed"):
+        things_emulation()
+
+
+def test_normal_exit_guard_is_offline_and_current_transition_is_not_panel_gated() -> None:
+    frozen = Path("bench/frozen/continuity-pre-2a-panel")
+    current = Path("data/stories/continuity-initiative")
+    for name in ("pacing.yaml", "knowledge.yaml", "handoffs.yaml", "storylets.md", "storylet-routes.yaml"):
+        if (frozen / name).read_bytes() != (current / name).read_bytes():
+            pytest.fail(f"normal-exit guard: {name} differs between frozen and current packages")
+    package, _ = package_and_state(load_variation(Path("bench/variations/stage7-door-grounded.json")), "2A")
+    transition = next(item for item in package.pacing.transitions if item.id == "t_2a_2b")
+    blob = repr(transition.model_dump()).lower()
+    assert "cooling_service_archive_panel" not in blob, "normal-exit guard: t_2a_2b is panel-gated"
 
 
 def test_budget_reserves_before_request_and_parser_rejects_bad_envelope() -> None:

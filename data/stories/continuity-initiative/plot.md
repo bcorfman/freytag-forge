@@ -359,8 +359,15 @@ item_placements:
     parent: infrastructure_corridors
     text: beside the inspection console in the infrastructure corridors
 setting_facts:
+- The cooling-service archive panel stands beside the inspection console in the infrastructure corridors.
+- The cooling-service archive panel looks like a ventilation grille.
+- The visible seam outlines the cooling-service archive panel.
+- The access panel beside the inspection console is the cooling-service archive panel.
 - The cooling-service archive panel leads directly from the infrastructure corridors into the records archive.
 - The cooling-service archive panel opens with a push.
+- The cooling-service archive panel has no lock.
+- The cooling-service archive panel has no keypad.
+- The cooling-service archive panel has no screen.
 - Using the cooling-service archive panel requires no further credentials.
 character_placements:
   kristin: {parent: brandon_hideout}
@@ -370,8 +377,7 @@ transition_ids: [t_2a_2b]
 bridge_text:
   t_2a_2b: >-
     Kristin and Brandon gained access to the infrastructure corridors under their inspection cover.
-    The cooling-service archive panel gave them direct access to the records archive.
-    They entered the records archive.
+    They continued into the records archive.
 ---
 
 **Setting:** Brandon’s hidden operations base and the secret facility
@@ -421,8 +427,6 @@ Kristin improvises, warning that a cooling-water fault could disable the undergr
 This gives Kristin access to restricted infrastructure corridors that bypass the main security checkpoints.
 
 The corridor inspection console accepts the temporary credentials long enough to display water-pressure, ventilation, door, and lighting diagnostics. Kristin notes its limits before they move on: it can report faults and cycle noncritical systems, but it cannot open detention cells or alter the main flood controls.
-
-The cooling-service archive panel stands beside the inspection console. It is easy to mistake for a ventilation grille. Its seam belongs to the same panel. A push opens it directly into the records archive. This route ends at the records archive.
 
 ### Scene 2A.4 — The First Complication
 

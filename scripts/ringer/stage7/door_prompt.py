@@ -9,12 +9,15 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
 PROMPT_FIXTURE = ROOT / "bench/results/stage7-blind-raw/attempt-1/e2e-blind-player-prompts.json"
 TRANSCRIPT_FIXTURE = ROOT / "bench/results/stage7-blind-raw/attempt-1/e2e-blind-player.json"
 SECTIONS = ("CHARACTERS", "SCENE", "THINGS", "CONSTRAINTS", "PLAYER")
 COMMAND = "Look for a concealed route or access panel leading from the service corridors to the detention area."
+FROZEN_GROUNDED_VARIATION = ROOT / "bench/variations/stage7-door-grounded-control.json"
+CURRENT_GROUNDED_VARIATION = ROOT / "bench/variations/stage7-door-grounded.json"
 PERIMETER_SENTENCE = (
     "Kristin and Brandon are at the facility perimeter. Their false identities have passed the first security checks."
 )
@@ -26,15 +29,9 @@ LIMITS_SENTENCE = (
     "Kristin notes its limits before they move on: it can report faults and cycle noncritical systems, "
     "but it cannot open detention cells or alter the main flood controls."
 )
-GROUNDED_LINES = (
-    "cooling-service archive panel is beside the inspection console in the infrastructure corridors.",
-    "The cooling-service archive panel leads directly from the infrastructure corridors into the records archive.",
-    "The cooling-service archive panel opens with a push.",
-    "Using the cooling-service archive panel requires no further credentials.",
-)
-GROUNDED_ANCHORS = (
-    "- facility gate is at the facility perimeter.",
-    "- This happens now. Show it in the scene: A second credential check threatens their inspector cover.",
+THINGS_ASSUMPTION = (
+    "best-case design test: assumes the per-turn match call refers to the panel for the recorded command; "
+    "the real selection rate is not measured by this screen"
 )
 ARMS = ("control", "review", "stale-scene", "wording", "fixed-control", "bridge")
 DOOR_REPLACEMENTS = {
@@ -148,6 +145,102 @@ def _sections(user: str) -> dict[str, str]:
     return result
 
 
+def _section_lines(user: str, *, allow_missing_things: bool = False) -> dict[str, tuple[str, ...]]:
+    sections = _sections(user) if not allow_missing_things else _sections_for_derivation(user)
+    return {name: tuple(line for line in body.splitlines() if line.startswith("- ")) for name, body in sections.items()}
+
+
+def _sections_for_derivation(user: str) -> dict[str, str]:
+    matches = list(re.finditer(r"(?m)^([A-Z]+):\n", user))
+    found = {m.group(1): m for m in matches if m.group(1) in SECTIONS}
+    required = {"CHARACTERS", "SCENE", "CONSTRAINTS", "PLAYER"}
+    if not required <= set(found):
+        raise AssertionError(f"expected derivation sections, found {sorted(found)}")
+    ordered = sorted(found.items(), key=lambda item: item[1].start())
+    result = {
+        name: user[match.end() : (ordered[index + 1][1].start() if index + 1 < len(ordered) else len(user))]
+        for index, (name, match) in enumerate(ordered)
+    }
+    result.setdefault("THINGS", "")
+    return result
+
+
+def _prompt_for_package(path: Path) -> str:
+    from bench.core import load_variation, prompt_for
+
+    return prompt_for(load_variation(path), "2A", COMMAND)["user"]
+
+
+def grounded_additions(frozen_user: str | None = None, current_user: str | None = None) -> dict[str, tuple[str, ...]]:
+    """Return current-package prompt lines absent from the frozen prompt.
+
+    The package prompts are built through the same offline path as ``bench
+    prompt``. Section subtraction is deliberately line-based so authored
+    punctuation and separators remain untouched by the experiment patch.
+    """
+
+    derive_emulated_things = frozen_user is None and current_user is None
+    frozen_user = _prompt_for_package(FROZEN_GROUNDED_VARIATION) if frozen_user is None else frozen_user
+    current_user = _prompt_for_package(CURRENT_GROUNDED_VARIATION) if current_user is None else current_user
+    frozen = _section_lines(frozen_user, allow_missing_things=True)
+    current = _section_lines(current_user, allow_missing_things=True)
+    additions: dict[str, tuple[str, ...]] = {}
+    for section in SECTIONS:
+        removed = [line for line in frozen[section] if line not in current[section]]
+        if removed:
+            raise AssertionError(f"grounded derivation removed {section} line(s): {removed!r}")
+        if section not in ("SCENE", "THINGS", "CONSTRAINTS") and current[section] != frozen[section]:
+            raise AssertionError(f"grounded derivation changed forbidden section {section}")
+        added = tuple(line for line in current[section] if line not in frozen[section])
+        if added:
+            additions[section] = added
+    if derive_emulated_things:
+        emulated = things_emulation()
+        frozen_things = tuple(emulated["frozen"][1:])
+        current_things = tuple(emulated["current"][1:])
+        thing_additions = tuple(line for line in current_things if line not in frozen_things)
+        if thing_additions:
+            additions["THINGS"] = thing_additions
+    if not any(additions.values()):
+        raise AssertionError("grounded derivation found no additions")
+    return additions
+
+
+def things_emulation() -> dict[str, list[str]]:
+    """Render the recorded-command THINGS block through ItemFactsProvider offline."""
+
+    from bench.core import load_variation, package_and_state
+    from storygame.runtime.cloudflare import CloudflareTurnProvider
+    from storygame.runtime.item_facts import ItemFactsProvider
+
+    rendered: dict[str, list[str]] = {}
+    for label, path in (("frozen", FROZEN_GROUNDED_VARIATION), ("current", CURRENT_GROUNDED_VARIATION)):
+        variation = load_variation(path)
+        package, state = package_and_state(variation, "2A")
+        provider = ItemFactsProvider(
+            worker_url="",
+            token="",
+            state=state,
+            prompt_variant=variation["_prompt_variant"],
+            item_facts={},
+            mode="single_call",
+            seed_from_package=True,
+            held_by=False,
+        )
+        provider._world().set_unplaced(package.world.protagonist_id, "infrastructure corridors")
+        provider._ensure_scene_seeded()
+        with mock.patch.object(
+            CloudflareTurnProvider,
+            "_request_item_facts",
+            lambda self, payload: {"refers": ["access panel"], "same_as": {}, "kind": {}},
+        ):
+            provider.prepare_turn(COMMAND)
+        if label == "current" and not getattr(provider, "_last_item_facts_match", {}).get("engine_resolutions"):
+            raise AssertionError("things emulation stub reply was not consumed by the item-facts engine")
+        rendered[label] = provider._things_block(narration=True).splitlines()
+    return rendered
+
+
 def _replace_line(section: str, text: str, old: str, new: str) -> str:
     lines = section.splitlines(keepends=True)
     matches = [i for i, line in enumerate(lines) if line.rstrip("\r\n").removeprefix("- ") == old]
@@ -179,16 +272,22 @@ def patch_prompt(selection: PromptSelection, arm: str, experiment: str = "door")
         if corridor != 2:
             raise AssertionError(f"opened-corridor sentence global count is {corridor}, expected 2")
     elif experiment == "grounded" and arm == "grounded":
-        constraints = sections["CONSTRAINTS"]
-        existing = [line for line in GROUNDED_LINES if line in original]
-        if existing:
-            raise AssertionError(f"grounded line already present: {existing[0]!r}")
-        if not constraints.endswith("\n\n"):
-            raise AssertionError("grounded CONSTRAINTS section must end with a blank line")
-        body = constraints.rstrip("\n")
-        if not any(body.endswith(anchor) for anchor in GROUNDED_ANCHORS):
-            raise AssertionError("grounded CONSTRAINTS section lacks its facility-gate anchor")
-        patched_sections["CONSTRAINTS"] = body + "\n" + "\n".join(f"- {line}" for line in GROUNDED_LINES) + "\n\n"
+        additions = grounded_additions()
+        for section, lines in additions.items():
+            body = sections[section]
+            if not body.endswith("\n\n"):
+                raise AssertionError(f"grounded {section} section must end with a blank line")
+            existing = [line for line in lines if line in _section_lines(original)[section]]
+            if existing:
+                raise AssertionError(f"grounded line already present: {existing[0]!r}")
+            if section == "THINGS":
+                first_item = body.find("- ")
+                if first_item < 0:
+                    raise AssertionError("grounded THINGS section has no recorded item line")
+                inserted = "".join(f"{line}\n" for line in lines)
+                patched_sections[section] = body[:first_item] + inserted + body[first_item:]
+            else:
+                patched_sections[section] = body.rstrip("\n") + "\n" + "\n".join(lines) + "\n\n"
     for section, old, new in PROMPT_EXPERIMENTS[experiment]["replacements"].get(arm, ()):
         patched_sections[section] = _replace_line(patched_sections[section], section, old, new)
     # Replace section bodies at their original offsets, preserving all separators.
@@ -206,7 +305,7 @@ def patch_prompt(selection: PromptSelection, arm: str, experiment: str = "door")
         if occurrences != 1:
             raise AssertionError(f"finish instruction count is {occurrences}, expected 1")
         patched_system = original_system.replace(removed, "", 1)
-    return {
+    result = {
         "arm": arm,
         "system": patched_system,
         "user": patched,
@@ -231,6 +330,9 @@ def patch_prompt(selection: PromptSelection, arm: str, experiment: str = "door")
         ),
         "source_path": selection.source_path,
     }
+    if experiment == "grounded" and arm == "grounded":
+        result["things_assumption"] = THINGS_ASSUMPTION
+    return result
 
 
 def recorded_transition() -> dict[str, Any]:

@@ -166,10 +166,14 @@ def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
         "bridge": bridge,
     }
     if experiment == "grounded":
+        source["things_assumption"] = source["prompts"]["grounded"]["things_assumption"]
         source["bridges"] = {
             arm: _package_bridge_material(ROOT / "bench/variations" / config["variations"][arm], bridge["prefix"])
             for arm in config["arms"]
         }
+        from door_prompt import things_emulation
+
+        source["things_emulation"] = things_emulation()
     atomic_json(out / "source-before.json", source)
     atomic_json(out / "source-after.json", source)
     return source
