@@ -253,6 +253,21 @@ items:
   name: inspection console
   aliases: [corridor inspection console, diagnostic console]
   fixed: true
+- id: cooling_service_archive_panel
+  name: cooling-service archive panel
+  kind: thing
+  fixed: true
+  openable: true
+  open: false
+  hidden: false
+  scoped_aliases:
+  - access panel
+  - hidden panel
+  - concealed panel
+  - panel
+  - grille
+  - ventilation grille
+  - seam
 - id: copied_janus_files
   name: copied JANUS files
   owner: kristin

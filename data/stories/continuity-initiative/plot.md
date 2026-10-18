@@ -350,11 +350,18 @@ freytag_phase: rising_action
 objective: Enter the facility under false identities
 participant_ids: [kristin, brandon]
 companions: [brandon]
-item_ids: [transit_card, hideout_servers, inspection_console, facility_gate]
+item_ids: [transit_card, hideout_servers, inspection_console, facility_gate, cooling_service_archive_panel]
 item_placements:
   hideout_servers: {parent: brandon_hideout}
   inspection_console: {parent: infrastructure_corridors}
   facility_gate: {parent: facility_perimeter, text: at the facility perimeter}
+  cooling_service_archive_panel:
+    parent: infrastructure_corridors
+    text: beside the inspection console in the infrastructure corridors
+setting_facts:
+- The cooling-service archive panel leads directly from the infrastructure corridors into the records archive.
+- The cooling-service archive panel opens with a push.
+- Using the cooling-service archive panel requires no further credentials.
 character_placements:
   kristin: {parent: brandon_hideout}
   brandon: {parent: brandon_hideout}
@@ -362,9 +369,9 @@ entry_text: "Brandon's hideout was buried inside a dead communications center: s
 transition_ids: [t_2a_2b]
 bridge_text:
   t_2a_2b: >-
-    Their false credentials survived the initial checks, and Kristin's warning about unstable cooling-water pressure
-    won them access to restricted infrastructure corridors. Beyond those corridors, the records archive waited behind
-    another layer of security.
+    Kristin and Brandon gained access to the infrastructure corridors under their inspection cover.
+    The cooling-service archive panel gave them direct access to the records archive.
+    They entered the records archive.
 ---
 
 **Setting:** Brandon’s hidden operations base and the secret facility
@@ -415,6 +422,8 @@ This gives Kristin access to restricted infrastructure corridors that bypass the
 
 The corridor inspection console accepts the temporary credentials long enough to display water-pressure, ventilation, door, and lighting diagnostics. Kristin notes its limits before they move on: it can report faults and cycle noncritical systems, but it cannot open detention cells or alter the main flood controls.
 
+The cooling-service archive panel stands beside the inspection console. It is easy to mistake for a ventilation grille. Its seam belongs to the same panel. A push opens it directly into the records archive. This route ends at the records archive.
+
 ### Scene 2A.4 — The First Complication
 
 **Details:** facial-recognition system; former developer; Continuity Initiative contractor; quiet security alert; Rebecca Jenkins; compromised infiltration
@@ -433,10 +442,15 @@ freytag_phase: rising_action
 objective: Find evidence in the records archive
 participant_ids: [kristin, brandon, michelle]
 companions: [brandon]
-item_ids: [archive_terminals, medical_terminal]
+item_ids: [archive_terminals, medical_terminal, cooling_service_archive_panel]
 item_placements:
   archive_terminals: {parent: janus_archive}
   medical_terminal: {parent: janus_archive}
+  cooling_service_archive_panel: {parent: infrastructure_corridors}
+setting_facts:
+- The cooling-service archive panel connects the infrastructure corridors to the records archive.
+- Kristin has already reached the records archive.
+- The archive terminals are available for investigation.
 entry_text: "The records archive hummed behind the restricted corridor. Rows of terminals held the Initiative's selection files - and, somewhere in them, the answers to why Michelle was taken and who helped build the system that chose her.\n\n"
 transition_ids: [t_2b_2c]
 bridge_text:
