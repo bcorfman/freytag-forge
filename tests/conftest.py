@@ -165,6 +165,8 @@ TIERS = ("unit", "component", "integration", "evaluation")
 QUALITY_TIERS = ("runtime_safety", "authoring_quality")
 _AUTHORING_QUALITY_FILES = {"test_markdown_story_package.py"}
 _HEALTH: dict[str, dict[str, Any]] = {}
+_XDIST_REPORTS: dict[str, dict[str, float]] = {}
+_COLLECTED_ITEMS: tuple[pytest.Item, ...] = ()
 _SESSION_WALL = 0.0
 _SESSION_CPU = 0.0
 
@@ -314,7 +316,17 @@ def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> 
     outcome.get_result()
 
 
+def pytest_runtest_logreport(report: pytest.TestReport) -> None:
+    if not hasattr(report, "node"):
+        return
+    timings = _XDIST_REPORTS.setdefault(report.nodeid, {})
+    timings[report.when] = report.duration
+
+
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    global _COLLECTED_ITEMS
+    if not hasattr(config, "workerinput"):
+        _COLLECTED_ITEMS = tuple(items)
     duplicate_errors: list[str] = []
     seen_paths: set[Path] = set()
     for item in items:
@@ -355,6 +367,9 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
 
 def pytest_collection_finish(session: pytest.Session) -> None:
+    global _COLLECTED_ITEMS
+    if not hasattr(session.config, "workerinput") and bool(session.config.getoption("numprocesses", 0)):
+        _COLLECTED_ITEMS = tuple(session.items)
     counts = Counter(
         next((tier for tier in QUALITY_TIERS if item.get_closest_marker(tier)), "unknown") for item in session.items
     )
@@ -409,6 +424,11 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     if not report_path:
         return
     records = getattr(session, "items", [])
+    is_xdist_controller = not hasattr(session.config, "workerinput") and bool(
+        session.config.getoption("numprocesses", 0)
+    )
+    if is_xdist_controller and not records:
+        records = _COLLECTED_ITEMS or tuple(_XDIST_REPORTS)
     summary: dict[str, Any] = {
         "exit_status": exitstatus,
         "tests": len(records),
@@ -425,30 +445,54 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         "top20_by_call_time": [],
         "top20_by_setup_time": [],
     }
+    use_controller_timings = is_xdist_controller and not _HEALTH
+    measured_timings = _XDIST_REPORTS if use_controller_timings else _HEALTH
     timings: list[dict[str, Any]] = []
+    file_seconds: dict[str, float] = {}
     for item in records:
-        tier = next((name for name in TIERS if item.get_closest_marker(name)), "unknown")
-        quality_tier = next((name for name in QUALITY_TIERS if item.get_closest_marker(name)), "unknown")
+        nodeid = item if isinstance(item, str) else item.nodeid
+        path = Path(nodeid.split("::", 1)[0])
+        tier = (
+            next((name for name in TIERS if item.get_closest_marker(name)), "unknown")
+            if not isinstance(item, str)
+            else _tier_for_path(path)
+        )
+        quality_tier = (
+            next((name for name in QUALITY_TIERS if item.get_closest_marker(name)), "unknown")
+            if not isinstance(item, str)
+            else _quality_tier_for_path(path)
+        )
         summary["tiers"][tier] += 1
         summary["quality_tiers"][quality_tier] += 1
-        health = getattr(item, "_test_health", {})
+        health = getattr(item, "_test_health", {}) if not isinstance(item, str) else {}
         for name, count in health.get("constructions", {}).items():
             summary["construction_counts"][name] += count
-        measured = _HEALTH.get(item.nodeid, {})
+        measured = measured_timings.get(nodeid, {})
         runtime = measured.get("runtime", {})
         tier_runtime = summary["runtime_counts_by_tier"].setdefault(tier, Counter())
         for name, count in runtime.items():
             if "." not in name:
                 summary["runtime_counts"][name] += count
                 tier_runtime[name] += count
+        setup_seconds = float(measured.get("setup_seconds", 0.0))
+        call_seconds = float(measured.get("call_seconds", 0.0))
+        teardown_seconds = float(measured.get("teardown_seconds", 0.0))
+        if use_controller_timings:
+            setup_seconds = float(measured.get("setup", 0.0))
+            call_seconds = float(measured.get("call", 0.0))
+            teardown_seconds = float(measured.get("teardown", 0.0))
+        file_key = _test_file_key(item.fspath if not isinstance(item, str) else path)
+        file_seconds[file_key] = file_seconds.get(file_key, 0.0) + setup_seconds + call_seconds + teardown_seconds
         timings.append(
             {
-                "nodeid": item.nodeid,
+                "nodeid": nodeid,
                 "tier": tier,
-                "setup_seconds": measured.get("setup_seconds", 0.0),
-                "call_seconds": measured.get("call_seconds", 0.0),
-                "teardown_seconds": measured.get("teardown_seconds", 0.0),
-                "seconds": health.get("seconds", 0.0),
+                "setup_seconds": setup_seconds,
+                "call_seconds": call_seconds,
+                "teardown_seconds": teardown_seconds,
+                "seconds": health.get("seconds", 0.0)
+                if not use_controller_timings
+                else setup_seconds + call_seconds + teardown_seconds,
                 "constructions": health.get("constructions", {}),
                 "runtime": {name: count for name, count in runtime.items() if "." not in name},
                 "commands": [
@@ -465,6 +509,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     summary["runtime_counts_by_tier"] = {
         tier: dict(counts) for tier, counts in summary["runtime_counts_by_tier"].items()
     }
+    summary["file_seconds"] = {path: round(file_seconds[path], 2) for path in sorted(file_seconds)}
     summary["slowest"] = sorted(timings, key=lambda row: row["seconds"], reverse=True)[:50]
     summary["top20_by_call_time"] = sorted(timings, key=lambda row: row["call_seconds"], reverse=True)[:20]
     summary["top20_by_setup_time"] = sorted(timings, key=lambda row: row["setup_seconds"], reverse=True)[:20]
