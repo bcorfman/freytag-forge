@@ -867,3 +867,64 @@ Consolidation only: reviewed plan status/results and relevant repository
 guidance, checked selected stale claims against git history and code discovery,
 and created this queue. No runtime changes, tests, billed probes, deployments,
 configuration changes, or production promotion were performed.
+
+**Stage 7 2B entry-repair replicate RESULT (2026-10-18, attempt 1 of 1, staging `62cae8ae`, `scene-v1`; Ringer
+`stage7-2b-entry`, manifest `scripts/ringer/stage7/2b-entry-e2e.json`; artifacts in gitignored
+`bench/results/stage7-2b-entry/attempt-1/`).** Bar NOT fully met: 2B target hit, whole-run and rejection items
+missed. `@smoke` passed; `@blind-player` raw, all scenes, 1 replicate passed in 6.2 min: 9 scenes, 80 turns, story
+ended, 0 game breaks, no forced or timer exits. Met: 2B exited by play in 8 turns with 2 stuck turns (baseline 14,
+forced); `k_sl_2b_a_r1` committed on 2B command 1 (bar: by command 2); every other scene exit earned by play.
+Missed: whole run 29 stuck turns (bar at most 19; baseline 30; per scene 1A 4, 1B 0, 1C 2, 2A 4, 2B 2, 2C 4, 3A 2,
+3B 3, 3C 8), so the stuck turns moved to other scenes rather than leaving the run; 2 rejections (bar 0): 2A turn 7
+"unavailable entity 'detention level'", 3C turn 13 "unavailable knowledge 'remaining detention sites'". Not run:
+the attribution audit. One sample, so neither a rate nor proof the stuck total moved because of the edit. The
+Ringer verdict read FAIL only because the worker wrote `operator-note.md` after the expected-files harvest; the
+check itself returned 0 and the note exists. Next: Brandon decides whether 2B stays as a win and which scenes
+(3C, 1A, 2A, 2C) to take next.
+
+**Stage 7 3C and 1A repair replicate RESULT (2026-10-18, attempt 1 of 1, staging `995b9f07` = PRs #667 3C `d_r1` verbs,
+#668 1A quiet-house line, #669 1A eligibility test; Ringer `stage7-3c-1a`, manifest `scripts/ringer/stage7/3c-1a-e2e.json`;
+artifacts in gitignored `bench/results/stage7-3c-1a/attempt-1/`).** INCONCLUSIVE for both fixes: the run stopped in 2C
+(`scene 2C rejected 5 times in a row`), 52 turns, 6 of 9 scenes, so 3C was never reached and the 3C `d_r1` change is
+untested. Per scene (turns, stuck, rejections): 1A 8/4/0, 1B 8/0/0, 1C 7/3/0, 2A 9/3/2, 2B 8/2/0, 2C 11/2/7 (no exit).
+All of 1A-2B left by play. Rejections 9, game breaks 0. 2C: seven rejections, all `narration mentions an unavailable
+entity 'security corridors'`, after the raw player chose "Go to Detention Level 3, Block C, cells 17-20 with Brandon"
+(turns 3, 4, 7-11); 2A had `detention level` (turn 7) and `security corridors` (turn 8) rejections. 1A: the
+turn-8 outdoor reading state the quiet-house probe replayed was not reached (this player went back into the house on its
+own at turn 4), so that fix is neither confirmed nor contradicted. One sample; do not read it as a rate. Next: the
+2C `security corridors` rejection loop blocks the whole-game run and is the new first problem; the 3C and 1A fixes need a
+run that gets past 2C. A second attempt is Brandon's call (each attempt counts).
+
+**Stage 7 2C rejection loop DIAGNOSED (2026-10-18, offline read plus 33 hosted narrator calls; probe
+`scripts/ringer/stage7/2c_replay_probe.py`, Ringer `2c-replay-probe-{build,smoke,n10}`, results
+`~/dev/ringer-work/2c-replay/{smoke,n10}/`).** Source: the `stage7-3c-1a` run, 2C turns 3, 4, 7-11. In 2A turn 6 the
+accepted reply created the narrator group "Kristin and Brandon" with place `security corridors` (a 3A place,
+`world.yaml:53`). In 2C turn 3 the player's "Go with Brandon to Detention Level 3..." made the engine resolve
+`Brandon` to that group (`engine_resolutions: {Brandon: 'Kristin and Brandon'}`), so the narrator prompt carried
+"Kristin and Brandon. Place: security corridors." (THINGS and PLAYER) and the narrator wrote the place; the leak guard
+then refused it as `unavailable entity 'security corridors'`. Replay of the recorded turn-3 prompt, 10 samples per arm,
+every reply read: control 10/10 say "security corridors" (each would be rejected); deleting the two group lines 0/10;
+moving the group to `command levels` 0/10. Side effect seen in all arms: narration often jumps straight to Detention
+Level 3 (control 7/10, fixed arms 2/10). NOT yet done: the fix. Open questions: why the same term was accepted in 2A
+turn 6 and rejected in 2A turn 8; whether a narrator-created group's place should be reset on scene change (engine,
+story-agnostic) or the group should not be resolved from a bare `Brandon` in 2C.
+
+**Stage 7 3C and 1A fixes MERGED (2026-10-18; merge commits #667 `801e5f93`, #668 `12a6f667`, #669 `995b9f07`).**
+3C (#667): in the `stage7-2b-entry` run 3C had 8 stuck turns and ended on the timer because `k_sl_3c_d_r1` (national
+network fragments) never fired; its verb group listed `broadcast the reports` but not the -ing form, and `d_r1` gates
+`e_r1`/`e_r2`. Added `broadcasting the reports`, `broadcasting reports`, `relay the reports`, `relaying the reports`;
+11 rows pinned in `tests/test_3c_cue_chain.py`. Compound commands that also say "coordinate rescue efforts" still tie
+`d_r1`/`d_r2` and return no match (pinned as None). UNTESTED in play: the `stage7-3c-1a` run stopped in 2C.
+1A diagnosis (ChatGPT answer `.plans/astra-1a-plan.md`, checked against the files): the harness's stuck flag
+(`blind-player.js:330`) means no mapped affordance, no new storylet and no new grounding id, not "no reveal". After
+`b_r1` the reveal `d_r1` is deliberately ineligible (`ALREADY_ESTABLISHED`; `storylet-routes.yaml:815` closes the D
+route), so reading the files again earns nothing by design. Real defects were prose: the turn-8 reply re-entered the
+house although the engine had put Kristin outside. Probe (`scripts/ringer/stage7/1a_replay_probe.py`, Ringer
+`1a-replay-probe-{build,smoke,n10}`, results `~/dev/ringer-work/1a-replay/n10/`, 40 hosted calls, every reply read):
+B8 control 9/10 re-enter the house, 3/10 do the reading; with the `k_scene_1a_entry` statement shortened to "Michelle
+is missing." 0/10 and 10/10 (#668). B7 adding the stabilization-centers research to `k_sl_1a_b_r1`: 3/10 use it, 2/10
+invent password or encryption steps vs 1/10 control, laptop still called Michelle's: NOT adopted. Regression test
+#669 (`tests/test_1a_research_files_eligibility.py`) pins `d_r1` ineligible after `b_r1`, eligible after the recording
+only, and the raw `b_r1`/`d_r1` word tie. Not changed (ChatGPT: no isolated fix justified): truck/laptop movement loops,
+A's repeated park journey. Open from that answer: the raw reason B8's engine stood Kristin up, and travel narrated
+before the scene transition.
