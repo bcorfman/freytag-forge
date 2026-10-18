@@ -8,7 +8,7 @@ import pytest
 from check_door_probe import check
 from door_continuation import action_groups, matched_ids
 from door_probe import EXPERIMENTS, bridge_material, dry_run, write_failed_response
-from door_prompt import ARMS, COMMAND, PromptSelection, patch_prompt, prompt_plan, select_prompt
+from door_prompt import ARMS, COMMAND, GROUNDED_LINES, PromptSelection, patch_prompt, prompt_plan, select_prompt
 from door_transport import RawRequestError, SpendBudget, raw_request
 
 from bench.core import load_variation, package_and_state
@@ -106,6 +106,51 @@ def test_completion_system_ablation_is_exact_and_checker_friendly(tmp_path: Path
     assert run["experiment"] == "completion"
     assert run["caps"] == EXPERIMENTS["completion"]["caps"][1]
     assert check(tmp_path, 1, "dry", "completion") == []
+
+
+def test_grounded_config_prompt_diff_variations_and_dry_checker(tmp_path: Path) -> None:
+    assert EXPERIMENTS["grounded"]["arms"] == ("control", "grounded")
+    assert EXPERIMENTS["grounded"]["caps"] == {
+        1: {"raw": 2, "cloudflare": 10, "player": 4},
+        12: {"raw": 24, "cloudflare": 120, "player": 48},
+    }
+    selection = select_prompt()
+    control = patch_prompt(selection, "control", "grounded")
+    grounded = patch_prompt(selection, "grounded", "grounded")
+    assert control["user"] == selection.user
+    assert control["hashes"]["user"] == control["hashes"]["original_user"]
+    assert grounded["system"] == control["system"]
+    assert grounded["original_user"] == control["original_user"]
+    appended = "".join(f"- {line}\n" for line in GROUNDED_LINES)
+    anchor = "- This happens now. Show it in the scene: A second credential check threatens their inspector cover.\n"
+    assert grounded["user"] == control["user"].replace(anchor, anchor + appended, 1)
+    assert all(f"+- {line}" in grounded["diff"] for line in GROUNDED_LINES)
+    for arm, package_path in EXPERIMENTS["grounded"]["variations"].items():
+        variation = load_variation(Path("bench/variations") / package_path)
+        package, _ = package_and_state(variation, "2A")
+        assert variation["_package_path"].endswith(
+            "bench/frozen/continuity-pre-2a-panel" if arm == "control" else "data/stories/continuity-initiative"
+        )
+        assert package.story_id == "continuity_initiative"
+    dry_run(tmp_path, 1, "grounded")
+    assert [(row["rep"], row["arm"]) for row in json.loads((tmp_path / "results.json").read_text())["rows"]] == [
+        (1, "control"),
+        (1, "grounded"),
+    ]
+    assert check(tmp_path, 1, "dry", "grounded") == []
+
+
+def test_grounded_rejects_missing_or_duplicate_anchor() -> None:
+    selection = select_prompt()
+    anchor = "- This happens now. Show it in the scene: A second credential check threatens their inspector cover.\n"
+    missing = PromptSelection(selection.system, selection.user.replace(anchor, "", 1), selection.source_path)
+    with pytest.raises(AssertionError, match="facility-gate anchor"):
+        patch_prompt(missing, "grounded", "grounded")
+    duplicate = PromptSelection(
+        selection.system, selection.user + "\n".join(f"- {line}" for line in GROUNDED_LINES), selection.source_path
+    )
+    with pytest.raises(AssertionError, match="already present"):
+        patch_prompt(duplicate, "grounded", "grounded")
 
 
 def test_budget_reserves_before_request_and_parser_rejects_bad_envelope() -> None:

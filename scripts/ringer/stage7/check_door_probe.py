@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from door_continuation import _matches_all
-from door_probe import EXPERIMENTS
+from door_probe import EXPERIMENTS, ROOT, _package_bridge_material
 from door_prompt import patch_prompt, select_prompt
 
 from bench.core import ledger_rows
@@ -206,6 +206,45 @@ def _check_completion(source: dict[str, Any], rows: list[dict[str, Any]], live: 
                     errors.append(f"{row.get('row_id')}: authored bridge/entry differs from completion control")
 
 
+def _check_grounded(source: dict[str, Any], errors: list[str]) -> None:
+    prompts = source.get("prompts", {})
+    control = prompts.get("control", {})
+    grounded = prompts.get("grounded", {})
+    if control.get("user") != control.get("original_user"):
+        errors.append("grounded control: user differs from original_user")
+    if grounded.get("original_user") != control.get("original_user"):
+        errors.append("grounded: original users differ across arms")
+    if control.get("system") != grounded.get("system"):
+        errors.append("grounded: system prompts differ across arms")
+    if control.get("hashes", {}).get("system") != control.get("hashes", {}).get("original_system"):
+        errors.append("grounded control: system hash differs from original_system hash")
+    if grounded.get("hashes", {}).get("system") != grounded.get("hashes", {}).get("original_system"):
+        errors.append("grounded: system hash differs from original_system hash")
+    expected = patch_prompt(select_prompt(), "grounded", "grounded")
+    if grounded.get("user") != expected["user"] or grounded.get("diff") != expected["diff"]:
+        errors.append("grounded: user is not exactly the four-line CONSTRAINTS append")
+    if grounded.get("diff") == control.get("diff"):
+        errors.append("grounded: user diff is not distinct from control")
+    bridges = source.get("bridges")
+    if not isinstance(bridges, dict):
+        errors.append("grounded: per-arm bridge material is missing")
+        return
+    prefix = source.get("bridge", {}).get("prefix")
+    if not isinstance(prefix, str):
+        errors.append("grounded: recorded narrator prefix is missing")
+        return
+    for arm in EXPERIMENTS["grounded"]["arms"]:
+        saved = bridges.get(arm)
+        if not isinstance(saved, dict):
+            errors.append(f"grounded: bridge material for {arm} is missing")
+            continue
+        path = ROOT / "bench/variations" / EXPERIMENTS["grounded"]["variations"][arm]
+        expected_bridge = _package_bridge_material(path, prefix)
+        for field in ("bridge", "entry", "fixed"):
+            if saved.get(field) != expected_bridge[field]:
+                errors.append(f"grounded {arm}: {field} does not match its variation package")
+
+
 def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
     errors: list[str] = []
     try:
@@ -284,6 +323,8 @@ def check(out: Path, n: int, mode: str, experiment: str = "door") -> list[str]:
             errors.append(f"prompts/{arm}: prompt hashes differ from fixture")
     if experiment == "completion":
         _check_completion(source, rows, live, errors)
+    elif experiment == "grounded":
+        _check_grounded(source, errors)
     if mode == "reviewed":
         _check_reviewed(out, rows, n, arms, errors)
     return errors

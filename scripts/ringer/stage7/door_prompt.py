@@ -26,6 +26,16 @@ LIMITS_SENTENCE = (
     "Kristin notes its limits before they move on: it can report faults and cycle noncritical systems, "
     "but it cannot open detention cells or alter the main flood controls."
 )
+GROUNDED_LINES = (
+    "cooling-service archive panel is beside the inspection console in the infrastructure corridors.",
+    "The cooling-service archive panel leads directly from the infrastructure corridors into the records archive.",
+    "The cooling-service archive panel opens with a push.",
+    "Using the cooling-service archive panel requires no further credentials.",
+)
+GROUNDED_ANCHORS = (
+    "- facility gate is at the facility perimeter.",
+    "- This happens now. Show it in the scene: A second credential check threatens their inspector cover.",
+)
 ARMS = ("control", "review", "stale-scene", "wording", "fixed-control", "bridge")
 DOOR_REPLACEMENTS = {
     "review": (
@@ -84,6 +94,7 @@ PROMPT_EXPERIMENTS = {
     "door": {"arms": ARMS, "replacements": DOOR_REPLACEMENTS},
     "source": {"arms": ("control", "location", "limits"), "replacements": SOURCE_REPLACEMENTS},
     "completion": {"arms": ("control", "no-finish"), "replacements": {}},
+    "grounded": {"arms": ("control", "grounded"), "replacements": {}},
 }
 REPLACEMENTS = DOOR_REPLACEMENTS
 
@@ -155,6 +166,7 @@ def patch_prompt(selection: PromptSelection, arm: str, experiment: str = "door")
         raise ValueError(f"unknown arm {arm}")
     original = selection.user
     sections = _sections(original)
+    patched_sections = dict(sections)
     if experiment == "door":
         global_credential = original.count("Brandon prepares technical credentials while Kristin chooses")
         if global_credential != 2:
@@ -166,7 +178,17 @@ def patch_prompt(selection: PromptSelection, arm: str, experiment: str = "door")
             raise AssertionError(f"perimeter sentence global count is {perimeter}, expected 1")
         if corridor != 2:
             raise AssertionError(f"opened-corridor sentence global count is {corridor}, expected 2")
-    patched_sections = dict(sections)
+    elif experiment == "grounded" and arm == "grounded":
+        constraints = sections["CONSTRAINTS"]
+        existing = [line for line in GROUNDED_LINES if line in original]
+        if existing:
+            raise AssertionError(f"grounded line already present: {existing[0]!r}")
+        if not constraints.endswith("\n\n"):
+            raise AssertionError("grounded CONSTRAINTS section must end with a blank line")
+        body = constraints.rstrip("\n")
+        if not any(body.endswith(anchor) for anchor in GROUNDED_ANCHORS):
+            raise AssertionError("grounded CONSTRAINTS section lacks its facility-gate anchor")
+        patched_sections["CONSTRAINTS"] = body + "\n" + "\n".join(f"- {line}" for line in GROUNDED_LINES) + "\n\n"
     for section, old, new in PROMPT_EXPERIMENTS[experiment]["replacements"].get(arm, ()):
         patched_sections[section] = _replace_line(patched_sections[section], section, old, new)
     # Replace section bodies at their original offsets, preserving all separators.

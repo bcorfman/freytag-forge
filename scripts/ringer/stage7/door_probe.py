@@ -39,6 +39,7 @@ from storygame.runtime.engine import RuntimeEngine  # noqa: E402
 CAPS = {1: {"raw": 4, "cloudflare": 28, "player": 12}, 12: {"raw": 48, "cloudflare": 336, "player": 144}}
 SOURCE_CAPS = {1: {"raw": 3, "cloudflare": 15, "player": 6}, 12: {"raw": 36, "cloudflare": 180, "player": 72}}
 COMPLETION_CAPS = {1: {"raw": 2, "cloudflare": 10, "player": 4}, 12: {"raw": 24, "cloudflare": 120, "player": 48}}
+GROUNDED_CAPS = {1: {"raw": 2, "cloudflare": 10, "player": 4}, 12: {"raw": 24, "cloudflare": 120, "player": 48}}
 VARIATIONS = {
     "control": "stage7-door-control.json",
     "review": "stage7-door-review.json",
@@ -53,6 +54,10 @@ SOURCE_VARIATIONS = {
     "limits": "stage7-door-source-limits.json",
 }
 COMPLETION_VARIATIONS = {"control": "stage7-door-control.json", "no-finish": "stage7-door-control.json"}
+GROUNDED_VARIATIONS = {
+    "control": "stage7-door-grounded-control.json",
+    "grounded": "stage7-door-grounded.json",
+}
 EXPERIMENTS = {
     "door": {"arms": ARMS, "variations": VARIATIONS, "caps": CAPS},
     "source": {"arms": PROMPT_EXPERIMENTS["source"]["arms"], "variations": SOURCE_VARIATIONS, "caps": SOURCE_CAPS},
@@ -60,6 +65,11 @@ EXPERIMENTS = {
         "arms": PROMPT_EXPERIMENTS["completion"]["arms"],
         "variations": COMPLETION_VARIATIONS,
         "caps": COMPLETION_CAPS,
+    },
+    "grounded": {
+        "arms": PROMPT_EXPERIMENTS["grounded"]["arms"],
+        "variations": GROUNDED_VARIATIONS,
+        "caps": GROUNDED_CAPS,
     },
 }
 
@@ -94,7 +104,7 @@ def write_failed_response(out: Path, error: RawRequestError) -> Path:
 
 def bridge_material() -> dict[str, Any]:
     recorded = recorded_transition()
-    package, _ = package_and_state(load_variation(ROOT / "bench/variations/stage7-door-control.json"), "2A")
+    package, _ = package_and_state(load_variation(ROOT / "bench/variations/stage7-door-grounded-control.json"), "2A")
     source = next(s for s in package.scenes if s.metadata.scene_id == "2A")
     target = next(s for s in package.scenes if s.metadata.scene_id == "2B")
     bridge, entry = source.metadata.bridge_text["t_2a_2b"], target.metadata.entry_text
@@ -126,6 +136,23 @@ def bridge_material() -> dict[str, Any]:
     }
 
 
+def _package_bridge_material(variation_path: Path, prefix: str) -> dict[str, Any]:
+    variation = load_variation(variation_path)
+    package, _ = package_and_state(variation, "2A")
+    source = next(s for s in package.scenes if s.metadata.scene_id == "2A")
+    target = next(s for s in package.scenes if s.metadata.scene_id == "2B")
+    bridge, entry = source.metadata.bridge_text["t_2a_2b"], target.metadata.entry_text
+    suffix = join_narration(
+        (NarrationSegment(kind="narration", text=bridge), NarrationSegment(kind="narration", text=entry))
+    )
+    return {
+        "bridge": bridge,
+        "entry": entry,
+        "fixed": suffix,
+        "screen": join_narration(tuple(NarrationSegment(kind="narration", text=x) for x in (prefix, bridge, entry))),
+    }
+
+
 def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
     config = experiment_config(experiment)
     selection = select_prompt()
@@ -138,6 +165,11 @@ def build_source(out: Path, experiment: str = "door") -> dict[str, Any]:
         "prompts": prompts,
         "bridge": bridge,
     }
+    if experiment == "grounded":
+        source["bridges"] = {
+            arm: _package_bridge_material(ROOT / "bench/variations" / config["variations"][arm], bridge["prefix"])
+            for arm in config["arms"]
+        }
     atomic_json(out / "source-before.json", source)
     atomic_json(out / "source-after.json", source)
     return source
@@ -309,11 +341,12 @@ def live_run(out: Path, n: int, experiment: str = "door") -> None:
                     )
                     atomic_json(out / "results.json", {"mode": "live", "rows": rows})
                     raise RuntimeError(failure) from error
+                authored = source.get("bridges", {}).get(arm, source["bridge"])
                 screen = join_narration(
                     (
                         NarrationSegment(kind="narration", text=raw.proposal.narration),
-                        NarrationSegment(kind="narration", text=source["bridge"]["bridge"]),
-                        NarrationSegment(kind="narration", text=source["bridge"]["entry"]),
+                        NarrationSegment(kind="narration", text=authored["bridge"]),
+                        NarrationSegment(kind="narration", text=authored["entry"]),
                     )
                 )
                 continuation_path = variation_path
