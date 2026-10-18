@@ -450,6 +450,7 @@ item_placements:
   cooling_service_archive_panel: {parent: infrastructure_corridors}
 setting_facts:
 - The cooling-service archive panel connects the infrastructure corridors to the records archive.
+- The cooling-service archive panel opens with a push.
 - Kristin has already reached the records archive.
 - The archive terminals are available for investigation.
 entry_text: "The records archive hummed behind the restricted corridor. The archive terminals held the Initiative's selection files. Those files held answers to why Michelle was taken and who helped build the system that chose her.\n\n"

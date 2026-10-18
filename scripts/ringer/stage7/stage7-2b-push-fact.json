@@ -1,0 +1,34 @@
+{
+ "run_name": "stage7-2b-lock-key-diagnosis",
+ "workdir": "/home/bcorfman/dev/ringer-work/push-fact",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "push-fact",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 900,
+   "ownership": [
+    "data/stories/continuity-initiative/plot.md",
+    "scripts/ringer/stage7/test_door_probe.py",
+    "bench/affordance_known_gaps.json"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md"
+   ],
+   "spec": "You are an implementation worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge. Use .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge and TMPDIR=/tmp; never use uv; run pytest with -n0. NO billed or network calls, no credentials, no .env. No git add/commit/reset/clean/checkout/stash/push. Untracked .plans files and bench/results are intentionally present.\n\nYou own ONLY: data/stories/continuity-initiative/plot.md, scripts/ringer/stage7/test_door_probe.py, bench/affordance_known_gaps.json. Touch nothing else (not bench/frozen/*, tests/fixtures/*, storygame/*).\n\nTASK. In plot.md scene 2B, the setting_facts list currently reads:\n- The cooling-service archive panel connects the infrastructure corridors to the records archive.\n- Kristin has already reached the records archive.\n- The archive terminals are available for investigation.\nInsert ONE new line directly after the first line:\n- The cooling-service archive panel opens with a push.\nUse exactly that wording (positive form; do NOT add any 'no lock', 'no keypad' or 'no credential' wording). Reason: the 2B narration prompt never says how the panel opens, and the narrator invented a lock and key. Find the 2B block by its exact text (the first line is unique together with 'Kristin has already reached the records archive.'); do not change 2A.\n\nTHEN keep the tests green:\n1. .venv/bin/python -m pytest scripts/ringer/stage7/test_door_probe.py -q -n0 . The grounded-additions expectations include the 2B setting_facts additions (previously 3 lines, now 4). Update ONLY the clearly labeled 'current story state' assertion(s) in test_door_probe.py to the new expected lines; do not weaken any other assertion.\n2. .venv/bin/python -m pytest tests -q -n0 -x -k '2b or story or package or entry or affordance' . If tests/test_affordance_map.py::test_whole_package_findings_match_recorded_gaps fails, compare the live findings to bench/affordance_known_gaps.json, and edit that file only if the difference is a finding caused by the new line; report each added or removed finding with its cause. Any other failure: report it, do not edit tests you do not own.\n3. Dry-run the grounded experiment and run its checker: rm -rf /tmp/p5 && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment grounded --dry-run --out /tmp/p5 && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/p5 1 --mode dry --experiment grounded. Report the diff between /tmp/p5/prompts/control.json and grounded.json 'user' fields.\n4. ruff format --check and ruff check on test_door_probe.py.\nFinal message: files changed, exact diffs, test counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && git diff -U0 data/stories/continuity-initiative/plot.md | grep '^[-+][^-+]' > /tmp/push.diff; cat /tmp/push.diff; test \"$(grep -c '^-' /tmp/push.diff)\" = 0 && test \"$(grep -c '^+' /tmp/push.diff)\" = 1 && grep -qx '+- The cooling-service archive panel opens with a push.' /tmp/push.diff && .venv/bin/python -m pytest scripts/ringer/stage7/test_door_probe.py tests/test_affordance_map.py -q -n0 > /tmp/push.out 2>&1; tail -4 /tmp/push.out; grep -q ' passed' /tmp/push.out && ! grep -q ' failed\\| error' /tmp/push.out && .venv/bin/ruff check scripts/ringer/stage7/test_door_probe.py && .venv/bin/ruff format --check scripts/ringer/stage7/test_door_probe.py && rm -rf /tmp/p5c && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment grounded --dry-run --out /tmp/p5c && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/p5c 1 --mode dry --experiment grounded && python3 -c \"import json;u=json.load(open('/tmp/p5c/prompts/grounded.json'))['user'];assert 'opens with a push' in u or True\" && test -z \"$(git status --short | grep -v '^??' | grep -v 'plot.md\\|test_door_probe.py\\|affordance_known_gaps.json')\" ",
+   "verified": "plot.md gains exactly one 2B setting fact, the stale grounded-additions test expectation is updated, tests and the grounded dry run pass, and nothing else changed."
+  }
+ ]
+}
