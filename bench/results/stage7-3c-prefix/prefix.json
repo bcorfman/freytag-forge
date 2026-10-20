@@ -1,0 +1,1580 @@
+{
+  "bridge_text": "Brandon disconnected the relay from JANUS and held it open while Kristin and Michelle began the broadcast. The evidence was moving beyond Charles's control as water rose through the outer access level.",
+  "committed_reveal_ids": [
+    "k_1b_stranger_evasion",
+    "k_bridge_1b_departure",
+    "k_bridge_1c_infiltration",
+    "k_bridge_2b_archive_crisis",
+    "k_bridge_3a_command_assault",
+    "k_bridge_3b_broadcast",
+    "k_scene_1a_entry",
+    "k_scene_1b_entry",
+    "k_scene_1c_entry",
+    "k_scene_2a_entry",
+    "k_scene_2b_entry",
+    "k_scene_2c_entry",
+    "k_scene_3a_entry",
+    "k_scene_3b_entry",
+    "k_sl_1a_a_r1",
+    "k_sl_1a_b_r0",
+    "k_sl_1a_b_r1",
+    "k_sl_1a_b_r2",
+    "k_sl_1a_d_r1",
+    "k_sl_1b_a_r1",
+    "k_sl_1b_b_r1",
+    "k_sl_1b_b_r2",
+    "k_sl_1b_c_r1",
+    "k_sl_1b_c_r2",
+    "k_sl_1c_a_r1",
+    "k_sl_1c_b_r1",
+    "k_sl_1c_c_r1",
+    "k_sl_2a_b_r1",
+    "k_sl_2a_b_r2",
+    "k_sl_2a_c_r1",
+    "k_sl_2a_c_r1_rebecca_observes",
+    "k_sl_2a_c_r2",
+    "k_sl_2a_c_r2_rebecca_observes",
+    "k_sl_2a_e_r1",
+    "k_sl_2b_a_r1",
+    "k_sl_2b_b_r1",
+    "k_sl_2b_b_r2",
+    "k_sl_2b_c_r1",
+    "k_sl_2b_c_r2",
+    "k_sl_2c_b_r1",
+    "k_sl_2c_b_r2",
+    "k_sl_2c_c_r1",
+    "k_sl_2c_c_r2",
+    "k_sl_2c_d_r1",
+    "k_sl_2c_d_r2",
+    "k_sl_3a_a_r1",
+    "k_sl_3a_a_r2",
+    "k_sl_3a_b_r2",
+    "k_sl_3a_c_r1",
+    "k_sl_3a_c_r2",
+    "k_sl_3a_d_r1",
+    "k_sl_3a_d_r2",
+    "k_sl_3b_a_r1",
+    "k_sl_3b_a_r2",
+    "k_sl_3b_b_r1",
+    "k_sl_3b_b_r2",
+    "k_sl_3b_c_r1",
+    "k_sl_3b_c_r2",
+    "k_sl_3b_d_r1",
+    "k_sl_3b_d_r2",
+    "k_sl_3b_e_r1"
+  ],
+  "entry_text": "The broadcast chamber lights steadied as Brandon's relay held open. Outside, Charles's emergency deluge was filling the outer access level and forcing water toward the maintenance routes; inside, the evidence was ready to leave for good.\n\n",
+  "facts": [
+    {
+      "object": null,
+      "predicate": "archive_crisis_understood",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "archive_security_sweep",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "behavioral_experiments_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_claimed_reform_motive",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_confession_available",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_identified",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_janus_role_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_retains_system_access",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "broadcast_started",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "captives_confirmed_alive",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "charles_abandoned_rebecca",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "charles_framed_officials_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "combined_broadcast_rescue_plan_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "command_levels_assault_underway",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "continuity_initiative_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "detention_locations_offer_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "detention_locations_secured",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "detention_lockdown_spreading",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "detention_uprising_started",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "evidence_ready_to_transmit",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "facility_destruction_threat",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "facility_infiltration_needed",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "facility_perimeter_reached",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "facility_proof",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "false_identities_ready",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "home_search_window_narrowing",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "human_security_control",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "identity_scrutiny_visible",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "inspector_cover_under_review",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "janus_evidence",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "janus_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "memory_card_recovered",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_abduction_suspicion",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_lead_actionable",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_reached",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_resistance_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_selected_for_resistance_influence",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_warning_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "military_override_codes_available",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "missing_may_be_alive",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "national_detention_network_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "override_codes_deadline_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "park_lockdown_spreading",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "park_pursuit_resolved",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "patrol_return_pressure",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "prisoner_records_corrupted",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "purge_clock_started",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "purge_transfers_underway",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "pursuit_closing_in",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "rebecca_experiment_approval_confronted",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "rebecca_observing_infiltrators",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "rebecca_office_reached",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "rebecca_office_required_for_broadcast",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "relay_open",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "restricted_corridor_access",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_1a_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_1b_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_1c_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_2a_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_2b_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_2c_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_3a_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_3b_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "story_elapsed_seconds",
+      "subject": "story",
+      "value": "3780"
+    },
+    {
+      "object": null,
+      "predicate": "terminal_security_escalating",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "terminal_sweep_closing",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "transport_route_departure_ready",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "transport_route_identified",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "trust_brandon",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "uprising_prepared",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": "captive",
+      "predicate": "wk_axis",
+      "subject": "brandon",
+      "value": "free"
+    },
+    {
+      "object": "conscious",
+      "predicate": "wk_axis",
+      "subject": "brandon",
+      "value": "conscious"
+    },
+    {
+      "object": "captive",
+      "predicate": "wk_axis",
+      "subject": "charles",
+      "value": "free"
+    },
+    {
+      "object": "open",
+      "predicate": "wk_axis",
+      "subject": "cooling_service_archive_panel",
+      "value": "closed"
+    },
+    {
+      "object": "captive",
+      "predicate": "wk_axis",
+      "subject": "kristin",
+      "value": "free"
+    },
+    {
+      "object": "closed",
+      "predicate": "wk_axis",
+      "subject": "kristin_laptop",
+      "value": "closed"
+    },
+    {
+      "object": "captive",
+      "predicate": "wk_axis",
+      "subject": "michelle",
+      "value": "free"
+    },
+    {
+      "object": "open",
+      "predicate": "wk_axis",
+      "subject": "michelle_drawer",
+      "value": "closed"
+    },
+    {
+      "object": "captive",
+      "predicate": "wk_axis",
+      "subject": "rebecca",
+      "value": "free"
+    },
+    {
+      "object": "captive",
+      "predicate": "wk_axis",
+      "subject": "senior_official",
+      "value": "free"
+    },
+    {
+      "object": "intact",
+      "predicate": "wk_axis",
+      "subject": "transit_card",
+      "value": "intact"
+    },
+    {
+      "object": "overturned",
+      "predicate": "wk_axis",
+      "subject": "workstation_chair",
+      "value": "overturned"
+    },
+    {
+      "object": "kristin",
+      "predicate": "wk_companion",
+      "subject": "brandon",
+      "value": null
+    },
+    {
+      "object": "kristin",
+      "predicate": "wk_companion",
+      "subject": "michelle",
+      "value": null
+    },
+    {
+      "object": "true",
+      "predicate": "wk_moved",
+      "subject": "brandon",
+      "value": null
+    },
+    {
+      "object": "true",
+      "predicate": "wk_moved",
+      "subject": "kristin",
+      "value": null
+    },
+    {
+      "object": "true",
+      "predicate": "wk_moved",
+      "subject": "michelle",
+      "value": null
+    },
+    {
+      "object": "true",
+      "predicate": "wk_moved",
+      "subject": "override_codes",
+      "value": null
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "archive_terminals",
+      "value": "janus_archive"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "back_door",
+      "value": "kitchen"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "brandon",
+      "value": "broadcast_relay"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "broadcast_chamber",
+      "value": "executive_office"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "broadcast_relay",
+      "value": "regional_facility"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "captives",
+      "value": "detention_level"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "cooling_service_archive_panel",
+      "value": "infrastructure_corridors"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "copied_janus_files",
+      "value": "kristin"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "detention_level",
+      "value": "regional_facility"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "detention_medical_records",
+      "value": "medical_level"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "emergency_surface_gates",
+      "value": "facility_escape"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "executive_office",
+      "value": "regional_facility"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "facility_escape",
+      "value": "regional_facility"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "facility_gate",
+      "value": "facility_perimeter"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "facility_perimeter",
+      "value": "regional_facility"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "freight_terminal",
+      "value": "regional_facility"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "gate_status_panel",
+      "value": "detention_level"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "hideout_servers",
+      "value": "brandon_hideout"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "holding_block",
+      "value": "detention_level"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "house_gate",
+      "value": "outside_house"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "infrastructure_corridors",
+      "value": "regional_facility"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "inspection_console",
+      "value": "infrastructure_corridors"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "janus_archive",
+      "value": "regional_facility"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "kitchen",
+      "value": "mcgehee_home"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "kristin",
+      "value": "executive_office"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "kristin_laptop",
+      "value": "truck_passenger_seat"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "kristin_truck",
+      "value": "freight_terminal"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "loading_docks",
+      "value": "freight_terminal"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "logistics_terminal",
+      "value": "freight_terminal"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "maintenance_network",
+      "value": "purge_chamber"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "medical_level",
+      "value": "detention_level"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "medical_terminal",
+      "value": "janus_archive"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "memory_card",
+      "value": "kristin"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "michelle",
+      "value": "executive_office"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "michelle_drawer",
+      "value": "michelle_workstation"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "michelle_drawer_binder_clips",
+      "value": "michelle_drawer"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "michelle_drawer_pens",
+      "value": "michelle_drawer"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "michelle_drawer_spare_batteries",
+      "value": "michelle_drawer"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "michelle_drawer_stapler",
+      "value": "michelle_drawer"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "michelle_phone",
+      "value": "kitchen"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "michelle_photograph",
+      "value": "park_bench"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "michelle_workstation",
+      "value": "kitchen"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "number_sequence",
+      "value": "park_bench"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "observation_shaft",
+      "value": "service_level"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "override_codes",
+      "value": "kristin"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "park_bench",
+      "value": "los_angeles_park"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "purge_chamber",
+      "value": "regional_facility"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "rebecca",
+      "value": "executive_office"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "rebecca_desk",
+      "value": "executive_office"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "security_corridors",
+      "value": "regional_facility"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "senior_official",
+      "value": "captives"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "service_entrance",
+      "value": "freight_terminal"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "service_gate",
+      "value": "los_angeles_park"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "service_level",
+      "value": "freight_terminal"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "stolen_radio",
+      "value": "detention_level"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "storm_drain",
+      "value": "los_angeles_park"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "transit_card",
+      "value": "park_bench"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "truck_driver_seat",
+      "value": "kristin_truck"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "truck_passenger_seat",
+      "value": "kristin_truck"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "workstation_chair",
+      "value": "kitchen"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "brandon",
+      "value": "watching Kristin in the park"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "cooling_service_archive_panel",
+      "value": "beside the inspection console in the infrastructure corridors"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "detention_medical_records",
+      "value": "in the medical level"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "facility_gate",
+      "value": "at the facility perimeter"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "house_gate",
+      "value": "at the front of the house"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "kristin_laptop",
+      "value": "on the passenger seat of Kristin's truck"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "memory_card",
+      "value": "with Kristin"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "michelle_drawer",
+      "value": "in Michelle's workstation"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "michelle_phone",
+      "value": "on the kitchen floor"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "workstation_chair",
+      "value": "at Michelle's workstation"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "archive_terminals",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "back_door",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "brandon",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "broadcast_chamber",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "broadcast_relay",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "captives",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "cooling_service_archive_panel",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "copied_janus_files",
+      "value": "carried_by"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "detention_level",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "detention_medical_records",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "emergency_surface_gates",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "executive_office",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "facility_escape",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "facility_gate",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "facility_perimeter",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "freight_terminal",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "gate_status_panel",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "hideout_servers",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "holding_block",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "house_gate",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "infrastructure_corridors",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "inspection_console",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "janus_archive",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "kitchen",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "kristin",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "kristin_laptop",
+      "value": "on"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "kristin_truck",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "loading_docks",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "logistics_terminal",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "maintenance_network",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "medical_level",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "medical_terminal",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "memory_card",
+      "value": "carried_by"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "michelle",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "michelle_drawer",
+      "value": "part_of"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "michelle_drawer_binder_clips",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "michelle_drawer_pens",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "michelle_drawer_spare_batteries",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "michelle_drawer_stapler",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "michelle_phone",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "michelle_photograph",
+      "value": "under"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "michelle_workstation",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "number_sequence",
+      "value": "under"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "observation_shaft",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "override_codes",
+      "value": "carried_by"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "park_bench",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "purge_chamber",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "rebecca",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "rebecca_desk",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "security_corridors",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "senior_official",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "service_entrance",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "service_gate",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "service_level",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "stolen_radio",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "storm_drain",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "transit_card",
+      "value": "under"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "truck_driver_seat",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "truck_passenger_seat",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "workstation_chair",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_seeded",
+      "subject": "__world__",
+      "value": "true"
+    },
+    {
+      "object": "behavioral_experiments_known",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "brandon_identified",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "facility_perimeter_reached",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "memory_card_recovered",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "military_override_codes_available",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "rebecca_office_reached",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "relay_open",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    }
+  ],
+  "git_sha": "5633582d41a90ed220da7be76ec5df881d7b30cb",
+  "knowledge_status": {
+    "janus_selection": {
+      "available": false,
+      "committed": false,
+      "matching_entry_ids": []
+    },
+    "relay_open": {
+      "available": true,
+      "committed": true,
+      "matching_entry_ids": [
+        "k_sl_3b_c_r1",
+        "k_sl_3b_c_r2"
+      ]
+    }
+  },
+  "package_content_hash": "9768c5ca33ec122e25f249c1d61a260f4099e78c764f48aae7b7eb5709cb8277",
+  "package_id": "continuity_initiative",
+  "scene": "3B",
+  "transcript_lines": [
+    "Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle\u2019s undamaged phone to a removal too deliberate to be looting.",
+    "A memory card is taped beneath the KMS drawer. Michelle left it there.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "The card holds Michelle's saved files and a damaged recording. The recording warns, \"Do not trust the emergency broadcasts.\" The files name the Continuity Initiative and point to a dead drop at a bench in the park.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands. Kristin starts the truck and heads for the park, avoiding checkpoints and emergency patrols. The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.",
+    "The man says his name is Brandon Corfman. He says the missing people are being moved alive. A tactical team is closing across the park. Brandon says he can open the secured service gate beside the storm drain. He tells Kristin to follow him.",
+    "As patrols close in, Brandon opens a secured service gate. He leads Kristin through it.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands. The park pursuit was behind them. Kristin and Brandon headed for the freight terminal along the transport route. Michelle's lead brought Kristin and Brandon to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. They kept to the shadow of the loading docks, looking for a way into whatever lay below.",
+    "Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running. The observation shaft overlooks the processing line. Kristin can read the identification numbers on the uniforms below.",
+    "Kristin matches sedated prisoners in the processing area to missing-person records. They are alive. The logistics computer waits beside the service entrance.",
+    "The logistics computer shows Kristin that Los Angeles is one regional hub. The detention network spans the country.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands. The observation shaft showed them living captives in an active regional command center, but the main facility could not be reached from the service level without triggering security. Kristin and Brandon withdrew to prepare a way inside. Brandon's hideout was buried inside a dead communications center: servers, salvaged hardware, and years of leaked Continuity Initiative documents. Somewhere beneath the city the facility waited, and its unstable cooling-water and ventilation readings were exactly the kind of flaw a pair of outside inspectors might be sent to examine.",
+    "Kristin finds a cooling weakness she can use for a real inspection warning. Brandon builds their cover around it. At the facility checkpoint, Kristin must show the inspector credentials.",
+    "Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks. A supervisor questions why their inspection was not scheduled. Kristin can explain the unscheduled inspection to the supervisor.",
+    "Kristin and Brandon open a restricted infrastructure corridor. They have access to the facility and its limited inspection console.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands. Kristin and Brandon gained access to the infrastructure corridors under their inspection cover. They continued into the records archive. Inside the records archive, the archive terminals are ready to search. They hold the Initiative's selection files, including Michelle's file.",
+    "A concrete authored consequence lands.",
+    "JANUS ranked every American for detention, leverage, or control. Michelle's file holds nothing more. Brandon's name may be in the development records.",
+    "Brandon's name is in the first JANUS records. He admits he helped write the system. A warning message blinks on the medical terminal.",
+    "Michelle is changing classifications. She is hiding vulnerable prisoners. Maintenance reports wait on the next terminal.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands. The JANUS evidence in the archive showed what the system was built to do. Kristin and Brandon understood how much danger that evidence put them in. The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count. Kristin carried the copied JANUS files. She could check them now.",
+    "A concrete authored consequence lands.",
+    "After Michelle corrupts the records, Charles orders valuable captives transferred. He orders everyone else destroyed within hours. The copied files lie close at hand.",
+    "Kristin and Brandon have enough evidence to expose the conspiracy. Sending it now would reveal their position and seal the detention sectors. A message from Michelle is waiting.",
+    "Michelle's encrypted message marks a maintenance access route into her holding block. Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands. The purge clock was running, and the evidence was ready to transmit. Kristin and Brandon committed to one combined mission: broadcast the truth and rescue the captives. A partly unsecured detention sector opened onto rows of captives. Coded announcements crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.",
+    "Kristin finds Michelle alive. Michelle is directing the prisoners through stolen radios and coded announcements. Michelle points toward the medical level, where the experiment records wait.",
+    "Michelle shows Kristin the medical level. The prisoners were subjected to memory, compliance, and resistance experiments. The senior official waits among the government prisoners.",
+    "The senior official Charles framed gives Kristin one-use authority for the emergency surface gates. It expires when Charles activates his new authority. Michelle turns toward the prisoners at the checkpoints.",
+    "Michelle triggers the coordinated uprising. The prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands. Michelle's uprising disabled cameras and seized checkpoints, while Charles sealed the primary exits and sent armed teams downward. Kristin, Michelle, and Brandon fought upward through the security corridors. Alarms layered over alarms as the facility fought to predict its attackers. Water-pressure warnings flashed on the inspection console while doors opened and closed in empty service corridors that JANUS watched move by move.",
+    "A concrete authored consequence lands.",
+    "Kristin feeds JANUS false alarms. Human operators take control. Rebecca's executive office waits beyond the security corridors.",
+    "Kristin and Michelle enter the executive office. Brandon stays behind in the corridors and holds off the security forces. Rebecca's experiment approvals lie near the marked site list.",
+    "Michelle confronts Rebecca with the experiment approvals. Rebecca offers the detention-site locations as leverage. The executive screen carries a remote channel marked Charles.",
+    "Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level. Brandon waits beside the broadcast controls.",
+    "Brandon disconnects the external relay from JANUS. He sends a confession that authenticates Michelle's evidence.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands."
+  ],
+  "turn_index": 63,
+  "world_parents": {
+    "archive_terminals": "janus_archive",
+    "back_door": "kitchen",
+    "brandon": "broadcast_relay",
+    "brandon_hideout": null,
+    "broadcast_chamber": "executive_office",
+    "broadcast_relay": "regional_facility",
+    "captives": "detention_level",
+    "charles": null,
+    "cooling_service_archive_panel": "infrastructure_corridors",
+    "copied_janus_files": "kristin",
+    "detention_level": "regional_facility",
+    "detention_medical_records": "medical_level",
+    "drainage_pump_controls": null,
+    "emergency_surface_gates": "facility_escape",
+    "executive_office": "regional_facility",
+    "facility_escape": "regional_facility",
+    "facility_gate": "facility_perimeter",
+    "facility_perimeter": "regional_facility",
+    "freight_terminal": "regional_facility",
+    "gate_status_panel": "detention_level",
+    "hideout_servers": "brandon_hideout",
+    "holding_block": "detention_level",
+    "house_gate": "outside_house",
+    "infrastructure_corridors": "regional_facility",
+    "inspection_console": "infrastructure_corridors",
+    "janus_archive": "regional_facility",
+    "kitchen": "mcgehee_home",
+    "kristin": "executive_office",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "freight_terminal",
+    "loading_docks": "freight_terminal",
+    "logistics_terminal": "freight_terminal",
+    "los_angeles_park": null,
+    "maintenance_network": "purge_chamber",
+    "mcgehee_home": null,
+    "medical_level": "detention_level",
+    "medical_terminal": "janus_archive",
+    "memory_card": "kristin",
+    "michelle": "executive_office",
+    "michelle_drawer": "michelle_workstation",
+    "michelle_drawer_binder_clips": "michelle_drawer",
+    "michelle_drawer_pens": "michelle_drawer",
+    "michelle_drawer_spare_batteries": "michelle_drawer",
+    "michelle_drawer_stapler": "michelle_drawer",
+    "michelle_phone": "kitchen",
+    "michelle_photograph": "park_bench",
+    "michelle_workstation": "kitchen",
+    "number_sequence": "park_bench",
+    "observation_shaft": "service_level",
+    "outside_house": null,
+    "override_codes": "kristin",
+    "park_bench": "los_angeles_park",
+    "portable_archive": null,
+    "purge_chamber": "regional_facility",
+    "rebecca": "executive_office",
+    "rebecca_desk": "executive_office",
+    "regional_facility": null,
+    "security_corridors": "regional_facility",
+    "senior_official": "captives",
+    "service_entrance": "freight_terminal",
+    "service_gate": "los_angeles_park",
+    "service_level": "freight_terminal",
+    "stolen_radio": "detention_level",
+    "storm_drain": "los_angeles_park",
+    "transit_card": "park_bench",
+    "truck_driver_seat": "kristin_truck",
+    "truck_passenger_seat": "kristin_truck",
+    "workstation_chair": "kitchen"
+  }
+}
