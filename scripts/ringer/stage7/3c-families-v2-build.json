@@ -1,0 +1,31 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-families-v2-build",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "families-v2-build",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": ["-c", "model_reasoning_effort=medium"],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 400,
+      "ownership": [
+        "bench/variations/stage7-3c-families-v2.json",
+        "scripts/ringer/stage7/three_c_probe.py",
+        "scripts/ringer/stage7/check_three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py",
+        "tests/test_3c_cue_chain.py"
+      ],
+      "spec": "You are an implementer on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. Edit ONLY the files in your ownership list. Never touch data/, src/storygame, other tests, git state or .env. No network or model calls, no billed runs, no uv. Run python as: `PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python`. Existing uncommitted edits in these files must be kept.\n\nGOAL (plan: .plans/chatgpt-3c-stuck-turns-plan.md, Step 7): add a new probe arm `families-v2`: the `pump` arm package (see bench/variations/stage7-3c-pump-need.json) plus ONE extra knowledge.yaml replacement that rewrites only the D-R2 (k_sl_3c_d_r2) action_evidence block. The exact Old and New YAML blocks are the two fenced yaml blocks labelled `Old:` and `New:` in the plan's Step 7 section (search the plan for 'Exact proposed replacement'). Build the JSON programmatically from the plan text so strings are byte-exact; do not retype them.\n\nDeliver: (1) bench/variations/stage7-3c-families-v2.json named `stage7-3c-families-v2` = pump's overrides + that replacement (do NOT stack on the old families variation). The Old block must occur exactly once in data/stories/continuity-initiative/knowledge.yaml; assert that, and load the package with the real loader. (2) Register arm `families-v2` in three_c_probe.py (ALL_ARMS, ARM_FILES) and wherever check_three_c_probe.py/test_three_c_probe.py enumerate arms, so `--arms pump,families-v2` works in play and artifacts modes; keep `families` as is. Add a harness test that the arm resolves and that only D-R2 evidence differs from pump. (3) In tests/test_3c_cue_chain.py add tests (reuse the _families_* helper pattern, parametrized on the variation path) for families-v2: all 34 added alternatives plus `their families` select k_sl_3c_d_r2 when eligible and unique; the 11 commands in the plan's table 'initial free evidence' give exactly the listed outcomes (D2 / none / D1 only / tie returns None); states: both D eligible, D1 spent, D2 spent (alias must not select D2), neither eligible, C2-only, both C orders; E still requires both D; whole-word/possessive/negation controls and #667 controls still pass; music, listening, 'Send the families into danger.', and unrelated recipients (journalists, guards, Brandon) return None. Never weaken an assertion; if real behavior contradicts the plan table, keep the assertion honest and report exactly. Also do a stubbed-provider guarded commit of one alias command selecting D2. Run ruff format and ruff check on touched files.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q tests/test_3c_cue_chain.py tests/test_resolution_cascade.py scripts/ringer/stage7/test_three_c_probe.py && .venv/bin/ruff check tests/test_3c_cue_chain.py scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py && .venv/bin/python -c \"import json;d=json.load(open('bench/variations/stage7-3c-families-v2.json'));r=d['overrides']['knowledge.yaml']['replacements'];assert any('send the families a message' in x['new'] and 'their families' in x['new'] for x in r);print('variation ok',len(r))\" && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --help | grep -q families-v2 || grep -q 'families-v2' scripts/ringer/stage7/three_c_probe.py; test -z \"$(git status --porcelain data src)\"",
+      "expect_files": ["/home/bcorfman/dev/freytag-forge/bench/variations/stage7-3c-families-v2.json"],
+      "verified": "v2 variation loads, only D2 evidence differs from pump, selection/negative/state tests pass, data untouched"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/three-c-posta-turn-index-fix",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "fix-posta-turn-index-check",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1200,
+      "check_timeout_s": 300,
+      "ownership": [
+        "scripts/ringer/stage7/check_three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py"
+      ],
+      "spec": "You are fixing a checker bug in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. Edit ONLY scripts/ringer/stage7/check_three_c_probe.py and scripts/ringer/stage7/test_three_c_probe.py. Never edit data/, storygame/, three_c_probe.py, bench/results/, git state or .env; no billed or network call. No uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, use `.venv/bin/python`.\n\nBug: in check_three_c_probe.py (~line 263) the per-row artifacts check requires scripted_prefix.turn_index == (7 if start == 'postc' else 8). The start 'posta' correctly records turn_index 1 (three_c_probe.py sets state.turn_index = 1 and the plan check at ~line 98 already uses 1 for posta), so every correct posta row fails with 'row does not record the scripted posta turn index'. Fix: make the row check use the same expected value as the plan check (posta 1, postc 7, post8 8), ideally by reusing one shared expression instead of a third copy. In test_three_c_probe.py extend test_scripted_prefix_row_records_checker_turn_index with a ('posta', 1) case (apply_start_prefix must work for posta; read the existing posta tests to see what state it needs) so a regression is caught. Match surrounding style; run ruff format then ruff check on both files.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_custody_result.py 2>&1 | tail -5 && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-custody-smoke 1 --mode artifacts && .venv/bin/ruff check scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py && .venv/bin/ruff format --check scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py && test -z \"$(git status --porcelain data storygame)\" && grep -q posta scripts/ringer/stage7/test_three_c_probe.py",
+      "verified": "posta row passes the artifacts check on the preserved smoke; tests, ruff clean; no data/storygame change",
+      "expect_files": [
+        "scripts/ringer/stage7/check_three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py"
+      ]
+    }
+  ]
+}

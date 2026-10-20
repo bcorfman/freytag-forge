@@ -1,0 +1,23 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-probe-transcript",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [{
+    "key": "probe-running-transcript",
+    "task_type": "code-fix",
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=medium"],
+    "full_access": true,
+    "max_attempts": 2,
+    "timeout_s": 2700,
+    "check_timeout_s": 300,
+    "ownership": ["scripts/ringer/stage7/three_c_probe.py", "scripts/ringer/stage7/test_three_c_probe.py", "scripts/ringer/stage7/check_three_c_probe.py"],
+    "spec": "You are fixing a fidelity defect in a billed-probe harness on freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. Edit ONLY scripts/ringer/stage7/three_c_probe.py, test_three_c_probe.py and check_three_c_probe.py in scripts/ringer/stage7/. Never touch data/, src/, tests/, frontend/, git state, .env. NO network or billed call. Use `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp` and `.venv/bin/python`.\n\nDEFECT: in play mode run_row builds the raw player's screen as only the 3C entry text plus the LATEST narration (see the `screen = join_narration(... entry_text, latest ...)` block). The real blind-player harness (frontend/e2e/blind-player.spec.js line ~53) gives the player the whole page `#transcript`: the entry text and every earlier command and reply. So the probe's player has amnesia: in a post8 smoke it re-tried opening actions because it never saw the five scripted turns. FIX for BOTH --start entry and --start post8: keep a running transcript list of (command, reply_text) pairs and build the screen as: entry text, then for every earlier turn '> <command>' on its own line followed by that turn's narration reply text, separated by blank lines, oldest first. For post8, the transcript must START with the five scripted prefix turns (the POST8_REVEALS commands and the scripted narration replies that apply_post8_prefix produced; make apply_post8_prefix return those replies, e.g. in the prefix dict, if it does not already). Only ACCEPTED turns append their reply; a rejected turn appends nothing to the transcript (the real UI shows a rejection notice, but keep this simple and say so in source.json under `transcript_note`). Cap the transcript sent to the player at the last 12000 characters, dropping oldest turns whole, and record `transcript_chars` per attempt in the turn record. Record in source.json: `player_screen: 'entry text + running transcript of command lines (prefixed with a greater-than sign) and replies, as the page #transcript'`. Do not change anything else (stop rules, caps, outcome classifier, commands mode).\n\nHERMETIC TESTS (real RuntimeEngine, fake provider, fake ask that records every screen it is given; no network): (1) in post8 mode the FIRST screen passed to ask() contains all five scripted commands ('> Send the evidence package.' etc.) and the D-R2 scripted reply text; (2) in entry mode the second screen contains the first command and its reply; (3) a rejected turn's text does not appear in the next screen; (4) the 12000-char cap drops whole oldest turns and keeps the entry text. Finish with pytest on test_three_c_probe.py, ruff format + check on the three files, and dry runs `three_c_probe.py --n 1 --dry-run --start post8 --semantic on --out /tmp/3c-t-dry` plus its check, and the commands-mode dry run `--n 1 --mode commands --start post8 --dry-run --out /tmp/3c-t-cmd` plus its check.",
+    "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py && .venv/bin/ruff check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py && rm -rf /tmp/3c-t-dry /tmp/3c-t-cmd && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start post8 --semantic on --out /tmp/3c-t-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py /tmp/3c-t-dry 1 --mode dry && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --mode commands --start post8 --dry-run --out /tmp/3c-t-cmd && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py /tmp/3c-t-cmd 1 --mode dry && grep -q 'transcript' scripts/ringer/stage7/three_c_probe.py",
+    "expect_files": ["scripts/ringer/stage7/three_c_probe.py"],
+    "verified": "player screen is a running transcript in entry and post8 modes; commands mode unchanged"
+  }]
+}

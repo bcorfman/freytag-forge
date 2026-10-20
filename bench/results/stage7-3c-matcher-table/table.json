@@ -1,0 +1,561 @@
+{
+  "scene": "3C",
+  "reveal_ids": [
+    "k_sl_3c_a_r1",
+    "k_sl_3c_a_r2",
+    "k_sl_3c_b_r1",
+    "k_sl_3c_b_r2",
+    "k_sl_3c_c_r1",
+    "k_sl_3c_c_r2",
+    "k_sl_3c_d_r1",
+    "k_sl_3c_d_r2",
+    "k_sl_3c_e_r1",
+    "k_sl_3c_e_r2"
+  ],
+  "subset_definition": {
+    "1": [
+      "k_sl_3c_a_r1",
+      "k_sl_3c_a_r2"
+    ],
+    "2": [
+      "k_sl_3c_b_r1",
+      "k_sl_3c_b_r2"
+    ],
+    "3": [
+      "k_sl_3c_c_r1",
+      "k_sl_3c_c_r2"
+    ],
+    "4": [
+      "k_sl_3c_c_r2"
+    ],
+    "5": [
+      "k_sl_3c_c_r2"
+    ],
+    "6": [
+      "k_sl_3c_d_r1",
+      "k_sl_3c_d_r2"
+    ],
+    "7": [
+      "k_sl_3c_d_r1",
+      "k_sl_3c_d_r2"
+    ],
+    "8": [
+      "k_sl_3c_d_r1",
+      "k_sl_3c_d_r2"
+    ],
+    "9": [
+      "k_sl_3c_d_r1"
+    ],
+    "10": [
+      "k_sl_3c_d_r1"
+    ],
+    "11": [
+      "k_sl_3c_d_r1"
+    ],
+    "12": [
+      "k_sl_3c_d_r1"
+    ],
+    "13": [
+      "k_sl_3c_d_r1"
+    ],
+    "14": [
+      "k_sl_3c_d_r1"
+    ],
+    "15": [
+      "k_sl_3c_d_r1"
+    ]
+  },
+  "rows": [
+    {
+      "turn": 1,
+      "commands": {
+        "raw": "Keep the broadcast live and complete the transmission of the JANUS evidence.",
+        "normalized": "Keep the broadcast live and complete the transmission of the JANUS evidence."
+      },
+      "bundle_universe_size": 2,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [],
+          "all_ten_current": [],
+          "eligible_deployed": [],
+          "eligible_current": []
+        },
+        "normalized": {
+          "all_ten_deployed": [],
+          "all_ten_current": [],
+          "eligible_deployed": [],
+          "eligible_current": []
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "commands": {
+        "raw": "Stop Rebecca from leaving and secure the Portable data case.",
+        "normalized": "Stop Rebecca from leaving and secure the Portable data case."
+      },
+      "bundle_universe_size": 2,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [
+            "b_r1"
+          ],
+          "all_ten_current": [
+            "b_r1"
+          ],
+          "eligible_deployed": [
+            "b_r1"
+          ],
+          "eligible_current": [
+            "b_r1"
+          ]
+        },
+        "normalized": {
+          "all_ten_deployed": [
+            "b_r1"
+          ],
+          "all_ten_current": [
+            "b_r1"
+          ],
+          "eligible_deployed": [
+            "b_r1"
+          ],
+          "eligible_current": [
+            "b_r1"
+          ]
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "commands": {
+        "raw": "Use the drainage pump controls to stop the rising water and evacuate the remaining captives.",
+        "normalized": "Use the drainage pump controls to stop the rising water and evacuate the remaining captives."
+      },
+      "bundle_universe_size": 2,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [
+            "c_r1"
+          ],
+          "all_ten_current": [
+            "c_r1"
+          ],
+          "eligible_deployed": [
+            "c_r1"
+          ],
+          "eligible_current": [
+            "c_r1"
+          ]
+        },
+        "normalized": {
+          "all_ten_deployed": [
+            "c_r1"
+          ],
+          "all_ten_current": [
+            "c_r1"
+          ],
+          "eligible_deployed": [
+            "c_r1"
+          ],
+          "eligible_current": [
+            "c_r1"
+          ]
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "commands": {
+        "raw": "Follow Michelle through the maintenance tunnel and evacuate the captives.",
+        "normalized": "Follow Michelle through the maintenance tunnel and evacuate the captives."
+      },
+      "bundle_universe_size": 1,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [],
+          "all_ten_current": [],
+          "eligible_deployed": [],
+          "eligible_current": []
+        },
+        "normalized": {
+          "all_ten_deployed": [],
+          "all_ten_current": [],
+          "eligible_deployed": [],
+          "eligible_current": []
+        }
+      }
+    },
+    {
+      "turn": 5,
+      "commands": {
+        "raw": "Use the senior official's one-use authority to open the surface gates before the authorization expires.",
+        "normalized": "Use the senior official's one-use authority to open the surface gates before the authorization expires."
+      },
+      "bundle_universe_size": 1,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [
+            "c_r2"
+          ],
+          "all_ten_current": [
+            "c_r2"
+          ],
+          "eligible_deployed": [
+            "c_r2"
+          ],
+          "eligible_current": [
+            "c_r2"
+          ]
+        },
+        "normalized": {
+          "all_ten_deployed": [
+            "c_r2"
+          ],
+          "all_ten_current": [
+            "c_r2"
+          ],
+          "eligible_deployed": [
+            "c_r2"
+          ],
+          "eligible_current": [
+            "c_r2"
+          ]
+        }
+      }
+    },
+    {
+      "turn": 6,
+      "commands": {
+        "raw": "Lead Michelle and the captives through the open surface gates and escape the facility.",
+        "normalized": "Lead Michelle and the captives through the open surface gates and escape the facility."
+      },
+      "bundle_universe_size": 2,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [
+            "c_r2"
+          ],
+          "all_ten_current": [
+            "c_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": []
+        },
+        "normalized": {
+          "all_ten_deployed": [
+            "c_r2"
+          ],
+          "all_ten_current": [
+            "c_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": []
+        }
+      }
+    },
+    {
+      "turn": 7,
+      "commands": {
+        "raw": "Keep the broadcast live and report the other detention sites to independent networks.",
+        "normalized": "Keep the broadcast live and report the other detention sites to independent networks."
+      },
+      "bundle_universe_size": 2,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [
+            "a_r1",
+            "b_r2"
+          ],
+          "all_ten_current": [
+            "a_r1",
+            "b_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": []
+        },
+        "normalized": {
+          "all_ten_deployed": [
+            "a_r1",
+            "b_r2"
+          ],
+          "all_ten_current": [
+            "a_r1",
+            "b_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": []
+        }
+      }
+    },
+    {
+      "turn": 8,
+      "commands": {
+        "raw": "Keep the broadcast live and tell the families of the missing that the captives are being evacuated and the truth about JANUS is being exposed.",
+        "normalized": "Keep the broadcast live and tell the families of the missing that the captives are being evacuated and the truth about JANUS is being exposed."
+      },
+      "bundle_universe_size": 2,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [
+            "d_r2"
+          ],
+          "all_ten_current": [
+            "d_r2"
+          ],
+          "eligible_deployed": [
+            "d_r2"
+          ],
+          "eligible_current": [
+            "d_r2"
+          ]
+        },
+        "normalized": {
+          "all_ten_deployed": [
+            "d_r2"
+          ],
+          "all_ten_current": [
+            "d_r2"
+          ],
+          "eligible_deployed": [
+            "d_r2"
+          ],
+          "eligible_current": [
+            "d_r2"
+          ]
+        }
+      }
+    },
+    {
+      "turn": 9,
+      "commands": {
+        "raw": "Continue broadcasting the truth about JANUS and coordinate independent rescue efforts for the remaining missing.",
+        "normalized": "Continue broadcasting the truth about JANUS and coordinate independent rescue efforts for the remaining missing."
+      },
+      "bundle_universe_size": 1,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [
+            "d_r2"
+          ],
+          "all_ten_current": [
+            "d_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": []
+        },
+        "normalized": {
+          "all_ten_deployed": [
+            "d_r2"
+          ],
+          "all_ten_current": [
+            "d_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": []
+        }
+      }
+    },
+    {
+      "turn": 10,
+      "commands": {
+        "raw": "Continue broadcasting the truth about JANUS and coordinating rescue efforts for the remaining missing.",
+        "normalized": "Continue broadcasting the truth about JANUS and coordinating rescue efforts for the remaining missing."
+      },
+      "bundle_universe_size": 1,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [],
+          "all_ten_current": [],
+          "eligible_deployed": [],
+          "eligible_current": []
+        },
+        "normalized": {
+          "all_ten_deployed": [],
+          "all_ten_current": [],
+          "eligible_deployed": [],
+          "eligible_current": []
+        }
+      }
+    },
+    {
+      "turn": 11,
+      "commands": {
+        "raw": "Continue broadcasting the truth about JANUS and coordinating independent rescue efforts for the remaining missing.",
+        "normalized": "Continue broadcasting the truth about JANUS and coordinating independent rescue efforts for the remaining missing."
+      },
+      "bundle_universe_size": 1,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [],
+          "all_ten_current": [],
+          "eligible_deployed": [],
+          "eligible_current": []
+        },
+        "normalized": {
+          "all_ten_deployed": [],
+          "all_ten_current": [],
+          "eligible_deployed": [],
+          "eligible_current": []
+        }
+      }
+    },
+    {
+      "turn": 12,
+      "commands": {
+        "raw": "Continue broadcasting the reports from the other detention sites and coordinate rescue efforts for the remaining missing.",
+        "normalized": "Continue broadcasting the reports from the other detention sites and coordinate rescue efforts for the remaining missing."
+      },
+      "bundle_universe_size": 1,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [
+            "d_r2"
+          ],
+          "all_ten_current": [
+            "d_r1",
+            "d_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": [
+            "d_r1"
+          ]
+        },
+        "normalized": {
+          "all_ten_deployed": [
+            "d_r2"
+          ],
+          "all_ten_current": [
+            "d_r1",
+            "d_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": [
+            "d_r1"
+          ]
+        }
+      }
+    },
+    {
+      "turn": 13,
+      "commands": {
+        "raw": "Continue broadcasting the reports from all remaining detention sites and coordinate their rescue.",
+        "normalized": "Continue broadcasting the reports from all remaining detention sites and coordinate their rescue."
+      },
+      "bundle_universe_size": 1,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [],
+          "all_ten_current": [
+            "d_r1"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": [
+            "d_r1"
+          ]
+        },
+        "normalized": {
+          "all_ten_deployed": [],
+          "all_ten_current": [
+            "d_r1"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": [
+            "d_r1"
+          ]
+        }
+      }
+    },
+    {
+      "turn": 14,
+      "commands": {
+        "raw": "Keep broadcasting the reports already received and coordinate rescue efforts for the missing.",
+        "normalized": "Keep broadcasting the reports already received and coordinate rescue efforts for the missing."
+      },
+      "bundle_universe_size": 1,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [
+            "d_r2"
+          ],
+          "all_ten_current": [
+            "d_r1",
+            "d_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": [
+            "d_r1"
+          ]
+        },
+        "normalized": {
+          "all_ten_deployed": [
+            "d_r2"
+          ],
+          "all_ten_current": [
+            "d_r1",
+            "d_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": [
+            "d_r1"
+          ]
+        }
+      }
+    },
+    {
+      "turn": 15,
+      "commands": {
+        "raw": "Continue broadcasting the truth about JANUS and coordinate rescue efforts for all remaining missing people.",
+        "normalized": "Continue broadcasting the truth about JANUS and coordinate rescue efforts for all remaining missing people."
+      },
+      "bundle_universe_size": 1,
+      "universe_size_matches_subset": true,
+      "variants": {
+        "raw": {
+          "all_ten_deployed": [
+            "d_r2"
+          ],
+          "all_ten_current": [
+            "d_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": []
+        },
+        "normalized": {
+          "all_ten_deployed": [
+            "d_r2"
+          ],
+          "all_ten_current": [
+            "d_r2"
+          ],
+          "eligible_deployed": [],
+          "eligible_current": []
+        }
+      }
+    }
+  ],
+  "plan_table_agrees": true,
+  "disagreements": [],
+  "plan_eligible_table_agrees": true,
+  "plan_eligible_disagreements": [],
+  "universe_size_disagreements": [],
+  "unique_selection_changed_by_667": [
+    12,
+    13,
+    14
+  ]
+}

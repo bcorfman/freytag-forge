@@ -1,0 +1,33 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-pump-build",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "build-3c-pump-screen",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_probe.py",
+        "scripts/ringer/stage7/check_three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py",
+        "tests/test_3c_pump_need.py",
+        "bench/results/stage7-3c-pump-dry/"
+      ],
+      "spec": "You are extending a billed-probe harness on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You may edit ONLY: scripts/ringer/stage7/three_c_probe.py, scripts/ringer/stage7/check_three_c_probe.py, scripts/ringer/stage7/test_three_c_probe.py, tests/test_3c_pump_need.py (new), and write under bench/results/stage7-3c-pump-dry/. bench/variations/stage7-3c-pump-need.json and .plans/astra-3c-pump-need-prereg.md already exist: do not edit them. Earlier tasks edited the same harness files; read their CURRENT content and keep every arm (control, pre667, surface, entry, escape, custody), start, field and test working. Never edit data/, storygame/, other tests, git state or .env; no billed or network call. No uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, `.venv/bin/python`. Read first: .plans/astra-3c-pump-need-prereg.md (the contract), the harness files, tests/test_3c_custody_result.py, and the custody arm wiring in three_c_probe.py (ARM_FILES, source_proof, CUSTODY_DELIVERY_OLD/NEW).\n\nTASK 1 (harness): add arm `pump` (variation bench/variations/stage7-3c-pump-need.json) to ALL_ARMS and ARM_FILES and make `--arms custody,pump` valid: relax the 'arms must include control, or entry as the baseline' rule in three_c_probe.py (and the matching check in check_three_c_probe.py) so `custody` also counts as a baseline, keeping every existing invocation working. Source proof must verify the pump replacement (custody delivery -> custody delivery with 'The drainage pumps need power. ' before 'Water rises around the drainage pump controls.') matches exactly once in knowledge.yaml-after-custody terms, i.e. the new string occurs once in the pump package's k_sl_3c_b_r1 delivery, and record old and new strings. Add to each row/attempt record the existing fields plus `c_r1_commit_scene_turn`, `c_r2_commit_scene_turn` and `both_c_by_turn_10` (true when both C parts committed by accepted scene turn 10) and `gate_only_escape` (C-R2 committed, C-R1 never, and surface fact true); the summary reports per arm both_c_by_turn_10 count, C-R1 rows, C-R2 rows, outcomes, rejections, clarifications. check_three_c_probe.py must accept pump/custody rows and print WHY on failure. Same start posta, scripted first command, caps (n=1: 80/40; n=12: 960/480), attempt cap 20.\n\nTASK 2 (tests/test_3c_pump_need.py, hermetic, real engine, no network): (a) only the k_sl_3c_b_r1 delivery differs between the custody and pump packages and the new sentence occurs once; (b) after A-R1 then B-R1 with scripted providers neither C part nor captives_reaching_surface is granted in either arm; (c) replay C-R2 ('Open the surface gates.') then C-R1 ('Restore the drainage pumps.') with scripted providers: surface stays false until both are committed; (d) the both_c_by_turn_10 and gate_only_escape computations on fabricated rows. Extend test_three_c_probe.py hermetically for the pump arm and baseline rule.\n\nFinish: ruff format then ruff check on touched .py files; run `.venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start posta --arms custody,pump --first-command 'Follow Rebecca.' --semantic on --out bench/results/stage7-3c-pump-dry` and the checker with --mode dry. Match surrounding style.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_pump_need.py tests/test_3c_custody_result.py tests/test_3c_escape_result.py tests/test_3c_entry_package.py tests/test_3c_surface_binding.py tests/test_3c_cue_chain.py 2>&1 | tail -6 && rm -rf bench/results/stage7-3c-pump-dry && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start posta --arms custody,pump --first-command 'Follow Rebecca.' --semantic on --out bench/results/stage7-3c-pump-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-pump-dry 1 --mode dry && .venv/bin/ruff check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_pump_need.py && .venv/bin/ruff format --check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_pump_need.py && test -z \"$(git status --porcelain data storygame)\"",
+      "verified": "pump-arm tests, harness tests and dry run pass; no data/storygame change; zero model calls"
+    }
+  ]
+}

@@ -2510,7 +2510,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin stops Rebecca from fleeing with the data case. Michelle sends its prisoner locations to independent networks. Water rises around the drainage pump controls."
+  delivery_text: "Kristin takes the Portable data case from Rebecca. Michelle sends its prisoner locations to independent networks. The drainage pumps need power. Water rises around the drainage pump controls."
 - id: k_sl_3c_b_r2
   statement: 'The prisoners capture Rebecca after her archive is copied beyond her reach, while Charles escapes his remote command site.'
   earn_when: copies the archive beyond Rebecca's reach

@@ -1,0 +1,41 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-adopt-gates",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "adopt-gates-fixture",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": ["-c", "model_reasoning_effort=medium"],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 5400,
+      "check_timeout_s": 1500,
+      "ownership": [
+        "tests/fixtures/continuity_initiative_pre_3c_adoption",
+        "bench/variations/stage7-3c-pump-need.json",
+        "bench/variations/stage7-3c-families.json",
+        "bench/variations/stage7-3c-families-v2.json",
+        "bench/variations/stage7-3c-entry-package.json",
+        "bench/variations/stage7-3c-custody-result.json",
+        "tests/test_3c_adopted_package.py",
+        "tests/test_3c_entry_package.py",
+        "tests/test_3c_custody_result.py",
+        "tests/test_3c_pump_need.py",
+        "tests/test_3c_carried_start.py",
+        "tests/test_3c_cue_chain.py",
+        "scripts/ringer/stage7/test_three_c_probe.py",
+        "scripts/ringer/stage7/three_c_probe.py",
+        "scripts/ringer/stage7/3c-adopt-pump.json"
+      ],
+      "spec": "You are an implementer on freytag-forge (Python 3.12) in /home/bcorfman/dev/freytag-forge, branch 3c-stuck-turns-screens. Own ONLY the files in your ownership list. Never touch storygame/, data/, other tests, git state (no commit/branch/checkout), or .env. No network, no model calls, no uv: run Python as `PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python`.\n\nBACKGROUND: The shipped package data/stories/continuity-initiative now (uncommitted) contains the measured `pump` arm: plot.md 3C entry_text and knowledge.yaml k_sl_3c_b_r1 delivery_text were replaced (do not edit them). Screen-era variations bench/variations/stage7-3c-{entry-package,custody-result,pump-need,families,families-v2}.json hold exact old/new string replacements against the PRE-adoption package; their old strings no longer occur in the shipped package. The variation files stage7-3c-pump-need/families/families-v2 were just restored to their committed state (git HEAD 8749e518); entry-package and custody-result are committed and unchanged.\n\nGOAL: make the historical screen arms reproducible against an explicit frozen pre-adoption package, and make the adoption test and Ringer check pin the shipped target independently of any mutable variation.\n(1) Create tests/fixtures/continuity_initiative_pre_3c_adoption/ as a copy of the package as of git HEAD: `git archive HEAD data/stories/continuity-initiative` extracted and moved (use `git show`/`git archive` read-only; do not alter the real data dir). Add a short README.txt there stating it is the frozen pre-adoption control and must never be edited.\n(2) Repoint the `story_package` field of the five variation files above to that fixture directory (check bench/core.py resolve_variation to see how paths resolve; keep the old/new strings byte-identical, keep files without trailing newline as they are). Confirm each old string occurs exactly once in the fixture and loads via bench.core.package_and_state.\n(3) Update tests (tests/test_3c_{entry_package,custody_result,pump_need,carried_start,cue_chain}.py and scripts/ringer/stage7/test_three_c_probe.py / three_c_probe.py) only where they break because of the repoint or because they reference the data dir as the pre-adoption control. A diagnostic arm that wants the CURRENT shipped package must be separately named (e.g. an explicit 'shipped' arm); never silently make shipped pump the old control.\n(4) Rewrite tests/test_3c_adopted_package.py. It must NOT read old/new from a variation. It must: pin the two shipped strings literally (entry_text and B-R1 delivery_text, taken from the pump variation's `new` values written as literals in the test); assert that applying the pump variation to the frozen fixture reproduces the shipped plot.md and knowledge.yaml byte-for-byte (compare sha256 of the resulting text with the shipped files, and also record those two hashes as literals); assert the frozen fixture differs from shipped in exactly those two files and only on those two lines (compare every other file in both trees byte-for-byte; D2 evidence/earn_when unchanged); loader loads the shipped package; B-R1 establishes neither C fact (keep the existing assertion). Do not merely delete the failing assertion.\n(5) Fix scripts/ringer/stage7/3c-adopt-pump.json check so it no longer requires old strings absent from variations: replace the python snippet with a pytest run of tests/test_3c_adopted_package.py plus the existing grep for absence of the rejected 'broadcast a message to the families' alias in the shipped knowledge.yaml. Keep the rest of that manifest otherwise unchanged.\n\nRun and make pass: `.venv/bin/python -m pytest -q --no-cov tests/test_3c_adopted_package.py tests/test_3c_entry_package.py tests/test_3c_custody_result.py tests/test_3c_pump_need.py tests/test_3c_carried_start.py tests/test_3c_cue_chain.py tests/test_3c_surface_binding.py tests/test_3c_escape_result.py scripts/ringer/stage7/test_three_c_probe.py scripts/ringer/stage7/test_door_transport.py` (the probe tests have a known standalone import-path issue: if a module fails collection alone, run them together as shown, with PYTHONPATH also including scripts/ringer/stage7). Then `.venv/bin/ruff check` and `.venv/bin/ruff format` on every touched .py. If a failure is not caused by the repoint, stop and report it verbatim; do not edit around it. Final message: every changed file with a one-line reason, and the two sha256 literals.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && test -f tests/fixtures/continuity_initiative_pre_3c_adoption/README.txt && ! git diff --quiet HEAD -- data/stories/continuity-initiative/plot.md && git diff --stat HEAD -- data | tail -1 && .venv/bin/python -m pytest -q --no-cov tests/test_3c_adopted_package.py tests/test_3c_entry_package.py tests/test_3c_custody_result.py tests/test_3c_pump_need.py tests/test_3c_carried_start.py tests/test_3c_cue_chain.py tests/test_3c_surface_binding.py tests/test_3c_escape_result.py scripts/ringer/stage7/test_three_c_probe.py scripts/ringer/stage7/test_door_transport.py 2>&1 | tail -15 && .venv/bin/ruff check tests scripts/ringer/stage7 && .venv/bin/ruff format --check tests scripts/ringer/stage7",
+      "expect_files": ["/home/bcorfman/dev/freytag-forge/tests/test_3c_adopted_package.py", "/home/bcorfman/dev/freytag-forge/tests/fixtures/continuity_initiative_pre_3c_adoption/README.txt"],
+      "verified": "historical arms load against the frozen fixture, adoption test pins shipped hashes independently, 3C tests and harness tests pass together"
+    }
+  ]
+}

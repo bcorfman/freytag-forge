@@ -1,0 +1,36 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-carried-fix",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "fix-3c-carried-reveal-recording",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_probe.py",
+        "scripts/ringer/stage7/check_three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py",
+        "tests/test_3c_carried_start.py",
+        "bench/results/stage7-3c-carried-dry/"
+      ],
+      "spec": "You are a harness fixer on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You own ONLY scripts/ringer/stage7/three_c_probe.py, check_three_c_probe.py, test_three_c_probe.py (same dir), tests/test_3c_carried_start.py, bench/results/stage7-3c-carried-dry/. NEVER touch data/, src/, storygame/, three_c_prefix.py, git state, .env. No network, no model calls, no uv. Use `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp` and `.venv/bin/python`.\n\nBUG: the `--start carried` path records NO committed reveals. In the live smoke bench/results/stage7-3c-carried-smoke/rows.json both rows have committed_reveal_ids [] and every turn's committed_reveals [], yet the story_fact_delta shows the chain advancing (turn 1 national_facility_locations_broadcast, turn 2 portable_archive_secured, ..., ending facts on turn 13/14). So A, B, C1, C2, D1, D2, E commits were never recorded; the row outcome was therefore mislabelled deadline_complete with deadline_event_ids [] and first_attempt_a null. run_row computes committed reveals as `[item for record in new_records for item in record.reveal_ids]` where new_records = records in state.turn_records whose id is not in a `before_record_ids` set (three_c_probe.py near lines 720 and 761). After the 63-turn scripted 3B replay plus the crossing turn, that diff finds nothing. FIND THE ROOT CAUSE (inspect TurnRecord ids/reveal_ids in storygame/runtime/state.py and engine.py; check whether ids repeat, whether records are trimmed/replaced, or whether reveal_ids is empty because reveals commit through another path such as the scripted replay's selection or the engine's reveal commit; do not guess), then fix it in the probe so every committed reveal is attributed to the correct accepted turn for ALL starts, with existing starts unchanged in behaviour. Prefer a robust method (e.g. diff of engine-established knowledge ids via the same helper used for preflight, taken before and after each turn, in addition to or instead of record ids) and keep outcome classification (earned vs deadline) driven by those recorded reveals and deadline_event_ids. If the root cause is in storygame/, do NOT edit it: report file and line in your final message and work around it in the probe.\n\nTESTS: add a regression test in tests/test_3c_carried_start.py that runs run_row for the carried start with a stub provider/fake ask that earns A on the first command (reuse the scripted-provider pattern from the existing tests) and asserts committed_reveals contains k_sl_3c_a_r1 on scene turn 1, a_commit_scene_turn == 1, first_attempt_a true, committed_reveal_ids non-empty, and fails on the pre-fix behaviour. Also add a checker rule in check_three_c_probe.py: for carried rows, a row with story_complete true and no recorded 3C chain commits is an error ('carried row recorded no reveals'). Then re-run the dry run: `.venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start carried --arms pump,families --semantic on --out bench/results/stage7-3c-carried-dry` (delete the dir first) and the checker with --mode dry. Run ruff format and ruff check on owned files. Never pass --confirm. In your final message state the root cause, file and line.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_carried_start.py tests/test_3c_pump_need.py tests/test_3c_custody_result.py tests/test_3c_entry_package.py tests/test_3c_cue_chain.py tests/test_three_c_prefix.py 2>&1 | tail -8 && rm -rf bench/results/stage7-3c-carried-dry && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start carried --arms pump,families --semantic on --out bench/results/stage7-3c-carried-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-carried-dry 1 --mode dry && .venv/bin/ruff check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_carried_start.py && .venv/bin/ruff format --check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_carried_start.py && test -z \"$(git status --porcelain data storygame src)\"",
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_3c_carried_start.py"
+      ],
+      "verified": "carried reveal recording fixed; regression test, existing tests, dry run pass; zero model calls"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+Frozen pre-adoption control package for the 3C adoption tests.
+
+This fixture is the continuity-initiative package as of git HEAD before the
+3C adoption. It must never be edited.

@@ -1,0 +1,23 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-matcher-table",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [{
+    "key": "matcher-table",
+    "task_type": "probe",
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=medium"],
+    "full_access": true,
+    "max_attempts": 2,
+    "timeout_s": 2400,
+    "check_timeout_s": 300,
+    "ownership": ["scripts/ringer/stage7/3c_matcher_table.py", "bench/results/stage7-3c-matcher-table/"],
+    "spec": "You are writing a free, read-only audit on freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. Create ONLY scripts/ringer/stage7/3c_matcher_table.py and run it to write bench/results/stage7-3c-matcher-table/table.json and table.md. Never touch data/, src/, tests/, git state, .env. No network, no model calls. Use `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp` and `.venv/bin/python`. Python -I is not needed.\n\nTASK (plan .plans/chatgpt-3c-stuck-turns-plan.md, section 'What the matcher actually does'): for the 15 scene-3C turns of the recorded blind run, run the REAL matcher (storygame.runtime.candidate_matcher: ActionEvidenceCandidate, uniquely_matched_candidate and/or uniquely_matched_authored_handoff, exactly as the engine uses them; read cloudflare.py ~414-424 and tests/test_3c_cue_chain.py for how candidates are built from knowledge action_evidence) over every k_sl_3c_* reveal (a_r1,a_r2,b_r1,b_r2,c_r1,c_r2,d_r1,d_r2,e_r1,e_r2), once per evidence set: DEPLOYED = knowledge.yaml from `git show 62cae8aed2996b64a5ebd9afa4ee2fc2b0999cf4:data/stories/continuity-initiative/knowledge.yaml` loaded through a temp copy of the package (copy data/stories/continuity-initiative to a tempfile dir, overwrite knowledge.yaml with that content, load with storygame.story_package.loader.load_story_package; the real repo must not change) and CURRENT = the working-tree package. Commands: take them from bench/results/stage7-2b-entry/attempt-1/e2e-blind-player.json, replicates[0].scenes where scene == '3C', turns 1..15; use BOTH the raw command and the recorded normalized command if the turn record has one (find the field names by reading the JSON; do not guess). For each turn and each evidence set compute: (a) matches over all ten reveals (list of ids matching, not just unique), and (b) matches over the state-appropriate subset: turn 1 a_r1,a_r2; turn 2 b_r1,b_r2; turn 3 c_r1,c_r2; turns 4-5 c_r2; turns 6-8 d_r1,d_r2; turns 9-15 d_r1 ... EXCEPT that for turns 6-8 and 9-15 this is the plan's 'state-appropriate' subset and NOT the recorded eligible set; also (c) the RECORDED eligible set per turn from bench/results/stage7-2b-entry/attempt-1/e2e-blind-player-bundles.json (scene 3C, bundles[turn=N].attempt_bundle: find the field listing eligible/universe reveal ids; if absent, say so). Report 'unique match' (exactly one) vs ties. Write table.md as a readable table mirroring the plan's table (columns: turn, command, all-ten deployed, all-ten current, subset deployed, subset current, recorded-eligible deployed, recorded-eligible current). The plan's expected current/deployed values (ids without k_sl_3c_ prefix; '—' none): all-ten deployed/current: t1 —/—, t2 b_r1/b_r1, t3 c_r1/c_r1, t4 —/—, t5 c_r2/c_r2, t6 c_r2/c_r2, t7 a_r1,b_r2 both, t8 d_r2/d_r2, t9 d_r2/d_r2, t10 —/—, t11 —/—, t12 d_r2 / d_r1,d_r2, t13 — / d_r1, t14 d_r2 / d_r1,d_r2, t15 d_r2/d_r2. In table.json include a key `plan_table_agrees` (bool) and `disagreements` (list of turn/column/expected/got) for the all-ten columns using those expectations; do not adjust results to agree. Also include `unique_selection_changed_by_667` listing turns whose recorded-eligible unique selection differs between DEPLOYED and CURRENT. The script exits 0 whenever it produced the report, even if the plan table disagrees.",
+    "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/3c_matcher_table.py >/dev/null && .venv/bin/ruff check scripts/ringer/stage7/3c_matcher_table.py && .venv/bin/python -c \"import json;t=json.load(open('bench/results/stage7-3c-matcher-table/table.json'));assert 'plan_table_agrees' in t and 'unique_selection_changed_by_667' in t,list(t);assert len(t['rows'])==15,len(t['rows']);print('ok',t['plan_table_agrees'])\" && test -s bench/results/stage7-3c-matcher-table/table.md",
+    "expect_files": ["bench/results/stage7-3c-matcher-table/table.json", "bench/results/stage7-3c-matcher-table/table.md"],
+    "verified": "15-row table for deployed and current evidence, compared to the plan's table, repo untouched"
+  }]
+}

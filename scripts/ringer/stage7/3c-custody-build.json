@@ -1,0 +1,33 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-custody-build",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "build-3c-custody-screen",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_probe.py",
+        "scripts/ringer/stage7/check_three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py",
+        "tests/test_3c_custody_result.py",
+        "bench/results/stage7-3c-custody-dry/"
+      ],
+      "spec": "You are extending a billed-probe harness on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You may edit ONLY: scripts/ringer/stage7/three_c_probe.py, scripts/ringer/stage7/check_three_c_probe.py, scripts/ringer/stage7/test_three_c_probe.py, tests/test_3c_custody_result.py (new), and write under bench/results/stage7-3c-custody-dry/. bench/variations/stage7-3c-custody-result.json and stage7-3c-entry-package.json already exist: do not edit them. Earlier tasks edited the same harness files; read their CURRENT content and keep every arm (control, pre667, surface, entry, escape), start, field and test working. Never edit data/, storygame/, other tests, git state or .env; no billed or network call. No uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, `.venv/bin/python`. Read first: .plans/astra-3c-custody-result-prereg.md (the contract), the harness files, tests/test_3c_entry_package.py, tests/test_3c_cue_chain.py, and world.yaml around `portable_archive_secured` (data/stories/continuity-initiative/world.yaml).\n\nTASK 1 (harness): add arm `custody` (variation bench/variations/stage7-3c-custody-result.json) and make `--arms entry,custody` valid. NOTE the existing rule that --arms must include `control`: relax it so a selection with `entry` as its baseline is allowed, but keep every existing invocation working. Source proof must verify BOTH replacements (plot.md entry text and knowledge.yaml B-R1 delivery) matched exactly once and record old and new strings. Add start `posta` (STARTS gains it): labelled synthetic state with entry facts asserted, scripted reveal A-R1 via 'Send the evidence package.' (same mechanism as apply_postc_prefix), turn_index 1, label like the others, the player screen showing the arm's own entry text. Preflight: compute and assert the real reveal universe at that state (expect B-R1 and B-R2 eligible; assert exactly what the engine shows and print it in plan.json). The scripted first command 'Follow Rebecca.' is passed via the existing --first-command; after it the harness must record whether k_sl_3c_b_r1 committed (`b_commit_on_first`). Attempt cap for posta rows is 20; caps n=1: 80 Cloudflare / 40 player; n=12: 960 / 480. Per attempt record `case_parent` (the parent of the Portable data case entity; find its id in world.yaml) next to the existing captives_parent/kristin_parent; per row record `acquisition_commands` (count of PLAYER commands issued after the B commit whose text contains a take/grab/retrieve/wrest/snatch/get verb AND the words case or archive; document the regex in a constant; this counts player input only, never narration) and `b_commit_attempt`. Update check_three_c_probe.py to accept posta/custody rows (arm names, interleaved rows, caps, attempt cap 20, required fields) and print WHY on failure.\n\nTASK 2 (tests/test_3c_custody_result.py, hermetic, real engine, no network): (a) both overrides of the custody variation apply once and ONLY the entry text and the k_sl_3c_b_r1 delivery differ between the entry and custody knowledge/plot payloads; (b) after committing A-R1 then B-R1 with scripted providers, the Portable data case's parent is Kristin in both arms and neither C part nor captives_reaching_surface is granted; (c) replaying 'Take the Portable data case from Rebecca.' with a provider that proposes no world change leaves the case under Kristin; (d) the posta preflight universe is what the engine shows. Extend test_three_c_probe.py hermetically for posta, the custody arm, acquisition counting and b_commit_attempt.\n\nFinish: ruff format then ruff check on touched .py files; run `.venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start posta --arms entry,custody --first-command 'Follow Rebecca.' --semantic on --out bench/results/stage7-3c-custody-dry` and the checker with --mode dry. Match surrounding style.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_custody_result.py tests/test_3c_escape_result.py tests/test_3c_entry_package.py tests/test_3c_surface_binding.py tests/test_3c_cue_chain.py 2>&1 | tail -6 && rm -rf bench/results/stage7-3c-custody-dry && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start posta --arms entry,custody --first-command 'Follow Rebecca.' --semantic on --out bench/results/stage7-3c-custody-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-custody-dry 1 --mode dry && .venv/bin/ruff check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_custody_result.py && .venv/bin/ruff format --check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_custody_result.py && test -z \"$(git status --porcelain data storygame)\"",
+      "verified": "custody-arm tests, harness tests and dry run pass; no data/storygame change; zero model calls"
+    }
+  ]
+}

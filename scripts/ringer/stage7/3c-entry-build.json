@@ -1,0 +1,33 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-entry-build",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "build-3c-entry-screen",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_probe.py",
+        "scripts/ringer/stage7/check_three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py",
+        "tests/test_3c_entry_package.py",
+        "bench/results/stage7-3c-entry-dry/"
+      ],
+      "spec": "You are extending a billed-probe harness on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You may edit ONLY: scripts/ringer/stage7/three_c_probe.py, scripts/ringer/stage7/check_three_c_probe.py, scripts/ringer/stage7/test_three_c_probe.py, tests/test_3c_entry_package.py (new), and write under bench/results/stage7-3c-entry-dry/. bench/variations/stage7-3c-entry-package.json already exists: do not edit it. Never edit data/, src/, other tests, git state or .env; no billed or network call. No uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, `.venv/bin/python`. Read first: .plans/astra-3c-entry-package-prereg.md (the contract), scripts/ringer/stage7/three_c_probe.py, check_three_c_probe.py, test_three_c_probe.py, tests/test_3c_cue_chain.py, scripts/ringer/stage7/3c_matcher_table.py.\n\nTASK 1 (harness): add arm `entry` (variation file bench/variations/stage7-3c-entry-package.json) to ALL_ARMS/ARM_FILES so `--arms control,entry` works with `--start entry` (the default start). Source proof must verify the plot.md replacement matched exactly once and record the old and new entry_text. Per row also record `a_commit_attempt` and `a_commit_scene_turn` (attempt number and scene turn of the first committed k_sl_3c_a_r1 or k_sl_3c_a_r2, null if none) and `pre_a_commands` (the commands issued before that, for hand reading), and `entry_text_shown` (the entry text the player screen actually used). Update check_three_c_probe.py to accept entry rows (arm names, 2N interleaved rows, caps 960 Cloudflare / 480 player for n=12 and 80 / 40 for n=1, attempt cap 20) and require the new fields; print WHY on failure. Existing arms/modes/tests must keep working.\n\nTASK 2 (tests/test_3c_entry_package.py, hermetic): (a) the entry variation loads and its replacement matches exactly once; (b) the first player screen text differs between control (old text) and entry (new text) using the harness's own screen builder; (c) with the real _matches_all (see how test_3c_cue_chain.py and 3c_matcher_table.py call it) the 15 recorded commands (use the recorded_commands() helper in the harness) and the negative controls 'Transmit the evidence.', 'Send the evidence.', 'Run away with the evidence.', 'Show Rebecca the evidence.', 'Send the evidence package.' produce identical matched sets in control and entry, and 'Send the evidence package.' matches k_sl_3c_a_r1 while the other four match nothing. Extend test_three_c_probe.py hermetically for the entry arm, the new row fields and the checker.\n\nFinish: ruff format then ruff check on the touched .py files; run `.venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start entry --arms control,entry --semantic on --out bench/results/stage7-3c-entry-dry` and the checker with --mode dry. Match surrounding style.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_entry_package.py tests/test_3c_surface_binding.py tests/test_3c_cue_chain.py 2>&1 | tail -6 && rm -rf bench/results/stage7-3c-entry-dry && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start entry --arms control,entry --semantic on --out bench/results/stage7-3c-entry-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-entry-dry 1 --mode dry && .venv/bin/ruff check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_entry_package.py && .venv/bin/ruff format --check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_entry_package.py && test -z \"$(git status --porcelain data src)\"",
+      "verified": "entry-arm tests, harness tests and dry run pass; no src/data change; zero model calls"
+    }
+  ]
+}

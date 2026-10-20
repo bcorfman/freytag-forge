@@ -1,0 +1,36 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-prefix",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "three-c-prefix-build",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 300,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_prefix.py",
+        "tests/test_three_c_prefix.py",
+        "bench/results/stage7-3c-prefix/"
+      ],
+      "spec": "You are a harness author on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. Create ONLY scripts/ringer/stage7/three_c_prefix.py and tests/test_three_c_prefix.py. Never touch data/, src/, storygame/, other tests, git state, .env. No network or model calls; no uv. Use `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp` and `.venv/bin/python`.\n\nRead first: .plans/astra-3c-prefix-prereg.md (the full contract), tests/test_canon_journey.py (UNCLOCKED_JOURNEY, _ScriptedProvider, _drive, legacy_package usage), storygame/runtime/persistence.py (RuntimeStateSqliteStore.save/load), storygame/runtime/state.py.\n\nBuild scripts/ringer/stage7/three_c_prefix.py with `--out DIR`. It replays the canon journey (import or copy the journey list and scripted provider pattern; do not change tests/test_canon_journey.py) with the real engine through 1A..3B, stops at the last turn BEFORE the scene becomes 3C (find it by driving until the next _drive would end in 3C; run the journey once to learn the index, then stop one turn earlier), saves with RuntimeStateSqliteStore to DIR/checkpoint.sqlite (session id 'stage7-3c-prefix'), and writes DIR/prefix.json with: package id and a content hash of the package files, git SHA, turn_index, scene id, committed reveal ids, fact predicates WITH values, world parent of every tracked thing, whether knowledge entries relay_open and janus_selection are committed or available in the state, the transcript lines (the scripted narration text per turn), and the rendered 3C entry_text and bridge_text obtained from step 2 below. Step 2: load the checkpoint into a fresh state with the current package, drive ONE scripted turn, assert it ends in scene 3C and capture the transition text. Output must be deterministic: sort keys, no timestamps, so two runs give byte-identical prefix.json. Exit nonzero with a clear message if any free check in the prereg fails; if the journey cannot reach 3B without asserting facts, stop and say so (do not assert 3B reveals).\n\nWrite tests/test_three_c_prefix.py (hermetic, fast) covering prereg free checks 1-4 and 6: round-trip dump equality and hash; loading with a package whose content differs fails (build a tiny altered package via the loader or a model copy; if that is not practical, test that a tampered payload hash raises RuntimeSaveError); loaded state is in 3B with committed 3B reveals; one scripted turn reaches 3C and the entry text appears; two builds into different tmp dirs produce identical prefix.json bytes. Then run the script once to /home/bcorfman/dev/freytag-forge/bench/results/stage7-3c-prefix/ (create it). Run `.venv/bin/ruff format` and `.venv/bin/ruff check` on both files and `.venv/bin/python -m pytest -q tests/test_three_c_prefix.py tests/test_canon_journey.py`. In your final message report check 5 of the prereg: whether relay_open is committed/available at 3C entry in the carried state.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q tests/test_three_c_prefix.py tests/test_canon_journey.py && .venv/bin/ruff check scripts/ringer/stage7/three_c_prefix.py tests/test_three_c_prefix.py && .venv/bin/python scripts/ringer/stage7/three_c_prefix.py --out /tmp/prefix-check-a && .venv/bin/python scripts/ringer/stage7/three_c_prefix.py --out /tmp/prefix-check-b && cmp /tmp/prefix-check-a/prefix.json /tmp/prefix-check-b/prefix.json && .venv/bin/python -c \"import json;d=json.load(open('bench/results/stage7-3c-prefix/prefix.json'));assert d['scene']=='3B',d['scene'];assert d['committed_reveal_ids'];print('prefix ok',d['turn_index'])\" && test -s bench/results/stage7-3c-prefix/checkpoint.sqlite && git diff --quiet -- data src storygame tests/test_canon_journey.py",
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7/three_c_prefix.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_three_c_prefix.py",
+        "/home/bcorfman/dev/freytag-forge/bench/results/stage7-3c-prefix/prefix.json"
+      ],
+      "verified": "free scripted 1A-3B checkpoint saved via the real store; round trip, 3B->3C crossing and determinism pass"
+    }
+  ]
+}

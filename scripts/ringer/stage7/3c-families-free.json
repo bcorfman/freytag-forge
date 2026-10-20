@@ -1,0 +1,32 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-families-free2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "families-alias-free-checks-r2",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 300,
+      "ownership": [
+        "tests/test_3c_cue_chain.py"
+      ],
+      "spec": "You are a test author on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. Edit ONLY tests/test_3c_cue_chain.py. Never touch data/, src/, bench/, other tests, git state, .env. No network or model calls. The file has uncommitted edits from earlier work; keep every existing test and its behavior. Run: `cd /home/bcorfman/dev/freytag-forge && PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python -m pytest -q tests/test_3c_cue_chain.py tests/test_resolution_cascade.py`. No uv.\n\nContext: the tests whose names start `test_families_` (and helpers `_families_*`) verify a candidate D-R2 alias set loaded from bench/variations/stage7-3c-families.json (adds 'broadcast a message/a response/an update to the families'). Read them first. Make exactly these changes, planned in .plans/chatgpt-3c-stuck-turns-plan.md Step 7:\n1. Add an unrelated-recipient negative control: in the candidate package, with A,B and both C committed (both D eligible) AND again with D1 spent, commands 'Broadcast a message to the journalists.', 'Broadcast an update to the guards.' and 'Broadcast a message to Brandon.' must match nothing (uniquely_matched_authored_handoff returns None).\n2. Add a D2-spent test: after D2 is committed, the three alias commands ('Broadcast a message to the families.', 'Broadcast a response to the families.', 'Broadcast an update to the families.') must NOT select k_sl_3c_d_r2 (result None or another candidate, never D2), and the neither-eligible test must loop over all three aliases, not one.\n3. Add the music negative ('Broadcast music to the families.') in the D1-spent state too.\n4. Remove the redundant in-function imports of RuntimeEngine and uniquely_matched_authored_handoff in the _families helpers (both are already imported at module top); keep behavior identical.\n5. Mutation check, performed by you now and not committed: temporarily copy bench/variations/stage7-3c-families.json to a scratch path, remove the knowledge.yaml replacement whose old is 'reassure the families, respond to the families]' from the live variation file, run the families tests and confirm the alias-selecting tests FAIL, then RESTORE the variation file byte-for-byte (`git status` must show it unchanged from before; verify with sha256sum before and after). Report which tests failed.\nDo not weaken any assertion; if one fails against real behavior, keep it and explain exactly. Run `.venv/bin/ruff format tests/test_3c_cue_chain.py` and `.venv/bin/ruff check tests/test_3c_cue_chain.py`, then the pytest command.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q tests/test_3c_cue_chain.py tests/test_resolution_cascade.py && .venv/bin/ruff check tests/test_3c_cue_chain.py && grep -q 'journalists' tests/test_3c_cue_chain.py && .venv/bin/python -c \"import json;s=open('bench/variations/stage7-3c-families.json').read();assert 'broadcast an update to the families' in s;print('variation intact')\" && git diff --quiet -- data src",
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_3c_cue_chain.py"
+      ],
+      "verified": "alias phrases select D2 only in the candidate; negatives and ties return none; data/ untouched"
+    }
+  ]
+}

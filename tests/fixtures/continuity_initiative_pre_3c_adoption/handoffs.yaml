@@ -1,0 +1,342 @@
+deliveries:
+- fact_id: continuity_initiative_known
+  scene_id: 1A
+  source_kind: message
+  source_entity_id: michelle
+  must_convey:
+  - [Michelle's memory card, Michelle's files, Michelle's notes, Michelle's card, memory card, research files]
+  - [Continuity Initiative, federal emergency program, Continuity program, federal Continuity program, Continuity project, population-selection program]
+  fallback_text: >-
+    Kristin recovers Michelle's memory card from beneath the drawer and reads the files
+    on it. The card identifies the federal emergency program as the Continuity Initiative, which was preparing to
+    choose who remains.
+  cue_text: "Kristin's initials, KMS, are carved into a drawer of Michelle's workstation. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
+  costs:
+  - {op: assert, fact_id: memory_card_recovered, value: true}
+- fact_id: park_pursuit_resolved
+  scene_id: 1B
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [escaped through the storm-drain system, storm-drain system, secured service gate, escaped through the storm drains, storm drains, service gate]
+  - [park pursuit ended, tactical team lost their trail, pursuit ended, the pursuit was over, they lost the tactical team, the ambush was behind them]
+  fallback_text: >-
+    Kristin and Brandon escaped through the storm-drain system, and Brandon unlocked the secured service gate.
+    The park pursuit ended behind them when the tactical team lost their trail.
+  cue_text: A tactical team is closing across the damaged park.
+- fact_id: transport_route_identified
+  scene_id: 1B
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [transit token, handwritten sequence, Michelle's dead drop, number sequence, Michelle's drop]
+  - [freight terminal, transport route, evacuation tunnels, freight yard, old freight yard, yard route]
+  fallback_text: >-
+    The transit token and handwritten sequence from Michelle's dead drop identify the transport route. They point Kristin
+    toward the supposedly abandoned freight terminal and its evacuation tunnels.
+  cue_text: A transit token and a handwritten number sequence lie beside Michelle's photograph.
+- fact_id: brandon_identified
+  scene_id: 1B
+  source_kind: npc
+  source_entity_id: brandon
+  must_convey:
+  - [Brandon Corfman, Brandon, Michelle's photograph, Michelle's photo, photo of Michelle, picture of Michelle]
+  - [identified himself, person in Michelle's photograph, source in the photograph, Brandon introduced himself, the man in Michelle's photo, identified the man in the photo, admitted he was the one in Michelle's photo]
+  costs:
+  - {op: retract, fact_id: trust_brandon, value: true}
+  fallback_text: >-
+    The man identified himself as Brandon Corfman, the person in Michelle's photograph. Kristin finally knew the source
+    in the photograph had found her in the park.
+  cue_text: The man watching Kristin waits near the service path. Michelle's photograph may be worth showing him.
+- fact_id: missing_may_be_alive
+  scene_id: 1B
+  source_kind: message
+  source_entity_id: brandon
+  must_convey:
+  - [Brandon claims, Brandon says, Brandon's warning, Brandon's claim, Brandon maintains, Brandon's account]
+  - [missing are still alive, missing people are alive, captives are alive, the disappeared are alive, people were taken alive, living survivors]
+  fallback_text: >-
+    Brandon claims that the missing are still alive, though he refuses to explain how he knows. His warning gives Kristin
+    reason to believe the disappeared people are captives rather than casualties.
+- fact_id: facility_proof
+  scene_id: 1C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [fresh tire tracks, humming air vents, heavy electrical service, recent tire tracks, working air vents, electrical load]
+  - [active facility, underground complex, site remains active, the terminal is operating, working facility, operation beneath the terminal]
+  fallback_text: >-
+    Fresh tire tracks, humming air vents, and heavy electrical service prove that the supposedly abandoned terminal hides
+    an active facility. The signs point to an underground complex beneath the loading docks.
+  cue_text: Fresh tire tracks cross the loading area. The air vents are still humming.
+- fact_id: captives_confirmed_alive
+  scene_id: 1C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [observation shaft, Kristin sees, processing area, the observation shaft, saw the processing line, prisoner processing area]
+  - [sedated prisoners, captives are alive, prisoners alive, living prisoners, prisoners are alive, living captives]
+  fallback_text: >-
+    From the observation shaft, Kristin sees sedated prisoners moving through the processing area. The captives are alive,
+    even if the view is too brief to confirm whether Michelle is among them. Time runs out before Kristin can copy the full set of prisoner numbers from the processing line.
+  costs:
+  - {op: assert, fact_id: evidence_gap_processing_numbers, value: true}
+  cue_text: The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.
+- fact_id: national_detention_network_known
+  scene_id: 1C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [logistics computer]
+  - [regional hub, detention network]
+  fallback_text: >-
+    The logistics computer shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
+  cue_text: A logistics computer hums by the service entrance. It may be worth reading.
+- fact_id: false_identities_ready
+  scene_id: 2A
+  source_kind: npc
+  source_entity_id: brandon
+  must_convey:
+  - [Brandon creates false credentials, false credentials, technical inspectors, Brandon builds their credentials, inspector credentials, fake credentials]
+  - [false identities, inspection cover, inspectors' cover, technical-inspection cover, fake identities, inspector cover]
+  fallback_text: >-
+    Brandon creates false credentials presenting them as technical inspectors. Their inspection cover gives Kristin and
+    Brandon the false identities they need to enter the facility.
+  cue_text: Brandon has laid out blank inspector forms beside the servers in the hideout.
+- fact_id: janus_evidence
+  scene_id: 2B
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [JANUS files, JANUS records, selection algorithm, JANUS archive, JANUS selection records, the selection files]
+  - [ranked every American, classification system, selected people, everyone was ranked, Americans were classified, the ranking system]
+  fallback_text: >-
+    Kristin opens the JANUS files in the records archive. The JANUS selection algorithm ranked every American for
+    detention, leverage, or control.
+  cue_text: Selection files fill the archive terminals. Government and financial records sit open beside them.
+- fact_id: brandon_janus_role_known
+  scene_id: 2B
+  source_kind: message
+  source_entity_id: brandon
+  must_convey:
+  - [Brandon admits, Brandon's confession, Brandon says, Brandon confessed, Brandon acknowledges it, Brandon's admission]
+  - [helped write JANUS, wrote the JANUS software, helped develop the AI, helped build JANUS, created the JANUS system, wrote part of JANUS]
+  costs:
+  - {op: retract, fact_id: trust_brandon, value: true}
+  - {op: assert, fact_id: evidence_gap_development_record, value: true}
+  fallback_text: >-
+    Brandon admits that he helped write JANUS, the software that selected people for detention. His confession confirms
+    that he helped develop the AI before learning what it would become. Time runs out before Kristin can copy the development record bearing Brandon's name.
+  cue_text: Brandon waits beside the development records, ready to answer a question.
+- fact_id: brandon_claimed_reform_motive
+  scene_id: 2B
+  source_kind: message
+  source_entity_id: brandon
+  must_convey:
+  - [Brandon says, Brandon's explanation, Brandon claims, Brandon's claim, Brandon explains, Brandon's account]
+  - [tried to destroy the project, expose the program, stop JANUS, wanted to bring down JANUS, tried to expose JANUS, break up the project]
+  fallback_text: >-
+    Brandon says he tried to destroy the project after he learned its purpose. His explanation is that he meant to expose
+    the program and stop JANUS from becoming a tool of political control.
+  cue_text: Brandon's earlier messages about the project remain open on the remote terminal.
+- fact_id: michelle_resistance_known
+  scene_id: 2B
+  source_kind: message
+  source_entity_id: michelle
+  must_convey:
+  - [Michelle's coded messages, Michelle's private notes, Michelle's resistance, Michelle's coded notes, her private messages, the resistance notes]
+  - [altering classifications, delaying transfers, sabotaging the facility, altered records, delayed transfers, resistance link]
+  fallback_text: >-
+    Michelle's coded messages and private notes show active sabotage and a small, hidden resistance link inside the
+    facility. It is altering classifications and delaying transfers.
+  cue_text: The medical terminal shows corrupted prisoner files and a warning message.
+- fact_id: purge_clock_started
+  scene_id: 2C
+  source_kind: broadcast
+  must_convey:
+  - [Charles's purge order, Charles orders, command orders, Charles's order, the purge command, Charles's command]
+  - [purge begins within hours, purge deadline, captives face killing, killing is due within hours, hours remain before the purge, the purge is imminent]
+  fallback_text: >-
+    Charles's purge order moves the transfers and killings onto a deadline. Command orders make clear that the purge
+    begins within hours, before the captives can be safely moved.
+  cue_text: Transfer orders sit open in the command levels. They may be worth checking.
+- fact_id: evidence_ready_to_transmit
+  scene_id: 2C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [Kristin and Brandon have evidence, evidence in hand, Kristin's evidence, they have the evidence, proof in hand, the gathered evidence]
+  - [ready to transmit, transmit the evidence, send proof, ready for broadcast, send the evidence, broadcast the proof]
+  fallback_text: >-
+    Kristin and Brandon have enough evidence to expose the conspiracy, leaving the evidence in hand. It is ready to
+    transmit, but sending proof will reveal their position.
+  cue_text: The copied files are close at hand. Kristin can check the copied files. Sending them could expose her and Brandon.
+- fact_id: rebecca_office_required_for_broadcast
+  scene_id: 2C
+  source_kind: message
+  source_entity_id: michelle
+  must_convey:
+  - [Michelle's encrypted message, Michelle's coded message, maintenance message, Michelle's note]
+  - [maintenance access route, maintenance path, local access route, route to Michelle]
+  - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office]
+  - [open the detention cells, open the cells, release the prisoners, open detention blocks]
+  - [broadcast the evidence, transmit the evidence, send the evidence, broadcast proof]
+  fallback_text: >-
+    Michelle's encrypted maintenance message marks a maintenance access route into her partly unsecured holding block
+    and identifies Rebecca's secured office as the manual point that can broadcast the evidence and open the detention
+    cells in the sealed sectors. Reaching the office before the purge closes the route will be dangerous.
+  cue_text: A maintenance report repeats a route marker that Michelle used in her private notes.
+- fact_id: michelle_reached
+  scene_id: 3A
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [Kristin reaches Michelle, reunion with Michelle, Michelle is reached, Kristin finds Michelle, they are reunited, Kristin reaches her]
+  - [detention sector, holding blocks, Michelle's cell, prisoner block, detention holding block, the cell block]
+  fallback_text: >-
+    Kristin reaches Michelle among the holding blocks in the detention sector. Their reunion is brief, but Michelle is
+    alive and ready to direct the rescue.
+  cue_text: Michelle speaks into a stolen radio beside the captives.
+- fact_id: military_override_codes_available
+  scene_id: 3A
+  source_kind: npc
+  source_entity_id: senior_official
+  must_convey:
+  - [framed official, senior official, imprisoned official, government prisoner]
+  - [emergency surface gates, surface gates, emergency gates]
+  - [authorization code, gate authorization, one-use authorization, override code]
+  - [expires, deadline, new authority, time limit]
+  fallback_text: >-
+    The senior official Charles framed gives Kristin one-use authorization for the emergency surface gates. It will
+    expire when Charles activates his new authority, so it creates a narrow escape window rather than a solution.
+  cue_text: A prisoner with an official access seal watches the gate-status panel cycle toward expiry.
+- fact_id: detention_uprising_started
+  scene_id: 3A
+  source_kind: message
+  source_entity_id: michelle
+  must_convey:
+  - [Michelle triggers, Michelle organizes prisoners, coded announcements, Michelle sets it off, Michelle starts the disturbances, her coded announcements]
+  - [uprising begins, prisoners rise, detention uprising, the prisoners revolt, the uprising is underway, prisoners seize checkpoints]
+  fallback_text: >-
+    Michelle triggers coordinated disturbances through coded announcements while she organizes prisoners across the
+    detention sectors. The uprising begins as prisoners rise, disable cameras, and seize internal checkpoints.
+  cue_text: Michelle turns toward prisoners gathering at the checkpoints. Several cameras show no picture.
+- fact_id: relay_open
+  scene_id: 3B
+  source_kind: observation
+  source_entity_id: brandon
+  must_convey:
+  - [Brandon holds the relay open, Brandon's relay, external communications relay, Brandon kept the relay open, Brandon held the relay open, Brandon leaves the relay open]
+  - [relay is open, relay open, broadcast connection, open communications relay, the connection stays open, relay remains open]
+  fallback_text: >-
+    Brandon reaches the external communications relay and disconnects it from JANUS. Brandon holds the relay open so the
+    broadcast connection can carry Michelle's evidence.
+  cue_text: The relay chamber lies beyond the broadcast controls. Its access panel shows fresh tool marks.
+- fact_id: human_security_control
+  scene_id: 3B
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [Kristin overloads JANUS, conflicting emergencies, human operators, JANUS is overloaded, too many emergencies, security emergencies conflict]
+  - [human operators take control, human security control, people control security, humans take over security, operators control the corridors, manual security takes over]
+  fallback_text: >-
+    Kristin overloads JANUS with conflicting emergencies until human operators take control. Human security control
+    replaces the system's predictions in the corridors.
+  cue_text: The cameras track Kristin move by move. The inspection console in the infrastructure corridors can send false water-pressure alarms into empty service corridors.
+- fact_id: charles_abandoned_rebecca
+  scene_id: 3B
+  source_kind: message
+  source_entity_id: rebecca
+  must_convey:
+  - [Charles locks down Rebecca's office, Charles abandons Rebecca, Rebecca understands, Charles cuts Rebecca off, Rebecca learns he abandoned her, Charles seals her office]
+  - [was expendable, Rebecca is expendable, Charles left Rebecca, Rebecca was abandoned, Charles discarded Rebecca, he left her to die]
+  fallback_text: >-
+    Charles locks down Rebecca's office and abandons Rebecca while he transfers control of the national network. Rebecca
+    finally understands that she was expendable to him.
+  cue_text: The executive screen still carries a remote channel marked Charles. Security doors are sealing around the room.
+- fact_id: detention_locations_secured
+  scene_id: 3B
+  source_kind: message
+  source_entity_id: rebecca
+  must_convey:
+  - [Rebecca offers, Rebecca's location data, Rebecca offers the locations, Rebecca gives, Rebecca's site list, the locations Rebecca offers]
+  - [detention locations, every detention site, locations of every detention site, detention-site locations, the prison sites, all detention facilities]
+  fallback_text: >-
+    Rebecca offers the locations of every detention site in exchange for a chance to save herself. Her location data
+    gives Kristin and Michelle the detention locations they need for the broadcast. Time runs out before Kristin can copy Rebecca's marked site list.
+  costs:
+  - {op: assert, fact_id: evidence_gap_marked_site_list, value: true}
+  cue_text: A marked site list lies beside Rebecca's national network controls.
+- fact_id: brandon_confession_available
+  scene_id: 3B
+  source_kind: message
+  source_entity_id: brandon
+  must_convey:
+  - [Brandon's confession, Brandon admits, Brandon transmits, Brandon's admission, Brandon confesses, Brandon sends his confession]
+  - [helped create JANUS, role in creating JANUS, authenticate Michelle's evidence, helped build the AI, JANUS development role, his part in JANUS]
+  fallback_text: >-
+    Brandon transmits a confession before security can lock down the relay chamber. He admits his role in creating JANUS,
+    and the statement helps authenticate Michelle's evidence.
+  cue_text: A voice channel marked Brandon is queued beside the broadcast controls.
+- fact_id: truth_no_longer_containable
+  scene_id: 3C
+  source_kind: broadcast
+  must_convey:
+  - [national broadcast, evidence package]
+  - [Charles speaks over Michelle, Charles's voice over Michelle]
+  fallback_text: The national broadcast stays live while Charles speaks over Michelle.
+  cue_text: The national broadcast is live. Charles speaks over Michelle while her evidence package waits to be sent.
+- fact_id: rebecca_captured
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [Rebecca leaves the executive office, Rebecca is leaving the executive office]
+  - [Portable data case, data case]
+  fallback_text: Rebecca leaves the executive office with the Portable data case.
+  cue_text: Rebecca is leaving the executive office with the Portable data case in her hands.
+- fact_id: evacuation_route_open
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [water rises, rising water]
+  - [drainage pump controls, pump controls]
+  fallback_text: Water rises around the drainage pump controls.
+  cue_text: Water rises around the drainage pump controls.
+- fact_id: los_angeles_facility_lost
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [surface gates, emergency surface gates]
+  - [senior official's authorization, gate authorization]
+  fallback_text: The surface gates remain shut as the senior official's authorization nears expiry.
+  cue_text: The surface gates are shut above the waiting captives. The gate authorization is close to expiry.
+- fact_id: national_network_fragmenting
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [reports from other detention sites, detention site reports]
+  - [broadcast chamber, Michelle's broadcast]
+  fallback_text: Reports from other detention sites reach the broadcast chamber.
+  cue_text: Reports from other detention sites reach the broadcast chamber.
+- fact_id: community_rescue_efforts_begun
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [families of the missing, missing families]
+  - [ask, for word]
+  fallback_text: Families of the missing ask the broadcast chamber for word.
+  cue_text: Families of the missing ask the broadcast chamber for word.
+- fact_id: phase_two_conflict_plan_known
+  scene_id: 3C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [recovered document, recovered file]
+  - [Charles's signal, Charles's last remote channel]
+  fallback_text: A recovered document remains closed while Charles's signal runs through his last remote channel.
+  cue_text: A recovered document remains closed. Charles's signal still runs through his last remote channel.

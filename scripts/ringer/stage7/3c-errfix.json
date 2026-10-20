@@ -1,0 +1,33 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-error-handling",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "fix-3c-probe-error-handling",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_probe.py",
+        "scripts/ringer/stage7/door_transport.py",
+        "scripts/ringer/stage7/test_three_c_probe.py",
+        "scripts/ringer/stage7/test_door_transport.py",
+        "bench/results/stage7-3c-errfix-dry/"
+      ],
+      "spec": "You are fixing an error-handling defect in a billed-probe harness on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You may edit ONLY: scripts/ringer/stage7/three_c_probe.py, scripts/ringer/stage7/door_transport.py, scripts/ringer/stage7/test_three_c_probe.py, scripts/ringer/stage7/test_door_transport.py (new if absent), and write under bench/results/stage7-3c-errfix-dry/. NEVER edit storygame/, data/, other tests, git state or .env; no billed or network call. No uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, `.venv/bin/python`.\n\nTHE DEFECT. A billed n=12 run (bench/results/stage7-3c-pump-n12/) made 498 good Cloudflare requests, then request 499 recorded spend event {\"kind\":\"cloudflare\",\"status\":\"failed\",\"detail\":\"narration\",\"error\":\"HTTPError\"} (see its spend.json). The harness then died and wrote run-failure.txt containing only: cannot assign to field '__traceback__'. That is a TypeError/AttributeError from the failure path itself, so the real HTTP failure (status, reason) was lost and the run ended without a clear cause. The rule for these runs: on quota, outage, malformed output or cap error the harness stops nonzero and run-failure.txt must say what happened, never retrying or replacing rows.\n\nDO: (1) Reproduce OFFLINE with a fake provider whose _request raises urllib.error.HTTPError(url, 503, 'Service Unavailable', {}, None) on one call mid-row, through the same code path the play loop uses (counted_provider in door_transport.py, engine.turn handling around three_c_probe.py lines 585-600 and 772-815, and the NarrationProviderError / RuntimeError branches, and the final handler that writes run-failure.txt near line 1156). Find which statement assigns to __traceback__ (look for frozen dataclasses, exception objects stored in or re-raised from frozen/slotted structures, `raise ... from`, ExceptionGroup or contextlib handling) and write a failing regression test FIRST. (2) Fix the cause in the files you own. If the root cause is inside storygame/ (which you must not edit), do not edit it: make the harness catch and record the failure robustly and state the storygame finding with file and line in your final answer. (3) run-failure.txt must name the exception type, HTTP status/reason when present, the row id and attempt, and keep partial rows.json/spend.json intact; the harness still exits nonzero. (4) Keep all arms, starts, fields and tests working. Match surrounding style; ruff format then ruff check touched files.\n\nFinish by running: .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start posta --arms custody,pump --first-command 'Follow Rebecca.' --semantic on --out bench/results/stage7-3c-errfix-dry and the checker with --mode dry.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7 tests/test_3c_pump_need.py tests/test_3c_custody_result.py 2>&1 | tail -6 && rm -rf bench/results/stage7-3c-errfix-dry && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start posta --arms custody,pump --first-command 'Follow Rebecca.' --semantic on --out bench/results/stage7-3c-errfix-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-errfix-dry 1 --mode dry && .venv/bin/ruff check scripts/ringer/stage7 && .venv/bin/ruff format --check scripts/ringer/stage7 && test -z \"$(git status --porcelain data storygame)\" && grep -rn -i 'httperror' scripts/ringer/stage7/test_three_c_probe.py scripts/ringer/stage7/test_door_transport.py | head -3 | grep -q .",
+      "verified": "a Cloudflare HTTPError mid-row stops the harness with a readable run-failure.txt naming the HTTP error; regression test fails before and passes after"
+    }
+  ]
+}

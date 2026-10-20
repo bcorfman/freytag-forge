@@ -46,6 +46,7 @@ addopts = [
     "auto",
 ]
 testpaths = ["tests"]
+pythonpath = ["scripts/ringer/stage7"]
 filterwarnings = ["ignore::DeprecationWarning"]
 markers = [
     "unit: pure contract, parser, policy, formatter, or serializer tests",

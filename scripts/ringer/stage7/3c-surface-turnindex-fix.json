@@ -1,0 +1,33 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-turn-index-fix",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "fix-3c-turn-index",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py"
+      ],
+      "spec": "You are fixing one recording gap in a billed-probe harness on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You may edit ONLY scripts/ringer/stage7/three_c_probe.py and scripts/ringer/stage7/test_three_c_probe.py. Never edit data/, src/, other files, git state or .env; no billed or network call. No uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, `.venv/bin/python`.\n\nDEFECT: check_three_c_probe.py (do not edit it) requires every post8/postc row's `scripted_prefix.turn_index` to equal 8 (post8) or 7 (postc). plan.json records it, but the per-row `scripted_prefix` written into rows.json (the dict returned by apply_post8_prefix / the postc equivalent, stored at the `\"scripted_prefix\": prefix` row sites) has only committed_reveal_ids, turns and latest_narration, so the checker reports 'row does not record the scripted postc turn index'. FIX: make the prefix builder(s) include `\"turn_index\": state.turn_index` (the value actually set on the state, 8 for post8 and 7 for postc) so every row carries the real value. Do not hard-code it separately in the rows; read it from the state the prefix set. Add a hermetic test in test_three_c_probe.py proving a row built for each of post8 and postc contains the right turn_index and passes the checker's relevant rule (use the existing fake provider/player fixtures; run the checker's artifacts validation on a tiny fake output dir if the existing tests already do so). Then run `.venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py`, `.venv/bin/ruff format` and `.venv/bin/ruff check` on the two files.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_surface_binding.py 2>&1 | tail -4 && grep -q 'turn_index' scripts/ringer/stage7/three_c_probe.py && .venv/bin/ruff check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py && .venv/bin/ruff format --check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py && test -z \"$(git status --porcelain data src)\"",
+      "expect_files": [
+        "scripts/ringer/stage7/three_c_probe.py"
+      ],
+      "verified": "row scripted_prefix records turn_index; tests pass; no src/data change"
+    }
+  ]
+}

@@ -13,11 +13,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-import yaml
+import yaml  # noqa: E402
 
-from bench.core import load_variation, package_and_state, provider_for
-from storygame.runtime.candidate_matcher import _matches_all
-from storygame.runtime.engine import RuntimeEngine
+from bench.core import load_variation, package_and_state, provider_for  # noqa: E402
+from storygame.runtime.candidate_matcher import _matches_all  # noqa: E402
+from storygame.runtime.engine import RuntimeEngine  # noqa: E402
 
 ARMS = (
     (
@@ -115,10 +115,14 @@ def write_summary(
 
 def write_notes(out: Path, summary: dict[str, Any], deviation: str = "None.") -> None:
     lines = [
-        "The probe was invoked from the repository root with the required TMPDIR=/tmp command after the requested free dry-run.",
-        "The live invocation used n=12 and the requested output directory. For each replicate, arms were processed in control, cue-b, cue-c order.",
-        "Each arm used its unchanged bench variation, bare Scene 2B entry state, and the specified one-input action through the bench runtime machinery.",
-        "The screen transcript began with the recorded final Scene 2A turn, followed by the specified examination command and the complete returned narration.",
+        "The probe was invoked from the repository root with the required TMPDIR=/tmp command "
+        "after the requested free dry-run.",
+        "The live invocation used n=12 and the requested output directory. For each replicate, "
+        "arms were processed in control, cue-b, cue-c order.",
+        "Each arm used its unchanged bench variation, bare Scene 2B entry state, and the "
+        "specified one-input action through the bench runtime machinery.",
+        "The screen transcript began with the recorded final Scene 2A turn, followed by the "
+        "specified examination command and the complete returned narration.",
         f"Deviation from the requested sequence: {deviation}",
         f"Narration calls: {summary.get('narration_calls', 0)}. Player calls: {summary.get('player_calls', 0)}.",
     ]

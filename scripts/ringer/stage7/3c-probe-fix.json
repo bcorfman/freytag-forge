@@ -1,0 +1,23 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-probe-fix",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [{
+    "key": "fix-probe-parents",
+    "task_type": "code-fix",
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=low"],
+    "full_access": true,
+    "max_attempts": 2,
+    "timeout_s": 1800,
+    "check_timeout_s": 300,
+    "ownership": ["scripts/ringer/stage7/3c_surface_binding_probe.py", "bench/results/stage7-3c-surface-binding/"],
+    "spec": "You are fixing a read-only probe on freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. Edit ONLY scripts/ringer/stage7/3c_surface_binding_probe.py and regenerate bench/results/stage7-3c-surface-binding/report.json. Never touch data/, src/, tests/, git state, .env. No uv, no network.\n\nBUG: in the report every control-arm value of captives_parent, captive_member_parents and person_parents (brandon, kristin, michelle) is None/empty, so the probe cannot detect any movement; its 'nobody else moved' assertion is vacuous. Find how the runtime stores a thing's world parent (read src/storygame/runtime/state.py and tests/test_late_scene_repro.py, which asserts 3C placements such as captives in maintenance_network) and read the real parent via that API for captives, each member of captives, and the entities for Kristin, Brandon and Michelle (ids from data/stories/continuity-initiative/world.yaml). Expected: control captives_parent is 'maintenance_network' before and after C; binding arm becomes 'facility_escape' only after BOTH C parts. Record parents at step 0 (before any reveal) as well as after each reveal, and make the probe exit nonzero if any person/member parent value is None (vacuous) or if the earlier assertions (no move after one C part, move after both, no non-captive person moved vs control) fail. Run: cd /home/bcorfman/dev/freytag-forge && PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python scripts/ringer/stage7/3c_surface_binding_probe.py",
+    "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/3c_surface_binding_probe.py >/dev/null && .venv/bin/python -c \"import json;r=json.load(open('bench/results/stage7-3c-surface-binding/report.json'));c=[s for s in r['steps'] if s['arm']=='control'];assert all(s['captives_parent']=='maintenance_network' for s in c),[s['captives_parent'] for s in c];assert all(None not in s['person_parents'].values() for s in r['steps']),'person parent None';b=[s for s in r['steps'] if s['arm']!='control' and s['step']==2];assert b and all(s['captives_parent']=='facility_escape' for s in b);print('ok')\"",
+    "expect_files": ["bench/results/stage7-3c-surface-binding/report.json"],
+    "verified": "control parents are real values and the binding moves captives only after both C parts"
+  }]
+}
