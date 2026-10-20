@@ -1,0 +1,37 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-surface-build",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "build-3c-surface-screen",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_probe.py",
+        "scripts/ringer/stage7/check_three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py",
+        "tests/test_3c_surface_binding.py",
+        "bench/results/stage7-3c-surface-dry/"
+      ],
+      "spec": "You are extending an existing billed-probe harness on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You may edit ONLY: scripts/ringer/stage7/three_c_probe.py, scripts/ringer/stage7/check_three_c_probe.py, scripts/ringer/stage7/test_three_c_probe.py, tests/test_3c_surface_binding.py (new), and write under bench/results/stage7-3c-surface-dry/. Never edit data/, src/, other tests, git state, or .env; never print credentials. NO billed or network call: only --dry-run and hermetic tests. No uv: use `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp` and `.venv/bin/python`. Read first: .plans/astra-3c-surface-binding-prereg.md (the contract), scripts/ringer/stage7/three_c_probe.py, 3c_surface_binding_probe.py, bench/variations/stage7-3c-surface-binding.json and stage7-3c-control.json, tests/test_resolution_cascade.py.\n\nTASK 1 (tests/test_3c_surface_binding.py, hermetic): with the surface-binding variation loaded (bench/core load_variation/package_and_state as the existing probes do) prove: (a) C-R1 then C-R2 and C-R2 then C-R1 both move group `captives` to facility_escape only after the second part; (b) C-R2 alone does not move it; (c) the deadline fallback moves it; (d) save/load keeps it; (e) with real MEMBERS placed in `captives` (look at world.yaml for how groups hold members; add members in the test state if none exist) the members follow the group and Kristin, Michelle and Brandon do not move. Control variation: none of these moves happen. Reuse helpers from 3c_surface_binding_probe.py and tests/test_3c_cue_chain.py rather than duplicating.\n\nTASK 2 (harness): add `--start postc` (STARTS gains \"postc\") building the labelled synthetic state: scripted reveals A-R1 'Send the evidence package.', B-R1 'Take the Portable data case from Rebecca.', C-R1 'Restore the drainage pumps.', C-R2 'Open the surface gates.' (same mechanism as apply_post8_prefix), turn_index 7, label text like POST8_LABEL. Preflight reveal universe must be exactly [k_sl_3c_d_r1, k_sl_3c_d_r2] else fail before any call. Add `--arms control,surface` selection (default behavior for existing modes unchanged: control,pre667): the `surface` arm uses bench/variations/stage7-3c-surface-binding.json. Add `--first-command TEXT` that is executed as the row's first turn (engine.turn) before the raw player is asked, recorded as attempt 1 with a `scripted_first` flag. Attempt cap for postc rows is 10 (like POST8_ATTEMPT_CAP). Caps for postc n=1: 80 Cloudflare / 40 player; n=12: 480 / 240. Per attempt additionally record `captives_parent` and `kristin_parent` (read from state after the turn; find how parents are stored via the existing surface probe) and per row the first-command response text in full. Output rows must keep everything the existing check expects. Update check_three_c_probe.py so --mode dry/artifacts accept postc/surface rows (caps, 2N interleaved rows, arm names) and print WHY on failure. Extend test_three_c_probe.py hermetically (fake provider/player): postc preflight, first-command recorded as scripted_first, surface arm override applied exactly once, caps. Existing tests must still pass.\n\nFinish: `.venv/bin/ruff format` then `.venv/bin/ruff check` on the touched .py files; run `.venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start postc --arms control,surface --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --out bench/results/stage7-3c-surface-dry` and the checker with --mode dry. Match surrounding style.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_surface_binding.py tests/test_3c_cue_chain.py tests/test_resolution_cascade.py 2>&1 | tail -8 && rm -rf bench/results/stage7-3c-surface-dry && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start postc --arms control,surface --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --out bench/results/stage7-3c-surface-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-surface-dry 1 --mode dry && .venv/bin/ruff check scripts/ringer/stage7 tests/test_3c_surface_binding.py && .venv/bin/ruff format --check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_surface_binding.py && test -z \"$(git status --porcelain data src)\"",
+      "expect_files": [
+        "tests/test_3c_surface_binding.py",
+        "scripts/ringer/stage7/three_c_probe.py"
+      ],
+      "verified": "surface-binding fixture tests, harness tests and dry run pass; no src/data change; zero model calls"
+    }
+  ]
+}

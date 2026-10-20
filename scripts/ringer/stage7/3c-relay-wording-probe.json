@@ -1,0 +1,30 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-relay-wording",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "probe-relay-wording",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "scripts/ringer/stage7/relay_wording_probe.py",
+        "bench/results/stage7-3c-relay-wording/"
+      ],
+      "spec": "You are a read-only-ish scout on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You may create ONLY scripts/ringer/stage7/relay_wording_probe.py and write output under bench/results/stage7-3c-relay-wording/ (report.json and report.md). Never edit anything else (not data/, storygame/, tests/, git state, .env); no network and no model call. No uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, `.venv/bin/python`.\n\nCONTEXT: the 3C scene entry text of the Continuity Initiative currently says 'Brandon's relay is open.' In a 12-row live screen the narration guard rejected 3 replies with `narration mentions unavailable knowledge 'relay open'` (`relay open` is an alias of a 3B knowledge entry; see data/stories/continuity-initiative/knowledge.yaml around lines 2346 and 2383 and handoffs.yaml around 229-230). The guard code is storygame/runtime/narration_safety.py (read it; also tests/test_narration_safety.py and tests/test_3c_entry_package.py, scripts/ringer/stage7/three_c_probe.py for how a 3C entry state is built: package_and_state from bench/core with the variation bench/variations/stage7-3c-control.json, then assert_3c_entry_facts).\n\nTASK: write relay_wording_probe.py that builds the real 3C entry state and runs candidate narration texts through the REAL narration-safety check the runtime applies to a narrator reply (find the public function; call it exactly as the runtime does, with the 3C state and package). Report for each text whether it is accepted, and if rejected, the exact error. Texts (each as a standalone narration string): (1) 'Brandon\\'s relay is open.' (2) 'Brandon is at the relay.' (3) 'Brandon\\'s relay is holding.' (4) 'Brandon\\'s relay held open.' (5) 'The relay is open.' (6) 'Brandon keeps the relay open.' (7) 'The broadcast chamber lights are steady. Michelle\\'s evidence package is ready to send. Water is entering the outer access level.' (8) 'The broadcast chamber lights are steady. Brandon is at the relay. Michelle\\'s evidence package is ready to send. Water is entering the outer access level.' (9) the full current entry text 'The broadcast chamber lights are steady. Brandon\\'s relay is open. Michelle\\'s evidence package is ready to send. Water is entering the outer access level.' (10) a positive control that must be rejected if the probe works: 'Michelle sends the evidence package to the independent networks.' (an unearned A-R1 statement) and (11) a control that must be accepted: 'Kristin looks around the broadcast chamber.'. If either control gives the opposite result, say so loudly in the report and exit nonzero (the probe is then not trustworthy). Also report whether the package loader accepts each of (7), (8), (9) as the 3C entry_text (the loader rejects scene prose containing a guarded phrase its scene has not earned: apply the same check without editing files, e.g. by loading the control variation with an in-memory plot.md replacement via bench/core load_variation overrides like the existing entry variation does).\n\nOutput report.json (list of {id, text, accepted, error}) and report.md (a short table plus a one-paragraph reading of which phrasing avoids the guard). Run the script, then `.venv/bin/ruff format` and `.venv/bin/ruff check` it.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/relay_wording_probe.py && python3 -c \"import json;r=json.load(open('bench/results/stage7-3c-relay-wording/report.json'));r=r if isinstance(r,list) else r.get('results',r);assert len(r)>=11,len(r);ids={x['id']:x for x in r};print({k:(v['accepted'],(v.get('error') or '')[:70]) for k,v in ids.items()})\" && .venv/bin/ruff check scripts/ringer/stage7/relay_wording_probe.py && .venv/bin/ruff format --check scripts/ringer/stage7/relay_wording_probe.py && test -z \"$(git status --porcelain data storygame tests)$(git diff --stat -- data storygame)\" ; test -z \"$(git status --porcelain data storygame)\"",
+      "verified": "11 texts evaluated by the real guard; controls behave; no data/storygame change"
+    }
+  ]
+}

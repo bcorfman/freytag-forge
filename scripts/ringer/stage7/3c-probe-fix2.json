@@ -1,0 +1,23 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-probe-fix2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [{
+    "key": "fix-3c-probe-entry-state",
+    "task_type": "code-fix",
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=medium"],
+    "full_access": true,
+    "max_attempts": 2,
+    "timeout_s": 2400,
+    "check_timeout_s": 300,
+    "ownership": ["scripts/ringer/stage7/three_c_probe.py", "scripts/ringer/stage7/test_three_c_probe.py", "scripts/ringer/stage7/check_three_c_probe.py"],
+    "spec": "You are fixing a harness defect on freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. Edit ONLY scripts/ringer/stage7/three_c_probe.py, test_three_c_probe.py and check_three_c_probe.py in scripts/ringer/stage7/. Never touch data/, src/, tests/, git state, .env. NO network or billed call. Use `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp` and `.venv/bin/python`.\n\nDEFECT: three_c_probe.run_row builds its 3C state with bench.core.package_and_state(variation, '3C'). That state has NONE of the three entry facts the real game has on entering 3C (broadcast_started, brandon_confession_available, detention_locations_secured), so the projected reveal universe is empty and no reveal can ever be earned; a billed smoke wasted 69 requests on this. The existing hermetic helper tests/test_3c_cue_chain.py::_state_3c shows the intended synthetic entry: after package_and_state, assert each of those three facts with `state.facts.assert_fact(Fact(predicate=fact_id, subject='story', value='true'))` (Fact from storygame.runtime.facts). Do the same in run_row right after package_and_state, in one small helper (ENTRY_FACTS constant), and record `entry_state: 'synthetic: 3C entry facts asserted, no replay of earlier scenes'` in source.json and every row.\n\nTHEN add fail-fast guards so an empty game cannot be billed again: before the first player call of EACH row, project the reveal universe for a neutral command via engine.projector.project(state, 'player', 'Send the evidence package.').reveal_universe and require it to contain 'k_sl_3c_a_r1' and 'k_sl_3c_a_r2' (the 3C opening reveals); otherwise raise a clear error that becomes run-failure.txt with zero billed calls spent. Also add that same preflight to --dry-run (it needs no network: build the state for both arms and put the universe ids per arm into plan.json), and make the live run also write plan.json so check_three_c_probe.py --mode artifacts no longer reports 'missing plan.json' (the previous live run omitted it). Hermetic tests: (1) a real-engine test that the universe at row start contains the two a_* reveals for both arms; (2) a test that omitting the entry facts makes the preflight raise before any ask() call. Run pytest on test_three_c_probe.py, ruff format+check, then `.venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --out /tmp/3c-dry-fix2` and `.venv/bin/python scripts/ringer/stage7/check_three_c_probe.py /tmp/3c-dry-fix2 1 --mode dry`.",
+    "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py && .venv/bin/ruff check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py && rm -rf /tmp/3c-dry-fix2 && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --out /tmp/3c-dry-fix2 && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py /tmp/3c-dry-fix2 1 --mode dry && grep -q k_sl_3c_a_r1 /tmp/3c-dry-fix2/plan.json && test -z \"$(git status --porcelain data src tests | grep -v test_3c_cue_chain)\"",
+    "expect_files": ["scripts/ringer/stage7/three_c_probe.py"],
+    "verified": "entry facts asserted, empty-universe preflight fails before any billed call, plan.json written live and dry"
+  }]
+}

@@ -1,0 +1,23 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-matcher-table2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [{
+    "key": "matcher-table-fix",
+    "task_type": "code-fix",
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=medium"],
+    "full_access": true,
+    "max_attempts": 2,
+    "timeout_s": 2400,
+    "check_timeout_s": 300,
+    "ownership": ["scripts/ringer/stage7/3c_matcher_table.py", "bench/results/stage7-3c-matcher-table/"],
+    "spec": "You are correcting a free, read-only audit on freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. Edit ONLY scripts/ringer/stage7/3c_matcher_table.py and regenerate bench/results/stage7-3c-matcher-table/table.json and table.md. Never touch data/, src/, tests/, git state, .env. No network. Use `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp` and `.venv/bin/python`.\n\nTwo defects in the current script/report: (1) The recorded 3C bundles (bench/results/stage7-2b-entry/attempt-1/e2e-blind-player-bundles.json, scene 3C, bundles[turn=N].attempt_bundle.reveal_selection) contain ONLY `universe_size` and `shortlist_size`, never reveal ids, so the 'recorded-eligible' columns can only say 'absent'. Replace them: the 'eligible' columns are the plan's STATE-APPROPRIATE subsets, and `universe_size` from the bundle is a cross-check. (2) The subset used for turns 9-15 included d_r2, but D-R2 is already committed from turn 8 on, so the state-appropriate subsets are exactly: turn 1 a_r1,a_r2; turn 2 b_r1,b_r2; turn 3 c_r1,c_r2; turns 4-5 c_r2; turns 6-8 d_r1,d_r2; turns 9-15 d_r1 ONLY. Fix the subset logic. Add a column/field `bundle_universe_size` per turn and a boolean `universe_size_matches_subset` (len(subset) == bundle universe_size); report any mismatch in a `universe_size_disagreements` list instead of adjusting anything. Redefine `unique_selection_changed_by_667` as the turns where the unique match over the state-appropriate subset differs between DEPLOYED and CURRENT evidence (expected from the plan: turns 12, 13, 14, selecting d_r1 under current and nothing under deployed; do not force this, report what the matcher gives). Keep plan_table_agrees/disagreements for the all-ten columns (they currently agree, keep them), and ALSO add `plan_eligible_table_agrees` with disagreements for the plan's 'Eligible' columns: deployed/current by turn: 1 —/—, 2 b_r1/b_r1, 3 c_r1/c_r1, 4 —/—, 5 c_r2/c_r2, 6 —/—, 7 —/—, 8 d_r2/d_r2, 9 —/—, 10 —/—, 11 —/—, 12 —/d_r1, 13 —/d_r1, 14 —/d_r1, 15 —/—. Regenerate table.md in the same layout with the renamed columns. Run the script, ruff format + check it.",
+    "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/3c_matcher_table.py >/dev/null && .venv/bin/ruff check scripts/ringer/stage7/3c_matcher_table.py && .venv/bin/python -c \"import json;t=json.load(open('bench/results/stage7-3c-matcher-table/table.json'));assert 'plan_eligible_table_agrees' in t and 'universe_size_disagreements' in t,list(t);assert 'absent' not in json.dumps(t),'still absent';print('ok',t['plan_eligible_table_agrees'],t['unique_selection_changed_by_667'])\"",
+    "expect_files": ["bench/results/stage7-3c-matcher-table/table.json"],
+    "verified": "eligible columns computed from plan subsets, cross-checked to bundle universe sizes"
+  }]
+}

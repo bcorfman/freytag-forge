@@ -78,6 +78,58 @@ def test_resolution_realization_storylets_are_required() -> None:
     )
 
 
+def _reveal(engine: RuntimeEngine, knowledge_id: str, command: str) -> None:
+    engine.provider = _Provider(knowledge_id)
+    engine.turn(command)
+    engine._activate_pacing()  # noqa: SLF001 - inspect the next staged cue.
+
+
+def _finish_a_through_c() -> RuntimeEngine:
+    engine = RuntimeEngine(_state_3c(), _Provider("k_sl_3c_a_r1"))
+    _reveal(engine, "k_sl_3c_a_r1", "Send the evidence package.")
+    _reveal(engine, "k_sl_3c_b_r1", "Take the Portable data case from Rebecca.")
+    _reveal(engine, "k_sl_3c_c_r1", "Restore the drainage pumps.")
+    _reveal(engine, "k_sl_3c_c_r2", "Open the surface gates.")
+    return engine
+
+
+def test_resolution_d_r2_alone_waits_for_d_r1() -> None:
+    engine = _finish_a_through_c()
+
+    _reveal(engine, "k_sl_3c_d_r2", "Call the families of the missing.")
+
+    assert engine.state.story_complete is False
+    assert Fact(predicate="charles_at_large", subject="story", value="true") not in engine.state.facts.asserted
+
+
+@pytest.mark.parametrize(
+    ("first_d", "second_d"),
+    [
+        ("k_sl_3c_d_r2", "k_sl_3c_d_r1"),
+        ("k_sl_3c_d_r1", "k_sl_3c_d_r2"),
+    ],
+)
+def test_resolution_d_chain_then_e_completes_without_deadline_events(first_d: str, second_d: str) -> None:
+    commands = {
+        "k_sl_3c_d_r1": "Check reports from other detention sites.",
+        "k_sl_3c_d_r2": "Call the families of the missing.",
+    }
+    engine = _finish_a_through_c()
+
+    _reveal(engine, first_d, commands[first_d])
+    assert engine.state.story_complete is False
+    assert Fact(predicate="charles_at_large", subject="story", value="true") not in engine.state.facts.asserted
+
+    _reveal(engine, second_d, commands[second_d])
+    assert "resolution_network_consequences" in engine.state.fired_event_ids
+    assert Fact(predicate="charles_at_large", subject="story", value="true") in engine.state.facts.asserted
+    assert engine.state.story_complete is False
+
+    _reveal(engine, "k_sl_3c_e_r1", "Open the recovered document.")
+    assert engine.state.story_complete is True
+    assert engine.state.turn_records[-1].deadline_event_ids == ()
+
+
 def test_portable_archive_starts_with_rebecca() -> None:
     scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "3C")
     placement = scene.metadata.item_placements["portable_archive"]

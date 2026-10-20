@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
-from contextlib import contextmanager, suppress
+from contextlib import suppress
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -72,30 +72,40 @@ class SpendBudget:
         event.update({"status": "ok" if ok else "failed", "error": error})
 
 
-@contextmanager
-def counted_provider(provider: Any, budget: SpendBudget):
+class _CountedProvider:
+    """Temporarily count provider sends without mutating raised exceptions."""
+
+    def __init__(self, provider: Any, budget: SpendBudget) -> None:
+        self.provider = provider
+        self.budget = budget
+        self.original = provider._request
+
+    def __enter__(self) -> Any:
+        def counted(payload: dict[str, Any]) -> Any:
+            self.budget.reserve("cloudflare", str(payload.get("_request_budget", "narration")))
+            try:
+                result = self.original(payload)
+            except Exception as error:
+                self.budget.acknowledge("cloudflare", False, type(error).__name__)
+                raise
+            self.budget.acknowledge("cloudflare", True)
+            return result
+
+        self.provider._request = counted
+        self.provider._door_counted = True
+        return self.provider
+
+    def __exit__(self, _exc_type: Any, _exc_value: BaseException | None, _traceback: Any) -> bool:
+        self.provider._request = self.original
+        with suppress(AttributeError):
+            del self.provider._door_counted
+        return False
+
+
+def counted_provider(provider: Any, budget: SpendBudget) -> _CountedProvider:
     """Count every physical provider send, then restore the provider method."""
 
-    original = provider._request
-
-    def counted(payload: dict[str, Any]) -> Any:
-        budget.reserve("cloudflare", str(payload.get("_request_budget", "narration")))
-        try:
-            result = original(payload)
-        except Exception as error:
-            budget.acknowledge("cloudflare", False, type(error).__name__)
-            raise
-        budget.acknowledge("cloudflare", True)
-        return result
-
-    provider._request = counted
-    provider._door_counted = True
-    try:
-        yield provider
-    finally:
-        provider._request = original
-        with suppress(AttributeError):
-            del provider._door_counted
+    return _CountedProvider(provider, budget)
 
 
 @dataclass(frozen=True)

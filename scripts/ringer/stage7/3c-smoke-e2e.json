@@ -1,0 +1,29 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-smoke",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "blind-3c-smoke",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 4200,
+      "check_timeout_s": 120,
+      "spec": "You are a hosted-E2E operator on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (OpenAI blind player plus Cloudflare narration), so read the hard rules first.\n\nHARD RULES. Change nothing except: files under artifacts/e2e-* and frontend/test-results/ (generated, gitignored) and the output directory /home/bcorfman/dev/freytag-forge/bench/results/stage7-3c-smoke/attempt-1/ . Do not edit or create any tracked file. No git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Staging only: if the API reports any channel other than staging, stop and report. Run the blind-player test AT MOST ONCE - never retry a failed or aborted run, because every attempt counts. Do not run anything else billed. Do not edit code to make a run pass.\n\nWHAT THIS IS: the n=1 smoke of the Scene 3C stuck-turn plan (.plans/chatgpt-3c-stuck-turns-plan.md, Step 1) on current main 5633582d, which includes the PR 667 d_r1 verbs. One raw-profile, single-scene (3C) blind-player run (frontend/e2e/blind-player.spec.js) on staging. Stopping rule fixed in advance: exactly one attempt, no replacement; if the smoke fails twice or a quota/budget stop (HTTP 429 with X-Narration-Error-Code AI_QUOTA_EXCEEDED or AI_DAILY_BUDGET_EXCEEDED) appears, stop and record it.\n\nSTEPS, in order:\n1. Identity: `mkdir -p bench/results/stage7-3c-smoke/attempt-1 && source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\" > bench/results/stage7-3c-smoke/attempt-1/identity.json`. Required channel 'staging', runtime 'scene-v1'. Expected sha 5633582d41a90ed220da7be76ec5df881d7b30cb; if different, record it and stop without running anything billed (write run-failure.txt 'NOT RUN: sha mismatch' and smoke-result.txt 'not run').\n2. Smoke: `rm -f artifacts/e2e-smoke-loaded.png; source .env && cd frontend && npm run test:e2e -- --grep @smoke`. If it fails once rerun once; if it still fails write the verbatim output to run-failure.txt, smoke-result.txt 'failed', and do NOT run the blind player. Write smoke-result.txt with 'passed' or 'failed' plus attempts.\n3. Delete stale artifacts: `rm -f artifacts/e2e-blind-player*.json artifacts/e2e-blind-player*.md`.\n4. Blind run: `source .env && cd frontend && E2E_BLIND_SCENE=3C BLIND_PLAYER_PROFILE=raw E2E_BLIND_REPLICATES=1 E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @blind-player` with a command timeout of at least 40 minutes. The command may exit nonzero (a failure is data, not a reason to rerun). Save the last 80 lines of output, secrets stripped, to attempt-1/run-tail.txt.\n5. Copy every artifacts/e2e-blind-player*.json and .md (if they exist) into attempt-1/. If the run died before writing a report, write the verbatim failure text to attempt-1/run-failure.txt. Never copy a report that predates step 3.\n6. Write attempt-1/operator-note.md (about 150 words, strictly factual): sha, smoke result, whether the test passed, scenes reached, turns, stuck/rejection/game-break counts if the report has them, and for scene 3C: the committed reveal ids per turn, whether story_complete was seen, and whether any deadline event ids are visible in the bundles, failure text verbatim. Quote, do not interpret. An honest failed or skipped attempt is a good result.\n",
+      "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ scripts/ringer/stage7/ && .venv/bin/python scripts/ringer/stage7/check_attempt.py bench/results/stage7-3c-smoke/attempt-1",
+      "expect_files": [
+        "bench/results/stage7-3c-smoke/attempt-1/operator-note.md"
+      ],
+      "verified": "attempt recorded with staging identity, smoke result, and a fresh report or verbatim failure; no tracked source changed"
+    }
+  ]
+}

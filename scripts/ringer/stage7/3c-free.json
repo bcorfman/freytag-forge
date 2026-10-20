@@ -1,0 +1,41 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-free",
+  "max_parallel": 2,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "stateful-d-r1-tests",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": ["-c", "model_reasoning_effort=low"],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 300,
+      "ownership": ["tests/test_3c_cue_chain.py"],
+      "spec": "You are a test author on freytag-forge (Python 3.12). Your working directory is the real repo /home/bcorfman/dev/freytag-forge. You may edit ONLY tests/test_3c_cue_chain.py. Never touch data/, src/, other tests, git state, or .env. No uv: run tests with `cd /home/bcorfman/dev/freytag-forge && PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python -m pytest -q tests/test_3c_cue_chain.py`. No network or model calls.\n\nGOAL: add STATEFUL coverage to tests/test_3c_cue_chain.py. The existing test_player_commands_match_the_answer_table audits all ten reveals at once and pins compound commands that tie d_r1/d_r2 as None; KEEP that test and every existing row unchanged. It does not describe real runtime state after D-R2 is already committed, when only k_sl_3c_d_r1 remains eligible.\n\nADD, reusing the existing helpers (_finish_a_through_c, _reveal, _provider, PACKAGE):\n1. A parametrized test: build the engine via _finish_a_through_c(), commit k_sl_3c_d_r2 with 'Call the families of the missing.' via _reveal, then for each of these three commands assert that the real matcher over the engine's CURRENTLY ELIGIBLE (projected) candidates selects exactly k_sl_3c_d_r1: (a) 'Continue broadcasting the reports from all remaining detention sites and coordinate their rescue.' (b) 'Continue broadcasting the reports from the other detention sites and coordinate rescue efforts for the remaining missing.' (c) 'Keep broadcasting the reports from other detention sites.' First read src/storygame/runtime/candidate_matcher.py (uniquely_matched_authored_handoff, _matches_all) and src/storygame/runtime/reveal_eligibility.py and cloudflare.py (search 'uniquely_matched_authored_handoff') to see how the engine builds the candidate set from engine.projector.project(...).reveal_universe or equivalent; use the same public path the provider uses rather than reimplementing matching. Also assert the projected reveal universe at that point is exactly ['k_sl_3c_d_r1'].\n2. The inverse order: commit k_sl_3c_d_r1 first with 'Check reports from other detention sites.' and assert only k_sl_3c_d_r2 remains in the universe.\nName tests descriptively (test_after_d_r2_only_d_r1_matches_compound_commands etc.). Match the surrounding code style (ruff format, line length used in repo, no extra comments). Do not make failing tests pass by changing expectations to None; these should pass against the current code. If one genuinely fails, leave it, say so in your final message, and do not weaken it.\n\nWhen done run `.venv/bin/ruff format tests/test_3c_cue_chain.py && .venv/bin/ruff check tests/test_3c_cue_chain.py` and the pytest command above.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && git diff --name-only | grep -v '^tests/test_3c_cue_chain.py$' | grep -v '^\\.plans/\\|^scripts/ringer/' ; test -z \"$(git diff --name-only -- src data tests | grep -v '^tests/test_3c_cue_chain.py$')\" && .venv/bin/python -m pytest -q tests/test_3c_cue_chain.py 2>&1 | tail -15 && grep -c 'k_sl_3c_d_r1' tests/test_3c_cue_chain.py && git diff -U0 tests/test_3c_cue_chain.py | grep -c '^+def test_.*d_r' ",
+      "expect_files": ["tests/test_3c_cue_chain.py"],
+      "verified": "new stateful D-R1 tests pass; only the one test file changed"
+    },
+    {
+      "key": "surface-binding-probe",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": ["-c", "model_reasoning_effort=low"],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 300,
+      "ownership": ["scripts/ringer/stage7/3c_surface_binding_probe.py", "bench/results/stage7-3c-surface-binding/"],
+      "spec": "You are a read-only probe author on freytag-forge. Working directory is the real repo /home/bcorfman/dev/freytag-forge. Create ONLY scripts/ringer/stage7/3c_surface_binding_probe.py and run it to write bench/results/stage7-3c-surface-binding/report.json. Do not edit data/, src/, tests/, or git state. No uv; run with `cd /home/bcorfman/dev/freytag-forge && PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python scripts/ringer/stage7/3c_surface_binding_probe.py`. No network or model calls.\n\nQUESTION: if data/stories/continuity-initiative/world.yaml line ~377 changed the story-fact entry `- captives_reaching_surface` into `- id: captives_reaching_surface` with `on_assert: [{move: captives, parent: facility_escape}]`, does the captive group move to facility_escape exactly when both C parts are done, and nothing else moves? The script must NOT edit the repo: copy data/stories/continuity-initiative to a temp dir (tempfile), apply the replacement there (old text `- captives_reaching_surface\\n` must match exactly once in world.yaml, else exit nonzero), and load both packages with storygame.story_package.loader.load_story_package. Build the 3C entry state like tests/test_3c_cue_chain.py `_state_3c` and drive the engine with its `_reveal` pattern (scripted provider returning the knowledge's delivery_text with grounding_ids). For BOTH arms (control = repo package, binding = temp copy) and BOTH C orders (c_r1 'Restore the drainage pumps.' then c_r2 'Open the surface gates.', and reversed), record after each step: whether fact captives_reaching_surface is asserted, the world parent of `captives`, the parent of each member of captives, and the parents of the player/Kristin/Brandon/Michelle entities (find ids by reading world.yaml). Also run a deadline-path case if you can find in src/storygame/runtime/canonical_events.py how the resolution deadline asserts the fact; if it cannot be driven cheaply, say so in the report under 'not_covered'. Report JSON keys: arms, orders, steps (list of dicts), differences (what differs between arms), not_covered. The probe must fail (nonzero) if the binding arm moves captives after only ONE C part, or fails to move them after both, or changes the parent of any non-captive person entity relative to control other than members of captives.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && test -z \"$(git status --porcelain data src tests)\" && .venv/bin/python scripts/ringer/stage7/3c_surface_binding_probe.py >/dev/null && .venv/bin/python -c \"import json;r=json.load(open('bench/results/stage7-3c-surface-binding/report.json'));assert all(k in r for k in ('arms','orders','steps','differences','not_covered')),list(r);assert len(r['steps'])>=8,len(r['steps']);print('ok',len(r['steps']))\"",
+      "expect_files": ["bench/results/stage7-3c-surface-binding/report.json"],
+      "verified": "probe runs on a temp package copy, repo untouched, report covers both arms and both orders"
+    }
+  ]
+}

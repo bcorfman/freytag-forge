@@ -1,0 +1,33 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-escape-build",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "build-3c-escape-screen",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_probe.py",
+        "scripts/ringer/stage7/check_three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py",
+        "tests/test_3c_escape_result.py",
+        "bench/results/stage7-3c-escape-dry/"
+      ],
+      "spec": "You are extending a billed-probe harness on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You may edit ONLY: scripts/ringer/stage7/three_c_probe.py, scripts/ringer/stage7/check_three_c_probe.py, scripts/ringer/stage7/test_three_c_probe.py, tests/test_3c_escape_result.py (new), and write under bench/results/stage7-3c-escape-dry/. bench/variations/stage7-3c-escape-result.json already exists: do not edit it. Another task (the Step 2 entry build) edited the same harness files just before you; read their CURRENT content and keep every existing arm, field and test working (arms control, pre667, surface, entry). Never edit data/, src/, other tests, git state or .env; no billed or network call. No uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, `.venv/bin/python`. Read first: .plans/astra-3c-escape-result-prereg.md (the contract), the three harness files, tests/test_3c_surface_binding.py and tests/test_3c_cue_chain.py.\n\nTASK 1 (harness): add arm `escape` (variation bench/variations/stage7-3c-escape-result.json) to ALL_ARMS/ARM_FILES so `--arms control,escape --start postc --first-command ...` works. Source proof must verify the knowledge.yaml replacement matched exactly once and record old and new statement. Per row also record `first_d_commit_scene_turn` (scene turn of the first committed k_sl_3c_d_r1 or k_sl_3c_d_r2, null if none). Update check_three_c_probe.py to accept escape rows (arm names, interleaved rows, the existing postc caps and attempt cap) and require the new field on postc rows; print WHY on failure.\n\nTASK 2 (tests/test_3c_escape_result.py, hermetic, real engine, no network): (a) the escape variation loads, matches once, and ONLY the k_sl_3c_c_r1 statement differs between control and escape knowledge payloads (compare every knowledge entry field-by-field); (b) C1-only: after scripted C-R1 alone, fact captives_reaching_surface is false in both arms and the parents of captives, Kristin, Michelle and Brandon are identical between arms; (c) both C orders reach identical facts and identical reveal eligibility in both arms; (d) the 15 recorded commands (recorded_commands() helper) give identical _matches_all results in both arms. Extend test_three_c_probe.py hermetically for the escape arm and first_d_commit_scene_turn.\n\nFinish: ruff format then ruff check on touched .py files; run `.venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start postc --arms control,escape --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --out bench/results/stage7-3c-escape-dry` and the checker with --mode dry. Match surrounding style.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_escape_result.py tests/test_3c_entry_package.py tests/test_3c_surface_binding.py tests/test_3c_cue_chain.py 2>&1 | tail -6 && rm -rf bench/results/stage7-3c-escape-dry && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --start postc --arms control,escape --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --out bench/results/stage7-3c-escape-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-escape-dry 1 --mode dry && .venv/bin/ruff check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_escape_result.py && .venv/bin/ruff format --check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_escape_result.py && test -z \"$(git status --porcelain data src)\"",
+      "verified": "escape-arm tests, harness tests and dry run pass; no src/data change; zero model calls"
+    }
+  ]
+}

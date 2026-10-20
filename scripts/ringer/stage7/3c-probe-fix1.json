@@ -1,0 +1,23 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-probe-fix1",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [{
+    "key": "fix-3c-probe-run-row",
+    "task_type": "code-fix",
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=medium"],
+    "full_access": true,
+    "max_attempts": 2,
+    "timeout_s": 2400,
+    "check_timeout_s": 300,
+    "ownership": ["scripts/ringer/stage7/three_c_probe.py", "scripts/ringer/stage7/test_three_c_probe.py"],
+    "spec": "You are fixing a harness bug on freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. Edit ONLY scripts/ringer/stage7/three_c_probe.py and scripts/ringer/stage7/test_three_c_probe.py. Never touch data/, src/, git state, .env. NO network or billed call. Use `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp` and `.venv/bin/python`.\n\nBUG: a live smoke of three_c_probe.py died at the first engine turn with \"'RuntimeSnapshot' object has no attribute 'package'\" (the CLI wrote run-failure.txt and an empty rows.json). In run_row, `before = state.snapshot()` returns a RuntimeSnapshot (src/storygame/runtime/state.py:64), but the code then calls _fact_keys(before) and probably other helpers (_staged_cue uses state.package) with it; snapshots have no .facts/.package. Read run_row end to end and fix EVERY place a snapshot or other wrong object is used where the live RuntimeState is needed (compute before-facts from the live state BEFORE the turn, e.g. before_facts = _fact_keys(state); keep the snapshot only for restore_snapshot). Also verify record fields that read engine data after the turn (committed reveals, deadline_event_ids from the turn record, story_complete, staged cue) against the real RuntimeEngine/TurnRecord API by reading src/storygame/runtime/engine.py; fix wrong attribute names.\n\nThen make the existing hermetic tests catch this class of bug: add a test that runs run_row (or the loop it uses) against a REAL RuntimeEngine built via bench.core.package_and_state(load_variation(bench/variations/stage7-3c-control.json), '3C') with a fake scripted provider injected (no Cloudflare) and a fake ask function returning commands like 'Send the evidence package.', for at least 3 attempts, asserting rows contain real status, before/after fact deltas and committed reveals fields without exceptions. If run_row calls provider_for/counted_provider in a way that blocks injecting a fake provider, refactor minimally (e.g. an optional provider_factory parameter defaulting to current behaviour). Also make the CLI write completed rows to rows.json incrementally (after each row) so a later failure keeps earlier rows.\n\nFinish with: `.venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py`, `.venv/bin/ruff format` and `.venv/bin/ruff check` on both files, and `.venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --out /tmp/3c-dry-fix1`.",
+    "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py 2>&1 | tail -6; .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py >/dev/null 2>&1 && .venv/bin/ruff check scripts/ringer/stage7/three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py && rm -rf /tmp/3c-dry-fix1 && .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --dry-run --out /tmp/3c-dry-fix1 && grep -q 'RuntimeEngine' scripts/ringer/stage7/test_three_c_probe.py && ! grep -n '_fact_keys(before)' scripts/ringer/stage7/three_c_probe.py && test -z \"$(git status --porcelain data src)\"",
+    "expect_files": ["scripts/ringer/stage7/three_c_probe.py"],
+    "verified": "run_row works against a real RuntimeEngine offline; no snapshot misuse remains"
+  }]
+}

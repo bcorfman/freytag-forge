@@ -1,0 +1,31 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/three-c-surface-n12",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "three-c-surface-n12",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/stage7-3c-surface-n12/",
+        "bench/results/ledger.jsonl (append-only)"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 12 --mode play --start postc --arms control,surface --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --confirm --out bench/results/stage7-3c-surface-n12",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-surface-n12 12 --mode artifacts",
+      "spec": "Run ONE billed 3C surface-binding screen: arms control and surface, 12 row(s) each, from the labelled synthetic post-C start, scripted first command then the raw blind player, at most 10 attempts per row, harness caps 480 Cloudflare / 240 player. Own only bench/results/stage7-3c-surface-n12/ plus append-only bench/results/ledger.jsonl. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 12 --mode play --start postc --arms control,surface --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --confirm --out bench/results/stage7-3c-surface-n12",
+      "verified": "24 rows reconcile with spend events and caps"
+    }
+  ]
+}

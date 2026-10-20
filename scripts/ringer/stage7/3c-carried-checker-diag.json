@@ -1,0 +1,55 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-carried-checker-diag",
+  "max_parallel": 2,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "fix-carried-checker-rule",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/stage7/check_three_c_probe.py",
+        "scripts/ringer/stage7/test_three_c_probe.py",
+        "tests/test_3c_carried_start.py"
+      ],
+      "spec": "You are a harness fixer on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You own ONLY scripts/ringer/stage7/check_three_c_probe.py, scripts/ringer/stage7/test_three_c_probe.py, tests/test_3c_carried_start.py. NEVER touch data/, src/, storygame/, three_c_probe.py, bench/results/*, git state, .env. No network, no model calls, no uv. Use `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp` and `.venv/bin/python`.\n\nBUG: running `.venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-carried-n12 12 --mode artifacts` exits nonzero with 'WHY: carried row must not record scripted 3C reveals', although the 24 live rows are sound (A first attempt, B, C1, C2, D, E all committed by the real player path, deadline_event_ids only on deadline rows). The rule is wrong: a carried row legitimately records 3C chain reveals in row['turns'][*]['committed_reveals'] and in row-level committed_reveal_ids because the player earned them. What the rule must forbid is 3C chain reveals in the row's `scripted_prefix` (the replayed 3B prefix and crossing turn must contain no k_sl_3c_ chain reveal committed by script). Find the rule, fix it to inspect only the scripted prefix, and keep every other check. Do NOT edit the result files; the real artifacts are read-only evidence. Add tests: (1) the live n12 rows.json (bench/results/stage7-3c-carried-n12, read only) passes the artifacts checker end to end, skipping the test if the directory is missing; (2) a synthetic row whose scripted_prefix contains k_sl_3c_a_r1 is rejected; (3) a row with earned 3C reveals in turns passes. Run ruff format/check on owned files. Never pass --confirm.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-carried-n12 12 --mode artifacts && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-carried-smoke2 1 --mode artifacts && .venv/bin/python -m pytest -q scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_carried_start.py 2>&1 | tail -4 && .venv/bin/ruff check scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_carried_start.py && .venv/bin/ruff format --check scripts/ringer/stage7/check_three_c_probe.py scripts/ringer/stage7/test_three_c_probe.py tests/test_3c_carried_start.py && test -z \"$(git status --porcelain data storygame src bench/results/stage7-3c-carried-n12)\"",
+      "expect_files": [],
+      "verified": "checker accepts the real n12 and smoke2 artifacts; synthetic bad prefix rejected"
+    },
+    {
+      "key": "diagnose-carried-d2-e",
+      "task_type": "research",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "ownership": [
+        ".plans/astra-3c-carried-diagnosis.md"
+      ],
+      "spec": "You are a read-only scout on freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. Write ONLY .plans/astra-3c-carried-diagnosis.md. NEVER edit any other file, run no model or network calls, no billed probes, no git mutation.\n\nCONTEXT: Scene 3C carried-state screen, bench/results/stage7-3c-carried-n12/rows.json (24 rows: arms pump and families, 12 each; each row has turns[] with scene_turn, command, response, committed_reveals, story_fact_delta, cue_text_staged, deadline_event_ids, world parents). Every row earned A, B, C1, C2 and D1 (nearly) fine; the loss is D2 and E: earned endings pump 8/12, families 9/12; the other rows ended by the deadline backstop at turn 14 (rows: pump 2,7,11,12; families 2,5,8; check the 'rep' field). Several earned rows commit D2 at turn 12 and E at turn 14, i.e. no slack. Chain: D1 = checks reports from detention sites (k_sl_3c_d_r1); D2 = informing/contacting the families (k_sl_3c_d_r2; aliases are in data/stories/continuity-initiative/knowledge.yaml, the families arm adds 'broadcast a message/a response/an update to the families'); E = open the recovered document (needs both D). Matcher rules: candidate_matcher.py needs one alternative from every group as whole words; exactly one match per command.\n\nTASK: For EVERY non-earned row and every earned row whose D2 or E lands at turn 12 or later, list per accepted turn from the first turn after C2: the command, committed reveals, and a one-line read of the reply. Then classify each row's delay with exactly one primary cause from: (a) player never attempts the families action, (b) player attempts a families/reports action that the matcher misses (quote the command and test it with the real matcher: run the project's matcher via .venv/bin/python with PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp against the current package, using the same unique-selection function tests/test_3c_cue_chain.py uses, and say whether D1/D2 are eligible at that turn), (c) player wanders to an invented thread (name it, e.g. Brandon rescue loops) after the surface gates, (d) turns simply ran out after a correct sequence, (e) other. Give counts per arm, quote at most 3 representative commands per cause, and state whether the missed-phrasing commands (b) share a pattern an authored alias could cover without matching unrelated actions (give the free negative-control commands too and their matcher results). Also state whether a handoff_after_turns of 16 would have changed any row's outcome (count rows whose D2/E would plausibly land by 16: only claim what the recorded turns support). Also check for E-at-14 rows whether a fallback supplied anything (deadline_event_ids). Be factual; separate observation from inference; no recommendations beyond naming the single best-supported next change and what evidence would refute it. Use abbreviations Kr for Kristin and Br for Brandon.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && test -s .plans/astra-3c-carried-diagnosis.md && for k in 'pump' 'families' 'primary' ; do grep -qi \"$k\" .plans/astra-3c-carried-diagnosis.md || { echo \"missing section mentioning $k\"; exit 1; }; done && [ $(wc -l < .plans/astra-3c-carried-diagnosis.md) -gt 30 ] || { echo 'diagnosis too short'; exit 1; }; grep -Eqi 'handoff_after_turns|deadline 16|16' .plans/astra-3c-carried-diagnosis.md || { echo 'no deadline-16 assessment'; exit 1; }; test -z \"$(git status --porcelain data storygame src scripts bench tests)\" || git status --porcelain data storygame src | head -1 | grep -q . && exit 1; exit 0",
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/.plans/astra-3c-carried-diagnosis.md"
+      ],
+      "verified": "checker accepts the real n12 and smoke2 artifacts; synthetic bad prefix rejected"
+    }
+  ]
+}
