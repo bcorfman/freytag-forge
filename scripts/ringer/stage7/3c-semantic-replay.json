@@ -1,0 +1,28 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-semantic-replay",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "semantic-replay-families",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": ["-c", "model_reasoning_effort=medium"],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 3600,
+      "check_timeout_s": 300,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_semantic_replay.py",
+        "bench/results/stage7-3c-semantic-replay/"
+      ],
+      "spec": "You are a probe author and runner on freytag-forge (Python 3.12), working in /home/bcorfman/dev/freytag-forge. Own ONLY scripts/ringer/stage7/three_c_semantic_replay.py and bench/results/stage7-3c-semantic-replay/. Never edit storygame/, data/, tests/, git state. Never print credentials. No uv: use `set -a; source .env; set +a; PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python`.\n\nQUESTION: in the carried n12 screen bench/results/stage7-3c-carried-v2-n12/, six player commands that plainly message the families earned no D2 even with semantic fallback ON. rows.json does not record why (exact match failed, then CloudflareProvider._semantic_authored_handoff in storygame/runtime/cloudflare.py ~line 536 uses jev_questions.reaches_reveals via self.semantic_ask; outcomes land in provider.last_reveal_selection: semantic_match / semantic_refusal / shortlist_exclusion / provider_error / budget_exhausted). Replay the real semantic path for these cases and record the outcome each time.\n\nCases (state: package = bench/variations/stage7-3c-pump-need.json, the PUMP arm, NOT families-v2, so the replay isolates the semantic path; build it like tests/test_3c_cue_chain.py's _families_finish_a_through_c helper, which commits A,B,C1,C2 with stubbed narration, then commit D1 via 'Read the detention site reports.' only where marked):\n 1. D1 open and D2 open: 'broadcast to the families that the captives are safe and the evidence is public'\n 2. D1 spent: 'broadcast to the families that the survivors are safe and the facility is collapsing'\n 3. D1 spent: 'send the families the confirmed prisoner lists and locations'\n 4. D1 spent: 'Confirm the broadcast reached the families and give them word about the liberated captives.'\n 5. D1 spent: 'Answer the families' requests with the confirmed news of the liberated captives.' (positive control, matches exactly today)\n 6. D1 spent: 'Broadcast music to the families.' (negative control)\nFor each case: first call uniquely_matched_authored_handoff on the projected reveal_universe to record whether the exact matcher selects; then run the real provider path with the real semantic_ask. Find how scripts/ringer/stage7/three_c_probe.py builds its CloudflareProvider and semantic_ask (reuse that code, do not invent a client) and reuse its spend/cap guard class so every billed call is counted. Narration calls must NOT be made: only the semantic selection step; stub or bypass narration. Run each case 3 times. HARD CAP: 40 semantic Cloudflare calls total, abort nonzero on exceeding or any HTTP error, never retry, no replacement samples. Record per case/run: exact_match_result, last_reveal_selection (outcome, matched, shortlist_size, universe_size), and the candidate sentences (earn_when) the judge was shown. Write results.json and a short results.md table in bench/results/stage7-3c-semantic-replay/, plus spend.json. If the cap or an error stops the run, leave partial results and write run-failure.txt.\n\nFirst do a dry run (no billed calls) that prints the six states' eligible candidates and exact-match results; only then do the billed run. Final message: the table, the per-case outcome counts, and your honest reading of whether the judge refused, errored, or matched, without speculating beyond the data.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && test ! -f bench/results/stage7-3c-semantic-replay/run-failure.txt && .venv/bin/python -c \"import json;r=json.load(open('bench/results/stage7-3c-semantic-replay/results.json'));s=json.load(open('bench/results/stage7-3c-semantic-replay/spend.json'));ev=s['events'] if isinstance(s,dict) else s;n=sum(1 for e in ev if e.get('kind')=='cloudflare');assert 1<=n<=40,n;rows=r['rows'] if isinstance(r,dict) and 'rows' in r else r;assert len(rows)==18,len(rows);print('rows',len(rows),'cloudflare calls',n)\" && git diff --quiet -- storygame data tests",
+      "expect_files": ["/home/bcorfman/dev/freytag-forge/bench/results/stage7-3c-semantic-replay/results.md"],
+      "verified": "18 replay rows recorded under a 40-call cap, no source touched"
+    }
+  ]
+}

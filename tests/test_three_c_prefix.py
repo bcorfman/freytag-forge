@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sqlite3
 from pathlib import Path
 
@@ -29,14 +30,17 @@ def _package():
     return legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
 
 
-def test_prefix_round_trip_and_payload_hash(prefix_dir: Path) -> None:
+def test_prefix_round_trip_and_payload_hash(prefix_dir: Path, tmp_path: Path) -> None:
     package = _package()
     store = RuntimeStateSqliteStore(prefix_dir / "checkpoint.sqlite")
     loaded = store.load(SESSION_ID, package)
     assert loaded.current_scene_id == "3B"
     assert _canonical_dump(loaded) == _canonical_dump(store.load(SESSION_ID, package))
 
-    with sqlite3.connect(prefix_dir / "checkpoint.sqlite") as connection:
+    tampered_path = tmp_path / "tampered.sqlite"
+    shutil.copy2(prefix_dir / "checkpoint.sqlite", tampered_path)
+    store = RuntimeStateSqliteStore(tampered_path)
+    with sqlite3.connect(tampered_path) as connection:
         connection.execute(
             "UPDATE runtime_snapshots SET payload_hash = ? WHERE session_id = ?",
             ("tampered", SESSION_ID),

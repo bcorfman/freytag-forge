@@ -1,17 +1,34 @@
 # Scene 3C: stuck-turn diagnosis and measured repair plan
 
-Status (Round 5 review, 2026-10-19; supplied artifacts are labelled 2026-10-20):
-carried-state harness and screen COMPLETE; pump 8/12 and families 9/12 earned,
-both below 10/12. Corrected checker passes n12 and smoke2. Revised D2 alias text
-and initial free selection checks are below; implementation and fresh screen remain.
-Next: Step 7 revised-alias validation, then Step 8 fresh carried pump-vs-alias n12.
-Deadline 16 remains conditional. Nothing adopted into `data/`.
-No implementation commit created; the target plan was already untracked.
-Planning only: no story, runtime, matcher, judge, or deployment change made.
+Status (Round 6 review, 2026-10-19; supplied artifacts are labelled 2026-10-20):
+Steps 7/8 COMPLETE. Latest carried screen: pump 10/12 earned, families-v2 9/12.
+Stop 3C screening and select entry + custody + pump, without aliases, for staging.
+The pump package already exists as an uncommitted `data/` diff; adoption is not
+yet gate-complete. Review the variation re-pins and failed Ringer check first.
+Step 9 COMPLETE (2026-10-20, uncommitted): frozen pre-adoption fixture, independent
+adoption pin, free gates green (details under Step 9). Next: Step 10 PR/main/staging,
+Step 11 three-run raw whole-game smoke, then Step 12 production decision. No deadline or earn_when
+experiment is queued. Screen work is committed at `8749e518` on
+`3c-stuck-turns-screens`; push status is supplied by the prompt, not checked remotely.
+This update edits only this plan and does not authorize or execute billed work.
 **confirmed**, **corrected**, and **new** label retained findings, revised decisions,
 and additions. Results below supersede the first plan's untested predictions.
 
 ## Decision
+
+**corrected (Round 6):** Follow the stopping rule: pump met the operational
+10/12 bar once. Families-v2 failed at 9/12; its one-row deficit does not prove
+harm or improvement. Adopt the smaller measured package for staging, conditional
+on Step 9. Earlier pump 8/12 remains contrary repeatability evidence; do not pool
+it with 10/12 or call either a population-rate estimate. All Round 3–5 queues
+below are historical where they conflict with this decision.
+
+**new (Round 6):** Choose the staged whole-game smoke as the next billed work.
+A pump-only carried n12 is the cheaper *direct repeatability* test, but repeats
+the same scripted history and cannot replace the hosted smoke. The smoke is the
+shortest remaining route to a quality playthrough with live prior scenes.
+Neither measurement can establish an 80% population rate. Keep earn_when as a
+conditional source investigation after adoption, not a prerequisite or promise.
 
 **corrected:** #667 fixes individual commands, not the fresh scene. Live A proves
 turns 12/14 commit D-R1 in 12/12 control probes and 0/12 pre667 probes. Live B
@@ -68,6 +85,25 @@ the verb repair. Three repaired rows plus three existing earners would only be
 rows, not a causal prediction for a new run. Do not promise 80% from aliases.
 
 ## Sources and verification boundary
+
+**new (Round 6 verification):** Read the latest summary, spend ledger, failed
+row commands and commits, semantic replay results, both preregistrations, actual
+adoption/variation git diffs, adoption test and Ringer manifest, promotion guide,
+testing runbook, workflow YAML and hosted blind-player source. Recounted 300
+player and 300 Cloudflare calls. The recorded rows confirm 10/12 versus 9/12.
+Families-v2 row 06 commits D1 at turn 9: it was not spent at the turn-8 miss;
+it was spent at the turn-12 miss. This closes the prompt's eligibility question.
+The semantic replay separately tests both D1-open and D1-spent cases.
+Codebase-memory confirms the narrow sentence reaches the semantic question;
+`jev_questions.py:123–167` asks whether the command performs the same whole act.
+The trace establishes refusals, not a model explanation or proof that changing
+the sentence will cure them.
+
+No new pytest, live probe, matrix regeneration or deployment ran for this
+documentation review. The 102 build tests and 853 focused-gate tests are supplied
+worker results, not independently rerun here. Historical verification statements
+below describe their rounds, including their then-clean `data/` worktree.
+Current `data/` has the two intended adoption edits. No procedure changed.
 
 **new (Round 5 verification):** Read carried rows/summary/spend, diagnosis,
 preregistration, source evidence and selector. Recomputed 8/12 vs 9/12, D2
@@ -584,6 +620,11 @@ remove a required C part, or weaken the earned definition to fit the clock.
 
 ## Probe specifications and order of work
 
+**corrected (Round 6 active order):** Steps 1–8 are measured history, except
+Step 6, which remains unrun and is not queued. Preserve their strings and
+protocols for reproducibility. Execute only Steps 9–12 next. Do not interpret
+historical “next screen” or “nothing adopted” wording as current instructions.
+
 ### Common protocol — confirmed
 
 One source change, one measurement, then re-baseline. Preserve all samples and
@@ -856,6 +897,13 @@ in separate screens using the same replacement format and exact texts in C.
 
 ### Step 6 — new, conditional: deadline 16
 
+**corrected (Round 6):** Not supported as the next experiment. In the latest
+screen, families-v2 12 and pump 07 earn D2 at 12 but spend 13/14 on more rescue
+coordination rather than E. Both also had recognition misses. Extra time might
+help, but the recordings do not show an attempted E blocked only by time.
+Do not revive this screen on eligibility alone; require evidence of an otherwise
+correct chain losing an E attempt specifically to the deadline.
+
 **corrected (Round 5):** Not built or screened; defer until after the revised
 alias. Now there is evidence of budget exposure: families 2/5 and pump 12 earn
 D2 at 14 and lose E to fallback. Five other rows earn E at 14 with empty
@@ -888,6 +936,13 @@ new near-complete rows after material/grounding repairs, not the old two earners
 alone. Do not change the global time budget to conceal a local pacing problem.
 
 ### Step 7 — new: review family communication aliases, then one mechanics smoke
+
+**RESULT — corrected (Round 6):** Revised aliases were built in
+`bench/variations/stage7-3c-families-v2.json`, arm `families-v2`, with the exact
+34 alternatives and `their families` below. Reported build validation: 102
+tests pass, Ruff clean, no `data/` change at build time. Step 8's fresh screen
+then failed the alias arm at 9/12. Close this step; retain its exact specification
+as history, and do not append aliases to rescue the latest missed sentences.
 
 **corrected — Round 4 outcome:** The original three-phrase arm passed its
 free checks, then earned 9/12 versus pump 8/12 in Step 8. It misses the scene
@@ -1061,6 +1116,43 @@ that never earns D2. Keep the old broadcast/community replacement strings in C
 as history, but do not resurrect either without its own recorded prompt cause.
 
 ### Step 8 — new: fresh carried-state scene acceptance before adoption
+
+**RESULT — corrected (Round 6, latest):**
+`bench/results/stage7-3c-carried-v2-n12/`, preregistration
+`.plans/astra-3c-families-v2-prereg.md`: pump earned/deadline/none = 10/2/0,
+families-v2 = 9/3/0. Both C by 10: 12/12 each; no rejections or clarifications.
+Spend: 300/960 Cloudflare and 300/480 player requests. Pump passes the scene
+bar; aliases fail. V2 earns at 11 in seven rows versus five for pump, but that
+does not offset its failed rows or establish a relative benefit.
+
+**DIAGNOSIS — new (Round 6):** V2 06 misses recipient-only broadcasts at 8
+and 12; D1 is open at 8 and spent at 12. V2 10 misses prisoner *lists* at 9.
+V2 12 misses its confirm-broadcast/give-word command at 9, earns D2 through
+the existing answer-families alias at 12, then never tries the document.
+Pump 02 also misses family broadcasts; pump 07 misses the names-to-families
+command, recovers D2 at 12, then ignores E. Recognition is a demonstrated
+remaining defect; extra time is not a demonstrated remedy.
+
+**Semantic replay — new (Round 6):**
+`bench/results/stage7-3c-semantic-replay/` and
+`scripts/ringer/stage7/three_c_semantic_replay.py`: four missed commands
+refused 12/12, exact control selected 3/3 without a judge call, music negative
+refused 3/3; 15/40 Cloudflare calls, no player calls. Correct the earnwhen
+preregistration's “messages refused 15/15”: three of those refusals are music.
+D-R2's `earn_when: calls the families of the missing` is narrower than the
+intended news-sharing act. This is a plausible source cause, not a measured
+treatment effect. The semantic path's correct invocation does not prove that
+the judge understands every intended paraphrase.
+
+**Decision — corrected (Round 6):** Stop screening. Select pump for Step 9.
+The run uses one authored canon-prefix history repeated across rows, not twelve
+independent full games. Earlier pump 8/12 and latest 10/12 are separate runs;
+one passing run is sufficient for this plan's operational staging choice, not
+proof of repeatability or 80% quality. Read narration as well as commits:
+latest pump row 01 turn 1 invents a study, drawers, a USB drive and a note while
+the appended handoff still earns A. Zero rejected turns does not certify prose
+or world consistency. Whole-game review must include these defects.
+The rest of Step 8 retains the completed Round 5/6 protocols as history.
 
 **corrected — harness COMPLETE:** `three_c_probe.py --start carried`, built in
 Ringer run `stage7-3c-stuck-turns-20261020T013217Z-p970532`; dry artifacts at
@@ -1239,6 +1331,182 @@ After adoption, use the production-promotion guide's SHA-bound main CI/staging
 flow and a three-replicate whole-game smoke. Three runs are a regression smoke,
 not an 80% estimate. An earlier-scene blocker remains a whole-game limitation.
 
+### Step 9 — new: finish pump adoption and free gates
+
+The uncommitted package diff changes exactly `plot.md:831` (3C entry) and
+`knowledge.yaml:2513` (B-R1 delivery) under
+`data/stories/continuity-initiative/`, to the measured strings in Steps 2–4.
+D2 evidence and earn_when are unchanged. Keep this candidate; do not reapply
+the now-idempotent variation or undo unrelated work.
+
+**Review finding:** The re-pins in
+`bench/variations/stage7-3c-{pump-need,families,families-v2}.json` make both
+entry and delivery replacements `old == new`. Ringer's
+`scripts/ringer/stage7/3c-adopt-pump.json` check requires old strings to be absent,
+so it necessarily fails. This is not proof of an incorrect story edit.
+However, `tests/test_3c_adopted_package.py` now explicitly requires these
+identities; it depends on a mutable variation rather than an independent
+measured baseline. Passing that assertion alone is insufficient.
+
+Prefer preserving screen-era variations at `8749e518` and applying them to an
+explicit frozen pre-adoption package fixture for historical tests. Do not
+silently make shipped pump the old control. Review and update affected fixtures
+in `tests/test_3c_{entry_package,custody_result,pump_need,carried_start}.py`,
+the other 3C variation tests and `scripts/ringer/stage7/test_three_c_probe.py`.
+Any current-package diagnostic arm should be separately named. Compare the
+complete resulting package with the measured pump package, recording hashes.
+Make the adoption test and Ringer check independently pin that target, unchanged
+D2 fields, successful loading, and B not granting either C fact. Replace the
+failed assertion with this comparison; do not merely delete it to turn green.
+
+Run affected 3C tests, prefix tests and harness tests together first; account for
+the recorded standalone import-path issue. Then run the focused package,
+projection, safety, matcher, pacing, canon, disclosure and resolution tests
+listed in `3c-adopt-pump.json`. Regenerate `.plans/disclosure-matrix.{json,md}`
+using `uv run python scripts/disclosure_matrix.py --out-dir .plans` and inspect
+the diff; worker-reported zero changes are not a substitute for this review.
+Capture stubbed payloads: 1A unchanged, 3C entry/post-B changed only as intended.
+
+Finish with runbook section 1: `TMPDIR=/tmp uv run pytest -q --cov` (90%),
+`uv run ruff check .`, `uv run ruff format --check .`, frontend Node tests,
+`npm test` and `npm run build`. Record actual failures; do not treat the worker's
+853 focused tests as a full gate. Cost: zero model calls, local test/build time.
+Win: reproducible historical arms, measured pump shipped, all required gates
+pass, generated artifacts reviewed. No billed rerun is needed for adoption.
+
+**Step 9 result (2026-10-20, uncommitted, no model calls):**
+- `tests/fixtures/continuity_initiative_pre_3c_adoption/` is a frozen copy of the
+  package at `8749e518`. Its README lives outside the dir at
+  `tests/fixtures/continuity_initiative_pre_3c_adoption.README.txt`: a file inside
+  changes the package hash and breaks the recorded-artifact checks.
+- The five screen-era variations (`entry-package`, `custody-result`, `pump-need`,
+  `families`, `families-v2`) keep their original old/new strings and point at the
+  fixture. `three_c_probe.py` and the entry/custody tests use an explicit
+  `pre-adoption` control, not the shipped data dir.
+- `tests/test_3c_adopted_package.py` pins the two shipped strings and shipped file
+  sha256 values, reproduces them from fixture + pump variation, and requires every
+  other file to match the fixture. `3c-adopt-pump.json` now runs that test.
+- Fixed pre-existing branch faults: `pyproject.toml` `pythonpath` for
+  `scripts/ringer/stage7` (3C tests failed to import `door_transport`); a
+  `test_three_c_prefix.py` test that tampered the shared checkpoint (now a copy);
+  lint in `three_c_semantic_replay.py`.
+- Gates: ruff check/format clean; frontend `npm test` 155/155 and `npm run build`
+  pass; disclosure matrix regenerated with no diff. Full `pytest --cov` last ran
+  2498 passed, 1 skipped, 92.71%, with one prefix-test failure that the test fix
+  above addresses; that file passes alone (4 passed) but the full suite has not been
+  rerun since. Rerun it before the PR.
+- Ringer run `adopt-gates-fixture` FAILED its check on lint outside its ownership;
+  the worker also reformatted `2b_cue_probe.py` (out of scope; review before commit).
+
+### Step 10 — new: PR, main, and SHA-bound staging
+
+Review `8749e518` plus Step 9's adoption/test diff on
+`3c-stuck-turns-screens`; exclude unrelated untracked door-grounded, blind and
+astra work. Commit reviewed changes and the plan, push, open/review the PR,
+and pass required CI. Describe latest 10/12, prior 8/12, failed aliases and
+remaining prose/recognition risks. Merge to `main`, then wait for that merge
+SHA's staging workflow. Do not deploy the branch directly.
+
+Existing files: `.github/workflows/test.yml`,
+`.github/workflows/deploy-frontend-pages.yml` and
+`docs/railway-production-promotion.md`; no workflow change is proposed.
+Require successful `staging-deployment`, matching Pages `/dev/`
+`deployment.json`, and `/api/v1/version` reporting the exact SHA,
+`runtime: scene-v1`, `channel: staging`. The workflow's scene evaluation runs
+`tests/test_web_demo.py tests/test_cloudflare_transport.py`; it is not the
+three-run raw-player quality smoke. Git/PR actions cost no model calls;
+CI/build/hosting cost infrastructure time and hosted checks can spend narration
+calls. No fixed dollar cost has been measured.
+
+### Step 11 — new: choose the whole-game staging smoke
+
+**Cheaper direct repeatability option, not queued:** A pump-only carried n12,
+using `three_c_probe.py --start carried`, semantic ON, deadline 14, 20 attempts,
+fresh preregistration/output and the existing checker. Cap **480 Cloudflare /
+240 player calls** (half the two-arm cap); roughly 150 each is an estimate
+from the last run, not a guarantee. A miss below 10/12 means the operational
+result did not repeat under the same scripted history. Retain both runs
+separately; no pooling or repeat-until-pass. It does not test live prior scenes.
+
+**Chosen next billed work:** Three fresh raw whole-game sessions on staging.
+Use `frontend/e2e/blind-player.spec.js`, `blind-player.js` and
+`merge-blind-player.js`; create a dedicated Ringer manifest/preregistration
+for the actual SHA, not the old PR670 manifest. Verify identity, run `@smoke`,
+then from `frontend/`, with root environment sourced only inside Ringer:
+
+```bash
+E2E_BLIND_SCENE=all BLIND_PLAYER_PROFILE=raw E2E_BLIND_REPLICATES=3 E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @blind-player
+```
+
+Unset `E2E_BLIND_REPLICATE_INDEX` for that command, or use the existing separate
+replicate mode and preserve/merge all three reports. Archive fresh identity,
+reports, prompts, bundles and failures under a new `bench/results/` directory.
+No replacement quality samples. A failed attempt is evidence, not permission
+to rerun until green.
+
+**Cost:** Source limits the player to 20 calls per scene and 200 per session,
+so three sessions have a conservative ceiling of **600 player calls**. Hosted
+Cloudflare cost also includes openings, up to two narration and two item-match
+calls per turn, and separate semantic calls. The player ceiling is not a
+Cloudflare cap. Preregister a metered Cloudflare budget and stop on exhaustion;
+the hosted harness has no single enforced Cloudflare-call cap comparable to
+the probe's. Include initial `@smoke` and CI-hosted calls separately. A fixed
+dollar total or reliable duration is not established; the canon judge's
+330-neuron estimate does not price this raw-player run.
+
+Choose this smoke because it is required on the path to a staged quality
+playthrough and tests live histories. Do not buy both measurements by default.
+Use another carried n12 only if repeatability becomes the explicit question
+or an earlier-scene blocker prevents meaningful 3C measurement.
+
+**Win and miss:** Read all narration plus handoffs/cues. Report each scene's
+earned/deadline exits, rejected turns, false reveals, custody/movement
+contradictions and ending provenance. For this plan's production recommendation,
+require three complete journeys with earned 3C endings and no newly demonstrated
+story-breaking defect. Three passes are a regression smoke, not an 80% rate.
+A miss holds promotion for diagnosis. An earlier-scene blocker fails whole-game
+quality but leaves 3C untested in that replicate; it does not prove D2 failed.
+Unknown ending provenance stays unknown until telemetry resolves it. A green
+Playwright exit alone does not establish this quality bar.
+
+### Step 12 — new: production decision and conditional source work
+
+After a passing Step 11, record the exact SHA, three results and rate uncertainty,
+review `/dev/`, and use `.github/workflows/promote-production.yml` for that
+staged SHA under the promotion guide. It verifies API/Pages identity and hosted
+E2E before recording `production-promotion`. This planning prompt does not
+dispatch it. Cost: deployment/build plus hosted narration checks, not another
+three-run quality screen. A later documentation-only results commit needs no
+repeat deployment/E2E.
+
+**Only remaining source candidate, deferred until after adoption:** Reopen
+`.plans/astra-3c-earnwhen-prereg.md` only if the smoke shows eligible family-news
+misses preventing quality completion. The exact isolated candidate is:
+
+```yaml
+# old
+earn_when: calls the families of the missing
+# candidate only
+earn_when: calls, messages, or broadcasts news to the families of the missing
+```
+
+Otherwise leave it dropped. This follows the principle of correcting missing
+authored material (3B handoff precedent), but there is no measured precedent
+for an earn_when repair itself. Do not claim the analogy proves efficacy.
+Do not change judge criteria/calibration. `cloudflare.py:570`, `:1043`, `:1526`
+show effects on semantic input, example selection and narrator constraints;
+capture all affected payloads before testing. Ties, eligibility, prose drift
+and ignored E require their own diagnosis, not this sentence.
+
+If reopened, first run the preregistered controlled semantic gate: four missed
+commands, exact control, music/danger/wrong-recipient/report-overlap negatives,
+three runs each, both D1 states where relevant. Cap 40 Cloudflare calls, zero
+player calls; positives >=2/3, negatives refused 3/3, exact control bypassing
+the judge. Preserve refusal of genuine two-candidate ties. Failure stops this
+proposal. Passing proves mechanics only; only then consider fresh carried
+pump-versus-earnwhen n12 (960/480 caps), followed by adoption/staging gates if
+it wins. This branch is not in the active queue.
+
 ## Tests and generated artifacts
 
 **confirmed:** Keep the new stateful #667 tests, both C/D orders, D2-alone not
@@ -1288,7 +1556,8 @@ existing runbook entry; measured results belong in this plan and the prereg.
 but neither raised earned completion. The measured record supersedes “#667 untested live,”
 “binding untested offline” and “binding not measured live.” Both escape edits
 lost on these starts; entry's opening gain did not improve completion. The
-fresh-start bar is still missed. No proposed arm has improved live completion.
+fresh-start bar was still missed in that round. **corrected (Round 6):** pump
+now meets 10/12 in one carried screen; no alias has demonstrated improvement.
 
 **new:** Risks generalize to any story whose completed transfer/evacuation is
 still narrated as pending: bind physical facts, state earned results clearly,
@@ -1304,29 +1573,35 @@ relay. Earlier-scene names/guards and entry text remain unchanged. Longer 3C
 pacing affects whole-story time and costs, not earlier scene windows. Check
 payloads and real journey regressions after adoption.
 
-**Not verified — corrected (Round 5):**
+**Not verified — corrected (Round 6):**
 
-- Revised alias package loading, full stateful regression matrix, guarded commits
-  and fresh n12 efficacy remain; the initial selector table is not that work.
+- Adoption's full gates and frozen-baseline verification remain. The two
+  package edits are reviewed here; variation re-pins are diagnosed, not repaired.
+  The Ringer FAIL is unresolved until its independent check is corrected and run.
+- Step 7 build and Step 8 screen are complete; their old pending status is closed.
+  Latest pump 10/12 does not establish repeatability or an 80% population rate.
 - Custody's next-reply hand score remains absent. The incomplete pump n=10
   component result does not become a completed n12 by adding carried rows.
-- The carried replay and both checked artifacts are verified; the old demand
+- The historical carried replay and checked artifacts remain evidence; the old demand
   to build a seed is closed. No `relay open` rejection occurred in 24 carried
   rows, consistent with the synthetic-history explanation, not causal proof.
-- Live-written prior-scene narration, independent histories, whole-game quality,
+- Live-written prior-scene narration, independent histories, staged whole-game quality,
   full semantic-fallback correctness and live parent/prose consistency remain
   unverified. Zero rejections is not a quality score for every narration.
 - No prompt-level cause justifies a new movement subtraction. Historical card
   rejection prose and hosted deadline telemetry remain unavailable.
-- Deadline 16 has three plausible historical targets but no recorded 15/16
-  continuation. Its net benefit after alias repair is unmeasured.
+- Deadline 16 has historical hypothetical targets but no recorded 15/16
+  continuation; latest near-complete rows ignored E. It is not queued.
+- Wider earn_when efficacy, false-positive behavior and prompt side effects
+  are unmeasured. The replay's 12 positive-command refusals do not prove a cure.
+- No PR/push/merge, SHA-bound staging smoke or production promotion was performed
+  in this review. Hosted spend and duration need a preregistered budget.
 
-**Resume here — corrected (Round 5):** Implement and validate the exact Step 7
-alias variation using the existing harness; preserve `families` as measured history.
-Freeze the revised arm and fresh preregistration, then run Step 8's pump-vs-alias
-carried n12 under separately confirmed caps. This prompt authorizes the plan update,
-not a billed run. Do not rebuild the prefix, repeat the old smoke, top up the
-incomplete pump screen, revive Steps 1/5, change E, or adopt package text now.
-If the new arm again earns 9/12, it fails: follow the Step 8 decision rule,
-without pooling or buying repeat samples merely to cross 10/12.
-This update changes only this plan; no implementation commit or billed call.
+**Resume here — corrected (Round 7):** Step 9 is done. Rerun the full suite once,
+review the uncommitted diff, then Step 10 PR/main/staging and Step 11's
+three raw whole-game playthroughs. Make the Step 12 production decision from
+their recorded quality and provenance. No further 3C screen is queued.
+Do not rebuild the prefix, top up the incomplete pump screen, revive Steps 1/5,
+add aliases, widen the deadline or change E. The plan update is complete;
+implementation, billed work and deployment above are future work, not actions
+authorized by this planning-only prompt.

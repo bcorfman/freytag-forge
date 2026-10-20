@@ -33,7 +33,7 @@ from three_c_prefix import (  # noqa: E402
     _turn as run_scripted_turn,
 )
 
-from bench.core import load_variation, package_and_state, provider_for  # noqa: E402
+from bench.core import load_variation, package_and_state, provider_for, resolve_variation  # noqa: E402
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff  # noqa: E402
 from storygame.runtime.cloudflare import NarrationProviderError  # noqa: E402
 from storygame.runtime.engine import RuntimeEngine  # noqa: E402
@@ -58,6 +58,7 @@ ARM_FILES = {
     "families": "stage7-3c-families.json",
     "families-v2": "stage7-3c-families-v2.json",
 }
+PRE_ADOPTION_PACKAGE = ROOT / "tests/fixtures/continuity_initiative_pre_3c_adoption"
 STARTS = ("entry", "posta", "post8", "postc", "carried")
 POSTA_ATTEMPT_CAP = 20
 POST8_ATTEMPT_CAP = 10
@@ -191,8 +192,15 @@ def variation_paths(arms: tuple[str, ...] = ARMS) -> dict[str, Path]:
     return {arm: ROOT / "bench/variations" / ARM_FILES[arm] for arm in arms}
 
 
+def pre_adoption_variation() -> dict[str, Any]:
+    return resolve_variation(
+        {"name": "pre-adoption", "story_package": str(PRE_ADOPTION_PACKAGE)},
+        ROOT / "bench/variations/stage7-3c-control.json",
+    )
+
+
 def source_proof(arms: tuple[str, ...] = ARMS) -> dict[str, Any]:
-    source = ROOT / "data/stories/continuity-initiative"
+    source = ROOT / "tests/fixtures/continuity_initiative_pre_3c_adoption"
     knowledge_path = source / "knowledge.yaml"
     plot_path = source / "plot.md"
     raw = knowledge_path.read_text(encoding="utf-8")

@@ -92,7 +92,7 @@ def test_escape_arm_is_registered() -> None:
 
 
 def test_exactly_once_replacement_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    source = tmp_path / "data/stories/continuity-initiative/knowledge.yaml"
+    source = tmp_path / "tests/fixtures/continuity_initiative_pre_3c_adoption/knowledge.yaml"
     source.parent.mkdir(parents=True)
     source.write_text("x\n", encoding="utf-8")
     monkeypatch.setattr(probe, "ROOT", tmp_path)

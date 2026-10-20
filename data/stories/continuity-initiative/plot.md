@@ -828,7 +828,7 @@ character_placements:
   rebecca: {parent: executive_office}
   brandon: {parent: broadcast_relay}
   captives: {parent: maintenance_network}
-entry_text: "The broadcast chamber lights steadied as Brandon's relay held open. Outside, Charles's emergency deluge was filling the outer access level and forcing water toward the maintenance routes; inside, the evidence was ready to leave for good.\n\n"
+entry_text: "The broadcast chamber lights are steady. Brandon's relay is open. Michelle's evidence package is ready to send. Water is entering the outer access level.\n\n"
 transition_ids: []
 ---
 

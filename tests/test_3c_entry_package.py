@@ -10,7 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _package(arm: str):
-    variation = load_variation(probe.variation_paths((arm,))[arm])
+    variation = (
+        probe.pre_adoption_variation() if arm == "pre-adoption" else load_variation(probe.variation_paths((arm,))[arm])
+    )
     package, _state = package_and_state(variation, "3C")
     return package
 
@@ -30,7 +32,7 @@ def _matched_ids(package, command: str) -> set[str]:
 
 def test_entry_variation_replaces_plot_entry_text_exactly_once() -> None:
     old_entry, new_entry = probe._entry_replacement()
-    plot = (ROOT / "data/stories/continuity-initiative/plot.md").read_text(encoding="utf-8")
+    plot = (ROOT / "tests/fixtures/continuity_initiative_pre_3c_adoption/plot.md").read_text(encoding="utf-8")
     assert plot.count(old_entry) == 1
     assert _entry_text(_package("entry")) == new_entry.removeprefix('entry_text: "').removesuffix('"').replace(
         "\\n", "\n"
@@ -38,7 +40,7 @@ def test_entry_variation_replaces_plot_entry_text_exactly_once() -> None:
 
 
 def test_first_player_screen_uses_control_or_entry_text() -> None:
-    control = _package("control")
+    control = _package("pre-adoption")
     entry = _package("entry")
     control_screen, _ = probe._player_screen(_entry_text(control), [])
     entry_screen, _ = probe._player_screen(_entry_text(entry), [])

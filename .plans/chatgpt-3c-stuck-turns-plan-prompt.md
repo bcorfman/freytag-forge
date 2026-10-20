@@ -6,6 +6,37 @@ applies it through Ringer tasks and probes it.
 
 ---
 
+## ROUND 6 (2026-10-20): the revised-alias screen lost; pump earned 10/12; the remaining cause is the semantic judge's sentence
+
+Read this first. Update `.plans/chatgpt-3c-stuck-turns-plan.md` in place under the Round 3 rules (edit, do not regenerate;
+record outcomes in their Step sections; mark "corrected" or "new"; revise Status, "Resume here" and "Not verified"). Goal
+unchanged: the shortest chain of measured steps to a quality free-text playthrough that passes the 80% earned bar (at least
+10/12). Drop anything that does not shorten it. Round 5's Step 7/8 queue is done; Round 5 and below stay correct for history.
+
+| What | Where | Outcome |
+| --- | --- | --- |
+| Step 7 revised aliases built | `bench/variations/stage7-3c-families-v2.json`, arm `families-v2`; Ringer build task | pump + the revised D-R2 `action_evidence` block exactly as in the plan (34 send/broadcast alternatives + `their families`). 102 tests pass, Ruff clean, data/ untouched. |
+| Step 8 carried n12 | `bench/results/stage7-3c-carried-v2-n12/`; prereg `.plans/astra-3c-families-v2-prereg.md` | pump 10/12 earned, 2 deadline, 0 none; families-v2 9/12 earned, 3 deadline. Both C by turn 10: 12/12 each. 0 rejections, 0 clarifications. 300/960 Cloudflare, 300/480 player. pump MEETS the 10/12 bar; families-v2 misses it; the 1-row gap is not distinguishable, so prefer pump. v2 earned E at turn 11 in 7 rows vs pump 5 (earlier D2), but lost 3 rows. |
+| Failed v2 rows read | rows 06, 10, 12 | Each tried to message the families in plain words and the alias set missed it: 06 turns 8 and 12 `broadcast to the families that ...` (no object noun); 10 turn 9 `send the families the confirmed prisoner lists and locations` (lists, not records); 12 turn 9 `Confirm the broadcast reached the families and give them word about the liberated captives` (then D2 only at 12 via an old alias, and the player never tried the document at 13 or 14). All three are vocabulary gaps. Not checked: whether D1 was already spent at row 06 turn 8. Deadline 16 is NOT supported: row 12 had a recognition miss and ignored the document cue. |
+| Semantic-fallback replay | `bench/results/stage7-3c-semantic-replay/`, `scripts/ringer/stage7/three_c_semantic_replay.py` | pump package, real `_semantic_authored_handoff` path, real judge, 3 runs per case, 15 of 40 Cloudflare calls. The four missed commands (cases 1-4) were refused 12 of 12. The control `Answer the families' requests with the confirmed news of the liberated captives.` matches exactly (judge not called). `Broadcast music to the families.` refused 3 of 3. The judge sees only D-R2's `earn_when: calls the families of the missing` (`knowledge.yaml:2650`) and its false-criterion rejects an act that is "about a different thing" (`jev_questions.py:123-167`). So the semantic path is working as designed, but compares against a narrow sentence. |
+| `earn_when` screen | `.plans/astra-3c-earnwhen-prereg.md` | DESIGNED, NOT RUN. Brandon dropped it: no past data on messaging phrasings, cases 3 and 4 likely still refused, pump already earned 10/12. Candidate was `calls, messages, or broadcasts news to the families of the missing`. `earn_when` also feeds the narrator's `Earn it when the player ...` line (`cloudflare.py` about 1526) and the example picker (about 1043). |
+| Adoption diff (uncommitted) | Ringer task `3c-adopt-pump` (Ringer verdict FAIL, see below); edits to `plot.md`, `knowledge.yaml`, new `tests/test_3c_adopted_package.py` | `data/` now holds exactly the pump fields (3C `entry_text`; B-R1 `delivery_text` with the custody sentence and `The drainage pumps need power.`), no aliases. The worker reports 853 focused-gate tests pass and the disclosure matrix regenerates with zero changed lines; I re-ran only the 3C tests. Ringer marked the task FAIL because my check asserted each variation's `old` text is absent from `data/`, which no longer holds after the worker re-pinned `stage7-3c-pump-need.json`, `-families.json` and `-families-v2.json` (outside its ownership). Adopting changes shipped text, so every screen-era test that applies those variations' old strings breaks (24 failed, 16 errors in my run without the re-pin). The re-pin is uncommitted and I have not reviewed it. |
+| Commit | `3c-stuck-turns-screens` @ `8749e518` | Harness, arms, tests, variations, manifests, preregs and plan updates (95 files). Not pushed. Other untracked work (door-grounded, blind, astra-fixes) left out. |
+
+### Questions for the updated plan (shortest path to a quality playthrough)
+
+1. With pump at 10/12 and every alias or judge lever either lost or unmeasured, should the plan now stop 3C screening and
+   adopt entry + custody + pump (no aliases)? State what is still unverified about that package: the n12 used a scripted-canon
+   prefix and a single run, and the plan's own bar says a pass is not an 80% population rate.
+2. What is the cheapest next measurement that tests whether the 10/12 holds: a second independent pump-only carried n12, or the
+   promotion flow's three-replicate whole-game smoke on staging? Say what each costs and what a miss would mean.
+3. Is there any remaining story-side lever worth one more screen? The only demonstrated source cause is the D-R2 `earn_when`
+   sentence. Say whether you would run the wider sentence now, after adoption, or never, and the evidence that would decide it.
+4. Order the work to a staged playthrough: gates, PR, merge to main, staging, the three-run smoke, production decision.
+   Name the files, tests and costs for each step.
+
+---
+
 ## ROUND 5 (2026-10-20): the carried-state screen ran; 8/12 and 9/12 earned; the loss is D2 recognition
 
 Read this section first, then Round 4 and Round 3 below it (still correct for the steps they cover). Update

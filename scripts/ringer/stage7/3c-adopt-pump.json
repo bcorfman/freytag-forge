@@ -1,0 +1,32 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-adopt-pump",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "adopt-pump-package",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": ["-c", "model_reasoning_effort=medium"],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 5400,
+      "check_timeout_s": 1500,
+      "ownership": [
+        "data/stories/continuity-initiative/plot.md",
+        "data/stories/continuity-initiative/knowledge.yaml",
+        ".plans/disclosure-matrix.json",
+        ".plans/disclosure-matrix.md",
+        "tests/shard_durations.json",
+        "tests/test_3c_adopted_package.py"
+      ],
+      "spec": "You are an implementer on freytag-forge (Python 3.12), working in /home/bcorfman/dev/freytag-forge on branch 3c-stuck-turns-screens. Own ONLY the files in your ownership list. Never touch storygame/, other tests, bench/, git state (no commit, no branch), or .env. No network, no model calls, no uv (use `PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python`).\n\nGOAL: apply the measured `pump` arm package to the shipped story as an UNCOMMITTED diff for human review. The arm is bench/variations/stage7-3c-pump-need.json; its overrides are exact old/new string replacements in plot.md (the 3C entry_text) and knowledge.yaml (the k_sl_3c_b_r1 delivery_text: custody sentence plus 'The drainage pumps need power.'). Read that JSON and apply each replacement to the matching file under data/stories/continuity-initiative/ programmatically, asserting each old string occurs exactly once; do not retype strings. Do NOT apply anything from stage7-3c-families*.json (the aliases lost) and nothing else.\n\nThen: (1) add tests/test_3c_adopted_package.py asserting the shipped package now equals the pump arm for those two fields, the loader loads it, and the 3C entry text / B-R1 delivery are as specified, plus that B does not assert either C fact. (2) Regenerate the disclosure matrix: `.venv/bin/python scripts/disclosure_matrix.py --out-dir .plans` (read the script's --help first to confirm the out-dir/filenames match .plans/disclosure-matrix.{json,md}); report in your final message exactly which generated lines changed. (3) Run, and make pass, the focused gates from docs/testing-runbook.md section 2: tests/test_markdown_story_package.py tests/test_knowledge_projection.py tests/test_knowledge_leakage_matrix.py tests/test_narration_safety.py tests/test_leak_terms.py tests/test_must_convey.py tests/test_narration_corpus.py tests/test_spine_expected_reveals.py tests/test_1a_spine_prompts.py tests/test_shared_knowledge_guards.py tests/test_candidate_matcher.py tests/test_cloudflare_transport.py tests/test_scene_relative_pacing.py tests/test_pacing_handoff.py tests/test_canon_journey.py tests/test_disclosure_matrix.py tests/test_3c_cue_chain.py tests/test_resolution_cascade.py. If a test fails because it pins the OLD 3C text (old entry_text or old B delivery), update only that pin to the new text and say which test and line; if a failure is anything else, do not edit around it: stop and report it verbatim. Regenerate narration-corpus verdicts only if tests/test_narration_corpus.py requires it, using the command in the runbook. Run `.venv/bin/ruff check` and `.venv/bin/ruff format` on touched .py files. Final message: list every changed file with a one-line reason.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && git diff --stat -- data | tail -3 && .venv/bin/python -m pytest -q --no-cov tests/test_3c_adopted_package.py && ! grep -q 'broadcast a message to the families' data/stories/continuity-initiative/knowledge.yaml && .venv/bin/python -m pytest -q --no-cov tests/test_3c_adopted_package.py tests/test_markdown_story_package.py tests/test_knowledge_projection.py tests/test_knowledge_leakage_matrix.py tests/test_narration_safety.py tests/test_leak_terms.py tests/test_must_convey.py tests/test_narration_corpus.py tests/test_spine_expected_reveals.py tests/test_1a_spine_prompts.py tests/test_shared_knowledge_guards.py tests/test_candidate_matcher.py tests/test_cloudflare_transport.py tests/test_scene_relative_pacing.py tests/test_pacing_handoff.py tests/test_canon_journey.py tests/test_disclosure_matrix.py tests/test_3c_cue_chain.py tests/test_resolution_cascade.py && .venv/bin/ruff check tests/test_3c_adopted_package.py",
+      "expect_files": ["/home/bcorfman/dev/freytag-forge/tests/test_3c_adopted_package.py"],
+      "verified": "shipped data equals the pump arm for exactly two fields, gates pass, matrix regenerated, no aliases adopted"
+    }
+  ]
+}

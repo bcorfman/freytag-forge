@@ -13,7 +13,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _package(arm: str):
-    return package_and_state(load_variation(probe.variation_paths((arm,))[arm]), "3C")
+    variation = (
+        probe.pre_adoption_variation() if arm == "pre-adoption" else load_variation(probe.variation_paths((arm,))[arm])
+    )
+    return package_and_state(variation, "3C")
 
 
 def _provider(package, knowledge_id: str):
@@ -51,7 +54,7 @@ def _mask(value, replacements):
 
 
 def test_custody_variation_changes_only_entry_text_and_b_r1_delivery() -> None:
-    control, _ = _package("control")
+    control, _ = _package("pre-adoption")
     entry, _ = _package("entry")
     custody, _ = _package("custody")
     entry_scene = next(scene for scene in entry.scenes if scene.metadata.scene_id == "3C")
