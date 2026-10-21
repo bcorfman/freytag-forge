@@ -2754,7 +2754,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "From an unknown location, Charles watches the unrest. He believes frightened people may still ask him to restore order."
+  delivery_text: "A partially recovered JANUS file labels the disappearances Phase One. Phase Two was designed to provoke conflict among those who remained. From an unknown location, Charles watches the unrest, believing frightened people may yet ask him to restore order."
 - id: k_bridge_1b_departure
   statement: Kristin and Brandon can depart along the identified transport route.
   entity_ids: [kristin, brandon, transit_card]

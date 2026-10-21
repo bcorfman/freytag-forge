@@ -1,0 +1,24 @@
+{
+  "run_name": "stage7-3c-staging-smoke",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-staging-smoke",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "staging-smoke",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": ["-c", "model_reasoning_effort=low"],
+      "max_attempts": 1,
+      "timeout_s": 1800,
+      "check_timeout_s": 60,
+      "spec": "You are a hosted-E2E operator on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends a few real Cloudflare narration calls, so read the hard rules first.\n\nHARD RULES. Change nothing except files under artifacts/e2e-* and frontend/test-results/ (generated, gitignored) and the output directory /home/bcorfman/dev/freytag-forge/bench/results/stage7-3c-staging-smoke/ . Do not edit or create any tracked file. No git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Staging only: if the API reports any channel other than staging, stop. Run the smoke at most twice in total. Do NOT run the blind-player test or anything else billed.\n\nSTEPS:\n1. Identity: `mkdir -p bench/results/stage7-3c-staging-smoke && source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\" > bench/results/stage7-3c-staging-smoke/identity.json`. Required: channel staging, runtime scene-v1, sha f918c663d67d368645f9a24a47a28ffb29fb77d8. If it differs, write smoke-result.txt 'not run: identity mismatch' and the note, and stop.\n2. Smoke: `rm -f artifacts/e2e-smoke-loaded.png; source .env && cd frontend && npm run test:e2e -- --grep @smoke`. If it fails once, rerun once. Save the last 60 lines of output (secrets stripped) to bench/results/stage7-3c-staging-smoke/run-tail.txt.\n3. Write smoke-result.txt whose first word is 'passed' or 'failed', then the number of attempts.\n4. Write operator-note.md (about 100 words, strictly factual): sha, smoke result, number of turns the smoke played, and any narration or item-match call counts that the smoke report, its output, or a response header exposes. If no call counts are exposed anywhere, say so plainly. Quote, do not interpret.\n",
+      "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ scripts/ringer/stage7/ && .venv/bin/python scripts/ringer/stage7/check_smoke.py bench/results/stage7-3c-staging-smoke",
+      "expect_files": ["bench/results/stage7-3c-staging-smoke/operator-note.md"],
+      "verified": "smoke recorded against the staged merge SHA with identity, result and note; no tracked source changed"
+    }
+  ]
+}

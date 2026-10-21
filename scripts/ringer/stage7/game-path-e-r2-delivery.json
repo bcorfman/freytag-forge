@@ -1,0 +1,34 @@
+{
+  "run_name": "game-path-completion-e-r2-delivery",
+  "workdir": "/home/bcorfman/dev/ringer-work/game-path-completion-e-r2-delivery",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "e-r2-delivery",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1200,
+      "check_timeout_s": 900,
+      "ownership": [
+        "data/stories/continuity-initiative/knowledge.yaml",
+        "data/stories/continuity-initiative/storylet-routes.yaml",
+        "tests/test_3c_phase_one_delivery.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_3c_phase_one_delivery.py"
+      ],
+      "spec": "You are an edit worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge (no worktree). You own ONLY these files: data/stories/continuity-initiative/knowledge.yaml, data/stories/continuity-initiative/storylet-routes.yaml, tests/test_3c_phase_one_delivery.py (new). Touch nothing else (other files in the tree are already modified by someone else; leave them). No git add/commit/reset/checkout/stash. No network, no .env, never use uv; run python as `PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python`.\n\nTASK. 1) In knowledge.yaml, item k_sl_3c_e_r2: replace its delivery_text value with exactly this one line: \"A partially recovered JANUS file labels the disappearances Phase One. Phase Two was designed to provoke conflict among those who remained. From an unknown location, Charles watches the unrest, believing frightened people may yet ask him to restore order.\" (currently \"From an unknown location, Charles watches the unrest. He believes frightened people may still ask him to restore order.\"). Change nothing else in that item.\n2) In storylet-routes.yaml, realization SL-3C-E-R2, replace its dramatic_intent (currently \"Recognize the Phase Two statement against visible unrest, without inventing mechanisms beyond the source.\") with: Reveal the Phase One label and the Phase Two plan through the partially recovered JANUS file. Show Charles watching the unrest from an unknown location, hoping frightened people will ask him to restore order.\nKeep the YAML valid and every other line byte-for-byte unchanged. Do not touch the k_sl_3c_e_r1 item or the frozen copies under bench/ or tests/fixtures/.\n3) Create tests/test_3c_phase_one_delivery.py (pytest, marker style copied from tests/test_discovery_continuity.py) with a test loading the package via storygame.story_package.loader.load_story_package(Path(\"data/stories/continuity-initiative\")) that asserts, for both k_sl_3c_e_r1 and k_sl_3c_e_r2, the delivery_text contains \"Phase One\" and \"Phase Two\"/\"conflict\" meaning (r1: \"Phase One\" and \"conflict among survivors\"; r2: \"Phase One\" and \"conflict among those who remained\") and that r2 also contains \"unknown location\". Final message: git diff of the two yaml files restricted to those two edits (use git diff -U0 and show only hunks for k_sl_3c_e_r2 / SL-3C-E-R2).",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/astra-e-r2-text.py && .venv/bin/python -m pytest -q --no-cov tests/test_3c_phase_one_delivery.py && .venv/bin/python -m pytest -q --no-cov -m authoring_quality && git diff --name-only -- data bench storygame tests/fixtures | sort | tr '\\n' ' ' | grep -qx 'data/stories/continuity-initiative/handoffs.yaml data/stories/continuity-initiative/knowledge.yaml data/stories/continuity-initiative/storylet-routes.yaml storygame/runtime/engine.py ' || { echo 'FAIL: unexpected changed files'; git diff --name-only; exit 1; }",
+      "verified": "E-R2 delivery and intent replaced, new pinning test passes, authoring_quality passes, no other tracked file changed"
+    }
+  ]
+}

@@ -157,6 +157,9 @@
     "tests/test_world_model.py": 3.88,
     "tests/test_world_placements.py": 9.83,
     "tests/test_world_seats.py": 2.59,
-    "tests/test_world_second_package.py": 0.82
+    "tests/test_world_second_package.py": 0.82,
+    "tests/test_game_path_journeys.py": 120.0,
+    "tests/test_game_path_completion.py": 6.0,
+    "tests/test_discovery_continuity.py": 8.0
   }
 }

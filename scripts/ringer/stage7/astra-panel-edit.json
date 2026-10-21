@@ -1,0 +1,25 @@
+{
+ "run_name": "astra-panel-changes",
+ "workdir": "/home/bcorfman/dev/ringer-work/astra-panel-changes",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "panel-setting-facts",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": ["-c", "model_reasoning_effort=medium"],
+   "max_attempts": 2,
+   "timeout_s": 1200,
+   "check_timeout_s": 600,
+   "ownership": ["data/stories/continuity-initiative/plot.md"],
+   "expect_files": ["/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md"],
+   "spec": "You are an edit worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge (no worktree). You own ONLY data/stories/continuity-initiative/plot.md. Touch nothing else. No git add/commit/reset/checkout/stash. No network, no .env, never use uv.\n\nTASK. In data/stories/continuity-initiative/plot.md, in the 2A section's setting_facts list, replace these four consecutive lines (currently lines 362-365):\n- The cooling-service archive panel stands beside the inspection console in the infrastructure corridors.\n- The cooling-service archive panel looks like a ventilation grille.\n- The visible seam outlines the cooling-service archive panel.\n- The access panel beside the inspection console is the cooling-service archive panel.\nwith exactly ONE line:\n- The cooling-service archive panel has a slotted face.\n\nKeep the six-plus following lines (leads directly from the infrastructure corridors into the records archive; opens with a push; no lock; no keypad; no screen; requires no further credentials) and the bridge_text, placements and every other line byte-for-byte unchanged. Do not touch world.yaml. Final message: the git diff of plot.md.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && git diff --stat -- . ':!.plans' ':!scripts/ringer/stage7/astra-panel-edit.json' | tail -3; test \"$(git diff --name-only -- data storygame bench | tr '\\n' ' ')\" = 'data/stories/continuity-initiative/plot.md ' || { echo 'FAIL: changed files other than plot.md'; exit 1; }; git diff -U0 -- data/stories/continuity-initiative/plot.md | grep '^[-+][^-+]' > /tmp/panel.diff; cat /tmp/panel.diff; test \"$(grep -c '^-' /tmp/panel.diff)\" = 4 || { echo 'FAIL: expected 4 removed lines'; exit 1; }; test \"$(grep -c '^+' /tmp/panel.diff)\" = 1 || { echo 'FAIL: expected 1 added line'; exit 1; }; grep -qx '+- The cooling-service archive panel has a slotted face.' /tmp/panel.diff || { echo 'FAIL: new line missing'; exit 1; }; grep -c 'has no keypad\\|opens with a push\\|requires no further credentials' data/stories/continuity-initiative/plot.md; rm -rf /tmp/panel-dry && .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment grounded --dry-run --out /tmp/panel-dry && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /tmp/panel-dry 1 --mode dry --experiment grounded",
+   "verified": "plot.md differs by exactly the four-to-one setting_facts replacement, no other tracked file changed, and the grounded dry run still builds."
+  }
+ ]
+}

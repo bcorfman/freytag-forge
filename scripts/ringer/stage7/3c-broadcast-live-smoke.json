@@ -1,0 +1,33 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/three-c-broadcast-smoke",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "three-c-broadcast-smoke",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 900,
+      "check_timeout_s": 120,
+      "ownership": [
+        "bench/results/stage7-3c-broadcast-live-smoke/"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/stage7-3c-broadcast-live-smoke/summary.json"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/three_c_recall_replay.py --experiment broadcast --n 1 --max-requests 4 --confirm --out bench/results/stage7-3c-broadcast-live-smoke",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_three_c_recall_replay.py bench/results/stage7-3c-broadcast-live-smoke 1 --mode artifacts --experiment broadcast",
+      "spec": "Run ONE billed 3C frozen-prompt smoke: 1 reply per arm (pump, recall), cap 4 Cloudflare requests, zero player calls. Own only bench/results/stage7-3c-broadcast-live-smoke/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with a failure file you must leave in place and report verbatim. Run exactly this single shell command and report its exit status: cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/three_c_recall_replay.py --experiment broadcast --n 1 --max-requests 4 --confirm --out bench/results/stage7-3c-broadcast-live-smoke",
+      "verified": "2 rows reconcile with request count and cap"
+    }
+  ]
+}

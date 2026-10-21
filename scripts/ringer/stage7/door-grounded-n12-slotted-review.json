@@ -1,0 +1,32 @@
+{
+ "run_name": "door-grounded-n12-slotted-review",
+ "workdir": "/home/bcorfman/dev/ringer-work/door-grounded-n12-slotted-review",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "blind-review",
+   "task_type": "code-review",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "full_access": true,
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 300,
+   "ownership": [
+    "/home/bcorfman/dev/ringer-work/blind-review-slotted/verdicts/"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/ringer-work/blind-review-slotted/verdicts/p01.json"
+   ],
+   "spec": "You are a read-only blinded reviewer for a text-adventure screen. Boundary: read ONLY the 24 packet files in /home/bcorfman/dev/ringer-work/blind-review-slotted/packets/ (p01.json..p24.json) and write ONLY /home/bcorfman/dev/ringer-work/blind-review-slotted/verdicts/pNN.json, one per packet. Do not open any other file, never look in /home/bcorfman/dev/ringer-work/blind-review-slotted/key.json or bench/results, do not run network or model calls, no git. Judge each packet on its text alone, independently; do not try to guess a condition or compare packets.\n\nSTORY FACTS. In the scene the protagonists, Kristin and Brandon, stand in service corridors and search for a way onward. The authored world has ONE supported route: a cooling-service archive panel with a slotted face, beside the inspection console, that opens with a push, has no lock, keypad or screen, and leads from the infrastructure corridors into the records archive with no further credentials. Anything else that gates access (a door with a keycard reader, keypad, biometric or login prompt, a locked or hidden unmarked door, a required username/password or credential) is INVENTED access hardware.\n\nA packet has: screen (narration shown first, may end with a bridge into the records archive), commands (the player's up-to-2 commands), responses (narrator replies), turns (saved reveal ledger; a turn with status 'earned' means the story engine awarded the selection-file reveal), and text_json (the exact JSON string of [screen, responses, commands]).\n\nFor each packet write JSON with exactly these keys, all true/false booleans unless noted:\n- upstream_invention: the screen or a response invents unsupported access hardware/credential gating before the player asks for it.\n- downstream_new_invention: a LATER response invents unsupported access hardware/credential gating not present earlier.\n- inherited_invention: a response repeats access hardware that the screen already invented.\n- player_pursuit: a player command chases an unsupported access object (for example pressing an invented indentation, swiping a keycard, entering a login).\n- premature_disclosure: a response reveals the selection-file/JANUS/who-built-the-system answers before the player has legitimately reached and searched the archive.\n- contradictory_delivery: the screen's stated outcome contradicts a response (e.g. screen says they entered the archive but a response has them still blocked at a panel or login).\n- earned_by_command_2: true iff any of the first two turns has status 'earned'.\n- declared_panel_used: the player or narrator actually uses/examines/pushes the described access panel (the supported route).\n- invented_access_object: any invented access hardware or credential gate appears anywhere (union of the invention judgments above, ignoring player-only).\n- reached_archive_without_new_credential: they are in/at the records archive without any new credential requirement.\n- evidence: an object mapping each of upstream_invention, downstream_new_invention, inherited_invention, player_pursuit, premature_disclosure, contradictory_delivery that you set true to an EXACT quote copied verbatim from that packet's text_json (a short span, 4-20 words, containing no double-quote characters and no backslashes, so it is a literal substring of text_json). Omit fields you set false.\n- notes: one sentence.\n\nWhen unsure, set false; the quotes must justify every true. Write all 24 files, then reply with a one-line count of packets with invented_access_object true.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=$PWD TMPDIR=/tmp && test $(ls /home/bcorfman/dev/ringer-work/blind-review-slotted/verdicts/p*.json | wc -l) = 24 || { echo 'FAIL: need 24 verdict files'; exit 1; }; .venv/bin/python scripts/ringer/stage7/blind_review.py convert /home/bcorfman/dev/freytag-forge/bench/results/stage7-door-grounded-n12-slotted /home/bcorfman/dev/ringer-work/blind-review-slotted && .venv/bin/python scripts/ringer/stage7/check_door_probe.py /home/bcorfman/dev/freytag-forge/bench/results/stage7-door-grounded-n12-slotted 12 --mode reviewed --experiment grounded",
+   "verified": "24 blinded verdicts convert, match row hashes, quote exact row text and reconcile with the review summary."
+  }
+ ]
+}

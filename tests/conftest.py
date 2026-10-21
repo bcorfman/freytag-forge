@@ -172,6 +172,7 @@ _SESSION_CPU = 0.0
 
 
 _INTEGRATION_FILES = {
+    "test_game_path_journeys.py",
     "test_knowledge_leakage_matrix.py",
     "test_phase3_evidence.py",
     "test_phase4_evidence.py",

@@ -6,6 +6,42 @@ applies it through Ringer tasks and probes it.
 
 ---
 
+## ROUND 7 (2026-10-20): pump is merged and staged; the first live whole-game run reached 3C and stalled after the gates; no D reveal
+
+Read this first, then Round 6 below (still correct for history). Update `.plans/chatgpt-3c-stuck-turns-plan.md` in place
+under the Round 3 rules (edit, do not regenerate; record outcomes in their Step sections; mark "corrected" or "new"; revise
+Status, "Resume here" and "Not verified"). Goal unchanged and narrower: the shortest chain of measured steps to a quality
+free-text playthrough. Drop anything that does not shorten it. Brandon's standing position: no rate claim from 1-3 runs; a
+small sample is a regression check only, so do not write "passes the bar" or "misses the bar" from n=1.
+
+| What | Where | Outcome |
+| --- | --- | --- |
+| Step 9 done and merged | PR #674, merge `f918c663d67d368645f9a24a47a28ffb29fb77d8` on `main` | Pump package shipped (3C `entry_text`; B-R1 `delivery_text` with custody and `The drainage pumps need power.`), no aliases. Frozen pre-adoption fixture; adoption test pins strings and hashes. Full suite 2499 passed, 1 skipped, 92.71% coverage; ruff, frontend tests and build green. First CI run failed because `bench/results/` is gitignored and three 3C tests read recorded inputs there; force-added `stage7-3c-matcher-table`, `stage7-3c-prefix`, `stage7-3c-carried-dry` (the only tracked files under `bench/results/`). Second run green. Branch deleted. |
+| Staging verified | merge SHA `f918c663` | `tests` workflow success incl. `Deploy staging`, scene staging evaluation, `Record staging deployment`; `/api/v1/version` = `scene-v1`, `staging`, exact SHA; Pages `/dev/deployment.json` = `staging`, exact SHA. |
+| Staging `@smoke` | Ringer `stage7-3c-staging-smoke`, `bench/results/stage7-3c-staging-smoke/` | Passed first attempt, 2 turns. No call counts exposed by the report, output or headers. Ringer FAIL only because the drift check saw 8 pre-existing untracked `.plans/` files (checker issue, not worker drift). Cost reading: the Worker has a server-enforced per-UTC-day USD budget (`DAILY_BUDGET_USD`, default 5, shared by all staging traffic that day) that returns 429 `AI_DAILY_BUDGET_EXCEEDED`; no read-out endpoint. So the stop rule is that 429, not a call count. |
+| One raw whole-game replicate (n=1) | Ringer `stage7-3c-blind-raw-f918c663`, `bench/results/stage7-3c-blind-raw-f918c663/attempt-1/`; manifest `scripts/ringer/stage7/3c-blind-raw-replicate-1.json` | `E2E_BLIND_SCENE=all`, raw, 1 replicate, 9.8 min, 79 turns. 1A-3B all left by earned transitions, 0 rejections, 0 game breaks (stuck turns 1A 5, 1B 0, 1C 1, 2A 4, 2B 5, 2C 4, 3A 0, 3B 3). 3C: 14 turns, A/B/C1/C2 earned on turns 1/2/3/5, NO D1/D2/E, exit `ending` with no transition cause (deadline fallback, not earned), 9 stuck turns (4, 6-13). Ringer FAIL only because the worker did not write `smoke-result.txt` (the note records it). Replicates 2 and 3 NOT run: Brandon dropped them as a gate (three runs support no rate). |
+| 3C turn read | `e2e-blind-player.json`, `e2e-blind-player-prompts.json` | Player commands 6-13 were eight near-identical "Lead Michelle and the captives through the (open) surface gates to safety." Narration on turns 5-8 repeats the C1 and C2 statements almost verbatim ("Michelle leads the captives through the maintenance tunnel"; "uses the senior official's authorization to release the surface gates"). The turn-6 prompt's SCENE block lists both statements as standing facts; world places Kristin, Michelle and captives in the maintenance network (the player's turn-4 command "Follow Michelle and the captives through the maintenance tunnel" moved Kristin there; it earned nothing). The D cues did fire on turns 6 and 7 ("Reports from other detention sites reach the broadcast chamber"; "Families of the missing ask the broadcast chamber for word") but Kristin was not at the chamber, and turn 6 offered no D candidates (movement command, no D evidence match). |
+| Surface binding vs this prompt | scratchpad script, offline, no model calls | Rebuilt the turn-6 prompt on the pump package with A/B/C1/C2 committed, with and without `stage7-3c-surface-binding.json`: SCENE block IDENTICAL; only the captives parent differs (`facility_escape` vs `maintenance_network`); Kristin/Michelle stay in `broadcast_chamber`, Brandon in `broadcast_relay` in both. So the binding fixes the captives' placement, not the statement replay, consistent with its measured 9/12 consistency and the loop persisting in 3 rows. The offline provider did not render THINGS, so places were compared in the world model. |
+| Open candidate (no build, no run) | plan section B "subtractive fallback" | C1 statement `k_sl_3c_c_r1`: old `Kristin restores power to drainage pumps and holds one watertight barrier while Michelle leads captives through the maintenance tunnel.` new `The drainage pumps have power. The evacuation route is open.` Reveal-time delivery unchanged. C2's statement is also replayed in the recording but the plan says screen it separately. Precedent: 2C stale-recall scoping and 1A #668 (technique proven, wording not). |
+
+### Questions for the updated plan (shortest path to a quality playthrough)
+
+1. One live run stalled in the same shape as the old "long post-gates escape" rows, while the carried n12 earned 10/12 on the
+   same statements. What differs between a scripted-canon prefix and a live history that could explain it (turn-4 detour
+   moving Kristin, player wording, Kristin's place), and which difference, if any, can be tested without a new billed
+   whole-game run? Do not claim a cause from one prompt.
+2. Is the C1 recall-scoping edit worth one screen, and if so what is the cheapest design (carried n12 vs pump, C1 only; or a
+   cheaper offline/semantic probe first; or C1+C2 together)? Give caps and the miss reading. If you would not screen it, say
+   what you would do instead to get a playthrough that reaches D1/D2/E.
+3. Several earlier scenes also show 4-5 stuck turns in this run (1A, 2A, 2B, 2C). Do they matter for a quality playthrough
+   now, or is 3C the only blocker? Use only what the recorded report supports.
+4. Redefine the production gate honestly. Three replicates were meant as a regression smoke, not a rate. State what a
+   promotion decision may rest on given the evidence we can afford, what each option costs (staging budget is one shared
+   UTC-day USD cap; read the dollars from the Cloudflare dashboard), and what we may not claim.
+5. Order the remaining work to a staged playthrough with named files, tests and costs. The merge and staging steps are done.
+
+---
+
 ## ROUND 6 (2026-10-20): the revised-alias screen lost; pump earned 10/12; the remaining cause is the semantic judge's sentence
 
 Read this first. Update `.plans/chatgpt-3c-stuck-turns-plan.md` in place under the Round 3 rules (edit, do not regenerate;

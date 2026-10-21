@@ -1,0 +1,33 @@
+{
+  "run_name": "game-path-completion-option3-cues",
+  "workdir": "/home/bcorfman/dev/ringer-work/game-path-completion-option3-cues",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "option3-cues",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1500,
+      "check_timeout_s": 900,
+      "ownership": [
+        "data/stories/continuity-initiative/handoffs.yaml",
+        "tests/test_3c_cue_wording.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_3c_cue_wording.py"
+      ],
+      "spec": "You are an edit worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge (no worktree). You own ONLY data/stories/continuity-initiative/handoffs.yaml and tests/test_3c_cue_wording.py (new). Touch nothing else (other files are already modified by someone else; leave them). No git add/commit/reset/checkout/stash. No network, no .env, never use uv; run python as `PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python`.\n\nCONTEXT. An earlier attempt left option-1 wording in two 3C handoff entries in handoffs.yaml (cue_text 'Michelle's broadcast carries reports...' and 'Through Michelle's broadcast, families...'). Replace it with the option-3 wording below. Do not revert or touch any other handoff entry in the file (other entries are intentionally modified already).\n\nTASK. In handoffs.yaml, scene 3C, set exactly these two entries' cue_text and fallback_text, leaving must_convey and every other line unchanged:\n1) fact_id national_network_fragmenting:\n cue_text: Reports from other detention sites reach the broadcast chamber.\n fallback_text: Reports from other detention sites reach the broadcast chamber. Detention sites surrender or release prisoners as the national network breaks apart.\n2) fact_id community_rescue_efforts_begun:\n cue_text: Families of the missing call the broadcast chamber for word.\n fallback_text: Families of the missing call for news. Families and communities organize independent rescue efforts. Many of the missing are still alive.\nEvery must_convey group must still be matched by BOTH the new cue_text and the new fallback_text (case-insensitive substring of any phrase in the group). The community_rescue_efforts_begun fallback above has no 'ask' or 'for word', so if group two ([ask, for word]) is not matched, change ONLY its first sentence to: Families of the missing call the broadcast chamber for word.  (keep the rest). Use the YAML quoting style of the neighbouring entries.\nThen create tests/test_3c_cue_wording.py (pytest, marker style copied from tests/test_discovery_continuity.py) that loads the package with storygame.story_package.loader.load_story_package(Path(\"data/stories/continuity-initiative\")) and asserts the two cue_text strings above are among the loaded handoffs (find the attribute by reading loader.py/models.py) and that each must_convey group is matched in both cue_text and fallback_text. Run the new test plus `-m authoring_quality`; if an existing test pins the old cue wording, update only that assertion and report it. Final message: git diff -U0 of handoffs.yaml restricted to the two entries.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/astra-cue-option3.py && .venv/bin/python -m pytest -q --no-cov tests/test_3c_cue_wording.py && .venv/bin/python -m pytest -q --no-cov -m authoring_quality && .venv/bin/python -m pytest -q --no-cov -x -m '(unit or component) and not authoring_quality' -n 4 && git diff --name-only -- data bench storygame | sort | tr '\\n' ' ' | grep -qx 'data/stories/continuity-initiative/handoffs.yaml data/stories/continuity-initiative/knowledge.yaml data/stories/continuity-initiative/storylet-routes.yaml storygame/runtime/engine.py ' || { echo 'FAIL: unexpected changed files'; git diff --name-only; exit 1; }",
+      "verified": "two 3C handoffs carry option-3 wording, option-1 wording gone, must_convey matched, fast suite and authoring_quality pass, no other tracked file changed"
+    }
+  ]
+}

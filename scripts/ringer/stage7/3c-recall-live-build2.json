@@ -1,0 +1,31 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-recall-build2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "harden-3c-recall-replay",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_recall_replay.py",
+        "scripts/ringer/stage7/check_three_c_recall_replay.py",
+        "tests/test_3c_recall_live.py"
+      ],
+      "spec": "You are a build worker on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You may edit/create ONLY: scripts/ringer/stage7/three_c_recall_replay.py, scripts/ringer/stage7/check_three_c_recall_replay.py (new), tests/test_3c_recall_live.py. NEVER touch data/, storygame/, other tests, git state, .env, bench/variations/*, .plans/*. No billed or network call: stub everything. Setup: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`; `.venv/bin/python`, no uv.\n\nRead scripts/ringer/stage7/three_c_recall_replay.py and tests/test_3c_recall_live.py first, then the closest existing artifact checker scripts/ringer/stage7/check_three_c_probe.py (copy its CLI/exit-code style).\nTASK 1: the billed (non --dry-run) path must refuse to run unless `--confirm` is passed (exit nonzero with a clear message, zero network calls, nothing written except nothing). Dry run stays unchanged and needs no --confirm.\nTASK 2: new check_three_c_recall_replay.py `<dir> <n_per_arm> --mode dry|artifacts`. dry: the files the dry run writes exist, summary has requests 0, pump_equals_recording true, recall_old_c1_remaining false, replacement_occurrences 3. artifacts: exactly 2*n rows OR (if run-failure/failure.txt exists) partial rows with that file present; rows alternate pump,recall; each row has arm, index, request count in 1..2, raw reply text field; summary requests equals the sum of row request counts and is <= the cap recorded in summary; zero player/semantic-judge calls recorded. Every failure prints which assertion broke.\nTASK 3: tests for --confirm refusal (stubbed network proves zero calls), and for the checker (a hand-built passing artifact dir, a dir with a wrong request sum, a dir with wrong arm order). Keep all existing tests passing; ruff clean and formatted.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q tests/test_3c_recall_live.py 2>&1 | tail -5 && rm -rf bench/results/stage7-3c-recall-live-dry && .venv/bin/python scripts/ringer/stage7/three_c_recall_replay.py --n 12 --dry-run --out bench/results/stage7-3c-recall-live-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_recall_replay.py bench/results/stage7-3c-recall-live-dry 12 --mode dry && ( .venv/bin/python scripts/ringer/stage7/three_c_recall_replay.py --n 1 --out /tmp/recall-noconfirm; test $? -ne 0 ) && .venv/bin/ruff check scripts/ringer/stage7/three_c_recall_replay.py scripts/ringer/stage7/check_three_c_recall_replay.py tests/test_3c_recall_live.py && .venv/bin/ruff format --check scripts/ringer/stage7/three_c_recall_replay.py scripts/ringer/stage7/check_three_c_recall_replay.py tests/test_3c_recall_live.py && test -z \"$(git status --porcelain data storygame)\"",
+      "verified": "confirm guard, checker and tests pass; zero model calls"
+    }
+  ]
+}

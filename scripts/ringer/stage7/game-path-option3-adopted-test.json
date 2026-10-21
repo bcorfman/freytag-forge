@@ -1,0 +1,33 @@
+{
+  "run_name": "game-path-completion-option3-cues",
+  "workdir": "/home/bcorfman/dev/ringer-work/game-path-completion-option3-cues",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "option3-adopted-test",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1500,
+      "check_timeout_s": 900,
+      "ownership": [
+        "tests/test_3c_adopted_package.py",
+        "tests/test_cue_spent_reveal.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_3c_adopted_package.py"
+      ],
+      "spec": "You are an edit worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge (no worktree). You own ONLY tests/test_3c_adopted_package.py and tests/test_cue_spent_reveal.py. Touch nothing else (other files are already modified by someone else, including data/stories/continuity-initiative/*; leave them). No git add/commit/reset/checkout/stash. No network, no .env, never use uv; run python as `PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp .venv/bin/python`.\n\nPROBLEM. test_frozen_pump_application_reproduces_the_shipped_package pins the shipped package to the frozen pre-adoption fixture (tests/fixtures/continuity_initiative_pre_3c_adoption) plus the pump change. Later, intended edits to the shipped package now break it: (a) knowledge.yaml: the k_sl_3c_e_r2 delivery_text was rewritten (Phase One / Phase Two / Charles watches the unrest); (b) handoffs.yaml: two new deliveries (architects_strategy_known, kristin_was_bait) and reworded 3C cue/fallback text for national_network_fragmenting and community_rescue_efforts_begun; (c) storylet-routes.yaml: the SL-3C-E-R2 dramatic_intent and two bridge activations (any_of / kristin_was_bait) changed. The test must keep proving what it is for: that applying the pump variation to the frozen package reproduces the adopted plot.md entry_text change and the k_sl_3c_b_r1 delivery change, and that the shipped plot.md still differs from frozen on exactly the one adoption line.\n\nTASK. Edit the test minimally: remove the two SHA-256 pins and the byte-for-byte equality of the non-plot/knowledge files; replace them with explicit, named, allowed later edits. Concretely: keep the old_entry/old_delivery count checks; keep the plot.md _line_differences assertion unchanged; for knowledge.yaml assert _line_differences(FROZEN, SHIPPED) equals exactly two entries (the existing B-R1 line at 2513, plus the k_sl_3c_e_r2 delivery_text line - compute its line number and old/new text from the files; define the new E-R2 delivery as a module constant LATER_E_R2_DELIVERY holding the exact shipped line) ; assert the materialized (pump-applied frozen) knowledge.yaml differs from shipped on exactly that one E-R2 line and plot.md is byte-identical to shipped; for the other package files, assert the set of file names is unchanged and that handoffs.yaml and storylet-routes.yaml are the only ones allowed to differ from frozen (all remaining files byte-equal). Drop unused constants/imports (ruff clean). Do not weaken the other tests in the file. Run: PYTHONPATH=... .venv/bin/python -m pytest -q --no-cov tests/test_3c_adopted_package.py and `.venv/bin/ruff check tests/test_3c_adopted_package.py && .venv/bin/ruff format tests/test_3c_adopted_package.py`. Final message: git diff of the test file.\n\nSECOND FIX (tests/test_cue_spent_reveal.py). test_old_and_new_real_cue_predicates_differ_only_for_spent_rows now sees three extra differing rows, all legitimate spent reveals caused by the new N-1/N-2 deliveries (the cue is correctly withheld once the storylet fired through another realization): ('2B', 'SL-2B-B fired through k_sl_2b_b_r2', 'kristin_was_bait', True, False), ('2B', 'SL-2B-B fired through k_sl_2b_b_r1', 'kristin_was_bait', True, False), ('1C', 'SL-1C-C fired through k_sl_1c_c_r1', 'architects_strategy_known', True, False). Add exactly those three tuples to the pinned expected set in that test, in the file's existing style, and nothing else. Run the file's tests and ruff check/format on it.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/astra-cue-option3.py && .venv/bin/python -m pytest -q --no-cov tests/test_3c_cue_wording.py tests/test_3c_adopted_package.py tests/test_cue_spent_reveal.py && .venv/bin/python -m pytest -q --no-cov -m authoring_quality && .venv/bin/ruff check tests/test_3c_adopted_package.py && .venv/bin/ruff format --check tests/test_3c_adopted_package.py tests/test_3c_cue_wording.py && .venv/bin/python -m pytest -q --no-cov -x -m '(unit or component) and not authoring_quality' -n 4 && git diff --name-only -- data bench storygame | sort | tr '\\n' ' ' | grep -qx 'data/stories/continuity-initiative/handoffs.yaml data/stories/continuity-initiative/knowledge.yaml data/stories/continuity-initiative/storylet-routes.yaml storygame/runtime/engine.py ' || { echo 'FAIL: unexpected changed files'; git diff --name-only; exit 1; }",
+      "verified": "adopted-package test names the later intended edits, passes with the option-3 cues in place, ruff clean, fast suite and authoring_quality pass"
+    }
+  ]
+}

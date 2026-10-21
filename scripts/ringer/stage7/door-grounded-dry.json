@@ -1,0 +1,30 @@
+{
+ "run_name": "door-grounded-dry",
+ "workdir": "/home/bcorfman/dev/ringer-work/door-grounded-dry",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "grounded-dry",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 900,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/stage7-door-grounded-dry/"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment grounded --dry-run --out bench/results/stage7-door-grounded-dry",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-grounded-dry 1 --mode dry --experiment grounded",
+   "verified": "The dry artifacts exist for 2 rows with grounded-experiment caps and the checker accepts them.",
+   "spec": "Run one free offline dry run of the Stage 7 GROUNDED-route door screen (arms control, grounded). Own only bench/results/stage7-door-grounded-dry/. Run the command exactly as given; make no network or provider calls, no code edits, no git mutation. Report the rows and caps written.\n\nYOUR WORKING DIRECTORY IS A SCRATCH DIRECTORY; the repository is at /home/bcorfman/dev/freytag-forge. Run exactly this single shell command and report the exit status and the files written:\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment grounded --dry-run --out bench/results/stage7-door-grounded-dry"
+  }
+ ]
+}

@@ -55,7 +55,7 @@ def _state_after_reveal(package: object, item_id: str) -> object:
     return state
 
 
-def test_old_and_new_real_cue_predicates_differ_only_for_three_spent_rows() -> None:
+def test_old_and_new_real_cue_predicates_differ_only_for_spent_rows() -> None:
     differences: set[tuple[str, str, str, bool, bool]] = set()
 
     for scene in PACKAGE.scenes:
@@ -80,6 +80,20 @@ def test_old_and_new_real_cue_predicates_differ_only_for_three_spent_rows() -> N
 
     assert differences == {
         (
+            "1A",
+            "SL-1A-B fired through k_sl_1a_b_r2",
+            "continuity_initiative_known",
+            True,
+            False,
+        ),
+        (
+            "1A",
+            "SL-1A-E fired through k_sl_1a_b_r0",
+            "continuity_initiative_known",
+            True,
+            False,
+        ),
+        (
             "1C",
             "SL-1C-C fired through k_sl_1c_c_r2",
             "national_detention_network_known",
@@ -97,6 +111,27 @@ def test_old_and_new_real_cue_predicates_differ_only_for_three_spent_rows() -> N
             "2B",
             "SL-2B-B fired through k_sl_2b_b_r3",
             "brandon_janus_role_known",
+            True,
+            False,
+        ),
+        (
+            "2B",
+            "SL-2B-B fired through k_sl_2b_b_r2",
+            "kristin_was_bait",
+            True,
+            False,
+        ),
+        (
+            "2B",
+            "SL-2B-B fired through k_sl_2b_b_r1",
+            "kristin_was_bait",
+            True,
+            False,
+        ),
+        (
+            "1C",
+            "SL-1C-C fired through k_sl_1c_c_r1",
+            "architects_strategy_known",
             True,
             False,
         ),

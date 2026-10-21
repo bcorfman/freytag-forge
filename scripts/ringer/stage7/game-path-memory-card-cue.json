@@ -1,0 +1,26 @@
+{
+ "run_name": "game-path-completion-memory-card-cue",
+ "workdir": "/home/bcorfman/dev/ringer-work/game-path-memory-card-cue",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "cue-spent-by-cost",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 1800,
+   "check_timeout_s": 300,
+   "spec": "You are a code worker on freytag-forge (Python 3.12). Your working directory is a git worktree of /home/bcorfman/dev/freytag-forge; edit files here directly. Do NOT git commit, push, stash or reset. Edit ONLY storygame/runtime/engine.py (the file you own). Never edit tests, data/stories/*, or any other file.\n\nPROBLEM: RuntimeEngine._cue_reveal_available(self, fact_id) decides whether a missing delivery fact may be staged as a cue. A FactDelivery has `costs` (route operations); the cue_text points the player toward an EARLIER step whose fact the delivery's assert-costs establish. In continuity-initiative scene 1A, delivery continuity_initiative_known has cue_text about the thin gap beneath the drawer and cost `assert memory_card_recovered`. After Kristin has already found the card, the cue still stages and tells the player to search for the card they already hold.\n\nREQUIRED CHANGE: in _cue_reveal_available, return False when the delivery for fact_id has at least one cost with op == \"assert\" whose fact_id is already asserted true in self.state.facts (compare with str(fact.value).lower() == \"true\" on self.state.facts.asserted, the same way neighbouring code such as _cue_escalation_available does). Do this inline inside _cue_reveal_available; do not add a new method on self, because tests call the function as RuntimeEngine._cue_reveal_available(SimpleNamespace(state=state), fact_id) with a bare namespace. Keep the existing behaviour otherwise. No story-specific names or fact ids in the code. Add a one-line docstring clause only; match the surrounding comment density.\n\nHOW TO RUN TESTS (uv does not work in your sandbox): first `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` and confirm the path is inside your worktree. Then run `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_discovery_continuity.py tests/test_staged_cues.py tests/test_cue_spent_reveal.py tests/test_cue_eligibility_compare.py tests/test_cue_escalation.py tests/test_3c_cue_chain.py tests/test_cue_text_safety.py`. tests/test_discovery_continuity.py is NOT in your worktree if it is untracked; copy it from /home/bcorfman/dev/freytag-forge/tests/test_discovery_continuity.py into your worktree tests/ directory (do not edit it) before running. All must pass. If another existing test fails because of your change, report which and why in notes.md in the worktree root; do not edit that test.\nFinish with `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format storygame/runtime/engine.py && ... -m ruff check storygame/runtime/engine.py`.",
+   "check": "cd $PWD && cp /home/bcorfman/dev/freytag-forge/tests/test_discovery_continuity.py tests/ && PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_discovery_continuity.py tests/test_staged_cues.py tests/test_cue_spent_reveal.py tests/test_cue_eligibility_compare.py tests/test_cue_escalation.py tests/test_3c_cue_chain.py tests/test_cue_text_safety.py 2>&1 | tail -25 && git status --porcelain | grep -v '^??' | grep -v 'storygame/runtime/engine.py' | (! grep .) && mkdir -p /home/bcorfman/dev/ringer-work/game-path-memory-card-cue-out && git diff > /home/bcorfman/dev/ringer-work/game-path-memory-card-cue-out/engine.patch && test -s /home/bcorfman/dev/ringer-work/game-path-memory-card-cue-out/engine.patch",
+   "expect_files": [],
+   "verified": "The new discovery-continuity tests and the existing cue tests pass, only engine.py changed, and the diff is exported as a patch."
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+{
+ "run_name": "door-grounded-smoke2",
+ "workdir": "/home/bcorfman/dev/ringer-work/door-grounded-smoke2",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "grounded-smoke2",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 1800,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/stage7-door-grounded-smoke2/",
+    "bench/results/ledger.jsonl (append-only)"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment grounded --confirm --out bench/results/stage7-door-grounded-smoke2",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-grounded-smoke2 1 --mode artifacts --experiment grounded",
+   "verified": "The live smoke artifacts for 2 rows reconcile with spend events, caps, prompt hashes and the ledger row.",
+   "spec": "Run one billed Stage 7 GROUNDED-route door-screen smoke after the dry check passed: arms control, grounded, one trial each, at most 10 Cloudflare requests and 4 raw-player attempts. Own only bench/results/stage7-door-grounded-smoke2/ plus append-only bench/results/ledger.jsonl. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report.\n\nThis is the SECOND smoke, on the revised story (commit ad8d0c76); the first smoke dir is a separate earlier attempt - do not touch it. YOUR WORKING DIRECTORY IS A SCRATCH DIRECTORY; the repository is at /home/bcorfman/dev/freytag-forge. Run exactly this single shell command (it cds into the repo itself) and report its exit status and the contents of any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 1 --experiment grounded --confirm --out bench/results/stage7-door-grounded-smoke2"
+  }
+ ]
+}

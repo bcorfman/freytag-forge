@@ -92,6 +92,19 @@ deliveries:
   fallback_text: >-
     The logistics computer shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
   cue_text: A logistics computer hums by the service entrance. It may be worth reading.
+- fact_id: architects_strategy_known
+  scene_id: 1C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [Charles and Rebecca]
+  - [made the crisis]
+  - [rule as its promised solution]
+  fallback_text: >-
+    A recording shows that Charles and Rebecca made the crisis.
+    They plan to rule as its promised solution.
+  cue_text: The recorded conference is available to play.
+  costs: []
 - fact_id: false_identities_ready
   scene_id: 2A
   source_kind: npc
@@ -150,6 +163,20 @@ deliveries:
     Michelle's coded messages and private notes show active sabotage and a small, hidden resistance link inside the
     facility. It is altering classifications and delaying transfers.
   cue_text: The medical terminal shows corrupted prisoner files and a warning message.
+- fact_id: kristin_was_bait
+  scene_id: 2B
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [Charles expected Kristin to seek Brandon]
+  - [Michelle's evidence]
+  - [expose Brandon's hidden network]
+  fallback_text: >-
+    Charles expected Kristin to seek Brandon.
+    He left Michelle's evidence where she could find it and expose Brandon's hidden network.
+    Corrupted files flicker on the medical terminal.
+  cue_text: Corrupted files flicker on the medical terminal.
+  costs: []
 - fact_id: purge_clock_started
   scene_id: 2C
   source_kind: broadcast
@@ -320,7 +347,7 @@ deliveries:
   must_convey:
   - [reports from other detention sites, detention site reports]
   - [broadcast chamber, Michelle's broadcast]
-  fallback_text: Reports from other detention sites reach the broadcast chamber.
+  fallback_text: Reports from other detention sites reach the broadcast chamber. Detention sites surrender or release prisoners as the national network breaks apart.
   cue_text: Reports from other detention sites reach the broadcast chamber.
 - fact_id: community_rescue_efforts_begun
   scene_id: 3C
@@ -329,8 +356,8 @@ deliveries:
   must_convey:
   - [families of the missing, missing families]
   - [ask, for word]
-  fallback_text: Families of the missing ask the broadcast chamber for word.
-  cue_text: Families of the missing ask the broadcast chamber for word.
+  fallback_text: Families of the missing call the broadcast chamber for word. Families and communities organize independent rescue efforts. Many of the missing are still alive.
+  cue_text: Families of the missing call the broadcast chamber for word.
 - fact_id: phase_two_conflict_plan_known
   scene_id: 3C
   source_kind: observation
