@@ -2856,6 +2856,7 @@ canonical_resolution_events:
   realization_storylets:
   - SL-3C-C
   - SL-3C-F
+  delivery_text: "The captives have emerged into Los Angeles. News drones, civilians, and local responders begin arriving. Over the relay, Brandon tells you, “Reports from other detention sites are reaching the broadcast chamber. Families of the missing are calling there for news.” The maintenance network still leads back to Rebecca's executive office. The broadcast chamber inside remains reachable."
   fallback_text: Michelle leads the captives through the maintenance tunnel. Kristin keeps the drainage pumps and one barrier working. Michelle uses the gate authorization, and the flooded Los Angeles facility is lost.
   fallback_realization: Kristin’s Army infrastructure and operations background and Michelle’s evacuation leadership get surviving captives to the surface
     while the Los Angeles facility is lost.

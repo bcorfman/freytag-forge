@@ -1255,6 +1255,10 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
             fallback_text = item.get("fallback_text")
             if resolution and (not isinstance(fallback_text, str) or not fallback_text.strip()):
                 raise StoryPackageError(f"resolution event '{item['id']}' must have non-empty fallback_text")
+            delivery_text = item.get("delivery_text")
+            if delivery_text is not None and (not isinstance(delivery_text, str) or not delivery_text.strip()):
+                event_kind = "resolution" if resolution else "bridge"
+                raise StoryPackageError(f"canonical {event_kind} event '{item['id']}' delivery_text must not be empty")
             return {
                 "id": item["id"],
                 "scene_id": item["scene_id"],
@@ -1266,6 +1270,7 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
                 "operations": item["produces"],
                 "realization_storylets": realization_storylets,
                 "fallback_text": fallback_text,
+                "delivery_text": delivery_text,
             }
 
         routes = StoryletRoutesSource.model_validate(

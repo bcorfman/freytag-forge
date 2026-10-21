@@ -10,12 +10,13 @@ from storygame.runtime.world_model import apply_world_effects
 class CanonicalEventMixin:
     """Keep route-event application separate from turn orchestration."""
 
-    def _apply_canonical_route_events(self) -> None:
+    def _apply_canonical_route_events(self) -> tuple[NarrationSegment, ...]:
         """Commit route-authored bridge/resolution facts once their conditions hold."""
 
         routes = self.state.package.storylet_routes
         events = (*routes.bridge_events, *routes.resolution_events)
         resolution_ids = {event.id for event in routes.resolution_events}
+        segments: list[NarrationSegment] = []
         while True:
             for event in events:
                 if event.scene_id != self.state.current_scene_id or event.id in self.state.fired_event_ids:
@@ -27,10 +28,12 @@ class CanonicalEventMixin:
                 ):
                     continue
                 self._commit_canonical_event(event)
+                if event.delivery_text is not None:
+                    segments.append(NarrationSegment(kind="narration", text=event.delivery_text))
                 break
             else:
                 apply_world_effects(self.state.package, self.state.facts)
-                return
+                return tuple(segments)
 
     def _commit_canonical_event(self, event) -> None:
         operations = tuple(

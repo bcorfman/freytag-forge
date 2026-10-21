@@ -470,7 +470,9 @@ class RuntimeEngine(CanonicalEventMixin):
         self._advance_pacing(proposal.narrative_seconds if clock_seconds is None else clock_seconds)
         self._activate_pacing()
         if not (canonical_event_id and proposal.transition):
-            self._apply_canonical_route_events()
+            canonical_segments = self._apply_canonical_route_events()
+        else:
+            canonical_segments = ()
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
@@ -513,11 +515,12 @@ class RuntimeEngine(CanonicalEventMixin):
                 proposal = proposal.model_copy(
                     update={"segments": tuple(segment for segment in proposal.segments if segment.text != cue_text)}
                 )
-        if entry_segments or resolution_segments or refusal_segment:
+        if canonical_segments or entry_segments or resolution_segments or refusal_segment:
             result = proposal.model_copy(
                 update={
                     "segments": (
                         *proposal.segments,
+                        *canonical_segments,
                         *(entry_segments or ()),
                         *(resolution_segments or ()),
                         *((refusal_segment,) if refusal_segment else ()),
@@ -962,12 +965,14 @@ class RuntimeEngine(CanonicalEventMixin):
         self._record_turn(pending)
         self._advance_pacing(pending.narrative_seconds)
         self._activate_pacing()
-        self._apply_canonical_route_events()
+        canonical_segments = self._apply_canonical_route_events()
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
-        if entry_segments:
-            pending = pending.model_copy(update={"segments": (*pending.segments, *entry_segments)})
+        if canonical_segments or entry_segments:
+            pending = pending.model_copy(
+                update={"segments": (*pending.segments, *canonical_segments, *(entry_segments or ()))}
+            )
         if refusal_segment:
             pending = pending.model_copy(update={"segments": (*pending.segments, refusal_segment)})
         return self._finish_ending(pending)

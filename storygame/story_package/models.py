@@ -682,6 +682,14 @@ class CanonicalRouteEvent(_Model):
     operations: tuple[RouteOperation, ...] = Field(min_length=1)
     realization_storylets: tuple[str, ...] = ()
     fallback_text: str | None = None
+    delivery_text: str | None = None
+
+    @field_validator("delivery_text")
+    @classmethod
+    def non_empty_delivery_text(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("delivery_text must not be empty")
+        return value
 
 
 class StoryletRoutesSource(_Model):
