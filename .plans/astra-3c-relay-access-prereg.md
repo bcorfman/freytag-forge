@@ -37,10 +37,17 @@ Approved with the caps above. Arm: `control` only (it is the shipped package, no
 Manifest `scripts/ringer/stage7/3c-relay-access-smoke.json`. The n=6 run follows only after the smoke is read by hand and is clean.
 
 ## SMOKE RESULT (2026-10-22, `bench/results/stage7-3c-relay-access-smoke/`, 1 row, arm `control`)
-Harness clean: 6 attempts, 0 rejections, 0 clarifications, earned_complete (D-R1, D-R2, E-R1), no deadline. Kristin stayed in the
-broadcast chamber; captives stayed in the maintenance network. The row never committed `resolution_escape`
-(`captives_reaching_surface` and `los_angeles_facility_lost` absent from every fact delta), so the new escape text was never shown.
-The synthetic post-C start finishes through the D and E reveals without that event. The smoke therefore tells us nothing about
-speakers, the barrier, or the open route. The n=6 run is NOT launched: it would show the same thing. Covered instead by the
-hermetic test that drives `resolution_escape` on the real package (exact text once, no D1/D2 earn).
-Open: a live path that reaches `resolution_escape` needs the event's activation (`truth_no_longer_containable`) met first.
+Harness clean: 6 attempts, 0 rejections, 0 clarifications, earned_complete (D-R1, D-R2, E-R1), no deadline.
+CORRECTION: an earlier note here said the row never reached `resolution_escape`. That was wrong. The scripted C-R2 prefix turn
+commits `resolution_escape` (state at row start: `captives_reaching_surface`, `los_angeles_facility_lost`, `resolution_escape` and
+SL-3C-C/SL-3C-F fired), the shipped delivery text is in that prefix turn's response, and the raw player sees it in its transcript.
+Read by hand: the player's first free command, "Return to the broadcast chamber and listen to the reports.", was accepted with no
+refusal or claim that the route was closed. Kristin was in the broadcast chamber for the whole row.
+Not covered by this row: Kristin starts the synthetic prefix in the chamber, so it does not test hearing the speakers from the
+pumps, maintenance network or surface, nor a return from those places through the barrier route.
+
+## Follow-up: Kristin-place starts (approved by Brandon 2026-10-22, "yes build the live path")
+Add `--kristin-place {chamber,maintenance_network,facility_escape}` to `three_c_probe.py` (default `chamber`, output unchanged).
+The move happens before the scripted C-R1 (`maintenance_network`, where the pump controls sit) or C-R2 (`facility_escape`, where the
+surface gates are) turn, so the escape text lands while she is there. Then one billed row per place, `--n 1`, arm `control`, same
+first command and caps as the smoke, read by hand against the same questions. n=6 only if all three are clean.
