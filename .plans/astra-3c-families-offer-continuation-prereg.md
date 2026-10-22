@@ -1,0 +1,42 @@
+# Preregistration: Stage 7 Scene 3C families-offer cue, continuation screen (DRAFT, not approved)
+
+Written 2026-10-22 before any billed run. Brandon has not approved this document, the arm build or the caps. Nothing billed runs until he does.
+Follows `.plans/astra-3c-families-offer-prereg.md` (player-choice screen: offer 11/12 answer the families, control 0/12) and `.plans/chatgpt-3c-after-escape-plan.md` order-of-work step 6. Proposal 1 was stopped (`.plans/astra-3c-entry-subtraction-prereg.md`).
+
+## Question
+With the D2 cue offering the answer action, does a blind free-text player in a live post-C 3C continuation leave 3C by an earned transition more often than with the shipped cue?
+
+## Arms (one variable)
+- `item-facts`: shipped package, product place capture (as in `bench/results/stage7-3c-escape-close-smoke`).
+- `families-offer`: identical except `handoffs.yaml` `community_rescue_efforts_begun` `cue_text` gains `Kristin can answer the families with news of the captives.` (variation `bench/variations/stage7-3c-families-offer.json` plus the `item_facts` block and `WorldCapture` wiring that `stage7-3c-item-facts.json` has). The escape close stays in both arms.
+
+## Free checks (required before any billed call)
+1. A Ringer code task adds arm `families-offer` to `three_c_probe.py` (as `3c-no-close-arm` did for `no-close`): variation proof in plan.json/source.json, accepted as a baseline pair with `item-facts`, existing arms' dry artifacts byte-identical, `check_three_c_probe.py` accepts it and rejects tampering. Variation equals `item-facts` in every file except the one cue line.
+2. Tests: arm loads, differs from `item-facts` only by that sentence, same provider and WorldCapture wiring, 24-row dry plan with no first command and `POSTC_CAPS[12]`. Full suite and ruff green.
+
+## Billed design (two separate Ringer tasks, no retries, no replacement rows, no top-ups)
+Start: labelled synthetic post-C, Kristin at `facility_escape`, no scripted first command, raw blind player, semantic fallback ON, product capture ON, at most 10 attempts per row, as in the escape-close smoke.
+1. Smoke: `--n 1 --arms item-facts,families-offer` (2 rows, caps 80 Cloudflare / 40 player). Proceed only if the harness is clean (both arms ran, 0 rejections for harness reasons, artifacts pass the checker, no first command). Stop and ask on any harness problem.
+2. Screen: `--n 12 --arms item-facts,families-offer`, 24 rows alternating, `POSTC_CAPS[12]` = 480 Cloudflare / 240 player. Expected use about 15 Cloudflare and 7 player requests per row, so about 360 / 170. Stop on `AI_DAILY_BUDGET_EXCEEDED`; keep partial evidence.
+Command shape (smoke): `.venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --mode play --start postc --kristin-place facility_escape --arms item-facts,families-offer --capture-item-facts --semantic on --confirm --out bench/results/stage7-3c-families-offer-smoke`
+Cap / usage record: Brandon (2026-10-22) said usage is well within limits; no figures recorded.
+
+## Measures (per row, from rows.json)
+`outcome` (`earned_complete`, `deadline_complete`, other), `accepted_turns`, `attempts`, committed reveal ids and their scene turns, D1/D2/E commit turns and order, `deadline_event_ids`, `kristin_parent` per turn, rejections, clarifications. Earned only if D and E commit before the deadline event fires; a D commit on the deadline turn is `deadline_complete`. Also: the raw command at each turn after the D2 cue is staged (does it answer the families?), repeated evacuation/tunnel commands (loop marker: three or more consecutive turns), refused or unplaced item facts, invented devices or callers.
+
+## Read by hand, every turn of every row, in full
+- Does the player act on the D2 cue, and in which turn after it appears? Does the D2 delivery follow?
+- Does the tunnel loop still occur, and does it block the D2 or E turns?
+- Does any reply invent a phone, caller or device for the families, or restart pumps, gates or the rescue?
+- Any false reveal, unplaced item fact or wrong match-call resolution.
+Preserve malformed, rejected and partial rows. No pooling with earlier rows (the A/B smoke rows are different arms and n=1).
+
+## Decision rule (triage only, not a population rate)
+- If `families-offer` earns at least 3 more exits than `item-facts` with no new grounding failure, and at least 10/12 earned in total (plan step 6): the cue helps; go to step 7 (carried entry through the real 3B→3C crossing, then the scene-fixing guide's three live replicates).
+- If it earns at least 3 more but fewer than 10/12 total: it helps but is not enough; read the deadline rows for cause before choosing the next change (the tunnel loop is the likely remaining one and has no supported fix).
+- If the arms differ by 2 or fewer, or both pass with a difference under 3: the cue is not shown necessary; prefer the shipped wording.
+- If `item-facts` earns more: read why before touching anything.
+Report counts per arm and quote every deadline row's looping turns.
+
+## Not covered
+Whole-game quality, a fresh-entry 3C, hosted deadline telemetry, rates.
