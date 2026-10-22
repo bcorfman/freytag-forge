@@ -1,0 +1,91 @@
+name: coverage nightly
+
+on:
+  schedule:
+    - cron: 17 6 * * *
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage-nightly
+  cancel-in-progress: true
+
+jobs:
+  coverage-shard:
+    name: Coverage shard ${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Locate uv cache
+        id: uv-cache-dir
+        run: echo "dir=$(uv cache dir)" >> "$GITHUB_OUTPUT"
+      - name: Cache uv dependencies
+        id: uv-cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.uv-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+      - name: Record dependency cache result
+        run: |
+          mkdir -p artifacts
+          cache_status=miss
+          if [ "${{ steps.uv-cache.outputs.cache-hit }}" = "true" ]; then cache_status=hit; fi
+          printf '{"cache":"uv","status":"%s","key":"%s"}\n' "$cache_status" "${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}" > artifacts/ci-cache.json
+          echo "uv dependency cache: $cache_status" >> "$GITHUB_STEP_SUMMARY"
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Run tests
+        env:
+          COVERAGE_FILE: .coverage.shard${{ matrix.shard }}
+        run: TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index ${{ matrix.shard }} --shard-count 6
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: .coverage.shard${{ matrix.shard }}
+          include-hidden-files: true
+          if-no-files-found: error
+      - name: Upload test-suite health report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-suite-health-${{ matrix.shard }}
+          path: artifacts/
+          if-no-files-found: warn
+
+  coverage-gate:
+    name: Coverage gate (90%)
+    needs: coverage-shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Download coverage data
+        uses: actions/download-artifact@v7
+        with:
+          pattern: coverage-shard-*
+          merge-multiple: true
+          path: coverage-data
+      - name: Combine coverage data
+        run: uv run coverage combine coverage-data
+      - name: Enforce coverage gate
+        run: |
+          report="$(uv run coverage report)"
+          printf '%s\n' "$report"
+          printf '%s\n' "$report" | grep 'TOTAL' >> "$GITHUB_STEP_SUMMARY"

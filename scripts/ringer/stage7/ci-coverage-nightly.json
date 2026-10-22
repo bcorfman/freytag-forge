@@ -1,0 +1,30 @@
+{
+  "run_name": "ci-coverage-nightly",
+  "workdir": "/home/bcorfman/dev/ringer-work/ci-coverage-nightly",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge-ci",
+  "tasks": [
+    {
+      "key": "move-coverage-to-nightly",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": ["-c", "model_reasoning_effort=medium"],
+      "max_attempts": 2,
+      "timeout_s": 1200,
+      "check_timeout_s": 300,
+      "ownership": [
+        ".github/workflows/test.yml",
+        ".github/workflows/coverage-nightly.yml"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge-ci/.github/workflows/coverage-nightly.yml"
+      ],
+      "spec": "You are an edit worker on freytag-forge. Working directory: the git worktree /home/bcorfman/dev/freytag-forge-ci (branch ci-coverage-nightly, cut from main) - edit files there directly. You own ONLY .github/workflows/test.yml (edit) and .github/workflows/coverage-nightly.yml (create). Touch nothing else. No git add/commit/reset/checkout/stash. No network.\n\nGOAL. Coverage must stop running on every push and pull request and instead run once a day late at night. Brandon does not care about coverage in per-push CI. Keep everything else about CI unchanged, including the 6-shard split (tests/shard_durations.json balances six shards, so the matrix stays shard: [0, 1, 2, 3, 4, 5] and --shard-count 6 stays).\n\nEDIT 1 - .github/workflows/test.yml. (a) In job test-shard: rename the display name to 'Test shard ${{ matrix.shard }}'; delete the 'COVERAGE_FILE' env on the 'Run tests' step; change the pytest command so it no longer uses coverage: replace `--cov --cov-report= --cov-fail-under=0` with `--no-cov` and keep `-n 4 --shard-index ${{ matrix.shard }} --shard-count 6 --tier-report=artifacts/test-suite-health-${{ matrix.shard }}.json`; delete the 'Upload coverage data' step; keep the 'Upload test-suite health report' step and everything else in the job. (b) Delete the whole job with id `test` (name 'Required coverage gate'). (c) In job deploy-staging change `needs: [cutover-contracts, fast-feedback, test]` to `needs: [cutover-contracts, fast-feedback, test-shard]`. Search the whole file for any other reference to the removed `test` job (needs.test, needs: test, 'coverage') and fix it so no dangling reference remains. Do not change any other job.\n\nEDIT 2 - create .github/workflows/coverage-nightly.yml, modeled on the old coverage jobs. `name: coverage nightly`. Triggers: `schedule` with ONE cron `17 6 * * *` (06:17 UTC, late night in US time zones) and `workflow_dispatch`; NO push or pull_request trigger. Top-level `env: FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: \"true\"`, `permissions: contents: read`, and `concurrency: group: coverage-nightly, cancel-in-progress: true`. Two jobs. Job `coverage-shard`: name 'Coverage shard ${{ matrix.shard }}', strategy fail-fast false, matrix shard [0, 1, 2, 3, 4, 5], runs-on ubuntu-latest, with the same steps the old test-shard job had before your edit (checkout@v6; the SAME astral-sh/setup-uv commit-pinned action line with version: latest; locate uv cache; cache uv dependencies; record dependency cache result; `uv sync --locked`), then 'Run tests' with env `COVERAGE_FILE: .coverage.shard${{ matrix.shard }}` and run `TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index ${{ matrix.shard }} --shard-count 6`, then 'Upload coverage data' (actions/upload-artifact@v7, name coverage-shard-${{ matrix.shard }}, path .coverage.shard${{ matrix.shard }}, include-hidden-files true, if-no-files-found error). Copy these steps verbatim from the ORIGINAL test.yml (use `git show HEAD:.github/workflows/test.yml` to see the pre-edit text). Job `coverage-gate`: name 'Coverage gate (90%)', needs coverage-shard, runs-on ubuntu-latest, with the old `test` job's steps verbatim (checkout, setup-uv, uv sync --locked, download-artifact@v7 with pattern coverage-shard-*, merge-multiple true, path coverage-data, `uv run coverage combine coverage-data`, and the 'Enforce coverage gate' step that runs `uv run coverage report` and appends the TOTAL line to $GITHUB_STEP_SUMMARY). Because pyproject sets fail_under = 90, `coverage report` fails the job below 90%.\n\nHARD RULES. Keep YAML 2-space indentation and the repo's existing style. Do not touch docs, pyproject.toml, tests, or any other workflow. Do not add any new dependency or action version that is not already used in the repo's workflows.\n\nVERIFY yourself with: /home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge-ci/scripts/ringer/stage7/ci-coverage-nightly-check.py (prints ok). Final message: `git diff -- .github` plus the new file.",
+      "check": "cd /home/bcorfman/dev/freytag-forge-ci && set -o pipefail && /home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/stage7/ci-coverage-nightly-check.py",
+      "verified": "test.yml shards run without coverage and deploy waits on them; coverage-nightly.yml has a daily cron, dispatch, 6 shards with --cov, and a combine-and-report 90% gate"
+    }
+  ]
+}
