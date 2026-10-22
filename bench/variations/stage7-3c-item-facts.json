@@ -1,0 +1,16 @@
+{
+  "name": "stage7-3c-item-facts",
+  "story_package": "data/stories/continuity-initiative",
+  "overrides": {},
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true,
+    "held_by": true,
+    "mark_fixed": false
+  },
+  "absent_thing_rule": false,
+  "system_prompt": {
+    "constant_rules_in_system": true,
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+  }
+}
