@@ -175,7 +175,7 @@ deliveries:
     Charles expected Kristin to seek Brandon.
     He left Michelle's evidence where she could find it and expose Brandon's hidden network.
     Corrupted files flicker on the medical terminal.
-  cue_text: Corrupted files flicker on the medical terminal.
+  cue_text: The medical terminal shows files you have not examined.
   costs: []
 - fact_id: purge_clock_started
   scene_id: 2C

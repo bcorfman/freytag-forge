@@ -817,12 +817,14 @@ freytag_phase: resolution
 objective: Expose the network and escape
 participant_ids: [kristin, michelle, rebecca, brandon]
 companions: [michelle]
-item_ids: [copied_janus_files, portable_archive, drainage_pump_controls, emergency_surface_gates]
+item_ids: [copied_janus_files, portable_archive, drainage_pump_controls, emergency_surface_gates, emergency_speakers, watertight_barrier]
 item_placements:
   copied_janus_files: {parent: kristin}
   portable_archive: {parent: rebecca, text: with Rebecca in her hands}
   drainage_pump_controls: {parent: maintenance_network}
   emergency_surface_gates: {parent: facility_escape}
+  emergency_speakers: {parent: maintenance_network}
+  watertight_barrier: {parent: maintenance_network}
 character_placements:
   kristin: {parent: broadcast_chamber}
   rebecca: {parent: executive_office}

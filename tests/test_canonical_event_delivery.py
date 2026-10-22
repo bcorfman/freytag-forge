@@ -14,9 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_ROOT = ROOT / "data/stories/continuity-initiative"
 DELIVERY_TEXT = (
     "The captives have emerged into Los Angeles. News drones, civilians, and local responders begin arriving. "
-    "Over the relay, Brandon tells you, “Reports from other detention sites are reaching the broadcast chamber. "
-    "Families of the missing are calling there for news.” The maintenance network still leads back to Rebecca's "
-    "executive office. The broadcast chamber inside remains reachable."
+    "Brandon’s voice comes through the emergency speakers. “Reports from other detention sites are reaching the "
+    "broadcast chamber. Families of the missing are calling there for news.” Then his voice falls silent. Your "
+    "barrier holds the way from the maintenance network to Rebecca's executive office open for now. The broadcast "
+    "chamber remains reachable while the barrier holds."
 )
 ENTRY_FACTS = ("broadcast_started", "brandon_confession_available", "detention_locations_secured")
 

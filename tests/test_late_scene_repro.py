@@ -131,6 +131,8 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
         "prisoner": "captives",
         "captives": "captives",
         "captive": "captives",
+        "speakers": "emergency_speakers",
+        "barrier": "watertight_barrier",
     },
 }
 

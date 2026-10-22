@@ -393,6 +393,20 @@
     },
     {
       "available_scenes": [
+        "3C"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "watertight_barrier"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "barrier",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
         "3A"
       ],
       "guard_kind": "knowledge_alias",
@@ -2806,6 +2820,20 @@
       "requires": [],
       "suggested_class": "public_candidate",
       "term": "emergency override codes",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
+        "3C"
+      ],
+      "guard_kind": "entity_name",
+      "owner_ids": [
+        "emergency_speakers"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "emergency speakers",
       "unlock_fact_ids": [],
       "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
     },
@@ -8925,6 +8953,20 @@
     },
     {
       "available_scenes": [
+        "3C"
+      ],
+      "guard_kind": "scoped_alias",
+      "owner_ids": [
+        "emergency_speakers"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "speakers",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
+    },
+    {
+      "available_scenes": [
         "3A"
       ],
       "guard_kind": "entity_name",
@@ -9731,6 +9773,20 @@
         "restricted_corridor_access"
       ],
       "why": "knowledge owner has establishing facts and the term is not an ordinary scene entity name"
+    },
+    {
+      "available_scenes": [
+        "3C"
+      ],
+      "guard_kind": "entity_name",
+      "owner_ids": [
+        "watertight_barrier"
+      ],
+      "requires": [],
+      "suggested_class": "public_candidate",
+      "term": "watertight barrier",
+      "unlock_fact_ids": [],
+      "why": "term is an ordinary entity name or appears in entry/world text for an available scene"
     },
     {
       "available_scenes": [
@@ -20950,6 +21006,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "scoped_alias",
+      "scene": "3C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "barrier"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "entity_name",
       "scene": "3C",
       "skipped": {
@@ -21280,6 +21353,23 @@
         "verdict": "accepted"
       },
       "term": "drainage pump controls"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "entity_name",
+      "scene": "3C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "emergency speakers"
     },
     {
       "early": {
@@ -22225,6 +22315,23 @@
         "error_code": "",
         "verdict": "accepted"
       },
+      "guard_kind": "scoped_alias",
+      "scene": "3C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "speakers"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
       "guard_kind": "entity_name",
       "scene": "3C",
       "skipped": {
@@ -22317,6 +22424,23 @@
         "verdict": "accepted"
       },
       "term": "upper command corridors"
+    },
+    {
+      "early": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "earned": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "guard_kind": "entity_name",
+      "scene": "3C",
+      "skipped": {
+        "error_code": "",
+        "verdict": "accepted"
+      },
+      "term": "watertight barrier"
     }
   ]
 }
