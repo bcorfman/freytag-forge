@@ -108,6 +108,7 @@ POST8_REVEALS = (
     ("k_sl_3c_d_r2", "Call the families of the missing."),
 )
 POSTC_REVEALS = POST8_REVEALS[:4]
+KRISTIN_PLACES = ("chamber", "maintenance_network", "facility_escape")
 POSTA_REVEALS = (("k_sl_3c_a_r1", "Send the evidence package."),)
 POSTC_LABEL = "synthetic post-turn-7: A-R1,B-R1,C-R1,C-R2 committed by scripted reveals; not a historical replay"
 CARRIED_LABEL = (
@@ -541,12 +542,25 @@ def apply_post8_prefix(package: Any, state: Any) -> dict[str, Any]:
     }
 
 
-def apply_postc_prefix(package: Any, state: Any) -> dict[str, Any]:
+def apply_postc_prefix(package: Any, state: Any, kristin_place: str = "chamber") -> dict[str, Any]:
     """Build the labelled post-turn-7 state with only the completed C chain."""
 
     engine = RuntimeEngine(state, None)
     commits: list[dict[str, Any]] = []
+    move_before = {
+        "maintenance_network": "k_sl_3c_c_r1",
+        "facility_escape": "k_sl_3c_c_r2",
+    }
+    if kristin_place not in KRISTIN_PLACES:
+        raise ValueError(f"unknown Kristin place: {kristin_place}")
     for knowledge_id, command in POSTC_REVEALS:
+        if move_before.get(kristin_place) == knowledge_id:
+            result = world_for(package, state.facts).move("kristin", kristin_place)
+            if not result.ok:
+                raise RuntimeError(f"could not move Kristin to {kristin_place}: {result.reason}")
+            parent = world_for(package, state.facts).parent("kristin")
+            if parent != kristin_place:
+                raise RuntimeError(f"Kristin move failed: expected parent {kristin_place}, got {parent or 'no parent'}")
         engine.provider = _scripted_provider(package, knowledge_id)
         before = {record.id for record in state.turn_records}
         response = engine.turn(command)
@@ -558,6 +572,17 @@ def apply_postc_prefix(package: Any, state: Any) -> dict[str, Any]:
         engine._activate_pacing()  # noqa: SLF001
     state.turn_index = 7
     last_knowledge = package.knowledge_indexes.by_id[POSTC_REVEALS[-1][0]]
+    escape_event = next(
+        (event for event in package.storylet_routes.resolution_events if event.id == "resolution_escape"), None
+    )
+    if "resolution_escape" not in state.fired_event_ids:
+        raise RuntimeError("postc scripted prefix did not fire resolution_escape")
+    if (
+        escape_event is None
+        or not escape_event.delivery_text
+        or commits[-1]["response"].count(escape_event.delivery_text) != 1
+    ):
+        raise RuntimeError("postc C-R2 response is missing the resolution_escape delivery text")
     return {
         "committed_reveal_ids": [item[0] for item in POSTC_REVEALS],
         "turn_index": state.turn_index,
@@ -588,13 +613,13 @@ def apply_posta_prefix(package: Any, state: Any) -> dict[str, Any]:
     }
 
 
-def apply_start_prefix(package: Any, state: Any, start: str) -> dict[str, Any] | None:
+def apply_start_prefix(package: Any, state: Any, start: str, kristin_place: str = "chamber") -> dict[str, Any] | None:
     if start == "posta":
         return apply_posta_prefix(package, state)
     if start == "post8":
         return apply_post8_prefix(package, state)
     if start == "postc":
-        return apply_postc_prefix(package, state)
+        return apply_postc_prefix(package, state, kristin_place)
     return None
 
 
@@ -681,6 +706,7 @@ def run_row(
     provider_factory: Callable[[Any, dict[str, Any]], Any] | None = None,
     start: str = "entry",
     first_command: str | None = None,
+    kristin_place: str = "chamber",
 ) -> dict[str, Any]:
     variation = load_variation(variation_path)
     carried = None
@@ -692,7 +718,8 @@ def run_row(
     else:
         package, state = package_and_state(variation, "3C")
         assert_3c_entry_facts(state)
-        prefix = apply_start_prefix(package, state, start)
+        prefix = apply_start_prefix(package, state, start, kristin_place)
+    kristin_place_start = world_for(package, state.facts).parent("kristin") if kristin_place != "chamber" else None
     preflight_engine = RuntimeEngine(state, None)
     opening_universe = preflight_reveal_universe(preflight_engine, state, start)
     provider = provider_factory(state, variation) if provider_factory is not None else provider_for(state, variation)
@@ -826,7 +853,7 @@ def run_row(
     derived["gate_only_escape"] = gate_only_escape({"turns": turns, **derived})
     for turn in turns:
         turn.update(derived)
-    return {
+    result = {
         "arm": arm,
         "semantic": semantic,
         "outcome": outcome,
@@ -920,6 +947,9 @@ def run_row(
         ],
         **derived,
     }
+    if kristin_place != "chamber":
+        result["kristin_place_start"] = kristin_place_start
+    return result
 
 
 def run_command_probe(
@@ -1043,6 +1073,7 @@ def plan_for(
     probe_mode: str = "play",
     arms: tuple[str, ...] = ARMS,
     first_command: str | None = None,
+    kristin_place: str = "chamber",
 ) -> None:
     universe_ids: dict[str, list[str]] = {}
     carried_records: dict[str, dict[str, Any]] = {}
@@ -1061,7 +1092,7 @@ def plan_for(
         else:
             package, state = package_and_state(variation, "3C")
             assert_3c_entry_facts(state)
-            apply_start_prefix(package, state, start)
+            apply_start_prefix(package, state, start, kristin_place)
         universe_ids[arm] = preflight_reveal_universe(RuntimeEngine(state, None), state, start)
     if probe_mode == "commands":
         for _rep in range(1, n + 1):
@@ -1087,50 +1118,53 @@ def plan_for(
         if start == "postc"
         else CAPS[n]
     )
+    plan = {
+        "mode": probe_mode,
+        "execution": mode,
+        "n": n,
+        "semantic": semantic,
+        "order": order,
+        "caps": caps,
+        "entry_state": CARRIED_ENTRY_STATE if start == "carried" else ENTRY_STATE,
+        "start": start,
+        "start_label": (
+            POSTA_LABEL
+            if start == "posta"
+            else POSTC_LABEL
+            if start == "postc"
+            else POST8_LABEL
+            if start == "post8"
+            else CARRIED_LABEL
+            if start == "carried"
+            else None
+        ),
+        "arms": list(arms),
+        "first_command": first_command,
+        "scripted_prefix": (
+            {
+                "committed_reveal_ids": [
+                    item[0]
+                    for item in (
+                        POSTA_REVEALS if start == "posta" else POSTC_REVEALS if start == "postc" else POST8_REVEALS
+                    )
+                ],
+                "turn_index": 1 if start == "posta" else 7 if start == "postc" else 8,
+            }
+            if start in {"posta", "post8", "postc"}
+            else carried_records
+            if start == "carried"
+            else None
+        ),
+        "rendered_entry_text": (
+            {arm: record["entry_text"] for arm, record in carried_records.items()} if start == "carried" else None
+        ),
+        "reveal_universe_ids": universe_ids,
+    }
+    if kristin_place != "chamber":
+        plan["kristin_place"] = kristin_place
     atomic_json(
         out / "plan.json",
-        {
-            "mode": probe_mode,
-            "execution": mode,
-            "n": n,
-            "semantic": semantic,
-            "order": order,
-            "caps": caps,
-            "entry_state": CARRIED_ENTRY_STATE if start == "carried" else ENTRY_STATE,
-            "start": start,
-            "start_label": (
-                POSTA_LABEL
-                if start == "posta"
-                else POSTC_LABEL
-                if start == "postc"
-                else POST8_LABEL
-                if start == "post8"
-                else CARRIED_LABEL
-                if start == "carried"
-                else None
-            ),
-            "arms": list(arms),
-            "first_command": first_command,
-            "scripted_prefix": (
-                {
-                    "committed_reveal_ids": [
-                        item[0]
-                        for item in (
-                            POSTA_REVEALS if start == "posta" else POSTC_REVEALS if start == "postc" else POST8_REVEALS
-                        )
-                    ],
-                    "turn_index": 1 if start == "posta" else 7 if start == "postc" else 8,
-                }
-                if start in {"posta", "post8", "postc"}
-                else carried_records
-                if start == "carried"
-                else None
-            ),
-            "rendered_entry_text": (
-                {arm: record["entry_text"] for arm, record in carried_records.items()} if start == "carried" else None
-            ),
-            "reveal_universe_ids": universe_ids,
-        },
+        plan,
     )
 
 
@@ -1149,7 +1183,15 @@ def carried_metadata(arms: tuple[str, ...]) -> dict[str, dict[str, Any]]:
     return records
 
 
-def dry_run(out: Path, n: int, start: str, semantic: str, arms: tuple[str, ...], first_command: str | None) -> None:
+def dry_run(
+    out: Path,
+    n: int,
+    start: str,
+    semantic: str,
+    arms: tuple[str, ...],
+    first_command: str | None,
+    kristin_place: str = "chamber",
+) -> None:
     source = source_proof(arms)
     source["semantic"] = semantic
     source["mode"] = "play"
@@ -1185,8 +1227,10 @@ def dry_run(out: Path, n: int, start: str, semantic: str, arms: tuple[str, ...],
             if start in {"posta", "post8", "postc"}
             else None
         )
+    if kristin_place != "chamber":
+        source["kristin_place"] = kristin_place
     atomic_json(out / "source.json", source)
-    plan_for(out, n, "dry", start, semantic, "play", arms, first_command)
+    plan_for(out, n, "dry", start, semantic, "play", arms, first_command, kristin_place)
 
 
 def commands_source(semantic: str, start: str) -> dict[str, Any]:
@@ -1211,48 +1255,57 @@ def commands_dry_run(out: Path, n: int, semantic: str, start: str) -> None:
     plan_for(out, n, "dry", start, semantic, "commands")
 
 
-def live_run(out: Path, n: int, semantic: str, start: str, arms: tuple[str, ...], first_command: str | None) -> None:
+def live_run(
+    out: Path,
+    n: int,
+    semantic: str,
+    start: str,
+    arms: tuple[str, ...],
+    first_command: str | None,
+    kristin_place: str = "chamber",
+) -> None:
     source = source_proof(arms)
     carried_source = carried_metadata(arms) if start == "carried" else None
+    source_payload = {
+        **source,
+        "semantic": semantic,
+        "entry_state": CARRIED_ENTRY_STATE if start == "carried" else ENTRY_STATE,
+        "start": start,
+        "start_label": POSTA_LABEL
+        if start == "posta"
+        else POSTC_LABEL
+        if start == "postc"
+        else POST8_LABEL
+        if start == "post8"
+        else CARRIED_LABEL
+        if start == "carried"
+        else None,
+        "arms": list(arms),
+        "first_command": first_command,
+        "scripted_prefix": carried_source
+        if carried_source is not None
+        else {
+            "committed_reveal_ids": [
+                item[0]
+                for item in (
+                    POSTA_REVEALS if start == "posta" else POSTC_REVEALS if start == "postc" else POST8_REVEALS
+                )
+            ],
+            "turn_index": 1 if start == "posta" else 7 if start == "postc" else 8,
+        }
+        if start in {"posta", "post8", "postc"}
+        else None,
+        "rendered_entry_text": (
+            {arm: data["entry_text"] for arm, data in carried_source.items()} if carried_source is not None else None
+        ),
+    }
+    if kristin_place != "chamber":
+        source_payload["kristin_place"] = kristin_place
     atomic_json(
         out / "source.json",
-        {
-            **source,
-            "semantic": semantic,
-            "entry_state": CARRIED_ENTRY_STATE if start == "carried" else ENTRY_STATE,
-            "start": start,
-            "start_label": POSTA_LABEL
-            if start == "posta"
-            else POSTC_LABEL
-            if start == "postc"
-            else POST8_LABEL
-            if start == "post8"
-            else CARRIED_LABEL
-            if start == "carried"
-            else None,
-            "arms": list(arms),
-            "first_command": first_command,
-            "scripted_prefix": carried_source
-            if carried_source is not None
-            else {
-                "committed_reveal_ids": [
-                    item[0]
-                    for item in (
-                        POSTA_REVEALS if start == "posta" else POSTC_REVEALS if start == "postc" else POST8_REVEALS
-                    )
-                ],
-                "turn_index": 1 if start == "posta" else 7 if start == "postc" else 8,
-            }
-            if start in {"posta", "post8", "postc"}
-            else None,
-            "rendered_entry_text": (
-                {arm: data["entry_text"] for arm, data in carried_source.items()}
-                if carried_source is not None
-                else None
-            ),
-        },
+        source_payload,
     )
-    plan_for(out, n, "live", start, semantic, "play", arms, first_command)
+    plan_for(out, n, "live", start, semantic, "play", arms, first_command, kristin_place)
     caps = POSTC_CAPS[n] if start == "postc" else CAPS[n]
     budget = SpendBudget(caps["cloudflare"], cloudflare_limit=caps["cloudflare"], player_limit=caps["raw_player"])
     rows: list[dict[str, Any]] = []
@@ -1268,6 +1321,7 @@ def live_run(out: Path, n: int, semantic: str, start: str, arms: tuple[str, ...]
                         semantic=semantic,
                         start=start,
                         first_command=first_command,
+                        kristin_place=kristin_place,
                     )
                 except ProbeRunFailure as error:
                     error.row_id = row_id
@@ -1388,10 +1442,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--confirm", action="store_true")
     parser.add_argument("--semantic", choices=("on", "off"), default="off")
     parser.add_argument("--start", choices=STARTS, default="entry")
+    parser.add_argument("--kristin-place", choices=KRISTIN_PLACES, default="chamber")
     parser.add_argument("--arms", default="control,pre667")
     parser.add_argument("--first-command")
     parser.add_argument("--mode", choices=("play", "commands"), default="play")
     args = parser.parse_args(argv)
+    if args.start != "postc" and args.kristin_place != "chamber":
+        raise SystemExit("--kristin-place is only valid with --start postc")
     arms = tuple(item.strip() for item in args.arms.split(",") if item.strip())
     if not arms or any(arm not in ALL_ARMS for arm in arms) or len(set(arms)) != len(arms):
         raise SystemExit(f"--arms must be a comma-separated selection from {','.join(ALL_ARMS)}")
@@ -1408,14 +1465,14 @@ def main(argv: list[str] | None = None) -> int:
             if args.mode == "commands":
                 commands_dry_run(out, args.n, args.semantic, args.start)
             else:
-                dry_run(out, args.n, args.start, args.semantic, arms, args.first_command)
+                dry_run(out, args.n, args.start, args.semantic, arms, args.first_command, args.kristin_place)
             return 0
         if not args.confirm:
             raise SystemExit("--confirm is mandatory for live execution")
         if args.mode == "commands":
             commands_live_run(out, args.n, args.semantic, args.start)
         else:
-            live_run(out, args.n, args.semantic, args.start, arms, args.first_command)
+            live_run(out, args.n, args.semantic, args.start, arms, args.first_command, args.kristin_place)
     except Exception as error:
         (out / "run-failure.txt").write_text(failure_message(error), encoding="utf-8")
         raise

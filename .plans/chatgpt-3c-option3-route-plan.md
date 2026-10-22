@@ -92,3 +92,19 @@ starting locations under the testing runbook. Check that the escape close
 fires once, the return changes Kristin's tracked place, and D1/D2 still need
 their own actions. No story/runtime files were changed for this plan. No
 tests or live playthroughs were run; movement source was inspected only.
+
+## 3. Relay audibility, return route and Brandon's fate (ChatGPT answer, 2026-10-21)
+
+Decided (prompt: [relay-access prompt](chatgpt-3c-relay-access-prompt.md)):
+
+1. Carrier: declare "emergency speakers", one fixed system covering the maintenance network, pump controls, surface gates and broadcast chamber. Parent is the maintenance network, not the facility: a facility-parented thing made "Regional facility" a nameable place in 3C, which narration safety rejects. Rejected: showing the line only in the chamber, and a messenger.
+2. Route: Kristin's barrier holds the way from the maintenance network to Rebecca's executive office open for now. Declare a fixed "watertight barrier" in the maintenance network. The route must stay open for the return to Michelle; closure happens after.
+3. Brandon: his transmission ends in silence, so his fate stays uncertain.
+
+Shipped text:
+
+> The captives have emerged into Los Angeles. News drones, civilians, and local responders begin arriving. Brandon’s voice comes through the emergency speakers. “Reports from other detention sites are reaching the broadcast chamber. Families of the missing are calling there for news.” Then his voice falls silent. Your barrier holds the way from the maintenance network to Rebecca's executive office open for now. The broadcast chamber remains reachable while the barrier holds.
+
+Scene 2B cue for `kristin_was_bait`: "The medical terminal shows files you have not examined."
+
+Open risk: if "the facility is lost" means every interior route is closed at this delivery, the open route contradicts it. Status: implemented on branch `3c-relay-access` (Ringer run `3c-relay-access`, manifest `scripts/ringer/stage7/3c-relay-access.json`); full suite (2902 passed, 92.72% coverage) and ruff green; disclosure matrix and `stage7-3c-carried-dry` proof regenerated. Live check awaits Brandon's approval of `.plans/astra-3c-relay-access-prereg.md`.

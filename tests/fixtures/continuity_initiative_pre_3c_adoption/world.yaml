@@ -291,6 +291,14 @@ items:
 - id: drainage_pump_controls
   name: drainage pump controls
   fixed: true
+- id: emergency_speakers
+  name: emergency speakers
+  scoped_aliases: [speakers]
+  fixed: true
+- id: watertight_barrier
+  name: watertight barrier
+  scoped_aliases: [barrier]
+  fixed: true
 - id: emergency_surface_gates
   name: emergency surface gates
   aliases: [surface gates]

@@ -3,16 +3,16 @@
   "transcript_note": "Only accepted turns append to the transcript; rejected turns show no rejection notice in the player screen.",
   "variation_files": {
     "pump": {
-      "path": "/home/bcorfman/dev/freytag-forge-opt3/bench/variations/stage7-3c-pump-need.json",
+      "path": "/home/bcorfman/dev/freytag-forge/bench/variations/stage7-3c-pump-need.json",
       "sha256": "f09cef9206f5a22776ced239b86484e59127c6df837f63b837d07c729338b6ff"
     },
     "families": {
-      "path": "/home/bcorfman/dev/freytag-forge-opt3/bench/variations/stage7-3c-families.json",
+      "path": "/home/bcorfman/dev/freytag-forge/bench/variations/stage7-3c-families.json",
       "sha256": "ffbd231c0709e050f9ffaeb38182766379f839d0a3eb934ec57a0625e9932afc"
     }
   },
   "knowledge_yaml": {
-    "path": "/home/bcorfman/dev/freytag-forge-opt3/tests/fixtures/continuity_initiative_pre_3c_adoption/knowledge.yaml",
+    "path": "/home/bcorfman/dev/freytag-forge/tests/fixtures/continuity_initiative_pre_3c_adoption/knowledge.yaml",
     "sha256": "d87f45b141b404d8780d7f2799657c08d76ee1818d672c94da50d856cfe82130",
     "replacement": {
       "old": ", broadcasting the reports, broadcasting reports, relay the reports, relaying the reports]",
@@ -37,7 +37,7 @@
     "loaded_arms": {
       "pump": {
         "variation": "stage7-3c-pump-need.json",
-        "package_hash": "4b2da25daf0919b24fd4ca1bfbdf367f6cbc84ef98aae66c982f0b4a88b47d0d",
+        "package_hash": "35471297960fd13e07a74d0d9868dec10203d7e6def867a75a41450427d35967",
         "d_r1_action_evidence": [
           [
             "ask",
@@ -112,7 +112,7 @@
       },
       "families": {
         "variation": "stage7-3c-families.json",
-        "package_hash": "46b24c3e3ccc411e7f2639d4ad9127af2db05c89bc5ef0ad61fb6deb0d6d8970",
+        "package_hash": "105c8cec60be2143feb1f7f09b5c3a332d48ce4b3d3002046792aaeec821eb66",
         "d_r1_action_evidence": [
           [
             "ask",

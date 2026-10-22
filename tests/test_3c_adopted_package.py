@@ -61,11 +61,11 @@ def test_frozen_pump_application_reproduces_the_shipped_package() -> None:
     assert (FROZEN_ROOT / "knowledge.yaml").read_text(encoding="utf-8").count(old_delivery) == 1
 
     assert _package_files(FROZEN_ROOT) == _package_files(SHIPPED_ROOT)
-    allowed_later_edits = {"handoffs.yaml", "storylet-routes.yaml"}
+    allowed_later_edits = {"handoffs.yaml", "storylet-routes.yaml", "world.yaml"}
     for filename in _package_files(FROZEN_ROOT) - {"plot.md", "knowledge.yaml"} - allowed_later_edits:
         assert (FROZEN_ROOT / filename).read_bytes() == (SHIPPED_ROOT / filename).read_bytes()
     assert _line_differences(FROZEN_ROOT / "plot.md", SHIPPED_ROOT / "plot.md") == [
-        (831, old_entry + "\n", SHIPPED_ENTRY_TEXT + "\n")
+        (833, old_entry + "\n", SHIPPED_ENTRY_TEXT + "\n"),
     ]
     assert _line_differences(FROZEN_ROOT / "knowledge.yaml", SHIPPED_ROOT / "knowledge.yaml") == [
         (2513, "  " + old_delivery + "\n", "  " + SHIPPED_B_R1_DELIVERY + "\n"),
@@ -100,3 +100,18 @@ def test_shipped_package_loads_and_b_r1_establishes_neither_c_fact() -> None:
         for effect in package.knowledge_indexes.by_id[c_id].establishes
     }
     assert c_fact_ids.isdisjoint({effect.fact_id for effect in b_r1.establishes})
+
+
+def test_shipped_package_resolves_3c_items_only_in_scene_3c() -> None:
+    package = load_story_package(SHIPPED_ROOT)
+    scene_3c = next(scene for scene in package.scenes if scene.metadata.scene_id == "3C")
+    item_ids = {item.id for item in package.world.items}
+
+    assert {"emergency_speakers", "watertight_barrier"} <= item_ids
+    assert {"emergency_speakers", "watertight_barrier"} <= set(scene_3c.metadata.item_ids)
+    assert scene_3c.metadata.item_placements["emergency_speakers"].parent == "maintenance_network"
+    assert scene_3c.metadata.item_placements["watertight_barrier"].parent == "maintenance_network"
+    for scene in package.scenes:
+        if scene.metadata.scene_id != "3C":
+            assert not {"emergency_speakers", "watertight_barrier"} & set(scene.metadata.item_ids)
+            assert not {"emergency_speakers", "watertight_barrier"} & set(scene.metadata.item_placements)

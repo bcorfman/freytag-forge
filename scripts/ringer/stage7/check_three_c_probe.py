@@ -16,6 +16,7 @@ from three_c_probe import (
     CARRIED_LABEL,
     COMMAND_TURNS,
     DE_R1,
+    KRISTIN_PLACES,
     POST8_ATTEMPT_CAP,
     POST8_LABEL,
     POST8_REVEALS,
@@ -107,6 +108,19 @@ def check(out: Path, n: int, mode: str) -> list[str]:
         errors.append("source and plan must record the same semantic setting (on or off)")
     if start not in {"entry", "posta", "post8", "postc", "carried"} or plan_start != start:
         errors.append("source and plan must record the same start arm")
+    source_kristin_place = source.get("kristin_place")
+    plan_kristin_place = plan.get("kristin_place")
+    if source_kristin_place is None and plan_kristin_place is None:
+        kristin_place = "chamber"
+    elif source_kristin_place == plan_kristin_place and source_kristin_place in KRISTIN_PLACES[1:]:
+        kristin_place = source_kristin_place
+    else:
+        kristin_place = source_kristin_place or plan_kristin_place
+        errors.append("source and plan must record the same valid non-default kristin_place")
+    if kristin_place != "chamber" and start != "postc":
+        errors.append("kristin_place is only valid with postc start")
+    if start == "postc" and kristin_place == "chamber" and (source_kristin_place or plan_kristin_place):
+        errors.append("default chamber artifacts must omit kristin_place")
     if start == "carried":
         if source.get("start_label") != CARRIED_LABEL or plan.get("start_label") != CARRIED_LABEL:
             errors.append("carried start label is missing or incorrect")
@@ -267,6 +281,11 @@ def check(out: Path, n: int, mode: str) -> list[str]:
             errors.append("row semantic setting does not match source")
         if any(row.get("start") != start for row in rows):
             errors.append("row start does not match plan start")
+        if kristin_place != "chamber":
+            if any(row.get("kristin_place_start") != kristin_place for row in rows):
+                errors.append("non-default rows must record Kristin's requested starting parent")
+        elif any("kristin_place_start" in row for row in rows):
+            errors.append("default chamber rows must omit kristin_place_start")
         attempt_cap = (
             POSTA_ATTEMPT_CAP
             if start == "posta"
