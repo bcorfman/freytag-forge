@@ -40,3 +40,13 @@ Report counts per arm and quote every deadline row's looping turns.
 
 ## Not covered
 Whole-game quality, a fresh-entry 3C, hosted deadline telemetry, rates.
+
+## Arm built and smoke approved (Brandon, 2026-10-22)
+Arm `families-offer` built by Ringer run `3c-families-offer-arm` (committed; variation `bench/variations/stage7-3c-families-offer-arm.json`, 23 tests green). Smoke approved with "if it passes, run the smoke"; caps 80 Cloudflare / 40 player; Ringer run `3c-families-offer-smoke`, manifest `scripts/ringer/stage7/3c-families-offer-smoke.json`.
+
+## SMOKE RESULT (2026-10-22, `bench/results/stage7-3c-families-offer-smoke/`, 1 row per arm)
+Harness clean: both arms ran, 0 rejections, 0 clarifications, no first command, artifacts pass the checker, spend inside caps.
+- `item-facts`: `deadline_complete`, no D1/D2/E. Turn 8 return to the chamber (cue D1 staged, no reveal), turn 9 "Leave the broadcast chamber and exit through the surface gates", turns 10-12 asked Michelle about the plan on the surface (the D1 and D2 cues were staged on turns 11 and 12 and never acted on), turns 13-14 followed Michelle through the maintenance tunnel; the deadline ended the scene on turn 14.
+- `families-offer`: `earned_complete`, 13 turns. Turn 8 chamber, turn 9 "Listen to the reports." (D1), turn 10 "Ask Michelle to connect the families' calls to the broadcast." (D2), turns 11-12 listened to the families and Charles's signal, turn 13 "Open the recovered document." (E). No deadline event.
+Observations: the player did not use the offered sentence's words; it chose its own families command. n=1 per arm, no inference. The surface-versus-chamber difference in the first moves is the player's own choice and reflects the screen's spread, not a result.
+The 24-row screen needs Brandon's go-ahead and his approval of the caps (480 Cloudflare / 240 player).
