@@ -67,6 +67,12 @@ def check(out: Path, n: int, mode: str) -> list[str]:
         errors.append("source does not record the synthetic 3C entry state")
     start = plan_start = None
     plan = json.loads((out / "plan.json").read_text())
+    source_capture = source.get("capture_item_facts")
+    plan_capture = plan.get("capture_item_facts")
+    if (source_capture is not None or plan_capture is not None) and (
+        source_capture is not True or plan_capture is not True
+    ):
+        errors.append("capture_item_facts must be true in both source and plan when present")
     arms = tuple(plan.get("arms", ARMS))
     try:
         proof = source_proof(arms)
@@ -229,6 +235,8 @@ def check(out: Path, n: int, mode: str) -> list[str]:
             errors.append("commands mode recorded a raw-player event")
         if any(row.get("status") not in {"accepted", "rejected", "clarification"} for row in rows):
             errors.append("every command row must have a valid status")
+        if source_capture is True and any("item_facts_capture" not in row for row in rows):
+            errors.append("capture-enabled command rows are missing item_facts_capture")
         for arm in ARMS:
             arm_rows = [row for row in rows if row.get("arm") == arm]
             for turn_label in COMMAND_TURNS:
@@ -379,6 +387,10 @@ def check(out: Path, n: int, mode: str) -> list[str]:
             for turn in row.get("turns", [])
         ):
             errors.append("attempt is missing captives_parent, kristin_parent, or case_parent")
+        if source_capture is True and any(
+            "item_facts_capture" not in turn for row in rows for turn in row.get("turns", [])
+        ):
+            errors.append("capture-enabled rows are missing item_facts_capture")
         for arm in arms:
             selected = [row for row in rows if row.get("arm") == arm]
             if len(selected) != n:
