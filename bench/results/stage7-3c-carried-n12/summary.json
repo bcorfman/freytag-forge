@@ -1,0 +1,35 @@
+{
+  "n": 12,
+  "arms": {
+    "pump": {
+      "outcomes": {
+        "earned_complete": 8,
+        "deadline_complete": 4,
+        "no_complete": 0
+      },
+      "mean_accepted_turns": 12.333333333333334,
+      "d_r1_commit_rate": 1.0,
+      "both_c_by_turn_10": 12,
+      "c_r1_rows": 12,
+      "c_r2_rows": 12,
+      "gate_only_escape": 0,
+      "rejections": 0,
+      "clarifications": 0
+    },
+    "families": {
+      "outcomes": {
+        "earned_complete": 9,
+        "deadline_complete": 3,
+        "no_complete": 0
+      },
+      "mean_accepted_turns": 12.833333333333334,
+      "d_r1_commit_rate": 0.9166666666666666,
+      "both_c_by_turn_10": 12,
+      "c_r1_rows": 12,
+      "c_r2_rows": 12,
+      "gate_only_escape": 0,
+      "rejections": 0,
+      "clarifications": 0
+    }
+  }
+}

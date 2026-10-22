@@ -1,0 +1,268 @@
+{
+  "mode": "play",
+  "execution": "live",
+  "n": 12,
+  "semantic": "on",
+  "order": [
+    {
+      "row": 1,
+      "arm": "pump"
+    },
+    {
+      "row": 1,
+      "arm": "families"
+    },
+    {
+      "row": 2,
+      "arm": "pump"
+    },
+    {
+      "row": 2,
+      "arm": "families"
+    },
+    {
+      "row": 3,
+      "arm": "pump"
+    },
+    {
+      "row": 3,
+      "arm": "families"
+    },
+    {
+      "row": 4,
+      "arm": "pump"
+    },
+    {
+      "row": 4,
+      "arm": "families"
+    },
+    {
+      "row": 5,
+      "arm": "pump"
+    },
+    {
+      "row": 5,
+      "arm": "families"
+    },
+    {
+      "row": 6,
+      "arm": "pump"
+    },
+    {
+      "row": 6,
+      "arm": "families"
+    },
+    {
+      "row": 7,
+      "arm": "pump"
+    },
+    {
+      "row": 7,
+      "arm": "families"
+    },
+    {
+      "row": 8,
+      "arm": "pump"
+    },
+    {
+      "row": 8,
+      "arm": "families"
+    },
+    {
+      "row": 9,
+      "arm": "pump"
+    },
+    {
+      "row": 9,
+      "arm": "families"
+    },
+    {
+      "row": 10,
+      "arm": "pump"
+    },
+    {
+      "row": 10,
+      "arm": "families"
+    },
+    {
+      "row": 11,
+      "arm": "pump"
+    },
+    {
+      "row": 11,
+      "arm": "families"
+    },
+    {
+      "row": 12,
+      "arm": "pump"
+    },
+    {
+      "row": 12,
+      "arm": "families"
+    }
+  ],
+  "caps": {
+    "cloudflare": 960,
+    "raw_player": 480
+  },
+  "entry_state": "carried: real 3B prefix replayed and real 3B->3C transition rendered",
+  "start": "carried",
+  "start_label": "carried 3B state: scripted canon journey 1A-3B replayed per arm on the real engine, then real 3B->3C transition; transcript is authored text, one shared history; not a live save",
+  "arms": [
+    "pump",
+    "families"
+  ],
+  "first_command": null,
+  "scripted_prefix": {
+    "pump": {
+      "turn_index": 63,
+      "committed_reveal_ids": [
+        "k_1b_stranger_evasion",
+        "k_bridge_1b_departure",
+        "k_bridge_1c_infiltration",
+        "k_bridge_2b_archive_crisis",
+        "k_bridge_3a_command_assault",
+        "k_bridge_3b_broadcast",
+        "k_scene_1a_entry",
+        "k_scene_1b_entry",
+        "k_scene_1c_entry",
+        "k_scene_2a_entry",
+        "k_scene_2b_entry",
+        "k_scene_2c_entry",
+        "k_scene_3a_entry",
+        "k_scene_3b_entry",
+        "k_sl_1a_a_r1",
+        "k_sl_1a_b_r0",
+        "k_sl_1a_b_r1",
+        "k_sl_1a_b_r2",
+        "k_sl_1a_d_r1",
+        "k_sl_1b_a_r1",
+        "k_sl_1b_b_r1",
+        "k_sl_1b_b_r2",
+        "k_sl_1b_c_r1",
+        "k_sl_1b_c_r2",
+        "k_sl_1c_a_r1",
+        "k_sl_1c_b_r1",
+        "k_sl_1c_c_r1",
+        "k_sl_2a_b_r1",
+        "k_sl_2a_b_r2",
+        "k_sl_2a_c_r1",
+        "k_sl_2a_c_r1_rebecca_observes",
+        "k_sl_2a_c_r2",
+        "k_sl_2a_c_r2_rebecca_observes",
+        "k_sl_2a_e_r1",
+        "k_sl_2b_a_r1",
+        "k_sl_2b_b_r1",
+        "k_sl_2b_b_r2",
+        "k_sl_2b_c_r1",
+        "k_sl_2b_c_r2",
+        "k_sl_2c_b_r1",
+        "k_sl_2c_b_r2",
+        "k_sl_2c_c_r1",
+        "k_sl_2c_c_r2",
+        "k_sl_2c_d_r1",
+        "k_sl_2c_d_r2",
+        "k_sl_3a_a_r1",
+        "k_sl_3a_a_r2",
+        "k_sl_3a_b_r2",
+        "k_sl_3a_c_r1",
+        "k_sl_3a_c_r2",
+        "k_sl_3a_d_r1",
+        "k_sl_3a_d_r2",
+        "k_sl_3b_a_r1",
+        "k_sl_3b_a_r2",
+        "k_sl_3b_b_r1",
+        "k_sl_3b_b_r2",
+        "k_sl_3b_c_r1",
+        "k_sl_3b_c_r2",
+        "k_sl_3b_d_r1",
+        "k_sl_3b_d_r2",
+        "k_sl_3b_e_r1"
+      ],
+      "committed_reveal_ids_hash": "4a20f380ffa1994854856bb570ef83111917447b44e5dc52a1c258248028397a",
+      "entry_text": "The broadcast chamber lights are steady. Brandon's relay is open. Michelle's evidence package is ready to send. Water is entering the outer access level.\n\n"
+    },
+    "families": {
+      "turn_index": 63,
+      "committed_reveal_ids": [
+        "k_1b_stranger_evasion",
+        "k_bridge_1b_departure",
+        "k_bridge_1c_infiltration",
+        "k_bridge_2b_archive_crisis",
+        "k_bridge_3a_command_assault",
+        "k_bridge_3b_broadcast",
+        "k_scene_1a_entry",
+        "k_scene_1b_entry",
+        "k_scene_1c_entry",
+        "k_scene_2a_entry",
+        "k_scene_2b_entry",
+        "k_scene_2c_entry",
+        "k_scene_3a_entry",
+        "k_scene_3b_entry",
+        "k_sl_1a_a_r1",
+        "k_sl_1a_b_r0",
+        "k_sl_1a_b_r1",
+        "k_sl_1a_b_r2",
+        "k_sl_1a_d_r1",
+        "k_sl_1b_a_r1",
+        "k_sl_1b_b_r1",
+        "k_sl_1b_b_r2",
+        "k_sl_1b_c_r1",
+        "k_sl_1b_c_r2",
+        "k_sl_1c_a_r1",
+        "k_sl_1c_b_r1",
+        "k_sl_1c_c_r1",
+        "k_sl_2a_b_r1",
+        "k_sl_2a_b_r2",
+        "k_sl_2a_c_r1",
+        "k_sl_2a_c_r1_rebecca_observes",
+        "k_sl_2a_c_r2",
+        "k_sl_2a_c_r2_rebecca_observes",
+        "k_sl_2a_e_r1",
+        "k_sl_2b_a_r1",
+        "k_sl_2b_b_r1",
+        "k_sl_2b_b_r2",
+        "k_sl_2b_c_r1",
+        "k_sl_2b_c_r2",
+        "k_sl_2c_b_r1",
+        "k_sl_2c_b_r2",
+        "k_sl_2c_c_r1",
+        "k_sl_2c_c_r2",
+        "k_sl_2c_d_r1",
+        "k_sl_2c_d_r2",
+        "k_sl_3a_a_r1",
+        "k_sl_3a_a_r2",
+        "k_sl_3a_b_r2",
+        "k_sl_3a_c_r1",
+        "k_sl_3a_c_r2",
+        "k_sl_3a_d_r1",
+        "k_sl_3a_d_r2",
+        "k_sl_3b_a_r1",
+        "k_sl_3b_a_r2",
+        "k_sl_3b_b_r1",
+        "k_sl_3b_b_r2",
+        "k_sl_3b_c_r1",
+        "k_sl_3b_c_r2",
+        "k_sl_3b_d_r1",
+        "k_sl_3b_d_r2",
+        "k_sl_3b_e_r1"
+      ],
+      "committed_reveal_ids_hash": "4a20f380ffa1994854856bb570ef83111917447b44e5dc52a1c258248028397a",
+      "entry_text": "The broadcast chamber lights are steady. Brandon's relay is open. Michelle's evidence package is ready to send. Water is entering the outer access level.\n\n"
+    }
+  },
+  "rendered_entry_text": {
+    "pump": "The broadcast chamber lights are steady. Brandon's relay is open. Michelle's evidence package is ready to send. Water is entering the outer access level.\n\n",
+    "families": "The broadcast chamber lights are steady. Brandon's relay is open. Michelle's evidence package is ready to send. Water is entering the outer access level.\n\n"
+  },
+  "reveal_universe_ids": {
+    "pump": [
+      "k_sl_3c_a_r1",
+      "k_sl_3c_a_r2"
+    ],
+    "families": [
+      "k_sl_3c_a_r1",
+      "k_sl_3c_a_r2"
+    ]
+  }
+}
