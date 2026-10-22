@@ -82,3 +82,21 @@ PLAYER line is recorded. Cause: the 3C probe builds its provider from `bench/var
 in 3C probe rows is therefore a harness property, not evidence that narrated moves fail in the product, and the earlier note
 that it was a tracking defect is withdrawn. Not covered: whether the product captures Kristin's chamber return; that needs a probe
 variation with `item_facts` (e.g. `item-facts-world-3c-runtime.json` style) or the hosted check.
+
+## Item-facts arm row (Brandon, 2026-10-22: "yes" to checking the product's own capture)
+Arm `item-facts` (variation `stage7-3c-item-facts.json`: control package, product capture provider settings from
+`build_capture_provider`), built by Ringer run `3c-item-facts-arm`. One row, `--start postc --kristin-place facility_escape
+--capture-item-facts`, same first command and caps (80 Cloudflare / 40 player), manifest `scripts/ringer/stage7/3c-item-facts-row.json`.
+Read: after "Return to the broadcast chamber.", does `kristin_parent` become `broadcast_chamber`, and what do match, unplaced and
+refused say; also whether any reply moves a person or thing to the speakers or barrier.
+
+## PRODUCT-CAPTURE RESULT (2026-10-22, `bench/results/stage7-3c-world-capture-row/`, 1 row, arm `item-facts` with WorldCapture, facility_escape start)
+First `item-facts` row (`stage7-3c-item-facts-row`) had the product provider but no `WorldCapture` in the engine, so a narrated
+`{"Kristin": {"place": "broadcast chamber"}}` was discarded. Ringer runs `3c-item-facts-arm` and `3c-world-capture` wired the
+product's engine construction into the arm; every Jev call is counted against the 80-request Cloudflare cap (8 Jev events of 21 in this row).
+Read by hand: 0 rejections, 0 clarifications. The tracked `kristin_parent` followed the narration: surface -> maintenance_network
+(when the player helped Michelle through the tunnel) -> broadcast_chamber on "Return to the broadcast chamber." The reply for that
+turn reads "heads back through the maintenance tunnel. She emerges into the broadcast chamber", the route the barrier sentence opened,
+with no refusal and no unplaced or refused capture entry. Scene ended by deadline (player lingered in the tunnel), unrelated to this change.
+Conclusion: the product's capture applies Kristin's return to the chamber after the escape text; the constant position in the
+`control` rows was the harness. n=1, so no rate claim.

@@ -35,9 +35,11 @@ from three_c_prefix import (  # noqa: E402
 
 from bench.core import load_variation, package_and_state, provider_for, resolve_variation  # noqa: E402
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff  # noqa: E402
+from storygame.runtime.capture import WorldCapture  # noqa: E402
 from storygame.runtime.cloudflare import NarrationProviderError  # noqa: E402
 from storygame.runtime.engine import RuntimeEngine  # noqa: E402
 from storygame.runtime.facts import Fact  # noqa: E402
+from storygame.runtime.jev import JevClient  # noqa: E402
 from storygame.runtime.world_model import world_for  # noqa: E402
 from storygame.story_package.loader import load_story_package  # noqa: E402
 
@@ -46,7 +48,18 @@ POSTC_CAPS = {1: {"cloudflare": 80, "raw_player": 40}, 12: {"cloudflare": 480, "
 COMMAND_TURNS = tuple(range(9, 15))
 RECORDED_TURNS = tuple(range(1, 16))
 ARMS = ("control", "pre667")
-ALL_ARMS = ("control", "pre667", "surface", "entry", "escape", "custody", "pump", "families", "families-v2")
+ALL_ARMS = (
+    "control",
+    "pre667",
+    "surface",
+    "entry",
+    "escape",
+    "custody",
+    "pump",
+    "families",
+    "families-v2",
+    "item-facts",
+)
 ARM_FILES = {
     "control": "stage7-3c-control.json",
     "pre667": "stage7-3c-pre667.json",
@@ -57,6 +70,7 @@ ARM_FILES = {
     "pump": "stage7-3c-pump-need.json",
     "families": "stage7-3c-families.json",
     "families-v2": "stage7-3c-families-v2.json",
+    "item-facts": "stage7-3c-item-facts.json",
 }
 PRE_ADOPTION_PACKAGE = ROOT / "tests/fixtures/continuity_initiative_pre_3c_adoption"
 STARTS = ("entry", "posta", "post8", "postc", "carried")
@@ -220,6 +234,69 @@ def _item_facts_capture(provider: Any, state: Any) -> dict[str, Any]:
         "raw": accessor("pending_item_facts"),
         "narrator_visible": visible,
     }
+
+
+def _json_capture_value(value: Any) -> Any:
+    """Convert capture diagnostics to values safe for JSON artifact output."""
+    if isinstance(value, dict):
+        return {str(key): _json_capture_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_json_capture_value(item) for item in value]
+    if hasattr(value, "model_dump"):
+        return _json_capture_value(value.model_dump(mode="json"))
+    return value
+
+
+def _counted_capture_ask(ask: Callable[[Any, Any], Any], budget: SpendBudget) -> Callable[[Any, Any], Any]:
+    """Count every physical Jev capture request before it is sent."""
+
+    def counted(state: Any, questions: Any) -> Any:
+        budget.reserve("cloudflare", "jev_capture")
+        try:
+            result = ask(state, questions)
+        except Exception as error:
+            budget.acknowledge("cloudflare", False, type(error).__name__)
+            raise
+        budget.acknowledge("cloudflare", True)
+        return result
+
+    return counted
+
+
+def _probe_engine(
+    arm: str,
+    state: Any,
+    provider: Any,
+    budget: SpendBudget,
+    semantic: str,
+    capture_ask: Callable[[Any, Any], Any] | None = None,
+) -> tuple[RuntimeEngine, WorldCapture | None]:
+    """Build the product-equivalent engine for the item-facts arm only."""
+    if arm != "item-facts":
+        return RuntimeEngine(state, provider), None
+    ask_impl = capture_ask if capture_ask is not None else JevClient.from_environment().ask
+    counted_ask = _counted_capture_ask(ask_impl, budget)
+    provider.semantic_ask = counted_ask
+    capture = WorldCapture(provider, counted_ask, fixed_refusal=True, engine_refusal=True)
+    if semantic == "off":
+        provider.semantic_ask = None
+    return RuntimeEngine(state, provider, capture=capture), capture
+
+
+def _world_capture_record(capture: WorldCapture, state: Any) -> dict[str, Any]:
+    delivery = state.last_turn_delivery
+    before = capture.last_before
+    after = capture.last_after
+    return _json_capture_value(
+        {
+            "before": before,
+            "after": after,
+            "steps": list(getattr(delivery, "capture_steps", ()) or ()),
+            "issues": list(getattr(delivery, "capture_issues", ()) or ()),
+            "unplaced": list(getattr(delivery, "capture_unplaced", ()) or ()),
+            "refusals": list(after.get("refused", ())) if isinstance(after, dict) else [],
+        }
+    )
 
 
 def variation_paths(arms: tuple[str, ...] = ARMS) -> dict[str, Path]:
@@ -741,6 +818,7 @@ def run_row(
     first_command: str | None = None,
     kristin_place: str = "chamber",
     capture_item_facts: bool = False,
+    capture_ask: Callable[[Any, Any], Any] | None = None,
 ) -> dict[str, Any]:
     variation = load_variation(variation_path)
     carried = None
@@ -759,7 +837,7 @@ def run_row(
     provider = provider_factory(state, variation) if provider_factory is not None else provider_for(state, variation)
     if semantic == "off" and hasattr(provider, "semantic_ask"):
         provider.semantic_ask = None
-    engine = RuntimeEngine(state, provider)
+    engine, world_capture = _probe_engine(arm, state, provider, budget, semantic, capture_ask)
     scene = next(item for item in package.scenes if item.metadata.scene_id == "3C")
     transcript: list[tuple[str, str]] = (
         ([("canon prefix", response) for response in carried["transcript"]] if carried is not None else [])
@@ -823,6 +901,11 @@ def run_row(
                         "kristin_parent": _parent_snapshot(package, state)[1],
                         "case_parent": _parent_snapshot(package, state)[2],
                         "acquisition_command": acquisition_command,
+                        **(
+                            {"world_capture": _world_capture_record(world_capture, state)}
+                            if world_capture is not None
+                            else {}
+                        ),
                         **({"item_facts_capture": _item_facts_capture(provider, state)} if capture_item_facts else {}),
                     }
                 )
@@ -871,6 +954,11 @@ def run_row(
                     "kristin_parent": _parent_snapshot(package, state)[1],
                     "case_parent": _parent_snapshot(package, state)[2],
                     "acquisition_command": acquisition_command,
+                    **(
+                        {"world_capture": _world_capture_record(world_capture, state)}
+                        if world_capture is not None
+                        else {}
+                    ),
                     **({"item_facts_capture": _item_facts_capture(provider, state)} if capture_item_facts else {}),
                 }
             )
@@ -998,6 +1086,7 @@ def run_command_probe(
     semantic: str = "off",
     provider_factory: Callable[[Any, dict[str, Any]], Any] | None = None,
     capture_item_facts: bool = False,
+    capture_ask: Callable[[Any, Any], Any] | None = None,
 ) -> dict[str, Any]:
     """Run one recorded command against one fresh synthetic post8 state."""
 
@@ -1008,7 +1097,7 @@ def run_command_probe(
     provider = provider_factory(state, variation) if provider_factory is not None else provider_for(state, variation)
     if semantic == "off" and hasattr(provider, "semantic_ask"):
         provider.semantic_ask = None
-    engine = RuntimeEngine(state, provider)
+    engine, world_capture = _probe_engine(arm, state, provider, budget, semantic, capture_ask)
     universe = preflight_reveal_universe(engine, state, "post8")
     projection = engine.projector.project(state, "player", command)
     handoff = uniquely_matched_authored_handoff(command, projection.candidates)
@@ -1048,6 +1137,7 @@ def run_command_probe(
             "scripted_prefix": prefix,
             "semantic": semantic,
             "entry_state": ENTRY_STATE,
+            **({"world_capture": _world_capture_record(world_capture, state)} if world_capture is not None else {}),
             **({"item_facts_capture": _item_facts_capture(provider, state)} if capture_item_facts else {}),
         }
     except Exception as error:
@@ -1099,6 +1189,7 @@ def run_command_probe(
         "scripted_prefix": prefix,
         "semantic": semantic,
         "entry_state": ENTRY_STATE,
+        **({"world_capture": _world_capture_record(world_capture, state)} if world_capture is not None else {}),
         **({"item_facts_capture": _item_facts_capture(provider, state)} if capture_item_facts else {}),
     }
 
@@ -1202,6 +1293,8 @@ def plan_for(
     }
     if capture_item_facts:
         plan["capture_item_facts"] = True
+    if "item-facts" in arms:
+        plan["world_capture"] = True
     if kristin_place != "chamber":
         plan["kristin_place"] = kristin_place
     atomic_json(
@@ -1274,6 +1367,8 @@ def dry_run(
         source["kristin_place"] = kristin_place
     if capture_item_facts:
         source["capture_item_facts"] = True
+    if "item-facts" in arms:
+        source["world_capture"] = True
     atomic_json(out / "source.json", source)
     plan_for(out, n, "dry", start, semantic, "play", arms, first_command, kristin_place, capture_item_facts)
 
@@ -1352,6 +1447,8 @@ def live_run(
         source_payload["kristin_place"] = kristin_place
     if capture_item_facts:
         source_payload["capture_item_facts"] = True
+    if "item-facts" in arms:
+        source_payload["world_capture"] = True
     atomic_json(
         out / "source.json",
         source_payload,
@@ -1509,8 +1606,8 @@ def main(argv: list[str] | None = None) -> int:
     arms = tuple(item.strip() for item in args.arms.split(",") if item.strip())
     if not arms or any(arm not in ALL_ARMS for arm in arms) or len(set(arms)) != len(arms):
         raise SystemExit(f"--arms must be a comma-separated selection from {','.join(ALL_ARMS)}")
-    if not {"control", "entry", "custody", "pump"} & set(arms):
-        raise SystemExit("--arms must include control, entry, custody, or pump as the baseline")
+    if not {"control", "entry", "custody", "pump", "item-facts"} & set(arms):
+        raise SystemExit("--arms must include control, entry, custody, pump, or item-facts as the baseline")
     out = args.out if args.out.is_absolute() else ROOT / args.out
     if out.exists() and any(out.iterdir()):
         raise SystemExit(f"output directory must be absent or empty: {out}")
