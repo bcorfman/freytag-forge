@@ -1123,12 +1123,21 @@ class RuntimeEngine(CanonicalEventMixin):
             self.state.staged_handoff_fact_ids = ()
 
     def _cue_reveal_available(self, fact_id: str) -> bool:
-        """Return whether a scene reveal that establishes a cue fact can be earned."""
+        """Return whether a scene reveal that establishes a cue fact can be earned; spent costs cannot re-cue."""
 
         delivery = next(
             (delivery for delivery in self.state.package.deliveries if delivery.fact_id == fact_id),
             None,
         )
+        if delivery is not None and any(
+            cost.op == "assert"
+            and any(
+                fact.predicate == cost.fact_id and str(fact.value).lower() == "true"
+                for fact in self.state.facts.asserted
+            )
+            for cost in delivery.costs
+        ):
+            return False
         reveal_fact_ids = {fact_id}
         if delivery is not None:
             reveal_fact_ids.update(cost.fact_id for cost in delivery.costs if cost.op == "assert")

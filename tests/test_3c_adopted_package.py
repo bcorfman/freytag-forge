@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 from pathlib import Path
 
 import yaml
@@ -21,12 +20,11 @@ SHIPPED_B_R1_DELIVERY = (
     'delivery_text: "Kristin takes the Portable data case from Rebecca. Michelle sends its prisoner locations '
     'to independent networks. The drainage pumps need power. Water rises around the drainage pump controls."'
 )
-SHIPPED_PLOT_SHA256 = "47dd7e2ae9b3ff41ca06b1ea005e4e8b9b64156865d16c4195788402a01d69ed"
-SHIPPED_KNOWLEDGE_SHA256 = "9417f345c1d0bb4ebef22262118f682f2d404cb88b1b25609063af26d67e4486"
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+LATER_E_R2_DELIVERY = (
+    'delivery_text: "A partially recovered JANUS file labels the disappearances Phase One. Phase Two was designed '
+    "to provoke conflict among those who remained. From an unknown location, Charles watches the unrest, believing "
+    'frightened people may yet ask him to restore order."'
+)
 
 
 def _package_files(root: Path) -> set[str]:
@@ -62,20 +60,31 @@ def test_frozen_pump_application_reproduces_the_shipped_package() -> None:
     assert (FROZEN_ROOT / "plot.md").read_text(encoding="utf-8").count(old_entry) == 1
     assert (FROZEN_ROOT / "knowledge.yaml").read_text(encoding="utf-8").count(old_delivery) == 1
 
-    for filename in ("plot.md", "knowledge.yaml"):
-        assert _sha256(materialized / filename) == _sha256(SHIPPED_ROOT / filename)
-    assert _sha256(materialized / "plot.md") == SHIPPED_PLOT_SHA256
-    assert _sha256(materialized / "knowledge.yaml") == SHIPPED_KNOWLEDGE_SHA256
-
     assert _package_files(FROZEN_ROOT) == _package_files(SHIPPED_ROOT)
-    for filename in _package_files(FROZEN_ROOT) - {"plot.md", "knowledge.yaml"}:
+    allowed_later_edits = {"handoffs.yaml", "storylet-routes.yaml"}
+    for filename in _package_files(FROZEN_ROOT) - {"plot.md", "knowledge.yaml"} - allowed_later_edits:
         assert (FROZEN_ROOT / filename).read_bytes() == (SHIPPED_ROOT / filename).read_bytes()
     assert _line_differences(FROZEN_ROOT / "plot.md", SHIPPED_ROOT / "plot.md") == [
         (831, old_entry + "\n", SHIPPED_ENTRY_TEXT + "\n")
     ]
     assert _line_differences(FROZEN_ROOT / "knowledge.yaml", SHIPPED_ROOT / "knowledge.yaml") == [
-        (2513, "  " + old_delivery + "\n", "  " + SHIPPED_B_R1_DELIVERY + "\n")
+        (2513, "  " + old_delivery + "\n", "  " + SHIPPED_B_R1_DELIVERY + "\n"),
+        (
+            2757,
+            '  delivery_text: "From an unknown location, Charles watches the unrest. He believes frightened people '
+            'may still ask him to restore order."\n',
+            "  " + LATER_E_R2_DELIVERY + "\n",
+        ),
     ]
+    assert _line_differences(materialized / "knowledge.yaml", SHIPPED_ROOT / "knowledge.yaml") == [
+        (
+            2757,
+            '  delivery_text: "From an unknown location, Charles watches the unrest. He believes frightened people '
+            'may still ask him to restore order."\n',
+            "  " + LATER_E_R2_DELIVERY + "\n",
+        )
+    ]
+    assert (materialized / "plot.md").read_bytes() == (SHIPPED_ROOT / "plot.md").read_bytes()
 
 
 def test_shipped_package_loads_and_b_r1_establishes_neither_c_fact() -> None:

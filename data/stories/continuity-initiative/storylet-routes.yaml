@@ -2548,8 +2548,7 @@ storylets:
     helps_transition_triggers: []
     protected_knowledge_boundaries: []
   - id: SL-3C-E-R2
-    dramatic_intent: Recognize the Phase Two statement against visible unrest, without inventing mechanisms beyond
-      the source.
+    dramatic_intent: Reveal the Phase One label and the Phase Two plan through the partially recovered JANUS file. Show Charles watching the unrest from an unknown location, hoping frightened people will ask him to restore order.
     operations:
     - op: assert
       fact_id: phase_one_label_known
@@ -2703,7 +2702,10 @@ canonical_bridge_events:
     all_facts_true:
     - facility_proof
     - captives_confirmed_alive
+    any_of:
     - national_detention_network_known
+    - architects_strategy_known
+    at_least: 1
   produces:
   - op: assert
     fact_id: facility_infiltration_needed
@@ -2738,6 +2740,7 @@ canonical_bridge_events:
     - brandon_janus_role_known
     - brandon_claimed_reform_motive
     - michelle_resistance_known
+    - kristin_was_bait
     at_least: 2
   produces:
   - op: assert

@@ -1,34 +1,35 @@
 # Scene 3C: stuck-turn diagnosis and measured repair plan
 
-Status (Round 6 review, 2026-10-19; supplied artifacts are labelled 2026-10-20):
-Steps 7/8 COMPLETE. Latest carried screen: pump 10/12 earned, families-v2 9/12.
-Stop 3C screening and select entry + custody + pump, without aliases, for staging.
-The pump package already exists as an uncommitted `data/` diff; adoption is not
-yet gate-complete. Review the variation re-pins and failed Ringer check first.
-Step 9 COMPLETE (2026-10-20, uncommitted): frozen pre-adoption fixture, independent
-adoption pin, free gates green (details under Step 9). Next: Step 10 PR/main/staging,
-Step 11 three-run raw whole-game smoke, then Step 12 production decision. No deadline or earn_when
-experiment is queued. Screen work is committed at `8749e518` on
-`3c-stuck-turns-screens`; push status is supplied by the prompt, not checked remotely.
-This update edits only this plan and does not authorize or execute billed work.
+Status — corrected (Round 7, 2026-10-20): Steps 9/10 COMPLETE. Pump is
+merged in PR #674 at `f918c663d67d368645f9a24a47a28ffb29fb77d8` and staged;
+identity and smoke passed. Step 11 ran one raw whole-game journey: 79 turns,
+all earlier exits earned, but 3C earned A/B/C1/C2 only and ended by fallback.
+Replicates 2/3 are dropped, not pending. No rate conclusion follows from n=1.
+**Step 11a RESULT (2026-10-20): the C1 prompt screen ran and MISSED.** Frozen turn-6
+prompt, 12 replies per arm, 30/48 Cloudflare requests: shipped pump finishes the
+passage 6/12, C1-scoped 3/12 (bar 10/12 and +3). C1 is stopped for good; Step 5's loss
+stands. Details in `.plans/astra-3c-recall-live-prereg.md`. The free live-versus-
+scripted state comparison was then DONE (2026-10-20, zero model calls): see
+"Step 11a free comparison result" below. Next decision is Brandon's (see Resume). No implementation, billed run or promotion is
+performed by this planning-only update. Existing worktree edits are preserved.
 **confirmed**, **corrected**, and **new** label retained findings, revised decisions,
 and additions. Results below supersede the first plan's untested predictions.
 
 ## Decision
 
-**corrected (Round 6):** Follow the stopping rule: pump met the operational
-10/12 bar once. Families-v2 failed at 9/12; its one-row deficit does not prove
-harm or improvement. Adopt the smaller measured package for staging, conditional
-on Step 9. Earlier pump 8/12 remains contrary repeatability evidence; do not pool
-it with 10/12 or call either a population-rate estimate. All Round 3–5 queues
-below are historical where they conflict with this decision.
+**corrected (Round 7):** Keep the staged pump package as the control. The
+latest carried 10/12 and earlier 8/12 are separate scripted-prefix results;
+neither predicts the live-history outcome. The new run demonstrates an unresolved
+escape loop, not a population failure rate. Hold the recommendation to promote
+as a quality repair until an earned staged journey and prose review support it.
 
-**new (Round 6):** Choose the staged whole-game smoke as the next billed work.
-A pump-only carried n12 is the cheaper *direct repeatability* test, but repeats
-the same scripted history and cannot replace the hosted smoke. The smoke is the
-shortest remaining route to a quality playthrough with live prior scenes.
-Neither measurement can establish an 80% population rate. Keep earn_when as a
-conditional source investigation after adoption, not a prerequisite or promise.
+**new (Round 7):** Do not buy another whole-game run merely to rediscover this
+loop, or immediately buy a carried n12 that repeats the easier history. First
+compare the recorded prompt/state with the scripted-prefix state for free.
+Then permit one C1-only prompt screen on the recorded turn-6 prompt, with the
+prior losing result retained. Do not bundle C2, surface binding, aliases or a
+longer deadline. A semantic-judge screen answers the wrong question here: the
+recorded player did not attempt either D action.
 
 **corrected:** #667 fixes individual commands, not the fresh scene. Live A proves
 turns 12/14 commit D-R1 in 12/12 control probes and 0/12 pre667 probes. Live B
@@ -85,6 +86,19 @@ the verb repair. Three repaired rows plus three existing earners would only be
 rows, not a causal prediction for a new run. Do not promise 80% from aliases.
 
 ## Sources and verification boundary
+
+**new (Round 7 verification):** Read the saved identity, operator note, report,
+turn-6 prompt and decision bundles under
+`bench/results/stage7-3c-blind-raw-f918c663/attempt-1/`, the Step 5 preregistration
+and exact variation, current C/D source and plot, and the prefix implementation
+through codebase-memory. Recounted scene exits, stuck turns and commands.
+The prompt's claim of eight near-identical “Lead” commands is corrected below:
+turns 11–13 say “Watch”. The turn-6 semantic shortlist has two candidates even
+though the final narrator prompt offers none. No new tests, model calls or
+payload reconstruction ran in this review. Merge is confirmed by local HEAD;
+CI/full-suite/Pages results below are supplied Round 7 evidence, not remotely
+rerun here. Dashboard dollar spend is unavailable in the local artifacts.
+Older verification paragraphs describe their historical worktrees and rounds.
 
 **new (Round 6 verification):** Read the latest summary, spend ledger, failed
 row commands and commits, semantic replay results, both preregistrations, actual
@@ -443,9 +457,10 @@ anything.
 
 ## Ranked follow-up fixes
 
-**corrected (Round 5 priority):** A–C below retain the earlier exact replacement
-strings and rationale. Their measured dispositions are in Steps 1–5. Only the
-revised D2 aliases (Step 7) are next; E ties and movement edits are not queued.
+**corrected (Round 7 priority):** A–C retain earlier exact replacement strings
+and rationale. Their measured dispositions are in Steps 1–5. Entry/custody/pump
+are adopted; aliases lost. Only the bounded C1 changed-context retest in Step
+11a is next. E ties, surface binding and deadline edits are not queued.
 
 ### A. New: opening and archive/pump material (largest observed reach)
 
@@ -538,8 +553,11 @@ are clear early complete-C/no-D targets. P05/C08/P10 also regress into travel
 and may benefit, but that effect is unmeasured. No new surface reveal, no
 unconditional player teleport, and no gate-only surface announcement.
 
-**new — subtractive fallback if the correct placement is ignored.** Only after
-capturing a losing binding prompt, screen C1's reusable statement separately:
+**corrected (Round 7) — this fallback already lost Step 5.** The exact C1
+replacement below was tested, not merely proposed: D by turn 10 was 3/12 versus
+7/12; earned endings 2/12 versus 5/12. Do not call it unbuilt or unrun.
+The new hosted prompt justifies only the bounded changed-context retest in
+Step 11a, not adoption or automatic repetition of that n12. Its source text is:
 
 Old:
 > Kristin restores power to drainage pumps and holds one watertight barrier while Michelle leads captives through the maintenance tunnel.
@@ -620,9 +638,10 @@ remove a required C part, or weaken the earned definition to fit the clock.
 
 ## Probe specifications and order of work
 
-**corrected (Round 6 active order):** Steps 1–8 are measured history, except
-Step 6, which remains unrun and is not queued. Preserve their strings and
-protocols for reproducibility. Execute only Steps 9–12 next. Do not interpret
+**corrected (Round 7 active order):** Steps 1–8 are measured history, except
+Step 6, which remains unrun and is not queued. Steps 9/10 and one Step 11
+journey are complete. Preserve historical strings and protocols for reproducibility.
+Next is Step 11a, then the conditional Step 12 decision. Do not interpret
 historical “next screen” or “nothing adopted” wording as current instructions.
 
 ### Common protocol — confirmed
@@ -1328,11 +1347,21 @@ Keep deadline, rejection, cap, no-completion and fair movement counts separate.
 A component may justify a correctness repair without passing the scene quality
 bar; say which claim passed. Stop adding fixes once fresh entry meets the bar.
 After adoption, use the production-promotion guide's SHA-bound main CI/staging
-flow and a three-replicate whole-game smoke. Three runs are a regression smoke,
-not an 80% estimate. An earlier-scene blocker remains a whole-game limitation.
+flow and the bounded quality review in Step 12. **Corrected (Round 7):** the
+three-run requirement is withdrawn. Small samples are regression evidence, not
+an 80% estimate. An earlier-scene blocker remains a whole-game limitation.
 
-### Step 9 — new: finish pump adoption and free gates
+### Step 9 — corrected: pump adoption and free gates complete
 
+**corrected — final outcome (Round 7):** PR #674 merged the frozen fixture and
+independent adoption pins. Final full suite: 2499 passed, 1 skipped, 92.71%
+coverage; Ruff, frontend tests and build green. The first CI attempt failed
+because three tests depended on ignored recordings. Only the required
+`stage7-3c-matcher-table`, `stage7-3c-prefix`, and `stage7-3c-carried-dry` inputs
+were force-added under `bench/results/`; second CI passed. The earlier partial
+result below is history, not a request to rerun completed gates.
+
+**Historical adoption work:**
 The uncommitted package diff changes exactly `plot.md:831` (3C entry) and
 `knowledge.yaml:2513` (B-R1 delivery) under
 `data/stories/continuity-initiative/`, to the measured strings in Steps 2–4.
@@ -1398,7 +1427,15 @@ pass, generated artifacts reviewed. No billed rerun is needed for adoption.
 - Ringer run `adopt-gates-fixture` FAILED its check on lint outside its ownership;
   the worker also reformatted `2b_cue_probe.py` (out of scope; review before commit).
 
-### Step 10 — new: PR, main, and SHA-bound staging
+### Step 10 — corrected: PR, main, and SHA-bound staging complete
+
+**corrected — outcome (Round 7):** #674 merged at
+`f918c663d67d368645f9a24a47a28ffb29fb77d8`; branch deleted. Supplied workflow
+results include Deploy staging, scene staging evaluation and Record staging
+deployment. Saved API identity is `scene-v1`, `staging`, exact SHA; supplied
+Pages `/dev/deployment.json` matches. Do not repeat this merge/deploy for the
+plan edit. The following is the completed procedure, retained for a later
+measured package change.
 
 Review `8749e518` plus Step 9's adoption/test diff on
 `3c-stuck-turns-screens`; exclude unrelated untracked door-grounded, blind and
@@ -1414,72 +1451,257 @@ Require successful `staging-deployment`, matching Pages `/dev/`
 `deployment.json`, and `/api/v1/version` reporting the exact SHA,
 `runtime: scene-v1`, `channel: staging`. The workflow's scene evaluation runs
 `tests/test_web_demo.py tests/test_cloudflare_transport.py`; it is not the
-three-run raw-player quality smoke. Git/PR actions cost no model calls;
+raw-player quality review. Git/PR actions cost no model calls;
 CI/build/hosting cost infrastructure time and hosted checks can spend narration
 calls. No fixed dollar cost has been measured.
 
-### Step 11 — new: choose the whole-game staging smoke
+### Step 11 — corrected: one staged whole-game regression run completed
 
-**Cheaper direct repeatability option, not queued:** A pump-only carried n12,
-using `three_c_probe.py --start carried`, semantic ON, deadline 14, 20 attempts,
-fresh preregistration/output and the existing checker. Cap **480 Cloudflare /
-240 player calls** (half the two-arm cap); roughly 150 each is an estimate
-from the last run, not a guarantee. A miss below 10/12 means the operational
-result did not repeat under the same scripted history. Retain both runs
-separately; no pooling or repeat-until-pass. It does not test live prior scenes.
+**Result (2026-10-20):** Ringer `stage7-3c-staging-smoke`, artifacts
+`bench/results/stage7-3c-staging-smoke/`: passed first attempt, two turns.
+Its Ringer FAIL was the drift check counting eight pre-existing untracked plan
+files, not observed worker drift. No call count was exposed. The separate raw
+run used `scripts/ringer/stage7/3c-blind-raw-replicate-1.json`; report, prompts,
+bundles and identity are in `bench/results/stage7-3c-blind-raw-f918c663/attempt-1/`.
+It took 9.8 minutes and 79 turns. Its Ringer FAIL was missing `smoke-result.txt`,
+not a failed browser execution. These checker issues do not erase the quality
+failure recorded inside the otherwise passing browser test.
 
-**Chosen next billed work:** Three fresh raw whole-game sessions on staging.
-Use `frontend/e2e/blind-player.spec.js`, `blind-player.js` and
-`merge-blind-player.js`; create a dedicated Ringer manifest/preregistration
-for the actual SHA, not the old PR670 manifest. Verify identity, run `@smoke`,
-then from `frontend/`, with root environment sourced only inside Ringer:
+| Scene | Turns | No-reveal turns | Exit | Rejections / game breaks |
+| --- | ---: | ---: | --- | --- |
+| 1A | 8 | 5 | earned | 0 / 0 |
+| 1B | 8 | 0 | earned | 0 / 0 |
+| 1C | 7 | 1 | earned | 0 / 0 |
+| 2A | 8 | 4 | earned | 0 / 0 |
+| 2B | 8 | 5 | earned | 0 / 0 |
+| 2C | 8 | 4 | earned | 0 / 0 |
+| 3A | 9 | 0 | earned | 0 / 0 |
+| 3B | 9 | 3 | earned | 0 / 0 |
+| 3C | 14 | 9 | deadline ending | 0 / 0 |
 
-```bash
-E2E_BLIND_SCENE=all BLIND_PLAYER_PROFILE=raw E2E_BLIND_REPLICATES=3 E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @blind-player
-```
+3C earns A/B/C1/C2 on 1/2/3/5, never D1/D2/E. Turn 14's committed delta
+supplies resolution facts, including both D results and the Phase Two result,
+without a selected reveal. Together with the turn-14 deadline this establishes
+fallback; `transition_cause: none` by itself would not. Replicates 2/3 were
+cancelled as a gate. No “passes/misses 80%” statement is warranted from this run.
 
-Unset `E2E_BLIND_REPLICATE_INDEX` for that command, or use the existing separate
-replicate mode and preserve/merge all three reports. Archive fresh identity,
-reports, prompts, bundles and failures under a new `bench/results/` directory.
-No replacement quality samples. A failed attempt is evidence, not permission
-to rerun until green.
+**Corrected diagnosis from the raw recording:**
 
-**Cost:** Source limits the player to 20 calls per scene and 200 per session,
-so three sessions have a conservative ceiling of **600 player calls**. Hosted
-Cloudflare cost also includes openings, up to two narration and two item-match
-calls per turn, and separate semantic calls. The player ceiling is not a
-Cloudflare cap. Preregister a metered Cloudflare budget and stop on exhaustion;
-the hosted harness has no single enforced Cloudflare-call cap comparable to
-the probe's. Include initial `@smoke` and CI-hosted calls separately. A fixed
-dollar total or reliable duration is not established; the canon judge's
-330-neuron estimate does not price this raw-player run.
+- Turn 4 follows Michelle through the tunnel. It earns nothing; its bundle
+  records semantic refusal. Turn 6's THINGS places Kristin, Michelle and the
+  captives in the maintenance network. Movement is real progress even when
+  the harness counts no reveal, so turn 4 alone is not a defect.
+- Turns 6–10 say “Lead … through the surface gates”; 11–13 say “Watch … reach
+  safety/emerge safely”. Turn 9 narration reaches Los Angeles, then turn 10
+  returns to tunnel travel; turn 11 waits for the gate signal again. That
+  repeated completion/reset is a concrete quality defect, not eight identical
+  commands or proof of one source cause. Preserve raw commands as evidence,
+  including the noncanonical final “Wait” command; do not use it as a new probe.
+- The C1 and C2 statements recur in both SCENE and permitted NPC speech.
+  SCENE also says “Expose the network and escape” and “Exposure and escape are
+  both immediate under the collapsing operation.” These are competing pulls,
+  not evidence that C1 alone causes the loop.
+- D cues appear at 6/7 and again at 11/12. Turn 6's bundle reports
+  `semantic_refusal`, universe/shortlist 2/2. The final narrator prompt offers
+  no candidates after that refusal. This is not evidence that D is ineligible
+  because Kristin left the chamber. D's authored requirements are truth plus
+  `captives_reaching_surface`, not a chamber-parent requirement. Location may
+  affect what the player pursues and what THINGS renders; it is not the
+  demonstrated D eligibility blocker. No family-news command needs an alias here.
 
-Choose this smoke because it is required on the path to a staged quality
-playthrough and tests live histories. Do not buy both measurements by default.
-Use another carried n12 only if repeatability becomes the explicit question
-or an earlier-scene blocker prevents meaningful 3C measurement.
+**New — history comparison without another whole-game bill:** The carried
+harness replays authored 1A–3B output separately on each package, then starts a
+raw player in 3C. It is one scripted history across rows. Live prior turns can
+leave different custody/parents and a different player transcript; the narrator
+receives projected facts rather than that transcript. Compare those two inputs
+separately. The supplied scratch reconstruction after A/B/C1/C2 leaves Kristin
+and Michelle in the chamber, unlike the hosted turn-4 detour. With surface
+binding it moves only captives; SCENE is identical. That reconstruction is not
+an exact restoration of the hosted turn-6 state and did not render THINGS.
+It rules out a statement change from that binding, not a behavioral benefit.
 
-**Win and miss:** Read all narration plus handoffs/cues. Report each scene's
-earned/deadline exits, rejected turns, false reveals, custody/movement
-contradictions and ending provenance. For this plan's production recommendation,
-require three complete journeys with earned 3C endings and no newly demonstrated
-story-breaking defect. Three passes are a regression smoke, not an 80% rate.
-A miss holds promotion for diagnosis. An earlier-scene blocker fails whole-game
-quality but leaves 3C untested in that replicate; it does not prove D2 failed.
-Unknown ending provenance stays unknown until telemetry resolves it. A green
-Playwright exit alone does not establish this quality bar.
+Free next comparison: record parents, held case, committed facts, cue history,
+turn index, D eligibility, full rendered prompt and player-visible transcript
+at 3C entry and before turn 6 for both histories. Use the real matcher on the
+recorded command and on `Check the reports from other detention sites.` and
+`Answer the families' requests with the confirmed news of the liberated captives.`
+as diagnostic positive controls. They are not instructions to the blind player.
+Use an isolated reconstructed fact state through existing runtime APIs; do not
+patch save fingerprints or represent the bundle's partial state as a full save.
+A second offline counterfactual may change only Kristin's parent through the
+world API and record exactly what projection changes. Label it synthetic and
+do not transplant that placement into the package. Free comparison can prove
+input/eligibility differences; it cannot prove what a model would do.
+
+**Earlier scenes:** They matter to whole-game quality and deserve a read of
+already-paid narration, but the report supports no earlier progression blocker
+in this journey. No-reveal counts include movement and even earned exit turns
+(1A turn 8, 2B turn 8). Do not open four repair projects from those counts or
+claim the earlier scenes are polished. Record specific repetitions, contradictions
+or misleading transitions in a quality review; only a demonstrated serious
+failure changes this plan's priority. 3C is the observed earned-ending blocker.
+
+### Step 11a — new: one bounded changed-context C1 screen, then continuation
+
+**Order:** free comparison above, frozen-prompt screen, conditional continuation,
+then package gates and one new staged journey. No C1+C2 bundle. This revisits
+Step 5 only because there is now an exact failing hosted prompt after adopted
+pump/custody and a real detour. Its prior loss is evidence against adoption.
+
+1. **Free preparation.** Write `.plans/astra-3c-recall-live-prereg.md` and a
+   separate `bench/variations/stage7-3c-recall-live.json` targeting shipped pump,
+   using exactly section B's old/new C1 statement. Do not repurpose historical
+   variations or fixtures. Proposed harness/manifest:
+   `scripts/ringer/stage7/three_c_recall_replay.py` and
+   `scripts/ringer/stage7/3c-recall-live-screen.json`; outputs
+   `bench/results/stage7-3c-recall-live-screen/`. Test in
+   `tests/test_3c_recall_live.py`: source replacement once, all repeated C1
+   projections changed (including NPC speech), C2/delivery/effects/evidence
+   unchanged, C1-only has no surface assertion, both C orders preserve D
+   eligibility. Frozen prompt must otherwise be byte-identical. Stop if this
+   isolation cannot be shown; do not pay to test a malformed reconstruction.
+2. **Cheapest useful billed screen.** Replay recorded turn 6, same command,
+   same THINGS, two interleaved arms: shipped pump versus C1-scoped pump,
+   12 replies each. One normal request plus at most one recovery: hard cap
+   **48 Cloudflare requests, zero player calls**; stop on budget response,
+   preserve partial rows, no replacements. No semantic judge call is needed
+   for this frozen no-candidate prompt. Read every reply by hand: does the
+   requested passage finish, do people stay consistent with that action, does
+   it reset pumps/gates or invent a new obstacle? Score prose, not just proposed
+   item facts; never keyword-gate adoption. Candidate must finish coherently in
+   at least 10/12 and exceed control by at least three replies, with no new
+   story-breaking error. This is a triage rule, not statistical significance
+   or a completion-rate estimate. Failure/tie stops C1, retaining Step 5's loss.
+3. **Only after a screen win:** test whether changed replies actually change
+   player behavior. Build a labelled reconstruction through turn 5 from the
+   recorded facts, placements, cue state and player screen; same seed in both
+   arms, no injected D command. If exact restoration is impossible, enumerate
+   missing fields and call the seed synthetic. Use 12 fresh raw continuations
+   per arm with semantic fallback ON, deadline 14 unchanged, maximum 12
+   attempts per row (nine accepted turns remain). Extend `three_c_probe.py`
+   and `check_three_c_probe.py` with an explicit start mode and tests in
+   `scripts/ringer/stage7/test_three_c_probe.py`; do not silently redefine
+   `carried`. Separate manifest `3c-recall-live-continuation.json`, output
+   `bench/results/stage7-3c-recall-live-continuation/`. Hard total caps:
+   **576 Cloudflare / 288 player calls**, including matching/recovery calls;
+   the Cloudflare cap may stop a run before the attempt cap. Free dry run first.
+   Operational win: candidate >=10/12 earned E, at least three more earned
+   endings than control, no new serious prose/guard defect. Also report D1/D2/E
+   timing, repeated travel, deadline/unknown/cap outcomes and all failures.
+   No pooling with Step 5 or carried runs. This seed-specific screen cannot
+   establish a whole-game rate. A carried n12 (960/480 two-arm caps) is the
+   existing cheaper-to-build fallback, but tests a different history; do not
+   buy both or substitute it silently for this continuation.
+4. **Miss reading:** a prompt miss means no demonstrated C1 benefit in the
+   failing context. A prompt win followed by continuation loss means better
+   immediate prose did not solve player progression. Neither licenses adoption,
+   a longer deadline, or more aliases. Read the surviving prompt for a specific
+   remaining pull. C2 can be a separately preregistered subtraction only if
+   that read implicates its repeated completed action; exact wording and
+   controls must be reviewed then. If player commands reach D but recognition
+   now fails, reopen Step 12's conditional earn_when investigation instead.
+   Do not schedule a succession of speculative screens in advance.
+5. **Win to staged playthrough:** adopt only C1's measured statement in
+   `data/stories/continuity-initiative/knowledge.yaml`. Preserve the pump-only
+   adoption evidence; update `tests/test_3c_adopted_package.py` so its existing
+   all-other-files/hash assertion distinguishes the new reviewed delta rather
+   than blessing arbitrary package drift. Run recall/harness tests plus
+   `test_3c_cue_chain`, `test_resolution_cascade`, `test_knowledge_projection`,
+   `test_markdown_story_package`, safety/leak and disclosure tests; regenerate
+   disclosure matrix and inspect. Capture unchanged 1A and isolated 3C payloads.
+   Finish runbook full coverage, Ruff and frontend gates (zero model calls).
+   PR/main/SHA-bound staging as Step 10, then one new raw whole-game regression
+   journey as Step 12. Only the new implementation needs these gates; the
+   already-staged pump and this plan edit do not.
+
+#### Step 11a free comparison result (2026-10-20)
+
+Offline, zero model calls. `scripts/ringer/stage7/three_c_state_compare.py`, report in
+`bench/results/stage7-3c-state-compare/report.{md,json}`, tests in
+`tests/test_3c_state_compare.py`. LIVE is the hosted run; SCRIPTED is the carried 3C
+entry state plus A-R1, B-R1, C1, C2 committed through the runtime API (synthetic: same
+four reveals, not the live transcript). A first version built the scripted side on a bare
+test state and was wrong; it was rebuilt and now asserts that the earlier-scene facts,
+`relay_open`, parents, and Michelle/captive THINGS lines exist.
+
+- **SCENE is byte-identical** in the two turn-6 prompts. The repeated C1, C2, A-R1 and
+  pressure lines are the same in both histories.
+- **D eligibility and the matcher are identical.** Both D reveals are eligible in the
+  scripted state. The recorded command `Lead Michelle and the captives through the open
+  surface gates to safety.` matches neither D reveal there either; the two diagnostic
+  controls match D-R1 and D-R2. The live bundle recorded a semantic refusal (universe and
+  shortlist 2/2). So the stuck turn is not a state/eligibility difference; it is the
+  command not performing either D act.
+- **The only prompt differences are places.** Live THINGS puts Kristin and Michelle in the
+  maintenance network and lists `emergency surface gates` at Los Angeles surface; scripted
+  puts both in the broadcast chamber and has no gates line. The captives are in the
+  maintenance network in both. This is the turn-4 follow-Michelle detour, which the
+  scripted prefix does not contain.
+- **Synthetic Kristin-only move** (world.move to the maintenance network) changes THINGS
+  and PLAYER only; SCENE and D eligibility are unchanged.
+- **Facts:** LIVE 97 predicates (partial telemetry), SCRIPTED 90. Live-only 8 across
+  3 families (four `wk_*` world-knowledge facts and others); scripted-only 1
+  (`rebecca_experiment_approval_confronted`). Not read as a cause.
+- **Open item:** the CONSTRAINTS diff lists three system-rule inserts on the scripted side,
+  most likely a section-parsing artifact of the offline renderer; unverified.
+- Cannot show: what a model does with either prompt, or any rate.
+
+Reading: the history difference is location only, and it was already a plausible
+explanation for the loop (people already in the tunnel, gates already open on the
+surface). Two prompt screens with that location held fixed found no statement-scoping win.
+No C1/A-R1 retest is warranted from this.
 
 ### Step 12 — new: production decision and conditional source work
 
-After a passing Step 11, record the exact SHA, three results and rate uncertainty,
-review `/dev/`, and use `.github/workflows/promote-production.yml` for that
-staged SHA under the promotion guide. It verifies API/Pages identity and hosted
-E2E before recording `production-promotion`. This planning prompt does not
-dispatch it. Cost: deployment/build plus hosted narration checks, not another
-three-run quality screen. A later documentation-only results commit needs no
-repeat deployment/E2E.
+**Corrected (Round 7) — recommendation and evidence:** Hold promotion of pump
+as the completed quality repair: the only live-history journey exposes a real
+loop and misses the earned D/E chain. The release workflow requires a successful
+staged SHA and review; its guide does not mandate three raw journeys. The earlier
+three-run rule was this plan's recommendation and is withdrawn. One subsequent
+earned whole-game journey, reviewed narration, free regression gates and exact
+staging identity can support a cautious promotion decision with explicit residual
+risk. They cannot establish reliability, 80% completion, or absence of rare bugs.
+A known serious quality failure must be fixed or explicitly accepted in that
+decision; do not hide it behind a passing browser test or select the best run.
 
-**Only remaining source candidate, deferred until after adoption:** Reopen
+| Option | Incremental work/cost | What the decision may say |
+| --- | --- | --- |
+| Hold now (recommended) | Free artifact comparison/review, then only conditional Step 11a spend | Pump is staged; quality repair remains incomplete. |
+| Promote existing pump with the known limitation | No new quality sample; production build/hosted smoke still costs time and model usage | Explicit acceptance of the observed loop; not successful remediation. |
+| Test measured repair then decide (recommended path) | Step 11a caps, free gates, new staging deploy/smoke, one raw whole-game run | Observed earned journey and reviewed quality at the recorded SHA, with sample limits. |
+| Extra whole-game regression journeys | Up to 200 player calls per session; hosted calls additional | Additional history coverage only; 1–3 runs do not establish a rate. Not required or queued. |
+
+For the new single journey, reuse the verified manifest pattern in
+`scripts/ringer/stage7/3c-blind-raw-replicate-1.json`, archive a fresh output
+under `bench/results/stage7-3c-blind-raw-<new-sha>/`, and use
+`E2E_BLIND_SCENE=all BLIND_PLAYER_PROFILE=raw E2E_BLIND_REPLICATES=1`.
+Keep the existing 20-player-call scene / 200-call session limits and
+`E2E_TURN_TIMEOUT_MS=90000`; record any cap stop. Review all narration and
+handoffs, earned/fallback provenance, false reveals, movement/custody and earlier
+scene issues. No replacement quality samples. A failure returns to its specific
+recorded cause, not an automatic repeat. An earlier-scene failure can leave 3C
+untested; a fallback ending is never an earned success.
+
+**Dollar budget — corrected:** Hosted calls have no single exposed call counter.
+`worker/src/index.js` reserves spend against `DAILY_BUDGET_USD` for both narrator
+and Jev paths. The default is **$5 per UTC day shared by all staging traffic**,
+not $5 for each test, run or arm; actual dashboard configuration may differ.
+Before billed work record dashboard daily cap and current dollar usage with UTC
+time; record usage after, separating concurrent traffic when possible. Stop on
+429 `AI_DAILY_BUDGET_EXCEEDED`; do not raise the cap or retry around it. Include
+CI/smoke and all other staging traffic in remaining headroom. Player-model
+spend is separate and must also be recorded. Probe request caps above remain
+useful bounds, not dollar prices or guarantees of finishing. No remaining
+balance or actual spend is inferable from 79 turns/9.8 minutes. Dashboard dollars
+were not read in this plan review; do not invent them or use the canon-neuron
+estimate. No new endpoint is needed just for this plan.
+
+After the review decision, promote only the exact successful staged SHA through
+`.github/workflows/promote-production.yml` and the promotion guide; production
+identity and hosted E2E remain required. This plan does not dispatch promotion.
+A later documentation-only results edit needs no repeat deploy/E2E.
+
+**Conditional D2 source candidate, still dropped:** Reopen
 `.plans/astra-3c-earnwhen-prereg.md` only if the smoke shows eligible family-news
 misses preventing quality completion. The exact isolated candidate is:
 
@@ -1573,35 +1795,38 @@ relay. Earlier-scene names/guards and entry text remain unchanged. Longer 3C
 pacing affects whole-story time and costs, not earlier scene windows. Check
 payloads and real journey regressions after adoption.
 
-**Not verified — corrected (Round 6):**
+**Not verified — corrected (Round 7):**
 
-- Adoption's full gates and frozen-baseline verification remain. The two
-  package edits are reviewed here; variation re-pins are diagnosed, not repaired.
-  The Ringer FAIL is unresolved until its independent check is corrected and run.
-- Step 7 build and Step 8 screen are complete; their old pending status is closed.
-  Latest pump 10/12 does not establish repeatability or an 80% population rate.
-- Custody's next-reply hand score remains absent. The incomplete pump n=10
-  component result does not become a completed n12 by adding carried rows.
-- The historical carried replay and checked artifacts remain evidence; the old demand
-  to build a seed is closed. No `relay open` rejection occurred in 24 carried
-  rows, consistent with the synthetic-history explanation, not causal proof.
-- Live-written prior-scene narration, independent histories, staged whole-game quality,
-  full semantic-fallback correctness and live parent/prose consistency remain
-  unverified. Zero rejections is not a quality score for every narration.
-- No prompt-level cause justifies a new movement subtraction. Historical card
-  rejection prose and hosted deadline telemetry remain unavailable.
-- Deadline 16 has historical hypothetical targets but no recorded 15/16
-  continuation; latest near-complete rows ignored E. It is not queued.
-- Wider earn_when efficacy, false-positive behavior and prompt side effects
-  are unmeasured. The replay's 12 positive-command refusals do not prove a cure.
-- No PR/push/merge, SHA-bound staging smoke or production promotion was performed
-  in this review. Hosted spend and duration need a preregistered budget.
+- C1 is tested historically and lost; its effect on the exact hosted failing
+  prompt is unmeasured. C2, scene-pressure lines, player history and location
+  remain alternative explanations; one prompt establishes no sole cause.
+- Surface binding's supplied scratch comparison is not an exact hosted-state
+  replay. Full state restoration and isolated parent counterfactuals remain.
+- Pump adoption/gates/merge/staging/smoke are complete. Latest carried 10/12
+  does not establish repeatability or an 80% population rate. One live-history
+  journey is now observed, with no earned D/E; quality success remains unverified.
+- Earlier scenes earned their exits in this run. Their no-reveal counts alone
+  neither establish defects nor certify prose quality; the detailed quality
+  review remains. Custody's historical hand score remains absent, and the
+  incomplete pump n10 must not be topped up or pooled with carried rows.
+- No billed screen, new test suite, dashboard read, remote CI recheck or
+  production promotion ran in this review. Dollar spend/remaining daily
+  headroom are unknown; the default cap is not the available balance.
+- Wider earn_when and deadline 16 remain unmeasured and unqueued. No family
+  communication attempt in this run justifies either. Historical unrecorded
+  rejection prose and unobserved turn-15/16 continuations remain unavailable.
 
-**Resume here — corrected (Round 7):** Step 9 is done. Rerun the full suite once,
-review the uncommitted diff, then Step 10 PR/main/staging and Step 11's
-three raw whole-game playthroughs. Make the Step 12 production decision from
-their recorded quality and provenance. No further 3C screen is queued.
-Do not rebuild the prefix, top up the incomplete pump screen, revive Steps 1/5,
-add aliases, widen the deadline or change E. The plan update is complete;
-implementation, billed work and deployment above are future work, not actions
-authorized by this planning-only prompt.
+**Resume here — Step 11a result (2026-10-20):** screen missed; no continuation, adoption or
+staged journey follows. Open choices for Brandon: (a) [DONE: free state comparison, see its result block],
+(b) [RAN 2026-10-20, MISSED: A-R1 scoped finished 5/12 vs shipped 7/12, no broadcast
+drift in either arm; see `.plans/astra-3c-broadcast-live-prereg.md`; stopped], (c) hold/accept pump per Step 12. Nothing queued.
+
+**Resume here — corrected (Round 7, superseded above):** Steps 9/10 and one Step 11 run are done.
+Do Step 11a's free live-versus-scripted input comparison, then the single capped
+C1 prompt retest if isolation holds. Carry forward the prior loss. Only a win
+justifies the continuation screen, implementation gates and one new staged
+whole-game regression journey. Step 12 defines the honest production decision.
+Do not rerun completed gates, require three journeys, rebuild the old prefix,
+top up old samples, bundle C2, revive aliases or extend the deadline by default.
+This update is a written plan only; its proposed implementation and billed
+measurements have not been executed.

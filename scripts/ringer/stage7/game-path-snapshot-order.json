@@ -1,0 +1,25 @@
+{
+  "run_name": "game-path-snapshot-order",
+  "workdir": "/home/bcorfman/dev/ringer-work/game-path-snapshot-order",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "snapshot-order-insensitive",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": ["-c", "model_reasoning_effort=medium"],
+      "max_attempts": 2,
+      "timeout_s": 1200,
+      "check_timeout_s": 600,
+      "ownership": ["tests/test_discovery_continuity.py"],
+      "expect_files": ["/home/bcorfman/dev/freytag-forge/tests/test_discovery_continuity.py"],
+      "spec": "You are an edit worker on freytag-forge. Working directory: the real repository /home/bcorfman/dev/freytag-forge on branch game-path-completion (no worktree). You own ONLY tests/test_discovery_continuity.py. Touch nothing else. No git add/commit/reset/checkout/stash. No network, no .env, never use uv; run python as `TMPDIR=/tmp PYTHONHASHSEED=0 .venv/bin/python`.\n\nPROBLEM. test_rejected_acquisition_leaves_facts_custody_and_cue_state_untouched (around line 178) compares two raw JSON strings from `state.snapshot().model_dump_json()` taken before and after a rejected turn. The snapshot serializes facts in an order that depends on the process hash seed, and the rollback after a rejected turn can rebuild the facts in a different order, so the strings differ although the facts are identical. It fails under PYTHONHASHSEED=0 and PYTHONHASHSEED=4 and passes under e.g. 1 and 2. The order is not meaningful; the test's intent is that a rejected turn leaves facts, custody and cue state unchanged.\n\nTASK. Make that one test compare the snapshots order-insensitively, without weakening it: add a small module-level helper (for example `_canonical_snapshot(state)`) that returns `json.loads(state.snapshot().model_dump_json())` with every list of fact records sorted by a stable key (`json.dumps(item, sort_keys=True)`), at whatever depth the facts lists appear (inspect the snapshot to find which keys hold unordered fact lists - do not sort lists whose order is meaningful such as turn history/transcripts). Use it for both the `before` and the after comparison, keep the `cue_before` check and every other assertion in the test, and keep ruff clean (ruff line length 120). Do not change any other test unless it has the same raw-string comparison (grep the file for `model_dump_json() ==`; if another test has the same flaw, fix it the same way).\n\nVERIFY yourself: for s in 0 1 4 7; do PYTHONHASHSEED=$s TMPDIR=/tmp .venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_discovery_continuity.py; done; and `.venv/bin/ruff check tests/test_discovery_continuity.py && .venv/bin/ruff format tests/test_discovery_continuity.py`. Final message: the git diff of the file.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && export TMPDIR=/tmp && for s in 0 1 2 3 4 5 6 7; do PYTHONHASHSEED=$s .venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_discovery_continuity.py::test_rejected_acquisition_leaves_facts_custody_and_cue_state_untouched || { echo \"FAIL: seed $s\"; exit 1; }; done && .venv/bin/python -m pytest -q --no-cov -n 4 tests/test_discovery_continuity.py && .venv/bin/ruff check tests/test_discovery_continuity.py && .venv/bin/ruff format --check tests/test_discovery_continuity.py && grep -c 'before' tests/test_discovery_continuity.py >/dev/null && [ \"$(git status --porcelain | grep -v '^??' | awk '{print $2}' | tr '\\n' ' ')\" = 'tests/test_discovery_continuity.py ' ] || { echo 'FAIL: unexpected changed files'; git status --porcelain; exit 1; }",
+      "verified": "rejected-acquisition test compares snapshots order-insensitively and passes under hash seeds 0-7; only that test file changed"
+    }
+  ]
+}

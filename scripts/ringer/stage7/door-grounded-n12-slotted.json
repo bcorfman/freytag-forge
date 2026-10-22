@@ -1,0 +1,31 @@
+{
+ "run_name": "door-grounded-n12-slotted",
+ "workdir": "/home/bcorfman/dev/ringer-work/door-grounded-n12-slotted",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "grounded-n12-slotted",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 7200,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/stage7-door-grounded-n12-slotted/",
+    "bench/results/ledger.jsonl (append-only)"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --experiment grounded --confirm --out bench/results/stage7-door-grounded-n12-slotted",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_door_probe.py bench/results/stage7-door-grounded-n12-slotted 12 --mode artifacts --experiment grounded",
+   "verified": "The 24 live rows reconcile with spend events, the 120/48 caps, prompt hashes, matcher evidence and the ledger row.",
+   "spec": "Run the full billed Stage 7 GROUNDED-route door screen once, after the dry check and smoke3, on the story with the panel setting_facts reduced to one slotted-face line (uncommitted plot.md edit); the earlier stage7-door-grounded-n12 dir is a separate prior result - do not touch it. Own only bench/results/stage7-door-grounded-n12-slotted/ plus append-only bench/results/ledger.jsonl. Run the given command exactly; source .env silently, never print credentials, no uv, no git mutation, no code edits, no judges. 12 trials per arm, 24 rep-major rows (control, grounded); hard maxima 120 Cloudflare requests and 48 raw-player attempts. No retries, replacement samples or smoke pooling. On quota, outage, malformed output or cap error the harness stops nonzero and writes run-failure.txt: leave it and partial artifacts in place and report. This is a wording screen only; do not claim hosted validation.\n\nYOUR WORKING DIRECTORY IS A SCRATCH DIRECTORY; the repository is at /home/bcorfman/dev/freytag-forge and the harness and .env are there. Run exactly this single shell command (it cds into the repo itself) and report its exit status and the contents of any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/door_probe.py --n 12 --experiment grounded --confirm --out bench/results/stage7-door-grounded-n12-slotted"
+  }
+ ]
+}

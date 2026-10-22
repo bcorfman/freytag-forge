@@ -1,0 +1,36 @@
+{
+  "run_name": "stage7-3c-stuck-turns",
+  "workdir": "/home/bcorfman/dev/ringer-work/stage7-3c-broadcast-build",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "build-3c-broadcast-replay",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/stage7/three_c_recall_replay.py",
+        "scripts/ringer/stage7/check_three_c_recall_replay.py",
+        "tests/test_3c_recall_live.py",
+        "bench/results/stage7-3c-broadcast-live-dry/"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7/three_c_recall_replay.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_3c_recall_live.py"
+      ],
+      "spec": "You are a build worker on freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. You may edit ONLY: scripts/ringer/stage7/three_c_recall_replay.py, scripts/ringer/stage7/check_three_c_recall_replay.py, tests/test_3c_recall_live.py, and write under bench/results/stage7-3c-broadcast-live-dry/. NEVER touch data/, storygame/, other tests, git state, .env, bench/variations/*, .plans/*. No billed or network call: stub everything. Setup: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`; `.venv/bin/python`, no uv.\n\nRead first: .plans/astra-3c-broadcast-live-prereg.md (the contract), bench/variations/stage7-3c-broadcast-live.json, and the three owned files.\nTASK: generalize the existing C1 replay harness to a second experiment without changing C1 behaviour. Add `--experiment {c1,broadcast}` (default c1) to three_c_recall_replay.py and check_three_c_recall_replay.py. `c1` must behave byte-for-byte as today (arms pump/recall, same dry-run files and summary keys, existing tests untouched and passing). `broadcast`: arms `pump` (recorded request unchanged) and `broadcast`, interleaved pump then broadcast; old string = the A-R1 statement `Michelle broadcasts captives, JANUS records, planning sessions, and detention locations to independent networks.`; new string = `Independent networks have the captives' video, JANUS records, planning sessions, and detention locations.` Read both strings from the broadcast variation JSON (the YAML-escaped `''` in the variation is one apostrophe in the real text) rather than retyping them, and fail loudly if they differ from those literals. Require exactly 3 occurrences of the old string in the recorded request (1 SCENE, 2 NPC speech) and after replacement zero occurrences of 'Michelle broadcasts captives' in the broadcast arm and exactly 3 of the new string; the pump arm must equal the recording byte for byte. Dry-run writes pump-request.json, broadcast-request.json, request.diff (only A-R1 lines differ), summary.json with requests 0, replacement_occurrences 3, isolation flags (pump_equals_recording true, a broadcast-trace-remaining flag false), network/judge/player call counts 0. Rows record arm names `pump`/`broadcast`. Keep the --confirm guard, request cap (default 48), recovery accounting, budget-stop and partial-row behaviour. The checker with --experiment broadcast validates the same things using arm names pump/broadcast and the broadcast dry-run keys.\nTESTS in tests/test_3c_recall_live.py (add, don't remove): old string occurs exactly once in knowledge.yaml and the broadcast variation loads with the real loader with every other package file hash unchanged; request isolation as above; B-R1 delivery line 'Michelle sends its prisoner locations to independent networks' is untouched in the broadcast arm; --confirm refusal and request cap under --experiment broadcast with a stubbed network; checker passes a hand-built good broadcast artifact dir and fails a wrong arm order.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python -m pytest -q tests/test_3c_recall_live.py tests/test_3c_cue_chain.py 2>&1 | tail -5 && rm -rf bench/results/stage7-3c-broadcast-live-dry bench/results/stage7-3c-recall-live-dry && .venv/bin/python scripts/ringer/stage7/three_c_recall_replay.py --experiment broadcast --n 12 --dry-run --out bench/results/stage7-3c-broadcast-live-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_recall_replay.py bench/results/stage7-3c-broadcast-live-dry 12 --mode dry --experiment broadcast && .venv/bin/python scripts/ringer/stage7/three_c_recall_replay.py --n 12 --dry-run --out bench/results/stage7-3c-recall-live-dry && .venv/bin/python scripts/ringer/stage7/check_three_c_recall_replay.py bench/results/stage7-3c-recall-live-dry 12 --mode dry && .venv/bin/python scripts/ringer/stage7/check_three_c_recall_replay.py bench/results/stage7-3c-recall-live-screen 12 --mode artifacts && ( .venv/bin/python scripts/ringer/stage7/three_c_recall_replay.py --experiment broadcast --n 1 --out /tmp/bc-noconfirm; test $? -ne 0 ) && .venv/bin/ruff check scripts/ringer/stage7/three_c_recall_replay.py scripts/ringer/stage7/check_three_c_recall_replay.py tests/test_3c_recall_live.py && .venv/bin/ruff format --check scripts/ringer/stage7/three_c_recall_replay.py scripts/ringer/stage7/check_three_c_recall_replay.py tests/test_3c_recall_live.py && test -z \"$(git status --porcelain data storygame)\"",
+      "verified": "broadcast experiment tests and dry run pass, C1 path unchanged; zero model calls"
+    }
+  ]
+}
