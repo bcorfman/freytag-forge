@@ -11,6 +11,6 @@ const payload = JSON.parse(input);
 if (payload.playerPrompt !== undefined) {
   process.stdout.write(JSON.stringify({ command: payload.playerPrompt, attempts: 0, offline: true }) + "\n");
 } else {
-  const command = await askPlayer({ profile: "raw", transcript: payload.transcript, status: payload.status || "", cap: 1 });
+  const command = await askPlayer({ profile: "raw", transcript: payload.transcript, status: payload.status || "", cap: 2 });
   process.stdout.write(JSON.stringify({ command, attempts: 1 }) + "\n");
 }
