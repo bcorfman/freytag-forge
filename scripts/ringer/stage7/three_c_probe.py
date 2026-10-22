@@ -189,6 +189,39 @@ def atomic_json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def _item_facts_capture(provider: Any, state: Any) -> dict[str, Any]:
+    """Return opt-in diagnostics already retained by an item-facts turn."""
+
+    def accessor(name: str) -> Any:
+        method = getattr(provider, name, None)
+        return method() if callable(method) else None
+
+    prompt = getattr(provider, "last_prompt", None)
+    prompt_user = prompt.get("user") if isinstance(prompt, dict) else None
+    visible: dict[str, list[str] | None] = {"THINGS": None, "PLAYER": None}
+    if isinstance(prompt_user, str):
+        section = None
+        sections: dict[str, list[str]] = {"THINGS": [], "PLAYER": []}
+        for line in prompt_user.splitlines():
+            heading = line.rstrip(":")
+            if heading in sections:
+                section = heading
+                continue
+            if section in sections and line.startswith("-") and "kristin" in line.casefold():
+                sections[section].append(line)
+        visible = {name: lines for name, lines in sections.items()}
+    delivery = getattr(state, "last_turn_delivery", None)
+    return {
+        "match": accessor("last_item_facts_match"),
+        "unplaced": accessor("last_item_facts_unplaced"),
+        "refused": accessor("last_item_facts_refused"),
+        "issues": list(getattr(delivery, "capture_issues", ()) or ()) if delivery is not None else None,
+        "steps": list(getattr(delivery, "capture_steps", ()) or ()) if delivery is not None else None,
+        "raw": accessor("pending_item_facts"),
+        "narrator_visible": visible,
+    }
+
+
 def variation_paths(arms: tuple[str, ...] = ARMS) -> dict[str, Path]:
     return {arm: ROOT / "bench/variations" / ARM_FILES[arm] for arm in arms}
 
@@ -707,6 +740,7 @@ def run_row(
     start: str = "entry",
     first_command: str | None = None,
     kristin_place: str = "chamber",
+    capture_item_facts: bool = False,
 ) -> dict[str, Any]:
     variation = load_variation(variation_path)
     carried = None
@@ -789,6 +823,7 @@ def run_row(
                         "kristin_parent": _parent_snapshot(package, state)[1],
                         "case_parent": _parent_snapshot(package, state)[2],
                         "acquisition_command": acquisition_command,
+                        **({"item_facts_capture": _item_facts_capture(provider, state)} if capture_item_facts else {}),
                     }
                 )
                 continue
@@ -836,6 +871,7 @@ def run_row(
                     "kristin_parent": _parent_snapshot(package, state)[1],
                     "case_parent": _parent_snapshot(package, state)[2],
                     "acquisition_command": acquisition_command,
+                    **({"item_facts_capture": _item_facts_capture(provider, state)} if capture_item_facts else {}),
                 }
             )
     all_reveals = {item for turn in turns for item in turn.get("committed_reveals", [])}
@@ -961,6 +997,7 @@ def run_command_probe(
     budget: SpendBudget,
     semantic: str = "off",
     provider_factory: Callable[[Any, dict[str, Any]], Any] | None = None,
+    capture_item_facts: bool = False,
 ) -> dict[str, Any]:
     """Run one recorded command against one fresh synthetic post8 state."""
 
@@ -1011,6 +1048,7 @@ def run_command_probe(
             "scripted_prefix": prefix,
             "semantic": semantic,
             "entry_state": ENTRY_STATE,
+            **({"item_facts_capture": _item_facts_capture(provider, state)} if capture_item_facts else {}),
         }
     except Exception as error:
         after_facts = _fact_keys(state)
@@ -1061,6 +1099,7 @@ def run_command_probe(
         "scripted_prefix": prefix,
         "semantic": semantic,
         "entry_state": ENTRY_STATE,
+        **({"item_facts_capture": _item_facts_capture(provider, state)} if capture_item_facts else {}),
     }
 
 
@@ -1074,6 +1113,7 @@ def plan_for(
     arms: tuple[str, ...] = ARMS,
     first_command: str | None = None,
     kristin_place: str = "chamber",
+    capture_item_facts: bool = False,
 ) -> None:
     universe_ids: dict[str, list[str]] = {}
     carried_records: dict[str, dict[str, Any]] = {}
@@ -1160,6 +1200,8 @@ def plan_for(
         ),
         "reveal_universe_ids": universe_ids,
     }
+    if capture_item_facts:
+        plan["capture_item_facts"] = True
     if kristin_place != "chamber":
         plan["kristin_place"] = kristin_place
     atomic_json(
@@ -1191,6 +1233,7 @@ def dry_run(
     arms: tuple[str, ...],
     first_command: str | None,
     kristin_place: str = "chamber",
+    capture_item_facts: bool = False,
 ) -> None:
     source = source_proof(arms)
     source["semantic"] = semantic
@@ -1229,8 +1272,10 @@ def dry_run(
         )
     if kristin_place != "chamber":
         source["kristin_place"] = kristin_place
+    if capture_item_facts:
+        source["capture_item_facts"] = True
     atomic_json(out / "source.json", source)
-    plan_for(out, n, "dry", start, semantic, "play", arms, first_command, kristin_place)
+    plan_for(out, n, "dry", start, semantic, "play", arms, first_command, kristin_place, capture_item_facts)
 
 
 def commands_source(semantic: str, start: str) -> dict[str, Any]:
@@ -1250,9 +1295,12 @@ def commands_source(semantic: str, start: str) -> dict[str, Any]:
     return source
 
 
-def commands_dry_run(out: Path, n: int, semantic: str, start: str) -> None:
-    atomic_json(out / "source.json", commands_source(semantic, start))
-    plan_for(out, n, "dry", start, semantic, "commands")
+def commands_dry_run(out: Path, n: int, semantic: str, start: str, capture_item_facts: bool = False) -> None:
+    source = commands_source(semantic, start)
+    if capture_item_facts:
+        source["capture_item_facts"] = True
+    atomic_json(out / "source.json", source)
+    plan_for(out, n, "dry", start, semantic, "commands", capture_item_facts=capture_item_facts)
 
 
 def live_run(
@@ -1263,6 +1311,7 @@ def live_run(
     arms: tuple[str, ...],
     first_command: str | None,
     kristin_place: str = "chamber",
+    capture_item_facts: bool = False,
 ) -> None:
     source = source_proof(arms)
     carried_source = carried_metadata(arms) if start == "carried" else None
@@ -1301,11 +1350,13 @@ def live_run(
     }
     if kristin_place != "chamber":
         source_payload["kristin_place"] = kristin_place
+    if capture_item_facts:
+        source_payload["capture_item_facts"] = True
     atomic_json(
         out / "source.json",
         source_payload,
     )
-    plan_for(out, n, "live", start, semantic, "play", arms, first_command, kristin_place)
+    plan_for(out, n, "live", start, semantic, "play", arms, first_command, kristin_place, capture_item_facts)
     caps = POSTC_CAPS[n] if start == "postc" else CAPS[n]
     budget = SpendBudget(caps["cloudflare"], cloudflare_limit=caps["cloudflare"], player_limit=caps["raw_player"])
     rows: list[dict[str, Any]] = []
@@ -1322,6 +1373,7 @@ def live_run(
                         start=start,
                         first_command=first_command,
                         kristin_place=kristin_place,
+                        capture_item_facts=capture_item_facts,
                     )
                 except ProbeRunFailure as error:
                     error.row_id = row_id
@@ -1373,10 +1425,13 @@ def live_run(
     atomic_json(out / "summary.json", summary)
 
 
-def commands_live_run(out: Path, n: int, semantic: str, start: str) -> None:
-    atomic_json(out / "source.json", commands_source(semantic, start))
+def commands_live_run(out: Path, n: int, semantic: str, start: str, capture_item_facts: bool = False) -> None:
+    source = commands_source(semantic, start)
+    if capture_item_facts:
+        source["capture_item_facts"] = True
+    atomic_json(out / "source.json", source)
     probe_count = n * len(ARMS) * len(COMMAND_TURNS)
-    plan_for(out, n, "live", start, semantic, "commands")
+    plan_for(out, n, "live", start, semantic, "commands", capture_item_facts=capture_item_facts)
     budget = SpendBudget(3 * probe_count, cloudflare_limit=3 * probe_count, player_limit=0)
     rows: list[dict[str, Any]] = []
     try:
@@ -1393,6 +1448,7 @@ def commands_live_run(out: Path, n: int, semantic: str, start: str) -> None:
                             variation_paths()[arm],
                             budget,
                             semantic,
+                            capture_item_facts=capture_item_facts,
                         )
                     except ProbeRunFailure as error:
                         error.row_id = row_id
@@ -1446,6 +1502,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--arms", default="control,pre667")
     parser.add_argument("--first-command")
     parser.add_argument("--mode", choices=("play", "commands"), default="play")
+    parser.add_argument("--capture-item-facts", action="store_true")
     args = parser.parse_args(argv)
     if args.start != "postc" and args.kristin_place != "chamber":
         raise SystemExit("--kristin-place is only valid with --start postc")
@@ -1463,16 +1520,34 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit("commands mode requires --start post8")
         if args.dry_run:
             if args.mode == "commands":
-                commands_dry_run(out, args.n, args.semantic, args.start)
+                commands_dry_run(out, args.n, args.semantic, args.start, args.capture_item_facts)
             else:
-                dry_run(out, args.n, args.start, args.semantic, arms, args.first_command, args.kristin_place)
+                dry_run(
+                    out,
+                    args.n,
+                    args.start,
+                    args.semantic,
+                    arms,
+                    args.first_command,
+                    args.kristin_place,
+                    args.capture_item_facts,
+                )
             return 0
         if not args.confirm:
             raise SystemExit("--confirm is mandatory for live execution")
         if args.mode == "commands":
-            commands_live_run(out, args.n, args.semantic, args.start)
+            commands_live_run(out, args.n, args.semantic, args.start, args.capture_item_facts)
         else:
-            live_run(out, args.n, args.semantic, args.start, arms, args.first_command, args.kristin_place)
+            live_run(
+                out,
+                args.n,
+                args.semantic,
+                args.start,
+                arms,
+                args.first_command,
+                args.kristin_place,
+                args.capture_item_facts,
+            )
     except Exception as error:
         (out / "run-failure.txt").write_text(failure_message(error), encoding="utf-8")
         raise

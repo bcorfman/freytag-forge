@@ -66,3 +66,19 @@ Probe change: `--kristin-place` (Ringer run `3c-kristin-place`); both rows 0 rej
   barrier; the engine does not check connectivity, so the open route cannot cause it.
 Bar: met (no false reveals, no new grounding failures seen, chamber return not refused). n=6 not run: two clean rows and an
 outside-scope tracking observation; a larger run would not test the changed text further.
+
+## Tracking diagnosis (Brandon, 2026-10-22: "yes" to diagnosing the Kristin-position observation)
+Free: `--capture-item-facts` flag (Ringer run `3c-capture-diagnosis`). Live: one row, `--start postc --kristin-place facility_escape
+--arms control --capture-item-facts`, same first command and caps as the smoke (80 Cloudflare / 40 player), manifest
+`scripts/ringer/stage7/3c-capture-diagnosis-row.json`. Read: for the turn after "Return to the broadcast chamber.", whether the
+narrator listed Kristin in item_facts, what place it named, and whether the move was matched, unplaced or refused. No fix is chosen
+before that is read; the technique comes from the plan's decisions and earlier narration fixes.
+
+## TRACKING DIAGNOSIS RESULT (2026-10-22, `bench/results/stage7-3c-capture-diagnosis/`, 1 row, facility_escape, flag on)
+Every capture field is null (`match`, `unplaced`, `refused`, `raw`) and `issues`/`steps` are empty on every turn, and no THINGS or
+PLAYER line is recorded. Cause: the 3C probe builds its provider from `bench/variations/stage7-3c-control.json`, which has no
+`item_facts` key, so `provider_for` returns a plain `CloudflareTurnProvider`. The product's place capture (`WorldCapture` with an
+`ItemFactsProvider`, enabled by `FREYTAG_WORLD_CAPTURE=1` in `web_demo.py`) never runs in these rows. A constant `kristin_parent`
+in 3C probe rows is therefore a harness property, not evidence that narrated moves fail in the product, and the earlier note
+that it was a tracking defect is withdrawn. Not covered: whether the product captures Kristin's chamber return; that needs a probe
+variation with `item_facts` (e.g. `item-facts-world-3c-runtime.json` style) or the hosted check.
