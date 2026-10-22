@@ -30,3 +30,17 @@ refused. Report counts and quote every failing turn.
 
 ## Not covered
 Whole-game quality, fresh-entry effect, hosted deadline telemetry.
+
+## Approved (Brandon, 2026-10-22: "yes")
+Approved with the caps above. Arm: `control` only (it is the shipped package, no overrides). Smoke command:
+`.venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --mode play --start postc --arms control --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --confirm --out bench/results/stage7-3c-relay-access-smoke`
+Manifest `scripts/ringer/stage7/3c-relay-access-smoke.json`. The n=6 run follows only after the smoke is read by hand and is clean.
+
+## SMOKE RESULT (2026-10-22, `bench/results/stage7-3c-relay-access-smoke/`, 1 row, arm `control`)
+Harness clean: 6 attempts, 0 rejections, 0 clarifications, earned_complete (D-R1, D-R2, E-R1), no deadline. Kristin stayed in the
+broadcast chamber; captives stayed in the maintenance network. The row never committed `resolution_escape`
+(`captives_reaching_surface` and `los_angeles_facility_lost` absent from every fact delta), so the new escape text was never shown.
+The synthetic post-C start finishes through the D and E reveals without that event. The smoke therefore tells us nothing about
+speakers, the barrier, or the open route. The n=6 run is NOT launched: it would show the same thing. Covered instead by the
+hermetic test that drives `resolution_escape` on the real package (exact text once, no D1/D2 earn).
+Open: a live path that reaches `resolution_escape` needs the event's activation (`truth_no_longer_containable`) met first.
