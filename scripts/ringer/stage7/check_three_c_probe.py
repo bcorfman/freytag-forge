@@ -76,9 +76,9 @@ def check(out: Path, n: int, mode: str) -> list[str]:
     arms = tuple(plan.get("arms", ARMS))
     source_world_capture = source.get("world_capture")
     plan_world_capture = plan.get("world_capture")
-    if "item-facts" in arms:
+    if {"item-facts", "no-close"} & set(arms):
         if source_world_capture is not True or plan_world_capture is not True:
-            errors.append("world_capture must be true in both source and plan for the item-facts arm")
+            errors.append("world_capture must be true in both source and plan for the item-facts arms")
     elif source_world_capture is not None or plan_world_capture is not None:
         errors.append("world_capture is only valid for the item-facts arm")
     try:
@@ -113,8 +113,10 @@ def check(out: Path, n: int, mode: str) -> list[str]:
     plan_start = plan.get("start")
     if tuple(source.get("arms", arms)) != arms:
         errors.append("source and plan arm selections differ")
-    if not {"control", "entry", "custody", "pump", "item-facts"} & set(arms):
-        errors.append("arm selection must include control, entry, custody, pump, or item-facts as the baseline")
+    if not {"control", "entry", "custody", "pump", "item-facts", "no-close"} & set(arms):
+        errors.append(
+            "arm selection must include control, entry, custody, pump, item-facts, or no-close as the baseline"
+        )
     if any(arm not in ALL_ARMS for arm in arms):
         errors.append(f"source and plan contain an unknown arm; allowed arms are {', '.join(ALL_ARMS)}")
     if source.get("semantic") not in {"on", "off"} or plan.get("semantic") != source.get("semantic"):
@@ -397,10 +399,10 @@ def check(out: Path, n: int, mode: str) -> list[str]:
         for row in rows:
             for turn in row.get("turns", []):
                 has_capture = "world_capture" in turn
-                if row.get("arm") == "item-facts" and not has_capture:
-                    errors.append("item-facts turns are missing world_capture")
-                if row.get("arm") != "item-facts" and has_capture:
-                    errors.append("world_capture is only valid on item-facts turns")
+                if row.get("arm") in {"item-facts", "no-close"} and not has_capture:
+                    errors.append("item-facts arms are missing world_capture")
+                if row.get("arm") not in {"item-facts", "no-close"} and has_capture:
+                    errors.append("world_capture is only valid on item-facts arms")
         if source_capture is True and any(
             "item_facts_capture" not in turn for row in rows for turn in row.get("turns", [])
         ):
