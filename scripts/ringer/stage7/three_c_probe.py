@@ -60,6 +60,7 @@ ALL_ARMS = (
     "families-v2",
     "item-facts",
     "no-close",
+    "families-offer",
 )
 ARM_FILES = {
     "control": "stage7-3c-control.json",
@@ -73,6 +74,7 @@ ARM_FILES = {
     "families-v2": "stage7-3c-families-v2.json",
     "item-facts": "stage7-3c-item-facts.json",
     "no-close": "stage7-3c-no-close.json",
+    "families-offer": "stage7-3c-families-offer-arm.json",
 }
 PRE_ADOPTION_PACKAGE = ROOT / "tests/fixtures/continuity_initiative_pre_3c_adoption"
 STARTS = ("entry", "posta", "post8", "postc", "carried")
@@ -274,7 +276,7 @@ def _probe_engine(
     capture_ask: Callable[[Any, Any], Any] | None = None,
 ) -> tuple[RuntimeEngine, WorldCapture | None]:
     """Build the product-equivalent engine for the item-facts arms."""
-    if arm not in {"item-facts", "no-close"}:
+    if arm not in {"item-facts", "no-close", "families-offer"}:
         return RuntimeEngine(state, provider), None
     ask_impl = capture_ask if capture_ask is not None else JevClient.from_environment().ask
     counted_ask = _counted_capture_ask(ask_impl, budget)
@@ -1293,7 +1295,7 @@ def plan_for(
     }
     if capture_item_facts:
         plan["capture_item_facts"] = True
-    if {"item-facts", "no-close"} & set(arms):
+    if {"item-facts", "no-close", "families-offer"} & set(arms):
         plan["world_capture"] = True
     if kristin_place != "chamber":
         plan["kristin_place"] = kristin_place
@@ -1367,7 +1369,7 @@ def dry_run(
         source["kristin_place"] = kristin_place
     if capture_item_facts:
         source["capture_item_facts"] = True
-    if {"item-facts", "no-close"} & set(arms):
+    if {"item-facts", "no-close", "families-offer"} & set(arms):
         source["world_capture"] = True
     atomic_json(out / "source.json", source)
     plan_for(out, n, "dry", start, semantic, "play", arms, first_command, kristin_place, capture_item_facts)
@@ -1447,7 +1449,7 @@ def live_run(
         source_payload["kristin_place"] = kristin_place
     if capture_item_facts:
         source_payload["capture_item_facts"] = True
-    if {"item-facts", "no-close"} & set(arms):
+    if {"item-facts", "no-close", "families-offer"} & set(arms):
         source_payload["world_capture"] = True
     atomic_json(
         out / "source.json",
@@ -1606,8 +1608,10 @@ def main(argv: list[str] | None = None) -> int:
     arms = tuple(item.strip() for item in args.arms.split(",") if item.strip())
     if not arms or any(arm not in ALL_ARMS for arm in arms) or len(set(arms)) != len(arms):
         raise SystemExit(f"--arms must be a comma-separated selection from {','.join(ALL_ARMS)}")
-    if not {"control", "entry", "custody", "pump", "item-facts", "no-close"} & set(arms):
-        raise SystemExit("--arms must include control, entry, custody, pump, item-facts, or no-close as the baseline")
+    if not {"control", "entry", "custody", "pump", "item-facts", "no-close", "families-offer"} & set(arms):
+        raise SystemExit(
+            "--arms must include control, entry, custody, pump, item-facts, no-close, or families-offer as the baseline"
+        )
     out = args.out if args.out.is_absolute() else ROOT / args.out
     if out.exists() and any(out.iterdir()):
         raise SystemExit(f"output directory must be absent or empty: {out}")
