@@ -1,0 +1,53 @@
+{
+ "run_name": "3c-relay-access-places",
+ "workdir": "/home/bcorfman/dev/ringer-work/3c-relay-access-places",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "relay-access-maintenance_network",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 10800,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/stage7-3c-relay-access-maintenance_network/",
+    "bench/results/ledger.jsonl (append-only)"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --mode play --start postc --arms control --kristin-place maintenance_network --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --confirm --out bench/results/stage7-3c-relay-access-maintenance_network",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-relay-access-maintenance_network 1 --mode artifacts",
+   "spec": "Run ONE billed 3C escape-result smoke: arm control (the shipped package), 1 row, from the labelled synthetic post-C start, scripted first command then the raw blind player, at most 10 attempts per row, harness caps 80 Cloudflare / 40 player. Own only bench/results/stage7-3c-relay-access-maintenance_network/ plus append-only bench/results/ledger.jsonl. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --mode play --start postc --arms control --kristin-place maintenance_network --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --confirm --out bench/results/stage7-3c-relay-access-maintenance_network",
+   "verified": "2 rows reconcile with spend events and caps"
+  },
+  {
+   "key": "relay-access-facility_escape",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 10800,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/stage7-3c-relay-access-facility_escape/",
+    "bench/results/ledger.jsonl (append-only)"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --mode play --start postc --arms control --kristin-place facility_escape --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --confirm --out bench/results/stage7-3c-relay-access-facility_escape",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/stage7/check_three_c_probe.py bench/results/stage7-3c-relay-access-facility_escape 1 --mode artifacts",
+   "spec": "Run ONE billed 3C escape-result smoke: arm control (the shipped package), 1 row, from the labelled synthetic post-C start, scripted first command then the raw blind player, at most 10 attempts per row, harness caps 80 Cloudflare / 40 player. Own only bench/results/stage7-3c-relay-access-facility_escape/ plus append-only bench/results/ledger.jsonl. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/three_c_probe.py --n 1 --mode play --start postc --arms control --kristin-place facility_escape --first-command 'Follow Michelle and the captives through the surface gates.' --semantic on --confirm --out bench/results/stage7-3c-relay-access-facility_escape",
+   "verified": "2 rows reconcile with spend events and caps"
+  }
+ ]
+}

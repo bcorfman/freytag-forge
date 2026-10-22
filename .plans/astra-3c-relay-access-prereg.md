@@ -51,3 +51,18 @@ Add `--kristin-place {chamber,maintenance_network,facility_escape}` to `three_c_
 The move happens before the scripted C-R1 (`maintenance_network`, where the pump controls sit) or C-R2 (`facility_escape`, where the
 surface gates are) turn, so the escape text lands while she is there. Then one billed row per place, `--n 1`, arm `control`, same
 first command and caps as the smoke, read by hand against the same questions. n=6 only if all three are clean.
+
+## KRISTIN-PLACE RESULT (2026-10-22, one row per place, arm `control`, `bench/results/stage7-3c-relay-access-{maintenance_network,facility_escape}/`)
+Probe change: `--kristin-place` (Ringer run `3c-kristin-place`); both rows 0 rejections, 0 clarifications, harness clean.
+- Escape text landed with Kristin at the maintenance network (before C-R1) and at the surface (before C-R2); the C-R2 response
+  carries the shipped text exactly.
+- Every row: "Return to the broadcast chamber." was accepted, narrated as Kristin rushing back and reaching the chamber, with no
+  refusal and no claim that the route was closed or that she could not hear Brandon. No reply placed anything at the speakers or
+  barrier. Outcomes: `facility_escape` earned_complete (13 turns); `maintenance_network` deadline_complete (14 turns; the player
+  looped on a phone call and the deadline closed the scene, not tied to this change).
+- Observation outside this change: in both rows the tracked `kristin_parent` never changed (stayed `maintenance_network` /
+  `facility_escape`) although the narration moved her to the chamber; the same field was constant in the earlier smoke too. Rows do
+  not record unplaced item facts, so the cause is undiagnosed. It is the "narrated move does not land" class, not the speakers or
+  barrier; the engine does not check connectivity, so the open route cannot cause it.
+Bar: met (no false reveals, no new grounding failures seen, chamber return not refused). n=6 not run: two clean rows and an
+outside-scope tracking observation; a larger run would not test the changed text further.
