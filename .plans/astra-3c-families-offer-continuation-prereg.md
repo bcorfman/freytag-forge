@@ -50,3 +50,11 @@ Harness clean: both arms ran, 0 rejections, 0 clarifications, no first command, 
 - `families-offer`: `earned_complete`, 13 turns. Turn 8 chamber, turn 9 "Listen to the reports." (D1), turn 10 "Ask Michelle to connect the families' calls to the broadcast." (D2), turns 11-12 listened to the families and Charles's signal, turn 13 "Open the recovered document." (E). No deadline event.
 Observations: the player did not use the offered sentence's words; it chose its own families command. n=1 per arm, no inference. The surface-versus-chamber difference in the first moves is the player's own choice and reflects the screen's spread, not a result.
 The 24-row screen needs Brandon's go-ahead and his approval of the caps (480 Cloudflare / 240 player).
+
+## Screen approved (Brandon, 2026-10-22: "run the 24-row screen")
+Ringer run `3c-families-offer-screen-n12`, manifest `scripts/ringer/stage7/3c-families-offer-n12.json`, caps 480 Cloudflare / 240 player, no retries or replacement rows.
+
+## SCREEN STOPPED BY A HARNESS FAILURE (2026-10-22, `bench/results/stage7-3c-families-offer-screen/`, partial, 7 of 24 rows)
+The harness stopped at row `stage7-3c-04-families-offer`, attempt 0, with `Blind player model call cap reached (1)` (run-failure.txt kept in place). Cause: `scripts/ringer/stage7/door_ask_player.mjs` calls `askPlayer` with `cap: 1`; `frontend/e2e/blind-player.js` retries once when the player's command fails its format check (imperative, ends with a period, 2 to 25 words, no waiting or restraint words), and the cap of 1 turns that retry into a thrown error that stops the whole run. The invalid command was not recorded. This is a player-format failure, not a game failure; the earlier smoke (13 player calls) did not hit it.
+Completed rows, kept as recorded and not scored as a result: item-facts 01 earned (13 turns), 02 earned (13), 03 deadline, 04 deadline; families-offer 01 earned (14), 02 deadline, 03 deadline. 4 item-facts rows and 3 families-offer rows is not a decision basis.
+Per this prereg a harness problem stops the screen and goes to Brandon; no retry, no top-up, no pooling of these 7 rows into any later run.
