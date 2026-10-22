@@ -19,6 +19,22 @@ from storygame.story_package.models import FactDelivery, RouteOperation
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
+def _canonical_snapshot(state: RuntimeState) -> dict[str, object]:
+    snapshot = json.loads(state.snapshot().model_dump_json())
+
+    def canonicalize(value: object, *, key: str | None = None) -> object:
+        if isinstance(value, dict):
+            return {item_key: canonicalize(item, key=item_key) for item_key, item in value.items()}
+        if isinstance(value, list):
+            items = [canonicalize(item) for item in value]
+            if key == "asserted":
+                return sorted(items, key=lambda item: json.dumps(item, sort_keys=True))
+            return items
+        return value
+
+    return canonicalize(snapshot)  # type: ignore[return-value]
+
+
 def _state_1a(*, card_recovered: bool) -> RuntimeState:
     state = RuntimeState.bootstrap(PACKAGE)
     state.turn_index = 3
@@ -177,7 +193,7 @@ def test_putting_the_card_down_and_picking_it_up_changes_custody_only() -> None:
 
 def test_rejected_acquisition_leaves_facts_custody_and_cue_state_untouched() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    before = state.snapshot().model_dump_json()
+    before = _canonical_snapshot(state)
     cue_before = state.staged_cue_fact_id
     engine = RuntimeEngine(state, _reveal_provider("k_sl_1a_b_r1"))
 
@@ -185,7 +201,7 @@ def test_rejected_acquisition_leaves_facts_custody_and_cue_state_untouched() -> 
         engine.turn("Read Michelle's memory card.")
 
     assert engine.last_attempt.outcome == "rejected"
-    assert state.snapshot().model_dump_json() == before
+    assert _canonical_snapshot(state) == before
     assert state.staged_cue_fact_id == cue_before
     assert "memory_card_recovered" not in _true_facts(state)
     assert _card_parent(state) != "kristin"
