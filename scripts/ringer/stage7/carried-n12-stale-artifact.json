@@ -1,0 +1,25 @@
+{
+  "run_name": "carried-n12-stale-artifact",
+  "workdir": "/home/bcorfman/dev/ringer-work/carried-n12-stale-artifact",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge-opt3",
+  "tasks": [
+    {
+      "key": "skip-when-recorded-package-differs",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": ["-c", "model_reasoning_effort=medium"],
+      "max_attempts": 2,
+      "timeout_s": 1200,
+      "check_timeout_s": 600,
+      "ownership": ["tests/test_3c_carried_start.py"],
+      "expect_files": ["/home/bcorfman/dev/freytag-forge-opt3/tests/test_3c_carried_start.py"],
+      "spec": "You are an edit worker on freytag-forge. Working directory: the git worktree /home/bcorfman/dev/freytag-forge-opt3 (branch 3c-option3-escape-close). You own ONLY tests/test_3c_carried_start.py. Touch nothing else. No git add/commit/reset/checkout/stash. No network, no .env, never use uv; run python as `TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge-opt3 /home/bcorfman/dev/freytag-forge/.venv/bin/python`.\n\nPROBLEM. test_checker_accepts_live_carried_n12_artifacts (around line 103) runs checker.check(bench/results/stage7-3c-carried-n12, 12, 'artifacts') and asserts no errors. That artifact is a RECORDED LIVE RUN: its source.json stores the package hash of the story package it ran against. On this branch the package has since changed (storylet-routes.yaml gained an event delivery_text), so the checker reports errors that end with 'differs from current package' (strings like 'loaded variation proof differs from current package'; see scripts/ringer/stage7/check_three_c_probe.py lines ~88-94). Those are expected provenance mismatches, not defects; the recording cannot be regenerated without a billed live run.\n\nTASK. Change ONLY that test so that: it computes `errors = checker.check(artifact, 12, 'artifacts')`; if errors is empty, the test passes as today; if every error contains the text 'differs from current package' the test calls pytest.skip with a clear reason such as 'live carried n12 artifacts were recorded against an earlier package'; if there is ANY other error the test fails with that list (assert errors == [] with the list visible). Keep the existing skip for a missing directory. Do not weaken or touch any other test, and do not edit the checker script or the artifacts. Keep ruff clean (line length 120).\n\nVERIFY yourself: `TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge-opt3 /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -rs tests/test_3c_carried_start.py` (the artifact test must be reported as skipped with your reason, the rest pass) and ruff check/format on the file. Final message: git diff of the file.",
+      "check": "cd /home/bcorfman/dev/freytag-forge-opt3 && set -o pipefail && export TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge-opt3 && PY=/home/bcorfman/dev/freytag-forge/.venv/bin/python && out=\"$($PY -m pytest -q --no-cov -rs tests/test_3c_carried_start.py 2>&1)\" ; echo \"$out\" | tail -6; echo \"$out\" | grep -q 'failed' && { echo 'FAIL: tests failed'; exit 1; }; echo \"$out\" | grep -qi 'skipped' || { echo 'FAIL: artifact test was not skipped'; exit 1; }; $PY - <<'PYEOF'\nimport json, sys\nfrom pathlib import Path\nsys.path.insert(0, 'scripts/ringer/stage7')\nimport check_three_c_probe as c\nerrors = c.check(Path('bench/results/stage7-3c-carried-n12'), 12, 'artifacts')\nother = [e for e in errors if 'differs from current package' not in e]\nassert errors and not other, f'premise changed: {errors}'\nprint('premise ok:', len(errors), 'provenance-only errors')\nPYEOF\nsrc=tests/test_3c_carried_start.py; grep -q 'differs from current package' $src || { echo 'FAIL: test does not name the provenance text'; exit 1; }; /home/bcorfman/dev/freytag-forge/.venv/bin/ruff check $src && /home/bcorfman/dev/freytag-forge/.venv/bin/ruff format --check $src && [ \"$(git status --porcelain | grep -v '^??' | awk '{print $2}' | tr '\\n' ' ')\" = 'tests/test_3c_carried_start.py ' ] || { echo 'FAIL: unexpected changed files'; git status --porcelain; exit 1; }",
+      "verified": "artifact test skips only when every checker error is a package-provenance mismatch, fails on any other error; rest of the file passes"
+    }
+  ]
+}
