@@ -22,3 +22,11 @@ Pass: at least 10/12 choices genuinely answer or contact the families, at least 
 
 ## Not covered
 Earned endings, the tunnel loop, hosted semantic fallback, rates.
+
+## Approved (Brandon, 2026-10-22: "build the probe script, commit then run the 24 player calls")
+Probe `scripts/ringer/stage7/3c_families_offer_probe.py` (Ringer run `3c-families-offer-probe`, committed). Screen run `3c-families-offer-screen`, 24 player requests, no narration calls.
+
+## RESULT (2026-10-22, `bench/results/stage7-3c-families-offer/`, 24 rows, 0 errors)
+The Ringer run reports FAIL only because its check (a `python -` heredoc) exited nonzero; the command itself exited 0 and rows.json holds all 24 rows with no errors.
+Read by hand, every command. Control: 0/12 answer the families; all 12 are tunnel commands ("Continue through the maintenance tunnel to the surface" and variants). Offer: 11/12 answer the families ("Answer the families with news of the captives" or "Answer the families' calls with news of the captives"), 1/12 ("Keep moving toward the surface") a tunnel command. The real selector picks `k_sl_3c_d_r2` for all 11, none for the other 13.
+No hardware/search thread was induced. Caveat: 8 of the 11 offer commands repeat the cue sentence's words nearly verbatim, so this shows the player takes the action when it is offered, not that it would find it unprompted. Rule: needed 10/12 and +3 over control. Met (11/12, +11). Passes the local screen; not adoption. Next: a continuation screen (12 rows per arm, product capture, semantic ON, no scripted first command, close kept in both arms) with its own prereg.

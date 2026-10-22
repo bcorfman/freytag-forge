@@ -1,0 +1,33 @@
+{
+ "run_name": "3c-families-offer-screen",
+ "workdir": "/home/bcorfman/dev/ringer-work/3c-families-offer-screen",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "families-offer-screen",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 120,
+   "ownership": [
+    "bench/results/stage7-3c-families-offer/"
+   ],
+   "expect_files": [
+    "bench/results/stage7-3c-families-offer/rows.json"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/3c_families_offer_probe.py --samples 12 --confirm --out bench/results/stage7-3c-families-offer",
+   "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('bench/results/stage7-3c-families-offer/rows.json'))\nrows=r if isinstance(r,list) else r.get('rows',[])\nprint(len(rows),'rows;',sum(1 for x in rows if x.get('error')),'errors')\nsys.exit(0 if len(rows)==24 else 1)\nPY",
+   "spec": "Run ONE billed 3C families-offer player-choice screen: 12 samples per arm (control, offer), 24 independent blind-player requests, no Cloudflare narration calls. Own only bench/results/stage7-3c-families-offer/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; on quota, outage or error leave partial rows.json and any run-failure.txt in place and report verbatim. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/3c_families_offer_probe.py --samples 12 --confirm --out bench/results/stage7-3c-families-offer",
+   "verified": "24 player choices recorded, errors reported"
+  }
+ ]
+}
