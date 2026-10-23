@@ -35,7 +35,7 @@ TMPDIR=/tmp uv run pytest -q --cov                           # full suite + 90% 
 TMPDIR=/tmp uv run pytest -q --no-cov -m "(unit or component) and not authoring_quality"  # CI fast feedback
 TMPDIR=/tmp uv run pytest -q --no-cov -m authoring_quality    # package authoring checks
 TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index N --shard-count 6  # one CI coverage shard; files are assigned by tests/shard_durations.json
-uv run coverage combine coverage-data && uv run coverage report  # CI required gate
+uv run coverage combine coverage-data && uv run coverage report  # nightly gate (coverage-nightly.yml)
 uv run ruff check . && uv run ruff format --check .
 # Repair lint/format debt when needed: uv run ruff check --fix . && uv run ruff format .
 (cd frontend && node --test e2e/*.test.js src/*.test.js)
@@ -48,9 +48,10 @@ reports no remaining issues; `npm test` passes and Vite writes `frontend/dist/`.
 **Cleanup:** None. `frontend/dist/` is generated; delete it freely.
 
 **Notes:** CI (`.github/workflows/test.yml`) runs static checks, fast feedback,
-and the required gate, then deploys the tested SHA to staging and reruns
+and six `--no-cov` test shards, then deploys the tested SHA to staging and reruns
 `tests/test_web_demo.py tests/test_cloudflare_transport.py` against the
-adapter contract. `frozen-runtime-regression.yml` runs
+adapter contract. `coverage-nightly.yml` enforces the 90% coverage floor on a
+schedule, not on pushes. `frozen-runtime-regression.yml` runs
 `tests/test_markdown_story_package.py` weekly.
 
 ## 2. Focused checks by boundary

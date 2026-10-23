@@ -25,7 +25,6 @@ WSL test captures must use Linux temporary storage:
 TMPDIR=/tmp uv run pytest -q
 TMPDIR=/tmp uv run pytest -q --no-cov -m authoring_quality
 TMPDIR=/tmp uv run pytest -q --no-cov -m "unit or component"
-TMPDIR=/tmp uv run pytest tests/test_conversation_quality_phase8.py -q --no-cov
 TMPDIR=/tmp uv run pytest -q --no-cov --collect-only
 TMPDIR=/tmp uv run pytest -q --cov -n 2 --tier-report=/tmp/test-suite-health.json
 cd frontend && npm test && npm run build
@@ -37,11 +36,13 @@ commit, command, coverage mode, elapsed time, and generated health report.
 ## CI
 
 The `tests` workflow runs **Static checks**, **Fast feedback (unit and
-component runtime-safety tests)**, and **Required coverage gate**. Static
-checks run Ruff's fast syntax/error rules. The fast job excludes the
-authoring-quality suite and boundary-heavy integration tests; the required
-gate is the single complete test run and uses two workers, branch coverage,
-the project-wide 90% floor, and a health artifact.
+component runtime-safety tests)**, and six **Test shard** jobs. None of them
+measures coverage. Static checks run Ruff's fast syntax/error rules. The fast
+job excludes the authoring-quality suite and boundary-heavy integration tests;
+the shards together run the complete suite with `--no-cov`, four workers each,
+and upload a health artifact. The project-wide 90% coverage floor is enforced
+by `coverage-nightly.yml` (daily, or on manual dispatch), which runs the same
+six shards with `--cov`, combines the data, and reports against `fail_under`.
 Coverage-context and benchmark workflows are informational. Live hosted and
 OpenAI tests remain opt-in and skip without their credentials and flags.
 
