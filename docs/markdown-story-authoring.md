@@ -188,6 +188,18 @@ knowledge or name a hidden location. A bridge may narrate only pressure facts
 that its activation requires. Set `verbatim: true` when the authored text must
 be emitted directly to the player rather than reproduced by the narrator.
 
+### Optional incidents
+
+An optional `incidents.yaml` file declares scene-local decision windows.
+Each incident has an `id`, `scene_id`, two or more `outcomes`, a missed-window event, and a successor transition.
+Each outcome names an `id`, one storylet realization, at least one advantage fact, and optional cost facts.
+Observation knowledge IDs may name free knowledge available in that scene.
+The loader requires exclusive realizations, known facts, scene-local events and transitions, and asserted outcome facts.
+Advantages must be disjoint, and an outcome cannot list the same fact as both an advantage and a cost.
+The missed-window event cannot grant an outcome fact or force the successor transition.
+Fact delivery costs in the incident scene cannot duplicate outcome costs.
+Phase 1 step 2 adds declarations and validation only; the engine does not act on incidents yet.
+
 `storylet-routes.yaml` is the executable companion to `storylets.md`. It
 declares scene-local activation predicates, exact fact operations for each
 realization, protected boundaries, canonical bridge events, and canonical

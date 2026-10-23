@@ -675,6 +675,24 @@ class StoryletRoute(_Model):
         return self
 
 
+class IncidentOutcome(_Model):
+    id: str = Field(pattern=_ID)
+    storylet_id: str = Field(pattern=r"^SL-[1-9][A-Z]-[A-Z]$")
+    realization_id: str = Field(min_length=1)
+    advantages: tuple[str, ...] = Field(min_length=1)
+    costs: tuple[str, ...] = ()
+
+
+class Incident(_Model):
+    id: str = Field(pattern=_ID)
+    scene_id: str = Field(pattern=_SCENE_ID)
+    outcomes: tuple[IncidentOutcome, ...] = Field(min_length=2)
+    missed_window_event_id: str = Field(pattern=_ID)
+    successor_transition_id: str = Field(pattern=_ID)
+    observation_knowledge_ids: tuple[str, ...] = ()
+    completes_scene: StrictBool = True
+
+
 class CanonicalRouteEvent(_Model):
     id: str = Field(min_length=1)
     scene_id: str = Field(pattern=_SCENE_ID)
@@ -716,6 +734,7 @@ class StoryPackage(_Model):
     knowledge: KnowledgeCatalog
     knowledge_indexes: KnowledgeIndexes
     deliveries: tuple[FactDelivery, ...]
+    incidents: tuple[Incident, ...] = ()
 
     @property
     def fact_ids(self) -> frozenset[str]:

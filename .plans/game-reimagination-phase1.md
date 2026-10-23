@@ -7,9 +7,10 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 ## Resume here
 
-Decisions in section 5 are made. Step 1 is done and verified (below), committed as
-`8c4447ca`. Next: step 2 (`incidents` model, loader
-validation, synthetic package fixture), as a Ringer manifest.
+Decisions in section 5 are made. Steps 1 and 2 are done and verified (below);
+step 1 is `8c4447ca`, step 2 is the commit that records this entry. Next: step 3
+(engine: outcome resolution, outcome-scoped cost, completion without the floor),
+as a Ringer manifest.
 
 ## Step 1 result (2026-10-22)
 
@@ -39,6 +40,34 @@ suite. Findings, all from executed tests:
 - Not pinned: clarification does not advance pacing. No short 1C command
   reaches `ClarificationTurn` in today's resolver, so that test is a skip.
   Cover it in step 4 with a synthetic fixture.
+
+## Step 2 result (2026-10-22)
+
+Ringer run `game-reimagination-phase1`, Codex Luna medium, 1 attempt, 101k
+tokens, 597 s. Added optional `incidents.yaml`: `Incident` and `IncidentOutcome`
+models, `StoryPackage.incidents` (default `()`), `_validate_incidents`, the
+synthetic package `tests/fixtures/stories/lighthouse-incident`, and
+`tests/test_incident_loader.py` (16 pass). Full suite 2,978 passed, 16 skipped;
+Ruff clean. No runtime change; the engine does not act on incidents yet.
+
+- Declaration shape: an incident names its scene, two or more outcomes, a
+  `missed_window_event_id` (an existing pacing event), a
+  `successor_transition_id`, optional `observation_knowledge_ids` and
+  `completes_scene` (default true). An outcome names one realization of the
+  shared storylet, its `advantages` and its `costs`. Both must be asserted true
+  by that realization, so the cost is the realization's own operation.
+- Exclusivity is by shared storylet with distinct realizations (step 1 finding).
+  Advantage sets are disjoint across outcomes.
+- The loader rejects the 11 listed cases. A missed-window event cannot touch an
+  outcome fact or carry the successor transition. A delivery cost in the
+  incident scene cannot duplicate an outcome cost.
+- Ids are snake_case (`_ID`), so the contract's `I-1C-freight-transfer` becomes
+  something like `i_1c_freight_transfer` in step 6.
+- `storygame/audit.py` enumerates `storylet-routes.yaml`; it was not changed.
+  Check in step 6 whether the audit needs to read `incidents.yaml`.
+- Gap to fix in step 3's manifest: no test covers an `incidents.yaml` that is
+  not a mapping, although the spec asked for one. Reading the loader, a YAML
+  list there would raise `AttributeError` on `.get`, not `StoryPackageError`.
 
 ## 1. What exists today (read in source, 2026-10-22)
 
