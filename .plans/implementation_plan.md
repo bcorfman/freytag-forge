@@ -1,5 +1,10 @@
 # Consolidated implementation plan
 
+Design direction update, 2026-10-22: see [the game reimagination plan](game-reimagination-plan.md)
+for the user's requested reassessment of pacing, content and continuity. Start
+there for new redesign work; preserve the evidence below. This pointer does
+not mark the outstanding implementation or verification complete.
+
 Status: **active; consolidated 2026-10-15 at local HEAD `5ea01199`.** This is
 the execution queue for remaining work from `.plans/`. Superseded source plans and review drafts have been removed from this
 directory; their evidence and decisions remain in git history. Their old

@@ -1,5 +1,10 @@
 # Complete every authored game path with coherent discoveries and reveals
 
+Design direction update, 2026-10-22: [the game reimagination plan](game-reimagination-plan.md)
+now frames the requested content and engine reassessment. Use this completion
+plan as evidence and a regression inventory; do not treat its older experiment
+queue as parallel work by default. Its unverified results remain unverified.
+
 Status: steps 1 to 4 mostly implemented offline (uncommitted); step 5 audited, awaiting the plot handoff answer; steps 6 and 7 not started. Updated 2026-10-20. Baseline checkout:
 `f918c663d67d368645f9a24a47a28ffb29fb77d8` (the adopted pump package).
 This is the new plan for whole-game completion. Keep the older 3C plan and its
