@@ -94,14 +94,6 @@ def test_real_package_matches_the_old_filter_after_each_storylet_fires() -> None
             _assert_reference_matches(state)
 
 
-def test_real_package_matches_the_old_filter_with_each_fact_toggled() -> None:
-    for scene in PACKAGE.scenes:
-        for fact_id in PACKAGE.fact_ids:
-            state = _scene_state(scene.metadata.scene_id)
-            state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
-            _assert_reference_matches(state)
-
-
 def _synthetic_state() -> RuntimeState:
     return RuntimeState.model_construct(
         package=SimpleNamespace(),

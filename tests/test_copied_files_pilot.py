@@ -116,11 +116,6 @@ def _resolver(scene_id: str) -> ItemFactsProvider:
     )
 
 
-def test_base_verdicts_are_unchanged_by_the_pilot() -> None:
-    current = {scene: tuple(_verdict(scene, sentence) for sentence in SENTENCES) for scene in BASE_VERDICTS}
-    assert current == BASE_VERDICTS
-
-
 def test_copied_files_are_placed_under_kristin_in_2c() -> None:
     assert world_for(PACKAGE, _state("2C").facts).parent("copied_janus_files") == "kristin"
 

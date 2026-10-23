@@ -117,16 +117,6 @@ def test_earning_memory_card_makes_the_same_collision_ambiguous() -> None:
     )
 
 
-def test_existing_terminal_and_seat_ambiguities_remain_fixed() -> None:
-    terminal = resolve_references(_state(scene_id="2B"), "Read the terminal.")
-    seat = resolve_references(_state(scene_id="1C"), "Sit in the seat.")
-
-    assert terminal.question is not None
-    assert clarification_text(terminal.question) == "Do you mean the archive terminals or the medical terminal?"
-    assert seat.question is not None
-    assert clarification_text(seat.question) == "Do you mean the driver's seat or the passenger seat?"
-
-
 def test_characterization_held_transit_card_bare_and_article_are_guarded() -> None:
     """Synthetic state: narration refuses both forms.
 

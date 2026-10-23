@@ -8,17 +8,6 @@ import three_c_probe as probe
 from door_transport import SpendBudget
 
 
-def test_capture_flag_off_keeps_dry_artifacts_byte_identical(tmp_path: Path) -> None:
-    without_flag = tmp_path / "without"
-    explicit_off = tmp_path / "explicit-off"
-    without_flag.mkdir()
-    explicit_off.mkdir()
-    probe.dry_run(without_flag, 1, "carried", "on", ("pump", "families"), None)
-    probe.dry_run(explicit_off, 1, "carried", "on", ("pump", "families"), None, capture_item_facts=False)
-    for name in ("source.json", "plan.json"):
-        assert (without_flag / name).read_bytes() == (explicit_off / name).read_bytes()
-
-
 class _CaptureProvider:
     def __init__(self, values: dict[str, object] | None = None) -> None:
         self.values = values or {}

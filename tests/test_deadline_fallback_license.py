@@ -8,10 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.contracts import NarrationSegment, ResolvedTurnProposal
 from storygame.runtime.engine import RuntimeEngine
-from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.state import RuntimeState
@@ -34,34 +32,6 @@ class _Response:
 
     def read(self) -> bytes:
         return self.payload
-
-
-def test_scene_1a_deadline_fallback_is_accepted_and_exits_scene(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "storygame.runtime.cloudflare.urlopen",
-        lambda *_args, **_kwargs: _Response(
-            {"narration": json.dumps({"segments": [{"kind": "narration", "text": "The house is quiet."}]})}
-        ),
-    )
-    state = RuntimeState.bootstrap(PACKAGE)
-    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    engine = RuntimeEngine(state, provider)
-    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
-
-    for player_input in (
-        "Search the kitchen.",
-        "Check the back door.",
-        "Look at the overturned chair.",
-        "Look around the living room.",
-        "Check the front window.",
-    ):
-        engine.turn(player_input)
-    for _ in range(window.handoff_after_turns - 5):
-        engine.turn("Search the room for a way forward.")
-
-    assert state.current_scene_id == "1B"
-    assert Fact(predicate="continuity_initiative_known", subject="story", value="true") in state.facts.asserted
-    assert Fact(predicate="memory_card_recovered", subject="story", value="true") in state.facts.asserted
 
 
 def test_card_is_still_unavailable_before_a_staged_handoff() -> None:

@@ -1,12 +1,6 @@
 from __future__ import annotations
 
-import os
-import subprocess
-import sys
 from pathlib import Path
-
-import check_three_c_probe as checker
-import three_c_probe as probe
 
 from bench.core import load_variation, package_and_state, provider_for
 from storygame.runtime.cloudflare import CloudflareTurnProvider
@@ -39,49 +33,6 @@ def test_provider_for_selects_item_facts_only_for_new_arm(monkeypatch) -> None:
 
     assert isinstance(provider_for(item_facts_state, item_facts_variation), ItemFactsProvider)
     assert type(provider_for(control_state, control_variation)) is CloudflareTurnProvider
-
-
-def test_item_facts_dry_run_is_accepted_by_checker(tmp_path: Path) -> None:
-    output = tmp_path / "item-facts"
-    env = os.environ | {"PYTHONPATH": str(ROOT), "TMPDIR": "/tmp"}
-    subprocess.run(
-        [
-            sys.executable,
-            str(ROOT / "scripts/ringer/stage7/three_c_probe.py"),
-            "--n",
-            "1",
-            "--mode",
-            "play",
-            "--start",
-            "postc",
-            "--arms",
-            "item-facts",
-            "--kristin-place",
-            "facility_escape",
-            "--capture-item-facts",
-            "--first-command",
-            "Follow Michelle and the captives through the surface gates.",
-            "--semantic",
-            "on",
-            "--dry-run",
-            "--out",
-            str(output),
-        ],
-        check=True,
-        env=env,
-    )
-    assert checker.check(output, 1, "dry") == []
-
-
-def test_existing_arm_dry_artifacts_remain_stable(tmp_path: Path) -> None:
-    first = tmp_path / "first"
-    second = tmp_path / "second"
-    first.mkdir()
-    second.mkdir()
-    probe.dry_run(first, 1, "postc", "off", ("control", "pre667"), None)
-    probe.dry_run(second, 1, "postc", "off", ("control", "pre667"), None)
-    for name in ("source.json", "plan.json"):
-        assert (first / name).read_bytes() == (second / name).read_bytes()
 
 
 def test_item_facts_apply_path_moves_kristin_to_broadcast_chamber() -> None:

@@ -58,43 +58,6 @@ def _provider(state: RuntimeState, monkeypatch: pytest.MonkeyPatch) -> Cloudflar
     return CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
 
-def test_2c_copying_bare_file_earns_copied_files_reveal(monkeypatch: pytest.MonkeyPatch) -> None:
-    state = _state("2C", "janus_evidence")
-    provider = _provider(state, monkeypatch)
-
-    result = RuntimeEngine(state, provider).turn(COPY_COMMAND)
-
-    assert result.selected_knowledge_ids == ("k_sl_2c_c_r1",)
-    assert provider.last_reveal_selection["reference_names"] == ["copied JANUS files"]
-
-
-@pytest.mark.parametrize("command", LEAD_COMMANDS)
-def test_3a_leading_captives_through_bare_gate_earns_uprising_reveal(
-    monkeypatch: pytest.MonkeyPatch, command: str
-) -> None:
-    state = _state(
-        "3A",
-        "michelle_reached",
-        "military_override_codes_available",
-        "override_codes_deadline_known",
-        "uprising_prepared",
-    )
-    provider = _provider(state, monkeypatch)
-
-    result = RuntimeEngine(state, provider).turn(command)
-
-    assert result.selected_knowledge_ids == ("k_sl_3a_c_r1",)
-    assert provider.last_reveal_selection["reference_names"] == ["detention captives", "emergency surface gates"]
-
-
-def test_resolved_reference_names_skip_full_names_and_unrelated_words() -> None:
-    state = _state("2C", "janus_evidence")
-
-    assert resolved_reference_names(state, COPY_COMMAND) == ("copied JANUS files",)
-    assert resolved_reference_names(state, "Copy the copied JANUS files to my laptop.") == ()
-    assert resolved_reference_names(state, "Wait by the window.") == ()
-
-
 def test_ambiguous_reference_still_asks_without_provider_call() -> None:
     state = _state("2B")
     calls: list[str] = []
@@ -109,17 +72,6 @@ def test_ambiguous_reference_still_asks_without_provider_call() -> None:
     assert calls == []
     assert resolved_reference_names(state, "Read the next terminal.") == ()
     assert resolve_references(state, "Read the next terminal.").question is not None
-
-
-def test_narrator_context_keeps_original_player_input(monkeypatch: pytest.MonkeyPatch) -> None:
-    state = _state("2C", "janus_evidence")
-    provider = _provider(state, monkeypatch)
-
-    prompt = provider.assemble_turn_prompt(COPY_COMMAND)
-
-    assert prompt["context"]["player_input"] == COPY_COMMAND
-    assert "copied JANUS files" not in prompt["context"]["player_input"]
-    assert provider.last_reveal_selection["reference_names"] == ["copied JANUS files"]
 
 
 def test_negated_copy_does_not_earn_reveal(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import json
-import socket
-import urllib.request
 from pathlib import Path
 
 import pytest
@@ -31,15 +29,6 @@ def test_state_compare_runs_offline_end_to_end(tmp_path: Path) -> None:
     places = report["prompt_diff"]["things_places_called_out"]["SCRIPTED"]
     assert places["Michelle"]["present"]
     assert places["captives"]["present"]
-
-
-def test_state_compare_does_not_use_network(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    def fail(*_args, **_kwargs):
-        raise AssertionError("network access is forbidden in the state comparison")
-
-    monkeypatch.setattr(socket, "socket", fail)
-    monkeypatch.setattr(urllib.request, "urlopen", fail)
-    assert compare.main(["--out", str(tmp_path / "network-guard")]) == 0
 
 
 def test_grouped_set_difference_on_fixtures() -> None:

@@ -16,7 +16,6 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.reference_resolution import resolve_references
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.validation import ProposalValidationError
 from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
 
@@ -242,22 +241,6 @@ def test_declared_place_forms_are_nameable_in_their_scene(scene_id: str) -> None
         )
 
 
-def test_scoped_aliases_resolve_only_in_their_declared_scenes() -> None:
-    for scene_id, aliases in EXPECTED_SCOPED_ALIASES_BY_SCENE.items():
-        state = _scene_state(scene_id)
-        for alias, entity_id in aliases.items():
-            if scene_id == "3C" and entity_id == "captives":
-                continue
-            result = resolve_references(state, f"Inspect the {alias}.")
-            assert result.question is None
-            assert len(result.resolutions) == 1
-            assert result.resolutions[0][0] in alias.casefold().split()
-            assert result.resolutions[0][1] == entity_id
-
-    assert resolve_references(_scene_state("2A"), "Inspect the bench.").resolutions == ()
-    assert resolve_references(_scene_state("3A"), "Inspect the servers.").resolutions == ()
-
-
 def test_3c_captives_are_out_of_scope_where_the_story_places_them() -> None:
     """The captives wait in maintenance_network (under the command levels), not in the 3C scene or with Kristin."""
 
@@ -306,32 +289,6 @@ def test_corridor_place_names_are_accepted_before_the_access_reveal(scene_id: st
 
     validate("The infrastructure corridors are quiet.")
     validate("The infrastructure corridor is quiet.")
-
-
-@pytest.mark.parametrize("scene_id", ("2A", "2B", "2C", "3A"))
-@pytest.mark.parametrize("term", ("medical records", "medical file"))
-def test_medical_record_common_phrases_can_reach_earlier_narration(
-    monkeypatch: pytest.MonkeyPatch, scene_id: str, term: str
-) -> None:
-    copula = "are" if term.endswith("records") else "is"
-    text = f"The {term} {copula} on the table."
-    result = _engine(monkeypatch, _scene_state(scene_id), text=text).turn(f"Read the {term}.")
-    assert result.segments[0].text == text
-
-
-@pytest.mark.parametrize("scene_id", ("2A", "2B", "2C", "3A"))
-def test_full_medical_records_entity_name_is_rejected_until_placed(
-    monkeypatch: pytest.MonkeyPatch, scene_id: str
-) -> None:
-    with pytest.raises(ProposalValidationError) as caught:
-        _engine(
-            monkeypatch,
-            _scene_state(scene_id),
-            text="The detention medical records are on the table.",
-        ).turn("Read the detention medical records.")
-
-    assert caught.value.code == "narration_known_term_leak"
-    assert str(caught.value) == "narration mentions an unavailable entity 'detention medical records'"
 
 
 def test_3a_medical_record_reveal_places_the_entity_and_accepts_its_name(

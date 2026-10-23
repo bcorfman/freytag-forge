@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 
-from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.contracts import NarrationSegment, ResolvedTurnProposal
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.knowledge import KnowledgeProjector
@@ -55,43 +54,6 @@ def _drive_to_scene(engine: RuntimeEngine, state: RuntimeState, target: str) -> 
             exits[source_scene] = turn_in_scene
 
     pytest.fail(f"did not reach {target}; stopped in {state.current_scene_id}")
-
-
-def test_repeated_waits_reach_3c_without_deadline_rejections(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "storygame.runtime.cloudflare.urlopen",
-        lambda *_args, **_kwargs: _Response(
-            {"narration": json.dumps({"segments": [{"kind": "narration", "text": "Kristin waits and watches."}]})}
-        ),
-    )
-    state = RuntimeState.bootstrap(PACKAGE)
-    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    engine = RuntimeEngine(state, provider)
-
-    exits = _drive_to_scene(engine, state, "3C")
-
-    assert set(exits) == {scene.metadata.scene_id for scene in PACKAGE.scenes[:-1]}
-    assert all(exits[scene_id] <= limit for scene_id, limit in _windows().items() if scene_id in exits)
-
-
-def test_pre_deadline_janus_narration_is_still_rejected(monkeypatch) -> None:
-    response_text = "Kristin waits and watches."
-
-    def open_request(*_args, **_kwargs) -> _Response:
-        return _Response({"narration": json.dumps({"segments": [{"kind": "narration", "text": response_text}]})})
-
-    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-    state = RuntimeState.bootstrap(PACKAGE)
-    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    engine = RuntimeEngine(state, provider)
-    _drive_to_scene(engine, state, "2B")
-    response_text = "Kristin reads about JANUS on a terminal."
-
-    with pytest.raises(ProposalValidationError) as caught:
-        engine.turn("Read the archive terminals.")
-
-    assert caught.value.code == "protected_narration_leak"
-    assert state.current_scene_id == "2B"
 
 
 def test_staged_fallback_licenses_only_protected_terms_it_contains() -> None:

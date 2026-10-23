@@ -10,8 +10,7 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ActivationRule, CanonicalRouteEvent, RouteOperation
-from tests._legacy_package import legacy_package
-from tests.test_canon_journey import PACKAGE, _drive, _ScriptedProvider
+from tests.test_canon_journey import _ScriptedProvider
 
 
 def _is_true(state: RuntimeState, fact_id: str) -> bool:
@@ -48,64 +47,6 @@ class _GreedyProvider(_ScriptedProvider):
             self.selected = []
         self.selected_history.append(tuple(self.selected))
         return super().__call__(player_input)
-
-
-def test_deliverable_early_then_world_only_deadline_exits_2a() -> None:
-    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
-    state = RuntimeState.bootstrap(package)
-    provider = _GreedyProvider(state)
-    engine = RuntimeEngine(state, provider)
-    provider.engine = engine
-
-    pre_2a_budget = sum(item.handoff_after_turns for item in package.pacing.scenes[:3]) + 1
-    for _ in range(pre_2a_budget):
-        if state.current_scene_id == "2A":
-            break
-        _drive(engine, provider, None)
-
-    assert state.current_scene_id == "2A"
-    _drive(engine, provider, None)
-    assert provider.selected_history[-1] == ("k_sl_2a_b_r1",)
-    provider.choose = False
-    window = next(item for item in package.pacing.scenes if item.scene_id == "2A")
-    exit_turn = None
-    for _ in range(window.handoff_after_turns - 1):
-        result = engine.turn("Inspect the restricted corridor entrance.")
-        if state.current_scene_id == "2B":
-            exit_turn = result
-            break
-
-    assert state.current_scene_id == "2B"
-    assert _is_true(state, "rebecca_observing_infiltrators")
-    assert exit_turn is not None
-    bridge_text = next(
-        scene.metadata.bridge_text["t_2a_2b"] for scene in package.scenes if scene.metadata.scene_id == "2A"
-    )
-    assert bridge_text in {segment.text for segment in exit_turn.segments}
-
-
-def test_staller_from_2a_still_exits_at_its_deadline() -> None:
-    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
-    state = RuntimeState.bootstrap(package)
-    provider = _ScriptedProvider(package)
-    engine = RuntimeEngine(state, provider)
-
-    pre_2a_budget = sum(item.handoff_after_turns for item in package.pacing.scenes[:3]) + 1
-    for _ in range(pre_2a_budget):
-        if state.current_scene_id == "2A":
-            break
-        _drive(engine, provider, None)
-
-    assert state.current_scene_id == "2A"
-    window = next(item for item in package.pacing.scenes if item.scene_id == "2A")
-    for _ in range(window.handoff_after_turns):
-        _drive(engine, provider, None)
-        if state.current_scene_id == "2B":
-            break
-
-    assert state.current_scene_id == "2B"
-    assert _is_true(state, "false_identities_ready")
-    assert _is_true(state, "rebecca_observing_infiltrators")
 
 
 def test_resolution_deadline_does_not_stage_world_only_bridge_fact() -> None:

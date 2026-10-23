@@ -211,18 +211,6 @@ def _redacted_knowledge(ids: set[str]) -> list[dict[str, int | str]]:
     ]
 
 
-def test_leakage_matrix_omits_every_future_known_term() -> None:
-    positions = _timeline_positions()
-    observations = _build_leakage_matrix()
-
-    for observation in observations:
-        _assert_future_terms_absent(observation, positions[observation.scene_id])
-        if observation.step.startswith("after:") and observation.visible:
-            assert observation.knowledge_id in {item.id for item in observation.context.committed_knowledge}, (
-                f"{observation.scene_id}/{observation.audience_id}/{observation.step} did not commit its reveal"
-            )
-
-
 def test_leakage_matrix_context_snapshot_stays_within_the_declared_payload_budget() -> None:
     observations = _build_leakage_matrix()
     snapshot: list[dict[str, object]] = []

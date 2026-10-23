@@ -10,7 +10,6 @@ from storygame.personas import PERSONAS, _legacy_package, _ScriptedProvider, _se
 from storygame.runtime.contracts import RuntimeContractError
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
-from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
@@ -62,58 +61,9 @@ def _narrate(state: RuntimeState, text: str, grounding: tuple[str, ...] = ()) ->
     RuntimeEngine(state, lambda _player_input: payload).turn("Inspect the alarm panel.")
 
 
-def test_earned_names_are_accepted_in_later_scene() -> None:
-    state = _seeded_3b()
-
-    _narrate(state, "Michelle and Brandon watch the JANUS relay as alarms sound.")
-
-
-def test_true_delivery_earns_protected_terms() -> None:
-    state = _seeded_3b()
-
-    _narrate(state, "The JANUS selection records fill the archive screen.")
-
-
-def test_false_delivery_fact_does_not_earn_protected_terms() -> None:
-    state = _seeded_3b()
-    for fact in state.facts.matching("janus_evidence"):
-        state.facts.retract_fact(fact)
-
-    with pytest.raises(ProposalValidationError) as exc_info:
-        _narrate(state, "The JANUS selection records fill the archive screen.")
-    assert exc_info.value.code == "protected_narration_leak"
-
-
-def test_undelivered_protected_terms_remain_unearned() -> None:
-    with pytest.raises(ProposalValidationError) as exc_info:
-        _narrate(_seeded_3b(), "The phase two conflict plan fills the archive screen.")
-    assert exc_info.value.code == "protected_narration_leak"
-
-
 def test_bare_later_scene_rejects_unearned_names() -> None:
     with pytest.raises(ProposalValidationError):
         _narrate(_bare_3b(), "Michelle and Brandon watch the JANUS selection records as alarms sound.")
-
-
-def test_seeded_later_scene_rejects_not_yet_earned_item_name() -> None:
-    with pytest.raises(ProposalValidationError):
-        _narrate(_seeded_3b(), "Brandon eyes the portable data case in Rebecca's office.")
-
-
-def test_earned_but_unshown_knowledge_cannot_be_used_as_grounding() -> None:
-    state = _seeded_3b()
-    projector = KnowledgeProjector()
-    earned_ids = {
-        item.id
-        for item in PACKAGE.knowledge.knowledge
-        if KnowledgeProjector._established(item, state) and KnowledgeProjector._visible_to(item, "player")
-    }
-    shown_ids = {item.id for item in projector.project(state, "player", "").committed_knowledge}
-    unshown_id = next(iter(sorted(earned_ids - shown_ids)))
-    statement = PACKAGE.knowledge_indexes.by_id[unshown_id].statement
-
-    with pytest.raises(ProposalValidationError, match="segment grounding is not committed or selected knowledge"):
-        _narrate(state, statement, (unshown_id,))
 
 
 def test_earned_phase_two_statement_lets_narration_say_phase_two() -> None:

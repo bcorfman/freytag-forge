@@ -1,21 +1,5 @@
 import json
-import subprocess
-import sys
 from pathlib import Path
-
-
-def test_contract_probe_dry_run_has_fourteen_commands(tmp_path):
-    report = tmp_path / "report.json"
-    result = subprocess.run(
-        [sys.executable, "bench/contract_probe.py", "--dry-run", "--samples", "1", "--out", str(report)],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    payload = json.loads(report.read_text())
-    assert payload["dry_run"] is True
-    assert len(payload["rows"]) == 14
-    assert "grants/N" in result.stdout
 
 
 def test_contract_probe_corpus_has_three_commands_per_label():

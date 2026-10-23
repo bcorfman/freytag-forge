@@ -6,8 +6,7 @@ test was deleted or edited to write this plan.
 ## Resume here
 
 Phase 1 evidence is in (sections 2b to 2d) and the first ledger draft is
-[test-suite-consolidation-ledger.md](test-suite-consolidation-ledger.md). Next: the mutant
-panel (D7, answered yes 2026-10-23), run first on ledger rows L5 to L8; then Brandon's cluster
+[test-suite-consolidation-ledger.md](test-suite-consolidation-ledger.md). Mutant panel done (section 2e). Next: apply it to ledger rows L5 to L8; then Brandon's cluster
 review of the ledger, then batch (a): rows L1 to L3. D1 to D4 keep their recommended defaults.
 Answered 2026-10-23: engine Codex Luna low, D5 (b) profile now and speed up later, D6
 regenerate `shard_durations.json` from the Phase 1 junit data, D7 yes.
@@ -198,6 +197,45 @@ Ringer round two of the same job (`test-suite-consolidation-phase1`), outputs in
 - **Ledger draft 1** written. Only L1 (an exact duplicate, 43 to 65 s) is a Delete today.
   L2 and L3 are Merge rows of negligible time. About 990 s of no-unique tests sit in rows
   L5 to L8, which wait for the mutant panel.
+
+## 2e. Mutant panel result (2026-10-23)
+
+All 50 clean commits ran as mutants (HEAD plus the `storygame/` part of one fix reverse-applied,
+full suite, no coverage). Merged data: `ringer-work/test-review/panel/panel-results.json`; runners
+`panel/smoke/smoke/panel_run.py` and `panel/panel_one.py` (verbose, 360 s cutoff, 120 s hang dump).
+
+- 49 mutants have kill sets. **7 are degenerate** (kill 100 to 2,000+ tests by breaking imports or
+  package load: `e346f80 775be92 7ab8092 7afb3bb ab3bd4f 90268ec b79ead5`) and are ignored for protection.
+- **4 mutants are killed by no test** (`90f8d21 ff9abcd 54541e9 aae208d`): a test gap, noted for later.
+- `3e8f9c6` hangs (spins in `cloudflare._is_present` inside a `turn()`); killed only by
+  `test_late_scene_repro::test_nonmatching_filler_preserves_authored_custody_across_2a_to_3c` (L8, protect).
+- 314 distinct tests kill at least one usable mutant.
+- Per ledger row, tests that kill a small (3 or fewer kills) non-degenerate mutant: L5 0 (7 killers
+  in all), L6 2 (`test_3c_cue_chain_stages_each_next_fact`, plus `test_payload_proof_removes_exactly_one_line`
+  via `b0f0413`), L7 7 (`test_bench_item_facts` seed and held-by cases, `test_runtime_mode_exit_turn...`),
+  L8 0 besides the hang test. These are Keep; the rest of each row is still a candidate.
+- Process lessons: my first check demanded 2,900+ tests and failed valid broken-import mutants; a 15 min
+  cutoff was too long (a normal mutant is about 3.5 min).
+
+## 2f. Batch 1 and the time rule (2026-10-23)
+
+Brandon's direction: wall time must fall by orders of magnitude; any test of 1 s or more needs a
+reason; delete what does not appear to matter, reintroduce later if needed; add tests only when
+complete and useful. Delete rule used: a test function of 1 s or more is deleted unless it is the
+cheapest killer of a usable panel mutant or the only cover of a line or branch across `storygame`,
+`bench` and `scripts` (second coverage run, `cov-run/tooling/`). Frozen files are excluded.
+
+- 99% of the time is in 301 tests of 1 s or more (1,939 of 2,184 CPU s); the 2,693 faster tests
+  are about 245 s.
+- **Batch 1 (applied, uncommitted):** 143 functions, 571 cases, three whole files
+  (`test_2c_assess_engine_turn`, `test_shared_knowledge_guards`, `test_tier_report_xdist`).
+  Collected 2,994 to 2,423. Full suite 2,407 passed, 16 skipped.
+  No-coverage wall 3:31 (or 3:06) to 2:17 (136.6 s), user CPU 2,266 s to 1,192 s.
+- Coverage: 3 items lost in `scripts/ringer/stage7/3c_entry_replay_probe.py` (closed 3C experiment
+  probe); accepted. Everything else in `storygame`, `bench`, `scripts` is still covered.
+- Next: the frozen journeys and the 360 s of tests kept only as sole coverage. Ringer run
+  `test-suite-consolidation-batch1-20261023T180825Z-p2191567`; tool and check in
+  `ringer-work/test-review/batch1/`.
 
 ### Frozen set (reimagination Phase 1 owns these)
 

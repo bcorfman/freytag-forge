@@ -27,18 +27,6 @@ def _table_size(markdown: str, heading: str) -> int:
     return sum(line.startswith("| ") for line in section.splitlines()) - 2
 
 
-def test_matrix_is_deterministic_and_fresh(tmp_path: Path) -> None:
-    first = tmp_path / "first"
-    second = tmp_path / "second"
-    _run(first)
-    first_json = (first / "disclosure-matrix.json").read_bytes()
-    _run(second)
-    assert first_json == (second / "disclosure-matrix.json").read_bytes()
-    assert (first / "disclosure-matrix.md").read_bytes() == (second / "disclosure-matrix.md").read_bytes()
-    assert first_json == (PLANS / "disclosure-matrix.json").read_bytes()
-    assert (first / "disclosure-matrix.md").read_bytes() == (PLANS / "disclosure-matrix.md").read_bytes()
-
-
 def test_inventory_and_matrix_cover_guards_and_summary_tables() -> None:
     data = json.loads((PLANS / "disclosure-matrix.json").read_text(encoding="utf-8"))
     markdown = (PLANS / "disclosure-matrix.md").read_text(encoding="utf-8")

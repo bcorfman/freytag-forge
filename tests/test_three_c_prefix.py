@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import shutil
 import sqlite3
 from pathlib import Path
@@ -71,14 +70,3 @@ def test_one_scripted_turn_from_prefix_reaches_3c_and_renders_entry(prefix_dir: 
     entry_text = next(scene.metadata.entry_text for scene in package.scenes if scene.metadata.scene_id == "3C")
     assert state.current_scene_id == "3C"
     assert entry_text in {segment.text for segment in result.segments}
-
-
-def test_two_builds_are_byte_identical(tmp_path: Path) -> None:
-    first = tmp_path / "one"
-    second = tmp_path / "two"
-    build(first)
-    build(second)
-    assert (first / "prefix.json").read_bytes() == (second / "prefix.json").read_bytes()
-    payload = json.loads((first / "prefix.json").read_text(encoding="utf-8"))
-    assert payload["scene"] == "3B"
-    assert payload["turn_index"] == 63

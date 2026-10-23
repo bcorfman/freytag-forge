@@ -202,39 +202,3 @@ def _play_until_scene_changes(
                 engine.last_attempt.transition_cause,
             )
     pytest.fail(f"{scene_id} did not change within the 60-turn cap")
-
-
-def test_non_drawer_replay_forces_1a_1b_1c_and_reaches_3c(monkeypatch: pytest.MonkeyPatch) -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
-    engine = _engine(monkeypatch, state)
-    engine.opening()
-
-    exits: dict[str, tuple[int, tuple[str, ...], tuple[str, ...], str, str]] = {}
-    exits["1A"] = _play_until_scene_changes(engine, state, "1A")
-
-    assert exits["1A"][:3] == (13, (), EXPECTED_HANDOFFS["1A"])
-    assert state.current_scene_id == "1B"
-    assert "memory_card_recovered" in _true_fact_ids(state)
-    assert "drawer_gap_pointed_out" not in _true_fact_ids(state)
-    assert _world_fact(state, "wk_parent", "memory_card") == "kristin"
-    assert _world_fact(state, "wk_relation", "memory_card") == "carried_by"
-
-    for scene_id in ("1B", "1C"):
-        exits[scene_id] = _play_until_scene_changes(engine, state, scene_id)
-
-    assert exits["1B"][:3] == (13, (), EXPECTED_HANDOFFS["1B"])
-    assert exits["1C"][:3] == (11, (), EXPECTED_HANDOFFS["1C"])
-    assert all(exit_data[4] == "forced" for exit_data in exits.values())
-    assert "recovers Michelle's memory card" in exits["1A"][3]
-    assert "Continuity Initiative" in exits["1A"][3]
-    assert state.current_scene_id == "2A"
-
-    # The same null-action script can traverse every remaining scene by the
-    # package's authored forced handoffs, without opening or searching a drawer.
-    remaining_exits: dict[str, str] = {}
-    for scene_id in ("2A", "2B", "2C", "3A", "3B"):
-        _turns, selected, _handoff_ids, _text, cause = _play_until_scene_changes(engine, state, scene_id)
-        remaining_exits[scene_id] = cause
-        assert selected == ()
-    assert remaining_exits == {scene_id: "forced" for scene_id in ("2A", "2B", "2C", "3A", "3B")}
-    assert state.current_scene_id == "3C"

@@ -26,42 +26,6 @@ def _rows(summary: dict[str, object]) -> dict[str, dict[str, object]]:
     return {row["scene_id"]: row for row in summary["scenes"]}
 
 
-def test_personas_cover_the_escalation_ladder_without_stranding(
-    summaries: dict[str, dict[str, object]],
-) -> None:
-    assert set(PERSONAS) == {"thorough", "staller", "wrong_lead"}
-
-    for name, summary in summaries.items():
-        assert summary["persona"] == name
-        assert summary["resolution_complete"] is True
-        assert summary["rejected_turns"] == []
-        rows = _rows(summary)
-        assert list(rows) == SCENE_IDS
-        for scene_id, row in rows.items():
-            window = WINDOWS[scene_id]
-            if scene_id != SCENE_IDS[-1]:
-                assert window.min_turns <= row["turns_to_exit"]
-            assert row["turns_to_exit"] <= window.handoff_after_turns
-            assert all(row["cue_fact_ids"].count(fact_id) <= 2 for fact_id in set(row["cue_fact_ids"]))
-
-    for row in _rows(summaries["thorough"]).values():
-        assert row["cue_count"] == len(row["cue_fact_ids"])
-        assert row["deadline_staged"] is False
-        assert row["layer_reached"] in {"none", "cue", "complication"}
-
-    for scene_id, row in _rows(summaries["staller"]).items():
-        if scene_id == SCENE_IDS[-1]:
-            continue
-        assert row["deadline_staged"] is True
-        assert row["layer_reached"] == "deadline"
-        events = [event for event in PACKAGE.pacing.events if event.scene_id == scene_id]
-        if any(event.at_turn < WINDOWS[scene_id].handoff_after_turns and not event.when for event in events):
-            assert row["complication_texts"]
-    assert "memory_card_recovered" in _rows(summaries["staller"])[SCENE_IDS[0]]["costs_applied"]
-
-    assert summaries["wrong_lead"]["resolution_complete"] is True
-
-
 @pytest.mark.parametrize("name", ["thorough", "staller", "wrong_lead"])
 def test_persona_summary_is_json_serializable(name: str, summaries: dict[str, dict[str, object]]) -> None:
     json.dumps(summaries[name])

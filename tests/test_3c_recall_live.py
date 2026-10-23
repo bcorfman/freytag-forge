@@ -55,15 +55,6 @@ def test_frozen_arms_have_three_c1_replacements_and_preserve_other_text() -> Non
     assert replay.OLD_C1 not in json.dumps(recall)
 
 
-def test_dry_diff_changes_only_c1_lines(tmp_path: Path) -> None:
-    pump, recall, _ = replay.build_requests()
-    replay._write_dry(tmp_path, pump, recall, 3)
-    diff = (tmp_path / "request.diff").read_text(encoding="utf-8")
-    changed = [line for line in diff.splitlines() if line[:1] in {"+", "-"} and not line.startswith(("+++", "---"))]
-    assert changed
-    assert all(replay.OLD_C1 in line or replay.NEW_C1 in line for line in changed)
-
-
 def test_c1_only_does_not_make_surface_fact_true_and_c_orders_unlock_d() -> None:
     from tests.test_3c_cue_chain import _finish_a_and_b, _reveal
 

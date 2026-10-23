@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from bench.core import load_variation, package_and_state
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.cloudflare import CloudflareTurnProvider
@@ -123,19 +121,6 @@ def test_offer_preserves_conveyance_and_protected_word_safety() -> None:
     assert not any(word in delivery.cue_text.casefold() for word in forbidden)
 
 
-def test_selector_tables_record_shipped_and_variation_behavior(capsys: pytest.CaptureFixture[str]) -> None:
-    shipped = _selector_table("stage7-3c-families.json")
-    variation = _selector_table(VARIATION_PATH.name)
-    print(f"shipped selector table: {shipped}")
-    print(f"variation selector table: {variation}")
-    assert shipped == variation
-    assert shipped == {"D1 unspent": D2, "D1 spent": D2, "D2 already spent": None, "C not complete": None}
-
-    captured = capsys.readouterr().out
-    assert "shipped selector table" in captured
-    assert "variation selector table" in captured
-
-
 def test_variation_command_never_selects_d1_or_another_reveal() -> None:
     package, engine = _finish_c()
     matched = _match(package, engine, COMMAND)
@@ -173,32 +158,3 @@ def test_composed_reply_diff_is_only_the_appended_sentence() -> None:
     assert "many of the missing are still alive" not in variation_text.casefold()
     assert shipped_eligible == variation_eligible
     assert shipped_committed == variation_committed
-
-
-@pytest.mark.parametrize("c_order", [C_FACTS, tuple(reversed(C_FACTS))])
-@pytest.mark.parametrize("d_order", [(D1, D2), (D2, D1)])
-def test_e_waits_for_both_d_parts_in_both_orders(c_order: tuple[str, ...], d_order: tuple[str, str]) -> None:
-    package, engine = _finish_c(c_order)
-    assert {D1, D2} <= {
-        candidate.id for candidate in engine.projector.project(engine.state, "player", COMMAND).reveal_universe
-    }
-
-    commands = {D1: "Read the detention site reports.", D2: "Answer the families."}
-    for knowledge_id in d_order:
-        engine.provider = _provider(package, knowledge_id)
-        engine.turn(commands[knowledge_id])
-        engine._activate_pacing()  # noqa: SLF001 - commit the next staged cue.
-        if knowledge_id == d_order[0]:
-            assert not {"k_sl_3c_e_r1", "k_sl_3c_e_r2"} & {
-                candidate.id
-                for candidate in engine.projector.project(
-                    engine.state, "player", "Open the recovered document."
-                ).reveal_universe
-            }
-
-    assert {"k_sl_3c_e_r1", "k_sl_3c_e_r2"} <= {
-        candidate.id
-        for candidate in engine.projector.project(
-            engine.state, "player", "Open the recovered document."
-        ).reveal_universe
-    }
