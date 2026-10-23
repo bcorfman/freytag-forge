@@ -1,0 +1,35 @@
+{
+ "run_name": "adopt-families-cue",
+ "workdir": "/home/bcorfman/dev/ringer-work/adopt-families-cue",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "adopt-families-cue",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 2400,
+   "ownership": [
+    "data/stories/continuity-initiative/handoffs.yaml",
+    "tests/test_3c_cue_wording.py",
+    "tests/test_3c_families_offer.py",
+    "tests/test_3c_families_offer_arm.py",
+    "tests/test_3c_families_offer_probe.py",
+    "tests/test_3c_cue_chain.py",
+    "bench/variations/stage7-3c-families-offer.json",
+    "bench/variations/stage7-3c-families-offer-arm.json"
+   ],
+   "spec": "You are a code worker on freytag-forge (Python 3.12). Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge; edit files here directly. Do NOT git commit, git add, or touch .git. NEVER make a network or model call, never read .env.\n\nTASK: adopt one wording change into the shipped story package. In data/stories/continuity-initiative/handoffs.yaml, fact_id `community_rescue_efforts_begun`, change\n  cue_text: Families of the missing call the broadcast chamber for word.\nto\n  cue_text: Families of the missing call the broadcast chamber for word. Kristin can answer the families with news of the captives.\nand nothing else in that file (must_convey, fallback_text and everything else stay). It won 5/12 vs 1/12 earned exits and D2 9/12 vs 3/12 in a measured screen (see .plans/astra-3c-families-offer-continuation-prereg.md, section SCREEN RESULT); Brandon approved keeping it.\n\nYou may edit ONLY: data/stories/continuity-initiative/handoffs.yaml, tests/test_3c_cue_wording.py, tests/test_3c_families_offer.py, tests/test_3c_families_offer_arm.py, tests/test_3c_families_offer_probe.py, tests/test_3c_cue_chain.py, bench/variations/stage7-3c-families-offer.json, bench/variations/stage7-3c-families-offer-arm.json, and any tracked generated artifact or fixture that a failing test proves is stale because of this cue text (for example a disclosure matrix, frozen fixture or checked-in dry-run proof such as bench/results/stage7-3c-carried-dry; regenerate with the repo's own script, never hand-edit generated files). tests/fixtures/continuity_initiative_pre_3c_adoption/ is a frozen historical fixture: do not edit it. Never touch storygame/.\n\nCONSEQUENCES TO HANDLE: (1) tests that pin the old cue text (tests/test_3c_cue_wording.py EXPECTED_CUES, any test comparing the shipped cue) must expect the new text. (2) The two experiment variations stage7-3c-families-offer.json and stage7-3c-families-offer-arm.json replace the OLD cue line with the new one; after adoption their `old` text no longer exists and they would fail to load. Keep them loadable and keep their tests meaningful: make each variation's override go the other way (old = the new shipped cue line, new = the old one-sentence cue) and rename nothing, then adjust tests/test_3c_families_offer.py, tests/test_3c_families_offer_arm.py and the probe tests so they assert what is now true (the variations now equal the pre-adoption package; the shipped package carries the sentence). Record the reversal in a `description` or `note` key only if the variation loader allows extra keys; otherwise explain it in notes.md. Do not change scripts/ringer/stage7/3c_families_offer_probe.py (it edits recorded prompts, not the package) or three_c_probe.py unless a failing test proves you must; if you must, say why in notes.md. (3) Run the whole suite and fix only failures caused by this change; report any other failure unchanged.\n\nHOW TO RUN (Ringer sandboxes cannot run uv): `PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\"` must print a path in this worktree. Full suite: `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider -n 4 tests` (long: run it once, then re-run only failing files). Then ruff check and ruff format --check on the files you touched.\n\nOUTPUT: leave changes uncommitted; write ./notes.md at the worktree root listing files changed, which generated artifacts you regenerated and with what command, the full-suite result, and any surprise or unrelated failure (report, do not hide).",
+   "check": "set -o pipefail; cd \"$PWD\"; export PYTHONPATH=$PWD TMPDIR=/tmp; PY=/home/bcorfman/dev/freytag-forge/.venv/bin/python\ntest -s notes.md && cp notes.md /home/bcorfman/dev/ringer-work/adopt-families-cue-notes.md || { echo \"FAIL: notes.md missing\"; exit 1; }\n$PY -c \"import storygame,sys; sys.exit(0 if storygame.__file__.startswith('$PWD') else 1)\" || { echo \"FAIL: not worktree\"; exit 1; }\ngit diff --quiet -- storygame tests/fixtures/continuity_initiative_pre_3c_adoption || { echo \"FAIL: storygame or frozen fixture edited\"; exit 1; }\ngrep -q 'Kristin can answer the families with news of the captives.' data/stories/continuity-initiative/handoffs.yaml || { echo \"FAIL: cue not adopted\"; exit 1; }\ntest \"$(git diff -U0 -- data/stories/continuity-initiative/handoffs.yaml | grep -c '^[-+][^-+]')\" = 2 || { echo \"FAIL: handoffs.yaml changed by more than the one cue line\"; git diff -- data/stories/continuity-initiative/handoffs.yaml | head -30; exit 1; }\n$PY -m pytest -q --no-cov -p no:cacheprovider -n 4 tests > pytest.out 2>&1; rc=$?; tail -15 pytest.out; test $rc -eq 0 || exit 1\nchanged=$(git status --porcelain | awk '{print $2}' | grep '\\.py$')\ntest -z \"$changed\" || { $PY -m ruff check $changed && $PY -m ruff format --check $changed || exit 1; }\ngit add -A -- data tests bench scripts; git diff --cached -- data tests bench scripts > /home/bcorfman/dev/ringer-work/adopt-families-cue.patch; test -s /home/bcorfman/dev/ringer-work/adopt-families-cue.patch && echo patch-exported",
+   "verified": "handoffs.yaml differs by exactly the one cue line, variations stay loadable as the reverse, full suite and ruff pass, patch exported"
+  }
+ ]
+}

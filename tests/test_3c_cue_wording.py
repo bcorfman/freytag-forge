@@ -10,7 +10,10 @@ pytestmark = pytest.mark.authoring_quality
 
 EXPECTED_CUES = {
     "national_network_fragmenting": "Reports from other detention sites reach the broadcast chamber.",
-    "community_rescue_efforts_begun": "Families of the missing call the broadcast chamber for word.",
+    "community_rescue_efforts_begun": (
+        "Families of the missing call the broadcast chamber for word. "
+        "Kristin can answer the families with news of the captives."
+    ),
 }
 
 

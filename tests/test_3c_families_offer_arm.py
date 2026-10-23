@@ -23,7 +23,7 @@ def _files(root: Path) -> dict[str, bytes]:
     return {str(path.relative_to(root)): path.read_bytes() for path in sorted(root.rglob("*")) if path.is_file()}
 
 
-def test_variation_loads_and_differs_only_by_the_appended_handoff_sentence() -> None:
+def test_variation_loads_and_reverses_only_the_adopted_handoff_sentence() -> None:
     shipped = load_variation(SHIPPED_VARIATION)
     families_offer = load_variation(FAMILIES_OFFER_VARIATION)
     shipped_root = Path(shipped["_package_path"])
@@ -31,8 +31,11 @@ def test_variation_loads_and_differs_only_by_the_appended_handoff_sentence() -> 
     assert _files(shipped_root).keys() == _files(families_offer_root).keys()
 
     handoff = "handoffs.yaml"
-    old = b"  cue_text: Families of the missing call the broadcast chamber for word."
-    new = old + b" Kristin can answer the families with news of the captives."
+    old = (
+        b"  cue_text: Families of the missing call the broadcast chamber for word. "
+        b"Kristin can answer the families with news of the captives."
+    )
+    new = b"  cue_text: Families of the missing call the broadcast chamber for word."
     shipped_files = _files(shipped_root)
     families_offer_files = _files(families_offer_root)
     assert shipped_files[handoff].count(old) == 1
@@ -42,7 +45,7 @@ def test_variation_loads_and_differs_only_by_the_appended_handoff_sentence() -> 
 
     package, _ = package_and_state(families_offer, "3C")
     delivery = next(item for item in package.deliveries if item.fact_id == "community_rescue_efforts_begun")
-    assert delivery.cue_text.endswith("Kristin can answer the families with news of the captives.")
+    assert delivery.cue_text == "Families of the missing call the broadcast chamber for word."
 
 
 def test_families_offer_uses_item_facts_provider_and_world_capture(monkeypatch) -> None:

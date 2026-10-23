@@ -13,7 +13,8 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 
 VARIATION_PATH = Path("bench/variations/stage7-3c-families-offer.json")
-SHIPPED_PACKAGE = Path("tests/fixtures/continuity_initiative_pre_3c_adoption")
+SHIPPED_PACKAGE = Path("data/stories/continuity-initiative")
+PRE_ADOPTION_PACKAGE = Path("tests/fixtures/continuity_initiative_pre_3c_adoption")
 COMMAND = "Answer the families with news of the captives."
 D2 = "k_sl_3c_d_r2"
 D1 = "k_sl_3c_d_r1"
@@ -101,20 +102,22 @@ def test_variation_loader_and_source_diff_are_exact() -> None:
         if relative.as_posix() != "handoffs.yaml":
             assert changed == shipped, relative
         else:
-            old = b"  cue_text: Families of the missing call the broadcast chamber for word."
-            new = old + b" Kristin can answer the families with news of the captives."
+            old = (
+                b"  cue_text: Families of the missing call the broadcast chamber for word. "
+                b"Kristin can answer the families with news of the captives."
+            )
+            new = b"  cue_text: Families of the missing call the broadcast chamber for word."
             assert changed == shipped.replace(old, new, 1)
-            assert shipped.count(old) == 1
+            assert (SHIPPED_PACKAGE / relative).read_bytes().count(old) == 1
             assert changed.count(new) == 1
+            historical = (PRE_ADOPTION_PACKAGE / relative).read_bytes()
+            assert changed == historical
 
 
 def test_offer_preserves_conveyance_and_protected_word_safety() -> None:
     variation, _ = _families_package_and_state(VARIATION_PATH.name)
     delivery = next(item for item in variation.deliveries if item.fact_id == "community_rescue_efforts_begun")
-    assert delivery.cue_text == (
-        "Families of the missing call the broadcast chamber for word. "
-        "Kristin can answer the families with news of the captives."
-    )
+    assert delivery.cue_text == "Families of the missing call the broadcast chamber for word."
     assert _matches_must_convey(delivery, delivery.cue_text)
     forbidden = ("janus", "phase one", "phase two", "coded message")
     assert not any(word in delivery.cue_text.casefold() for word in forbidden)
@@ -160,12 +163,12 @@ def _composed_reply(variation_path: str) -> tuple[str, frozenset[str], frozenset
 
 
 def test_composed_reply_diff_is_only_the_appended_sentence() -> None:
-    shipped_text, shipped_eligible, shipped_committed = _composed_reply("stage7-3c-families.json")
+    shipped_text, shipped_eligible, shipped_committed = _composed_reply("stage7-3c-item-facts.json")
     variation_text, variation_eligible, variation_committed = _composed_reply(VARIATION_PATH.name)
     old = "Families of the missing call the broadcast chamber for word."
     appended = " Kristin can answer the families with news of the captives."
-    assert variation_text == shipped_text.replace(old, old + appended, 1)
-    assert variation_text.endswith(old + appended)
+    assert variation_text == shipped_text.replace(old + appended, old, 1)
+    assert shipped_text.endswith(old + appended)
     assert "organize independent rescue efforts" not in variation_text.casefold()
     assert "many of the missing are still alive" not in variation_text.casefold()
     assert shipped_eligible == variation_eligible
