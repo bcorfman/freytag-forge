@@ -7,8 +7,8 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 ## Resume here
 
-Decisions in section 5 are made. Step 1 is done and verified (below), applied to
-the working tree but not committed. Next: step 2 (`incidents` model, loader
+Decisions in section 5 are made. Step 1 is done and verified (below), committed as
+`8c4447ca`. Next: step 2 (`incidents` model, loader
 validation, synthetic package fixture), as a Ringer manifest.
 
 ## Step 1 result (2026-10-22)
