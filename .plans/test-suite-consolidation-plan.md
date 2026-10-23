@@ -5,11 +5,12 @@ test was deleted or edited to write this plan.
 
 ## Resume here
 
-Phase 0 is done (result in section 2a). Next: Phase 1, starting with one
-`--cov-context=test` run with `--junitxml`, which gives per-test coverage and
-per-test time together. Before Phase 3, Brandon reviews the ledger (section 5).
-Decisions D1 to D6 (section 8) carry a recommended default; D5 and D6 come from the
-Phase 0 measurement and should be answered before Phase 1 ends.
+Phase 1 evidence is in (sections 2b to 2d) and the first ledger draft is
+[test-suite-consolidation-ledger.md](test-suite-consolidation-ledger.md). Next: the mutant
+panel (D7, answered yes 2026-10-23), run first on ledger rows L5 to L8; then Brandon's cluster
+review of the ledger, then batch (a): rows L1 to L3. D1 to D4 keep their recommended defaults.
+Answered 2026-10-23: engine Codex Luna low, D5 (b) profile now and speed up later, D6
+regenerate `shard_durations.json` from the Phase 1 junit data, D7 yes.
 
 ## 1. Goal and what counts as success
 
@@ -101,6 +102,102 @@ What this changes:
   coverage gate in CI" statements (`docs/test-suite-performance-guide.md`,
   `docs/testing-runbook.md`). All `tests/...` paths named in `docs/`, `README.md`
   and `bench/README.md` resolve.
+
+## 2b. Phase 1 per-test coverage result (2026-10-23)
+
+Ringer run `test-suite-consolidation-phase1-20261023T055114Z-p1978912`, Codex Luna low,
+one task, two identical runs of
+`pytest -q --cov --cov-context=test --junitxml=... --tier-report=...` on HEAD
+`5ea3c750`. Outputs: `/home/bcorfman/dev/ringer-work/test-review/cov-run/per-test-coverage/`
+(`cov-{a,b}.sqlite`, `junit-{a,b}.xml`, `per-test-{a,b}.json.gz`, `determinism.json`,
+`no-storygame-coverage-{a,b}.json`). The checker is
+`ringer-work/test-review/check_cov_run.py`.
+
+| Measure | Value |
+| --- | --- |
+| Result, both runs | 2,994 testcases, 16 skipped, 0 failed |
+| Coverage-mode wall time | 15:52 and 14:13, user CPU 9,490 s and 9,745 s (about 5x the no-coverage 3:06 and 2,042 s) |
+| Tests with a coverage context | 2,756 of 2,994 |
+| Tests with none | 238, in `no-storygame-coverage-*.json`. Spot check: `test_penalty_rubric` and one `test_1a_gap_pointer` test, run alone, record no test context. They run no `storygame` code (bench, script, data and authored-text tests, and the skips). Zero coverage is not redundancy, so they are judged by reading, not by coverage |
+| Union of covered (file, line, arc) items | 19,120 in both runs, 0 items in only one run |
+| Tests whose own set differs between runs | 40 of 2,756 |
+
+Determinism: the union is exactly stable, so the batch gate (the union must not shrink)
+is sound. Per-test sets are not: 40 tests differ, by up to about 3,000 items, in
+opposite directions for neighbours (for example `test_leak_terms` gains 3,059 items
+where other tests lose them). Not diagnosed; shared module-level caches warmed by
+whichever test runs first on a worker would explain it, but that is a guess. Handling,
+chosen so the stop rule (section 7) does not block Phase 1: a test that differs between
+runs is never credited with coverage it holds in one run only when claiming a retained
+test covers something, and is never deleted on unique-coverage grounds without a human
+read. If the number of differing tests grows, stop and fix determinism first.
+
+The first check failed (the worker's output was fine): my threshold treated the 238
+no-context tests as a gap. Fixed in the checker, then rerun on the same outputs.
+
+## 2c. Phase 1 analysis results (2026-10-23)
+
+Ringer run `test-suite-consolidation-phase1-20261023T062646Z-p1995973`, four read-only
+tasks, outputs in `/home/bcorfman/dev/ringer-work/test-review/analysis/<task>/`. The
+run reported FAIL on all four because of two bugs in my check (it counted my own
+uncommitted plan edit and old worktrees); the fixed check passes on the same outputs.
+
+**Coverage analysis** (2,756 tests with a context; the check recomputed unique-item
+counts for 25 sampled tests and 200 subset pairs):
+
+- 2,494 tests have no unique line or arc, 290 groups have identical sets, 200,838 pairs
+  are subset pairs, and a greedy cover needs 368 tests to keep all 19,120 items.
+- Read these as an upper bound on overlap, not a deletion list. Line and arc coverage
+  shows code ran, not that a result was asserted, so most tests overlap. The largest
+  identical-set groups are parametrized suites (`test_shared_knowledge_guards` 182 and
+  128 cases, `test_evidence_gap_journeys` and journeys 67, `test_candidate_matcher` 31).
+- Time figures in `coverage-analysis.json` come from the coverage run and are about 5x
+  inflated (one test reads 308 s against a 66 s maximum without coverage). Use them for
+  ranking only. The summed "removable seconds" in the md (8,360 s) is meaningless as a
+  saving.
+
+**Duplicate and obsolescence scan** (1,661 test functions):
+
+- 3 exact-duplicate groups: the two known pairs plus one parametrized pair, to be read.
+- 0 near-duplicate clusters at ratio 0.9 with 8 or more lines. The threshold may be too
+  strict; rerun at 0.7 before concluding anything.
+- Obsolescence: 4 findings, 3 of them `test_shard_balance` naming a deliberately
+  missing `tests/test_missing_duration.py` (false positives), and one unconditional
+  `pytest.skip` in `test_incident_characterization` (frozen).
+- Gap: the worker listed only module-docstring clusters. The filename clusters
+  (`*_arm`, `*_probe`, `*_repro`, `*_spine_prompts`, `phase*`) were not produced.
+
+**Regression panel feasibility:** 530 non-merge commits touch both `storygame/` and
+`tests/`; 50 have a `storygame/` part that reverse-applies cleanly onto HEAD
+(`git apply -R --check`, re-tested on 8 sampled commits). That is above the stop-rule
+minimum of 15, so the panel is buildable. Running it costs 50 full-suite runs (about
+3 min each without coverage); see D7.
+
+**Journeys profile (D5):** serial, 71 tests, 297.7 s, 4 to 5 s each. Setup is 0 s. The
+file time in the 16-core run (454 s) is larger than the serial time, which points at
+contention or per-worker load, not at the tests; not established. The profile of the
+slowest test (10.6 s under cProfile) puts the time in the engine, not in test setup:
+`storygame/runtime/facts.py:28 matching` 2.1 s cumulative and its generator 649k calls,
+`knowledge._established` 2.9 s, `reference_resolution._scene_things` 2.9 s. Per
+journey the package load and state build happen once or twice, so sharing built state
+(D5 option b) would save little. The lever is the runtime's per-turn fact scan, which
+is a source change outside this plan. Recorded for Brandon; no action taken.
+
+## 2d. Phase 1 round two (2026-10-23)
+
+Ringer round two of the same job (`test-suite-consolidation-phase1`), outputs in
+`ringer-work/test-review/round2/`.
+
+- **Quiet no-coverage run with junit:** 3:31.83 wall, 2,266 s user CPU, 1,078% of one core,
+  2,994 testcases, 0 failed. Per-test times sum to 2,184 s and are saved in
+  `ringer-work/test-review/pertest-nocov.json`. This replaces the 5x-inflated coverage-run
+  times for ranking. The Phase 0 run was 3:06; the 14% difference is not explained.
+- **Looser near-duplicate scan** (ratio 0.75, Jaccard 0.6, 6 lines): 19 clusters, mostly
+  same-file tests that differ in one setup call or assertion. Low payoff.
+- **Filename clusters:** arm 3 files, probe 2, repro 4, spine_prompts 7, phase 3.
+- **Ledger draft 1** written. Only L1 (an exact duplicate, 43 to 65 s) is a Delete today.
+  L2 and L3 are Merge rows of negligible time. About 990 s of no-unique tests sit in rows
+  L5 to L8, which wait for the mutant panel.
 
 ### Frozen set (reimagination Phase 1 owns these)
 
@@ -270,6 +367,12 @@ at once: they edit the same shard file and docs.
    files, and CI sharding reads it. Recommended: regenerate it from the Phase 1
    run, as its own small Ringer manifest, then again in Phase 5. Check the effect
    on CI shard wall times, which this plan has not measured.
+
+7. **D7: build the mutant panel?** 50 clean commits are available. Running them is 50
+   full-suite runs, about 2.5 hours of one machine, and gives the only evidence that a
+   test asserts something. Recommended: yes, but first on the candidate set only (the
+   tests that coverage marks as having no unique item and that are not in
+   parametrized suites), not on all 2,994.
 
 Worker engine: ask Brandon before the first run, with the numbers from
 `ringer.py models --task-type code-fix`. Phase 1's choice (Codex Luna, medium)
