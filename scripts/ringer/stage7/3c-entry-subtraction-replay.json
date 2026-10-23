@@ -1,0 +1,30 @@
+{
+ "run_name": "3c-entry-subtraction-replay",
+ "workdir": "/home/bcorfman/dev/ringer-work/3c-entry-subtraction-replay",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "entry-subtraction-replay",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 120,
+   "ownership": [
+    "bench/results/stage7-3c-entry-subtraction/"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/3c_entry_replay_probe.py --rows bench/results/stage7-3c-escape-close-smoke/rows.json --samples 12 --confirm --out bench/results/stage7-3c-entry-subtraction",
+   "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && .venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('bench/results/stage7-3c-entry-subtraction/rows.json'))\nrows=r if isinstance(r,list) else r.get('rows',[])\nprint(len(rows),'rows;',sum(1 for x in rows if x.get('error')),'errors')\nsys.exit(0 if len(rows)==24 else 1)\nPY",
+   "spec": "Run ONE billed 3C entry-subtraction replay: 12 samples per arm (control, subtraction), 24 Cloudflare calls, no player calls. Own only bench/results/stage7-3c-entry-subtraction/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; on quota, outage or error leave partial rows.json and any error in place and report verbatim. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/stage7/3c_entry_replay_probe.py --rows bench/results/stage7-3c-escape-close-smoke/rows.json --samples 12 --confirm --out bench/results/stage7-3c-entry-subtraction",
+   "verified": "24 replay rows recorded, errors reported"
+  }
+ ]
+}

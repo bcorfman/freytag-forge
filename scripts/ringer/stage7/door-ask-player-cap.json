@@ -1,0 +1,29 @@
+{
+ "run_name": "door-ask-player-cap",
+ "workdir": "/home/bcorfman/dev/ringer-work/door-ask-player-cap",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "door-ask-player-cap",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 1800,
+   "check_timeout_s": 600,
+   "ownership": [
+    "scripts/ringer/stage7/door_ask_player.mjs",
+    "tests/test_door_ask_player_cap.py"
+   ],
+   "spec": "You are a code worker on freytag-forge (Python 3.12 plus Node). Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge; edit files here directly. Do NOT git commit, git add, or touch .git. Edit ONLY: scripts/ringer/stage7/door_ask_player.mjs, tests/test_door_ask_player_cap.py (new). Never touch frontend/, storygame/, data/, other scripts or tests. NEVER make a network or model call and never read .env: tests stub fetch and set OPENAI_API_KEY to a dummy.\n\nREAD FIRST (read-only): AGENTS.md, scripts/ringer/stage7/door_ask_player.mjs, frontend/e2e/blind-player.js (`askPlayer`, `validateCommand` or equivalent format check, the retry loop and `cap`/`counter`), frontend/e2e/blind-player.test.js around the cap test, and how scripts/ringer/stage7/three_c_probe.py `_ask_player` uses the child (one SpendBudget `raw_player` unit per child call).\n\nPROBLEM: door_ask_player.mjs passes `cap: 1` to askPlayer. When the blind player's first command fails the format check, askPlayer retries once, but cap 1 turns the retry into `Error: Blind player model call cap reached (1).`, which aborted a whole 24-row billed screen. Raise it to `cap: 2` so the player's own format retry can run. Change nothing else (keep `attempts: 1` in the output JSON unless the real call count is available cheaply from the counter, in which case report the true number of model calls in a new `model_calls` field and keep `attempts` as is; the Python caller reads only `command`).\n\nTEST tests/test_door_ask_player_cap.py (hermetic): run `node` on door_ask_player.mjs with stdin JSON {\"transcript\": \"...\", \"status\": \"\"}, OPENAI_API_KEY=dummy, and a stubbed global fetch injected with `node --import <a small stub module you write into pytest tmp_path>` that returns OpenAI Responses-API-shaped JSON (read blind-player.js to see the exact response shape it parses). Cases: (a) first reply valid -> command returned, one fetch; (b) first reply invalid (for example `I search the desk` without a period) then second valid -> command is the second reply, exactly two fetches, exit code 0; (c) two invalid replies in a row -> nonzero exit with the cap error (cap is 2, not unbounded). Skip with a clear message only if `node` is absent.\n\nHOW TO RUN (Ringer sandboxes cannot run uv): `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_door_ask_player_cap.py tests/test_3c_families_offer_arm.py tests/test_3c_families_offer_probe.py`, ruff check and ruff format --check on the new test, and `cd frontend && node --test e2e/blind-player.test.js` if the frontend node test runs offline (report if not).\n\nOUTPUT: leave changes uncommitted; write ./notes.md at the worktree root with files changed, commands that passed, and anything surprising.",
+   "check": "set -o pipefail; cd \"$PWD\"; export PYTHONPATH=$PWD TMPDIR=/tmp; PY=/home/bcorfman/dev/freytag-forge/.venv/bin/python\ntest -s notes.md && cp notes.md /home/bcorfman/dev/ringer-work/door-ask-player-cap-notes.md || { echo \"FAIL: notes.md missing\"; exit 1; }\nbad=$(git status --porcelain | awk '{print $2}' | grep -v -x -e notes.md -e pytest.out -e scripts/ringer/stage7/door_ask_player.mjs -e tests/test_door_ask_player_cap.py)\ntest -z \"$bad\" || { echo \"FAIL: outside ownership: $bad\"; exit 1; }\ngrep -q 'cap: 2' scripts/ringer/stage7/door_ask_player.mjs || { echo \"FAIL: cap not 2\"; exit 1; }\ngit diff --quiet -- frontend storygame data || { echo \"FAIL: frontend/storygame/data edited\"; exit 1; }\n$PY -m pytest -q --no-cov -p no:cacheprovider tests/test_door_ask_player_cap.py tests/test_3c_families_offer_arm.py tests/test_3c_families_offer_probe.py > pytest.out 2>&1; rc=$?; tail -15 pytest.out; test $rc -eq 0 || exit 1\ngrep -q skipped pytest.out && { echo \"FAIL: cap test skipped\"; exit 1; }\n$PY -m ruff check tests/test_door_ask_player_cap.py && $PY -m ruff format --check tests/test_door_ask_player_cap.py || exit 1\ngit add -A -- scripts tests; git diff --cached -- scripts tests > /home/bcorfman/dev/ringer-work/door-ask-player-cap.patch; test -s /home/bcorfman/dev/ringer-work/door-ask-player-cap.patch && echo patch-exported",
+   "verified": "cap is 2, a format retry succeeds, two invalid replies still stop, patch exported"
+  }
+ ]
+}

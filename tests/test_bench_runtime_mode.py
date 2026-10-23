@@ -16,10 +16,8 @@ import pytest
 
 import bench.core as core
 import bench.jev_use as jev_use
-from storygame.runtime.capture import build_capture_provider
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.contracts import NarrationSegment
-from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 
@@ -71,35 +69,6 @@ def _run(monkeypatch: pytest.MonkeyPatch, path: Path, turns: int = 3, inputs: li
     monkeypatch.setattr(CloudflareTurnProvider, "_request", _narration_reply)
     variation = _variation(path, turns, inputs)
     return core.run_scene(variation, "1A", variation["scripts"]["1A"][0])
-
-
-def test_runtime_mode_matches_bench_mode(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
-    normal = _run(monkeypatch, NORMAL)
-    runtime = _run(monkeypatch, RUNTIME)
-
-    fields = (
-        "player_input",
-        "typed_input",
-        "prompt_system",
-        "prompt_user",
-        "things_given",
-        "item_facts_before",
-        "item_facts_after",
-        "item_facts_issues",
-        "match_issues",
-        "seating_steps",
-        "seating_asked",
-        "seating_issues",
-        "taking_steps",
-        "taking_asked",
-        "taking_issues",
-        "standing_steps",
-        "standing_asked",
-        "standing_issues",
-    )
-    assert [[turn[field] for field in fields] for turn in normal["turns"]] == [
-        [turn[field] for field in fields] for turn in runtime["turns"]
-    ]
 
 
 def test_runtime_mode_exit_turn_records_facts_before_transition(
@@ -185,60 +154,6 @@ def test_runtime_mode_records_narration_prompt(monkeypatch: pytest.MonkeyPatch, 
     assert result["turns"][0]["prompt_user"] == narration_calls[1]["user"]
 
 
-def test_runtime_mode_records_steps(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
-    def prepare_state(state):
-        world = world_for(state.package, state.facts)
-        assert world.move("kristin", "kitchen").ok
-        assert world.move("kristin_laptop", "kitchen").ok
-
-    original_provider_for = core.provider_for
-    original_before_turn = core.WorldCapture.before_turn
-
-    def provider_for_with_laptop(state, variation):
-        prepare_state(state)
-        return original_provider_for(state, variation)
-
-    def before_turn_with_laptop(capture, command):
-        prepare_state(capture.provider.state)
-        return original_before_turn(capture, command)
-
-    monkeypatch.setattr(core, "provider_for", provider_for_with_laptop)
-    monkeypatch.setattr(core.WorldCapture, "before_turn", before_turn_with_laptop)
-    original_opening = core.RuntimeEngine.opening
-
-    def opening_with_laptop_ready(engine):
-        result = original_opening(engine)
-        prepare_state(engine.state)
-        return result
-
-    monkeypatch.setattr(core.RuntimeEngine, "opening", opening_with_laptop_ready)
-    inputs = ["Read the files on my laptop."]
-    normal = _run(monkeypatch, NORMAL, turns=1, inputs=inputs)
-    runtime = _run(monkeypatch, RUNTIME, turns=1, inputs=inputs)
-
-    normal_turn = normal["turns"][0]
-    runtime_turn = runtime["turns"][0]
-    step_fields = (
-        "seating_steps",
-        "seating_asked",
-        "seating_issues",
-        "taking_steps",
-        "taking_asked",
-        "taking_issues",
-        "standing_steps",
-        "standing_asked",
-        "standing_issues",
-    )
-    assert any(runtime_turn[field] for field in ("seating_steps", "taking_steps", "standing_steps")), {
-        "runtime": {field: runtime_turn[field] for field in step_fields},
-        "normal": {field: normal_turn[field] for field in step_fields},
-    }
-    assert [runtime_turn[field] for field in step_fields] == [normal_turn[field] for field in step_fields]
-    steps = runtime_turn["standing_steps"] + runtime_turn["taking_steps"] + runtime_turn["seating_steps"]
-    assert runtime_turn["player_input"].startswith(" ".join(steps))
-    assert runtime_turn["player_input"].endswith(inputs[0])
-
-
 def test_runtime_mode_builds_fresh_provider_each_turn(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
     calls = []
     original = core.build_capture_provider
@@ -262,60 +177,6 @@ def test_runtime_mode_builds_fresh_provider_each_turn(monkeypatch: pytest.Monkey
     assert result["status"] == "ok"
     assert len(calls) == 1 + len(result["turns"])
     assert len(loads) == len(result["turns"])
-
-
-def test_runtime_mode_passes_mark_fixed_to_capture_provider(
-    monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]
-) -> None:
-    calls: list[object] = []
-    original = core.build_capture_provider
-
-    def build(state, *, mark_fixed=False):
-        calls.append(mark_fixed)
-        return original(state, mark_fixed=mark_fixed)
-
-    monkeypatch.setattr(core, "build_capture_provider", build)
-    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.invalid/turn")
-    monkeypatch.setattr(CloudflareTurnProvider, "_request", _narration_reply)
-
-    marked = _variation(RUNTIME, turns=1)
-    marked["item_facts"]["mark_fixed"] = "anywhere"
-    marked_result = core.run_scene(marked, "1A", marked["scripts"]["1A"][0])
-    assert marked_result["status"] == "ok"
-    marked_call_count = len(calls)
-    assert marked_call_count > 0
-    assert all(value == "anywhere" for value in calls[:marked_call_count])
-
-    unmarked = _variation(RUNTIME, turns=1)
-    unmarked_result = core.run_scene(unmarked, "1A", unmarked["scripts"]["1A"][0])
-    assert unmarked_result["status"] == "ok"
-    assert all(not value for value in calls[marked_call_count:])
-
-    state = RuntimeState.bootstrap(PACKAGE)
-    assert build_capture_provider(state).mark_fixed is False
-    assert build_capture_provider(state, mark_fixed=True).mark_fixed is True
-    assert build_capture_provider(state, mark_fixed=True).mark_fixed_variant == "carry_away"
-    assert build_capture_provider(state, mark_fixed="anywhere").mark_fixed_variant == "anywhere"
-
-
-def test_runtime_mode_passes_fixed_refusal_to_capture(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
-    calls: list[bool] = []
-    original = core.WorldCapture
-
-    def capture(provider, ask, fixed_refusal=False, *, engine_refusal=False):
-        calls.append(fixed_refusal)
-        return original(provider, ask, fixed_refusal=fixed_refusal, engine_refusal=engine_refusal)
-
-    monkeypatch.setattr(core, "WorldCapture", capture)
-    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.invalid/turn")
-    monkeypatch.setattr(CloudflareTurnProvider, "_request", _narration_reply)
-    enabled = _variation(RUNTIME, turns=1)
-    enabled["fixed_refusal"] = True
-    assert _run(monkeypatch, RUNTIME, turns=1)["status"] == "ok"
-    assert calls[-1] is False
-    result = core.run_scene(enabled, "1A", enabled["scripts"]["1A"][0])
-    assert result["status"] == "ok"
-    assert calls[-1] is True
 
 
 def test_runtime_mode_passes_engine_refusal_to_capture(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:

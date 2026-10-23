@@ -1,0 +1,7 @@
+deliveries:
+- fact_id: brass_key_found
+  scene_id: 1A
+  source_kind: observation
+  source_entity_id: ada
+  must_convey: [[brass key], [Ada finds]]
+  fallback_text: Ada finds the brass key and keeps it safe.

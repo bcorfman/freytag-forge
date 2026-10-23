@@ -1,0 +1,15 @@
+incidents:
+- id: tide_window
+  scene_id: 1A
+  outcomes:
+  - id: copy_chart
+    storylet_id: SL-1A-A
+    realization_id: r1
+    advantages: [chart_copied]
+    costs: [chart_page_torn]
+  - id: learn_route
+    storylet_id: SL-1A-A
+    realization_id: r0
+    advantages: [boat_route_known]
+  missed_window_event_id: tide_turns
+  successor_transition_id: t_1a_1b

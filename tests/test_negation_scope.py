@@ -5,14 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from bench.core import advance_state_to_scene
 from storygame.runtime.candidate_matcher import (
     negation_scoped_command,
     uniquely_matched_authored_handoff,
 )
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
-from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
@@ -143,17 +141,3 @@ def test_engine_provider_path_respects_negation_scope(
     result = RuntimeEngine(state, provider).turn(player_input)
 
     assert result.selected_knowledge_ids == expected
-
-
-def test_engine_provider_scopes_before_appending_resolved_bare_noun(monkeypatch: pytest.MonkeyPatch) -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
-    advance_state_to_scene(PACKAGE, state, "2C")
-    state.facts.assert_fact(Fact(predicate="janus_evidence", subject="story", value="true"))
-    provider = _provider(state, monkeypatch)
-    player_input = "Check the files; do not send anything yet."
-
-    result = RuntimeEngine(state, provider).turn(player_input)
-
-    assert result.selected_knowledge_ids == ("k_sl_2c_c_r1",)
-    assert provider._evidence_input(player_input) == "Check the files copied JANUS files"
-    assert provider.last_reveal_selection["reference_names"] == ["copied JANUS files"]

@@ -1,0 +1,25 @@
+{
+  "name": "stage7-3c-no-close",
+  "story_package": "data/stories/continuity-initiative",
+  "overrides": {
+    "storylet-routes.yaml": {
+      "replacements": [
+        {
+          "old": "  delivery_text: \"The captives have emerged into Los Angeles. News drones, civilians, and local responders begin arriving. Brandon’s voice comes through the emergency speakers. “Reports from other detention sites are reaching the broadcast chamber. Families of the missing are calling there for news.” Then his voice falls silent. Your barrier holds the way from the maintenance network to Rebecca's executive office open for now. The broadcast chamber remains reachable while the barrier holds.\"\n",
+          "new": ""
+        }
+      ]
+    }
+  },
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true,
+    "held_by": true,
+    "mark_fixed": false
+  },
+  "absent_thing_rule": false,
+  "system_prompt": {
+    "constant_rules_in_system": true,
+    "output_example": "{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"{protagonist}\",\"condition\":[\"lit\"]},\"{protagonist}\":{\"place\":\"porch\"}}}"
+  }
+}

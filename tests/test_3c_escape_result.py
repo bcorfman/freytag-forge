@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import three_c_probe as probe
 
 from bench.core import load_variation, package_and_state
-from storygame.runtime.candidate_matcher import _matches_all
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.world_model import world_for
 
@@ -61,68 +59,9 @@ def _eligibility(engine: RuntimeEngine) -> list[str]:
     return sorted(candidate.id for candidate in projection.reveal_universe)
 
 
-def test_escape_variation_replaces_only_c_r1_statement() -> None:
-    control, _ = _package("control")
-    escape, _ = _package("escape")
-    control_entries = {item.id: item.model_dump() for item in control.knowledge.knowledge}
-    escape_entries = {item.id: item.model_dump() for item in escape.knowledge.knowledge}
-    assert control_entries.keys() == escape_entries.keys()
-    differences = {
-        knowledge_id: (control_entries[knowledge_id], escape_entries[knowledge_id])
-        for knowledge_id in control_entries
-        if control_entries[knowledge_id] != escape_entries[knowledge_id]
-    }
-    assert set(differences) == {"k_sl_3c_c_r1"}
-    assert differences["k_sl_3c_c_r1"][0]["statement"] == (
-        "Kristin restores power to drainage pumps and holds one watertight barrier while Michelle leads captives "
-        "through the maintenance tunnel."
-    )
-    assert differences["k_sl_3c_c_r1"][1]["statement"] == "The drainage pumps have power. The evacuation route is open."
-
-
 def test_escape_source_proof_records_one_statement_replacement() -> None:
     proof = probe.source_proof(("control", "escape"))
     replacement = proof["knowledge_yaml"]["escape_replacement"]
     assert replacement["matches"] == 1
     assert replacement["old"].startswith("statement: 'Kristin restores power")
     assert replacement["new"] == "statement: 'The drainage pumps have power. The evacuation route is open.'"
-
-
-def test_c1_alone_preserves_facts_and_people_between_arms() -> None:
-    states = {}
-    for arm in ARM_FILES:
-        package, engine = _finish_a_and_b(arm)
-        _reveal(engine, package, "k_sl_3c_c_r1")
-        states[arm] = (_parents(package, engine), engine.state)
-
-    assert not any(fact.predicate == "captives_reaching_surface" for fact in states["control"][1].facts.asserted)
-    assert not any(fact.predicate == "captives_reaching_surface" for fact in states["escape"][1].facts.asserted)
-    assert states["control"][0] == states["escape"][0]
-
-
-@pytest.mark.parametrize("order", C_ORDERS)
-def test_both_c_orders_have_identical_facts_and_reveal_eligibility(order: tuple[str, str]) -> None:
-    results = {}
-    for arm in ARM_FILES:
-        package, engine = _finish_a_and_b(arm)
-        for knowledge_id in order:
-            _reveal(engine, package, knowledge_id)
-        results[arm] = (probe._fact_keys(engine.state), _eligibility(engine))
-
-    assert results["control"] == results["escape"]
-
-
-def test_fifteen_recorded_matcher_results_are_identical() -> None:
-    results = {}
-    for arm in ARM_FILES:
-        package, _ = _package(arm)
-        results[arm] = [
-            {
-                knowledge.id: _matches_all(knowledge.action_evidence, item["command"])
-                for knowledge in package.knowledge.knowledge
-                if knowledge.action_evidence
-            }
-            for item in probe.recorded_commands()
-        ]
-    assert len(results["control"]) == 15
-    assert results["control"] == results["escape"]

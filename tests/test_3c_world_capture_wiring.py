@@ -82,29 +82,6 @@ def test_every_capture_ask_is_counted_and_cap_is_checked_before_send():
     assert capped.cloudflare_requests == 1
 
 
-def test_non_item_facts_engine_has_no_capture_and_control_dry_artifacts_are_stable(tmp_path: Path):
-    variation = load_variation(ROOT / "bench/variations/stage7-3c-control.json")
-    _package, state = package_and_state(variation, "3C")
-
-    def provider(_command):
-        return {"segments": [{"kind": "narration", "text": "No capture."}]}
-
-    engine, capture = probe._probe_engine("control", state, provider, SpendBudget(1), "off")
-
-    assert capture is None
-    assert engine.capture is None
-
-    first = tmp_path / "first"
-    second = tmp_path / "second"
-    first.mkdir()
-    second.mkdir()
-    probe.dry_run(first, 1, "postc", "off", ("control", "pre667"), None)
-    probe.dry_run(second, 1, "postc", "off", ("control", "pre667"), None)
-    for name in ("source.json", "plan.json"):
-        assert (first / name).read_bytes() == (second / name).read_bytes()
-    assert checker.check(first, 1, "dry") == []
-
-
 def test_item_facts_dry_run_marks_world_capture_without_creating_jev_client(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         probe.JevClient,

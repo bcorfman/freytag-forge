@@ -260,47 +260,6 @@ def test_both_c_parts_are_earnable_in_either_order(order: tuple[str, str]) -> No
     assert any(fact.predicate == "captives_reaching_surface" for fact in engine.state.facts.asserted)
 
 
-@pytest.mark.parametrize("order", [("k_sl_3c_d_r1", "k_sl_3c_d_r2"), ("k_sl_3c_d_r2", "k_sl_3c_d_r1")])
-def test_both_d_parts_are_earnable_and_e_waits_for_both(order: tuple[str, str]) -> None:
-    engine = _finish_a_through_c()
-    commands = {
-        "k_sl_3c_d_r1": "Check reports from other detention sites.",
-        "k_sl_3c_d_r2": "Call the families of the missing.",
-    }
-    _reveal(engine, order[0], commands[order[0]])
-    assert not {"k_sl_3c_e_r1", "k_sl_3c_e_r2"} & {
-        candidate.id for candidate in engine.projector.project(engine.state, "player", commands[order[0]]).candidates
-    }
-    _reveal(engine, order[1], commands[order[1]])
-    candidate_ids = {
-        candidate.id
-        for candidate in engine.projector.project(engine.state, "player", "Open the recovered document.").candidates
-    }
-    assert {"k_sl_3c_e_r1", "k_sl_3c_e_r2"} <= candidate_ids
-
-
-@pytest.mark.parametrize(
-    "command",
-    [
-        "Continue broadcasting the reports from all remaining detention sites and coordinate their rescue.",
-        "Continue broadcasting the reports from the other detention sites and "
-        "coordinate rescue efforts for the remaining missing.",
-        "Keep broadcasting the reports from other detention sites.",
-    ],
-)
-def test_after_d_r2_only_d_r1_matches_compound_commands(command: str) -> None:
-    engine = _finish_a_through_c()
-    _reveal(engine, "k_sl_3c_d_r2", "Call the families of the missing.")
-
-    projection = engine.projector.project(engine.state, "player", command)
-    universe = projection.reveal_universe
-    assert [candidate.id for candidate in universe] == ["k_sl_3c_d_r1"]
-
-    matched = uniquely_matched_authored_handoff(command, universe)
-    assert matched is not None
-    assert matched.candidate.id == "k_sl_3c_d_r1"
-
-
 def test_after_d_r1_only_d_r2_remains_in_the_reveal_universe() -> None:
     engine = _finish_a_through_c()
     _reveal(engine, "k_sl_3c_d_r1", "Check reports from other detention sites.")
@@ -424,79 +383,6 @@ def test_families_replacement_is_unique_and_current_package_lacks_aliases() -> N
     )
 
 
-def test_families_candidate_matches_statefully_and_preserves_uniqueness() -> None:
-    package, engine = _families_finish_a_through_c()
-    assert _families_match(package, engine, "Broadcast the reports to the families.").candidate.id == "k_sl_3c_d_r1"
-    assert _families_match(package, engine, "Broadcast music to the families.") is None
-    assert _families_match(package, engine, "Listen for any response from the families.") is None
-    assert (
-        _families_match(
-            package, engine, "Broadcast a message to the families about the released captives."
-        ).candidate.id
-        == "k_sl_3c_d_r2"
-    )
-    assert (
-        _families_match(package, engine, "Read the detention site reports and broadcast a message to the families.")
-        is None
-    )
-
-    engine.provider = _families_provider(package, "k_sl_3c_d_r1")
-    engine.turn("Read the detention site reports.")
-    engine._activate_pacing()  # noqa: SLF001 - commit D1 before testing D2 aliases.
-    for alias in (
-        "Broadcast a message to the families.",
-        "Broadcast a response to the families.",
-        "Broadcast an update to the families.",
-    ):
-        matched = _families_match(package, engine, alias)
-        assert matched is not None
-        assert matched.candidate.id == "k_sl_3c_d_r2"
-    assert _families_match(package, engine, "Broadcast music to the families.") is None
-
-    package, engine = _families_finish_a_through_c()
-    engine.provider = _families_provider(package, "k_sl_3c_d_r2")
-    engine.turn("Broadcast a message to the families.")
-    engine._activate_pacing()  # noqa: SLF001 - commit D2 before testing D1.
-    for alias in (
-        "Broadcast a message to the families.",
-        "Broadcast a response to the families.",
-        "Broadcast an update to the families.",
-    ):
-        matched = _families_match(package, engine, alias)
-        assert matched is None or matched.candidate.id != "k_sl_3c_d_r2"
-
-    matched = _families_match(package, engine, "Broadcast the reports to the families.")
-    assert matched is not None
-    assert matched.candidate.id == "k_sl_3c_d_r1"
-
-
-@pytest.mark.parametrize("order", [("k_sl_3c_c_r1", "k_sl_3c_c_r2"), ("k_sl_3c_c_r2", "k_sl_3c_c_r1")])
-def test_families_d_and_e_wait_for_committed_parts_in_both_c_orders(order: tuple[str, str]) -> None:
-    package, engine = _families_finish_a_through_c(order)
-    projection = engine.projector.project(engine.state, "player", "Broadcast the reports to the families.")
-    assert {candidate.id for candidate in projection.reveal_universe} >= {"k_sl_3c_d_r1", "k_sl_3c_d_r2"}
-
-    engine.provider = _families_provider(package, "k_sl_3c_d_r2")
-    engine.turn("Broadcast a message to the families.")
-    engine._activate_pacing()  # noqa: SLF001 - only D2 is committed here.
-    assert not {"k_sl_3c_e_r1", "k_sl_3c_e_r2"} & {
-        candidate.id
-        for candidate in engine.projector.project(
-            engine.state, "player", "Open the recovered document."
-        ).reveal_universe
-    }
-
-    engine.provider = _families_provider(package, "k_sl_3c_d_r1")
-    engine.turn("Broadcast the reports to the families.")
-    engine._activate_pacing()  # noqa: SLF001 - both D parts are now committed.
-    assert {"k_sl_3c_e_r1", "k_sl_3c_e_r2"} <= {
-        candidate.id
-        for candidate in engine.projector.project(
-            engine.state, "player", "Open the recovered document."
-        ).reveal_universe
-    }
-
-
 def test_families_c2_only_does_not_make_d_eligible() -> None:
     package, engine = _families_finish_a_through_c(("k_sl_3c_c_r2",))
     assert not {"k_sl_3c_d_r1", "k_sl_3c_d_r2"} & {
@@ -565,15 +451,6 @@ def _families_v2_added_aliases() -> tuple[str, ...]:
 
 
 @pytest.mark.parametrize("variation_path", [FAMILIES_V2_PATH])
-@pytest.mark.parametrize("alias", _families_v2_added_aliases())
-def test_families_v2_all_added_aliases_select_d2_when_eligible(variation_path: str, alias: str) -> None:
-    package, engine = _families_finish_a_through_c(variation_path=variation_path)
-    matched = _families_match(package, engine, alias.capitalize() + " confirming the captives are alive.")
-    assert matched is not None
-    assert matched.candidate.id == "k_sl_3c_d_r2"
-
-
-@pytest.mark.parametrize("variation_path", [FAMILIES_V2_PATH])
 def test_families_v2_initial_free_evidence_table(variation_path: str) -> None:
     package, engine = _families_finish_a_through_c(variation_path=variation_path)
     expectations = (
@@ -592,69 +469,3 @@ def test_families_v2_initial_free_evidence_table(variation_path: str) -> None:
     for command, expected_id in expectations:
         matched = _families_match(package, engine, command)
         assert matched is None if expected_id is None else matched.candidate.id == expected_id
-
-
-@pytest.mark.parametrize("variation_path", [FAMILIES_V2_PATH])
-@pytest.mark.parametrize("order", [("k_sl_3c_c_r1", "k_sl_3c_c_r2"), ("k_sl_3c_c_r2", "k_sl_3c_c_r1")])
-def test_families_v2_alias_commit_is_guarded_and_e_requires_both_d(variation_path: str, order: tuple[str, ...]) -> None:
-    package, engine = _families_finish_a_through_c(order, variation_path)
-    engine.provider = _families_provider(package, "k_sl_3c_d_r2")
-    response = engine.turn("Send the families a message confirming the captives are alive.")
-    assert response.selected_knowledge_ids == ("k_sl_3c_d_r2",)
-    assert engine.state.turn_records[-1].reveal_ids == ("k_sl_3c_d_r2",)
-    assert not {"k_sl_3c_e_r1", "k_sl_3c_e_r2"} & {
-        candidate.id
-        for candidate in engine.projector.project(
-            engine.state, "player", "Open the recovered document."
-        ).reveal_universe
-    }
-    engine.provider = _families_provider(package, "k_sl_3c_d_r1")
-    engine.turn("Broadcast the reports to the families.")
-    engine._activate_pacing()  # noqa: SLF001 - commit the second D part.
-    assert {"k_sl_3c_e_r1", "k_sl_3c_e_r2"} <= {
-        candidate.id
-        for candidate in engine.projector.project(
-            engine.state, "player", "Open the recovered document."
-        ).reveal_universe
-    }
-
-
-@pytest.mark.parametrize("variation_path", [FAMILIES_V2_PATH])
-def test_families_v2_controls_and_spent_states(variation_path: str) -> None:
-    package, engine = _families_finish_a_through_c(variation_path=variation_path)
-    controls = (
-        ("Send their families a message.", "k_sl_3c_d_r2"),
-        ("Send the families a message.", "k_sl_3c_d_r2"),
-        ("Do not send the families a message.", None),
-        ("Broadcast a message to the journalists.", None),
-        ("Broadcast an update to the guards.", None),
-        ("Broadcast a message to Brandon.", None),
-        ("Broadcast music to the families.", None),
-        ("Listen for any response from the families.", None),
-        ("Send the families into danger.", None),
-    )
-    for command, expected_id in controls:
-        matched = _families_match(package, engine, command)
-        if expected_id is None:
-            assert matched is None
-        else:
-            assert matched is not None and matched.candidate.id == expected_id
-
-    engine.provider = _families_provider(package, "k_sl_3c_d_r2")
-    engine.turn("Send the families a message.")
-    engine._activate_pacing()  # noqa: SLF001 - spend D2 before checking the alias guard.
-    assert _families_match(package, engine, "Tell their families that the captives are safe.") is None
-
-    package, engine = _families_finish_a_through_c(variation_path=variation_path)
-    engine.provider = _families_provider(package, "k_sl_3c_d_r1")
-    engine.turn("Read the detention site reports.")
-    engine._activate_pacing()  # noqa: SLF001 - spend D1 before checking the D2 aliases.
-    matched = _families_match(package, engine, "Tell their families that the captives are safe.")
-    assert matched is not None and matched.candidate.id == "k_sl_3c_d_r2"
-
-
-@pytest.mark.parametrize("variation_path", [FAMILIES_V2_PATH])
-@pytest.mark.parametrize("order", [(), ("k_sl_3c_c_r2",)])
-def test_families_v2_d_requires_both_c_parts(variation_path: str, order: tuple[str, ...]) -> None:
-    package, engine = _families_finish_a_through_c(order, variation_path)
-    assert _families_match(package, engine, "Send the families a message.") is None

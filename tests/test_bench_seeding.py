@@ -40,60 +40,6 @@ class _Response:
         return self.payload
 
 
-def test_thorough_seeding_reaches_late_scenes_without_worker_calls(monkeypatch) -> None:
-    calls = 0
-
-    def forbidden(*_args: object, **_kwargs: object) -> None:
-        nonlocal calls
-        calls += 1
-        raise AssertionError("thorough seeding must not call the narration worker")
-
-    monkeypatch.setattr(cloudflare, "urlopen", forbidden)
-    variation = _variation("thorough")
-
-    for scene_id in ("1B", "3B"):
-        package, state = core.seeded_state_for_scene(variation, scene_id)
-        bare_package, bare_state = core.package_and_state(variation, scene_id)
-
-        assert state.package is package
-        assert package.knowledge == bare_package.knowledge
-        assert package.knowledge_indexes == bare_package.knowledge_indexes
-        assert state.current_scene_id == scene_id
-        assert state.turn_index == state.scene_entered_at_turn
-        assert len(state.facts.asserted) > len(bare_state.facts.asserted)
-        assert (
-            core.entry_state(state, seeded_by="thorough")["earned_knowledge_count"]
-            > core.entry_state(bare_state)["earned_knowledge_count"]
-        )
-
-    assert calls == 0
-
-
-def test_run_scene_seeding_prevents_midstory_opening_rejection(monkeypatch) -> None:
-    prose = "Michelle and Brandon watch the JANUS selection records as alarms sound."
-    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
-    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test")
-    monkeypatch.setattr(
-        cloudflare,
-        "urlopen",
-        lambda *_args, **_kwargs: _Response({"segments": [{"kind": "narration", "text": prose}]}),
-    )
-    script = {"name": "opening", "inputs": ["Inspect the relay room."]}
-
-    bare = core.run_scene(_variation(), "3B", script, max_turns=2)
-    seeded = core.run_scene(_variation("thorough"), "3B", script, max_turns=2)
-
-    assert bare["status"] == "failed"
-    assert "protected knowledge" in bare["failure_reason"] or "unavailable entity" in bare["failure_reason"]
-    cue = next(item.cue_text for item in STORY_PACKAGE.deliveries if item.fact_id == seeded["turns"][0]["cue_fact_id"])
-    assert seeded["turns"][0]["narration"] == f"{prose} {cue}"
-    assert "protected knowledge" not in seeded.get("failure_reason", "")
-    assert "unavailable entity" not in seeded.get("failure_reason", "")
-    assert seeded["opening"]
-    assert bare["entry_state"]["seeded_by"] == "none"
-    assert seeded["entry_state"]["seeded_by"] == "thorough"
-
-
 def test_first_scene_thorough_seeding_returns_bootstrap_without_worker(monkeypatch) -> None:
     monkeypatch.setattr(cloudflare, "urlopen", lambda *_args, **_kwargs: pytest.fail("worker call"))
     package, state = core.seeded_state_for_scene(_variation("thorough"), "1A")

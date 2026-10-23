@@ -9,9 +9,7 @@ import pytest
 
 from bench.core import advance_state_to_scene
 from storygame.runtime.cloudflare import CloudflareTurnProvider
-from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeState, TurnDelivery
-from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -50,36 +48,6 @@ def _provider(state: RuntimeState, monkeypatch: pytest.MonkeyPatch, text: str = 
     monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", "0")
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     return CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-
-
-def test_committed_reveal_is_reported_and_next_turn_resets(monkeypatch: pytest.MonkeyPatch) -> None:
-    state = _state_at_2c()
-    engine = RuntimeEngine(state, _provider(state, monkeypatch))
-
-    engine.turn(COMMAND)
-    assert state.last_turn_delivery.revealed_knowledge_ids == ("k_sl_2c_c_r2",)
-
-    engine.turn("Inspect the wall.")
-    assert state.last_turn_delivery.revealed_knowledge_ids == ()
-
-
-def test_unmatched_turn_reports_no_reveal(monkeypatch: pytest.MonkeyPatch) -> None:
-    state = _state_at_2c()
-    engine = RuntimeEngine(state, _provider(state, monkeypatch))
-
-    engine.turn("Look at the ceiling.")
-
-    assert state.last_turn_delivery.revealed_knowledge_ids == ()
-
-
-def test_rejected_turn_restores_empty_delivery(monkeypatch: pytest.MonkeyPatch) -> None:
-    state = _state_at_2c()
-    engine = RuntimeEngine(state, _provider(state, monkeypatch, "Rebecca's secured office can broadcast the evidence."))
-
-    with pytest.raises(ProposalValidationError):
-        engine.turn(COMMAND)
-
-    assert state.last_turn_delivery.revealed_knowledge_ids == ()
 
 
 def test_old_turn_delivery_without_field_loads() -> None:

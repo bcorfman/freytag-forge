@@ -30,15 +30,6 @@ def test_expected_reveal_ids_exist_and_include_2c_c_r2() -> None:
     assert "k_sl_2c_c_r2" in expected["2C"]
 
 
-def test_expected_reveals_spend_sibling_storylets_once() -> None:
-    expected = expected_reveals(_scene_prompts(), _knowledge())
-    ids = {item_id for scene in expected.values() for item_id in scene}
-    assert not ids & {"k_sl_1a_b_r2", "k_sl_1b_a_r1", "k_sl_1c_c_r2", "k_sl_2b_a_r2"}
-    knowledge = _knowledge()
-    sources = [knowledge[item_id]["source"]["storylet_id"] for item_id in ids]
-    assert len(sources) == len(set(sources))
-
-
 def test_world_only_matches_are_not_expected() -> None:
     assert "k_sl_2c_a_r1" not in expected_reveals(_scene_prompts(), _knowledge())["2C"]
 

@@ -17,6 +17,7 @@ from storygame.story_package.models import (
     Character,
     Entity,
     FactDelivery,
+    Incident,
     ItemPlacement,
     KnowledgeCatalog,
     KnowledgeDefinition,
@@ -975,6 +976,128 @@ def _validate_deliveries(package: StoryPackage) -> None:
             raise StoryPackageError(f"scene {event.scene_id} bridge-required fact '{fact_id}' has no FactDelivery")
 
 
+def _validate_incidents(package: StoryPackage) -> None:
+    scenes = {scene.metadata.scene_id for scene in package.scenes}
+    routes = {route.id: route for route in package.storylet_routes.storylets}
+    events = {event.id: event for event in package.pacing.events}
+    transitions = {transition.id: transition for transition in package.pacing.transitions}
+    knowledge = {item.id: item for item in package.knowledge.knowledge}
+    seen_ids: set[str] = set()
+    scenes_with_incidents: set[str] = set()
+    for incident in package.incidents:
+        if incident.id in seen_ids:
+            raise StoryPackageError(f"incident '{incident.id}' has a duplicate incident id '{incident.id}'")
+        seen_ids.add(incident.id)
+        if incident.scene_id not in scenes:
+            raise StoryPackageError(f"incident '{incident.id}' references unknown scene '{incident.scene_id}'")
+        if incident.scene_id in scenes_with_incidents:
+            raise StoryPackageError(
+                f"incident '{incident.id}' shares scene '{incident.scene_id}' with another incident"
+            )
+        scenes_with_incidents.add(incident.scene_id)
+
+        event = events.get(incident.missed_window_event_id)
+        if event is None:
+            raise StoryPackageError(
+                f"incident '{incident.id}' references unknown pacing event '{incident.missed_window_event_id}'"
+            )
+        if event.scene_id != incident.scene_id:
+            raise StoryPackageError(
+                f"incident '{incident.id}' event '{event.id}' belongs to scene '{event.scene_id}', "
+                f"not '{incident.scene_id}'"
+            )
+        transition = transitions.get(incident.successor_transition_id)
+        if transition is None:
+            raise StoryPackageError(
+                f"incident '{incident.id}' references unknown transition '{incident.successor_transition_id}'"
+            )
+        if transition.source_scene_id != incident.scene_id:
+            raise StoryPackageError(
+                f"incident '{incident.id}' transition '{transition.id}' starts in '{transition.source_scene_id}', "
+                f"not '{incident.scene_id}'"
+            )
+        if event.transition_id == transition.id:
+            raise StoryPackageError(
+                f"incident '{incident.id}' event '{event.id}' cannot use successor transition '{transition.id}'"
+            )
+
+        outcome_ids = [outcome.id for outcome in incident.outcomes]
+        if len(outcome_ids) != len(set(outcome_ids)):
+            duplicate = next(outcome_id for outcome_id in outcome_ids if outcome_ids.count(outcome_id) > 1)
+            raise StoryPackageError(f"incident '{incident.id}' has duplicate outcome id '{duplicate}'")
+        storylet_ids = {outcome.storylet_id for outcome in incident.outcomes}
+        if len(storylet_ids) != 1:
+            offending = ", ".join(sorted(storylet_ids))
+            raise StoryPackageError(
+                f"incident '{incident.id}' outcome storylet '{offending}' is not shared by every outcome"
+            )
+        route = routes.get(incident.outcomes[0].storylet_id)
+        if route is None or route.scene_id != incident.scene_id:
+            offending = incident.outcomes[0].storylet_id
+            raise StoryPackageError(
+                f"incident '{incident.id}' outcome references storylet '{offending}' outside "
+                f"scene '{incident.scene_id}'"
+            )
+        realization_ids = [outcome.realization_id for outcome in incident.outcomes]
+        if len(realization_ids) != len(set(realization_ids)):
+            duplicate = next(
+                realization_id for realization_id in realization_ids if realization_ids.count(realization_id) > 1
+            )
+            raise StoryPackageError(f"incident '{incident.id}' has duplicate realization id '{duplicate}'")
+        realization_map = {realization.id: realization for realization in route.realizations}
+        for realization_id in realization_ids:
+            if realization_id not in realization_map:
+                raise StoryPackageError(f"incident '{incident.id}' references unknown realization '{realization_id}'")
+
+        advantage_sets: list[set[str]] = []
+        outcome_costs: set[str] = set()
+        for outcome in incident.outcomes:
+            advantages = set(outcome.advantages)
+            costs = set(outcome.costs)
+            unknown = (advantages | costs) - package.fact_ids
+            if unknown:
+                offending = sorted(unknown)[0]
+                raise StoryPackageError(f"incident '{incident.id}' references unknown fact '{offending}'")
+            if overlap := advantages & costs:
+                offending = sorted(overlap)[0]
+                raise StoryPackageError(
+                    f"incident '{incident.id}' outcome '{outcome.id}' overlaps advantage and cost fact '{offending}'"
+                )
+            asserted = _asserted_true_route_operations(realization_map[outcome.realization_id].operations)
+            missing = (advantages | costs) - asserted
+            if missing:
+                offending = sorted(missing)[0]
+                raise StoryPackageError(
+                    f"incident '{incident.id}' outcome '{outcome.id}' fact '{offending}' is not asserted by "
+                    f"realization '{outcome.realization_id}'"
+                )
+            if any(advantages & prior for prior in advantage_sets):
+                offending = sorted(advantages & set.union(*advantage_sets))[0]
+                raise StoryPackageError(f"incident '{incident.id}' has overlapping advantage fact '{offending}'")
+            advantage_sets.append(advantages)
+            outcome_costs.update(costs)
+        event_facts = {effect.fact_id for effect in event.effects}
+        if touched := event_facts & (set.union(*advantage_sets) | outcome_costs):
+            offending = sorted(touched)[0]
+            raise StoryPackageError(f"incident '{incident.id}' event '{event.id}' touches outcome fact '{offending}'")
+        for knowledge_id in incident.observation_knowledge_ids:
+            definition = knowledge.get(knowledge_id)
+            if definition is None:
+                raise StoryPackageError(f"incident '{incident.id}' references unknown knowledge '{knowledge_id}'")
+            if incident.scene_id not in definition.available_in_scenes:
+                raise StoryPackageError(
+                    f"incident '{incident.id}' knowledge '{knowledge_id}' is unavailable in scene '{incident.scene_id}'"
+                )
+        for delivery in package.deliveries:
+            if delivery.scene_id == incident.scene_id:
+                overlap = {cost.fact_id for cost in delivery.costs} & outcome_costs
+                if overlap:
+                    offending = sorted(overlap)[0]
+                    raise StoryPackageError(
+                        f"incident '{incident.id}' delivery cost fact '{offending}' duplicates an outcome cost"
+                    )
+
+
 def _asserted_true_route_operations(operations: tuple[RouteOperation, ...]) -> set[str]:
     return {operation.fact_id for operation in operations if operation.op == "assert" and operation.value is True}
 
@@ -1237,6 +1360,15 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
         if not isinstance(raw_deliveries, list):
             raise StoryPackageError("YAML handoffs.yaml must contain a deliveries list")
         deliveries = tuple(FactDelivery.model_validate(item) for item in raw_deliveries)
+        incidents_path = root / "incidents.yaml"
+        if not incidents_path.exists():
+            incidents = ()
+        else:
+            incidents_raw = _yaml(incidents_path)
+            raw_incidents = incidents_raw.get("incidents")
+            if not isinstance(raw_incidents, list):
+                raise StoryPackageError("YAML incidents.yaml must contain an incidents list")
+            incidents = tuple(Incident.model_validate(item) for item in raw_incidents)
 
         route_storylet_ids = {item["id"] for item in routes_raw["storylets"]}
 
@@ -1316,12 +1448,14 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
         knowledge=knowledge,
         knowledge_indexes=_compile_knowledge_indexes(knowledge, world),
         deliveries=deliveries,
+        incidents=incidents,
     )
     _validate_disclosure_guards(package)
     _validate_knowledge(package)
     _validate(package)
     _validate_authored_handoffs(package)
     _validate_deliveries(package)
+    _validate_incidents(package)
     _validate_transition_trigger_sources(package)
     _validate_resolution_entry_guarantees(package)
     _validate_required_reveal_prerequisites(package)

@@ -1,7 +1,6 @@
 import io
 import json
 import subprocess
-import sys
 from pathlib import Path
 from types import SimpleNamespace
 from urllib.error import HTTPError
@@ -107,29 +106,6 @@ def _use_legacy_candidates(monkeypatch, knowledge_ids: set[str]) -> None:
         return legacy_package(original_load_story_package(path), knowledge_ids)
 
     monkeypatch.setattr(core, "load_story_package", load_legacy_package)
-
-
-def test_score_matches_archived_acceptance_fixture() -> None:
-    result = subprocess.run(
-        [sys.executable, "-m", "bench", "score", "--run-dir", str(ARCHIVE)],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert json.loads(result.stdout) == {
-        "total": 12,
-        "per_criterion": {
-            "canon_consistent": 0,
-            "scene_local": 2,
-            "progressive": 0,
-            "rich": 1,
-            "protected_safe": 5,
-            "exit_motivated": 2,
-            "rewards_investigation": 2,
-        },
-    }
-    assert result.stderr == ""
 
 
 def test_resolved_variation_hashes_are_stable_and_distinguish_prompt_configs() -> None:

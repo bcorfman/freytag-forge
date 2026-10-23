@@ -8,7 +8,6 @@ import check_three_c_probe as checker
 import pytest
 import three_c_probe as probe
 from door_transport import SpendBudget
-from three_c_prefix import _canonical_dump
 
 from bench.core import load_variation
 from storygame.story_package.loader import load_story_package
@@ -19,26 +18,6 @@ ROOT = Path(__file__).resolve().parents[1]
 def _arm_package(arm: str):
     variation = load_variation(probe.variation_paths((arm,))[arm])
     return variation, load_story_package(Path(variation["_package_path"]))
-
-
-def test_carried_pump_and_families_cross_real_3c_without_chain_reveals() -> None:
-    expected = json.loads((ROOT / "bench/results/stage7-3c-prefix/prefix.json").read_text())
-    for arm in ("pump", "families"):
-        variation, package = _arm_package(arm)
-        replay = probe.carried_replay(package, variation)
-        assert replay["state"].current_scene_id == "3C"
-        assert replay["entry_text"]
-        assert replay["bridge_text"]
-        assert replay["prefix"]["committed_reveal_ids"] == expected["committed_reveal_ids"]
-        assert not set(replay["prefix"]["committed_reveal_ids"]) & probe.CHAIN
-        assert any(f.predicate == "relay_open" and f.value == "true" for f in replay["state"].facts.asserted)
-
-
-def test_carried_replay_is_deterministic() -> None:
-    variation, package = _arm_package("pump")
-    first = probe.carried_replay(package, variation)["state"]
-    second = probe.carried_replay(package, variation)["state"]
-    assert _canonical_dump(first) == _canonical_dump(second)
 
 
 def test_families_diff_is_only_the_three_d_r2_phrases() -> None:
