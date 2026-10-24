@@ -46,6 +46,7 @@ from storygame.story_package.models import (
     SceneMetadata,
     item_placement_is_visible,
     placement_text,
+    scene_entry_texts,
 )
 
 logger = logging.getLogger(__name__)
@@ -1241,7 +1242,12 @@ class CloudflareTurnProvider:
             "location": location.name,
             "phase": scene.freytag_phase,
             "objective": scene.objective,
-            "entry_text": scene.entry_text,
+            "entry_text": "\n\n".join(
+                scene_entry_texts(
+                    scene,
+                    {fact.predicate for fact in self.state.facts.asserted if str(fact.value).lower() == "true"},
+                )
+            ),
             "opening_beat": {
                 "id": beat.id,
                 "title": beat.title,

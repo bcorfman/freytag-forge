@@ -61,6 +61,7 @@ class Journey:
     picked: list[str] = field(default_factory=list)
     forced_exits: list[tuple[str, str]] = field(default_factory=list)
     scenes: list[str] = field(default_factory=list)
+    entry_texts: list[str] = field(default_factory=list)
 
     @property
     def deadline_events(self) -> list[str]:
@@ -110,7 +111,7 @@ def play(preferred: tuple[str, ...] = ()) -> Journey:
         provider.selected = (selected,) if selected else ()
         scene_before = state.current_scene_id
         try:
-            engine.turn(PERSONAS["thorough"])
+            result = engine.turn(PERSONAS["thorough"])
         except (ProposalValidationError, RuntimeContractError):
             provider.selected = ()
             selected = None
@@ -119,6 +120,8 @@ def play(preferred: tuple[str, ...] = ()) -> Journey:
             journey.picked.append(selected)
         if state.current_scene_id != scene_before:
             journey.scenes.append(state.current_scene_id)
+            if state.current_scene_id == "2A":
+                journey.entry_texts.extend(segment.text for segment in result.segments)
             if engine.last_attempt.transition_cause in ("forced", "timer"):
                 journey.forced_exits.append((scene_before, engine.last_attempt.transition_cause))
     return journey

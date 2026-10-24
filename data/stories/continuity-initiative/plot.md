@@ -343,6 +343,11 @@ character_placements:
   kristin: {parent: brandon_hideout}
   brandon: {parent: brandon_hideout}
 entry_text: "Brandon's hideout was buried inside a dead communications center: servers, salvaged hardware, and years of leaked Continuity Initiative documents. Somewhere beneath the city the facility waited, and its unstable cooling-water and ventilation readings were exactly the kind of flaw a pair of outside inspectors might be sent to examine.\n\n"
+entry_variants:
+- requires: [processing_numbers_copied]
+  text: "Kristin still has the copied prisoner numbers. She needs a way into the facility."
+- requires: [service_level_access_known]
+  text: "Kristin and Brandon know the service approach. Their proof is weaker, but it may still get them inside."
 transition_ids: [t_2a_2b]
 bridge_text:
   t_2a_2b: >-

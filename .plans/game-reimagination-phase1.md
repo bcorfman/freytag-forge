@@ -7,12 +7,11 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 ## Resume here
 
-Decisions in section 5 are made. Steps 1-6 and 7a are done and verified (below).
+Decisions in section 5 are made. Steps 1-6, 7a and 7b are done and verified (below).
 Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is
 `fc3f63e3`, step 5 is `bd926e15`, step 5b is `78e18467`, step 6 is `45989f14`,
-step 7a is the commit that records this entry. Next: step 7b (runtime: conditional
-2A entry text, free-text wiring of `follow_connection`, shared post-turn helper),
-then 7c (discovery cue lifecycle fix), each a Ringer manifest.
+step 7a is `c633cd16`, step 7b is the commit that records this entry. Next: step 7c
+(discovery cue lifecycle fix) as a Ringer manifest.
 
 ## Step 1 result (2026-10-22)
 
@@ -202,6 +201,27 @@ and tests only. Full suite 2,454 passed, 16 skipped; Ruff clean.
   already asserted. A 1C-to-2A probe printed the same static text for both outcomes.
   This needs a small runtime change (fact-keyed entry text variants); fold it
   into step 7b.
+
+## Step 7b result (2026-10-24)
+
+Ringer run `game-reimagination-phase1`, Codex Luna medium, 1 attempt, 209k tokens,
+817 s; manifest `scripts/ringer/phase1/step7b-manifest.json`. Full suite 2,466
+passed, 16 skipped; Ruff clean.
+
+- **Entry variants.** Optional `SceneMetadata.entry_variants` (required fact ids plus
+  text). One helper, `scene_entry_texts`, emits the base text then each satisfied
+  variant in declaration order; the opening, authored and handoff transitions and the
+  Cloudflare payload use it. The loader rejects unknown facts, empty requirements,
+  blank text and unavailable guarded terms. 2A has one variant per 1C advantage; with
+  neither, entry text is unchanged.
+- **Traversal wiring.** A pure lexical matcher in `traversal.py` maps an imperative
+  movement command to a connection (destination name or id words, or exactly one
+  outgoing via entity). Unmatched, unrelated or ambiguous commands fall through to the
+  provider. Closed access returns `EngineRefusalTurn("access_closed")`, which keeps a
+  player-visible reply and does not advance the turn or incident window.
+- **Helper.** `_complete_accepted_turn` is shared by `_turn_active` and
+  `follow_connection`.
+- Not verified: the variants and traversal wiring have not been played with a model.
 
 ## 1. What exists today (read in source, 2026-10-22)
 

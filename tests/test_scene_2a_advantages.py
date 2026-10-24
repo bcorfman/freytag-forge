@@ -4,6 +4,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import scene_entry_texts
 from tests.test_game_path_journeys import play
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -94,3 +95,28 @@ def test_carried_advantages_persist_into_2b() -> None:
     ):
         assert "2B" in journey.scenes
         assert Fact(predicate=fact_id, subject="story", value="true") in journey.state.facts.asserted
+
+
+def test_2a_entry_variants_follow_each_real_journey_advantage() -> None:
+    numbers = play(("k_sl_1c_c_copy_numbers", "k_sl_2a_c_r3"))
+    route = play(("k_sl_1c_c_secure_route", "k_sl_2a_c_r4"))
+    assert numbers.entry_texts[-1].startswith("Kristin still has the copied prisoner numbers.")
+    assert route.entry_texts[-1].startswith("Kristin and Brandon know the service approach.")
+
+
+def test_2a_entry_includes_both_variants_in_declaration_order() -> None:
+    state = _state_2a("processing_numbers_copied", "service_level_access_known")
+    metadata = next(scene.metadata for scene in PACKAGE.scenes if scene.metadata.scene_id == "2A")
+    texts = scene_entry_texts(metadata, {fact.predicate for fact in state.facts.asserted})
+    assert texts[1:] == (
+        "Kristin still has the copied prisoner numbers. She needs a way into the facility.",
+        "Kristin and Brandon know the service approach. Their proof is weaker, but it may still get them inside.",
+    )
+
+
+def test_2a_entry_is_base_only_when_neither_advantage_is_true() -> None:
+    state = _state_2a()
+    metadata = next(scene.metadata for scene in PACKAGE.scenes if scene.metadata.scene_id == "2A")
+    assert tuple(scene_entry_texts(metadata, {fact.predicate for fact in state.facts.asserted})) == (
+        metadata.entry_text,
+    )

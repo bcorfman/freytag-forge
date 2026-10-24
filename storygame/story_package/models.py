@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
@@ -478,6 +478,11 @@ class WorldSource(_Model):
         return values
 
 
+class EntryTextVariant(_Model):
+    requires: tuple[str, ...] = Field(min_length=1)
+    text: str = Field(min_length=1)
+
+
 class SceneMetadata(_Model):
     scene_id: str = Field(pattern=_SCENE_ID)
     location_id: str = Field(pattern=_ID)
@@ -488,6 +493,7 @@ class SceneMetadata(_Model):
     participant_ids: tuple[str, ...] = ()
     item_ids: tuple[str, ...] = ()
     entry_text: str = Field(min_length=1)
+    entry_variants: tuple[EntryTextVariant, ...] = ()
     transition_ids: tuple[str, ...] = ()
     bridge_text: Mapping[str, str] = {}
     item_placements: Mapping[str, str | ItemPlacement] = {}
@@ -501,6 +507,16 @@ class SceneMetadata(_Model):
         if any(not value.strip() for value in values):
             raise ValueError("setting_facts entries must not be empty or whitespace-only")
         return values
+
+
+def scene_entry_texts(metadata: SceneMetadata, true_facts: Collection[str]) -> tuple[str, ...]:
+    """Return the base entry and every fact-qualified entry variant in order."""
+
+    facts = set(true_facts)
+    return (
+        metadata.entry_text,
+        *(variant.text for variant in metadata.entry_variants if set(variant.requires) <= facts),
+    )
 
 
 class SceneBeat(_Model):

@@ -45,7 +45,7 @@ from storygame.runtime.reference_resolution import (
 from storygame.runtime.reveal_eligibility import ALREADY_ESTABLISHED, STORYLET_SPENT, explain_reveal
 from storygame.runtime.state import CueStage as RuntimeCueStage
 from storygame.runtime.state import RuntimeState, TurnDelivery, TurnRecord
-from storygame.runtime.traversal import resolve_traversal
+from storygame.runtime.traversal import match_traversal_command, resolve_traversal
 from storygame.runtime.validation import (
     ProgressionValidator,
     ProposalValidationError,
@@ -54,7 +54,7 @@ from storygame.runtime.validation import (
     unconveyed_terms,
 )
 from storygame.runtime.world_model import apply_world_effects, world_for
-from storygame.story_package.models import FactDelivery
+from storygame.story_package.models import FactDelivery, scene_entry_texts
 from storygame.story_package.obligations import required_storylet_ids
 
 SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
@@ -208,8 +208,11 @@ class RuntimeEngine(CanonicalEventMixin):
                     raise
                 continue
             break
-        entry = NarrationSegment(kind="narration", text=scene.metadata.entry_text)
-        return ResolvedTurnProposal(segments=(entry, *proposal.segments))
+        entries = tuple(
+            NarrationSegment(kind="narration", text=text)
+            for text in scene_entry_texts(scene.metadata, self._true_facts(self.state.facts))
+        )
+        return ResolvedTurnProposal(segments=(*entries, *proposal.segments))
 
     def turn(
         self,
@@ -235,6 +238,14 @@ class RuntimeEngine(CanonicalEventMixin):
                 return ClarificationTurn(reference.question)
             if reference.outcome in {"answered", "capped"}:
                 player_input = reference.command
+            destination_id = match_traversal_command(
+                self.state.package,
+                self.state.facts,
+                world_for(self.state.package, self.state.facts),
+                player_input,
+            )
+            if destination_id is not None:
+                return self.follow_connection(destination_id)
         budget = self._provider_budget()
         try:
             self._begin_provider_turn()
@@ -272,10 +283,27 @@ class RuntimeEngine(CanonicalEventMixin):
                 ),
             )
         proposal = ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text=connection.arrival_text),))
+        return self._complete_accepted_turn(proposal, before=before)
+
+    def _complete_accepted_turn(
+        self,
+        proposal: ResolvedTurnProposal,
+        *,
+        before,
+        canonical_event_id: str | None = None,
+        clock_seconds: int | None = None,
+        staged_cue_fact_id: str | None = None,
+        staged_cue_stage: int = 1,
+        refusal_segment: NarrationSegment | None = None,
+    ) -> ResolvedTurnProposal:
+        """Run the shared post-commit lifecycle for any accepted turn."""
+
         self._record_turn(proposal)
-        self._advance_pacing(proposal.narrative_seconds)
+        self._advance_pacing(proposal.narrative_seconds if clock_seconds is None else clock_seconds)
         self._activate_pacing()
-        canonical_segments = self._apply_canonical_route_events()
+        canonical_segments = (
+            self._apply_canonical_route_events() if not (canonical_event_id and proposal.transition) else ()
+        )
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
@@ -287,18 +315,48 @@ class RuntimeEngine(CanonicalEventMixin):
             self.state.turn_records[-1] = self.state.turn_records[-1].model_copy(
                 update={"deadline_event_ids": deadline_event_ids}
             )
-        return self._finish_ending(
-            proposal.model_copy(
-                update={
-                    "segments": (
-                        *proposal.segments,
-                        *canonical_segments,
-                        *(entry_segments or ()),
-                        *resolution_segments,
-                    )
-                }
+        if (
+            staged_cue_fact_id
+            and self.state.current_scene_id == before.current_scene_id
+            and not (self.last_projection and self.last_projection.handoff_deliveries)
+            and not self._provider_has_active_handoff()
+        ):
+            if staged_cue_fact_id not in self.state.delivered_cue_ids:
+                self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)
+            self.state.cue_stages = (
+                *(stage for stage in self.state.cue_stages if stage.fact_id != staged_cue_fact_id),
+                RuntimeCueStage(
+                    fact_id=staged_cue_fact_id,
+                    stage=staged_cue_stage,
+                    last_turn=self.state.turn_index,
+                    visit_entered_at=before.scene_entered_at_turn,
+                ),
             )
+            self.state.staged_cue_fact_id = None
+            self.state.staged_cue_stage = 1
+        elif staged_cue_fact_id and self.state.current_scene_id != before.current_scene_id:
+            self.state.staged_cue_fact_id = staged_cue_fact_id
+            cue_text = next(
+                (
+                    delivery.escalation_text if staged_cue_stage == 2 else delivery.cue_text
+                    for delivery in self.state.package.deliveries
+                    if delivery.fact_id == staged_cue_fact_id
+                    and (delivery.escalation_text if staged_cue_stage == 2 else delivery.cue_text)
+                ),
+                None,
+            )
+            if cue_text is not None:
+                proposal = proposal.model_copy(
+                    update={"segments": tuple(segment for segment in proposal.segments if segment.text != cue_text)}
+                )
+        segments = (
+            *proposal.segments,
+            *canonical_segments,
+            *(entry_segments or ()),
+            *(resolution_segments or ()),
+            *((refusal_segment,) if refusal_segment else ()),
         )
+        return self._finish_ending(proposal.model_copy(update={"segments": segments}))
 
     def _turn_active(self, player_input: str, *, clock_seconds: int | None = None) -> ResolvedTurnProposal:
         """Call the provider once, then validate before any canonical mutation."""
@@ -319,8 +377,6 @@ class RuntimeEngine(CanonicalEventMixin):
         provider_reply = None
         provider_proposal = None
         canonical_event_id = None
-        entry_segments = None
-        resolution_segments = None
         refusal_segment = None
         forced_handoff = False
         try:
@@ -525,73 +581,15 @@ class RuntimeEngine(CanonicalEventMixin):
                     capture=context,
                 )
                 return proposal.model_copy(update={"game_break": warning})
-        self._record_turn(proposal)
-        self._advance_pacing(proposal.narrative_seconds if clock_seconds is None else clock_seconds)
-        self._activate_pacing()
-        if not (canonical_event_id and proposal.transition):
-            canonical_segments = self._apply_canonical_route_events()
-        else:
-            canonical_segments = ()
-        self._activate_pacing()
-        entry_segments = self._apply_authored_transition()
-        self._activate_pacing()
-        if self._unresolved_incident():
-            resolution_segments, deadline_event_ids = (), ()
-        else:
-            resolution_segments, deadline_event_ids = self._apply_resolution_deadline_backstop()
-        if deadline_event_ids:
-            self.state.turn_records[-1] = self.state.turn_records[-1].model_copy(
-                update={"deadline_event_ids": deadline_event_ids}
-            )
-        if (
-            staged_cue_fact_id
-            and self.state.current_scene_id == before.current_scene_id
-            and not (self.last_projection and self.last_projection.handoff_deliveries)
-            and not self._provider_has_active_handoff()
-        ):
-            if staged_cue_fact_id not in self.state.delivered_cue_ids:
-                self.state.delivered_cue_ids = (*self.state.delivered_cue_ids, staged_cue_fact_id)
-            self.state.cue_stages = (
-                *(stage for stage in self.state.cue_stages if stage.fact_id != staged_cue_fact_id),
-                RuntimeCueStage(
-                    fact_id=staged_cue_fact_id,
-                    stage=staged_cue_stage,
-                    last_turn=self.state.turn_index,
-                    visit_entered_at=before.scene_entered_at_turn,
-                ),
-            )
-            self.state.staged_cue_fact_id = None
-            self.state.staged_cue_stage = 1
-        elif staged_cue_fact_id and self.state.current_scene_id != before.current_scene_id:
-            self.state.staged_cue_fact_id = staged_cue_fact_id
-            cue_text = next(
-                (
-                    delivery.escalation_text if staged_cue_stage == 2 else delivery.cue_text
-                    for delivery in self.state.package.deliveries
-                    if delivery.fact_id == staged_cue_fact_id
-                    and (delivery.escalation_text if staged_cue_stage == 2 else delivery.cue_text)
-                ),
-                None,
-            )
-            if cue_text is not None:
-                proposal = proposal.model_copy(
-                    update={"segments": tuple(segment for segment in proposal.segments if segment.text != cue_text)}
-                )
-        if canonical_segments or entry_segments or resolution_segments or refusal_segment:
-            result = proposal.model_copy(
-                update={
-                    "segments": (
-                        *proposal.segments,
-                        *canonical_segments,
-                        *(entry_segments or ()),
-                        *(resolution_segments or ()),
-                        *((refusal_segment,) if refusal_segment else ()),
-                    )
-                }
-            )
-        else:
-            result = proposal
-        result = self._finish_ending(result)
+        result = self._complete_accepted_turn(
+            proposal,
+            before=before,
+            canonical_event_id=canonical_event_id,
+            clock_seconds=clock_seconds,
+            staged_cue_fact_id=staged_cue_fact_id,
+            staged_cue_stage=staged_cue_stage,
+            refusal_segment=refusal_segment,
+        )
         self._record_attempt(
             player_input,
             command_text,
@@ -1073,10 +1071,13 @@ class RuntimeEngine(CanonicalEventMixin):
                 item for item in self.state.package.scenes if item.metadata.scene_id == transition.source_scene_id
             )
             bridge = NarrationSegment(kind="narration", text=source_scene.metadata.bridge_text[transition.id])
-            entry = NarrationSegment(kind="narration", text=scene.metadata.entry_text)
+            entry = tuple(
+                NarrationSegment(kind="narration", text=text)
+                for text in scene_entry_texts(scene.metadata, self._true_facts(self.state.facts))
+            )
             self.state.apply_proposal(
                 ResolvedTurnProposal(
-                    segments=(bridge, entry),
+                    segments=(bridge, *entry),
                     transition={"transition_id": transition.id},
                 )
             )
@@ -1084,7 +1085,7 @@ class RuntimeEngine(CanonicalEventMixin):
                 self.state.turn_records[-1] = self.state.turn_records[-1].model_copy(
                     update={"transition_id": transition.id}
                 )
-            return bridge, entry
+            return (bridge, *entry)
         return None
 
     def _activate_pacing(self, *, realize_complications: bool = False) -> None:
@@ -1483,7 +1484,10 @@ class RuntimeEngine(CanonicalEventMixin):
             segments = (
                 *segments,
                 NarrationSegment(kind="narration", text=source_scene.metadata.bridge_text[transition.id]),
-                NarrationSegment(kind="narration", text=target_scene.metadata.entry_text),
+                *(
+                    NarrationSegment(kind="narration", text=text)
+                    for text in scene_entry_texts(target_scene.metadata, self._true_facts(self.state.facts))
+                ),
             )
         combined = proposal.model_copy(
             update={
