@@ -254,7 +254,7 @@ facts:
   purpose: The safe opening frame for scene 3C has been established.
 scene_frames:
 - scene_id: 1A
-  situation: "Michelle's home is otherwise untouched, but its back door frame shows recent damage. Michelle is missing, and her tablet and work bag are gone. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it."
+  situation: "Michelle's home is otherwise untouched, but the back door has been forced. The lock is splintered out of the wood. Michelle is missing, and her tablet and work bag are gone. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it."
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
   situation: A damaged public park with an ordinary bench near the service path. Checkpoints and emergency patrols make a simple search feel exposed.
@@ -317,12 +317,12 @@ knowledge:
   - [door, forced entry]
   delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over and the back door was forced, but nothing else was taken. This was not looting. Someone came for Michelle."
 - id: k_sl_1a_b_r0
-  statement: "Kristin finds Michelle's memory card taped beneath the drawer and takes it with her."
+  statement: "Kristin finds Michelle's memory card taped beneath the drawer and pockets it."
   earn_when: searches the drawer, the gap in the drawer, or the space beneath it
   action_evidence:
   - [look, search, inspect, check]
   - [under, beneath, underside, gap, lower edge, bottom edge]
-  - [drawer, KMS, workstation, "drawer's"]
+  - [drawer, KMS, workstation, "drawer's", the gap, that gap]
   entity_ids: [kristin, michelle, memory_card, michelle_drawer]
   aliases:
   - memory card recovered
@@ -358,7 +358,7 @@ knowledge:
   - [taped]
   - [beneath the KMS drawer, under the KMS drawer, beneath the drawer]
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
-  delivery_text: "Kristin finds Michelle's memory card taped beneath the drawer. She takes it with her. Her laptop is in her truck outside."
+  delivery_text: "Kristin's fingers find something taped beneath the drawer. She peels it loose. It is Michelle's memory card, and she pockets it. Her laptop is still out in her truck."
 - id: k_sl_1a_f_r1
   statement: "Kristin opens the drawer and is pointed toward the thin gap beneath its lower edge."
   earn_when: pulls or opens the drawer

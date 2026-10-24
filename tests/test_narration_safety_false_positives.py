@@ -73,7 +73,7 @@ def test_1c_alias_and_phase_boundaries_are_narrow() -> None:
 
 
 def test_1a_scene_entry_allows_forced_entry_wording() -> None:
-    _narrate(_scene_state("1A"), "The back door frame shows recent damage, and Kristin takes in the forced entry.")
+    _narrate(_scene_state("1A"), "The back door has been forced, and Kristin takes in the splintered lock.")
 
 
 def test_servers_are_scoped_to_the_hideout_item() -> None:

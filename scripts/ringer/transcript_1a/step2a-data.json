@@ -1,0 +1,35 @@
+{
+ "run_name": "1a-continuity-step2",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-step2",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "step2a-data",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1500,
+   "ownership": [
+    "data/stories/continuity-initiative/knowledge.yaml",
+    "tests/test_1a_back_door_gap.py",
+    "tests/test_pipeline_eval.py",
+    "tests/test_narration_safety_false_positives.py",
+    "tests/test_1a_spine_prompts.py",
+    "tests/test_spine_expected_reveals.py",
+    "tests/fixtures/narration_corpus.json"
+   ],
+   "spec": "You are changing Scene 1A story data in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. Never edit anything under bench/frozen/, tests/fixtures/continuity_initiative_pre_3c_adoption/, storygame/, other scenes' data, plot.md, world.yaml, or .env.\n\nYOU MAY EDIT ONLY: data/stories/continuity-initiative/knowledge.yaml (scene 1A frame and the knowledge item k_sl_1a_b_r0 only), tests/test_1a_back_door_gap.py (NEW), and existing tests/fixtures that pin the OLD text of the two lines below, namely tests/test_pipeline_eval.py, tests/test_narration_safety_false_positives.py, tests/test_1a_spine_prompts.py, tests/test_spine_expected_reveals.py, plus the generated files tests/fixtures/narration_corpus.json and the spine expectation JSON (regenerate them with the repo scripts, do not hand-edit): `TMPDIR=/tmp .venv/bin/python scripts/regenerate_narration_corpus_verdicts.py` and `.venv/bin/python -m scripts.generate_spine_expected_reveals`. Updating an old test that pins the old text to the new text is REQUIRED and allowed; do not weaken any assertion otherwise.\n\nTHE FOUR DATA CHANGES (exact text; do not paraphrase):\n1. In knowledge.yaml `scene_frames`, scene 1A `situation` becomes exactly: Michelle's home is otherwise untouched, but the back door has been forced. The lock is splintered out of the wood. Michelle is missing, and her tablet and work bag are gone. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it.\n   (The old text said the back door FRAME shows damage; that invited a door-frame gap. The new text must contain no word 'frame' and no word 'gap'.)\n2. Knowledge item k_sl_1a_b_r0: `delivery_text` becomes exactly: Kristin's fingers find something taped beneath the drawer. She peels it loose. It is Michelle's memory card, and she pockets it. Her laptop is still out in her truck.\n   and its `statement` becomes: Kristin finds Michelle's memory card taped beneath the drawer and pockets it.\n   Keep every must_convey group satisfied by the new delivery text (the package lints enforce this) and keep leak_terms as they are.\n3. Knowledge item k_sl_1a_b_r0 `action_evidence`: keep the first two groups exactly as they are. Add the phrases `the gap` and `that gap` to the THIRD group (the one that currently reads [drawer, KMS, workstation, \"drawer's\"]). Do not change any other reveal's evidence. This makes 'Feel in the gap.' reach the card reveal once the gap has been described; the verb 'feel' is already in the closed search synonym class.\n4. Nothing else in the package changes.\n\nTESTS FIRST. Create tests/test_1a_back_door_gap.py BEFORE editing data, confirm it fails for the right reasons, then make the data changes and confirm it passes. Keep it small and complete. Model it on tests/test_1a_gap_pointer.py (reuse its _handoff/_plain_match approach with RuntimeEngine/KnowledgeProjector state where SL-1A-E and SL-1A-F are active). Assert: (a) the 1A situation text equals the new text and contains neither 'frame' nor 'gap'; (b) the k_sl_1a_b_r0 delivery_text and statement equal the new text, and the delivery contains neither 'takes it with her' nor 'in her truck outside'; (c) 'Feel in the gap.' and 'Search the gap beneath the drawer.' and 'Feel under the drawer.' each uniquely match k_sl_1a_b_r0 through both uniquely_matched_authored_handoff and the plain matcher; (d) 'Feel in the gap.' does NOT match k_sl_1a_f_r1 or k_sl_1a_f_r2; (e) these still match NOTHING: 'Search the kitchen.', 'Look at the fabric.', 'Pull out the drawer.' for the CARD reveal (pull out the drawer must still go to k_sl_1a_f_r1 only).\n\nFINISH: run `.venv/bin/python -m ruff format` and `.venv/bin/python -m ruff check` on every .py file you touched. Run the regenerate scripts above if any generated expectation changed, then the focused tests listed in the check below until all pass. Report which old tests you had to update and why.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -x tests/test_1a_back_door_gap.py tests/test_1a_gap_pointer.py tests/test_1a_drawer_words.py tests/test_1a_spine_prompts.py tests/test_spine_expected_reveals.py tests/test_markdown_story_package.py tests/test_narration_safety.py tests/test_leak_terms.py tests/test_must_convey.py tests/test_narration_corpus.py tests/test_narration_safety_false_positives.py tests/test_pipeline_eval.py tests/test_candidate_matcher.py tests/test_cloudflare_transport.py tests/test_reference_protected.py tests/test_guard_vocabulary.py tests/test_knowledge_projection.py tests/test_knowledge_leakage_matrix.py 2>&1 | tail -15 && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -m authoring_quality 2>&1 | tail -5 && git diff --quiet -- bench/frozen tests/fixtures/continuity_initiative_pre_3c_adoption storygame data/stories/continuity-initiative/plot.md data/stories/continuity-initiative/world.yaml && grep -q \"the back door has been forced\" data/stories/continuity-initiative/knowledge.yaml && ! grep -q \"back door frame shows\" data/stories/continuity-initiative/knowledge.yaml && .venv/bin/python -m ruff check tests && .venv/bin/python -m ruff format --check tests/test_1a_back_door_gap.py",
+   "verified": "new 1A data tests pass; affected package, safety and spine suites pass; frozen fixtures and runtime untouched"
+  }
+ ]
+}

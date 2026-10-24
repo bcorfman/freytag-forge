@@ -400,8 +400,9 @@ def test_pipeline_arm_counts_guard_retry_and_sums_tokens(monkeypatch: pytest.Mon
                 "segments": [
                     {
                         "kind": "narration",
-                        "text": "Kristin finds Michelle's memory card taped beneath the drawer. "
-                        "She takes it with her. Her laptop is in her truck outside.",
+                        "text": "Kristin's fingers find something taped beneath the drawer. "
+                        "She peels it loose. It is Michelle's memory card, and she pockets it. "
+                        "Her laptop is still out in her truck.",
                         "grounding_ids": ["k_sl_1a_b_r0"],
                     }
                 ],
@@ -412,8 +413,9 @@ def test_pipeline_arm_counts_guard_retry_and_sums_tokens(monkeypatch: pytest.Mon
                 "segments": [
                     {
                         "kind": "narration",
-                        "text": "Kristin finds Michelle's memory card taped beneath the drawer. "
-                        "She takes it with her. Her laptop is in her truck outside.",
+                        "text": "Kristin's fingers find something taped beneath the drawer. "
+                        "She peels it loose. It is Michelle's memory card, and she pockets it. "
+                        "Her laptop is still out in her truck.",
                         "grounding_ids": ["k_sl_1a_b_r0"],
                     }
                 ],
@@ -516,8 +518,9 @@ def test_pipeline_arm_reports_state_after_real_world_effect(monkeypatch: pytest.
             "segments": [
                 {
                     "kind": "narration",
-                    "text": "Kristin finds Michelle's memory card taped beneath the drawer. "
-                    "She takes it with her. Her laptop is in her truck outside.",
+                    "text": "Kristin's fingers find something taped beneath the drawer. "
+                    "She peels it loose. It is Michelle's memory card, and she pockets it. "
+                    "Her laptop is still out in her truck.",
                     "grounding_ids": ["k_sl_1a_b_r0"],
                 }
             ],
