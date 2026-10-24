@@ -238,9 +238,17 @@ Observed in committed state and prompts:
   move; “get in” names no vehicle and emits no notice; Kristin's parent stays
   `mcgehee_home` through all eight turns. Boarding needs the semantic ask,
   which this stub does not run, so boarding behavior is untested here.
-- The PLAYER block of every prompt holds only the command: no Kristin
-  location, seat or area. THINGS always says the laptop is on the passenger
-  seat, even after the card line says it is “in her truck outside”.
+- CORRECTION (2026-10-24): that stubbed replay used the plain provider. The
+  product wiring (world capture on, `build_capture_provider`) does put
+  “Kristin. Place: Michelle's house.” in THINGS and PLAYER, so requirement 4
+  is not a missing projection but a wrong committed place (house, not outside)
+  plus a plain-provider path. The plain provider's PLAYER block holds only the
+  command. THINGS in the plain provider says the laptop is on the passenger
+  seat even after the card line says it is “in her truck outside”.
+- Product-wired dry run (`bench/results/transcript-1a-dry`, harness
+  `scripts/ringer/transcript_1a/live_baseline.py`): with Jev stubbed off the
+  boarding question for “go out to the truck” is “unanswered”, so the live
+  run is what shows whether boarding fires.
 - `home_search_narrows_1a` fires on turn 8 (“look around”).
 
 Not yet done: live capture, `item_facts_unplaced`, model identity, the
