@@ -345,8 +345,8 @@ cluster.
 | 1. Evidence | Section 4 steps 2 to 5; build the ledger | Ledger complete; every candidate has a verdict; panel clean-apply count recorded |
 | 2. Review | Brandon's cluster review; reviewer pass on Delete rows | Approved verdict list; rows changed or rejected are recorded with the reason |
 | 3. Batches | One Ringer manifest per batch, in this order: (a) exact duplicates and stale files, (b) closed 3C experiment arms and probes, (c) heavy `*_repro` and journey overlaps, (d) `bench_item_facts` parametrization audit, (e) per-scene spine-prompt files merged into a parametrized test, (f) `phase*` files. Each batch ends with a commit and a plan update | Every batch passes its check (below); time and coverage recorded per batch |
-| 4. Frozen set | After reimagination step 7, repeat Phases 1 to 3 for the frozen tests | Frozen rows resolved |
-| 5. Close | Regenerate `tests/shard_durations.json`; check `test_shard_balance`; confirm the runbook and guide name only existing files | Two consecutive green CI runs on `main`; before/after numbers in this file |
+| 4. Frozen set | Scheduled 2026-10-24: after reimagination Phase 3 (migrate the adventure), not after step 7; redo the evidence for the frozen files Phase 1 changed. See the main plan's section 8. Repeat Phases 1 to 3 for the frozen tests | Frozen rows resolved |
+| 5. Close | Run before reimagination Phase 4 (qualify and deliver). Regenerate `tests/shard_durations.json`; check `test_shard_balance`; confirm the runbook and guide name only existing files | Two consecutive green CI runs on `main`; before/after numbers in this file |
 
 Batch order is by risk and payoff: (a) and (b) have the least behavior risk; (c)
 and (d) hold most of the recorded time.
