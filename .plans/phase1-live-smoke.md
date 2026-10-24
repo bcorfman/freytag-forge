@@ -56,3 +56,15 @@ as evidence and is not replaced.
 Smoke 2 (same design, same caps) is run only after the harness records per-turn
 committed facts, reveal selection, rejection and recovery. Two unsuccessful iterations
 on the same symptom stop the work for a contract review.
+
+## Result of smoke 2 (2026-10-24)
+
+Artifacts: `bench/results/phase1-slice-smoke-2/` (gitignored; local). Same loop,
+now diagnosed from per-turn records: the transfer window closed at turn 5, no outcome was
+earned, and at turn 11 (`handoff_after_turns`) the legacy handoff staged the incident's
+advantage fact. The provider then replied with that fact's fallback text every turn
+(`semantic_refusal`, no rejection, nothing committed, one recovery per turn). Cause:
+`_activate_pacing` had no unresolved-incident guard on handoff staging. Fixed in step 8e
+(guard plus `tests/test_incident_handoff_guard.py`). Smoke 3 re-runs the same design with
+the fix, in `bench/results/phase1-slice-smoke-3/`. Open design question: a blind player has
+no signal after the window closes that the recovery action exists.

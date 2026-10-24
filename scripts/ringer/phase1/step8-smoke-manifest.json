@@ -19,14 +19,14 @@
       "timeout_s": 10800,
       "check_timeout_s": 300,
       "ownership": [
-        "bench/results/phase1-slice-smoke-2/"
+        "bench/results/phase1-slice-smoke-3/"
       ],
-      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/slice_probe.py --n 1 --confirm --out bench/results/phase1-slice-smoke-2",
-      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_slice_probe.py bench/results/phase1-slice-smoke-2 1 --mode artifacts",
-      "spec": "Run ONE billed Phase 1 1C slice smoke per .plans/phase1-live-smoke.md: arm current, 1 row, raw blind player from the synthetic 1C arrival, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/phase1-slice-smoke-2/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/slice_probe.py --n 1 --confirm --out bench/results/phase1-slice-smoke-2",
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/slice_probe.py --n 1 --confirm --out bench/results/phase1-slice-smoke-3",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_slice_probe.py bench/results/phase1-slice-smoke-3 1 --mode artifacts",
+      "spec": "Run ONE billed Phase 1 1C slice smoke per .plans/phase1-live-smoke.md: arm current, 1 row, raw blind player from the synthetic 1C arrival, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/phase1-slice-smoke-3/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/slice_probe.py --n 1 --confirm --out bench/results/phase1-slice-smoke-3",
       "verified": "1 row reconciles with spend events and caps; artifacts check passes",
       "expect_files": [
-        "bench/results/phase1-slice-smoke-2/results.json"
+        "bench/results/phase1-slice-smoke-3/results.json"
       ]
     }
   ]

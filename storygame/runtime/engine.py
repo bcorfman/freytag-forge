@@ -1213,9 +1213,15 @@ class RuntimeEngine(CanonicalEventMixin):
             )
             if self.state.staged_cue_fact_id is not None:
                 self.state.staged_cue_stage = 2
-        if self._escalation_eligible() and turns_since_entry >= window.handoff_after_turns:
+        unresolved_incident = self._unresolved_incident()
+        # An unresolved incident must not hand off unearned advantage facts.
+        if (
+            unresolved_incident is None
+            and self._escalation_eligible()
+            and turns_since_entry >= window.handoff_after_turns
+        ):
             self.state.staged_handoff_fact_ids = missing or self._bridge_missing_fact_ids()
-        elif not self._escalation_eligible():
+        elif unresolved_incident is not None or not self._escalation_eligible():
             self.state.staged_handoff_fact_ids = ()
 
     def _cue_reveal_available(self, fact_id: str) -> bool:
