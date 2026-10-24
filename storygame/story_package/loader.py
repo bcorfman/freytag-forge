@@ -493,6 +493,9 @@ def _validate_knowledge(package: StoryPackage) -> None:
     for known in catalog.knowledge:
         for effect in known.establishes:
             produced_by.setdefault(effect.fact_id, set()).update(known.available_in_scenes)
+    for event in package.pacing.events:
+        for effect in event.effects:
+            produced_by.setdefault(effect.fact_id, set()).add(event.scene_id)
     seen_ids: set[str] = set()
     owned_effects: set[tuple[str, str, str, str, object]] = set()
     graph: dict[str, set[str]] = {}

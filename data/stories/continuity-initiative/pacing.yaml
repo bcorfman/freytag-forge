@@ -35,7 +35,11 @@ events:
   - fact_id: transfer_window_missed
     equals: true
   realizations:
-  - text: The transfer line goes dark, and the last prisoners disappear from view.
+  - verbatim: true
+    text: >-
+      The view down the observation shaft goes dark.
+      Brandon says, "That chance is gone. We can still try the service entrance.
+      Follow me through it if you want to try. We will have to risk the sweep."
 - id: scrutiny_2a
   scene_id: 2A
   at_turn: 3

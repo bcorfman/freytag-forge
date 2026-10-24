@@ -87,3 +87,24 @@ no rejection. The slice still failed as a game: 30 commands, final scene 1C, exi
   numbers, asking Brandon, or the recovery. Decision needed from Brandon (see the step 8
   note in the phase 1 plan). Two smokes with the same symptom were diagnosed; no wording
   patch was attempted.
+
+## Result of smoke 4 (2026-10-24)
+
+Artifacts: `bench/results/phase1-slice-smoke-4/` (gitignored; local). Run on the package
+with Brandon offering the moves (step 9, from `.plans/1c-brandon-offers-moves.md`).
+One row, a raw blind player, no retries.
+
+- Finished: 1C -> 2A -> 2B in 10 commands, `ended_by` `scene_2b`, exit cause `copy_numbers`.
+- The player was in 1C for 3 turns: the dock check earned the facility proof, a look
+  through the observation shaft confirmed the captives, and "Copy the prisoner numbers."
+  earned the outcome and entered 2A. Both 2A entry variants appeared in the responses.
+- 0 recoveries, 0 rejections, 0 dropped segments, no repeated response, `stuck_loop` false,
+  no stale cue.
+- What this does not show: one row; only the copy-numbers path; the missed window and the
+  recovery invitation were not exercised; the secure-route path was not tried. The player
+  did not read the transfer window as a deadline because it finished before turn 5.
+  Not a rate. The preregistered keep rule (harness completes, no stale cue, no impossible
+  handoff, no unexplained state loss) is met for this row.
+- Still open: three `transfer_window_missed == false` prerequisites were rejected by the
+  loader (it counts only reveals as producers of a fact); the 1C-A observation can still be
+  earned after a miss (`test_invitation_report.py` records one unanswered invitation).

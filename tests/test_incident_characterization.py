@@ -133,7 +133,9 @@ def test_rejected_turn_restores_security_pacing_then_accepted_turn_fires_it() ->
     assert "transfer_window_1c" in state.fired_event_ids
     assert Fact(predicate="transfer_window_missed", subject="story", value="true") in state.facts.asserted
     assert state.last_turn_delivery.complication_text == (
-        "The transfer line goes dark, and the last prisoners disappear from view."
+        'The view down the observation shaft goes dark. Brandon says, "That chance is gone. '
+        "We can still try the service entrance. Follow me through it if you want to try. "
+        'We will have to risk the sweep."'
     )
     assert all("transfer line goes dark" not in segment.text for segment in result.segments)
 

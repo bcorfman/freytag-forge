@@ -54,7 +54,7 @@ The story is built for a maximum of 120 accepted player turns. A scene should no
 |---|---:|---|
 | 1A | 13 | Search Michelle's house; form a theory; recover and interpret the card; evade a widening patrol search. |
 | 1B | 13 | Work the dead drop; decide what Brandon is; test the route; escape a closing park. |
-| 1C | 11 | Read the terminal as infrastructure; watch the captives; investigate the network; withdraw before the sweep. |
+| 1C | Choice closes at 5; recovery remains open | Inspect the terminal; observe the captives; choose copying the numbers or asking Brandon about the route; follow Brandon at greater risk if the window closes. |
 | 2A | 11 | Build a cover; rehearse it under scrutiny; exploit facility weaknesses; survive a second credential review. |
 | 2B | 15 | Gather JANUS evidence; confront Brandon; trace Michelle's sabotage; leave as an archive audit closes in. |
 | 2C | 16 | Receive Rebecca's offer; face the purge; live with the evidence-or-rescue conflict; learn Michelle's harder third path. |
@@ -245,7 +245,7 @@ Kristin realizes Brandon retains access to government systems and may be more de
 scene_id: 1C
 location_id: freight_terminal
 freytag_phase: rising_action
-objective: Confirm the facility and its purpose
+objective: Observe the transfer and choose what to secure
 participant_ids: [kristin, brandon, michelle]
 companions: [brandon]
 item_ids: [transit_card, kristin_truck, service_entrance, prisoner_number_record]
@@ -255,23 +255,25 @@ item_placements:
   kristin_truck: {parent: freight_terminal}
   service_entrance: {parent: freight_terminal}
   prisoner_number_record: {parent: processing_line}
-entry_text: "Michelle's lead brought Kristin and Brandon to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. They kept to the shadow of the loading docks, looking for a way into whatever lay below.\n\n"
+entry_text: >-
+  Michelle's lead brought Kristin and Brandon to the freight terminal.
+  It was supposed to be abandoned. Fresh tire tracks crossed the loading docks.
+  The air vents hummed. Brandon said, "Check the loading docks for signs of activity.
+  The observation shaft gives us a view below. Let's find out what is happening
+  before we try to get inside."
 transition_ids: [t_1c_2a]
 bridge_text:
   t_1c_2a: >-
     Kristin and Brandon withdraw from the terminal to prepare a way inside.
 ---
 
-**Setting:** Industrial outskirts of Los Angeles and an underground Continuity Initiative installation
+**Setting:** The freight terminal, its loading docks, and the observation shaft above the processing line
 
 **Characters:**
 
 * Kristin Schweitzer
 * Brandon Corfman
-* Charles Jenkins, through surveillance footage
-* Rebecca Jenkins, through surveillance footage
-
-**Plot:** Kristin and Brandon locate one of the secret facilities and discover that it is only one part of a nationwide network.
+**Plot:** Kristin and Brandon investigate an active freight terminal. Brandon points Kristin toward the observation shaft. Once she has studied the captives, he offers a choice: copy their numbers or ask him about the transfer route. If the transfer leaves first, he offers a riskier attempt through the service entrance.
 
 ### Scene 1C.1 — Following the Transport Route
 
@@ -281,19 +283,21 @@ Michelle’s lead brings Kristin and Brandon to a supposedly abandoned freight t
 
 Fresh tire tracks, air vents, and unusually heavy electrical service confirm that the site remains active.
 
-Kristin and Brandon search for a route into the service level without triggering security.
+Brandon points Kristin toward the observation shaft. He asks her to study the people on the processing line before they try to enter.
 
 ### Scene 1C.2 — Proof of the Captives
 
-**Details:** observation shaft; sedated prisoners; processing area; identification numbers; missing-person reports; woman resembling Michelle; chance to copy the prisoner numbers
+**Details:** observation shaft; sedated prisoners; processing line; identification numbers; woman resembling Michelle; service entrance
 
-From an observation shaft, Kristin sees rows of sedated prisoners being moved through a processing area. Their identification numbers correspond to missing-person reports stored in Michelle’s files.
+Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she glimpses a woman who could be her. The woman's face slips from sight before Kristin can be certain. The transfer is still moving.
 
-Kristin can copy the visible prisoner numbers and match them to missing-person records. She can also ask Brandon about the transfer route or have him open the service entrance with the transit token.
+Brandon offers two ways to use the remaining time. Kristin can copy the prisoner numbers for stronger proof. She can instead ask him about the transfer route. His help gives them a service approach, but costs Kristin the chance to copy the full number set. There is time for one choice.
 
-She briefly sees a woman resembling Michelle among a group being transferred, but the view is obscured before she can confirm her identity.
+Copying the numbers produces the prisoner number record. Asking Brandon earns the service approach. Either choice gives them a reason to pull back and prepare their entry into the facility.
 
-Kristin wants to enter immediately. Brandon stops her, arguing that a reckless rescue attempt would cause the prisoners to be relocated or killed.
+If the window closes first, the view down the observation shaft goes dark. Brandon offers to lead Kristin through the service entrance at greater risk. His offer does not open the entrance, establish the route, or move Kristin. Following him earns the service approach. Kristin loses the number set. The sweep closes in. They then withdraw to prepare their entry.
+
+The closure alone grants no proof, confirmed sighting, copied numbers, route, or decision to infiltrate. Michelle's identity remains uncertain. Brandon says nothing about his past work or the wider conspiracy.
 
 ### Scene 1C.3 — Relocated
 
