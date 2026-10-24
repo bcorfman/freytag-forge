@@ -674,6 +674,7 @@ def _validate_ending(package: StoryPackage) -> None:
 def _validate_narration_term_traps(package: StoryPackage) -> None:
     """Reject authored scene text that names knowledge not committed at scene entry."""
 
+    from storygame.runtime.facts import Fact
     from storygame.runtime.knowledge import KnowledgeProjector
     from storygame.runtime.state import RuntimeState
 
@@ -696,18 +697,53 @@ def _validate_narration_term_traps(package: StoryPackage) -> None:
             if value:
                 authored_parts.append(value)
         # Beat vocabulary is licensed at narration time when that beat is projected.
-        authored_text = " ".join(" ".join(authored_parts).casefold().split())
-        for term in sorted(guarded_terms):
-            normalized_term = " ".join(term.split())
-            if not re.search(rf"(?<!\w){re.escape(normalized_term)}(?!\w)", authored_text):
-                continue
-            owners = tuple(indexes.leak_term_to_knowledge.get(term, ()))
-            if set(owners) & committed:
-                continue
-            raise StoryPackageError(
-                f"scene {scene.metadata.scene_id} authored prose contains unavailable knowledge term "
-                f"'{term}' owned by knowledge IDs {list(owners)}"
+        texts = [(" ".join(authored_parts), committed)]
+        for variant in scene.metadata.entry_variants:
+            variant_state = RuntimeState(
+                package=package,
+                current_scene_id=scene.metadata.scene_id,
+                phase=scene.metadata.freytag_phase,
             )
+            variant_state._assert_scene_entry_fact(scene.metadata.scene_id)
+            for fact_id in variant.requires:
+                variant_state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+            variant_committed = {item.id for item in projector.project(variant_state, "player", "").committed_knowledge}
+            variant_committed.update(
+                item.id
+                for item in package.knowledge.knowledge
+                if any(requirement.fact_id in variant.requires for requirement in item.requires)
+            )
+            texts.append((variant.text, variant_committed))
+        for authored_text, available in texts:
+            normalized_text = " ".join(authored_text.casefold().split())
+            for term in sorted(guarded_terms):
+                normalized_term = " ".join(term.split())
+                if not re.search(rf"(?<!\w){re.escape(normalized_term)}(?!\w)", normalized_text):
+                    continue
+                owners = tuple(indexes.leak_term_to_knowledge.get(term, ()))
+                if set(owners) & available:
+                    continue
+                raise StoryPackageError(
+                    f"scene {scene.metadata.scene_id} authored prose contains unavailable knowledge term "
+                    f"'{term}' owned by knowledge IDs {list(owners)}"
+                )
+
+
+def _validate_entry_variants(package: StoryPackage) -> None:
+    fact_ids = set(package.world.facts)
+    for scene in package.scenes:
+        for index, variant in enumerate(scene.metadata.entry_variants):
+            if not variant.requires:
+                raise StoryPackageError(
+                    f"scene {scene.metadata.scene_id} entry variant {index} requires at least one fact"
+                )
+            unknown = set(variant.requires) - fact_ids
+            if unknown:
+                raise StoryPackageError(
+                    f"scene {scene.metadata.scene_id} entry variant {index} names unknown fact IDs {sorted(unknown)}"
+                )
+            if not variant.text.strip():
+                raise StoryPackageError(f"scene {scene.metadata.scene_id} entry variant {index} text must not be blank")
 
 
 def _validate(package: StoryPackage) -> None:
@@ -1576,6 +1612,7 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
     )
     _validate_disclosure_guards(package)
     _validate_knowledge(package)
+    _validate_entry_variants(package)
     _validate(package)
     _validate_authored_handoffs(package)
     _validate_deliveries(package)

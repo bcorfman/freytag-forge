@@ -9,6 +9,7 @@ import yaml
 from storygame.runtime.engine import EngineRefusalTurn, RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.traversal import match_traversal_command
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import StoryPackageError, load_story_package
 
@@ -23,6 +24,43 @@ def provider(_input: str):
 def state_and_engine() -> tuple[RuntimeState, RuntimeEngine]:
     state = RuntimeState.bootstrap(load_story_package(FIXTURE))
     return state, RuntimeEngine(state, provider)
+
+
+def test_movement_commands_match_destination_or_unique_route_entity() -> None:
+    state, _engine = state_and_engine()
+    world = world_for(state.package, state.facts)
+    assert match_traversal_command(state.package, state.facts, world, "Go to the service level") == "service_level"
+    assert (
+        match_traversal_command(state.package, state.facts, world, "Take the sea chest to the service level")
+        == "service_level"
+    )
+    assert match_traversal_command(state.package, state.facts, world, "Go to the logbook") is None
+
+
+def test_turn_wires_closed_movement_to_refusal_without_calling_provider() -> None:
+    state = RuntimeState.bootstrap(load_story_package(FIXTURE))
+    calls: list[str] = []
+
+    def recording_provider(command: str):
+        calls.append(command)
+        return provider(command)
+
+    result = RuntimeEngine(state, recording_provider).turn("Go to the service level")
+    assert isinstance(result, EngineRefusalTurn)
+    assert result.narration == "access_closed"
+    assert calls == []
+
+
+def test_unrelated_movement_falls_through_to_provider() -> None:
+    state = RuntimeState.bootstrap(load_story_package(FIXTURE))
+    calls: list[str] = []
+
+    def recording_provider(command: str):
+        calls.append(command)
+        return provider(command)
+
+    RuntimeEngine(state, recording_provider).turn("Go to the logbook")
+    assert calls == ["Go to the logbook"]
 
 
 def true_facts(state: RuntimeState) -> set[str]:
