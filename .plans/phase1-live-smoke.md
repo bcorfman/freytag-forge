@@ -158,3 +158,20 @@ artifacts check passes (fix the manifest convention before the next smoke).
 - Not shown: the prefixes are scripted, so these prove the paths work through the real
   narrator and matcher, not that strangers would choose them. Smoke 4 showed a blind player
   taking copy-numbers unprompted. The Phase 1 exit criterion still needs five fresh humans.
+
+## Smoke 7: stall prefix (2026-10-24, before any billed call)
+
+Question: through the real narrator, does a player who never acts in 1C see Brandon's nudge on
+turn 6 and the withdrawal on turn 8, land in 2A with no unearned fact and no fallback line, and
+then play on without a stuck loop? Same design, caps and keep rule as smokes 5 and 6; one
+row, no retries, never pooled with other smokes.
+
+- `--prefix stall`: eight scripted commands that earn no outcome and no recovery: the five of
+  `missed_window` followed by three that only wait and watch. The raw blind player takes
+  over from turn 9, in 2A. Scripted turns spend no player request.
+- Output: `bench/results/phase1-slice-smoke-7-stall/`.
+- Passes if turn 6's response contains the verbatim nudge once, turn 8's response contains the
+  verbatim withdrawal and the scene is 2A afterwards, none of `processing_numbers_copied`,
+  `service_level_access_known`, `evidence_gap_processing_numbers`, `trust_brandon` or
+  `terminal_sweep_closing` is true at turn 8, no response shows an advantage fallback line, and
+  the row reaches 2B or ends cleanly with a diagnosed cause.
