@@ -1,0 +1,25 @@
+{
+  "run_name": "game-reimagination-phase1",
+  "workdir": "/home/bcorfman/dev/ringer-work/game-reimagination-phase1",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "step8b-drop-service-connection",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 1500,
+      "expect_files": [],
+      "spec": "You are a code worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge, detached at HEAD. Edit files ONLY under the current working directory; NEVER edit anything under /home/bcorfman/dev/freytag-forge directly (you may only run its .venv/bin/python). Do NOT git commit, do NOT git add -A, do NOT touch .git. Write short notes to /home/bcorfman/dev/ringer-work/game-reimagination-phase1-notes/step8b-notes.md.\n\nCONTEXT: Brandon decided (2026-10-24) to drop the continuity-initiative package's declared connection `freight_terminal_to_service_level` until Phase 3. Reason: every 1C incident outcome enters 2A on the same turn, so the connection cannot be used from free text in a real journey (see .plans/game-reimagination-phase1.md, Step 8 part 1 result). The runtime connections/traversal machinery (storygame/**) stays; it is tested on synthetic packages and must remain story-agnostic and unchanged.\n\nGOAL: (1) Remove the connection from the real package data/stories/continuity-initiative so the package declares no connections. Check storygame/story_package/loader.py to see whether an absent or empty connections.yaml is accepted; delete the file if absent is accepted, otherwise leave an empty list. Keep the service_entrance and service_level world entities and every fact (service_level_access_known etc.) because knowledge, deliveries and 2A depend on them. Check plot.md, world.yaml and knowledge.yaml for text or declarations that exist only to support the connection and remove only those, with no player-visible change elsewhere. (2) Update tests that pin the real package's connection: tests/test_continuity_1c_incident.py (declaration test and the connection closed/open test), tests/test_scene_1c_grounding.py, tests/test_affordance_map.py, tests/test_traversal.py wherever they use the real package. Where a test exercised traversal only on the real package, move or keep that coverage on a synthetic/lighthouse package so connection gating, one-action arrival and unrelated-entity refusal stay covered; do not simply delete traversal coverage. Delete a test only if it asserts solely that the real package has the connection, and list each deleted or changed test in the notes. Do not touch tests/fixtures/continuity_initiative_pre_3c_adoption (frozen). (3) Add one test that the real package loads with no connections and that a 'Go to the service level' command falls through to the provider (no traversal), so the dropped state is pinned.\n\nOWNED FILES: data/stories/continuity-initiative/*, tests/*. Do not edit storygame/**. \n\nHOW TO RUN: first confirm PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\" prints a path inside the cwd. Focused: PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n auto <files>. FULL suite (must end green): same command with no file args. Ruff on Python files you touch: -m ruff check --fix then -m ruff format. Do not run uv.\n\nNOTES CONTRACT: step8b-notes.md with sections: PACKAGE CHANGES, TESTS CHANGED OR DELETED (with reason), TRAVERSAL COVERAGE KEPT WHERE, OPEN QUESTIONS (or 'none'). Reply with a short summary.",
+      "check": "bash -c 'set -uo pipefail; N=/home/bcorfman/dev/ringer-work/game-reimagination-phase1-notes/step8b-notes.md; [ -s $N ] || { echo FAIL no notes; exit 1; }; PY=/home/bcorfman/dev/freytag-forge/.venv/bin/python; git add -A -- data tests; bad=$(git status --porcelain | grep -v -E \"^[AMD]  (data/stories/continuity-initiative/[A-Za-z0-9_.-]+|tests/[A-Za-z0-9_./-]+)$\" || true); [ -z \"$bad\" ] || { echo \"FAIL stray files:\"; echo \"$bad\"; exit 1; }; [ -f tests/test_phase1_slice_playthroughs.py ] || { echo FAIL no playthrough test; exit 1; }; OUT=/home/bcorfman/dev/ringer-work/game-reimagination-phase1-patches; mkdir -p $OUT; git diff --cached > $OUT/step8b.patch; [ -s $OUT/step8b.patch ] || { echo FAIL empty patch; exit 1; }; if git diff --cached --name-only | grep -q \"^storygame/\"; then echo FAIL storygame edited; exit 1; fi; PYTHONPATH=$PWD TMPDIR=/tmp $PY -m pytest -q -p no:cacheprovider --no-cov -n auto 2>&1 | tail -25; [ ${PIPESTATUS[0]} -eq 0 ] || { echo FAIL full suite; exit 1; }; $PY -m ruff check storygame tests && $PY -m ruff format --check storygame tests || exit 1; echo PASS'",
+      "verified": "Real package declares no connections; traversal coverage kept on synthetic package; full suite and ruff green"
+    }
+  ]
+}

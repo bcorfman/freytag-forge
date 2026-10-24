@@ -263,6 +263,19 @@ Ringer run `game-reimagination-phase1`, Codex Luna medium, 1 attempt, 141k token
   pause before the handoff).
 - Not done: the smoke-tested model run (part 2); no billed call was made.
 
+## Step 8 part 1b result (2026-10-24)
+
+Brandon decided to drop `freight_terminal_to_service_level` until Phase 3 (decision
+on the finding above). Ringer run `game-reimagination-phase1`, Codex Luna medium,
+1 attempt, 99k tokens, 502 s; manifest `scripts/ringer/phase1/step8b-manifest.json`.
+
+- Deleted `connections.yaml`; the loader accepts an absent file. The service entities
+  and facts stay. Traversal coverage stays on the lighthouse fixture.
+- Deleted the real-package closed/open connection test and
+  `test_scene_1c_can_move_into_the_service_level`; added a test that "Go to the
+  service level" falls through to the provider.
+- Phase 3 item: reintroduce a connection where a real journey can use it.
+
 ## 1. What exists today (read in source, 2026-10-22)
 
 | Need from the contract | What the code does now | Gap |
