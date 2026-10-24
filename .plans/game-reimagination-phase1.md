@@ -7,11 +7,11 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 ## Resume here
 
-Decisions in section 5 are made. Steps 1-6, 7a and 7b are done and verified (below).
+Decisions in section 5 are made. Steps 1-6, 7a, 7b and 7c are done and verified (below).
 Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is
 `fc3f63e3`, step 5 is `bd926e15`, step 5b is `78e18467`, step 6 is `45989f14`,
-step 7a is `c633cd16`, step 7b is the commit that records this entry. Next: step 7c
-(discovery cue lifecycle fix) as a Ringer manifest.
+step 7a is `c633cd16`, step 7b is `9920a3b5`, step 7c is the commit that records this entry. Next: step 8
+(scripted-provider playthroughs, then a smoke-tested model run).
 
 ## Step 1 result (2026-10-22)
 
@@ -222,6 +222,24 @@ passed, 16 skipped; Ruff clean.
 - **Helper.** `_complete_accepted_turn` is shared by `_turn_active` and
   `follow_connection`.
 - Not verified: the variants and traversal wiring have not been played with a model.
+
+## Step 7c result (2026-10-24)
+
+Ringer run `game-reimagination-phase1`, Codex Luna medium, 1 attempt, 131k tokens,
+668 s; manifest `scripts/ringer/phase1/step7c-manifest.json`. Full suite 2,469
+passed, 16 skipped; Ruff clean.
+
+- New `storygame/runtime/cue_lifecycle.py`: `staged_cue_is_eligible` checks delivery
+  scene, final asserted target fact, reveal availability and stage-2 retirement;
+  `clear_staged_cue` resets the staged fields. Called before cue text is assembled in
+  `CloudflareTurnProvider._compose_staged_cue`, `_complete_accepted_turn` and
+  `_prepare_handoff` (queued handoff text filtered against final facts and scene).
+- `tests/test_cue_lifecycle.py` covers the plan section 6 sequences. The Cloudflare
+  stale-target test failed before the fix; the engine-only same-turn test was already
+  green. Two tests in `tests/test_pacing_handoff.py` pinned carrying a staged cue
+  across a handoff and now require it cleared.
+- Not verified: no model play; typed `obsolete_when` predicates were not added (the
+  check reuses fact state and reveal eligibility).
 
 ## 1. What exists today (read in source, 2026-10-22)
 

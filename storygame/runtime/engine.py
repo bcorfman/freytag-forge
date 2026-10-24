@@ -32,6 +32,7 @@ from storygame.runtime.contracts import (
     SceneTransitionProposal,
     parse_turn_proposal,
 )
+from storygame.runtime.cue_lifecycle import clear_staged_cue, staged_cue_is_eligible
 from storygame.runtime.facts import Fact
 from storygame.runtime.incidents import resolved_incident_outcome
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
@@ -315,6 +316,24 @@ class RuntimeEngine(CanonicalEventMixin):
             self.state.turn_records[-1] = self.state.turn_records[-1].model_copy(
                 update={"deadline_event_ids": deadline_event_ids}
             )
+        staged_delivery = next(
+            (delivery for delivery in self.state.package.deliveries if delivery.fact_id == staged_cue_fact_id),
+            None,
+        )
+        if staged_delivery is not None and not staged_cue_is_eligible(
+            self.state,
+            staged_delivery,
+            final_scene_id=self.state.current_scene_id,
+            final_facts=self.state.facts,
+            reveal_available=self._cue_reveal_available(staged_cue_fact_id),
+        ):
+            cue_text = staged_delivery.escalation_text if staged_cue_stage == 2 else staged_delivery.cue_text
+            if cue_text is not None:
+                proposal = proposal.model_copy(
+                    update={"segments": tuple(segment for segment in proposal.segments if segment.text != cue_text)}
+                )
+            clear_staged_cue(self.state)
+            staged_cue_fact_id = None
         if (
             staged_cue_fact_id
             and self.state.current_scene_id == before.current_scene_id
@@ -1405,29 +1424,44 @@ class RuntimeEngine(CanonicalEventMixin):
             if delivery.fact_id in self.state.staged_handoff_fact_ids
         }
         segments = proposal.segments
-        missing = self._missing_handoff_terms(deliveries.values(), proposal.narration)
-        if missing:
-            segments = tuple(
-                NarrationSegment(kind="narration", text=delivery.fallback_text) for delivery in deliveries.values()
-            )
         unresolved = self._unresolved_incident()
         blocked_facts = (
             {fact_id for outcome in unresolved.outcomes for fact_id in outcome.advantages}
             if unresolved is not None
             else set()
         )
+        candidate_facts = self.state.facts.clone()
+        for operation in proposal.operations:
+            self.state._apply_operation(candidate_facts, operation)
+        for event in proposal.events:
+            for operation in event.operations:
+                self.state._apply_operation(candidate_facts, operation)
+        deliveries = {
+            fact_id: delivery
+            for fact_id, delivery in deliveries.items()
+            if staged_cue_is_eligible(
+                self.state,
+                delivery,
+                final_scene_id=self.state.current_scene_id,
+                final_facts=candidate_facts,
+                reveal_available=True,
+                check_stage=False,
+            )
+        }
         delivery_operations = tuple(
             operation
             for delivery in deliveries.values()
             if delivery.fact_id not in blocked_facts
             for operation in self._delivery_operations(delivery)
         )
-        candidate_facts = self.state.facts.clone()
-        for operation in (*proposal.operations, *delivery_operations):
+        for operation in delivery_operations:
             self.state._apply_operation(candidate_facts, operation)
-        for event in proposal.events:
-            for operation in event.operations:
-                self.state._apply_operation(candidate_facts, operation)
+        missing = self._missing_handoff_terms(deliveries.values(), proposal.narration)
+        if missing:
+            segments = tuple(
+                NarrationSegment(kind="narration", text=delivery.fallback_text) for delivery in deliveries.values()
+            )
+        self.state.staged_handoff_fact_ids = tuple(deliveries)
         pending_bridge_event = next(
             (
                 event
