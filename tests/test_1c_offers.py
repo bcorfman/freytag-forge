@@ -6,10 +6,28 @@ import pytest
 
 from storygame.personas import _ScriptedProvider
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.story_package.loader import load_story_package
-from tests.test_continuity_1c_incident import _facts, _state
+from tests.test_continuity_1c_incident import _assert_fact, _facts, _state
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+def test_1c_arrival_offers_all_three_reveals_in_authored_order() -> None:
+    state = _state()
+    candidates = [
+        item_id
+        for item_id in PACKAGE.knowledge_indexes.scene_to_candidates["1C"]
+        if item_id in {"k_sl_1c_a_r1", "k_sl_1c_b_r1", "k_sl_1c_b_r2"}
+    ]
+
+    assert candidates == ["k_sl_1c_a_r1", "k_sl_1c_b_r1", "k_sl_1c_b_r2"]
+    assert explain_reveal(state, "player", PACKAGE.knowledge_indexes.by_id[candidates[0]]).eligible
+
+    _assert_fact(state, "facility_proof")
+    assert all(
+        explain_reveal(state, "player", PACKAGE.knowledge_indexes.by_id[item_id]).eligible for item_id in candidates[1:]
+    )
 
 
 def test_1c_offer_contract_is_gated_and_the_miss_is_visible() -> None:
@@ -49,3 +67,7 @@ def test_1c_offer_contract_is_gated_and_the_miss_is_visible() -> None:
     provider.selected = ("k_sl_1c_b_r1",)
     with pytest.raises(Exception, match="not eligible"):
         engine.turn("Study the people through the observation shaft.")
+
+    provider.selected = ("k_sl_1c_a_r1",)
+    with pytest.raises(Exception, match="not eligible"):
+        engine.turn("Inspect the loading docks for signs of activity.")

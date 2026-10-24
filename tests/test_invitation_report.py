@@ -37,7 +37,7 @@ def test_every_report_row_has_a_review_label() -> None:
 
 def test_spent_reveal_rows_are_absent_after_cue_change() -> None:
     assert "CUE_SHOWN_BUT_SPENT: 0" in cue_report(PACKAGE)
-    assert "unanswered invitation: 1" in _output()
+    assert "unanswered invitation: 0" in _output()
 
 
 def test_1a_drawer_cue_has_an_eligible_response() -> None:

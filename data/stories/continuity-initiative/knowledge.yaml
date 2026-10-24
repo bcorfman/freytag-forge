@@ -858,7 +858,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1C
-  requires: []
+  requires:
+  - fact_id: transfer_window_missed
+    equals: false
   establishes:
   - op: assert
     fact_id: facility_proof
@@ -891,6 +893,8 @@ knowledge:
   requires:
   - fact_id: facility_proof
     equals: true
+  - fact_id: transfer_window_missed
+    equals: false
   establishes:
   - op: assert
     fact_id: captives_confirmed_alive
@@ -927,6 +931,8 @@ knowledge:
   requires:
   - fact_id: facility_proof
     equals: true
+  - fact_id: transfer_window_missed
+    equals: false
   establishes:
   - op: assert
     fact_id: captives_confirmed_alive

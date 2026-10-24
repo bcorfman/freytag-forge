@@ -11,8 +11,8 @@ Decisions in section 5 are made. Steps 1-6, 7a-7c and 8 part 1 (scripted playthr
 Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is
 `fc3f63e3`, step 5 is `bd926e15`, step 5b is `78e18467`, step 6 is `45989f14`,
 step 7a is `c633cd16`, step 7b is `9920a3b5`, step 7c is `c7be45a5` (merged in #689), step 8 part 1 is the commit that records this entry.
-Step 9 landed (Brandon offers the moves) and smoke 4 finished 1C -> 2B. Next: smokes for the
-missed window and the secure route, the loader decision, then five fresh human players.
+Step 9 landed (Brandon offers the moves) and smoke 4 finished 1C -> 2B. Step 9b landed the loader change. Next: smokes for the
+missed window and the secure route, then five fresh human players.
 
 ## Step 1 result (2026-10-22)
 
@@ -308,8 +308,23 @@ Brandon (the character) offers the moves. Authored by ChatGPT Desktop in
 - **Smoke 4** (see phase1-live-smoke.md): the blind player finished 1C -> 2A -> 2B in 10
   turns via copy-numbers. One row; the missed window and the secure route were not
   exercised.
-- Remaining before Phase 1 exit: smokes covering the missed window and the secure route, the
-  loader decision, and five fresh human players.
+- Remaining before Phase 1 exit: smokes covering the missed window and the secure route, and
+  five fresh human players. (Loader decision: done, see step 9b.)
+
+## Step 9b result (2026-10-24)
+
+Brandon approved the loader change. Ringer run `game-reimagination-phase1` (Codex Luna
+medium, 1 attempt, 119k tokens, 611 s; manifest `scripts/ringer/phase1/step9b-manifest.json`).
+Full suite 2,490 passed, 16 skipped.
+
+- `_validate_knowledge` now counts every `PacingEvent` effect as a producer in the event's
+  scene; the scene-order reachability rule is unchanged. `tests/test_loader_pacing_producers.py`
+  (same scene and later scene accepted; earlier scene and unproduced fact rejected; the two
+  accept cases failed before the fix).
+- The three reverted prerequisites are in: `k_sl_1c_a_r1`, `_b_r1`, `_b_r2` require
+  `transfer_window_missed` equals false. After a miss all three reveals are ineligible;
+  `test_invitation_report.py` is back to `unanswered invitation: 0`.
+- Smoke 4 ran before this change. The missed-window path is still unplayed with a model.
 
 ## 1. What exists today (read in source, 2026-10-22)
 
