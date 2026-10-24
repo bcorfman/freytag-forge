@@ -245,3 +245,17 @@ Observed in committed state and prompts:
 
 Not yet done: live capture, `item_facts_unplaced`, model identity, the
 before/after payload diff. Steps 2–5 not started.
+
+### Approvals and verified facts (2026-10-24)
+
+Brandon approved the live baseline preregistration, the Luna worker, the
+patrol retiming (delay of about five turns accepted) and the three-way
+response proposal ("ok"; capability gap to be named before coding if the
+incident contract cannot express it). Transition `triggers` are all-of
+(`storygame/runtime/validation.py:422`, `engine.py:961`), so `t_1a_1b` needs
+`michelle_lead_actionable`, `patrol_return_pressure` and
+`memory_card_recovered` together; moving `patrol_return_pressure` to departure
+cannot fire the exit early.
+Harness build: Ringer run `transcript-1a-live-baseline`, manifest
+`scripts/ringer/transcript_1a/build-live-baseline.json`. The billed run
+follows its dry run and a 2-turn smoke.
