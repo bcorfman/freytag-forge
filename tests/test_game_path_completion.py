@@ -76,6 +76,9 @@ def test_pressure_event_fires_at_its_turn_when_its_conditions_hold(event, offset
 @pytest.mark.parametrize("event", [event for event in EVENTS if event.when], ids=lambda event: event.id)
 def test_pressure_event_with_missing_conditions_waits_then_fires_once_they_arrive(event) -> None:
     state = _in_scene(event.scene_id, event.at_turn + 3)
+    state.fired_event_ids.update(
+        prior.id for prior in EVENTS if prior.scene_id == event.scene_id and prior.at_turn < event.at_turn
+    )
     engine = _engine(state)
 
     engine._activate_pacing()

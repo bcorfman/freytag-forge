@@ -35,8 +35,13 @@ def test_complication_text_is_accepted_on_event_firing_turn(event, realization) 
             phase=scene.metadata.freytag_phase,
         )
 
-    for guard in realization.when:
+    for guard in (*event.when, *realization.when):
         state.facts.assert_fact(Fact(predicate=guard.fact_id, subject="story", value=str(guard.equals).lower()))
+    state.fired_event_ids.update(
+        prior.id
+        for prior in PACKAGE.pacing.events
+        if prior.scene_id == event.scene_id and prior.at_turn < event.at_turn
+    )
     state.turn_index = state.scene_entered_at_turn + event.at_turn - 1
 
     engine = RuntimeEngine(

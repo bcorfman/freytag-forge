@@ -301,13 +301,34 @@ class RuntimeEngine(CanonicalEventMixin):
 
         self._record_turn(proposal)
         self._advance_pacing(proposal.narrative_seconds if clock_seconds is None else clock_seconds)
-        self._activate_pacing()
+        self._activate_pacing(realize_complications=True)
+        if (
+            self.state.last_turn_delivery.complication_verbatim
+            and self.state.last_turn_delivery.complication_text
+            and self.state.last_turn_delivery.complication_text not in {segment.text for segment in proposal.segments}
+        ):
+            proposal = proposal.model_copy(
+                update={
+                    "segments": (
+                        *proposal.segments,
+                        NarrationSegment(kind="narration", text=self.state.last_turn_delivery.complication_text),
+                    )
+                }
+            )
         canonical_segments = (
             self._apply_canonical_route_events() if not (canonical_event_id and proposal.transition) else ()
         )
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
+        if entry_segments and self.state.last_turn_delivery.complication_verbatim:
+            proposal = proposal.model_copy(
+                update={
+                    "segments": (
+                        NarrationSegment(kind="narration", text=self.state.last_turn_delivery.complication_text or ""),
+                    )
+                }
+            )
         if self._unresolved_incident():
             resolution_segments, deadline_event_ids = (), ()
         else:
@@ -423,7 +444,7 @@ class RuntimeEngine(CanonicalEventMixin):
                         "capture_issues": tuple(capture_record.get("issues", ())),
                     }
                 )
-            self._activate_pacing(realize_complications=True)
+            self._activate_pacing(realize_complications=True, defer_guarded_events=True)
             self.state.last_turn_delivery = self.state.last_turn_delivery.model_copy(
                 update={
                     "cue_fact_id": self.state.staged_cue_fact_id,
@@ -1043,11 +1064,32 @@ class RuntimeEngine(CanonicalEventMixin):
             refusal_segment = None
         self._record_turn(pending)
         self._advance_pacing(pending.narrative_seconds)
-        self._activate_pacing()
+        self._activate_pacing(realize_complications=True)
+        if (
+            self.state.last_turn_delivery.complication_verbatim
+            and self.state.last_turn_delivery.complication_text
+            and self.state.last_turn_delivery.complication_text not in {segment.text for segment in pending.segments}
+        ):
+            pending = pending.model_copy(
+                update={
+                    "segments": (
+                        *pending.segments,
+                        NarrationSegment(kind="narration", text=self.state.last_turn_delivery.complication_text),
+                    )
+                }
+            )
         canonical_segments = self._apply_canonical_route_events()
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
+        if entry_segments and self.state.last_turn_delivery.complication_verbatim:
+            pending = pending.model_copy(
+                update={
+                    "segments": (
+                        NarrationSegment(kind="narration", text=self.state.last_turn_delivery.complication_text or ""),
+                    )
+                }
+            )
         if canonical_segments or entry_segments:
             pending = pending.model_copy(
                 update={"segments": (*pending.segments, *canonical_segments, *(entry_segments or ()))}
@@ -1104,10 +1146,12 @@ class RuntimeEngine(CanonicalEventMixin):
                 self.state.turn_records[-1] = self.state.turn_records[-1].model_copy(
                     update={"transition_id": transition.id}
                 )
+            if self.state.last_turn_delivery.complication_verbatim:
+                return entry
             return (bridge, *entry)
         return None
 
-    def _activate_pacing(self, *, realize_complications: bool = False) -> None:
+    def _activate_pacing(self, *, realize_complications: bool = False, defer_guarded_events: bool = False) -> None:
         """Activate only package-declared, scene-bound optional storylets."""
 
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
@@ -1139,6 +1183,8 @@ class RuntimeEngine(CanonicalEventMixin):
                 and turns_since_entry >= event.at_turn
                 and all(self._predicate_matches(predicate) for predicate in event.when)
             ):
+                if defer_guarded_events and any(predicate.equals is False for predicate in event.when):
+                    continue
                 for effect in event.effects:
                     self.state.facts.assert_fact(
                         Fact(predicate=effect.fact_id, subject="story", value=str(effect.equals).lower())

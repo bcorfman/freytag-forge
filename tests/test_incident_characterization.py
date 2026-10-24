@@ -108,10 +108,10 @@ def test_loader_rejects_pacing_event_beyond_scene_min_turns(tmp_path: Path) -> N
     pacing_path = root / "pacing.yaml"
     pacing = yaml.safe_load(pacing_path.read_text(encoding="utf-8"))
     event = next(item for item in pacing["events"] if item["id"] == "transfer_window_1c")
-    event["at_turn"] = 8
+    event["at_turn"] = 9
     pacing_path.write_text(yaml.safe_dump(pacing, sort_keys=False), encoding="utf-8")
 
-    with pytest.raises(StoryPackageError, match="transfer_window_1c.*min_turns floor 7"):
+    with pytest.raises(StoryPackageError, match="transfer_window_1c.*min_turns floor 8"):
         load_story_package(root)
 
 
@@ -144,18 +144,18 @@ def test_clarification_turn_does_not_advance_pacing() -> None:
     pytest.skip("No short, stable 1C command in today's reference resolver produces ClarificationTurn.")
 
 
-def test_1c_missed_window_stays_open_past_deadline_without_unearned_facts() -> None:
+def test_1c_missed_window_withdraws_without_unearned_facts() -> None:
     state = _scene_1c_state()
     engine = RuntimeEngine(state, lambda _: {"segments": [{"kind": "narration", "text": "The terminal is quiet."}]})
     results = [engine.turn("Wait and watch the terminal.") for _ in range(10)]
 
     assert state.facts.matching("transfer_window_missed", subject="story")
-    assert not state.facts.matching("facility_infiltration_needed", subject="story")
-    assert state.current_scene_id == "1C"
+    assert state.facts.matching("facility_infiltration_needed", subject="story")
+    assert state.current_scene_id == "2A"
     assert state.turn_index == 10
     assert results[-1].segments
 
     assert state.turn_index == 10
-    assert state.current_scene_id == "1C"
-    assert not state.facts.matching("facility_infiltration_needed", subject="story")
+    assert state.current_scene_id == "2A"
+    assert state.facts.matching("facility_infiltration_needed", subject="story")
     assert results[-1].segments

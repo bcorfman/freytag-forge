@@ -40,6 +40,36 @@ events:
       The view down the observation shaft goes dark.
       Brandon says, "That chance is gone. We can still try the service entrance.
       Follow me through it if you want to try. We will have to risk the sweep."
+- id: transfer_nudge_1c
+  scene_id: 1C
+  at_turn: 6
+  when:
+  - fact_id: transfer_window_missed
+    equals: true
+  - fact_id: facility_infiltration_needed
+    equals: false
+  effects:
+  - fact_id: brandon_urges_retreat
+    equals: true
+  realizations:
+  - verbatim: true
+    text: >-
+      A siren sounds somewhere below. The sweep is coming closer. Brandon grabs Kristin's arm. "We are almost out of time," he says. "The service entrance is still open. Follow me through it, or we leave with nothing."
+- id: transfer_withdrawal_1c
+  scene_id: 1C
+  at_turn: 8
+  when:
+  - fact_id: transfer_window_missed
+    equals: true
+  - fact_id: facility_infiltration_needed
+    equals: false
+  effects:
+  - fact_id: facility_infiltration_needed
+    equals: true
+  realizations:
+  - verbatim: true
+    text: >-
+      The sweep reaches the loading docks. Brandon pulls Kristin away from the observation shaft. "We are leaving. Now," he says. They slip out the way they came, with no numbers and no route. Brandon says, "We will have to find another way in."
 - id: scrutiny_2a
   scene_id: 2A
   at_turn: 3
@@ -178,7 +208,7 @@ scenes:
   nudge_after_turns: 10
   handoff_after_turns: 13
 - scene_id: 1C
-  min_turns: 7
+  min_turns: 8
   nudge_after_turns: 8
   handoff_after_turns: 11
 - scene_id: 2A

@@ -41,5 +41,9 @@ def test_persona_cli_writes_json(
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert set(payload) == set(PERSONAS)
     assert payload["thorough"]["resolution_complete"]
-    assert not payload["staller"]["resolution_complete"]
-    assert not payload["wrong_lead"]["resolution_complete"]
+    assert payload["staller"]["resolution_complete"]
+    assert payload["wrong_lead"]["resolution_complete"]
+    for name in ("staller", "wrong_lead"):
+        row = _rows(payload[name])["1C"]
+        assert row["turns_to_exit"] == 8
+        assert row["costs_applied"] == []

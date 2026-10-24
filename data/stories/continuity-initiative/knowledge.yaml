@@ -61,6 +61,8 @@ facts:
   purpose: Kristin used the known service approach in the supervisor confrontation.
 - id: transfer_window_missed
   purpose: The transfer window closed before Kristin resolved the incident.
+- id: brandon_urges_retreat
+  purpose: Brandon urged Kristin to take the service entrance before the sweep closed in.
 - id: michelle_possible_sighting
   purpose: Kristin has an obscured, unconfirmed possible sighting of Michelle inside
     the facility.
