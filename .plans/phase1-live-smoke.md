@@ -39,3 +39,20 @@ The smoke passes if the harness completes (or stops with a clearly attributed
 cap/outage failure), the artifacts check passes, and no stale cue, impossible handoff
 or unexplained state loss appears. Any such finding is a Phase 1 defect to diagnose
 from the transcript before the next billed run, not a wording patch.
+
+## Result of smoke 1 (2026-10-24)
+
+Artifacts: `bench/results/phase1-slice-smoke-1/`. Harness completed (50 Cloudflare, 30
+player requests); the artifacts check passed. Ringer reported FAIL only because
+`expect_files` resolved against its workdir, not the repo.
+
+Finding, not a pass: the free observation fired on turn 4, but from turn 11 every
+command returned the same authored line ("Kristin copies the prisoner numbers...") for
+20 turns. The final facts did not show the copy-numbers advantage, 1C was never left,
+and the provider logged 20 recoveries. The harness did not record why (reveal
+selection, rejection, committed facts), so the cause is undiagnosed. Smoke 1 is kept
+as evidence and is not replaced.
+
+Smoke 2 (same design, same caps) is run only after the harness records per-turn
+committed facts, reveal selection, rejection and recovery. Two unsuccessful iterations
+on the same symptom stop the work for a contract review.
