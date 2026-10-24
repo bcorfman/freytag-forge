@@ -1115,6 +1115,15 @@ def _validate_transition_trigger_sources(package: StoryPackage) -> None:
     for delivery in package.deliveries:
         asserted_by_scene.setdefault(delivery.scene_id, set()).add(delivery.fact_id)
         asserted_by_scene.setdefault(delivery.scene_id, set()).update(_asserted_true_route_operations(delivery.costs))
+    routes = {route.id: route for route in package.storylet_routes.storylets}
+    for incident in package.incidents:
+        route = routes[incident.outcomes[0].storylet_id]
+        realizations = {realization.id: realization for realization in route.realizations}
+        asserted_by_scene.setdefault(incident.scene_id, set()).update(
+            fact_id
+            for outcome in incident.outcomes
+            for fact_id in _asserted_true_route_operations(realizations[outcome.realization_id].operations)
+        )
 
     for transition in package.pacing.transitions:
         for trigger in transition.triggers:
@@ -1365,6 +1374,8 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
             incidents = ()
         else:
             incidents_raw = _yaml(incidents_path)
+            if not isinstance(incidents_raw, dict):
+                raise StoryPackageError("YAML incidents.yaml must be a mapping")
             raw_incidents = incidents_raw.get("incidents")
             if not isinstance(raw_incidents, list):
                 raise StoryPackageError("YAML incidents.yaml must contain an incidents list")

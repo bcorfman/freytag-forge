@@ -51,6 +51,7 @@ facts:
 - boat_route_known
 - chart_page_torn
 - tide_has_turned
+- incident_outcome_resolved
 - id: brass_key_found
   on_assert:
   - {move: brass_key, parent: ada, text: in Ada's coat pocket}
