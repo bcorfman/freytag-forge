@@ -1039,6 +1039,41 @@ def _validate_incidents(package: StoryPackage) -> None:
                 f"incident '{incident.id}' outcome references storylet '{offending}' outside "
                 f"scene '{incident.scene_id}'"
             )
+        recovery_route = routes.get(incident.recovery_storylet_id)
+        if recovery_route is None:
+            raise StoryPackageError(
+                f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' is unknown"
+            )
+        if recovery_route.scene_id != incident.scene_id:
+            raise StoryPackageError(
+                f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' belongs to "
+                f"scene '{recovery_route.scene_id}', not '{incident.scene_id}'"
+            )
+        if incident.recovery_storylet_id == incident.outcomes[0].storylet_id:
+            raise StoryPackageError(
+                f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' must differ "
+                "from the outcomes' shared storylet"
+            )
+        unknown_outcome_facts = {
+            fact_id
+            for outcome in incident.outcomes
+            for fact_id in (*outcome.advantages, *outcome.costs)
+            if fact_id not in package.fact_ids
+        }
+        if unknown_outcome_facts:
+            offending = sorted(unknown_outcome_facts)[0]
+            raise StoryPackageError(f"incident '{incident.id}' references unknown fact '{offending}'")
+        event_activation_facts = {predicate.fact_id for predicate in (*event.when,)} | {
+            effect.fact_id for effect in event.effects if effect.equals is True
+        }
+        recovery_activation_facts = {predicate.fact_id for predicate in recovery_route.activation_conditions}
+        missing_activation = event_activation_facts - recovery_activation_facts
+        if missing_activation:
+            offending = sorted(missing_activation)[0]
+            raise StoryPackageError(
+                f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' activation "
+                f"does not require missed-window fact '{offending}'"
+            )
         realization_ids = [outcome.realization_id for outcome in incident.outcomes]
         if len(realization_ids) != len(set(realization_ids)):
             duplicate = next(
@@ -1049,6 +1084,22 @@ def _validate_incidents(package: StoryPackage) -> None:
         for realization_id in realization_ids:
             if realization_id not in realization_map:
                 raise StoryPackageError(f"incident '{incident.id}' references unknown realization '{realization_id}'")
+
+        recovery_realizations = recovery_route.realizations
+        outcome_facts = [set(outcome.advantages) | set(outcome.costs) for outcome in incident.outcomes]
+        shared_outcome_facts = set.union(*outcome_facts)
+        qualifying: list[tuple[str, set[str]]] = []
+        for realization in recovery_realizations:
+            asserted = _asserted_true_route_operations(realization.operations)
+            matches = [facts for facts in outcome_facts if facts <= asserted]
+            extras = asserted - shared_outcome_facts
+            if len(matches) == 1 and extras:
+                qualifying.append((realization.id, extras))
+        if not qualifying:
+            raise StoryPackageError(
+                f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' has no realization "
+                "that reuses exactly one outcome and declares an extra recovery cost fact"
+            )
 
         advantage_sets: list[set[str]] = []
         outcome_costs: set[str] = set()

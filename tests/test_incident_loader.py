@@ -80,6 +80,7 @@ def _unasserted_fact(package: Path) -> str:
     incident = _incident(package)
     outcome = incident["outcomes"][1]
     outcome["advantages"] = ["chart_copied"]
+    outcome["costs"] = ["brass_key_found"]
     _write_yaml(package / "incidents.yaml", {"incidents": [incident]})
     return "chart_copied"
 
@@ -119,6 +120,102 @@ def _overlapping_delivery_cost(package: Path) -> str:
     return "chart_page_torn"
 
 
+def _unknown_recovery_storylet(package: Path) -> str:
+    incident = _incident(package)
+    incident["recovery_storylet_id"] = "SL-1A-C"
+    _write_yaml(package / "incidents.yaml", {"incidents": [incident]})
+    return "SL-1A-C"
+
+
+def _recovery_in_other_scene(package: Path) -> str:
+    routes = _read_yaml(package / "storylet-routes.yaml")
+    recovery = dict(next(item for item in routes["storylets"] if item["id"] == "SL-1A-B"))
+    recovery["id"] = "SL-1B-A"
+    recovery["scene_id"] = "1B"
+    recovery["activation"]["pacing"]["target_turn"] = 1
+    recovery["activation"]["pacing"]["latest_turn"] = 1
+    routes["storylets"].append(recovery)
+    incident = _incident(package)
+    incident["recovery_storylet_id"] = "SL-1B-A"
+    _write_yaml(package / "incidents.yaml", {"incidents": [incident]})
+    _write_yaml(package / "storylet-routes.yaml", routes)
+    knowledge = _read_yaml(package / "knowledge.yaml")
+    recovery_knowledge = next(item for item in knowledge["knowledge"] if item["id"] == "k_recover_chart")
+    recovery_knowledge["available_in_scenes"] = ["1B"]
+    recovery_knowledge["source"]["storylet_id"] = "SL-1B-A"
+    _write_yaml(package / "knowledge.yaml", knowledge)
+    storylets = (package / "storylets.md").read_text(encoding="utf-8")
+    storylets += """
+
+### SL-1B-A — Recover the Chart Elsewhere
+
+**Source beats:** [The Search](plot.md#scene-1a1--the-search)
+
+**Allowed scene:** `1B`
+
+**Available when**
+- The tide has turned.
+
+**Participants / items**
+- Ada Lovell and the logbook.
+
+**Dramatic purpose**
+- Restore the missed opportunity.
+
+**Possible realizations**
+- Ada recovers the chart.
+
+**Effects**
+- Establishes `chart_copied`.
+
+**Completion**
+- The chart is recovered.
+
+**Abort**
+- Ada leaves.
+
+**Protected boundary**
+- None.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 1`
+"""
+    (package / "storylets.md").write_text(storylets, encoding="utf-8")
+    return "1B"
+
+
+def _recovery_reuses_shared_storylet(package: Path) -> str:
+    incident = _incident(package)
+    incident["recovery_storylet_id"] = "SL-1A-A"
+    _write_yaml(package / "incidents.yaml", {"incidents": [incident]})
+    return "SL-1A-A"
+
+
+def _recovery_has_no_qualifying_realization(package: Path) -> str:
+    routes = _read_yaml(package / "storylet-routes.yaml")
+    recovery = next(item for item in routes["storylets"] if item["id"] == "SL-1A-B")
+    recovery["realization_options"][0]["operations"] = [
+        {"op": "assert", "fact_id": "recovery_cost_paid", "value": True}
+    ]
+    _write_yaml(package / "storylet-routes.yaml", routes)
+    knowledge = _read_yaml(package / "knowledge.yaml")
+    next(item for item in knowledge["knowledge"] if item["id"] == "k_recover_chart")["establishes"] = [
+        {"op": "assert", "fact_id": "recovery_cost_paid", "value": True}
+    ]
+    _write_yaml(package / "knowledge.yaml", knowledge)
+    return "SL-1A-B"
+
+
+def _recovery_does_not_require_window(package: Path) -> str:
+    routes = _read_yaml(package / "storylet-routes.yaml")
+    recovery = next(item for item in routes["storylets"] if item["id"] == "SL-1A-B")
+    recovery["activation"]["conditions"] = []
+    _write_yaml(package / "storylet-routes.yaml", routes)
+    return "tide_has_turned"
+
+
 REJECTIONS = [
     (
         "duplicate incident id",
@@ -138,6 +235,11 @@ REJECTIONS = [
     ("unknown successor transition", _unknown_transition, "missing_transition"),
     ("unknown observation knowledge", _unknown_observation, "missing_knowledge"),
     ("delivery cost overlaps outcome", _overlapping_delivery_cost, "chart_page_torn"),
+    ("unknown recovery storylet", _unknown_recovery_storylet, "SL-1A-C"),
+    ("recovery storylet in another scene", _recovery_in_other_scene, "1B"),
+    ("recovery reuses outcome storylet", _recovery_reuses_shared_storylet, "SL-1A-A"),
+    ("recovery has no qualifying realization", _recovery_has_no_qualifying_realization, "SL-1A-B"),
+    ("recovery misses window activation", _recovery_does_not_require_window, "tide_has_turned"),
 ]
 
 

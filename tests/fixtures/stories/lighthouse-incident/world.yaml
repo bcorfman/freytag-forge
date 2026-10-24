@@ -52,6 +52,7 @@ facts:
 - chart_copied
 - boat_route_known
 - chart_page_torn
+- recovery_cost_paid
 - tide_has_turned
 - incident_outcome_resolved
 - route_traversed

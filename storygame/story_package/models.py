@@ -704,6 +704,7 @@ class Incident(_Model):
     id: str = Field(pattern=_ID)
     scene_id: str = Field(pattern=_SCENE_ID)
     outcomes: tuple[IncidentOutcome, ...] = Field(min_length=2)
+    recovery_storylet_id: str = Field(pattern=r"^SL-[1-9][A-Z]-[A-Z]$")
     missed_window_event_id: str = Field(pattern=_ID)
     successor_transition_id: str = Field(pattern=_ID)
     observation_knowledge_ids: tuple[str, ...] = ()
