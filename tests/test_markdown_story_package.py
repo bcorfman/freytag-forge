@@ -630,6 +630,8 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_2a_e_r1",
         "k_sl_2a_c_r1",
         "k_sl_2a_c_r2",
+        "k_sl_2a_c_r3",
+        "k_sl_2a_c_r4",
         "k_sl_2b_a_r1",
         "k_sl_2b_a_r2",
         "k_sl_2b_b_r1",
@@ -1206,7 +1208,7 @@ def test_loader_rejects_delivery_for_world_only_fact(tmp_path: Path) -> None:
     )
     source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
 
-    with pytest.raises(StoryPackageError, match="rebecca_observing_infiltrators.*no player-visible"):
+    with pytest.raises(StoryPackageError, match="rebecca_observing_infiltrators.*more than one delivery"):
         load_story_package(root)
 
 

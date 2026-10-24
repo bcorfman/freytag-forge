@@ -81,7 +81,7 @@ deliveries:
     even if the view is too brief to confirm whether Michelle is among them.
   cue_text: The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.
 - fact_id: processing_numbers_copied
-  scene_id: 1C
+  scene_id: 2A
   source_kind: observation
   source_entity_id: kristin
   must_convey:
@@ -89,13 +89,20 @@ deliveries:
   - [missing-person records, missing records]
   fallback_text: Kristin copies the prisoner numbers and matches them to missing-person records.
 - fact_id: service_level_access_known
-  scene_id: 1C
+  scene_id: 2A
   source_kind: npc
   source_entity_id: brandon
   must_convey:
   - [Brandon, Brandon's help]
   - [transfer route, service entrance]
   fallback_text: Brandon explains the transfer route and opens the service entrance.
+- fact_id: rebecca_observing_infiltrators
+  scene_id: 2A
+  source_kind: inference
+  must_convey:
+  - [watch, watches, under watch, scrutiny]
+  - [supervisor, inspection team, inspectors]
+  fallback_text: The supervisor keeps the inspection team under watch.
 - fact_id: false_identities_ready
   scene_id: 2A
   source_kind: npc

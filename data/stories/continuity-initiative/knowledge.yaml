@@ -55,6 +55,10 @@ facts:
   purpose: Kristin knows Charles and Rebecca intend to leverage the manufactured catastrophe for political reconstruction/control.
 - id: processing_numbers_copied
   purpose: Kristin copied the visible prisoner numbers from the processing line.
+- id: processing_numbers_used_in_confrontation
+  purpose: Kristin used the copied prisoner numbers in the supervisor confrontation.
+- id: service_route_used_in_confrontation
+  purpose: Kristin used the known service approach in the supervisor confrontation.
 - id: transfer_window_missed
   purpose: The transfer window closed before Kristin resolved the incident.
 - id: michelle_possible_sighting
@@ -1309,6 +1313,78 @@ knowledge:
   relevance:
     entity_ids: [rebecca, regional_facility]
     priority: 0
+- id: k_sl_2a_c_r3
+  statement: Kristin uses the copied prisoner numbers to support her explanation to the supervisor and gains restricted corridor access.
+  earn_when: uses, cites, shows, or explains the copied prisoner numbers to the supervisor
+  action_evidence:
+  - [use, cite, show, explain, present, point out, tell]
+  - [copied prisoner numbers, prisoner numbers, identification numbers, missing-person records]
+  - [supervisor, security supervisor, facility supervisor, security officer]
+  entity_ids: [kristin, brandon, regional_facility]
+  aliases:
+  - restricted corridor access
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  requires:
+  - fact_id: false_identities_ready
+    equals: true
+  - fact_id: facility_perimeter_reached
+    equals: true
+  - fact_id: processing_numbers_copied
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  - op: assert
+    fact_id: rebecca_observing_infiltrators
+    value: true
+  - op: assert
+    fact_id: processing_numbers_used_in_confrontation
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-C, realization_id: SL-2A-C-R3}
+  relevance: {entity_ids: [regional_facility], priority: 10}
+  must_convey:
+  - [copied prisoner numbers]
+  - [to support the cooling-water explanation]
+  - [grants restricted corridor access]
+  delivery_text: Kristin uses the copied prisoner numbers to support the cooling-water explanation. The supervisor grants restricted corridor access.
+- id: k_sl_2a_c_r4
+  statement: Kristin uses the known service approach to make the inspection route credible and gains restricted corridor access with less scrutiny.
+  earn_when: explains, shows, or uses the known service route or service entrance with the supervisor
+  action_evidence:
+  - [explain, show, use, describe, present, tell]
+  - [known service route, service route, transfer route, service entrance, service level]
+  - [supervisor, security supervisor, facility supervisor, security officer]
+  entity_ids: [kristin, brandon, regional_facility, service_entrance]
+  aliases:
+  - restricted corridor access
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  requires:
+  - fact_id: false_identities_ready
+    equals: true
+  - fact_id: facility_perimeter_reached
+    equals: true
+  - fact_id: service_level_access_known
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  - op: assert
+    fact_id: rebecca_observing_infiltrators
+    value: true
+  - op: assert
+    fact_id: service_route_used_in_confrontation
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-C, realization_id: SL-2A-C-R4}
+  relevance: {entity_ids: [regional_facility, service_entrance], priority: 10}
+  must_convey:
+  - [known service approach]
+  - [reduces his scrutiny]
+  - [grants restricted corridor access]
+  delivery_text: Kristin uses the known service approach to explain the inspection route. The supervisor reduces his scrutiny and grants restricted corridor access.
 - id: k_sl_2b_a_r1
   statement: 'In the archive, Kristin secures JANUS files showing how Americans were ranked for detention, leverage, or control.'
   earn_when: searches the archive terminals for Michelle's record

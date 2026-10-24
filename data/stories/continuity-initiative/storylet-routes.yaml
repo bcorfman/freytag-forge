@@ -1421,6 +1421,38 @@ storylets:
     - janus_selection_system
     - brandon_history
     - janus_phase_two
+  - id: SL-2A-C-R3
+    dramatic_intent: Kristin uses the copied prisoner numbers to support the cooling-water explanation, giving the supervisor proof while still needing corridor access.
+    source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
+    operations:
+    - op: assert
+      fact_id: restricted_corridor_access
+      value: true
+    - op: assert
+      fact_id: rebecca_observing_infiltrators
+      value: true
+    - op: assert
+      fact_id: processing_numbers_used_in_confrontation
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: [t_2a_2b]
+    protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
+  - id: SL-2A-C-R4
+    dramatic_intent: Kristin uses the known service approach to make the inspection route credible, reducing the supervisor's scrutiny before gaining corridor access.
+    source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
+    operations:
+    - op: assert
+      fact_id: restricted_corridor_access
+      value: true
+    - op: assert
+      fact_id: rebecca_observing_infiltrators
+      value: true
+    - op: assert
+      fact_id: service_route_used_in_confrontation
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: [t_2a_2b]
+    protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
   completion_or_abort:
     complete_when:
     - fact_id: restricted_corridor_access

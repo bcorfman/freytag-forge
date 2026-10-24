@@ -12,12 +12,13 @@ and [1c-contract-result.md](1c-contract-result.md). Phase 1 may begin only
 after implementing the typed incident-outcome, outcome-scoped-cost, and
 traversal contracts named there.
 
-Phase 1 status (2026-10-24): in progress. Steps 1-5b of the 8-step plan in
+Phase 1 status (2026-10-24): in progress. Steps 1-6 of the 8-step plan in
 [game-reimagination-phase1.md](game-reimagination-phase1.md) are committed and
-verified (latest `78e18467`, branch `phase1-step5-connections`): incident
+verified (latest `45989f14`, branch `phase1-step5-connections`): incident
 declarations, outcome resolution, pressure and missed window, connections and
-traversal, and the recovery storylet. Its section 5 decisions are made. Next is
-step 6, authoring the 1C incident on the real package; that file holds the
+traversal, the recovery storylet, and the 1C incident authored on the real
+package. Its section 5 decisions are made. Next is step 7 (2A variants,
+`follow_connection` wiring, discovery cue lifecycle fix); that file holds the
 step table and each step's result.
 
 Start with Phase 0, then build the observation-shaft slice in Phase 1. The

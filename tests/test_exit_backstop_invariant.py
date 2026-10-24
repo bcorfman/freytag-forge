@@ -115,4 +115,4 @@ def test_continuity_package_accepts_2a_world_only_bridge_fact_without_delivery()
         event.scene_id == "2A" and "rebecca_observing_infiltrators" in event.activation.all_facts_true
         for event in package.storylet_routes.bridge_events
     )
-    assert "rebecca_observing_infiltrators" not in {delivery.fact_id for delivery in package.deliveries}
+    assert "rebecca_observing_infiltrators" in {delivery.fact_id for delivery in package.deliveries}

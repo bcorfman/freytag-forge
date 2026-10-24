@@ -7,13 +7,12 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 ## Resume here
 
-Decisions in section 5 are made. Steps 1-6 are done and verified (below).
+Decisions in section 5 are made. Steps 1-6 and 7a are done and verified (below).
 Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is
-`fc3f63e3`, step 5 is `bd926e15`, step 5b is `78e18467`, step 6 is the commit
-that records this entry. Next: step 7 (2A variants keyed to
-`processing_numbers_copied` and `service_level_access_known`, free-text wiring of
-`follow_connection`, discovery cue lifecycle fix), as a Ringer manifest. Read the
-2A package sources first.
+`fc3f63e3`, step 5 is `bd926e15`, step 5b is `78e18467`, step 6 is `45989f14`,
+step 7a is the commit that records this entry. Next: step 7b (runtime: conditional
+2A entry text, free-text wiring of `follow_connection`, shared post-turn helper),
+then 7c (discovery cue lifecycle fix), each a Ringer manifest.
 
 ## Step 1 result (2026-10-22)
 
@@ -186,6 +185,23 @@ passed, 16 skipped; Ruff clean.
 - Not done in step 6: 2A variants and consumer, `follow_connection` wiring, cue
   lifecycle (all step 7); the 1C player-facing text has not been played with a
   model.
+
+## Step 7a result (2026-10-24)
+
+Ringer run `game-reimagination-phase1`, Codex Luna medium, 2 attempts, 545k
+tokens, 2,869 s; manifest `scripts/ringer/phase1/step7a-manifest.json`. Package
+and tests only. Full suite 2,454 passed, 16 skipped; Ruff clean.
+
+- SL-2A-C gained C-R3 (uses `processing_numbers_copied`) and C-R4 (uses
+  `service_level_access_known`), guarded by `requires`. Each records a
+  confrontation marker fact and still reaches `restricted_corridor_access` and
+  `t_2a_2b`. The advantage facts are only read. `tests/test_scene_2a_advantages.py`
+  pins gating, both advantages, the no-advantage path and persistence into 2B.
+- **Not done: the 2A entry variants.** `FactDelivery` stages only missing facts and
+  the target `entry_text` is static, so arrival text cannot vary by an advantage
+  already asserted. A 1C-to-2A probe printed the same static text for both outcomes.
+  This needs a small runtime change (fact-keyed entry text variants); fold it
+  into step 7b.
 
 ## 1. What exists today (read in source, 2026-10-22)
 

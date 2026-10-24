@@ -158,6 +158,16 @@ def test_whole_package_findings_match_recorded_gaps():
         }
         for check in (2, 3)
     )
+    expected.extend(
+        {
+            "check": check,
+            "scene_id": "2A",
+            "gate": "t_2a_2b:restricted_corridor_access",
+            "subject": subject,
+        }
+        for subject in ("service_entrance", "service_level")
+        for check in (2, 3)
+    )
     actual = [
         {key: finding[key] for key in ("check", "scene_id", "gate", "subject")}
         for finding in check_affordance_map(package, amap)
@@ -196,7 +206,11 @@ def test_whole_package_findings_match_recorded_gaps():
     assert sorted(actual_1c, key=lambda item: (item["check"], item["subject"])) == sorted(
         expected_1c, key=lambda item: (item["check"], item["subject"])
     )
-    assert sorted(actual, key=lambda item: (item["scene_id"], item["gate"], item["subject"], item["check"])) == expected
+
+    def sort_key(item):
+        return (item["scene_id"], item["gate"], item["subject"], item["check"])
+
+    assert sorted(actual, key=sort_key) == sorted(expected, key=sort_key)
 
 
 def test_continuity_1a_gate_affordances_include_drawer_and_memory_card():

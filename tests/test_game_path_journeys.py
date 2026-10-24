@@ -44,7 +44,11 @@ for _item in PACKAGE.knowledge.knowledge:
         SIBLINGS.setdefault(_item.source.storylet_id, []).append(_item.id)
 
 # A realization that needs an earlier alternative of the same scene to be offered first.
-CHAINS: dict[str, tuple[str, ...]] = {"k_sl_1a_d_r1": ("k_sl_1a_b_r2", "k_sl_1a_d_r1")}
+CHAINS: dict[str, tuple[str, ...]] = {
+    "k_sl_1a_d_r1": ("k_sl_1a_b_r2", "k_sl_1a_d_r1"),
+    "k_sl_2a_c_r3": ("k_sl_1c_c_copy_numbers", "k_sl_2a_c_r3"),
+    "k_sl_2a_c_r4": ("k_sl_1c_c_secure_route", "k_sl_2a_c_r4"),
+}
 
 # Named issues N-1 and N-2 were fixed by widening the two bridge activations.
 # Add entries back only for a branch that reaches the exit through a forced scene exit.
