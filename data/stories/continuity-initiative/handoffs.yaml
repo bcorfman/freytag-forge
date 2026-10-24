@@ -68,7 +68,8 @@ deliveries:
   fallback_text: >-
     Fresh tire tracks, humming air vents, and heavy electrical service prove that the supposedly abandoned terminal hides
     an active facility. The signs point to an underground complex beneath the loading docks.
-  cue_text: Fresh tire tracks cross the loading area. The air vents are still humming.
+  cue_text: >-
+    Brandon says, "Check the loading docks for signs of activity."
 - fact_id: captives_confirmed_alive
   scene_id: 1C
   source_kind: observation
@@ -79,7 +80,8 @@ deliveries:
   fallback_text: >-
     From the observation shaft, Kristin sees sedated prisoners moving through the processing area. The captives are alive,
     even if the view is too brief to confirm whether Michelle is among them.
-  cue_text: The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.
+  cue_text: >-
+    Brandon says, "Study the people through the observation shaft."
 - fact_id: processing_numbers_copied
   scene_id: 2A
   source_kind: observation

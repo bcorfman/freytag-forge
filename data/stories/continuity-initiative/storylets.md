@@ -469,6 +469,7 @@ Each entry below is authoring data, not a player action menu.
 **Available when**
 - Kristin and Brandon are at the freight terminal/industrial site.
 - The underground complex has not yet been fully confirmed.
+- The transfer window remains open.
 
 **Participants / items**
 - Kristin Schweitzer
@@ -514,6 +515,7 @@ Each entry below is authoring data, not a player action menu.
 - The active underground facility has been credibly confirmed.
 - Kristin can observe the captive-processing area.
 - Michelle’s status remains unconfirmed.
+- The transfer window remains open.
 
 **Participants / items**
 - Kristin Schweitzer
@@ -529,8 +531,8 @@ Each entry below is authoring data, not a player action menu.
 **Possible realizations**
 - Kristin studies the prisoners through the observation shaft.
 - She watches a woman who might be Michelle but cannot obtain certainty.
-- Brandon physically or verbally stops an impulsive move into the processing area.
-- Kristin can resent Brandon’s restraint even if it is strategically sound.
+- Brandon offers copying the prisoner numbers for stronger proof.
+- Brandon offers help with the transfer route at the cost of the full number set.
 
 **Effects**
 - May set `captives_confirmed_alive`.
@@ -548,8 +550,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 5`
-- latest: `turn 6`
+- target: `turn 2`
+- latest: `turn 3`
 
 ---
 
@@ -562,6 +564,7 @@ Each entry below is authoring data, not a player action menu.
 **Available when**
 - The active facility and living captives have been credibly confirmed.
 - Kristin knows captives are present.
+- The transfer window remains open.
 
 **Participants / items**
 - Kristin Schweitzer
@@ -591,8 +594,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 9`
-- latest: `turn 10`
+- target: `turn 3`
+- latest: `turn 4`
 
 ---
 
@@ -614,6 +617,7 @@ Each entry below is authoring data, not a player action menu.
 - Turn the missed window into a costly final chance to enter.
 
 **Possible realizations**
+- Brandon invites Kristin to follow him through the service entrance. The offer alone grants nothing.
 - Brandon leads Kristin through the service entrance while the sweep closes in.
 
 **Effects**
@@ -1983,7 +1987,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 |---|---|---|
 | [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-D` | Crime-scene inference, Michelle’s evidence, first authority pressure |
 | [1B](plot.md#scene-1b--the-lead-in-the-park) | `SL-1B-A` … `SL-1B-C` | Dead-drop clues, Brandon trust, pursuit |
-| [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-C` | Facility discovery, living captives, national scale |
+| [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-D` | Facility discovery, living captives, one advantage, costly recovery after a missed window |
 | [2A](plot.md#scene-2a--false-identities) | `SL-2A-A` … `SL-2A-C` | Brandon context, infiltration preparation, entry complication |
 | [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-A` … `SL-2B-C` | JANUS, Kristin-as-bait, Brandon’s role, Michelle’s resistance |
 | [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-A` … `SL-2C-D` | Rebecca’s offer, purge pressure, lived crisis, combined mission |

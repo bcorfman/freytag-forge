@@ -199,7 +199,6 @@ def test_whole_package_findings_match_recorded_gaps():
             "michelle_phone",
             "michelle_photograph",
             "brandon_hideout",
-            "service_entrance",
             "transit_card",
         )
     ]

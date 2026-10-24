@@ -13,8 +13,8 @@ from storygame.story_package.loader import load_story_package
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
 NEW_SENTENCE = (
-    "The observation shaft overlooks the processing line. "
-    "Kristin can read the identification numbers on the uniforms below."
+    'Brandon says, "Study the people through the observation shaft. '
+    'We need to know what is happening on the processing line."'
 )
 
 

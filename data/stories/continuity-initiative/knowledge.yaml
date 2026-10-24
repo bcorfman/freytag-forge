@@ -258,8 +258,11 @@ scene_frames:
   situation: A damaged public park with an ordinary bench near the service path. Checkpoints and emergency patrols make a simple search feel exposed.
   pressure: Follow Michelle's lead and survive the park
 - scene_id: 1C
-  situation: A supposedly abandoned freight terminal whose fresh tire tracks, humming air vents, and heavy electrical service show that it is active. Its loading docks sit above ground. A service level lies below them. The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.
-  pressure: Confirm the facility and its purpose
+  situation: >-
+    The freight terminal has loading docks above a service level.
+    The observation shaft overlooks the processing line.
+    The service entrance is at the freight terminal.
+  pressure: Observe the transfer and choose what to secure
 - scene_id: 2A
   situation: Brandon's fortified hideout inside an abandoned communications center, stocked with servers and leaked Initiative documents. The facility's strained cooling-water and ventilation systems offer a narrow pretext for an unscheduled inspection.
   pressure: Enter the facility under false identities
@@ -868,7 +871,9 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running. The observation shaft overlooks the processing line. Kristin can read the identification numbers on the uniforms below.
+    Kristin finds electrical load, fresh air from the vents, and signs of recent work.
+    The freight terminal is still running. Brandon says, "Study the people through
+    the observation shaft. We need to know what is happening on the processing line."
 - id: k_sl_1c_b_r1
   statement: 'From the processing area, Kristin matches sedated prisoners to missing-person records and knows they are alive.'
   earn_when: studies the prisoners and watches the shaft view
@@ -899,8 +904,12 @@ knowledge:
     priority: 0
   delivery_text: >-
     Kristin studies the sedated prisoners through the observation shaft. They are alive.
+    Brandon says, "Copy the prisoner numbers if you want stronger proof.
+    Or ask me about the transfer route. I can help with the service entrance.
+    That will cost us the chance to copy the full set of numbers.
+    There is time for one choice before the transfer leaves."
 - id: k_sl_1c_b_r2
-  statement: 'Kristin sees sedated captives alive in the processing line and glimpses a woman who could be Michelle before the view vanishes.'
+  statement: Kristin sees living captives in the processing line. She glimpses a woman who could be Michelle before the woman's face slips from sight.
   earn_when: watches the processing line for Michelle
   action_evidence:
   - [watch, observe, look at, study, inspect, examine]
@@ -933,7 +942,12 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Kristin watches the sedated captives in the processing line. She glimpses a woman who could be Michelle. Then the view vanishes.
+    Kristin watches the sedated captives in the processing line. They are alive.
+    She glimpses a woman who could be Michelle. The woman's face slips from sight.
+    The transfer is still moving. Brandon says, "Copy the prisoner numbers if you
+    want stronger proof. Or ask me about the transfer route.
+    I can help with the service entrance. That will cost us the chance to copy
+    the full set of numbers. There is time for one choice before the transfer leaves."
 - id: k_sl_1c_c_copy_numbers
   statement: Kristin copies the visible prisoner numbers and matches them to missing-person records.
   earn_when: copies the prisoner numbers
@@ -962,7 +976,9 @@ knowledge:
     value: true
   source: {kind: storylet_realization, storylet_id: SL-1C-C, realization_id: SL-1C-C-R1}
   relevance: {entity_ids: [], priority: 0}
-  delivery_text: Kristin copies the visible prisoner numbers and matches them to missing-person records.
+  delivery_text: >-
+    Kristin copies the visible prisoner numbers and matches them to missing-person records.
+    Brandon says, "That gives us stronger proof. We still need a way inside."
 - id: k_sl_1c_c_secure_route
   statement: Brandon explains the transfer route and opens the service entrance with the transit token.
   earn_when: asks Brandon about the transfer route or opens the service entrance with the transit token
@@ -996,7 +1012,10 @@ knowledge:
     value: true
   source: {kind: storylet_realization, storylet_id: SL-1C-C, realization_id: SL-1C-C-R2}
   relevance: {entity_ids: [brandon, service_entrance], priority: 0}
-  delivery_text: Brandon explains the transfer route and opens the service entrance with the transit token.
+  delivery_text: >-
+    Brandon explains the transfer route and opens the service entrance with the transit token.
+    Kristin loses the chance to copy the full set of prisoner numbers.
+    Brandon says, "We have an approach. Now we need to prepare."
 - id: k_sl_1c_d_r1
   statement: Brandon leads Kristin through the service entrance while the sweep closes in.
   earn_when: follows Brandon through the service entrance as the sweep closes in
@@ -1028,7 +1047,10 @@ knowledge:
     value: true
   source: {kind: storylet_realization, storylet_id: SL-1C-D, realization_id: SL-1C-D-R1}
   relevance: {entity_ids: [brandon, service_entrance], priority: 0}
-  delivery_text: Brandon leads Kristin through the service entrance while the sweep closes in.
+  delivery_text: >-
+    Brandon leads Kristin through the service entrance. He shows her the service approach.
+    The full set of prisoner numbers is lost. The sweep closes in.
+    Brandon says, "We have to pull back. We can prepare now that we know the approach."
 - id: k_sl_2a_a_r1
   statement: 'Kristin finds years of leaked code, emergency supplies, and Continuity files in Brandon’s fortified hideout.'
   earn_when: reviews, reads, or studies Continuity Initiative documents, Brandon's documents, or documents in Brandon's hideout

@@ -1035,7 +1035,9 @@ storylets:
   title: The “Abandoned” Terminal Is Working Too Hard
   activation:
     scene_id: 1C
-    conditions: []
+    conditions:
+    - fact_id: transfer_window_missed
+      equals: false
     pacing:
       earliest_turn: 0
       target_turn: 2
@@ -1074,17 +1076,19 @@ storylets:
     conditions:
     - fact_id: facility_proof
       equals: true
+    - fact_id: transfer_window_missed
+      equals: false
     pacing:
       earliest_turn: 0
-      target_turn: 5
-      latest_turn: 6
+      target_turn: 2
+      latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: If the player fixates on immediate rescue, show living captives and an uncertain Michelle sighting
-    to heighten urgency while preserving the need for broader understanding.
+  pressure_role: >-
+    Show living captives when Kristin studies the processing line.
+    Brandon offers a choice between copying their numbers and asking him about the transfer route.
   realization_options:
   - id: SL-1C-B-R1
-    dramatic_intent: Confirm living captives and make the cost of an impulsive rescue concrete, establishing that
-      controlled deeper access is necessary.
+    dramatic_intent: Confirm that the sedated prisoners are alive.
     operations:
     - op: assert
       fact_id: captives_confirmed_alive
@@ -1120,8 +1124,9 @@ storylets:
       - michelle_possible_sighting
     abort_when:
     - scene_id_not: 1C
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+  non_coercion_note: >-
+    Brandon may offer these actions in dialogue. Kristin chooses what to attempt.
+    Equivalent player actions may earn the same result.
 - id: SL-1C-C
   scene_id: 1C
   title: The Transfer Window
@@ -1134,8 +1139,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 9
-      latest_turn: 10
+      target_turn: 3
+      latest_turn: 4
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Put the player under a moving transfer window and let a deliberate choice shape the next phase.
   realization_options:
@@ -1186,8 +1191,9 @@ storylets:
       - service_level_access_known
     abort_when:
     - scene_id_not: 1C
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+  non_coercion_note: >-
+    Brandon may offer these actions in dialogue. Kristin chooses what to attempt.
+    Equivalent player actions may earn the same result.
 - id: SL-1C-D
   scene_id: 1C
   title: The Sweep Closes In
@@ -1235,8 +1241,9 @@ storylets:
       equals: true
     abort_when:
     - scene_id_not: 1C
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+  non_coercion_note: >-
+    Brandon may offer these actions in dialogue. Kristin chooses what to attempt.
+    Equivalent player actions may earn the same result.
 - id: SL-2A-A
   scene_id: 2A
   title: Brandon Prepared for This Years Ago
