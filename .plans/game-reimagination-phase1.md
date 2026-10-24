@@ -7,10 +7,11 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 ## Resume here
 
-Decisions in section 5 are made. Steps 1, 2 and 3 are done and verified
-(below). Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is the commit that
-records this entry. Next: step 4 (pressure event, missed-window withdrawal
-within the scene, no unearned advantage on deadline), as a Ringer manifest.
+Decisions in section 5 are made. Steps 1-4 are done and verified (below).
+Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is the
+commit that records this entry. **Open decision before step 6:** what ends a
+scene after a missed window with no recovery (see Step 4 result). Next: step 5
+(`connections` and the traversal action), as a Ringer manifest.
 
 ## Step 1 result (2026-10-22)
 
@@ -92,6 +93,30 @@ applied by hand and verified: full suite 2,408 passed, 16 skipped; Ruff clean.
   realization operations now count as trigger sources for the successor.
 - Tests only on the lighthouse fixture; the real package has no incidents until
   step 6, and the step 1 turn-11 backstop test still passes unchanged.
+
+## Step 4 result (2026-10-23)
+
+Ringer run `game-reimagination-phase1`, Codex Luna medium, 1 attempt, 96k
+tokens, 406 s. Tests only, no engine change: added
+`tests/test_incident_pressure.py`; incident tests 36 pass, 1 skipped; full suite
+2,414 passed, 16 skipped; Ruff clean. Pinned on the lighthouse fixture:
+
+- Rejected proposals and repeated retries leave turn index, facts, fired and
+  active events unchanged; the pressure event does not fire.
+- Clarification leaves state unchanged (tested via an injected reference
+  question; the stub has no natural ambiguity). A provider error restores
+  pre-turn state; Cloudflare's internal retry loop is covered only by its
+  existing provider tests.
+- The missed window fires once, asserts only its own fact, grants no advantage
+  or cost, and the scene stays put past the handoff deadline.
+- Late recovery works. On the boundary turn, pressure activates before proposal
+  resolution. Save/load after the window does not refire it.
+
+**Open decision:** after a missed window with no recovery the player stays in
+the scene indefinitely; no backstop, no successor. The contract wants a grounded
+recovery or an honest failure/return path. Options: a package-declared recovery
+storylet, or a typed incident field declaring a withdrawal transition. Decide
+before step 6 authors the real 1C.
 
 ## 1. What exists today (read in source, 2026-10-22)
 
