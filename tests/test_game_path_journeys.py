@@ -21,18 +21,12 @@ from pathlib import Path
 import pytest
 
 from storygame.personas import (
-    PERSONAS,
     _legacy_package,
     _resolution_complete,
-    _ScriptedProvider,
-    _select_thorough,
-    _turn_cap,
 )
-from storygame.runtime.contracts import RuntimeContractError
-from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
+from tests.journey_prefix import run as run_with_prefix
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 PLAYED = _legacy_package(PACKAGE)
@@ -69,62 +63,14 @@ class Journey:
 
 
 def play(preferred: tuple[str, ...] = ()) -> Journey:
-    blocked = {
-        sibling
-        for item_id in preferred
-        for sibling in SIBLINGS[PACKAGE.knowledge_indexes.by_id[item_id].source.storylet_id]
-        if sibling not in preferred
-    }
-    # Incident recovery is only legal after its missed-window pressure event.
-    # Keep the supported outcomes out of the projection for this branch, then
-    # let the normal incident clock make the recovery realization available.
-    recovery_ids = {
-        item.id
-        for item in PACKAGE.knowledge.knowledge
-        if item.source.storylet_id
-        in {incident.recovery_storylet_id for incident in PACKAGE.incidents if incident.recovery_storylet_id}
-    }
-    if set(preferred) & recovery_ids:
-        for incident in PACKAGE.incidents:
-            if incident.scene_id != "1C":
-                continue
-            blocked.update(
-                item.id
-                for item in PACKAGE.knowledge.knowledge
-                if item.source.storylet_id in {outcome.storylet_id for outcome in incident.outcomes}
-            )
-    state = RuntimeState.bootstrap(PLAYED)
-    provider = _ScriptedProvider(PLAYED, state)
-    engine = RuntimeEngine(state, provider)
-    journey = Journey(state=state, scenes=[state.current_scene_id])
-    for _ in range(_turn_cap(PLAYED)):
-        if _resolution_complete(state):
-            break
-        engine._activate_pacing()
-        offered = tuple(
-            candidate
-            for candidate in engine.projector.project(state, "player", "").candidates
-            if candidate.id not in blocked
-        )
-        wanted = next((item_id for item_id in preferred if any(c.id == item_id for c in offered)), None)
-        selected = wanted or _select_thorough(PLAYED, state, offered)
-        provider.selected = (selected,) if selected else ()
-        scene_before = state.current_scene_id
-        try:
-            result = engine.turn(PERSONAS["thorough"])
-        except (ProposalValidationError, RuntimeContractError):
-            provider.selected = ()
-            selected = None
-            engine.turn(PERSONAS["thorough"])
-        if selected and engine.last_attempt.outcome == "committed":
-            journey.picked.append(selected)
-        if state.current_scene_id != scene_before:
-            journey.scenes.append(state.current_scene_id)
-            if state.current_scene_id == "2A":
-                journey.entry_texts.extend(segment.text for segment in result.segments)
-            if engine.last_attempt.transition_cause in ("forced", "timer"):
-                journey.forced_exits.append((scene_before, engine.last_attempt.transition_cause))
-    return journey
+    result = run_with_prefix(preferred)
+    return Journey(
+        state=result.state,
+        picked=result.picked,
+        forced_exits=result.forced_exits,
+        scenes=result.scenes,
+        entry_texts=result.entry_texts,
+    )
 
 
 PLAYER_REALIZATIONS = [

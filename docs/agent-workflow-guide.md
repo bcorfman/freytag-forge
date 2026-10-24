@@ -22,3 +22,8 @@
   build checks; use task `"check_timeout_s": 900` or
   `RINGER_CHECK_TIMEOUT_S=900`, after confirming the installed `ringer.py`
   provides `check_timeout_for`.
+- The Ringer check convention is a manifest check running
+  `scripts/quick_suite.py` (with `--also` for journeys or heavy files relevant
+  to the change) plus Ruff; the full suite runs in CI and before merge.
+- A worker's own verification uses the quick tier and runs the full suite at
+  most once, at the end.
