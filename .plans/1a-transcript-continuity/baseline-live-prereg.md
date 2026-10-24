@@ -41,11 +41,11 @@ Luna worker. Smoke: Ringer run `transcript-1a-baseline-smoke` (1 replicate, 2 tu
 Raw rows: `bench/results/transcript-1a-baseline/` (ignored by git). Compact fixture of every narration: `baseline-live-narrations.json`. Read by hand, narration only. Counts are out of 5; a count is a failure of the requirement at that turn, not a rate.
 
 **1 Gap/fabric (fails 5/5).**
-- “Feel in the gap” was read as a door-frame gap in 5/5 (“between the back door and the frame”, “between the door frame and the wall”). 5/5 invented an object there: torn fabric 1, key fragment 1, screw 2 (plus fabric in a fourth replicate's follow-up).
+- “Feel in the gap” was read as a door-frame gap in 5/5 (“between the back door and the frame”, “between the door frame and the wall”). 5/5 invented an object there: torn fabric 2 (replicates 1, 4), key fragment 1 (2), screw 2 (3, 5).
 - “Look at the fabric” was accepted as real in 5/5 (fabric examined, or entry scratches described).
 - No reveal on “feel in the gap” in 5/5; the gap never reached the drawer (0/5).
 - Later “look around” repeated the door gap in 2/5 (torn fabric in replicate 1, key in the gap in replicate 2).
-- `item_facts_unplaced` held the invented object in 4/5 (fabric, key, screw, screw), plus a door handle in replicate 3.
+- `item_facts_unplaced` held the invented object in 4/5 (fabric in 1, key in 2, screw in 3 and 5; replicate 4's fabric was not recorded as unplaced), plus a door handle in replicate 3.
 
 **2 Patrol (fails 5/5).**
 - Turn 4 (“pull out the drawer”) narrated an officer who “lingers at the drawer” (replicates 1 to 3) or “lingers nearby” (4, 5) with no arrival shown; replicate 3 adds the officer saying “I'll be right back”.
