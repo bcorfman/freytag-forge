@@ -68,3 +68,22 @@ advantage fact. The provider then replied with that fact's fallback text every t
 (guard plus `tests/test_incident_handoff_guard.py`). Smoke 3 re-runs the same design with
 the fix, in `bench/results/phase1-slice-smoke-3/`. Open design question: a blind player has
 no signal after the window closes that the recovery action exists.
+
+## Result of smoke 3 (2026-10-24)
+
+Artifacts: `bench/results/phase1-slice-smoke-3/` (gitignored; local). The handoff fix
+worked: 0 recoveries, no repeated response beyond 2, `stuck_loop` false, no stale cue,
+no rejection. The slice still failed as a game: 30 commands, final scene 1C, exit cause
+`other`.
+
+- The free observation fired on turn 2. The window closed on turn 5 (`transfer_window_missed`).
+  The blind player never attempted either outcome and never found the recovery.
+- The live narrator drifted off the world from turn 12: Kristin at her kitchen table,
+  a "Project Nightshade" file, driving back with Michelle and Brandon, a keycard reader,
+  a service elevator. None are declared in 1C. This is a grounding failure of the
+  narrator, separate from the incident design.
+- Diagnosis: the opportunities are not visible. Plan section 1 requires the player to see
+  what can be attempted and what is at risk; nothing in 1C narration offers copying the
+  numbers, asking Brandon, or the recovery. Decision needed from Brandon (see the step 8
+  note in the phase 1 plan). Two smokes with the same symptom were diagnosed; no wording
+  patch was attempted.

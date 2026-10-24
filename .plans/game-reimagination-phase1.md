@@ -11,8 +11,8 @@ Decisions in section 5 are made. Steps 1-6, 7a-7c and 8 part 1 (scripted playthr
 Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is
 `fc3f63e3`, step 5 is `bd926e15`, step 5b is `78e18467`, step 6 is `45989f14`,
 step 7a is `c633cd16`, step 7b is `9920a3b5`, step 7c is `c7be45a5` (merged in #689), step 8 part 1 is the commit that records this entry.
-Next: step 8 part 2, a smoke-tested model run, which needs Brandon's budget go-ahead
-(Cloudflare cap, dollar usage with UTC timestamp, player-model budget).
+Next: decide how the 1C opportunities become visible (step 8 part 2 result), then
+repeat the live smoke.
 
 ## Step 1 result (2026-10-22)
 
@@ -275,6 +275,20 @@ on the finding above). Ringer run `game-reimagination-phase1`, Codex Luna medium
   `test_scene_1c_can_move_into_the_service_level`; added a test that "Go to the
   service level" falls through to the provider.
 - Phase 3 item: reintroduce a connection where a real journey can use it.
+
+## Step 8 part 2 result (2026-10-24)
+
+Preregistration and results: [phase1-live-smoke.md](phase1-live-smoke.md). Probe:
+`scripts/ringer/phase1/slice_probe.py` (hermetic tests in `tests/test_slice_probe.py`).
+Three single-row live smokes, no retries. Smokes 1 and 2 looped on a false fallback line;
+step 8e fixed the cause (legacy handoff staged in an unresolved incident). Smoke 3: no
+loop, but the blind player never left 1C (30 commands).
+
+- **Open decision.** Opportunities are not visible to a blind player: nothing offers the
+  copy, the Brandon question or the recovery, and the window closes at turn 5.
+- Also seen: live narrator drift from turn 12 (kitchen table, invented files); a
+  grounding problem to handle under docs/world-model-grounding.md, not by prompt rules.
+- Phase 1 exit (both approaches finish coherently with strangers) is NOT met.
 
 ## 1. What exists today (read in source, 2026-10-22)
 
