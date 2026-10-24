@@ -1,0 +1,25 @@
+{
+  "run_name": "game-reimagination-phase1",
+  "workdir": "/home/bcorfman/dev/ringer-work/game-reimagination-phase1",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "ci-fast-feedback-quick-tier",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 1500,
+      "expect_files": [],
+      "spec": "You are a CI worker editing the freytag-forge repo. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge, detached at HEAD. Edit files ONLY under the current working directory; NEVER edit anything under /home/bcorfman/dev/freytag-forge directly (you may only run its .venv/bin/python). Do NOT git commit, do NOT git add -A, do NOT touch .git. No network. Write short notes to /home/bcorfman/dev/ringer-work/game-reimagination-phase1-notes/cifast-notes.md.\n\nCONTEXT: Brandon says the slow test loop cripples the rework. CI job `fast-feedback` in .github/workflows/test.yml runs `TMPDIR=/tmp uv run pytest -q --no-cov -n 4 -m \"(unit or component) and not authoring_quality\"`, which takes about 147 s and duplicates work the six shard jobs do, so it is now the longest job. scripts/quick_suite.py (read it, and docs/testing-runbook.md section 1) runs pytest on everything except files recorded at 15 s or more in tests/shard_durations.json, and passes arguments after `--` to pytest. Decision: the fast feedback job becomes the intersection, so it is fast and still a cheap early signal; the six shard jobs keep running every test, so nothing is dropped from CI.\n\nGOAL: (1) In .github/workflows/test.yml change ONLY the run line of the `Run fast feedback tests` step to: TMPDIR=/tmp uv run python scripts/quick_suite.py -- -n 4 -m \"(unit or component) and not authoring_quality\" . Check quick_suite.py's argument handling so that this exact command works (it already sets -n auto by default; the later -n 4 must win or be harmless on a 4-core runner; if the script rejects it, pass the arguments in the form it supports and say so). Rename nothing: keep the job id, job name and the required-check names exactly, because branch protection may reference them. (2) Update docs/testing-runbook.md where it describes the CI fast-feedback job or its command (grep for `fast`), in place, one line; do not add results. (3) Verify locally: run the exact quick_suite.py command with the .venv python instead of `uv run python`, confirm it passes, and report its wall time and the number of tests selected, and, with `--list`, the skipped files. Confirm with a YAML parse (python -c with yaml if available, otherwise a careful read) that the workflow is still valid and that no other line of the workflow changed (report `git diff --stat`).\n\nOWNED FILES: .github/workflows/test.yml, docs/testing-runbook.md. Nothing else.\n\nHOW TO RUN: first confirm PYTHONPATH=$PWD /home/bcorfman/dev/freytag-forge/.venv/bin/python -c \"import storygame; print(storygame.__file__)\" prints a path inside the cwd. Do not run uv. Full suite must end green: PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n auto.\n\nNOTES CONTRACT: cifast-notes.md with sections: CHANGE (the old and new run line), QUICK_SUITE COMPAT (any adjustment), LOCAL VERIFY (command, tests selected, wall time), DIFF (stat), OPEN QUESTIONS (or 'none'). Reply with a short summary.",
+      "check": "bash -c 'set -uo pipefail; N=/home/bcorfman/dev/ringer-work/game-reimagination-phase1-notes/cifast-notes.md; [ -s $N ] || { echo FAIL no notes; exit 1; }; PY=/home/bcorfman/dev/freytag-forge/.venv/bin/python; git add -A -- .github/workflows/test.yml docs/testing-runbook.md; bad=$(git status --porcelain | grep -v -E \"^[AMD]  (\\.github/workflows/test\\.yml|docs/testing-runbook\\.md)$\" || true); [ -z \"$bad\" ] || { echo \"FAIL stray files:\"; echo \"$bad\"; exit 1; }; grep -q \"scripts/quick_suite.py\" .github/workflows/test.yml || { echo FAIL workflow does not use the quick tier; exit 1; }; OUT=/home/bcorfman/dev/ringer-work/game-reimagination-phase1-patches; mkdir -p $OUT; git diff --cached > $OUT/cifast.patch; [ -s $OUT/cifast.patch ] || { echo FAIL empty patch; exit 1; }; PYTHONPATH=$PWD TMPDIR=/tmp $PY -m pytest -q -p no:cacheprovider --no-cov -n auto 2>&1 | tail -25; [ ${PIPESTATUS[0]} -eq 0 ] || { echo FAIL full suite; exit 1; }; $PY -m ruff check storygame tests scripts && $PY -m ruff format --check storygame tests scripts || exit 1; echo PASS'",
+      "verified": "Fast feedback job runs the quick tier with the unit/component marker filter; job names unchanged; full suite and ruff green"
+    }
+  ]
+}
