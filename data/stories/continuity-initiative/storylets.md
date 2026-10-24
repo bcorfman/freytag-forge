@@ -482,18 +482,14 @@ Each entry below is authoring data, not a player action menu.
 
 **Possible realizations**
 - Kristin compares declared abandonment with electrical load, ventilation, and recent infrastructure work.
-- The transit token opens access that should not exist at a dead facility.
-- Kristin maps a dry maintenance ascent into the drainage spine, then leaves it alone because it is too exposed to use now.
 - Brandon supplies operational context while Kristin supplies infrastructure and operations analysis.
 
 **Effects**
 - May set `facility_proof`.
 - May reveal evidence of continuing facility activity.
-- May establish safe service-level access.
-- May set `facility_infiltration_needed` when the main installation cannot be reached safely from the service level.
 
 **Completion**
-- Kristin and Brandon have a credible route into the service level.
+- Kristin and Brandon have proof that the terminal is active.
 
 **Abort**
 - The facility becomes openly alerted and the subtle-entry situation ends.
@@ -531,17 +527,15 @@ Each entry below is authoring data, not a player action menu.
 - Intensify Kristin’s rescue impulse while preserving uncertainty about Michelle.
 
 **Possible realizations**
-- Kristin matches prisoner identifiers to missing-person records.
-- She sees a woman who might be Michelle but cannot obtain certainty.
+- Kristin studies the prisoners through the observation shaft.
+- She watches a woman who might be Michelle but cannot obtain certainty.
 - Brandon physically or verbally stops an impulsive move into the processing area.
 - Kristin can resent Brandon’s restraint even if it is strategically sound.
 
 **Effects**
 - May set `captives_confirmed_alive`.
 - May make rescue more urgent.
-- May change `trust_brandon`.
 - May set `michelle_possible_sighting` without confirming Michelle's location.
-- May set `facility_infiltration_needed` when an impulsive rescue would endanger or relocate the captives.
 
 **Completion**
 - Kristin accepts that living captives are being held here.
@@ -559,53 +553,85 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
-### SL-1C-C — A Regional Hub, Not the Prison
+### SL-1C-C — The Transfer Window
 
-**Source beats:** [1C.3 — The Nationwide Network](plot.md#scene-1c3--the-nationwide-network), [1C.4 — The Architects Revealed](plot.md#scene-1c4--the-architects-revealed)
+**Source beats:** [1C.2 — Proof of the Captives](plot.md#scene-1c2--proof-of-the-captives)
 
 **Allowed scene:** `1C`
 
 **Available when**
 - The active facility and living captives have been credibly confirmed.
-- Brandon can access the logistics computer or equivalent authored records.
-- Kristin knows captives are present but does not yet know the operation’s scale.
+- Kristin knows captives are present.
 
 **Participants / items**
 - Kristin Schweitzer
 - Brandon Corfman
-- Charles Jenkins through recorded conference material
-- Rebecca Jenkins through recorded conference material
-- Logistics records / recorded conference
+- Prisoner number record
+- Service entrance
 
 **Dramatic purpose**
-- Deliver the scene’s scale reversal in stages: regional facility → national network → deliberate political strategy.
-- Allow the player to absorb operational and ideological evidence separately.
+- Force a meaningful choice while the transfer window remains open.
 
 **Possible realizations**
-- Logistics categories reveal why different people were selected.
-- Kristin focuses on Michelle’s category before recognizing the national pattern.
-- The Charles/Rebecca recording clarifies the reconstruction strategy.
-- Brandon’s reactions can create additional suspicion without disclosing his later confession.
+- Kristin copies the visible prisoner numbers and matches them to missing-person records.
+- Kristin asks Brandon about the transfer route or has him open the service entrance with the transit token.
 
 **Effects**
-- May set `national_detention_network_known`.
-- May reveal the selection categories.
-- May set `architects_strategy_known`.
-- May convey the conspiracy's national scope.
-- May establish `facility_infiltration_needed` once Kristin understands that observation or a direct local rescue is insufficient.
+- The copy outcome establishes `processing_numbers_copied` and `facility_infiltration_needed`.
+- The route outcome establishes `service_level_access_known`, `evidence_gap_processing_numbers`, `facility_infiltration_needed`, and `trust_brandon`.
 
 **Completion**
-- Kristin understands that the disappearances were engineered to remove, classify, and later leverage people at national scale.
+- Kristin has chosen proof or a route into the facility.
 
 **Abort**
-- Required records become inaccessible and no declared fallback remains; use dependency/game-break handling rather than silently rewriting the plot.
+- The transfer window closes.
 
 **Protected boundary**
-- JANUS itself, Kristin-as-bait, Brandon’s development role, and Michelle’s resistance network remain protected for Scene 2B.
+- The national network and the architects’ strategy remain for a later scene.
 
 **Pacing window**
 - earliest: `turn 0`
 - target: `turn 9`
+- latest: `turn 10`
+
+---
+
+### SL-1C-D — The Sweep Closes In
+
+**Source beats:** [1C.2 — Proof of the Captives](plot.md#scene-1c2--proof-of-the-captives)
+
+**Allowed scene:** `1C`
+
+**Available when**
+- The transfer window has been missed.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Service entrance
+
+**Dramatic purpose**
+- Turn the missed window into a costly final chance to enter.
+
+**Possible realizations**
+- Brandon leads Kristin through the service entrance while the sweep closes in.
+
+**Effects**
+- Reuses the secure-route outcome.
+- Establishes `terminal_sweep_closing` as the recovery cost.
+
+**Completion**
+- Kristin reaches the next scene.
+
+**Abort**
+- Kristin leaves the scene.
+
+**Protected boundary**
+- The national network and the architects’ strategy remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 6`
 - latest: `turn 10`
 
 ---

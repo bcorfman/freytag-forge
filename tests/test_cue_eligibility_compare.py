@@ -109,8 +109,6 @@ def test_real_package_reports_no_real_spent_cases_and_not_stageable_1a_case() ->
     output = report(PACKAGE)
 
     for row in (
-        "1C | SL-1C-C fired through k_sl_1c_c_r2 | national_detention_network_known | False | False | "
-        "k_sl_1c_c_r1:storylet_spent | AGREE",
         "2B | SL-2B-B fired through k_sl_2b_b_r3 | brandon_janus_role_known | False | False | "
         "k_sl_2b_b_r1:storylet_spent,k_sl_2b_b_r2:storylet_spent | AGREE",
         "2B | SL-2B-B fired through k_sl_2b_b_r3 | brandon_claimed_reform_motive | False | False | "

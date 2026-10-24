@@ -44,7 +44,11 @@ for _item in PACKAGE.knowledge.knowledge:
         SIBLINGS.setdefault(_item.source.storylet_id, []).append(_item.id)
 
 # A realization that needs an earlier alternative of the same scene to be offered first.
-CHAINS: dict[str, tuple[str, ...]] = {"k_sl_1a_d_r1": ("k_sl_1a_b_r2", "k_sl_1a_d_r1")}
+CHAINS: dict[str, tuple[str, ...]] = {
+    "k_sl_1a_d_r1": ("k_sl_1a_b_r2", "k_sl_1a_d_r1"),
+    "k_sl_2a_c_r3": ("k_sl_1c_c_copy_numbers", "k_sl_2a_c_r3"),
+    "k_sl_2a_c_r4": ("k_sl_1c_c_secure_route", "k_sl_2a_c_r4"),
+}
 
 # Named issues N-1 and N-2 were fixed by widening the two bridge activations.
 # Add entries back only for a branch that reaches the exit through a forced scene exit.
@@ -70,6 +74,24 @@ def play(preferred: tuple[str, ...] = ()) -> Journey:
         for sibling in SIBLINGS[PACKAGE.knowledge_indexes.by_id[item_id].source.storylet_id]
         if sibling not in preferred
     }
+    # Incident recovery is only legal after its missed-window pressure event.
+    # Keep the supported outcomes out of the projection for this branch, then
+    # let the normal incident clock make the recovery realization available.
+    recovery_ids = {
+        item.id
+        for item in PACKAGE.knowledge.knowledge
+        if item.source.storylet_id
+        in {incident.recovery_storylet_id for incident in PACKAGE.incidents if incident.recovery_storylet_id}
+    }
+    if set(preferred) & recovery_ids:
+        for incident in PACKAGE.incidents:
+            if incident.scene_id != "1C":
+                continue
+            blocked.update(
+                item.id
+                for item in PACKAGE.knowledge.knowledge
+                if item.source.storylet_id in {outcome.storylet_id for outcome in incident.outcomes}
+            )
     state = RuntimeState.bootstrap(PLAYED)
     provider = _ScriptedProvider(PLAYED, state)
     engine = RuntimeEngine(state, provider)

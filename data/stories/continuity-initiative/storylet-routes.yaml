@@ -38,15 +38,15 @@ pacing_event_review:
     value: true
   status: approved
   reason: Makes the park pursuit visibly close in without resolving it.
-- event_id: security_1c
+- event_id: transfer_window_1c
   scene_id: 1C
-  at_turn: 3
+  at_turn: 5
   effect:
     op: assert
-    fact_id: terminal_security_escalating
+    fact_id: transfer_window_missed
     value: true
   status: approved
-  reason: Makes security pressure at the terminal visibly escalate.
+  reason: Closes the transfer window with an observable loss of the prisoners from view.
 - event_id: scrutiny_2a
   scene_id: 2A
   at_turn: 3
@@ -77,12 +77,6 @@ pacing_event_review:
   effect: {op: assert, fact_id: park_lockdown_spreading, value: true}
   status: approved
   reason: Turns the park pursuit into a shrinking physical space after the dead-drop and Brandon encounter have had room to play.
-- event_id: terminal_sweep_1c
-  scene_id: 1C
-  at_turn: 7
-  effect: {op: assert, fact_id: terminal_sweep_closing, value: true}
-  status: approved
-  reason: Gives the terminal investigation a second, observable pressure wave after the captives and logistics evidence are discovered.
 - event_id: cover_review_2a
   scene_id: 2A
   at_turn: 7
@@ -192,20 +186,27 @@ new_fact_ids:
   used_by_storylets:
   - SL-1C-B
   used_by_transitions: []
+- id: national_detention_network_known
+  definition: Kristin knows the Los Angeles site is part of a national detention network.
+  used_by_storylets: []
+  used_by_transitions: []
+- id: architects_strategy_known
+  definition: Kristin knows Charles and Rebecca intend to leverage the manufactured catastrophe for political reconstruction/control.
+  used_by_storylets: []
+  used_by_transitions: []
+- id: processing_numbers_copied
+  definition: Kristin copied the visible prisoner numbers from the processing line.
+  used_by_storylets:
+  - SL-1C-C
+  used_by_transitions: []
+- id: transfer_window_missed
+  definition: The transfer window closed before Kristin resolved the incident.
+  used_by_storylets: []
+  used_by_transitions: []
 - id: michelle_possible_sighting
   definition: Kristin has an obscured, unconfirmed possible sighting of Michelle inside the facility.
   used_by_storylets:
   - SL-1C-B
-  used_by_transitions: []
-- id: national_detention_network_known
-  definition: Kristin knows the Los Angeles site is part of a national detention network.
-  used_by_storylets:
-  - SL-1C-C
-  used_by_transitions: []
-- id: architects_strategy_known
-  definition: Kristin knows Charles and Rebecca intend to leverage the manufactured catastrophe for political reconstruction/control.
-  used_by_storylets:
-  - SL-1C-C
   used_by_transitions: []
 - id: brandon_prepared_before_event
   definition: Kristin knows Brandon prepared for the disappearance before it occurred.
@@ -410,10 +411,6 @@ new_fact_ids:
   definition: The pursuit team is visibly closing in on Kristin and Brandon in the park.
   used_by_storylets: []
   used_by_transitions: []
-- id: terminal_security_escalating
-  definition: Security around the terminal is visibly escalating.
-  used_by_storylets: []
-  used_by_transitions: []
 - id: identity_scrutiny_visible
   definition: Facility staff are visibly scrutinizing Kristin’s inspector identity.
   used_by_storylets: []
@@ -536,8 +533,8 @@ new_fact_ids:
   used_by_storylets: [SL-1B-B, SL-1B-C]
   used_by_transitions: []
 - id: terminal_sweep_closing
-  definition: Security teams are sweeping the terminal's service levels.
-  used_by_storylets: [SL-1C-B, SL-1C-C]
+  definition: The terminal sweep is reaching the upper level.
+  used_by_storylets: [SL-1C-D]
   used_by_transitions: []
 - id: inspector_cover_under_review
   definition: A second credential review threatens Kristin and Brandon's inspection cover.
@@ -1061,24 +1058,6 @@ storylets:
     - janus_selection_system
     - brandon_history
     - janus_phase_two
-  - id: SL-1C-A-R2
-    dramatic_intent: Confirm the active underground facility and a service-level route. Kristin also maps a dry
-      maintenance ascent into the drainage spine, too exposed to use now, while establishing that the main installation
-      cannot be reached safely without a deliberate infiltration plan.
-    operations:
-    - op: assert
-      fact_id: facility_proof
-      value: true
-    - op: assert
-      fact_id: service_level_access_known
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_1c_2a
-    protected_knowledge_boundaries:
-    - janus_selection_system
-    - brandon_history
-    - janus_phase_two
   completion_or_abort:
     complete_when:
     - fact_id: facility_proof
@@ -1145,7 +1124,7 @@ storylets:
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-1C-C
   scene_id: 1C
-  title: A Regional Hub, Not the Prison
+  title: The Transfer Window
   activation:
     scene_id: 1C
     conditions:
@@ -1158,16 +1137,17 @@ storylets:
       target_turn: 9
       latest_turn: 10
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: When the player is ready to treat the site as the whole conspiracy, widen the scale through logistics
-    and recordings so the next phase feels necessary.
+  pressure_role: Put the player under a moving transfer window and let a deliberate choice shape the next phase.
   realization_options:
   - id: SL-1C-C-R1
-    dramatic_intent: Read logistics categories and understand that the Los Angeles site is part of a national detention
-      network.
-    source_beats: [scene-1c3--the-nationwide-network]
+    dramatic_intent: Copy the visible prisoner numbers and match them to missing-person records.
+    source_beats: [scene-1c2--proof-of-the-captives]
     operations:
     - op: assert
-      fact_id: national_detention_network_known
+      fact_id: processing_numbers_copied
+      value: true
+    - op: assert
+      fact_id: facility_infiltration_needed
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
@@ -1177,12 +1157,20 @@ storylets:
     - brandon_history
     - janus_phase_two
   - id: SL-1C-C-R2
-    dramatic_intent: Understand Charles and Rebecca’s reconstruction strategy and conclude that exposing and disrupting
-      the operation requires deeper access than a local rescue attempt can provide.
-    source_beats: [scene-1c4--the-architects-revealed]
+    dramatic_intent: Ask Brandon about the transfer route or have him open the service entrance with the transit token.
+    source_beats: [scene-1c2--proof-of-the-captives]
     operations:
     - op: assert
-      fact_id: architects_strategy_known
+      fact_id: service_level_access_known
+      value: true
+    - op: assert
+      fact_id: evidence_gap_processing_numbers
+      value: true
+    - op: assert
+      fact_id: facility_infiltration_needed
+      value: true
+    - op: assert
+      fact_id: trust_brandon
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:
@@ -1194,8 +1182,57 @@ storylets:
   completion_or_abort:
     complete_when:
     - any_fact_true:
-      - national_detention_network_known
-      - architects_strategy_known
+      - processing_numbers_copied
+      - service_level_access_known
+    abort_when:
+    - scene_id_not: 1C
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1C-D
+  scene_id: 1C
+  title: The Sweep Closes In
+  activation:
+    scene_id: 1C
+    conditions:
+    - fact_id: transfer_window_missed
+      equals: true
+    pacing:
+      earliest_turn: 0
+      target_turn: 6
+      latest_turn: 10
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let a missed transfer window create one last dangerous chance to enter through Brandon's route.
+  realization_options:
+  - id: SL-1C-D-R1
+    dramatic_intent: Brandon leads Kristin through the service entrance while the sweep closes in.
+    source_beats: [scene-1c2--proof-of-the-captives]
+    operations:
+    - op: assert
+      fact_id: service_level_access_known
+      value: true
+    - op: assert
+      fact_id: evidence_gap_processing_numbers
+      value: true
+    - op: assert
+      fact_id: facility_infiltration_needed
+      value: true
+    - op: assert
+      fact_id: trust_brandon
+      value: true
+    - op: assert
+      fact_id: terminal_sweep_closing
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1c_2a
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: terminal_sweep_closing
+      equals: true
     abort_when:
     - scene_id_not: 1C
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
@@ -1384,6 +1421,38 @@ storylets:
     - janus_selection_system
     - brandon_history
     - janus_phase_two
+  - id: SL-2A-C-R3
+    dramatic_intent: Kristin uses the copied prisoner numbers to support the cooling-water explanation, giving the supervisor proof while still needing corridor access.
+    source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
+    operations:
+    - op: assert
+      fact_id: restricted_corridor_access
+      value: true
+    - op: assert
+      fact_id: rebecca_observing_infiltrators
+      value: true
+    - op: assert
+      fact_id: processing_numbers_used_in_confrontation
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: [t_2a_2b]
+    protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
+  - id: SL-2A-C-R4
+    dramatic_intent: Kristin uses the known service approach to make the inspection route credible, reducing the supervisor's scrutiny before gaining corridor access.
+    source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
+    operations:
+    - op: assert
+      fact_id: restricted_corridor_access
+      value: true
+    - op: assert
+      fact_id: rebecca_observing_infiltrators
+      value: true
+    - op: assert
+      fact_id: service_route_used_in_confrontation
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: [t_2a_2b]
+    protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
   completion_or_abort:
     complete_when:
     - fact_id: restricted_corridor_access
@@ -2703,8 +2772,8 @@ canonical_bridge_events:
     - facility_proof
     - captives_confirmed_alive
     any_of:
-    - national_detention_network_known
-    - architects_strategy_known
+    - processing_numbers_copied
+    - service_level_access_known
     at_least: 1
   produces:
   - op: assert
@@ -2714,8 +2783,7 @@ canonical_bridge_events:
   - SL-1C-A
   - SL-1C-B
   - SL-1C-C
-  fallback_realization: Once the facility, living captives, national scope, and architects’ strategy are established,
-    validated free-text reasoning may conclude that deliberate deeper infiltration is necessary.
+  fallback_realization: Once the facility and living captives are established with either supported advantage, validated free-text reasoning may conclude that deliberate deeper infiltration is necessary.
 - id: bridge_2a_restricted_access
   scene_id: 2A
   activation:

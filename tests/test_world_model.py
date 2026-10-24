@@ -296,4 +296,5 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "rebecca_office_reached",
         "military_override_codes_available",
         "portable_archive_secured",
+        "processing_numbers_copied",
     }

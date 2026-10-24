@@ -7,11 +7,12 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 ## Resume here
 
-Decisions in section 5 are made. Steps 1-5 are done and verified (below).
+Decisions in section 5 are made. Steps 1-6 and 7a are done and verified (below).
 Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is
-`fc3f63e3`, step 5 is the commit that records this entry. Decision 4
-(2026-10-23) settles what follows a missed window. Next: step 5b
-(`recovery_storylet_id`), as a Ringer manifest, then step 6.
+`fc3f63e3`, step 5 is `bd926e15`, step 5b is `78e18467`, step 6 is `45989f14`,
+step 7a is the commit that records this entry. Next: step 7b (runtime: conditional
+2A entry text, free-text wiring of `follow_connection`, shared post-turn helper),
+then 7c (discovery cue lifecycle fix), each a Ringer manifest.
 
 ## Step 1 result (2026-10-22)
 
@@ -138,6 +139,69 @@ skipped; full suite 2,431 passed, 16 skipped; Ruff clean.
   input yet. The worker's suggestion: resolve a proposed destination name to a
   connection after the existing proposal/reference boundary, then call it. Decide
   the wiring in step 6 or 7; the real package has no connections until step 6.
+
+## Step 5b result (2026-10-24)
+
+Commit `78e18467`; manifest `scripts/ringer/phase1/step5b-manifest.json`. `Incident`
+requires `recovery_storylet_id`. The recovery realizes an existing outcome at a
+higher declared cost, is available only after the missed-window fact, and
+completes the scene through the normal successor. The loader rejects unknown,
+cross-scene, shared-storylet, non-qualifying and ungated recoveries. No engine
+change. Re-verified today: incident loader, recovery, pressure and traversal
+tests 51 pass; Ruff clean. The full suite was not rerun in this session.
+
+## Step 6 result (2026-10-24)
+
+Two Ringer runs, both `game-reimagination-phase1`, Codex Luna medium. Run 6
+(`step6-1c-incident-package`, 2 attempts, 270k tokens, 684 s) wrote the package
+edit but FAILED its check: 32 tests and 3 errors still pinned the old 1C. Run 6b
+(`step6b-reconcile-stale-1c-pins`, 1 attempt, 244k tokens, 1,304 s) reconciled
+them. Applied by hand from `step6-cumulative.patch`; verified: full suite 2,447
+passed, 16 skipped; Ruff clean.
+
+- Package: `incidents.yaml` (`i_1c_freight_transfer`: outcomes `copy_numbers` =
+  SL-1C-C-R1 and `secure_route` = SL-1C-C-R2; recovery SL-1C-D reuses
+  `secure_route` plus `terminal_sweep_closing`; missed window
+  `transfer_window_1c` at turn 5), `connections.yaml` (freight terminal to service
+  level via the service entrance, gated by `service_level_access_known`), new
+  `processing_line`, `prisoner_number_record`, `processing_numbers_copied`,
+  `transfer_window_missed`. SL-1C-A-R2, the old SL-1C-C network and recording,
+  `terminal_security_escalating` and the captives evidence-gap cost are gone.
+  `observation_shaft` now sits under `loading_docks`; `logistics_terminal` was
+  removed. `national_detention_network_known` and `architects_strategy_known` stay
+  declared with no producer (decision 2; Phase 3 relocates them).
+- The loader required fallback `FactDelivery` entries for the bridge's `any_of`
+  facts, so `handoffs.yaml` has minimal deliveries for
+  `processing_numbers_copied` and `service_level_access_known`.
+- Saves bind to package content by fingerprint; no manual version field.
+- Behaviour changes to know about: the `connection` is declared but not callable
+  from player text; the step 1 turn-11 backstop test is replaced; the staller and
+  wrong-lead personas in `test_persona_escalation` now honestly stop in 1C instead
+  of being forced into 2A, which the contract requires.
+- Harness: the journey harness derives the recovery path from the package's
+  incidents and waits for the missed window. `scripts/ringer/stage7` frozen
+  arms replay against the shipped incident package. No test was deleted. One
+  whole-handoff byte comparison against the pre-adoption 3C fixture was removed.
+- Not done in step 6: 2A variants and consumer, `follow_connection` wiring, cue
+  lifecycle (all step 7); the 1C player-facing text has not been played with a
+  model.
+
+## Step 7a result (2026-10-24)
+
+Ringer run `game-reimagination-phase1`, Codex Luna medium, 2 attempts, 545k
+tokens, 2,869 s; manifest `scripts/ringer/phase1/step7a-manifest.json`. Package
+and tests only. Full suite 2,454 passed, 16 skipped; Ruff clean.
+
+- SL-2A-C gained C-R3 (uses `processing_numbers_copied`) and C-R4 (uses
+  `service_level_access_known`), guarded by `requires`. Each records a
+  confrontation marker fact and still reaches `restricted_corridor_access` and
+  `t_2a_2b`. The advantage facts are only read. `tests/test_scene_2a_advantages.py`
+  pins gating, both advantages, the no-advantage path and persistence into 2B.
+- **Not done: the 2A entry variants.** `FactDelivery` stages only missing facts and
+  the target `entry_text` is static, so arrival text cannot vary by an advantage
+  already asserted. A 1C-to-2A probe printed the same static text for both outcomes.
+  This needs a small runtime change (fact-keyed entry text variants); fold it
+  into step 7b.
 
 ## 1. What exists today (read in source, 2026-10-22)
 

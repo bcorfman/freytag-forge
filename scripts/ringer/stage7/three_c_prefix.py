@@ -21,6 +21,16 @@ SESSION_ID = "stage7-3c-prefix"
 PACKAGE_ROOT = Path(__file__).resolve().parents[3] / "data/stories/continuity-initiative"
 
 
+def _journey_package(package):
+    """Use the shipped incident contract for frozen arms lacking its files."""
+
+    if "k_sl_1c_c_copy_numbers" not in package.knowledge_indexes.by_id:
+        from storygame.story_package.loader import load_story_package
+
+        return load_story_package(PACKAGE_ROOT)
+    return package
+
+
 def _git_sha(root: Path) -> str:
     try:
         return subprocess.check_output(
@@ -31,6 +41,7 @@ def _git_sha(root: Path) -> str:
 
 
 def _run(package, count: int) -> tuple[RuntimeState, list[str]]:
+    package = _journey_package(package)
     state = RuntimeState.bootstrap(package)
     provider = _ScriptedProvider(package)
     engine = RuntimeEngine(state, provider)
@@ -54,6 +65,7 @@ def _turn(engine: RuntimeEngine, provider: _ScriptedProvider, selection: str | N
 
 
 def _prefix_count(package) -> int:
+    package = _journey_package(package)
     state = RuntimeState.bootstrap(package)
     provider = _ScriptedProvider(package)
     engine = RuntimeEngine(state, provider)
@@ -140,7 +152,7 @@ def _transition_texts(state: RuntimeState, result) -> tuple[str, str]:
 
 def build(out_dir: Path) -> dict[str, Any]:
     out_dir.mkdir(parents=True, exist_ok=True)
-    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
+    package = legacy_package(_journey_package(PACKAGE), {"k_sl_1a_a_r1"})
     prefix_count = _prefix_count(package)
     state, transcript = _run(package, prefix_count)
     if state.current_scene_id != "3B":

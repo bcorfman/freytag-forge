@@ -94,13 +94,6 @@ def test_old_and_new_real_cue_predicates_differ_only_for_spent_rows() -> None:
             False,
         ),
         (
-            "1C",
-            "SL-1C-C fired through k_sl_1c_c_r2",
-            "national_detention_network_known",
-            True,
-            False,
-        ),
-        (
             "2B",
             "SL-2B-B fired through k_sl_2b_b_r3",
             "brandon_claimed_reform_motive",
@@ -125,13 +118,6 @@ def test_old_and_new_real_cue_predicates_differ_only_for_spent_rows() -> None:
             "2B",
             "SL-2B-B fired through k_sl_2b_b_r1",
             "kristin_was_bait",
-            True,
-            False,
-        ),
-        (
-            "1C",
-            "SL-1C-C fired through k_sl_1c_c_r1",
-            "architects_strategy_known",
             True,
             False,
         ),
@@ -168,11 +154,13 @@ def test_synthetic_cue_predicate_keeps_the_other_eligibility_cases() -> None:
 
 def test_real_engine_does_not_stage_spent_1c_cue_but_stages_it_when_ranked_first(monkeypatch) -> None:
     spent_state = next(
-        state for label, state in _scene_states(PACKAGE, "1C") if label == "SL-1C-C fired through k_sl_1c_c_r2"
+        state
+        for label, state in _scene_states(PACKAGE, "1C")
+        if label == "SL-1C-C fired through k_sl_1c_c_secure_route"
     )
     spent_engine = RuntimeEngine(spent_state, lambda _command: {"segments": []})
     spent_engine._activate_pacing()
-    assert spent_engine.state.staged_cue_fact_id != "national_detention_network_known"
+    assert spent_engine.state.staged_cue_fact_id != "processing_numbers_copied"
 
     entry_state = next(state for label, state in _scene_states(PACKAGE, "1C") if label == "S0")
     for fact_id in ("facility_proof", "captives_confirmed_alive"):
@@ -181,7 +169,7 @@ def test_real_engine_does_not_stage_spent_1c_cue_but_stages_it_when_ranked_first
     monkeypatch.setattr(
         entry_engine,
         "_ranked_cue_fact_ids",
-        lambda: ("national_detention_network_known",),
+        lambda: ("processing_numbers_copied",),
     )
     entry_engine._activate_pacing()
-    assert entry_engine.state.staged_cue_fact_id == "national_detention_network_known"
+    assert entry_engine.state.staged_cue_fact_id is None

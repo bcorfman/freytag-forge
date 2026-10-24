@@ -1,0 +1,19 @@
+incidents:
+- id: i_1c_freight_transfer
+  scene_id: 1C
+  outcomes:
+  - id: copy_numbers
+    storylet_id: SL-1C-C
+    realization_id: SL-1C-C-R1
+    advantages: [processing_numbers_copied]
+    costs: []
+  - id: secure_route
+    storylet_id: SL-1C-C
+    realization_id: SL-1C-C-R2
+    advantages: [service_level_access_known]
+    costs: [evidence_gap_processing_numbers]
+  recovery_storylet_id: SL-1C-D
+  missed_window_event_id: transfer_window_1c
+  successor_transition_id: t_1c_2a
+  observation_knowledge_ids: [k_sl_1c_b_r1, k_sl_1c_b_r2]
+  completes_scene: true

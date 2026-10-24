@@ -38,40 +38,34 @@ def test_1c_a_deliveries_have_the_reading_pointer() -> None:
         "Kristin finds electrical load, fresh air from the vents, and signs of recent work. "
         "The freight terminal is still running. " + NEW_SENTENCE
     )
-    assert knowledge["k_sl_1c_a_r2"]["delivery_text"] == (
-        "The transit token opens a service entrance to an active facility below. "
-        "A service map shows a dry maintenance climb to the drainage spine. "
-        "Kristin sees that route is too exposed to use now. " + NEW_SENTENCE
-    )
+    assert "k_sl_1c_a_r2" not in knowledge
 
 
 def test_1c_reading_pointer_matches_real_matcher() -> None:
     knowledge = _knowledge()
-    ids = ("k_sl_1c_a_r1", "k_sl_1c_a_r2", "k_sl_1c_b_r1", "k_sl_1c_b_r2", "k_sl_1c_c_r1", "k_sl_1c_c_r2")
+    ids = ("k_sl_1c_a_r1", "k_sl_1c_b_r1", "k_sl_1c_b_r2", "k_sl_1c_c_copy_numbers", "k_sl_1c_c_secure_route")
     candidates = {item_id: tuple(tuple(group) for group in knowledge[item_id]["action_evidence"]) for item_id in ids}
     cases = {
         "k_sl_1c_b_r1": (
-            "Read the identification numbers on the uniforms below.",
-            "Copy the ID numbers.",
-            "Compare the prisoners with missing-person records.",
-            "Read the numbers on the uniforms.",
-            "Check the uniforms for numbers.",
-            "Record the numbers on the prisoners' uniforms.",
-        ),
-        "k_sl_1c_b_r2": ("Search the processing line for Michelle.", "Look for Michelle in the processing area."),
-        "": (
+            "Study the prisoners through the observation shaft.",
             "Inspect the observation shaft and look for a way down into the processing area.",
+        ),
+        "k_sl_1c_b_r1,k_sl_1c_b_r2": ("Watch Michelle in the processing line.",),
+        "k_sl_1c_c_copy_numbers": ("Copy the prisoner numbers.",),
+        "k_sl_1c_c_secure_route": (
+            "Ask Brandon about the transfer route.",
+            "Use the transit token on the access panel.",
+        ),
+        "": (
             "Examine the locked stairs and the surrounding service level for a way to unlock or bypass them.",
             "Climb down the ladder from the observation shaft to the service level.",
             "Find an entrance to the processing line.",
             "Enter the biohazard containment zone.",
-            "Use the transit token on the access panel.",
             "Inspect the uniforms.",
             "Read my notes about the missing people.",
             "Check the numbers on my phone.",
             "Read the prisoner numbers.",
         ),
-        "k_sl_1c_b_r1,k_sl_1c_b_r2": ("Check the ID numbers and look for Michelle in the processing line.",),
     }
     for expected, commands in cases.items():
         expected_ids = set(expected.split(",")) if expected else set()
@@ -82,33 +76,15 @@ def test_1c_reading_pointer_matches_real_matcher() -> None:
 
 def test_1c_b_r1_first_two_evidence_groups_are_unchanged() -> None:
     knowledge = _knowledge()
-    assert knowledge["k_sl_1c_b_r1"]["action_evidence"][:2] == [
-        [
-            "compare",
-            "match",
-            "cross-check",
-            "check",
-            "read",
-            "examine",
-            "inspect",
-            "observe",
-            "look at",
-            "record",
-            "copy",
-            "photograph",
-            "capture",
-            "write down",
-            "log",
-        ],
+    assert knowledge["k_sl_1c_b_r1"]["action_evidence"] == [
+        ["study", "watch", "observe", "look at", "inspect", "examine"],
         [
             "prisoners",
             "captives",
             "people in the processing area",
-            "uniforms",
-            "uniform",
-            "workers' uniforms",
-            "identification numbers",
-            "ID numbers",
+            "processing line",
+            "shaft view",
+            "observation shaft",
         ],
     ]
 

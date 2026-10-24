@@ -51,7 +51,7 @@ DELIVERY_FACTS = (
     "detention_locations_secured",
 )
 WITHHELD_REALIZATIONS = (
-    ("k_sl_1c_b_r1", "k_sl_1c_b_r2"),
+    ("k_sl_1c_c_copy_numbers", "k_sl_1c_c_secure_route"),
     (
         "k_sl_2b_b_r1",
         "k_sl_2b_b_r2",

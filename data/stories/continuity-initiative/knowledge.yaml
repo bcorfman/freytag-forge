@@ -49,14 +49,21 @@ facts:
     facility.
 - id: captives_confirmed_alive
   purpose: Kristin has directly confirmed living captives inside the regional facility.
-- id: michelle_possible_sighting
-  purpose: Kristin has an obscured, unconfirmed possible sighting of Michelle inside
-    the facility.
 - id: national_detention_network_known
   purpose: Kristin knows the Los Angeles site is part of a national detention network.
 - id: architects_strategy_known
-  purpose: Kristin knows Charles and Rebecca intend to leverage the manufactured
-    catastrophe for political reconstruction/control.
+  purpose: Kristin knows Charles and Rebecca intend to leverage the manufactured catastrophe for political reconstruction/control.
+- id: processing_numbers_copied
+  purpose: Kristin copied the visible prisoner numbers from the processing line.
+- id: processing_numbers_used_in_confrontation
+  purpose: Kristin used the copied prisoner numbers in the supervisor confrontation.
+- id: service_route_used_in_confrontation
+  purpose: Kristin used the known service approach in the supervisor confrontation.
+- id: transfer_window_missed
+  purpose: The transfer window closed before Kristin resolved the incident.
+- id: michelle_possible_sighting
+  purpose: Kristin has an obscured, unconfirmed possible sighting of Michelle inside
+    the facility.
 - id: brandon_prepared_before_event
   purpose: Kristin knows Brandon prepared for the disappearance before it occurred.
 - id: restricted_corridor_access
@@ -140,8 +147,6 @@ facts:
     scrutiny at Michelle's house.
 - id: pursuit_closing_in
   purpose: The pursuit team is visibly closing in on Kristin and Brandon in the park.
-- id: terminal_security_escalating
-  purpose: Security around the terminal is visibly escalating.
 - id: identity_scrutiny_visible
   purpose: Facility staff are visibly scrutinizing Kristin’s inspector identity.
 - id: facility_collapse_escalating
@@ -214,7 +219,7 @@ facts:
 - id: park_lockdown_spreading
   purpose: Emergency teams are closing the park's paths and service exits around Kristin and Brandon.
 - id: terminal_sweep_closing
-  purpose: Security teams are beginning a methodical sweep of the terminal's service levels.
+  purpose: The terminal sweep is reaching the upper level.
 - id: inspector_cover_under_review
   purpose: The facility is checking Kristin and Brandon's inspection cover closely enough that a second mistake will expose them.
 - id: archive_security_sweep
@@ -864,46 +869,12 @@ knowledge:
     priority: 0
   delivery_text: >-
     Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running. The observation shaft overlooks the processing line. Kristin can read the identification numbers on the uniforms below.
-- id: k_sl_1c_a_r2
-  statement: 'Michelle’s transit token opens a service entrance beneath the terminal, confirming an active facility below. The service schematic marks a dry maintenance ascent that joins the drainage spine, too exposed to use now but worth remembering.'
-  earn_when: uses the transit token at the service entrance
-  action_evidence:
-  - [use, scan, insert, try, open, unlock]
-  - [transit token, token]
-  - [service entrance, service door, entrance below the terminal]
-  entity_ids: []
-  aliases:
-  - facility proof
-  - service level access known
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 1C
-  requires: []
-  establishes:
-  - op: assert
-    fact_id: facility_proof
-    value: true
-  - op: assert
-    fact_id: service_level_access_known
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-1C-A
-    realization_id: SL-1C-A-R2
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: >-
-    The transit token opens a service entrance to an active facility below. A service map shows a dry maintenance climb to the drainage spine. Kristin sees that route is too exposed to use now. The observation shaft overlooks the processing line. Kristin can read the identification numbers on the uniforms below.
 - id: k_sl_1c_b_r1
   statement: 'From the processing area, Kristin matches sedated prisoners to missing-person records and knows they are alive.'
-  earn_when: compares the prisoners with missing-person records or reads, examines, records, copies, photographs, captures, writes down, or logs the identification numbers on the prisoners' uniforms
+  earn_when: studies the prisoners and watches the shaft view
   action_evidence:
-  - [compare, match, cross-check, check, read, examine, inspect, observe, look at, record, copy, photograph, capture, write down, log]
-  - [prisoners, captives, people in the processing area, uniforms, uniform, workers' uniforms, identification numbers, ID numbers]
-  - [missing-person records, missing people records, missing records, records, identification numbers, ID numbers, numbers]
+  - [study, watch, observe, look at, inspect, examine]
+  - [prisoners, captives, people in the processing area, processing line, shaft view, observation shaft]
   entity_ids: []
   aliases:
   - captives confirmed alive
@@ -927,12 +898,12 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Kristin matches sedated prisoners in the processing area to missing-person records. They are alive. The logistics computer waits beside the service entrance.
+    Kristin studies the sedated prisoners through the observation shaft. They are alive.
 - id: k_sl_1c_b_r2
   statement: 'Kristin sees sedated captives alive in the processing line and glimpses a woman who could be Michelle before the view vanishes.'
-  earn_when: searches the processing line for Michelle
+  earn_when: watches the processing line for Michelle
   action_evidence:
-  - [look for, search for, scan for, find, search, look, check]
+  - [watch, observe, look at, study, inspect, examine]
   - [Michelle, woman who looks like Michelle]
   - [processing line, processing area, observation shaft]
   entity_ids: []
@@ -962,21 +933,21 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: >-
-    Kristin sees sedated captives alive in the processing line. She glimpses a woman who could be Michelle. Then the view vanishes. The logistics computer waits beside the service entrance.
-- id: k_sl_1c_c_r1
-  statement: 'A logistics computer shows that Los Angeles is only a regional hub in a detention network spanning the country.'
-  earn_when: reads, accesses, or uses the logistics computer
+    Kristin watches the sedated captives in the processing line. She glimpses a woman who could be Michelle. Then the view vanishes.
+- id: k_sl_1c_c_copy_numbers
+  statement: Kristin copies the visible prisoner numbers and matches them to missing-person records.
+  earn_when: copies the prisoner numbers
   action_evidence:
-  - [read, search, inspect, check, access, use, open, activate, examine, look at]
-  - [logistics computer, terminal computer, computer]
-  entity_ids: []
-  aliases:
-  - national detention network known
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 1C
+  - [copy, write down, record, photograph]
+  - [prisoner numbers, identification numbers, numbers]
+  entity_ids: [prisoner_number_record]
+  aliases: [copy the prisoner numbers]
+  leak_terms: []
+  audience: {kind: public, player_visible: true}
+  must_convey:
+  - [prisoner numbers, identification numbers]
+  - [missing-person records, missing records]
+  available_in_scenes: [1C]
   requires:
   - fact_id: facility_proof
     equals: true
@@ -984,31 +955,27 @@ knowledge:
     equals: true
   establishes:
   - op: assert
-    fact_id: national_detention_network_known
+    fact_id: processing_numbers_copied
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-1C-C
-    realization_id: SL-1C-C-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: >-
-    The logistics computer shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
-- id: k_sl_1c_c_r2
-  statement: 'A recording of Charles and Rebecca reveals they engineered the crisis to rule as its promised solution.'
-  earn_when: plays the recording of Charles and Rebecca
+  - op: assert
+    fact_id: facility_infiltration_needed
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-1C-C, realization_id: SL-1C-C-R1}
+  relevance: {entity_ids: [], priority: 0}
+  delivery_text: Kristin copies the visible prisoner numbers and matches them to missing-person records.
+- id: k_sl_1c_c_secure_route
+  statement: Brandon explains the transfer route and opens the service entrance with the transit token.
+  earn_when: asks Brandon about the transfer route or opens the service entrance with the transit token
   action_evidence:
-  - [play, listen to, open]
-  - [recording of Charles and Rebecca, Charles and Rebecca recording, recording]
-  entity_ids: [rebecca]
-  aliases:
-  - architects strategy known
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 1C
+  - [ask, talk to, question, open, unlock, use]
+  - [Brandon, transfer route, service entrance, transit token]
+  aliases: [ask Brandon about the transfer route]
+  leak_terms: []
+  audience: {kind: public, player_visible: true}
+  must_convey:
+  - [Brandon, Brandon's help]
+  - [transfer route, service entrance]
+  available_in_scenes: [1C]
   requires:
   - fact_id: facility_proof
     equals: true
@@ -1016,17 +983,52 @@ knowledge:
     equals: true
   establishes:
   - op: assert
-    fact_id: architects_strategy_known
+    fact_id: service_level_access_known
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-1C-C
-    realization_id: SL-1C-C-R2
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: >-
-    A recording shows that Charles and Rebecca made the crisis. They plan to rule as its promised solution.
+  - op: assert
+    fact_id: evidence_gap_processing_numbers
+    value: true
+  - op: assert
+    fact_id: facility_infiltration_needed
+    value: true
+  - op: assert
+    fact_id: trust_brandon
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-1C-C, realization_id: SL-1C-C-R2}
+  relevance: {entity_ids: [brandon, service_entrance], priority: 0}
+  delivery_text: Brandon explains the transfer route and opens the service entrance with the transit token.
+- id: k_sl_1c_d_r1
+  statement: Brandon leads Kristin through the service entrance while the sweep closes in.
+  earn_when: follows Brandon through the service entrance as the sweep closes in
+  action_evidence:
+  - [follow, enter, use, open, move through]
+  - [Brandon, service entrance, service level, sweep]
+  aliases: [follow Brandon through the service entrance]
+  leak_terms: []
+  audience: {kind: public, player_visible: true}
+  must_convey:
+  - [Brandon leads, follow Brandon]
+  - [service entrance, service level]
+  available_in_scenes: [1C]
+  establishes:
+  - op: assert
+    fact_id: service_level_access_known
+    value: true
+  - op: assert
+    fact_id: evidence_gap_processing_numbers
+    value: true
+  - op: assert
+    fact_id: facility_infiltration_needed
+    value: true
+  - op: assert
+    fact_id: trust_brandon
+    value: true
+  - op: assert
+    fact_id: terminal_sweep_closing
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-1C-D, realization_id: SL-1C-D-R1}
+  relevance: {entity_ids: [brandon, service_entrance], priority: 0}
+  delivery_text: Brandon leads Kristin through the service entrance while the sweep closes in.
 - id: k_sl_2a_a_r1
   statement: 'Kristin finds years of leaked code, emergency supplies, and Continuity files in Brandon’s fortified hideout.'
   earn_when: reviews, reads, or studies Continuity Initiative documents, Brandon's documents, or documents in Brandon's hideout
@@ -1311,6 +1313,78 @@ knowledge:
   relevance:
     entity_ids: [rebecca, regional_facility]
     priority: 0
+- id: k_sl_2a_c_r3
+  statement: Kristin uses the copied prisoner numbers to support her explanation to the supervisor and gains restricted corridor access.
+  earn_when: uses, cites, shows, or explains the copied prisoner numbers to the supervisor
+  action_evidence:
+  - [use, cite, show, explain, present, point out, tell]
+  - [copied prisoner numbers, prisoner numbers, identification numbers, missing-person records]
+  - [supervisor, security supervisor, facility supervisor, security officer]
+  entity_ids: [kristin, brandon, regional_facility]
+  aliases:
+  - restricted corridor access
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  requires:
+  - fact_id: false_identities_ready
+    equals: true
+  - fact_id: facility_perimeter_reached
+    equals: true
+  - fact_id: processing_numbers_copied
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  - op: assert
+    fact_id: rebecca_observing_infiltrators
+    value: true
+  - op: assert
+    fact_id: processing_numbers_used_in_confrontation
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-C, realization_id: SL-2A-C-R3}
+  relevance: {entity_ids: [regional_facility], priority: 10}
+  must_convey:
+  - [copied prisoner numbers]
+  - [to support the cooling-water explanation]
+  - [grants restricted corridor access]
+  delivery_text: Kristin uses the copied prisoner numbers to support the cooling-water explanation. The supervisor grants restricted corridor access.
+- id: k_sl_2a_c_r4
+  statement: Kristin uses the known service approach to make the inspection route credible and gains restricted corridor access with less scrutiny.
+  earn_when: explains, shows, or uses the known service route or service entrance with the supervisor
+  action_evidence:
+  - [explain, show, use, describe, present, tell]
+  - [known service route, service route, transfer route, service entrance, service level]
+  - [supervisor, security supervisor, facility supervisor, security officer]
+  entity_ids: [kristin, brandon, regional_facility, service_entrance]
+  aliases:
+  - restricted corridor access
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  requires:
+  - fact_id: false_identities_ready
+    equals: true
+  - fact_id: facility_perimeter_reached
+    equals: true
+  - fact_id: service_level_access_known
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  - op: assert
+    fact_id: rebecca_observing_infiltrators
+    value: true
+  - op: assert
+    fact_id: service_route_used_in_confrontation
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-C, realization_id: SL-2A-C-R4}
+  relevance: {entity_ids: [regional_facility, service_entrance], priority: 10}
+  must_convey:
+  - [known service approach]
+  - [reduces his scrutiny]
+  - [grants restricted corridor access]
+  delivery_text: Kristin uses the known service approach to explain the inspection route. The supervisor reduces his scrutiny and grants restricted corridor access.
 - id: k_sl_2b_a_r1
   statement: 'In the archive, Kristin secures JANUS files showing how Americans were ranked for detention, leverage, or control.'
   earn_when: searches the archive terminals for Michelle's record

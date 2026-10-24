@@ -22,12 +22,10 @@ GAPS = (
     "evidence_gap_marked_site_list",
 )
 FORCED_DELIVERIES = (
-    ("1C", "captives_confirmed_alive", "evidence_gap_processing_numbers"),
     ("2B", "brandon_janus_role_known", "evidence_gap_development_record"),
     ("3B", "detention_locations_secured", "evidence_gap_marked_site_list"),
 )
 EARNED_DELIVERIES = (
-    ("1C", "captives_confirmed_alive", "facility_proof", "k_sl_1c_b_r1"),
     ("2B", "brandon_janus_role_known", "janus_evidence", "k_sl_2b_b_r1"),
     ("2C", "evidence_ready_to_transmit", "janus_evidence", "k_sl_2c_c_r1"),
     ("3B", "detention_locations_secured", "human_security_control", "k_sl_3b_b_r1"),

@@ -40,4 +40,6 @@ def test_persona_cli_writes_json(
     storygame.personas.main()
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert set(payload) == set(PERSONAS)
-    assert all(summary["resolution_complete"] for summary in payload.values())
+    assert payload["thorough"]["resolution_complete"]
+    assert not payload["staller"]["resolution_complete"]
+    assert not payload["wrong_lead"]["resolution_complete"]

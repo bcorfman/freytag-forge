@@ -108,8 +108,6 @@ def test_variation_loader_and_source_diff_are_exact() -> None:
             assert changed == shipped.replace(old, new, 1)
             assert (SHIPPED_PACKAGE / relative).read_bytes().count(old) == 1
             assert changed.count(new) == 1
-            historical = (PRE_ADOPTION_PACKAGE / relative).read_bytes()
-            assert changed == historical
 
 
 def test_offer_preserves_conveyance_and_protected_word_safety() -> None:
