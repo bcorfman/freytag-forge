@@ -50,6 +50,8 @@ def test_dry_run_real_package_passes_checker(tmp_path: Path) -> None:
     assert row["prefix"] == "none"
     assert row["scripted_turns"] == 0
     assert not any(turn["scripted"] for turn in row["turns"])
+    assert row["nudge_seen_turn"] is None
+    assert row["withdrawal_seen_turn"] is None
 
 
 @pytest.mark.parametrize("prefix", ["missed_window", "secure_route"])
@@ -64,6 +66,33 @@ def test_dry_run_prefixes_pass_checker_and_do_not_spend_prefix_player_requests(t
     assert not any(turn["scripted"] for turn in row["turns"][row["scripted_turns"] :])
     summary = json.loads((tmp_path / "summary.json").read_text())
     assert summary["player_requests"] == len(row["commands"]) - row["scripted_turns"]
+    assert row["nudge_seen_turn"] is None
+    assert row["withdrawal_seen_turn"] is None
+
+
+def test_stall_prefix_passes_checker_and_has_clean_deadline_handoff(tmp_path: Path) -> None:
+    assert slice_probe.run(tmp_path, 1, True, False, "stall") == 0
+    assert check_slice_probe.check(tmp_path, 1, "dry") == []
+    row = json.loads((tmp_path / "results.json").read_text())["rows"][0]
+    assert row["final_scene"] == "2B"
+    assert row["nudge_seen_turn"] == 6
+    assert row["withdrawal_seen_turn"] == 8
+    assert row["scripted_turns"] == 8
+    assert row["turns"][7]["scene_after"] == "2A"
+    summary = json.loads((tmp_path / "summary.json").read_text())
+    assert summary["player_requests"] == len(row["commands"]) - row["scripted_turns"]
+    forbidden = {
+        "processing_numbers_copied",
+        "service_level_access_known",
+        "evidence_gap_processing_numbers",
+        "trust_brandon",
+        "terminal_sweep_closing",
+    }
+    facts_at_turn_8 = {
+        fact_id.split("|", 1)[0] for turn in row["turns"][:8] for fact_id in turn["facts_newly_asserted"]
+    }
+    assert not forbidden & facts_at_turn_8
+    assert not any(turn["committed_reveals"] for turn in row["turns"][:8])
 
 
 def test_missed_window_prefix_closes_window_without_advantage(tmp_path: Path) -> None:
