@@ -8,9 +8,9 @@ import re
 from pathlib import Path
 
 try:
-    from .slice_probe import CAPS, ROW_FIELDS
+    from .slice_probe import CAPS, PREFIXES, ROW_FIELDS
 except ImportError:
-    from slice_probe import CAPS, ROW_FIELDS
+    from slice_probe import CAPS, PREFIXES, ROW_FIELDS
 
 
 def check(out: Path, n: int, mode: str) -> list[str]:
@@ -34,6 +34,10 @@ def check(out: Path, n: int, mode: str) -> list[str]:
             errors.append(f"WHY {row.get('row_id', '<row>')} is missing fields: {', '.join(missing)}")
         if row.get("arm") != "current":
             errors.append(f"WHY {row.get('row_id')}: arm must be current")
+        if row.get("prefix") not in PREFIXES:
+            errors.append(f"WHY {row.get('row_id')}: prefix must be one of {tuple(PREFIXES)}")
+        if type(row.get("scripted_turns")) is not int or row["scripted_turns"] < 0:
+            errors.append(f"WHY {row.get('row_id')}: scripted_turns must be a non-negative integer")
         if len(row.get("commands", [])) != len(row.get("responses", [])):
             errors.append(f"WHY {row.get('row_id')}: commands and responses must have equal length")
         if len(row.get("commands", [])) > 30:
@@ -64,6 +68,7 @@ def check(out: Path, n: int, mode: str) -> list[str]:
             "delivered_cue_ids",
             "segments_dropped",
             "repeated_response",
+            "scripted",
         )
         for turn in turns:
             missing_turn = [field for field in required_turn_fields if field not in turn]
@@ -86,6 +91,8 @@ def check(out: Path, n: int, mode: str) -> list[str]:
                     )
             if type(turn["repeated_response"]) is not bool:
                 errors.append(f"WHY {row.get('row_id')}: turn {turn.get('turn')} repeated_response must be boolean")
+            if type(turn["scripted"]) is not bool:
+                errors.append(f"WHY {row.get('row_id')}: turn {turn.get('turn')} scripted must be boolean")
             if not isinstance(turn["reveal_selection"], dict):
                 errors.append(f"WHY {row.get('row_id')}: turn {turn.get('turn')} reveal_selection must be an object")
         if type(row.get("repeated_response_streak_max")) is not int or row["repeated_response_streak_max"] < 1:
@@ -96,6 +103,15 @@ def check(out: Path, n: int, mode: str) -> list[str]:
             errors.append(f"WHY {row.get('row_id')}: final_true_facts must be a sorted list")
         if type(row.get("stuck_loop")) is not bool:
             errors.append(f"WHY {row.get('row_id')}: stuck_loop must be boolean")
+        scripted_turns = sum(bool(turn.get("scripted")) for turn in turns)
+        if row.get("scripted_turns") != scripted_turns:
+            errors.append(f"WHY {row.get('row_id')}: scripted_turns does not match turn records")
+        if row.get("prefix") == "none" and scripted_turns:
+            errors.append(f"WHY {row.get('row_id')}: prefix none cannot have scripted turns")
+        if row.get("prefix") in PREFIXES and row.get("prefix") != "none":
+            expected = len(PREFIXES[row["prefix"]])
+            if scripted_turns != expected:
+                errors.append(f"WHY {row.get('row_id')}: prefix {row['prefix']} must have {expected} scripted turns")
     raw = "".join(path.read_text(encoding="utf-8") for path in out.glob("**/*") if path.is_file())
     if re.search(r"(?:token|secret|authorization|api[_-]?key)\s*[:=]\s*[^\s}\"]+", raw, re.I):
         errors.append("WHY an artifact appears to contain a secret or token")
