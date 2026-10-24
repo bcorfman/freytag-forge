@@ -251,8 +251,7 @@ Observed in committed state and prompts:
   run is what shows whether boarding fires.
 - `home_search_narrows_1a` fires on turn 8 (“look around”).
 
-Not yet done: live capture, `item_facts_unplaced`, model identity, the
-before/after payload diff. Steps 2–5 not started.
+Live capture done (below). Not yet done: the before/after payload diff (taken when step 2 lands). Steps 2–5 not started.
 
 ### Approvals and verified facts (2026-10-24)
 
@@ -267,3 +266,18 @@ cannot fire the exit early.
 Harness build: Ringer run `transcript-1a-live-baseline`, manifest
 `scripts/ringer/transcript_1a/build-live-baseline.json`. The billed run
 follows its dry run and a 2-turn smoke.
+
+### Step 1 — live baseline (2026-10-24, git ae0d7a34)
+
+Ringer runs `transcript-1a-baseline-smoke` and `transcript-1a-baseline-live`
+(5 replicates, 40 turns, 145 calls, 0 errors, Luna worker). All four
+requirements fail in every replicate at the sequence level; counts, causes and
+the fixture are in
+[the preregistration result](1a-transcript-continuity/baseline-live-prereg.md#result-2026-10-24-git-ae0d7a34-5-replicates-40-turns-145-calls-0-errors-no-quota-stop)
+and `1a-transcript-continuity/baseline-live-narrations.json`. Headline:
+“feel in the gap” becomes a door gap with an invented object 5/5; an unannounced
+officer lingers at the drawer 5/5 and nothing happens when the card is taken
+5/5; the engine seats Kristin on “go out to the truck” but the narration says she
+gets out 5/5; “get in” ends correctly 1/5; seated “look around” describes the
+house 1/1.
+Step 1 is complete. Next: step 2 (package edits through Ringer, tests first).

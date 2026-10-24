@@ -1,0 +1,1074 @@
+{
+ "summary": {
+  "mode": "live",
+  "replicates_requested": 5,
+  "replicates_completed": 5,
+  "turns_recorded": 40,
+  "calls_made": 145,
+  "max_calls": 200,
+  "stopped_reason": null,
+  "errors": 0,
+  "git_sha": "ae0d7a3430d56118c9b0c6f84bf032c099e8f144",
+  "package_dir": "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative",
+  "worker_url_host": "freytag-demo-narrate.bcorfman.workers.dev",
+  "real_calls": 145,
+  "inputs": [
+   "go in the house",
+   "feel in the gap",
+   "look at the fabric",
+   "pull out the drawer",
+   "feel under the drawer",
+   "go out to the truck",
+   "get in",
+   "look around"
+  ],
+  "semantic_reveal_effective": "1"
+ },
+ "replicates": [
+  {
+   "opening": {
+    "narration": "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin steps into Michelle's house, her eyes scanning the room for any sign of her friend. She calls out Michelle's name, but there's no response. Kristin moves to the workstation, her gaze falling on the drawer with her initials carved into it.",
+    "places": {
+     "kristin": "mcgehee_home",
+     "kristin_laptop": "truck_passenger_seat",
+     "memory_card": "michelle_drawer",
+     "michelle_drawer": "michelle_workstation",
+     "kristin_truck": "outside_house"
+    }
+   },
+   "turns": [
+    {
+     "input": "go in the house",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She steps inside, her eyes scanning the room for any sign of Michelle. The air inside is stale, and the only sound is the creaking of the old wooden floorboards beneath her feet. Kristin's initials, KMS, are carved into a drawer of Michelle's workstation. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "feel in the gap",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She feels in the gap between the back door and the frame, searching for any clues. Her fingers brush against a small piece of torn fabric caught in the gap.",
+     "item_facts_unplaced": [
+      {
+       "name": "torn fabric",
+       "place": "gap between back door and frame"
+      }
+     ],
+     "steps": []
+    },
+    {
+     "input": "look at the fabric",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She bends down to examine the torn fabric more closely. \"It looks like it was ripped by something sharp, maybe a knife or a piece of metal,\" she says to herself.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "pull out the drawer",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "SL-1A-F",
+      "pressure_1a"
+     ],
+     "selected_knowledge_ids": [
+      "k_sl_1a_f_r1"
+     ],
+     "narration": "The officer from the patrol lingers at the drawer on Michelle's workstation without opening it. He glances at Kristin, then back at the drawer, his expression unreadable. The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "feel under the drawer",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "SL-1A-E"
+     ],
+     "selected_knowledge_ids": [
+      "k_sl_1a_b_r0"
+     ],
+     "narration": "Kristin looks at the drawer, her eyes narrowing as she tries to understand the significance of the carved initials. She bends down to examine the initials more closely, her mind racing with possibilities. Kristin finds Michelle's memory card taped beneath the drawer. She takes it with her. Her laptop is in her truck outside.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "go out to the truck",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She gets out of the driver's seat and walks to the truck.",
+     "item_facts_unplaced": [],
+     "steps": [
+      "Kristin sat down in the driver's seat.",
+      "Kristin's laptop sat on the passenger seat."
+     ]
+    },
+    {
+     "input": "get in",
+     "places_before": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "truck_driver_seat",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She gets in her truck.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "look around",
+     "places_before": {
+      "kristin": "truck_driver_seat",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "truck_driver_seat",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "home_search_narrows_1a"
+     ],
+     "selected_knowledge_ids": [],
+     "narration": "Kristin looks around the house, taking in the scene of Michelle's disappearance. She notices the torn fabric caught in the gap between the back door and frame, and the overturned workstation chair. Kristin's eyes scan the room, searching for any other clues.",
+     "item_facts_unplaced": [],
+     "steps": []
+    }
+   ]
+  },
+  {
+   "opening": {
+    "narration": "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin steps into Michelle's house, her eyes scanning the room for any sign of her friend. She calls out Michelle's name, but there's no response. Kristin moves to the workstation, her gaze falling on the drawer with her initials carved into it.",
+    "places": {
+     "kristin": "mcgehee_home",
+     "kristin_laptop": "truck_passenger_seat",
+     "memory_card": "michelle_drawer",
+     "michelle_drawer": "michelle_workstation",
+     "kristin_truck": "outside_house"
+    }
+   },
+   "turns": [
+    {
+     "input": "go in the house",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She steps inside, her eyes scanning the room for any sign of Michelle. The air inside is stale, and the silence is oppressive. Kristin's initials, KMS, are carved into a drawer of Michelle's workstation. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "feel in the gap",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She feels in the gap between the back door frame and the wall. Her fingers brush against something small and metallic. She pulls out a small piece of metal, a torn fragment of a key.",
+     "item_facts_unplaced": [
+      {
+       "name": "key",
+       "place": "gap between back door frame and wall"
+      }
+     ],
+     "steps": []
+    },
+    {
+     "input": "look at the fabric",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She examines the fabric of the back door frame, where the damage is most noticeable. \"It looks like someone tried to force their way in, but they didn't quite succeed,\" she says to herself.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "pull out the drawer",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "SL-1A-F",
+      "pressure_1a"
+     ],
+     "selected_knowledge_ids": [
+      "k_sl_1a_f_r1"
+     ],
+     "narration": "The officer from the patrol lingers at the drawer on Michelle's workstation without opening it. He glances at Kristin, then back at the drawer, his expression unreadable. The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "feel under the drawer",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "SL-1A-E"
+     ],
+     "selected_knowledge_ids": [
+      "k_sl_1a_b_r0"
+     ],
+     "narration": "Kristin looks at the drawer, her eyes narrowing as she tries to understand the significance of the carved initials. She examines the carved initials more closely, her mind racing with possibilities. Kristin's gaze falls to the thin gap beneath the drawer, and she feels a sudden urge to investigate. Kristin finds Michelle's memory card taped beneath the drawer. She takes it with her. Her laptop is in her truck outside.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "go out to the truck",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "outside_house",
+      "kristin_laptop": "kristin",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She gets out of the driver's seat. She walks to the passenger seat. She opens the laptop.",
+     "item_facts_unplaced": [],
+     "steps": [
+      "Kristin sat down in the driver's seat.",
+      "Kristin's laptop sat on the passenger seat."
+     ]
+    },
+    {
+     "input": "get in",
+     "places_before": {
+      "kristin": "outside_house",
+      "kristin_laptop": "kristin",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "kitchen",
+      "kristin_laptop": "kristin",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She pushes the back door open and steps inside. The air inside is stale, and the silence is oppressive.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "look around",
+     "places_before": {
+      "kristin": "kitchen",
+      "kristin_laptop": "kristin",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "kitchen",
+      "kristin_laptop": "kristin",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "home_search_narrows_1a"
+     ],
+     "selected_knowledge_ids": [],
+     "narration": "Kristin looks around the kitchen, taking in the scene of Michelle's missing belongings. She notices the workstation chair is overturned, and the drawer is closed. Kristin's eyes land on the key stuck in the gap between the back door frame and the wall.",
+     "item_facts_unplaced": [],
+     "steps": []
+    }
+   ]
+  },
+  {
+   "opening": {
+    "narration": "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin steps out of her truck and onto the driveway, her eyes scanning the house for any sign of Michelle. She approaches the back door, noticing the frame is damaged, and the door is slightly ajar. Kristin pushes the door open and steps inside, calling out Michelle's name.",
+    "places": {
+     "kristin": "mcgehee_home",
+     "kristin_laptop": "truck_passenger_seat",
+     "memory_card": "michelle_drawer",
+     "michelle_drawer": "michelle_workstation",
+     "kristin_truck": "outside_house"
+    }
+   },
+   "turns": [
+    {
+     "input": "go in the house",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She steps inside, her eyes scanning the room for any sign of Michelle. The air is stale, and the silence is oppressive. Kristin's initials, KMS, are carved into a drawer of Michelle's workstation. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "feel in the gap",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She feels in the gap between the door frame and the wall. Her fingers brush against something small and metallic. She pulls out a small piece of metal, a screw, that had been dislodged from the door frame.",
+     "item_facts_unplaced": [
+      {
+       "name": "screw",
+       "place": "gap between door frame and wall"
+      }
+     ],
+     "steps": []
+    },
+    {
+     "input": "look at the fabric",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She examines the fabric of the back door frame, noticing the scratches and scuffs that suggest a forced entry. The scratches seem to be recent, and she can see a faint smudge of dirt on the door handle.",
+     "item_facts_unplaced": [
+      {
+       "name": "door handle",
+       "place": "back door frame"
+      }
+     ],
+     "steps": []
+    },
+    {
+     "input": "pull out the drawer",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "SL-1A-F",
+      "pressure_1a"
+     ],
+     "selected_knowledge_ids": [
+      "k_sl_1a_f_r1"
+     ],
+     "narration": "The officer from the patrol lingers at the drawer on Michelle's workstation without opening it. 'I'll be right back,' he says, his eyes scanning the room. The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "feel under the drawer",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "SL-1A-E"
+     ],
+     "selected_knowledge_ids": [
+      "k_sl_1a_b_r0"
+     ],
+     "narration": "Kristin looks at the drawer, then bends down to examine the carved initials more closely. She notices a thin gap beneath the drawer's lower edge. Kristin finds Michelle's memory card taped beneath the drawer. She takes it with her. Her laptop is in her truck outside.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "go out to the truck",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "kristin_truck",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She gets out of the truck.",
+     "item_facts_unplaced": [],
+     "steps": [
+      "Kristin sat down in the driver's seat.",
+      "Kristin's laptop sat on the passenger seat."
+     ]
+    },
+    {
+     "input": "get in",
+     "places_before": {
+      "kristin": "kristin_truck",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She gets out of the truck and walks to the house.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "look around",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "home_search_narrows_1a"
+     ],
+     "selected_knowledge_ids": [],
+     "narration": "Kristin looks around Michelle's house, taking in the scene. She notices the back door frame is damaged, and the workstation chair is overturned. The patrol is checking parked vehicles and speaking to neighbors, casting a watchful eye over the house.",
+     "item_facts_unplaced": [],
+     "steps": []
+    }
+   ]
+  },
+  {
+   "opening": {
+    "narration": "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin steps into Michelle's house, her eyes scanning the room for any sign of her friend. She calls out Michelle's name, but there's no response. Kristin moves to the workstation, her gaze falling on the drawer with her initials carved into it.",
+    "places": {
+     "kristin": "mcgehee_home",
+     "kristin_laptop": "truck_passenger_seat",
+     "memory_card": "michelle_drawer",
+     "michelle_drawer": "michelle_workstation",
+     "kristin_truck": "outside_house"
+    }
+   },
+   "turns": [
+    {
+     "input": "go in the house",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She steps inside, her eyes scanning the room for any sign of Michelle. The air is stale, and the silence is oppressive. Kristin's initials, KMS, are carved into a drawer of Michelle's workstation. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "feel in the gap",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She feels in the gap between the back door frame and the wall. Her fingers brush against something metal. She pulls out a small piece of torn fabric.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "look at the fabric",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She examines the torn fabric in her hand. It appears to be a piece of Michelle's favorite sweater.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "pull out the drawer",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "SL-1A-F",
+      "pressure_1a"
+     ],
+     "selected_knowledge_ids": [
+      "k_sl_1a_f_r1"
+     ],
+     "narration": "Kristin approaches the workstation, her eyes fixed on the drawer with her initials carved into it. The officer from the patrol lingers nearby, eyeing the drawer but not making a move to open it. The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "feel under the drawer",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "SL-1A-E"
+     ],
+     "selected_knowledge_ids": [
+      "k_sl_1a_b_r0"
+     ],
+     "narration": "Kristin looks at the drawer, then at the carved initials, KMS. She bends down to examine the initials more closely. Kristin finds Michelle's memory card taped beneath the drawer. She takes it with her. Her laptop is in her truck outside.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "go out to the truck",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She gets out of the driver's seat and walks to the truck.",
+     "item_facts_unplaced": [],
+     "steps": [
+      "Kristin sat down in the driver's seat.",
+      "Kristin's laptop sat on the passenger seat."
+     ]
+    },
+    {
+     "input": "get in",
+     "places_before": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She walks through the gate and onto the property. She approaches the front door of Michelle's house.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "look around",
+     "places_before": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "home_search_narrows_1a"
+     ],
+     "selected_knowledge_ids": [],
+     "narration": "The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.",
+     "item_facts_unplaced": [],
+     "steps": []
+    }
+   ]
+  },
+  {
+   "opening": {
+    "narration": "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\nKristin steps into Michelle's house, her eyes scanning the room for any sign of her friend. She calls out Michelle's name, but there's no response. She moves to the workstation, her gaze falling on the drawer with her initials carved into it.",
+    "places": {
+     "kristin": "mcgehee_home",
+     "kristin_laptop": "truck_passenger_seat",
+     "memory_card": "michelle_drawer",
+     "michelle_drawer": "michelle_workstation",
+     "kristin_truck": "outside_house"
+    }
+   },
+   "turns": [
+    {
+     "input": "go in the house",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She steps inside, her eyes scanning the room for any sign of Michelle. The air inside is stale, and a faint scent of coffee lingers in the air. She notices the workstation, where Michelle's tablet and work bag are missing, and a drawer with her initials, KMS, newly carved into it. Kristin's initials, KMS, are carved into a drawer of Michelle's workstation. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "feel in the gap",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She feels in the gap between the door frame and the wall. Her fingers brush against something small and metallic. She pulls out a small piece of metal, a screw, that had been dislodged from the door frame.",
+     "item_facts_unplaced": [
+      {
+       "name": "screw",
+       "place": "gap between door frame and wall"
+      }
+     ],
+     "steps": []
+    },
+    {
+     "input": "look at the fabric",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She examines the fabric of the back door frame, noticing the scratches and scuffs that indicate a forced entry. 'This was no ordinary break-in,' she thinks to herself.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "pull out the drawer",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "SL-1A-F",
+      "pressure_1a"
+     ],
+     "selected_knowledge_ids": [
+      "k_sl_1a_f_r1"
+     ],
+     "narration": "Kristin approaches the workstation, her eyes fixed on the drawer with her initials carved into it. The officer from the patrol lingers nearby, eyeing the drawer but not making a move to open it. The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "feel under the drawer",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "michelle_drawer",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "SL-1A-E"
+     ],
+     "selected_knowledge_ids": [
+      "k_sl_1a_b_r0"
+     ],
+     "narration": "Kristin looks at the drawer, then bends down to examine the carved initials more closely. She says, \"KMS, that's my initials. What's going on, Shelly?\" Kristin's eyes follow the line of the initials to the thin gap beneath the drawer. Kristin finds Michelle's memory card taped beneath the drawer. She takes it with her. Her laptop is in her truck outside.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "go out to the truck",
+     "places_before": {
+      "kristin": "mcgehee_home",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "She gets out of the driver's seat and walks to the truck. She opens the door and steps inside.",
+     "item_facts_unplaced": [],
+     "steps": [
+      "Kristin sat down in the driver's seat.",
+      "Kristin's laptop sat on the passenger seat."
+     ]
+    },
+    {
+     "input": "get in",
+     "places_before": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [],
+     "selected_knowledge_ids": [],
+     "narration": "Kristin walks through the house gate and approaches the front door. She tries the door handle, and it opens with a slight creak.",
+     "item_facts_unplaced": [],
+     "steps": []
+    },
+    {
+     "input": "look around",
+     "places_before": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "places_after": {
+      "kristin": "outside_house",
+      "kristin_laptop": "truck_passenger_seat",
+      "memory_card": "kristin",
+      "michelle_drawer": "michelle_workstation",
+      "kristin_truck": "outside_house"
+     },
+     "fired": [
+      "home_search_narrows_1a"
+     ],
+     "selected_knowledge_ids": [],
+     "narration": "Kristin looks around the house and the surrounding area. She sees the patrol checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.",
+     "item_facts_unplaced": [],
+     "steps": []
+    }
+   ]
+  }
+ ]
+}
