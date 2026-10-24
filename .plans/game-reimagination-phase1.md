@@ -334,6 +334,33 @@ showed the recovery invitation on turn 5 and the blind player followed it; the s
 committed through free text. All three outcome paths now have a live pass, none with a rate.
 Remaining before Phase 1 exit: five fresh human players, and the closing decision in section 4.
 
+## Step 11 result (2026-10-24)
+
+A stalling player now leaves 1C. Brandon decided: a nudge, then a withdrawal, three turns
+after the window closes. The two beats were written by Claude in an interactive-fiction
+voice at Brandon's request (not ChatGPT Desktop). Ringer run `game-reimagination-phase1`
+(Codex Luna medium, 1 attempt, 195k tokens, 1,338 s; manifest
+`scripts/ringer/phase1/step11-manifest.json`). Full suite 2,522 passed, 16 skipped, 1
+strict xfail.
+
+- `transfer_nudge_1c` (turn 6) and `transfer_withdrawal_1c` (turn 8), both verbatim, both
+  guarded on `transfer_window_missed` true and `facility_infiltration_needed` false. The
+  withdrawal asserts only `facility_infiltration_needed`, so `t_1c_2a` fires with no
+  advantage, no cost fact and no fallback line. New fact `brandon_urges_retreat`; 1C
+  `min_turns` 7 -> 8 (the loader requires `at_turn <= min_turns`).
+- **Engine change (story-agnostic):** guarded pacing events (a false-valued `when`) are deferred
+  until after the player's proposal, so a recovery on the event turn still wins; a verbatim
+  pacing text that causes a transition replaces provider narration and the bridge, so only
+  the event text and the entry text are shown. Only the two new events use a false-valued
+  guard today; the heuristic is crude and should be replaced by an explicit event field if
+  another package needs it.
+- Recovery on turn 6, 7 or 8 ends 1C through the recovery and the withdrawal never fires.
+  Rejected, clarification and transport-error turns do not advance either event.
+- **Story-gap audit** (`tests/test_stall_exit_audit.py`): a neutral staller leaves every scene
+  within `handoff_after_turns + 3` except **3C**, which stays at the bound of 17 turns
+  (strict xfail). 3C is the finale; this belongs to Phase 2 (finite 3B -> 3C -> aftermath).
+- Not yet played with a model: the nudge and the withdrawal. A live stall smoke is next.
+
 ## 1. What exists today (read in source, 2026-10-22)
 
 | Need from the contract | What the code does now | Gap |

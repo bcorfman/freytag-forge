@@ -38,6 +38,9 @@ def check(out: Path, n: int, mode: str) -> list[str]:
             errors.append(f"WHY {row.get('row_id')}: prefix must be one of {tuple(PREFIXES)}")
         if type(row.get("scripted_turns")) is not int or row["scripted_turns"] < 0:
             errors.append(f"WHY {row.get('row_id')}: scripted_turns must be a non-negative integer")
+        for field in ("nudge_seen_turn", "withdrawal_seen_turn"):
+            if row.get(field) is not None and (type(row[field]) is not int or row[field] < 1):
+                errors.append(f"WHY {row.get('row_id')}: {field} must be a positive integer or null")
         if len(row.get("commands", [])) != len(row.get("responses", [])):
             errors.append(f"WHY {row.get('row_id')}: commands and responses must have equal length")
         if len(row.get("commands", [])) > 30:

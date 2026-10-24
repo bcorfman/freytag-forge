@@ -54,7 +54,7 @@ The story is built for a maximum of 120 accepted player turns. A scene should no
 |---|---:|---|
 | 1A | 13 | Search Michelle's house; form a theory; recover and interpret the card; evade a widening patrol search. |
 | 1B | 13 | Work the dead drop; decide what Brandon is; test the route; escape a closing park. |
-| 1C | Choice closes at 5; recovery remains open | Inspect the terminal; observe the captives; choose copying the numbers or asking Brandon about the route; follow Brandon at greater risk if the window closes. |
+| 1C | Choice closes at 5; recovery open until 8, then withdrawal | Inspect the terminal; observe the captives; choose copying the numbers or asking Brandon about the route; follow Brandon at greater risk if the window closes. |
 | 2A | 11 | Build a cover; rehearse it under scrutiny; exploit facility weaknesses; survive a second credential review. |
 | 2B | 15 | Gather JANUS evidence; confront Brandon; trace Michelle's sabotage; leave as an archive audit closes in. |
 | 2C | 16 | Receive Rebecca's offer; face the purge; live with the evidence-or-rescue conflict; learn Michelle's harder third path. |
@@ -296,6 +296,8 @@ Brandon offers two ways to use the remaining time. Kristin can copy the prisoner
 Copying the numbers produces the prisoner number record. Asking Brandon earns the service approach. Either choice gives them a reason to pull back and prepare their entry into the facility.
 
 If the window closes first, the view down the observation shaft goes dark. Brandon offers to lead Kristin through the service entrance at greater risk. His offer does not open the entrance, establish the route, or move Kristin. Following him earns the service approach. Kristin loses the number set. The sweep closes in. They then withdraw to prepare their entry.
+
+If Kristin still does not act, Brandon urges her to take the service entrance. If she waits three turns after the window closes, the sweep reaches the loading docks and Brandon pulls her out. They leave with no numbers and no route, and they must find another way in. The withdrawal grants no proof, copied numbers, route or trust.
 
 The closure alone grants no proof, confirmed sighting, copied numbers, route, or decision to infiltrate. Michelle's identity remains uncertain. Brandon says nothing about his past work or the wider conspiracy.
 

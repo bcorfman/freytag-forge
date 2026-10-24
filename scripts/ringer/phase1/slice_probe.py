@@ -39,6 +39,20 @@ PREFIXES = {
         "Look through the observation shaft at the people below.",
         "Ask Brandon about the transfer route.",
     ),
+    "stall": (
+        "Wait quietly and listen for movement.",
+        "Inspect the loading docks for a security route.",
+        "Listen to the ventilation system for a change.",
+        "Examine the observation shaft for movement.",
+        "Check the terminal doors for a safe exit.",
+        "Stay beside the observation shaft and watch the loading docks.",
+        "Listen for the sweep.",
+        "Wait for Brandon to say what to do.",
+    ),
+}
+PACING_REALIZATION_IDS = {
+    "nudge": "transfer_nudge_1c",
+    "withdrawal": "transfer_withdrawal_1c",
 }
 INCIDENT_FACTS = {
     "copy_numbers": "processing_numbers_copied",
@@ -69,6 +83,8 @@ ROW_FIELDS = (
     "stuck_loop",
     "prefix",
     "scripted_turns",
+    "nudge_seen_turn",
+    "withdrawal_seen_turn",
 )
 
 
@@ -132,6 +148,14 @@ def _operation_fact_ids(values: Any) -> set[str]:
     return {value if isinstance(value, str) else value.fact_id for value in values}
 
 
+def _pacing_realization_texts(package: Any) -> dict[str, str]:
+    events = {event.id: event for event in package.pacing.events}
+    return {
+        name: next(realization.text for realization in events[event_id].realizations)
+        for name, event_id in PACING_REALIZATION_IDS.items()
+    }
+
+
 def classify_exit_cause(facts: Any, incident: Any) -> str:
     """Classify only from declared incident advantages and recovery facts."""
     ids = _fact_ids(facts)
@@ -162,6 +186,10 @@ def _provider_payload(selected: str | None, text: str | None = None) -> dict[str
         "k_sl_2a_c_r3": (
             "Kristin uses the copied prisoner numbers to support the cooling-water explanation. "
             "The supervisor grants restricted corridor access."
+        ),
+        "k_sl_2a_c_r1": (
+            "Kristin convinces the supervisor that a cooling-water imbalance and ventilation fault could shut down "
+            "the service level. He grants corridor access."
         ),
         "k_sl_2a_c_r4": (
             "Kristin uses the known service route and the known service approach to explain the inspection approach; "
@@ -353,6 +381,11 @@ def _run_row(
     target_scene = next(scene for scene in package.scenes if scene.metadata.scene_id == "2A")
     target_texts = set(scene_entry_texts(target_scene.metadata, _true_fact_ids(state)))
     seen = sorted(text for text in target_texts if any(text in response for response in responses))
+    realization_texts = _pacing_realization_texts(package)
+
+    def seen_turn(text: str) -> int | None:
+        return next((turn["turn"] for turn, response in zip(turns, responses, strict=True) if text in response), None)
+
     return {
         "row_id": row_id,
         "rep": 1,
@@ -376,6 +409,8 @@ def _run_row(
         "stuck_loop": repeated_response_streak_max >= 3,
         "prefix": prefix,
         "scripted_turns": sum(turn["scripted"] for turn in turns),
+        "nudge_seen_turn": seen_turn(realization_texts["nudge"]),
+        "withdrawal_seen_turn": seen_turn(realization_texts["withdrawal"]),
     }
 
 
@@ -427,10 +462,27 @@ def run(out: Path, n: int, dry: bool, confirm: bool, prefix: str = "none") -> in
                         "k_sl_2a_c_r4",
                         *([None] * 5),
                     ]
+                elif prefix == "stall":
+                    commands = [
+                        "Ask Brandon how he prepared for this.",
+                        "Check the cooling-water weakness.",
+                        "Present the inspector credentials at the facility checkpoint.",
+                        "Explain the cooling-water risk to the supervisor.",
+                        *["Check the restricted corridor for a safe passage."] * 7,
+                    ]
+                    selections = [
+                        "k_sl_2a_a_r1",
+                        "k_sl_2a_b_r1",
+                        "k_sl_2a_e_r1",
+                        "k_sl_2a_c_r1",
+                        *([None] * 7),
+                    ]
                 if prefix == "missed_window":
                     selections = [None, "k_sl_1c_a_r1", None, "k_sl_1c_b_r2", None] + selections
                 elif prefix == "secure_route":
                     selections = ["k_sl_1c_a_r1", "k_sl_1c_b_r2", "k_sl_1c_c_secure_route"] + selections
+                elif prefix == "stall":
+                    selections = [None] * len(PREFIXES[prefix]) + selections
                 provider = _ScriptedProvider(state, selections)
                 ask = _scripted_player(commands, budget)
                 row = _run_row(

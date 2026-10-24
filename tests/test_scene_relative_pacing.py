@@ -110,7 +110,7 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
     expected_windows = {
         "1A": (8, 10, 13),
         "1B": (8, 10, 13),
-        "1C": (7, 8, 11),
+        "1C": (8, 8, 11),
         "2A": (7, 8, 11),
         "2B": (8, 10, 15),
         "2C": (8, 9, 16),

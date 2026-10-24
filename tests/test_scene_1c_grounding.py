@@ -121,16 +121,16 @@ def _neutral_turn(state: RuntimeState) -> None:
     ).turn("Search the loading docks for guards.")
 
 
-def test_scene_1c_waits_for_a_supported_incident_outcome_before_2a() -> None:
+def test_scene_1c_withdrawal_reaches_2a_without_supported_advantage() -> None:
     state = _scene_1c_state()
     for fact_id in ("facility_proof", "captives_confirmed_alive"):
         state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
 
     for _ in range(8):
         _neutral_turn(state)
-    assert state.current_scene_id == "1C"
+    assert state.current_scene_id == "2A"
+    assert "facility_infiltration_needed" in {
+        fact.predicate for fact in state.facts.asserted if fact.subject == "story" and fact.value == "true"
+    }
 
-    state.facts.assert_fact(Fact(predicate="processing_numbers_copied", subject="story", value="true"))
-    state.facts.assert_fact(Fact(predicate="facility_infiltration_needed", subject="story", value="true"))
-    _neutral_turn(state)
     assert state.current_scene_id == "2A"

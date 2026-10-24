@@ -142,18 +142,17 @@ def test_outcomes_are_exclusive() -> None:
     assert state.snapshot() == before
 
 
-def test_missed_window_grants_no_advantage_past_old_deadline() -> None:
+def test_missed_window_withdraws_without_advantage_past_deadline() -> None:
     state = _state()
     engine = RuntimeEngine(state, _provider())
     for _ in range(12):
         engine.turn("Inspect the terminal for signs of activity.")
 
     assert "transfer_window_missed" in _facts(state)
-    assert not {"processing_numbers_copied", "service_level_access_known", "facility_infiltration_needed"} & _facts(
-        state
-    )
-    assert state.current_scene_id == "1C"
-    assert state.turn_index >= 12
+    assert not {"processing_numbers_copied", "service_level_access_known"} & _facts(state)
+    assert "facility_infiltration_needed" in _facts(state)
+    assert state.current_scene_id == "2A"
+    assert state.turn_index >= 8
 
 
 def test_recovery_requires_missed_window_and_completes_scene() -> None:

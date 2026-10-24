@@ -55,7 +55,11 @@ def test_unresolved_incident_never_stages_or_delivers_advantages(state_factory) 
         fallback_by_fact[fact_id] in response_text for fact_id in advantage_ids if fact_id in fallback_by_fact
     )
     assert not advantage_ids & _true_facts(state)
-    assert state.current_scene_id == incident.scene_id
+    if state.package.story_id == "continuity_initiative":
+        assert state.current_scene_id == "2A"
+        assert "facility_infiltration_needed" in _true_facts(state)
+    else:
+        assert state.current_scene_id == incident.scene_id
 
 
 def test_ordinary_real_package_scene_still_stages_handoff() -> None:

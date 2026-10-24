@@ -47,6 +47,24 @@ pacing_event_review:
     value: true
   status: approved
   reason: Closes the transfer window with an observable loss of the prisoners from view.
+- event_id: transfer_nudge_1c
+  scene_id: 1C
+  at_turn: 6
+  effect:
+    op: assert
+    fact_id: brandon_urges_retreat
+    value: true
+  status: approved
+  reason: Gives a stalling player a concrete chance to leave before the sweep closes the loading docks.
+- event_id: transfer_withdrawal_1c
+  scene_id: 1C
+  at_turn: 8
+  effect:
+    op: assert
+    fact_id: facility_infiltration_needed
+    value: true
+  status: approved
+  reason: Withdraws the stalling player with an honest loss of proof, copied numbers, route, and trust.
 - event_id: scrutiny_2a
   scene_id: 2A
   at_turn: 3
@@ -201,6 +219,10 @@ new_fact_ids:
   used_by_transitions: []
 - id: transfer_window_missed
   definition: The transfer window closed before Kristin resolved the incident.
+  used_by_storylets: []
+  used_by_transitions: []
+- id: brandon_urges_retreat
+  definition: Brandon urged Kristin to take the service entrance before the sweep closed in.
   used_by_storylets: []
   used_by_transitions: []
 - id: michelle_possible_sighting
