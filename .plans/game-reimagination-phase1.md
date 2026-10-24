@@ -9,8 +9,8 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 Decisions in section 5 are made. Steps 1-4 are done and verified (below).
 Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is the
-commit that records this entry. **Open decision before step 6:** what ends a
-scene after a missed window with no recovery (see Step 4 result). Next: step 5
+commit that records this entry. Decision 4 (2026-10-23) settles
+what follows a missed window. Next: step 5
 (`connections` and the traversal action), as a Ringer manifest.
 
 ## Step 1 result (2026-10-22)
@@ -112,11 +112,10 @@ tokens, 406 s. Tests only, no engine change: added
 - Late recovery works. On the boundary turn, pressure activates before proposal
   resolution. Save/load after the window does not refire it.
 
-**Open decision:** after a missed window with no recovery the player stays in
+**Decided (section 5, item 4):** after a missed window with no recovery the player stays in
 the scene indefinitely; no backstop, no successor. The contract wants a grounded
 recovery or an honest failure/return path. Options: a package-declared recovery
-storylet, or a typed incident field declaring a withdrawal transition. Decide
-before step 6 authors the real 1C.
+storylet, or a typed incident field declaring a withdrawal transition. 
 
 ## 1. What exists today (read in source, 2026-10-22)
 
@@ -178,6 +177,7 @@ with the same fields.
 | 3 | Engine: outcome resolution, outcome-scoped cost, completion without the floor | Deterministic tests on the fixture, then on the real package |
 | 4 | Pressure event, missed window, no unearned advantage on deadline | Tests: rejection, clarification and retry do not advance it; missed window grants nothing |
 | 5 | `connections` and the traversal action | Tests: gated by fact, one-action arrival, unrelated entity is not a destination |
+| 5b | Required `recovery_storylet_id` on `Incident`, loader checks, fixture update, engine test that the recovery completes the scene | Loader rejects missing or non-outcome recovery; recovery test passes |
 | 6 | 1C package edit: world, outcomes, bridge, `processing_line`, `prisoner_number_record`, `service_entrance` connection, remove the C chain from the path | Package loads; completion matrix and grounding checks pass |
 | 7 | 1B arrival and 2A variants and consumer; discovery cue lifecycle fix | Sequences in plan section 6 |
 | 8 | Scripted-provider playthroughs of both outcomes and the missed window, then a smoke-tested model run | Per the testing runbook; no billed run before a smoke test |
@@ -203,6 +203,16 @@ file before the next step starts.
    screen's channel marked Charles). Also remove `national_detention_network_known`
    from the 1C path; its content is restated at 3B/3C.
 3. **Worker:** Codex Luna at medium effort for every Phase 1 step.
+
+4. **Missed-window recovery (Brandon, 2026-10-23):** option 1. A missed window
+   leaves the scene open with a package-declared recovery storylet, not a
+   forced withdrawal transition. The recovery reuses outcome A or B at a higher
+   cost (no third outcome), so the outcome count and the 2A variants are
+   unchanged, and it completes through the existing successor transition. Add a
+   required `recovery_storylet_id` to `Incident` and make the loader reject an
+   incident without one or whose recovery does not realize an existing outcome
+   (new step 5b, before step 6). Add a typed withdrawal field only if step 8
+   playtests show stalling.
 
 ## 6. Not verified
 
