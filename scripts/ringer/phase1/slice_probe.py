@@ -48,6 +48,10 @@ ROW_FIELDS = (
     "recovery_count",
     "final_scene",
     "ended_by",
+    "turns",
+    "repeated_response_streak_max",
+    "final_true_facts",
+    "stuck_loop",
 )
 
 
@@ -65,6 +69,33 @@ def _state(package: Any) -> RuntimeState:
 
 def _true_fact_ids(state: RuntimeState) -> set[str]:
     return {fact.predicate for fact in state.facts.asserted if fact.value == "true"}
+
+
+def _fact_keys(state: RuntimeState) -> set[str]:
+    return {"|".join(str(part) for part in fact.key) for fact in state.facts.asserted}
+
+
+def _model_dump(value: Any) -> Any:
+    dump = getattr(value, "model_dump", None)
+    return dump(mode="json") if callable(dump) else value
+
+
+def _reveal_selection(provider: Any, last_attempt: Any = None) -> dict[str, Any]:
+    handoff = getattr(provider, "authored_handoff", None)
+    candidate = getattr(handoff, "candidate", None)
+    selection = getattr(provider, "last_reveal_selection", None)
+    semantic = getattr(provider, "last_semantic_match", None)
+    exact_outcome = selection.get("outcome") if isinstance(selection, dict) else None
+    semantic_outcome = _model_dump(semantic)
+    return {
+        "provider_last_reveal_selection": _model_dump(selection),
+        "engine_last_attempt_reveal_selection": _model_dump(getattr(last_attempt, "reveal_selection", None)),
+        "authored_handoff_candidate_id": getattr(candidate, "id", None),
+        "exact_semantic_outcome": {
+            "exact": exact_outcome,
+            "semantic": semantic_outcome,
+        },
+    }
 
 
 def detect_stale_cue(cue_fact_id: str | None, facts_before: set[str]) -> bool:
@@ -210,12 +241,23 @@ def _run_row(
     commands: list[str] = []
     responses: list[str] = []
     stale_cues: list[dict[str, Any]] = []
+    turns: list[dict[str, Any]] = []
     clarifications = rejections = segments_dropped = 0
     engine = RuntimeEngine(state, provider)
     command = ask_player(screen, budget)
     turns_in_1c = 0
+    previous_response: str | None = None
+    current_response_streak = 0
+    repeated_response_streak_max = 0
     while len(commands) < MAX_COMMANDS:
+        scene_before = state.current_scene_id
         before = _true_fact_ids(state)
+        before_keys = _fact_keys(state)
+        before_reveals = {reveal_id for record in state.turn_records for reveal_id in record.reveal_ids}
+        request_before = getattr(provider, "request_count", 0)
+        recovery_before = getattr(provider, "recovery_count", 0)
+        attempts = getattr(engine, "attempts", None)
+        attempts_before = len(attempts) if attempts is not None else None
         was_1c = state.current_scene_id == "1C"
         turn = engine.turn(command)
         commands.append(command)
@@ -223,13 +265,46 @@ def _run_row(
             turns_in_1c += 1
         response = "\n\n".join(segment.text for segment in turn.segments)
         responses.append(response)
+        repeated_response = response == previous_response
+        current_response_streak = current_response_streak + 1 if repeated_response else 1
+        repeated_response_streak_max = max(repeated_response_streak_max, current_response_streak)
+        previous_response = response
         if trace is not None:
             trace.append({"command": command, "response": response})
         cue = state.last_turn_delivery.cue_fact_id
         stale_cues.append({"turn": len(commands), "cue_fact_id": cue, "stale": detect_stale_cue(cue, before)})
         clarifications += int(hasattr(turn, "clarification"))
-        rejections += int(bool(getattr(getattr(engine, "last_attempt", None), "rejection", None)))
+        if attempts is None:
+            last_attempt = getattr(engine, "last_attempt", None)
+        else:
+            last_attempt = engine.last_attempt if len(attempts) > attempts_before else None
+        rejections += int(bool(getattr(last_attempt, "rejection", None)))
         segments_dropped += state.last_turn_delivery.segments_dropped
+        after_keys = _fact_keys(state)
+        turns.append(
+            {
+                "turn": len(commands),
+                "scene_before": scene_before,
+                "scene_after": state.current_scene_id,
+                "facts_newly_asserted": sorted(after_keys - before_keys),
+                "facts_retracted": sorted(before_keys - after_keys),
+                "committed_reveals": sorted(
+                    {reveal_id for record in state.turn_records for reveal_id in record.reveal_ids} - before_reveals
+                )
+                if state.turn_records
+                else [],
+                "reveal_selection": _reveal_selection(provider, last_attempt),
+                "last_attempt_rejection": _model_dump(getattr(last_attempt, "rejection", None)),
+                "transition_cause": getattr(last_attempt, "transition_cause", None),
+                "request_count_delta": getattr(provider, "request_count", 0) - request_before,
+                "recovery_count_delta": getattr(provider, "recovery_count", 0) - recovery_before,
+                "staged_cue_fact_id": state.staged_cue_fact_id,
+                "staged_handoff_fact_ids": sorted(state.staged_handoff_fact_ids),
+                "delivered_cue_ids": sorted(state.delivered_cue_ids),
+                "segments_dropped": state.last_turn_delivery.segments_dropped,
+                "repeated_response": repeated_response,
+            }
+        )
         if scripted and state.current_scene_id == "2A":
             state.active_event_ids.add("SL-2A-C")
         if state.current_scene_id == "2B":
@@ -265,6 +340,10 @@ def _run_row(
         "recovery_count": getattr(provider, "recovery_count", 0),
         "final_scene": final_scene,
         "ended_by": ended_by,
+        "turns": turns,
+        "repeated_response_streak_max": repeated_response_streak_max,
+        "final_true_facts": sorted(_true_fact_ids(state)),
+        "stuck_loop": repeated_response_streak_max >= 3,
     }
 
 

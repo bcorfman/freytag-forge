@@ -43,6 +43,59 @@ def check(out: Path, n: int, mode: str) -> list[str]:
         for field in ("clarification_count", "rejection_count", "segments_dropped", "request_count", "recovery_count"):
             if type(row.get(field)) is not int or row[field] < 0:
                 errors.append(f"WHY {row.get('row_id')}: {field} must be a non-negative integer")
+        turns = row.get("turns")
+        if not isinstance(turns, list) or len(turns) != len(row.get("commands", [])):
+            errors.append(f"WHY {row.get('row_id')}: turns must have one record per command")
+            turns = turns if isinstance(turns, list) else []
+        required_turn_fields = (
+            "turn",
+            "scene_before",
+            "scene_after",
+            "facts_newly_asserted",
+            "facts_retracted",
+            "committed_reveals",
+            "reveal_selection",
+            "last_attempt_rejection",
+            "transition_cause",
+            "request_count_delta",
+            "recovery_count_delta",
+            "staged_cue_fact_id",
+            "staged_handoff_fact_ids",
+            "delivered_cue_ids",
+            "segments_dropped",
+            "repeated_response",
+        )
+        for turn in turns:
+            missing_turn = [field for field in required_turn_fields if field not in turn]
+            if missing_turn:
+                errors.append(f"WHY {row.get('row_id')}: turn record missing fields: {', '.join(missing_turn)}")
+                continue
+            for field in (
+                "facts_newly_asserted",
+                "facts_retracted",
+                "committed_reveals",
+                "staged_handoff_fact_ids",
+                "delivered_cue_ids",
+            ):
+                if not isinstance(turn[field], list) or turn[field] != sorted(turn[field]):
+                    errors.append(f"WHY {row.get('row_id')}: turn {turn.get('turn')} {field} must be sorted list")
+            for field in ("request_count_delta", "recovery_count_delta", "segments_dropped"):
+                if type(turn[field]) is not int or turn[field] < 0:
+                    errors.append(
+                        f"WHY {row.get('row_id')}: turn {turn.get('turn')} {field} must be non-negative integer"
+                    )
+            if type(turn["repeated_response"]) is not bool:
+                errors.append(f"WHY {row.get('row_id')}: turn {turn.get('turn')} repeated_response must be boolean")
+            if not isinstance(turn["reveal_selection"], dict):
+                errors.append(f"WHY {row.get('row_id')}: turn {turn.get('turn')} reveal_selection must be an object")
+        if type(row.get("repeated_response_streak_max")) is not int or row["repeated_response_streak_max"] < 1:
+            errors.append(f"WHY {row.get('row_id')}: repeated_response_streak_max must be a positive integer")
+        if not isinstance(row.get("final_true_facts"), list) or row["final_true_facts"] != sorted(
+            row["final_true_facts"]
+        ):
+            errors.append(f"WHY {row.get('row_id')}: final_true_facts must be a sorted list")
+        if type(row.get("stuck_loop")) is not bool:
+            errors.append(f"WHY {row.get('row_id')}: stuck_loop must be boolean")
     raw = "".join(path.read_text(encoding="utf-8") for path in out.glob("**/*") if path.is_file())
     if re.search(r"(?:token|secret|authorization|api[_-]?key)\s*[:=]\s*[^\s}\"]+", raw, re.I):
         errors.append("WHY an artifact appears to contain a secret or token")
