@@ -108,3 +108,26 @@ One row, a raw blind player, no retries.
 - Still open: three `transfer_window_missed == false` prerequisites were rejected by the
   loader (it counts only reveals as producers of a fact); the 1C-A observation can still be
   earned after a miss (`test_invitation_report.py` records one unanswered invitation).
+
+## Smokes 5 and 6: scripted prefixes (2026-10-24, before any billed call)
+
+Question: do the two paths smoke 4 did not exercise work against the real narrator after
+step 9b: the missed window with its recovery invitation (smoke 5) and the secure route
+(smoke 6)? Same design, caps and keep rule as above; one row each, no retries, no pooling,
+and never pooled with smokes 1-4 (different start: a scripted prefix).
+
+- `--prefix missed_window` (smoke 5): five scripted commands that earn no outcome and let
+  the window close on turn 5 (the commands of the missed-window journey in
+  `tests/test_phase1_slice_playthroughs.py`). The raw blind player takes over from turn 6 and
+  sees the verbatim recovery invitation. Scripted turns spend no player request.
+- `--prefix secure_route` (smoke 6): three scripted commands: check the loading docks, look
+  through the observation shaft, then "Ask Brandon about the transfer route." The raw
+  player continues after the outcome. This forces the choice; it tests the path, not what a
+  stranger would choose.
+- Outputs: `bench/results/phase1-slice-smoke-5-missed/` and `-6-secure/`. Each row records
+  its prefix and the number of scripted turns.
+- Smoke 5 passes if the player takes the recovery (or a path to 2B) without a stuck loop,
+  stale cue or false outcome; if the player does not find the recovery in 25 further turns that
+  is a finding about the invitation, not a harness fault. Smoke 6 passes if the outcome
+  commits through free text (`secure_route`), the 2A service-route variant shows, and the row
+  reaches 2B.
