@@ -175,3 +175,20 @@ row, no retries, never pooled with other smokes.
   `service_level_access_known`, `evidence_gap_processing_numbers`, `trust_brandon` or
   `terminal_sweep_closing` is true at turn 8, no response shows an advantage fallback line, and
   the row reaches 2B or ends cleanly with a diagnosed cause.
+
+## Result of smoke 7 (2026-10-24)
+
+Artifacts: `bench/results/phase1-slice-smoke-7-stall/` (gitignored; local). One row, a
+`stall` prefix of eight scripted commands, then the raw blind player; run on `main` with step 11
+(`908b4af6` merged after the run started, same code). No retries.
+
+- **Pass.** The nudge showed on turn 6 exactly once; the withdrawal showed on turn 8 and the
+  turn-8 response was only the withdrawal text plus the plain 2A entry text (provider narration
+  and the bridge suppressed, as designed). The scene was 2A afterwards.
+- No unearned fact: after turn 8 the only new fact was `facility_infiltration_needed`; no copied
+  numbers, route, trust, cost or terminal-sweep fact, and no advantage fallback line anywhere.
+- The blind player continued 2A to 2B at turn 15. 0 recoveries, 0 rejections, no stale cue, no
+  repeated response, `stuck_loop` false.
+- Not shown: scripted prefix, one row. Strangers' behaviour is untested.
+- Open (Phase 2): a neutral staller stays in 3C past its bound (strict xfail in
+  `tests/test_stall_exit_audit.py`). 1C no longer lets a player stall indefinitely.

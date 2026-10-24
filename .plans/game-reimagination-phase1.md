@@ -359,7 +359,8 @@ strict xfail.
 - **Story-gap audit** (`tests/test_stall_exit_audit.py`): a neutral staller leaves every scene
   within `handoff_after_turns + 3` except **3C**, which stays at the bound of 17 turns
   (strict xfail). 3C is the finale; this belongs to Phase 2 (finite 3B -> 3C -> aftermath).
-- Not yet played with a model: the nudge and the withdrawal. A live stall smoke is next.
+- Smoke 7 (live, one row, scripted prefix): nudge on turn 6, withdrawal on turn 8, 2A with no
+  unearned fact, the row reached 2B. See phase1-live-smoke.md.
 
 ## 1. What exists today (read in source, 2026-10-22)
 
