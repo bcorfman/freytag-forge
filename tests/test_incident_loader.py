@@ -170,6 +170,13 @@ def test_incidents_yaml_requires_an_incidents_list(tmp_path: Path) -> None:
         load_story_package(package)
 
 
+def test_incidents_yaml_requires_a_list_value(tmp_path: Path) -> None:
+    package = _copy_fixture(tmp_path)
+    (package / "incidents.yaml").write_text("incidents: {id: tide_window}\n", encoding="utf-8")
+    with pytest.raises(StoryPackageError, match="incidents.yaml.*list"):
+        load_story_package(package)
+
+
 def test_delivery_cost_without_incident_cost_overlap_is_valid(tmp_path: Path) -> None:
     package = _copy_fixture(tmp_path)
     handoffs = _read_yaml(package / "handoffs.yaml")

@@ -14,12 +14,14 @@ storylets:
     operations:
     - {op: assert, fact_id: brass_key_found, value: true}
     - {op: assert, fact_id: boat_route_known, value: true}
+    - {op: assert, fact_id: incident_outcome_resolved, value: true}
   - id: r1
     dramatic_intent: Find the key and copy the chart.
     operations:
     - {op: assert, fact_id: brass_key_found, value: true}
     - {op: assert, fact_id: chart_copied, value: true}
     - {op: assert, fact_id: chart_page_torn, value: true}
+    - {op: assert, fact_id: incident_outcome_resolved, value: true}
 canonical_bridge_events:
 - id: bridge_to_lamp_room
   scene_id: 1A

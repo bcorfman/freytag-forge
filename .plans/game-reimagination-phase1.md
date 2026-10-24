@@ -7,10 +7,10 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 ## Resume here
 
-Decisions in section 5 are made. Steps 1 and 2 are done and verified (below);
-step 1 is `8c4447ca`, step 2 is the commit that records this entry. Next: step 3
-(engine: outcome resolution, outcome-scoped cost, completion without the floor),
-as a Ringer manifest.
+Decisions in section 5 are made. Steps 1, 2 and 3 are done and verified
+(below). Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is the commit that
+records this entry. Next: step 4 (pressure event, missed-window withdrawal
+within the scene, no unearned advantage on deadline), as a Ringer manifest.
 
 ## Step 1 result (2026-10-22)
 
@@ -68,6 +68,30 @@ Ruff clean. No runtime change; the engine does not act on incidents yet.
 - Gap to fix in step 3's manifest: no test covers an `incidents.yaml` that is
   not a mapping, although the spec asked for one. Reading the loader, a YAML
   list there would raise `AttributeError` on `.get`, not `StoryPackageError`.
+
+## Step 3 result (2026-10-23)
+
+Ringer run `game-reimagination-phase1`, Codex Luna medium, 2 attempts, 205k
+tokens, 996 s. The run reported FAIL only because the manifest check ran pytest
+on `.`, which collects `scripts/ringer/stage7` probes and breaks the shard
+tests. Use bare `pytest` (testpaths `tests`) in checks. The exported patch was
+applied by hand and verified: full suite 2,408 passed, 16 skipped; Ruff clean.
+
+- `storygame/runtime/incidents.py`: `resolved_incident_outcome(incident, facts)`
+  returns the first outcome whose advantage facts are all true. No new state.
+- `_apply_authored_transition` skips the `min_turns` floor only for an
+  incident's `successor_transition_id` with `completes_scene` and a resolved
+  outcome. All other transitions keep the floor.
+- Unresolved incident scene: the resolution deadline backstop is skipped, and
+  `_prepare_handoff` drops deliveries of any outcome advantage fact and takes no
+  successor transition. **Consequence for step 4:** with no outcome and no
+  backstop, nothing ends the scene. Step 4 must add the missed-window
+  withdrawal (the pressure event's own path), or a player who does nothing
+  stays in the scene forever.
+- Loader: non-mapping `incidents.yaml` raises `StoryPackageError`; outcome
+  realization operations now count as trigger sources for the successor.
+- Tests only on the lighthouse fixture; the real package has no incidents until
+  step 6, and the step 1 turn-11 backstop test still passes unchanged.
 
 ## 1. What exists today (read in source, 2026-10-22)
 

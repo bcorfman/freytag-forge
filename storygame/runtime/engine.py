@@ -33,6 +33,7 @@ from storygame.runtime.contracts import (
     parse_turn_proposal,
 )
 from storygame.runtime.facts import Fact
+from storygame.runtime.incidents import resolved_incident_outcome
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.reference_resolution import (
@@ -476,7 +477,10 @@ class RuntimeEngine(CanonicalEventMixin):
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
-        resolution_segments, deadline_event_ids = self._apply_resolution_deadline_backstop()
+        if self._unresolved_incident():
+            resolution_segments, deadline_event_ids = (), ()
+        else:
+            resolution_segments, deadline_event_ids = self._apply_resolution_deadline_backstop()
         if deadline_event_ids:
             self.state.turn_records[-1] = self.state.turn_records[-1].model_copy(
                 update={"deadline_event_ids": deadline_event_ids}
@@ -991,7 +995,16 @@ class RuntimeEngine(CanonicalEventMixin):
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
         windows = {window.scene_id: window for window in self.state.package.pacing.scenes}
         for transition in self.validator.eligible_transitions(self.state):
-            if turns_since_entry < windows[transition.source_scene_id].min_turns:
+            incident = next(
+                (item for item in self.state.package.incidents if item.scene_id == transition.source_scene_id), None
+            )
+            completes_now = (
+                incident is not None
+                and incident.completes_scene
+                and transition.id == incident.successor_transition_id
+                and resolved_incident_outcome(incident, self.state.facts) is not None
+            )
+            if not completes_now and turns_since_entry < windows[transition.source_scene_id].min_turns:
                 continue
             if not self.validator.transition_dependencies_available(transition, self.state.facts):
                 continue
@@ -1338,8 +1351,17 @@ class RuntimeEngine(CanonicalEventMixin):
             segments = tuple(
                 NarrationSegment(kind="narration", text=delivery.fallback_text) for delivery in deliveries.values()
             )
+        unresolved = self._unresolved_incident()
+        blocked_facts = (
+            {fact_id for outcome in unresolved.outcomes for fact_id in outcome.advantages}
+            if unresolved is not None
+            else set()
+        )
         delivery_operations = tuple(
-            operation for delivery in deliveries.values() for operation in self._delivery_operations(delivery)
+            operation
+            for delivery in deliveries.values()
+            if delivery.fact_id not in blocked_facts
+            for operation in self._delivery_operations(delivery)
         )
         candidate_facts = self.state.facts.clone()
         for operation in (*proposal.operations, *delivery_operations):
@@ -1390,7 +1412,9 @@ class RuntimeEngine(CanonicalEventMixin):
         )
         for operation in bridge_operations:
             self.state._apply_operation(candidate_facts, operation)
-        transition = self._handoff_transition(candidate_facts) if bridge_event else None
+        transition = (
+            None if unresolved is not None else self._handoff_transition(candidate_facts) if bridge_event else None
+        )
         if transition:
             source_scene = next(
                 item for item in self.state.package.scenes if item.metadata.scene_id == transition.source_scene_id
@@ -1417,6 +1441,14 @@ class RuntimeEngine(CanonicalEventMixin):
             }
         )
         return combined, bridge_event.id if bridge_event else None
+
+    def _unresolved_incident(self):
+        incident = next(
+            (item for item in self.state.package.incidents if item.scene_id == self.state.current_scene_id), None
+        )
+        return (
+            incident if incident is not None and resolved_incident_outcome(incident, self.state.facts) is None else None
+        )
 
     @staticmethod
     def _true_facts(facts) -> frozenset[str]:

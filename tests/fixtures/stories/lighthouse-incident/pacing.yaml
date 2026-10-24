@@ -7,7 +7,7 @@ transitions:
   source_scene_id: 1A
   target_scene_id: 1B
   priority: 0
-  triggers: [{fact_id: brass_key_found, equals: true}]
+  triggers: [{fact_id: incident_outcome_resolved, equals: true}]
 events:
 - id: tide_turns
   scene_id: 1A
