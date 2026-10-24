@@ -29,6 +29,10 @@ variations).
 **Purpose:** The authoritative gate for runtime, package, transport, API, and
 persistence behavior. Free; no network.
 
+For the Ringer quick tier, run `uv run python scripts/quick_suite.py [--also PATH ...]`.
+It skips manifest-recorded files at or above the 15-second threshold; `--also` re-includes relevant journeys.
+CI and pre-merge verification still run the complete suite.
+
 ```bash
 TMPDIR=/tmp uv run pytest -q                                  # full suite without coverage
 TMPDIR=/tmp uv run pytest -q --cov                           # full suite + 90% coverage gate

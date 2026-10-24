@@ -258,6 +258,24 @@ and handoff tests.
   by row, not by file.
 - The journeys are both frozen and the largest cost (568 s). That conflict is D5.
 
+## 2g. Speed-up pass (2026-10-24)
+
+Brandon: the suite speed is crippling the rework. Measured on a loaded machine (load 5 to 13,
+so absolute numbers are noisy; compare within a table). Branch `speed-quick-tier-and-journeys`,
+Ringer manifests `scripts/ringer/phase1/speedup-manifest.json` and `speedup2-manifest.json`.
+
+| Change | Result |
+| --- | --- |
+| Quick tier (`scripts/quick_suite.py`): skips the 13 files of 15 s or more | 37.6 s wall, 469 CPU s, against 105 to 169 s wall and 1,115 to 1,340 CPU s for the full suite. Ringer checks and workers use it; CI and merges run everything |
+| Journey prefix sharing (`tests/journey_prefix.py`) | `test_game_path_journeys` CPU 661 to 695 s down to 436 to 466 s (about 33%). Equivalence proven offline for all 73 journey variants; `tests/test_journey_prefix_equivalence.py` guards drift |
+| Regenerated `tests/shard_durations.json` (PR 697) | CI effect not yet measured |
+| Tried and not shipped | Splitting `test_golden_ok_entries_remain_accepted` into cases (collected tests 2,523 to 3,001, wall time worse) and an index in `FactStore.matching` (about 11% journey CPU, within noise). Knowledge `_established` and reference-resolution `_scene_things` caches (about 3 s each of a 10.6 s journey) were judged unsafe in that pass and remain the largest engine cost |
+
+Not done: `test_evidence_gap_journeys` (its walks withhold several realizations at once, so the
+prefix helper does not fit), the heavy 3C tests, and deleting tests. The frozen set is unfrozen for
+this pass only, by Brandon's decision; the Phase 4 schedule in the main plan still applies to
+deletions.
+
 ## 3. Constraints from the project
 
 - Every code or test change runs as a Ringer manifest, one batch per run, with
