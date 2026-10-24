@@ -78,33 +78,24 @@ deliveries:
   - [sedated prisoners, captives are alive, prisoners alive, living prisoners, prisoners are alive, living captives]
   fallback_text: >-
     From the observation shaft, Kristin sees sedated prisoners moving through the processing area. The captives are alive,
-    even if the view is too brief to confirm whether Michelle is among them. Time runs out before Kristin can copy the full set of prisoner numbers from the processing line.
-  costs:
-  - {op: assert, fact_id: evidence_gap_processing_numbers, value: true}
+    even if the view is too brief to confirm whether Michelle is among them.
   cue_text: The observation shaft overlooks a processing line. Identification numbers are visible on the uniforms below.
-- fact_id: national_detention_network_known
+- fact_id: processing_numbers_copied
   scene_id: 1C
   source_kind: observation
   source_entity_id: kristin
   must_convey:
-  - [logistics computer]
-  - [regional hub, detention network]
-  fallback_text: >-
-    The logistics computer shows Kristin that Los Angeles is one regional hub. The detention network spans the country.
-  cue_text: A logistics computer hums by the service entrance. It may be worth reading.
-- fact_id: architects_strategy_known
+  - [prisoner numbers, identification numbers]
+  - [missing-person records, missing records]
+  fallback_text: Kristin copies the prisoner numbers and matches them to missing-person records.
+- fact_id: service_level_access_known
   scene_id: 1C
-  source_kind: observation
-  source_entity_id: kristin
+  source_kind: npc
+  source_entity_id: brandon
   must_convey:
-  - [Charles and Rebecca]
-  - [made the crisis]
-  - [rule as its promised solution]
-  fallback_text: >-
-    A recording shows that Charles and Rebecca made the crisis.
-    They plan to rule as its promised solution.
-  cue_text: The recorded conference is available to play.
-  costs: []
+  - [Brandon, Brandon's help]
+  - [transfer route, service entrance]
+  fallback_text: Brandon explains the transfer route and opens the service entrance.
 - fact_id: false_identities_ready
   scene_id: 2A
   source_kind: npc

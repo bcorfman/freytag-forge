@@ -278,7 +278,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 40
+    assert len(package.storylets) == 41
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
@@ -301,6 +301,8 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "evidence_gap_processing_numbers",
         "evidence_gap_development_record",
         "evidence_gap_marked_site_list",
+        "national_detention_network_known",
+        "architects_strategy_known",
     }
     assert mapped_facts <= set(package.world.facts)
     assert set(package.world.facts) - pacing_facts - pacing_only_facts <= mapped_facts
@@ -561,7 +563,7 @@ def test_every_shipped_storylet_source_link_resolves_to_a_scene_beat() -> None:
     beats = {anchor for scene in package.scenes for anchor in scene.beats}
     links = [link for storylet in package.storylets for link in storylet.source_links]
 
-    assert len(set(links)) == 36
+    assert len(set(links)) == 34
     assert all(link in beats for link in set(links))
 
 
@@ -616,11 +618,11 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_1b_c_r1",
         "k_sl_1b_c_r2",
         "k_sl_1c_a_r1",
-        "k_sl_1c_a_r2",
         "k_sl_1c_b_r1",
         "k_sl_1c_b_r2",
-        "k_sl_1c_c_r1",
-        "k_sl_1c_c_r2",
+        "k_sl_1c_c_copy_numbers",
+        "k_sl_1c_c_secure_route",
+        "k_sl_1c_d_r1",
         "k_sl_2a_a_r1",
         "k_sl_2a_a_r2",
         "k_sl_2a_b_r1",

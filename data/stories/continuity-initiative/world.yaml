@@ -79,6 +79,9 @@ locations:
   parent: freight_terminal
 - id: observation_shaft
   name: observation shaft
+  parent: loading_docks
+- id: processing_line
+  name: processing line
   parent: service_level
 npcs:
 - id: kristin
@@ -239,9 +242,9 @@ items:
   name: Portable data case
   aliases:
   - data case
-- id: logistics_terminal
-  name: logistics computer
-  fixed: true
+- id: prisoner_number_record
+  name: prisoner number record
+  hidden: true
 - id: service_entrance
   name: service entrance
   fixed: true
@@ -332,6 +335,10 @@ facts:
   on_assert:
   - {move: memory_card, parent: kristin, text: with Kristin}
   - {reveal: memory_card}
+- id: processing_numbers_copied
+  on_assert:
+  - {move: prisoner_number_record, parent: kristin, text: with Kristin}
+  - {reveal: prisoner_number_record}
 - drawer_gap_pointed_out
 - official_interest_in_michelle_known
 - house_marked_for_return
@@ -344,6 +351,8 @@ facts:
 - brandon_retains_system_access
 - service_level_access_known
 - captives_confirmed_alive
+- processing_numbers_copied
+- transfer_window_missed
 - michelle_possible_sighting
 - national_detention_network_known
 - architects_strategy_known
@@ -392,7 +401,6 @@ facts:
 - michelle_lead_actionable
 - patrol_return_pressure
 - pursuit_closing_in
-- terminal_security_escalating
 - identity_scrutiny_visible
 - facility_collapse_escalating
 - evidence_gap_processing_numbers

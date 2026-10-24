@@ -248,18 +248,18 @@ freytag_phase: rising_action
 objective: Confirm the facility and its purpose
 participant_ids: [kristin, brandon, michelle]
 companions: [brandon]
-item_ids: [transit_card, kristin_truck, logistics_terminal, service_entrance]
+item_ids: [transit_card, kristin_truck, service_entrance, prisoner_number_record]
+character_placements:
+  captives: {parent: processing_line, text: moving through the processing line below}
 item_placements:
   kristin_truck: {parent: freight_terminal}
-  logistics_terminal: {parent: freight_terminal}
   service_entrance: {parent: freight_terminal}
+  prisoner_number_record: {parent: processing_line}
 entry_text: "Michelle's lead brought Kristin and Brandon to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. They kept to the shadow of the loading docks, looking for a way into whatever lay below.\n\n"
 transition_ids: [t_1c_2a]
 bridge_text:
   t_1c_2a: >-
-    The observation shaft showed them living captives in an active regional command center, but the main facility could
-    not be reached from the service level without triggering security. Kristin and Brandon withdrew to prepare a way
-    inside.
+    Kristin and Brandon withdraw from the terminal to prepare a way inside.
 ---
 
 **Setting:** Industrial outskirts of Los Angeles and an underground Continuity Initiative installation
@@ -283,50 +283,23 @@ Fresh tire tracks, air vents, and unusually heavy electrical service confirm tha
 
 Kristin and Brandon search for a route into the service level without triggering security.
 
-An old service schematic marks one dry maintenance ascent joining the drainage spine. It is too exposed to use now, but Kristin memorizes it as the sort of route that might matter if the facility's systems fail later.
-
 ### Scene 1C.2 — Proof of the Captives
 
 **Details:** observation shaft; sedated prisoners; processing area; identification numbers; missing-person reports; woman resembling Michelle; chance to copy the prisoner numbers
 
 From an observation shaft, Kristin sees rows of sedated prisoners being moved through a processing area. Their identification numbers correspond to missing-person reports stored in Michelle’s files.
 
-Kristin can copy the full set of prisoner numbers from the processing line to support her account, but the prisoners are already being moved out of view.
+Kristin can copy the visible prisoner numbers and match them to missing-person records. She can also ask Brandon about the transfer route or have him open the service entrance with the transit token.
 
 She briefly sees a woman resembling Michelle among a group being transferred, but the view is obscured before she can confirm her identity.
 
 Kristin wants to enter immediately. Brandon stops her, arguing that a reckless rescue attempt would cause the prisoners to be relocated or killed.
 
-### Scene 1C.3 — The Nationwide Network
+### Scene 1C.3 — Relocated
 
-**Details:** logistics computer; regional command center; nationwide facilities; political personnel; resistance organizers; experimental programs
+**Details:** transfer window; empty processing line; later-scene evidence
 
-Brandon accesses a logistics computer and discovers that the Los Angeles site is not where all the missing people are held. It is a regional command center connected to facilities throughout the country.
-
-The logistics computer hums beside the service entrance.
-
-The missing have been divided into categories:
-
-* Political and military personnel
-* Scientists, engineers, and medical specialists
-* Journalists and public figures
-* People labeled as potential resistance organizers
-* Civilians selected for experimental programs
-* Families of strategically valuable individuals
-
-The conspiracy did not simply remove random citizens. It removed people who might either help control the country or resist that control.
-
-### Scene 1C.4 — The Architects Revealed
-
-**Details:** recorded conference; Charles Jenkins; Rebecca Jenkins; overcrowded facilities; resisting prisoners; emergency authority
-
-A recorded conference shows Charles and Rebecca Jenkins discussing the next phase of the Continuity Initiative.
-
-Charles intends to announce that the federal government has collapsed and establish a new emergency authority. Rebecca warns him that several facilities are overcrowded and that prisoners are beginning to resist.
-
-Charles responds that the public will accept any government that promises to restore the missing.
-
-Kristin now understands the central strategy: the conspirators created the catastrophe so they could later present themselves as the only people capable of ending it.
+Scenes 1C.3 and 1C.4 await relocation to a later scene. Candidate homes are 2C.1 and 3B.2.
 
 # Scene 2 — The Infiltration
 

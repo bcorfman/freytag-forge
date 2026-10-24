@@ -31,7 +31,7 @@ EXPECTED_PLACE_FORMS_BY_SCENE = {
         "outside the house",
     ),
     "1B": ("Los Angeles park",),
-    "1C": ("freight terminal", "abandoned freight terminal"),
+    "1C": ("freight terminal", "abandoned freight terminal", "processing line"),
     "2A": (
         "Facility perimeter",
         "Brandon's hideout",
@@ -81,7 +81,7 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
         "photograph": "michelle_photograph",
         "photo": "michelle_photograph",
     },
-    "1C": {},
+    "1C": {"captives": "captives", "captive": "captives", "prisoner": "captives", "prisoners": "captives"},
     "2A": {
         "servers": "hideout_servers",
         "gate": "facility_gate",

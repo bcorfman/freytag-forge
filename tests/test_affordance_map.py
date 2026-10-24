@@ -149,10 +149,53 @@ def test_whole_package_findings_match_recorded_gaps():
     expected = [
         finding for finding in expected if (finding["scene_id"], finding["gate"], finding["subject"]) not in obsolete
     ]
+    expected.extend(
+        {
+            "check": check,
+            "scene_id": "2C",
+            "gate": "t_2c_3a:combined_broadcast_rescue_plan_known",
+            "subject": "processing_line",
+        }
+        for check in (2, 3)
+    )
     actual = [
         {key: finding[key] for key in ("check", "scene_id", "gate", "subject")}
         for finding in check_affordance_map(package, amap)
+        if finding["scene_id"] != "1C"
     ]
+    actual_1c = [
+        {key: finding[key] for key in ("check", "scene_id", "gate", "subject")}
+        for finding in check_affordance_map(package, amap)
+        if finding["scene_id"] == "1C"
+    ]
+    expected_1c = [
+        {"check": 2, "scene_id": "1C", "gate": "t_1c_2a:facility_infiltration_needed", "subject": subject}
+        for subject in (
+            "loading_docks",
+            "observation_shaft",
+            "processing_line",
+            "mcgehee_home",
+            "memory_card",
+            "michelle_phone",
+            "michelle_photograph",
+            "brandon_hideout",
+            "service_level",
+        )
+    ] + [
+        {"check": 3, "scene_id": "1C", "gate": "t_1c_2a:facility_infiltration_needed", "subject": subject}
+        for subject in (
+            "mcgehee_home",
+            "memory_card",
+            "michelle_phone",
+            "michelle_photograph",
+            "brandon_hideout",
+            "service_entrance",
+            "transit_card",
+        )
+    ]
+    assert sorted(actual_1c, key=lambda item: (item["check"], item["subject"])) == sorted(
+        expected_1c, key=lambda item: (item["check"], item["subject"])
+    )
     assert sorted(actual, key=lambda item: (item["scene_id"], item["gate"], item["subject"], item["check"])) == expected
 
 

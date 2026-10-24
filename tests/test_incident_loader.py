@@ -249,8 +249,9 @@ def test_incident_fixture_loads_with_two_outcomes() -> None:
     assert [outcome.id for outcome in package.incidents[0].outcomes] == ["copy_chart", "learn_route"]
 
 
-def test_existing_packages_have_no_incidents() -> None:
-    assert load_story_package(ROOT.parent.parent.parent / "data" / "stories" / "continuity-initiative").incidents == ()
+def test_real_package_declares_the_continuity_incident() -> None:
+    incidents = load_story_package(ROOT.parent.parent.parent / "data" / "stories" / "continuity-initiative").incidents
+    assert [incident.id for incident in incidents] == ["i_1c_freight_transfer"]
     assert load_story_package(ROOT / "lighthouse-keeper").incidents == ()
 
 

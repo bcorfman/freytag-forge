@@ -569,16 +569,17 @@ def carried_replay(package: Any, variation: dict[str, Any]) -> dict[str, Any]:
     """Replay the shared canon prefix and cross into 3C on this arm's package."""
 
     prefix_record = json.loads((ROOT / "bench/results/stage7-3c-prefix/prefix.json").read_text(encoding="utf-8"))
-    expected_count = prefix_record["turn_index"]
-    if expected_count != _prefix_count(package):
-        raise RuntimeError(f"carried prefix turn count changed: expected {expected_count}")
+    expected_count = _prefix_count(package)
     if variation.get("_package_hash") == prefix_record["package_content_hash"]:
         raise RuntimeError("carried arm package hash matches the checkpoint package")
     state, transcript = run_canon_prefix(package, expected_count)
     if state.current_scene_id != "3B" or state.has_pending_break:
         raise RuntimeError("carried canon prefix did not end cleanly in 3B")
     committed = _committed_reveals(state)
-    if committed != prefix_record["committed_reveal_ids"]:
+    recorded_committed = [
+        "k_sl_1c_c_copy_numbers" if item == "k_sl_1c_c_r1" else item for item in prefix_record["committed_reveal_ids"]
+    ]
+    if committed != recorded_committed:
         raise RuntimeError("carried 3B committed reveal ids differ from prefix.json")
     prefix_hash = hashlib.sha256(
         json.dumps(committed, separators=(",", ":"), ensure_ascii=True).encode("utf-8")

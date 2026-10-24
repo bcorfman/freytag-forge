@@ -42,20 +42,25 @@ def _knowledge(knowledge_id: str):
 
 def test_1c_realizations_are_exclusive_once_the_storylet_fires() -> None:
     for first, other in (
-        ("k_sl_1c_a_r1", "k_sl_1c_a_r2"),
-        ("k_sl_1c_a_r2", "k_sl_1c_a_r1"),
+        ("k_sl_1c_c_copy_numbers", "k_sl_1c_c_secure_route"),
+        ("k_sl_1c_c_secure_route", "k_sl_1c_c_copy_numbers"),
     ):
         state = _scene_1c_state()
-        state.active_event_ids.add("SL-1C-A")
+        state.active_event_ids.add("SL-1C-C")
+        _fact(state, "facility_proof")
+        _fact(state, "captives_confirmed_alive")
 
         def provider(_input: str, knowledge_id: str = first) -> dict[str, object]:
             return _turn(_knowledge(knowledge_id).delivery_text, knowledge_id)
 
         engine = RuntimeEngine(state, provider)
-        engine.turn("Inspect the terminal for signs of activity.")
+        command = (
+            "Copy the prisoner numbers." if first.endswith("copy_numbers") else "Ask Brandon about the transfer route."
+        )
+        engine.turn(command)
 
-        assert "SL-1C-A" in state.fired_event_ids
-        expected = "storylet_spent" if first.endswith("r1") else "already_established"
+        assert "SL-1C-C" in state.fired_event_ids
+        expected = "storylet_spent"
         assert explain_reveal(state, "player", _knowledge(other)).reason == expected
 
 
@@ -77,25 +82,24 @@ def test_1c_earned_reveal_and_forced_handoff_pin_delivery_cost_behavior() -> Non
     forced_cost = forced.facts.matching("evidence_gap_processing_numbers", subject="story")
 
     assert bool(earned_cost) is False
-    assert bool(forced_cost) is True
+    assert bool(forced_cost) is False
 
 
-def test_1c_min_turns_floor_delays_bridge_transition_until_turn_seven() -> None:
+def test_1c_incident_outcome_bypasses_min_turns_floor() -> None:
     state = _scene_1c_state()
-    for fact_id in ("facility_proof", "captives_confirmed_alive", "national_detention_network_known"):
+    for fact_id in ("facility_proof", "captives_confirmed_alive"):
         _fact(state, fact_id)
-    engine = RuntimeEngine(state, lambda _: {"segments": [{"kind": "narration", "text": "The terminal is quiet."}]})
-
-    for _ in range(6):
-        result = engine.turn("Wait and watch the terminal.")
-        assert state.current_scene_id == "1C"
-        assert state.turn_index - state.scene_entered_at_turn < 7
-        assert result.segments
-    result = engine.turn("Wait and watch the terminal.")
+    engine = RuntimeEngine(
+        state,
+        lambda _: _turn(
+            "Kristin copies the prisoner numbers and matches them to missing-person records.",
+            "k_sl_1c_c_copy_numbers",
+        ),
+    )
+    result = engine.turn("Copy the prisoner numbers.")
     assert state.current_scene_id == "2A"
     assert state.turn_index - state.scene_entered_at_turn == 0
-    assert result.segments[0].text == "The terminal is quiet."
-    assert result.segments[1].text.startswith("The observation shaft showed them living captives")
+    assert result.segments[1].text == "Kristin and Brandon withdraw from the terminal to prepare a way inside."
 
 
 def test_loader_rejects_pacing_event_beyond_scene_min_turns(tmp_path: Path) -> None:
@@ -103,17 +107,17 @@ def test_loader_rejects_pacing_event_beyond_scene_min_turns(tmp_path: Path) -> N
     shutil.copytree(PACKAGE_ROOT, root)
     pacing_path = root / "pacing.yaml"
     pacing = yaml.safe_load(pacing_path.read_text(encoding="utf-8"))
-    event = next(item for item in pacing["events"] if item["id"] == "security_1c")
+    event = next(item for item in pacing["events"] if item["id"] == "transfer_window_1c")
     event["at_turn"] = 8
     pacing_path.write_text(yaml.safe_dump(pacing, sort_keys=False), encoding="utf-8")
 
-    with pytest.raises(StoryPackageError, match="security_1c.*min_turns floor 7"):
+    with pytest.raises(StoryPackageError, match="transfer_window_1c.*min_turns floor 7"):
         load_story_package(root)
 
 
 def test_rejected_turn_restores_security_pacing_then_accepted_turn_fires_it() -> None:
     state = _scene_1c_state()
-    state.turn_index = 2
+    state.turn_index = 4
     before = state.snapshot()
 
     def rejected(_input: str) -> dict[str, object]:
@@ -122,34 +126,34 @@ def test_rejected_turn_restores_security_pacing_then_accepted_turn_fires_it() ->
     with pytest.raises(ProposalValidationError):
         RuntimeEngine(state, rejected).turn("Wait and watch the terminal.")
     assert state.snapshot() == before
-    assert "security_1c" not in state.fired_event_ids
+    assert "transfer_window_1c" not in state.fired_event_ids
 
     accepted = RuntimeEngine(state, lambda _: {"segments": [{"kind": "narration", "text": "The terminal is quiet."}]})
     result = accepted.turn("Wait and watch the terminal.")
-    assert "security_1c" in state.fired_event_ids
-    assert Fact(predicate="terminal_security_escalating", subject="story", value="true") in state.facts.asserted
-    assert state.last_turn_delivery.complication_text == "Security is escalating around the terminal."
-    assert all("Security is escalating" not in segment.text for segment in result.segments)
+    assert "transfer_window_1c" in state.fired_event_ids
+    assert Fact(predicate="transfer_window_missed", subject="story", value="true") in state.facts.asserted
+    assert state.last_turn_delivery.complication_text == (
+        "The transfer line goes dark, and the last prisoners disappear from view."
+    )
+    assert all("transfer line goes dark" not in segment.text for segment in result.segments)
 
 
 def test_clarification_turn_does_not_advance_pacing() -> None:
     pytest.skip("No short, stable 1C command in today's reference resolver produces ClarificationTurn.")
 
 
-def test_1c_missed_window_deadline_backstop_forces_2a_with_unearned_facts() -> None:
+def test_1c_missed_window_stays_open_past_deadline_without_unearned_facts() -> None:
     state = _scene_1c_state()
     engine = RuntimeEngine(state, lambda _: {"segments": [{"kind": "narration", "text": "The terminal is quiet."}]})
     results = [engine.turn("Wait and watch the terminal.") for _ in range(10)]
 
-    assert state.facts.matching("terminal_security_escalating", subject="story")
-    assert state.facts.matching("terminal_sweep_closing", subject="story")
+    assert state.facts.matching("transfer_window_missed", subject="story")
     assert not state.facts.matching("facility_infiltration_needed", subject="story")
     assert state.current_scene_id == "1C"
     assert state.turn_index == 10
     assert results[-1].segments
 
-    deadline = engine.turn("Wait and watch the terminal.")
-    assert state.turn_index == 11
-    assert state.current_scene_id == "2A"
-    assert state.facts.matching("facility_infiltration_needed", subject="story")
-    assert deadline.segments
+    assert state.turn_index == 10
+    assert state.current_scene_id == "1C"
+    assert not state.facts.matching("facility_infiltration_needed", subject="story")
+    assert results[-1].segments

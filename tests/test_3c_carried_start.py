@@ -62,7 +62,7 @@ def test_carried_run_row_uses_scene_turns_from_one_without_network() -> None:
     )
     assert row["start"] == "carried"
     assert row["turns"][0]["scene_turn"] == 1
-    assert row["prefix_turn_index"] == 63
+    assert row["prefix_turn_index"] == 59
     assert "k_sl_3c_a_r1" in row["turns"][0]["committed_reveals"]
     assert row["a_commit_scene_turn"] == 1
     assert row["first_attempt_a"] == 1

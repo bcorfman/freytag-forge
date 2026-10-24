@@ -28,14 +28,14 @@ events:
     equals: true
   realizations:
   - text: The pursuers are closing in through the park. The pursuit is not over.
-- id: security_1c
+- id: transfer_window_1c
   scene_id: 1C
-  at_turn: 3
+  at_turn: 5
   effects:
-  - fact_id: terminal_security_escalating
+  - fact_id: transfer_window_missed
     equals: true
   realizations:
-  - text: Security is escalating around the terminal.
+  - text: The transfer line goes dark, and the last prisoners disappear from view.
 - id: scrutiny_2a
   scene_id: 2A
   at_turn: 3
@@ -108,14 +108,6 @@ events:
     equals: true
   realizations:
   - text: Emergency teams close the footpaths one by one. The service exits are becoming the only way out of the park.
-- id: terminal_sweep_1c
-  scene_id: 1C
-  at_turn: 7
-  effects:
-  - fact_id: terminal_sweep_closing
-    equals: true
-  realizations:
-  - text: Radios below call for a sweep of the service levels. Guards are beginning to search upward toward the loading docks.
 - id: cover_review_2a
   scene_id: 2A
   at_turn: 7

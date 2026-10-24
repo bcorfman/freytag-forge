@@ -516,8 +516,8 @@ def test_runtime_owned_opening_beat_is_still_projected() -> None:
             id="narrator_selected_candidates_keep_projecting_all_source_beats",
         ),
         pytest.param(
-            "k_sl_1c_c_r1",
-            "scene-1c3--the-nationwide-network",
+            "k_sl_1c_c_copy_numbers",
+            "scene-1c2--proof-of-the-captives",
             id="candidate_beats_use_each_realization_source_beats_only",
         ),
         pytest.param(

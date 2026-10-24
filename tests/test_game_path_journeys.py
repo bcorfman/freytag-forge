@@ -70,6 +70,24 @@ def play(preferred: tuple[str, ...] = ()) -> Journey:
         for sibling in SIBLINGS[PACKAGE.knowledge_indexes.by_id[item_id].source.storylet_id]
         if sibling not in preferred
     }
+    # Incident recovery is only legal after its missed-window pressure event.
+    # Keep the supported outcomes out of the projection for this branch, then
+    # let the normal incident clock make the recovery realization available.
+    recovery_ids = {
+        item.id
+        for item in PACKAGE.knowledge.knowledge
+        if item.source.storylet_id
+        in {incident.recovery_storylet_id for incident in PACKAGE.incidents if incident.recovery_storylet_id}
+    }
+    if set(preferred) & recovery_ids:
+        for incident in PACKAGE.incidents:
+            if incident.scene_id != "1C":
+                continue
+            blocked.update(
+                item.id
+                for item in PACKAGE.knowledge.knowledge
+                if item.source.storylet_id in {outcome.storylet_id for outcome in incident.outcomes}
+            )
     state = RuntimeState.bootstrap(PLAYED)
     provider = _ScriptedProvider(PLAYED, state)
     engine = RuntimeEngine(state, provider)

@@ -31,7 +31,6 @@ def test_scene_1c_places_the_facility_arrival() -> None:
 
     assert world.move("kristin", "observation_shaft").ok
     assert world.parent("brandon") == "observation_shaft"
-    assert not world.move("logistics_terminal", "kristin").ok
 
     locations = {location.id: location for location in PACKAGE.world.locations}
     for location_id in (
@@ -59,7 +58,7 @@ def test_scene_1c_declares_the_service_level_area_hierarchy() -> None:
     locations = {location.id: location for location in PACKAGE.world.locations}
 
     assert locations["service_level"].parent == "freight_terminal"
-    assert locations["observation_shaft"].parent == "service_level"
+    assert locations["observation_shaft"].parent == "loading_docks"
 
 
 def test_scene_1c_can_move_into_the_service_level() -> None:
@@ -131,7 +130,7 @@ def _neutral_turn(state: RuntimeState) -> None:
     ).turn("Search the loading docks for guards.")
 
 
-def test_scene_1c_waits_for_the_logistics_terminal_before_2a() -> None:
+def test_scene_1c_waits_for_a_supported_incident_outcome_before_2a() -> None:
     state = _scene_1c_state()
     for fact_id in ("facility_proof", "captives_confirmed_alive"):
         state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
@@ -140,6 +139,7 @@ def test_scene_1c_waits_for_the_logistics_terminal_before_2a() -> None:
         _neutral_turn(state)
     assert state.current_scene_id == "1C"
 
-    state.facts.assert_fact(Fact(predicate="national_detention_network_known", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="processing_numbers_copied", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="facility_infiltration_needed", subject="story", value="true"))
     _neutral_turn(state)
     assert state.current_scene_id == "2A"
