@@ -22,6 +22,19 @@ storylets:
     - {op: assert, fact_id: chart_copied, value: true}
     - {op: assert, fact_id: chart_page_torn, value: true}
     - {op: assert, fact_id: incident_outcome_resolved, value: true}
+- id: SL-1A-B
+  scene_id: 1A
+  title: Recover the Chart
+  activation: {conditions: [{fact_id: tide_has_turned, equals: true}], pacing: {earliest_turn: 0, target_turn: 1, latest_turn: 3}}
+  pressure_role: recovery
+  realization_options:
+  - id: r0
+    dramatic_intent: Recover the chart after the tide turns.
+    operations:
+    - {op: assert, fact_id: chart_copied, value: true}
+    - {op: assert, fact_id: chart_page_torn, value: true}
+    - {op: assert, fact_id: recovery_cost_paid, value: true}
+    - {op: assert, fact_id: incident_outcome_resolved, value: true}
 canonical_bridge_events:
 - id: bridge_to_lamp_room
   scene_id: 1A

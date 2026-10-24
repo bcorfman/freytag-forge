@@ -45,6 +45,7 @@ from storygame.runtime.reference_resolution import (
 from storygame.runtime.reveal_eligibility import ALREADY_ESTABLISHED, STORYLET_SPENT, explain_reveal
 from storygame.runtime.state import CueStage as RuntimeCueStage
 from storygame.runtime.state import RuntimeState, TurnDelivery, TurnRecord
+from storygame.runtime.traversal import resolve_traversal
 from storygame.runtime.validation import (
     ProgressionValidator,
     ProposalValidationError,
@@ -52,7 +53,7 @@ from storygame.runtime.validation import (
     predicate_matches,
     unconveyed_terms,
 )
-from storygame.runtime.world_model import apply_world_effects
+from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.models import FactDelivery
 from storygame.story_package.obligations import required_storylet_ids
 
@@ -241,6 +242,63 @@ class RuntimeEngine(CanonicalEventMixin):
         finally:
             if budget is not None:
                 budget.end_turn()
+
+    def follow_connection(self, destination_id: str) -> ResolvedTurnProposal | EngineRefusalTurn:
+        """Take one package-declared connection as an atomic, provider-free turn."""
+
+        before = self.state.snapshot()
+        resolution = resolve_traversal(
+            self.state.package,
+            self.state.facts,
+            world_for(self.state.package, self.state.facts),
+            destination_id,
+        )
+        if resolution.refusal_reason is not None:
+            return EngineRefusalTurn(resolution.refusal_reason)
+        connection = resolution.connection
+        assert connection is not None
+        self.state.turn_index += 1
+        world = world_for(self.state.package, self.state.facts)
+        result = world.place(self.state.package.world.protagonist_id, connection.to_place_id)
+        if not result.ok:
+            self.state.restore_snapshot(before)
+            return EngineRefusalTurn("no_route")
+        for operation in connection.consequences:
+            self.state._apply_operation(
+                self.state.facts,
+                FactOperation(
+                    operation=operation.op,
+                    fact=Fact(predicate=operation.fact_id, subject="story", value=str(operation.value).lower()),
+                ),
+            )
+        proposal = ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text=connection.arrival_text),))
+        self._record_turn(proposal)
+        self._advance_pacing(proposal.narrative_seconds)
+        self._activate_pacing()
+        canonical_segments = self._apply_canonical_route_events()
+        self._activate_pacing()
+        entry_segments = self._apply_authored_transition()
+        self._activate_pacing()
+        if self._unresolved_incident():
+            resolution_segments, deadline_event_ids = (), ()
+        else:
+            resolution_segments, deadline_event_ids = self._apply_resolution_deadline_backstop()
+        if deadline_event_ids:
+            self.state.turn_records[-1] = self.state.turn_records[-1].model_copy(
+                update={"deadline_event_ids": deadline_event_ids}
+            )
+        return self._finish_ending(
+            proposal.model_copy(
+                update={
+                    "segments": (
+                        *proposal.segments,
+                        *canonical_segments,
+                        *(entry_segments or ()),
+                        *resolution_segments,
+                    )
+                }
+            )
+        )
 
     def _turn_active(self, player_input: str, *, clock_seconds: int | None = None) -> ResolvedTurnProposal:
         """Call the provider once, then validate before any canonical mutation."""

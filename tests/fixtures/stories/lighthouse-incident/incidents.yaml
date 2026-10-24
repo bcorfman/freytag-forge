@@ -11,5 +11,6 @@ incidents:
     storylet_id: SL-1A-A
     realization_id: r0
     advantages: [boat_route_known]
+  recovery_storylet_id: SL-1A-B
   missed_window_event_id: tide_turns
   successor_transition_id: t_1a_1b

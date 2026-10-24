@@ -15,6 +15,7 @@ from worldkeeper import BASE_KINDS, MemoryBackend, SchemaError, World, WorldSche
 
 from storygame.story_package.models import (
     Character,
+    Connection,
     Entity,
     FactDelivery,
     Incident,
@@ -1038,6 +1039,41 @@ def _validate_incidents(package: StoryPackage) -> None:
                 f"incident '{incident.id}' outcome references storylet '{offending}' outside "
                 f"scene '{incident.scene_id}'"
             )
+        recovery_route = routes.get(incident.recovery_storylet_id)
+        if recovery_route is None:
+            raise StoryPackageError(
+                f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' is unknown"
+            )
+        if recovery_route.scene_id != incident.scene_id:
+            raise StoryPackageError(
+                f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' belongs to "
+                f"scene '{recovery_route.scene_id}', not '{incident.scene_id}'"
+            )
+        if incident.recovery_storylet_id == incident.outcomes[0].storylet_id:
+            raise StoryPackageError(
+                f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' must differ "
+                "from the outcomes' shared storylet"
+            )
+        unknown_outcome_facts = {
+            fact_id
+            for outcome in incident.outcomes
+            for fact_id in (*outcome.advantages, *outcome.costs)
+            if fact_id not in package.fact_ids
+        }
+        if unknown_outcome_facts:
+            offending = sorted(unknown_outcome_facts)[0]
+            raise StoryPackageError(f"incident '{incident.id}' references unknown fact '{offending}'")
+        event_activation_facts = {predicate.fact_id for predicate in (*event.when,)} | {
+            effect.fact_id for effect in event.effects if effect.equals is True
+        }
+        recovery_activation_facts = {predicate.fact_id for predicate in recovery_route.activation_conditions}
+        missing_activation = event_activation_facts - recovery_activation_facts
+        if missing_activation:
+            offending = sorted(missing_activation)[0]
+            raise StoryPackageError(
+                f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' activation "
+                f"does not require missed-window fact '{offending}'"
+            )
         realization_ids = [outcome.realization_id for outcome in incident.outcomes]
         if len(realization_ids) != len(set(realization_ids)):
             duplicate = next(
@@ -1048,6 +1084,22 @@ def _validate_incidents(package: StoryPackage) -> None:
         for realization_id in realization_ids:
             if realization_id not in realization_map:
                 raise StoryPackageError(f"incident '{incident.id}' references unknown realization '{realization_id}'")
+
+        recovery_realizations = recovery_route.realizations
+        outcome_facts = [set(outcome.advantages) | set(outcome.costs) for outcome in incident.outcomes]
+        shared_outcome_facts = set.union(*outcome_facts)
+        qualifying: list[tuple[str, set[str]]] = []
+        for realization in recovery_realizations:
+            asserted = _asserted_true_route_operations(realization.operations)
+            matches = [facts for facts in outcome_facts if facts <= asserted]
+            extras = asserted - shared_outcome_facts
+            if len(matches) == 1 and extras:
+                qualifying.append((realization.id, extras))
+        if not qualifying:
+            raise StoryPackageError(
+                f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' has no realization "
+                "that reuses exactly one outcome and declares an extra recovery cost fact"
+            )
 
         advantage_sets: list[set[str]] = []
         outcome_costs: set[str] = set()
@@ -1096,6 +1148,65 @@ def _validate_incidents(package: StoryPackage) -> None:
                     raise StoryPackageError(
                         f"incident '{incident.id}' delivery cost fact '{offending}' duplicates an outcome cost"
                     )
+
+
+def _validate_connections(package: StoryPackage) -> None:
+    locations = {location.id for location in package.world.locations}
+    entities = {package.world.protagonist_id} | {
+        entity.id
+        for group in (package.world.locations, package.world.npcs, package.world.items, package.world.groups)
+        for entity in group
+    }
+    facts = set(package.world.facts)
+    seen: set[str] = set()
+    for connection in package.connections:
+        if connection.id in seen:
+            raise StoryPackageError(f"connection '{connection.id}' has a duplicate connection id")
+        seen.add(connection.id)
+        if connection.from_place_id not in locations:
+            raise StoryPackageError(
+                f"connection '{connection.id}' references unknown from place '{connection.from_place_id}'"
+            )
+        if connection.to_place_id not in locations:
+            raise StoryPackageError(
+                f"connection '{connection.id}' references unknown to place '{connection.to_place_id}'"
+            )
+        if connection.from_place_id == connection.to_place_id:
+            raise StoryPackageError(f"connection '{connection.id}' cannot connect a place to itself")
+        if connection.via_id is not None and connection.via_id not in entities:
+            raise StoryPackageError(f"connection '{connection.id}' references unknown via entity '{connection.via_id}'")
+        if connection.access_fact_id is not None and connection.access_fact_id not in facts:
+            raise StoryPackageError(
+                f"connection '{connection.id}' references unknown access fact '{connection.access_fact_id}'"
+            )
+        unknown = {operation.fact_id for operation in connection.consequences} - facts
+        if unknown:
+            raise StoryPackageError(
+                f"connection '{connection.id}' has consequence on undeclared fact '{sorted(unknown)[0]}'"
+            )
+
+
+def _load_connections(root: Path) -> tuple[Connection, ...]:
+    path = root / "connections.yaml"
+    if not path.exists():
+        return ()
+    try:
+        raw = deepcopy(_parse_yaml(path.read_text(encoding="utf-8")))
+    except (OSError, yaml.YAMLError) as exc:
+        raise StoryPackageError(f"cannot read YAML '{path}': {exc}") from exc
+    if not isinstance(raw, dict):
+        raise StoryPackageError("connection '<unknown>': YAML connections.yaml must be a mapping")
+    items = raw.get("connections")
+    if not isinstance(items, list):
+        raise StoryPackageError("connection '<unknown>': YAML connections.yaml must contain a connections list")
+    result: list[Connection] = []
+    for item in items:
+        connection_id = item.get("id", "<unknown>") if isinstance(item, dict) else "<unknown>"
+        try:
+            result.append(Connection.model_validate(item))
+        except (TypeError, ValidationError) as exc:
+            raise StoryPackageError(f"connection '{connection_id}' is invalid: {exc}") from exc
+    return tuple(result)
 
 
 def _asserted_true_route_operations(operations: tuple[RouteOperation, ...]) -> set[str]:
@@ -1369,6 +1480,7 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
         if not isinstance(raw_deliveries, list):
             raise StoryPackageError("YAML handoffs.yaml must contain a deliveries list")
         deliveries = tuple(FactDelivery.model_validate(item) for item in raw_deliveries)
+        connections = _load_connections(root)
         incidents_path = root / "incidents.yaml"
         if not incidents_path.exists():
             incidents = ()
@@ -1460,6 +1572,7 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
         knowledge_indexes=_compile_knowledge_indexes(knowledge, world),
         deliveries=deliveries,
         incidents=incidents,
+        connections=connections,
     )
     _validate_disclosure_guards(package)
     _validate_knowledge(package)
@@ -1467,6 +1580,7 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
     _validate_authored_handoffs(package)
     _validate_deliveries(package)
     _validate_incidents(package)
+    _validate_connections(package)
     _validate_transition_trigger_sources(package)
     _validate_resolution_entry_guarantees(package)
     _validate_required_reveal_prerequisites(package)

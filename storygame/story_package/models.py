@@ -619,6 +619,23 @@ class RouteOperation(_Model):
     value: str | bool | int | None = None
 
 
+class Connection(_Model):
+    id: str = Field(pattern=_ID)
+    from_place_id: str = Field(pattern=_ID)
+    to_place_id: str = Field(pattern=_ID)
+    via_id: str | None = Field(default=None, pattern=_ID)
+    access_fact_id: str | None = Field(default=None, pattern=_ID)
+    consequences: tuple[RouteOperation, ...] = ()
+    arrival_text: str = Field(min_length=1)
+
+    @field_validator("arrival_text")
+    @classmethod
+    def non_blank_arrival_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("arrival_text must not be empty")
+        return value
+
+
 class FactDelivery(_Model):
     """A diegetic, player-safe way to carry an unearned fact forward."""
 
@@ -687,6 +704,7 @@ class Incident(_Model):
     id: str = Field(pattern=_ID)
     scene_id: str = Field(pattern=_SCENE_ID)
     outcomes: tuple[IncidentOutcome, ...] = Field(min_length=2)
+    recovery_storylet_id: str = Field(pattern=r"^SL-[1-9][A-Z]-[A-Z]$")
     missed_window_event_id: str = Field(pattern=_ID)
     successor_transition_id: str = Field(pattern=_ID)
     observation_knowledge_ids: tuple[str, ...] = ()
@@ -735,6 +753,7 @@ class StoryPackage(_Model):
     knowledge_indexes: KnowledgeIndexes
     deliveries: tuple[FactDelivery, ...]
     incidents: tuple[Incident, ...] = ()
+    connections: tuple[Connection, ...] = ()
 
     @property
     def fact_ids(self) -> frozenset[str]:

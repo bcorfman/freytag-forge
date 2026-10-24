@@ -16,6 +16,10 @@ facts:
   purpose: The tide has turned.
 - id: incident_outcome_resolved
   purpose: An incident outcome has been resolved.
+- id: recovery_cost_paid
+  purpose: The recovery damaged the keeper's remaining chart.
+- id: route_traversed
+  purpose: Ada has used the service connection.
 scene_frames:
 - {scene_id: 1A, situation: The cottage is quiet., pressure: The lamp hour approaches.}
 - {scene_id: 1B, situation: The lamp room is dark., pressure: The light must be tended.}
@@ -42,6 +46,17 @@ knowledge:
   action_evidence: [[find, key]]
   must_convey: [[brass key]]
   delivery_text: Ada finds the brass key.
+- id: k_recover_chart
+  statement: Ada recovers the chart at a cost.
+  entity_ids: [logbook]
+  aliases: [recover chart]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  establishes: [{op: assert, fact_id: chart_copied, value: true}, {op: assert, fact_id: chart_page_torn, value: true}, {op: assert, fact_id: recovery_cost_paid, value: true}, {op: assert, fact_id: incident_outcome_resolved, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-1A-B, realization_id: r0}
+  action_evidence: [[recover, chart]]
+  must_convey: [[recover, chart]]
+  delivery_text: Ada recovers the chart, but the remaining page is damaged.
 - id: k_lamp_room
   statement: Ada entered the lamp room.
   entity_ids: [lamp_room]
