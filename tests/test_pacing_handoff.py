@@ -374,7 +374,7 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     assert Fact(predicate="brandon_identified", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="missing_may_be_alive", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="transport_route_departure_ready", subject="story", value="true") in state.facts.asserted
-    assert state.staged_cue_fact_id == "brandon_identified"
+    assert state.staged_cue_fact_id is None
     assert state.staged_handoff_fact_ids == ()
     assert state.last_turn_delivery.cue_fact_id == "brandon_identified"
     assert state.last_turn_delivery.handoff_staged is True
@@ -396,7 +396,7 @@ def test_handoff_turn_keeps_a_staged_cue_for_the_next_turn() -> None:
     engine.turn("Search the route.")
 
     assert state.current_scene_id == "1C"
-    assert state.staged_cue_fact_id == "transport_route_identified"
+    assert state.staged_cue_fact_id is None
     assert "transport_route_identified" not in state.delivered_cue_ids
 
 
