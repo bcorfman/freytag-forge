@@ -375,7 +375,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1A
-  requires: []
+  requires:
+  - fact_id: memory_card_recovered
+    equals: false
   establishes:
   - op: assert
     fact_id: drawer_gap_pointed_out
@@ -403,7 +405,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1A
-  requires: []
+  requires:
+  - fact_id: memory_card_recovered
+    equals: false
   establishes:
   - op: assert
     fact_id: drawer_gap_pointed_out

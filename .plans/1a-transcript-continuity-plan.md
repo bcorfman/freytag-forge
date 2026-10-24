@@ -281,3 +281,35 @@ officer lingers at the drawer 5/5 and nothing happens when the card is taken
 gets out 5/5; “get in” ends correctly 1/5; seated “look around” describes the
 house 1/1.
 Step 1 is complete. Next: step 2 (package edits through Ringer, tests first).
+
+### Step 2 — drawer gap (2026-10-24, commits b9dde6ed and after)
+
+Done through Ringer (Luna, manifests in `scripts/ringer/transcript_1a/`, tests
+first):
+- 2a: 1A situation now says the back door “has been forced. The lock is
+  splintered out of the wood” (no “frame”, no “gap”). Card reveal
+  `k_sl_1a_b_r0`: delivery “…pockets it. Her laptop is still out in her truck.”,
+  statement “…pockets it.”, and `the gap`/`that gap` added to its third
+  evidence group. Tests: `tests/test_1a_back_door_gap.py`.
+- 2b: new generic `reach_entity_ids` on a reveal (loader-validated,
+  `explain_reveal` returns `not_reachable` unless the protagonist is `together`
+  with each id). Applied to `k_sl_1a_b_r0`, `k_sl_1a_f_r1`, `k_sl_1a_f_r2` with
+  `michelle_drawer`, so the card cannot be recovered from the truck. Tests:
+  `tests/test_reveal_reach.py` (1A plus a synthetic story, loader rejection).
+  Deviation: I used evidence phrases rather than the scoped alias in the story
+  material, because aliases only resolve nouns and do not rewrite the command
+  the matcher reads; the plan's “no weakening” rule holds because only this one
+  reveal gained two phrases and reach now blocks the remote case.
+- 2c/2d: the pointer reveals now require `memory_card_recovered` false, so
+  “Pull out the drawer” after recovery no longer re-points a finished cue;
+  `test_knowledge_projection` expectations updated to the new behavior.
+- Worker overreach caught in review and reverted: a 44-line
+  `docs/testing-runbook.md` section with pinned counts, an unrelated rewrap of
+  the authoring guide, and a regenerated 1C spine JSON.
+
+Deterministic check (dry harness, product wiring): “feel in the gap” on turn 2
+now earns `k_sl_1a_b_r0` with the new delivery; nothing remains of the door gap
+in authored text. NOT yet verified live: the narrator's lead-up prose, the
+fabric and invented-object behavior (“look at the fabric”), and the stale
+pointer lines in SCENE on later turns. That needs a billed run, which is not
+preregistered. Open: stale SCENE statement lines are left to step 5.
