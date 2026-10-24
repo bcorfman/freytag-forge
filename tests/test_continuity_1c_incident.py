@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from storygame.runtime.engine import EngineRefusalTurn, RuntimeEngine
+from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, world_for
@@ -44,13 +44,29 @@ def _provider(knowledge_id: str | None = None, text: str = "Kristin inspects the
     return provide
 
 
-def test_real_package_declares_incident_outcomes_recovery_and_connection() -> None:
+def test_real_package_declares_incident_outcomes_and_recovery_without_connections() -> None:
     assert len(PACKAGE.incidents) == 1
     incident = PACKAGE.incidents[0]
     assert incident.id == "i_1c_freight_transfer"
     assert {outcome.id for outcome in incident.outcomes} == {"copy_numbers", "secure_route"}
     assert incident.recovery_storylet_id == "SL-1C-D"
-    assert PACKAGE.connections[0].via_id == "service_entrance"
+    assert PACKAGE.connections == ()
+
+
+def test_real_package_loads_without_connections_and_service_level_command_falls_through() -> None:
+    assert load_story_package(PACKAGE_ROOT).connections == ()
+    state = _state()
+    calls: list[str] = []
+
+    def recording_provider(command: str):
+        calls.append(command)
+        return _provider()(command)
+
+    RuntimeEngine(state, recording_provider).turn("Go to the service level")
+
+    assert calls == ["Go to the service level"]
+    assert state.turn_index == 1
+    assert state.current_scene_id == "1C"
 
 
 def test_free_observation_establishes_only_observation_facts() -> None:
@@ -177,17 +193,3 @@ def test_save_restore_after_outcome_keeps_facts() -> None:
     restored = _state()
     restored.restore_snapshot(saved)
     assert {"service_level_access_known", "evidence_gap_processing_numbers", "trust_brandon"} <= _facts(restored)
-
-
-def test_service_connection_is_closed_before_access_and_resolves_after_access() -> None:
-    state = _state()
-    engine = RuntimeEngine(state, _provider())
-    before = state.snapshot()
-    refusal = engine.follow_connection("service_level")
-    assert isinstance(refusal, EngineRefusalTurn)
-    assert refusal.narration == "access_closed"
-    assert state.snapshot() == before
-
-    _assert_fact(state, "service_level_access_known")
-    result = engine.follow_connection("service_level")
-    assert result.narration == "Kristin and Brandon reach the service level through the service entrance."

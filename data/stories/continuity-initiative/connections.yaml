@@ -1,7 +1,0 @@
-connections:
-- id: freight_terminal_to_service_level
-  from_place_id: freight_terminal
-  to_place_id: service_level
-  via_id: service_entrance
-  access_fact_id: service_level_access_known
-  arrival_text: Kristin and Brandon reach the service level through the service entrance.

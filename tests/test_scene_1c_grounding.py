@@ -61,15 +61,6 @@ def test_scene_1c_declares_the_service_level_area_hierarchy() -> None:
     assert locations["observation_shaft"].parent == "loading_docks"
 
 
-def test_scene_1c_can_move_into_the_service_level() -> None:
-    state = _scene_1c_state()
-    world = world_for(PACKAGE, state.facts)
-
-    assert world.move("kristin", "service_level").ok
-    assert world.parent("brandon") == "service_level"
-    assert "freight_terminal" in world.chain("kristin")
-
-
 def test_scene_1c_narration_allows_related_facility_areas() -> None:
     state = _scene_1c_state()
     proposal = RuntimeEngine(
