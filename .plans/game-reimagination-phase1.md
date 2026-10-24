@@ -11,8 +11,7 @@ Decisions in section 5 are made. Steps 1-6, 7a-7c and 8 part 1 (scripted playthr
 Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is
 `fc3f63e3`, step 5 is `bd926e15`, step 5b is `78e18467`, step 6 is `45989f14`,
 step 7a is `c633cd16`, step 7b is `9920a3b5`, step 7c is `c7be45a5` (merged in #689), step 8 part 1 is the commit that records this entry.
-Step 9 landed (Brandon offers the moves) and smoke 4 finished 1C -> 2B. Step 9b landed the loader change. Next: smokes for the
-missed window and the secure route, then five fresh human players.
+Step 9 landed (Brandon offers the moves) and smoke 4 finished 1C -> 2B. Step 9b landed the loader change. Smokes 5 and 6 passed. Next: five fresh human players.
 
 ## Step 1 result (2026-10-22)
 
@@ -325,6 +324,15 @@ Full suite 2,490 passed, 16 skipped.
   `transfer_window_missed` equals false. After a miss all three reveals are ineligible;
   `test_invitation_report.py` is back to `unanswered invitation: 0`.
 - Smoke 4 ran before this change. The missed-window path is still unplayed with a model.
+
+## Step 10 result (2026-10-24)
+
+Smokes 5 and 6 (see phase1-live-smoke.md): `--prefix missed_window` and `--prefix secure_route`
+on the probe (`scripts/ringer/phase1/step10-manifest.json`, Codex Luna medium, 1 attempt, 82k
+tokens; full suite 2,493 passed, 16 skipped). Both single rows reached 2B: the missed window
+showed the recovery invitation on turn 5 and the blind player followed it; the secure route
+committed through free text. All three outcome paths now have a live pass, none with a rate.
+Remaining before Phase 1 exit: five fresh human players, and the closing decision in section 4.
 
 ## 1. What exists today (read in source, 2026-10-22)
 
