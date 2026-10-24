@@ -12,14 +12,14 @@ and [1c-contract-result.md](1c-contract-result.md). Phase 1 may begin only
 after implementing the typed incident-outcome, outcome-scoped-cost, and
 traversal contracts named there.
 
-Phase 1 status (2026-10-24): in progress. Steps 1-7 and 8 part 1 of the 8-step plan in
-[game-reimagination-phase1.md](game-reimagination-phase1.md) are committed and
-verified (branch `phase1-step7c-cue-lifecycle`): incident
-declarations, outcome resolution, pressure and missed window, connections and
-traversal, the recovery storylet, and the 1C incident authored on the real
-package. Its section 5 decisions are made. Next is step 8 part 2 (a
-smoke-tested model run, needs a budget go-ahead); that file holds the
-step table and each step's result.
+Phase 1 status (2026-10-24): the build is merged to `main`; the human gate is open. The
+incident slice, cue lifecycle fix, handoff guard, Brandon's offers, the loader change and the
+stall exit (nudge turn 6, withdrawal turn 8) are in. Seven single-row live smokes ran; smokes
+4 to 7 reached 2B on every path (copy numbers, missed window, secure route, stall). Not met:
+five fresh human players, which Brandon may waive or replace with his own playthrough. Known
+gap for Phase 2: a neutral staller stays in 3C. [game-reimagination-phase1.md](game-reimagination-phase1.md)
+holds the step table and each step's result; [phase1-live-smoke.md](phase1-live-smoke.md) holds
+the smokes.
 
 Start with Phase 0, then build the observation-shaft slice in Phase 1. The
 primary question is whether this becomes a game people want to keep playing,
@@ -322,6 +322,24 @@ counter advance. Keep ones that change trust, tactics, risk or emotional meaning
 | 2. Prove portability and finale | Exercise same contracts in the unrelated lighthouse fixture; implement finite 3B→3C evacuation→aftermath crossing | No story-specific engine branches; an earned rescue ends visibly; no return-to-chamber exposition scavenger hunt |
 | 3. Migrate the adventure | Rewrite remaining content in dramatic order, remove redundant storylets and superseded cue paths, audit all declared alternatives | Complete game with every supported outcome reachable and its downstream consequences visible |
 | 4. Qualify and deliver | Whole-game human and raw-language runs, staging verification, release notes and rollback artifact | Gameplay gates below pass on the intended package/model configuration; staged SHA is eligible for production promotion |
+
+### Test-suite consolidation: where it fits
+
+The [test-suite consolidation plan](test-suite-consolidation-plan.md) is a separate effort that
+only touches this one at the frozen set (its section 2f: 21 files owned by Phase 1, including
+the slowest journeys). Schedule, decided 2026-10-24:
+
+- **Now to Phase 2:** its Phases 0 to 3 continue on everything outside the frozen set. Phase 1
+  step 7 is done, so the freeze is technically lifted, but Phase 1 changed several frozen files,
+  so redo its evidence for them before deleting anything.
+- **Leave the frozen journeys until Phase 3 lands.** Phase 3 rewrites the remaining content and
+  removes superseded cue paths, which changes those journeys again. Consolidation Phase 4
+  (frozen set) runs right after Phase 3.
+- **Consolidation Phase 5 (regenerate `tests/shard_durations.json`, shard balance, two green CI
+  runs on `main`) runs before Phase 4 here,** so staging qualification starts from a balanced,
+  faster suite.
+- New tests added by this plan follow the consolidation rule: add one only when it gives complete,
+  useful coverage; the suite is already too big.
 
 Use one bounded implementation cycle per phase with a recorded result before
 expanding scope. If Phase 1 needs repeated wording patches for the same symptom,
