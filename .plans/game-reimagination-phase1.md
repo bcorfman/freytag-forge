@@ -7,11 +7,12 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 ## Resume here
 
-Decisions in section 5 are made. Steps 1-6, 7a, 7b and 7c are done and verified (below).
+Decisions in section 5 are made. Steps 1-6, 7a-7c and 8 part 1 (scripted playthroughs) are done and verified (below).
 Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is
 `fc3f63e3`, step 5 is `bd926e15`, step 5b is `78e18467`, step 6 is `45989f14`,
-step 7a is `c633cd16`, step 7b is `9920a3b5`, step 7c is the commit that records this entry. Next: step 8
-(scripted-provider playthroughs, then a smoke-tested model run).
+step 7a is `c633cd16`, step 7b is `9920a3b5`, step 7c is `c7be45a5` (merged in #689), step 8 part 1 is the commit that records this entry.
+Next: step 8 part 2, a smoke-tested model run, which needs Brandon's budget go-ahead
+(Cloudflare cap, dollar usage with UTC timestamp, player-model budget).
 
 ## Step 1 result (2026-10-22)
 
@@ -240,6 +241,27 @@ passed, 16 skipped; Ruff clean.
   across a handoff and now require it cleared.
 - Not verified: no model play; typed `obsolete_when` predicates were not added (the
   check reuses fact state and reveal eligibility).
+
+## Step 8 part 1 result (2026-10-24)
+
+Ringer run `game-reimagination-phase1`, Codex Luna medium, 1 attempt, 141k tokens,
+561 s; manifest `scripts/ringer/phase1/step8-manifest.json`. Full suite 2,473 passed,
+16 skipped; Ruff clean. Test-only change.
+
+- `tests/test_phase1_slice_playthroughs.py`: four hermetic playthroughs on the real
+  package (copy numbers, secure route, missed window with recovery, save/load on the
+  copy and missed-window journeys), each reaching 2B within the turn budget.
+- The worker marked two journeys strict-xfail as an engine defect. That was wrong:
+  the journey script omitted `_advance_to_2b`, and the 2A reveal is eligible
+  (`explain_reveal` returned eligible). Fixed in the test; no xfail remains.
+- **Design finding, needs a decision.** Every incident outcome completes 1C and enters
+  2A on the same turn, so the `freight_terminal_to_service_level` connection cannot be
+  used from free text in a real journey: the player has already left 1C when
+  `service_level_access_known` becomes true. Traversal is covered only by the unit
+  test that asserts the fact without the outcome transition. Options: drop the
+  connection from this slice, or give it a use (for example a post-outcome 1C
+  pause before the handoff).
+- Not done: the smoke-tested model run (part 2); no billed call was made.
 
 ## 1. What exists today (read in source, 2026-10-22)
 
