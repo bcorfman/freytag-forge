@@ -1,0 +1,13 @@
+connections:
+  - id: cottage_to_service_level
+    from_place_id: cottage
+    to_place_id: service_level
+    via_id: sea_chest
+    access_fact_id: brass_key_found
+    consequences:
+      - {op: assert, fact_id: route_traversed, value: true}
+    arrival_text: Ada reaches the service level.
+  - id: cottage_to_parlour
+    from_place_id: cottage
+    to_place_id: parlour
+    arrival_text: Ada steps into the parlour.

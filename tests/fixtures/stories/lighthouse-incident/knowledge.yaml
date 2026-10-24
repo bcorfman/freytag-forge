@@ -16,6 +16,8 @@ facts:
   purpose: The tide has turned.
 - id: incident_outcome_resolved
   purpose: An incident outcome has been resolved.
+- id: route_traversed
+  purpose: Ada has used the service connection.
 scene_frames:
 - {scene_id: 1A, situation: The cottage is quiet., pressure: The lamp hour approaches.}
 - {scene_id: 1B, situation: The lamp room is dark., pressure: The light must be tended.}

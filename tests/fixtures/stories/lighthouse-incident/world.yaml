@@ -13,6 +13,8 @@ locations:
   name: the shore
 - id: lamp_room
   name: lamp room
+- id: service_level
+  name: service level
 npcs:
 - id: ada
   name: Ada Lovell
@@ -52,6 +54,7 @@ facts:
 - chart_page_torn
 - tide_has_turned
 - incident_outcome_resolved
+- route_traversed
 - id: brass_key_found
   on_assert:
   - {move: brass_key, parent: ada, text: in Ada's coat pocket}

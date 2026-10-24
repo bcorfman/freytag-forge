@@ -7,11 +7,11 @@ Parent: [game-reimagination-plan.md](game-reimagination-plan.md). Contract:
 
 ## Resume here
 
-Decisions in section 5 are made. Steps 1-4 are done and verified (below).
-Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is the
-commit that records this entry. Decision 4 (2026-10-23) settles
-what follows a missed window. Next: step 5
-(`connections` and the traversal action), as a Ringer manifest.
+Decisions in section 5 are made. Steps 1-5 are done and verified (below).
+Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is
+`fc3f63e3`, step 5 is the commit that records this entry. Decision 4
+(2026-10-23) settles what follows a missed window. Next: step 5b
+(`recovery_storylet_id`), as a Ringer manifest, then step 6.
 
 ## Step 1 result (2026-10-22)
 
@@ -116,6 +116,28 @@ tokens, 406 s. Tests only, no engine change: added
 the scene indefinitely; no backstop, no successor. The contract wants a grounded
 recovery or an honest failure/return path. Options: a package-declared recovery
 storylet, or a typed incident field declaring a withdrawal transition. 
+
+## Step 5 result (2026-10-24)
+
+Ringer run `game-reimagination-phase1`, Codex Luna medium, 1 attempt, 128k
+tokens, 886 s. Added optional `connections.yaml` (`Connection`,
+`StoryPackage.connections`, loader validation of 8 cases), the pure
+`storygame/runtime/traversal.py` (`resolve_traversal`; refusals `no_route`,
+`access_closed`, `already_there`; containment-aware, so a place inside the
+`from` place counts), `RuntimeEngine.follow_connection(destination_id)`, lighthouse
+fixture connections, and `tests/test_traversal.py` (17). Focused 53 pass, 1
+skipped; full suite 2,431 passed, 16 skipped; Ruff clean.
+
+- `follow_connection` is one atomic, provider-free accepted turn: it moves the
+  protagonist, asserts the consequences, appends the arrival text, then runs the
+  same post-turn sequence as `_turn_active`, so it burns the incident window; a
+  refusal changes nothing.
+- It **duplicates** the post-turn sequence of `_turn_active` (about 20 lines).
+  Extract a shared helper when step 7 touches that code.
+- **Not wired to player text.** Nothing calls `follow_connection` from free-text
+  input yet. The worker's suggestion: resolve a proposed destination name to a
+  connection after the existing proposal/reference boundary, then call it. Decide
+  the wiring in step 6 or 7; the real package has no connections until step 6.
 
 ## 1. What exists today (read in source, 2026-10-22)
 
