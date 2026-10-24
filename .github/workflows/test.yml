@@ -59,7 +59,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Run fast feedback tests
-        run: TMPDIR=/tmp uv run pytest -q --no-cov -n 4 -m "(unit or component) and not authoring_quality"
+        run: TMPDIR=/tmp uv run python scripts/quick_suite.py -- -n 4 -m "(unit or component) and not authoring_quality"
 
   test-shard:
     name: Test shard ${{ matrix.shard }}

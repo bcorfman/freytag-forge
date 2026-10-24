@@ -36,7 +36,7 @@ CI and pre-merge verification still run the complete suite.
 ```bash
 TMPDIR=/tmp uv run pytest -q                                  # full suite without coverage
 TMPDIR=/tmp uv run pytest -q --cov                           # full suite + 90% coverage gate
-TMPDIR=/tmp uv run pytest -q --no-cov -m "(unit or component) and not authoring_quality"  # CI fast feedback
+TMPDIR=/tmp uv run python scripts/quick_suite.py -- -n 4 -m "(unit or component) and not authoring_quality"  # CI fast feedback
 TMPDIR=/tmp uv run pytest -q --no-cov -m authoring_quality    # package authoring checks
 TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index N --shard-count 6  # one CI coverage shard; files are assigned by tests/shard_durations.json
 uv run coverage combine coverage-data && uv run coverage report  # nightly gate (coverage-nightly.yml)
