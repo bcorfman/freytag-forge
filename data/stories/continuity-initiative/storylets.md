@@ -96,9 +96,11 @@ Each entry below is authoring data, not a player action menu.
 
 **Possible realizations**
 - Kristin searches beneath the KMS drawer, finds Michelle's hidden memory card, and keeps it with her.
+- While a patrol officer is in the house, Kristin finds the card in plain sight of the officer, who challenges her.
 
 **Effects**
 - May set `memory_card_recovered` when Kristin finds the card.
+- May set `card_challenged` and `kristin_marked_by_patrol` when an officer sees Kristin take the card.
 
 **Completion**
 - Kristin has Michelle's memory card.

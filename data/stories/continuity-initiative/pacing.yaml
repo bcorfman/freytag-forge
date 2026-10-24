@@ -58,6 +58,10 @@ events:
   - fact_id: pursuit_closing_in
     equals: true
   realizations:
+  - when:
+    - fact_id: kristin_marked_by_patrol
+      equals: true
+    text: The pursuers already have a description of Kristin. They are closing in through the park.
   - text: The pursuers are closing in through the park. The pursuit is not over.
 - id: transfer_window_1c
   scene_id: 1C

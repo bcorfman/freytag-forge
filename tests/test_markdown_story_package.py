@@ -605,6 +605,7 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
     expected = {
         "k_sl_1a_a_r1",
         "k_sl_1a_b_r0",
+        "k_sl_1a_b_r0w",
         "k_sl_1a_f_r1",
         "k_sl_1a_f_r2",
         "k_sl_1a_b_r1",

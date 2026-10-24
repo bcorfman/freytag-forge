@@ -313,3 +313,31 @@ in authored text. NOT yet verified live: the narrator's lead-up prose, the
 fabric and invented-object behavior (“look at the fabric”), and the stale
 pointer lines in SCENE on later turns. That needs a billed run, which is not
 preregistered. Open: stale SCENE statement lines are left to step 5.
+
+### Step 3 — patrol arrival, presence and consequence (2026-10-24)
+
+Done through Ringer (Luna, high effort, tests first). Capability finding:
+`incidents.yaml` models a scene-exit decision window (`completes_scene`,
+successor transition) and would block leaving 1A, so it does not fit a witnessed
+recovery. No new engine capability was needed: the existing techniques cover it
+(exclusive reveals gated on a presence fact, a second storylet realization,
+fact-driven npc moves, pacing events).
+- 3a: `pressure_1a` replaced by `patrol_arrives_1a` (turn 4),
+  `patrol_enters_1a` (5), `patrol_leaves_1a` (7), `patrol_returns_1a` (9, “coming
+  back” only when `patrol_departed`). New npc `patrol_officer` is moved by
+  `patrol_on_scene` / `patrol_in_house` / `patrol_departed`; unplaced before
+  arrival. 1A `min_turns` 8→9 (the exit trigger now arrives at turn 9). Old
+  `pressure_1a` pins in six test files updated.
+- 3b: `k_sl_1a_b_r0w` (SL-1A-E-R2) fires instead of `k_sl_1a_b_r0` while
+  `patrol_in_house` is true: the delivery ends with the officer's challenge, and
+  `card_challenged` plus `kristin_marked_by_patrol` commit; custody does not
+  change. `pursuit_1b` has a first line gated on `kristin_marked_by_patrol`.
+  Plot 1A.4 and SL-1A-E text updated; the “Kristin conceals the card” sentence
+  is gone.
+- Known by design: THINGS lists a character only when the command names them
+  (context bound), so the officer reaches the narrator through the authored
+  lines and the committed statement, not a standing roster line. Whether that
+  suffices is a live question.
+- Not done: the three-way response (deflect, hand over, walk out) is free text
+  with no engine-resolved outcome; hand-over is the player's own act.
+  Not verified live: narrator behavior after the challenge.

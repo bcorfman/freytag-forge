@@ -151,6 +151,16 @@ new_fact_ids:
   - SL-1A-D
   used_by_transitions:
   - t_1a_1b
+- id: card_challenged
+  definition: A patrol officer saw Kristin take Michelle's memory card and challenged her.
+  used_by_storylets:
+  - SL-1A-E
+  used_by_transitions: []
+- id: kristin_marked_by_patrol
+  definition: The patrol has Kristin marked as someone to watch.
+  used_by_storylets:
+  - SL-1A-E
+  used_by_transitions: []
 - id: drawer_gap_pointed_out
   definition: Kristin has been pointed toward the thin gap beneath Michelle's workstation drawer.
   used_by_storylets:
@@ -643,6 +653,26 @@ storylets:
     operations:
     - op: assert
       fact_id: memory_card_recovered
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers:
+    - t_1a_1b
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  - id: SL-1A-E-R2
+    dramatic_intent: Kristin finds the hidden card while a patrol officer is in the house, and the officer challenges her.
+    source_beats: [scene-1a1--michelle-is-gone]
+    operations:
+    - op: assert
+      fact_id: memory_card_recovered
+      value: true
+    - op: assert
+      fact_id: card_challenged
+      value: true
+    - op: assert
+      fact_id: kristin_marked_by_patrol
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers:

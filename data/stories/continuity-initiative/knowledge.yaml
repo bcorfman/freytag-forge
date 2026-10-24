@@ -342,7 +342,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1A
-  requires: []
+  requires:
+  - fact_id: patrol_in_house
+    equals: false
   establishes:
   - op: assert
     fact_id: memory_card_recovered
@@ -370,6 +372,58 @@ knowledge:
   - [beneath the KMS drawer, under the KMS drawer, beneath the drawer]
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
   delivery_text: "Kristin's fingers find something taped beneath the drawer. She peels it loose. It is Michelle's memory card, and she pockets it. Her laptop is still out in her truck."
+- id: k_sl_1a_b_r0w
+  statement: An officer saw Kristin take Michelle's memory card and asked what it is.
+  reach_entity_ids: [michelle_drawer]
+  earn_when: searches the drawer, the gap in the drawer, or the space beneath it
+  action_evidence:
+  - [look, search, inspect, check]
+  - [under, beneath, underside, gap, lower edge, bottom edge]
+  - [drawer, KMS, workstation, "drawer's", the gap, that gap]
+  entity_ids: [kristin, michelle, memory_card, michelle_drawer]
+  aliases:
+  - memory card recovered in sight of the patrol
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires:
+  - fact_id: patrol_in_house
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: memory_card_recovered
+    value: true
+  - op: assert
+    fact_id: card_challenged
+    value: true
+  - op: assert
+    fact_id: kristin_marked_by_patrol
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-E
+    realization_id: SL-1A-E-R2
+  relevance:
+    entity_ids: [memory_card, michelle_drawer]
+    priority: 10
+  leak_terms:
+  - memory card
+  - hidden memory card
+  - hidden card
+  - Michelle's card
+  - the card
+  - taped beneath the drawer
+  - taped under the drawer
+  - taped to the drawer
+  - memory card recovered
+  must_convey:
+  - [memory card, card, Michelle's card, the card, hidden card, hidden memory card]
+  - [taped]
+  - [beneath the KMS drawer, under the KMS drawer, beneath the drawer]
+  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
+  delivery_text: 'Kristin''s fingers find something taped beneath the drawer. She peels it loose. It is Michelle''s memory card, and she pockets it. The officer turns at the sound. "What have you got there?" His hand is already out.'
 - id: k_sl_1a_f_r1
   statement: "Kristin opens the drawer and is pointed toward the thin gap beneath its lower edge."
   reach_entity_ids: [michelle_drawer]
