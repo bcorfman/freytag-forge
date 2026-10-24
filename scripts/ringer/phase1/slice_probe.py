@@ -25,6 +25,21 @@ from storygame.story_package.models import scene_entry_texts  # noqa: E402
 
 CAPS = {"cloudflare": 80, "player": 40}
 MAX_COMMANDS = 30
+PREFIXES = {
+    "none": (),
+    "missed_window": (
+        "Wait quietly and listen for movement.",
+        "Inspect the loading docks for a security route.",
+        "Listen to the ventilation system for a change.",
+        "Examine the observation shaft for movement.",
+        "Check the terminal doors for a safe exit.",
+    ),
+    "secure_route": (
+        "Check the loading docks for signs of activity.",
+        "Look through the observation shaft at the people below.",
+        "Ask Brandon about the transfer route.",
+    ),
+}
 INCIDENT_FACTS = {
     "copy_numbers": "processing_numbers_copied",
     "secure_route": "service_level_access_known",
@@ -52,6 +67,8 @@ ROW_FIELDS = (
     "repeated_response_streak_max",
     "final_true_facts",
     "stuck_loop",
+    "prefix",
+    "scripted_turns",
 )
 
 
@@ -146,7 +163,10 @@ def _provider_payload(selected: str | None, text: str | None = None) -> dict[str
             "Kristin uses the copied prisoner numbers to support the cooling-water explanation. "
             "The supervisor grants restricted corridor access."
         ),
-        "k_sl_2a_c_r4": "Kristin uses the known service route to explain the inspection approach to the supervisor.",
+        "k_sl_2a_c_r4": (
+            "Kristin uses the known service route and the known service approach to explain the inspection approach; "
+            "the supervisor reduces his scrutiny and grants restricted corridor access."
+        ),
         "k_sl_2a_b_r1": "Kristin checks the cooling-water weakness and Brandon builds their inspection cover.",
         "k_sl_2a_e_r1": (
             "Kristin presents the inspector credentials at the facility checkpoint and reaches the facility perimeter."
@@ -234,7 +254,8 @@ def _run_row(
     budget: SpendBudget,
     row_id: str,
     trace: list[dict[str, str]] | None = None,
-    scripted: bool = False,
+    prefix: str = "none",
+    dry_scripted: bool = False,
 ) -> dict[str, Any]:
     incident = package.incidents[0]
     screen = _entry_screen(package, state)
@@ -244,12 +265,15 @@ def _run_row(
     turns: list[dict[str, Any]] = []
     clarifications = rejections = segments_dropped = 0
     engine = RuntimeEngine(state, provider)
-    command = ask_player(screen, budget)
+    prefix_commands = PREFIXES[prefix]
+    prefix_index = 0
+    command = prefix_commands[0] if prefix_commands else ask_player(screen, budget)
     turns_in_1c = 0
     previous_response: str | None = None
     current_response_streak = 0
     repeated_response_streak_max = 0
     while len(commands) < MAX_COMMANDS:
+        is_scripted_prefix_turn = prefix_index < len(prefix_commands)
         scene_before = state.current_scene_id
         before = _true_fact_ids(state)
         before_keys = _fact_keys(state)
@@ -303,9 +327,12 @@ def _run_row(
                 "delivered_cue_ids": sorted(state.delivered_cue_ids),
                 "segments_dropped": state.last_turn_delivery.segments_dropped,
                 "repeated_response": repeated_response,
+                "scripted": is_scripted_prefix_turn,
             }
         )
-        if scripted and state.current_scene_id == "2A":
+        if is_scripted_prefix_turn:
+            prefix_index += 1
+        if dry_scripted and state.current_scene_id == "2A":
             state.active_event_ids.add("SL-2A-C")
         if state.current_scene_id == "2B":
             ended_by = "scene_2b"
@@ -316,7 +343,10 @@ def _run_row(
         if len(commands) >= MAX_COMMANDS:
             ended_by = "command_cap"
             break
-        command = ask_player(screen + "\n\n" + "\n".join(responses), budget)
+        if prefix_index < len(prefix_commands):
+            command = prefix_commands[prefix_index]
+        else:
+            command = ask_player(screen + "\n\n" + "\n".join(responses), budget)
     else:
         ended_by = "command_cap"
     final_scene = state.current_scene_id
@@ -344,6 +374,8 @@ def _run_row(
         "repeated_response_streak_max": repeated_response_streak_max,
         "final_true_facts": sorted(_true_fact_ids(state)),
         "stuck_loop": repeated_response_streak_max >= 3,
+        "prefix": prefix,
+        "scripted_turns": sum(turn["scripted"] for turn in turns),
     }
 
 
@@ -352,9 +384,11 @@ def _write(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def run(out: Path, n: int, dry: bool, confirm: bool) -> int:
+def run(out: Path, n: int, dry: bool, confirm: bool, prefix: str = "none") -> int:
     if not dry and not confirm:
         raise SystemExit("live mode requires --confirm")
+    if prefix not in PREFIXES:
+        raise ValueError(f"unknown prefix: {prefix}")
     variation = load_variation(ROOT / "bench/variations/phase1-slice-current.json")
     package = load_story_package(Path(variation["_package_path"]))
     rows: list[dict[str, Any]] = []
@@ -365,9 +399,51 @@ def run(out: Path, n: int, dry: bool, confirm: bool) -> int:
             state = _state(package)
             if dry:
                 commands, selections = _commands_for("dry")
+                if prefix == "missed_window":
+                    commands = [
+                        "Follow Brandon through the service entrance.",
+                        "Check the cooling-water weakness.",
+                        "Present the inspector credentials at the facility checkpoint.",
+                        "Use the known service route to explain the inspection approach to the supervisor.",
+                        *["Check the restricted corridor for a safe passage."] * 7,
+                    ]
+                    selections = [
+                        "k_sl_1c_d_r1",
+                        "k_sl_2a_b_r1",
+                        "k_sl_2a_e_r1",
+                        "k_sl_2a_c_r4",
+                        *([None] * 5),
+                    ]
+                elif prefix == "secure_route":
+                    commands = [
+                        "Check the cooling-water weakness.",
+                        "Present the inspector credentials at the facility checkpoint.",
+                        "Use the known service route to explain the inspection approach to the supervisor.",
+                        *["Check the restricted corridor for a safe passage."] * 5,
+                    ]
+                    selections = [
+                        "k_sl_2a_b_r1",
+                        "k_sl_2a_e_r1",
+                        "k_sl_2a_c_r4",
+                        *([None] * 5),
+                    ]
+                if prefix == "missed_window":
+                    selections = [None, "k_sl_1c_a_r1", None, "k_sl_1c_b_r2", None] + selections
+                elif prefix == "secure_route":
+                    selections = ["k_sl_1c_a_r1", "k_sl_1c_b_r2", "k_sl_1c_c_secure_route"] + selections
                 provider = _ScriptedProvider(state, selections)
                 ask = _scripted_player(commands, budget)
-                row = _run_row(package, state, provider, ask, budget, f"phase1-slice-{rep:02d}-current", trace, True)
+                row = _run_row(
+                    package,
+                    state,
+                    provider,
+                    ask,
+                    budget,
+                    f"phase1-slice-{rep:02d}-current",
+                    trace,
+                    prefix,
+                    True,
+                )
             else:
                 provider = provider_for(state, variation)
                 with counted_provider(provider, budget):
@@ -379,6 +455,7 @@ def run(out: Path, n: int, dry: bool, confirm: bool) -> int:
                         budget,
                         f"phase1-slice-{rep:02d}-current",
                         trace,
+                        prefix,
                     )
             rows.append(row)
             _write(out / "results.json", {"mode": "dry" if dry else "live", "rows": rows, "caps": CAPS, "n": n})
@@ -407,8 +484,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--confirm", action="store_true")
+    parser.add_argument("--prefix", choices=tuple(PREFIXES), default="none")
     args = parser.parse_args(argv)
-    return run(args.out, args.n, args.dry_run, args.confirm)
+    return run(args.out, args.n, args.dry_run, args.confirm, args.prefix)
 
 
 if __name__ == "__main__":

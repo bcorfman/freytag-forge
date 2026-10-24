@@ -108,3 +108,53 @@ One row, a raw blind player, no retries.
 - Still open: three `transfer_window_missed == false` prerequisites were rejected by the
   loader (it counts only reveals as producers of a fact); the 1C-A observation can still be
   earned after a miss (`test_invitation_report.py` records one unanswered invitation).
+
+## Smokes 5 and 6: scripted prefixes (2026-10-24, before any billed call)
+
+Question: do the two paths smoke 4 did not exercise work against the real narrator after
+step 9b: the missed window with its recovery invitation (smoke 5) and the secure route
+(smoke 6)? Same design, caps and keep rule as above; one row each, no retries, no pooling,
+and never pooled with smokes 1-4 (different start: a scripted prefix).
+
+- `--prefix missed_window` (smoke 5): five scripted commands that earn no outcome and let
+  the window close on turn 5 (the commands of the missed-window journey in
+  `tests/test_phase1_slice_playthroughs.py`). The raw blind player takes over from turn 6 and
+  sees the verbatim recovery invitation. Scripted turns spend no player request.
+- `--prefix secure_route` (smoke 6): three scripted commands: check the loading docks, look
+  through the observation shaft, then "Ask Brandon about the transfer route." The raw
+  player continues after the outcome. This forces the choice; it tests the path, not what a
+  stranger would choose.
+- Outputs: `bench/results/phase1-slice-smoke-5-missed/` and `-6-secure/`. Each row records
+  its prefix and the number of scripted turns.
+- Smoke 5 passes if the player takes the recovery (or a path to 2B) without a stuck loop,
+  stale cue or false outcome; if the player does not find the recovery in 25 further turns that
+  is a finding about the invitation, not a harness fault. Smoke 6 passes if the outcome
+  commits through free text (`secure_route`), the 2A service-route variant shows, and the row
+  reaches 2B.
+
+## Results of smokes 5 and 6 (2026-10-24)
+
+Artifacts: `bench/results/phase1-slice-smoke-5-missed/` and `-6-secure/` (gitignored;
+local). One row each, no retries, run on `main` at `e741af7a` plus the prefix option.
+Ringer showed FAIL for both only because `expect_files` resolves against its workdir; the
+artifacts check passes (fix the manifest convention before the next smoke).
+
+- **Smoke 5 (missed window): pass.** Five scripted turns; the window closed on turn 5 and the
+  verbatim line showed in that response ("The view down the observation shaft goes dark.
+  Brandon says, 'That chance is gone. We can still try the service entrance. Follow me
+  through it ...'"). The blind player's first turn was "Follow Brandon through the service
+  entrance.", which earned the recovery (`k_sl_1c_d_r1`), entered 2A with the service-route
+  variant, and reached 2B at turn 13. Facts show the honest cost: `evidence_gap_processing_numbers`,
+  `trust_brandon`, `terminal_sweep_closing`; no copied numbers; `exit_cause`
+  `missed_window_plus_recovery`. 0 recoveries, 0 rejections, no stale cue, no loop.
+- **Smoke 6 (secure route): pass.** The scripted "Ask Brandon about the transfer route." committed
+  `k_sl_1c_c_secure_route` through free text on turn 3, entered 2A with the service-route
+  variant and reached 2B at turn 10. Same cost facts; no stale cue, no loop.
+- Seen, not blocking: the live narrator's own sentences sometimes disagree with the authored
+  delivery that follows them (smoke 6, turn 3: Brandon says they must get past the
+  processing line first, then the authored line says he opens the service entrance). The
+  authored text is what commits; a narrator-consistency item for later. Segments dropped: 2 in
+  smoke 5, 1 in smoke 6.
+- Not shown: the prefixes are scripted, so these prove the paths work through the real
+  narrator and matcher, not that strangers would choose them. Smoke 4 showed a blind player
+  taking copy-numbers unprompted. The Phase 1 exit criterion still needs five fresh humans.

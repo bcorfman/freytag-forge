@@ -47,6 +47,34 @@ def test_dry_run_real_package_passes_checker(tmp_path: Path) -> None:
         <= turn.keys()
         for turn in row["turns"]
     )
+    assert row["prefix"] == "none"
+    assert row["scripted_turns"] == 0
+    assert not any(turn["scripted"] for turn in row["turns"])
+
+
+@pytest.mark.parametrize("prefix", ["missed_window", "secure_route"])
+def test_dry_run_prefixes_pass_checker_and_do_not_spend_prefix_player_requests(tmp_path: Path, prefix: str) -> None:
+    assert slice_probe.run(tmp_path, 1, True, False, prefix) == 0
+    assert check_slice_probe.check(tmp_path, 1, "dry") == []
+    artifact = json.loads((tmp_path / "results.json").read_text())
+    row = artifact["rows"][0]
+    assert row["prefix"] == prefix
+    assert row["scripted_turns"] == len(slice_probe.PREFIXES[prefix])
+    assert [turn["scripted"] for turn in row["turns"][: row["scripted_turns"]]] == [True] * row["scripted_turns"]
+    assert not any(turn["scripted"] for turn in row["turns"][row["scripted_turns"] :])
+    summary = json.loads((tmp_path / "summary.json").read_text())
+    assert summary["player_requests"] == len(row["commands"]) - row["scripted_turns"]
+
+
+def test_missed_window_prefix_closes_window_without_advantage(tmp_path: Path) -> None:
+    assert slice_probe.run(tmp_path, 1, True, False, "missed_window") == 0
+    row = json.loads((tmp_path / "results.json").read_text())["rows"][0]
+    assert "transfer_window_missed|story|None|true" in row["turns"][4]["facts_newly_asserted"]
+    assert not any(
+        fact_id.startswith(("processing_numbers_copied|", "service_level_access_known|"))
+        for turn in row["turns"][:5]
+        for fact_id in turn["facts_newly_asserted"]
+    )
 
 
 class _FixedTextProvider:
