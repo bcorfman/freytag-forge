@@ -6,11 +6,12 @@ no runtime changes, model calls, or deployment have been performed.
 
 ## Resume here
 
-Step 1's free, stubbed baseline is recorded below. Next: the billed live
-capture of step 1 needs a preregistration, an engine choice and a budget from
-Brandon, and steps 2 and 3 need plot material (drawer-gap wording, the
-observed-recovery outcome) written in ChatGPT Desktop, so none of those has
-started. Original step-1 note: capture the reported sequence through the current runtime,
+Step 1's free, stubbed baseline is recorded below. Drafted 2026-10-24 and
+awaiting Brandon's approval, nothing applied or billed:
+[story material and observed-recovery outcome](1a-transcript-continuity/story-material.md)
+(steps 2 to 4 wording, written by Claude as IF writer at Brandon's direction)
+and the [live baseline preregistration](1a-transcript-continuity/baseline-live-prereg.md)
+(step 1, billed part; needs his approval and engine pick). Original step-1 note: capture the reported sequence through the current runtime,
 including prompts and committed facts. The user supplied prose, but no session
 ID, deployed SHA, model payloads, or save. Do not claim that this checkout
 produced the transcript or that the causes below have been reproduced.
