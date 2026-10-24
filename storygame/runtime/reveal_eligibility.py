@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import predicate_matches
+from storygame.runtime.world_model import world_for
 from storygame.story_package.models import KnowledgeDefinition
 
 ELIGIBLE = "eligible"
@@ -13,6 +14,7 @@ ALREADY_ESTABLISHED = "already_established"
 NOT_VISIBLE = "not_visible"
 STORYLET_SPENT = "storylet_spent"
 PREREQUISITE_MISSING = "prerequisite_missing"
+NOT_REACHABLE = "not_reachable"
 SOURCE_INACTIVE = "source_inactive"
 
 
@@ -57,6 +59,11 @@ def explain_reveal(state: RuntimeState, audience_id: str, item: KnowledgeDefinit
     for predicate in item.requires:
         if not predicate_matches(predicate, state.facts):
             return RevealEligibility(False, PREREQUISITE_MISSING, predicate.fact_id)
+    if item.reach_entity_ids:
+        world = world_for(state.package, state.facts)
+        for entity_id in item.reach_entity_ids:
+            if not world.together(state.package.world.protagonist_id, entity_id):
+                return RevealEligibility(False, NOT_REACHABLE, entity_id)
     if item.source.kind != "storylet_realization" or item.source.storylet_id not in state.active_event_ids:
         return RevealEligibility(False, SOURCE_INACTIVE, item.source.storylet_id or item.source.kind)
     return RevealEligibility(True, ELIGIBLE)

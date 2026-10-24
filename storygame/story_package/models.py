@@ -144,6 +144,7 @@ class KnowledgeDefinition(_Model):
     id: str = Field(pattern=_ID)
     statement: str = Field(min_length=1)
     entity_ids: tuple[str, ...] = ()
+    reach_entity_ids: tuple[str, ...] = ()
     aliases: tuple[str, ...] = Field(min_length=1)
     audience: Audience
     available_in_scenes: tuple[str, ...] = Field(min_length=1)
