@@ -9,7 +9,7 @@ from typing import Any
 from storygame.runtime.fixed_refusal import fixed_refusal_text, refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev_questions import (
-    goes_to_vehicle,
+    boards_vehicle,
     moves_thing,
     names_other_action,
     needs_to_stand,
@@ -91,7 +91,7 @@ class WorldCapture:
         else:
             standing = stand_before_leave(world, package, command, lambda c, s, r: needs_to_stand(adapter, c, s, r))
             taking = take_before_put(world, package, command, lambda c, t: moves_thing(adapter, c, t))
-            boarding = board_vehicle(world, package, command, lambda c, v: goes_to_vehicle(adapter, c, v))
+            boarding = board_vehicle(world, package, command, lambda c, v: boards_vehicle(adapter, c, v))
             seating = (
                 seat_before_use(world, package, command, lambda c, t: uses_thing(adapter, c, t))
                 if not standing.steps and not boarding.steps

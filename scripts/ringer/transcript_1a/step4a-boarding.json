@@ -1,0 +1,33 @@
+{
+ "run_name": "1a-continuity-step4",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-step4",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "step4a-boarding",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 4800,
+   "check_timeout_s": 2400,
+   "ownership": [
+    "storygame/runtime/seating.py",
+    "storygame/runtime/jev_questions.py",
+    "storygame/runtime/capture.py",
+    "tests/test_boarding.py",
+    "docs/world-model-grounding.md"
+   ],
+   "spec": "You are changing one generic engine behavior in freytag-forge (Python 3.12): when the player boards a vehicle. Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: storygame/runtime/seating.py, storygame/runtime/jev_questions.py, storygame/runtime/capture.py, tests/test_boarding.py, and any existing test that pins the changed behavior (e.g. a jev question test, tests/test_world_capture*.py) plus ONE short paragraph in docs/world-model-grounding.md where it describes a vehicle's seat and `notice_text` (do not touch docs/testing-runbook.md; do not reformat other text). Shared runtime must contain NO story names (no Kristin, truck, laptop, Michelle). Never edit data/, bench/frozen/, .env.\n\nMEASURED PROBLEM (live game, 5 of 5 playthroughs of Scene 1A). (1) 'go out to the truck' made the engine seat the player in the driver's seat (the Jev yes/no question `goes_to_vehicle` counts going TO a vehicle as boarding it), then the narrator wrote 'she gets out of the driver's seat' and the committed place ended up outside: a contradiction. (2) A bare 'get in' after walking to the truck did nothing at all, because board_vehicle only acts when the command NAMES the vehicle: no seating step, no notice of what sits in the cab, and the narrator sent the player back toward the house in 4 of 5 runs.\n\nREQUIRED BEHAVIOR. (a) Approaching is not boarding. Rename the Jev question to `boards_vehicle` (function `boards_vehicle` in jev_questions.py, update every caller and test) with instructions 'Decide whether the command has the player get into the vehicle, sit in it, or drive it.' and criteria true: 'The command means getting into the vehicle, sitting in it, or driving it.' false: 'The command only walks or goes to the vehicle, approaches it, looks at it, touches it, talks about it, or leaves it.' Keep the answer plumbing (`_answer`) as is. (b) Contextual boarding: board_vehicle also acts when the command names NO vehicle, provided exactly one candidate vehicle (visible, with a visible seat, protagonist not already seated in it) is in the SAME AREA as the protagonist (`world.area(vehicle_id) == world.area(protagonist)`); then ask the same question with that vehicle's name. If two or more candidate vehicles share the area, or none does, ask nothing and do not board. If the command names a vehicle, behavior is as before (ask about the named vehicle, boarding only when the answer is true). A command that names a DIFFERENT thing than a vehicle is still allowed to trigger the contextual question (the Jev answer decides). (c) Everything else stays: the first seat, `enter_text`, a visible `notice_text` for each item in the vehicle that the protagonist does not hold (so a laptop carried away or left elsewhere is not announced), no boarding when already seated, the unanswered-question issue text, SeatingResult fields. Repeated 'get in' while seated must produce no second notice and no leave/re-enter.\n\nTESTS FIRST, in tests/test_boarding.py (the existing tests there use the shipped package; keep them passing but adapt names/stubs for the rename). Add, small and complete: (1) approach: with the answer function returning False for 'Go out to Kristin's truck.' nothing moves; with it returning True for 'Get in Kristin's truck.' the player is seated with the same two steps as today. (2) contextual: protagonist outside_house, laptop on the passenger seat, 'Get in.' with an answer function returning True boards and yields the enter step then the passenger-seat notice; with the protagonist INSIDE the house the answer function is never called and nothing moves. (3) laptop carried (move it to the protagonist) or left in the house: boarding yields only the enter step. (4) already seated: 'Get in.' asks nothing. (5) a synthetic second story proving the behavior has no truck-specific logic: build the smallest package/world you can (reuse tests/test_cue_eligibility_compare.py `_synthetic_package()` or the helpers other synthetic tests use; if none can host a vehicle with a seat, build the minimal world in the test with worldkeeper directly) with a DIFFERENT vehicle (for example a boat with a seat and an item with notice_text) and show named boarding, contextual boarding with one vehicle, and no contextual boarding with two vehicles in the same area. Update the capture-path test (test_capture_records_boarding_steps_and_prefix) for the renamed question key.\n\nFINISH: ruff format and ruff check every .py you touched; run the focused suites in the check until they pass; report every old test you changed and why.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && ls tests/test_boarding.py >/dev/null && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 $(ls -d tests/test_boarding.py tests/test_world_capture*.py tests/test_jev*.py tests/test_item_facts*.py tests/test_cloudflare_transport.py tests/test_web_demo.py tests/test_seating*.py tests/test_taking*.py tests/test_fixed_refusal*.py tests/test_bench_item_facts.py tests/test_markdown_story_package.py tests/test_canon_journey.py tests/test_world_model.py 2>/dev/null | tr '\\n' ' ') 2>&1 | tail -14 && ! grep -rniE 'goes_to_vehicle' storygame tests && ! grep -niE 'kristin|truck|laptop|michelle' storygame/runtime/seating.py && git diff --quiet -- data bench/frozen docs/testing-runbook.md && .venv/bin/python -m ruff check storygame tests && .venv/bin/python -m ruff format --check storygame/runtime/seating.py storygame/runtime/jev_questions.py storygame/runtime/capture.py tests/test_boarding.py",
+   "verified": "approach vs board is distinguished, contextual 'get in' boards, laptop notice follows custody, a second vehicle works; focused suites pass; no story names in runtime"
+  }
+ ]
+}

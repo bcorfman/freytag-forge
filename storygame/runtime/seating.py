@@ -106,10 +106,11 @@ def seat_before_use(world, package, player_input: str, uses_thing: Callable[[str
 
 
 def board_vehicle(
-    world, package, player_input: str, goes_to_vehicle: Callable[[str, str], bool | None]
+    world, package, player_input: str, boards_vehicle: Callable[[str, str], bool | None]
 ) -> SeatingResult:
     protagonist = package.protagonist_id
     items = {item.id: item for item in package.world.items}
+    visible_vehicles = []
     candidates = []
     for item in package.world.items:
         if not world.is_a(item.id, "vehicle") or not world.is_visible(item.id):
@@ -117,6 +118,7 @@ def board_vehicle(
         seats = sorted(
             seat.id for seat in package.world.items if seat.seat_for == item.id and world.is_visible(seat.id)
         )
+        visible_vehicles.append((item.id, seats))
         if not seats:
             continue
         parent = world.parent(protagonist)
@@ -124,12 +126,27 @@ def board_vehicle(
             continue
         candidates.append((item.id, seats))
 
+    named_candidates = [
+        candidate for candidate in sorted(candidates) if _command_names_thing(player_input, world.names(candidate[0]))
+    ]
+    names_vehicle = any(
+        _command_names_thing(player_input, world.names(vehicle_id)) for vehicle_id, _ in visible_vehicles
+    )
+    if names_vehicle:
+        candidates_to_ask = named_candidates
+    else:
+        protagonist_area = world.area(protagonist)
+        contextual_candidates = [
+            candidate
+            for candidate in sorted(candidates)
+            if protagonist_area is not None and world.area(candidate[0]) == protagonist_area
+        ]
+        candidates_to_ask = contextual_candidates if len(contextual_candidates) == 1 else []
+
     asked = False
     issues: list[str] = []
-    for vehicle_id, seats in sorted(candidates):
-        if not _command_names_thing(player_input, world.names(vehicle_id)):
-            continue
-        answer = goes_to_vehicle(player_input, world.name(vehicle_id))
+    for vehicle_id, seats in candidates_to_ask:
+        answer = boards_vehicle(player_input, world.name(vehicle_id))
         asked = True
         if answer is None:
             issues.append(f"boarding question unanswered for '{world.name(vehicle_id)}'")
