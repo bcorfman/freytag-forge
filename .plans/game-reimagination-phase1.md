@@ -11,8 +11,8 @@ Decisions in section 5 are made. Steps 1-6, 7a-7c and 8 part 1 (scripted playthr
 Step 1 is `8c4447ca`, step 2 is `398bcbbb`, step 3 is `68518933`, step 4 is
 `fc3f63e3`, step 5 is `bd926e15`, step 5b is `78e18467`, step 6 is `45989f14`,
 step 7a is `c633cd16`, step 7b is `9920a3b5`, step 7c is `c7be45a5` (merged in #689), step 8 part 1 is the commit that records this entry.
-Next: decide how the 1C opportunities become visible (step 8 part 2 result), then
-repeat the live smoke.
+Step 9 landed (Brandon offers the moves) and smoke 4 finished 1C -> 2B. Next: smokes for the
+missed window and the secure route, the loader decision, then five fresh human players.
 
 ## Step 1 result (2026-10-22)
 
@@ -289,6 +289,27 @@ loop, but the blind player never left 1C (30 commands).
 - Also seen: live narrator drift from turn 12 (kitchen table, invented files); a
   grounding problem to handle under docs/world-model-grounding.md, not by prompt rules.
 - Phase 1 exit (both approaches finish coherently with strangers) is NOT met.
+
+## Step 9 result (2026-10-24)
+
+Brandon (the character) offers the moves. Authored by ChatGPT Desktop in
+[1c-brandon-offers-moves.md](1c-brandon-offers-moves.md); applied exactly by Ringer run
+`game-reimagination-phase1` (Codex Luna medium, 1 attempt, 145k tokens, 717 s; manifest
+`scripts/ringer/phase1/step9-manifest.json`). Full suite 2,485 passed, 16 skipped.
+
+- Applied to plot.md, knowledge.yaml, pacing.yaml, handoffs.yaml, storylet-routes.yaml and
+  storylets.md. Seven tests that pinned the old authored text were updated; new
+  `tests/test_1c_offers.py`.
+- **Blocked:** three `transfer_window_missed == false` prerequisites on the 1C observation
+  reveals. The loader's reachability graph ignores pacing-event effects. Storylet gating
+  still blocks the captives reveals after a miss; the dock observation (A) can still be
+  earned. Fixing it needs a loader change (count pacing-event effects as producers); not
+  made, awaiting Brandon.
+- **Smoke 4** (see phase1-live-smoke.md): the blind player finished 1C -> 2A -> 2B in 10
+  turns via copy-numbers. One row; the missed window and the secure route were not
+  exercised.
+- Remaining before Phase 1 exit: smokes covering the missed window and the secure route, the
+  loader decision, and five fresh human players.
 
 ## 1. What exists today (read in source, 2026-10-22)
 
