@@ -16,6 +16,8 @@ locations:
   parent: mcgehee_home
 - id: outside_house
   name: outside the house
+- id: patrol_staging
+  name: patrol staging area
 - id: los_angeles_park
   name: Los Angeles park
 - id: brandon_hideout
@@ -136,6 +138,11 @@ npcs:
   - imprisoned official
   - government prisoner
   narrator_bio: A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
+- id: patrol_officer
+  name: federal patrol officer
+  aliases:
+  - patrol officer
+  - the officer
 groups:
 - id: captives
   name: detention captives
@@ -403,6 +410,17 @@ facts:
 - charles_at_large
 - michelle_lead_actionable
 - patrol_return_pressure
+- id: patrol_on_scene
+  on_assert:
+  - {move: patrol_officer, parent: outside_house, text: by the front door}
+- id: patrol_in_house
+  on_assert:
+  - {move: patrol_officer, parent: kitchen, text: at Michelle's workstation}
+- id: patrol_departed
+  on_assert:
+  - {move: patrol_officer, parent: patrol_staging}
+- card_challenged
+- kristin_marked_by_patrol
 - pursuit_closing_in
 - identity_scrutiny_visible
 - facility_collapse_escalating

@@ -147,6 +147,16 @@ facts:
 - id: patrol_return_pressure
   purpose: Observable signs indicate the federal patrol is likely to return or intensify
     scrutiny at Michelle's house.
+- id: patrol_on_scene
+  purpose: A federal emergency patrol has arrived at Michelle's house.
+- id: patrol_in_house
+  purpose: A patrol officer is inside Michelle's house.
+- id: patrol_departed
+  purpose: The federal emergency patrol has left Michelle's house.
+- id: card_challenged
+  purpose: A patrol officer saw Kristin take Michelle's memory card and challenged her.
+- id: kristin_marked_by_patrol
+  purpose: The patrol has Kristin marked as someone to watch.
 - id: pursuit_closing_in
   purpose: The pursuit team is visibly closing in on Kristin and Brandon in the park.
 - id: identity_scrutiny_visible

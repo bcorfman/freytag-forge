@@ -177,23 +177,7 @@ def test_guarded_pacing_event_never_fires_before_at_turn() -> None:
     assert "synthetic_pressure" in state.fired_event_ids
 
 
-@pytest.mark.parametrize(
-    ("facts", "expected_index"),
-    [
-        ((), 0),
-        ((("memory_card_recovered", True),), 2),
-        (
-            (
-                ("memory_card_recovered", True),
-                ("michelle_lead_actionable", True),
-            ),
-            1,
-        ),
-    ],
-)
-def test_pressure_1a_prompt_carries_one_matching_realization_for_one_turn(
-    monkeypatch, facts: tuple[tuple[str, bool], ...], expected_index: int
-) -> None:
+def test_patrol_arrival_prompt_carries_one_verbatim_realization_for_one_turn(monkeypatch) -> None:
     captured: list[str] = []
 
     def open_request(request, **_kwargs: object) -> _Response:
@@ -202,44 +186,31 @@ def test_pressure_1a_prompt_carries_one_matching_realization_for_one_turn(
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
     state = RuntimeState.bootstrap(PACKAGE)
-    for fact_id, value in facts:
-        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value=str(value).lower()))
     engine = RuntimeEngine(
         state,
         CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state),
     )
 
-    event = next(event for event in PACKAGE.pacing.events if event.id == "pressure_1a")
-    expected = event.realizations[expected_index].text
-    all_texts = tuple(realization.text for realization in event.realizations)
+    event = next(event for event in PACKAGE.pacing.events if event.id == "patrol_arrives_1a")
+    expected = event.realizations[0].text
     engine.turn("Search the kitchen.")
     engine.turn("Check the back door.")
     engine.turn("Inspect the overturned chair.")
-    engine.turn("Trace the patrol marker.")
+    arrival = engine.turn("Trace the patrol marker.")
     engine.turn("Search the front room.")
 
-    assert all(text not in captured[0] for text in all_texts)
-    assert all(text not in captured[index] for index in (1, 2) for text in all_texts)
-    assert captured[3].count(expected) == 1
-    assert all(text not in captured[3] for text in all_texts if text != expected)
-    assert expected not in captured[4]
+    assert all(expected not in prompt for prompt in captured[:5])
+    assert tuple(segment.text for segment in arrival.segments).count(expected) == 1
 
 
-def test_pressure_1a_lead_actionable_realization_precedes_custody() -> None:
+def test_patrol_return_realization_follows_departure() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
-    state.facts.assert_fact(Fact(predicate="michelle_lead_actionable", subject="story", value="true"))
     engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]})
 
-    for player_input in (
-        "Search the kitchen.",
-        "Check the back door.",
-        "Inspect the overturned chair.",
-        "Trace the patrol marker.",
-    ):
-        engine.turn(player_input)
-    event = next(event for event in PACKAGE.pacing.events if event.id == "pressure_1a")
-    assert state.last_turn_delivery.complication_text == event.realizations[1].text
+    for _ in range(9):
+        engine.turn("Wait.")
+    event = next(event for event in PACKAGE.pacing.events if event.id == "patrol_returns_1a")
+    assert state.last_turn_delivery.complication_text == event.realizations[0].text
 
 
 def test_resolution_pacing_realization_reaches_narrator_when_escalation_is_gated(monkeypatch) -> None:

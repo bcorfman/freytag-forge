@@ -80,7 +80,7 @@ scene_id: 1A
 location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
-participant_ids: [kristin, michelle]
+participant_ids: [kristin, michelle, patrol_officer]
 item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door, house_gate]
 item_placements:
   memory_card: {parent: michelle_drawer, under: true}

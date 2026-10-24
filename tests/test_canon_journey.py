@@ -29,6 +29,7 @@ UNCLOCKED_JOURNEY = [
     ("k_sl_1a_b_r1", "1A"),
     (None, "1A"),
     (None, "1A"),
+    (None, "1A"),
     (None, "1B"),
     ("k_sl_1b_b_r1", "1B"),
     ("k_sl_1b_c_r1", "1B"),
@@ -148,7 +149,12 @@ def test_clocked_canon_journey_reaches_the_resolution_scene() -> None:
         )
         assert not state.has_pending_break
 
-    assert "pressure_1a" in state.fired_event_ids
+    assert {
+        "patrol_arrives_1a",
+        "patrol_enters_1a",
+        "patrol_leaves_1a",
+        "patrol_returns_1a",
+    } <= state.fired_event_ids
     assert "purge_2c" in state.fired_event_ids
     assert "override_deadline_3a" in state.fired_event_ids
     assert "destruction_3b" in state.fired_event_ids

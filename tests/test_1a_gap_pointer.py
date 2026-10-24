@@ -238,4 +238,4 @@ def test_1a_transition_and_timer_remain_authored_values() -> None:
         "memory_card_recovered",
     )
     assert transition.required_dependencies == ("memory_card",)
-    assert (scene.min_turns, scene.nudge_after_turns, scene.handoff_after_turns) == (8, 10, 13)
+    assert (scene.min_turns, scene.nudge_after_turns, scene.handoff_after_turns) == (9, 10, 13)

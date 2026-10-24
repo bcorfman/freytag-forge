@@ -302,6 +302,8 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "evidence_gap_marked_site_list",
         "national_detention_network_known",
         "architects_strategy_known",
+        "card_challenged",
+        "kristin_marked_by_patrol",
     }
     assert mapped_facts <= set(package.world.facts)
     assert set(package.world.facts) - pacing_facts - pacing_only_facts <= mapped_facts
@@ -1026,7 +1028,7 @@ def test_loader_rejects_a_pacing_event_scheduled_past_its_scene_minimum(tmp_path
     source = root / "pacing.yaml"
     pacing = yaml.safe_load(source.read_text())
     window = next(item for item in pacing["scenes"] if item["scene_id"] == "1A")
-    event = next(item for item in pacing["events"] if item["id"] == "pressure_1a")
+    event = next(item for item in pacing["events"] if item["id"] == "patrol_arrives_1a")
     event["at_turn"] = window["min_turns"] + 1
     source.write_text(yaml.safe_dump(pacing, sort_keys=False))
 
