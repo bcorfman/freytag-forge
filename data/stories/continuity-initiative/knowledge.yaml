@@ -333,7 +333,7 @@ knowledge:
   action_evidence:
   - [look, search, inspect, check]
   - [under, beneath, underside, gap, lower edge, bottom edge]
-  - [drawer, KMS, workstation, "drawer's", the gap, that gap]
+  - [drawer, KMS, workstation, "drawer's"]
   entity_ids: [kristin, michelle, memory_card, michelle_drawer]
   aliases:
   - memory card recovered
@@ -379,7 +379,7 @@ knowledge:
   action_evidence:
   - [look, search, inspect, check]
   - [under, beneath, underside, gap, lower edge, bottom edge]
-  - [drawer, KMS, workstation, "drawer's", the gap, that gap]
+  - [drawer, KMS, workstation, "drawer's"]
   entity_ids: [kristin, michelle, memory_card, michelle_drawer]
   aliases:
   - memory card recovered in sight of the patrol

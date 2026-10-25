@@ -69,7 +69,6 @@ def test_scene_1a_and_card_copy_use_the_new_wording() -> None:
 
 def test_gap_commands_uniquely_match_the_card_reveal() -> None:
     for command in (
-        "Feel in the gap.",
         "Search the gap beneath the drawer.",
         "Feel under the drawer.",
     ):

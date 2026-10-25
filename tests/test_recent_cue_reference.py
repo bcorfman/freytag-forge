@@ -9,6 +9,7 @@ import pytest
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 
@@ -86,6 +87,26 @@ def test_gap_without_prior_cue_earns_nothing(monkeypatch: pytest.MonkeyPatch, se
 
 
 @pytest.mark.parametrize("semantic", ("0", "1"))
+@pytest.mark.parametrize("command", ("Feel in the gap.", "Search the gap."))
+def test_staged_cue_referent_follow_up_earns_memory_card(
+    monkeypatch: pytest.MonkeyPatch, semantic: str, command: str
+) -> None:
+    monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", semantic)
+    state = _state()
+    engine = _engine(monkeypatch, state)
+
+    first = engine.turn("Go in the house.")
+    cue_text = next(item.cue_text for item in PACKAGE.deliveries if item.fact_id == "continuity_initiative_known")
+    result = engine.turn(command)
+
+    assert first.selected_knowledge_ids == ()
+    assert cue_text in tuple(segment.text for segment in first.segments)
+    assert state.cue_stages[-1].last_turn == state.turn_index - 1
+    assert result.selected_knowledge_ids == (CARD_REVEAL,)
+    assert _has_fact(state, "memory_card_recovered")
+
+
+@pytest.mark.parametrize("semantic", ("0", "1"))
 @pytest.mark.parametrize("command", ("Search the gap.", "Feel along the gap.", "Check the gap."))
 def test_recent_cue_referent_follow_up_earns_memory_card(
     monkeypatch: pytest.MonkeyPatch, semantic: str, command: str
@@ -107,9 +128,10 @@ def test_unrelated_follow_up_does_not_use_recent_cue(monkeypatch: pytest.MonkeyP
     state = _state()
     engine = _engine(monkeypatch, state)
 
-    engine.turn("Open the drawer.")
+    first = engine.turn("Go in the house.")
     result = engine.turn("Read the receipt.")
 
+    assert first.selected_knowledge_ids == ()
     assert result.selected_knowledge_ids == ()
     assert not _has_fact(state, "memory_card_recovered")
 
@@ -120,8 +142,39 @@ def test_unrelated_referent_never_resolves(monkeypatch: pytest.MonkeyPatch, sema
     state = _state()
     engine = _engine(monkeypatch, state)
 
-    engine.turn("Open the drawer.")
+    first = engine.turn("Go in the house.")
     result = engine.turn("Search the kitchen.")
 
+    assert first.selected_knowledge_ids == ()
     assert result.selected_knowledge_ids == (KITCHEN_REVEAL,)
     assert not _has_fact(state, "memory_card_recovered")
+
+
+@pytest.mark.parametrize("semantic", ("0", "1"))
+def test_staged_cue_referent_expires_after_unrelated_turn(monkeypatch: pytest.MonkeyPatch, semantic: str) -> None:
+    monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", semantic)
+    state = _state()
+    engine = _engine(monkeypatch, state)
+
+    first = engine.turn("Go in the house.")
+    unrelated = engine.turn("Search the kitchen.")
+    result = engine.turn("Feel in the gap.")
+
+    assert first.selected_knowledge_ids == ()
+    assert unrelated.selected_knowledge_ids == (KITCHEN_REVEAL,)
+    assert result.selected_knowledge_ids == ()
+    assert not _has_fact(state, "memory_card_recovered")
+
+
+@pytest.mark.parametrize("semantic", ("0", "1"))
+def test_staged_cue_does_not_select_recovered_card(monkeypatch: pytest.MonkeyPatch, semantic: str) -> None:
+    monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", semantic)
+    state = _state()
+    engine = _engine(monkeypatch, state)
+
+    first = engine.turn("Go in the house.")
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
+    result = engine.turn("Feel in the gap.")
+
+    assert first.selected_knowledge_ids == ()
+    assert result.selected_knowledge_ids == ()
