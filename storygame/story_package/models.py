@@ -266,6 +266,7 @@ class Group(Entity):
 class Location(Entity):
     parent: str | None = Field(default=None, pattern=_ID)
     owner: str | None = Field(default=None, pattern=_ID)
+    description: str | None = None
 
 
 class Item(Entity):

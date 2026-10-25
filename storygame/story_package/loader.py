@@ -1487,6 +1487,8 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
                 raise StoryPackageError(f"npc '{npc.id}' unavailable is not a pole of its axes")
         location_ids = {location.id for location in world.locations}
         for location in world.locations:
+            if location.description is not None and not location.description.strip():
+                raise StoryPackageError(f"location '{location.id}' description must be a non-blank string")
             if location.parent is not None and location.parent not in location_ids:
                 raise StoryPackageError(f"location '{location.id}' has unknown location parent '{location.parent}'")
         try:

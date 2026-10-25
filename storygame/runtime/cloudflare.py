@@ -963,10 +963,12 @@ class CloudflareTurnProvider:
     def _owner_rules(self) -> list[str]:
         world = self._placement_world()
         visible_items = self._visible_placed_items(world)
+        thing_names = set(self._thing_names()) if hasattr(self, "_thing_names") and self._where_line() else None
         possessive_items = [
             visible_items[item_id][0].name
             for item_id in self._current_scene().item_ids
             if item_id in visible_items
+            and (thing_names is None or visible_items[item_id][0].name in thing_names)
             and self._placement_text(item_id, visible_items[item_id][1], world) is not None
             and re.fullmatch(r".+['’]s\s+.+", visible_items[item_id][0].name)
         ]
@@ -1148,7 +1150,27 @@ class CloudflareTurnProvider:
         context["candidates"] = [
             candidate for candidate in context["candidates"] if candidate["id"] in model_candidate_ids
         ]
+        context["where"] = self._where_line()
         return context
+
+    def _where_line(self) -> str:
+        if not self._example_player_input:
+            return ""
+        world = world_for(self.state.package, self.state.facts)
+        protagonist_id = self.state.package.world.protagonist_id
+        scene = self._current_scene()
+        seat_id = world.parent(protagonist_id)
+        seated = bool(seat_id and world.schema.entities.get(seat_id) and world.schema.entities[seat_id].seat_for)
+        if not seated and world.together(protagonist_id, scene.location_id):
+            return ""
+        protagonist = self._protagonist_name()
+        area_id = world.area(protagonist_id)
+        area = world.name(area_id) if area_id else "an unknown place"
+        if seated:
+            vehicle_id = world.parent(seat_id)
+            vehicle = world.name(vehicle_id) if vehicle_id else "a vehicle"
+            return f"{protagonist} is in the {world.name(seat_id)} of {vehicle}, {area}."
+        return f"{protagonist} is {area}."
 
     def _candidate_beats(self) -> tuple[SceneBeat, ...]:
         """Return beats authored as the source of reveals offered this turn."""
@@ -1506,6 +1528,9 @@ class CloudflareTurnProvider:
         player = context.get("player", {}) if isinstance(context, dict) else {}
         offered_ids = {candidate.id for candidate in self._model_candidates()}
         if isinstance(player, dict) and player:
+            where = player.get("where")
+            if isinstance(where, str) and where:
+                scene.append(where)
             scene.extend(paragraphs(player["scene_frame"]))
             scene.append(f"What presses on {self._protagonist_name()} now: {player['pressure']}")
             scene_setting = user.get("scene_setting")

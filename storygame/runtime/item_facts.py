@@ -532,7 +532,27 @@ class ItemFactsProvider(CloudflareTurnProvider):
                         if seat_name not in names and seat_name in self.item_facts:
                             names.insert(index + 1, seat_name)
             index += 1
-        return names
+        scene = next(
+            scene for scene in self.state.package.scenes if scene.metadata.scene_id == self.state.current_scene_id
+        )
+        protagonist_id = self.state.package.world.protagonist_id
+        seat_id = world.parent(protagonist_id)
+        seated = bool(seat_id and world.schema.entities.get(seat_id) and world.schema.entities[seat_id].seat_for)
+        if not getattr(self, "_example_player_input", ""):
+            return names
+        if not seated and world.together(protagonist_id, scene.metadata.location_id):
+            return names
+        referred = {name.casefold() for name in self._referred_names}
+        return [
+            name
+            for name in names
+            if name == protagonist
+            or name.casefold() in referred
+            or (
+                (entity_id := world.resolve(name)) is not None
+                and (world.holder(entity_id) == protagonist_id or world.together(protagonist_id, entity_id))
+            )
+        ]
 
     def _select_protagonist(self):
         if self._selected_names is not None:

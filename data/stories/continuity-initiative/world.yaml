@@ -17,6 +17,7 @@ locations:
 - id: outside_house
   name: outside the house
   aliases: [outside, the yard, the driveway, the street, the curb, the front of the house]
+  description: "Michelle's house stands behind a low gate. Kristin's truck is parked at the curb, and sirens carry from the next street."
 - id: patrol_staging
   name: patrol staging area
 - id: los_angeles_park
