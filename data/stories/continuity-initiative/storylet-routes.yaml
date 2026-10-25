@@ -156,6 +156,11 @@ new_fact_ids:
   used_by_storylets:
   - SL-1A-E
   used_by_transitions: []
+- id: officer_demanded_card
+  definition: The officer has demanded the card from Kristin.
+  used_by_storylets:
+  - SL-1A-E
+  used_by_transitions: []
 - id: kristin_marked_by_patrol
   definition: The patrol has Kristin marked as someone to watch.
   used_by_storylets:

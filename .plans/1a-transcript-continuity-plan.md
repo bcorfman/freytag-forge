@@ -473,3 +473,7 @@ Per requirement (n, not pooled):
 - A reply entry that restates a thing's committed place and adds `held_by` for another holder keeps the place and drops `held_by` (fixes the laptop flipping to Kristin on an outside look, which hid the boarding notice). Tests: `tests/test_staged_cue_reach.py`, `tests/test_held_by_echo.py`.
 - Ringer reported FAIL on both tasks because my check globbed a nonexistent `test_world_capture*.py`; focused suites (271 tests), ruff check and format pass when run by hand. NOT verified live.
 - Still open: card re-find on "feel under the drawer" after recovery (5/5 on A), visible follow-up after the officer's challenge, invented paper by the gate, "living room" wording, unrequested "wait" moves. These need a probe preregistration for Brandon's approval.
+
+### Step 11 — visible follow-up to the officer's challenge (2026-10-25, Ringer `1a-continuity-officer-presses`)
+
+Brandon chose a visible next step in 1A, and asked me to write it as an interactive-fiction writer. New fact `officer_demanded_card`; pacing event `officer_presses_1a` (turn 5, needs `card_challenged` and `patrol_in_house`) shows the officer demanding the card; `patrol_leaves_1a` gets an acknowledging departure line when the demand was made, else the plain line. No transition depends on it; card custody is untouched, so deflect, hand over or run stay the player's free-text choice. Tests: `tests/test_1a_officer_press.py` (5; 212 focused tests pass). NOT verified live: whether the narrator responds to the player's answer to the demand.

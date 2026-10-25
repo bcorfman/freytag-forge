@@ -422,6 +422,7 @@ facts:
   on_assert:
   - {move: patrol_officer, parent: patrol_staging}
 - card_challenged
+- officer_demanded_card
 - kristin_marked_by_patrol
 - pursuit_closing_in
 - identity_scrutiny_visible

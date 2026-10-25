@@ -21,6 +21,20 @@ events:
   realizations:
   - verbatim: true
     text: "The front door opens. An officer walks in and heads straight for Michelle's workstation."
+- id: officer_presses_1a
+  scene_id: 1A
+  at_turn: 5
+  when:
+  - fact_id: card_challenged
+    equals: true
+  - fact_id: patrol_in_house
+    equals: true
+  effects:
+  - fact_id: officer_demanded_card
+    equals: true
+  realizations:
+  - verbatim: true
+    text: "The officer plants himself between her and the front door and holds out a gloved hand. \"Whatever you just took from that desk. Let's see it, ma'am. Right now.\""
 - id: patrol_leaves_1a
   scene_id: 1A
   at_turn: 7
@@ -35,6 +49,11 @@ events:
   - fact_id: patrol_in_house
     equals: false
   realizations:
+  - when:
+    - fact_id: officer_demanded_card
+      equals: true
+    verbatim: true
+    text: "The officer's radio crackles with a description that is hers. He backs out through the front door, eyes on her the whole way, and the patrol pulls away from the curb."
   - verbatim: true
     text: "The patrol pulls away from the curb."
 - id: patrol_returns_1a

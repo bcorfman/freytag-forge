@@ -101,6 +101,7 @@ Each entry below is authoring data, not a player action menu.
 **Effects**
 - May set `memory_card_recovered` when Kristin finds the card.
 - May set `card_challenged` and `kristin_marked_by_patrol` when an officer sees Kristin take the card.
+- The officer then demands the card (`officer_demanded_card`), and the departure line acknowledges the demand; custody remains the player's choice.
 
 **Completion**
 - Kristin has Michelle's memory card.

@@ -155,6 +155,8 @@ facts:
   purpose: The federal emergency patrol has left Michelle's house.
 - id: card_challenged
   purpose: A patrol officer saw Kristin take Michelle's memory card and challenged her.
+- id: officer_demanded_card
+  purpose: The officer has demanded the card from Kristin.
 - id: kristin_marked_by_patrol
   purpose: The patrol has Kristin marked as someone to watch.
 - id: pursuit_closing_in
