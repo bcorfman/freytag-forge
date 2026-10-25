@@ -453,3 +453,16 @@ Done through Ringer (Luna, high effort, tests first), all committed:
   [postfix2 verification prereg](1a-transcript-continuity/postfix2-live-prereg.md),
   awaiting Brandon's approval; it needs a `--route movement` added to the
   harness first (free).
+
+### Step 8 — boarding text, probe, postfix2 live result (2026-10-25, code ed7fb599)
+
+Boarding probe (120 calls, prereg Result): no narrator arm showed the laptop reliably (best 5 of 30). Brandon approved the fallback, built and committed: a boarding-only turn is answered by the engine's own steps with no narrator call (`a53d2c39`); stale narrator item facts are discarded on that path (found by the postfix3 smoke: the seat did not commit); a boarding-only command while already seated answers "Kristin is already in the driver's seat." (short name) with no narrator call and no state change.
+
+postfix2 live run (Ringer `transcript-1a-postfix2-live`, 490 calls, no quota stop, 1 turn error): A reported n=5, B corrected n=3, C witnessed n=3, D movement n=3. Every narration read by hand.
+
+Per requirement (n, not pooled):
+- **1 Gap (A, B; n=8):** no door gap in any lead-up 8/8; drawer resolved and card earned once 8/8. Fabric diversion (the historical command only): invented fabric 2/5 on A (threads in the wood, a torn lab coat). New: "feel under the drawer" after the card is already taken narrates finding a memory card again 5/5 on A.
+- **2 Patrol (all; n=14):** arrival text once at turn 4, entry at 5, leave at 7; "coming back" only after departure, 14/14. Observed recovery: exercised in 1 of 3 on C. There the challenge shows on the recovery turn, but the next input errored (NarrationProviderError, invalid proposal) and the turn after that just says the patrol pulled away, so no visible follow-up. In 2 of 3 C replicates a "wait" put Kristin outside, so recovery was never reached (0/2 "not reproduced", not a fix). Requirement 2's consequence half stays OPEN.
+- **3 Truck/laptop:** `go out to the truck` committed `truck_driver_seat` in every boarding (A5, B3, C3, D3+); no exit contradiction; `get in` while seated gave the engine line 11/11 with no exit; card text implied no travel 8/8. OPEN: the laptop notice was missing on 2 of 3 D boardings because the narrator's item_facts set the laptop `held_by Kristin` on an outside look around (it was not in THINGS); and in 5 turns (D x3, C x2) a stale drawer cue ("Kristin's initials, KMS, are carved into a drawer...") was appended after the seat line while she sat in the truck.
+- **4 Observation by place (n=42 looks):** no look moved her; seated and outside looks never described the kitchen interior; in-house looks described the house. Invented areas (`n_*`) 0, `None` places 0 in all 145 turns. OPEN smaller items: C prose said "living room" and "in front of the house" while committed in the house (1 of 3); invented "piece of paper by the gate" in 3 D narrations and a note/gun-wielding officer on C r3; no look from the seat describes the cab.
+- Not fixed or not reproduced: unrequested "wait" moves (C: 2 of 3; A/B/D: 0).
