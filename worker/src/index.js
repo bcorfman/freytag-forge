@@ -26,7 +26,7 @@ export default {
       return respondError("UNAUTHORIZED", "Invalid token", 401, traceId);
     }
     const pathname = new URL(request.url).pathname;
-    const configuredModel = asString(env.CF_AI_MODEL).trim() || "@cf/meta/llama-3.1-8b-instruct-fast";
+    const configuredModel = asString(env.CF_AI_MODEL).trim() || "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
     let model = configuredModel;
     let profile = getModelProfile(model);
     if (pathname !== "/jev" && request.headers.has("X-Bench-Model")) {

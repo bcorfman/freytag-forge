@@ -301,6 +301,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.prior_notice_steps: tuple[str, ...] = ()
         self.command_consumed = False
         self.observation_request: ObservationRequest | None = None
+        self.observe_automatically: bool = True
         self.last_turn_engine_text = False
         self._last_item_facts_unplaced = []
         self._last_item_facts_refused = []

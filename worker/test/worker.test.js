@@ -42,7 +42,7 @@ function request(body = {}) {
 
 test("cost maths uses byte-based input estimates and whole micro-dollars", () => {
   assert.equal(estimateInputTokens("a€"), 2);
-  assert.equal(callCostMicroUsd(DEFAULT_MODEL_PRICES, "@cf/meta/llama-3.1-8b-instruct-fast", 10, 20), 20);
+  assert.equal(callCostMicroUsd(DEFAULT_MODEL_PRICES, "@cf/meta/llama-3.3-70b-instruct-fp8-fast", 10, 20), 48);
   assert.equal(callCostMicroUsd({}, "unknown", 10, 20), null);
 });
 
@@ -127,7 +127,7 @@ test("successful AI usage settles to actual cost", async () => {
   try {
     const response = await worker.fetch(request(), env({ DAILY_BUDGET: namespace }));
     assert.equal(response.status, 200);
-    assert.equal(await namespace.storage().get("spent"), 2);
+    assert.equal(await namespace.storage().get("spent"), 5);
   } finally { globalThis.fetch = originalFetch; }
 });
 
@@ -215,6 +215,6 @@ test("narration route unchanged returns narration and model", async () => {
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(body.narration, "Done.");
-    assert.equal(body.model, "@cf/meta/llama-3.1-8b-instruct-fast");
+    assert.equal(body.model, "@cf/meta/llama-3.3-70b-instruct-fp8-fast");
   } finally { globalThis.fetch = originalFetch; }
 });

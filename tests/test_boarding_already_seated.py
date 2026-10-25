@@ -168,6 +168,7 @@ def test_boarding_sequence_uses_engine_text_for_both_turns(monkeypatch: pytest.M
     assert world.move("kristin", "outside_house").ok
     assert world.move("kristin_laptop", "truck_passenger_seat").ok
     provider = build_capture_provider(state)
+    provider.observe_automatically = False
     calls: list[object] = []
 
     def ask(command, questions):

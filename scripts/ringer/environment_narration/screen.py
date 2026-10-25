@@ -230,6 +230,7 @@ def _capture_prompt(
     before = _state_hash(state)
     with _capture_stubs(boarding_probe, _ask_for(start_id)):
         provider = build_capture_provider(state)
+        provider.observe_automatically = False
         provider.observation_request = request
         captured: dict[str, str] = {}
 

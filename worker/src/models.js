@@ -1,16 +1,5 @@
 const DEFAULT_MAX_TOKENS_CEILING = 2048;
 
-function buildLlamaBody({ system, user, maxTokens, responseFormat }) {
-  return {
-    messages: [
-      { role: "system", content: system },
-      { role: "user", content: user }
-    ],
-    max_tokens: maxTokens,
-    ...(responseFormat ? { response_format: responseFormat, temperature: 0 } : {})
-  };
-}
-
 // The 70B narrator is more reliable with default sampling, so this profile ignores response_format.
 function buildLlamaPlainBody({ system, user, maxTokens }) {
   return {
@@ -19,18 +8,6 @@ function buildLlamaPlainBody({ system, user, maxTokens }) {
       { role: "user", content: user }
     ],
     max_tokens: maxTokens
-  };
-}
-
-function buildDeepseekBody({ system, user, maxTokens, responseFormat }) {
-  return {
-    messages: [
-      { role: "system", content: system },
-      { role: "user", content: user }
-    ],
-    max_completion_tokens: maxTokens,
-    reasoning_effort: "low",
-    ...(responseFormat ? { response_format: responseFormat, temperature: 0 } : {})
   };
 }
 
@@ -60,40 +37,15 @@ function extractLlama(payload) {
   };
 }
 
-function extractDeepseek(payload) {
-  const result = payload?.result && typeof payload.result === "object" ? payload.result : payload;
-  const choice = Array.isArray(result?.choices) ? result.choices[0] : null;
-  const content = choice?.message?.content;
-  const tokens = usage(result?.usage ?? payload?.usage);
-  return {
-    text: typeof content === "string" && content.trim() ? content.trim() : "",
-    promptTokens: tokens.promptTokens,
-    completionTokens: tokens.completionTokens,
-    truncated: choice?.finish_reason === "length"
-  };
-}
-
 export const MODEL_PROFILES = {
-  "@cf/meta/llama-3.1-8b-instruct-fast": {
-    buildBody: buildLlamaBody,
-    extract: extractLlama,
-    maxTokensCeiling: DEFAULT_MAX_TOKENS_CEILING,
-    price: { input: 0.282, output: 0.827 }
-  },
   "@cf/meta/llama-3.3-70b-instruct-fp8-fast": {
     buildBody: buildLlamaPlainBody,
     extract: extractLlama,
     maxTokensCeiling: DEFAULT_MAX_TOKENS_CEILING,
     price: { input: 0.293, output: 2.253 }
-  },
-  "@cf/deepseek-ai/deepseek-v4.1-flash-1017": {
-    buildBody: buildDeepseekBody,
-    extract: extractDeepseek,
-    maxTokensCeiling: 4096,
-    price: { input: 0.3, output: 1.2 }
   }
 };
 
 export function getModelProfile(model) {
-  return MODEL_PROFILES[model] || MODEL_PROFILES["@cf/meta/llama-3.1-8b-instruct-fast"];
+  return MODEL_PROFILES[model] || MODEL_PROFILES["@cf/meta/llama-3.3-70b-instruct-fp8-fast"];
 }

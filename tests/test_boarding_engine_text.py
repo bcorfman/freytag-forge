@@ -36,7 +36,7 @@ class _Response:
 
 
 def _provider(state: RuntimeState) -> ItemFactsProvider:
-    return ItemFactsProvider(
+    provider = ItemFactsProvider(
         worker_url="https://worker.example/turn",
         token="",
         state=state,
@@ -45,6 +45,8 @@ def _provider(state: RuntimeState) -> ItemFactsProvider:
         seed_from_package=True,
         held_by=True,
     )
+    provider.observe_automatically = False
+    return provider
 
 
 def _real_boarding_engine(*, only_boards: bool = True):
@@ -110,6 +112,7 @@ def test_consumed_boarding_discards_previous_narrator_item_facts(monkeypatch: py
     assert world.move("kristin", "outside_house").ok
     assert world.move("kristin_laptop", "truck_passenger_seat").ok
     provider = build_capture_provider(state)
+    provider.observe_automatically = False
 
     def ask(command, questions):
         return {
@@ -159,6 +162,7 @@ def test_synthetic_consumed_boarding_discards_previous_narrator_item_facts(
     world = world_for(package, state.facts)
     assert world.move("hero", "yard").ok
     provider = build_capture_provider(state)
+    provider.observe_automatically = False
 
     def ask(command, questions):
         return {

@@ -15,6 +15,8 @@ class SeatingResult:
     issues: tuple[str, ...]
     command_consumed: bool = False
     notice_steps: tuple[str, ...] = ()
+    vehicle_id: str | None = None
+    already_aboard: bool = False
 
 
 def _protagonist_name(package) -> str:
@@ -161,7 +163,15 @@ def board_vehicle(
                 )
                 if command_consumed:
                     step = f"{_protagonist_name(package)} is already in the {world.name(parent)}."
-                    return SeatingResult(step, (step,), asked, tuple(issues), True)
+                    return SeatingResult(
+                        step,
+                        (step,),
+                        asked,
+                        tuple(issues),
+                        True,
+                        vehicle_id=seated_vehicle,
+                        already_aboard=True,
+                    )
             return SeatingResult(player_input, (), asked, tuple(issues))
 
     named_candidates = [
@@ -210,7 +220,15 @@ def board_vehicle(
                 steps.append(item.notice_text)
                 notice_steps.append(item.notice_text)
         command = " ".join(steps) if command_consumed else " ".join((*steps, player_input))
-        return SeatingResult(command, tuple(steps), asked, tuple(issues), command_consumed, tuple(notice_steps))
+        return SeatingResult(
+            command,
+            tuple(steps),
+            asked,
+            tuple(issues),
+            command_consumed,
+            tuple(notice_steps),
+            vehicle_id=vehicle_id,
+        )
     return SeatingResult(player_input, (), asked, tuple(issues))
 
 

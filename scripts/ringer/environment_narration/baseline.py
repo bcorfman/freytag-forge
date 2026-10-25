@@ -293,6 +293,7 @@ def _capture_case(package: Any, spec: dict[str, object], boarding_probe: ModuleT
 
     with _stubs(ask):
         provider = build_capture_provider(state)
+        provider.observe_automatically = False
         provider._request_item_facts = lambda _payload: {"refers": [], "same_as": {}}
         captured: dict[str, str] = {}
 

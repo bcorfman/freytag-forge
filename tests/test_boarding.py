@@ -355,16 +355,16 @@ def test_product_provider_omits_only_consumed_boarding_command_from_prompt(
         }
 
     WorldCapture(provider, ask).before_turn("Go out to the truck.")
-    before_request_count = provider.request_count
     provider("Go out to the truck.")
     if only_boards:
-        assert captured == {}
-        assert provider.request_count == before_request_count
-        assert provider.last_turn_engine_text is True
-        assert provider.last_prompt is None
+        assert captured
+        user = provider._section_user_prompt(captured["user"])
+        assert "Already done: Kristin sat down in the driver's seat." in user
+        assert "Kristin's laptop sat on the passenger seat." not in user
+        assert provider.last_turn_engine_text is False
     else:
         user = provider._section_user_prompt(captured["user"])
-        before = "Just before this: Kristin sat down in the driver's seat. Kristin's laptop sat on the passenger seat."
+        before = "Already done: Kristin sat down in the driver's seat."
 
         assert before in user
         assert "- Go out to the truck." in user

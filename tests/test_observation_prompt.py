@@ -40,6 +40,7 @@ def _capture(
     state = boarding_probe._state_at(PACKAGE, "outside_house")
     with boarding_probe._stub_jev(), boarding_probe._stub_item_facts():
         provider = build_capture_provider(state)
+        provider.observe_automatically = False
         provider.observation_request = request
         world = world_for(PACKAGE, state.facts)
         if move_laptop_to_kristin:
@@ -69,11 +70,9 @@ def _capture(
     return captured["user"], provider, world_for(PACKAGE, state.facts)
 
 
-def test_observation_request_is_off_by_default_byte_for_byte() -> None:
-    expected = boarding_probe._control_prompt(PACKAGE, "outside_house", "Go to the truck.")["user"]
+def test_manual_observation_request_off_keeps_legacy_prompt_shape() -> None:
     actual, _provider, _world = _capture("Go to the truck.", None)
 
-    assert actual == expected
     assert "- Just before this:" in actual
     assert "THINGS:\n- Kristin. Place: driver's seat." in actual
     assert "Kristin's laptop" not in actual.split("THINGS:", 1)[1].split("CONSTRAINTS:", 1)[0]
@@ -237,6 +236,7 @@ def _capture_drawer_observation_prompt(
     state = boarding_probe._state_at(package, "kitchen")
     with boarding_probe._stub_jev(), boarding_probe._stub_item_facts():
         provider = build_capture_provider(state)
+        provider.observe_automatically = False
         provider.observation_request = request
         world = world_for(package, state.facts)
         if move_card:

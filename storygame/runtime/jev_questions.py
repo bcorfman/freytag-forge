@@ -67,6 +67,26 @@ def boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
     return _answer(ask, {"command": command, "vehicle": vehicle_name}, questions, "boards_vehicle")
 
 
+def opens_container(ask, command: str, container_name: str) -> bool | None:
+    questions = {
+        "opens_container": {
+            "type": "noul",
+            "instructions": (
+                "Decide whether the command has the player open the container. "
+                "This includes a command to look inside it by opening it."
+            ),
+            "criteria": {
+                "true": (
+                    "The command has the player open the container. "
+                    "The command can have the player look inside it by opening it."
+                ),
+                "false": ("The command only looks at, closes, touches, moves, carries, or talks about the container."),
+            },
+        }
+    }
+    return _answer(ask, {"command": command, "container": container_name}, questions, "opens_container")
+
+
 def only_boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
     questions = {
         "only_boards_vehicle": {

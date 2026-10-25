@@ -14,10 +14,12 @@ from storygame.runtime.jev_questions import (
     names_other_action,
     needs_to_stand,
     only_boards_vehicle,
+    opens_container,
     relocates_thing,
     same_or_part,
     uses_thing,
 )
+from storygame.runtime.observation import ObservationRequest
 from storygame.runtime.seating import SeatingResult, board_vehicle, seat_before_use, stand_before_leave
 from storygame.runtime.taking import TakingResult, take_before_put
 from storygame.runtime.world_model import apply_scene_placements
@@ -61,6 +63,10 @@ class WorldCapture:
         package = self.provider.state.package
         world = self.provider._world()
         adapter = _ask_adapter(self.ask)
+        observe_automatically = self.provider.observe_automatically
+        if observe_automatically:
+            self.provider.observation_request = None
+            self.provider._referred_names = []
         fixed = (
             refuse_fixed_move(
                 world,
@@ -105,20 +111,23 @@ class WorldCapture:
                 else None
             )
         fixed_steps = fixed.steps if fixed else ()
-        boarding_steps = boarding.steps
+        already_aboard_in_observation = observe_automatically and boarding.already_aboard
+        boarding_steps = () if already_aboard_in_observation else boarding.steps
         seating_steps = seating.steps if seating else ()
         provider_steps = (*fixed_steps, *standing.steps, *boarding_steps, *taking.steps, *seating_steps)
         self.provider.prior_steps = provider_steps
-        self.provider.prior_notice_steps = boarding.notice_steps
-        self.provider.command_consumed = boarding.command_consumed
+        self.provider.prior_notice_steps = () if already_aboard_in_observation else boarding.notice_steps
+        self.provider.command_consumed = boarding.command_consumed and not already_aboard_in_observation
         command_record = (
             " ".join((*fixed_steps, *standing.steps, boarding.command, *taking.steps, *seating_steps))
-            if boarding.command_consumed
+            if self.provider.command_consumed
             else " ".join((*provider_steps, command))
         )
         match_info = {}
         if self.provider.item_facts_mode == "single_call" and not engine_refusal and not self.provider.command_consumed:
             match_info = self.provider.prepare_turn(command)
+        if observe_automatically:
+            self._set_observation_request(command, boarding, adapter)
         record = {
             "command": command_record,
             "steps": list(provider_steps),
@@ -128,7 +137,7 @@ class WorldCapture:
             "engine_refusal": engine_refusal,
             "standing_steps": list(standing.steps),
             "boarding_steps": list(boarding_steps),
-            "boarding_command_consumed": boarding.command_consumed,
+            "boarding_command_consumed": self.provider.command_consumed,
             "taking_steps": list(taking.steps),
             "seating_steps": list(seating_steps),
             "standing_asked": standing.asked,
@@ -160,6 +169,27 @@ class WorldCapture:
         record["item_facts_before"] = _json_value(self.provider.facts_for_names(things_given, structural=True))
         self.last_before = record
         return record
+
+    def _set_observation_request(self, command: str, boarding: SeatingResult, adapter) -> None:
+        world = self.provider._world()
+        focus_id = boarding.vehicle_id
+        kind = "enter" if focus_id is not None else "look"
+        if focus_id is None:
+            for name in self.provider._referred_names:
+                entity_id = self.provider._resolve_scoped_entity(world, name) or world.resolve(name)
+                if entity_id is None:
+                    continue
+                if any(
+                    world.is_a(entity_id, entity_kind)
+                    for entity_kind in ("thing", "container", "supporter", "area", "vehicle")
+                ):
+                    focus_id = entity_id
+                    break
+        if focus_id is None:
+            return
+        if world.is_a(focus_id, "container") and opens_container(adapter, command, world.name(focus_id)) is True:
+            kind = "open"
+        self.provider.observation_request = ObservationRequest(command, kind, focus_id)
 
     def after_commit(self, command: str, narration: str, *, entered_scene: bool) -> dict[str, Any]:
         raw = self.provider.pending_item_facts()
