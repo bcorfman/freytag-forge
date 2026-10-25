@@ -517,6 +517,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _thing_names(self):
         names = list(self._selected_names if self._selected_names is not None else self.dependency_names())
+        selected_names = set(names)
         protagonist = _protagonist_name(self.state.package)
         if protagonist in self.item_facts and protagonist not in names:
             names.append(protagonist)
@@ -548,8 +549,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seated = bool(seat_id and world.schema.entities.get(seat_id) and world.schema.entities[seat_id].seat_for)
         if not getattr(self, "_example_player_input", ""):
             return names
-        if not seated and together_or_unplaced(world, protagonist_id, scene.metadata.location_id):
-            return names
         command = self._example_player_input
         literal_names = {
             name.casefold()
@@ -557,19 +556,31 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if (entity_id := world.resolve(name)) is not None and _command_names_thing(command, world.names(entity_id))
         }
         resolved_names = {name.casefold() for name in resolved_reference_names(self.state, command)}
-        return [
-            name
-            for name in names
-            if name == protagonist
-            or name.casefold() in literal_names
-            or name.casefold() in resolved_names
-            or (
-                (entity_id := world.resolve(name)) is not None
-                and (
-                    world.holder(entity_id) == protagonist_id or together_or_unplaced(world, protagonist_id, entity_id)
+
+        def keep_name(name):
+            return (
+                name == protagonist
+                or name.casefold() in literal_names
+                or name.casefold() in resolved_names
+                or (
+                    (entity_id := world.resolve(name)) is not None
+                    and (
+                        world.holder(entity_id) == protagonist_id
+                        or together_or_unplaced(world, protagonist_id, entity_id)
+                    )
                 )
             )
-        ]
+
+        if not seated and together_or_unplaced(world, protagonist_id, scene.metadata.location_id):
+            dependencies = set(self.dependency_names())
+            return [
+                name
+                for name in names
+                if name in dependencies
+                or (name in selected_names and name not in self._referred_names)
+                or keep_name(name)
+            ]
+        return [name for name in names if keep_name(name)]
 
     def _select_protagonist(self):
         if self._selected_names is not None:

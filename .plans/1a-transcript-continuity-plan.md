@@ -21,7 +21,7 @@ State as of 2026-10-25. The Completion record at the bottom has each step; this 
 **Done since postfix2 (not yet seen live):** stale cue withheld out of reach and laptop `held_by` echo (step 10); the officer demands the card after a witnessed recovery and the departure acknowledges it (step 11); open-defect probe run (step 12, no arm won).
 
 **Open, in order:**
-1. **Outside things in a house prompt (free, deterministic).** In postfix2 witnessed replicates 1 and 2 the "wait" prompt (committed place `mcgehee_home`) listed the gate, truck, seats and laptop; replicate 0 did not. The narrator then moved Kristin to "house gate". Find why (read-only scout over `bench/results/transcript-1a-postfix2-witnessed/rows.json` turns 1 and 2, and the place-scoped feed in `item_facts.py`), then fix through Ringer.
+1. ~~Outside things in a house prompt~~ Done (step 13); not yet seen live.
 2. **Searched-and-empty place (needs Brandon's decision).** "Feel under the drawer" after the card is taken: the narrator invents a notebook, USB drive or note in 16 of 20 replies whether or not the card statement is present. Option: an engine-authored "nothing else is there" line. Not chosen.
 3. **Invented object outside (P3):** not reproduced (control 6/10; rule arm 9/10, view arm 8/10; bar not met). Revisit only if it shows again in the rerun.
 4. **Rerun postfix2 live** (A n=5, B n=3, C n=3, D n=3, about 530 calls) in a new preregistration for Brandon's approval, to see the step 10 and 11 fixes and the officer follow-up live. It also covers: the laptop notice on boarding, the stale cue in the truck, and the narrator's reply to the officer's demand.
@@ -446,3 +446,7 @@ Brandon chose a visible next step in 1A, and asked me to write it as an interact
 ### Step 12 — open narrator-defect probe (2026-10-25, Ringer `1a-continuity-open-probe-live`, 90 calls)
 
 Result is in `1a-transcript-continuity/postfix2-open-probe-prereg.md`. No arm met the decision rule, so no fix ships. P1 (card re-find): the narrator replaces the card with another invented object (notebook, USB drive, note) in the drop and past arms, 2/10 pass each, control 2/10. P2 (wait in the house): control 10/10, not reproduced on replicate 0's prompt, but replicates 1 and 2 had outside things (gate, truck, seats, laptop) in a house prompt and the narrator moved Kristin to the gate; the leak's cause is open. P3 (invented paper outside): control 6/10, rule arm 9/10, view arm 8/10, bar not met. Next: find why outside things reach a house prompt (deterministic, free) and decide how a searched-and-empty place is narrated.
+
+### Step 13 — out-of-reach referred things (2026-10-25, Ringer `1a-continuity-referred-reach`)
+
+Cause: for the bare command "wait" the match model returned `refers` with the gate and truck in 2 of 3 postfix2 witnessed replicates (identical prompts; model noise). `_thing_names` returned referred names unfiltered whenever Kristin was at the scene location, and truck seats and the laptop were added by seat/given_with expansion. Fix: in the in-scene case, a name that is not a dependency or selected-but-unreferred (protagonist) must pass the same reach filter as the out-of-scene case (literal, resolved, held, or together). Second task closed the expansion gap. Tests: `tests/test_referred_reach.py` (synthetic story); 124 focused tests, ruff pass. NOT verified live.
