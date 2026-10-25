@@ -8,6 +8,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "scripts/ringer/transcript_1a/live_baseline.py"
 CHECKER = ROOT / "scripts/ringer/transcript_1a/check_live_baseline.py"
@@ -20,6 +22,67 @@ def test_dry_run_and_checker(tmp_path: Path) -> None:
         [str(PYTHON), str(SCRIPT), "--dry-run", "--replicates", "1", "--turns", "2", "--out", str(out)], check=True
     )
     subprocess.run([str(PYTHON), str(CHECKER), str(out), "1", "--mode", "dry", "--turns", "2"], check=True)
+
+
+@pytest.mark.parametrize(
+    ("route", "expected_inputs"),
+    (
+        (
+            "reported",
+            ("go in the house", "feel in the gap", "look at the fabric"),
+        ),
+        (
+            "corrected",
+            ("go in the house", "pull out the drawer", "feel in the gap"),
+        ),
+        (
+            "witnessed",
+            ("go in the house", "examine the carved initials", "wait"),
+        ),
+    ),
+)
+def test_routes_dry_run_and_checker(tmp_path: Path, route: str, expected_inputs: tuple[str, ...]) -> None:
+    out = tmp_path / route
+    subprocess.run(
+        [
+            str(PYTHON),
+            str(SCRIPT),
+            "--dry-run",
+            "--route",
+            route,
+            "--replicates",
+            "1",
+            "--turns",
+            "3",
+            "--out",
+            str(out),
+        ],
+        check=True,
+    )
+    summary = json.loads((out / "summary.json").read_text())
+    assert summary["route"] == route
+    assert summary["inputs"] == list(expected_inputs)
+    rows = json.loads((out / "rows.json").read_text())
+    assert rows[0]["route"] == route
+    assert all(turn["route"] == route for turn in rows[0]["turns"])
+    subprocess.run([str(PYTHON), str(CHECKER), str(out), "1", "--mode", "dry", "--turns", "3"], check=True)
+
+
+def test_default_route_keeps_reported_inputs(tmp_path: Path) -> None:
+    out = tmp_path / "default"
+    subprocess.run([str(PYTHON), str(SCRIPT), "--dry-run", "--replicates", "1", "--out", str(out)], check=True)
+    summary = json.loads((out / "summary.json").read_text())
+    assert summary["route"] == "reported"
+    assert summary["inputs"] == [
+        "go in the house",
+        "feel in the gap",
+        "look at the fabric",
+        "pull out the drawer",
+        "feel under the drawer",
+        "go out to the truck",
+        "get in",
+        "look around",
+    ]
 
 
 def test_call_cap_keeps_partial_rows(tmp_path: Path) -> None:

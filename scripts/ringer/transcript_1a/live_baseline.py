@@ -17,16 +17,44 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-INPUTS = (
-    "go in the house",
-    "feel in the gap",
-    "look at the fabric",
-    "pull out the drawer",
-    "feel under the drawer",
-    "go out to the truck",
-    "get in",
-    "look around",
-)
+ROUTES = {
+    "reported": (
+        "go in the house",
+        "feel in the gap",
+        "look at the fabric",
+        "pull out the drawer",
+        "feel under the drawer",
+        "go out to the truck",
+        "get in",
+        "look around",
+    ),
+    "corrected": (
+        "go in the house",
+        "pull out the drawer",
+        "feel in the gap",
+        "look around",
+        "wait",
+        "wait",
+        "go out to the truck",
+        "get in",
+        "look around",
+        "get out of the truck",
+        "look around",
+        "wait",
+    ),
+    "witnessed": (
+        "go in the house",
+        "examine the carved initials",
+        "wait",
+        "wait",
+        "feel in the gap",
+        "say what the card is to the officer",
+        "wait",
+        "go out to the truck",
+        "get in",
+        "look around",
+    ),
+}
 TRACKED = ("kristin", "kristin_laptop", "memory_card", "michelle_drawer", "kristin_truck")
 QUOTA_CODES = ("AI_QUOTA_EXCEEDED", "AI_DAILY_BUDGET_EXCEEDED")
 
@@ -185,6 +213,11 @@ def _prompts(counter: CallCounter) -> list[dict[str, str]]:
     return list(counter.prompts)
 
 
+def _route_inputs(route: str, turns: int | None = None) -> tuple[str, ...]:
+    inputs = ROUTES[route]
+    return inputs if turns is None else inputs[:turns]
+
+
 def _wire(counter: CallCounter, dry: bool) -> None:
     import storygame.runtime.cloudflare as cf
     import storygame.runtime.jev as jev
@@ -212,7 +245,12 @@ def _stop_exception(counter: CallCounter) -> CallCapExceeded | QuotaExceeded | N
 
 
 def _replicate(
-    counter: CallCounter, package: Any, turns: int, record: dict[str, Any], on_turn: Any = None
+    counter: CallCounter,
+    package: Any,
+    route: str,
+    inputs: tuple[str, ...],
+    record: dict[str, Any],
+    on_turn: Any = None,
 ) -> dict[str, Any]:
     from storygame.runtime.capture import WorldCapture, build_capture_provider
     from storygame.runtime.engine import RuntimeEngine
@@ -237,7 +275,7 @@ def _replicate(
     stop = _stop_exception(counter)
     if stop is not None:
         raise stop
-    for command in INPUTS[:turns]:
+    for command in inputs:
         counter.prompts.clear()
         counter.responses.clear()
         before = _places(state)
@@ -253,6 +291,7 @@ def _replicate(
             selected = []
             error = f"{type(exc).__name__}: {exc}"
         row = {
+            "route": route,
             "input": command,
             "before": before,
             "after": _places(state),
@@ -289,19 +328,21 @@ def _summary(
     mode: str,
     requested: int,
     rows: list[dict[str, Any]],
-    turns: int,
+    route: str,
+    inputs: tuple[str, ...],
     counter: CallCounter,
     stopped: str | None,
     package: Any,
     out: Path,
 ) -> dict[str, Any]:
-    completed = sum(len(row.get("turns", ())) == turns for row in rows)
+    completed = sum(len(row.get("turns", ())) == len(inputs) for row in rows)
     errors = sum(1 for row in rows for turn in row.get("turns", ()) if turn.get("error"))
     sha = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=False
     ).stdout.strip()
     return {
         "mode": mode,
+        "route": route,
         "replicates_requested": requested,
         "replicates_completed": completed,
         "turns_recorded": sum(len(row.get("turns", ())) for row in rows),
@@ -315,7 +356,7 @@ def _summary(
         if mode == "dry"
         else urlparse(os.environ["CLOUDFLARE_WORKER_URL"]).hostname,
         "real_calls": counter.real_calls,
-        "inputs": list(INPUTS[:turns]),
+        "inputs": list(inputs),
         "semantic_reveal_effective": os.environ.get("FREYTAG_SEMANTIC_REVEAL", "1"),
     }
 
@@ -323,7 +364,8 @@ def _summary(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--replicates", type=int, default=5)
-    parser.add_argument("--turns", type=int, default=8)
+    parser.add_argument("--turns", type=int)
+    parser.add_argument("--route", choices=tuple(ROUTES), default="reported")
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--max-calls", type=int, default=200)
     parser.add_argument("--dry-run", action="store_true")
@@ -332,8 +374,10 @@ def main(argv: list[str] | None = None) -> int:
     if not args.dry_run and (not args.confirm or not os.environ.get("CLOUDFLARE_WORKER_URL")):
         print("live mode requires --confirm and CLOUDFLARE_WORKER_URL", file=sys.stderr)
         return 2
-    if not 0 <= args.turns <= len(INPUTS) or args.replicates < 0 or args.max_calls < 0:
+    turns = len(ROUTES[args.route]) if args.turns is None else args.turns
+    if not 0 <= turns <= len(ROUTES[args.route]) or args.replicates < 0 or args.max_calls < 0:
         parser.error("invalid replicate, turn, or call limit")
+    inputs = _route_inputs(args.route, turns)
     mode = "dry" if args.dry_run else "live"
     if args.dry_run:
         os.environ.setdefault("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
@@ -348,12 +392,13 @@ def main(argv: list[str] | None = None) -> int:
     stopped = None
     try:
         for _ in range(args.replicates):
-            record: dict[str, Any] = {"opening": None, "turns": []}
+            record: dict[str, Any] = {"route": args.route, "opening": None, "turns": []}
             rows.append(record)
             _replicate(
                 counter,
                 package,
-                args.turns,
+                args.route,
+                inputs,
                 record,
                 lambda: (args.out / "rows.json").write_text(
                     json.dumps(rows, indent=2, ensure_ascii=False, default=_json) + "\n"
@@ -364,7 +409,7 @@ def main(argv: list[str] | None = None) -> int:
         stopped = getattr(exc, "code", "MAX_CALLS_EXCEEDED")
     finally:
         (args.out / "rows.json").write_text(json.dumps(rows, indent=2, ensure_ascii=False, default=_json) + "\n")
-        summary = _summary(mode, args.replicates, rows, args.turns, counter, stopped, package, args.out)
+        summary = _summary(mode, args.replicates, rows, args.route, inputs, counter, stopped, package, args.out)
         (args.out / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n")
     return 0
 
