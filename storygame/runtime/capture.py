@@ -109,6 +109,7 @@ class WorldCapture:
         seating_steps = seating.steps if seating else ()
         provider_steps = (*fixed_steps, *standing.steps, *boarding_steps, *taking.steps, *seating_steps)
         self.provider.prior_steps = provider_steps
+        self.provider.command_consumed = boarding.command_consumed
         command_record = (
             " ".join((*fixed_steps, *standing.steps, boarding.command, *taking.steps, *seating_steps))
             if boarding.command_consumed
@@ -196,11 +197,13 @@ class WorldCapture:
         }
         self.last_after = record
         self.provider.prior_steps = ()
+        self.provider.command_consumed = False
         return record
 
     def discard(self) -> None:
         self.provider.discard_pending_item_facts()
         self.provider.prior_steps = ()
+        self.provider.command_consumed = False
 
     def context(self) -> dict[str, Any]:
         names = (
@@ -221,6 +224,7 @@ class WorldCapture:
         )
         result = {name: _json_value(getattr(self.provider, name)) for name in names}
         result["prior_steps"] = _json_value(self.provider.prior_steps)
+        result["command_consumed"] = self.provider.command_consumed
         result["command"] = self._command
         return result
 
@@ -258,6 +262,7 @@ class WorldCapture:
                     value = value or []
                 setattr(self.provider, name, value)
         self.provider.prior_steps = tuple(context.get("prior_steps", ()))
+        self.provider.command_consumed = bool(context.get("command_consumed", False))
         self._command = context.get("command", "")
 
 

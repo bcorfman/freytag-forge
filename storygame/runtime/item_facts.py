@@ -296,6 +296,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._match_offered_names = set()
         self._schema_cache = {}
         self.prior_steps: tuple[str, ...] = ()
+        self.command_consumed = False
         self._last_item_facts_unplaced = []
         self._last_item_facts_refused = []
         self._fact_effect_snapshot = None
@@ -569,7 +570,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _player_lines(self, user):
         lines = super()._player_lines(user)
-        if self.prior_steps and lines:
+        if self.command_consumed:
+            lines = [f"Just before this: {' '.join(self.prior_steps)}"] if self.prior_steps else []
+        elif self.prior_steps and lines:
             lines.insert(0, f"Just before this: {' '.join(self.prior_steps)}")
         if not lines or "scene_setting" not in user:
             return lines

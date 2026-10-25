@@ -82,6 +82,9 @@ def test_location_aliases_resolve() -> None:
     assert world.resolve("driveway") == "outside_house"
     assert world.resolve("outside") == "outside_house"
     assert world.resolve("inside") == "mcgehee_home"
+    assert world.resolve("the living room") == "mcgehee_home"
+    assert world.resolve("the front room") == "mcgehee_home"
+    assert world.resolve("the hallway") == "mcgehee_home"
 
 
 def test_scene_entry_bootstraps_kristin_in_the_house_and_connections_load() -> None:

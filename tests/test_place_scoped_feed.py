@@ -185,6 +185,19 @@ def test_unplaced_protagonist_gets_the_in_house_feed(monkeypatch: pytest.MonkeyP
     assert "WHERE:" not in unplaced_prompt["user"]
 
 
+def test_protagonist_in_narrator_named_house_room_gets_the_in_house_feed(monkeypatch: pytest.MonkeyPatch) -> None:
+    state = _state_at("mcgehee_home")
+    world = world_for(PACKAGE, state.facts)
+    created = world.create("a narrator named room", parent="mcgehee_home", kind="area")
+    assert created.ok and created.id
+    assert world.move("kristin", created.id).ok
+
+    prompt = _turn_prompt(monkeypatch, state)
+
+    assert "- drawer. Place: in Michelle's workstation." in prompt["user"]
+    assert "Michelle's house stands behind a low gate." not in prompt["user"]
+
+
 def test_command_referred_distant_thing_remains_in_things(monkeypatch: pytest.MonkeyPatch) -> None:
     state = _state_at("outside_house")
     _stub_transport(monkeypatch)

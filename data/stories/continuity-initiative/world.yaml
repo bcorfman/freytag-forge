@@ -10,7 +10,7 @@ kinds:
 locations:
 - id: mcgehee_home
   name: Michelle's house
-  aliases: [Michelle's home, the house, inside, indoors]
+  aliases: [Michelle's home, the house, inside, indoors, the living room, the front room, the hallway]
 - id: kitchen
   name: kitchen
   parent: mcgehee_home

@@ -48,8 +48,20 @@ def _visible_to(item: KnowledgeDefinition, audience_id: str) -> bool:
 
 
 def together_or_unplaced(world, protagonist_id: str, entity_id: str) -> bool:
-    """Treat an unplaced protagonist as able to reach any entity."""
-    return world.area(protagonist_id) is None or world.together(protagonist_id, entity_id)
+    """Treat an unplaced protagonist or an entity in the same root area as reachable."""
+    protagonist_area = world.area(protagonist_id)
+    if protagonist_area is None:
+        return True
+    if world.together(protagonist_id, entity_id):
+        return True
+    entity_area = world.area(entity_id)
+    if entity_area is None:
+        return False
+    if world.kind(entity_id) == "area":
+        return False
+    protagonist_root = [protagonist_area, *world.chain(protagonist_area)][-1]
+    entity_root = [entity_area, *world.chain(entity_area)][-1]
+    return protagonist_root == entity_root
 
 
 def explain_reveal(state: RuntimeState, audience_id: str, item: KnowledgeDefinition) -> RevealEligibility:

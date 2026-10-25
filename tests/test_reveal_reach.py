@@ -68,6 +68,21 @@ def test_scene_reveals_are_reachable_at_home_but_not_from_the_truck() -> None:
     assert (result.eligible, result.reason) == (False, NOT_REACHABLE)
 
 
+def test_scene_reveals_are_reachable_from_a_narrator_named_room_in_the_house() -> None:
+    state = _scene_state()
+    world = world_for(PACKAGE, state.facts)
+    created = world.create("a narrator named room", parent="mcgehee_home", kind="area")
+    assert created.ok and created.id
+    assert world.move("kristin", created.id).ok
+
+    for knowledge_id in REVEALS:
+        assert explain_reveal(state, "player", PACKAGE.knowledge_indexes.by_id[knowledge_id]).eligible
+
+    assert world.move("kristin", "outside_house").ok
+    result = explain_reveal(state, "player", PACKAGE.knowledge_indexes.by_id[REVEALS[0]])
+    assert (result.eligible, result.reason) == (False, NOT_REACHABLE)
+
+
 def test_scene_reveals_fail_open_when_the_protagonist_is_unplaced() -> None:
     state = _scene_state()
     world = world_for(PACKAGE, state.facts)
@@ -81,7 +96,11 @@ def _synthetic_state() -> tuple[RuntimeState, KnowledgeDefinition]:
     world = WorldSource(
         story_id="synthetic",
         protagonist_id="hero",
-        locations=(Location(id="room_a", name="Room A"), Location(id="room_b", name="Room B")),
+        locations=(
+            Location(id="room_a", name="Room A"),
+            Location(id="room_a_child", name="Room A Child", parent="room_a"),
+            Location(id="room_b", name="Room B"),
+        ),
         npcs=(Npc(id="hero", name="Hero"),),
         items=(Item(id="target", name="Target"),),
     )
@@ -117,6 +136,14 @@ def test_synthetic_reveal_reach_is_story_neutral() -> None:
     assert world.move("hero", "room_b").ok
     result = explain_reveal(state, "player", item)
     assert (result.eligible, result.reason, result.detail) == (False, NOT_REACHABLE, "target")
+
+
+def test_synthetic_reveal_reach_allows_siblings_under_the_same_root() -> None:
+    state, item = _synthetic_state()
+    world = world_for(state.package, state.facts)
+    assert world.move("hero", "room_a_child").ok
+
+    assert explain_reveal(state, "player", item).eligible
 
 
 def test_synthetic_reveal_reach_fails_open_when_the_protagonist_is_unplaced() -> None:

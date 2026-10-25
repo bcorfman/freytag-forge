@@ -3,9 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 from worldkeeper import MemoryBackend, World, WorldSchema
 
-from storygame.runtime.capture import WorldCapture
+from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.seating import board_vehicle, stand_before_leave
 from storygame.runtime.state import RuntimeState
@@ -334,6 +335,32 @@ def test_capture_consumes_a_command_that_only_boards():
     assert record["boarding_command_consumed"] is True
     assert provider.prior_steps == tuple(record["boarding_steps"])
     assert world.parent("kristin") == "truck_driver_seat"
+
+
+@pytest.mark.parametrize("only_boards", [True, False])
+def test_product_provider_omits_only_consumed_boarding_command_from_prompt(
+    monkeypatch: pytest.MonkeyPatch, only_boards: bool
+) -> None:
+    state, _world = _at_truck()
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example")
+    provider = build_capture_provider(state)
+    captured: dict[str, object] = {}
+    provider._dispatch = lambda system, user: captured.update(system=system, user=user) or {"segments": []}
+
+    def ask(_state, questions):
+        key = next(iter(questions))
+        return {
+            key: {"noul": 1.0 if key == "boards_vehicle" or (key == "only_boards_vehicle" and only_boards) else 0.0}
+        }
+
+    WorldCapture(provider, ask).before_turn("Go out to the truck.")
+    provider("Go out to the truck.")
+    user = provider._section_user_prompt(captured["user"])
+    before = "Just before this: Kristin sat down in the driver's seat. Kristin's laptop sat on the passenger seat."
+
+    assert before in user
+    command_line = "- Go out to the truck."
+    assert (command_line not in user) is only_boards
 
 
 def test_getting_out_of_a_vehicle_moves_to_the_seat_area():
