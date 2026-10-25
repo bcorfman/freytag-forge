@@ -1,8 +1,10 @@
 # Correct Scene 1A reference, patrol, and location continuity
 
-Status: in progress (step 1 deterministic baseline done), 2026-10-24. Planning baseline:
-`be14abdf997db10bdfefc47a1e5b60d254fb1963`. This change is a plan only;
-no runtime changes, model calls, or deployment have been performed.
+Status: in progress, 2026-10-24. Steps 1 to 4 and most of 5 and 6 are implemented
+and committed on `fix-1a-transcript-continuity`; the live verification and the final
+full-suite gate are not done, so no requirement is claimed corrected yet except where
+the Completion record shows live evidence. Planning baseline:
+`be14abdf997db10bdfefc47a1e5b60d254fb1963`.
 
 ## Resume here
 
