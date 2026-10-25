@@ -47,13 +47,6 @@ def _provider(state: RuntimeState) -> ItemFactsProvider:
     )
 
 
-def _boarding_ask(_state, questions):
-    return {
-        question: {"noul": 1.0 if question in {"boards_vehicle", "only_boards_vehicle"} else 0.0}
-        for question in questions
-    }
-
-
 def _real_boarding_engine(*, only_boards: bool = True):
     state = RuntimeState.bootstrap(PACKAGE)
     world = world_for(PACKAGE, state.facts)
@@ -61,17 +54,24 @@ def _real_boarding_engine(*, only_boards: bool = True):
     assert world.move("kristin_laptop", "truck_passenger_seat").ok
     provider = _provider(state)
 
+    capture: WorldCapture | None = None
+
     def ask(_state, questions):
+        is_boarding = capture is not None and capture._command == "Get in."
         return {
             question: {
                 "noul": (
-                    1.0 if question == "boards_vehicle" or (only_boards and question == "only_boards_vehicle") else 0.0
+                    1.0
+                    if is_boarding
+                    and (question == "boards_vehicle" or (only_boards and question == "only_boards_vehicle"))
+                    else 0.0
                 )
             }
             for question in questions
         }
 
-    return state, provider, RuntimeEngine(state, provider, capture=WorldCapture(provider, ask))
+    capture = WorldCapture(provider, ask)
+    return state, provider, RuntimeEngine(state, provider, capture=capture)
 
 
 def _stub_narrator(monkeypatch: pytest.MonkeyPatch, *, allow: list[bool], calls: list[object]) -> None:
@@ -281,10 +281,20 @@ def test_boarded_snapshot_round_trip_preserves_following_turn(monkeypatch: pytes
     restored = RuntimeState.bootstrap(PACKAGE)
     restored.restore_snapshot(snapshot)
     restored_provider = _provider(restored)
+    restored_capture: WorldCapture | None = None
+
+    def restored_ask(_state, questions):
+        is_boarding = restored_capture is not None and restored_capture._command == "Get in."
+        return {
+            question: {"noul": 1.0 if is_boarding and question in {"boards_vehicle", "only_boards_vehicle"} else 0.0}
+            for question in questions
+        }
+
+    restored_capture = WorldCapture(restored_provider, restored_ask)
     restored_engine = RuntimeEngine(
         restored,
         restored_provider,
-        capture=WorldCapture(restored_provider, _boarding_ask),
+        capture=restored_capture,
     )
     allow[0] = True
 

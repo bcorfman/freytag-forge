@@ -1,0 +1,35 @@
+{
+ "run_name": "1a-continuity-boarding-text",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-boarding-text",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "already-seated-boarding-text",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 5400,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "storygame/runtime/seating.py",
+    "storygame/runtime/capture.py",
+    "storygame/runtime/item_facts.py",
+    "tests/test_boarding_already_seated.py",
+    "tests/test_boarding.py",
+    "tests/test_boarding_engine_text.py",
+    "tests/test_vehicle_landing.py"
+   ],
+   "spec": "You are fixing a boarding defect in freytag-forge (Python 3.12), approved by Brandon. Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT: storygame/runtime/seating.py, storygame/runtime/capture.py (only if needed), a NEW tests/test_boarding_already_seated.py, and existing tests only where a pin truly changes (list each). Never edit data/, docs/, .plans/, bench/. Shared runtime has NO story names (no Kristin, truck, laptop, driver ...).\n\nDEFECT: board_vehicle (seating.py) skips any vehicle the protagonist is already seated in (the `continue` where her parent is a seat_for that vehicle). So when a player in the driver's seat types 'Get in.' (live: the prior turn 'Go out to the truck.' had already boarded her), nothing handles it, the narrator is called with 'Get in.', and it wrote 'She opens the door and steps out of the truck' although the committed place stayed in the seat (prose contradicts state). The plan requires that repeated entry never produces a false exit.\n\nFIX: when the protagonist is already in a seat of a visible vehicle and the command is about boarding that vehicle, treat it like a consumed boarding turn with an engine step. Detect it with the SAME classifier callables board_vehicle already takes: ask boards_vehicle(player_input, vehicle name) for the vehicle she is seated in when (a) the command names that vehicle (use the existing _command_names_thing test) or (b) it names no visible vehicle and she is seated in exactly one vehicle. If the answer is True and only_boards_vehicle(...) is True, return a SeatingResult with command_consumed=True, no world change, and one generic step built from names, exactly: '<protagonist name> is already in the <seat name>.' using world.name(protagonist) and world.name(seat_entity), where the seat entity is her current parent. If boards is True but only_boards is not True, or either answer is None/False, change nothing (current behavior, record an issue only for a None answer as the existing code does). Do not add story text to any data file. The existing engine-text path (ItemFactsProvider.__call__ when command_consumed and prior_steps, item_facts.py) then shows the step as the whole narration with no narrator call; confirm that works for this step without edits to item_facts.py, and if it needs one, make the smallest change and explain.\n\nTESTS FIRST in tests/test_boarding_already_seated.py (hermetic, no network, fail if the narrator is called on the consumed turn; model setup on tests/test_boarding_engine_text.py): (a) 1A package, protagonist already in truck_driver_seat, 'Get in.' with Jev boards and only_boards yes: narration is exactly 'Kristin is already in the driver's seat.' (check what world.name returns for the seat and assert the real string), no narrator request, parent unchanged, laptop unchanged, no notice repeated; (b) 'Get in the truck.' same; (c) boards yes but only_boards no: unchanged, narrator is called; (d) boards no: unchanged; (e) seated in a vehicle and the command names a DIFFERENT visible vehicle that she is not in: normal boarding path for that other vehicle is unchanged; (f) a synthetic second story with a differently named vehicle gives the analogous step; (g) the full sequence through RuntimeEngine: outside -> 'Go to the truck.' (boards) -> 'Get in.' yields engine text twice, two different texts, seat unchanged, no narrator call on either, with the capture wired as in tests/test_boarding_engine_text.py::test_consumed_boarding_discards_previous_narrator_item_facts (build_capture_provider, fixed_refusal=True, engine_refusal=True). Existing tests pinning the old behavior (a seated protagonist's repeated boarding command reaching the narrator) must be updated, kept in intent, and listed.\n\nFINISH: ruff format and ruff check touched files; run the check's suites; report existing tests changed and print the narration of (a) and (g).",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 $(ls -d tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_boarding.py tests/test_boarding_probe.py tests/test_place_scoped_feed.py tests/test_vehicle_landing.py tests/test_recent_cue_reference.py tests/test_reveal_reach.py tests/test_1a_movement.py tests/test_late_scene_repro.py tests/test_item_facts*.py tests/test_world_capture*.py tests/test_bench_runtime_mode.py tests/test_cloudflare_transport.py tests/test_web_demo.py tests/test_seating*.py 2>/dev/null | tr '\\n' ' ') 2>&1 | tail -10 && git diff --quiet -- data bench/frozen docs .plans && (! git diff -U0 -- storygame | grep -E '^\\+' | grep -iE 'kristin|michelle|drawer|truck|laptop|driver') && .venv/bin/python -m ruff check storygame tests && .venv/bin/python -m ruff format --check storygame tests",
+   "verified": "a boarding command while already seated shows an engine line, no narrator call, no state change; focused suites pass; no story names in runtime"
+  }
+ ]
+}

@@ -162,7 +162,7 @@ def test_boarding_omits_a_laptop_left_in_the_house():
     assert result.steps == ("Kristin sat down in the driver's seat.",)
 
 
-def test_already_aboard_is_not_asked():
+def test_already_aboard_is_asked_but_not_consumed():
     _, world = _at_truck()
     assert world.move("kristin", "truck_driver_seat").ok
     asked = []
@@ -170,11 +170,11 @@ def test_already_aboard_is_not_asked():
     result = board_vehicle(world, PACKAGE, "Drive Kristin's truck.", lambda *args: asked.append(args) or True)
 
     assert result.steps == ()
-    assert result.asked is False
-    assert asked == []
+    assert result.asked is True
+    assert asked == [("Drive Kristin's truck.", "Kristin's truck")]
 
 
-def test_repeated_contextual_boarding_while_seated_is_not_asked():
+def test_repeated_contextual_boarding_while_seated_is_asked_but_not_consumed():
     _, world = _at_truck()
     assert world.move("kristin", "truck_driver_seat").ok
     asked = []
@@ -182,8 +182,9 @@ def test_repeated_contextual_boarding_while_seated_is_not_asked():
     result = board_vehicle(world, PACKAGE, "Get in.", lambda *args: asked.append(args) or True)
 
     assert result.steps == ()
-    assert result.asked is False
-    assert asked == []
+    assert result.command_consumed is False
+    assert result.asked is True
+    assert asked == [("Get in.", "Kristin's truck")]
 
 
 def _synthetic_vehicle_world(vehicle_count=1):
