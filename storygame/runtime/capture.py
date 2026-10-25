@@ -116,7 +116,7 @@ class WorldCapture:
             else " ".join((*provider_steps, command))
         )
         match_info = {}
-        if self.provider.item_facts_mode == "single_call" and not engine_refusal:
+        if self.provider.item_facts_mode == "single_call" and not engine_refusal and not self.provider.command_consumed:
             match_info = self.provider.prepare_turn(command)
         record = {
             "command": command_record,

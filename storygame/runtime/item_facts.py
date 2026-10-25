@@ -298,6 +298,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._schema_cache = {}
         self.prior_steps: tuple[str, ...] = ()
         self.command_consumed = False
+        self.last_turn_engine_text = False
         self._last_item_facts_unplaced = []
         self._last_item_facts_refused = []
         self._fact_effect_snapshot = None
@@ -611,6 +612,31 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _setting_fact_rules(self):
         return _package_seed(self.state.package, self.state, self.state.current_scene_id)[2]
+
+    def __call__(self, player_input: str) -> object:
+        self.last_turn_engine_text = False
+        if not (self.command_consumed and self.prior_steps):
+            return super().__call__(player_input)
+
+        self.last_turn_engine_text = True
+        self._rejection_note = None
+        self.last_prompt = None
+        try:
+            self.assemble_turn_prompt(player_input)
+            response = {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": " ".join(self.prior_steps),
+                    }
+                ],
+                "selected_knowledge_ids": [],
+            }
+            proposal = self._parse_eligible_proposal(response)
+            return self._accept_proposal(response, proposal)
+        except Exception:
+            self.clear_authored_handoff()
+            raise
 
     def _system_rules(self, opening):
         if self.prompt_variant and self.prompt_variant.get("constant_rules_in_system") is True:

@@ -127,6 +127,7 @@ def _stub_item_facts() -> Iterator[None]:
 
 def _control_prompt(package: Any, place_id: str, command: str) -> dict[str, str]:
     from storygame.runtime.capture import WorldCapture, build_capture_provider
+    from storygame.runtime.cloudflare import CloudflareTurnProvider
 
     state = _state_at(package, place_id)
     with _stub_jev(), _stub_item_facts():
@@ -145,7 +146,9 @@ def _control_prompt(package: Any, place_id: str, command: str) -> dict[str, str]
 
         provider._dispatch = dispatch
         WorldCapture(provider, _boarding_ask).before_turn(command)
-        provider(command)
+        # The product now answers a boarding-only turn with engine text and no narrator
+        # call; the probe needs the narrator request that boarding used to send.
+        CloudflareTurnProvider.__call__(provider, command)
 
     if "system" not in captured or "user" not in captured:
         raise RuntimeError(f"provider did not produce a narrator request for {place_id!r}")
