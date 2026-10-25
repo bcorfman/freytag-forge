@@ -16,6 +16,13 @@ class SeatingResult:
     command_consumed: bool = False
 
 
+def _protagonist_name(package) -> str:
+    protagonist = next((npc for npc in package.world.npcs if npc.id == package.protagonist_id), None)
+    if protagonist is None:
+        return package.protagonist_id
+    return min((*protagonist.aliases, protagonist.name), key=len)
+
+
 def _command_names_thing(command: str, names: tuple[str, ...]) -> bool:
     command = command.replace("’", "'").casefold()
     for name in names:
@@ -152,7 +159,7 @@ def board_vehicle(
                     else False
                 )
                 if command_consumed:
-                    step = f"{world.name(protagonist)} is already in the {world.name(parent)}."
+                    step = f"{_protagonist_name(package)} is already in the {world.name(parent)}."
                     return SeatingResult(step, (step,), asked, tuple(issues), True)
             return SeatingResult(player_input, (), asked, tuple(issues))
 

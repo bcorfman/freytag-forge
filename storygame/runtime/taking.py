@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from storygame.runtime.seating import _command_names_thing
+from storygame.runtime.seating import _command_names_thing, _protagonist_name
 
 
 @dataclass(frozen=True)
@@ -22,13 +22,6 @@ def _with_article(name: str) -> str:
     if len(name) > 1 and name[0].isupper() and name[1].islower():
         name = name[0].lower() + name[1:]
     return f"the {name}"
-
-
-def _protagonist_name(package) -> str:
-    protagonist = next((npc for npc in package.world.npcs if npc.id == package.protagonist_id), None)
-    if protagonist is None:
-        return package.protagonist_id
-    return min((*protagonist.aliases, protagonist.name), key=len)
 
 
 def take_before_put(world, package, player_input: str, moves_thing: Callable[[str, str], bool | None]) -> TakingResult:

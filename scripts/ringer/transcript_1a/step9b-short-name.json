@@ -1,0 +1,33 @@
+{
+ "run_name": "1a-continuity-boarding-text",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-boarding-text",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "already-seated-short-name",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 1200,
+   "ownership": [
+    "storygame/runtime/seating.py",
+    "storygame/runtime/taking.py",
+    "tests/test_boarding_already_seated.py",
+    "tests/test_boarding_engine_text.py",
+    "tests/test_boarding.py"
+   ],
+   "spec": "Small fix in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: storygame/runtime/seating.py, tests/test_boarding_already_seated.py, tests/test_boarding_engine_text.py, tests/test_boarding.py. Never edit data/, docs/, .plans/, bench/. No story names in storygame/.\n\nCHANGE: board_vehicle in seating.py now returns the engine line f\"{world.name(protagonist)} is already in the {world.name(parent)}.\" for a boarding-only command while seated. world.name(protagonist) is the full credited name ('Kristin Schweitzer'). Brandon wants the SHORT name the player is called by ('Kristin'), matching the other boarding lines. Use the existing idiom already in the code base: the shortest of the protagonist NPC's aliases plus name, as storygame/runtime/taking.py::_protagonist_name(package) does (min over (*aliases, name) by len; falls back to package.protagonist_id when there is no NPC). Do not copy-paste a third copy: move that function to one shared place both taking.py and seating.py import (check for import cycles; seating.py may import from taking.py, or put it in a small neutral module, whichever avoids a cycle), keep taking.py's behavior unchanged, and leave item_facts.py and cloudflare.py alone.\n\nTEST FIRST: update the pinned expectation in tests/test_boarding_already_seated.py (currently 'Kristin Schweitzer is already in the driver's seat.') to \"Kristin is already in the driver's seat.\", and make the synthetic-story test prove the same rule with a synthetic protagonist whose full name is longer than its alias (assert it uses the alias). Run it to see it fail first. List any other test pin you change.\n\nFINISH: ruff format and check touched files; run: .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_boarding.py tests/test_taking*.py tests/test_seating*.py tests/test_vehicle_landing.py",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 $(ls -d tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_boarding.py tests/test_taking*.py tests/test_seating*.py tests/test_vehicle_landing.py tests/test_place_scoped_feed.py tests/test_item_facts*.py tests/test_world_capture*.py 2>/dev/null) 2>&1 | tail -6 && git diff --quiet -- data bench/frozen docs .plans && (! git diff -U0 -- storygame | grep -E '^\\+' | grep -iE 'kristin|michelle|drawer|truck|laptop|driver|schweitzer') && .venv/bin/python -m ruff check storygame tests && .venv/bin/python -m ruff format --check storygame tests",
+   "verified": "already-seated line uses the protagonist's short name via one shared helper"
+  }
+ ]
+}

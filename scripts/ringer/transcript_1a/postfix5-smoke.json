@@ -1,0 +1,30 @@
+{
+ "run_name": "transcript-1a-postfix5-smoke",
+ "workdir": "/home/bcorfman/dev/ringer-work/transcript-1a-postfix5-smoke",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "transcript-1a-postfix5-smoke-corrected",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 120,
+   "ownership": [
+    "bench/results/transcript-1a-postfix5-smoke-corrected/"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route corrected --replicates 1 --turns 9 --max-calls 45 --confirm --out bench/results/transcript-1a-postfix5-smoke-corrected",
+   "spec": "Run ONE billed Scene 1A smoke: route corrected, 1 replicate, 9 turns, hard cap 45 Cloudflare calls. Own only bench/results/transcript-1a-postfix5-smoke-corrected/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; on quota, outage or error leave the partial rows.json and summary.json in place and report verbatim. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route corrected --replicates 1 --turns 9 --max-calls 45 --confirm --out bench/results/transcript-1a-postfix5-smoke-corrected",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python scripts/ringer/transcript_1a/check_live_baseline.py bench/results/transcript-1a-postfix5-smoke-corrected 1 --mode live --turns 9",
+   "verified": "rows.json and summary.json recorded within the call cap"
+  }
+ ]
+}

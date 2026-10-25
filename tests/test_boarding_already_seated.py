@@ -52,8 +52,8 @@ def test_repeated_boarding_is_consumed_without_repeating_entry(command: str) -> 
 
     result = board_vehicle(world, PACKAGE, command, boards, lambda *_: True)
 
-    assert result.command == "Kristin Schweitzer is already in the driver's seat."
-    assert result.steps == ("Kristin Schweitzer is already in the driver's seat.",)
+    assert result.command == "Kristin is already in the driver's seat."
+    assert result.steps == ("Kristin is already in the driver's seat.",)
     assert result.command_consumed is True
     assert result.issues == ()
     assert asked == [(command, "Kristin's truck")]
@@ -118,6 +118,8 @@ def test_boarding_a_different_visible_vehicle_keeps_normal_path() -> None:
 
 def test_synthetic_story_uses_its_vehicle_name_for_repeated_boarding() -> None:
     package = _synthetic_package()
+    protagonist = package.world.npcs[0].model_copy(update={"name": "Ariadne Longname", "aliases": ("Ari",)})
+    package = package.model_copy(update={"world": package.world.model_copy(update={"npcs": (protagonist,)})})
     state = RuntimeState.bootstrap(package)
     world = world_for(package, state.facts)
     assert world.move("hero", "driver_seat").ok
@@ -198,7 +200,7 @@ def test_boarding_sequence_uses_engine_text_for_both_turns(monkeypatch: pytest.M
     assert first.narration.startswith(
         "Kristin sat down in the driver's seat. Kristin's laptop sat on the passenger seat."
     )
-    assert second.narration == "Kristin Schweitzer is already in the driver's seat."
+    assert second.narration == "Kristin is already in the driver's seat."
     assert world.parent("kristin") == "truck_driver_seat"
     assert world.parent("kristin_laptop") == "truck_passenger_seat"
     assert calls == []
