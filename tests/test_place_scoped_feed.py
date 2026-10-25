@@ -46,10 +46,10 @@ GOLDENS = json.loads((ROOT / "tests/fixtures/place_feed/baseline_prompts.json").
 
 
 class _Response:
-    def __init__(self) -> None:
-        self.body = json.dumps(
-            {"narration": json.dumps({"segments": [{"kind": "narration", "text": "Fixture."}]})}
-        ).encode()
+    def __init__(self, body: object | None = None) -> None:
+        if body is None:
+            body = {"narration": json.dumps({"segments": [{"kind": "narration", "text": "Fixture."}]})}
+        self.body = json.dumps(body).encode()
 
     def read(self) -> bytes:
         return self.body
@@ -61,11 +61,16 @@ class _Response:
         return False
 
 
-def _stub_transport(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, object]]:
+def _stub_transport(
+    monkeypatch: pytest.MonkeyPatch, *, matching_reply: dict[str, object] | None = None
+) -> list[dict[str, object]]:
     captured: list[dict[str, object]] = []
 
     def open_request(request, **_kwargs: object) -> _Response:
-        captured.append(json.loads(request.data))
+        payload = json.loads(request.data)
+        captured.append(payload)
+        if matching_reply is not None and payload["system"].startswith("You match names in a story game"):
+            return _Response(matching_reply)
         return _Response()
 
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example")
@@ -96,10 +101,21 @@ def _state_at(place_id: str | None, *, scene_id: str = "1A") -> RuntimeState:
     return state
 
 
-def _turn_prompt(monkeypatch: pytest.MonkeyPatch, state: RuntimeState, command: str = "Look around.") -> dict:
-    captured = _stub_transport(monkeypatch)
+def _turn_prompt(
+    monkeypatch: pytest.MonkeyPatch,
+    state: RuntimeState,
+    command: str = "Look around.",
+    *,
+    match_all_things: bool = False,
+) -> dict:
+    matching_reply = {} if match_all_things else None
+    captured = _stub_transport(monkeypatch, matching_reply=matching_reply)
     provider = build_capture_provider(state)
+    if matching_reply is not None:
+        matching_reply.update({"refers": list(provider.item_facts), "same_as": {}})
     provider._selected_names = list(provider.item_facts)
+    if match_all_things:
+        provider.prepare_turn(command)
     provider(command)
     assert captured
     return captured[-1]
@@ -161,6 +177,34 @@ def test_outside_feed_uses_the_visible_place_and_local_things(monkeypatch: pytes
         "thin gap",
     ):
         assert hidden.casefold() not in user.casefold()
+
+
+@pytest.mark.parametrize("place", ("outside_house", "truck_driver_seat"))
+def test_matcher_refers_do_not_defeat_place_scope(monkeypatch: pytest.MonkeyPatch, place: str) -> None:
+    user = _turn_prompt(monkeypatch, _state_at(place), match_all_things=True)["user"]
+
+    for hidden in (
+        "drawer",
+        "pens",
+        "stapler",
+        "spare batteries",
+        "Michelle's phone",
+        "workstation",
+        "workstation chair",
+        "kitchen floor",
+    ):
+        assert hidden.casefold() not in user.casefold()
+
+
+def test_literal_command_keeps_a_distant_thing_despite_matcher_refers(monkeypatch: pytest.MonkeyPatch) -> None:
+    user = _turn_prompt(
+        monkeypatch,
+        _state_at("outside_house"),
+        "Open the drawer.",
+        match_all_things=True,
+    )["user"]
+
+    assert "- drawer." in user
 
 
 def test_seated_outside_feed_has_exact_where_bullet(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -364,7 +408,7 @@ def _synthetic_provider(state: RuntimeState) -> ItemFactsProvider:
     return provider
 
 
-def test_synthetic_story_proves_place_scope_without_story_names() -> None:
+def test_synthetic_story_proves_place_scope_and_literal_command_scope() -> None:
     package = _synthetic_package()
     inside = RuntimeState.bootstrap(package)
     inside.facts.assert_fact(Fact(predicate="statue_known", subject="story", value="true"))
@@ -378,6 +422,11 @@ def test_synthetic_story_proves_place_scope_without_story_names() -> None:
     outside.facts.assert_fact(Fact(predicate="statue_known", subject="story", value="true"))
     assert world_for(package, outside.facts).move("hero", "yard").ok
     outside_provider = _synthetic_provider(outside)
+    outside_provider._referred_names = list(outside_provider.item_facts)
+    bare_user = outside_provider._section_user_prompt(outside_provider.assemble_turn_prompt("Look around.")["context"])
+    assert "- stone statue." not in bare_user
+    assert "- lamp." not in bare_user
+
     outside_provider._referred_names = ["stone statue"]
     outside_user = outside_provider._section_user_prompt(
         outside_provider.assemble_turn_prompt("Look at the stone statue.")["context"]

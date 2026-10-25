@@ -1,0 +1,51 @@
+{
+ "run_name": "transcript-1a-postfix2-smoke-b",
+ "workdir": "/home/bcorfman/dev/ringer-work/transcript-1a-postfix2-smoke-b",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "transcript-1a-postfix2-smoke-reported-b",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 120,
+   "ownership": [
+    "bench/results/transcript-1a-postfix2-smoke-b-reported/"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route reported --replicates 1 --turns 2 --max-calls 30 --confirm --out bench/results/transcript-1a-postfix2-smoke-b-reported",
+   "spec": "Run ONE billed Scene 1A run: route reported, 1 replicate(s), 2 turn(s) each, hard cap 30 Cloudflare calls. Own only bench/results/transcript-1a-postfix2-smoke-b-reported/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; on quota, outage or error leave the partial rows.json and summary.json in place and report verbatim. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route reported --replicates 1 --turns 2 --max-calls 30 --confirm --out bench/results/transcript-1a-postfix2-smoke-b-reported",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python scripts/ringer/transcript_1a/check_live_baseline.py bench/results/transcript-1a-postfix2-smoke-b-reported 1 --mode live --turns 2",
+   "verified": "rows.json and summary.json recorded within the call cap"
+  },
+  {
+   "key": "transcript-1a-postfix2-smoke-movement-b",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 120,
+   "ownership": [
+    "bench/results/transcript-1a-postfix2-smoke-b-movement/"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route movement --replicates 1 --turns 6 --max-calls 30 --confirm --out bench/results/transcript-1a-postfix2-smoke-b-movement",
+   "spec": "Run ONE billed Scene 1A run: route movement, 1 replicate(s), 6 turn(s) each, hard cap 30 Cloudflare calls. Own only bench/results/transcript-1a-postfix2-smoke-b-movement/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; on quota, outage or error leave the partial rows.json and summary.json in place and report verbatim. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route movement --replicates 1 --turns 6 --max-calls 30 --confirm --out bench/results/transcript-1a-postfix2-smoke-b-movement",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python scripts/ringer/transcript_1a/check_live_baseline.py bench/results/transcript-1a-postfix2-smoke-b-movement 1 --mode live --turns 6",
+   "verified": "rows.json and summary.json recorded within the call cap"
+  }
+ ]
+}

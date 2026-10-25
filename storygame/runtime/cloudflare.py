@@ -271,6 +271,7 @@ class CloudflareTurnProvider:
         self._forced_beat_anchors: set[str] = set()
         self.prompt_candidate_ids: tuple[str, ...] = ()
         self._example_player_input = ""
+        self.recent_cue_referent_owner: str | None = None
         self.prompt_variant = prompt_variant
         self.request_count = 0
         self.recovery_count = 0
@@ -405,6 +406,7 @@ class CloudflareTurnProvider:
             "reference_names": [],
             "recent_cue_owner": None,
         }
+        self.recent_cue_referent_owner = None
         self.last_contract_shadow = {
             "ran": False,
             "answers": {},
@@ -465,6 +467,7 @@ class CloudflareTurnProvider:
             appended.append(owner)
         self.last_reveal_selection["reference_names"] = list(reference_names)
         self.last_reveal_selection["recent_cue_owner"] = owner or None
+        self.recent_cue_referent_owner = owner or None
         evidence_input = player_input if scoped_input is None else scoped_input
         return " ".join((evidence_input, *appended))
 

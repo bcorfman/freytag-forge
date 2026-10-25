@@ -12,6 +12,7 @@ from worldkeeper import MemoryBackend, World, WorldSchema
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import scoped_alias_entity_ids
+from storygame.runtime.reference_resolution import resolved_reference_names
 from storygame.runtime.reveal_eligibility import together_or_unplaced
 from storygame.runtime.seating import _command_names_thing
 from storygame.runtime.validation import ProgressionValidator
@@ -548,12 +549,19 @@ class ItemFactsProvider(CloudflareTurnProvider):
             return names
         if not seated and together_or_unplaced(world, protagonist_id, scene.metadata.location_id):
             return names
-        referred = {name.casefold() for name in self._referred_names}
+        command = self._example_player_input
+        literal_names = {
+            name.casefold()
+            for name in names
+            if (entity_id := world.resolve(name)) is not None and _command_names_thing(command, world.names(entity_id))
+        }
+        resolved_names = {name.casefold() for name in resolved_reference_names(self.state, command)}
         return [
             name
             for name in names
             if name == protagonist
-            or name.casefold() in referred
+            or name.casefold() in literal_names
+            or name.casefold() in resolved_names
             or (
                 (entity_id := world.resolve(name)) is not None
                 and (
@@ -574,6 +582,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
             lines = [f"Just before this: {' '.join(self.prior_steps)}"] if self.prior_steps else []
         elif self.prior_steps and lines:
             lines.insert(0, f"Just before this: {' '.join(self.prior_steps)}")
+        if self.recent_cue_referent_owner and lines and not self.command_consumed:
+            lines[-1] = f"{lines[-1]} (meaning the {self.recent_cue_referent_owner})"
         if not lines or "scene_setting" not in user:
             return lines
         player_lines = []

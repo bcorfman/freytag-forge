@@ -7,9 +7,11 @@ from pathlib import Path
 
 import pytest
 
+from storygame.runtime.capture import WorldCapture
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
+from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 
@@ -56,10 +58,33 @@ def _normal_response(_request: object, **_kwargs: object) -> _Response:
     )
 
 
-def _engine(monkeypatch: pytest.MonkeyPatch, state: RuntimeState) -> RuntimeEngine:
-    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", _normal_response)
-    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
-    return RuntimeEngine(state, provider)
+def _engine(
+    monkeypatch: pytest.MonkeyPatch,
+    state: RuntimeState,
+    captured: list[dict[str, object]] | None = None,
+    *,
+    with_capture: bool = False,
+) -> RuntimeEngine:
+    def transport(request: object, **kwargs: object) -> _Response:
+        if captured is not None:
+            captured.append(json.loads(request.data))
+        return _normal_response(request, **kwargs)
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", transport)
+    if not with_capture:
+        provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+        return RuntimeEngine(state, provider)
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+        held_by=True,
+    )
+    capture = WorldCapture(provider, lambda _state, questions: {next(iter(questions)): True})
+    return RuntimeEngine(state, provider, capture=capture)
 
 
 @pytest.mark.parametrize("semantic", ("0", "1"))
@@ -104,6 +129,32 @@ def test_staged_cue_referent_follow_up_earns_memory_card(
     assert state.cue_stages[-1].last_turn == state.turn_index - 1
     assert result.selected_knowledge_ids == (CARD_REVEAL,)
     assert _has_fact(state, "memory_card_recovered")
+
+
+def test_recent_cue_owner_is_rendered_in_the_narrator_player_line(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[dict[str, object]] = []
+    state = _state()
+    engine = _engine(monkeypatch, state, captured, with_capture=True)
+
+    engine.turn("Go in the house.")
+    engine.turn("Feel in the gap.")
+
+    assert captured[-1]["user"].endswith("- Feel in the gap. (meaning the drawer)")
+
+
+@pytest.mark.parametrize("command", ("Search the kitchen.", "Look around."))
+def test_unresolved_recent_cue_keeps_the_plain_narrator_player_line(
+    monkeypatch: pytest.MonkeyPatch, command: str
+) -> None:
+    captured: list[dict[str, object]] = []
+    state = _state()
+    engine = _engine(monkeypatch, state, captured, with_capture=True)
+
+    engine.turn("Go in the house.")
+    engine.turn(command)
+
+    assert captured[-1]["user"].endswith(f"- {command}")
+    assert "(meaning the " not in captured[-1]["user"]
 
 
 @pytest.mark.parametrize("semantic", ("0", "1"))
