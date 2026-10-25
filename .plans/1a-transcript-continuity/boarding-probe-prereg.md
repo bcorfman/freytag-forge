@@ -17,7 +17,7 @@ Narrator-writing guide (plain words, 12th-grade, one idea per sentence; apply a 
 
 ## Prompts (built offline, free, from the head of the branch after step 7b)
 Three narrator prompts built with the product-wired provider and a stubbed network and stubbed Jev (boards: true, only_boards: true), so the control is exactly what the current code sends:
-1. "Go out to the truck." from `outside_house`, nothing else changed.
+1. "Go to the truck." from `outside_house`, nothing else changed.
 2. "Get in." from `outside_house` (contextual boarding).
 3. "Go out to the truck." from the kitchen (a house-to-truck boarding).
 Each contains the real SCENE, THINGS, PLAYER and CONSTRAINTS of that state. A Ringer task builds them (`scripts/ringer/transcript_1a/boarding_probe.py --dry` writes the three prompts and the diff of each arm against control).

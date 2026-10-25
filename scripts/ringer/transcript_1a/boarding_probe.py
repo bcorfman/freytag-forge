@@ -20,7 +20,7 @@ PACKAGE_ROOT = ROOT / "data/stories/continuity-initiative"
 QUOTA_CODES = ("AI_QUOTA_EXCEEDED", "AI_DAILY_BUDGET_EXCEEDED")
 DEFAULT_MAX_CALLS = 100
 PROMPT_CASES = (
-    ("P1", "outside_house", "Go out to the truck."),
+    ("P1", "outside_house", "Go to the truck."),
     ("P2", "outside_house", "Get in."),
     ("P3", "kitchen", "Go out to the truck."),
 )
