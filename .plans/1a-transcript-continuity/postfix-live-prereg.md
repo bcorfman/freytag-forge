@@ -39,3 +39,28 @@ Hosted staging behavior (a separate gate after merge), other scenes, rates beyon
 
 ## APPROVED (Brandon, 2026-10-24: "I approve the post-fix prereg")
 Gate before spending: full suite 2590 passed, 92.55% coverage (bar 90%), ruff clean, at the commit that precedes this note. Luna at high effort. Ringer run `transcript-1a-postfix`.
+
+## RESULT (2026-10-24, git `5ddf931f`, Luna high; Ringer runs `transcript-1a-postfix-smoke` and `transcript-1a-postfix-live`; 412 calls of 600, 0 errors, no quota stop)
+Raw rows in `bench/results/transcript-1a-postfix-{reported,corrected,witnessed}/` (git-ignored). Read by hand, narration plus appended delivery text. Counts are replicates (or per-replicate turns) out of n; not rates.
+
+**Route A, reported inputs, n=5 (descriptive; baseline in brackets).**
+- Gap/fabric: "feel in the gap" earns the card 5/5 [0/5]. The narrator's lead-up still writes a door gap ("the gap between the door and the frame") 5/5 [5/5]; invented objects: pry-bar outline 2, sweater 1, lab coat 1 (key and screw no longer appear) [5/5]. A second search under the drawer after the card was already recovered finds "a memory card" again 5/5 (new; the baseline order never repeated it).
+- Patrol: arrival, entry, leaving texts appear once each at scene turns 4, 5, 7 in 5/5; no "lingers", "back" or "returns" before the arrival [officer lingering 5/5].
+- Truck: "go out to the truck" adds no seating step 5/5 [seated 5/5]; "get in" seats her with the laptop notice 4/5 [1/5]; the fifth replicate had the narrator board her on "go out", so "get in" produced "she gets out" (a contradiction).
+- Observation: seated "look around" described the house or moved her 5/5 [1/1 wrong]; none correct.
+
+**Route B, corrected route, n=3 (acceptance).**
+- Gap: 3/3 clean. "Feel in the gap" after the pointer reads "She feels in the gap beneath the drawer." No door gap, no invented object. PASS.
+- Patrol: 3/3. Arrival, entry, leaving once each; the return text "The patrol is coming back to the house." appears after the departure. PASS.
+- Truck/laptop: "get in" seats her with the laptop notice once 3/3; the notice is not repeated. The card text implies no travel 3/3. But "go out to the truck" committed her parent as `kristin_truck` (inside the vehicle, not beside it) 3/3, and one replicate drove off ("starts the engine. She pulls out of the driveway"). PARTIAL.
+- Observation: FAIL 3/3. Seated "look around" moved her to the kitchen and described the interior (3/3); after "get out of the truck" the next look described the interior from a new area `n_yard_1` (1), moved her into the kitchen (1), or walked her into the house unasked (1).
+
+**Route C, witnessed recovery, n=3 (acceptance).**
+- Challenge: PASS 3/3. The recovery selects `k_sl_1a_b_r0w`; the challenge sentence appears on that turn; the next turn's reply ("It's Michelle's memory card," Kristin says to the officer) acknowledges the officer; custody stays with Kristin. Not verified live: 1B's marked pursuit line (route not run).
+- State anomalies on the challenge turn: Kristin's committed parent became `None` for two turns in one replicate (item_facts left `Kristin` unplaced) and a new ad hoc area in another.
+- The patrol leaves one turn after the challenge by timer, so the visible follow-up is one turn long; the lasting consequence is the committed `kristin_marked_by_patrol` for 1B.
+- Truck: the narrator boarded her on "go out to the truck" in 2/3 and wrote "gets out" on "get in". Observation: FAIL 3/3.
+
+**Per requirement.** 1 gap: closed on the corrected route (3/3), still open on the reported route's lead-up (5/5), because there the gap was shown by a staged cue, not a committed statement, so SCENE has no gap line. 2 patrol: closed (6/6 plus the reported route). 3 truck/laptop: open (state and notice work; narrator over-narration and the `kristin_truck` parent remain). 4 observation: open (0/11 correct).
+
+**Prompt read for requirement 4 (seated "look around", corrected route replicate 1, turn 9).** SCENE lists only house content (forced back door, KMS drawer, two "pointed toward the thin gap" lines, "Michelle is missing"). The PLAYER block lists about 15 house objects (drawer, pens, stapler, workstation chair, phone) and one line about Kristin: `Kristin. Place: driver's seat.` Nothing says what is visible from the cab.
