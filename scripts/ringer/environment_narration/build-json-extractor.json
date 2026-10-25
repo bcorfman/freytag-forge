@@ -1,0 +1,36 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-extract",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t6h-json-object-extractor",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "storygame/runtime/narration_json.py",
+    "storygame/runtime/cloudflare.py",
+    "tests/test_narration_json_extract.py",
+    "tests/test_cloudflare_transport.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/narration_json.py",
+    "/home/bcorfman/dev/freytag-forge/tests/test_narration_json_extract.py"
+   ],
+   "spec": "You are adding one small, conservative repair to the JSON decoding of model replies in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example; run `.venv/bin/python`. No network, no live model call, no uv. Do not git commit. NEVER print or write any credential. NO regular expressions anywhere in this change (a character scanner only, like the existing escape_stray_quotes). No story vocabulary. YOU MAY EDIT ONLY: storygame/runtime/narration_json.py, storygame/runtime/cloudflare.py (only the `_decode_narration` method and its imports), new tests/test_narration_json_extract.py, and tests/test_cloudflare_transport.py (add tests only; change no existing assertion). Read storygame/runtime/narration_json.py, tests/test_narration_json.py and CloudflareTurnProvider._decode_narration in storygame/runtime/cloudflare.py first.\n\nPROBLEM (measured): Llama 3.3 70B with JSON mode off sometimes wraps a correct JSON object in a sentence, for example for the item-name matcher: `Since there are no new names in the command, the response would be:\\n\\n{\"refers\": [], \"same_as\": {}, \"kind\": {}}` and `Since there are no new names in the command \"Look around\", the response will be empty for \"same_as\" and \"kind\". The \"refers\" section will also be empty because the command does not mention any specific things from the list. \\n\\n{\\n\"refers\": [],\\n\"same_as\": {},\\n\"kind\": {}\\n}`. json.loads fails on them, so the call is logged as failed although the answer is right.\n\nBUILD (1) in storygame/runtime/narration_json.py add `extract_json_object(text: str) -> dict | None`. Scan `text` for `{` characters. For each `{` that is not inside an object you already matched, find its balanced closing `}` with a scanner that is aware of JSON strings and backslash escapes (braces inside strings do not count). The candidate text is parsed with json.loads; if that fails, try json.loads(escape_stray_quotes(candidate)). A candidate counts only if it parses to a dict. Return that dict if EXACTLY ONE candidate counts. Return None if there are none or two or more (never guess which object the model meant). Return None as soon as you meet a `{` whose braces never balance (an unterminated object): do NOT go on to treat an inner `{...}` of a cut-off reply as the answer. Text before the `{` (even with quotes, apostrophes or colons in it) never affects the result because only `{` starts a candidate. Never raise on any input (including empty text, lone braces, lone backslashes).\n(2) In CloudflareTurnProvider._decode_narration keep the order: strict json.loads, then the existing escape_stray_quotes repair of the whole text, then the NEW step, then the existing truncation completion and salvage. The new step calls extract_json_object on the ORIGINAL narration text (not the quote-repaired one); if it returns a dict, log one warning like the stray-quote one (`Narration reply had text around its JSON; kept the object (worker host=%s)`, same host argument style, never the reply text) and return the dict. It must not call self._record_recovery() (no extra model call happened). If it returns None, behaviour is exactly as today (the original JSONDecodeError path, completion, salvage).\n\nTESTS FIRST in tests/test_narration_json_extract.py (pure, hermetic): the two real replies above verbatim return {refers: [], same_as: {}, kind: {}}; a reply that is already clean JSON still returns that dict; prose + object + prose returns the object; braces and escaped quotes inside strings (`{\"a\": \"}{ \\\"x\\\" {\"}`) do not confuse the scanner; a stray-quote repairable object inside prose is recovered; two separate objects -> None; no object -> None; empty text -> None; a lone `{`, a lone `}` and a lone backslash -> None without raising; a cut-off reply `{\"segments\": [{\"text\": \"a\"}, {\"text\": \"b` -> None (the nested-object trap); a JSON array or string in prose -> None; prose with an apostrophe and a lone double quote before the object still works. In tests/test_cloudflare_transport.py add: a Worker reply whose `narration` is the first prose-wrapped sample decodes to the object through the provider's request path (use the existing fake-urlopen style in that file) and does not increment the recovery count; a truncated segments reply still goes through the existing truncation salvage exactly as before (assert the same result the existing tests assert for that kind of input); a clean reply is untouched. Run the new tests and see them fail, then implement, then run the whole of tests/test_narration_json.py, tests/test_narration_json_extract.py and tests/test_cloudflare_transport.py.\n\nFINISH: ruff check and ruff format every file you touched; report pass counts and quote the final extract_json_object.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_narration_json_extract.py tests/test_narration_json.py tests/test_cloudflare_transport.py tests/test_bench_item_facts.py tests/test_observation_mode.py tests/test_narration_safety.py tests/test_web_demo.py 2>&1 | tee /tmp/env-extract.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error|xfailed)' /tmp/env-extract.out && grep -q 'def extract_json_object' storygame/runtime/narration_json.py && ! grep -nE '^(import re|from re )|\\bre\\.(compile|search|match|sub|findall|fullmatch)' storygame/runtime/narration_json.py && git diff --quiet -- data docs worker && ! git diff -U0 -- storygame | grep -iE '^\\+.*(kristin|laptop|truck|drawer|michelle)' && .venv/bin/python -m ruff check storygame tests && .venv/bin/python -m ruff format --check storygame tests",
+   "verified": "a single JSON object wrapped in prose is recovered; ambiguous, cut-off and absent objects are not"
+  }
+ ]
+}

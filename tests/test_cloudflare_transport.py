@@ -633,6 +633,61 @@ def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:
     assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
 
 
+def test_transport_extracts_one_prose_wrapped_worker_object_without_recovery(monkeypatch) -> None:
+    reply = (
+        "Since there are no new names in the command, the response would be:\n\n"
+        '{"refers": [], "same_as": {}, "kind": {}}'
+    )
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"narration": reply})
+    )
+
+    assert provider._request({"system": "", "user": ""}) == {
+        "refers": [],
+        "same_as": {},
+        "kind": {},
+    }
+    assert provider.recovery_count == 0
+
+
+def test_transport_still_salvages_a_truncated_segments_reply(monkeypatch) -> None:
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+    reply = (
+        '{"segments":[{"kind":"narration","text":"She opens the drawer."},{"kind":"narration","text":"The card is co'
+    )
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"narration": reply})
+    )
+
+    assert provider._request({"system": "", "user": ""}) == {
+        "segments": [{"kind": "narration", "text": "She opens the drawer."}]
+    }
+    assert provider.recovery_count == 1
+
+
+def test_transport_leaves_a_clean_worker_reply_untouched(monkeypatch) -> None:
+    reply = '{"segments":[{"kind":"narration","text":"A valid proposal."}]}'
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"narration": reply})
+    )
+
+    assert provider._request({"system": "", "user": ""}) == {
+        "segments": [{"kind": "narration", "text": "A valid proposal."}]
+    }
+    assert provider.recovery_count == 0
+
+
 def test_transport_drops_empty_unknown_reply_keys_but_keeps_nonempty_extras(monkeypatch) -> None:
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)

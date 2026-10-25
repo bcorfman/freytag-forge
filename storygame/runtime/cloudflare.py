@@ -34,7 +34,7 @@ from storygame.runtime.cue_lifecycle import (
 )
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
-from storygame.runtime.narration_json import escape_stray_quotes
+from storygame.runtime.narration_json import escape_stray_quotes, extract_json_object
 from storygame.runtime.recent_cue import recent_cue_referent_text
 from storygame.runtime.reference_resolution import resolved_reference_names
 from storygame.runtime.reveal_eligibility import together_or_unplaced
@@ -2155,6 +2155,13 @@ class CloudflareTurnProvider:
                         urlsplit(self.worker_url).hostname,
                     )
                     return decoded
+            extracted = extract_json_object(narration)
+            if extracted is not None:
+                logger.warning(
+                    "Narration reply had text around its JSON; kept the object (worker host=%s)",
+                    urlsplit(self.worker_url).hostname,
+                )
+                return extracted
             candidate_narration = repaired if repaired != narration else narration
             completed = self._complete_truncated_json(candidate_narration)
             if completed is not None:
