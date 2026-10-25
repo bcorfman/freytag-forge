@@ -42,11 +42,25 @@ def boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
         "boards_vehicle": {
             "type": "noul",
             "instructions": (
-                "Decide whether the command has the player go to the vehicle, get into it, sit in it, or drive it."
+                "Decide whether the command has the player go to the vehicle to use it. "
+                "A command that only says go to the vehicle means the player gets in. "
+                "The command can have the player get into it. "
+                "The command can have the player sit in it. "
+                "The command can have the player drive it."
             ),
             "criteria": {
-                "true": "The command means going to the vehicle, getting into it, sitting in it, or driving it.",
-                "false": "The command only looks at, touches, or talks about the vehicle, or leaves it.",
+                "true": (
+                    "The command has the player go to the vehicle to use it. "
+                    "A command that only says go to the vehicle means the player gets in. "
+                    "The command has the player get into it. "
+                    "The command has the player sit in it. "
+                    "The command has the player drive it."
+                ),
+                "false": (
+                    "The command is not boarding if it only walks over to or walks up to the vehicle. "
+                    "It is not boarding if it only approaches, looks at, touches, or talks about the vehicle. "
+                    "It is not boarding if it leaves the vehicle."
+                ),
             },
         }
     }

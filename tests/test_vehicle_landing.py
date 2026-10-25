@@ -25,15 +25,15 @@ def _provider() -> ItemFactsProvider:
     )
 
 
-def test_protagonist_landing_at_vehicle_uses_its_first_visible_seat():
+def test_protagonist_landing_at_vehicle_stays_at_its_area_when_not_aboard():
     provider = _provider()
 
     _facts, issues = provider.apply_item_facts(
         {"Kristin": {"place": "Kristin's truck"}}, player_input="Go out to Kristin's truck."
     )
 
-    assert not issues
-    assert provider._world().parent("kristin") == "truck_driver_seat"
+    assert issues
+    assert provider._world().parent("kristin") == "outside_house"
 
 
 def test_protagonist_landing_at_outside_area_stays_in_the_area():
@@ -56,7 +56,7 @@ def test_non_protagonist_landing_at_vehicle_is_not_seated():
     assert provider._world().parent("kristin_laptop") == "kristin_truck"
 
 
-def test_synthetic_vehicle_landing_uses_a_seat_without_story_names():
+def test_synthetic_vehicle_landing_stays_at_its_area_without_story_names():
     package, world = _synthetic_vehicle_world()
     provider = SimpleNamespace(
         state=SimpleNamespace(package=SimpleNamespace(world=SimpleNamespace(protagonist_id=package.protagonist_id)))
@@ -64,7 +64,7 @@ def test_synthetic_vehicle_landing_uses_a_seat_without_story_names():
 
     ItemFactsProvider._apply_move(provider, world, "player", "Player", {"place": "boat 0"}, "boat_0", [])
 
-    assert world.parent("player") == "boat_seat_0"
+    assert world.parent("player") == "harbor"
 
 
 def test_reachable_kitchen_reveal_is_not_offered_outside():

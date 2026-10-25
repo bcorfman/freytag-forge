@@ -11,6 +11,17 @@ function buildLlamaBody({ system, user, maxTokens, responseFormat }) {
   };
 }
 
+// The 70B narrator is more reliable with default sampling, so this profile ignores response_format.
+function buildLlamaPlainBody({ system, user, maxTokens }) {
+  return {
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user }
+    ],
+    max_tokens: maxTokens
+  };
+}
+
 function buildDeepseekBody({ system, user, maxTokens, responseFormat }) {
   return {
     messages: [
@@ -70,7 +81,7 @@ export const MODEL_PROFILES = {
     price: { input: 0.282, output: 0.827 }
   },
   "@cf/meta/llama-3.3-70b-instruct-fp8-fast": {
-    buildBody: buildLlamaBody,
+    buildBody: buildLlamaPlainBody,
     extract: extractLlama,
     maxTokensCeiling: DEFAULT_MAX_TOKENS_CEILING,
     price: { input: 0.293, output: 2.253 }

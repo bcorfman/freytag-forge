@@ -1,16 +1,25 @@
 # Reliable environment narration without per-item engine prose
 
-Status: implementation proposal, 2026-10-25. Reviewed local baseline `14f11314`.
+Status: in progress, 2026-10-25 (see "Resume here"). Reviewed local baseline `14f11314`.
 No runtime changes, new live experiments, model switch, or deployment were made
 while writing this plan. Historical measurements below are not fresh results.
 
 ## Resume here
 
-T1, T2, T3a, T3b and T3c are done (records below). Start at **T5** (billed screen; needs Brandon's approval of `.plans/grounded-llm-environment-narration/t5-screen-prereg.md` and a bench Worker first), then complete tasks in order. T1–T4 prepare a concrete, free
-experiment; T5 is the first billed gate. Do not restart the old prompt-tweaking
-queue. This plan supersedes the proposed engine-written empty-search response
-in the 1A continuity plan and supplies the replacement path for its boarding
-workaround. Preserve its other fixes and unfinished verification.
+**State as of 2026-10-25 (end of session).** Done, with records under "Completion record": T1, T2, T3a-e, T3f (outcome-wording scope line), T4a, T4b, T6a (stray-quote repair), T6b (narrator cannot board the protagonist), T6c (boarding question wording). The billed T5 screen was replaced by seven small direct smokes (about $0.05 in total, plus a 100-call Jev probe); the T5 preregistration is superseded and unapproved. Commits: `e7913d3a` (runtime, tests, Worker profiles) and `ece5dcdd` (bench tooling, records, plan). T6b, T6c, T6d, `jev_boarding_probe.py` and its test, and the later plan records are committed together on this branch. Nothing is deployed.
+
+Decision from the measurements: narrate with `@cf/meta/llama-3.3-70b-instruct-fp8-fast`, JSON mode OFF (no `response_format`), the product's default sampling, and the stray-quote repair. Median about 3 s (Brandon accepted this speed); tail up to 10.4 s was seen once. Scope line: S5b invented finds 8/15 before, 0/15 after the outcome wording. Boarding: Jev wording fixes the walk-over/approach cases; "Go out to the truck." is borderline and left as is by Brandon.
+
+**Next, in order:** (1) T6 integration remainder: **T6d is done** (the 70B Worker profile never sends `response_format` or `temperature`; the Worker drops them, so the Python calls need no change; not deployed, and any deploy or production config change needs Brandon's explicit instruction). Still open: the product never sets `ItemFactsProvider.observation_request`, so the observation prompt (and the model-written already-seated result) is not used outside the bench; decide who builds the `ObservationRequest` (focus from the command) and enable it. The matcher (300 tokens) and `second_call_update` (400 tokens) also reach the 70B JSON-off through the Worker and have not been measured that way; run a small smoke on them first. "Approach versus board" is now decided by the engine's Jev question (T6b/T6c). (2) T7 verifier in shadow, T8 candidate preview and transaction, T9 confirmation, T10 retire the boarding engine-text path and `notice_text`, T11 ruff, one full pytest+cov run, CI and SHA-bound staging.
+
+**Open items:** the laptop place phrase "passenger seat of Kristin's truck" (copied from the prompt) left the laptop unplaced in a hermetic test with the matcher and Jev stubbed out; production adds both, so it needs a live check before it is called a bug. S4 (drawer opening) invented drawer contents in 2/2 samples (only the memory card matters, so likely harmless, but n=2). Portable containers are excluded from items; the markdown story-package format lacks `view` and `contents_complete`; the `blocked_by.axis` field accepts an entity id or an axis name. Ask Brandon whether to commit.
+
+Older text follows. Where it conflicts with this paragraph, this paragraph wins.
+
+Do not restart the old prompt-tweaking queue. This plan supersedes the proposed
+engine-written empty-search response in the 1A continuity plan and supplies the
+replacement path for its boarding workaround. Preserve its other fixes and
+unfinished verification.
 
 Speed requirement (Brandon, 2026-10-25): narration must have a fast response
 time. It is a gate, not a note: see the T5 preregistration (narration call p95
@@ -632,3 +641,16 @@ Brandon accepted the current speed (70B median about 3 s) as meeting the narrati
 - Fisher exact on 8/15 vs 0/15: p about 0.003. With the earlier 0/8 for arm A, 0/23; the Wilson upper bound is about 14%, so the 9/10 bar holds on S5b.
 - Validity 30/30 strict. Latency control median 3.24 s (max 5.96), arm A median 3.02 s (max 6.35); no call over 10 s this time (the earlier 9.8 and 10.4 s calls remain the tail).
 - Not yet shown: that the new wording leaves S1-S4 and S6 unchanged (it only renders on declared-complete empty scopes, so those prompts should be byte-identical; the T1 baseline and screen dry-run cover that).
+
+### Capture check on the S2 (look through the truck window) replies (2026-10-25; hermetic, no model call; probe script kept in the session scratchpad, not in the repo)
+Method: start S2 on the proposed package copy, feed recorded 70B `item_facts` through `ItemFactsProvider.apply_item_facts` with the Jev and matcher stubs used by the screen.
+- Kr `{"place": "truck"}` (70B JSON-off wide run: 3/3; schema run 0/3 said "outside the house"; nj run 0/1) puts Kr in the truck's driver's seat (`_apply_move` seats a protagonist who is placed in a vehicle) while the prose has her outside looking through the window. Cause is deterministic once the narrator names the truck; "truck" resolves by exact name, so no model call can correct it.
+- Laptop `{"place": "passenger seat of Kristin's truck"}` (copied from the prompt's own "on the passenger seat of Kristin's truck"; all 70B S2 proposed rows) left the laptop UNPLACED (no parent) with no issue text when the matcher/Jev stubs return nothing. Production adds a matcher `same_as` and a Jev mapping check, so this is unproven either way and needs a live check before it is called a bug.
+- Recommendation (not built): in observation mode, a look request must not move the protagonist into the focus entity. Deterministic, story-agnostic, testable offline; the alternative is a prompt arm (costs billed samples).
+
+### T6b/T6c and Jev boarding probe (2026-10-25)
+- Decision (Brandon): "go out to my truck", a bare "go to the truck" and "get in" board; "walk over to", "walk up to" and "approach" stay outside; the bare "go to" is open to interpretation and need not be tuned further.
+- T6b: `ItemFactsProvider._apply_move` no longer lets a narrator reply board the protagonist. A reported vehicle or vehicle seat when she is not already aboard keeps her at the vehicle's area and records an issue. Boarding is decided only by the engine (`board_vehicle` + Jev `boards_vehicle`). Tests: `tests/test_narrator_cannot_board.py`; two old assertions in `tests/test_vehicle_landing.py` and one in `tests/test_bench_item_facts.py` that encoded narrator boarding were changed.
+- T6c: `boards_vehicle` question reworded (go to it to use it counts; only walking over/up to, approaching, looking at, touching, talking about or leaving it does not).
+- Jev probe (`jev_boarding_probe.py`, 100 calls, 25 commands x old/current x 2, via the Worker /jev route, median 0.35 s per call, usage not recorded): old 43/50 (should-board 24/24, should-not 19/26), current 48/50 (22/24, 26/26). All walk-over/approach/step-up cases are fixed. The two misses are both samples of "Go out to the truck." (0.43, 0.49 against the 0.5 cutoff); "Go out to my truck." passes at 0.52/0.56, bare "go to" at 0.58-0.66. Left as is by decision.
+- T6d (2026-10-25): Ringer run `grounded-environment-narration-20261025T204710Z-p1047262` (Luna high, 2 attempts; Ringer FAIL only because my check grepped `# fail 0` and this Node prints `ℹ fail 0`, and had `git diff --quiet -- storygame` which the uncommitted T6b/T6c edits break; every gate rerun by hand). `worker/src/models.js`: the 70B profile uses `buildLlamaPlainBody` (messages and max_tokens only, ignores `response_format`, no `temperature`); 8B and DeepSeek unchanged. Three new tests in `worker/test/models.test.js`. `node --test test/`: 33 pass; T1 baseline identical (8); 481 passed over 12 focused Python suites; ruff clean (also fixed `compare_baseline.py` SIM115). Not deployed. Risk: matcher and second-call prompts on the 70B without JSON mode are unmeasured.

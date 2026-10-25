@@ -2,8 +2,9 @@
 
 import json
 import sys
+from pathlib import Path
 
-frozen, fresh = (json.load(open(path)) for path in sys.argv[1:3])
+frozen, fresh = (json.loads(Path(path).read_text()) for path in sys.argv[1:3])
 for payload in (frozen, fresh):
     payload["source"].pop("dirty", None)
     payload["source"].pop("package_hash", None)

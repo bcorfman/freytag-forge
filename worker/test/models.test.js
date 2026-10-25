@@ -92,6 +92,44 @@ test("each profile emits its documented Workers AI request body", async () => {
   }
 });
 
+test("70B ignores JSON response format and temperature", async () => {
+  const environment = env({ CF_AI_MODEL: "@cf/meta/llama-3.3-70b-instruct-fp8-fast" });
+  const result = await runWithFetch(aiResponse(successFor(environment.CF_AI_MODEL)), async (calls) => ({
+    response: await worker.fetch(request({ response_format: { type: "json_object" } }), environment),
+    body: JSON.parse(calls[0].init.body)
+  }));
+  assert.equal(result.response.status, 200);
+  assert.deepEqual(result.body.messages, [
+    { role: "system", content: "Guide the player." },
+    { role: "user", content: "Search the room." }
+  ]);
+  assert.equal(result.body.max_tokens, 64);
+  assert.equal("response_format" in result.body, false);
+  assert.equal("temperature" in result.body, false);
+});
+
+test("default 8B keeps JSON response format and deterministic temperature", async () => {
+  const result = await runWithFetch(aiResponse(successFor("llama")), async (calls) => ({
+    response: await worker.fetch(request({ response_format: { type: "json_object" } }), env()),
+    body: JSON.parse(calls[0].init.body)
+  }));
+  assert.equal(result.response.status, 200);
+  assert.deepEqual(result.body.response_format, { type: "json_object" });
+  assert.equal(result.body.temperature, 0);
+});
+
+test("allowed benchmark 70B ignores JSON response format", async () => {
+  const model = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+  const environment = env({ CF_BENCH_MODELS: model });
+  const result = await runWithFetch(aiResponse(successFor(model)), async (calls) => ({
+    response: await worker.fetch(request({ response_format: { type: "json_object" } }, { "X-Bench-Model": model }), environment),
+    body: JSON.parse(calls[0].init.body)
+  }));
+  assert.equal(result.response.status, 200);
+  assert.equal("response_format" in result.body, false);
+  assert.equal("temperature" in result.body, false);
+});
+
 test("llama 3.3 extracts result.response", async () => {
   const environment = env({ CF_AI_MODEL: "@cf/meta/llama-3.3-70b-instruct-fp8-fast" });
   const response = await runWithFetch(aiResponse({ success: true, result: { response: "Seventy billion narration" } }), () =>

@@ -1189,6 +1189,28 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if place_parent is None or not isinstance(value.get("place"), str):
             return
         place = value["place"].strip()
+        vehicle_id = None
+        if entity_id == self.state.package.world.protagonist_id:
+            if world.is_a(place_parent, "vehicle"):
+                vehicle_id = place_parent
+            else:
+                place_entity = world.schema.entities.get(place_parent)
+                if place_entity and place_entity.seat_for and world.is_a(place_entity.seat_for, "vehicle"):
+                    vehicle_id = place_entity.seat_for
+            current_parent = world.parent(entity_id)
+            current_parent_entity = world.schema.entities.get(current_parent) if current_parent else None
+            already_aboard = current_parent == vehicle_id or (
+                current_parent_entity is not None and current_parent_entity.seat_for == vehicle_id
+            )
+            if vehicle_id and not already_aboard:
+                area = world.area(vehicle_id)
+                issues.append(
+                    f"item_facts for {name!r} placed her in the vehicle {world.name(vehicle_id)!r} "
+                    "but the command did not board it; kept at the vehicle's area"
+                )
+                if area is None:
+                    return
+                place_parent = area
         if entity_id == self.state.package.world.protagonist_id and world.is_a(place_parent, "vehicle"):
             visible_seats = sorted(
                 candidate_id
