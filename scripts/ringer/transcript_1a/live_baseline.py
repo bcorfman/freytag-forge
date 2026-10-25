@@ -55,8 +55,29 @@ ROUTES = {
         "get in",
         "look around",
     ),
+    "movement": (
+        "look around",
+        "go outside",
+        "look around",
+        "go out to the truck",
+        "look around",
+        "get out of the truck",
+        "look around",
+        "go inside",
+        "look around",
+        "go out to the truck",
+        "go inside",
+        "look around",
+    ),
 }
-TRACKED = ("kristin", "kristin_laptop", "memory_card", "michelle_drawer", "kristin_truck")
+TRACKED = (
+    "kristin",
+    "kristin_laptop",
+    "memory_card",
+    "michelle_drawer",
+    "kristin_truck",
+    "patrol_officer",
+)
 QUOTA_CODES = ("AI_QUOTA_EXCEEDED", "AI_DAILY_BUDGET_EXCEEDED")
 
 
@@ -313,6 +334,7 @@ def _replicate(
             "prompts": _prompts(counter),
             "provider_responses": list(counter.responses),
             "narration": narration,
+            "narrator_called": any(prompt["system"].startswith("You are the narrator") for prompt in counter.prompts),
             "error": error,
             "notes": [] if getattr(capture, "last_before", None) is not None else ["capture step field unavailable"],
         }

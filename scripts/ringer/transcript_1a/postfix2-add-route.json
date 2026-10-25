@@ -1,0 +1,31 @@
+{
+ "run_name": "transcript-1a-postfix2",
+ "workdir": "/home/bcorfman/dev/ringer-work/transcript-1a-postfix2",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "add-movement-route",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/transcript_1a/live_baseline.py",
+    "scripts/ringer/transcript_1a/check_live_baseline.py",
+    "scripts/ringer/transcript_1a/test_live_baseline.py"
+   ],
+   "spec": "You are extending a billed-probe harness in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY scripts/ringer/transcript_1a/live_baseline.py, check_live_baseline.py and test_live_baseline.py in that folder, and write under bench/results/transcript-1a-dry/. Never edit storygame/, data/, tests/, docs/, .plans/. Read the files first and match their style.\n\nCHANGE. live_baseline.py has a ROUTES mapping (routes reported, corrected, witnessed) selected by --route. Add a fourth route `movement` with exactly these 12 inputs, in order:\nlook around / go outside / look around / go out to the truck / look around / get out of the truck / look around / go inside / look around / go out to the truck / go inside / look around\nAlso make each recorded turn row carry the places after the turn for ALL of these ids, in `places_after` (and `places_before`): kristin, kristin_laptop, memory_card, michelle_drawer, kristin_truck, patrol_officer. (Today it records the first five; add patrol_officer only. Existing default output for the reported route must otherwise be unchanged.) Add to each turn row a boolean `narrator_called` = whether any narration prompt (a prompt whose system text starts with 'You are the narrator') was sent that turn; engine-owned movement turns make no narrator call, and the check below needs it. check_live_baseline.py must accept the movement route (its length comes from ROUTES) and the new fields.\nTESTS (hermetic, add at most one test to test_live_baseline.py): a dry run of the movement route with --replicates 1 writes rows and a summary the checker accepts, summary route == 'movement', 12 inputs, and in the dry run the turn for 'go outside' has narrator_called false and places_after kristin == 'outside_house' while the first 'look around' has narrator_called true.\nFINISH: ruff format and ruff check the three files; run the tests; run `.venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --dry-run --route movement --replicates 1 --out bench/results/transcript-1a-dry/movement` and the checker with --mode dry; print for that dry run, for each turn, input, narrator_called and kristin's place.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider scripts/ringer/transcript_1a/test_live_baseline.py 2>&1 | tail -5 && rm -rf bench/results/transcript-1a-dry && for r in reported corrected witnessed movement; do .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --dry-run --route $r --replicates 1 --out bench/results/transcript-1a-dry/$r && .venv/bin/python scripts/ringer/transcript_1a/check_live_baseline.py bench/results/transcript-1a-dry/$r 1 --mode dry || exit 1; done && python3 -c \"import json;d=json.load(open('bench/results/transcript-1a-dry/movement/rows.json'))[0]['turns'];assert len(d)==12,len(d);assert d[1]['input']=='go outside' and d[1]['narrator_called'] is False and d[1]['places_after']['kristin']=='outside_house',d[1];assert d[0]['narrator_called'] is True\" && git diff --quiet -- storygame data tests docs && .venv/bin/python -m ruff check scripts/ringer/transcript_1a && .venv/bin/python -m ruff format --check scripts/ringer/transcript_1a",
+   "verified": "movement route and narrator_called recorded; dry runs of all four routes pass; engine-owned moves make no narrator call"
+  }
+ ]
+}

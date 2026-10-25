@@ -25,6 +25,7 @@ FIELDS = {
     "prompts",
     "provider_responses",
     "narration",
+    "narrator_called",
     "error",
     "notes",
 }

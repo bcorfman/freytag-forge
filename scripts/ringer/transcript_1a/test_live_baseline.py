@@ -85,6 +85,38 @@ def test_default_route_keeps_reported_inputs(tmp_path: Path) -> None:
     ]
 
 
+def test_movement_route_records_places_and_narrator_calls(tmp_path: Path) -> None:
+    out = tmp_path / "movement"
+    subprocess.run(
+        [str(PYTHON), str(SCRIPT), "--dry-run", "--route", "movement", "--replicates", "1", "--out", str(out)],
+        check=True,
+    )
+    summary = json.loads((out / "summary.json").read_text())
+    assert summary["route"] == "movement"
+    assert summary["inputs"] == [
+        "look around",
+        "go outside",
+        "look around",
+        "go out to the truck",
+        "look around",
+        "get out of the truck",
+        "look around",
+        "go inside",
+        "look around",
+        "go out to the truck",
+        "go inside",
+        "look around",
+    ]
+    rows = json.loads((out / "rows.json").read_text())
+    turns = rows[0]["turns"]
+    assert turns[0]["input"] == "look around"
+    assert turns[0]["narrator_called"] is True
+    outside = next(turn for turn in turns if turn["input"] == "go outside")
+    assert outside["narrator_called"] is False
+    assert outside["places_after"]["kristin"] == "outside_house"
+    subprocess.run([str(PYTHON), str(CHECKER), str(out), "1", "--mode", "dry"], check=True)
+
+
 def test_call_cap_keeps_partial_rows(tmp_path: Path) -> None:
     out = tmp_path / "cap"
     subprocess.run(
