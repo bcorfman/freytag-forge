@@ -1274,6 +1274,27 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     continue
                 place = value.get("place")
                 place_id, resolved_place = resolve_precedence_place(place)
+                current_parent = world.parent(entry_id) if entry_id is not None else None
+                current_place_label = world.place_label(entry_id) if entry_id is not None else None
+                current_parent_name = world.name(current_parent) if current_parent is not None else None
+                place_matches_current_parent = current_parent is not None and (
+                    place_id == current_parent
+                    or (
+                        isinstance(place, str)
+                        and isinstance(current_place_label, str)
+                        and place.strip().casefold() == current_place_label.casefold()
+                    )
+                )
+                holder_matches_current_parent = holder_id == current_parent or (
+                    holder_id is None
+                    and isinstance(holder_name, str)
+                    and isinstance(current_parent_name, str)
+                    and holder_name.casefold() == current_parent_name.casefold()
+                )
+                if holder_name and place_matches_current_parent and not holder_matches_current_parent:
+                    value["place"] = world.name(current_parent)
+                    value.pop("held_by")
+                    continue
                 holder_area = world.area(holder_id) if holder_id is not None else None
                 holder_entry_place_id = None
                 if holder_id is not None:

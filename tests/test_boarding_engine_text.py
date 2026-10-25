@@ -307,7 +307,7 @@ def test_boarded_snapshot_round_trip_preserves_following_turn(monkeypatch: pytes
     assert len(calls) == 4
 
 
-def test_staged_cue_composes_onto_engine_text(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_staged_cue_is_withheld_from_engine_text_out_of_reach(monkeypatch: pytest.MonkeyPatch) -> None:
     state, provider, engine = _real_boarding_engine()
     delivery = next(item for item in PACKAGE.deliveries if item.fact_id == "continuity_initiative_known")
     state.staged_cue_fact_id = delivery.fact_id
@@ -320,4 +320,5 @@ def test_staged_cue_composes_onto_engine_text(monkeypatch: pytest.MonkeyPatch) -
     result = engine.turn("Get in.")
 
     assert all(step in result.narration for step in BOARDING_STEPS)
-    assert delivery.cue_text in result.narration
+    assert delivery.cue_text not in result.narration
+    assert state.staged_cue_fact_id == delivery.fact_id

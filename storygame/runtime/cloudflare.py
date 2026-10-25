@@ -27,7 +27,11 @@ from storygame.runtime.contracts import (
     contract_error_summary,
     parse_turn_proposal,
 )
-from storygame.runtime.cue_lifecycle import clear_staged_cue, staged_cue_is_eligible
+from storygame.runtime.cue_lifecycle import (
+    clear_staged_cue,
+    staged_cue_is_eligible,
+    staged_cue_reveal_is_reachable,
+)
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
 from storygame.runtime.recent_cue import recent_cue_referent_text
@@ -1459,6 +1463,8 @@ class CloudflareTurnProvider:
             return proposal
         if not staged_cue_is_eligible(self.state, cue):
             clear_staged_cue(self.state)
+            return proposal
+        if not staged_cue_reveal_is_reachable(self.state, cue):
             return proposal
         text = cue.escalation_text if self.state.staged_cue_stage == 2 else cue.cue_text
         if text is None:

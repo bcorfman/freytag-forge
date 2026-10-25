@@ -1,0 +1,53 @@
+{
+ "run_name": "1a-continuity-postfix2-fixes",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-postfix2-fixes",
+ "max_parallel": 2,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "stale-cue-needs-reach",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 1200,
+   "ownership": [
+    "storygame/runtime/cue_lifecycle.py",
+    "storygame/runtime/cloudflare.py",
+    "storygame/runtime/engine.py",
+    "tests/test_staged_cue_reach.py"
+   ],
+   "spec": "Fix in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. Never edit data/, docs/, .plans/, bench/. No story names (Kristin, drawer, truck, laptop...) in storygame/. Write tests first, run them and see them fail, then fix. List any existing test pin you change and why. YOU MAY EDIT ONLY: storygame/runtime/cue_lifecycle.py, storygame/runtime/cloudflare.py, storygame/runtime/engine.py, tests/test_staged_cue_reach.py. BUG: the staged cue text (a delivery's cue_text, appended as an extra narration segment in storygame/runtime/cloudflare.py around line 1450-1470, and handled in engine.py ~340-390 and ~1494) is appended on every turn while it is staged, wherever the protagonist is. Live evidence: in scene 1A the cue 'initials KMS are carved into a drawer...' was appended to the engine-only boarding line while the protagonist sat in the truck outside, though the drawer is in the house. FIX (generic): a staged cue must be displayed only when the reveal that would earn its fact can be reached from where the protagonist is now. storygame/runtime/reveal_eligibility.py::explain_reveal already returns 'not_reachable' when the protagonist is not together with a reveal's reach_entity_ids; reuse that (engine._cue_reveal_available is the existing availability check at engine.py ~1263; extend or add a sibling, do not duplicate logic). When not reachable, SUPPRESS the cue for that turn but do NOT clear it or mark it delivered: when the protagonist returns to reach, the cue shows again. This must hold on both the narrator path and the engine-text (boarding) path. Cues whose earning reveals declare no reach_entity_ids behave exactly as before. TESTS in tests/test_staged_cue_reach.py: (a) a synthetic story (not the continuity story) with a cue and a reveal with reach_entity_ids: cue appended when together, absent when the protagonist is elsewhere, present again after returning, never marked delivered while suppressed; (b) the same on the engine-text path; (c) a no-reach cue unchanged; (d) one test against the real continuity-initiative package: protagonist seated in the truck driver seat in scene 1A (use the existing test helpers other 1A tests use) gets no drawer cue, in the house she does. FINISH: ruff format and check touched files; run the focused tests you touched plus tests/test_staged_cue_reach.py tests/test_cue*.py tests/test_reveal_reach.py tests/test_boarding*.py tests/test_1a*.py tests/test_staged*.py tests/test_recent_cue_reference.py.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_staged_cue_reach.py tests/test_cue*.py tests/test_reveal_reach.py tests/test_boarding*.py tests/test_1a*.py tests/test_staged*.py tests/test_recent_cue_reference.py 2>&1 | tail -8 && git diff --quiet -- data bench/frozen docs .plans && (! git diff -U0 -- storygame | grep -E '^\\+' | grep -iE 'kristin|michelle|drawer|truck|laptop|driver|schweitzer') && .venv/bin/python -m ruff check storygame tests && .venv/bin/python -m ruff format --check storygame tests",
+   "verified": "already-seated line uses the protagonist's short name via one shared helper"
+  },
+  {
+   "key": "held-by-echo-keeps-place",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 1200,
+   "ownership": [
+    "storygame/runtime/item_facts.py",
+    "tests/test_held_by_echo.py"
+   ],
+   "spec": "Fix in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. Never edit data/, docs/, .plans/, bench/. No story names (Kristin, drawer, truck, laptop...) in storygame/. Write tests first, run them and see them fail, then fix. List any existing test pin you change and why. YOU MAY EDIT ONLY: storygame/runtime/item_facts.py, tests/test_held_by_echo.py. BUG: in storygame/runtime/item_facts.py the held_by precedence block (~lines 1239-1305, 'held_by_wins') lets a narrator reply entry that restates a thing's CURRENT place and also adds held_by: protagonist move the thing into the protagonist's hands. Live evidence: the protagonist stood outside; the reply raw was {'Kristin': {'place': 'outside the house'}, \"Kristin's laptop\": {'place': 'on the passenger seat of Kristin\\'s truck', 'held_by': 'Kristin', 'state': 'closed'}, 'passenger seat': {'place': \"Kristin's truck\"}, ...} for a plain look-around. The narration never mentions the laptop, but custody flipped to the protagonist, so the later boarding turn emitted no 'laptop sat on the passenger seat' notice. FIX (generic): when an entry's own place resolves to the thing's currently committed parent (an unchanged place) and the entry also has held_by naming someone other than that parent, the entry is self-contradictory; keep the committed place, drop held_by, still apply any condition/state fields of that entry. Genuine changes must still land (memory: a reply change that does not land is a severe failure): a held_by entry whose place is absent, or differs from the committed parent, or is the holder, behaves exactly as before, and engine-resolved takes (storygame/runtime/taking.py) are untouched. Do not parse prose; do not add regex. TESTS in tests/test_held_by_echo.py using a synthetic story (and, if cheap, the real raw above through the same capture entry point other item_facts tests use): echo with unchanged place keeps custody and still applies the state; a real pick-up (place = holder or omitted) still moves it; held_by with a different place from a different holder behaves as before. Look at existing tests/test_item_facts*.py for helpers. FINISH: ruff format and check touched files; run the focused tests you touched plus tests/test_held_by_echo.py tests/test_item_facts*.py tests/test_place_scoped_feed.py tests/test_world_capture*.py tests/test_taking*.py tests/test_boarding*.py.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_held_by_echo.py tests/test_item_facts*.py tests/test_place_scoped_feed.py tests/test_world_capture*.py tests/test_taking*.py tests/test_boarding*.py 2>&1 | tail -8 && git diff --quiet -- data bench/frozen docs .plans && (! git diff -U0 -- storygame | grep -E '^\\+' | grep -iE 'kristin|michelle|drawer|truck|laptop|driver|schweitzer') && .venv/bin/python -m ruff check storygame tests && .venv/bin/python -m ruff format --check storygame tests",
+   "verified": "already-seated line uses the protagonist's short name via one shared helper"
+  }
+ ]
+}
