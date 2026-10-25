@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from storygame.runtime.capture import WorldCapture
+from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.state import RuntimeState
@@ -102,6 +102,97 @@ def test_consumed_boarding_uses_engine_text_and_prints_final_narration(monkeypat
     assert capture_after["narration_prompt"] is None
     assert calls == []
     print(f"test (a) final narration: {result.narration}")
+
+
+def test_consumed_boarding_discards_previous_narrator_item_facts(monkeypatch: pytest.MonkeyPatch) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    world = world_for(PACKAGE, state.facts)
+    assert world.move("kristin", "outside_house").ok
+    assert world.move("kristin_laptop", "truck_passenger_seat").ok
+    provider = build_capture_provider(state)
+
+    def ask(command, questions):
+        return {
+            question: {
+                "noul": (
+                    1.0
+                    if (command.get("command") == "Get in." and question in {"boards_vehicle", "only_boards_vehicle"})
+                    else 0.0
+                )
+            }
+            for question in questions
+        }
+
+    engine = RuntimeEngine(
+        state,
+        provider,
+        capture=WorldCapture(provider, ask, fixed_refusal=True, engine_refusal=True),
+    )
+
+    def open_request(_request, **_kwargs: object) -> _Response:
+        return _Response(
+            {
+                "segments": [{"kind": "narration", "text": "Quiet."}],
+                "item_facts": {"Kristin": {"place": "outside the house"}},
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    for _ in range(3):
+        engine.turn("Look around.")
+
+    engine.turn("Get in.")
+
+    boarded_world = world_for(PACKAGE, state.facts)
+    assert boarded_world.parent("kristin") == "truck_driver_seat"
+    assert boarded_world.parent("kristin_laptop") == "truck_passenger_seat"
+
+    engine.turn("Look around.")
+    assert world_for(PACKAGE, state.facts).parent("kristin") == "outside_house"
+
+
+def test_synthetic_consumed_boarding_discards_previous_narrator_item_facts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    package = _synthetic_boarding_package()
+    state = RuntimeState.bootstrap(package)
+    world = world_for(package, state.facts)
+    assert world.move("hero", "yard").ok
+    provider = build_capture_provider(state)
+
+    def ask(command, questions):
+        return {
+            question: {
+                "noul": (
+                    1.0
+                    if (command.get("command") == "Get in." and question in {"boards_vehicle", "only_boards_vehicle"})
+                    else 0.0
+                )
+            }
+            for question in questions
+        }
+
+    engine = RuntimeEngine(
+        state,
+        provider,
+        capture=WorldCapture(provider, ask, fixed_refusal=True, engine_refusal=True),
+    )
+
+    def open_request(_request, **_kwargs: object) -> _Response:
+        return _Response(
+            {
+                "segments": [{"kind": "narration", "text": "Quiet."}],
+                "item_facts": {"Ari": {"place": "yard"}},
+            }
+        )
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    for _ in range(3):
+        engine.turn("Look around.")
+
+    engine.turn("Get in.")
+
+    assert world_for(package, state.facts).parent("hero") == "driver_seat"
 
 
 def test_following_turn_calls_narrator_without_repeating_boarding_notice(monkeypatch: pytest.MonkeyPatch) -> None:

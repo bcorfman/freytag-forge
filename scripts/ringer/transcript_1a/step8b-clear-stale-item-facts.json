@@ -1,0 +1,30 @@
+{
+ "run_name": "1a-continuity-boarding-text",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-boarding-text",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "clear-stale-item-facts-on-engine-text",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 4200,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "storygame/runtime/item_facts.py",
+    "tests/test_boarding_engine_text.py"
+   ],
+   "spec": "You are fixing a regression in freytag-forge (Python 3.12) found by a live smoke. Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: storygame/runtime/item_facts.py and tests/test_boarding_engine_text.py. Never edit data/, docs/, .plans/, bench/. No story names in storygame/.\n\nDEFECT: ItemFactsProvider.__call__ (item_facts.py) has an engine-text path for a consumed boarding turn (command_consumed and prior_steps): it makes no narrator call. But the provider's pending item facts (_pending_item_facts / _pending_item_facts_present, set when a narrator reply arrives, read by pending_item_facts(), which WorldCapture.after_commit passes to apply_item_facts) are NOT cleared on that path, so the PREVIOUS narrator turn's item_facts are applied again after the boarding turn. Live: the prior 'Look around.' reply said the protagonist's place was outside the house; replaying it moved her back out of the driver's seat the boarding step had just put her in, so the engine text said she sat down while the committed place stayed outside (and a later turn then showed her laptop held by her). Reproduced offline: a stub narrator reply of {\"segments\":[{\"kind\":\"narration\",\"text\":\"Quiet.\"}],\"item_facts\":{\"Kristin\":{\"place\":\"outside the house\"}}} for three 'Look around.' turns from outside_house, then 'Go to the truck.' with Jev answering boards_vehicle and only_boards_vehicle yes: afterwards parent('kristin') is outside_house instead of truck_driver_seat.\n\nFIX: on the engine-text path call self.discard_pending_item_facts() so a turn with no narrator reply applies no item facts. Check whether any other per-reply state set at lines ~680 to 710 of item_facts.py (for example _selected_names / _referred_names / _held_item_facts / _changed_last_turn / last_item_facts_unplaced) would also leak from the previous narrator turn into the engine-text turn and its after_commit, and clear those too if so (explain which and why in your report). Do not touch the normal narrator path.\n\nTEST FIRST in tests/test_boarding_engine_text.py: a regression test that follows the reproduction above through the real RuntimeEngine with build_capture_provider (see tests/test_boarding_engine_text.py helpers; make the Jev ask answer boarding yes only on the boarding command; WorldCapture(provider, ask, fixed_refusal=True, engine_refusal=True)); assert that after the boarding turn the protagonist's parent is truck_driver_seat, the laptop's parent is truck_passenger_seat, and the next 'Look around.' turn (narrator stub again returns the outside-the-house item_facts) does not leave her at the driver's seat parent changed unexpectedly: state your assertion for that next turn as what the code actually should do (a new narrator reply that says she is outside is the narrator's proposal; keep the assertion only on the boarding turn if the next-turn behavior is ambiguous and say so). It must fail before the fix. Add a second variant with a synthetic story from tests.test_place_scoped_feed._synthetic_package if one can be built cheaply.\n\nFINISH: ruff format and ruff check the touched files; run `.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_boarding_engine_text.py tests/test_boarding.py tests/test_boarding_probe.py tests/test_place_scoped_feed.py tests/test_vehicle_landing.py tests/test_item_facts*.py tests/test_world_capture*.py`. Report what you changed.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_boarding_engine_text.py tests/test_boarding.py tests/test_boarding_probe.py tests/test_place_scoped_feed.py tests/test_vehicle_landing.py tests/test_recent_cue_reference.py tests/test_reveal_reach.py tests/test_1a_movement.py tests/test_late_scene_repro.py tests/test_item_facts*.py tests/test_world_capture*.py tests/test_bench_runtime_mode.py tests/test_cloudflare_transport.py tests/test_web_demo.py 2>&1 | tail -10 && git diff --quiet -- data bench/frozen docs .plans && (! git diff -U0 -- storygame | grep -E '^\\+' | grep -iE 'kristin|michelle|drawer|truck|laptop') && .venv/bin/python -m ruff check storygame tests && .venv/bin/python -m ruff format --check storygame tests",
+   "verified": "a boarding engine-text turn applies no stale item facts; seat stays committed; focused suites pass"
+  }
+ ]
+}

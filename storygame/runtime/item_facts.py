@@ -621,6 +621,26 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.last_turn_engine_text = True
         self._rejection_note = None
         self.last_prompt = None
+        self.discard_pending_item_facts()
+        self._held_item_facts = {}
+        self._item_facts_issues = []
+        self._changed_last_turn = set()
+        self._selected_names = None
+        self._referred_names = []
+        self._referred_lines = []
+        self._match_offered_names = set()
+        self._last_item_facts_unplaced = []
+        self._last_item_facts_refused = []
+        self._fact_effect_snapshot = None
+        self._last_item_facts_match = {
+            "match_call": False,
+            "match_raw": None,
+            "match_issues": [],
+            "resolutions": {},
+            "place_resolutions": {},
+            "engine_resolutions": {},
+            "mapping_checks": [],
+        }
         try:
             self.assemble_turn_prompt(player_input)
             response = {
