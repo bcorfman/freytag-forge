@@ -94,6 +94,13 @@ def test_old_and_new_real_cue_predicates_differ_only_for_spent_rows() -> None:
             False,
         ),
         (
+            "1A",
+            "SL-1A-E fired through k_sl_1a_b_r0w",
+            "continuity_initiative_known",
+            True,
+            False,
+        ),
+        (
             "2B",
             "SL-2B-B fired through k_sl_2b_b_r3",
             "brandon_claimed_reform_motive",

@@ -95,7 +95,15 @@ def main(out: str) -> None:
         )
     Path(out).write_text(json.dumps(record, indent=1, sort_keys=True, default=str))
     for turn in record["turns"]:
-        print(turn["input"], "|", turn["after"]["kristin"], "|", turn["after"]["memory_card"], "|", turn["narration"][:140])
+        print(
+            turn["input"],
+            "|",
+            turn["after"]["kristin"],
+            "|",
+            turn["after"]["memory_card"],
+            "|",
+            turn["narration"][:140],
+        )
 
 
 if __name__ == "__main__":

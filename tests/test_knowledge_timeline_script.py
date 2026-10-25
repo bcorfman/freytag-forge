@@ -66,5 +66,9 @@ def test_knowledge_timeline_script_replays_eligible_prefix_and_rejects_future_se
         if item_id == "k_future_invalid":
             continue
         item = package.knowledge_indexes.by_id[item_id]
-        assert {predicate.fact_id for predicate in item.requires} <= established
+        for predicate in item.requires:
+            if predicate.equals is True:
+                assert predicate.fact_id in established
+            else:
+                assert predicate.fact_id not in established
         established.update(effect.fact_id for effect in item.establishes if effect.op == "assert")
