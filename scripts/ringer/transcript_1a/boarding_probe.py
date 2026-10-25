@@ -18,7 +18,7 @@ from urllib.request import Request
 ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_ROOT = ROOT / "data/stories/continuity-initiative"
 QUOTA_CODES = ("AI_QUOTA_EXCEEDED", "AI_DAILY_BUDGET_EXCEEDED")
-DEFAULT_MAX_CALLS = 100
+DEFAULT_MAX_CALLS = 130
 PROMPT_CASES = (
     ("P1", "outside_house", "Go to the truck."),
     ("P2", "outside_house", "Get in."),
@@ -200,7 +200,7 @@ def _section_bounds(lines: list[str], heading: str) -> tuple[int, int]:
 def arm_user_text(control_user: str, arm: int, command: str | None = None) -> str:
     """Apply one preregistered user-text-only arm to a control prompt."""
 
-    if arm not in (0, 1, 2):
+    if arm not in (0, 1, 2, 3):
         raise ValueError(f"unknown arm: {arm}")
     if arm == 0:
         return control_user
@@ -224,14 +224,24 @@ def arm_user_text(control_user: str, arm: int, command: str | None = None) -> st
         result = "\n".join(lines)
         return f"{result}\n" if trailing_newline else result
 
-    constraints_start, constraints_end = _section_bounds(lines, "CONSTRAINTS")
-    addition = "- Show every thing named in the Just before this line."
-    if addition in lines[constraints_start + 1 : constraints_end]:
-        raise ValueError("control prompt already contains the arm 2 constraint")
-    insert_at = constraints_end
-    while insert_at > constraints_start + 1 and lines[insert_at - 1] == "":
-        insert_at -= 1
-    lines.insert(insert_at, addition)
+    if arm == 2:
+        constraints_start, constraints_end = _section_bounds(lines, "CONSTRAINTS")
+        addition = "- Show every thing named in the Just before this line."
+        if addition in lines[constraints_start + 1 : constraints_end]:
+            raise ValueError("control prompt already contains the arm 2 constraint")
+        insert_at = constraints_end
+        while insert_at > constraints_start + 1 and lines[insert_at - 1] == "":
+            insert_at -= 1
+        lines.insert(insert_at, addition)
+    else:
+        things_start, things_end = _section_bounds(lines, "THINGS")
+        addition = "- Kristin's laptop. Place: passenger seat."
+        if addition in lines[things_start + 1 : things_end]:
+            raise ValueError("control prompt already contains the arm 3 THINGS line")
+        thing_lines = [index for index in range(things_start + 1, things_end) if lines[index].startswith("- ")]
+        if not thing_lines:
+            raise ValueError("THINGS section has no list lines")
+        lines.insert(thing_lines[-1] + 1, addition)
     result = "\n".join(lines)
     return f"{result}\n" if trailing_newline else result
 
@@ -258,13 +268,34 @@ def _with_arms(prompt: dict[str, Any]) -> dict[str, Any]:
             "system": control["system"],
             "user": arm_user_text(control["user"], arm, prompt.get("command")),
         }
-        for arm in range(3)
+        for arm in range(4)
     }
     return {
         **prompt,
         "arms": arms,
-        "diffs": {str(arm): _diff(control["user"], arms[str(arm)]["user"], arm) for arm in (1, 2)},
+        "diffs": {str(arm): _diff(control["user"], arms[str(arm)]["user"], arm) for arm in (1, 2, 3)},
     }
+
+
+def _distinct_prompt_groups(prompts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    groups: list[dict[str, Any]] = []
+    by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    for prompt in prompts:
+        control = prompt["control"]
+        key = (control["system"], control["user"])
+        group = by_key.get(key)
+        if group is None:
+            group = {
+                "prompt": prompt,
+                "prompt_ids": [prompt["id"]],
+                "collapsed_prompt_ids": [],
+            }
+            by_key[key] = group
+            groups.append(group)
+        else:
+            group["prompt_ids"].append(prompt["id"])
+            group["collapsed_prompt_ids"].append(prompt["id"])
+    return groups
 
 
 def dry_document(prompts: list[dict[str, Any]]) -> dict[str, Any]:
@@ -272,8 +303,9 @@ def dry_document(prompts: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "mode": "dry",
         "prompts": enriched,
+        "prompts_identical": len({(prompt["control"]["system"], prompt["control"]["user"]) for prompt in prompts}) == 1,
         "system_identical": all(
-            len({prompt["control"]["system"], *(prompt["arms"][str(arm)]["system"] for arm in range(3))}) == 1
+            len({prompt["control"]["system"], *(prompt["arms"][str(arm)]["system"] for arm in range(4))}) == 1
             for prompt in enriched
         ),
     }
@@ -382,7 +414,8 @@ def _send_narrator(
 
 
 def run_samples(document: dict[str, Any], samples: int, max_calls: int, out: Path) -> dict[str, Any]:
-    total = len(document["prompts"]) * 3 * samples
+    groups = _distinct_prompt_groups(document["prompts"])
+    total = len(groups) * 4 * samples
     if total > max_calls:
         raise CallCapExceeded(f"requested {total} calls exceeds max-calls {max_calls}")
     url = os.environ.get("CLOUDFLARE_WORKER_URL", "").strip()
@@ -396,13 +429,18 @@ def run_samples(document: dict[str, Any], samples: int, max_calls: int, out: Pat
         "calls_requested": total,
         "calls_made": 0,
         "stop_reason": None,
+        "distinct_prompt_count": len(groups),
+        "prompt_collapses": {
+            group["prompt"]["id"]: group["collapsed_prompt_ids"] for group in groups if group["collapsed_prompt_ids"]
+        },
         "rows": [],
     }
     counter = CallCounter(max_calls)
     _write_json(out, result)
     for sample in range(samples):
-        for arm in range(3):
-            for prompt in document["prompts"]:
+        for arm in range(4):
+            for group in groups:
+                prompt = group["prompt"]
                 arm_prompt = prompt["arms"][str(arm)]
                 row = {
                     "sample": sample + 1,
@@ -445,7 +483,7 @@ def _build_parser() -> argparse.ArgumentParser:
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--dry", action="store_true")
     mode.add_argument("--run", action="store_true")
-    parser.add_argument("--samples", type=int, default=10)
+    parser.add_argument("--samples", type=int, default=30)
     parser.add_argument("--max-calls", type=int, default=DEFAULT_MAX_CALLS)
     parser.add_argument("--confirm", action="store_true")
     parser.add_argument("--out", required=True, type=Path)
@@ -466,7 +504,12 @@ def main(argv: list[str] | None = None) -> int:
         document = dry_document(build_control_prompts())
         if args.dry:
             _write_json(args.out, document)
-            print("dry: wrote 3 prompts, 3 arms, and 6 diffs; made 0 calls")
+            distinct_count = len(_distinct_prompt_groups(document["prompts"]))
+            diff_count = len(document["prompts"]) * 3
+            print(
+                f"dry: {len(document['prompts'])} prompts built, {distinct_count} distinct, "
+                f"4 arms, {diff_count} diffs, 0 calls"
+            )
             return 0
         try:
             result = run_samples(document, args.samples, args.max_calls, args.out)

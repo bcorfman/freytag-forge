@@ -15,6 +15,8 @@ def _synthetic_prompt() -> str:
     return (
         "SCENE:\n"
         "- A room.\n\n"
+        "THINGS:\n"
+        "- Player's notebook. Place: desk.\n\n"
         "CONSTRAINTS:\n"
         "- Keep it short.\n\n"
         "PLAYER:\n"
@@ -29,6 +31,7 @@ def test_arm_text_transforms_keep_system_and_control_unchanged() -> None:
     arm0 = boarding_probe.arm_user_text(control, 0)
     arm1 = boarding_probe.arm_user_text(control, 1, "Do the thing.")
     arm2 = boarding_probe.arm_user_text(control, 2)
+    arm3 = boarding_probe.arm_user_text(control, 3)
 
     assert arm0 == control
     assert "Just before this:" not in arm1
@@ -37,10 +40,22 @@ def test_arm_text_transforms_keep_system_and_control_unchanged() -> None:
     assert arm2.count("Show every thing named in the Just before this line.") == 1
     assert arm2.count("CONSTRAINTS:\n") == 1
     assert "- Show every thing named in the Just before this line." in arm2
+    expected_arm3 = control.replace(
+        "- Player's notebook. Place: desk.\n\nCONSTRAINTS:",
+        "- Player's notebook. Place: desk.\n- Kristin's laptop. Place: passenger seat.\n\nCONSTRAINTS:",
+    )
+    assert arm3 == expected_arm3
 
 
-def test_real_dry_document_has_three_prompts_three_arms_and_no_opener_calls(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+def test_arm_3_requires_a_things_section() -> None:
+    control = "PLAYER:\n- Player. Place: room.\n- Just before this: Player opened the door.\n"
+
+    with pytest.raises(ValueError, match="THINGS"):
+        boarding_probe.arm_user_text(control, 3)
+
+
+def test_real_dry_document_has_three_prompts_four_arms_and_no_opener_calls(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     calls: list[object] = []
     monkeypatch.setattr(cloudflare, "urlopen", lambda *args, **kwargs: calls.append(args) or None)
@@ -50,9 +65,12 @@ def test_real_dry_document_has_three_prompts_three_arms_and_no_opener_calls(
 
     document = json.loads(output.read_text())
     assert len(document["prompts"]) == 3
-    assert all(set(prompt["arms"]) == {"0", "1", "2"} for prompt in document["prompts"])
-    assert all(set(prompt["diffs"]) == {"1", "2"} for prompt in document["prompts"])
+    assert document["prompts_identical"] is True
+    assert document["system_identical"] is True
+    assert all(set(prompt["arms"]) == {"0", "1", "2", "3"} for prompt in document["prompts"])
+    assert all(set(prompt["diffs"]) == {"1", "2", "3"} for prompt in document["prompts"])
     assert calls == []
+    assert capsys.readouterr().out == "dry: 3 prompts built, 1 distinct, 4 arms, 9 diffs, 0 calls\n"
 
 
 def test_missing_just_before_line_fails_loudly() -> None:
@@ -60,14 +78,21 @@ def test_missing_just_before_line_fails_loudly() -> None:
         boarding_probe.arm_user_text("PLAYER:\n- Player. Place: room.\n", 1)
 
 
-def test_cap_refuses_before_any_call(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_default_cap_refuses_four_arms_at_40_samples_before_any_call(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     document = boarding_probe.dry_document(boarding_probe.build_control_prompts())
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
     calls: list[object] = []
     monkeypatch.setattr(cloudflare, "urlopen", lambda *args, **kwargs: calls.append(args) or None)
 
-    with pytest.raises(boarding_probe.CallCapExceeded, match="requested 108 calls"):
-        boarding_probe.run_samples(document, samples=12, max_calls=100, out=tmp_path / "rows.json")
+    with pytest.raises(boarding_probe.CallCapExceeded, match="requested 160 calls"):
+        boarding_probe.run_samples(
+            document,
+            samples=40,
+            max_calls=boarding_probe.DEFAULT_MAX_CALLS,
+            out=tmp_path / "rows.json",
+        )
     assert calls == []
 
 
@@ -87,7 +112,26 @@ class _Response:
         return False
 
 
-def test_run_is_interleaved_and_stops_on_quota_429(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_run_is_interleaved_for_distinct_prompts(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    document = boarding_probe.dry_document(boarding_probe.build_control_prompts())
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    payloads: list[dict[str, object]] = []
+
+    def opener(request: object, **_kwargs: object) -> _Response:
+        payloads.append(json.loads(request.data))
+        return _Response({"narration": json.dumps({"segments": [{"kind": "narration", "text": "A reply."}]})})
+
+    monkeypatch.setattr(cloudflare, "urlopen", opener)
+    result = boarding_probe.run_samples(document, samples=2, max_calls=130, out=tmp_path / "rows.json")
+
+    assert len(payloads) == 8
+    assert result["calls_requested"] == 8
+    assert [row["arm"] for row in result["rows"]] == [0, 1, 2, 3, 0, 1, 2, 3]
+    assert [row["prompt_id"] for row in result["rows"]] == ["P1"] * 8
+    assert result["prompt_collapses"] == {"P1": ["P2", "P3"]}
+
+
+def test_run_stops_on_quota_429(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     document = boarding_probe.dry_document(boarding_probe.build_control_prompts())
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
     payloads: list[dict[str, object]] = []
@@ -111,8 +155,8 @@ def test_run_is_interleaved_and_stops_on_quota_429(monkeypatch: pytest.MonkeyPat
     assert len(payloads) == 5
     assert result["calls_made"] == 5
     assert result["stop_reason"] == "AI_QUOTA_EXCEEDED"
-    assert [row["arm"] for row in result["rows"][:4]] == [0, 0, 0, 1]
-    assert [row["prompt_id"] for row in result["rows"][:4]] == ["P1", "P2", "P3", "P1"]
+    assert [row["arm"] for row in result["rows"][:4]] == [0, 1, 2, 3]
+    assert [row["prompt_id"] for row in result["rows"][:4]] == ["P1"] * 4
     assert result["rows"][0]["narration"] == "A reply."
     assert json.loads(output.read_text())["stop_reason"] == "AI_QUOTA_EXCEEDED"
 
