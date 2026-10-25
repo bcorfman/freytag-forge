@@ -1,0 +1,30 @@
+{
+ "run_name": "1a-continuity-boarding-probe",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-boarding-probe",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "amend-boarding-probe-arm3",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 4800,
+   "check_timeout_s": 1200,
+   "ownership": [
+    "scripts/ringer/transcript_1a/boarding_probe.py",
+    "tests/test_boarding_probe.py"
+   ],
+   "spec": "You are amending a billed-run harness in freytag-forge (Python 3.12) to match an amended preregistration. Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: scripts/ringer/transcript_1a/boarding_probe.py and tests/test_boarding_probe.py. Never edit storygame/, data/, docs/, .plans/. Never make a live call.\n\nREAD FIRST: the 'Amendment 1' section at the end of .plans/1a-transcript-continuity/boarding-probe-prereg.md, then the two files you own.\n\nCHANGES:\n1. Add arm 3: control user text plus ONE line inserted at the end of the THINGS section (after the last '- ' line of that section, before the blank line): `- Kristin's laptop. Place: passenger seat.` The 'Just before this:' line stays. Arms 0, 1, 2 are unchanged. System text stays identical in every arm. Raise ValueError if THINGS is missing or the line is already present. arm_user_text must accept arm 3; arms are 0..3 everywhere (dry document, diffs for arms 1, 2, 3, interleaving, counts, the dry printout).\n2. Distinct prompts: build_control_prompts still builds P1, P2, P3. The dry document records `prompts_identical` (true when all three control system+user texts are equal) and lists them all, but the RUN sends only distinct prompts: dedupe by (system, user) of the control, keeping the first (P1), and record in the run result which prompt ids were collapsed into it. Update the cap arithmetic to arms (4) x distinct prompts x samples.\n3. Defaults: --samples default 30, --max-calls default 130. The run refuses (nonzero exit, no call) when 4 x distinct prompts x samples exceeds --max-calls. Interleave round-robin per sample index, arm-major (sample 1: arm 0, 1, 2, 3, then sample 2 ...).\n4. The dry printout should say: 3 prompts built, N distinct, 4 arms, diffs, 0 calls.\n\nTESTS FIRST in tests/test_boarding_probe.py (update existing tests whose numbers change and list each): arm 3 inserts exactly one THINGS line and nothing else changes; arm 3 fails loudly without a THINGS section; the real dry document has 3 prompts x 4 arms, system identical, prompts_identical true, zero opener calls; a run with a fake opener over the real package sends exactly 4 x 1 x samples calls in interleaved arm order; the cap refuses 4 x 1 x 40 with the default cap; quota 429 stop and no-confirm behavior still hold.\n\nFINISH: ruff format and ruff check both files; run `.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_boarding_probe.py`; run `--dry --out /tmp/boarding-probe-dry.json` and print the arm 3 diff and the distinct-prompt count. Report each existing test changed and why.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_boarding_probe.py 2>&1 | tail -15 && .venv/bin/python scripts/ringer/transcript_1a/boarding_probe.py --dry --out /tmp/boarding-probe-dry.json && .venv/bin/python -c \"import json;d=json.load(open('/tmp/boarding-probe-dry.json'));assert d['prompts_identical'] is True;p=d['prompts'][0];assert set(p['arms'])=={'0','1','2','3'};assert \\\"Kristin's laptop. Place: passenger seat.\\\" in p['arms']['3']['user'];assert d['system_identical']\" && git diff --quiet -- storygame data docs bench/frozen .plans && .venv/bin/python -m ruff check scripts/ringer/transcript_1a/boarding_probe.py tests/test_boarding_probe.py && .venv/bin/python -m ruff format --check scripts/ringer/transcript_1a/boarding_probe.py tests/test_boarding_probe.py",
+   "verified": "arm 3 lists the laptop in THINGS; identical prompts are sent once; 4 arms interleaved; cap 130; tests hermetic"
+  }
+ ]
+}

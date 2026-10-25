@@ -1,4 +1,4 @@
-# Preregistration: Scene 1A boarding narration probe (DRAFT, not approved)
+# Preregistration: Scene 1A boarding narration probe (amended 2026-10-25)
 
 Written 2026-10-24 before any billed run. Brandon has not approved this document. Nothing billed runs until he does.
 Source: Brandon's question on 2026-10-24 ("aren't there other successful cases of items in the scene being narrated consistently instead of having to do pure engine text?"). Method: scene-fixing guide step 2 (replay prompts, one arm per likely cause, 10 samples per arm, read every narration).
@@ -42,3 +42,15 @@ An arm advances when it passes at least 8 of 10 on at least 2 of the 3 prompts, 
 
 ## Not covered
 Other vehicles, other in-cab items, hosted staging, narration after the first boarding turn, and whether the laptop is mentioned on later turns (a separate question: the place-scoped feed lists it).
+
+## Amendment 1 (2026-10-25, before any billed run; Brandon approved adding the laptop-in-THINGS arm)
+
+Found by the free `--dry` build: the narrator prompt for P1, P2 and P3 is byte-identical, because the engine consumes the boarding command (step 7a) and the prompt carries only the SCENE, `PLAYER: Kristin. Place: driver's seat.` and the `Just before this:` steps. P1's command is also corrected to "Go to the truck." (from outside, "go out" is not a move). So the three prompts are one prompt. Also found: THINGS lists only Kristin, so the laptop appears nowhere except the steps line.
+
+Changes (everything above not mentioned here stands):
+- **Prompts:** one distinct prompt (P1's text). The harness builds all three, checks and records that they are identical, and sends only one.
+- **New arm 3, laptop in THINGS:** control plus one THINGS line, `- Kristin's laptop. Place: passenger seat.`, in the same form as the existing `- Kristin. Place: driver's seat.` line. The `Just before this:` line stays. Nothing else changes.
+- **Design:** 4 arms x 30 samples, interleaved, one narrator call each: 120 calls, cap 130. Same no-retry, no-replacement, partial-rows and quota-stop rules.
+- **Scoring:** unchanged, (a), (b), (c) read by hand.
+- **Decision rule (the 8 of 10 and 3 of 10 rates, now on one prompt):** an arm advances when it passes at least 24 of 30 and beats control by at least 9 passes. Among advancing arms prefer the one that adds no rule: arm 1, then arm 3, then arm 2. A winning arm still goes to a product-wired live check, never straight to adoption. Arm 3 needs an engine change to adopt (list items the boarding notice named in THINGS for the turn); that is a separate, tested change.
+- **Fallback:** unchanged. If no arm advances, engine-authored boarding text needs Brandon's separate approval.
