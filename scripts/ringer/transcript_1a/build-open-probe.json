@@ -1,0 +1,34 @@
+{
+ "run_name": "1a-continuity-open-probe-build",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-open-probe-build",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "build-open-probe",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 4800,
+   "check_timeout_s": 1200,
+   "ownership": [
+    "scripts/ringer/transcript_1a/open_probe.py",
+    "tests/test_open_probe.py"
+   ],
+   "expect_files": [
+    "scripts/ringer/transcript_1a/open_probe.py",
+    "tests/test_open_probe.py"
+   ],
+   "spec": "You are building a billed-run harness for a narrator probe in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: scripts/ringer/transcript_1a/open_probe.py (new) and tests/test_open_probe.py (new). Never edit storygame/, data/, docs/, bench/frozen/. Never make a live call: only `--dry` is run by you.\n\nREAD FIRST: .plans/1a-transcript-continuity/postfix2-open-probe-prereg.md (the approved design; follow it exactly), scripts/ringer/transcript_1a/boarding_probe.py (an existing, finished harness of the same kind: copy its structure, transport, quota stop, cap, --confirm gating, partial-row writing and CLI; reuse by import where clean, do not edit it), scripts/ringer/transcript_1a/live_baseline.py (ROUTES and its dry replay path: replay recorded route inputs through the product-wired provider with a stubbed network, then take the final narrator request) and tests/test_boarding_probe.py (how its hermetic tests inject a fake opener).\n\nBUILD scripts/ringer/transcript_1a/open_probe.py:\n1. Prompt builder: for each of the 3 problems replay the route inputs with the network stubbed and Jev stubbed so the engine reaches the state, and capture the exact narrator request (system and user text) the current code sends on the LAST input. That is arm 0 (control). P1: live_baseline route `reported`, inputs through 'feel under the drawer' (the card must already be taken: fail loudly if the control user text does not contain 'Michelle's memory card. Held by: Kristin'). P2: route `witnessed`, inputs through the first 'wait' (fail loudly if the control SCENE lacks the string 'KMS initials carved in drawer' or THINGS lacks 'Place: Michelle's house'). P3: route `movement`, through the outside 'look around' that follows the first 'get out of the truck' (the 7th input; fail loudly if the control SCENE lacks 'Kristin is outside the house.').\n2. Arms are minimal edits of the control USER text only; system text is identical in every arm. Edit by section (SCENE, THINGS, CONSTRAINTS headings) and exact line, never by regex over prose; if an expected line is missing, fail loudly.\n   P1 arm 1 'drop': remove the CONSTRAINTS line that ends 'finds Michelle's memory card taped beneath the drawer and pockets it.' P1 arm 2 'past': keep that line's prefix ('Dr. Michelle McGehee may say this aloud: ') and replace the statement with 'Kristin already took Michelle's memory card from beneath the drawer.'\n   P2 arm 1 'where': insert 'Kristin is inside the house.' as the FIRST bullet of SCENE. P2 arm 2 'place': in THINGS change the line 'Kristin. Place: Michelle's house.' to 'Kristin. Place: inside Michelle's house.'\n   P3 arm 1 'view': append ' From the curb she can see the gate, the front of the house, the truck, the street, and the lights on the next street.' to the SCENE bullet that begins 'Michelle's house stands behind a low gate.' P3 arm 2 'rule': add ONE new last line to CONSTRAINTS: 'Describe only the things in THINGS and SCENE.'\n3. `--dry`: write --out JSON holding, per problem, the control prompt, each arm's user text and a unified diff of each arm vs control; zero model calls, zero network; print a short summary.\n4. `--run --samples N --confirm`: send each (problem, arm) N times, interleaved round-robin, one narrator call each through the same transport the provider uses (request to CLOUDFLARE_WORKER_URL, same body shape as boarding_probe), no Jev or capture calls, no retries, no replacements; record per row the problem, arm, sample index, the raw reply text, the narration parsed from it (segments text joined, mark unparseable as unusable) and the reply's item_facts object if present; write partial rows after every call; hard cap --max-calls default 100 (refuse to start if problems x arms x samples exceeds it); stop immediately on a 429 whose body has AI_QUOTA_EXCEEDED or AI_DAILY_BUDGET_EXCEEDED and record the stop reason. Live needs --confirm and CLOUDFLARE_WORKER_URL, else exit nonzero with no call. Also support `--problem P1|P2|P3|all` and `--samples` so a 2-sample smoke is `--run --samples 2 --confirm`.\n5. Do not score; scoring is by hand.\n\nTESTS FIRST in tests/test_open_probe.py (hermetic, no network, no live worker): each arm transform on a synthetic prompt string (only the intended line changes; system text identical); loud failure when an expected line is missing; the dry run on the real 1A package writes 3 problems x 3 arms with diffs and makes zero opener calls; the live path refuses without --confirm or without CLOUDFLARE_WORKER_URL, refuses over the cap, writes partial rows, and stops on a 429 quota body (fake opener). Run them, see them fail, then build. FINISH: ruff format and check both files.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_open_probe.py 2>&1 | tail -15 && .venv/bin/python scripts/ringer/transcript_1a/open_probe.py --dry --out /tmp/open-probe-dry.json && .venv/bin/python -c \"import json;d=json.load(open('/tmp/open-probe-dry.json'));print(list(d))\" && git diff --quiet -- storygame data docs bench/frozen && .venv/bin/python -m ruff check scripts/ringer/transcript_1a/open_probe.py tests/test_open_probe.py && .venv/bin/python -m ruff format --check scripts/ringer/transcript_1a/open_probe.py tests/test_open_probe.py",
+   "verified": "dry run builds 3 problems x 3 arms with diffs and no network; live path is capped, gated and quota-stopping; tests hermetic"
+  }
+ ]
+}

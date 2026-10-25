@@ -48,3 +48,16 @@ The route C 502 `INVALID_PROPOSAL` (one malformed reply in 145 turns; no cause u
 
 ## Budget
 About 90 narrator calls (cap 100), plus 6 smoke calls.
+
+## APPROVED (Brandon, 2026-10-25: "yes")
+Harness `scripts/ringer/transcript_1a/open_probe.py` (Ringer build `1a-continuity-open-probe-build`; tests 18 pass by hand). Dry run checked: control prompts equal the recorded prompts and each arm differs only by its one edit. Smoke: 9 calls (1 per arm per problem, 3 more than the "6" in Budget; total stays under the cap of 100). Live: Ringer `1a-continuity-open-probe-live`, 90 calls, no quota stop, 5 unusable replies (all P3: 3 control, 2 view; the model returned malformed JSON). Rows: `bench/results/open-probe-live/probe.json` (gitignored, kept locally). Every reply read by hand.
+
+## Result (2026-10-25, 10 samples per arm, per problem, not pooled)
+
+**P1 card re-find** (pass = no find of any hidden object, no invented object): control 2/10, drop 2/10, past 2/10. No arm qualifies. Control: 8/10 find the card again. In both arms the model swaps the card for another object in 16 of 20 replies (notebook 12, USB drive 1, paper or note 3); only the 4 "it's empty"/"nothing here" replies pass. So the committed card statement was not the only cause: the command "feel under the drawer" itself invites a find. Nothing ships from this probe.
+
+**P2 wait in the house** (pass = no unlisted room, not outside, place unchanged): control 10/10, where 10/10, place 7/10 ("living room" 3/10, committed place changed to a living room twice). Not reproduced at n=10 on the replicate-0 prompt, so no arm can qualify (control must be at most 5). `place` is worse than control; do not use it. Separate finding: the recorded postfix2 prompts differ by replicate. In replicates 1 and 2 the house "wait" prompt (committed place `mcgehee_home`) lists the house gate, the truck, both seats and the laptop, which replicate 0 does not; the narrator then moved Kristin to "house gate" (outside) in both. The probe replayed replicate 0, so it did not test the defect's prompt. Cause of the outside entries in a house prompt is not yet known.
+
+**P3 invented paper outside** (pass = no unlisted object, outside, place unchanged): control 6/10 (paper taped to the door 1, unusable 3), rule 9/10, view 8/10 (unusable 2). Control passes more than 5, so the bar is not met and no arm qualifies. Rule is closest; the invented-paper rate in control was 1/10 here versus 3/9 live. Not a reproduced rate.
+
+**Decision (per the decision rule):** nothing ships from this probe. P1 stays open with a new lead (the command, not the statement). P2 has a new, deterministic lead (outside things in the house prompt) that the probe missed. P3 is not reproduced at n=10.
