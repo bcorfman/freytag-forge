@@ -12,9 +12,14 @@ from worldkeeper import MemoryBackend, World, WorldSchema
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import scoped_alias_entity_ids
+from storygame.runtime.reveal_eligibility import together_or_unplaced
 from storygame.runtime.seating import _command_names_thing
 from storygame.runtime.validation import ProgressionValidator
-from storygame.runtime.world_model import _true, apply_scene_placements, apply_world_effects
+from storygame.runtime.world_model import (
+    _true,
+    apply_scene_placements,
+    apply_world_effects,
+)
 from storygame.story_package.models import item_placement_is_visible, placement_text
 from storygame.story_package.world_schema import world_source_schema_data
 
@@ -540,7 +545,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seated = bool(seat_id and world.schema.entities.get(seat_id) and world.schema.entities[seat_id].seat_for)
         if not getattr(self, "_example_player_input", ""):
             return names
-        if not seated and world.together(protagonist_id, scene.metadata.location_id):
+        if not seated and together_or_unplaced(world, protagonist_id, scene.metadata.location_id):
             return names
         referred = {name.casefold() for name in self._referred_names}
         return [
@@ -550,7 +555,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
             or name.casefold() in referred
             or (
                 (entity_id := world.resolve(name)) is not None
-                and (world.holder(entity_id) == protagonist_id or world.together(protagonist_id, entity_id))
+                and (
+                    world.holder(entity_id) == protagonist_id or together_or_unplaced(world, protagonist_id, entity_id)
+                )
             )
         ]
 
@@ -856,7 +863,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if (
                 entity_id == protagonist_id
                 or not world.is_visible(entity_id)
-                or not world.together(protagonist_id, entity_id)
+                or not together_or_unplaced(world, protagonist_id, entity_id)
             ):
                 continue
             if not _command_names_thing(player_input, world.names(entity_id)):

@@ -1,4 +1,7 @@
-# Preregistration: Scene 1A observation, referent and boarding probes (DRAFT, not approved)
+# Preregistration: Scene 1A observation, referent and boarding probes (WITHDRAWN 2026-10-24, never approved or run)
+
+> Withdrawn: Brandon's design (the engine holds the places and feeds them to the narrator) replaced the narrator-rule arms. Superseded by `postfix2-live-prereg.md`.
+
 
 Written 2026-10-24 before any billed run. Brandon has not approved this document. Nothing billed runs until he does.
 Source: `postfix-live-prereg.md` result and the plan's step 5. Method: scene-fixing guide step 2 (replay recorded prompts, one arm per likely cause, 10 to 15 samples per arm, read every narration).

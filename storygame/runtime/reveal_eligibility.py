@@ -47,6 +47,11 @@ def _visible_to(item: KnowledgeDefinition, audience_id: str) -> bool:
     return item.audience.kind == "public" or audience_id in item.audience.character_ids
 
 
+def together_or_unplaced(world, protagonist_id: str, entity_id: str) -> bool:
+    """Treat an unplaced protagonist as able to reach any entity."""
+    return world.area(protagonist_id) is None or world.together(protagonist_id, entity_id)
+
+
 def explain_reveal(state: RuntimeState, audience_id: str, item: KnowledgeDefinition) -> RevealEligibility:
     """Return the first reason ``item`` is not an eligible reveal."""
 
@@ -62,7 +67,7 @@ def explain_reveal(state: RuntimeState, audience_id: str, item: KnowledgeDefinit
     if item.reach_entity_ids:
         world = world_for(state.package, state.facts)
         for entity_id in item.reach_entity_ids:
-            if not world.together(state.package.world.protagonist_id, entity_id):
+            if not together_or_unplaced(world, state.package.world.protagonist_id, entity_id):
                 return RevealEligibility(False, NOT_REACHABLE, entity_id)
     if item.source.kind != "storylet_realization" or item.source.storylet_id not in state.active_event_ids:
         return RevealEligibility(False, SOURCE_INACTIVE, item.source.storylet_id or item.source.kind)

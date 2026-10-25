@@ -32,6 +32,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
 from storygame.runtime.recent_cue import recent_cue_referent_text
 from storygame.runtime.reference_resolution import resolved_reference_names
+from storygame.runtime.reveal_eligibility import together_or_unplaced
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import (
     derive_grounding,
@@ -1161,7 +1162,7 @@ class CloudflareTurnProvider:
         scene = self._current_scene()
         seat_id = world.parent(protagonist_id)
         seated = bool(seat_id and world.schema.entities.get(seat_id) and world.schema.entities[seat_id].seat_for)
-        if not seated and world.together(protagonist_id, scene.location_id):
+        if not seated and together_or_unplaced(world, protagonist_id, scene.location_id):
             return ""
         protagonist = self._protagonist_name()
         area_id = world.area(protagonist_id)

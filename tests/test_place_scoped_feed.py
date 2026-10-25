@@ -169,6 +169,22 @@ def test_seated_outside_feed_has_exact_where_bullet(monkeypatch: pytest.MonkeyPa
     assert "Kristin. Place: driver's seat." in user
 
 
+def test_unplaced_protagonist_gets_the_in_house_feed(monkeypatch: pytest.MonkeyPatch) -> None:
+    unplaced = _state_at("mcgehee_home")
+    assert world_for(PACKAGE, unplaced.facts).set_unplaced("kristin", "unknown").ok
+
+    unplaced_prompt = _turn_prompt(monkeypatch, unplaced)
+    in_house_prompt = _turn_prompt(monkeypatch, _state_at("mcgehee_home"))
+
+    assert unplaced_prompt["system"] == in_house_prompt["system"]
+    assert "\n".join(
+        line for line in unplaced_prompt["user"].splitlines() if not line.startswith("- Kristin.")
+    ) == "\n".join(line for line in in_house_prompt["user"].splitlines() if not line.startswith("- Kristin."))
+    assert "Michelle's home is otherwise untouched" in unplaced_prompt["user"]
+    assert "- drawer. Place: in Michelle's workstation." in unplaced_prompt["user"]
+    assert "WHERE:" not in unplaced_prompt["user"]
+
+
 def test_command_referred_distant_thing_remains_in_things(monkeypatch: pytest.MonkeyPatch) -> None:
     state = _state_at("outside_house")
     _stub_transport(monkeypatch)
@@ -364,3 +380,18 @@ def test_synthetic_story_proves_place_scope_without_story_names() -> None:
     seated_provider = _synthetic_provider(seated)
     seated_user = seated_provider._section_user_prompt(seated_provider.assemble_turn_prompt("Look around.")["context"])
     assert "SCENE:\n- Ari is in the driver seat of a blue car, the yard." in seated_user
+
+
+def test_synthetic_unplaced_protagonist_gets_the_in_scene_feed() -> None:
+    package = _synthetic_package()
+    unplaced = RuntimeState.bootstrap(package)
+    unplaced.facts.assert_fact(Fact(predicate="statue_known", subject="story", value="true"))
+    assert world_for(package, unplaced.facts).set_unplaced("hero", "unknown").ok
+
+    provider = _synthetic_provider(unplaced)
+    user = provider._section_user_prompt(provider.assemble_turn_prompt("Look around.")["context"])
+
+    assert "The room is ready." in user
+    assert "The statue bears a blue mark." in user
+    assert "- lamp." in user
+    assert "WHERE:" not in user

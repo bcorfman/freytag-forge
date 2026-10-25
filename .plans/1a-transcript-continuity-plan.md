@@ -377,3 +377,31 @@ fact-driven npc moves, pacing events).
   guide.
 - Next: [post-fix live prereg](1a-transcript-continuity/postfix-live-prereg.md),
   awaiting Brandon's approval.
+
+### Step 6 — engine-owned places and a place-scoped feed (2026-10-24)
+
+Brandon's direction after the post-fix live result: inside the house, outside,
+and the truck are three distinct places (outside contains the truck; the truck
+contains the seats); “go out to the truck” seats her, “go outside” does not,
+“go inside” puts her in the house, getting out of the truck leaves her outside,
+and from the truck she sees outside. The data already had that tree; the
+failures were that no movement was engine-owned and the narrator prompt ignored
+where she is. Reverses 4a's rule that approaching a vehicle is not boarding.
+Done through Ringer (Luna, high effort, tests first), all committed:
+- 6a: aliases on `outside_house` and `mcgehee_home`; `connections.yaml` with
+  `house_to_outside` and `outside_to_house` (authored arrival text, no narrator
+  call); `tests/test_1a_movement.py`.
+- 6b: optional `description` on locations; the narrator prompt is place-scoped
+  (scene situation, committed statements with `reach_entity_ids`, and object
+  lists follow the tree; a WHERE bullet and the area description replace the
+  house text while she is outside or seated); in-scene prompts are byte-identical
+  to before (goldens in `tests/fixtures/place_feed/`); synthetic second story.
+- 6c: `boards_vehicle` counts going to the vehicle again; a second Jev question
+  `only_boards_vehicle` drops a pure boarding command from the narrator's view
+  (it had read “go out to the truck” as leaving the vehicle); a reply that places
+  the protagonist at a vehicle lands her in its first visible seat; the
+  kitchen-evidence reveal is reach-limited to the back door.
+- Withdrawn: the five-arm observation probe prereg. Next:
+  [postfix2 verification prereg](1a-transcript-continuity/postfix2-live-prereg.md),
+  awaiting Brandon's approval; it needs a `--route movement` added to the
+  harness first (free).

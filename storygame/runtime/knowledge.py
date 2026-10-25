@@ -7,7 +7,7 @@ from collections.abc import Iterable
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from storygame.runtime.reveal_eligibility import explain_reveal
+from storygame.runtime.reveal_eligibility import explain_reveal, together_or_unplaced
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package.models import ActionContract, FactDelivery, KnowledgeDefinition, entity_surface_forms
@@ -285,7 +285,7 @@ class KnowledgeProjector:
 
     @staticmethod
     def _scene_frame(state, situation, scene, world, protagonist_id: str, player_input: str) -> str:
-        if not player_input or world.together(protagonist_id, scene.metadata.location_id):
+        if not player_input or together_or_unplaced(world, protagonist_id, scene.metadata.location_id):
             return situation
         area_ids = (world.area(protagonist_id), *world.chain(protagonist_id))
         descriptions = {location.id: location.description for location in state.package.world.locations}
@@ -387,7 +387,7 @@ class KnowledgeProjector:
     @staticmethod
     def _within_reach(item: KnowledgeDefinition, world, protagonist_id: str) -> bool:
         return not item.reach_entity_ids or all(
-            world.together(protagonist_id, entity_id) for entity_id in item.reach_entity_ids
+            together_or_unplaced(world, protagonist_id, entity_id) for entity_id in item.reach_entity_ids
         )
 
     @staticmethod

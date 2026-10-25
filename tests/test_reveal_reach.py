@@ -68,6 +68,15 @@ def test_scene_reveals_are_reachable_at_home_but_not_from_the_truck() -> None:
     assert (result.eligible, result.reason) == (False, NOT_REACHABLE)
 
 
+def test_scene_reveals_fail_open_when_the_protagonist_is_unplaced() -> None:
+    state = _scene_state()
+    world = world_for(PACKAGE, state.facts)
+    assert world.set_unplaced("kristin", "unknown").ok
+
+    for knowledge_id in REVEALS:
+        assert explain_reveal(state, "player", PACKAGE.knowledge_indexes.by_id[knowledge_id]).eligible
+
+
 def _synthetic_state() -> tuple[RuntimeState, KnowledgeDefinition]:
     world = WorldSource(
         story_id="synthetic",
@@ -108,6 +117,14 @@ def test_synthetic_reveal_reach_is_story_neutral() -> None:
     assert world.move("hero", "room_b").ok
     result = explain_reveal(state, "player", item)
     assert (result.eligible, result.reason, result.detail) == (False, NOT_REACHABLE, "target")
+
+
+def test_synthetic_reveal_reach_fails_open_when_the_protagonist_is_unplaced() -> None:
+    state, item = _synthetic_state()
+    world = world_for(state.package, state.facts)
+    assert world.set_unplaced("hero", "unknown").ok
+
+    assert explain_reveal(state, "player", item).eligible
 
 
 def test_loader_rejects_an_unknown_reach_entity(tmp_path: Path) -> None:
