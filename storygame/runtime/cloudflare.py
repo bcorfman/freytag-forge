@@ -34,6 +34,7 @@ from storygame.runtime.cue_lifecycle import (
 )
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
+from storygame.runtime.narration_json import escape_stray_quotes
 from storygame.runtime.recent_cue import recent_cue_referent_text
 from storygame.runtime.reference_resolution import resolved_reference_names
 from storygame.runtime.reveal_eligibility import together_or_unplaced
@@ -2142,10 +2143,23 @@ class CloudflareTurnProvider:
         try:
             return json.loads(narration)
         except json.JSONDecodeError:
-            completed = self._complete_truncated_json(narration)
+            repaired = escape_stray_quotes(narration)
+            if repaired != narration:
+                try:
+                    decoded = json.loads(repaired)
+                except json.JSONDecodeError:
+                    pass
+                else:
+                    logger.warning(
+                        "Narration reply had unescaped quotes; repaired (worker host=%s)",
+                        urlsplit(self.worker_url).hostname,
+                    )
+                    return decoded
+            candidate_narration = repaired if repaired != narration else narration
+            completed = self._complete_truncated_json(candidate_narration)
             if completed is not None:
                 return completed
-            salvaged = self._salvage_truncated_json(narration)
+            salvaged = self._salvage_truncated_json(candidate_narration)
             if salvaged is None:
                 raise
             logger.warning(

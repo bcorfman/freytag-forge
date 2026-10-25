@@ -269,6 +269,20 @@ class Location(Entity):
     description: str | None = None
 
 
+class ItemViewBlockedBy(_Model):
+    axis: str = Field(pattern=_ID)
+    pole: str = Field(pattern=_ID)
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class ItemView(_Model):
+    from_: str = Field(alias="from", pattern=_ID)
+    blocked_by: ItemViewBlockedBy | None = None
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+
+
 class Item(Entity):
     # A fixed thing is furniture or part of the scene, so the engine keeps its authored place.
     fixed: bool | None = None
@@ -277,6 +291,8 @@ class Item(Entity):
     open: bool = False
     hidden: bool = False
     contents: list[str] = Field(default_factory=list)
+    view: list[ItemView] = []
+    contents_complete: StrictBool = False
     owner: str | None = Field(default=None, pattern=_ID)
     enterable: bool | None = None
     enter_pole: str | None = Field(default=None, pattern=_ID)

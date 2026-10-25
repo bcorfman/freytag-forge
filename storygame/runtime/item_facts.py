@@ -12,6 +12,7 @@ from worldkeeper import MemoryBackend, World, WorldSchema
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import scoped_alias_entity_ids
+from storygame.runtime.observation import ObservationContext, ObservationRequest, build_observation_context
 from storygame.runtime.reference_resolution import resolved_reference_names
 from storygame.runtime.reveal_eligibility import together_or_unplaced
 from storygame.runtime.seating import _command_names_thing
@@ -297,7 +298,9 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._match_offered_names = set()
         self._schema_cache = {}
         self.prior_steps: tuple[str, ...] = ()
+        self.prior_notice_steps: tuple[str, ...] = ()
         self.command_consumed = False
+        self.observation_request: ObservationRequest | None = None
         self.last_turn_engine_text = False
         self._last_item_facts_unplaced = []
         self._last_item_facts_refused = []
@@ -454,8 +457,17 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def _things_block(self, *, narration=False):
         names = self._thing_names()
-        lines = ["THINGS:"] if names or (narration and self._referred_lines) else []
         world = self._world()
+        context = self._observation_context(world)
+        observation_lines = []
+        if context is not None:
+            listed_names = set(names)
+            for thing in context.visible_things:
+                if thing.name in listed_names:
+                    continue
+                observation_lines.append(self._observation_thing_line(thing))
+                listed_names.add(thing.name)
+        lines = ["THINGS:"] if names or observation_lines or (narration and self._referred_lines) else []
         protagonist_id = self.state.package.world.protagonist_id
         protagonist_index = None
         for name in names:
@@ -510,6 +522,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     line += f" With {name}: {labels}."
                 protagonist_index = len(lines)
             lines.append(line)
+        lines.extend(observation_lines)
         if narration and self._referred_lines:
             insert_at = protagonist_index + 1 if protagonist_index is not None else len(lines)
             lines[insert_at:insert_at] = self._referred_lines
@@ -589,13 +602,19 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 self._selected_names.append(protagonist)
 
     def _player_lines(self, user):
-        lines = super()._player_lines(user)
-        if self.command_consumed:
-            lines = [f"Just before this: {' '.join(self.prior_steps)}"] if self.prior_steps else []
-        elif self.prior_steps and lines:
-            lines.insert(0, f"Just before this: {' '.join(self.prior_steps)}")
-        if self.recent_cue_referent_owner and lines and not self.command_consumed:
-            lines[-1] = f"{lines[-1]} (meaning the {self.recent_cue_referent_owner})"
+        if self.observation_request is None:
+            lines = super()._player_lines(user)
+            if self.command_consumed:
+                lines = [f"Just before this: {' '.join(self.prior_steps)}"] if self.prior_steps else []
+            elif self.prior_steps and lines:
+                lines.insert(0, f"Just before this: {' '.join(self.prior_steps)}")
+            if self.recent_cue_referent_owner and lines and not self.command_consumed:
+                lines[-1] = f"{lines[-1]} (meaning the {self.recent_cue_referent_owner})"
+        else:
+            lines = [self.observation_request.action]
+            completed_actions = self._observation_completed_actions()
+            if completed_actions:
+                lines.append(f"Already done: {' '.join(completed_actions)}")
         if not lines or "scene_setting" not in user:
             return lines
         player_lines = []
@@ -610,8 +629,69 @@ class ItemFactsProvider(CloudflareTurnProvider):
             player_lines.append(f"{name}. {label}: {place.strip()}.")
         return player_lines + lines
 
+    def _observation_completed_actions(self):
+        notices = list(self.prior_notice_steps)
+        completed_actions = []
+        for step in self.prior_steps:
+            try:
+                notices.remove(step)
+            except ValueError:
+                completed_actions.append(step)
+        return tuple(completed_actions)
+
+    def _observation_context(self, world=None) -> ObservationContext | None:
+        request = self.observation_request
+        if request is None:
+            return None
+        current_world = world if world is not None else self._world()
+        return build_observation_context(
+            current_world,
+            self.state.package.world.protagonist_id,
+            request,
+            completed_actions=self._observation_completed_actions(),
+        )
+
+    def _observation_thing_line(self, thing) -> str:
+        if self.held_by and thing.holder:
+            return f"- {thing.name}. Held by: {thing.holder}."
+        if thing.place:
+            return f"- {thing.name}. Place: {thing.place}."
+        return f"- {thing.name}."
+
+    def _observation_scope_is_empty(self, world, context: ObservationContext) -> bool:
+        if not context.scope_complete or context.required:
+            return False
+        request = self.observation_request
+        focus_id = request.focus if request is not None else None
+        if not focus_id:
+            return False
+        for thing in context.visible_things:
+            entity_id = world.resolve(thing.name)
+            while entity_id:
+                if entity_id == focus_id:
+                    return False
+                entity_id = world.parent(entity_id)
+        return True
+
     def _section_user_prompt(self, user):
         rendered = super()._section_user_prompt(user)
+        world = self._world()
+        context = self._observation_context(world)
+        constraints = []
+        if context is not None and context.required:
+            constraints.append(f"- Show these in your reply: {', '.join(context.required)}.")
+        if context is not None and self._observation_scope_is_empty(world, context):
+            focus_id = self.observation_request.focus
+            name = world.name(focus_id)
+            constraints.append(f"- Nothing is left in or under the {name}. Searching the {name} finds nothing.")
+        if constraints:
+            constraint_text = "\n".join(constraints)
+            marker = "\n\nCONSTRAINTS:"
+            rendered = (
+                rendered.replace(marker, f"{marker}\n{constraint_text}", 1)
+                if marker in rendered
+                else f"{rendered}\n\nCONSTRAINTS:\n{constraint_text}"
+            )
         things = self._things_block(narration=True)
         if not things:
             return rendered
@@ -626,7 +706,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def __call__(self, player_input: str) -> object:
         self.last_turn_engine_text = False
-        if not (self.command_consumed and self.prior_steps):
+        if self.observation_request is not None or not (self.command_consumed and self.prior_steps):
             return super().__call__(player_input)
 
         self.last_turn_engine_text = True

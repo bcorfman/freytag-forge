@@ -14,6 +14,7 @@ class SeatingResult:
     asked: bool
     issues: tuple[str, ...]
     command_consumed: bool = False
+    notice_steps: tuple[str, ...] = ()
 
 
 def _protagonist_name(package) -> str:
@@ -196,6 +197,7 @@ def board_vehicle(
             issues.append(f"could not move protagonist into '{world.name(seat)}': {result.reason}")
             return SeatingResult(player_input, (), asked, tuple(issues))
         steps = [items[seat].enter_text]
+        notice_steps = []
         for item_id in sorted(items):
             item = items[item_id]
             if (
@@ -206,8 +208,9 @@ def board_vehicle(
                 and vehicle_id in world.chain(item_id)
             ):
                 steps.append(item.notice_text)
+                notice_steps.append(item.notice_text)
         command = " ".join(steps) if command_consumed else " ".join((*steps, player_input))
-        return SeatingResult(command, tuple(steps), asked, tuple(issues), command_consumed)
+        return SeatingResult(command, tuple(steps), asked, tuple(issues), command_consumed, tuple(notice_steps))
     return SeatingResult(player_input, (), asked, tuple(issues))
 
 

@@ -5,6 +5,7 @@ import {
   estimateInputTokens,
   utcDay
 } from "./budget.js";
+import { MODEL_PROFILES, getModelProfile } from "./models.js";
 
 const MAX_BODY_BYTES = 256 * 1024;
 
@@ -24,6 +25,21 @@ export default {
     if (authorization !== `Bearer ${env.DEMO_SHARED_TOKEN}`) {
       return respondError("UNAUTHORIZED", "Invalid token", 401, traceId);
     }
+    const pathname = new URL(request.url).pathname;
+    const configuredModel = asString(env.CF_AI_MODEL).trim() || "@cf/meta/llama-3.1-8b-instruct-fast";
+    let model = configuredModel;
+    let profile = getModelProfile(model);
+    if (pathname !== "/jev" && request.headers.has("X-Bench-Model")) {
+      const benchModel = asString(request.headers.get("X-Bench-Model")).trim();
+      const benchModels = asString(env.CF_BENCH_MODELS).split(",").map((value) => value.trim()).filter(Boolean);
+      const benchPrices = modelPrices(env, respondError, traceId);
+      if (benchPrices instanceof Response) return benchPrices;
+      if (!benchModels.includes(benchModel) || !MODEL_PROFILES[benchModel] || !isPrice(benchPrices[benchModel])) {
+        return respondError("BENCH_MODEL_REJECTED", "The requested benchmark model is not allowed", 400, traceId);
+      }
+      model = benchModel;
+      profile = MODEL_PROFILES[model];
+    }
     const contentLength = Number(request.headers.get("content-length") || 0);
     if (contentLength > MAX_BODY_BYTES) {
       return respondError("REQUEST_TOO_LARGE", "Request body is too large", 413, traceId);
@@ -40,15 +56,14 @@ export default {
     }
     const system = asString(body?.system);
     const user = asString(body?.user);
-    const maxTokens = boundedInteger(body?.max_tokens, 512, 64, 2048);
+    const maxTokens = boundedInteger(body?.max_tokens, 512, 64, profile.maxTokensCeiling);
     const responseFormat = body?.response_format && typeof body.response_format === "object" ? body.response_format : null;
     const accountId = asString(env.CF_ACCOUNT_ID).trim();
     const apiToken = asString(env.CF_API_TOKEN).trim();
-    const model = asString(env.CF_AI_MODEL).trim() || "@cf/meta/llama-3.1-8b-instruct-fast";
     if (!accountId || !apiToken) {
       return respondError("WORKER_CONFIGURATION_ERROR", "Workers AI credentials are not configured", 500, traceId);
     }
-    if (new URL(request.url).pathname === "/jev") {
+    if (pathname === "/jev") {
       return handleJev({ body, env, accountId, apiToken, traceId, workerRevision, respondError });
     }
     if (!system || !user) {
@@ -57,6 +72,9 @@ export default {
 
     const prices = modelPrices(env, respondError, traceId);
     if (prices instanceof Response) return prices;
+    if (!isPrice(prices[model])) {
+      return respondError("WORKER_CONFIGURATION_ERROR", "The configured model has no price", 500, traceId);
+    }
     const reservedAmount = callCostMicroUsd(prices, model, estimateInputTokens(system + user), maxTokens);
     if (reservedAmount === null || !Number.isFinite(reservedAmount) || reservedAmount < 0) {
       return respondError("WORKER_CONFIGURATION_ERROR", "The configured model has no price", 500, traceId);
@@ -80,7 +98,7 @@ export default {
       try {
         let aiResponse;
         try {
-          aiResponse = await callWorkersAi({ accountId, apiToken, model, system, user, maxTokens, responseFormat });
+          aiResponse = await callWorkersAi({ accountId, apiToken, model, profile, system, user, maxTokens, responseFormat });
         } catch (error) {
           console.error("Workers AI network failure", { trace_id: traceId, error: String(error) });
           return respondError("AI_NETWORK_ERROR", "Workers AI could not be reached", 502, traceId);
@@ -88,10 +106,11 @@ export default {
         const upstreamRequestId = aiResponse.headers.get("cf-ray") || aiResponse.headers.get("x-request-id") || "";
         const rawResponse = await aiResponse.text();
         const parsedResponse = tryParseJson(rawResponse);
+        let extraction;
         if (aiResponse.ok && parsedResponse?.success !== false) {
-          const usage = parsedResponse?.result?.usage;
-          if (Number.isFinite(usage?.prompt_tokens) && Number.isFinite(usage?.completion_tokens)) {
-            const actualAmount = callCostMicroUsd(prices, model, usage.prompt_tokens, usage.completion_tokens);
+          extraction = profile.extract(parsedResponse);
+          if (Number.isFinite(extraction.promptTokens) && Number.isFinite(extraction.completionTokens)) {
+            const actualAmount = callCostMicroUsd(prices, model, extraction.promptTokens, extraction.completionTokens);
             if (actualAmount !== null) settlementAmount = actualAmount;
           }
         }
@@ -122,12 +141,14 @@ export default {
             upstream_request_id: upstreamRequestId || undefined
           });
         }
-        const narration = extractNarration(parsedResponse);
+        const narration = extraction?.text || "";
         if (!narration) {
           console.error("Workers AI returned no narration", { trace_id: traceId, upstream_request_id: upstreamRequestId, response_keys: Object.keys(parsedResponse || {}) });
           return respondError("AI_EMPTY_RESPONSE", "Workers AI returned no narration", 502, traceId, { upstream_request_id: upstreamRequestId || undefined });
         }
-        return json({ narration, model, trace_id: traceId, upstream_request_id: upstreamRequestId || undefined }, 200, { "X-Worker-Revision": workerRevision });
+        const responsePayload = { narration, model, trace_id: traceId, upstream_request_id: upstreamRequestId || undefined };
+        if (extraction?.truncated) responsePayload.truncated = true;
+        return json(responsePayload, 200, { "X-Worker-Revision": workerRevision });
       } finally {
         try {
           const settleResponse = await budget.fetch("https://budget/settle", { method: "POST", body: JSON.stringify({ id: reservationId, amount: settlementAmount }) });
@@ -295,11 +316,11 @@ function jevUpstreamError(aiResponse, parsedResponse, traceId, upstreamRequestId
   }, headers);
 }
 
-async function callWorkersAi({ accountId, apiToken, model, system, user, maxTokens, responseFormat }) {
+async function callWorkersAi({ accountId, apiToken, model, profile, system, user, maxTokens, responseFormat }) {
   return fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run/${model}`, {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json", Authorization: `Bearer ${apiToken}` },
-    body: JSON.stringify({ messages: [{ role: "system", content: system }, { role: "user", content: user }], max_tokens: maxTokens, ...(responseFormat ? { response_format: responseFormat, temperature: 0 } : {}) })
+    body: JSON.stringify(profile.buildBody({ system, user, maxTokens, responseFormat }))
   });
 }
 
@@ -323,12 +344,16 @@ function classifyUpstreamFailure(status, code, message) {
   return { code: "AI_UPSTREAM_ERROR", message: "Workers AI returned an upstream error", httpStatus: 502 };
 }
 
-function extractNarration(payload) {
-  for (const value of [payload?.result?.response, payload?.result?.text, payload?.response]) {
-    if (typeof value === "string" && value.trim()) return value.trim();
-    if (value && typeof value === "object") return JSON.stringify(value);
-  }
-  return "";
+function isPrice(price) {
+  return Boolean(
+    price &&
+      typeof price.input === "number" &&
+      typeof price.output === "number" &&
+      Number.isFinite(price.input) &&
+      Number.isFinite(price.output) &&
+      price.input >= 0 &&
+      price.output >= 0
+  );
 }
 
 function extractErrors(payload) { return payload && Array.isArray(payload.errors) ? payload.errors.slice(0, 5).map((error) => ({ code: error?.code ?? null, message: String(error?.message || "Workers AI error").slice(0, 500) })) : []; }
