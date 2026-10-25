@@ -10,12 +10,13 @@ kinds:
 locations:
 - id: mcgehee_home
   name: Michelle's house
-  aliases: [Michelle's home, the house]
+  aliases: [Michelle's home, the house, inside, indoors]
 - id: kitchen
   name: kitchen
   parent: mcgehee_home
 - id: outside_house
   name: outside the house
+  aliases: [outside, the yard, the driveway, the street, the curb, the front of the house]
 - id: patrol_staging
   name: patrol staging area
 - id: los_angeles_park
