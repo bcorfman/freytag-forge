@@ -54,3 +54,20 @@ Changes (everything above not mentioned here stands):
 - **Scoring:** unchanged, (a), (b), (c) read by hand.
 - **Decision rule (the 8 of 10 and 3 of 10 rates, now on one prompt):** an arm advances when it passes at least 24 of 30 and beats control by at least 9 passes. Among advancing arms prefer the one that adds no rule: arm 1, then arm 3, then arm 2. A winning arm still goes to a product-wired live check, never straight to adoption. Arm 3 needs an engine change to adopt (list items the boarding notice named in THINGS for the turn); that is a separate, tested change.
 - **Fallback:** unchanged. If no arm advances, engine-authored boarding text needs Brandon's separate approval.
+
+## Result (2026-10-25, git 132dcd82 plus the auth fix; 120 calls, 120 usable, no quota stop)
+
+Every reply read by hand. Rows: `bench/results/boarding-probe-live/probe.json`. Smoke (8 calls) first found a missing auth header (401 on all 8), fixed, rerun clean.
+
+| Arm | Laptop shown, seated, nothing invented | Laptop mentioned at all | Says she gets out |
+| --- | --- | --- | --- |
+| 0 control | 0 / 30 | 1 (adds an invented paper) | 2 |
+| 1 steps as the action | 1 / 30 (sample 16) | 12 | 11 |
+| 2 steps plus a rule | 3 / 30 (13, 19, 21) | 3 | 0 |
+| 3 laptop in THINGS | 5 / 30 (8, 13, 16, 22, 27) | 5 | 4 |
+
+Sample 2 of arm 1 shows the laptop but invents tabs and a note, so it fails (c). Sample 16 of arm 1 gives the laptop screen an open search; counted as a pass because it adds no new object (the smoke read stricter; the decision is the same either way).
+
+Decision rule: an arm advances at 24 of 30 or more and 9 or more above control. No arm comes close (best 5 of 30). Neither a rule, the steps as the action, nor listing the laptop makes the narrator show it reliably.
+Side findings: arm 2 keeps her seated in 30 of 30 (28 open with "sits in the driver's seat of her truck, outside Michelle's house"), arm 1 makes her get out in 11 of 30, and arms 0 and 3 invent "Michelle's car in the driveway" or a paper on the seat in a few.
+Per the preregistration the fallback is engine-authored boarding text (the steps shown verbatim, no narrator call), which needs Brandon's separate approval.
