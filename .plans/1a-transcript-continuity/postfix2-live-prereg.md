@@ -32,3 +32,6 @@ Acceptance (plan): every requirement satisfied in all replicates of the routes t
 
 ## Not covered
 Hosted staging (a separate gate after merge); 1B's marked pursuit line live; the three-way response as an engine outcome (free text only); other scenes' behavior beyond the byte-identity goldens and the full suite; rates beyond n=3 to 5.
+
+## APPROVED (Brandon, 2026-10-24: "I approve the postfix2 prereg")
+Code under test: the commit that adds the movement route to the harness (`git log` head when the smoke starts). Ringer runs `transcript-1a-postfix2-smoke` and `transcript-1a-postfix2-live`. Full suite not re-run before spending, by Brandon's standing instruction to run it once at the very end.
