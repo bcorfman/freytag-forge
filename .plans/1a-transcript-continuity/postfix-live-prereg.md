@@ -13,9 +13,10 @@ Back door text; card delivery and statement; drawer pointers retire after recove
 Harness: `scripts/ringer/transcript_1a/live_baseline.py` (product wiring, call cap, quota stop), extended only by a `--inputs` option that selects an input script (a Ringer task adds it, with a hermetic test).
 - **Route A, the reported raw route (regression arm), 5 replicates x 8 turns:** the baseline's eight inputs, unchanged, so each count compares with the baseline's counts. Expected calls about 150 (baseline 145 plus contextual boarding questions).
 - **Route B, the corrected route (acceptance arm), 3 replicates x 12 turns, three complete live replicates as the plan requires:** go in the house / pull out the drawer / feel in the gap / look around / wait / wait / go out to the truck / get in / look around / get out of the truck / look around / wait. The order puts the card search before the turn-4 patrol arrival so recovery is unobserved. Expected calls about 130.
-- **Route C, the observed-recovery branch, 3 replicates x 10 turns:** go in the house / examine the carved initials / wait / wait / feel in the gap (the patrol officer is in the house from scene turn 5, so recovery is witnessed) / say what the card is to the officer / wait / go out to the truck / get in / look around. Expected calls about 110.
+- **Route C, the observed-recovery branch, 3 replicates x 11 turns:** go in the house / examine the carved initials / wait / wait / wait / feel under the drawer / say what the card is to the officer / wait / go out to the truck / get in / look around. The patrol officer enters the house after scene turn 5 completes, so the card is taken at input 6 with the officer inside. Expected calls about 120.
+  *Amended 2026-10-24 before any billed run, after a free dry run: the first draft took the card at input 5 with a bare "feel in the gap", which would have been unwitnessed (the officer is not yet inside) and whose one-turn gap referent would have expired. Brandon approved the design; this corrects the input script only.*
 - Free first: `--dry-run` of each route; one 2-turn smoke per route.
-- Cap per task 200 Cloudflare calls (route B and C together about 240 expected, so each is its own task with its own 200 cap). Total expected 390 to 420 calls, cap 600.
+- Cap per task 200 Cloudflare calls (route B and C together about 250 expected, so each is its own task with its own 200 cap). Total expected 390 to 420 calls, cap 600.
 - No LLM judge. Every narration is read by hand, narration plus appended delivery text, never `item_facts`.
 
 ## Engine
