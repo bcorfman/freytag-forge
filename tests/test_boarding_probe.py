@@ -112,6 +112,60 @@ class _Response:
         return False
 
 
+def test_narrator_request_uses_trimmed_worker_token_as_authorization(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "  probe-token  ")
+    captured: list[object] = []
+
+    def opener(request: object, **_kwargs: object) -> _Response:
+        captured.append(request)
+        return _Response({"segments": [{"kind": "narration", "text": "A reply."}]})
+
+    monkeypatch.setattr(cloudflare, "urlopen", opener)
+    boarding_probe._send_narrator("system", "user", "https://worker.example/turn", boarding_probe.CallCounter(1))
+
+    assert captured[0].headers["Authorization"] == "Bearer probe-token"
+
+
+@pytest.mark.parametrize("token", [None, "   "])
+def test_narrator_request_omits_blank_worker_token(monkeypatch: pytest.MonkeyPatch, token: str | None) -> None:
+    if token is None:
+        monkeypatch.delenv("CLOUDFLARE_WORKER_TOKEN", raising=False)
+    else:
+        monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", token)
+    captured: list[object] = []
+
+    def opener(request: object, **_kwargs: object) -> _Response:
+        captured.append(request)
+        return _Response({"segments": [{"kind": "narration", "text": "A reply."}]})
+
+    monkeypatch.setattr(cloudflare, "urlopen", opener)
+    boarding_probe._send_narrator("system", "user", "https://worker.example/turn", boarding_probe.CallCounter(1))
+
+    assert "Authorization" not in captured[0].headers
+
+
+def test_401_output_does_not_contain_worker_token(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    token = "probe-secret-that-must-not-leak"
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", token)
+
+    def opener(request: object, **_kwargs: object) -> _Response:
+        raise HTTPError(request.full_url, 401, "unauthorized", {}, io.BytesIO(b'{"error":"unauthorized"}'))
+
+    monkeypatch.setattr(cloudflare, "urlopen", opener)
+    output = tmp_path / "rows.json"
+    boarding_probe.run_samples(
+        boarding_probe.dry_document(boarding_probe.build_control_prompts()),
+        samples=1,
+        max_calls=10,
+        out=output,
+    )
+
+    assert token not in output.read_text()
+
+
 def test_run_is_interleaved_for_distinct_prompts(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     document = boarding_probe.dry_document(boarding_probe.build_control_prompts())
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")

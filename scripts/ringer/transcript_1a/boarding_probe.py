@@ -360,10 +360,14 @@ def _send_narrator(
         "max_tokens": 1024,
         "response_format": {"type": "json_object"},
     }
+    headers = {"Content-Type": "application/json", "User-Agent": cloudflare.BROWSER_USER_AGENT}
+    token = os.environ.get("CLOUDFLARE_WORKER_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     request = Request(
         url,
         data=json.dumps(payload).encode(),
-        headers={"Content-Type": "application/json", "User-Agent": cloudflare.BROWSER_USER_AGENT},
+        headers=headers,
         method="POST",
     )
     try:
