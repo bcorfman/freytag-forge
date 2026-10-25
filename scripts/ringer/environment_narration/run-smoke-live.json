@@ -1,0 +1,35 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-smoke-live",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "billed-smoke-four-models",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 1500,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/environment-narration/smoke-direct-rows.json",
+    "bench/results/environment-narration/smoke-direct-report.md",
+    "bench/results/environment-narration/smoke-prompts.json"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/smoke-direct-rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/smoke-direct-report.md"
+   ],
+   "spec": "You are a RUNNER for one billed smoke run in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. This spends a few cents on the project's Cloudflare Workers AI account and the human has approved it (24 calls, ceiling $0.03). HARD RULES: run the two commands below EXACTLY ONCE, in order. NEVER run the first command a second time for any reason (not after an error, not after a partial result: a rerun would spend money again). Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit.\n\nCOMMAND 1 (the billed run; it prints a progress summary; a non-zero exit with partial rows is a valid outcome, do not retry):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && (set -a; . ./.env; set +a; unset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN; .venv/bin/python scripts/ringer/environment_narration/screen.py --dry --out bench/results/environment-narration/smoke-prompts.json >/dev/null && .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --prompts bench/results/environment-narration/smoke-prompts.json --run --confirm --max-calls 24 --max-usd 0.03 --out bench/results/environment-narration/smoke-direct-rows.json)\n\nCOMMAND 2 (renders the report; safe to rerun if it fails):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --report --rows bench/results/environment-narration/smoke-direct-rows.json --out bench/results/environment-narration/smoke-direct-report.md\n\nThen print the per-variant summary section of bench/results/environment-narration/smoke-direct-report.md (usable counts, latency min/median/max, tokens, cost, failed variants and their first error text) and say in one or two sentences what happened, including any variant that failed or any stop reason. Do not interpret quality; just report.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge && set -o pipefail && test -s bench/results/environment-narration/smoke-direct-rows.json && test -s bench/results/environment-narration/smoke-direct-report.md && (set -a; . ./.env; set +a; .venv/bin/python - <<'PY'\nimport json,os,sys\nrows=json.load(open('bench/results/environment-narration/smoke-direct-rows.json'))\nrows=rows['rows'] if isinstance(rows,dict) and 'rows' in rows else rows\ntext=open('bench/results/environment-narration/smoke-direct-rows.json').read()+open('bench/results/environment-narration/smoke-direct-report.md').read()\nfor name in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CF_API_TOKEN','OPENAI_API_KEY','RAILWAY_TOKEN'):\n    v=os.environ.get(name,'').strip()\n    assert not v or v not in text, f'{name} value leaked into outputs'\nassert len(rows)==24, f'expected 24 rows (sent or skipped), got {len(rows)}'\nprint('integrity ok: 24 rows, no credential in outputs')\nPY\n)",
+   "verified": "24 rows recorded (sent or skipped) and no credential appears in any output"
+  }
+ ]
+}

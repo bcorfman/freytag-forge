@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-smoke-probe",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "smoke-direct-s5b-probe-arms",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/environment_narration/smoke_direct.py",
+    "tests/test_environment_smoke_direct.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/smoke_direct.py"
+   ],
+   "spec": "You are extending a small billed-smoke tool (offline until a human confirms) in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/smoke_direct.py and tests/test_environment_smoke_direct.py (read both first). Never edit anything else. You never make a live call. NEVER print, log or write any credential value. Defaults (default variants, `original` and `wide` slots, S5b, temperature 0, json_object) must stay exactly as they are.\n\nGOAL: a four-arm prompt probe on the search-after-recovery start (S5b), run on Llama 3.3 70B with JSON mode off and the PRODUCT's default sampling (no temperature in the request), so samples genuinely vary.\n\nCHANGE, TESTS FIRST:\n1. Profile key `temperature` (number or None; absent means 0 exactly as today). When the profile value is None, `_request_body` omits the `temperature` key entirely. Add a profile after the existing ones, not in the default four: label `llama-3.3-70b-default-temp`, model_id `@cf/meta/llama-3.3-70b-instruct-fp8-fast`, token_parameter max_tokens, max_tokens 1024, extra_body {}, input_price 0.293, output_price 2.253, json_mode False, temperature None, note 'JSON mode off and no temperature, as the product sends it'.\n2. Derived probe starts, built at prompt-load time exactly like S5b, from the PROPOSED context of S5b (system text unchanged; the existing context is copied unchanged). Each edits only whole lines of the user text, using plain string operations (no regular expressions): (a) `S5bA`: replace the line that starts with '- The ' and ends with ' holds nothing else the player can find.' by the two sentences '- Nothing is left in or under the X. Searching the X finds nothing.' where X is the text between '- The ' and ' holds nothing else the player can find.'; (b) `S5bB`: delete the line that starts with '- What presses on '; (c) `S5bC`: both edits. A missing line is a clear ValueError naming the arm. S5b, S5, and the prompts file on disk are unchanged.\n3. `--slots probe`: for sample 0 through 7, in this order within each sample: S5b proposed, S5bA proposed, S5bB proposed, S5bC proposed (32 slots), round-robin across variants as today. Guards unchanged (--max-calls, --max-usd).\n4. Tests, hermetic: the temperature-None body has no `temperature` key while other profiles keep temperature 0; A, B, C each differ from S5b proposed only by the stated lines (diff the line lists), C equals both edits applied together; ValueError when a line is missing; probe plan has 32 calls in the stated order with the single variant; defaults unchanged (24-call and 20-call plans). FINISH: ruff check and ruff format both files; run screen.py --dry then smoke_direct.py --dry --slots probe --variants llama-3.3-70b-default-temp with dummy env values; report calls and ceiling USD.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && P=.venv/bin/python && S=scripts/ringer/environment_narration && $P -m pytest -q -p no:cacheprovider --no-cov tests/test_environment_smoke_direct.py tests/test_environment_screen.py tests/test_environment_baseline.py tests/test_narration_json.py 2>&1 | tee /tmp/env-pr.out | tail -5 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/env-pr.out && $P $S/baseline.py --out /tmp/env-pr-base.json >/dev/null && $P $S/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-pr-base.json && $P $S/screen.py --dry --out /tmp/env-pr-prompts.json >/dev/null && env CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz $P $S/smoke_direct.py --prompts /tmp/env-pr-prompts.json --dry --slots probe --variants llama-3.3-70b-default-temp --out /tmp/env-pr-plan.json | tail -2 && env CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz $P $S/smoke_direct.py --prompts /tmp/env-pr-prompts.json --dry --slots wide --variants llama-3.3-70b-nojson --out /tmp/env-pr-wide.json | tail -1 && $P - <<'PY'\nimport json\na=json.load(open('/tmp/env-pr-plan.json'))['calls']\nassert len(a)==32 and {c['variant'] for c in a}=={'llama-3.3-70b-default-temp'}\nassert [c['start'] for c in a[:4]]==['S5b','S5bA','S5bB','S5bC']\nby={c['start']:c['user'] for c in a}\nassert 'holds nothing else the player can find' in by['S5b'] and 'holds nothing else' not in by['S5bA']\nassert 'Nothing is left in or under the drawer. Searching the drawer finds nothing.' in by['S5bA']\nassert 'What presses on' in by['S5b'] and 'What presses on' not in by['S5bB'] and 'What presses on' not in by['S5bC']\nassert 'holds nothing else' in by['S5bB'] and 'holds nothing else' not in by['S5bC']\nassert all('may say this aloud' not in u for u in by.values())\nw=json.load(open('/tmp/env-pr-wide.json'))['calls']; assert len(w)==20\nprint('probe plan ok: 32 calls, arms differ only by the stated lines')\nPY\n! grep -rF dummy-token-xyz /tmp/env-pr-plan.json && $P -m ruff check $S/smoke_direct.py tests/test_environment_smoke_direct.py && $P -m ruff format --check $S/smoke_direct.py tests/test_environment_smoke_direct.py",
+   "verified": "four S5b arms, 32-call probe plan, default-temperature 70B profile; defaults unchanged"
+  }
+ ]
+}

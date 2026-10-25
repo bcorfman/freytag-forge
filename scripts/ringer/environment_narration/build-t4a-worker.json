@@ -1,0 +1,36 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t4a",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t4a-worker-model-profiles",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 6000,
+   "check_timeout_s": 900,
+   "ownership": [
+    "worker/src/models.js",
+    "worker/src/index.js",
+    "worker/src/budget.js",
+    "worker/test/models.test.js"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/worker/src/models.js",
+    "/home/bcorfman/dev/freytag-forge/worker/test/models.test.js"
+   ],
+   "spec": "You are adding model profiles to a Cloudflare Worker in freytag-forge (JavaScript ES modules, Node test runner). Working directory: /home/bcorfman/dev/freytag-forge/worker. No network, no real Workers AI call: tests mock global fetch the way worker/test/worker.test.js already does. Do not git commit. YOU MAY EDIT ONLY: worker/src/models.js (new), worker/src/index.js, worker/src/budget.js, worker/test/models.test.js (new). Never edit worker/test/worker.test.js, wrangler.jsonc, storygame/, docs/, data/, packages/, .plans/. Existing tests must pass UNCHANGED.\n\nREAD FIRST: worker/src/index.js (request handling, model = env.CF_AI_MODEL || default, callWorkersAi, extractNarration, classifyUpstreamFailure, the reserve/settle flow), worker/src/budget.js (DEFAULT_MODEL_PRICES, callCostMicroUsd), worker/test/worker.test.js (how fetch and the budget Durable Object are faked), .plans/grounded-llm-environment-narration.md section 'Cloudflare narrator recommendation'. Facts from Cloudflare's docs (checked 2026-10-25): `@cf/meta/llama-3.3-70b-instruct-fp8-fast`: request uses `messages` and `max_tokens`, final text at `response`, price $0.293 input / $2.253 output per million tokens. `@cf/deepseek-ai/deepseek-v4.1-flash-1017`: request uses `messages`, `max_completion_tokens` (`max_tokens` is deprecated), `reasoning_effort` in max|high|low|none, `temperature`, `response_format`; response is chat-completion shaped with `choices[]` and `usage{}` (the final text field and the reasoning field and the usage field names are NOT documented, so be defensive); price $0.30 / $1.20 per million; paid access required. Prices in budget.js are micro-dollars per token numerically equal to dollars per million.\n\nBUILD. (1) worker/src/models.js exports `MODEL_PROFILES` keyed by model id with: `buildBody({system, user, maxTokens, responseFormat})`, `extract(payload)` returning `{text, promptTokens, completionTokens, truncated}`, `maxTokensCeiling`, and `price`. Profiles: the existing default `@cf/meta/llama-3.1-8b-instruct-fast` reproduces today's body and extraction EXACTLY; `@cf/meta/llama-3.3-70b-instruct-fp8-fast` same body shape and extraction as today; `@cf/deepseek-ai/deepseek-v4.1-flash-1017` sends `max_completion_tokens` and `reasoning_effort: \"low\"`, adds `temperature: 0` only with a response_format as today, ceiling 4096, and extracts the final text ONLY from `result.choices[0].message.content` (or `choices[0].message.content` without the envelope), never from any reasoning field, taking token usage from `usage.prompt_tokens` and `usage.completion_tokens` when numeric; a reply with reasoning but no final text is empty (the caller returns AI_EMPTY_RESPONSE); `finish_reason === \"length\"` sets truncated true. Unknown model ids that are not in MODEL_PROFILES keep today's behavior (price lookup decides; unpriced is still a configuration error). (2) budget.js: add the two candidate prices to DEFAULT_MODEL_PRICES with a comment citing the documented rates. (3) index.js: use the profile for body, extraction, ceiling clamp (default clamp 64..2048 stays for every other model) and usage settlement; the success JSON keeps all current fields and adds `truncated: true` only when the profile reports truncation. If usage is missing, settle the reserved amount exactly as today. (4) Benchmark model selection, SERVER-CONTROLLED: new env `CF_BENCH_MODELS` (comma-separated ids, unset or empty means the feature is OFF, which is the production default). A request carrying header `X-Bench-Model` (after the normal token check) is honored only when that id is in CF_BENCH_MODELS AND in MODEL_PROFILES AND priced; then it is the model for that call. A header present but not allowed (feature off, unlisted, unpriced) is rejected with 400 and code `BENCH_MODEL_REJECTED` and NO Workers AI call and no budget reservation; never fall back silently to the default model. Without the header behavior is byte-for-byte today's. Do not expose the allowlist or any profile in responses beyond the existing `model` field. The /jev route is untouched.\n\nTESTS FIRST in worker/test/models.test.js (offline, mocked fetch): each profile's outgoing Workers AI body (llama profiles keep max_tokens; deepseek has max_completion_tokens and reasoning_effort low and no max_tokens); llama 3.3 success returns narration from `result.response`; deepseek success returns narration from the choices message and ignores a reasoning field even when it is longer; reasoning-only deepseek reply gives AI_EMPTY_RESPONSE; finish_reason length yields truncated true and the narration kept; malformed non-JSON upstream body gives the existing upstream error; upstream 429 with a quota message gives AI_QUOTA_EXCEEDED; a deepseek usage object settles to actual cost computed with its price while missing usage settles the reservation; clamp 4096 for deepseek and 2048 for others; X-Bench-Model allowed (makes the call with that model and reports it in `model`), rejected when CF_BENCH_MODELS is unset, rejected when the id is unlisted or unpriced, and rejection makes zero fetch calls and zero reservations; no header means the default model as before. Run them, see them fail, then build. FINISH: run `node --check src/index.js src/models.js src/budget.js` (one file per call is fine) and `node --test test/`; report counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge/worker && set -o pipefail && node --check src/index.js && node --check src/models.js && node --check src/budget.js && node --test test/ 2>&1 | tee /tmp/env-t4a.out | tail -12 && grep -Eq '\u2139 fail 0' /tmp/env-t4a.out && grep -Eq '\u2139 pass ([2-9][0-9]|[1-9][0-9][0-9])' /tmp/env-t4a.out && cd /home/bcorfman/dev/freytag-forge && git diff --quiet -- storygame docs data worker/test/worker.test.js worker/wrangler.jsonc && test -z \"$(git status --short -- worker/wrangler.jsonc worker/test/worker.test.js)\" && grep -q 'BENCH_MODEL_REJECTED' worker/src/index.js && grep -q 'deepseek-v4.1-flash-1017' worker/src/budget.js && grep -q 'llama-3.3-70b-instruct-fp8-fast' worker/src/budget.js && ! grep -iE 'kristin|laptop|truck|drawer|michelle' worker/src/models.js",
+   "verified": "two candidate model profiles with correct bodies, extraction, prices and settlement; gated server-side benchmark model header; existing worker tests unchanged and green"
+  }
+ ]
+}

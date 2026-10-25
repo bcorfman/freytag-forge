@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-smoke-70b-fix",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "smoke-direct-unusable-200-not-fatal",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/environment_narration/smoke_direct.py",
+    "tests/test_environment_smoke_direct.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/smoke_direct.py"
+   ],
+   "spec": "You are fixing a small billed-smoke tool (offline until a human confirms) in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/smoke_direct.py and tests/test_environment_smoke_direct.py (read both first). Never edit anything else. You never make a live call. NEVER print, log or write any credential value.\n\nPROBLEM: in a real run, Llama 3.3 70B answered HTTP 200 with a reply whose JSON was malformed (`{\"segments':[{\": \"narration\", \"text\": \"...\"}`), so the row was usable=False; `_is_variant_failure` treated that as a whole-variant failure and the other five calls were skipped. A single malformed reply must be one unusable row, not a dead variant.\n\nCHANGE, TESTS FIRST: (1) `_is_variant_failure` is true ONLY for a non-2xx HTTP status (as today for those). An HTTP 2xx whose body is unusable (malformed JSON reply, missing segments, empty text) is recorded as an unusable row (usable False, error_class unset or a new 'UNUSABLE' value, narration None, final_text kept) and the run CONTINUES with that variant's remaining calls. Transport failures, 401/403 stop, 429 stop, and the two-consecutive-transport-failure stop all stay exactly as they are. (2) The report's per-call section keeps `Narration: (unusable)` for unusable rows but ALSO prints the raw `final_text` for them on its own line, `- Raw reply text: <final_text>` (redacted like everything else; omit the line when final_text is None). (3) Update tests: any existing test that expects an HTTP-200-unusable reply to fail a variant must now expect the variant to continue (six rows, calls made for all six, the unusable one recorded); keep the non-2xx variant-failure tests (they must still skip the rest of that variant and continue other variants). Add a test for the malformed-JSON-with-200 case using the real shape above, and one for the report's Raw reply text line. Hermetic, no network. FINISH: ruff check and ruff format both files; report the pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && P=.venv/bin/python && S=scripts/ringer/environment_narration && $P -m pytest -q -p no:cacheprovider --no-cov tests/test_environment_smoke_direct.py tests/test_environment_screen.py tests/test_environment_baseline.py 2>&1 | tee /tmp/env-70b2.out | tail -5 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/env-70b2.out && $P $S/baseline.py --out /tmp/env-70b2-base.json >/dev/null && $P $S/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-70b2-base.json && $P $S/screen.py --dry --out /tmp/env-70b2-prompts.json >/dev/null && env CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz $P $S/smoke_direct.py --prompts /tmp/env-70b2-prompts.json --dry --variants llama-3.3-70b --out /tmp/env-70b2-plan.json | tail -2 && $P $S/smoke_direct.py --report --rows bench/results/environment-narration/smoke70-rows.json --out /tmp/env-70b2-report.md && grep -q 'Raw reply text' /tmp/env-70b2-report.md && $P -m ruff check $S/smoke_direct.py tests/test_environment_smoke_direct.py && $P -m ruff format --check $S/smoke_direct.py tests/test_environment_smoke_direct.py",
+   "verified": "a 200 with a malformed reply is one unusable row and the variant continues; report shows the raw reply text"
+  }
+ ]
+}

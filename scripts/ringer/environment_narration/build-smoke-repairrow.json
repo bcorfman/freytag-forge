@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-smoke-repairrow",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "smoke-direct-repair-columns",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/environment_narration/smoke_direct.py",
+    "tests/test_environment_smoke_direct.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/smoke_direct.py"
+   ],
+   "spec": "You are extending a small billed-smoke tool (offline until a human confirms) in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/smoke_direct.py and tests/test_environment_smoke_direct.py (read both first). Never edit anything else. You never make a live call. NEVER print, log or write any credential value.\n\nCONTEXT: the product now repairs unescaped inner quotes in a narrator reply with `storygame.runtime.narration_json.escape_stray_quotes(text) -> str` (a pure character scanner). The smoke should report how many replies are valid strictly and how many are valid after that same repair, because the repaired count is what the product would actually accept without a second model call.\n\nCHANGE, TESTS FIRST: (1) Each row built from a response (including skipped/transport rows, where the fields are absent/false) gains `repair_usable` (bool) and `narration_repaired` (str or None). A row that is already `usable` has repair_usable True and narration_repaired equal to its narration. A row that is not usable but has a non-empty final_text is retried once through escape_stray_quotes followed by the same JSON parse and the same segment extraction (`_narration_from_reply`) used for strict rows; if that yields narration, repair_usable is True and narration_repaired holds it. `usable` itself and every other existing field keep their exact meaning and values. (2) The report's per-variant summary prints `- Valid JSON: strict A / N; after the product's quote repair B / N` (N = rows with a status, i.e. calls actually sent), and each call section prints `- Repaired reply text: <narration_repaired>` only for rows where usable is False and repair_usable is True (redacted like all text). Existing report lines unchanged. (3) Tests, hermetic: the three real failing replies (use these as literals) become repair_usable with segment text containing the quoted speech:\nFIXTURE 1 (Python repr): '{\"segments\":[{\"kind\":\"narration\",\"text\":\"Kristin looks around the truck, her eyes falling on her laptop on the passenger seat.\"},{\"kind\":\"narration\",\"text\":\"She says to herself, \"I need to find some clues about Shelly\\'s disappearance.\"\"},{\"kind\":\"narration\",\"text\":\"She reaches for her laptop, saying, \"Maybe I can find something on here.\"\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"Kristin\":{\"place\":\"driver\\'s seat\"},\"Kristin\\'s laptop\":{\"place\":\"passenger seat\"}}}'\nFIXTURE 2 (Python repr): '{\"segments\":[{\"kind\":\"narration\",\"text\":\"Kristin looks around the truck, taking in her surroundings.\"},{\"kind\":\"narration\",\"text\":\"Her eyes land on her laptop, which is sitting on the passenger seat.\"},{\"kind\":\"narration\",\"text\":\"She says to herself, \"I should check if I have any messages from Shelly,\" and reaches for the laptop.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"Kristin\":{\"place\":\"driver\\'s seat\"},\"Kristin\\'s laptop\":{\"place\":\"passenger seat\"}}}'\nFIXTURE 3 (Python repr): '{\"segments\":[{\"kind\":\"narration\",\"text\":\"Kristin looks around the truck, taking in her surroundings.\"},{\"kind\":\"narration\",\"text\":\"Her eyes land on her laptop, which is sitting on the passenger seat.\"},{\"kind\":\"narration\",\"text\":\"She says to herself, \"I should check if I have any messages from Shelly.\"\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"Kristin\":{\"place\":\"driver\\'s seat\"},\"Kristin\\'s laptop\":{\"place\":\"passenger seat\"}}}'\na reply that is strictly valid has repair_usable True and no 'Repaired reply text' line; a reply of unrecoverable garbage has repair_usable False; `usable` is unchanged for all of them; the existing tests stay green. FINISH: ruff check and ruff format both files; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && P=.venv/bin/python && S=scripts/ringer/environment_narration && $P -m pytest -q -p no:cacheprovider --no-cov tests/test_environment_smoke_direct.py tests/test_environment_screen.py tests/test_environment_baseline.py tests/test_narration_json.py 2>&1 | tee /tmp/env-rr.out | tail -5 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/env-rr.out && $P $S/baseline.py --out /tmp/env-rr-base.json >/dev/null && $P $S/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-rr-base.json && $P $S/smoke_direct.py --report --rows bench/results/environment-narration/smoke-nj-rows.json --out /tmp/env-rr-report.md && grep -E 'Valid JSON: strict' /tmp/env-rr-report.md && grep -q 'Repaired reply text' /tmp/env-rr-report.md && $P - <<'PY'\nimport re\nt=open('/tmp/env-rr-report.md').read()\nm=re.search(r'llama-3.3-70b-nojson.*?Valid JSON: strict (\\d+) / (\\d+); after the product.s quote repair (\\d+) / (\\d+)',t,re.S)\nassert m and (m.group(1),m.group(2),m.group(3),m.group(4))==('3','6','6','6'), m and m.groups()\nprint('70b-nojson: strict 3/6, repaired 6/6 confirmed on recorded rows')\nPY\n$P -m ruff check $S/smoke_direct.py tests/test_environment_smoke_direct.py && $P -m ruff format --check $S/smoke_direct.py tests/test_environment_smoke_direct.py",
+   "verified": "rows and report carry strict vs product-repaired validity; recorded nojson rows give 3/6 strict and 6/6 repaired"
+  }
+ ]
+}

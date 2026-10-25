@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t1-fix",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t1-fix-model-parse",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 1800,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/environment_narration/baseline.py",
+    "tests/test_environment_baseline.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/baseline.py"
+   ],
+   "spec": "You are fixing one regression in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY scripts/ringer/environment_narration/baseline.py and tests/test_environment_baseline.py. Never edit worker/ or anything else.\n\nBUG: baseline.py parse_worker_default_model matches only `const model = asString(env.CF_AI_MODEL).trim() || \"<id>\"`. worker/src/index.js now reads `const configuredModel = asString(env.CF_AI_MODEL).trim() || \"@cf/meta/llama-3.1-8b-instruct-fast\";` so the baseline CLI and 5 tests fail with 'worker source does not contain the default model'.\n\nFIX: make the pattern accept any single JavaScript identifier as the const name (`const\\s+[A-Za-z_$][\\w$]*\\s*=\\s*asString\\(env\\.CF_AI_MODEL\\)...`), still requiring the CF_AI_MODEL fallback form and a quoted default, and still failing loudly on a source without it. TEST FIRST: add to tests/test_environment_baseline.py two cases for parse_worker_default_model: the new `configuredModel` form returns '@cf/meta/llama-3.1-8b-instruct-fast', and the old `model` form still works; keep the existing fails-loudly test unchanged. Run, see the new case fail, fix. FINISH: ruff check and ruff format both files; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_environment_baseline.py 2>&1 | tail -4 && .venv/bin/python scripts/ringer/environment_narration/baseline.py --out /tmp/env-fix-base.json && .venv/bin/python scripts/ringer/environment_narration/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-fix-base.json && .venv/bin/python -c \"import json;d=json.load(open('/tmp/env-fix-base.json'));assert d['source']['worker_default_model']=='@cf/meta/llama-3.1-8b-instruct-fast',d['source']\" && .venv/bin/python -m ruff check scripts/ringer/environment_narration/baseline.py tests/test_environment_baseline.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration/baseline.py tests/test_environment_baseline.py",
+   "verified": "baseline parses the renamed default-model constant and still matches frozen T1 evidence"
+  }
+ ]
+}

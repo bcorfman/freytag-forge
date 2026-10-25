@@ -8,6 +8,13 @@ the Completion record shows live evidence. Planning baseline:
 
 ## Resume here
 
+**Direction update (2026-10-25):** use the
+[LLM environment narration plan](grounded-llm-environment-narration.md) for
+boarding/item presentation and searched-empty behavior. The user now requires
+LLM-written environmental descriptions; do not add the proposed engine-written
+empty-search sentence below. Keep existing fixes while measuring the replacement.
+This does not mark the remaining live or staging verification complete.
+
 Branch `fix-1a-transcript-continuity` (never merged; commit log has every step).
 State as of 2026-10-25. The Completion record at the bottom has each step; this section says only what to do next.
 

@@ -1,0 +1,36 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t3a",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t3a-observation-projection",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 6000,
+   "check_timeout_s": 1500,
+   "ownership": [
+    "storygame/runtime/observation.py",
+    "packages/worldkeeper/src/worldkeeper/model.py",
+    "packages/worldkeeper/tests/test_view_and_scope.py",
+    "tests/test_observation_context.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/observation.py",
+    "/home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_view_and_scope.py"
+   ],
+   "spec": "You are implementing a pure, story-agnostic projection in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no model call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: storygame/runtime/observation.py (new), packages/worldkeeper/src/worldkeeper/model.py (additive), packages/worldkeeper/tests/test_view_and_scope.py (new), and tests/test_observation_context.py (ONLY to delete the two xfail marks `needs_projection`/`needs_schema` and their decorator uses; never change an assertion or fixture). Never edit data/, docs/, worker/, storygame/story_package/, other storygame modules, or other tests. Do NOT wire this into the prompt path (a later task does).\n\nREAD FIRST: tests/test_observation_context.py (THE CONTRACT: 16 strictly-xfailed tests that already specify the exact API, field names and behaviors; read all of it), .plans/grounded-llm-environment-narration.md sections 'Required architecture' 1-3, .plans/grounded-llm-environment-narration/t2-visibility-audit.md (what exists and the minimum schema), packages/worldkeeper/src/worldkeeper/model.py (World, WorldSchema.from_data, _Entity, is_visible, is_shut_away, given_with, contents, is_enterable, place_label), packages/worldkeeper/tests/test_world.py (test style).\n\nSTEP 1, TESTS FIRST, packages/worldkeeper/tests/test_view_and_scope.py: worldkeeper gains two optional, additive entity declarations, defaults unchanged. (a) `view`: a list of {from: <area-or-entity id>, blocked_by: {axis: <axis name on some entity>, pole: <pole>} | omitted}. (b) `contents_complete`: bool. Add World queries `sees(observer_id, entity_id) -> bool` and `contents_complete(entity_id) -> bool` (False when undeclared, open world). `sees` rule, generic: the entity must be is_visible; and for every ancestor in its chain that is enterable (World.is_enterable; areas never count) and does not contain the observer in the observer's own chain, the ancestor must declare a `view` entry whose `from` is the observer's area or one of the observer's ancestors, and whose blocked_by (if any) does not currently hold. No enterable boundary between them means visible exactly as today. Validate `view` and `contents_complete` shapes and referenced ids/axes at schema load with SchemaError and a clear message; keep tolerating other unknown keys exactly as today. Prove: default behavior of every existing query is unchanged; a vehicle without `view` hides its interior from outside and shows it from inside; a declared view shows it from the named place; a blocked_by pole hides it again; malformed declarations raise SchemaError; contents_complete defaults False. Then implement.\n\nSTEP 2, storygame/runtime/observation.py: implement `ObservationRequest`, `ObservationContext` (frozen dataclass), `ObservedThing` (frozen), `ObservationScopeTooLarge`, `build_observation_context` and `ObservationContext.prompt_fields()` EXACTLY as the T2 tests use them. Rules: pure and deterministic (sorted, stable ordering, no clock, no randomness); built only on a worldkeeper World and public queries (no private attributes); never mentions any story vocabulary (the check greps for kristin|laptop|truck|notice|drawer|michelle case-insensitively and fails the task if present); entity ids stay internal and never appear in prompt_fields(); hidden and shut-away things never appear anywhere except `contingent_things` for an `open` request whose focus is the container, and then only non-hidden ones; carried items of the observer are visible with holder set; `required` = the focus thing itself when it is a thing, plus the visible contents of a small focus scope, plus contingent things for `open`; optional visible things beyond max_optional are dropped (deterministically) and named in omitted_optional; more required than max_required raises ObservationScopeTooLarge; scope_complete mirrors World.contents_complete(focus) and an empty complete scope reports no known contents. Public names come from World.name and public place text from the thing's immediate supporter/container name (the test expects 'passenger seat', 'telescope tray'), never a generated English sentence. Do not add any notice or description text.\n\nSTEP 3: delete the xfail marks in tests/test_observation_context.py so all 20 tests pass, and keep every assertion as written. If a T2 assertion seems wrong or contradictory, do NOT change it: implement the closest reasonable behavior, leave that one test marked xfail(strict=True) with its reason updated, and say which and why in your final message.\n\nFINISH: ruff check and ruff format on every file you touched. Report the final pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_observation_context.py packages/worldkeeper/tests tests/test_seating.py tests/test_boarding.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_referred_reach.py tests/test_environment_baseline.py -rx 2>&1 | tee /tmp/env-t3a.out | tail -25 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/env-t3a.out && ! grep -Eq '[0-9]+ xfailed' /tmp/env-t3a.out && test -e storygame/runtime/observation.py && ! grep -iE 'kristin|laptop|truck|notice|drawer|michelle' storygame/runtime/observation.py && git diff --quiet -- data docs worker storygame/story_package && .venv/bin/python -m ruff check storygame/runtime/observation.py packages/worldkeeper/src/worldkeeper/model.py packages/worldkeeper/tests/test_view_and_scope.py tests/test_observation_context.py && .venv/bin/python -m ruff format --check storygame/runtime/observation.py packages/worldkeeper/src/worldkeeper/model.py packages/worldkeeper/tests/test_view_and_scope.py tests/test_observation_context.py",
+   "verified": "all 20 observation tests and the worldkeeper view/scope tests pass, no story vocabulary in the module, existing boarding/seating/reach suites still green"
+  }
+ ]
+}

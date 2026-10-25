@@ -1,0 +1,34 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t3d",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t3d-package-view-and-scope",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 4800,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "storygame/story_package/models.py",
+    "storygame/story_package/world_schema.py",
+    "tests/test_package_view_scope.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/tests/test_package_view_scope.py"
+   ],
+   "spec": "You are adding two optional package fields in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no model call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: storygame/story_package/models.py, storygame/story_package/world_schema.py, tests/test_package_view_scope.py (new). Never edit data/, docs/, worker/, packages/, storygame/runtime/, other tests.\n\nCONTEXT: worldkeeper (packages/worldkeeper/src/worldkeeper/model.py, finished, do not edit) now accepts two optional entity declarations in WorldSchema.from_data: `view` (a list of {from: <entity id>, blocked_by: {axis, pole} optional}) and `contents_complete` (bool); see its SchemaError checks and packages/worldkeeper/tests/test_view_and_scope.py. Story packages cannot declare them yet: the Item model in storygame/story_package/models.py has no such fields and storygame/story_package/world_schema.py (see how seat_for is passed through at about line 62) builds the schema dict from Item. Package authors need them so a story can say a vehicle can be seen into from an area, and that a searched place holds nothing else.\n\nCHANGE: (1) Add to Item: `view: list[ItemView] = []` where ItemView is a small _Model with `from_` aliased to `from` (pattern _ID) and optional `blocked_by` model {axis: _ID str, pole: _ID str} (match how neighbouring models handle reserved names and extra='forbid'), and `contents_complete: bool = False`. (2) In world_schema.py pass them through to the worldkeeper item dict ONLY when set (omit `view` when empty and `contents_complete` when False) so existing packages produce byte-identical schema data. (3) Loader errors: an unknown `from` entity or unknown blocked_by axis/pole must surface as the package loader's normal StoryPackageError, not a raw worldkeeper SchemaError or a traceback; find how seat_for or other worldkeeper SchemaErrors are surfaced and mirror it. No story vocabulary in code.\n\nTESTS FIRST in tests/test_package_view_scope.py (hermetic): copy data/stories/continuity-initiative to tmp_path and edit its world yaml in the test the way tests/test_seating.py does for its loader-rejection tests: (a) the unmodified package's world_source_schema_data output is identical before/after (assert against a captured literal hash computed in the test by calling the pre-existing helper on the real package and comparing it with the same call after loading from the copy, i.e. unmodified copy == real package); (b) a copy with `view` on the vehicle item (from: the outside area id, with a blocked_by naming an existing axis/pole) loads and the resulting World.sees(observer outside, laptop) is True while the shipped package gives False; (c) `contents_complete: true` on the drawer loads and World.contents_complete(drawer) is True, the shipped package False; (d) unknown `from`, unknown axis and a non-bool contents_complete each raise StoryPackageError. Discover the real entity ids from the package. Run them, see them fail, then build. FINISH: ruff check and ruff format every touched file; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_package_view_scope.py tests/test_observation_prompt.py tests/test_observation_context.py packages/worldkeeper/tests tests/test_seating.py tests/test_boarding.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_referred_reach.py tests/test_environment_baseline.py tests/test_markdown_story_package.py tests/test_incident_loader.py tests/test_loader_pacing_producers.py 2>&1 | tee /tmp/env-t3d.out | tail -8 && ! grep -Eq '[0-9]+ (failed|error|xfailed)' /tmp/env-t3d.out && .venv/bin/python scripts/ringer/environment_narration/baseline.py --out /tmp/env-t3d-base.json && .venv/bin/python scripts/ringer/environment_narration/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-t3d-base.json && test \"$(md5sum storygame/runtime/observation.py | cut -d' ' -f1)\" = 4c5c7b8e1349fe0a2f74e284d0da06ce && test \"$(md5sum packages/worldkeeper/src/worldkeeper/model.py | cut -d' ' -f1)\" = 7c4746e69cf129b7458f7dd09267c1df && git diff --quiet -- data docs worker && test -z \"$(git status --short data)\" && ! git diff -U0 -- storygame/story_package | grep -iE '^\\+.*(kristin|laptop|truck|drawer|michelle)' && .venv/bin/python -m ruff check storygame/story_package/models.py storygame/story_package/world_schema.py tests/test_package_view_scope.py && .venv/bin/python -m ruff format --check storygame/story_package/models.py storygame/story_package/world_schema.py tests/test_package_view_scope.py",
+   "verified": "story packages can declare view and contents_complete; shipped packages unchanged"
+  }
+ ]
+}

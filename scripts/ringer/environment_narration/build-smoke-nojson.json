@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-smoke-nojson",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "smoke-direct-nojson-thinkoff-variants",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/environment_narration/smoke_direct.py",
+    "tests/test_environment_smoke_direct.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/smoke_direct.py"
+   ],
+   "spec": "You are extending a small billed-smoke tool (offline until a human confirms) in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/smoke_direct.py and tests/test_environment_smoke_direct.py (read both first). Never edit anything else. You never make a live call. NEVER print, log or write any credential value.\n\nCONTEXT: VARIANTS has five profiles; the default plan uses the first four and `--variants a,b` selects labels. A real run showed Llama 3.3 70B corrupts its JSON when `response_format` json_object is forced, and Qwen3 30B spends ~970 hidden reasoning tokens per call. Cloudflare documents no switch for Qwen3 thinking, so two undocumented ways are tested as separate variants.\n\nCHANGE, TESTS FIRST: (1) Give each profile two optional keys read with defaults so existing profiles are unchanged: `json_mode` (bool, default True: the request body includes `response_format` json_object exactly as today; False: the key is omitted) and `user_suffix` (str, default '': appended to the user message content, separated by a blank line, only when non-empty). (2) Append three profiles AFTER the existing five, none of them in the default plan: (a) label `llama-3.3-70b-nojson`, model_id `@cf/meta/llama-3.3-70b-instruct-fp8-fast`, token_parameter max_tokens, max_tokens 1024, input_price 0.293, output_price 2.253, json_mode False; (b) label `qwen3-think-off-kwargs`, model_id `@cf/qwen/qwen3-30b-a3b-fp8`, max_tokens, 1024, extra_body {\"chat_template_kwargs\": {\"enable_thinking\": false}}, input_price 0.0509, output_price 0.335, json_mode True; (c) label `qwen3-think-off-soft`, same model and prices, max_tokens 1024, extra_body {}, user_suffix '/no_think', json_mode True. Each has a one-line `note` stating what it changes. (3) `_request_body` honours json_mode, user_suffix and extra_body (deep-copy extra_body so the module constant is never mutated); `_build_plan` carries the suffix into the call's user text so request_bytes and the ceiling include it. (4) The report's per-variant section also prints the profile `note` when non-empty. (5) Tests: default plan still 4 variants x 6 = 24 calls with identical bodies as before (response_format present); each new label selectable via --variants, 6 calls each, three together 18 calls with ceiling = sum of per-call ceilings; the nojson body has no response_format key; the kwargs body contains chat_template_kwargs.enable_thinking == False and the module constant is not mutated across calls; the soft body's user message ends with '\\n\\n/no_think' and the other variants' user text is unchanged; unknown label still rejected. Hermetic, no network. FINISH: ruff check and ruff format both files; run screen.py --dry then smoke_direct.py --dry --variants llama-3.3-70b-nojson,qwen3-think-off-kwargs,qwen3-think-off-soft with dummy env values and report calls and ceiling USD.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && P=.venv/bin/python && S=scripts/ringer/environment_narration && $P -m pytest -q -p no:cacheprovider --no-cov tests/test_environment_smoke_direct.py tests/test_environment_screen.py tests/test_environment_baseline.py 2>&1 | tee /tmp/env-nj.out | tail -5 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/env-nj.out && $P $S/baseline.py --out /tmp/env-nj-base.json >/dev/null && $P $S/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-nj-base.json && $P $S/screen.py --dry --out /tmp/env-nj-prompts.json >/dev/null && env CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz $P $S/smoke_direct.py --prompts /tmp/env-nj-prompts.json --dry --variants llama-3.3-70b-nojson,qwen3-think-off-kwargs,qwen3-think-off-soft --out /tmp/env-nj-plan.json | tail -2 && env CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz $P $S/smoke_direct.py --prompts /tmp/env-nj-prompts.json --dry --out /tmp/env-nj-plan24.json | tail -1 && $P -c \"\nimport json\na=json.load(open('/tmp/env-nj-plan.json'));b=json.load(open('/tmp/env-nj-plan24.json'))\nassert len(a['calls'])==18 and len(b['calls'])==24\nassert {c['variant'] for c in a['calls']}=={'llama-3.3-70b-nojson','qwen3-think-off-kwargs','qwen3-think-off-soft'}\nsoft=[c for c in a['calls'] if c['variant']=='qwen3-think-off-soft']\nassert all(c['user'].endswith('/no_think') for c in soft)\nassert not any(c['user'].endswith('/no_think') for c in a['calls'] if c['variant']!='qwen3-think-off-soft')\nprint('plans ok', a['ceiling_usd'], b['ceiling_usd'])\" && ! grep -rF 'dummy-token-xyz' /tmp/env-nj-plan.json && $P -m ruff check $S/smoke_direct.py tests/test_environment_smoke_direct.py && $P -m ruff format --check $S/smoke_direct.py tests/test_environment_smoke_direct.py",
+   "verified": "three new variants selectable; default plan unchanged"
+  }
+ ]
+}

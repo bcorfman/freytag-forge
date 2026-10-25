@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-smoke-70b",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "smoke-direct-add-llama-70b",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/environment_narration/smoke_direct.py",
+    "tests/test_environment_smoke_direct.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/smoke_direct.py"
+   ],
+   "spec": "You are extending a small billed-smoke tool (offline until a human confirms) in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/smoke_direct.py and tests/test_environment_smoke_direct.py (both exist; read them first). Never edit anything else. You never make a live call. NEVER print, log or write any credential value.\n\nCHANGE, TESTS FIRST: (1) Add a fifth profile to VARIANTS, appended after the existing four: label `llama-3.3-70b`, model_id `@cf/meta/llama-3.3-70b-instruct-fp8-fast`, token_parameter `max_tokens`, max_tokens 1024, extra_body {}, input_price 0.293, output_price 2.253, note empty. (2) Add a CLI option `--variants` (comma-separated labels, order preserved, duplicates and unknown labels are an error reported through the existing _error path with the unknown label named; default = the original four labels in their original order, so `--dry/--run` without the option behaves EXACTLY as today: 24 calls, 6 per variant, round robin, same ceilings). `_build_plan` takes the label list and keeps the same six slots per variant round-robin; selecting only `llama-3.3-70b` gives 6 calls. The run-time guard stays: --max-calls must cover the plan, ceiling must not exceed --max-usd. `_run` and `_request_body` must work for the new profile (response text for this model arrives at result.response, which _extract_text already handles; response_format json_object and temperature 0 stay). (3) The report's per-variant summary lists only variants that have at least one row in the rows file (so a 6-row run does not print four empty sections), and the 'Failed variants' loop uses the same set. Existing 24-row reports must come out unchanged. Tests to add/keep: default plan is still the four, 24 calls; `--variants llama-3.3-70b` yields 6 calls with the right model id, `max_tokens` key (not max_completion_tokens) and ceiling = sum of per-call ceilings; unknown and duplicate labels are rejected without any network call; the request body for the new profile; the report for a 6-row llama-3.3-70b-only rows file omits the other four; all existing tests still pass unchanged except where they enumerate VARIANTS (update only those to the default four labels). Hermetic: tests never touch the network. FINISH: ruff check and ruff format both files; run `screen.py --dry` then `smoke_direct.py --dry --variants llama-3.3-70b` against it with dummy env values and report the call count and ceiling USD.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_environment_smoke_direct.py tests/test_environment_screen.py tests/test_environment_baseline.py 2>&1 | tee /tmp/env-70b.out | tail -5 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/env-70b.out && .venv/bin/python scripts/ringer/environment_narration/compare_baseline.py >/dev/null && .venv/bin/python scripts/ringer/environment_narration/screen.py --dry --out /tmp/env-smoke-prompts4.json && env CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --prompts /tmp/env-smoke-prompts4.json --dry --variants llama-3.3-70b --out /tmp/env-smoke-plan4.json | tail -4 && env CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --prompts /tmp/env-smoke-prompts4.json --dry --out /tmp/env-smoke-plan5.json | tail -2 && .venv/bin/python -c \"import json;a=json.load(open('/tmp/env-smoke-plan4.json'));b=json.load(open('/tmp/env-smoke-plan5.json'));assert len(a['calls'])==6 and {c['variant'] for c in a['calls']}=={'llama-3.3-70b'};assert len(b['calls'])==24 and 'llama-3.3-70b' not in {c['variant'] for c in b['calls']};print('plans ok', a['ceiling_usd'], b['ceiling_usd'])\" && (env CLOUDFLARE_ACCOUNT_ID=dummy CLOUDFLARE_AI_TOKEN=dummy .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --prompts /tmp/env-smoke-prompts4.json --dry --variants nope --out /tmp/env-smoke-bad.json; test $? -ne 0) && ! grep -rF 'dummy-token-xyz' /tmp/env-smoke-plan4.json /tmp/env-smoke-plan5.json && .venv/bin/python -m ruff check scripts/ringer/environment_narration/smoke_direct.py tests/test_environment_smoke_direct.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration/smoke_direct.py tests/test_environment_smoke_direct.py",
+   "verified": "llama-3.3-70b variant selectable via --variants; default plan unchanged at 24 calls; 6-call plan for the 70B alone"
+  }
+ ]
+}

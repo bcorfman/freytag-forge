@@ -1,0 +1,35 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-smoke-nojsonwide-live",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "billed-smoke-llama-70b-nojson-wide",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 900,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/environment-narration/smoke-nojsonwide-rows.json",
+    "bench/results/environment-narration/smoke-nojsonwide-report.md",
+    "bench/results/environment-narration/smoke-nojsonwide-prompts.json"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/smoke-nojsonwide-rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/smoke-nojsonwide-report.md"
+   ],
+   "spec": "You are a RUNNER for one billed smoke run in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. This spends under two cents on the project's Cloudflare Workers AI account and the human has approved it (20 calls to Llama 3.3 70B fp8-fast with JSON mode off (reply format requested in the prompt only), ceiling $0.06, expected about $0.012). HARD RULES: run the two commands below EXACTLY ONCE, in order. NEVER run the first command a second time for any reason (not after an error, not after a partial result: a rerun would spend money again). Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit.\n\nCOMMAND 1 (the billed run; non-zero exit with partial rows is a valid outcome, do not retry):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && (set -a; . ./.env; set +a; unset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN; .venv/bin/python scripts/ringer/environment_narration/screen.py --dry --out bench/results/environment-narration/smoke-nojsonwide-prompts.json >/dev/null && .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --prompts bench/results/environment-narration/smoke-nojsonwide-prompts.json --variants llama-3.3-70b-nojson --slots wide --run --confirm --max-calls 20 --max-usd 0.06 --out bench/results/environment-narration/smoke-nojsonwide-rows.json)\n\nCOMMAND 2 (renders the report; safe to rerun if it fails):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --report --rows bench/results/environment-narration/smoke-nojsonwide-rows.json --out bench/results/environment-narration/smoke-nojsonwide-report.md\n\nThen print the per-variant summary section of bench/results/environment-narration/smoke-nojsonwide-report.md (usable count, latency min/median/max, tokens, cost, any error text) and say in one or two sentences what happened, including any stop reason. Do not interpret quality; just report.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge && set -o pipefail && test -s bench/results/environment-narration/smoke-nojsonwide-rows.json && test -s bench/results/environment-narration/smoke-nojsonwide-report.md && env PYTHONPATH=. .venv/bin/python -c \"import json;a=json.load(open('bench/results/environment-narration/smoke-prompts.json'));b=json.load(open('bench/results/environment-narration/smoke-nojsonwide-prompts.json'));assert a==b,'prompts differ from the first smoke';print('prompts identical')\" && (set -a; . ./.env; set +a; .venv/bin/python - <<'PY'\nimport json,os\ndoc=json.load(open('bench/results/environment-narration/smoke-nojsonwide-rows.json'))\nrows=doc['rows'] if isinstance(doc,dict) and 'rows' in doc else doc\ntext=open('bench/results/environment-narration/smoke-nojsonwide-rows.json').read()+open('bench/results/environment-narration/smoke-nojsonwide-report.md').read()\nfor name in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CF_API_TOKEN','OPENAI_API_KEY','RAILWAY_TOKEN'):\n    v=os.environ.get(name,'').strip()\n    assert not v or v not in text, name+' value leaked into outputs'\nassert len(rows)==20 and {r['variant'] for r in rows}=={'llama-3.3-70b-nojson'}, 'expected 20 llama-3.3-70b-nojson rows, got %d' % len(rows)\nprint('integrity ok: 20 rows, same prompts as the first smoke, no credential in outputs')\nPY\n)",
+   "verified": "20 rows recorded, prompts identical to the first smoke, no credential in outputs"
+  }
+ ]
+}

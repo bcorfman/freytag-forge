@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-smoke-trim",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "smoke-direct-trim-to-four",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 1200,
+   "ownership": [
+    "scripts/ringer/environment_narration/smoke_direct.py",
+    "tests/test_environment_smoke_direct.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/smoke_direct.py"
+   ],
+   "spec": "You are trimming a small billed-smoke tool (still offline until a human confirms) in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/smoke_direct.py and tests/test_environment_smoke_direct.py (both exist; read them first). Never edit anything else. You never make a live call. NEVER print, log or write any credential value.\n\nCHANGE: the VARIANTS table currently holds seven variants. Remove `gemma-3-12b`, `glm-4.7-flash` and `deepseek-none` entirely (table rows, notes, tests, docs strings), keeping exactly these four in this order: `llama-3.1-8b`, `gemma-4-26b-a4b`, `qwen3-30b-a3b`, `gpt-oss-20b`, with their existing model ids, token-limit parameter names, max tokens and prices unchanged. The plan stays 6 calls per variant (S1 proposed x3, S1 existing x1, S2 proposed x1, S5 proposed x1) = 24 calls, round-robin interleaved, deterministic; default --max-calls 24; the ceiling USD stays the sum of per-call ceilings. Keep every other behavior exactly (per-variant failure skipping, 401/403/429 stop, no retries, secret safety). Update the tests: 4 variants x 6 = 24 calls, no mention of the removed three, the per-variant-failure tests now use one of the four remaining variants as the failing one. Run them, then ruff check and ruff format both files; run `--dry` against a fresh `screen.py --dry` document and report calls and the ceiling USD.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_environment_smoke_direct.py tests/test_environment_screen.py 2>&1 | tail -5 && .venv/bin/python scripts/ringer/environment_narration/screen.py --dry --out /tmp/env-smoke-prompts3.json && env CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --prompts /tmp/env-smoke-prompts3.json --dry --out /tmp/env-smoke-plan3.json | tail -8 && .venv/bin/python -c \"import json;t=open('/tmp/env-smoke-plan3.json').read();assert all(x not in t for x in ('gemma-3-12b','glm-4.7-flash','deepseek','llama-3.3-70b'));assert all(x in t for x in ('llama-3.1-8b','gemma-4-26b-a4b','qwen3-30b-a3b','gpt-oss-20b'));print('four variants ok')\" && ! grep -iE 'gemma-3|glm|deepseek' scripts/ringer/environment_narration/smoke_direct.py && (env CLOUDFLARE_ACCOUNT_ID= CLOUDFLARE_AI_TOKEN= .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --prompts /tmp/env-smoke-prompts3.json --run --confirm --max-usd 1 --out /tmp/env-smoke-refuse3.json; test $? -ne 0) && ! grep -rF 'dummy-token-xyz' /tmp/env-smoke-plan3.json && .venv/bin/python -m ruff check scripts/ringer/environment_narration/smoke_direct.py tests/test_environment_smoke_direct.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration/smoke_direct.py tests/test_environment_smoke_direct.py",
+   "verified": "four variants, 24-call interleaved plan, nothing of the removed models remains"
+  }
+ ]
+}
