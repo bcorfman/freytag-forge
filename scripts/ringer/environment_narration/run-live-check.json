@@ -1,0 +1,29 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-live-check",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "billed-live-check-local-worker",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": ["-c", "model_reasoning_effort=low"],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 1800,
+   "check_timeout_s": 300,
+   "ownership": ["bench/results/environment-narration/live-check"],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/live-check/reported/rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/live-check/corrected/rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/live-check/spent.json"
+   ],
+   "spec": "You are a RUNNER for one billed live check in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. It plays the 1A scenario through the real product path against a LOCAL Worker on 127.0.0.1 (a cap-enforcing copy of worker/src/index.js) which calls Llama 3.3 70B fp8-fast and the Jev model on the project's Cloudflare Workers AI account. The human has approved it: about 130 calls, expected cost about ten cents, hard ceiling $0.25 enforced by the local Worker's ledger. HARD RULES: run COMMAND 1 EXACTLY ONCE. NEVER run it a second time for any reason (not after an error, not after a partial result: a rerun spends money again). Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit. The script itself refuses to run if its port is busy (exit 4); do not do your own port checks, just run COMMAND 1 once.\n\nCOMMAND 1 (the billed run; a non-zero exit with partial rows is a valid outcome, do not retry):\ncd /home/bcorfman/dev/freytag-forge && bash scripts/ringer/environment_narration/live_check.sh\n\nThe script starts the local Worker, runs two routes twice each, writes rows.json and summary.json under bench/results/environment-narration/live-check/{reported,corrected}, writes spent.json, and stops the Worker. Report the exit code, the lines the script printed (they contain no secrets), and the contents of spent.json. Do not interpret the results beyond that.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && .venv/bin/python - <<'PY'\nimport json,os\nbase='bench/results/environment-narration/live-check'\nfor route in ('reported','corrected'):\n    rows=json.load(open(f'{base}/{route}/rows.json'))\n    summary=json.load(open(f'{base}/{route}/summary.json'))\n    assert rows, route+': no rows'\n    print(route,'replicates',len(rows),'calls',summary['calls_made'],'stopped',summary['stopped_reason'],'errors',len(summary['errors']))\nspent=json.load(open(f'{base}/spent.json'))\nprint('spent',spent)\nassert spent['spent_micro_usd']<=250000, 'cap exceeded'\ntext=''.join(open(os.path.join(d,f)).read() for d,_,fs in os.walk(base) for f in fs)\nfor name in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_WORKER_TOKEN'):\n    pass\nPY\n(set -a; . ./.env; set +a; .venv/bin/python - <<'PY'\nimport os\nbase='bench/results/environment-narration/live-check'\ntext=''.join(open(os.path.join(d,f)).read() for d,_,fs in os.walk(base) for f in fs)\nfor name in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_WORKER_TOKEN'):\n    v=os.environ.get(name,'').strip()\n    assert not v or v not in text, name+' value leaked into outputs'\nprint('no credential in outputs')\nPY\n)",
+   "verified": "rows recorded for both routes, spend within the $0.25 cap, and no credential in outputs"
+  }
+ ]
+}
