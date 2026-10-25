@@ -1032,6 +1032,18 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if place_parent is None or not isinstance(value.get("place"), str):
             return
         place = value["place"].strip()
+        if entity_id == self.state.package.world.protagonist_id and world.is_a(place_parent, "vehicle"):
+            visible_seats = sorted(
+                candidate_id
+                for candidate_id in world.entity_ids()
+                if (
+                    world.schema.entities.get(candidate_id)
+                    and world.schema.entities[candidate_id].seat_for == place_parent
+                    and world.is_visible(candidate_id)
+                )
+            )
+            if visible_seats:
+                place_parent = visible_seats[0]
         under = value.get("under") is True
         dropped_under = under and (world.is_a(place_parent, "area") or world.is_a(place_parent, "character"))
         if dropped_under:

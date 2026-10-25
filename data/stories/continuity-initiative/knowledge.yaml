@@ -295,6 +295,7 @@ scene_frames:
 knowledge:
 - id: k_sl_1a_a_r1
   statement: 'Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle’s undamaged phone to a removal too deliberate to be looting.'
+  reach_entity_ids: [back_door]
   earn_when: searches the kitchen or back door for signs of what happened
   action_evidence:
   - [search, examine, inspect, check]

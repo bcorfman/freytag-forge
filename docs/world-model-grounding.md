@@ -93,9 +93,10 @@ issue.
 - **Seats.** A seat with `seat_for` needs `enter_text` and `leave_text`. A
   seat without `seat_for` (a park bench) must have neither. A vehicle's visible
   seat with `seat_for` makes the engine seat the character when a command
-  boards the vehicle, or when exactly one such vehicle is in the protagonist's
-  area; an item's `notice_text` is added as a step only for each visible item
-  in the vehicle that the protagonist does not hold.
+  boards the vehicle, when exactly one such vehicle is in the protagonist's
+  area, or when item facts place the protagonist at that vehicle; an item's
+  `notice_text` is added as a step only for each visible item in the vehicle
+  that the protagonist does not hold.
 - **Contents.** A container's contents are declared on it with `contents:`,
   never as a setting-fact sentence. The sentence goes stale the moment a thing
   leaves.

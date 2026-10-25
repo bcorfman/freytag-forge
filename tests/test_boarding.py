@@ -7,7 +7,7 @@ from worldkeeper import MemoryBackend, World, WorldSchema
 
 from storygame.runtime.capture import WorldCapture
 from storygame.runtime.item_facts import ItemFactsProvider
-from storygame.runtime.seating import board_vehicle
+from storygame.runtime.seating import board_vehicle, stand_before_leave
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
@@ -27,21 +27,57 @@ def _at_truck():
     return state, world
 
 
-def test_approaching_vehicle_does_not_board():
+def test_going_to_vehicle_boards():
     _, world = _at_truck()
 
     asked = []
 
     def answer(command, vehicle):
         asked.append((command, vehicle))
-        return False
+        return True
 
     result = board_vehicle(world, PACKAGE, "Go out to Kristin's truck.", answer)
 
-    assert result.steps == ()
+    assert result.steps == (
+        "Kristin sat down in the driver's seat.",
+        "Kristin's laptop sat on the passenger seat.",
+    )
     assert result.asked is True
     assert asked == [("Go out to Kristin's truck.", "Kristin's truck")]
-    assert world.parent("kristin") == "outside_house"
+    assert world.parent("kristin") == "truck_driver_seat"
+
+
+def test_only_boarding_command_is_consumed_after_seating():
+    _, world = _at_truck()
+
+    result = board_vehicle(
+        world,
+        PACKAGE,
+        "Go out to Kristin's truck.",
+        lambda *_: True,
+        lambda *_: True,
+    )
+
+    assert result.command == "Kristin sat down in the driver's seat. Kristin's laptop sat on the passenger seat."
+    assert result.command_consumed is True
+    assert world.parent("kristin") == "truck_driver_seat"
+
+
+def test_boarding_command_with_another_action_is_not_consumed():
+    _, world = _at_truck()
+
+    result = board_vehicle(
+        world,
+        PACKAGE,
+        "Drive Kristin's truck.",
+        lambda *_: True,
+        lambda *_: False,
+    )
+
+    assert result.command == (
+        "Kristin sat down in the driver's seat. Kristin's laptop sat on the passenger seat. Drive Kristin's truck."
+    )
+    assert result.command_consumed is False
 
 
 def test_boards_vehicle_and_notices_visible_laptop():
@@ -268,6 +304,44 @@ def test_capture_records_boarding_steps_and_prefix():
         "Kristin's laptop sat on the passenger seat.",
     ]
     assert record["boarding_asked"] is True
+    assert record["boarding_command_consumed"] is False
     assert record["command"].startswith("Kristin sat down in the driver's seat.")
     assert "boards_vehicle" in seen_questions
+    assert "only_boards_vehicle" in seen_questions
     assert world.parent("kristin") == "truck_driver_seat"
+
+
+def test_capture_consumes_a_command_that_only_boards():
+    state, world = _at_truck()
+    provider = ItemFactsProvider(
+        worker_url="",
+        token="",
+        state=state,
+        item_facts={},
+        mode="off",
+        seed_from_package=True,
+        held_by=True,
+    )
+
+    def ask(_state, questions):
+        key = next(iter(questions))
+        return {key: {"noul": 1.0}}
+
+    record = WorldCapture(provider, ask).before_turn("Go out to Kristin's truck.")
+
+    expected_steps = "Kristin sat down in the driver's seat. Kristin's laptop sat on the passenger seat."
+    assert record["command"] == expected_steps
+    assert record["boarding_command_consumed"] is True
+    assert provider.prior_steps == tuple(record["boarding_steps"])
+    assert world.parent("kristin") == "truck_driver_seat"
+
+
+def test_getting_out_of_a_vehicle_moves_to_the_seat_area():
+    _, world = _at_truck()
+    assert world.move("kristin", "truck_driver_seat").ok
+
+    result = stand_before_leave(world, PACKAGE, "Get out of the truck.", lambda *_: True)
+
+    assert result.command == "Kristin got out of the truck. Get out of the truck."
+    assert result.steps == ("Kristin got out of the truck.",)
+    assert world.parent("kristin") == "outside_house"

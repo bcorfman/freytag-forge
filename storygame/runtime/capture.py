@@ -13,6 +13,7 @@ from storygame.runtime.jev_questions import (
     moves_thing,
     names_other_action,
     needs_to_stand,
+    only_boards_vehicle,
     relocates_thing,
     same_or_part,
     uses_thing,
@@ -91,7 +92,13 @@ class WorldCapture:
         else:
             standing = stand_before_leave(world, package, command, lambda c, s, r: needs_to_stand(adapter, c, s, r))
             taking = take_before_put(world, package, command, lambda c, t: moves_thing(adapter, c, t))
-            boarding = board_vehicle(world, package, command, lambda c, v: boards_vehicle(adapter, c, v))
+            boarding = board_vehicle(
+                world,
+                package,
+                command,
+                lambda c, v: boards_vehicle(adapter, c, v),
+                lambda c, v: only_boards_vehicle(adapter, c, v),
+            )
             seating = (
                 seat_before_use(world, package, command, lambda c, t: uses_thing(adapter, c, t))
                 if not standing.steps and not boarding.steps
@@ -102,11 +109,16 @@ class WorldCapture:
         seating_steps = seating.steps if seating else ()
         provider_steps = (*fixed_steps, *standing.steps, *boarding_steps, *taking.steps, *seating_steps)
         self.provider.prior_steps = provider_steps
+        command_record = (
+            " ".join((*fixed_steps, *standing.steps, boarding.command, *taking.steps, *seating_steps))
+            if boarding.command_consumed
+            else " ".join((*provider_steps, command))
+        )
         match_info = {}
         if self.provider.item_facts_mode == "single_call" and not engine_refusal:
             match_info = self.provider.prepare_turn(command)
         record = {
-            "command": " ".join((*provider_steps, command)),
+            "command": command_record,
             "steps": list(provider_steps),
             "fixed_refusal_steps": list(fixed_steps),
             "fixed_refusal_asked": fixed.asked if fixed else False,
@@ -114,6 +126,7 @@ class WorldCapture:
             "engine_refusal": engine_refusal,
             "standing_steps": list(standing.steps),
             "boarding_steps": list(boarding_steps),
+            "boarding_command_consumed": boarding.command_consumed,
             "taking_steps": list(taking.steps),
             "seating_steps": list(seating_steps),
             "standing_asked": standing.asked,

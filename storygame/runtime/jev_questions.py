@@ -41,17 +41,30 @@ def boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
     questions = {
         "boards_vehicle": {
             "type": "noul",
-            "instructions": "Decide whether the command has the player get into the vehicle, sit in it, or drive it.",
+            "instructions": (
+                "Decide whether the command has the player go to the vehicle, get into it, sit in it, or drive it."
+            ),
             "criteria": {
-                "true": "The command means getting into the vehicle, sitting in it, or driving it.",
-                "false": (
-                    "The command only walks or goes to the vehicle, approaches it, looks at it, touches it, "
-                    "talks about it, or leaves it."
-                ),
+                "true": "The command means going to the vehicle, getting into it, sitting in it, or driving it.",
+                "false": "The command only looks at, touches, or talks about the vehicle, or leaves it.",
             },
         }
     }
     return _answer(ask, {"command": command, "vehicle": vehicle_name}, questions, "boards_vehicle")
+
+
+def only_boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
+    questions = {
+        "only_boards_vehicle": {
+            "type": "noul",
+            "instructions": "Decide whether the command asks for nothing more than getting to or into the vehicle.",
+            "criteria": {
+                "true": "The command only goes to, gets into, or sits in the vehicle.",
+                "false": "The command also asks for another action, such as driving, searching, looking, or talking.",
+            },
+        }
+    }
+    return _answer(ask, {"command": command, "vehicle": vehicle_name}, questions, "only_boards_vehicle")
 
 
 def moves_thing(ask, command: str, thing_name: str) -> bool | None:

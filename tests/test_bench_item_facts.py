@@ -577,8 +577,8 @@ def test_reply_moving_a_seated_kristin_is_kept():
     )
 
     assert issues == []
-    assert facts["Kristin"]["place"] == "Kristin's truck"
-    assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "kristin_truck"
+    assert facts["Kristin"]["place"] == "driver's seat"
+    assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "truck_driver_seat"
 
 
 def test_self_named_place_is_a_no_op():

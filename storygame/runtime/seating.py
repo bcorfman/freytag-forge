@@ -13,6 +13,7 @@ class SeatingResult:
     steps: tuple[str, ...]
     asked: bool
     issues: tuple[str, ...]
+    command_consumed: bool = False
 
 
 def _command_names_thing(command: str, names: tuple[str, ...]) -> bool:
@@ -106,7 +107,11 @@ def seat_before_use(world, package, player_input: str, uses_thing: Callable[[str
 
 
 def board_vehicle(
-    world, package, player_input: str, boards_vehicle: Callable[[str, str], bool | None]
+    world,
+    package,
+    player_input: str,
+    boards_vehicle: Callable[[str, str], bool | None],
+    only_boards_vehicle: Callable[[str, str], bool | None] | None = None,
 ) -> SeatingResult:
     protagonist = package.protagonist_id
     items = {item.id: item for item in package.world.items}
@@ -153,6 +158,11 @@ def board_vehicle(
             continue
         if answer is False:
             continue
+        command_consumed = (
+            only_boards_vehicle(player_input, world.name(vehicle_id)) is True
+            if only_boards_vehicle is not None
+            else False
+        )
         seat = seats[0]
         result = world.move(protagonist, seat)
         if not result.ok:
@@ -169,7 +179,8 @@ def board_vehicle(
                 and vehicle_id in world.chain(item_id)
             ):
                 steps.append(item.notice_text)
-        return SeatingResult(" ".join((*steps, player_input)), tuple(steps), asked, tuple(issues))
+        command = " ".join(steps) if command_consumed else " ".join((*steps, player_input))
+        return SeatingResult(command, tuple(steps), asked, tuple(issues), command_consumed)
     return SeatingResult(player_input, (), asked, tuple(issues))
 
 
