@@ -1,0 +1,33 @@
+{
+ "run_name": "1a-continuity-step5",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-step5",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "step5c-seed-report-state",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 2400,
+   "ownership": [
+    "scripts/ringer/affordance/sibling_reachability.py",
+    "tests/test_sibling_reachability.py",
+    "tests/test_cue_eligibility_compare.py",
+    "tests/test_cue_spent_reveal.py",
+    "tests/test_invitation_report.py"
+   ],
+   "spec": "You are fixing a test-support helper in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: scripts/ringer/affordance/sibling_reachability.py and, only where a pinned expectation genuinely changes because of the fix below, tests/test_sibling_reachability.py, tests/test_cue_eligibility_compare.py, tests/test_cue_spent_reveal.py, tests/test_invitation_report.py. NEVER edit storygame/, data/, bench/frozen/, docs/testing-runbook.md; do not reformat unrelated text.\n\nPROBLEM. `_state(package, scene_id, active_event_ids)` in scripts/ringer/affordance/sibling_reachability.py builds a RuntimeState with RuntimeState.model_construct and an EMPTY FactStore. No world is seeded and no scene placements are applied, so the protagonist has no location. A reveal can now declare `reach_entity_ids` (storygame/runtime/reveal_eligibility.py explain_reveal returns reason 'not_reachable' unless the protagonist is `together` with each listed entity), so in every state the invitation report builds, Scene 1A's drawer reveals read 'not_reachable' and tests/test_invitation_report.py::test_1a_drawer_cue_has_an_eligible_response fails. In the real game the protagonist starts in the house and the drawer is in the kitchen inside it, so the reveal IS reachable; the helper, not the game, is wrong.\n\nFIX. Make `_state` seed the world the way the real game and the bench do. Read RuntimeState.bootstrap in storygame/runtime/state.py (world_for(package, facts).seed(); apply_scene_placements(package, facts, scene_id); apply_world_effects(package, facts)) and bench/core.py `package_and_state` (it does the same for a chosen scene). Add exactly that seeding to `_state` for the requested scene_id after _assert_scene_entry_fact, reusing the same imported helpers (import them from where those functions live; do not copy their code). Keep `_state`'s signature and every other behavior. Do not change the report/comparison logic.\n\nTESTS. The restored original tests/test_invitation_report.py::test_1a_drawer_cue_has_an_eligible_response must pass UNCHANGED (it asserts some 1A drawer-cue row ends with ' | eligible response'). Then run the other users of `_state` (tests/test_sibling_reachability.py, tests/test_cue_eligibility_compare.py, tests/test_cue_spent_reveal.py, tests/test_invitation_report.py, tests/test_drawer_avoidance_repro.py). If seeding changes a pinned row set, update the pin ONLY if you can show the change is caused by seeding and is correct (for example a reveal that was falsely 'not_reachable' is now eligible); otherwise STOP and report. Report every pin you changed with the evidence. Write one new small test in tests/test_sibling_reachability.py proving `_state(package, '1A')` places the protagonist with the drawer (world_for(...).together(protagonist, 'michelle_drawer') is true) for the shipped package.\n\nFINISH: ruff format and ruff check the files you touched; run the check.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_sibling_reachability.py tests/test_cue_eligibility_compare.py tests/test_cue_spent_reveal.py tests/test_invitation_report.py tests/test_drawer_avoidance_repro.py tests/test_reveal_reach.py tests/test_1a_patrol.py tests/test_1a_witnessed_recovery.py 2>&1 | tail -12 && git diff --quiet -- storygame data bench/frozen docs && grep -q 'any(row.endswith(\" | eligible response\")' tests/test_invitation_report.py && .venv/bin/python -m ruff check . && .venv/bin/python -m ruff format --check .",
+   "verified": "report states are seeded like the real game; the original invitation test passes unchanged; no runtime or data change"
+  }
+ ]
+}

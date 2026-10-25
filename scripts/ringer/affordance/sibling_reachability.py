@@ -11,6 +11,7 @@ from storygame.runtime.facts import Fact, FactStore
 from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import predicate_matches
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 
 
@@ -41,6 +42,10 @@ def _state(package: Any, scene_id: str, active_event_ids: set[str] = ()) -> Runt
         staged_handoff_fact_ids=(),
     )
     state._assert_scene_entry_fact(scene_id)
+    if getattr(package, "world", None) is not None:
+        world_for(package, state.facts).seed()
+        apply_scene_placements(package, state.facts, scene_id)
+        apply_world_effects(package, state.facts)
     return state
 
 

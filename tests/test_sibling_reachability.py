@@ -3,7 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from scripts.ringer.affordance.sibling_reachability import report
+from scripts.ringer.affordance.sibling_reachability import _state, report
+from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import (
     Audience,
@@ -112,3 +113,10 @@ def test_real_package_reports_medical_entry_sibling_fact_as_obtainable() -> None
     output = report(package)
 
     assert "SL-3A-B | k_sl_3a_b_r2 | k_sl_3a_b_r1 | storylet_spent | yes | -" in output
+
+
+def test_real_package_1a_state_places_protagonist_with_drawer() -> None:
+    package = load_story_package(Path(__file__).parents[1] / "data/stories/continuity-initiative")
+    state = _state(package, "1A")
+
+    assert world_for(package, state.facts).together(package.world.protagonist_id, "michelle_drawer")
