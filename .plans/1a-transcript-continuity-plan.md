@@ -9,61 +9,26 @@ the Completion record shows live evidence. Planning baseline:
 ## Resume here
 
 Branch `fix-1a-transcript-continuity` (never merged; commit log has every step).
-State as of 2026-10-24 late evening. Read the Completion record at the bottom
-for what each step did; this section says only what to do next.
+State as of 2026-10-25. The Completion record at the bottom has each step; this section says only what to do next.
 
 **Standing instructions from Brandon (follow them):**
-- Every code change goes through a Ringer task (Luna, `gpt-5.6-luna`, **high
-  effort**), tests first, manifests in `scripts/ringer/transcript_1a/`. Review each
-  diff; reject worker overreach (a past worker bloated `docs/testing-runbook.md`
-  and rewrote a test to hide a bug; both were reverted).
+- Every code change goes through a Ringer task (Luna, `gpt-5.6-luna`, **high effort**), tests first, manifests in `scripts/ringer/transcript_1a/`. Review each diff; reject worker overreach. Check globs must name files that exist (a bad glob made two Ringer tasks report FAIL in step 10).
+- Authored story text: Brandon wants Claude to write it as an interactive-fiction writer (step 11), then apply it through Ringer.
 - No billed run without a preregistration he has approved.
-- Run the full suite (`TMPDIR=/tmp uv run pytest -q --cov`, plus ruff) **once, at
-  the very end**; use focused suites in between. The last full run passed except
-  2 failures that were then fixed (stale alias pin and the fail-open bug).
+- Run the full suite (`TMPDIR=/tmp uv run pytest -q --cov`, plus ruff) **once, at the very end**; use focused suites in between.
 - Read every live narration by hand; report per requirement, not pooled.
 
-**Running when this was written:** Ringer task `step7b-literal-scope-and-referent`
-(manifest `scripts/ringer/transcript_1a/step7b-literal-scope-and-referent.json`,
-run `1a-continuity-step7`). It edits `storygame/runtime/item_facts.py`,
-`cloudflare.py`, `tests/test_place_scoped_feed.py`, `tests/test_recent_cue_reference.py`
-(uncommitted until reviewed). To resume: `git status`; if those files are modified
-and the Ringer run (`~/.ringer/runs/1a-continuity-step7-*.json`) says PASS, review
-`git diff storygame tests`, run the focused suites, and commit; if it failed or was
-interrupted, rerun the manifest. It fixes (1) distant objects still listed in the
-narrator prompt because the name-matcher's `refers` list kept them (now only things
-the command literally names), and (2) passing the engine's resolved “the gap means
-the drawer” to the narrator (“feel in the gap (meaning the drawer)”).
+**Done since postfix2 (not yet seen live):** stale cue withheld out of reach and laptop `held_by` echo (step 10); the officer demands the card after a witnessed recovery and the departure acknowledges it (step 11); open-defect probe run (step 12, no arm won).
 
-**Approved, not yet run (both preregistered and approved by Brandon):**
-1. [boarding probe](1a-transcript-continuity/boarding-probe-prereg.md): 3 arms x 3
-   prompts x 10 samples (cap 100 narrator calls). Question: can the narrator be made
-   to narrate the laptop on the passenger seat after boarding, or must boarding be
-   engine-only text? First build `scripts/ringer/transcript_1a/boarding_probe.py`
-   (a Ringer task) with `--dry`, build the prompts from the head AFTER 7b is
-   committed, 2-sample smoke, then the run. If neither arm wins, the fallback
-   (engine-authored text, no narrator call) needs Brandon's separate approval.
-2. [postfix2 verification](1a-transcript-continuity/postfix2-live-prereg.md): routes
-   A reported n=5, B corrected n=3, C witnessed n=3, D movement n=3, about 530 calls,
-   cap 700. Manifests exist (`postfix2-smoke.json`, `postfix2-smoke-b.json`,
-   `postfix2-live.json`); the harness already supports `--route movement`. Smokes
-   were run twice; run the full `postfix2-live.json` only after 7b is committed and
-   the boarding probe has settled boarding behavior.
+**Open, in order:**
+1. **Outside things in a house prompt (free, deterministic).** In postfix2 witnessed replicates 1 and 2 the "wait" prompt (committed place `mcgehee_home`) listed the gate, truck, seats and laptop; replicate 0 did not. The narrator then moved Kristin to "house gate". Find why (read-only scout over `bench/results/transcript-1a-postfix2-witnessed/rows.json` turns 1 and 2, and the place-scoped feed in `item_facts.py`), then fix through Ringer.
+2. **Searched-and-empty place (needs Brandon's decision).** "Feel under the drawer" after the card is taken: the narrator invents a notebook, USB drive or note in 16 of 20 replies whether or not the card statement is present. Option: an engine-authored "nothing else is there" line. Not chosen.
+3. **Invented object outside (P3):** not reproduced (control 6/10; rule arm 9/10, view arm 8/10; bar not met). Revisit only if it shows again in the rerun.
+4. **Rerun postfix2 live** (A n=5, B n=3, C n=3, D n=3, about 530 calls) in a new preregistration for Brandon's approval, to see the step 10 and 11 fixes and the officer follow-up live. It also covers: the laptop notice on boarding, the stale cue in the truck, and the narrator's reply to the officer's demand.
+5. Not built: hosted staging verification after merge; the three-way response to the demand is free text only; one malformed model reply (502 `INVALID_PROPOSAL`, 1 in 145 turns) is left alone.
 
-**Open defects (from the smokes and the postfix run):**
-- The laptop notice never reaches the player's text (0 of 10 boarding turns):
-  only the boarding probe above can settle this.
-- Reported route lead-up invents a door gap for “feel in the gap” (5 of 5 in the
-  first post-fix run); 7b passes the referent to the narrator, to be measured live.
-- Seated or outside “look around” still described the house (0 of 11 correct in
-  the first post-fix run); the place-scoped feed (6b, 7b) is the fix, to be measured.
-- Narrator-invented rooms (`n_living_room_1`) and `None` places: fixed by aliases,
-  same-root reach and fail-open; to be counted in the verification run.
-- Not built: 1B marked-pursuit line verified live; the three-way response to the
-  officer's challenge is free text only; hosted staging verification after merge.
+**After all of that:** full suite once, update the Completion record, then merge through CI and the staging gate per the testing runbook (Brandon merges per PR).
 
-**After all of that:** full suite once, update the Completion record, then merge
-through CI and the staging gate per the testing runbook (Brandon merges per PR).
 Original step-1 note kept below for history. This is a focused correction plan alongside
 [the active redesign](game-reimagination-plan.md). Reuse its implemented
 incident and traversal contracts where applicable; do not restart historical
