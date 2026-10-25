@@ -341,3 +341,39 @@ fact-driven npc moves, pacing events).
 - Not done: the three-way response (deflect, hand over, walk out) is free text
   with no engine-resolved outcome; hand-over is the player's own act.
   Not verified live: narrator behavior after the challenge.
+
+### Steps 4 and 5 (partial) — truck, laptop, cue referent (2026-10-24)
+
+- 4a (generic, Ringer, high effort): the Jev question `goes_to_vehicle` became
+  `boards_vehicle` (“get into, sit in, or drive”; approaching, looking, touching
+  are false), so “Go out to the truck” no longer seats the player. `board_vehicle`
+  also acts with no vehicle named when exactly one boardable vehicle is in the
+  protagonist's own area, so a bare “Get in” seats her and emits the enter text
+  plus the existing laptop notice (only for items she does not hold). Tests
+  include a second, differently named vehicle. This is a generic behavior
+  change for every vehicle (plan step 4 required recording it).
+- 4b: instead of moving Kristin's committed start outside (which would stall the
+  persona and journey tests, because reach now blocks the drawer reveals until
+  she is in the house), the 1A entry text ends “She found the back door forced
+  and let herself in.” so prose and committed place agree. Deviation from the
+  story-material proposal, which suggested starting outside.
+- 5a (Ringer, high): reverted the `the gap`/`that gap` evidence phrases I added
+  in step 2 (they broke the pinned rule that a bare “Search the gap.” with no
+  prior cue earns nothing). `recent_cue_referent_text` now also treats a cue
+  delivered on the previous turn as a one-turn referent, so the staged drawer
+  cue makes “Feel in the gap.” refer to the drawer. It uses a reveal's
+  `reach_entity_ids` as the owner when present.
+- Pin repairs: nine tests that pinned the old 1A pacing, reveal rows or turn
+  counts were updated to the new intended behavior. One worker edit was
+  rejected: it rewrote `test_invitation_report` to assert the drawer cue has no
+  response; the cause was a report helper that never placed the protagonist, so
+  `sibling_reachability._state` now seeds the world and the original assertion
+  passes unchanged.
+- Step 5 observation scoping (stale interior description while outside or
+  seated) is NOT done. Product wiring already puts Kristin's place in THINGS and
+  PLAYER; what remains is whether the narrator honors it, which needs the live
+  routes. If they show the cab or exterior still described from the house, a
+  probe (one arm per cause, 10 to 15 samples) is next, per the scene-fixing
+  guide.
+- Next: [post-fix live prereg](1a-transcript-continuity/postfix-live-prereg.md),
+  awaiting Brandon's approval.

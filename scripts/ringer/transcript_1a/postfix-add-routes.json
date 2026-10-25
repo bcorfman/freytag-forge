@@ -1,0 +1,31 @@
+{
+ "run_name": "transcript-1a-postfix",
+ "workdir": "/home/bcorfman/dev/ringer-work/transcript-1a-postfix",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "add-routes",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/transcript_1a/live_baseline.py",
+    "scripts/ringer/transcript_1a/check_live_baseline.py",
+    "scripts/ringer/transcript_1a/test_live_baseline.py"
+   ],
+   "spec": "You are extending a billed-probe harness in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY scripts/ringer/transcript_1a/live_baseline.py, scripts/ringer/transcript_1a/check_live_baseline.py, scripts/ringer/transcript_1a/test_live_baseline.py and write under bench/results/transcript-1a-dry/. Never edit storygame/, data/, tests/, docs/, .plans/. Read all three files first and match their style.\n\nCHANGE. Add an option `--route {reported,corrected,witnessed}` (default `reported`) to live_baseline.py. `reported` is today's eight inputs, unchanged byte for byte (the existing behavior and default output must not change). The other two routes select these input scripts, in order:\n corrected (12 inputs): go in the house / pull out the drawer / feel in the gap / look around / wait / wait / go out to the truck / get in / look around / get out of the truck / look around / wait\n witnessed (10 inputs): go in the house / examine the carved initials / wait / wait / feel in the gap / say what the card is to the officer / wait / go out to the truck / get in / look around\n`--turns K` keeps meaning 'use the first K inputs of the chosen route', and its upper bound becomes the chosen route's length. Replace the module-level INPUTS use with a ROUTES mapping plus a helper; summary.json gains `route` and `inputs` for the chosen route; rows record the route. check_live_baseline.py must accept the route from summary.json when validating (turn counts per replicate = the route's length unless --turns is given), and keep rejecting a mismatch between summary route and rows.\n\nTESTS (hermetic, in test_live_baseline.py; keep the file small; add at most two tests): (1) a dry run for each of the three routes with --replicates 1 --turns 3 writes rows and a summary that the checker accepts, with summary route and inputs matching the route; (2) the default route's dry run produces exactly the same inputs list as before (the eight reported inputs). Existing tests must keep passing.\n\nFINISH: ruff format and ruff check the three files; run the tests; run `.venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --dry-run --route corrected --replicates 1 --out bench/results/transcript-1a-dry` and `... --route witnessed ...` into separate subfolders of bench/results/transcript-1a-dry, then the checker on each with --mode dry.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider scripts/ringer/transcript_1a/test_live_baseline.py 2>&1 | tail -6 && rm -rf bench/results/transcript-1a-dry && for r in reported corrected witnessed; do .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --dry-run --route $r --replicates 2 --out bench/results/transcript-1a-dry/$r && .venv/bin/python scripts/ringer/transcript_1a/check_live_baseline.py bench/results/transcript-1a-dry/$r 2 --mode dry || exit 1; done && python3 -c \"import json;s=json.load(open('bench/results/transcript-1a-dry/reported/summary.json'));assert len(s['inputs'])==8 and s['inputs'][0]=='go in the house' and s['route']=='reported',s\" && python3 -c \"import json;s=json.load(open('bench/results/transcript-1a-dry/corrected/summary.json'));assert len(s['inputs'])==12,s\" && python3 -c \"import json;s=json.load(open('bench/results/transcript-1a-dry/witnessed/summary.json'));assert len(s['inputs'])==10,s\" && git diff --quiet -- storygame data tests docs && .venv/bin/python -m ruff check scripts/ringer/transcript_1a && .venv/bin/python -m ruff format --check scripts/ringer/transcript_1a",
+   "verified": "three input routes selectable, default unchanged, dry runs pass; zero network calls"
+  }
+ ]
+}
