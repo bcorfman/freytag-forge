@@ -18,6 +18,8 @@ the old `{placement: ...}` form still load. The new form also changes the world:
 `{parent: item_or_location_id, text: ..., under: true, part_of: true}`. `under`
 and `part_of` are mutually exclusive; use `part_of` when an item is a component
 of its parent. `text` is optional; without it, the bench uses the parent's name.
+When an item authored under a place is no longer there, the engine tells the
+narrator nothing more is under it. No extra declaration is needed.
 A hidden item may have a declared place because it never
 reaches the narrator, but it must not carry `text`.
 
@@ -171,6 +173,9 @@ the knowledge is earned. Every multi-word phrase in the list is blocked;
 single-word entries are not enforced. If the field is absent, the old behavior
 remains: aliases and multi-word `must_convey` phrases are guarded. An empty list
 means the item has no guarded vocabulary.
+
+A knowledge statement may set `voiceable: false` when it records what the player character did, so a present non-player character does not repeat it as speech.
+The default is true.
 
 Each `FactDelivery` may also have an optional `cue_text`. A cue is one or two
 short sentences about a concrete thing the player can already see or has

@@ -324,6 +324,7 @@ class KnowledgeProjector:
             if state.current_scene_id in item.available_in_scenes
             and self._established(item, state)
             and self._visible_to(item, audience_id)
+            and item.voiceable
             # Scene framing belongs in context, not in a character's dialogue.
             and not (item.source.kind == "scene_entry" and item.audience.kind == "public")
         ]

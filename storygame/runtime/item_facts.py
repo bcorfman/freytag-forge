@@ -24,7 +24,7 @@ from storygame.runtime.world_model import (
     apply_scene_placements,
     apply_world_effects,
 )
-from storygame.story_package.models import item_placement_is_visible, placement_text
+from storygame.story_package.models import ItemPlacement, item_placement_is_visible, placement_text
 from storygame.story_package.world_schema import world_source_schema_data
 
 _FIXED_MARKERS = {
@@ -679,6 +679,31 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 entity_id = world.parent(entity_id)
         return True
 
+    def _observation_underside_is_exhausted(self, world, context: ObservationContext) -> bool:
+        if context is None:
+            return False
+        request = self.observation_request
+        focus_id = request.focus if request is not None else None
+        if not focus_id:
+            return False
+        scene = next(
+            scene for scene in self.state.package.scenes if scene.metadata.scene_id == self.state.current_scene_id
+        )
+        authored_items = tuple(
+            item_id
+            for item_id, placement in scene.metadata.item_placements.items()
+            if isinstance(placement, ItemPlacement) and placement.parent == focus_id and placement.under
+        )
+        if not authored_items:
+            return False
+        for item_id in authored_items:
+            if world.parent(item_id) == focus_id and world.relation(item_id) == "under":
+                return False
+        return not any(
+            world.parent(entity_id) == focus_id and world.relation(entity_id) == "under"
+            for entity_id in world.contents(focus_id)
+        )
+
     def _section_user_prompt(self, user):
         rendered = super()._section_user_prompt(user)
         world = self._world()
@@ -690,6 +715,10 @@ class ItemFactsProvider(CloudflareTurnProvider):
             focus_id = self.observation_request.focus
             name = world.name(focus_id)
             constraints.append(f"- Nothing is left in or under the {name}. Searching the {name} finds nothing.")
+        if context is not None and self._observation_underside_is_exhausted(world, context):
+            focus_id = self.observation_request.focus
+            name = world.name(focus_id)
+            constraints.append(f"- Nothing else is under the {name}. Searching under the {name} finds nothing more.")
         if constraints:
             constraint_text = "\n".join(constraints)
             marker = "\n\nCONSTRAINTS:"
