@@ -294,6 +294,22 @@ def _observation_request(capture: Any, state: Any) -> dict[str, str | None] | No
     return {"kind": request.kind, "focus": focus}
 
 
+def _shadow_observation_values(
+    capture: Any,
+    state: Any,
+    previous_after: object,
+    previous_request: object,
+) -> tuple[Any, dict[str, str | None] | None]:
+    after = getattr(capture, "last_after", None)
+    observation_shadow = after.get("observation_shadow") if isinstance(after, dict) else None
+    if after is previous_after:
+        observation_shadow = None
+    observation_request = _observation_request(capture, state)
+    if previous_request is not None and capture.provider.observation_request is previous_request:
+        observation_request = None
+    return observation_shadow, observation_request
+
+
 def _stop_exception(counter: CallCounter) -> CallCapExceeded | QuotaExceeded | None:
     if counter.stop_reason == "MAX_CALLS_EXCEEDED":
         return CallCapExceeded(f"max-calls exceeded ({counter.max_calls})")
@@ -346,6 +362,9 @@ def _replicate(
         counter.responses.clear()
         before = _places(state)
         fired_before = set(state.fired_event_ids)
+        if shadow:
+            previous_after = getattr(capture, "last_after", None)
+            previous_request = capture.provider.observation_request
         error = None
         try:
             result = engine.turn(command)
@@ -383,12 +402,14 @@ def _replicate(
             "notes": [] if getattr(capture, "last_before", None) is not None else ["capture step field unavailable"],
         }
         if shadow:
-            after = getattr(capture, "last_after", None)
-            row["observation_shadow"] = after.get("observation_shadow") if isinstance(after, dict) else None
+            observation_shadow, observation_request = _shadow_observation_values(
+                capture, state, previous_after, previous_request
+            )
+            row["observation_shadow"] = observation_shadow
             row["observation_relations"] = (
                 _observation_relations(relation_calls) if relation_calls is not None else None
             )
-            row["observation_request"] = _observation_request(capture, state)
+            row["observation_request"] = observation_request
         record.setdefault("turns", []).append(row)
         if on_turn is not None:
             on_turn()
