@@ -15,7 +15,7 @@ LLM-written environmental descriptions; do not add the proposed engine-written
 empty-search sentence below. Keep existing fixes while measuring the replacement.
 This does not mark the remaining live or staging verification complete.
 
-Branch `fix-1a-transcript-continuity` (never merged; commit log has every step).
+Branch `fix-1a-transcript-continuity` was merged to main as PR #700 (merge commit `b52c8cd0`, 2026-10-25); the commit log has every step. The observation work that replaces the boarding workaround continued in PRs #701 (merged) and #702 (open); current status is in the [LLM environment narration plan](grounded-llm-environment-narration.md). The live verification of the four requirements on the final code, the hosted staging check and the final full-suite gate below are still not done.
 State as of 2026-10-25. The Completion record at the bottom has each step; this section says only what to do next.
 
 **Standing instructions from Brandon (follow them):**
