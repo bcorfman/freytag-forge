@@ -6,6 +6,8 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from storygame.runtime.character_names import short_name
+
 
 @dataclass(frozen=True)
 class SeatingResult:
@@ -23,7 +25,7 @@ def _protagonist_name(package) -> str:
     protagonist = next((npc for npc in package.world.npcs if npc.id == package.protagonist_id), None)
     if protagonist is None:
         return package.protagonist_id
-    return min((*protagonist.aliases, protagonist.name), key=len)
+    return short_name(protagonist)
 
 
 def _command_names_thing(command: str, names: tuple[str, ...]) -> bool:

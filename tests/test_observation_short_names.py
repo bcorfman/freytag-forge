@@ -56,8 +56,10 @@ def _assert_holder_projection(state: RuntimeState, item_id: str, full_name: str,
     assert item.holder == short_name
     assert f"Held by: {short_name}." in prompt
     assert f"Held by: {full_name}." not in prompt
-    assert relation.holder == short_name
-    assert short_name in question
+    assert relation.place is None
+    assert relation.holder is None
+    assert "held by " + short_name not in question
+    assert "held by " + full_name not in question
     assert full_name not in question
 
 
@@ -65,7 +67,7 @@ def test_shipped_story_uses_short_protagonist_name_in_observation_path() -> None
     state = _state_at("outside_house", already_aboard=True)
     world = world_for(PACKAGE, state.facts)
     protagonist = next(npc for npc in PACKAGE.world.npcs if npc.id == PACKAGE.world.protagonist_id)
-    short_name = min((*protagonist.aliases, protagonist.name), key=len)
+    short_name = protagonist.aliases[0] if protagonist.aliases else protagonist.name
     full_name = world.name(PACKAGE.world.protagonist_id)
     assert world.move("kristin_laptop", PACKAGE.world.protagonist_id).ok
 
@@ -82,9 +84,10 @@ def test_shipped_story_uses_short_protagonist_name_in_observation_path() -> None
     assert laptop.holder == short_name
     assert "Held by: " + short_name + "." in prompt
     assert "Held by: " + full_name + "." not in prompt
-    assert relation.holder == short_name
-    assert short_name in question
-    assert full_name not in question
+    assert relation.place is None
+    assert relation.holder is None
+    assert "held by " + short_name not in question
+    assert "held by " + full_name not in question
 
 
 def test_synthetic_story_uses_alias_for_holder_and_keeps_supporter_name() -> None:

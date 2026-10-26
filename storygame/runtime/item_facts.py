@@ -9,6 +9,7 @@ from urllib.error import HTTPError, URLError
 
 from worldkeeper import MemoryBackend, World, WorldSchema
 
+from storygame.runtime.character_names import short_name
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import scoped_alias_entity_ids
@@ -67,14 +68,15 @@ def _normalize_refer(value: str) -> str:
 
 def _protagonist_name(package) -> str | None:
     npc = next((entity for entity in package.world.npcs if entity.id == package.protagonist_id), None)
-    return min((*npc.aliases, npc.name), key=len) if npc else None
+    return short_name(npc) if npc else None
 
 
 def _character_label(facts, npc, name, *, shortest=False):
     if npc and npc.unnamed_label and npc.named_by and not _true(facts, npc.named_by):
         return npc.unnamed_label
-    labels = (npc.name, *npc.aliases) if npc else (name,)
-    return min(labels, key=len) if shortest else (npc.aliases[0] if npc and npc.aliases else name)
+    if shortest:
+        return short_name(npc) if npc else name
+    return npc.aliases[0] if npc and npc.aliases else name
 
 
 def declared_axes_for_world(world, names):

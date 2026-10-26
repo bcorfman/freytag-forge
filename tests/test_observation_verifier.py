@@ -34,7 +34,7 @@ def _answers(questions: dict, score: object = 0.9) -> dict:
 
 def test_relations_from_context_preserves_required_order_and_placement() -> None:
     assert relations_from_context(_context()) == (
-        Relation(thing="blue seal", holder="keeper"),
+        Relation(thing="blue seal"),
         Relation(thing="missing charm"),
         Relation(thing="amber token", place="stone shelf"),
     )

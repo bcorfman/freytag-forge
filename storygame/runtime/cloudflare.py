@@ -20,6 +20,7 @@ from storygame.runtime.candidate_matcher import (
     uniquely_matched_authored_handoff,
     uniquely_matched_candidate,
 )
+from storygame.runtime.character_names import short_name
 from storygame.runtime.contracts import (
     NarrationSegment,
     RuntimeContractError,
@@ -1064,7 +1065,7 @@ class CloudflareTurnProvider:
         npc = next((entity for entity in package.world.npcs if entity.id == package.protagonist_id), None)
         if npc is None:
             return package.protagonist_id
-        return min((*npc.aliases, npc.name), key=len)
+        return short_name(npc)
 
     def _system_prompt(self, opening: bool = False) -> str:
         """The instructions that never vary: role, genre, player, and reply shape.

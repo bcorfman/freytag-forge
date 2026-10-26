@@ -24,10 +24,10 @@ def relations_from_context(context: ObservationContext) -> tuple[Relation, ...]:
     relations = []
     for name in context.required:
         matching = next((thing for thing in context.visible_things if thing.name == name), None)
-        if matching is None:
+        if matching is None or matching.holder is not None:
             relations.append(Relation(thing=name))
         else:
-            relations.append(Relation(thing=name, place=matching.place, holder=matching.holder))
+            relations.append(Relation(thing=name, place=matching.place))
     return tuple(relations)
 
 
@@ -158,9 +158,11 @@ def _question_for(relation: Relation) -> dict[str, object]:
 
 def _location_text(relation: Relation) -> str:
     facts = []
-    if relation.place is not None:
+    if relation.place is not None and relation.place == relation.holder:
+        facts.append(f"held by {relation.holder}")
+    elif relation.place is not None:
         facts.append(f"at place {relation.place}")
-    if relation.holder is not None:
+    if relation.holder is not None and relation.place != relation.holder:
         facts.append(f"held by {relation.holder}")
     return f" ({' and '.join(facts)})" if facts else ""
 

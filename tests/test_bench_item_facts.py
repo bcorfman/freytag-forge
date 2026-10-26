@@ -2939,10 +2939,11 @@ def test_prepare_turn_orders_possessive_place_without_error():
     assert "- Michelle's house. This is a place." in provider._referred_lines
 
 
-def test_entity_label_keeps_shortest_name():
+def test_entity_label_uses_first_declared_alias():
     provider = _scene_provider("3B")
 
-    assert provider._entity_label(provider._world(), "michelle") == "Shelly"
+    npc = next(npc for npc in PACKAGE.world.npcs if npc.id == "michelle")
+    assert provider._entity_label(provider._world(), npc.id) == npc.aliases[0]
     assert "With Kristin: the man watching Kristin, Michelle." in provider._things_block(narration=True)
 
 
