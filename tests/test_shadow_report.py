@@ -255,9 +255,45 @@ def test_held_item_relations_are_reported_by_hand_label(tmp_path, capsys):
     rows = [
         {
             "turns": [
-                _turn(relations=[_relation("held true", holder="protagonist")]),
-                _turn(relations=[_relation("held false", holder="protagonist")]),
-                _turn(relations=[_relation("room relation", holder="room")]),
+                _turn(
+                    relations=[_relation("held card", place="", holder="")],
+                    shadow={
+                        **_shadow(),
+                        "verdicts": [{"thing": "held card", "verdict": "accept", "score": 1.0}],
+                    },
+                ),
+                _turn(
+                    relations=[_relation("held card", place="", holder="")],
+                    shadow={
+                        **_shadow(verdict="reject", score=0.2),
+                        "verdicts": [{"thing": "held card", "verdict": "reject", "score": 0.2}],
+                    },
+                ),
+                _turn(
+                    relations=[_relation("held card", place="", holder="")],
+                    shadow={
+                        **_shadow(verdict="uncertain", score=0.5),
+                        "verdicts": [{"thing": "held card", "verdict": "uncertain", "score": 0.5}],
+                    },
+                ),
+                _turn(
+                    relations=[_relation("held card", place="", holder="")],
+                    shadow={**_shadow(), "verdicts": []},
+                ),
+                _turn(
+                    relations=[_relation("held note", place="", holder="")],
+                    shadow={
+                        **_shadow(),
+                        "verdicts": [{"thing": "held note", "verdict": "accept", "score": 1.0}],
+                    },
+                ),
+                _turn(
+                    relations=[_relation("not a mention", place="seat", holder="")],
+                    shadow={
+                        **_shadow(),
+                        "verdicts": [{"thing": "not a mention", "verdict": "accept", "score": 1.0}],
+                    },
+                ),
             ]
         }
     ]
@@ -268,6 +304,9 @@ def test_held_item_relations_are_reported_by_hand_label(tmp_path, capsys):
             "r0t0": {"acceptable": True, "1": True},
             "r0t1": {"acceptable": True, "1": False},
             "r0t2": {"acceptable": True, "1": True},
+            "r0t3": {"acceptable": True, "1": False},
+            "r0t4": {"acceptable": True, "1": True},
+            "r0t5": {"acceptable": True, "1": True},
         },
     )
     rows_path = _write_json(tmp_path, "rows.json", rows)
@@ -277,8 +316,10 @@ def test_held_item_relations_are_reported_by_hand_label(tmp_path, capsys):
     assert code == 0
     assert error == ""
     held_section = output.split("## 6 held-item mention relations", 1)[1]
-    assert "| true | 2 |" in held_section
-    assert "| false | 1 |" in held_section
+    assert "| thing | labelled true | labelled false | accept | reject | uncertain | unavailable |" in held_section
+    assert "| held card | 2 | 2 | 1 | 1 | 1 | 1 |" in held_section
+    assert "| held note | 1 | 0 | 1 | 0 | 0 | 0 |" in held_section
+    assert "not a mention" not in held_section
 
 
 def test_refind_clause_passes_at_minimum_with_one_true(tmp_path, capsys):
@@ -356,11 +397,26 @@ def test_invented_object_clause_passes_at_minimum_with_one_true(tmp_path, capsys
                 command="Inspect the passenger seat.",
                 relations=[],
                 shadow={"outcome": "no_relations", "requests": 0, "verdicts": []},
-                places_before={"laptop": "protagonist"},
-                observation_request={"kind": "look", "focus": "passenger_seat"},
+                places_before={"laptop": "driver_seat"},
+                observation_request={"kind": "look", "focus": "passenger seat"},
             )
         )
         labels[f"r0t{index}"] = {"acceptable": True, "invented_object": index == 0}
+    turns.append(
+        _turn(
+            command="Inspect the passenger seat.",
+            relations=[_relation("laptop", place="passenger_seat", holder="")],
+            shadow={
+                "outcome": "ok",
+                "requests": 1,
+                "elapsed_s": 0.4,
+                "verdicts": [{"thing": "laptop", "verdict": "accept", "score": 1.0}],
+            },
+            places_before={"laptop": "passenger_seat"},
+            observation_request={"kind": "look", "focus": "passenger seat"},
+        )
+    )
+    labels["r0t6"] = {"acceptable": True, "1": True, "invented_object": False}
     rows_path = _write_json(tmp_path, "rows.json", [{"turns": turns}])
     labels_path = _write_json(tmp_path, "labels.json", labels)
 
@@ -377,8 +433,8 @@ def test_invented_object_clause_fails_with_two_true(tmp_path, capsys):
             command="inspect the passenger seat",
             relations=[],
             shadow={"outcome": "no_relations", "requests": 0, "verdicts": []},
-            places_before={"laptop": "protagonist"},
-            observation_request={"kind": "look", "focus": "passenger_seat"},
+            places_before={"laptop": "driver_seat"},
+            observation_request={"kind": "look", "focus": "passenger seat"},
         )
         for _ in range(6)
     ]
@@ -399,8 +455,8 @@ def test_invented_object_clause_is_inconclusive_below_minimum(tmp_path, capsys):
             command="inspect the passenger seat",
             relations=[],
             shadow={"outcome": "no_relations", "requests": 0, "verdicts": []},
-            places_before={"laptop": "protagonist"},
-            observation_request={"kind": "look", "focus": "passenger_seat"},
+            places_before={"laptop": "driver_seat"},
+            observation_request={"kind": "look", "focus": "passenger seat"},
         )
         for _ in range(5)
     ]
@@ -713,3 +769,24 @@ def test_join_reports_2b_pass_status(tmp_path, capsys):
     assert code == 0
     assert error == ""
     assert "2b: PASS (0/1 = 0.000000 <= 0.10)" in output
+
+
+def test_held_item_table_separator_precedes_the_data_rows():
+    rows = [
+        {
+            "turns": [
+                _turn(
+                    command="Examine my brass marker.",
+                    relations=[{"thing": "brass marker", "place": None, "holder": None}],
+                    shadow=_shadow(),
+                )
+            ]
+        }
+    ]
+    report, missing = shadow_report._join(rows, {"r0t0": {"1": True, "acceptable": True}})
+
+    assert not missing
+    lines = report.splitlines()
+    header = lines.index("| thing | labelled true | labelled false | accept | reject | uncertain | unavailable |")
+    assert lines[header + 1].startswith("| --- |")
+    assert lines[header + 2].startswith("| brass marker | 1 | 0 | 1 |")

@@ -180,13 +180,6 @@ def _normalise_command(value: Any) -> str:
 
 
 def _seat_is_empty(turn: dict[str, Any]) -> bool:
-    places_before = turn.get("places_before")
-    request = turn.get("observation_request")
-    focus = request.get("focus") if isinstance(request, dict) else None
-    if isinstance(places_before, dict) and focus is not None:
-        return not any(parent == focus for parent in places_before.values())
-    # If the placement map or focus is unavailable, the recorded empty-seat
-    # outcome is the zero-relation observation.
     return turn.get("observation_relations") == []
 
 
@@ -314,11 +307,20 @@ def _join(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list
     if transition_failures:
         failures.append("5 scene-transition turns drop the requirement")
 
-    held_item_counts = {True: 0, False: 0}
+    held_item_counts: dict[str, dict[str, int]] = {}
     for turn_id, turn in observations:
         for number, relation in enumerate(turn["observation_relations"], start=1):
-            if relation.get("holder") not in (None, ""):
-                held_item_counts[_label_for(labels, turn_id, number)] += 1
+            if relation.get("place") not in (None, "") or relation.get("holder") not in (None, ""):
+                continue
+            thing = str(relation.get("thing") or "")
+            counts = held_item_counts.setdefault(
+                thing,
+                {"true": 0, "false": 0, **{verdict: 0 for verdict in VERDICTS}},
+            )
+            label = _label_for(labels, turn_id, number)
+            counts["true" if label else "false"] += 1
+            verdict, _ = _verdict(turn.get("observation_shadow"), relation)
+            counts[verdict] += 1
 
     refind_count = 0
     refind_true = 0
@@ -440,10 +442,8 @@ def _join(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list
             "",
             "## 6 held-item mention relations",
             "",
-            "| hand label | count |",
-            "| --- | ---: |",
-            f"| true | {held_item_counts[True]} |",
-            f"| false | {held_item_counts[False]} |",
+            "| thing | labelled true | labelled false | accept | reject | uncertain | unavailable |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
             "",
             (f"7 re-find of the held card: {refind_status} (n={refind_count}, refind true={refind_true})"),
             (
@@ -456,6 +456,17 @@ def _join(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list
             "",
         ]
     )
+    held_table = lines.index("| thing | labelled true | labelled false | accept | reject | uncertain | unavailable |")
+    held_separator = held_table + 1
+    held_rows = [
+        f"| {thing} | {counts['true']} | {counts['false']} | {counts['accept']} | "
+        f"{counts['reject']} | {counts['uncertain']} | {counts['unavailable']} |"
+        for thing, counts in held_item_counts.items()
+    ]
+    if held_rows:
+        lines[held_separator + 1 : held_separator + 1] = held_rows
+    else:
+        lines.insert(held_separator + 1, "- None")
     return "\n".join(lines), []
 
 
