@@ -100,6 +100,10 @@ visible nearby seated-use item or leaves a seat.
 all aliases in one axis must not overlap, ignoring case. Furniture descendants
 are fixed unless the nearest kind or the item explicitly sets `fixed: false`.
 
+Set `contents_complete: true` when the world model lists everything that can be in or on this place.
+If a player looks at or searches it while it is empty, the engine tells the narrator that nothing is left, so the narrator does not invent an object.
+Leave it off (the default) for any place where the story may add things; it applies to the exact place, not to what is inside it.
+
 World facts may already declare `on_assert` effects. These effects run when the
 fact becomes true. Supported effects include `move`, `reveal`, `accompany`, and
 `set_axis`. A `move` effect may include optional `text`, which becomes the

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -19,8 +20,10 @@ PACKAGE = load_story_package(PACKAGE_ROOT)
 EXPECTED_SCHEMA_HASH = "eed592a10904acddc8c0b8cb3831a9803cc058a7a96906c240d1a1c977132f7d"
 
 
-def _schema_hash(package) -> str:
-    payload = json.dumps(world_source_schema_data(package.world), sort_keys=True, separators=(",", ":")).encode("utf-8")
+def _schema_hash(package, schema_data=None) -> str:
+    if schema_data is None:
+        schema_data = world_source_schema_data(package.world)
+    payload = json.dumps(schema_data, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -41,7 +44,21 @@ def test_unmodified_package_schema_is_byte_identical(tmp_path):
 
     copied = load_story_package(root)
 
-    assert _schema_hash(PACKAGE) == EXPECTED_SCHEMA_HASH
+    schema_data = world_source_schema_data(PACKAGE.world)
+    passenger_seat = next(entity for entity in schema_data["entities"] if entity["id"] == "truck_passenger_seat")
+    assert passenger_seat["contents_complete"] is True
+    assert all(
+        entity["id"] == "truck_passenger_seat" or not {"contents_complete", "view"} & entity.keys()
+        for entity in schema_data["entities"]
+    )
+
+    schema_without_contents_complete = deepcopy(schema_data)
+    passenger_seat = next(
+        entity for entity in schema_without_contents_complete["entities"] if entity["id"] == "truck_passenger_seat"
+    )
+    del passenger_seat["contents_complete"]
+
+    assert _schema_hash(PACKAGE, schema_without_contents_complete) == EXPECTED_SCHEMA_HASH
     assert _schema_hash(copied) == _schema_hash(PACKAGE)
 
 
