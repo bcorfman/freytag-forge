@@ -60,6 +60,7 @@ from storygame.story_package.models import (
 logger = logging.getLogger(__name__)
 
 MAX_TURN_SEGMENTS = 5
+REQUEST_TIMEOUT_SECONDS = 20.0
 TURN_REQUEST_BUDGET = 2
 ITEM_FACTS_REQUEST_BUDGET = 2
 _REQUEST_BUDGET_FIELD = "__freytag_request_budget"
@@ -79,6 +80,11 @@ _REJECTION_FEEDBACK = {
     "uncited_knowledge": _KNOWLEDGE_REJECTION,
     "protected_narration_leak": _KNOWLEDGE_REJECTION,
 }
+
+
+def _is_timeout(error: BaseException) -> bool:
+    return isinstance(error, TimeoutError) or (isinstance(error, URLError) and isinstance(error.reason, TimeoutError))
+
 
 DEFAULT_OUTPUT_EXAMPLE = (
     '{"segments":[{"kind":"narration","text":"She picks up the lantern. She carries it out to the porch."},'
@@ -2077,6 +2083,8 @@ class CloudflareTurnProvider:
         except HTTPError:
             raise
         except (TimeoutError, URLError, OSError) as first_failure:
+            if _is_timeout(first_failure):
+                raise
             try:
                 return self._request(payload)
             except HTTPError:
@@ -2127,7 +2135,7 @@ class CloudflareTurnProvider:
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         request = Request(self.worker_url, data=json.dumps(wire_payload).encode(), headers=headers, method="POST")
-        with urlopen(request, timeout=float(getenv("CLOUDFLARE_TIMEOUT", "15"))) as response:  # noqa: S310
+        with urlopen(request, timeout=float(getenv("CLOUDFLARE_TIMEOUT", str(REQUEST_TIMEOUT_SECONDS)))) as response:  # noqa: S310
             body = json.loads(response.read())
         if isinstance(body, dict) and body.get("status") == "error":
             raise NarrationProviderError(str(body.get("message", "narration service failed")), 502)
