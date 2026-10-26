@@ -1,0 +1,36 @@
+{
+ "run_name": "1a-continuity-step7",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-step7",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "step7a-consume-and-root",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 4800,
+   "check_timeout_s": 2400,
+   "ownership": [
+    "storygame/runtime/capture.py",
+    "storygame/runtime/item_facts.py",
+    "storygame/runtime/reveal_eligibility.py",
+    "data/stories/continuity-initiative/world.yaml",
+    "tests/test_boarding.py",
+    "tests/test_place_scoped_feed.py",
+    "tests/test_reveal_reach.py",
+    "tests/test_late_scene_repro.py"
+   ],
+   "spec": "You are fixing two defects found by a live smoke run in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT: storygame/runtime/capture.py, storygame/runtime/item_facts.py, storygame/runtime/reveal_eligibility.py, data/stories/continuity-initiative/world.yaml (ONLY aliases on the location mcgehee_home), tests/test_boarding.py, tests/test_place_scoped_feed.py, tests/test_reveal_reach.py, tests/test_late_scene_repro.py, tests/test_1a_movement.py. Never edit bench/frozen/, docs/testing-runbook.md; do not reformat unrelated text. Shared runtime has NO story names.\n\nDEFECT 1: a pure boarding command still reaches the narrator. Commit b-c (the previous change) added `only_boards_vehicle`: when the player's command only goes to or gets into a vehicle and the engine seats her, `SeatingResult.command_consumed` is True and WorldCapture records `boarding_command_consumed`, but it only changed the capture record's `command` string. The engine still calls `self.provider(command_text)` with the RAW command (storygame/runtime/engine.py ~456) and the narrator prompt's PLAYER section still ends with the raw line '- go out to the truck' after 'Just before this: Kristin sat down in the driver's seat. Kristin's laptop sat on the passenger seat.' Live smoke: the narrator then wrote 'She opens the door and steps out of the truck.' FIX: when capture reports the command as consumed, the provider must render the PLAYER section with ONLY the 'Just before this: ...' line (the engine steps) and NOT the raw command line. Implement with a small provider attribute set by WorldCapture.before_turn alongside `prior_steps` (cleared wherever `prior_steps` is cleared, restored where it is restored from context, ~capture.py lines 198, 203, 260) and honored in item_facts.py `_player_lines` (~line 570). The raw command must still be used everywhere else (reveal matching, reference resolution, the name-matching call, the engine's command_text). Not consumed: prompts byte-identical to today.\nDEFECT 2: rooms the narrator invents inside the house break reach. The narrator named a 'living room'; the engine created area n_living_room_1 as a CHILD of the house (mcgehee_home), a sibling of the kitchen. `world.together(protagonist, drawer)` is then False (sibling areas are not nested), so the reach gate (reveal_eligibility.together_or_unplaced) blocked the drawer reveal and the player's 'feel in the gap' earned nothing. FIX: rooms in the same building count as together. In reveal_eligibility.py extend `together_or_unplaced` so it is also True when the protagonist and the entity share the same ROOT area: the last element of [area, *world.chain(area)] (or the area itself when it has no parent) is the same for both. Update its docstring. Everything else about it stays. Strict nested `together` elsewhere is unchanged. A different root (the house versus the outside area containing the truck) must stay NOT together.\nDATA: add aliases `the living room`, `the front room`, `the hallway` to the location mcgehee_home in world.yaml (keep all existing aliases), so those names resolve to the house instead of creating a new area. If the loader or a lint rejects any, keep the ones that pass and report which.\n\nTESTS FIRST (small): (a) tests/test_boarding.py: with the stubbed ask answering true to boards and true to only_boards, the narrator prompt built through the product-wired provider for 'Go out to the truck.' contains 'Just before this: Kristin sat down in the driver's seat. Kristin's laptop sat on the passenger seat.' and does NOT contain the line '- Go out to the truck.'; with only_boards false the raw command line is present as today; (b) tests/test_reveal_reach.py: put the protagonist in a made-up child area of the house (world.add or the helper the file uses; if none, create it the way the engine does for a narrator-named place) and show the drawer reveal is eligible, while outside_house still gives not_reachable; add a synthetic-story case for same-root; (c) tests/test_place_scoped_feed.py: protagonist in a child room of the house gets the in-house (unscoped) prompt; (d) tests/test_late_scene_repro.py: update the expected 1A place forms with exactly the alias forms the failing output lists. Existing tests must keep passing.\n\nFINISH: ruff format and ruff check every .py you touched; run the focused suites in the check (the full suite is run once at the very end of the plan, not here); report what you changed.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 $(ls -d tests/test_boarding.py tests/test_vehicle_landing.py tests/test_place_scoped_feed.py tests/test_reveal_reach.py tests/test_late_scene_repro.py tests/test_1a_movement.py tests/test_3a_records_followup.py tests/test_knowledge_projection.py tests/test_1a_gap_pointer.py tests/test_1a_back_door_gap.py tests/test_1a_patrol.py tests/test_1a_witnessed_recovery.py tests/test_recent_cue_reference.py tests/test_cloudflare_transport.py tests/test_item_facts*.py tests/test_world_capture*.py tests/test_bench_item_facts.py tests/test_1a_spine_prompts.py tests/test_1b_spine_prompts.py tests/test_2a_spine_prompts.py tests/test_3ab_spine_prompts.py tests/test_cue_eligibility_compare.py tests/test_cue_spent_reveal.py tests/test_invitation_report.py tests/test_web_demo.py tests/test_markdown_story_package.py 2>/dev/null | tr '\\n' ' ') 2>&1 | tail -12 && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -m authoring_quality 2>&1 | tail -4 && git diff --quiet -- bench/frozen docs && (! git diff -U0 -- storygame | grep -E '^\\+' | grep -iE 'kristin|michelle|drawer|truck|laptop') && .venv/bin/python -m ruff check . && .venv/bin/python -m ruff format --check .",
+   "verified": "a consumed boarding command is absent from the narrator prompt; rooms in the same building are reachable; focused suites pass; no story names in runtime"
+  }
+ ]
+}

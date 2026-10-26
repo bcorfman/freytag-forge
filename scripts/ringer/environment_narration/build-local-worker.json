@@ -1,0 +1,34 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-local-worker",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t6i-local-worker",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/environment_narration/local_worker.mjs",
+    "scripts/ringer/environment_narration/local_worker.test.mjs"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/local_worker.mjs",
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/local_worker.test.mjs"
+   ],
+   "spec": "You are building a small LOCAL runner for the freytag-forge narration Worker (Node 20+, ES modules). Working directory: /home/bcorfman/dev/freytag-forge. No network, no live Workers AI call, no deployment, no wrangler: tests inject a fake fetch. Do not git commit. NEVER print, log or write any credential value. YOU MAY EDIT ONLY: new scripts/ringer/environment_narration/local_worker.mjs and new scripts/ringer/environment_narration/local_worker.test.mjs. Never touch worker/, storygame/, tests/ or data/. Read worker/src/index.js (default export `fetch(request, env)`, class `DailyBudget`), worker/src/budget.js and worker/test/models.test.js (its fake Storage/Namespace/env helpers show how to bind DAILY_BUDGET) first.\n\nWHY: the Worker is a plain HTTP handler that calls the Workers AI REST API with CF_ACCOUNT_ID and CF_API_TOKEN, so it can run on a laptop. We want to point the Python product (CLOUDFLARE_WORKER_URL) at it to test the new Worker code (70B only, no response_format) BEFORE any deploy, with a hard dollar cap.\n\nBUILD local_worker.mjs. It exports `createLocalWorker({ env, fetchImpl })` returning `{ handle(nodeRequest, nodeResponse), spentMicroUsd() }` and, when run directly (`node local_worker.mjs --port 8787 --max-usd 0.10`), starts an http server bound to 127.0.0.1 ONLY. Behaviour: (1) it refuses to start (non-zero exit, message on stderr) unless `--max-usd` is a positive number, and unless CLOUDFLARE_WORKER_TOKEN, CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN are set in the environment (check presence only; never print them). (2) It builds the Worker env: DEMO_SHARED_TOKEN from CLOUDFLARE_WORKER_TOKEN, CF_ACCOUNT_ID from CLOUDFLARE_ACCOUNT_ID, CF_API_TOKEN from CLOUDFLARE_AI_TOKEN, DAILY_BUDGET_USD from --max-usd, and an in-memory DAILY_BUDGET namespace that wraps the real `DailyBudget` class from worker/src/index.js over a Map-backed storage (same pattern as the test helper), so the real reservation/settlement code enforces the cap. It must NOT set CF_AI_MODEL or CF_BENCH_MODELS (the Worker default, the 70B, is what we test). (3) It converts each incoming Node request into a Web `Request` (method, url path, headers, body) and calls the real default export `fetch(request, env)` from worker/src/index.js, then writes status, headers and body back. All routes, including /jev, go through that one call. The global fetch used by the Worker for api.cloudflare.com must be `fetchImpl` when given (inject by temporarily wrapping globalThis.fetch inside handle, or any equally simple way) and the real global fetch otherwise. (4) It prints ONE log line per request to stdout: ISO time, path, HTTP status, latency ms, and the `model` field of the JSON response when present; NEVER the request body, the reply text, headers or any env value. (5) `GET /__spent` (no auth needed, loopback only) returns {\"spent_micro_usd\": N, \"max_usd\": X}. (6) On SIGINT/SIGTERM it prints the final spent amount and exits 0.\n\nTESTS FIRST in local_worker.test.mjs (node:test, hermetic, fake fetchImpl returning a canned Workers AI success body for the 70B and for Jev; read the existing worker tests for the shapes): a POST with the right bearer token returns 200 with a `narration` field, and the fake fetch received a body with messages and max_tokens but no response_format; a wrong token returns 401 and the fake fetch was never called; a budget of 0.000001 USD makes the second call return the Worker's AI_DAILY_BUDGET_EXCEEDED 429 without calling the fake fetch; /__spent reports a positive amount after a call; the log line contains the path and status and never contains the request text, the reply text or the token (capture stdout writes); starting the module as a process without --max-usd exits non-zero and prints nothing secret (spawn it with a scrubbed env); the server listens on 127.0.0.1 only (assert the address). Run them with `node --test scripts/ringer/environment_narration/local_worker.test.mjs`, see them fail first, then build.\n\nFINISH: `node --check` both files and report the test counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && node --check scripts/ringer/environment_narration/local_worker.mjs && node --check scripts/ringer/environment_narration/local_worker.test.mjs && node --test scripts/ringer/environment_narration/local_worker.test.mjs 2>&1 | tee /tmp/env-lw.out | tail -12 && grep -Eq '(\u2139|#) fail 0' /tmp/env-lw.out && grep -Eq '(\u2139|#) pass [5-9]|(\u2139|#) pass [1-9][0-9]' /tmp/env-lw.out && (cd worker && node --test test/ 2>&1 | grep -Eq '(\u2139|#) fail 0') && git diff --quiet -- worker/src storygame data docs && ! grep -nE 'api-token|Bearer [A-Za-z0-9]{8,}' scripts/ringer/environment_narration/local_worker.mjs && env -i PATH=\"$PATH\" node scripts/ringer/environment_narration/local_worker.mjs --port 8799 > /tmp/lw-nomax.out 2>&1; test $? -ne 0",
+   "verified": "a loopback-only local Worker with a hard dollar cap that runs the real Worker code"
+  }
+ ]
+}

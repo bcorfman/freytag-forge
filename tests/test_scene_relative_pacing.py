@@ -108,7 +108,7 @@ def test_optional_storylets_and_pacing_events_leave_two_turns_to_react() -> None
 
 def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
     expected_windows = {
-        "1A": (8, 10, 13),
+        "1A": (9, 10, 13),
         "1B": (8, 10, 13),
         "1C": (8, 8, 11),
         "2A": (7, 8, 11),
@@ -213,17 +213,17 @@ def test_loader_rejects_handoff_sum_over_budget(tmp_path: Path) -> None:
             lambda event: event["realizations"][-1].__setitem__(
                 "when", [{"fact_id": "patrol_return_pressure", "equals": True}]
             ),
-            "pacing event 'pressure_1a'",
+            "pacing event 'patrol_arrives_1a'",
             id="loader_rejects_guarded_last_pacing_realization",
         ),
         pytest.param(
             lambda event: event["realizations"][0].__setitem__("when", [{"fact_id": "no_such_fact", "equals": True}]),
-            "pacing event 'pressure_1a'",
+            "pacing event 'patrol_arrives_1a'",
             id="loader_rejects_unknown_pacing_realization_fact",
         ),
         pytest.param(
             lambda event: event.__setitem__("when", [{"fact_id": "no_such_fact", "equals": True}]),
-            "pacing event 'pressure_1a'.*unknown event guard predicate",
+            "pacing event 'patrol_arrives_1a'.*unknown event guard predicate",
             id="loader_rejects_unknown_pacing_event_guard_fact",
         ),
     ],
@@ -233,7 +233,7 @@ def test_loader_rejects_invalid_pacing_event_guards(tmp_path: Path, mutate: obje
     shutil.copytree(Path("data/stories/continuity-initiative"), root)
     source = root / "pacing.yaml"
     data = yaml.safe_load(source.read_text())
-    event = next(item for item in data["events"] if item["id"] == "pressure_1a")
+    event = next(item for item in data["events"] if item["id"] == "patrol_arrives_1a")
     mutate(event)  # type: ignore[operator]
     source.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
 

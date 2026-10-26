@@ -505,6 +505,10 @@ def _validate_knowledge(package: StoryPackage) -> None:
         seen_ids.add(item.id)
         if set(item.entity_ids + item.relevance.entity_ids) - entities:
             raise StoryPackageError(f"knowledge '{item.id}' references unknown entities")
+        unknown_reach_entities = set(item.reach_entity_ids) - entities
+        if unknown_reach_entities:
+            unknown = next(iter(unknown_reach_entities))
+            raise StoryPackageError(f"knowledge '{item.id}' references unknown reach entity '{unknown}'")
         if set(item.available_in_scenes) - scenes:
             raise StoryPackageError(f"knowledge '{item.id}' references an unknown scene")
         required_facts = {predicate.fact_id for predicate in item.requires}
@@ -1483,6 +1487,8 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
                 raise StoryPackageError(f"npc '{npc.id}' unavailable is not a pole of its axes")
         location_ids = {location.id for location in world.locations}
         for location in world.locations:
+            if location.description is not None and not location.description.strip():
+                raise StoryPackageError(f"location '{location.id}' description must be a non-blank string")
             if location.parent is not None and location.parent not in location_ids:
                 raise StoryPackageError(f"location '{location.id}' has unknown location parent '{location.parent}'")
         try:

@@ -1,0 +1,29 @@
+{
+ "run_name": "1a-continuity-referred-reach",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-referred-reach",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "drop-expanded-companions-of-dropped-things",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 1200,
+   "ownership": [
+    "storygame/runtime/item_facts.py",
+    "tests/test_referred_reach.py"
+   ],
+   "spec": "Code fix in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: storygame/runtime/item_facts.py and tests/test_referred_reach.py. Never edit docs/, .plans/, bench/, data/. No story names in storygame/.\n\nCONTEXT: ItemFactsProvider._thing_names (storygame/runtime/item_facts.py ~line 518) was just changed so that, when the protagonist is at the scene location and not seated, a name in self._referred_names that is out of reach is dropped (see git diff, and tests/test_referred_reach.py). GAP: the earlier loop in _thing_names expands names with `world.given_with`, `world.seats` and a parent's seats, inserting extra names (such as a vehicle's seats and an item on a seat) that are NOT in self._referred_names. When the vehicle (outside, out of reach) is dropped, its seats and the laptop on the seat still reach the narrator's THINGS. Live case: protagonist in the house, command 'Wait.', match reply refers the truck; the truck is dropped but 'passenger seat', 'driver's seat' and the laptop on the passenger seat stay.\n\nFIX: in the in-scene branch, apply keep_name to every name that is not the protagonist and not in self.dependency_names(), not only to names in self._referred_names (selected names are only dependencies, the protagonist, referred names and these expansions). Names in reach, literally named, resolved, held, or dependencies stay exactly as today.\n\nTESTS FIRST in tests/test_referred_reach.py: extend the synthetic story with a vehicle in a separate room that has two seats and an item on one seat; protagonist in the house; command 'Wait.'; match refers the vehicle: the vehicle, seats and item are all absent from THINGS. And a control: same but the command is 'Look at the vehicle.' keeps the vehicle (seats/item may stay if they pass keep_name; assert only the vehicle is present). Run, see the first fail, then fix. Report any existing test pin changed (expect none).",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_referred_reach.py $(ls tests/test_item_facts*.py tests/test_place_feed*.py tests/test_reveal_reach.py tests/test_staged_cue_reach.py tests/test_held_by_echo.py tests/test_1a_*.py 2>/dev/null) 2>&1 | tail -8 && git diff --quiet -- docs bench/frozen .plans data && .venv/bin/python -m ruff check storygame tests && .venv/bin/python -m ruff format --check storygame tests"
+  }
+ ]
+}

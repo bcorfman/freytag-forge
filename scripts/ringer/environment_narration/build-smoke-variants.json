@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-smoke-variants",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "smoke-direct-variants",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 4800,
+   "check_timeout_s": 1200,
+   "ownership": [
+    "scripts/ringer/environment_narration/smoke_direct.py",
+    "tests/test_environment_smoke_direct.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/smoke_direct.py"
+   ],
+   "spec": "You are revising a small billed-smoke tool (still offline until a human confirms) in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/smoke_direct.py and tests/test_environment_smoke_direct.py (both exist; read them first). Never edit anything else. You never make a live call. NEVER print, log or write any credential value.\n\nCHANGE 1, make the variant list DATA: one `VARIANTS` table (label, model id, token-limit parameter name, max tokens, optional extra body fields, input price, output price, note) replacing the hard-coded four, with exactly these seven, in this order (the order drives the interleaving):\n1 `llama-3.1-8b` -> @cf/meta/llama-3.1-8b-instruct-fast, `max_tokens` 1024, 0.282/0.827 (price is a deliberately high stand-in, the model is not on the price page; the current configured baseline);\n2 `gemma-3-12b` -> @cf/google/gemma-3-12b-it, `max_tokens` 1024, 0.345/0.556 (note: its docs page returned 404 on 2026-10-25, so it may be retired; a rejected request is a valid result);\n3 `gemma-4-26b-a4b` -> @cf/google/gemma-4-26b-a4b-it, `max_completion_tokens` 2048, 0.10/0.30;\n4 `qwen3-30b-a3b` -> @cf/qwen/qwen3-30b-a3b-fp8, `max_tokens` 2048, 0.0509/0.335;\n5 `gpt-oss-20b` -> @cf/openai/gpt-oss-20b, `max_tokens` 2048, 0.20/0.30;\n6 `glm-4.7-flash` -> @cf/zai-org/glm-4.7-flash, `max_completion_tokens` 2048, 0.0605/0.40;\n7 `deepseek-none` -> @cf/deepseek-ai/deepseek-v4.1-flash-1017, `max_completion_tokens` 3072 with extra field reasoning_effort 'none', 0.30/1.20.\nREMOVE llama-3.3-70b and deepseek-low entirely. Body for every variant: messages [system, user], the token-limit parameter above, response_format {type: json_object} and temperature 0, plus extras. The plan stays 6 calls per variant (S1 proposed x3, S1 existing x1, S2 proposed x1, S5 proposed x1) = 42 calls, round-robin interleaved, deterministic. Default --max-calls 42. The ceiling USD is still the sum of per-call ceilings (input tokens ceil(bytes/3) at the input rate plus the max tokens at the output rate).\n\nCHANGE 2, per-variant failure handling (the previous rule stopped the whole run on any 4xx). New rules: HTTP 401/403 or 429 anywhere: STOP the whole run at once (record AUTH or the quota/error code). Any other non-2xx status (e.g. 400 bad request, 404 model not found, 5xx) or an unusable body for a variant: record the row with its full raw body, mark that variant FAILED, SKIP its remaining planned calls (record them as skipped, not sent), and CONTINUE with the other variants. Never retry, never substitute. Two consecutive transport failures across the run still stop it. The report lists skipped calls and each failed variant's first error body verbatim (credential redacted).\n\nTESTS FIRST (update tests/test_environment_smoke_direct.py; keep every still-valid test, update the ones that named the old variants): the plan is 7 variants x 6 = 42 calls, interleaved, no llama-3.3-70b and no deepseek-low anywhere; each variant's body uses the stated token-limit parameter (max_tokens vs max_completion_tokens) and deepseek-none carries reasoning_effort 'none'; a fake-opener 404 for gemma-3-12b marks only that variant FAILED, skips its remaining calls and the other variants still run; a fake 400 behaves the same; a 401 or 429 still stops the whole run; the credential string never appears in rows, report or exceptions. Run them, see them fail, then build. FINISH: ruff check and ruff format both files; run `--dry` against a fresh `screen.py --dry` document and report calls and the ceiling USD.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_environment_smoke_direct.py tests/test_environment_screen.py 2>&1 | tail -5 && .venv/bin/python scripts/ringer/environment_narration/screen.py --dry --out /tmp/env-smoke-prompts2.json && env CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --prompts /tmp/env-smoke-prompts2.json --dry --out /tmp/env-smoke-plan2.json | tail -8 && .venv/bin/python -c \"import json;t=open('/tmp/env-smoke-plan2.json').read();d=json.loads(t);assert 'llama-3.3-70b' not in t and 'deepseek-low' not in t;labels={'llama-3.1-8b','gemma-3-12b','gemma-4-26b-a4b','qwen3-30b-a3b','gpt-oss-20b','glm-4.7-flash','deepseek-none'};assert all(l in t for l in labels);print('variants ok')\" && (env CLOUDFLARE_ACCOUNT_ID= CLOUDFLARE_AI_TOKEN= .venv/bin/python scripts/ringer/environment_narration/smoke_direct.py --prompts /tmp/env-smoke-prompts2.json --run --confirm --max-usd 1 --out /tmp/env-smoke-refuse2.json; test $? -ne 0) && ! grep -rF 'dummy-token-xyz' /tmp/env-smoke-plan2.json && .venv/bin/python -m ruff check scripts/ringer/environment_narration/smoke_direct.py tests/test_environment_smoke_direct.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration/smoke_direct.py tests/test_environment_smoke_direct.py",
+   "verified": "seven data-driven variants, 42-call interleaved plan, per-variant failure skipping, auth/429 still stop the run"
+  }
+ ]
+}

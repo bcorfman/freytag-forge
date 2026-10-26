@@ -117,7 +117,8 @@ def test_real_package_reports_no_real_spent_cases_and_not_stageable_1a_case() ->
         assert row in output
     assert (
         "1A | SL-1A-B fired through k_sl_1a_b_r1 | continuity_initiative_known | False | False | "
-        "k_sl_1a_b_r0:already_established,k_sl_1a_b_r1:already_established,k_sl_1a_d_r1:already_established | "
+        "k_sl_1a_b_r0:already_established,k_sl_1a_b_r0w:prerequisite_missing,"
+        "k_sl_1a_b_r1:already_established,k_sl_1a_d_r1:already_established | "
         "NOT_STAGEABLE_FACT_TRUE"
     ) in output
     assert "Real cases (cue fact still missing, no eligible reveal)" in output

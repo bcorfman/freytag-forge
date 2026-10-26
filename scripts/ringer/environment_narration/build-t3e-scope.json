@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t3e",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t3e-render-complete-empty-scope",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "storygame/runtime/item_facts.py",
+    "tests/test_observation_prompt.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/tests/test_observation_prompt.py"
+   ],
+   "spec": "You are making one targeted prompt change in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no model call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: storygame/runtime/item_facts.py and tests/test_observation_prompt.py (append tests; change no existing assertion). Never edit storygame/runtime/observation.py, packages/, data/, docs/, worker/, other modules.\n\nCONTEXT: the opt-in observation prompt (ItemFactsProvider.observation_request) already adds a `Show these in your reply:` CONSTRAINTS line from ObservationContext.required (see _section_user_prompt in storygame/runtime/item_facts.py and tests/test_observation_prompt.py). ObservationContext.scope_complete is True only when the focus entity declares contents_complete (story packages can now declare it; see tests/test_package_view_scope.py for how to build a package copy with `contents_complete: true` on the drawer). It is computed but never rendered, so a searched place that is declared complete and now empty reads the same to the narrator as one never described, and the narrator invents a replacement clue. Only a complete, empty scope licenses an unqualified empty result.\n\nCHANGE: in observation mode only, when context.scope_complete is true AND the focus scope has no known contents (context.visible_things holds nothing located inside the focus entity: no required names and no thing whose containment chain includes the focus), add ONE CONSTRAINTS line in plain 12th-grade words, with the focus entity's public name, exactly: `- The <focus name> holds nothing else the player can find.` Use the world's public name for the focus (world.name), never an id. When scope_complete is false, or anything known remains inside the focus, add nothing. Do not change the `Show these` line, THINGS, or PLAYER handling. No story vocabulary in code.\n\nTESTS FIRST (append to tests/test_observation_prompt.py; hermetic, real package copied to tmp_path with the drawer declared contents_complete as in tests/test_package_view_scope.py): (a) after the memory card is taken (moved to the protagonist) a request ObservationRequest('Search beneath the drawer.', 'look', <drawer id>) yields the CONSTRAINTS line `The drawer holds nothing else the player can find.` (check the drawer's real public name) and the held card appears nowhere under the drawer; (b) the same state on the unmodified shipped package (no declaration) has no such line; (c) with the declaration but an item still inside the drawer's scope, no such line; (d) default off (observation_request None) is unchanged. Run, see them fail, then build. FINISH: ruff check and ruff format both files; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_observation_prompt.py tests/test_package_view_scope.py tests/test_observation_context.py packages/worldkeeper/tests tests/test_seating.py tests/test_boarding.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_referred_reach.py tests/test_environment_baseline.py tests/test_held_by_echo.py tests/test_staged_cue_reach.py tests/test_narration_safety.py 2>&1 | tee /tmp/env-t3e.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error|xfailed)' /tmp/env-t3e.out && .venv/bin/python scripts/ringer/environment_narration/baseline.py --out /tmp/env-t3e-base.json && .venv/bin/python scripts/ringer/environment_narration/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-t3e-base.json && test \"$(md5sum storygame/runtime/observation.py | cut -d' ' -f1)\" = 4c5c7b8e1349fe0a2f74e284d0da06ce && test \"$(md5sum packages/worldkeeper/src/worldkeeper/model.py | cut -d' ' -f1)\" = 7c4746e69cf129b7458f7dd09267c1df && git diff --quiet -- data docs && test -z \"$(git status --short data)\" && ! git diff -U0 -- storygame/runtime/item_facts.py | grep -iE '^\\+.*(kristin|laptop|truck|drawer|michelle)' && .venv/bin/python -m ruff check storygame/runtime/item_facts.py tests/test_observation_prompt.py && .venv/bin/python -m ruff format --check storygame/runtime/item_facts.py tests/test_observation_prompt.py",
+   "verified": "a declared-complete empty scope is stated in the observation prompt; undeclared or non-empty scopes add nothing"
+  }
+ ]
+}

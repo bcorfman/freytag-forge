@@ -1,0 +1,26 @@
+{
+ "run_name": "1a-continuity-referred-reach",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-referred-reach",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "drop-out-of-reach-referred-things",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": ["-c", "model_reasoning_effort=high"],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 1200,
+   "ownership": [
+    "storygame/runtime/item_facts.py",
+    "tests/test_referred_reach.py"
+   ],
+   "spec": "Code fix in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: storygame/runtime/item_facts.py and the new file tests/test_referred_reach.py. Never edit docs/, .plans/, bench/, data/. The runtime must stay story-agnostic: no story, place or character names in storygame/.\n\nBUG: In `ItemFactsProvider._thing_names` (storygame/runtime/item_facts.py, near line 549) there is an early return `if not seated and together_or_unplaced(world, protagonist_id, scene.metadata.location_id): return names`. When the protagonist stands at the scene location, every name selected by the match call (`self._referred_names`, set in `prepare_turn`) goes into the narrator's THINGS even if it is out of her reach. Live evidence: command 'wait' (names nothing), protagonist in the house, the match model returned refers [Kristin, house gate, Kristin's truck]; the gate and truck (outside, a different root area) and the laptop on the truck's seat reached the house prompt and the narrator moved her to the gate. The filter below that early return (literal name in command, resolved reference, held by protagonist, or together_or_unplaced) already handles the not-at-scene-location case.\n\nFIX: in the in-scene case, drop a name only if ALL hold: it is in self._referred_names, it is NOT in self.dependency_names(), the command does not literally name it (same `_command_names_thing` test), it is not in `resolved_reference_names(self.state, command)`, it is not held by the protagonist, and it is NOT together_or_unplaced with the protagonist. Every other name stays exactly as today (so prompts for in-reach things, dependencies, the protagonist, and the seated path are byte-identical). Keep the code small and reuse the existing filter helpers; do not duplicate its logic if you can share it.\n\nTESTS FIRST in tests/test_referred_reach.py, using a small synthetic story (not the continuity-initiative story; look at existing tests such as tests/test_reveal_reach.py and tests/test_place_feed*.py for how to build a package, a state and an ItemFactsProvider with a stubbed match reply and no network): (1) protagonist in room A, match reply refers an object in a separate room B for command 'Wait.': object absent from the narration THINGS block; (2) same, but the command literally names the object ('Look at the lamp.'): present; (3) a referred object in the same room: present; (4) a dependency name in another room still present. Run them, see (1) fail, then fix. Report any existing test pin you change and why (expect none).",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_referred_reach.py $(ls tests/test_item_facts*.py tests/test_place_feed*.py tests/test_reveal_reach.py tests/test_staged_cue_reach.py tests/test_held_by_echo.py tests/test_1a_*.py 2>/dev/null) 2>&1 | tail -8 && git diff --quiet -- docs bench/frozen .plans data && .venv/bin/python -m ruff check storygame tests && .venv/bin/python -m ruff format --check storygame tests"
+  }
+ ]
+}

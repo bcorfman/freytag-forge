@@ -13,6 +13,17 @@ class SeatingResult:
     steps: tuple[str, ...]
     asked: bool
     issues: tuple[str, ...]
+    command_consumed: bool = False
+    notice_steps: tuple[str, ...] = ()
+    vehicle_id: str | None = None
+    already_aboard: bool = False
+
+
+def _protagonist_name(package) -> str:
+    protagonist = next((npc for npc in package.world.npcs if npc.id == package.protagonist_id), None)
+    if protagonist is None:
+        return package.protagonist_id
+    return min((*protagonist.aliases, protagonist.name), key=len)
 
 
 def _command_names_thing(command: str, names: tuple[str, ...]) -> bool:
@@ -106,10 +117,18 @@ def seat_before_use(world, package, player_input: str, uses_thing: Callable[[str
 
 
 def board_vehicle(
-    world, package, player_input: str, goes_to_vehicle: Callable[[str, str], bool | None]
+    world,
+    package,
+    player_input: str,
+    boards_vehicle: Callable[[str, str], bool | None],
+    only_boards_vehicle: Callable[[str, str], bool | None] | None = None,
 ) -> SeatingResult:
     protagonist = package.protagonist_id
     items = {item.id: item for item in package.world.items}
+    parent = world.parent(protagonist)
+    parent_entity = world.schema.entities.get(parent) if parent else None
+    seated_vehicle = parent_entity.seat_for if parent_entity and parent_entity.seat_for else None
+    visible_vehicles = []
     candidates = []
     for item in package.world.items:
         if not world.is_a(item.id, "vehicle") or not world.is_visible(item.id):
@@ -117,31 +136,78 @@ def board_vehicle(
         seats = sorted(
             seat.id for seat in package.world.items if seat.seat_for == item.id and world.is_visible(seat.id)
         )
+        visible_vehicles.append((item.id, seats))
         if not seats:
             continue
-        parent = world.parent(protagonist)
-        if parent and world.schema.entities.get(parent) and world.schema.entities[parent].seat_for == item.id:
+        if seated_vehicle == item.id:
             continue
         candidates.append((item.id, seats))
 
     asked = False
     issues: list[str] = []
-    for vehicle_id, seats in sorted(candidates):
-        if not _command_names_thing(player_input, world.names(vehicle_id)):
-            continue
-        answer = goes_to_vehicle(player_input, world.name(vehicle_id))
+    names_vehicle = any(
+        _command_names_thing(player_input, world.names(vehicle_id)) for vehicle_id, _ in visible_vehicles
+    )
+    if seated_vehicle and any(vehicle_id == seated_vehicle for vehicle_id, _ in visible_vehicles):
+        names_seated_vehicle = _command_names_thing(player_input, world.names(seated_vehicle))
+        if names_seated_vehicle or not names_vehicle:
+            answer = boards_vehicle(player_input, world.name(seated_vehicle))
+            asked = True
+            if answer is None:
+                issues.append(f"boarding question unanswered for '{world.name(seated_vehicle)}'")
+            elif answer is True:
+                command_consumed = (
+                    only_boards_vehicle(player_input, world.name(seated_vehicle)) is True
+                    if only_boards_vehicle is not None
+                    else False
+                )
+                if command_consumed:
+                    step = f"{_protagonist_name(package)} is already in the {world.name(parent)}."
+                    return SeatingResult(
+                        step,
+                        (step,),
+                        asked,
+                        tuple(issues),
+                        True,
+                        vehicle_id=seated_vehicle,
+                        already_aboard=True,
+                    )
+            return SeatingResult(player_input, (), asked, tuple(issues))
+
+    named_candidates = [
+        candidate for candidate in sorted(candidates) if _command_names_thing(player_input, world.names(candidate[0]))
+    ]
+    if names_vehicle:
+        candidates_to_ask = named_candidates
+    else:
+        protagonist_area = world.area(protagonist)
+        contextual_candidates = [
+            candidate
+            for candidate in sorted(candidates)
+            if protagonist_area is not None and world.area(candidate[0]) == protagonist_area
+        ]
+        candidates_to_ask = contextual_candidates if len(contextual_candidates) == 1 else []
+
+    for vehicle_id, seats in candidates_to_ask:
+        answer = boards_vehicle(player_input, world.name(vehicle_id))
         asked = True
         if answer is None:
             issues.append(f"boarding question unanswered for '{world.name(vehicle_id)}'")
             continue
         if answer is False:
             continue
+        command_consumed = (
+            only_boards_vehicle(player_input, world.name(vehicle_id)) is True
+            if only_boards_vehicle is not None
+            else False
+        )
         seat = seats[0]
         result = world.move(protagonist, seat)
         if not result.ok:
             issues.append(f"could not move protagonist into '{world.name(seat)}': {result.reason}")
             return SeatingResult(player_input, (), asked, tuple(issues))
         steps = [items[seat].enter_text]
+        notice_steps = []
         for item_id in sorted(items):
             item = items[item_id]
             if (
@@ -152,7 +218,17 @@ def board_vehicle(
                 and vehicle_id in world.chain(item_id)
             ):
                 steps.append(item.notice_text)
-        return SeatingResult(" ".join((*steps, player_input)), tuple(steps), asked, tuple(issues))
+                notice_steps.append(item.notice_text)
+        command = " ".join(steps) if command_consumed else " ".join((*steps, player_input))
+        return SeatingResult(
+            command,
+            tuple(steps),
+            asked,
+            tuple(issues),
+            command_consumed,
+            tuple(notice_steps),
+            vehicle_id=vehicle_id,
+        )
     return SeatingResult(player_input, (), asked, tuple(issues))
 
 

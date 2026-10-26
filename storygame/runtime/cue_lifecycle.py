@@ -3,6 +3,8 @@
 from collections.abc import Collection
 from typing import Protocol
 
+from storygame.runtime.reveal_eligibility import NOT_REACHABLE, PREREQUISITE_MISSING, explain_reveal
+
 
 class _FactState(Protocol):
     current_scene_id: str
@@ -16,6 +18,29 @@ class _FactState(Protocol):
 class _Delivery(Protocol):
     fact_id: str
     scene_id: str
+    costs: Collection[object]
+
+
+def staged_cue_reveal_is_reachable(state: _FactState, delivery: _Delivery) -> bool:
+    """Return whether an earning reveal is reachable from the protagonist's place."""
+
+    package = getattr(state, "package", None)
+    knowledge_catalog = getattr(package, "knowledge", None)
+    knowledge_items = getattr(knowledge_catalog, "knowledge", ())
+    cost_fact_ids = {cost.fact_id for cost in delivery.costs if cost.op == "assert"}
+    reveal_fact_ids = cost_fact_ids or {delivery.fact_id}
+    reveals = tuple(
+        knowledge
+        for knowledge in knowledge_items
+        if state.current_scene_id in knowledge.available_in_scenes
+        and any(effect.op == "assert" and effect.fact_id in reveal_fact_ids for effect in knowledge.establishes)
+    )
+    ready_reveals = tuple(
+        knowledge for knowledge in reveals if explain_reveal(state, "player", knowledge).reason != PREREQUISITE_MISSING
+    )
+    return not ready_reveals or any(
+        explain_reveal(state, "player", knowledge).reason != NOT_REACHABLE for knowledge in ready_reveals
+    )
 
 
 def staged_cue_is_eligible(

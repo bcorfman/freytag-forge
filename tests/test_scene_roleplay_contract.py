@@ -95,14 +95,19 @@ def test_declared_pressure_event_advances_facts_without_parsing_waiting() -> Non
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _: {"segments": [{"kind": "narration", "text": "Wait."}]})
 
-    event = next(event for event in PACKAGE.pacing.events if event.id == "pressure_1a")
+    event = next(event for event in PACKAGE.pacing.events if event.id == "patrol_returns_1a")
     turn_count = event.at_turn
     # These are deliberate non-events: advance the declared pressure clock without player action.
     for turn_index in range(turn_count):
         engine.turn("Wait." if turn_index % 2 == 0 else "Keep waiting.")
 
     assert Fact(predicate="patrol_return_pressure", subject="story", value="true") in state.facts.asserted
-    assert "pressure_1a" in state.fired_event_ids
+    assert {
+        "patrol_arrives_1a",
+        "patrol_enters_1a",
+        "patrol_leaves_1a",
+        "patrol_returns_1a",
+    } <= state.fired_event_ids
     assert Fact(predicate="story_elapsed_seconds", subject="story", value=str(turn_count * 60)) in state.facts.asserted
 
 

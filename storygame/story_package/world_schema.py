@@ -61,6 +61,25 @@ def world_source_schema_data(world: WorldSource) -> dict:
             item_data["enter_pole"] = item.enter_pole
         if item.seat_for is not None:
             item_data["seat_for"] = item.seat_for
+        if item.view:
+            item_data["view"] = [
+                {
+                    "from": view.from_,
+                    **(
+                        {
+                            "blocked_by": {
+                                "axis": view.blocked_by.axis,
+                                "pole": view.blocked_by.pole,
+                            }
+                        }
+                        if view.blocked_by is not None
+                        else {}
+                    ),
+                }
+                for view in item.view
+            ]
+        if item.contents_complete:
+            item_data["contents_complete"] = True
         if item.axes:
             item_data["axes"] = _axis_data(item.axes)
         if item.fixed is not None:

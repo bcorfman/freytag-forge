@@ -1,0 +1,9 @@
+connections:
+  - id: house_to_outside
+    from_place_id: mcgehee_home
+    to_place_id: outside_house
+    arrival_text: "Kristin steps outside. Her truck is parked at the curb."
+  - id: outside_to_house
+    from_place_id: outside_house
+    to_place_id: mcgehee_home
+    arrival_text: "Kristin goes back inside through the forced back door."

@@ -1,0 +1,29 @@
+{
+ "run_name": "1a-continuity-step2",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-step2",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "step2d-projection-test",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 1800,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "tests/test_knowledge_projection.py"
+   ],
+   "spec": "You are updating ONE old-behavior test in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. No network, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY tests/test_knowledge_projection.py. Touch nothing else; do not reformat unrelated lines.\n\nCONTEXT. The reveals k_sl_1a_f_r1 and k_sl_1a_f_r2 (the drawer-gap pointers) now require memory_card_recovered to be false in data/stories/continuity-initiative/knowledge.yaml, so once the memory card has been recovered they are no longer projected as candidates. The test `test_scene_1a_route_windows_preserve_the_recording_timeline` still expects them in every step, which pinned the old behavior.\n\nCHANGE. In that test, the tuple `expected_candidates` has four sets, one per player input ('Inspect the back door.', 'Look beneath the KMS drawer.', 'Read the files on Michelle's memory card.', 'Check the gate.'). The card is recovered by the second input's turn. So change ONLY the third and fourth sets: the third becomes {\"k_sl_1a_b_r1\", \"k_sl_1a_b_r2\"} and the fourth becomes set(). The first two sets stay exactly as they are. Run the test; if the third or fourth set differs from what the real projection returns, report the actual values and do NOT guess: print them and stop with a clear explanation.\n\nFINISH: `.venv/bin/python -m ruff format tests/test_knowledge_projection.py` and `ruff check` it; run the check.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_knowledge_projection.py tests/test_1a_gap_pointer.py tests/test_1a_back_door_gap.py tests/test_reveal_reach.py tests/test_1a_drawer_words.py tests/test_1a_spine_prompts.py tests/test_spine_expected_reveals.py tests/test_markdown_story_package.py tests/test_cue_lifecycle.py tests/test_cue_spent_reveal.py tests/test_canon_journey.py tests/test_pacing_handoff.py tests/test_scene_relative_pacing.py tests/test_cloudflare_transport.py tests/test_web_demo.py 2>&1 | tail -12 && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -m authoring_quality 2>&1 | tail -4 && git diff --quiet -- storygame bench/frozen docs && git diff --numstat tests/test_knowledge_projection.py | awk '$1<=4 && $2<=4 {ok=1} END {exit ok?0:1}' && .venv/bin/python -m ruff check tests && .venv/bin/python -m ruff format --check tests/test_knowledge_projection.py",
+   "verified": "old pointer expectation updated; broad focused suites pass"
+  }
+ ]
+}

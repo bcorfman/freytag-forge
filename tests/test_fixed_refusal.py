@@ -210,6 +210,7 @@ def test_capture_real_scene_1a_fixed_refusal_precedes_other_questions(monkeypatc
     step = "Kristin tried to move the workstation. It is fixed in place and did not move."
     assert record["steps"][0] == step
     assert provider.prior_steps[:1] == (step,)
+    assert provider.observation_request is None
     prompt = provider.assemble_turn_prompt("Carry the workstation to the truck.")
     rendered = prompt.get("user") or provider._section_user_prompt(prompt["context"])
     assert "Just before this: Kristin tried to move the workstation." in rendered

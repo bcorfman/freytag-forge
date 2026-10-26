@@ -37,18 +37,68 @@ def uses_thing(ask, command: str, thing_name: str) -> bool | None:
     return _answer(ask, {"command": command, "thing": thing_name}, questions, "uses_thing")
 
 
-def goes_to_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
+def boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
     questions = {
-        "goes_to_vehicle": {
+        "boards_vehicle": {
             "type": "noul",
-            "instructions": "Decide whether the command takes the player to, into, or in control of the vehicle.",
+            "instructions": (
+                "Decide whether the command has the player go to the vehicle to use it. "
+                "A command that only says go to the vehicle means the player gets in. "
+                "The command can have the player get into it. "
+                "The command can have the player sit in it. "
+                "The command can have the player drive it."
+            ),
             "criteria": {
-                "true": "The command means going to the vehicle, getting into it, or driving it.",
-                "false": "The command only looks at, touches, or talks about the vehicle, or leaves it.",
+                "true": (
+                    "The command has the player go to the vehicle to use it. "
+                    "A command that only says go to the vehicle means the player gets in. "
+                    "The command has the player get into it. "
+                    "The command has the player sit in it. "
+                    "The command has the player drive it."
+                ),
+                "false": (
+                    "The command is not boarding if it only walks over to or walks up to the vehicle. "
+                    "It is not boarding if it only approaches, looks at, touches, or talks about the vehicle. "
+                    "It is not boarding if it leaves the vehicle."
+                ),
             },
         }
     }
-    return _answer(ask, {"command": command, "vehicle": vehicle_name}, questions, "goes_to_vehicle")
+    return _answer(ask, {"command": command, "vehicle": vehicle_name}, questions, "boards_vehicle")
+
+
+def opens_container(ask, command: str, container_name: str) -> bool | None:
+    questions = {
+        "opens_container": {
+            "type": "noul",
+            "instructions": (
+                "Decide whether the command has the player open the container. "
+                "This includes a command to look inside it by opening it."
+            ),
+            "criteria": {
+                "true": (
+                    "The command has the player open the container. "
+                    "The command can have the player look inside it by opening it."
+                ),
+                "false": ("The command only looks at, closes, touches, moves, carries, or talks about the container."),
+            },
+        }
+    }
+    return _answer(ask, {"command": command, "container": container_name}, questions, "opens_container")
+
+
+def only_boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
+    questions = {
+        "only_boards_vehicle": {
+            "type": "noul",
+            "instructions": "Decide whether the command asks for nothing more than getting to or into the vehicle.",
+            "criteria": {
+                "true": "The command only goes to, gets into, or sits in the vehicle.",
+                "false": "The command also asks for another action, such as driving, searching, looking, or talking.",
+            },
+        }
+    }
+    return _answer(ask, {"command": command, "vehicle": vehicle_name}, questions, "only_boards_vehicle")
 
 
 def moves_thing(ask, command: str, thing_name: str) -> bool | None:

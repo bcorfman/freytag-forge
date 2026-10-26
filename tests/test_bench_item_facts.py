@@ -569,16 +569,16 @@ def test_owner_possessive_name_resolves(monkeypatch):
 def test_reply_moving_a_seated_kristin_is_kept():
     provider = _seeded_provider()
     world = world_for(PACKAGE, provider.state.facts)
-    assert world.move("kristin", "kitchen").ok
-    assert world.move("kristin", "workstation_chair").ok
+    assert world.move("kristin", "outside_house").ok
+    assert world.move("kristin", "truck_driver_seat").ok
 
     facts, issues = provider.apply_item_facts(
         {"Kristin": {"place": "Kristin's truck"}}, player_input="Go out to the truck."
     )
 
     assert issues == []
-    assert facts["Kristin"]["place"] == "Kristin's truck"
-    assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "kristin_truck"
+    assert facts["Kristin"]["place"] == "driver's seat"
+    assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "truck_driver_seat"
 
 
 def test_self_named_place_is_a_no_op():

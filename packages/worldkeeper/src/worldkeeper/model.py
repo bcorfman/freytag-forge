@@ -98,6 +98,8 @@ class _Entity:
     enterable: bool | None = None
     enter_pole: str | None = None
     seat_for: str | None = None
+    view: tuple[dict[str, Any], ...] = ()
+    contents_complete: bool = False
 
 
 def _slug(text):
@@ -165,6 +167,30 @@ class WorldSchema:
             entity_id, kind = entity_data.get("id"), entity_data.get("kind")
             if not entity_id or entity_id in entities or kind not in kinds:
                 raise SchemaError("invalid entity declaration")
+            raw_view = entity_data.get("view", [])
+            if not isinstance(raw_view, list):
+                raise SchemaError("view must be a list")
+            view = []
+            for view_data in raw_view:
+                if not isinstance(view_data, Mapping):
+                    raise SchemaError("view entries must be mappings")
+                from_id = view_data.get("from")
+                if not isinstance(from_id, str) or not from_id:
+                    raise SchemaError("view from must name an entity")
+                blocked_by = view_data.get("blocked_by")
+                if blocked_by is not None:
+                    if not isinstance(blocked_by, Mapping):
+                        raise SchemaError("view blocked_by must be a mapping")
+                    axis_name, pole = blocked_by.get("axis"), blocked_by.get("pole")
+                    if not isinstance(axis_name, str) or not axis_name:
+                        raise SchemaError("view blocked_by axis must name an axis")
+                    if not isinstance(pole, str) or not pole:
+                        raise SchemaError("view blocked_by pole must name a pole")
+                    blocked_by = {"axis": axis_name, "pole": pole}
+                view.append({"from": from_id, "blocked_by": blocked_by})
+            contents_complete = entity_data.get("contents_complete", False)
+            if not isinstance(contents_complete, bool):
+                raise SchemaError("contents_complete must be boolean")
             axes = []
             for axis_data in entity_data.get("axes", []):
                 poles = axis_data.get("poles", [])
@@ -211,6 +237,8 @@ class WorldSchema:
                 entity_data.get("enterable"),
                 entity_data.get("enter_pole"),
                 entity_data.get("seat_for"),
+                tuple(view),
+                contents_complete,
             )
         for entity in list(entities.values()):
             if entity.parent and (
@@ -251,6 +279,26 @@ class WorldSchema:
                 if content_id in entities:
                     raise SchemaError("duplicate expanded content")
                 entities[content_id] = _Entity(content_id, content_name, "thing", parent=entity.id)
+        axis_poles = {}
+        for entity in entities.values():
+            if entity.openable:
+                axis_poles.setdefault("open", set()).update(("open", "closed"))
+                axis_poles.setdefault(entity.id, set()).update(("open", "closed"))
+            if entity.axes:
+                axis_poles.setdefault(entity.id, set()).update(pole for axis in entity.axes for pole in axis["poles"])
+            for axis in entity.axes:
+                axis_poles.setdefault(axis["name"], set()).update(axis["poles"])
+        for entity in entities.values():
+            for view_data in entity.view:
+                if view_data["from"] not in entities:
+                    raise SchemaError(f"view from references unknown entity: {view_data['from']}")
+                blocked_by = view_data["blocked_by"]
+                if blocked_by is not None:
+                    axis_name, pole = blocked_by["axis"], blocked_by["pole"]
+                    if axis_name not in axis_poles:
+                        raise SchemaError(f"view blocked_by references unknown axis: {axis_name}")
+                    if pole not in axis_poles[axis_name]:
+                        raise SchemaError(f"view blocked_by references unknown pole: {pole}")
         return cls(kinds, entities, kind_enterable)
 
 
@@ -481,6 +529,45 @@ class World:
     def contents(self, entity_id):
         """Return direct child IDs in sorted order."""
         return tuple(sorted(candidate for candidate in self._ids() if self.parent(candidate) == entity_id))
+
+    def contents_complete(self, entity_id):
+        """Return whether an entity's declared direct contents are complete."""
+        entity = self._entity(entity_id)
+        return bool(entity and entity.contents_complete)
+
+    def sees(self, observer_id, entity_id):
+        """Return whether an observer can see an entity through declared boundaries."""
+        if not self.exists(observer_id) or not self.is_visible(entity_id):
+            return False
+        observer_chain = self.chain(observer_id)
+        observer_places = {self.area(observer_id), *observer_chain}
+        for ancestor in self.chain(entity_id):
+            if not self.is_enterable(ancestor):
+                continue
+            if ancestor in observer_chain:
+                continue
+            if any(
+                boundary in observer_chain and boundary in self.chain(ancestor)
+                for boundary in observer_chain
+                if self.is_enterable(boundary)
+            ):
+                continue
+            entity = self._entity(ancestor)
+            if not entity or not any(
+                view_data["from"] in observer_places and not self._view_blocked(view_data["blocked_by"])
+                for view_data in entity.view
+            ):
+                return False
+        return True
+
+    def _view_blocked(self, blocked_by):
+        if blocked_by is None:
+            return False
+        if self.exists(blocked_by["axis"]):
+            return blocked_by["pole"] in self.axis_values(blocked_by["axis"]).values()
+        return any(
+            self.axis_values(candidate).get(blocked_by["axis"]) == blocked_by["pole"] for candidate in self.entity_ids()
+        )
 
     def is_hidden(self, entity_id):
         """Return whether an entity is hidden."""

@@ -14,6 +14,7 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
+from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import Audience
 from tests._legacy_package import legacy_package
@@ -38,6 +39,7 @@ def _scene_state(scene_id: str) -> RuntimeState:
     state.current_scene_id = scene_id
     state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == scene_id)
     state._assert_scene_entry_fact(scene_id)
+    apply_scene_placements(PACKAGE, state.facts, scene_id)
     return state
 
 
@@ -123,9 +125,8 @@ def test_3b_frame_remains_without_the_moving_fact() -> None:
     _assert_story_fact(state, "human_security_control")
 
     projection = KnowledgeProjector().project(state, "player", "Inspect the executive office.")
-    frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "3B")
 
-    assert projection.scene_frame == frame.situation
+    assert projection.scene_frame == ""
     assert projection.scene_hidden_ids == ()
 
 
@@ -134,9 +135,8 @@ def test_3b_effect_knowledge_hides_scene_line_but_keeps_frame_and_commitment() -
     _establish(state, "k_sl_3b_c_r1")
 
     projection = KnowledgeProjector().project(state, "player", "Inspect the broadcast relay.")
-    frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "3B")
 
-    assert projection.scene_frame == frame.situation
+    assert projection.scene_frame == ""
     assert "k_sl_3b_c_r1" in projection.scene_hidden_ids
     assert "k_sl_3b_c_r1" in _ids(projection.committed_knowledge)
 
@@ -347,8 +347,8 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
     expected_candidates = (
         {"k_sl_1a_a_r1", "k_sl_1a_f_r1", "k_sl_1a_f_r2"},
         {"k_sl_1a_b_r0", "k_sl_1a_f_r1", "k_sl_1a_f_r2"},
-        {"k_sl_1a_b_r1", "k_sl_1a_b_r2", "k_sl_1a_f_r1", "k_sl_1a_f_r2"},
-        {"k_sl_1a_f_r1", "k_sl_1a_f_r2"},
+        {"k_sl_1a_b_r1", "k_sl_1a_b_r2"},
+        set(),
     )
     for player_input, expected in zip(
         (

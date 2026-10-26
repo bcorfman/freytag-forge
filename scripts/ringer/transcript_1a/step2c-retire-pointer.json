@@ -1,0 +1,31 @@
+{
+ "run_name": "1a-continuity-step2",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-step2",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "step2c-retire-pointer",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "data/stories/continuity-initiative/knowledge.yaml",
+    "tests/test_1a_gap_pointer.py",
+    "tests/test_1a_back_door_gap.py"
+   ],
+   "spec": "You are making one small data fix in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: data/stories/continuity-initiative/knowledge.yaml (items k_sl_1a_f_r1 and k_sl_1a_f_r2 only), tests/test_1a_gap_pointer.py (add tests; change an old assertion only if it pins the old behavior), tests/test_1a_back_door_gap.py, and generated spine files if a repo test demands regeneration. Do NOT edit docs/testing-runbook.md or reformat unrelated text anywhere. Never touch storygame/, bench/frozen/, or other scenes.\n\nPROBLEM. The two drawer-gap pointer reveals k_sl_1a_f_r1 and k_sl_1a_f_r2 (storylet SL-1A-F, 'The Drawer Points to the Gap') are authored to be available only while Kristin does NOT yet have the memory card (data/stories/continuity-initiative/storylets.md says so under 'Available when'), but their `requires:` is empty. So after the card is recovered, 'Pull out the drawer.' still fires the pointer and sets drawer_gap_pointed_out, which re-points a finished cue.\n\nFIX. Set `requires` on BOTH items to a predicate that the fact memory_card_recovered is false. Find how other items in knowledge.yaml and the loader's FactPredicate model write an equals-false requirement (see storygame/story_package/models.py FactPredicate and examples of `equals: false` in pacing.yaml or other `requires:` lists) and use that exact shape. First confirm by test (below) that a fact that was never asserted counts as false for predicate_matches (storygame/runtime/validation.py predicate_matches); if it does not, report that and do not change runtime code.\n\nTESTS FIRST, in tests/test_1a_gap_pointer.py (small): (1) with SL-1A-E and SL-1A-F active and the card NOT recovered, 'Pull out the drawer.' still hands off k_sl_1a_f_r1 and 'Study the carving.' still hands off k_sl_1a_f_r2 (existing tests already cover this; keep them passing); (2) after asserting memory_card_recovered true (use Fact(predicate='memory_card_recovered', subject='story', value='true') as tests in this file do), neither pointer is in the projected candidates and 'Pull out the drawer.' has no authored handoff. Write the new test first, see it fail, then fix the data.\n\nFINISH: run the focused tests in the check; ruff format/check on any .py you touched; report what you changed.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -x -n 4 tests/test_1a_gap_pointer.py tests/test_1a_back_door_gap.py tests/test_reveal_reach.py tests/test_1a_drawer_words.py tests/test_1a_spine_prompts.py tests/test_spine_expected_reveals.py tests/test_markdown_story_package.py tests/test_knowledge_projection.py tests/test_cue_lifecycle.py tests/test_cue_spent_reveal.py tests/test_canon_journey.py tests/test_pacing_handoff.py 2>&1 | tail -12 && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -m authoring_quality 2>&1 | tail -4 && git diff --quiet -- storygame bench/frozen docs && test \"$(git diff --numstat data | awk '{print $1}')\" -le 12 && .venv/bin/python -m ruff check tests && .venv/bin/python -m ruff format --check tests/test_1a_gap_pointer.py",
+   "verified": "gap pointers retire once the card is recovered; focused suites pass; no runtime or docs change"
+  }
+ ]
+}

@@ -6,7 +6,14 @@ import json
 
 from bench.jev_use import ask_moves_thing, ask_needs_to_stand, ask_same_or_part, ask_uses_thing
 from storygame.runtime.jev import JevClient
-from storygame.runtime.jev_questions import moves_thing, needs_to_stand, same_or_part, uses_thing
+from storygame.runtime.jev_questions import (
+    boards_vehicle,
+    moves_thing,
+    needs_to_stand,
+    opens_container,
+    same_or_part,
+    uses_thing,
+)
 
 
 class _Response:
@@ -96,3 +103,56 @@ def test_runtime_questions_fail_closed() -> None:
         assert function(lambda *_args: (_ for _ in ()).throw(RuntimeError("offline")), *arguments) is None
         assert function(lambda *_args: {}, *arguments) is None
         assert function(lambda *_args, answer_key=key: {answer_key: {"noul": "yes"}}, *arguments) is None
+
+
+def test_boards_vehicle_question_uses_boarding_wording() -> None:
+    captured = {}
+
+    def ask(_state, questions):
+        captured.update(questions)
+        return {"boards_vehicle": {"noul": 0.0}}
+
+    assert boards_vehicle(ask, "Walk over to the vehicle.", "vehicle") is False
+
+    question = captured["boards_vehicle"]
+    assert question["type"] == "noul"
+    instructions = question["instructions"].lower()
+    true_criterion = question["criteria"]["true"].lower()
+    false_criterion = question["criteria"]["false"].lower()
+
+    for text in ("go to the vehicle to use it", "get into it", "sit in it", "drive it"):
+        assert text in instructions
+        assert text in true_criterion
+    for text in (
+        "walks over to",
+        "walks up to",
+        "approaches",
+        "looks at",
+        "touches",
+        "talks about",
+        "leaves",
+        "not boarding",
+    ):
+        assert text in false_criterion
+
+
+def test_opens_container_question_uses_opening_wording() -> None:
+    captured = {}
+
+    def ask(_state, questions):
+        captured.update(questions)
+        return {"opens_container": {"noul": 1.0}}
+
+    assert opens_container(ask, "Open the box.", "box") is True
+
+    question = captured["opens_container"]
+    assert question["type"] == "noul"
+    instructions = question["instructions"].lower()
+    true_criterion = question["criteria"]["true"].lower()
+    false_criterion = question["criteria"]["false"].lower()
+
+    for text in ("open the container", "look inside it by opening it"):
+        assert text in instructions
+        assert text in true_criterion
+    for text in ("looks at", "closes", "touches", "moves", "carries", "talks about"):
+        assert text in false_criterion

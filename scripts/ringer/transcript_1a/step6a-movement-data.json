@@ -1,0 +1,31 @@
+{
+ "run_name": "1a-continuity-step6",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-step6",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "step6a-movement-data",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 4800,
+   "check_timeout_s": 2400,
+   "ownership": [
+    "data/stories/continuity-initiative/world.yaml",
+    "data/stories/continuity-initiative/connections.yaml",
+    "tests/test_1a_movement.py"
+   ],
+   "spec": "You are making Scene 1A movement engine-owned, using ONLY existing package features (DATA plus TESTS; no runtime code). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: data/stories/continuity-initiative/world.yaml, data/stories/continuity-initiative/connections.yaml (NEW), tests/test_1a_movement.py (NEW), and existing tests that pin the old data if a change really requires it (list each). Never edit storygame/, bench/frozen/, docs/testing-runbook.md; do not reformat unrelated text.\n\nTHE PLACES (already in the data, do not restructure): `mcgehee_home` (Michelle's house; the kitchen is inside it) and `outside_house` (outside the house) are separate root areas; Kristin's truck `kristin_truck` is inside outside_house, with seats truck_driver_seat and truck_passenger_seat inside the truck. Kristin starts in mcgehee_home. There are no connections today (storygame/story_package/loader.py `_load_connections` reads root/connections.yaml; models.py `Connection`; runtime/traversal.py `match_traversal_command` and `resolve_traversal`; RuntimeEngine.follow_connection makes the move a provider-free turn; tests/fixtures/stories/lighthouse-incident/connections.yaml is an example).\n\nPROBLEM (measured live, 109 turns). Moves between inside and outside depend on place names the narrator proposes. 6 times it created a new area (`n_yard_1`, `n_in_front_of_michelle_s_workstation_1`) because 'yard' resolved to nothing; 4 times it put Kristin in 'Kristin's truck' as a place (inside the vehicle with no seat); twice her place became None.\n\nREQUIRED BEHAVIOR.\n1. world.yaml: add `aliases` to the location outside_house: outside, the yard, the driveway, the street, the curb, the front of the house. Add aliases to mcgehee_home (keep the existing ones): inside, indoors. If the loader or a lint rejects an alias (duplicate name, leak-scanned bare common word, collision with another entity or `kinds`), keep the aliases that pass and REPORT exactly which were rejected and why; never rename existing ids or names.\n2. connections.yaml with exactly two connections: `house_to_outside` from mcgehee_home to outside_house, arrival_text exactly: Kristin steps outside. Her truck is parked at the curb.   and `outside_to_house` from outside_house to mcgehee_home, arrival_text exactly: Kristin goes back inside through the forced back door.   No access facts, no consequences, no via.\n3. Behavior (tests/test_1a_movement.py, written FIRST and seen failing, keep it small and complete, drive the real RuntimeEngine with a provider that raises if called, so a traversal turn proves no narrator call): (a) from the house (parent mcgehee_home and also from the kitchen) 'Go outside.' and 'Walk outside.' move Kristin to outside_house with that arrival text and make no provider call; (b) from outside_house 'Go inside.' and 'Go back inside.' move her to mcgehee_home; (c) from truck_driver_seat (Kristin seated, move her with world.move) 'Go inside.' puts her in mcgehee_home and she is no longer in the seat; (d) 'Go out to the truck.' and 'Get in the truck.' and 'Look around.' are NOT traversals (match_traversal_command returns None) from the house and from outside; (e) 'Go in the house.' while already inside is not a traversal and does not raise; (f) alias resolution: world.resolve for 'the yard', 'driveway', 'outside' returns outside_house and 'inside' returns mcgehee_home (use the world_for(...) object); (g) the scene entry still bootstraps with Kristin in mcgehee_home and the package loads.\n4. Do not change scene pacing, reveals, storylets or narration text. If an existing test pins the absence of connections or the exact alias list, update it and say why. \n\nFINISH: ruff format and ruff check the test file; run the focused suites in the check; report rejected aliases, tests changed, and anything surprising (for example a pacing or journey test whose turn count changed because traversal turns count as turns).",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 $(ls -d tests/test_1a_movement.py tests/test_traversal*.py tests/test_markdown_story_package.py tests/test_world_model.py tests/test_reference_resolution*.py tests/test_cloudflare_transport.py tests/test_web_demo.py tests/test_canon_journey.py tests/test_1a_patrol.py tests/test_1a_witnessed_recovery.py tests/test_boarding.py tests/test_narration_safety.py tests/test_leak_terms.py tests/test_guard_vocabulary.py tests/test_reference_protected.py tests/test_item_facts*.py tests/test_scene_relative_pacing.py tests/test_pacing_handoff.py 2>/dev/null | tr '\\n' ' ') 2>&1 | tail -14 && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -m authoring_quality 2>&1 | tail -4 && test -f data/stories/continuity-initiative/connections.yaml && git diff --quiet -- storygame bench/frozen docs && .venv/bin/python -m ruff check . && .venv/bin/python -m ruff format --check .",
+   "verified": "inside and outside are engine-owned traversals with authored text and no narrator call; place aliases resolve; suites pass"
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+{
+ "run_name": "transcript-1a-postfix",
+ "workdir": "/home/bcorfman/dev/ringer-work/transcript-1a-postfix",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "fix-witnessed-route",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/transcript_1a/live_baseline.py",
+    "scripts/ringer/transcript_1a/check_live_baseline.py",
+    "scripts/ringer/transcript_1a/test_live_baseline.py"
+   ],
+   "spec": "You are fixing one constant in a probe harness in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY scripts/ringer/transcript_1a/live_baseline.py, check_live_baseline.py and test_live_baseline.py in that folder (and write under bench/results/transcript-1a-dry/). Never edit storygame/, data/, tests/, docs/, .plans/.\n\nCHANGE. In live_baseline.py the ROUTES entry `witnessed` (currently 10 inputs) must become exactly these 11 inputs, in order:\ngo in the house / examine the carved initials / wait / wait / wait / feel under the drawer / say what the card is to the officer / wait / go out to the truck / get in / look around\n(Reason: the patrol officer enters the house only after scene turn 5 completes, so the card must be taken at input 6; a bare 'feel in the gap' would not earn because its one-turn cue referent has expired by then, so the explicit 'feel under the drawer' is used.) Do not change the `reported` or `corrected` routes. Update any test or checker expectation that hard-codes the witnessed length of 10 (grep for it) to 11, deriving it from ROUTES where possible.\nFINISH: ruff format and ruff check the three files; run the tests; run `.venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --dry-run --route witnessed --replicates 1 --out bench/results/transcript-1a-dry/witnessed` and the checker with --mode dry; then print, for that dry run, for each turn the input, the selected_knowledge_ids and the memory_card parent, so the report shows that input 6 selects k_sl_1a_b_r0w.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider scripts/ringer/transcript_1a/test_live_baseline.py 2>&1 | tail -5 && rm -rf bench/results/transcript-1a-dry && .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --dry-run --route witnessed --replicates 1 --out bench/results/transcript-1a-dry/witnessed && .venv/bin/python scripts/ringer/transcript_1a/check_live_baseline.py bench/results/transcript-1a-dry/witnessed 1 --mode dry && python3 -c \"import json;d=json.load(open('bench/results/transcript-1a-dry/witnessed/rows.json'))[0]['turns'];assert len(d)==11,len(d);assert d[5]['input']=='feel under the drawer' and d[5]['selected_knowledge_ids']==['k_sl_1a_b_r0w'],(d[5]['input'],d[5]['selected_knowledge_ids'])\" && git diff --quiet -- storygame data tests docs && .venv/bin/python -m ruff check scripts/ringer/transcript_1a && .venv/bin/python -m ruff format --check scripts/ringer/transcript_1a",
+   "verified": "witnessed route recovers the card while the officer is in the house; dry run selects k_sl_1a_b_r0w at input 6"
+  }
+ ]
+}

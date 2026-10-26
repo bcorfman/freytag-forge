@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 
 from storygame.runtime.candidate_matcher import _SYNONYM_CLASSES, _words
 from storygame.runtime.knowledge import _entity_surface_forms
+from storygame.runtime.reveal_eligibility import explain_reveal
 
 _STOPWORDS = frozenset(
     {
@@ -74,37 +76,80 @@ def _current_scene_record(state):
     return record
 
 
-def recent_cue_referent_text(state, player_input: str) -> str:
-    """Return one committed cue owner for evidence matching, or an empty string."""
-
-    record = _current_scene_record(state)
-    if record is None or not record.reveal_ids:
-        return ""
-
-    entries = [
-        state.package.knowledge_indexes.by_id[reveal_id]
-        for reveal_id in record.reveal_ids
-        if reveal_id in state.package.knowledge_indexes.by_id
-    ]
-    entries = [entry for entry in entries if isinstance(entry.delivery_text, str) and entry.delivery_text.strip()]
-    if not entries:
+def _referent_from_evidence(state, player_input: str, evidence: Iterable[tuple[object, str]]) -> str:
+    evidence = tuple((entry, text) for entry, text in evidence if isinstance(text, str) and text.strip())
+    if not evidence:
         return ""
 
     protagonist_id = state.package.world.protagonist_id
     named_ids = _named_entity_ids(state, player_input)
     owner_ids = {
         entity_id
-        for entry in entries
-        for entity_id in entry.entity_ids
+        for entry, _text in evidence
+        for entity_id in (getattr(entry, "reach_entity_ids", ()) or entry.entity_ids)
         if entity_id != protagonist_id and entity_id not in named_ids
     }
     if len(owner_ids) != 1:
         return ""
 
-    delivery_words = set().union(*(_content_words(entry.delivery_text) for entry in entries))
-    if not delivery_words.intersection(_content_words(player_input)):
+    evidence_words = set().union(*(_content_words(text) for _entry, text in evidence))
+    if not evidence_words.intersection(_content_words(player_input)):
         return ""
 
     owner_id = next(iter(owner_ids))
     owner = next((entity for entity in _entities(state) if entity.id == owner_id), None)
     return owner.name if owner is not None else ""
+
+
+def _staged_cue_evidence(state) -> tuple[tuple[object, str], ...]:
+    if state.turn_index <= state.scene_entered_at_turn:
+        return ()
+
+    evidence: list[tuple[object, str]] = []
+    for stage in getattr(state, "cue_stages", ()):
+        if (
+            stage.fact_id not in state.delivered_cue_ids
+            or stage.last_turn != state.turn_index - 1
+            or stage.visit_entered_at != state.scene_entered_at_turn
+        ):
+            continue
+        delivery = next(
+            (
+                delivery
+                for delivery in state.package.deliveries
+                if delivery.fact_id == stage.fact_id and delivery.scene_id == state.current_scene_id
+            ),
+            None,
+        )
+        if delivery is None:
+            continue
+        cue_text = delivery.escalation_text if stage.stage == 2 else delivery.cue_text
+        if not cue_text:
+            continue
+        fact_ids = {delivery.fact_id, *(cost.fact_id for cost in delivery.costs if cost.op == "assert")}
+        knowledge_ids = {
+            knowledge_id
+            for fact_id in fact_ids
+            for knowledge_id in state.package.knowledge_indexes.facts_to_knowledge.get(fact_id, ())
+        }
+        for knowledge_id in knowledge_ids:
+            entry = state.package.knowledge_indexes.by_id[knowledge_id]
+            if state.current_scene_id in entry.available_in_scenes and explain_reveal(state, "player", entry).eligible:
+                evidence.append((entry, cue_text))
+    return tuple(evidence)
+
+
+def recent_cue_referent_text(state, player_input: str) -> str:
+    """Return one recent reveal or cue owner for evidence matching, or empty string."""
+
+    record = _current_scene_record(state)
+    if record is None:
+        return ""
+
+    evidence = [
+        (state.package.knowledge_indexes.by_id[reveal_id], entry.delivery_text)
+        for reveal_id in record.reveal_ids
+        if (entry := state.package.knowledge_indexes.by_id.get(reveal_id)) is not None
+    ]
+    evidence.extend(_staged_cue_evidence(state))
+    return _referent_from_evidence(state, player_input, evidence)

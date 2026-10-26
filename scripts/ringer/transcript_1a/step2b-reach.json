@@ -1,0 +1,36 @@
+{
+ "run_name": "1a-continuity-step2",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-step2",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "step2b-reach",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 2400,
+   "ownership": [
+    "storygame/story_package/models.py",
+    "storygame/story_package/loader.py",
+    "storygame/runtime/reveal_eligibility.py",
+    "storygame/runtime/engine.py",
+    "storygame/runtime/knowledge.py",
+    "docs/markdown-story-authoring.md",
+    "data/stories/continuity-initiative/knowledge.yaml",
+    "tests/test_reveal_reach.py"
+   ],
+   "spec": "You are adding one small, story-neutral capability to the freytag-forge engine (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. Never edit bench/frozen/, tests/fixtures/continuity_initiative_pre_3c_adoption/, .env, or scene data other than the three 1A knowledge items named below. Shared runtime must contain NO story names (no Kristin, Michelle, drawer, card, 1A).\n\nWHY. Today a reveal (a knowledge item the player earns by acting) is eligible whenever its storylet is active, wherever the protagonist stands. In scene 1A, 'Feel under the drawer.' typed while Kristin is outside at her truck would recover the hidden memory card through the wall. We add an opt-in package field so a reveal can require the protagonist to be with the things it is about.\n\nTHE CAPABILITY. New optional field `reach_entity_ids: tuple[str, ...] = ()` on KnowledgeDefinition (storygame/story_package/models.py), and in the knowledge.yaml loader whitelist/validation (storygame/story_package/loader.py): every id must name a declared world item, character or group, else StoryPackageError naming the knowledge id and the unknown id. In storygame/runtime/reveal_eligibility.py add `NOT_REACHABLE = \"not_reachable\"` and, in explain_reveal, AFTER the prerequisite (requires) check and BEFORE the source-active check, return RevealEligibility(False, NOT_REACHABLE, <the first unreachable id>) when any listed id is not together with the protagonist, using the world model: `world_for(state.package, state.facts).together(state.package.world.protagonist_id, entity_id)` (packages/worldkeeper/src/worldkeeper/model.py: together = same area or nested areas; an item the protagonist holds counts as with her). An empty reach_entity_ids changes nothing for any existing reveal. Check every caller of explain_reveal: storygame/runtime/knowledge.py `_candidates` (unreachable reveals must not be offered) and storygame/runtime/engine.py `_cue_reveal_available` (~line 1300; it treats any reason other than STORYLET_SPENT and ALREADY_ESTABLISHED as still available, so a cue for an unreachable reveal must stay available exactly like a missing prerequisite: keep that behavior and say so in a one-line comment if you touch it). Also confirm the narrator-selection validation path (grep for ineligible_selection) rejects an unreachable selected reveal; if it already goes through the candidate list, add no code. Add a short paragraph documenting `reach_entity_ids` to docs/markdown-story-authoring.md next to the action_evidence section.\n\nTHE DATA. In data/stories/continuity-initiative/knowledge.yaml add `reach_entity_ids: [michelle_drawer]` to exactly these three items and no others: k_sl_1a_b_r0, k_sl_1a_f_r1, k_sl_1a_f_r2. Kristin starts at `mcgehee_home`; the drawer is in the kitchen inside it, so she is together with it there, and she is NOT together with it at `outside_house` or in the truck.\n\nTESTS FIRST. Create tests/test_reveal_reach.py BEFORE the code, confirm it fails for the right reason, then implement. Keep it small and complete. Cases: (1) 1A, Kristin moved to outside_house (use RuntimeState.bootstrap(PACKAGE), world_for(...).move('kristin','outside_house') as tests/test_boarding.py does, with SL-1A-E and SL-1A-F in state.active_event_ids): explain_reveal for k_sl_1a_b_r0, k_sl_1a_f_r1 and k_sl_1a_f_r2 is ineligible with reason not_reachable; none of the three is in KnowledgeProjector().project(state,'player','Feel under the drawer.').candidates; uniquely_matched_authored_handoff for 'Feel under the drawer.' and 'Feel in the gap.' over those candidates is None. (2) Same state with Kristin in mcgehee_home, then in the truck driver's seat: reachable at mcgehee_home (eligible, handoff matches k_sl_1a_b_r0), not reachable in the truck. (3) A story-neutral synthetic case in the style of tests/test_cue_eligibility_compare.py `_synthetic_package()` (reuse that helper if it fits; otherwise build the smallest package with two areas and one item) proving reach gating works with no Kristin-specific logic: reveal with reach ids is ineligible when the protagonist is in the other area and eligible after she moves. (4) Loader: a reveal whose reach_entity_ids names an undeclared id raises StoryPackageError mentioning the id. Do not add a test per field; these four groups are the whole coverage.\n\nFINISH: ruff format then ruff check on every .py file you touched; then run the focused tests in the check below until all pass, and also `.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_canon_journey.py tests/test_scene_relative_pacing.py tests/test_pacing_handoff.py` and fix any regression you caused. Report any existing test you had to change and why.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -x -n 4 tests/test_reveal_reach.py tests/test_1a_back_door_gap.py tests/test_1a_gap_pointer.py tests/test_1a_drawer_words.py tests/test_1a_spine_prompts.py tests/test_spine_expected_reveals.py tests/test_markdown_story_package.py tests/test_knowledge_projection.py tests/test_knowledge_leakage_matrix.py tests/test_candidate_matcher.py tests/test_cloudflare_transport.py tests/test_cue_spent_reveal.py tests/test_cue_eligibility_compare.py tests/test_cue_lifecycle.py tests/test_boarding.py tests/test_reference_protected.py tests/test_canon_journey.py tests/test_scene_relative_pacing.py tests/test_pacing_handoff.py tests/test_web_demo.py 2>&1 | tail -15 && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -m authoring_quality 2>&1 | tail -5 && git diff --quiet -- bench/frozen tests/fixtures/continuity_initiative_pre_3c_adoption && test \"$(grep -c 'reach_entity_ids' data/stories/continuity-initiative/knowledge.yaml)\" = 3 && ! grep -rniE 'kristin|michelle|drawer|memory_card' storygame/runtime/reveal_eligibility.py && .venv/bin/python -m ruff check storygame tests && .venv/bin/python -m ruff format --check storygame tests/test_reveal_reach.py",
+   "verified": "reach gate tested on 1A and a synthetic story; focused, journey and pacing suites pass; no story names in runtime"
+  }
+ ]
+}

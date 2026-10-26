@@ -29,6 +29,7 @@ from storygame.runtime.world_model import apply_scene_placements, apply_world_ef
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
 from tests._legacy_package import legacy_package
+from tests.test_narration_json import FIXTURE_1, FIXTURE_2, FIXTURE_3
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -632,6 +633,61 @@ def test_transport_unwraps_the_workers_narration_envelope(monkeypatch) -> None:
     assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "A valid proposal."}]}
 
 
+def test_transport_extracts_one_prose_wrapped_worker_object_without_recovery(monkeypatch) -> None:
+    reply = (
+        "Since there are no new names in the command, the response would be:\n\n"
+        '{"refers": [], "same_as": {}, "kind": {}}'
+    )
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"narration": reply})
+    )
+
+    assert provider._request({"system": "", "user": ""}) == {
+        "refers": [],
+        "same_as": {},
+        "kind": {},
+    }
+    assert provider.recovery_count == 0
+
+
+def test_transport_still_salvages_a_truncated_segments_reply(monkeypatch) -> None:
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+    reply = (
+        '{"segments":[{"kind":"narration","text":"She opens the drawer."},{"kind":"narration","text":"The card is co'
+    )
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"narration": reply})
+    )
+
+    assert provider._request({"system": "", "user": ""}) == {
+        "segments": [{"kind": "narration", "text": "She opens the drawer."}]
+    }
+    assert provider.recovery_count == 1
+
+
+def test_transport_leaves_a_clean_worker_reply_untouched(monkeypatch) -> None:
+    reply = '{"segments":[{"kind":"narration","text":"A valid proposal."}]}'
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    monkeypatch.setattr(
+        "storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response({"narration": reply})
+    )
+
+    assert provider._request({"system": "", "user": ""}) == {
+        "segments": [{"kind": "narration", "text": "A valid proposal."}]
+    }
+    assert provider.recovery_count == 0
+
+
 def test_transport_drops_empty_unknown_reply_keys_but_keeps_nonempty_extras(monkeypatch) -> None:
     provider = CloudflareTurnProvider(
         worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
@@ -775,6 +831,91 @@ def test_transport_completes_a_reply_missing_its_final_brace(monkeypatch) -> Non
     assert result["item_facts"]["Michelle's phone"]["condition"] == ["cracked screen"]
     assert state.last_turn_delivery.segments_truncated is False
     assert state.last_turn_delivery.recovery_used is False
+
+
+@pytest.mark.parametrize(
+    ("fixture", "speech_texts"),
+    [
+        (
+            FIXTURE_1,
+            (
+                'She says to herself, "I need to find some clues about Shelly\'s disappearance."',
+                'She reaches for her laptop, saying, "Maybe I can find something on here."',
+            ),
+        ),
+        (
+            FIXTURE_2,
+            ('She says to herself, "I should check if I have any messages from Shelly," and reaches for the laptop.',),
+        ),
+        (
+            FIXTURE_3,
+            ('She says to herself, "I should check if I have any messages from Shelly."',),
+        ),
+    ],
+)
+def test_transport_repairs_unescaped_speech_quotes_without_reasking(monkeypatch, caplog, fixture, speech_texts) -> None:
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        return _Response({"narration": fixture})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    result = provider._request({"system": "", "user": ""})
+
+    assert [segment["text"] for segment in result["segments"] if segment["text"] in speech_texts] == list(speech_texts)
+    assert result["item_facts"] == {
+        "Kristin": {"place": "driver's seat"},
+        "Kristin's laptop": {"place": "passenger seat"},
+    }
+    assert len(payloads) == 1
+    assert provider.request_count == 1
+    assert state.last_turn_delivery.recovery_used is False
+    repair_logs = [record for record in caplog.records if "unescaped quotes" in record.message]
+    assert len(repair_logs) == 1
+    assert repair_logs[0].message == "Narration reply had unescaped quotes; repaired (worker host=worker.example)"
+
+
+def test_transport_repairs_then_salvages_a_truncated_quoted_reply(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    state = RuntimeState.bootstrap(PACKAGE)
+    provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    reply = (
+        '{"segments":[{"kind":"narration","text":"She opens the drawer."},'
+        '{"kind":"narration","text":"She says, "I need clues and rea'
+    )
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        return _Response({"narration": reply})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    assert provider("Listen.") == {"segments": [{"kind": "narration", "text": "She opens the drawer."}]}
+    assert len(payloads) == 1
+    assert provider.request_count == 1
+    assert state.last_turn_delivery.recovery_used is True
+
+
+def test_transport_still_reasks_for_an_invalid_provider_envelope(monkeypatch) -> None:
+    payloads: list[dict[str, object]] = []
+    provider = CloudflareTurnProvider(
+        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
+    )
+
+    def open_request(request, timeout):
+        payloads.append(json.loads(request.data))
+        if len(payloads) == 1:
+            return _Response({"narration": '{"segments":[]}'})
+        return _Response({"narration": '{"segments":[{"kind":"action","text":"Kristin checks the door."}]}'})
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+
+    assert provider("Listen.") == {"segments": [{"kind": "action", "text": "Kristin checks the door."}]}
+    assert len(payloads) == 2
 
 
 def test_transport_completes_a_reply_missing_two_closing_delimiters(monkeypatch) -> None:

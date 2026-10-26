@@ -1,0 +1,30 @@
+{
+ "run_name": "transcript-1a-live-baseline",
+ "workdir": "/home/bcorfman/dev/ringer-work/transcript-1a-live-baseline",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "harden-live-baseline",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 600,
+   "ownership": [
+    "scripts/ringer/transcript_1a/live_baseline.py",
+    "scripts/ringer/transcript_1a/test_live_baseline.py"
+   ],
+   "spec": "You are hardening a billed-probe harness. Working directory: /home/bcorfman/dev/freytag-forge. You may edit ONLY scripts/ringer/transcript_1a/live_baseline.py and scripts/ringer/transcript_1a/test_live_baseline.py (and write under bench/results/transcript-1a-dry/). Never edit storygame/, data/, tests/, .plans/, git state or .env. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, use `.venv/bin/python`. Do not git commit. Read both files first and match their style.\n\nTWO DEFECTS TO FIX in live_baseline.py.\n1. A quota response never reaches CallCounter.inspect: Cloudflare answers HTTP 429 with header X-Narration-Error-Code (AI_QUOTA_EXCEEDED or AI_DAILY_BUDGET_EXCEEDED), and urllib raises urllib.error.HTTPError from urlopen before any response object is wrapped. In CallCounter.live_urlopen, catch urllib.error.HTTPError, inspect str(error.headers) and, when readable, the error body (read it once, then re-raise the SAME HTTPError with its body still readable, for example by re-creating it with io.BytesIO(body) as fp), so a quota code sets the stop and callers still see a normal HTTPError.\n2. CallCapExceeded and QuotaExceeded are RuntimeError subclasses raised inside the provider's own request path, which may catch broad exceptions and turn them into a recovered turn, so the run would keep going. Add a sticky `stop_reason` attribute on CallCounter: set it when the cap would be exceeded (value MAX_CALLS_EXCEEDED) or a quota code is seen (value = the code), before raising. In _replicate, after EVERY engine.turn (and after engine.opening()), if counter.stop_reason is set, record the turn row you just built (so partial data is kept) and then raise the matching exception so main() stops all replicates and writes stopped_reason. Once stop_reason is set, before_call must keep raising so no further call is ever issued. Keep the existing behavior otherwise.\n\nTESTS (test_live_baseline.py, keep the file small; add at most two tests): (a) a hermetic test that live_urlopen, given a fake urlopen raising HTTPError(429) with header X-Narration-Error-Code: AI_QUOTA_EXCEEDED, sets stop_reason to that code and re-raises an HTTPError whose body is still readable (monkeypatch urllib.request.urlopen; no network); (b) a test that when a swallowed CallCapExceeded happens inside a turn (monkeypatch the provider call path or use --max-calls 1 in dry mode, whichever is simplest), main() still ends with summary stopped_reason set and rows.json holding the partial turn, and the process returns 0. Existing three tests must still pass.\n\nFinish: .venv/bin/python -m ruff format and ruff check on the two files, run all tests in scripts/ringer/transcript_1a/test_live_baseline.py, then run the full dry run: `.venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --dry-run --replicates 2 --out bench/results/transcript-1a-dry` and `.venv/bin/python scripts/ringer/transcript_1a/check_live_baseline.py bench/results/transcript-1a-dry 2 --mode dry`.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && grep -q HTTPError scripts/ringer/transcript_1a/live_baseline.py && grep -q stop_reason scripts/ringer/transcript_1a/live_baseline.py && .venv/bin/python -m pytest -q -p no:cacheprovider scripts/ringer/transcript_1a/test_live_baseline.py 2>&1 | tail -8 && rm -rf bench/results/transcript-1a-dry && .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --dry-run --replicates 2 --out bench/results/transcript-1a-dry && .venv/bin/python scripts/ringer/transcript_1a/check_live_baseline.py bench/results/transcript-1a-dry 2 --mode dry && .venv/bin/python -m ruff check scripts/ringer/transcript_1a && .venv/bin/python -m ruff format --check scripts/ringer/transcript_1a && test -z \"$(git status --porcelain storygame data tests)\"",
+   "verified": "quota HTTPError and swallowed-cap stops are tested; dry run still passes"
+  }
+ ]
+}

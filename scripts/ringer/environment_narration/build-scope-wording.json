@@ -1,0 +1,58 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-scope-wording",
+ "max_parallel": 2,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t3f-scope-line-outcome-wording",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "storygame/runtime/item_facts.py",
+    "tests/test_observation_prompt.py",
+    "tests/test_environment_screen.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/item_facts.py"
+   ],
+   "spec": "You are making one targeted prompt-wording change in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no model call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. You never make a live call. NEVER print, log or write any credential value. YOU MAY EDIT ONLY: storygame/runtime/item_facts.py, tests/test_observation_prompt.py, tests/test_environment_screen.py. Never edit observation.py, packages/, data/, docs/, worker/, scripts/, other tests.\n\nCONTEXT: In observation mode, ItemFactsProvider._section_user_prompt (storygame/runtime/item_facts.py, near line 685) adds one CONSTRAINTS line for a complete, empty scope: `- The <focus name> holds nothing else the player can find.` A billed probe showed the narrator still invents a replacement clue with that wording (3 of 8 samples) and does not with this outcome wording (0 of 8): `- Nothing is left in or under the <focus name>. Searching the <focus name> finds nothing.` The scope condition (_observation_scope_is_empty) does not change.\n\nCHANGE, TESTS FIRST: (1) Update the existing assertions that name the old line so they name the new line, exactly `- Nothing is left in or under the drawer. Searching the drawer finds nothing.`: in tests/test_observation_prompt.py the three assertions near lines 275, 288, 300 (positive in the complete-empty case, `not in` in the unmarked and still-has-an-item cases); in tests/test_environment_screen.py lines 74-75 (`holds nothing else the player can find` in S5 proposed, not in existing) now assert `Nothing is left in or under the drawer. Searching the drawer finds nothing.` instead. Also assert in the positive test that the old sentence `holds nothing else the player can find` appears nowhere in the user text. Run them, see them fail. (2) In item_facts.py replace the f-string with `- Nothing is left in or under the {name}. Searching the {name} finds nothing.` where name = world.name(focus_id) (public name, never an id; compute it once). No story vocabulary in code. Do not change the condition, the `Show these` line, THINGS, or PLAYER handling. FINISH: ruff check and ruff format both source files and all three test files; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_observation_prompt.py tests/test_environment_screen.py tests/test_package_view_scope.py tests/test_observation_context.py tests/test_environment_baseline.py tests/test_seating.py tests/test_boarding.py tests/test_narration_safety.py 2>&1 | tee /tmp/env-wording.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error|xfailed)' /tmp/env-wording.out && .venv/bin/python scripts/ringer/environment_narration/baseline.py --out /tmp/env-wording-base.json && .venv/bin/python scripts/ringer/environment_narration/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-wording-base.json && grep -q 'Nothing is left in or under the' storygame/runtime/item_facts.py && ! grep -rq 'holds nothing else the player can find' storygame tests/test_observation_prompt.py tests/test_environment_screen.py && test \"$(md5sum storygame/runtime/observation.py | cut -d' ' -f1)\" = 4c5c7b8e1349fe0a2f74e284d0da06ce && git diff --quiet -- data docs && ! git diff -U0 -- storygame/runtime/item_facts.py | grep -iE '^\\+.*(kristin|laptop|truck|drawer|michelle)' && .venv/bin/python -m ruff check storygame/runtime/item_facts.py tests/test_observation_prompt.py tests/test_environment_screen.py && .venv/bin/python -m ruff format --check storygame/runtime/item_facts.py tests/test_observation_prompt.py tests/test_environment_screen.py",
+   "verified": "the complete-empty scope line states the outcome (arm A wording); old wording gone"
+  },
+  {
+   "key": "smoke-direct-confirm-slots",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "scripts/ringer/environment_narration/smoke_direct.py",
+    "tests/test_environment_smoke_direct.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/smoke_direct.py"
+   ],
+   "spec": "You are extending a small billed-smoke tool (offline until a human confirms) in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no model call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. You never make a live call. NEVER print, log or write any credential value. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/smoke_direct.py and tests/test_environment_smoke_direct.py (read both first). Never edit anything else. Existing behaviour, defaults and slot orders (`original`, `wide`, `probe`) must stay exactly as they are.\n\nGOAL: a confirmation slot order for the S5b scope-line wording: control (S5b proposed, the current wording) against arm A (S5bA proposed, the outcome wording), 15 samples each, on the prompts file already frozen on disk.\n\nCHANGE, TESTS FIRST: add `--slots confirm` to _SLOT_ORDERS: for sample 0 through 14, in this order within each sample: (S5b, proposed, sample) then (S5bA, proposed, sample) (30 slots), round-robin across variants as the other orders do. Guards (--max-calls, --max-usd) and the report are unchanged; the report's By-start counts must show S5b and S5bA separately. Hermetic tests: the confirm plan with the single variant `llama-3.3-70b-default-temp` has 30 calls alternating S5b/S5bA with sample indexes 0-14 each; the ceiling USD equals the sum of per-call ceilings; the other three orders still have their old call counts (24, 20, 32 for the original/wide/probe plans as the existing tests assert). FINISH: ruff check and ruff format both files; run `smoke_direct.py --dry --slots confirm --variants llama-3.3-70b-default-temp --prompts bench/results/environment-narration/smoke-probe-prompts.json --out /tmp/env-confirm-plan.json` with dummy env values CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz and report calls and ceiling USD.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && P=.venv/bin/python && S=scripts/ringer/environment_narration && $P -m pytest -q -p no:cacheprovider --no-cov tests/test_environment_smoke_direct.py tests/test_narration_json.py 2>&1 | tee /tmp/env-confirm.out | tail -5 && ! grep -Eq '[0-9]+ (failed|error|xfailed)' /tmp/env-confirm.out && env CLOUDFLARE_ACCOUNT_ID=dummy-acct CLOUDFLARE_AI_TOKEN=dummy-token-xyz $P $S/smoke_direct.py --prompts bench/results/environment-narration/smoke-probe-prompts.json --dry --slots confirm --variants llama-3.3-70b-default-temp --out /tmp/env-confirm-plan.json | tail -2 && $P - <<'PY'\nimport json\na=json.load(open('/tmp/env-confirm-plan.json'))['calls']\nassert len(a)==30, len(a)\nassert [c['start'] for c in a[:4]]==['S5b','S5bA','S5b','S5bA']\nassert [c['sample'] for c in a if c['start']=='S5b']==list(range(15))\nby={}\nfor c in a: by.setdefault(c['start'],c['user'])\nassert 'holds nothing else the player can find' in by['S5b'] and 'Nothing is left in or under the drawer. Searching the drawer finds nothing.' in by['S5bA']\nprint('confirm plan ok: 30 calls')\nPY\n! grep -rF dummy-token-xyz /tmp/env-confirm-plan.json && $P -m ruff check $S/smoke_direct.py tests/test_environment_smoke_direct.py && $P -m ruff format --check $S/smoke_direct.py tests/test_environment_smoke_direct.py",
+   "verified": "--slots confirm gives 30 alternating S5b/S5bA calls"
+  }
+ ]
+}

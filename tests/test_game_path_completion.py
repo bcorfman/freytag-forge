@@ -48,12 +48,18 @@ def _engine(state: RuntimeState) -> RuntimeEngine:
 
 def _satisfy(state: RuntimeState, predicates) -> None:
     for predicate in predicates:
-        if predicate.equals is True:
-            _assert_true(state, predicate.fact_id)
+        state.facts.assert_fact(Fact(predicate=predicate.fact_id, subject="story", value=str(predicate.equals).lower()))
 
 
 def _is_true(state: RuntimeState, fact_id: str) -> bool:
-    return any(str(fact.value).lower() == "true" for fact in state.facts.matching(fact_id))
+    matching = state.facts.matching(fact_id)
+    return bool(matching) and str(matching[0].value).lower() == "true"
+
+
+def _has_value(state: RuntimeState, fact_id: str, value: bool) -> bool:
+    return any(
+        fact.predicate == fact_id and str(fact.value).lower() == str(value).lower() for fact in state.facts.asserted
+    )
 
 
 EVENTS = [event for event in PACKAGE.pacing.events if event.transition_id is None]
@@ -70,7 +76,10 @@ def test_pressure_event_fires_at_its_turn_when_its_conditions_hold(event, offset
     should_fire = event.at_turn + offset >= event.at_turn
     assert (event.id in state.fired_event_ids) is should_fire
     for effect in event.effects:
-        assert _is_true(state, effect.fact_id) is should_fire
+        if should_fire:
+            assert _has_value(state, effect.fact_id, effect.equals)
+        else:
+            assert _is_true(state, effect.fact_id) is not effect.equals
 
 
 @pytest.mark.parametrize("event", [event for event in EVENTS if event.when], ids=lambda event: event.id)
@@ -91,7 +100,7 @@ def test_pressure_event_with_missing_conditions_waits_then_fires_once_they_arriv
     engine._activate_pacing()
 
     assert event.id in state.fired_event_ids
-    assert all(_is_true(state, effect.fact_id) for effect in event.effects)
+    assert all(_has_value(state, effect.fact_id, effect.equals) for effect in event.effects)
 
 
 @pytest.mark.parametrize("event", EVENTS, ids=lambda event: event.id)
@@ -101,10 +110,19 @@ def test_pressure_event_fires_only_once(event) -> None:
     engine = _engine(state)
 
     engine._activate_pacing()
-    first = [fact for fact in state.facts.asserted if fact.predicate == event.effects[0].fact_id]
+    effect = event.effects[0]
+    first = [
+        fact
+        for fact in state.facts.asserted
+        if fact.predicate == effect.fact_id and str(fact.value).lower() == str(effect.equals).lower()
+    ]
     state.turn_index += 2
     engine._activate_pacing()
-    second = [fact for fact in state.facts.asserted if fact.predicate == event.effects[0].fact_id]
+    second = [
+        fact
+        for fact in state.facts.asserted
+        if fact.predicate == effect.fact_id and str(fact.value).lower() == str(effect.equals).lower()
+    ]
 
     assert len(first) == len(second) == 1
 

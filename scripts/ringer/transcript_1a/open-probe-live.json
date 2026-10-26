@@ -1,0 +1,30 @@
+{
+ "run_name": "1a-continuity-open-probe-live",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-open-probe-live",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "open-probe-live",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 7200,
+   "check_timeout_s": 120,
+   "ownership": [
+    "bench/results/open-probe-live/"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/open_probe.py --run --problem all --samples 10 --max-calls 90 --confirm --out bench/results/open-probe-live/probe.json",
+   "spec": "Run ONE billed narrator probe (live): 3 problems x 3 arms x 10 samples = 90 narrator calls, hard cap 90. Own only bench/results/open-probe-live/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; on quota, outage or error leave the partial output file in place and report verbatim. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/open_probe.py --run --problem all --samples 10 --max-calls 90 --confirm --out bench/results/open-probe-live/probe.json",
+   "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python -c \"import json;d=json.load(open('bench/results/open-probe-live/probe.json'));print(d['calls_made'],d['stop_reason'],sorted({(r['problem'],r['arm'],r['usable'],r['status']) for r in d['rows']}));assert d['calls_made']<=90 and len(d['rows'])==90, 'expected 90 rows'\"",
+   "verified": "90 rows recorded within the call cap"
+  }
+ ]
+}

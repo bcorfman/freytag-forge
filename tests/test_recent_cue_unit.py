@@ -72,9 +72,29 @@ def _cue_state(monkeypatch: pytest.MonkeyPatch) -> tuple[RuntimeState, RuntimeEn
     return state, engine, provider
 
 
-def test_accepted_unrelated_turn_expires_cue(monkeypatch: pytest.MonkeyPatch) -> None:
-    state, engine, _provider = _cue_state(monkeypatch)
+@pytest.mark.parametrize("semantic", ("0", "1"))
+@pytest.mark.parametrize("command", ("Feel in the gap.", "Search the gap."))
+def test_staged_cue_referent_is_used_by_engine(monkeypatch: pytest.MonkeyPatch, semantic: str, command: str) -> None:
+    monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", semantic)
+    state = _state()
+    engine, _provider = _engine(monkeypatch, state)
 
+    first = engine.turn("Go in the house.")
+    cue_text = next(item.cue_text for item in PACKAGE.deliveries if item.fact_id == "continuity_initiative_known")
+    result = engine.turn(command)
+
+    assert first.selected_knowledge_ids == ()
+    assert cue_text in tuple(segment.text for segment in first.segments)
+    assert recent_cue_referent_text(state, command) == ""
+    assert result.selected_knowledge_ids == (CARD_REVEAL,)
+
+
+def test_accepted_unrelated_turn_expires_cue(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", "0")
+    state = _state()
+    engine, _provider = _engine(monkeypatch, state)
+
+    engine.turn("Go in the house.")
     engine.turn("Read the receipt.")
     result = engine.turn("Search the gap.")
 

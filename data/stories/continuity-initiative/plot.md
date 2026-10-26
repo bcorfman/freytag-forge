@@ -80,7 +80,7 @@ scene_id: 1A
 location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
-participant_ids: [kristin, michelle]
+participant_ids: [kristin, michelle, patrol_officer]
 item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door, house_gate]
 item_placements:
   memory_card: {parent: michelle_drawer, under: true}
@@ -94,7 +94,7 @@ item_placements:
   house_gate: {parent: outside_house, text: at the front of the house}
   michelle_drawer: {parent: michelle_workstation, part_of: true, text: in Michelle's workstation}
   workstation_chair: {parent: kitchen, text: at Michelle's workstation}
-entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal.\n\n"
+entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal. She found the back door forced and let herself in.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:
   t_1a_1b: >-
@@ -156,9 +156,9 @@ This becomes the story’s **inciting incident**. Kristin realizes Michelle’s 
 
 **Details:** federal emergency patrol; welfare-check officers; Michelle’s office search; Michelle's memory card; marked front gate; reflective tape
 
-An emergency patrol arrives at Michelle's home unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open the drawer, so the card remains undiscovered; they discover and confiscate nothing.
+An emergency patrol arrives at Michelle's home unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open the drawer. If Kristin has not taken the card, or takes it out of their sight, they find nothing. If she takes it while an officer is watching, the officer challenges her, and the patrol's suspicion follows her out of the house.
 
-Kristin conceals the memory card and pretends to know nothing. After the patrol leaves, she notices that one officer has quietly marked the front gate with a strip of reflective tape.
+After the patrol leaves, Kristin notices that one officer has quietly marked the front gate with a strip of reflective tape.
 
 She understands that the authorities intend to return.
 

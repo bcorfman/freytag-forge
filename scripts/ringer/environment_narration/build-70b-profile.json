@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-70b-profile",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t6d-70b-plain-profile",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 1800,
+   "check_timeout_s": 900,
+   "ownership": [
+    "worker/src/models.js",
+    "worker/test/models.test.js"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/worker/src/models.js"
+   ],
+   "spec": "You are changing one Cloudflare Worker model profile in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. No network, no live model call, no deployment. Do not git commit. NEVER print or write any credential. YOU MAY EDIT ONLY: worker/src/models.js and worker/test/models.test.js. Never touch worker/src/index.js, Python, data or docs.\n\nBACKGROUND: worker/src/models.js has MODEL_PROFILES. The profile for @cf/meta/llama-3.3-70b-instruct-fp8-fast currently reuses buildLlamaBody, which sends response_format and temperature 0 whenever the request carries a response_format. Measured on the real model: with JSON mode forced, 0 of 6 narration replies were valid JSON; with JSON mode off and default sampling, 20 of 20 were valid after the Python repair step. So this model must never receive response_format, and must use the model's default sampling (no temperature field).\n\nCHANGE: give the 70B profile its own body builder (for example buildLlamaPlainBody) that returns only messages (system then user) and max_tokens, and ignores the responseFormat argument entirely: no response_format key and no temperature key, even when the request asked for JSON mode. The 8B default profile (@cf/meta/llama-3.1-8b-instruct-fast) and the DeepSeek profile must keep their exact current behaviour. Keep the extractor, price and ceiling of the 70B profile unchanged. Add a short comment on why the 70B profile ignores response_format (one or two plain sentences).\n\nTESTS FIRST in worker/test/models.test.js, in the style of the existing tests there (reuse its env, request, runWithFetch, aiResponse helpers; read the file first): (1) with CF_AI_MODEL set to the 70B model and a request body that includes response_format {type: 'json_object'}, the body sent to Workers AI has no response_format and no temperature, keeps the messages and max_tokens; (2) the same request through the default 8B model still sends response_format json_object and temperature 0 (add this only if no existing test already asserts it; do not duplicate); (3) the 70B model via an allowed X-Bench-Model header also sends no response_format. Run `cd worker && node --test test/` and see (1) and (3) fail before the change, then make the change and see all pass.\n\nFINISH: `node --check worker/src/models.js`. Report the pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge/worker && set -o pipefail && node --check src/models.js && node --check src/index.js && node --test test/ 2>&1 | tee /tmp/env-70b.out | tail -12 && grep -Eq '^# fail 0' /tmp/env-70b.out && cd /home/bcorfman/dev/freytag-forge && git diff --quiet -- worker/src/index.js worker/src/budget.js storygame data docs && git diff -U0 -- worker/src/models.js | grep -Eq '^\\+.*buildLlama' && ! git diff -U0 -- worker/src/models.js | grep -iE '^\\+.*(kristin|laptop|truck|drawer|michelle)' && cd /home/bcorfman/dev/freytag-forge && .venv/bin/python scripts/ringer/environment_narration/baseline.py --out /tmp/env-70b-base.json && .venv/bin/python scripts/ringer/environment_narration/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-70b-base.json",
+   "verified": "the 70B Worker profile never sends response_format or temperature; the 8B and DeepSeek profiles are unchanged"
+  }
+ ]
+}

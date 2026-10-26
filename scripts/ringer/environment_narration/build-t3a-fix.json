@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t3a-fix",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t3a-fix-derived-kinds",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 1500,
+   "ownership": [
+    "storygame/runtime/observation.py",
+    "tests/test_observation_context.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/observation.py"
+   ],
+   "spec": "You are fixing one bug in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no model call: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY storygame/runtime/observation.py and tests/test_observation_context.py (append one test; change no existing assertion). Never touch packages/, data/, docs/, worker/, other modules.\n\nBUG: storygame/runtime/observation.py decides what counts as an observable item with `world.kind(entity_id) == \"thing\"` (an exact-kind match) in _candidate_ids, _required_ids, build_observation_context and _contingent_ids. A story kind that inherits `thing`, e.g. schema kinds `[{\"id\": \"gadget\", \"is\": [\"thing\"]}]` with an entity `probe` of kind gadget on a supporter `bench`, is therefore silently dropped: inspecting the bench lists only the plain-kind cup. Story packages define their own item kinds, so this loses real items.\n\nFIX: add one private helper `_is_item(world, entity_id)` that is true when `world.is_a(entity_id, \"thing\")` and the entity is not a structural kind, i.e. not `world.is_a(entity_id, k)` for any k in (\"container\", \"supporter\", \"furniture\", \"vehicle\"). Replace every exact-kind check for items with it (keep seats, drawers, tables, and vehicles excluded exactly as today). No story vocabulary. TEST FIRST: append to tests/test_observation_context.py a plain (non-xfail) test that builds a World from a schema dict with the gadget kind above (kinds format is a LIST of {id, is}; look at worldkeeper WorldSchema.from_data), puts the observer in an area, the bench in the area, `probe` (gadget) and `cup` (thing) on the bench, then asserts for ObservationRequest('Inspect the bench.', 'look', bench) that required == ('cup', 'probe') and both appear in visible_things, and that the bench itself is in neither. Run it, see it fail, then fix. FINISH: ruff check and ruff format both files. Report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_observation_context.py packages/worldkeeper/tests tests/test_seating.py tests/test_boarding.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_referred_reach.py tests/test_environment_baseline.py 2>&1 | tee /tmp/env-t3a2.out | tail -8 && ! grep -Eq '[0-9]+ (failed|error|xfailed)' /tmp/env-t3a2.out && grep -q 'gadget' tests/test_observation_context.py && ! grep -E '== \"thing\"' storygame/runtime/observation.py && ! grep -iE 'kristin|laptop|truck|notice|drawer|michelle' storygame/runtime/observation.py && git diff --quiet -- data docs worker storygame && test \"$(md5sum packages/worldkeeper/src/worldkeeper/model.py | cut -d' ' -f1)\" = 7c4746e69cf129b7458f7dd09267c1df && .venv/bin/python -m ruff check storygame/runtime/observation.py tests/test_observation_context.py && .venv/bin/python -m ruff format --check storygame/runtime/observation.py tests/test_observation_context.py",
+   "verified": "all 20 observation tests and the worldkeeper view/scope tests pass, no story vocabulary in the module, existing boarding/seating/reach suites still green"
+  }
+ ]
+}

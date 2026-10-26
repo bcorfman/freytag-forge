@@ -10,6 +10,7 @@ from storygame.runtime.candidate_matcher import (
     uniquely_matched_candidate,
 )
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
@@ -137,6 +138,17 @@ def test_gap_commands_still_match_the_card_and_not_the_pointer(command: str) -> 
     assert plain_match.id == CARD_REVEAL
 
 
+def test_drawer_gap_pointers_are_unavailable_after_card_recovery() -> None:
+    state = _state()
+    state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
+
+    candidates = KnowledgeProjector().project(state, "player", "").candidates
+
+    assert F_R1 not in {candidate.id for candidate in candidates}
+    assert F_R2 not in {candidate.id for candidate in candidates}
+    assert uniquely_matched_authored_handoff("Pull out the drawer.", candidates) is None
+
+
 def test_drawer_gap_realizations_have_exact_deliveries_and_fact_metadata() -> None:
     r1 = PACKAGE.knowledge_indexes.by_id[F_R1]
     r2 = PACKAGE.knowledge_indexes.by_id[F_R2]
@@ -192,7 +204,10 @@ def test_pointer_fact_is_catalogued_but_read_by_no_gate_or_transition() -> None:
         if any(effect.fact_id == NEW_FACT for effect in knowledge.establishes)
     ]
     assert {knowledge.id for knowledge in fact_claims} == {F_R1, F_R2}
-    assert all(not knowledge.requires for knowledge in fact_claims)
+    assert all(
+        knowledge.requires[0].fact_id == "memory_card_recovered" and knowledge.requires[0].equals is False
+        for knowledge in fact_claims
+    )
 
     assert all(
         predicate.fact_id != NEW_FACT
@@ -223,4 +238,4 @@ def test_1a_transition_and_timer_remain_authored_values() -> None:
         "memory_card_recovered",
     )
     assert transition.required_dependencies == ("memory_card",)
-    assert (scene.min_turns, scene.nudge_after_turns, scene.handoff_after_turns) == (8, 10, 13)
+    assert (scene.min_turns, scene.nudge_after_turns, scene.handoff_after_turns) == (9, 10, 13)

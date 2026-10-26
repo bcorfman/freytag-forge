@@ -147,6 +147,18 @@ facts:
 - id: patrol_return_pressure
   purpose: Observable signs indicate the federal patrol is likely to return or intensify
     scrutiny at Michelle's house.
+- id: patrol_on_scene
+  purpose: A federal emergency patrol has arrived at Michelle's house.
+- id: patrol_in_house
+  purpose: A patrol officer is inside Michelle's house.
+- id: patrol_departed
+  purpose: The federal emergency patrol has left Michelle's house.
+- id: card_challenged
+  purpose: A patrol officer saw Kristin take Michelle's memory card and challenged her.
+- id: officer_demanded_card
+  purpose: The officer has demanded the card from Kristin.
+- id: kristin_marked_by_patrol
+  purpose: The patrol has Kristin marked as someone to watch.
 - id: pursuit_closing_in
   purpose: The pursuit team is visibly closing in on Kristin and Brandon in the park.
 - id: identity_scrutiny_visible
@@ -254,7 +266,7 @@ facts:
   purpose: The safe opening frame for scene 3C has been established.
 scene_frames:
 - scene_id: 1A
-  situation: "Michelle's home is otherwise untouched, but its back door frame shows recent damage. Michelle is missing, and her tablet and work bag are gone. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it."
+  situation: "Michelle's home is otherwise untouched, but the back door has been forced. The lock is splintered out of the wood. Michelle is missing, and her tablet and work bag are gone. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it."
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
   situation: A damaged public park with an ordinary bench near the service path. Checkpoints and emergency patrols make a simple search feel exposed.
@@ -285,6 +297,7 @@ scene_frames:
 knowledge:
 - id: k_sl_1a_a_r1
   statement: 'Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle’s undamaged phone to a removal too deliberate to be looting.'
+  reach_entity_ids: [back_door]
   earn_when: searches the kitchen or back door for signs of what happened
   action_evidence:
   - [search, examine, inspect, check]
@@ -317,7 +330,8 @@ knowledge:
   - [door, forced entry]
   delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over and the back door was forced, but nothing else was taken. This was not looting. Someone came for Michelle."
 - id: k_sl_1a_b_r0
-  statement: "Kristin finds Michelle's memory card taped beneath the drawer and takes it with her."
+  statement: "Kristin finds Michelle's memory card taped beneath the drawer and pockets it."
+  reach_entity_ids: [michelle_drawer]
   earn_when: searches the drawer, the gap in the drawer, or the space beneath it
   action_evidence:
   - [look, search, inspect, check]
@@ -331,7 +345,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1A
-  requires: []
+  requires:
+  - fact_id: patrol_in_house
+    equals: false
   establishes:
   - op: assert
     fact_id: memory_card_recovered
@@ -358,9 +374,62 @@ knowledge:
   - [taped]
   - [beneath the KMS drawer, under the KMS drawer, beneath the drawer]
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
-  delivery_text: "Kristin finds Michelle's memory card taped beneath the drawer. She takes it with her. Her laptop is in her truck outside."
+  delivery_text: "Kristin's fingers find something taped beneath the drawer. She peels it loose. It is Michelle's memory card, and she pockets it. Her laptop is still out in her truck."
+- id: k_sl_1a_b_r0w
+  statement: An officer saw Kristin take Michelle's memory card and asked what it is.
+  reach_entity_ids: [michelle_drawer]
+  earn_when: searches the drawer, the gap in the drawer, or the space beneath it
+  action_evidence:
+  - [look, search, inspect, check]
+  - [under, beneath, underside, gap, lower edge, bottom edge]
+  - [drawer, KMS, workstation, "drawer's"]
+  entity_ids: [kristin, michelle, memory_card, michelle_drawer]
+  aliases:
+  - memory card recovered in sight of the patrol
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires:
+  - fact_id: patrol_in_house
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: memory_card_recovered
+    value: true
+  - op: assert
+    fact_id: card_challenged
+    value: true
+  - op: assert
+    fact_id: kristin_marked_by_patrol
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-E
+    realization_id: SL-1A-E-R2
+  relevance:
+    entity_ids: [memory_card, michelle_drawer]
+    priority: 10
+  leak_terms:
+  - memory card
+  - hidden memory card
+  - hidden card
+  - Michelle's card
+  - the card
+  - taped beneath the drawer
+  - taped under the drawer
+  - taped to the drawer
+  - memory card recovered
+  must_convey:
+  - [memory card, card, Michelle's card, the card, hidden card, hidden memory card]
+  - [taped]
+  - [beneath the KMS drawer, under the KMS drawer, beneath the drawer]
+  - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
+  delivery_text: 'Kristin''s fingers find something taped beneath the drawer. She peels it loose. It is Michelle''s memory card, and she pockets it. The officer turns at the sound. "What have you got there?" His hand is already out.'
 - id: k_sl_1a_f_r1
   statement: "Kristin opens the drawer and is pointed toward the thin gap beneath its lower edge."
+  reach_entity_ids: [michelle_drawer]
   earn_when: pulls or opens the drawer
   action_evidence:
   - [pull open, pull out, pull the, pull my, pull michelle, "pull michelle's", slide open, slide out, tug, yank, open the, open my, open michelle, open her]
@@ -373,7 +442,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1A
-  requires: []
+  requires:
+  - fact_id: memory_card_recovered
+    equals: false
   establishes:
   - op: assert
     fact_id: drawer_gap_pointed_out
@@ -388,6 +459,7 @@ knowledge:
   delivery_text: "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
 - id: k_sl_1a_f_r2
   statement: "Kristin examines the carved initials and is pointed toward the thin gap beneath the drawer."
+  reach_entity_ids: [michelle_drawer]
   earn_when: examines the carved initials
   action_evidence:
   - [examine, inspect, study, read, look at, check, trace, run my fingers]
@@ -400,7 +472,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1A
-  requires: []
+  requires:
+  - fact_id: memory_card_recovered
+    equals: false
   establishes:
   - op: assert
     fact_id: drawer_gap_pointed_out

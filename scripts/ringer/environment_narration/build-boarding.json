@@ -1,0 +1,65 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-boarding",
+ "max_parallel": 2,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t6b-narrator-cannot-board",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "storygame/runtime/item_facts.py",
+    "tests/test_narrator_cannot_board.py",
+    "tests/test_bench_item_facts.py",
+    "tests/test_vehicle_landing.py",
+    "tests/test_seating.py",
+    "tests/test_boarding.py",
+    "tests/test_boarding_already_seated.py",
+    "tests/test_boarding_engine_text.py",
+    "tests/test_command_split.py",
+    "tests/test_world_placements.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/item_facts.py"
+   ],
+   "spec": "You are fixing a boarding bug in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no model call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. You never make a live call. NEVER print, log or write any credential value. Follow docs/narrator-writing-guide.md for any wording a model reads (plain words, one idea per sentence, 12th-grade level) and docs/contributor-guide.md. No regular expressions to interpret text; no story vocabulary (no truck, laptop, Kristin) in runtime code. YOU MAY EDIT ONLY: storygame/runtime/item_facts.py, new tests/test_narrator_cannot_board.py, and existing test files ONLY at assertions that encode the old behaviour described below (tests/test_bench_item_facts.py, tests/test_vehicle_landing.py, tests/test_seating.py, tests/test_boarding.py, tests/test_boarding_already_seated.py, tests/test_boarding_engine_text.py, tests/test_command_split.py, tests/test_world_placements.py). Never edit anything else.\n\nBUG: ItemFactsProvider._apply_move (storygame/runtime/item_facts.py near line 1188) seats the protagonist when the narrator's item_facts reports her place as a vehicle (it swaps the vehicle for its first visible seat) or as a vehicle seat directly. A narrator that writes 'walks over to the truck and looks through the window' and reports place 'truck' therefore puts the player in the driver's seat although she is standing outside (3 of 7 recorded 70B replies). Boarding is decided by the engine BEFORE narration: storygame/runtime/seating.py board_vehicle asks the Jev question boards_vehicle for the command and seats the protagonist itself. The narrator must not be able to board her.\n\nRULE (story-agnostic, deterministic): when the entity being moved is the protagonist and the resolved place is a vehicle (world.is_a(place, 'vehicle')) or a seat of a vehicle (the entity has seat_for), then if the protagonist is NOT already aboard that same vehicle (her parent is that vehicle or one of its seats), do not move her into the vehicle or seat. Move her to the vehicle's area instead (world.area(vehicle id)); if she is already in that area this is a no-op. Record a visible issue string in `issues`, for example `item_facts for 'Kristin' placed her in the vehicle 'X' but the command did not board it; kept at the vehicle's area` (use the protagonist's reported name and the vehicle's public name). When she IS already aboard that vehicle (engine boarded her, or she was seated before), behaviour is unchanged: a reported vehicle or other seat of the same vehicle keeps current handling and records no issue. Non-protagonist moves are unchanged. Do not change board_vehicle or Jev questions.\n\nTESTS FIRST in tests/test_narrator_cannot_board.py (hermetic; no network; reuse the stubbing style of tests/test_bench_item_facts.py `_seeded_provider` and its Jev/item-facts stubs, or tests/test_vehicle_landing.py, on the real package data/stories/continuity-initiative): (1) protagonist outside the house (the area that holds the vehicle), reply {protagonist name: {place: vehicle name}} -> she stays outside, parent is the area, not a seat, an issue is recorded, and a laptop reported on the passenger seat in the same reply still lands; (2) protagonist inside the house room, same reply -> she ends in the vehicle's area (outside), not in a seat, issue recorded; (3) reply names a seat directly ('driver's seat') while she is not aboard -> same as (1); (4) protagonist already moved into the driver's seat by the engine (world.move), reply place is the vehicle or the seat -> still seated, no issue; (5) a non-protagonist character reply is unchanged. Run them and see (1)-(3) fail. Then fix. Then run the existing files listed above and `tests/test_bench_item_facts.py`: tests/test_bench_item_facts.py::test_reply_moving_a_seated_kristin_is_kept (around line 569) encodes the old behaviour (a reply boards a protagonist who was not aboard): change it so the engine boards her first (world.move into the driver seat) and the reply keeps her there with no issue, or assert the new behaviour; change any other assertion only if it encodes the same old behaviour and name each one in your final report. FINISH: ruff check and ruff format every file you touched; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_narrator_cannot_board.py tests/test_bench_item_facts.py tests/test_vehicle_landing.py tests/test_seating.py tests/test_boarding.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_command_split.py tests/test_world_placements.py tests/test_observation_prompt.py tests/test_environment_baseline.py tests/test_world_model.py tests/test_refused_move_clause.py tests/test_cloudflare_transport.py 2>&1 | tee /tmp/env-nocb.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error|xfailed)' /tmp/env-nocb.out && .venv/bin/python scripts/ringer/environment_narration/baseline.py --out /tmp/env-nocb-base.json && .venv/bin/python scripts/ringer/environment_narration/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-nocb-base.json && git diff --quiet -- data docs && ! git diff -U0 -- storygame/runtime/item_facts.py | grep -iE '^\\+.*(kristin|laptop|truck|drawer|michelle)' && .venv/bin/python -m ruff check storygame/runtime/item_facts.py tests/test_narrator_cannot_board.py tests/test_bench_item_facts.py && .venv/bin/python -m ruff format --check storygame/runtime/item_facts.py tests/test_narrator_cannot_board.py tests/test_bench_item_facts.py",
+   "verified": "a narrated vehicle place cannot board the protagonist; the engine's command-level boarding is the only way in"
+  },
+  {
+   "key": "t6c-boarding-question-wording",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "storygame/runtime/jev_questions.py",
+    "tests/test_jev_questions.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/jev_questions.py"
+   ],
+   "spec": "You are rewording one classifier question in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no model call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. You never make a live call. NEVER print, log or write any credential value. Follow docs/narrator-writing-guide.md for any wording a model reads (plain words, one idea per sentence, 12th-grade level) and docs/contributor-guide.md. No regular expressions to interpret text; no story vocabulary (no truck, laptop, Kristin) in runtime code. YOU MAY EDIT ONLY: storygame/runtime/jev_questions.py and tests/test_jev_questions.py. Never edit anything else. The question is billed-model text, so change only the wording of `boards_vehicle` and keep its key, type, structure and the other builders exactly.\n\nCONTEXT: boards_vehicle(ask, command, vehicle_name) decides whether the engine seats the player in a vehicle before narration. Its true criterion says 'going to the vehicle', so a command that only walks up to it (walk over to it, go up to it, step up to it, approach it) also boards. The author rules: a command that goes out to or goes to the vehicle to use it counts as boarding ('Go out to my truck.', 'Go to my truck.', 'Get in my truck.', 'Drive to town.' -> true; a bare 'go to' means get in). A command that only moves next to it ('Walk over to my truck.', 'Walk up to my truck.', 'Approach my truck.') or only looks at, touches, or talks about it ('Look through the truck window.', 'Open the truck door.') or leaves it is NOT boarding.\n\nCHANGE, TESTS FIRST: in tests/test_jev_questions.py add hermetic assertions on the built question (use the existing test helpers there; no network): the instructions and true criterion say the command has the player go to the vehicle to use it, get into it, sit in it, or drive it; the false criterion says a command that only walks over or up to the vehicle, approaches it, looks at, touches or talks about it, or leaves it is not boarding. Check the exact words you choose appear (case-insensitive substring is fine; do not use regular expressions). Update any existing assertion that pins the old wording and name it in your report. See the new assertions fail, then reword boards_vehicle in plain 12th-grade words, one idea per sentence, no story vocabulary. FINISH: ruff check and ruff format both files; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_jev_questions.py tests/test_boarding.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_seating.py 2>&1 | tee /tmp/env-jevb.out | tail -5 && ! grep -Eq '[0-9]+ (failed|error|xfailed)' /tmp/env-jevb.out && .venv/bin/python -c \"from storygame.runtime.jev_questions import boards_vehicle as b; got={}; b(lambda s,q: got.update(q) or {'boards_vehicle':{'noul':1.0}}, 'x','y'); t=str(got).lower(); assert 'walk' in t and 'approach' in t, t; print('wording ok')\" && git diff --quiet -- data docs && ! git diff -U0 -- storygame/runtime/jev_questions.py | grep -iE '^\\+.*(kristin|laptop|truck|drawer|michelle)' && .venv/bin/python -m ruff check storygame/runtime/jev_questions.py tests/test_jev_questions.py && .venv/bin/python -m ruff format --check storygame/runtime/jev_questions.py tests/test_jev_questions.py",
+   "verified": "boards_vehicle separates going to use a vehicle from only walking up to it"
+  }
+ ]
+}

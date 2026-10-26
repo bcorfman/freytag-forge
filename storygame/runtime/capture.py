@@ -9,13 +9,21 @@ from typing import Any
 from storygame.runtime.fixed_refusal import fixed_refusal_text, refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev_questions import (
-    goes_to_vehicle,
+    boards_vehicle,
     moves_thing,
     names_other_action,
     needs_to_stand,
+    only_boards_vehicle,
+    opens_container,
     relocates_thing,
     same_or_part,
     uses_thing,
+)
+from storygame.runtime.observation import ObservationRequest
+from storygame.runtime.observation_verifier import (
+    QUESTION_VERSION,
+    ObservationVerifier,
+    relations_from_context,
 )
 from storygame.runtime.seating import SeatingResult, board_vehicle, seat_before_use, stand_before_leave
 from storygame.runtime.taking import TakingResult, take_before_put
@@ -51,6 +59,7 @@ class WorldCapture:
         self.ask = ask
         self.fixed_refusal = fixed_refusal
         self.engine_refusal = engine_refusal
+        self.shadow_verifier: ObservationVerifier | None = None
         self._command = ""
         self.last_before: dict[str, Any] | None = None
         self.last_after: dict[str, Any] | None = None
@@ -60,6 +69,10 @@ class WorldCapture:
         package = self.provider.state.package
         world = self.provider._world()
         adapter = _ask_adapter(self.ask)
+        observe_automatically = self.provider.observe_automatically
+        if observe_automatically:
+            self.provider.observation_request = None
+            self.provider._referred_names = []
         fixed = (
             refuse_fixed_move(
                 world,
@@ -91,22 +104,38 @@ class WorldCapture:
         else:
             standing = stand_before_leave(world, package, command, lambda c, s, r: needs_to_stand(adapter, c, s, r))
             taking = take_before_put(world, package, command, lambda c, t: moves_thing(adapter, c, t))
-            boarding = board_vehicle(world, package, command, lambda c, v: goes_to_vehicle(adapter, c, v))
+            boarding = board_vehicle(
+                world,
+                package,
+                command,
+                lambda c, v: boards_vehicle(adapter, c, v),
+                lambda c, v: only_boards_vehicle(adapter, c, v),
+            )
             seating = (
                 seat_before_use(world, package, command, lambda c, t: uses_thing(adapter, c, t))
                 if not standing.steps and not boarding.steps
                 else None
             )
         fixed_steps = fixed.steps if fixed else ()
-        boarding_steps = boarding.steps
+        already_aboard_in_observation = observe_automatically and boarding.already_aboard
+        boarding_steps = () if already_aboard_in_observation else boarding.steps
         seating_steps = seating.steps if seating else ()
         provider_steps = (*fixed_steps, *standing.steps, *boarding_steps, *taking.steps, *seating_steps)
         self.provider.prior_steps = provider_steps
+        self.provider.prior_notice_steps = () if already_aboard_in_observation else boarding.notice_steps
+        self.provider.command_consumed = boarding.command_consumed and not already_aboard_in_observation
+        command_record = (
+            " ".join((*fixed_steps, *standing.steps, boarding.command, *taking.steps, *seating_steps))
+            if self.provider.command_consumed
+            else " ".join((*provider_steps, command))
+        )
         match_info = {}
-        if self.provider.item_facts_mode == "single_call" and not engine_refusal:
+        if self.provider.item_facts_mode == "single_call" and not engine_refusal and not self.provider.command_consumed:
             match_info = self.provider.prepare_turn(command)
+        if observe_automatically and not (fixed and fixed.refused):
+            self._set_observation_request(command, boarding, adapter)
         record = {
-            "command": " ".join((*provider_steps, command)),
+            "command": command_record,
             "steps": list(provider_steps),
             "fixed_refusal_steps": list(fixed_steps),
             "fixed_refusal_asked": fixed.asked if fixed else False,
@@ -114,6 +143,7 @@ class WorldCapture:
             "engine_refusal": engine_refusal,
             "standing_steps": list(standing.steps),
             "boarding_steps": list(boarding_steps),
+            "boarding_command_consumed": self.provider.command_consumed,
             "taking_steps": list(taking.steps),
             "seating_steps": list(seating_steps),
             "standing_asked": standing.asked,
@@ -146,10 +176,64 @@ class WorldCapture:
         self.last_before = record
         return record
 
+    def _set_observation_request(self, command: str, boarding: SeatingResult, adapter) -> None:
+        world = self.provider._world()
+        focus_id = boarding.vehicle_id
+        kind = "enter" if focus_id is not None else "look"
+        if focus_id is None:
+            for name in self.provider._referred_names:
+                entity_id = self.provider._resolve_scoped_entity(world, name) or world.resolve(name)
+                if entity_id is None:
+                    continue
+                if any(
+                    world.is_a(entity_id, entity_kind)
+                    for entity_kind in ("thing", "container", "supporter", "area", "vehicle")
+                ):
+                    focus_id = entity_id
+                    break
+        if focus_id is None:
+            return
+        if world.is_a(focus_id, "container") and opens_container(adapter, command, world.name(focus_id)) is True:
+            kind = "open"
+        self.provider.observation_request = ObservationRequest(command, kind, focus_id)
+
     def after_commit(self, command: str, narration: str, *, entered_scene: bool) -> dict[str, Any]:
         raw = self.provider.pending_item_facts()
         adapter = _ask_adapter(self.ask)
         narration_prompt = dict(self.provider.last_prompt) if self.provider.last_prompt is not None else None
+        observation_shadow = None
+        if self.shadow_verifier is not None and self.provider.observation_request is not None:
+            try:
+                context = self.provider._observation_context()
+                if context is not None:
+                    self.shadow_verifier.begin_turn()
+                    report = self.shadow_verifier.verify(narration, relations_from_context(context))
+                    observation_shadow = {
+                        "outcome": report.outcome,
+                        "requests": report.requests,
+                        "elapsed_s": report.elapsed_s,
+                        "failure": report.failure,
+                        "question_version": QUESTION_VERSION,
+                        "accepted": report.accepted,
+                        "verdicts": [
+                            {
+                                "thing": verdict.relation.thing,
+                                "verdict": verdict.verdict,
+                                "score": verdict.score,
+                            }
+                            for verdict in report.verdicts
+                        ],
+                    }
+            except Exception as error:
+                observation_shadow = {
+                    "outcome": "shadow_error",
+                    "requests": 0,
+                    "elapsed_s": 0.0,
+                    "failure": type(error).__name__,
+                    "question_version": QUESTION_VERSION,
+                    "accepted": False,
+                    "verdicts": [],
+                }
         _previous, issues = self.provider.apply_item_facts(
             raw,
             player_input=command,
@@ -181,13 +265,19 @@ class WorldCapture:
             "narration_prompt": narration_prompt,
             "facts_after": _json_value(facts_after),
         }
+        if observation_shadow is not None:
+            record["observation_shadow"] = _json_value(observation_shadow)
         self.last_after = record
         self.provider.prior_steps = ()
+        self.provider.prior_notice_steps = ()
+        self.provider.command_consumed = False
         return record
 
     def discard(self) -> None:
         self.provider.discard_pending_item_facts()
         self.provider.prior_steps = ()
+        self.provider.prior_notice_steps = ()
+        self.provider.command_consumed = False
 
     def context(self) -> dict[str, Any]:
         names = (
@@ -208,6 +298,8 @@ class WorldCapture:
         )
         result = {name: _json_value(getattr(self.provider, name)) for name in names}
         result["prior_steps"] = _json_value(self.provider.prior_steps)
+        result["prior_notice_steps"] = _json_value(self.provider.prior_notice_steps)
+        result["command_consumed"] = self.provider.command_consumed
         result["command"] = self._command
         return result
 
@@ -245,6 +337,8 @@ class WorldCapture:
                     value = value or []
                 setattr(self.provider, name, value)
         self.provider.prior_steps = tuple(context.get("prior_steps", ()))
+        self.provider.prior_notice_steps = tuple(context.get("prior_notice_steps", ()))
+        self.provider.command_consumed = bool(context.get("command_consumed", False))
         self._command = context.get("command", "")
 
 

@@ -144,6 +144,7 @@ class KnowledgeDefinition(_Model):
     id: str = Field(pattern=_ID)
     statement: str = Field(min_length=1)
     entity_ids: tuple[str, ...] = ()
+    reach_entity_ids: tuple[str, ...] = ()
     aliases: tuple[str, ...] = Field(min_length=1)
     audience: Audience
     available_in_scenes: tuple[str, ...] = Field(min_length=1)
@@ -265,6 +266,21 @@ class Group(Entity):
 class Location(Entity):
     parent: str | None = Field(default=None, pattern=_ID)
     owner: str | None = Field(default=None, pattern=_ID)
+    description: str | None = None
+
+
+class ItemViewBlockedBy(_Model):
+    axis: str = Field(pattern=_ID)
+    pole: str = Field(pattern=_ID)
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class ItemView(_Model):
+    from_: str = Field(alias="from", pattern=_ID)
+    blocked_by: ItemViewBlockedBy | None = None
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
 
 
 class Item(Entity):
@@ -275,6 +291,8 @@ class Item(Entity):
     open: bool = False
     hidden: bool = False
     contents: list[str] = Field(default_factory=list)
+    view: list[ItemView] = []
+    contents_complete: StrictBool = False
     owner: str | None = Field(default=None, pattern=_ID)
     enterable: bool | None = None
     enter_pole: str | None = Field(default=None, pattern=_ID)

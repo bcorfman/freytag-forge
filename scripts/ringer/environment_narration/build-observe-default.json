@@ -1,0 +1,79 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-observe",
+ "max_parallel": 2,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t6e-remove-8b-deepseek-profiles",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "worker/src/models.js",
+    "worker/src/budget.js",
+    "worker/src/index.js",
+    "worker/test/models.test.js",
+    "worker/test/worker.test.js"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/worker/src/models.js"
+   ],
+   "spec": "You are simplifying the Cloudflare Worker model profiles in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. No network, no live model call, no deployment. Do not git commit. NEVER print or write any credential. YOU MAY EDIT ONLY: worker/src/models.js, worker/src/budget.js, worker/src/index.js, worker/test/models.test.js, worker/test/worker.test.js. Nothing else.\n\nGOAL (decided by the project owner): the only supported narration model is @cf/meta/llama-3.3-70b-instruct-fp8-fast. Remove the profiles for @cf/meta/llama-3.1-8b-instruct-fast and @cf/deepseek-ai/deepseek-v4.1-flash-1017.\n\nCHANGES: (1) worker/src/models.js: delete the 8B and DeepSeek profiles and all code only they used (buildLlamaBody, buildDeepseekBody, extractDeepseek, the 4096 ceiling). Keep the 70B profile exactly as it is (it ignores response_format and temperature). getModelProfile must fall back to the 70B profile for an unknown id. (2) worker/src/budget.js: remove the two prices from DEFAULT_MODEL_PRICES; keep the 70B price. (3) worker/src/index.js: the default model (the `configuredModel` fallback string) becomes the 70B id; change nothing else in that file. (4) Tests: read worker/test/models.test.js and worker/test/worker.test.js fully first. Delete tests that only exercise DeepSeek or the 8B profile; change every assertion that expects the old default model (the 8B id) to expect the 70B id; keep the benchmark-header tests (allowed, feature off, unlisted, unpriced) by rewriting them around the 70B model and an id that has no profile (for example a made-up id) where they used DeepSeek as 'another model'; keep a test that a request for a model without a profile is rejected with BENCH_MODEL_REJECTED and makes zero Workers AI calls and zero budget reservations. Keep all other tests (budget, jev, auth, quota, truncation, envelope) and keep them green. Do not weaken any assertion that is not about the removed models. Run `cd worker && node --test test/` first to see it pass, make the change, and run it again.\n\nFINISH: `node --check` every file you touched. Report pass counts and name each test you deleted or rewrote.",
+   "check": "cd /home/bcorfman/dev/freytag-forge/worker && set -o pipefail && node --check src/models.js && node --check src/index.js && node --check src/budget.js && node --test test/ 2>&1 | tee /tmp/env-rm-profiles.out | tail -12 && grep -Eq '(\u2139|#) fail 0' /tmp/env-rm-profiles.out && grep -Eq '(\u2139|#) pass [1-9]' /tmp/env-rm-profiles.out && ! grep -rniE 'deepseek|llama-3\\.1-8b' /home/bcorfman/dev/freytag-forge/worker/src && grep -q 'llama-3.3-70b-instruct-fp8-fast' /home/bcorfman/dev/freytag-forge/worker/src/index.js && cd /home/bcorfman/dev/freytag-forge && git diff --quiet -- data docs",
+   "verified": "the Worker supports only the 70B model and defaults to it"
+  },
+  {
+   "key": "t6f-observation-mode-default",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "storygame/runtime/seating.py",
+    "storygame/runtime/capture.py",
+    "storygame/runtime/item_facts.py",
+    "storygame/runtime/jev_questions.py",
+    "scripts/ringer/environment_narration/baseline.py",
+    "scripts/ringer/environment_narration/screen.py",
+    "tests/test_observation_mode.py",
+    "tests/test_jev_questions.py",
+    "tests/test_boarding_already_seated.py",
+    "tests/test_boarding_engine_text.py",
+    "tests/test_boarding.py",
+    "tests/test_seating.py",
+    "tests/test_bench_item_facts.py",
+    "tests/test_vehicle_landing.py",
+    "tests/test_command_split.py",
+    "tests/test_world_placements.py",
+    "tests/test_web_demo.py",
+    "tests/test_cloudflare_transport.py",
+    "tests/test_narrator_cannot_board.py",
+    "tests/test_environment_screen.py",
+    "tests/test_environment_baseline.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/capture.py"
+   ],
+   "spec": "You are turning on 'observation mode' in the freytag-forge product narration path (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example; run `.venv/bin/python`. No network, no live model call, no uv. Do not git commit. NEVER print or write any credential. Follow docs/narrator-writing-guide.md for any wording a model reads (plain words, one idea per sentence, 12th-grade level) and docs/contributor-guide.md. No regular expressions to interpret text. NO story vocabulary (no truck, laptop, Kristin, drawer, Michelle) in runtime code. Write every player command in new tests as an imperative (see docs/player-input-guide.md): e.g. 'Enter the truck.', 'Open the drawer.', 'Examine my laptop.'\n\nBACKGROUND (read these first): storygame/runtime/observation.py (ObservationRequest(action, kind, focus), build_observation_context); storygame/runtime/item_facts.py (ItemFactsProvider.observation_request, _player_lines, _section_user_prompt, __call__, prepare_turn, _observation_completed_actions); storygame/runtime/capture.py (WorldCapture.before_turn, build_capture_provider); storygame/runtime/seating.py (SeatingResult, board_vehicle); storygame/runtime/jev_questions.py; tests/test_observation_prompt.py and tests/test_boarding_already_seated.py (how tests stub Jev and item facts). Today nothing in the product sets ItemFactsProvider.observation_request, so the observation prompt (the projected visible things, the 'Show these in your reply' line, the 'Already done:' line, the model-written boarding result) is used only by the bench. Boarding a vehicle is still an engine-written sentence and the narrator is not called.\n\nWHAT TO BUILD (story-agnostic, deterministic except the Jev questions that already exist or are added below):\n1. SeatingResult (seating.py) gains two defaulted fields: `vehicle_id: str | None = None` (the vehicle she boarded, or the one she is already aboard when the command named it) and `already_aboard: bool = False` (True only in board_vehicle's already-in-the-vehicle branch that returns the engine sentence 'X is already in the Y.'). Set them; change nothing else about board_vehicle's behaviour or return text.\n2. ItemFactsProvider gets a plain attribute `observe_automatically: bool = True`. When True, WorldCapture.before_turn decides observation_request FRESH EVERY TURN (set to None first, so no request survives from an earlier turn). When False, before_turn must leave observation_request exactly as the caller set it (the bench sets it by hand).\n3. Deciding the request in before_turn, after boarding and after the item-match call (prepare_turn) have run: (a) if boarding.vehicle_id is set -> ObservationRequest(command, 'enter', boarding.vehicle_id). (b) else take the entities named by the match call's resolved referred names (provider._referred_names; map each name to an entity id with the provider's world resolver, as other code in item_facts.py does) and use the FIRST one that is an item, a container, a supporter, an area, or a vehicle (world.is_a); if none qualifies, set no request (the old prompt path stays untouched for that turn - talking to a character, walking somewhere, etc.). Kind is 'look' unless the focus is a container and the new Jev question below says the command opens it, then 'open'. The request's action is the player's original command text, never the engine-composed command_record.\n4. New Jev question `opens_container(ask, command, container_name)` in jev_questions.py, same shape as boards_vehicle (noul, instructions and true/false criteria in plain words): true when the command has the player open the container (or look inside it by opening it); false when it only looks at, closes, touches, moves, carries, or talks about it. It is asked only when the focus is a container. A None answer means 'look'. Add it to the adapter the same way the other questions are passed in capture.py.\n5. Already aboard: in observation mode, when boarding.already_aboard is True, do NOT consume the command and do NOT add the engine sentence as a step: the command goes to the narrator unchanged, with no 'Just before this' or 'Already done' line from it, and the request is ('enter', vehicle). The model then writes what happens. When the command DID board her (not already aboard) and the command is consumed, the narrator is now called (the engine-text shortcut in ItemFactsProvider.__call__ is skipped whenever observation_request is set, which already works) with 'Already done:' showing her seat step only (notice sentences are already excluded in observation mode). The old engine-text path still runs when observe_automatically is False or no request was set.\n6. The bench scripts scripts/ringer/environment_narration/baseline.py and scripts/ringer/environment_narration/screen.py must set `observe_automatically = False` on the provider right after building it, so they keep measuring exactly what they measure today (run `scripts/ringer/environment_narration/baseline.py --out /tmp/x.json` then `compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/x.json`: it must still print 'baseline cases identical: 8').\n\nTESTS FIRST in new tests/test_observation_mode.py (hermetic; no network; real package data/stories/continuity-initiative with the stub style of tests/test_observation_prompt.py): (a) 'Enter the truck.' -> request kind 'enter' with the vehicle as focus, the narrator IS called (use the provider._dispatch capture trick from the existing tests), the prompt lists the laptop at its seat, 'Already done' contains the seat step and no notice sentence, no engine text was returned (last_turn_engine_text False); (b) already in the driver's seat + 'Get in the truck.' -> not consumed, narrator called, prompt contains no 'is already in the' engine sentence, request kind 'enter'; (c) 'Open the drawer.' with the new Jev question stubbed true -> kind 'open', and stubbed None -> kind 'look'; (d) a command whose referred names are only a character -> observation_request is None and the prompt equals the observe_automatically=False prompt byte for byte; (e) the request is cleared on the next turn (command A sets one, command B with no qualifying referent leaves None); (f) observe_automatically=False leaves a hand-set request untouched; (g) a synthetic second package (copy the pattern the existing tests use for the observatory/skiff packages, see tests/test_observation_context.py) boards/inspects with NO Kristin/truck vocabulary and works with no code change. Run them and see them fail. Then implement. Then run the existing suites listed in the check and fix tests that pinned the retired behaviour (engine-written boarding text for a consumed boarding command and engine-written already-in-vehicle text) by passing observe_automatically=False for the tests whose purpose is the legacy path, or updating the assertion when the test is about the product default; NAME every test you changed in your final report and never delete a test for a behaviour still in force.\n\nYou MAY EDIT ONLY: storygame/runtime/seating.py, storygame/runtime/capture.py, storygame/runtime/item_facts.py, storygame/runtime/jev_questions.py, scripts/ringer/environment_narration/baseline.py, scripts/ringer/environment_narration/screen.py, tests/test_observation_mode.py (new), tests/test_jev_questions.py, and the existing test files named in the check command (only at assertions that encode the retired behaviour above). Never edit data/, docs/, worker/ or .plans/.\nFINISH: ruff check and ruff format every Python file you touched; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_observation_mode.py tests/test_observation_prompt.py tests/test_observation_context.py tests/test_environment_baseline.py tests/test_environment_screen.py tests/test_jev_questions.py tests/test_narrator_cannot_board.py tests/test_bench_item_facts.py tests/test_vehicle_landing.py tests/test_seating.py tests/test_boarding.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_command_split.py tests/test_world_placements.py tests/test_referred_reach.py tests/test_held_by_echo.py tests/test_staged_cue_reach.py tests/test_narration_safety.py tests/test_cloudflare_transport.py tests/test_web_demo.py 2>&1 | tee /tmp/env-observe.out | tail -8 && ! grep -Eq '[0-9]+ (failed|error|xfailed)' /tmp/env-observe.out && .venv/bin/python scripts/ringer/environment_narration/baseline.py --out /tmp/env-observe-base.json && .venv/bin/python scripts/ringer/environment_narration/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-observe-base.json && git diff --quiet -- data docs && ! git diff -U0 -- storygame | grep -iE '^\\+.*(kristin|laptop|truck|drawer|michelle)' && .venv/bin/python -m ruff check storygame tests scripts/ringer/environment_narration && .venv/bin/python -m ruff format --check storygame tests scripts/ringer/environment_narration",
+   "verified": "the product builds an observation request every turn and the narrator writes boarding results"
+  }
+ ]
+}

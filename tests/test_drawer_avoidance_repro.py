@@ -89,7 +89,6 @@ def test_static_drawer_dependencies_have_no_later_scene_dependents() -> None:
         "continuity_initiative_known",
         "drawer_gap_pointed_out",
         "house_marked_for_return",
-        "memory_card_recovered",
         "michelle_lead_actionable",
         "michelle_warning_known",
         "official_interest_in_michelle_known",

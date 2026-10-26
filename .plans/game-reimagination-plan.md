@@ -6,6 +6,12 @@ or deployment is part of this change.
 
 ## Resume here
 
+Environment narration follow-up (2026-10-25): the
+[LLM environment narration plan](grounded-llm-environment-narration.md) defines
+the measured replacement for engine-written item/boarding descriptions, model
+comparison, and routine implementation coordinator recommendation. It is a
+focused workstream, not a restart of the whole-game migration.
+
 Phase 0 status (2026-10-22): complete. The catalogue and accepted revised 1C
 incident contract are in [game-reimagination-phase0.md](game-reimagination-phase0.md)
 and [1c-contract-result.md](1c-contract-result.md). Phase 1 may begin only

@@ -32,7 +32,11 @@ from storygame.runtime.contracts import (
     SceneTransitionProposal,
     parse_turn_proposal,
 )
-from storygame.runtime.cue_lifecycle import clear_staged_cue, staged_cue_is_eligible
+from storygame.runtime.cue_lifecycle import (
+    clear_staged_cue,
+    staged_cue_is_eligible,
+    staged_cue_reveal_is_reachable,
+)
 from storygame.runtime.facts import Fact
 from storygame.runtime.incidents import resolved_incident_outcome
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
@@ -341,19 +345,22 @@ class RuntimeEngine(CanonicalEventMixin):
             (delivery for delivery in self.state.package.deliveries if delivery.fact_id == staged_cue_fact_id),
             None,
         )
-        if staged_delivery is not None and not staged_cue_is_eligible(
+        staged_reveal_reachable = staged_delivery is None or self._cue_reveal_reachable(staged_cue_fact_id)
+        staged_eligible = staged_delivery is not None and staged_cue_is_eligible(
             self.state,
             staged_delivery,
             final_scene_id=self.state.current_scene_id,
             final_facts=self.state.facts,
             reveal_available=self._cue_reveal_available(staged_cue_fact_id),
-        ):
+        )
+        if staged_delivery is not None and (not staged_eligible or not staged_reveal_reachable):
             cue_text = staged_delivery.escalation_text if staged_cue_stage == 2 else staged_delivery.cue_text
             if cue_text is not None:
                 proposal = proposal.model_copy(
                     update={"segments": tuple(segment for segment in proposal.segments if segment.text != cue_text)}
                 )
-            clear_staged_cue(self.state)
+            if not staged_eligible:
+                clear_staged_cue(self.state)
             staged_cue_fact_id = None
         if (
             staged_cue_fact_id
@@ -1300,6 +1307,15 @@ class RuntimeEngine(CanonicalEventMixin):
             and explain_reveal(self.state, "player", knowledge).reason not in {STORYLET_SPENT, ALREADY_ESTABLISHED}
             for knowledge in reveals
         )
+
+    def _cue_reveal_reachable(self, fact_id: str) -> bool:
+        """Return whether a staged cue's earning reveal is reachable right now."""
+
+        delivery = next(
+            (delivery for delivery in self.state.package.deliveries if delivery.fact_id == fact_id),
+            None,
+        )
+        return delivery is None or staged_cue_reveal_is_reachable(self.state, delivery)
 
     def _ranked_cue_fact_ids(self) -> tuple[str, ...]:
         """Rank missing bridge facts by their earliest eligible source window."""

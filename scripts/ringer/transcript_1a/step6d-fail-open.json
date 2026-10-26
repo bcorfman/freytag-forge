@@ -1,0 +1,35 @@
+{
+ "run_name": "1a-continuity-step6",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-step6",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "step6d-fail-open",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 4800,
+   "check_timeout_s": 2400,
+   "ownership": [
+    "storygame/runtime/knowledge.py",
+    "storygame/runtime/item_facts.py",
+    "storygame/runtime/cloudflare.py",
+    "storygame/runtime/reveal_eligibility.py",
+    "tests/test_place_scoped_feed.py",
+    "tests/test_reveal_reach.py",
+    "tests/test_late_scene_repro.py"
+   ],
+   "spec": "You are fixing a robustness bug and one stale pin in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT: storygame/runtime/knowledge.py, storygame/runtime/item_facts.py, storygame/runtime/cloudflare.py, storygame/runtime/reveal_eligibility.py, tests/test_place_scoped_feed.py, tests/test_reveal_reach.py, tests/test_late_scene_repro.py. Never edit data/, bench/frozen/, docs/testing-runbook.md; do not reformat unrelated text. Shared runtime has NO story names.\n\nBUG. Two recent generic features decide things from `world.together(protagonist, X)`: (1) the place-scoped narrator prompt (knowledge.py `_scene_frame` and `_within_reach` for committed statements; item_facts.py `_thing_names` scoping; cloudflare.py `_where_line`) and (2) the reveal reach gate (reveal_eligibility.py `explain_reveal` returning not_reachable). `together` is False whenever the protagonist has NO area (world.area(protagonist) is None, i.e. its parent is None/unplaced), which really happens (the narrator's item_facts left the protagonist unplaced twice in 109 live turns, and many unit-test states are never placed). In that state the prompt hides the whole scene (tests/test_3a_records_followup.py::test_records_are_grounded_and_shown_after_medical_entry_without_pre_reveal_contents fails: the records item vanished from THINGS) and every reach-gated reveal becomes unreachable.\n\nFIX (fail open). When the protagonist's area is unknown (world.area(protagonist_id) is None), every one of those places behaves exactly as if the protagonist were with the scene: no prompt scoping (scene situation, committed statements, THINGS/PLAYER lists), no WHERE line, and the reach gate treats the reveal as reachable. Implement this once, in one small shared helper (for example in storygame/runtime/world_model.py or next to `_within_reach`; choose the least invasive place) and call it from all of those sites; do not duplicate the check. Behavior when the protagonist HAS an area is unchanged (the existing tests for scoping and reach must keep passing without modification).\n\nTESTS FIRST. Add to tests/test_place_scoped_feed.py and tests/test_reveal_reach.py, small: (a) 1A with the protagonist unplaced (world.place or remove its parent so world.area is None; use whatever the existing tests in these files use to move it, then clear the parent): the narrator prompt equals the in-house prompt (scene situation present, house things listed, no WHERE line) and the card reveal is eligible; (b) a synthetic-story case in the same style as the file's existing synthetic cases. Also update tests/test_late_scene_repro.py: the expected place-form set for scene 1A (EXPECTED_PLACE_FORMS_BY_SCENE) must now include the new aliases that were added on purpose: for outside_house: outside, the yard, the driveway, the street, the curb, the front of the house; for mcgehee_home: inside, indoors. Read the test to find the exact normalized form it compares and add exactly the forms the failure output lists, nothing else, and say which.\n\nFINISH: ruff format and ruff check every .py you touched; run the focused tests in the check (the full suite is run once at the end of the whole plan, not here); report what you changed.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 $(ls -d tests/test_place_scoped_feed.py tests/test_reveal_reach.py tests/test_late_scene_repro.py tests/test_3a_records_followup.py tests/test_knowledge_projection.py tests/test_1a_movement.py tests/test_boarding.py tests/test_vehicle_landing.py tests/test_1a_gap_pointer.py tests/test_1a_back_door_gap.py tests/test_1a_patrol.py tests/test_1a_witnessed_recovery.py tests/test_recent_cue_reference.py tests/test_cloudflare_transport.py tests/test_item_facts*.py tests/test_1a_spine_prompts.py tests/test_1b_spine_prompts.py tests/test_2a_spine_prompts.py tests/test_3ab_spine_prompts.py tests/test_cue_eligibility_compare.py tests/test_cue_spent_reveal.py tests/test_invitation_report.py tests/test_web_demo.py 2>/dev/null | tr '\\n' ' ') 2>&1 | tail -12 && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -m authoring_quality 2>&1 | tail -4 && git diff --quiet -- data bench/frozen docs && (! git diff -U0 -- storygame | grep -E '^\\+' | grep -iE 'kristin|michelle|drawer|truck|laptop') && .venv/bin/python -m ruff check . && .venv/bin/python -m ruff format --check .",
+   "verified": "unknown protagonist place fails open in the prompt scoping and the reach gate; alias pin updated; focused suites pass"
+  }
+ ]
+}

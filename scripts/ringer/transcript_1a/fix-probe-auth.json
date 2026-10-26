@@ -1,0 +1,30 @@
+{
+ "run_name": "1a-continuity-boarding-probe",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-boarding-probe",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "fix-probe-auth-header",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/transcript_1a/boarding_probe.py",
+    "tests/test_boarding_probe.py"
+   ],
+   "spec": "You are fixing a missing auth header in a probe harness in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY scripts/ringer/transcript_1a/boarding_probe.py and tests/test_boarding_probe.py. Never edit storygame/, data/, docs/, .plans/. Never make a live call.\n\nDEFECT: a live smoke got HTTP 401 on all 8 calls because `_send_narrator` in boarding_probe.py builds its Request headers without the Authorization header. The product provider (storygame/runtime/cloudflare.py around line 2104) adds `Authorization: Bearer <token>` when its token is non-empty, where the token comes from the CLOUDFLARE_WORKER_TOKEN environment variable (stripped; line 327). FIX: in `_send_narrator`, read os.environ CLOUDFLARE_WORKER_TOKEN (stripped) and add the same Authorization header only when non-empty. Never write the token into any output file, row, log or exception text.\n\nTEST FIRST in tests/test_boarding_probe.py: with a fake opener capturing the Request, (a) token set -> header 'Authorization' equals 'Bearer <token>' (urllib normalizes the key to 'Authorization'); (b) token unset or blank -> no Authorization header; (c) the token string appears nowhere in the written output JSON for a run whose fake opener returns a 401 HTTPError.\n\nFINISH: ruff format and ruff check both files; run `.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_boarding_probe.py`. Report any existing test changed.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_boarding_probe.py 2>&1 | tail -15 && git diff --quiet -- storygame data docs bench/frozen .plans && .venv/bin/python -m ruff check scripts/ringer/transcript_1a/boarding_probe.py tests/test_boarding_probe.py && .venv/bin/python -m ruff format --check scripts/ringer/transcript_1a/boarding_probe.py tests/test_boarding_probe.py",
+   "verified": "bearer header sent only when a token is set; token never written to output"
+  }
+ ]
+}

@@ -7,7 +7,7 @@ from collections.abc import Iterable
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from storygame.runtime.reveal_eligibility import explain_reveal
+from storygame.runtime.reveal_eligibility import explain_reveal, together_or_unplaced
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package.models import ActionContract, FactDelivery, KnowledgeDefinition, entity_surface_forms
@@ -236,6 +236,9 @@ class KnowledgeProjector:
         frame = next(
             frame for frame in state.package.knowledge.scene_frames if frame.scene_id == state.current_scene_id
         )
+        scene = next(scene for scene in state.package.scenes if scene.metadata.scene_id == state.current_scene_id)
+        world = world_for(state.package, state.facts)
+        protagonist_id = state.package.world.protagonist_id
         committed = self._committed_for(state, audience_id, player_input)
         scene_hidden_ids = self._effect_item_ids(state)
         protagonist_moving_facts = {
@@ -260,7 +263,11 @@ class KnowledgeProjector:
         return TurnKnowledgeContext(
             scene_id=state.current_scene_id,
             phase=state.phase,
-            scene_frame="" if hides_protagonist_move else frame.situation,
+            scene_frame=(
+                ""
+                if hides_protagonist_move
+                else self._scene_frame(state, frame.situation, scene, world, protagonist_id, player_input)
+            ),
             pressure=frame.pressure,
             audience_id=audience_id,
             committed_knowledge=committed,
@@ -274,6 +281,17 @@ class KnowledgeProjector:
                 delivery for delivery in state.package.deliveries if delivery.fact_id in state.staged_handoff_fact_ids
             ),
             scene_hidden_ids=scene_hidden_ids,
+        )
+
+    @staticmethod
+    def _scene_frame(state, situation, scene, world, protagonist_id: str, player_input: str) -> str:
+        if not player_input or together_or_unplaced(world, protagonist_id, scene.metadata.location_id):
+            return situation
+        area_ids = (world.area(protagonist_id), *world.chain(protagonist_id))
+        descriptions = {location.id: location.description for location in state.package.world.locations}
+        return next(
+            (descriptions[area_id] for area_id in area_ids if area_id in descriptions and descriptions[area_id]),
+            "",
         )
 
     def _effect_item_ids(self, state: RuntimeState) -> tuple[str, ...]:
@@ -309,6 +327,9 @@ class KnowledgeProjector:
             # Scene framing belongs in context, not in a character's dialogue.
             and not (item.source.kind == "scene_entry" and item.audience.kind == "public")
         ]
+        world = world_for(state.package, state.facts)
+        protagonist_id = state.package.world.protagonist_id
+        established = [item for item in established if self._within_reach(item, world, protagonist_id)]
         if len(established) <= limit:
             return tuple(self._projected(item) for item in established)
         return tuple(self._projected(item) for item in established[-limit:])
@@ -339,6 +360,9 @@ class KnowledgeProjector:
             for item in state.package.knowledge.knowledge
             if self._established(item, state) and self._visible_to(item, audience_id)
         ]
+        world = world_for(state.package, state.facts)
+        protagonist_id = state.package.world.protagonist_id
+        visible = [item for item in visible if self._within_reach(item, world, protagonist_id)]
         in_scene = [item for item in visible if state.current_scene_id in item.available_in_scenes]
         scene_ids = {item.id for item in in_scene}
         referenced_entity_ids = _input_referenced_entity_ids(
@@ -359,6 +383,12 @@ class KnowledgeProjector:
         ]
         selected = [*in_scene, *recalled][: self.max_committed_knowledge]
         return tuple(self._projected(item) for item in selected)
+
+    @staticmethod
+    def _within_reach(item: KnowledgeDefinition, world, protagonist_id: str) -> bool:
+        return not item.reach_entity_ids or all(
+            together_or_unplaced(world, protagonist_id, entity_id) for entity_id in item.reach_entity_ids
+        )
 
     @staticmethod
     def _player_refers_to(

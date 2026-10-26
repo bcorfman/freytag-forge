@@ -152,6 +152,16 @@ is never sent to the narrator or exposed in the narrator's serialized context.
 Keep aliases narrow and author-reviewed. A candidate without `delivery_text`
 keeps the legacy narrator-proposal path.
 
+An optional `reach_entity_ids` list makes a reveal require the protagonist to
+be together with each named world item, character, or group. Use it when the
+reveal is about something the protagonist must be physically near; omit it
+when the reveal has no reach restriction. The loader validates every ID, and
+the runtime checks reach after prerequisites and before source activation.
+
+Locations may also declare an optional `description` used when the protagonist
+is outside the scene's location; it must be a non-blank string and should
+describe only what is visible from that place.
+
 An optional `leak_terms` list names vocabulary that narration must guard before
 the knowledge is earned. Every multi-word phrase in the list is blocked;
 single-word entries are not enforced. If the field is absent, the old behavior

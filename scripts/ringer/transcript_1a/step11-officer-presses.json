@@ -1,0 +1,36 @@
+{
+ "run_name": "1a-continuity-officer-presses",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-officer-presses",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "officer-presses-after-challenge",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 1200,
+   "ownership": [
+    "data/stories/continuity-initiative/pacing.yaml",
+    "data/stories/continuity-initiative/world.yaml",
+    "data/stories/continuity-initiative/knowledge.yaml",
+    "data/stories/continuity-initiative/storylet-routes.yaml",
+    "data/stories/continuity-initiative/storylets.md",
+    "tests/test_1a_officer_press.py",
+    "tests/test_1a_patrol.py",
+    "tests/test_1a_witnessed_recovery.py"
+   ],
+   "spec": "Story-data change in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: data/stories/continuity-initiative/pacing.yaml, data/stories/continuity-initiative/world.yaml, data/stories/continuity-initiative/knowledge.yaml, data/stories/continuity-initiative/storylet-routes.yaml, data/stories/continuity-initiative/storylets.md, tests/test_1a_officer_press.py, tests/test_1a_patrol.py, tests/test_1a_witnessed_recovery.py. Never edit storygame/, docs/, .plans/, bench/. Use the text below EXACTLY (it is final authored prose; do not reword).\n\nGOAL: in scene 1A, when an officer sees Kristin take the card (reveal k_sl_1a_b_r0w sets card_challenged and kristin_marked_by_patrol while patrol_in_house is true), the challenge must have a visible follow-up the player can answer, and the patrol's departure must acknowledge it. Today the patrol just leaves.\n\n1. New fact `officer_demanded_card`, declared everywhere card_challenged is declared (world.yaml fact list, knowledge.yaml fact list with a purpose line 'The officer has demanded the card from Kristin.', storylet-routes.yaml fact entry like card_challenged with definition and used_by_storylets SL-1A-E, used_by_transitions []). It must not be required by any transition trigger.\n2. New pacing event in pacing.yaml placed right after patrol_enters_1a: id officer_presses_1a, scene_id 1A, at_turn 5, when [card_challenged equals true, patrol_in_house equals true], effects [officer_demanded_card equals true], one verbatim realization with this text: \"The officer plants himself between her and the front door and holds out a gloved hand. \\\"Whatever you just took from that desk. Let's see it, ma'am. Right now.\\\"\"\n3. patrol_leaves_1a gets a first realization gated on officer_demanded_card equals true, verbatim: \"The officer's radio crackles with a description that is hers. He backs out through the front door, eyes on her the whole way, and the patrol pulls away from the curb.\" keep the existing plain 'The patrol pulls away from the curb.' as the fallback realization. Confirm in storygame/runtime/engine.py (read only) that realizations are chosen first-match by `when`, as patrol_returns_1a already relies on. The leave effects stay unchanged.\n4. storylets.md SL-1A-E note: one added sentence saying the officer then demands the card (officer_demanded_card) and the departure line acknowledges it. The text must not claim the card is concealed, confiscated or handed over: custody is the player's choice.\n\nTESTS FIRST in tests/test_1a_officer_press.py (follow tests/test_1a_patrol.py and tests/test_1a_witnessed_recovery.py for helpers): witnessed recovery then the next turn shows the press line once and sets officer_demanded_card; that the demand fires only when card_challenged is true (recovery before arrival or an unwitnessed run never shows it, and the departure shows the plain line); departure after a demand shows the acknowledging line; the exit trigger t_1a_1b is unaffected (card custody is unchanged by the demand). Run the new tests, see them fail, then edit the data. List any existing test pin you change (turn counts or event lists in other tests) and why.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 $(ls -d tests/test_1a_officer_press.py tests/test_1a_patrol.py tests/test_1a_witnessed_recovery.py tests/test_1a*.py tests/test_story_package*.py tests/test_pacing*.py tests/test_knowledge*.py tests/test_continuity*.py 2>/dev/null) 2>&1 | tail -8 && git diff --quiet -- storygame docs bench/frozen .plans && .venv/bin/python -m ruff check tests && .venv/bin/python -m ruff format --check tests",
+   "verified": "already-seated line uses the protagonist's short name via one shared helper"
+  }
+ ]
+}

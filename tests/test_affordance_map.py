@@ -194,7 +194,6 @@ def test_whole_package_findings_match_recorded_gaps():
     ] + [
         {"check": 3, "scene_id": "1C", "gate": "t_1c_2a:facility_infiltration_needed", "subject": subject}
         for subject in (
-            "mcgehee_home",
             "memory_card",
             "michelle_phone",
             "michelle_photograph",
@@ -260,7 +259,15 @@ def test_affordances_and_scene_location_include_aliases():
     assert scene["location"] == {
         "id": "mcgehee_home",
         "name": "Michelle's house",
-        "aliases": ["Michelle's home", "the house"],
+        "aliases": [
+            "Michelle's home",
+            "the house",
+            "inside",
+            "indoors",
+            "the living room",
+            "the front room",
+            "the hallway",
+        ],
     }
     assert all("aliases" in affordance for gate in scene["gates"] for affordance in gate["affordances"])
 

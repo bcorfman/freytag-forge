@@ -1,0 +1,35 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t3c",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "t3c-notice-steps-out-of-observation-prompt",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 4800,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "storygame/runtime/seating.py",
+    "storygame/runtime/capture.py",
+    "storygame/runtime/item_facts.py",
+    "tests/test_observation_prompt.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/tests/test_observation_prompt.py"
+   ],
+   "spec": "You are making one targeted change in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. No network, no model call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. YOU MAY EDIT ONLY: storygame/runtime/seating.py, storygame/runtime/capture.py, storygame/runtime/item_facts.py, tests/test_observation_prompt.py (append tests; change no existing assertion). Never edit observation.py, packages/, data/, docs/, worker/.\n\nCONTEXT: the opt-in observation prompt (ItemFactsProvider.observation_request, see tests/test_observation_prompt.py) puts an `Already done:` line in PLAYER built from provider.prior_steps. For boarding, prior_steps includes each visible item's authored `notice_text` (seating.board_vehicle appends it to SeatingResult.steps, e.g. a sentence saying where an item sits). That per-item engine-written environment prose must NOT reach the narrator on the observation path: the narrator should learn item positions from the projected THINGS lines, and a package with no notice_text must behave identically. Other steps (the seat's enter_text, standing, taking, fixed-refusal steps, the generic already-in-seat sentence) are completed ACTIONS and stay.\n\nCHANGE: (1) Add `notice_steps: tuple[str, ...] = ()` to SeatingResult in storygame/runtime/seating.py and have board_vehicle fill it with exactly the notice_text strings it appends; `steps` stays unchanged and still contains them, so every existing consumer and all default-path behavior is byte-identical. (2) In storygame/runtime/capture.py WorldCapture.before_turn, pass boarding.notice_steps to the provider as `provider.prior_notice_steps` (a tuple; reset to () wherever prior_steps is reset or the turn ends, mirror how prior_steps and command_consumed are handled, including any saved/restored context if prior_steps is persisted). (3) In ItemFactsProvider add `self.prior_notice_steps = ()` and, ONLY when observation_request is not None, build the `Already done:` line and ObservationContext completed_actions from prior_steps with those notice strings removed (remove by exact match, preserve order, remove each notice once); the default path keeps using prior_steps untouched. If no steps remain, add no Already done line. No story vocabulary in the code.\n\nTESTS FIRST (append to tests/test_observation_prompt.py): (a) 'Enter the truck.' with observation_request set: the Already done line holds the seat step only and does not contain the notice sentence, while THINGS still lists the laptop with Place: passenger seat; (b) with observation_request None the PLAYER section still holds the full `Just before this:` line including the notice (default unchanged); (c) a package whose items have no notice_text (copy the real package to tmp_path and delete the notice_text keys from its world yaml as tests/test_seating.py does; or build the SeatingResult directly) yields identical observation prompts apart from nothing: Already done is the same seat step; (d) SeatingResult.notice_steps is a subset of steps and empty when no notice exists. Run them, see them fail, then build. FINISH: ruff check and ruff format every touched file; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example && set -o pipefail && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_observation_prompt.py tests/test_observation_context.py packages/worldkeeper/tests tests/test_seating.py tests/test_boarding.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_referred_reach.py tests/test_environment_baseline.py tests/test_held_by_echo.py tests/test_staged_cue_reach.py tests/test_narration_safety.py tests/test_3c_world_capture_wiring.py tests/test_cloudflare_transport.py 2>&1 | tee /tmp/env-t3c.out | tail -8 && ! grep -Eq '[0-9]+ (failed|error|xfailed)' /tmp/env-t3c.out && .venv/bin/python scripts/ringer/environment_narration/baseline.py --out /tmp/env-t3c-base.json && .venv/bin/python scripts/ringer/environment_narration/compare_baseline.py bench/results/environment-narration/t1-baseline.json /tmp/env-t3c-base.json && test \"$(md5sum storygame/runtime/observation.py | cut -d' ' -f1)\" = 4c5c7b8e1349fe0a2f74e284d0da06ce && test \"$(md5sum packages/worldkeeper/src/worldkeeper/model.py | cut -d' ' -f1)\" = 7c4746e69cf129b7458f7dd09267c1df && git diff --quiet -- data docs worker storygame/story_package && ! git diff -U0 -- storygame | grep -iE '^\\+.*(kristin|laptop|truck|drawer|michelle)' && .venv/bin/python -m ruff check storygame/runtime/seating.py storygame/runtime/capture.py storygame/runtime/item_facts.py tests/test_observation_prompt.py && .venv/bin/python -m ruff format --check storygame/runtime/seating.py storygame/runtime/capture.py storygame/runtime/item_facts.py tests/test_observation_prompt.py",
+   "verified": "observation prompt carries completed actions without item notice sentences; default path and baseline unchanged"
+  }
+ ]
+}

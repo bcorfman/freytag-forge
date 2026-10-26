@@ -1,25 +1,75 @@
 budget_seconds: 7200
 events:
-- id: pressure_1a
+- id: patrol_arrives_1a
   scene_id: 1A
   at_turn: 4
+  effects:
+  - fact_id: patrol_on_scene
+    equals: true
+  realizations:
+  - verbatim: true
+    text: "A federal emergency patrol pulls up outside Michelle's house. Two officers get out. One walks to the front door. The other looks over the street."
+- id: patrol_enters_1a
+  scene_id: 1A
+  at_turn: 5
+  when:
+  - fact_id: patrol_on_scene
+    equals: true
+  effects:
+  - fact_id: patrol_in_house
+    equals: true
+  realizations:
+  - verbatim: true
+    text: "The front door opens. An officer walks in and heads straight for Michelle's workstation."
+- id: officer_presses_1a
+  scene_id: 1A
+  at_turn: 5
+  when:
+  - fact_id: card_challenged
+    equals: true
+  - fact_id: patrol_in_house
+    equals: true
+  effects:
+  - fact_id: officer_demanded_card
+    equals: true
+  realizations:
+  - verbatim: true
+    text: "The officer plants himself between her and the front door and holds out a gloved hand. \"Whatever you just took from that desk. Let's see it, ma'am. Right now.\""
+- id: patrol_leaves_1a
+  scene_id: 1A
+  at_turn: 7
+  when:
+  - fact_id: patrol_on_scene
+    equals: true
+  effects:
+  - fact_id: patrol_departed
+    equals: true
+  - fact_id: patrol_on_scene
+    equals: false
+  - fact_id: patrol_in_house
+    equals: false
+  realizations:
+  - when:
+    - fact_id: officer_demanded_card
+      equals: true
+    verbatim: true
+    text: "The officer's radio crackles with a description that is hers. He backs out through the front door, eyes on her the whole way, and the patrol pulls away from the curb."
+  - verbatim: true
+    text: "The patrol pulls away from the curb."
+- id: patrol_returns_1a
+  scene_id: 1A
+  at_turn: 9
   effects:
   - fact_id: patrol_return_pressure
     equals: true
   realizations:
   - when:
-    - fact_id: memory_card_recovered
-      equals: false
-    text: An officer from the patrol comes back and lingers at the drawer on Michelle's workstation without opening it.
-  - when:
-    - fact_id: michelle_lead_actionable
+    - fact_id: patrol_departed
       equals: true
-    text: The patrol is coming back and it is time to leave.
-  - when:
-    - fact_id: memory_card_recovered
-      equals: true
-    text: The patrol is back and searching the house for something Kristin now carries.
-  - text: The patrol is returning to the house.
+    verbatim: true
+    text: "The patrol is coming back to the house."
+  - verbatim: true
+    text: "A federal emergency patrol turns onto Michelle's street."
 - id: pursuit_1b
   scene_id: 1B
   at_turn: 4
@@ -27,6 +77,10 @@ events:
   - fact_id: pursuit_closing_in
     equals: true
   realizations:
+  - when:
+    - fact_id: kristin_marked_by_patrol
+      equals: true
+    text: The pursuers already have a description of Kristin. They are closing in through the park.
   - text: The pursuers are closing in through the park. The pursuit is not over.
 - id: transfer_window_1c
   scene_id: 1C
@@ -200,7 +254,7 @@ events:
   - text: Rising water is closing routes through the facility. The remaining routes are narrowing fast.
 scenes:
 - scene_id: 1A
-  min_turns: 8
+  min_turns: 9
   nudge_after_turns: 10
   handoff_after_turns: 13
 - scene_id: 1B

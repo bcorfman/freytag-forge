@@ -255,17 +255,17 @@ def test_declared_pressure_event_advances_without_provider_timing_or_prose_parsi
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _: _turn("Dust shifts beneath the door."))
 
-    for player_input in (
-        "Inspect the marked front gate.",
-        "Examine the patrol marker on the gate.",
-        "Search the front room.",
-        "Trace the patrol route.",
-    ):
-        engine.turn(player_input)
+    for _ in range(9):
+        engine.turn("Wait.")
 
     assert Fact(predicate="patrol_return_pressure", subject="story", value="true") in state.facts.asserted
-    assert "pressure_1a" in state.fired_event_ids
-    assert Fact(predicate="story_elapsed_seconds", subject="story", value="240") in state.facts.asserted
+    assert {
+        "patrol_arrives_1a",
+        "patrol_enters_1a",
+        "patrol_leaves_1a",
+        "patrol_returns_1a",
+    } <= state.fired_event_ids
+    assert Fact(predicate="story_elapsed_seconds", subject="story", value="540") in state.facts.asserted
 
 
 def test_transition_rejects_lead_and_patrol_without_card_custody() -> None:

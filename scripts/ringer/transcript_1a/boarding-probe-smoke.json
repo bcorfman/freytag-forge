@@ -1,0 +1,30 @@
+{
+ "run_name": "1a-continuity-boarding-probe",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-continuity-boarding-probe",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "boarding-probe-smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 120,
+   "ownership": [
+    "bench/results/boarding-probe-smoke/"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/boarding_probe.py --run --samples 2 --max-calls 10 --confirm --out bench/results/boarding-probe-smoke/probe.json",
+   "spec": "Run ONE billed boarding-probe smoke: 4 arms x 1 distinct prompt x 2 samples = 8 narrator calls, hard cap 10. Own only bench/results/boarding-probe-smoke/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; on quota, outage or error leave the partial output file in place and report verbatim. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/boarding_probe.py --run --samples 2 --max-calls 10 --confirm --out bench/results/boarding-probe-smoke/probe.json",
+   "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python -c \"import json;d=json.load(open('bench/results/boarding-probe-smoke/probe.json'));print(d['calls_made'],d['stop_reason'],[ (r['arm'],r['usable'],r['status']) for r in d['rows']]);assert d['calls_made']<=10 and len(d['rows'])==8, 'expected 8 rows'\"",
+   "verified": "8 rows recorded within the call cap"
+  }
+ ]
+}

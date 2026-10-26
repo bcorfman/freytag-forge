@@ -44,17 +44,20 @@ def _provider(knowledge_id: str | None = None, text: str = "Kristin inspects the
     return provide
 
 
-def test_real_package_declares_incident_outcomes_and_recovery_without_connections() -> None:
+def test_real_package_declares_incident_outcomes_and_recovery() -> None:
     assert len(PACKAGE.incidents) == 1
     incident = PACKAGE.incidents[0]
     assert incident.id == "i_1c_freight_transfer"
     assert {outcome.id for outcome in incident.outcomes} == {"copy_numbers", "secure_route"}
     assert incident.recovery_storylet_id == "SL-1C-D"
-    assert PACKAGE.connections == ()
+    assert {connection.id for connection in PACKAGE.connections} == {"house_to_outside", "outside_to_house"}
 
 
-def test_real_package_loads_without_connections_and_service_level_command_falls_through() -> None:
-    assert load_story_package(PACKAGE_ROOT).connections == ()
+def test_real_package_loads_with_house_connections_and_service_level_command_falls_through() -> None:
+    assert {connection.id for connection in load_story_package(PACKAGE_ROOT).connections} == {
+        "house_to_outside",
+        "outside_to_house",
+    }
     state = _state()
     calls: list[str] = []
 
