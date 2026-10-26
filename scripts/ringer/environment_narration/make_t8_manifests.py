@@ -286,6 +286,163 @@ def t8c() -> dict:
     }
 
 
+def shadow_harness() -> dict:
+    spec = (
+        COMMON
+        + "YOU MAY EDIT ONLY: scripts/ringer/transcript_1a/live_baseline.py and scripts/ringer/transcript_1a/test_live_baseline.py. "
+        "\n\nCONTEXT. live_baseline.py replays a route of player commands through the real engine (product wiring: build_capture_provider, WorldCapture, JevClient) against a Worker URL, with a call cap, and writes rows.json and summary.json. Read the whole file and its test file first. The product has an optional SHADOW observation verifier: `WorldCapture.shadow_verifier = ObservationVerifier(ask)` (storygame/runtime/observation_verifier.py); when set and an observation request exists, after_commit adds `record['observation_shadow']` (outcome, requests, elapsed_s, failure, accepted, verdicts [thing, verdict, score]) to `capture.last_after`. It never changes a turn. "
+        "\n\nBUILD. (1) A new flag `--shadow` (default off; with it off, rows and summary are byte-identical to today). With it on, `_replicate` sets `capture.shadow_verifier = ObservationVerifier(capture_ask)` before the opening, and every turn row gains: `observation_shadow` (the dict from `capture.last_after` for that turn, or None), `observation_relations` (a list of {thing, place, holder} for the relations the verifier was asked about, in order, or None), and `observation_request` (kind and focus name or None). Record the relations WITHOUT changing product code: wrap `storygame.runtime.capture.relations_from_context` for the duration of the run with a function that calls the original and appends its result to a per-turn list that the replicate loop clears before each turn (restore the original in a finally). The summary gains `shadow: true/false`, `observation_turns` (turns whose observation_relations is not None) and `shadow_verifier_requests` (sum of requests). "
+        "(2) A new route `observe` in ROUTES with exactly these 13 inputs in order: 'inspect the drawer', 'pull out the drawer', 'feel under the drawer', 'feel under the drawer', 'go outside', 'inspect the truck', 'enter the truck', 'inspect the passenger seat', 'examine my laptop', 'get out of the truck', 'examine the truck', 'go inside', 'inspect the drawer'. "
+        "(3) In dry-run mode the Jev stub raises, so the shadow step records outcome 'unavailable' or 'shadow_error'; that is fine, the dry run only proves wiring and call counts. "
+        "\n\nTESTS FIRST in scripts/ringer/transcript_1a/test_live_baseline.py (follow its existing style, hermetic, dry-run only, no network): flag off leaves rows without the three new keys and summary without `shadow`; `--shadow --route observe --replicates 1 --dry-run` writes 13 turn rows each with the three keys present (values may be None), summary shadow true; the `relations_from_context` wrapper is restored after the run even when the run raises; the route has exactly the 13 inputs; --shadow does not change `calls_made` ordering assumptions for existing routes (compare a dry run of 'corrected' with and without --shadow: same narration rows). "
+        "\n\nFINISH: ruff check and format both files; report test counts and the dry-run summary of `--route observe --shadow --replicates 1 --dry-run --out /tmp/shadow-dry`."
+    )
+    check = (
+        f"cd {REPO} && export PYTHONPATH={REPO} TMPDIR=/tmp && set -o pipefail && "
+        "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov scripts/ringer/transcript_1a/test_live_baseline.py tests/test_observation_shadow.py tests/test_observation_verifier.py 2>&1 | tee /tmp/shadowh.out | tail -6 "
+        "&& ! grep -Eq '[0-9]+ (failed|error)' /tmp/shadowh.out "
+        "&& env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route observe --shadow --replicates 1 --dry-run --out /tmp/shadow-dry-check >/dev/null "
+        "&& .venv/bin/python -c \"import json;s=json.load(open('/tmp/shadow-dry-check/summary.json'));assert s['shadow'] is True and len(s['inputs'])==13, s\" "
+        "&& git diff --quiet -- storygame docs worker data "
+        "&& .venv/bin/python -m ruff check scripts/ringer/transcript_1a && .venv/bin/python -m ruff format --check scripts/ringer/transcript_1a"
+    )
+    return {
+        "task_type": "code-feature",
+        "engine": "codex",
+        "model": "gpt-5.6-luna",
+        "engine_args": ["-c", "model_reasoning_effort=high"],
+        "full_access": True,
+        "max_attempts": 2,
+        "timeout_s": 3600,
+        "check_timeout_s": 900,
+        "key": "shadow-sample-harness",
+        "ownership": [
+            "scripts/ringer/transcript_1a/live_baseline.py",
+            "scripts/ringer/transcript_1a/test_live_baseline.py",
+        ],
+        "expect_files": [f"{REPO}/scripts/ringer/transcript_1a/live_baseline.py"],
+        "spec": spec,
+        "check": check,
+        "verified": "the live harness can run a hand-readable shadow-verifier sample",
+    }
+
+
+def shadow_report() -> dict:
+    spec = (
+        COMMON
+        + "YOU MAY EDIT ONLY: scripts/ringer/environment_narration/shadow_report.py (NEW) and tests/test_shadow_report.py (NEW). "
+        "\n\nCONTEXT. scripts/ringer/transcript_1a/live_baseline.py (read it) with `--shadow` writes rows.json: a list of replicate records, each with `turns`, each turn row having `input`, `narration`, `error`, `observation_request` ({kind, focus} or None), `observation_relations` (list of {thing, place, holder} or None) and `observation_shadow` (None or {outcome, requests, elapsed_s, failure, accepted, question_version, verdicts: [{thing, verdict, score}]}). Verdicts are 'accept', 'reject', 'uncertain' or 'unavailable'. A human (the orchestrator) reads the narrations BLIND to the verdicts and writes labels; this script prints the blind sheet and later joins labels to verdicts. "
+        "\n\nBUILD a stdlib-only CLI with three subcommands (argparse; no regex). "
+        "`sheet ROWS_JSON [--out FILE]`: prints markdown, one block per observation turn (turns whose observation_relations is not None and error is None) with the id `r<replicate>t<turn>` (0-based indexes), the player command, the narration text verbatim, and the relation list as 'thing | place | holder' lines numbered 1..n. It must NOT print verdicts, scores, outcome or any observation_shadow content. Also lists, at the end, the ids of turns that were skipped because they had no relations. "
+        '`labels-template ROWS_JSON`: prints a JSON skeleton {id: {"1": null, "2": null, ...}} (one key per relation number) for the human to fill with true (the narration presents the thing as present at that place/holder) or false. '
+        "`join ROWS_JSON LABELS_JSON [--out FILE]`: refuses (exit 2, message) if any label is null/missing for an observation turn that has relations. Computes per relation: label x verdict confusion (verdict accept / reject / uncertain / unavailable x label true / false); FALSE ACCEPTS = verdict accept with label false (listed with id, command, thing, score); strict rejections = label true with verdict not accept; per turn: `would_reject` = any relation not accepted OR shadow outcome not 'ok' (fail closed), split by whether all labels on that turn are true ('good turn') or not; verifier latency p50/p95 (elapsed_s) and requests; counts of turns without a shadow record. Prints the GATE: PASS only if false accepts == 0 AND good-turn strict reject rate <= 0.10 AND verifier p95 elapsed_s <= 2.0 AND at least 30 labelled relations; else FAIL with every failing clause named. Always print n for each rate and the exact one-sided 95% upper bound for zero false accepts (1 - 0.05**(1/n) form is fine; document the formula). Exit code 0 for PASS or FAIL (the report is informational), 2 for refusal. "
+        "\n\nTESTS FIRST in tests/test_shadow_report.py (hermetic, tmp_path rows files built inline): sheet shows narration and relations and contains none of the strings 'accept', 'reject', 'uncertain', 'score', 'outcome' that came only from the verdict data (use unusual verdict-only markers such as a score 0.8431 and check absence); sheet skips error turns and no-relation turns and lists them; labels-template shape; join refuses on a missing label; join counts a false accept and fails the gate; join passes the gate on a clean synthetic set of 30+ relations with p95 <= 2.0; strict-reject rate and would_reject logic (an 'unavailable' outcome counts as would_reject); upper-bound arithmetic. "
+        "\n\nFINISH: ruff check and format; report counts."
+    )
+    check = (
+        f"cd {REPO} && export PYTHONPATH={REPO} TMPDIR=/tmp && set -o pipefail && "
+        "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_shadow_report.py scripts/ringer/transcript_1a/test_live_baseline.py 2>&1 | tee /tmp/shadowr.out | tail -6 "
+        "&& ! grep -Eq '[0-9]+ (failed|error)' /tmp/shadowr.out "
+        "&& ! grep -nE '^(import re|from re )|\\bre\\.(compile|search|match|sub|findall|fullmatch)' scripts/ringer/environment_narration/shadow_report.py "
+        "&& git diff --quiet -- storygame docs worker data "
+        "&& .venv/bin/python -m ruff check scripts/ringer/environment_narration tests/test_shadow_report.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration tests/test_shadow_report.py"
+    )
+    return {
+        "task_type": "code-feature",
+        "engine": "codex",
+        "model": "gpt-5.6-luna",
+        "engine_args": ["-c", "model_reasoning_effort=high"],
+        "full_access": True,
+        "max_attempts": 2,
+        "timeout_s": 3600,
+        "check_timeout_s": 900,
+        "key": "shadow-sample-report",
+        "ownership": [
+            "scripts/ringer/environment_narration/shadow_report.py",
+            "tests/test_shadow_report.py",
+        ],
+        "expect_files": [f"{REPO}/scripts/ringer/environment_narration/shadow_report.py"],
+        "spec": spec,
+        "check": check,
+        "verified": "a blind reading sheet and a label join with a preregistered gate",
+    }
+
+
+def shadow_report_acceptable() -> dict:
+    spec = (
+        COMMON
+        + "YOU MAY EDIT ONLY: scripts/ringer/environment_narration/shadow_report.py and tests/test_shadow_report.py. "
+        "\n\nCONTEXT. Read both files and .plans/grounded-llm-environment-narration/t8-shadow-sample-prereg.md including Addendum A. shadow_report.py has subcommands sheet, labels-template and join (a blind reading sheet and a join of hand labels with shadow verdicts, with a gate). Addendum A adds a per-turn reading `acceptable` and a new gate clause 2b. "
+        "\n\nBUILD. (1) `labels-template` adds, for every observation turn, a key \"acceptable\": null next to the numbered relation keys. A turn with zero relations (observation_relations == []) still gets the template entry with only \"acceptable\". (2) `sheet` also prints, for each observation turn, the turn row's `places_before` and `places_after` (compact one-line JSON each, key `places_before`/`places_after`), and the observation request kind and focus name; still NO verdict, score, outcome or shadow content. Zero-relation observation turns are printed too (relations section says 'none'). (3) `join` refuses (exit 2) when any observation turn lacks a boolean `acceptable` label, or when a relation label is missing. It computes clause 2b: among observation turns with acceptable == true, the share that enforcement would reject (any relation verdict not 'accept', or a shadow outcome other than 'ok' when the turn has at least one relation; a turn with zero relations and outcome 'no_relations' is NOT a rejection; a turn with zero relations and a missing shadow record is NOT a rejection), printing n and the share, and adds `2b` to the gate: FAIL when that share is above 0.10 (when n is 0 it is inconclusive and the gate says so). Also print a short table of acceptable == true turns that would be rejected: id, command, and the rejected things with scores. Existing clauses 1, 2, 3, 4 keep their meaning and wording. "
+        "\n\nTESTS FIRST in tests/test_shadow_report.py (extend; keep existing tests green): template carries acceptable; sheet shows places and request kind but still no verdict-only markers; join refuses without acceptable; 2b computed correctly on a synthetic set (acceptable turn rejected because of over-demanded relations lowers the 2b pass and is listed; an unacceptable turn that is rejected does not count against 2b; zero-relation turns are not rejections); gate wording lists 2b when it fails. "
+        "\n\nFINISH: ruff check and format; report counts."
+    )
+    check = (
+        f"cd {REPO} && export PYTHONPATH={REPO} TMPDIR=/tmp && set -o pipefail && "
+        "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_shadow_report.py 2>&1 | tee /tmp/shadowr2.out | tail -6 "
+        "&& ! grep -Eq '[0-9]+ (failed|error)' /tmp/shadowr2.out "
+        "&& grep -q 'acceptable' scripts/ringer/environment_narration/shadow_report.py "
+        "&& ! grep -nE '^(import re|from re )|\\bre\\.(compile|search|match|sub|findall|fullmatch)' scripts/ringer/environment_narration/shadow_report.py "
+        "&& git diff --quiet -- storygame docs worker data scripts/ringer/transcript_1a "
+        "&& .venv/bin/python -m ruff check scripts/ringer/environment_narration tests/test_shadow_report.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration tests/test_shadow_report.py"
+    )
+    return {
+        "task_type": "code-feature",
+        "engine": "codex",
+        "model": "gpt-5.6-luna",
+        "engine_args": ["-c", "model_reasoning_effort=high"],
+        "full_access": True,
+        "max_attempts": 2,
+        "timeout_s": 3600,
+        "check_timeout_s": 900,
+        "key": "shadow-report-acceptable",
+        "ownership": [
+            "scripts/ringer/environment_narration/shadow_report.py",
+            "tests/test_shadow_report.py",
+        ],
+        "expect_files": [f"{REPO}/scripts/ringer/environment_narration/shadow_report.py"],
+        "spec": spec,
+        "check": check,
+        "verified": "the report supports the acceptable reading and gate clause 2b",
+    }
+
+
+def shadow_report_zero_relations() -> dict:
+    spec = (
+        COMMON
+        + "YOU MAY EDIT ONLY: scripts/ringer/environment_narration/shadow_report.py and tests/test_shadow_report.py. "
+        "\n\nBUG. In shadow_report.py `_join`, `turn_would_reject` starts as `not isinstance(shadow, dict) or shadow.get('outcome') != 'ok'`. For an observation turn with ZERO relations the shadow outcome is 'no_relations' (or the shadow record may be missing), so the turn is counted as one enforcement would reject, which inflates the original gate clause 2 (good-turn strict reject rate) and the mixed-turn counts. A turn with zero relations is never rejected by enforcement (nothing is asked). Fix: `turn_would_reject` can be True only when the turn has at least one relation (a relation verdict that is not 'accept', or a shadow outcome other than 'ok', or a missing shadow record, all evaluated only when relations is non-empty). Zero-relation turns still count in `good_turns` (all labels true vacuously) but never as rejected; keep the 2b logic as is. Also make sure `turns_without_shadow` still reports them. "
+        "\n\nTESTS FIRST in tests/test_shadow_report.py: a synthetic set containing zero-relation turns with outcome 'no_relations' and with a missing shadow record -> clause 2 good-turn reject count excludes them (compute the exact expected counts), and the printed good-turn rejection rate matches; a turn with relations and outcome 'unavailable' is still a rejection. Keep all existing tests green. FINISH: ruff check and format; report counts."
+    )
+    check = (
+        f"cd {REPO} && export PYTHONPATH={REPO} TMPDIR=/tmp && set -o pipefail && "
+        "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_shadow_report.py 2>&1 | tee /tmp/shadowr3.out | tail -6 "
+        "&& ! grep -Eq '[0-9]+ (failed|error)' /tmp/shadowr3.out "
+        "&& ! grep -nE '^(import re|from re )|\\bre\\.(compile|search|match|sub|findall|fullmatch)' scripts/ringer/environment_narration/shadow_report.py "
+        "&& git diff --quiet -- storygame docs worker data "
+        "&& .venv/bin/python -m ruff check scripts/ringer/environment_narration tests/test_shadow_report.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration tests/test_shadow_report.py"
+    )
+    return {
+        "task_type": "code-fix",
+        "engine": "codex",
+        "model": "gpt-5.6-luna",
+        "engine_args": ["-c", "model_reasoning_effort=high"],
+        "full_access": True,
+        "max_attempts": 2,
+        "timeout_s": 3600,
+        "check_timeout_s": 900,
+        "key": "shadow-report-zero-relations",
+        "ownership": [
+            "scripts/ringer/environment_narration/shadow_report.py",
+            "tests/test_shadow_report.py",
+        ],
+        "expect_files": [f"{REPO}/scripts/ringer/environment_narration/shadow_report.py"],
+        "spec": spec,
+        "check": check,
+        "verified": "zero-relation turns are never counted as enforcement rejections",
+    }
+
+
 def manifest(task: dict, name: str) -> dict:
     return {
         "run_name": "grounded-environment-narration",
@@ -299,7 +456,16 @@ def manifest(task: dict, name: str) -> dict:
 
 if __name__ == "__main__":
     which = sys.argv[1:] or ["t8a"]
-    builders = {"t8a": t8a, "t8a2": t8a2, "t8b": t8b, "t8c": t8c}
+    builders = {
+        "t8a": t8a,
+        "t8a2": t8a2,
+        "t8b": t8b,
+        "t8c": t8c,
+        "shadow": shadow_harness,
+        "shadowr": shadow_report,
+        "shadowr2": shadow_report_acceptable,
+        "shadowr3": shadow_report_zero_relations,
+    }
     for key in which:
         path = OUT / f"build-{key}-preview.json"
         path.write_text(json.dumps(manifest(builders[key](), key), indent=1) + "\n", encoding="utf-8")

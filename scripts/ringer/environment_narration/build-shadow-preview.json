@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-shadow",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 900,
+   "key": "shadow-sample-harness",
+   "ownership": [
+    "scripts/ringer/transcript_1a/live_baseline.py",
+    "scripts/ringer/transcript_1a/test_live_baseline.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/transcript_1a/live_baseline.py"
+   ],
+   "spec": "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no live model call. Do not git commit. NEVER print or write any credential. NO regular expressions in new code. No story vocabulary (no Kristin, truck, laptop, drawer, Michelle) in non-test code. Tests may use the shipped continuity-initiative package through the helpers in tests/test_observation_mode.py (`_state_at`) and tests/test_observation_shadow.py, plus a synthetic second story. Write the tests FIRST, run them and confirm they fail for the right reason, then implement until they pass. Do not edit any file outside YOU MAY EDIT ONLY. Run ruff check and ruff format on your files at the end. YOU MAY EDIT ONLY: scripts/ringer/transcript_1a/live_baseline.py and scripts/ringer/transcript_1a/test_live_baseline.py. \n\nCONTEXT. live_baseline.py replays a route of player commands through the real engine (product wiring: build_capture_provider, WorldCapture, JevClient) against a Worker URL, with a call cap, and writes rows.json and summary.json. Read the whole file and its test file first. The product has an optional SHADOW observation verifier: `WorldCapture.shadow_verifier = ObservationVerifier(ask)` (storygame/runtime/observation_verifier.py); when set and an observation request exists, after_commit adds `record['observation_shadow']` (outcome, requests, elapsed_s, failure, accepted, verdicts [thing, verdict, score]) to `capture.last_after`. It never changes a turn. \n\nBUILD. (1) A new flag `--shadow` (default off; with it off, rows and summary are byte-identical to today). With it on, `_replicate` sets `capture.shadow_verifier = ObservationVerifier(capture_ask)` before the opening, and every turn row gains: `observation_shadow` (the dict from `capture.last_after` for that turn, or None), `observation_relations` (a list of {thing, place, holder} for the relations the verifier was asked about, in order, or None), and `observation_request` (kind and focus name or None). Record the relations WITHOUT changing product code: wrap `storygame.runtime.capture.relations_from_context` for the duration of the run with a function that calls the original and appends its result to a per-turn list that the replicate loop clears before each turn (restore the original in a finally). The summary gains `shadow: true/false`, `observation_turns` (turns whose observation_relations is not None) and `shadow_verifier_requests` (sum of requests). (2) A new route `observe` in ROUTES with exactly these 13 inputs in order: 'inspect the drawer', 'pull out the drawer', 'feel under the drawer', 'feel under the drawer', 'go outside', 'inspect the truck', 'enter the truck', 'inspect the passenger seat', 'examine my laptop', 'get out of the truck', 'examine the truck', 'go inside', 'inspect the drawer'. (3) In dry-run mode the Jev stub raises, so the shadow step records outcome 'unavailable' or 'shadow_error'; that is fine, the dry run only proves wiring and call counts. \n\nTESTS FIRST in scripts/ringer/transcript_1a/test_live_baseline.py (follow its existing style, hermetic, dry-run only, no network): flag off leaves rows without the three new keys and summary without `shadow`; `--shadow --route observe --replicates 1 --dry-run` writes 13 turn rows each with the three keys present (values may be None), summary shadow true; the `relations_from_context` wrapper is restored after the run even when the run raises; the route has exactly the 13 inputs; --shadow does not change `calls_made` ordering assumptions for existing routes (compare a dry run of 'corrected' with and without --shadow: same narration rows). \n\nFINISH: ruff check and format both files; report test counts and the dry-run summary of `--route observe --shadow --replicates 1 --dry-run --out /tmp/shadow-dry`.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov scripts/ringer/transcript_1a/test_live_baseline.py tests/test_observation_shadow.py tests/test_observation_verifier.py 2>&1 | tee /tmp/shadowh.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/shadowh.out && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route observe --shadow --replicates 1 --dry-run --out /tmp/shadow-dry-check >/dev/null && .venv/bin/python -c \"import json;s=json.load(open('/tmp/shadow-dry-check/summary.json'));assert s['shadow'] is True and len(s['inputs'])==13, s\" && git diff --quiet -- storygame docs worker data && .venv/bin/python -m ruff check scripts/ringer/transcript_1a && .venv/bin/python -m ruff format --check scripts/ringer/transcript_1a",
+   "verified": "the live harness can run a hand-readable shadow-verifier sample"
+  }
+ ]
+}
