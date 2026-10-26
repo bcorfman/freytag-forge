@@ -1,0 +1,71 @@
+# ruff: noqa: E501
+"""Generate the Ringer manifest that adds resume and completion markers to the defect probe run mode."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+OUT = Path(REPO) / "scripts/ringer/environment_narration/build-defect-resume.json"
+SCRIPT = "scripts/ringer/environment_narration/defect_probe.py"
+TESTS = "tests/test_defect_probe.py"
+
+SPEC = (
+    "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. "
+    "export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). "
+    "Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. "
+    "NEVER make a network call and NEVER run a live (--run --confirm) invocation: tests patch _call so any real call fails the test. Do not git commit. NEVER print or write any credential. NO regular expressions in new code. "
+    f"YOU MAY EDIT ONLY: {SCRIPT} and {TESTS}. Do NOT regenerate or touch defect_probe/prompts.json or prompts.lock.json or anything under bench/. "
+    "Write the tests FIRST, run them, confirm they fail for the right reason, then implement. Run ruff check and ruff format on both files at the end. "
+    "BACKGROUND. A billed stage 1 run of this probe was killed after 19 of its 80 calls (the runner finished its task while the process was still going). The 19 rows are on disk and are valid samples of the preregistered fixed-order plan; calls 20 to 80 are outstanding. "
+    "The run must be able to continue the SAME plan without repeating a call, and must say plainly when it is complete. "
+    "BUILD. (1) `--resume` (only valid with --run): load the existing --out file; REFUSE (nonzero exit, clear message, nothing written) unless it has a list of rows, a null stop_reason, no row marked skipped, every existing row's call_index equals its position + 1 and its arm (row['context']), prompt id (row['start']) and sample equal the plan entry with that call_index, and the file's `stage` matches --stage; also refuse if the file is already complete. "
+    "The remaining calls are the plan entries after the existing rows, in the same order, with the same call_index values. --max-calls must be at least the NUMBER REMAINING (not the full plan). The estimate check becomes: the actual cost already recorded in the existing rows plus the estimate for the remaining calls must not exceed --max-usd; the running BUDGET stop compares the cumulative actual cost (existing rows plus new rows) with --max-usd. "
+    "The existing rows are kept unchanged and new rows are appended to the same file, which is rewritten after every call as today. Add a top-level list `resumed_at_call_index` to the file (append the first resumed call_index each time). All other stop rules (auth/429, 3 consecutive unusable rows counted from the resume point, BUDGET) are unchanged. "
+    "(2) Completion marker: whenever a run (fresh or resumed) executes every planned call without a stop, set `\"complete\": true` in the file after the last row; a stopped or killed run never has it (a fresh file starts with `\"complete\": false`). Existing partial files that lack the key count as not complete. "
+    "(3) `--sheet` must REFUSE (nonzero exit, nothing written) when any given --rows file is not complete, unless the new flag `--allow-partial` is passed; with stage 1 rows plus stage 2 rows both must be complete. `--report` must also refuse incomplete rows unless `--allow-partial`. "
+    "(4) `--dry-run` with `--resume --rows-from-out PATH` is NOT needed; instead `--dry-run --resume --out PATH` prints how many rows exist, how many calls remain, the cost already spent, and the estimate for the rest (and refuses on the same prefix/stage conditions as --run). "
+    "TESTS (add to tests/test_defect_probe.py; hermetic; _call monkeypatched, urlopen patched to raise): a fresh full run (fake _call) ends with complete true and 80 rows; a run stopped by a 429 or by 3 unusable rows or BUDGET has complete false and a stop_reason; a file with 19 valid prefix rows resumes: only calls 20..80 are made (record the call_index values the fake sees), the first 19 rows are byte-identical afterwards, the file ends complete with 80 rows and `resumed_at_call_index == [20]`; resume refuses (and makes no call and does not modify the file) for: a gap, a wrong arm or sample at some position, a non-null stop_reason, a skipped row, a stage mismatch, an already complete file; --max-calls smaller than the remaining count is refused while a value equal to the remaining count is accepted (even though it is smaller than the full plan); cumulative budget: existing cost 0.02 and --max-usd 0.025 stops with BUDGET after the first resumed call or earlier per the running sum; the estimate refusal includes the existing cost; --sheet and --report refuse an incomplete file and succeed with --allow-partial; a complete file passes; the existing fresh-run tests still pass unchanged. "
+    "Finish by running `.venv/bin/python scripts/ringer/environment_narration/defect_probe.py --dry-run --stage 1` (must still say 80 calls) and print the new --resume help text."
+)
+
+CHECK = (
+    "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && "
+    f"env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov {TESTS} 2>&1 | tee /tmp/defect-resume.out | tail -6 && "
+    "! grep -Eq '[0-9]+ (failed|error)' /tmp/defect-resume.out && "
+    ".venv/bin/python scripts/ringer/environment_narration/defect_probe.py --dry-run --stage 1 2>&1 | grep -q 'total calls: 80 calls' && "
+    "! git status --short -- scripts/ringer/environment_narration/defect_probe/ | grep -q . && "
+    f"! grep -nE '\\bre\\.(compile|search|match|sub|findall|fullmatch)|import re\\b' {SCRIPT} && "
+    "grep -q 'resumed_at_call_index' scripts/ringer/environment_narration/defect_probe.py && "
+    f".venv/bin/python -m ruff check {SCRIPT} {TESTS} && .venv/bin/python -m ruff format --check {SCRIPT} {TESTS}"
+)
+
+manifest = {
+    "run_name": "grounded-environment-narration",
+    "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-defect-resume",
+    "max_parallel": 1,
+    "worktrees": False,
+    "repo": REPO,
+    "tasks": [
+        {
+            "key": "defect-probe-resume",
+            "task_type": "code-feature",
+            "engine": "codex",
+            "model": "gpt-5.6-luna",
+            "engine_args": ["-c", "model_reasoning_effort=high"],
+            "full_access": True,
+            "max_attempts": 2,
+            "timeout_s": 3000,
+            "check_timeout_s": 900,
+            "ownership": [SCRIPT, TESTS],
+            "expect_files": [f"{REPO}/{TESTS}"],
+            "spec": SPEC,
+            "check": CHECK,
+            "verified": "the probe resumes the fixed plan from a valid prefix, marks completion, and refuses partial files for sheet and report",
+        }
+    ],
+}
+
+if __name__ == "__main__":
+    OUT.write_text(json.dumps(manifest, indent=2) + "\n")

@@ -453,12 +453,13 @@ def test_sheet_key_and_blind_text(tmp_path: Path, capsys: pytest.CaptureFixture[
     first.write_text(
         json.dumps(
             {
+                "complete": True,
                 "rows": [
                     _fake_row(
                         {"call_index": 1, "variant": "v", "model": "m", "start": "PA", "context": "A1", "sample": 0},
                         usable=True,
                     )
-                ]
+                ],
             }
         ),
         encoding="utf-8",
@@ -467,12 +468,13 @@ def test_sheet_key_and_blind_text(tmp_path: Path, capsys: pytest.CaptureFixture[
     second.write_text(
         json.dumps(
             {
+                "complete": True,
                 "rows": [
                     _fake_row(
                         {"call_index": 2, "variant": "v", "model": "m", "start": "PB", "context": "B1", "sample": 1},
                         usable=True,
                     )
-                ]
+                ],
             }
         ),
         encoding="utf-8",
@@ -516,7 +518,7 @@ def _report_fixture(tmp_path: Path, counts: dict[str, int], n: int = 10) -> tupl
             key[ident] = {"arm": arm, "sample": sample, "call_index": index, "source": str(rows_path)}
             labels[ident] = {"verdict": "fail" if sample < fails else "pass", "note": ""}
             index += 1
-    rows_path.write_text(json.dumps({"rows": rows}), encoding="utf-8")
+    rows_path.write_text(json.dumps({"complete": True, "rows": rows}), encoding="utf-8")
     key_path.write_text(json.dumps(key), encoding="utf-8")
     labels_path.write_text(json.dumps(labels), encoding="utf-8")
     return rows_path, key_path, labels_path
@@ -570,3 +572,264 @@ def test_report_control_not_reproduced_and_stage_two_gate(tmp_path: Path) -> Non
     assert "A1 stage 2 gate: PASS" in text
     assert "A2 stage 2 gate: FAIL" in text
     assert "B1 stage 2 gate: FAIL" in text
+
+
+def _resume_document(probe_dir: Path, output: Path, count: int = 19, cost: float = 0.0) -> dict:
+    plan = probe.planned_calls(_read(probe_dir / "prompts.json"), 1)
+    rows = [_fake_row(call, cost=cost if index == 0 else 0.0) for index, call in enumerate(plan[:count])]
+    document = {"schema": 1, "stage": 1, "rows": rows, "stop_reason": None, "complete": False}
+    output.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    return document
+
+
+def _resume_args(output: Path, probe_dir: Path, *extra: str) -> list[str]:
+    return [
+        "--run",
+        "--resume",
+        "--confirm",
+        "--stage",
+        "1",
+        "--max-calls",
+        "61",
+        "--max-usd",
+        "10",
+        "--out",
+        str(output),
+        "--probe-dir",
+        str(probe_dir),
+        *extra,
+    ]
+
+
+def test_fresh_full_run_marks_complete(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    probe_dir = _build(tmp_path)
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account")
+    monkeypatch.setenv("CF_API_TOKEN", "token")
+    monkeypatch.setattr(
+        smoke_direct, "urlopen", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("network used"))
+    )
+    monkeypatch.setattr(probe, "_call", lambda account, token, call: _fake_row(call))
+    output = tmp_path / "complete.json"
+    assert (
+        probe.main(
+            [
+                "--run",
+                "--confirm",
+                "--stage",
+                "1",
+                "--max-calls",
+                "80",
+                "--max-usd",
+                "10",
+                "--out",
+                str(output),
+                "--probe-dir",
+                str(probe_dir),
+            ]
+        )
+        == 0
+    )
+    document = _read(output)
+    assert document["complete"] is True
+    assert len(document["rows"]) == 80
+    assert document["stop_reason"] is None
+
+
+@pytest.mark.parametrize(
+    ("row_kwargs", "max_usd", "expected_stop"),
+    [
+        ({"status": 429}, 10.0, "429"),
+        ({"usable": False}, 10.0, "UNUSABLE"),
+        ({"cost": 0.6}, 1.0, "BUDGET"),
+    ],
+)
+def test_stopped_run_is_not_complete(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    row_kwargs: dict,
+    max_usd: float,
+    expected_stop: str,
+) -> None:
+    probe_dir = _build(tmp_path)
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account")
+    monkeypatch.setenv("CF_API_TOKEN", "token")
+    monkeypatch.setattr(probe, "_call", lambda account, token, call: _fake_row(call, **row_kwargs))
+    output = tmp_path / f"{expected_stop}.json"
+    assert (
+        probe.main(
+            [
+                "--run",
+                "--confirm",
+                "--stage",
+                "1",
+                "--max-calls",
+                "80",
+                "--max-usd",
+                str(max_usd),
+                "--out",
+                str(output),
+                "--probe-dir",
+                str(probe_dir),
+            ]
+        )
+        == 0
+    )
+    document = _read(output)
+    assert document["complete"] is False
+    assert document["stop_reason"] == ("HTTP_429" if expected_stop == "429" else expected_stop)
+
+
+def test_resume_completes_only_remaining_calls_and_records_marker(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    probe_dir = _build(tmp_path)
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account")
+    monkeypatch.setenv("CF_API_TOKEN", "token")
+    output = tmp_path / "resume.json"
+    before = _resume_document(probe_dir, output)
+    before_rows = json.dumps(before["rows"], sort_keys=True)
+    seen: list[int] = []
+
+    def fake_call(account: str, token: str, call: dict) -> dict:
+        seen.append(call["call_index"])
+        return _fake_row(call)
+
+    monkeypatch.setattr(probe, "_call", fake_call)
+    assert probe.main(_resume_args(output, probe_dir)) == 0
+    after = _read(output)
+    assert seen == list(range(20, 81))
+    assert json.dumps(after["rows"][:19], sort_keys=True) == before_rows
+    assert len(after["rows"]) == 80
+    assert after["complete"] is True
+    assert after["resumed_at_call_index"] == [20]
+
+
+@pytest.mark.parametrize("mutation", ["gap", "arm", "sample", "stop", "skipped", "stage", "complete"])
+def test_resume_refuses_invalid_existing_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, mutation: str) -> None:
+    probe_dir = _build(tmp_path)
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account")
+    monkeypatch.setenv("CF_API_TOKEN", "token")
+    output = tmp_path / "invalid-resume.json"
+    document = _resume_document(probe_dir, output)
+    if mutation == "gap":
+        document["rows"][5]["call_index"] = 7
+    elif mutation == "arm":
+        document["rows"][5]["context"] = "B3"
+    elif mutation == "sample":
+        document["rows"][5]["sample"] = 99
+    elif mutation == "stop":
+        document["stop_reason"] = "BUDGET"
+    elif mutation == "skipped":
+        document["rows"][5]["skipped"] = True
+    elif mutation == "stage":
+        document["stage"] = 2
+    else:
+        document["complete"] = True
+    output.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    original = output.read_bytes()
+    calls: list[int] = []
+    monkeypatch.setattr(
+        probe, "_call", lambda account, token, call: calls.append(call["call_index"]) or _fake_row(call)
+    )
+    assert probe.main(_resume_args(output, probe_dir)) != 0
+    assert calls == []
+    assert output.read_bytes() == original
+
+
+def test_resume_max_calls_uses_remaining_count(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    probe_dir = _build(tmp_path)
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account")
+    monkeypatch.setenv("CF_API_TOKEN", "token")
+    output = tmp_path / "resume-cap.json"
+    _resume_document(probe_dir, output)
+    calls: list[int] = []
+    monkeypatch.setattr(
+        probe, "_call", lambda account, token, call: calls.append(call["call_index"]) or _fake_row(call)
+    )
+    assert probe.main(_resume_args(output, probe_dir, "--max-calls", "60")) != 0
+    assert calls == []
+    assert probe.main(_resume_args(output, probe_dir, "--max-calls", "61")) == 0
+    assert calls == list(range(20, 81))
+
+
+def test_resume_budget_is_cumulative_and_estimate_includes_existing_cost(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    probe_dir = _build(tmp_path)
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account")
+    monkeypatch.setenv("CF_API_TOKEN", "token")
+    output = tmp_path / "resume-budget.json"
+    _resume_document(probe_dir, output, cost=0.02)
+    calls: list[int] = []
+    monkeypatch.setattr(
+        probe, "_call", lambda account, token, call: calls.append(call["call_index"]) or _fake_row(call, cost=0.01)
+    )
+    assert probe.main(_resume_args(output, probe_dir, "--max-usd", "0.000001")) != 0
+    assert calls == []
+    assert "existing actual cost" in capsys.readouterr().err
+    monkeypatch.setattr(probe, "_estimated_call_usd", lambda call: 0.0)
+    assert probe.main(_resume_args(output, probe_dir, "--max-usd", "0.025")) == 0
+    document = _read(output)
+    assert calls == [20]
+    assert document["stop_reason"] == "BUDGET"
+    assert document["complete"] is False
+
+
+def test_resume_dry_run_reports_remaining_and_spent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    probe_dir = _build(tmp_path)
+    output = tmp_path / "resume-dry.json"
+    _resume_document(probe_dir, output, cost=0.02)
+    assert (
+        probe.main(["--dry-run", "--resume", "--stage", "1", "--out", str(output), "--probe-dir", str(probe_dir)]) == 0
+    )
+    text = capsys.readouterr().out
+    assert "existing rows: 19" in text
+    assert "remaining calls: 61" in text
+    assert "actual cost already spent: $0.020000" in text
+    assert "estimated USD for remaining" in text
+
+
+def test_sheet_and_report_require_complete_rows_unless_allowed(tmp_path: Path) -> None:
+    rows, key, labels = _report_fixture(tmp_path, {"A0": 0}, n=1)
+    rows_document = _read(rows)
+    rows_document["complete"] = False
+    rows.write_text(json.dumps(rows_document), encoding="utf-8")
+    sheet = tmp_path / "sheet.md"
+    sheet_key = tmp_path / "sheet-key.json"
+    assert probe.main(["--sheet", "--rows", str(rows), "--out", str(sheet), "--key", str(sheet_key)]) != 0
+    assert (
+        probe.main(["--sheet", "--allow-partial", "--rows", str(rows), "--out", str(sheet), "--key", str(sheet_key)])
+        == 0
+    )
+    report = tmp_path / "report.md"
+    assert (
+        probe.main(["--report", "--rows", str(rows), "--key", str(key), "--labels", str(labels), "--out", str(report)])
+        != 0
+    )
+    assert (
+        probe.main(
+            [
+                "--report",
+                "--allow-partial",
+                "--rows",
+                str(rows),
+                "--key",
+                str(key),
+                "--labels",
+                str(labels),
+                "--out",
+                str(report),
+            ]
+        )
+        == 0
+    )
+    rows_document = _read(rows)
+    rows_document["complete"] = True
+    rows.write_text(json.dumps(rows_document), encoding="utf-8")
+    assert probe.main(["--sheet", "--rows", str(rows), "--out", str(sheet), "--key", str(sheet_key)]) == 0
+    assert (
+        probe.main(["--report", "--rows", str(rows), "--key", str(key), "--labels", str(labels), "--out", str(report)])
+        == 0
+    )
