@@ -125,33 +125,6 @@ def test_missing_expected_line_fails_loudly(problem: str, arm: str, missing: str
         open_probe.transform_user(problem, arm, control)
 
 
-def test_real_dry_run_writes_three_problems_and_zero_opener_calls(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    calls: list[object] = []
-    monkeypatch.setattr(cloudflare, "urlopen", lambda *args, **kwargs: calls.append(args))
-    out = tmp_path / "open-probe.json"
-
-    assert open_probe.main(["--dry", "--out", str(out)]) == 0
-
-    document = json.loads(out.read_text())
-    assert {problem["id"] for problem in document["problems"]} == {"P1", "P2", "P3"}
-    assert all(
-        set(problem["arms"]) == {"control", "drop", "past"} for problem in document["problems"] if problem["id"] == "P1"
-    )
-    assert all(
-        set(problem["arms"]) == {"control", "where", "place"}
-        for problem in document["problems"]
-        if problem["id"] == "P2"
-    )
-    assert all(
-        set(problem["arms"]) == {"control", "view", "rule"} for problem in document["problems"] if problem["id"] == "P3"
-    )
-    assert all(set(problem["diffs"]) == set(problem["arms"]) - {"control"} for problem in document["problems"])
-    assert calls == []
-    assert "dry:" in capsys.readouterr().out
-
-
 def _sample_document() -> dict[str, object]:
     problems = []
     for problem_id, arms in (

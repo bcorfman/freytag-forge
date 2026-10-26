@@ -1,0 +1,68 @@
+# ruff: noqa: E501
+"""Generate the Ringer manifest that adds world placement to speaker presence (option A) and retires the stale open-probe test."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+OUT = Path(REPO) / "scripts/ringer/environment_narration/build-presence-placement.json"
+SRC = "storygame/runtime/cloudflare.py"
+TEST = "tests/test_speaker_presence.py"
+PROBE_TEST = "tests/test_open_probe.py"
+
+SPEC = (
+    "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. "
+    "export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). "
+    "Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. "
+    f"YOU MAY EDIT ONLY: {SRC} (only `CloudflareTurnProvider._is_present` and its docstring), {TEST} (extend it) and {PROBE_TEST} (delete ONE test, below). No network, no live model call. Do not git commit. NEVER print or write any credential. NO new regular expressions. No story vocabulary (Kristin, Michelle, truck, drawer, patrol) in non-test code. "
+    "STATE OF THE WORKING TREE. An earlier task (already done, uncommitted, do not undo) added the pure helper `_speaker_present_in_prose(prose, aliases)` with the one-step evidence inheritance rule and a test file tests/test_speaker_presence.py (8 tests). Read both first. "
+    "PROBLEM. With that rule, Michelle (a missing person mentioned only through a recording) is correctly NOT present in scene 1A. But one existing test now fails: tests/test_1a_witnessed_recovery.py::test_challenge_statement_reaches_the_next_cloudflare_scene_prompt. Cause, verified: after the witnessed card recovery the world model places the patrol officer in the kitchen, in the same area tree as the protagonist (world.together('kristin','patrol_officer') is True, world.area('patrol_officer') == 'kitchen'), but `_is_present` judges only from beat prose, so the officer counts as absent; the officer's statement used to reach the narrator prompt only through Michelle's wrongly present 'may say this aloud' line. The statement must now reach the prompt through the officer, who is really there. "
+    "FIX (exactly this). In `_is_present(speaker_id)`: after the protagonist shortcut, build the world with `world_for(self.state.package, self.state.facts)` (look at how cloudflare.py already does this, e.g. near line 1195 or 523) and if `world.together(self.state.package.protagonist_id, speaker_id)` is True return True. `together` is already False whenever either entity is unplaced, so an unplaced NPC (such as Michelle) falls through to the prose rule unchanged. Placement only ever ADDS presence; it never removes it. Update the docstring to state: placement in the protagonist's area tree makes a speaker present; otherwise presence is inferred from beat prose with the evidence-inheritance rule. "
+    "TESTS to add to tests/test_speaker_presence.py (real package data/stories/continuity-initiative, provider built as the existing tests in that file do): (1) in the state of tests/test_1a_witnessed_recovery.py `_state(patrol_in_house=True)` (copy the few lines you need; do not import private helpers from another test module if that is awkward) the patrol officer is present and `provider._speaker_contexts('Search the kitchen for signs of a struggle.')` has a 'patrol_officer' key; (2) after `world_for(package, state.facts).move('patrol_officer', 'outside_house')` while the protagonist stays in the house area, with the officer's prose still silent, `_is_present('patrol_officer')` is False (placed elsewhere does not make him present); (3) Michelle stays absent in the 1A bootstrap state (she is unplaced); (4) the existing per-scene bootstrap presence table test must still pass UNCHANGED (1A michelle False, everything else as pinned). If placement flips ANY entry of that table, do not edit the table: stop and report which entries flip and why. "
+    f"RETIRE one stale test: in {PROBE_TEST} delete `test_real_dry_run_writes_three_problems_and_zero_opener_calls` (and any import or helper that becomes unused; ruff will tell you). Reason, put it in a one-line comment nowhere: the historical open probe's problem P1 replays a prompt that contained Michelle's 'may say this aloud' card line, which the presence fix removed, so its dry run on the real package can no longer build P1. Do not change scripts/ringer/transcript_1a/open_probe.py. The other tests in that file must still pass. "
+    "FINALLY run: tests/test_speaker_presence.py tests/test_1a_witnessed_recovery.py tests/test_open_probe.py tests/test_cloudflare_transport.py tests/test_knowledge_projection.py tests/test_narration_safety.py tests/test_late_scene_repro.py tests/test_canonical_event_delivery.py tests/test_concealment_repro.py tests/test_3c_adopted_package.py tests/test_bench.py, then `.venv/bin/python scripts/quick_suite.py` (run with CLOUDFLARE_WORKER_URL and CLOUDFLARE_WORKER_TOKEN unset) and report the exact pass/fail counts. Run ruff check and ruff format on the three files."
+)
+
+CHECK = (
+    "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && "
+    f"env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python scripts/quick_suite.py 2>&1 | tee /tmp/presence2-quick.out | grep -E 'passed|failed|FAILED' | tail -5 && "
+    "! grep -Eq '[0-9]+ failed|FAILED' /tmp/presence2-quick.out && grep -Eq '[0-9]+ passed' /tmp/presence2-quick.out && "
+    f"env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov {TEST} tests/test_1a_witnessed_recovery.py tests/test_open_probe.py 2>&1 | tail -3 | tee /tmp/presence2-focus.out && "
+    "! grep -Eq '[0-9]+ (failed|error)' /tmp/presence2-focus.out && "
+    f"! grep -n 'test_real_dry_run_writes_three_problems_and_zero_opener_calls' {PROBE_TEST} && "
+    f"test $(git diff -U0 -- {SRC} | grep -E '^\\+' | grep -cE '\\bre\\.[a-z]+\\(') -le 5 && "
+    f"! git diff -U0 -- {SRC} | grep -E '^\\+' | grep -iE '(kristin|michelle|truck|drawer|laptop|patrol)' && "
+    "grep -q 'together(' storygame/runtime/cloudflare.py && "
+    f".venv/bin/python -m ruff check {SRC} {TEST} {PROBE_TEST} && .venv/bin/python -m ruff format --check {SRC} {TEST} {PROBE_TEST}"
+)
+
+manifest = {
+    "run_name": "grounded-environment-narration",
+    "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-presence-placement",
+    "max_parallel": 1,
+    "worktrees": False,
+    "repo": REPO,
+    "tasks": [
+        {
+            "key": "speaker-presence-placement",
+            "task_type": "code-fix",
+            "engine": "codex",
+            "model": "gpt-5.6-luna",
+            "engine_args": ["-c", "model_reasoning_effort=high"],
+            "full_access": True,
+            "max_attempts": 2,
+            "timeout_s": 3000,
+            "check_timeout_s": 1800,
+            "ownership": [SRC, TEST, PROBE_TEST],
+            "expect_files": [f"{REPO}/{TEST}"],
+            "spec": SPEC,
+            "check": CHECK,
+            "verified": "an NPC placed in the protagonist's area is present; the witnessed statement reaches the prompt via the officer; the full quick suite is green",
+        }
+    ],
+}
+
+if __name__ == "__main__":
+    OUT.write_text(json.dumps(manifest, indent=2) + "\n")

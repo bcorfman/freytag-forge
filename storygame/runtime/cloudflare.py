@@ -204,6 +204,32 @@ _ABSENCE_OR_EVIDENCE = frozenset(
 )
 
 
+def _speaker_present_in_prose(prose: str, aliases: tuple[str, ...]) -> bool:
+    """Return whether prose gives the speaker an unskipped presence action."""
+
+    previous_mentions_speaker = False
+    previous_direct_skip = False
+    for sentence in re.split(r"(?<=[.!?])\s+", prose):
+        folded = sentence.casefold()
+        mentions_speaker = any(re.search(rf"\b{re.escape(alias.casefold())}\b", folded) for alias in aliases)
+        words = set(re.findall(r"[a-z]+", folded))
+        direct_skip = bool(words & _ABSENCE_OR_EVIDENCE)
+        inherited_skip = previous_mentions_speaker and previous_direct_skip
+        if mentions_speaker and not direct_skip and not inherited_skip:
+            action_pattern = "|".join(sorted(_PRESENCE_ACTIONS, key=len, reverse=True))
+            if any(
+                re.search(
+                    rf"\b{re.escape(alias.casefold())}(?!['’]s)\b(?:\s+\w+){{0,2}}\s+(?:{action_pattern})\b",
+                    folded,
+                )
+                for alias in aliases
+            ):
+                return True
+        previous_mentions_speaker = mentions_speaker
+        previous_direct_skip = direct_skip
+    return False
+
+
 @dataclass(frozen=True)
 class NarrationProviderError(RuntimeError):
     message: str
@@ -2012,30 +2038,20 @@ class CloudflareTurnProvider:
         }
 
     def _is_present(self, speaker_id: str) -> bool:
-        """Infer on-stage presence from authored beat prose and entity aliases."""
+        """Placement in the protagonist's area tree makes a speaker present.
+
+        Otherwise, infer presence from beat prose with the evidence-inheritance rule.
+        """
 
         if speaker_id == self.state.package.protagonist_id:
+            return True
+        world = world_for(self.state.package, self.state.facts)
+        if world.together(self.state.package.protagonist_id, speaker_id):
             return True
         entity = next(item for item in self.state.package.world.npcs if item.id == speaker_id)
         aliases = (entity.name, *entity.aliases)
         prose = " ".join(beat.prose for beat in self._scene().beats.values())
-        for sentence in re.split(r"(?<=[.!?])\s+", prose):
-            folded = sentence.casefold()
-            if not any(re.search(rf"\b{re.escape(alias.casefold())}\b", folded) for alias in aliases):
-                continue
-            words = set(re.findall(r"[a-z]+", folded))
-            if words & _ABSENCE_OR_EVIDENCE:
-                continue
-            action_pattern = "|".join(sorted(_PRESENCE_ACTIONS, key=len, reverse=True))
-            if any(
-                re.search(
-                    rf"\b{re.escape(alias.casefold())}(?!['’]s)\b(?:\s+\w+){{0,2}}\s+(?:{action_pattern})\b",
-                    folded,
-                )
-                for alias in aliases
-            ):
-                return True
-        return False
+        return _speaker_present_in_prose(prose, aliases)
 
     def _current_scene(self) -> SceneMetadata:
         return self._scene().metadata
