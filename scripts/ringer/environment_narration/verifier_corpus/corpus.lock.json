@@ -1,0 +1,11 @@
+{
+  "cases": 224,
+  "combined": "1f18f4b41778876b7c5066a1a3d75e9db910d075e8c1ee337ab5b79b0641dc52",
+  "files": {
+    "cases-a.jsonl": "f131952b9a6f38eff5bac47865117cd858db03eb43b18978a2998b08e043852f",
+    "cases-b.jsonl": "ace5f33160560a9f8469bc899937783df756837a9fd065ebb7c4b40cc743a67f",
+    "cases-c.jsonl": "f4e76229deab6e5e0cefe178e015b8e25a22cd90ea266d4d48d57e2414119c05",
+    "cases-d.jsonl": "1c54dbd7a45af68f0652402662d4de985008e52991c280b835eeb75391b4adde"
+  },
+  "relations": 274
+}

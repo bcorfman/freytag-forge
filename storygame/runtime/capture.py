@@ -20,6 +20,11 @@ from storygame.runtime.jev_questions import (
     uses_thing,
 )
 from storygame.runtime.observation import ObservationRequest
+from storygame.runtime.observation_verifier import (
+    QUESTION_VERSION,
+    ObservationVerifier,
+    relations_from_context,
+)
 from storygame.runtime.seating import SeatingResult, board_vehicle, seat_before_use, stand_before_leave
 from storygame.runtime.taking import TakingResult, take_before_put
 from storygame.runtime.world_model import apply_scene_placements
@@ -54,6 +59,7 @@ class WorldCapture:
         self.ask = ask
         self.fixed_refusal = fixed_refusal
         self.engine_refusal = engine_refusal
+        self.shadow_verifier: ObservationVerifier | None = None
         self._command = ""
         self.last_before: dict[str, Any] | None = None
         self.last_after: dict[str, Any] | None = None
@@ -195,6 +201,39 @@ class WorldCapture:
         raw = self.provider.pending_item_facts()
         adapter = _ask_adapter(self.ask)
         narration_prompt = dict(self.provider.last_prompt) if self.provider.last_prompt is not None else None
+        observation_shadow = None
+        if self.shadow_verifier is not None and self.provider.observation_request is not None:
+            try:
+                context = self.provider._observation_context()
+                if context is not None:
+                    self.shadow_verifier.begin_turn()
+                    report = self.shadow_verifier.verify(narration, relations_from_context(context))
+                    observation_shadow = {
+                        "outcome": report.outcome,
+                        "requests": report.requests,
+                        "elapsed_s": report.elapsed_s,
+                        "failure": report.failure,
+                        "question_version": QUESTION_VERSION,
+                        "accepted": report.accepted,
+                        "verdicts": [
+                            {
+                                "thing": verdict.relation.thing,
+                                "verdict": verdict.verdict,
+                                "score": verdict.score,
+                            }
+                            for verdict in report.verdicts
+                        ],
+                    }
+            except Exception as error:
+                observation_shadow = {
+                    "outcome": "shadow_error",
+                    "requests": 0,
+                    "elapsed_s": 0.0,
+                    "failure": type(error).__name__,
+                    "question_version": QUESTION_VERSION,
+                    "accepted": False,
+                    "verdicts": [],
+                }
         _previous, issues = self.provider.apply_item_facts(
             raw,
             player_input=command,
@@ -226,6 +265,8 @@ class WorldCapture:
             "narration_prompt": narration_prompt,
             "facts_after": _json_value(facts_after),
         }
+        if observation_shadow is not None:
+            record["observation_shadow"] = _json_value(observation_shadow)
         self.last_after = record
         self.provider.prior_steps = ()
         self.provider.prior_notice_steps = ()

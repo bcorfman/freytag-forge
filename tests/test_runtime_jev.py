@@ -41,6 +41,68 @@ def test_jev_client_posts_to_jev_path() -> None:
     assert captured["headers"]["User-agent"] == BROWSER_USER_AGENT
 
 
+def test_jev_client_records_model_and_status_on_success() -> None:
+    def opener(*_args, **_kwargs):
+        return _Response({"answers": {"q": {"noul": 0.8}}, "model": "jev-test-1"})
+
+    client = JevClient("https://worker.example", "", opener=opener)
+
+    assert client.ask({}, {"q": "?"}) == {"q": {"noul": 0.8}}
+    assert client.last_model == "jev-test-1"
+    assert client.last_status == 200
+
+
+def test_jev_client_leaves_model_unset_when_body_has_no_model() -> None:
+    def opener(*_args, **_kwargs):
+        return _Response({"answers": {"q": {"noul": 0.8}}})
+
+    client = JevClient("https://worker.example", "", opener=opener)
+
+    assert client.ask({}, {"q": "?"}) == {"q": {"noul": 0.8}}
+    assert client.last_model is None
+    assert client.last_status == 200
+
+
+def test_jev_client_leaves_model_unset_for_error_body() -> None:
+    def opener(*_args, **_kwargs):
+        return _Response({"status": "error", "model": "jev-test-1"})
+
+    client = JevClient("https://worker.example", "", opener=opener)
+
+    assert client.ask({}, {"q": "?"}) is None
+    assert client.last_model is None
+    assert client.last_status == 200
+
+
+def test_jev_client_records_http_error_status() -> None:
+    def opener(*_args, **_kwargs):
+        raise HTTPError("url", 429, "rate limited", {}, None)
+
+    client = JevClient("https://worker.example", "", opener=opener)
+
+    assert client.ask({}, {"q": "?"}) is None
+    assert client.last_model is None
+    assert client.last_status == 429
+
+
+def test_jev_client_success_resets_previous_failure_status() -> None:
+    def failing_opener(*_args, **_kwargs):
+        raise HTTPError("url", 429, "rate limited", {}, None)
+
+    def successful_opener(*_args, **_kwargs):
+        return _Response({"answers": {"q": {"noul": 0.8}}, "model": "jev-test-1"})
+
+    client = JevClient("https://worker.example", "", opener=failing_opener)
+
+    assert client.ask({}, {"q": "?"}) is None
+    assert client.last_status == 429
+
+    client.opener = successful_opener
+    assert client.ask({}, {"q": "?"}) == {"q": {"noul": 0.8}}
+    assert client.last_model == "jev-test-1"
+    assert client.last_status == 200
+
+
 def test_jev_client_returns_none_on_error() -> None:
     failures = [
         lambda *_args, **_kwargs: (_ for _ in ()).throw(HTTPError("url", 500, "bad", {}, None)),

@@ -19,6 +19,8 @@ class JevClient:
         self.opener = opener or urlopen
         self.timeout = timeout
         self.request_count = 0
+        self.last_model: str | None = None
+        self.last_status: int | None = None
 
     @classmethod
     def from_environment(cls) -> JevClient:
@@ -28,6 +30,8 @@ class JevClient:
         )
 
     def ask(self, state: object, questions: object) -> dict | None:
+        self.last_model = None
+        self.last_status = None
         self.request_count += 1
         worker_url = self.worker_url.strip()
         if not worker_url:
@@ -39,7 +43,8 @@ class JevClient:
                 headers["Authorization"] = f"Bearer {self.token}"
             request = Request(f"{worker_url.rstrip('/')}/jev", data=payload, headers=headers, method="POST")
             with self.opener(request, timeout=self.timeout) as response:
-                if getattr(response, "status", 200) >= 400:
+                self.last_status = getattr(response, "status", 200)
+                if self.last_status >= 400:
                     return None
                 body = json.loads(response.read())
             if not isinstance(body, dict):
@@ -47,8 +52,16 @@ class JevClient:
             if body.get("status") == "error":
                 return None
             answers = body.get("answers")
-            return answers if isinstance(answers, dict) else None
-        except (HTTPError, URLError, OSError, TimeoutError, ValueError, TypeError):
+            if not isinstance(answers, dict):
+                return None
+            model = body.get("model")
+            if isinstance(model, str) and model:
+                self.last_model = model
+            return answers
+        except HTTPError as error:
+            self.last_status = error.code
+            return None
+        except (URLError, OSError, TimeoutError, ValueError, TypeError):
             return None
 
 
