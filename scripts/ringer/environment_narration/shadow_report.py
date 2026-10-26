@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 VERDICTS = ("accept", "reject", "uncertain", "unavailable")
+REFIND_COMMAND = "feel under the drawer"
+SEAT_COMMAND = "inspect the passenger seat"
 
 
 def _load_json(path: str) -> Any:
@@ -27,6 +29,18 @@ def _observation_turns(rows: list[dict[str, Any]]):
     for turn_id, turn in _turns(rows):
         if turn.get("observation_relations") is not None and turn.get("error") is None:
             yield turn_id, turn
+
+
+def _transition_turns(rows: list[dict[str, Any]]):
+    for replicate_index, replicate in enumerate(rows):
+        previous_scene = None
+        has_previous = False
+        for turn_index, turn in enumerate(replicate.get("turns", ())):
+            scene = turn.get("scene")
+            if has_previous and scene != previous_scene:
+                yield _turn_id(replicate_index, turn_index), turn
+            previous_scene = scene
+            has_previous = True
 
 
 def _relation_text(relation: dict[str, Any]) -> str:
@@ -87,6 +101,8 @@ def _labels_template(rows: list[dict[str, Any]]) -> str:
         turn_id: {
             **{str(number): None for number, _ in enumerate(turn["observation_relations"], 1)},
             "acceptable": None,
+            "refind": None,
+            "invented_object": None,
         }
         for turn_id, turn in _observation_turns(rows)
     }
@@ -106,6 +122,14 @@ def _acceptable_for(labels: dict[str, Any], turn_id: str) -> bool | None:
     if not isinstance(turn_labels, dict):
         return None
     value = turn_labels.get("acceptable")
+    return value if isinstance(value, bool) else None
+
+
+def _tag_for(labels: dict[str, Any], turn_id: str, name: str) -> bool | None:
+    turn_labels = labels.get(turn_id)
+    if not isinstance(turn_labels, dict):
+        return None
+    value = turn_labels.get(name)
     return value if isinstance(value, bool) else None
 
 
@@ -144,6 +168,32 @@ def _number(value: Any) -> str:
     if value is None:
         return "None"
     return str(value)
+
+
+def _normalise_command(value: Any) -> str:
+    if not isinstance(value, str):
+        return ""
+    command = value.casefold().strip()
+    if command.endswith("."):
+        command = command[:-1].rstrip()
+    return command
+
+
+def _seat_is_empty(turn: dict[str, Any]) -> bool:
+    places_before = turn.get("places_before")
+    request = turn.get("observation_request")
+    focus = request.get("focus") if isinstance(request, dict) else None
+    if isinstance(places_before, dict) and focus is not None:
+        return not any(parent == focus for parent in places_before.values())
+    # If the placement map or focus is unavailable, the recorded empty-seat
+    # outcome is the zero-relation observation.
+    return turn.get("observation_relations") == []
+
+
+def _defect_status(count: int, true_count: int, minimum: int) -> str:
+    if count < minimum:
+        return "INCONCLUSIVE"
+    return "PASS" if true_count <= 1 else "FAIL"
 
 
 def _join(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list[str]]:
@@ -251,6 +301,50 @@ def _join(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list
     if relation_count < 30:
         failures.append("at least 30 labelled relations")
 
+    transition_turns = list(_transition_turns(rows))
+    transition_failures = []
+    for turn_id, turn in transition_turns:
+        shadow = turn.get("observation_shadow")
+        if shadow is not None and not (
+            isinstance(shadow, dict)
+            and shadow.get("requirement_dropped") == "scene_or_area_changed"
+            and shadow.get("requests") == 0
+        ):
+            transition_failures.append(turn_id)
+    if transition_failures:
+        failures.append("5 scene-transition turns drop the requirement")
+
+    held_item_counts = {True: 0, False: 0}
+    for turn_id, turn in observations:
+        for number, relation in enumerate(turn["observation_relations"], start=1):
+            if relation.get("holder") not in (None, ""):
+                held_item_counts[_label_for(labels, turn_id, number)] += 1
+
+    refind_count = 0
+    refind_true = 0
+    invented_count = 0
+    invented_true = 0
+    for turn_id, turn in observations:
+        command = _normalise_command(turn.get("input"))
+        if command == REFIND_COMMAND:
+            tag = _tag_for(labels, turn_id, "refind")
+            if tag is not None:
+                refind_count += 1
+                refind_true += tag
+        if command == SEAT_COMMAND and _seat_is_empty(turn):
+            tag = _tag_for(labels, turn_id, "invented_object")
+            if tag is not None:
+                invented_count += 1
+                invented_true += tag
+    refind_status = _defect_status(refind_count, refind_true, 15)
+    invented_status = _defect_status(invented_count, invented_true, 6)
+    verifier_status = "FAIL" if failures else "PASS"
+    product_status = (
+        "FAIL"
+        if "FAIL" in (refind_status, invented_status)
+        else ("INCONCLUSIVE" if "INCONCLUSIVE" in (refind_status, invented_status) else "PASS")
+    )
+
     lines = ["# Joined observation report", "", "## Gate", ""]
     lines.append("GATE: PASS" if not failures else f"GATE: FAIL ({'; '.join(failures)})")
     if acceptable_turns == 0:
@@ -324,6 +418,41 @@ def _join(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list
             f"p95 elapsed_s: {_number(p95) if p95 is None else f'{p95:.3f}'}",
             f"requests: {requests}",
             f"labelled relations: {relation_count}",
+            "",
+        ]
+    )
+    lines.extend(
+        [
+            "## Sample 2 clauses",
+            "",
+            (
+                "5 scene-transition turns drop the requirement: "
+                + (
+                    "INCONCLUSIVE (n=0)"
+                    if not transition_turns
+                    else (
+                        f"FAIL ({', '.join(transition_failures)})"
+                        if transition_failures
+                        else f"PASS ({len(transition_turns)}/{len(transition_turns)})"
+                    )
+                )
+            ),
+            "",
+            "## 6 held-item mention relations",
+            "",
+            "| hand label | count |",
+            "| --- | ---: |",
+            f"| true | {held_item_counts[True]} |",
+            f"| false | {held_item_counts[False]} |",
+            "",
+            (f"7 re-find of the held card: {refind_status} (n={refind_count}, refind true={refind_true})"),
+            (
+                f"8 invented object on the empty seat: {invented_status} "
+                f"(n={invented_count}, invented_object true={invented_true})"
+            ),
+            "",
+            f"verifier gate (clauses 1 to 6): {verifier_status}",
+            f"product-defect gate (clauses 7 and 8): {product_status}",
             "",
         ]
     )
