@@ -21,7 +21,7 @@ SQLite, and exposes typed game-break resolution separately at
 | `MODEL_PRICES_JSON` | — | Optional JSON of per-model USD prices per million tokens; an unpriced model is refused |
 | `DAILY_BUDGET` | — | Durable Object binding for the per-UTC-day budget counter |
 | — | `CLOUDFLARE_WORKER_URL` | Worker URL |
-| — | `CLOUDFLARE_TIMEOUT` | Bounded request timeout |
+| — | `CLOUDFLARE_TIMEOUT` | Bounded request timeout; default 20 seconds; a timeout fails the call and is not retried, while other connection failures are retried once |
 | — | `FREYTAG_RATE_LIMIT_PER_MINUTE` | Turns per session per minute; default 10 |
 | — | `FREYTAG_SESSIONS_PER_IP_PER_DAY` | New sessions per IP per day; default 20 |
 | — | `FREYTAG_TRUST_PROXY_HEADER` | Set to `1` on Railway to read the client IP from the rightmost `X-Forwarded-For` entry |
