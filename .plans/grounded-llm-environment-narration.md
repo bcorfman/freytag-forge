@@ -743,3 +743,20 @@ Method: start S2 on the proposed package copy, feed recorded 70B `item_facts` th
 
 ### CI fix on PR #703 (2026-10-25)
 - Seven tests in `tests/test_holder_wording_probe.py` read the gitignored shadow-sample `rows.json` (five via a hard-coded absolute path, one via the default path) and failed on CI; local runs hid it. Ringer run `grounded-environment-narration-20261026T035714Z-p1332146` (PASS, 1 attempt): the five tests use the committed frozen cases, the rebuild-identity comparison skips when the rows file is absent, the lock assertion still runs. Rechecked by hand on the real checkout (15 passed) and on a copy of the tracked files without the gitignored data (14 passed, 1 skipped); ruff clean.
+
+### Defect probe stage 1 RESULT (2026-10-26, 80 of 80 calls, branch `t8-defect-probe-resume`)
+- Run: calls 1 to 19 from the interrupted run, calls 20 to 80 from a resumed run (Ringer `grounded-environment-narration-20261026T040241Z-p1341816`, runner Luna low, PASS). The first 19 rows were byte-identical after the resume, `resumed_at_call_index` is [20], `complete` is true, no stop reason. Cost **$0.0534** of the $0.10 cap; 5 replies were not valid JSON after repair (4 had readable text and were labelled by content, 1 had no text and is `unusable`). Resume support (`--resume`, completion marker, sheet and report refuse partial files) is in `defect_probe.py` with tests; Ringer run `...T035853Z-p1335791`.
+- Procedure as preregistered: key file sha256 `2f801f9b2b05ef53ed04da460f5c8ad97bd65c15acb29233dd95595642f33ac4` recorded before reading; I read all 80 replies on the blind sheet (defect letter only) and wrote labels; labels sha256 `9a9d0f0af25e5aa4d47e3d6eb325dfaf1763b6656c76a696eca1ce80513799da` frozen before the join. Local, gitignored: `bench/results/environment-narration/defect-probe-s1-{rows,key,sheet,labels,report}`.
+- Result (fails of 10; Wilson 95% upper bound of the failure rate in brackets):
+
+| Defect A (held card re-find) | fails | | Defect B (invented seat object) | fails |
+| --- | --- | --- | --- | --- |
+| A0 control | 10 [100%] | | B0 control | 8 [94%] |
+| A1 cue line deleted | 1 (+1 no-text reply) [40%] | | B1 pressure line deleted | 7 [89%] |
+| A2 A1 + `Show these` line deleted | 2 [51%] | | B2 empty-seat outcome line added | 0 [28%] |
+| A3 A1 + "nothing more under the drawer" line | 0 [28%] | | B3 B1 + B2 | 0 [28%] |
+
+- Both controls reproduced the defect. By the preregistered rule the candidates are **A1** (simplest arm with at most 1 fail) and **B2** (B1 did not advance).
+- Reading: (1) A1's one fail is a "lost pen that fell through a gap"; A2's two fails are the same kind of find (a pen), so every remaining A failure is a small invented object, none re-finds the card or quotes the cue. Deleting the cue line removed all 13 card re-finds and cue quotations seen in the whole run (all 13 were in A0, plus none in A1 to A3). (2) The pressure-line deletion does nothing for B (7/10). The outcome line fixes it (0/10 in B2 and B3), which only works in the product if the seat is declared a complete empty scope. (3) The 70B still volunteers dust and floor detail; the rubric counted only objects.
+- Limits: n=10 per arm, one recorded prompt per defect, one hand reader who knew the aim (arm key hidden). Stage 2 (15 more samples each for A1, B2 and both controls, 60 calls, about $0.04, cap $0.08) has not been run.
+- Next: Brandon's go for stage 2; then product fixes as separate Ringer tasks, tests first (A1: stop offering an earned protagonist event as a line an absent person may say aloud, after a free offline diagnosis of `_speaker_contexts` / `_is_present`; B2: `contents_complete` for the passenger seat, which needs the markdown package format to express it first). The second shadow sample (step 5) needs its own preregistration and Brandon's go.
