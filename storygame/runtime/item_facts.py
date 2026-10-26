@@ -13,6 +13,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProvid
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import scoped_alias_entity_ids
 from storygame.runtime.observation import ObservationContext, ObservationRequest, build_observation_context
+from storygame.runtime.observation_preview import CallMemo
 from storygame.runtime.reference_resolution import resolved_reference_names
 from storygame.runtime.reveal_eligibility import together_or_unplaced
 from storygame.runtime.seating import _command_names_thing
@@ -319,6 +320,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.item_facts_axis_fixes = 0
         self.item_facts_lifted = 0
         self.item_facts_reply_keys = {"place": 0, "contents": 0, "under": 0}
+        self.item_facts_call_memo: CallMemo | None = None
         self._ensure_hand_seeds(item_facts)
         self._ensure_scene_seeded()
 
@@ -1513,11 +1515,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if match_names:
             match_called = True
             self.item_facts_match_calls += 1
+            payload = self._match_payload(player_input, match_names, include_places=bool(place_names), story=story)
             try:
-                match_reply = CloudflareTurnProvider._request_item_facts(
-                    self,
-                    self._match_payload(player_input, match_names, include_places=bool(place_names), story=story),
-                )
+                if self.item_facts_call_memo is None:
+                    match_reply = CloudflareTurnProvider._request_item_facts(self, payload)
+                else:
+                    match_reply = self.item_facts_call_memo.remember(
+                        "match",
+                        payload,
+                        lambda: CloudflareTurnProvider._request_item_facts(self, payload),
+                    )
             except Exception as error:
                 if _is_item_facts_budget_error(error):
                     raise

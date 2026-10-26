@@ -176,6 +176,9 @@ class RuntimeEngine(CanonicalEventMixin):
     def _provider_budget(self) -> TurnProviderBudget | None:
         return self.provider if isinstance(self.provider, TurnProviderBudget) else None
 
+    def _enforcing(self) -> bool:
+        return self.capture is not None and getattr(self.capture, "enforcing_verifier", None) is not None
+
     def _begin_provider_turn(self) -> None:
         budget = self._provider_budget()
         if budget is not None:
@@ -189,6 +192,42 @@ class RuntimeEngine(CanonicalEventMixin):
         handoff = self._provider_handoff()
         if handoff is not None:
             handoff.clear_authored_handoff()
+
+    def _restore_capture_provider_fields(self, fields: dict[str, object] | None) -> None:
+        if fields is None:
+            return
+        for name, value in fields.items():
+            setattr(self.provider, name, deepcopy(value))
+
+    def _preview_observation(
+        self,
+        command_text: str,
+        proposal: ResolvedTurnProposal,
+        candidate_state: RuntimeState,
+        before,
+    ) -> str | None:
+        if self.capture is None or getattr(self.capture, "enforcing_verifier", None) is None:
+            return None
+        try:
+            preview = self.capture.preview_commit(
+                command_text,
+                proposal.narration,
+                candidate_state,
+                entered_scene=candidate_state.current_scene_id != before.current_scene_id,
+            )
+        except (NarrationProviderError, ProposalValidationError):
+            raise
+        except Exception as error:
+            raise ProposalValidationError(
+                "The observation check could not complete.",
+                code="observation_preview_failed",
+            ) from error
+        if not preview.accepted:
+            raise ProposalValidationError(
+                "The narration did not show the observed things as the world has them.",
+                code="observation_unverified",
+            )
+        return proposal.narration if preview.required else None
 
     def opening(self) -> ResolvedTurnProposal:
         """Open on the authored entry text, then the provider's embellishment; an opening commits no canon.
@@ -426,9 +465,19 @@ class RuntimeEngine(CanonicalEventMixin):
         canonical_event_id = None
         refusal_segment = None
         forced_handoff = False
+        pre_turn_context = None
+        pre_turn_provider_fields = None
+        previewed_narration = None
         try:
             self.state.last_turn_delivery = TurnDelivery()
             self.state.turn_index += 1
+            if self._enforcing():
+                pre_turn_context = self.capture.context()
+                pre_turn_provider_fields = {
+                    name: deepcopy(getattr(self.provider, name))
+                    for name in pre_turn_context
+                    if name in vars(self.provider)
+                }
             capture_record = self.capture.before_turn(command_text) if self.capture else {}
             if capture_record.get("engine_refusal"):
                 refusal = capture_record["engine_refusal"]
@@ -494,6 +543,7 @@ class RuntimeEngine(CanonicalEventMixin):
                     self.narration_validator.validate(
                         self.state, candidate_state, proposal, self.projector, command_text
                     )
+                    previewed_narration = self._preview_observation(command_text, proposal, candidate_state, before)
                 except ProposalValidationError as error:
                     if attempt == TURN_NARRATION_ATTEMPTS - 1:
                         raise
@@ -530,6 +580,11 @@ class RuntimeEngine(CanonicalEventMixin):
                     continue
                 break
         except NarrationProviderError as error:
+            if self._enforcing():
+                self.capture.discard()
+                if pre_turn_context is not None:
+                    self.capture.resume(pre_turn_context)
+                    self._restore_capture_provider_fields(pre_turn_provider_fields)
             self.state.restore_snapshot(before)
             self._clear_provider_handoff()
             self._record_attempt(
@@ -545,6 +600,19 @@ class RuntimeEngine(CanonicalEventMixin):
             if self.capture:
                 self.capture.discard()
             self.state.restore_snapshot(before)
+            error_code = getattr(error, "code", None) or type(error).__name__
+            if (
+                self.capture
+                and pre_turn_context is not None
+                and error_code
+                in {
+                    "observation_unverified",
+                    "observation_diverged",
+                    "observation_preview_failed",
+                }
+            ):
+                self.capture.resume(pre_turn_context)
+                self._restore_capture_provider_fields(pre_turn_provider_fields)
             self._clear_provider_handoff()
             self._record_attempt(
                 player_input,
@@ -552,7 +620,7 @@ class RuntimeEngine(CanonicalEventMixin):
                 before,
                 provider_reply=provider_reply,
                 outcome="rejected",
-                rejection=AttemptError(code=getattr(error, "code", None) or type(error).__name__, message=str(error)),
+                rejection=AttemptError(code=error_code, message=str(error)),
             )
             raise
         # Keep the package's existing future-dependency analysis as the final
@@ -594,9 +662,27 @@ class RuntimeEngine(CanonicalEventMixin):
             context = self.capture.context()
             capture_record = self.capture.after_commit(
                 command_text,
-                proposal.narration,
+                previewed_narration if previewed_narration is not None else proposal.narration,
                 entered_scene=self.state.current_scene_id != before.current_scene_id,
             )
+            if capture_record.get("observation_diverged"):
+                message = "The committed effects differ from the previewed effects."
+                self.capture.discard()
+                self.state.restore_snapshot(before)
+                if pre_turn_context is not None:
+                    self.capture.resume(pre_turn_context)
+                    self._restore_capture_provider_fields(pre_turn_provider_fields)
+                self._clear_provider_handoff()
+                self._record_attempt(
+                    player_input,
+                    command_text,
+                    before,
+                    provider_reply=provider_reply,
+                    provider_proposal=provider_proposal,
+                    outcome="rejected",
+                    rejection=AttemptError(code="observation_diverged", message=message),
+                )
+                raise ProposalValidationError(message, code="observation_diverged")
             delivery = self.state.last_turn_delivery
             self.state.last_turn_delivery = delivery.model_copy(
                 update={
@@ -1041,6 +1127,7 @@ class RuntimeEngine(CanonicalEventMixin):
         self.refusal_extra_calls = 0
         pending = self.state.pending_proposal
         pending_capture = self.state.pending_capture
+        pending_snapshot = self.state.pending_snapshot
         pending_scene = self.state.pending_snapshot.current_scene_id if self.state.pending_snapshot else None
         self.state.resolve_break(decision)
         if decision != "proceed" or pending is None:
@@ -1053,6 +1140,16 @@ class RuntimeEngine(CanonicalEventMixin):
                 pending.narration,
                 entered_scene=pending_scene is not None and self.state.current_scene_id != pending_scene,
             )
+            if capture_record.get("observation_diverged"):
+                self.capture.discard()
+                if pending_snapshot is not None:
+                    self.state.restore_snapshot(pending_snapshot)
+                self._clear_provider_handoff()
+                # Provider turn-output fields are reset by the next turn's before_turn.
+                raise ProposalValidationError(
+                    "The committed effects differ from the previewed effects.",
+                    code="observation_diverged",
+                )
             delivery = self.state.last_turn_delivery
             self.state.last_turn_delivery = delivery.model_copy(
                 update={
