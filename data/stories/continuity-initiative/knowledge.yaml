@@ -331,6 +331,7 @@ knowledge:
   delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over and the back door was forced, but nothing else was taken. This was not looting. Someone came for Michelle."
 - id: k_sl_1a_b_r0
   statement: "Kristin finds Michelle's memory card taped beneath the drawer and pockets it."
+  voiceable: false
   reach_entity_ids: [michelle_drawer]
   earn_when: searches the drawer, the gap in the drawer, or the space beneath it
   action_evidence:

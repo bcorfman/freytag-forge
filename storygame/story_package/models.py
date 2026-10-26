@@ -158,6 +158,7 @@ class KnowledgeDefinition(_Model):
     leak_terms: tuple[str, ...] | None = None
     delivery_text: str | None = None
     action_contract: ActionContract | None = None
+    voiceable: StrictBool = Field(default=True, exclude_if=lambda value: value is True)
 
 
 class SceneFrame(_Model):
