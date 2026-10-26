@@ -7,6 +7,7 @@ import subprocess
 import urllib.error
 import urllib.request
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -127,6 +128,66 @@ def test_shadow_observe_records_schema_for_all_turns(tmp_path: Path) -> None:
         len(turn["observation_shadow"]["requests"])
         for turn in rows[0]["turns"]
         if turn["observation_shadow"] is not None
+    )
+
+
+def test_shadow_clears_stale_observation_on_engine_moves(tmp_path: Path) -> None:
+    out = tmp_path / "observe-engine-moves"
+    subprocess.run(
+        [
+            str(PYTHON),
+            str(SCRIPT),
+            "--shadow",
+            "--dry-run",
+            "--route",
+            "observe",
+            "--replicates",
+            "1",
+            "--out",
+            str(out),
+        ],
+        check=True,
+    )
+    rows = json.loads((out / "rows.json").read_text())
+    turns = rows[0]["turns"]
+    for command in ("go outside", "go inside"):
+        row = next(turn for turn in turns if turn["input"] == command)
+        assert row["narrator_called"] is False
+        assert row["observation_shadow"] is None
+        assert row["observation_request"] is None
+    narrator_rows_with_request = [
+        turn for turn in turns if turn["narrator_called"] and turn["observation_request"] is not None
+    ]
+    assert all(turn["observation_shadow"] is not None for turn in narrator_rows_with_request)
+
+
+def test_shadow_observation_identity_rule(monkeypatch: pytest.MonkeyPatch) -> None:
+    module_spec = importlib.util.spec_from_file_location("live_baseline", SCRIPT)
+    module = importlib.util.module_from_spec(module_spec)
+    assert module_spec.loader is not None
+    module_spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "_observation_request", lambda _capture, _state: {"kind": "look"})
+
+    previous_after = {"observation_shadow": {"requests": 7}}
+    previous_request = object()
+    same_capture = SimpleNamespace(
+        last_after=previous_after,
+        provider=SimpleNamespace(observation_request=previous_request),
+    )
+    assert module._shadow_observation_values(same_capture, object(), previous_after, previous_request) == (
+        None,
+        None,
+    )
+
+    new_after = {"observation_shadow": {"requests": 3}}
+    new_request = object()
+    new_capture = SimpleNamespace(
+        last_after=new_after,
+        provider=SimpleNamespace(observation_request=new_request),
+    )
+    assert module._shadow_observation_values(new_capture, object(), previous_after, previous_request) == (
+        {"requests": 3},
+        {"kind": "look"},
     )
 
 
