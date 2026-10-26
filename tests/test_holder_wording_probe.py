@@ -114,7 +114,8 @@ def test_held_only_normalization_and_questions():
     assert probe.held_only_relation(held) == Relation("laptop", None, "Kristin")
     assert probe.held_only_relation(other) == other
     assert probe.held_only_relation(bare) == bare
-    assert probe.question_for_arm(held, "full_both") != probe.question_for_arm(held, "short_held_only")
+    # The product now renders an equal place and holder as "held by", so the arms agree.
+    assert probe.question_for_arm(held, "full_both") == probe.question_for_arm(held, "short_held_only")
     assert probe.question_for_arm(other, "short_both") == probe.question_for_arm(other, "short_held_only")
 
 
