@@ -84,6 +84,17 @@ ROUTES = {
         "go inside",
         "inspect the drawer",
     ),
+    "observe_topup": (
+        "inspect the drawer",
+        "pull out the drawer",
+        "feel under the drawer",
+        "feel under the drawer",
+        "go outside",
+        "inspect the truck",
+        "enter the truck",
+        "pick up my laptop",
+        "inspect the passenger seat",
+    ),
 }
 TRACKED = (
     "kristin",
