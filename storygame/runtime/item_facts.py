@@ -651,6 +651,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             current_world,
             self.state.package.world.protagonist_id,
             request,
+            label=self._entity_label,
             completed_actions=self._observation_completed_actions(),
         )
 

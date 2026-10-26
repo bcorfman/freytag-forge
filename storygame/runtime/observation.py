@@ -1,6 +1,6 @@
 """Pure projection of public world state for an observation task."""
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
 from worldkeeper import World
@@ -70,11 +70,19 @@ def build_observation_context(
     observer_id: str,
     request: ObservationRequest,
     *,
+    label: Callable[[World, str], str] | None = None,
     completed_actions: Iterable[str] = (),
     max_required: int = 32,
     max_optional: int = 32,
 ) -> ObservationContext:
     """Build a deterministic public projection using only worldkeeper queries."""
+    if label is None:
+
+        def entity_label(current_world: World, entity_id: str) -> str:
+            return current_world.name(entity_id)
+
+    else:
+        entity_label = label
     if max_required < 0 or max_optional < 0:
         raise ValueError("observation scope limits must be non-negative")
 
@@ -103,11 +111,11 @@ def build_observation_context(
 
     contingent_ids = _contingent_ids(world, request)
     return ObservationContext(
-        observer=world.name(observer_id),
+        observer=entity_label(world, observer_id),
         action=request.action,
         completed_actions=tuple(completed_actions),
-        visible_things=tuple(_observed(world, entity_id) for entity_id in selected_ids),
-        contingent_things=tuple(_observed(world, entity_id) for entity_id in contingent_ids),
+        visible_things=tuple(_observed(world, entity_id, entity_label) for entity_id in selected_ids),
+        contingent_things=tuple(_observed(world, entity_id, entity_label) for entity_id in contingent_ids),
         required=tuple(world.name(entity_id) for entity_id in required_ids),
         omitted_optional=omitted_optional,
         scope_complete=bool(request.focus and world.contents_complete(request.focus)),
@@ -183,13 +191,13 @@ def _contingent_ids(world: World, request: ObservationRequest) -> tuple[str, ...
     )
 
 
-def _observed(world: World, entity_id: str) -> ObservedThing:
+def _observed(world: World, entity_id: str, label: Callable[[World, str], str]) -> ObservedThing:
     parent_id = world.parent(entity_id)
     holder_id = world.holder(entity_id)
     return ObservedThing(
         name=world.name(entity_id),
-        place=world.name(parent_id) if parent_id else None,
-        holder=world.name(holder_id) if holder_id else None,
+        place=label(world, parent_id) if parent_id else None,
+        holder=label(world, holder_id) if holder_id else None,
     )
 
 

@@ -235,11 +235,14 @@ def test_examine_my_laptop_reports_holder_and_current_place_once():
         world,
         ids["observer"],
         ObservationRequest("Examine my laptop.", "look", ids["laptop"]),
+        label=lambda current_world, entity_id: (
+            "Kristin" if entity_id == ids["observer"] else current_world.name(entity_id)
+        ),
     )
 
     laptops = [thing for thing in context.visible_things if thing.name == "Kristin's laptop"]
     assert len(laptops) == 1
-    assert laptops[0].holder == "Kristin Schweitzer"
+    assert laptops[0].holder == "Kristin"
     assert laptops[0].place != "passenger seat"
     assert context.required == ("Kristin's laptop",)
 

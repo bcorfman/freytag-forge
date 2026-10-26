@@ -13,6 +13,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from scripts.ringer.environment_narration.verifier_calibration import _load_corpus
 from storygame.runtime.jev import JevClient
 from storygame.runtime.observation_verifier import ObservationVerifier, Relation, _question_for
@@ -22,6 +24,7 @@ DEFAULT_ROWS_PATH = REPO_DIR / "bench/results/environment-narration/shadow-sampl
 PROBE_DIR = Path(__file__).with_name("holder_probe")
 CASES_PATH = PROBE_DIR / "cases.jsonl"
 LOCK_PATH = PROBE_DIR / "cases.lock.json"
+WORLD_PATH = REPO_DIR / "data/stories/continuity-initiative/world.yaml"
 DEFAULT_SAMPLES = 2
 DEFAULT_MAX_CALLS = 1000
 DEFAULT_MAX_USD = 1.0
@@ -30,7 +33,7 @@ UNUSABLE_STOP_AFTER = 3
 ACCEPT_ABOVE = 0.65
 REJECT_BELOW = 0.35
 COST_PER_MILLION_INPUT_TOKENS = 0.042
-QUESTION_ARMS = ("current", "held_only")
+QUESTION_ARMS = ("full_both", "short_both", "short_held_only")
 CASE_KINDS = ("absent_thing", "positive_held", "wrong_holder")
 
 
@@ -69,7 +72,7 @@ def held_only_relation(relation: Relation) -> Relation:
 def question_for_arm(relation: Relation, arm: str) -> dict[str, object]:
     if arm not in QUESTION_ARMS:
         raise ValueError(f"unknown arm: {arm}")
-    selected = held_only_relation(relation) if arm == "held_only" else relation
+    selected = held_only_relation(relation) if arm == "short_held_only" else relation
     return _question_for(selected)
 
 
@@ -113,20 +116,60 @@ def _turn_records(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], lis
     return holder_records, examine_turns
 
 
-def _case(case_id: str, kind: str, label: str, narration: str, relation: Relation, source_turn: str) -> dict[str, Any]:
+def _short_labels(world_path: Path | str = WORLD_PATH) -> dict[str, str]:
+    document = yaml.safe_load(Path(world_path).read_text(encoding="utf-8"))
+    if not isinstance(document, dict) or not isinstance(document.get("npcs"), list):
+        raise ValueError("world.yaml must contain an npcs list")
+    labels: dict[str, str] = {}
+    for npc in document["npcs"]:
+        if not isinstance(npc, dict) or not isinstance(npc.get("name"), str):
+            continue
+        aliases = npc.get("aliases") or []
+        if not isinstance(aliases, list):
+            aliases = []
+        names = [alias for alias in aliases if isinstance(alias, str)]
+        names.append(npc["name"])
+        label = min(names, key=len)
+        for name in names:
+            labels[name] = label
+    return labels
+
+
+def _short_relation(relation: Relation, labels: dict[str, str]) -> Relation:
+    def replace(value: str | None) -> str | None:
+        return labels.get(value, value) if isinstance(value, str) else value
+
+    return Relation(
+        thing=replace(relation.thing),
+        place=replace(relation.place),
+        holder=replace(relation.holder),
+    )
+
+
+def _case(
+    case_id: str,
+    kind: str,
+    label: str,
+    narration: str,
+    relation: Relation,
+    source_turn: str,
+    short_labels: dict[str, str],
+) -> dict[str, Any]:
     return {
         "id": case_id,
         "kind": kind,
         "label": label,
         "narration": narration,
         "relation": _relation_document(relation),
+        "relation_short": _relation_document(_short_relation(relation, short_labels)),
         "source_turn": source_turn,
     }
 
 
-def build_cases(rows_path: Path | str = DEFAULT_ROWS_PATH) -> list[dict[str, Any]]:
+def build_cases(rows_path: Path | str = DEFAULT_ROWS_PATH, world_path: Path | str = WORLD_PATH) -> list[dict[str, Any]]:
     """Build the frozen 25-case holder probe corpus from shadow rows."""
     rows = _load_rows(Path(rows_path))
+    short_labels = _short_labels(world_path)
     holder_records, examine_turns = _turn_records(rows)
     if len(holder_records) != 10:
         raise ValueError(f"rows.json yielded {len(holder_records)} holder relations; expected exactly 10")
@@ -144,9 +187,9 @@ def build_cases(rows_path: Path | str = DEFAULT_ROWS_PATH) -> list[dict[str, Any
         )
         turn_id = record["turn_id"]
         narration = turn.get("narration")
-        cases.append(_case(f"h-p-{turn_id}", "positive_held", "accept", narration, relation, turn_id))
+        cases.append(_case(f"h-p-{turn_id}", "positive_held", "accept", narration, relation, turn_id, short_labels))
         wrong = Relation(thing=relation.thing, place="Michelle McGehee", holder="Michelle McGehee")
-        cases.append(_case(f"h-w-{turn_id}", "wrong_holder", "reject", narration, wrong, turn_id))
+        cases.append(_case(f"h-w-{turn_id}", "wrong_holder", "reject", narration, wrong, turn_id, short_labels))
 
     for record in examine_turns:
         turn_id = record["turn_id"]
@@ -163,6 +206,7 @@ def build_cases(rows_path: Path | str = DEFAULT_ROWS_PATH) -> list[dict[str, Any
                 record["turn"].get("narration"),
                 relation,
                 turn_id,
+                short_labels,
             )
         )
     cases.sort(key=lambda item: (item["source_turn"], item["kind"]))
@@ -217,7 +261,7 @@ def _lock_matches(cases: list[dict[str, Any]], cases_path: Path | None = None, l
 
 
 def _request_payload(case: dict[str, Any], arm: str) -> dict[str, Any]:
-    relation_data = case["relation"]
+    relation_data = case["relation"] if arm == "full_both" else case["relation_short"]
     relation = Relation(**relation_data)
     return {
         "input": {
@@ -259,6 +303,11 @@ def _question_text_hash(relation: Relation, arm: str) -> str:
     return _sha256(text.encode("utf-8"))
 
 
+def _relation_for_arm(case: dict[str, Any], arm: str) -> Relation:
+    relation_data = case["relation"] if arm == "full_both" else case["relation_short"]
+    return Relation(**relation_data)
+
+
 def _status_stop_reason(client: object) -> str | None:
     status = getattr(client, "last_status", None)
     if not isinstance(status, int):
@@ -288,8 +337,8 @@ def run_cases(
     }
     consecutive_unusable = 0
     for call_index, (case, arm, sample) in enumerate(calls[:max_calls], start=1):
-        relation = Relation(**case["relation"])
-        selected = held_only_relation(relation) if arm == "held_only" else relation
+        relation = _relation_for_arm(case, arm)
+        selected = held_only_relation(relation) if arm == "short_held_only" else relation
         verifier = ObservationVerifier(client.ask, accept_above=ACCEPT_ABOVE, reject_below=REJECT_BELOW)
         verifier.begin_turn()
         started = time.perf_counter()
@@ -346,7 +395,7 @@ def _check_corpus() -> int:
                 holder=relation_data.get("holder"),
             )
             examined += 1
-            if question_for_arm(relation, "current") != question_for_arm(relation, "held_only"):
+            if question_for_arm(relation, "full_both") != question_for_arm(relation, "short_held_only"):
                 changed += 1
     print(f"changed questions: {changed}")
     print(f"relations examined: {examined}")
@@ -404,41 +453,49 @@ def _report_text(rows: list[dict[str, Any]]) -> tuple[str, bool]:
             )
         lines.append("")
 
-    held_positive = [row for row in rows if row.get("arm") == "held_only" and row.get("kind") == "positive_held"]
-    held_negative = [
-        row for row in rows if row.get("arm") == "held_only" and row.get("kind") in {"wrong_holder", "absent_thing"}
+    full_positive = [row for row in rows if row.get("arm") == "full_both" and row.get("kind") == "positive_held"]
+    full_negative = [
+        row for row in rows if row.get("arm") == "full_both" and row.get("kind") in {"wrong_holder", "absent_thing"}
     ]
-    current_positive = [row for row in rows if row.get("arm") == "current" and row.get("kind") == "positive_held"]
-    held_accepts = sum(row.get("verdict") == "accept" for row in held_positive)
-    held_negative_accepts = sum(row.get("verdict") == "accept" for row in held_negative)
-    current_accepts = sum(row.get("verdict") == "accept" for row in current_positive)
-    current_negative_accepts = sum(
-        row.get("verdict") == "accept"
-        for row in rows
-        if row.get("arm") == "current" and row.get("kind") in {"wrong_holder", "absent_thing"}
-    )
-    g1 = held_accepts >= 18
-    g2 = held_negative_accepts == 0
-    g3 = held_accepts >= current_accepts
+    full_accepts = sum(row.get("verdict") == "accept" for row in full_positive)
+    full_negative_accepts = sum(row.get("verdict") == "accept" for row in full_negative)
     lines.extend(
         [
+            "## Before (full_both arm) numbers",
+            "",
+            f"- positive_held accepts: {full_accepts} of {len(full_positive)}",
+            f"- negative accepts: {full_negative_accepts} of {len(full_negative)}",
+            "",
+            "short_both passing means no wording change is needed (the simpler fix).",
+            "",
             "## GATE",
-            "",
-            f"- G1: {'PASS' if g1 else 'FAIL'} — held_only positive accepts "
-            f"{held_accepts} of {len(held_positive)} (required at least 18 of 20)",
-            f"- G2: {'PASS' if g2 else 'FAIL'} — held_only negative accepts "
-            f"{held_negative_accepts} of {len(held_negative)} (required zero of 30)",
-            f"- G3: {'PASS' if g3 else 'FAIL'} — held_only positive accepts "
-            f"{held_accepts}; current positive accepts {current_accepts}",
-            "",
-            "## Before (current arm) numbers",
-            "",
-            f"- positive_held accepts: {current_accepts} of {len(current_positive)}",
-            f"- negative accepts: {current_negative_accepts}",
             "",
         ]
     )
-    return "\n".join(lines), g1 and g2 and g3
+    all_passed = True
+    for arm in ("short_both", "short_held_only"):
+        positive = [row for row in rows if row.get("arm") == arm and row.get("kind") == "positive_held"]
+        negative = [
+            row for row in rows if row.get("arm") == arm and row.get("kind") in {"wrong_holder", "absent_thing"}
+        ]
+        positive_accepts = sum(row.get("verdict") == "accept" for row in positive)
+        negative_accepts = sum(row.get("verdict") == "accept" for row in negative)
+        g1 = positive_accepts >= 18
+        g2 = negative_accepts == 0
+        g3 = positive_accepts >= full_accepts
+        all_passed = all_passed and g1 and g2 and g3
+        lines.extend(
+            [
+                f"- {arm} G1: {'PASS' if g1 else 'FAIL'} — positive accepts "
+                f"{positive_accepts} of {len(positive)} (required at least 18 of 20)",
+                f"- {arm} G2: {'PASS' if g2 else 'FAIL'} — negative accepts "
+                f"{negative_accepts} of {len(negative)} (required zero of 30)",
+                f"- {arm} G3: {'PASS' if g3 else 'FAIL'} — positive accepts "
+                f"{positive_accepts}; full_both positive accepts {full_accepts}",
+                "",
+            ]
+        )
+    return "\n".join(lines), all_passed
 
 
 def report_rows(rows_path: Path, out: Path) -> int:

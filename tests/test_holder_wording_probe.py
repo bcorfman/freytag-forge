@@ -9,7 +9,7 @@ from storygame.runtime.observation_verifier import Relation
 
 
 def _turn(turn_index, *, examine=False):
-    holder = f"Holder {turn_index}"
+    holder = "Kristin Schweitzer"
     return {
         "input": "examine my laptop" if examine else "look",
         "narration": f"The narration for turn {turn_index}.",
@@ -24,6 +24,20 @@ def _rows():
 
 def _write_rows(path, rows):
     path.write_text(json.dumps(rows), encoding="utf-8")
+
+
+def _write_world(path):
+    path.write_text(
+        """npcs:
+  - name: Kristin Schweitzer
+    aliases: [Kristin, Kristin Schweitzer]
+  - name: Dr. Michelle McGehee
+    aliases: [Michelle, Dr. McGehee, Michelle McGehee, Shelly]
+  - name: Brandon Corfman
+    aliases: [Brandon, Brandon Corfman]
+""",
+        encoding="utf-8",
+    )
 
 
 def _write_cases_and_lock(monkeypatch, tmp_path, cases):
@@ -41,13 +55,17 @@ def _write_cases_and_lock(monkeypatch, tmp_path, cases):
 
 def test_build_cases_counts_and_fields(tmp_path):
     rows_path = tmp_path / "rows.json"
+    world_path = tmp_path / "world.yaml"
     _write_rows(rows_path, _rows())
+    _write_world(world_path)
 
-    cases = probe.build_cases(rows_path)
+    cases = probe.build_cases(rows_path, world_path)
 
     assert len(cases) == 25
     assert [case["kind"] for case in cases[:3]] == ["absent_thing", "positive_held", "wrong_holder"]
-    assert all(set(case) == {"id", "kind", "label", "narration", "relation", "source_turn"} for case in cases)
+    assert all(
+        set(case) == {"id", "kind", "label", "narration", "relation", "relation_short", "source_turn"} for case in cases
+    )
     assert sum(case["kind"] == "positive_held" for case in cases) == 10
     assert sum(case["kind"] == "wrong_holder" for case in cases) == 10
     assert sum(case["kind"] == "absent_thing" for case in cases) == 5
@@ -59,6 +77,14 @@ def test_build_cases_counts_and_fields(tmp_path):
         "place": "Kristin Schweitzer",
         "holder": "Kristin Schweitzer",
     }
+    assert absent[0]["relation_short"] == {
+        "thing": "Michelle's memory card",
+        "place": "Kristin",
+        "holder": "Kristin",
+    }
+    wrong = next(case for case in cases if case["kind"] == "wrong_holder")
+    assert wrong["relation_short"]["holder"] == "Shelly"
+    assert wrong["relation_short"]["place"] == "Shelly"
 
 
 def test_build_cases_rejects_wrong_holder_count(tmp_path):
@@ -70,16 +96,26 @@ def test_build_cases_rejects_wrong_holder_count(tmp_path):
     assert "exactly 10" in str(error.value)
 
 
-def test_held_only_normalization_and_questions():
-    held = Relation("laptop", "Michelle McGehee", "Michelle McGehee")
-    other = Relation("book", "desk", "Michelle McGehee")
-    bare = Relation("coin", None, "Michelle McGehee")
+def test_frozen_cases_preserve_identity_and_lock():
+    cases = probe._load_cases()
+    rebuilt = probe.build_cases()
 
-    assert probe.held_only_relation(held) == Relation("laptop", None, "Michelle McGehee")
+    assert [{key: case[key] for key in case if key != "relation_short"} for case in cases] == [
+        {key: case[key] for key in case if key != "relation_short"} for case in rebuilt
+    ]
+    assert probe._lock_matches(cases)
+
+
+def test_held_only_normalization_and_questions():
+    held = Relation("laptop", "Kristin", "Kristin")
+    other = Relation("book", "desk", "Kristin")
+    bare = Relation("coin", None, "Kristin")
+
+    assert probe.held_only_relation(held) == Relation("laptop", None, "Kristin")
     assert probe.held_only_relation(other) == other
     assert probe.held_only_relation(bare) == bare
-    assert probe.question_for_arm(held, "current") != probe.question_for_arm(held, "held_only")
-    assert probe.question_for_arm(other, "current") == probe.question_for_arm(other, "held_only")
+    assert probe.question_for_arm(held, "full_both") != probe.question_for_arm(held, "short_held_only")
+    assert probe.question_for_arm(other, "short_both") == probe.question_for_arm(other, "short_held_only")
 
 
 def test_check_corpus_reports_zero_changed(capsys):
@@ -93,7 +129,7 @@ def test_dry_run_numbers(capsys):
     assert probe.main(["--dry-run", "--samples", "2"]) == 0
     output = capsys.readouterr().out
     assert "case count: 25" in output
-    assert "planned requests: 100" in output
+    assert "planned requests: 150" in output
     assert "token estimate:" in output
     assert "USD ceiling:" in output
 
@@ -162,10 +198,17 @@ def test_run_writes_interleaved_rows(monkeypatch, tmp_path):
     client = FakeClient()
     output = tmp_path / "run.json"
 
-    document = probe.run_cases(cases, samples=2, max_calls=100, out=output, client=client)
+    document = probe.run_cases(cases, samples=2, max_calls=150, out=output, client=client)
 
-    assert len(document["rows"]) == 100
-    assert [row["arm"] for row in document["rows"][:4]] == ["current", "held_only", "current", "held_only"]
+    assert len(document["rows"]) == 150
+    assert [row["arm"] for row in document["rows"][:6]] == [
+        "full_both",
+        "short_both",
+        "short_held_only",
+        "full_both",
+        "short_both",
+        "short_held_only",
+    ]
     assert all(
         set(row)
         >= {
@@ -185,12 +228,12 @@ def test_run_writes_interleaved_rows(monkeypatch, tmp_path):
         for row in document["rows"]
     )
     assert output.exists()
-    assert len(client.calls) == 100
+    assert len(client.calls) == 150
 
 
 def _report_rows():
     rows = []
-    for arm in ("current", "held_only"):
+    for arm in ("full_both", "short_both", "short_held_only"):
         cases = [("positive_held", "accept", "accept", 20)]
         cases.extend(
             [
@@ -224,17 +267,19 @@ def test_report_gate_pass_and_fail(tmp_path):
     report = report_path.read_text(encoding="utf-8")
     assert "G1" in report and "G1: PASS" in report
     assert "G2: PASS" in report and "G3: PASS" in report
+    assert "short_both G1: PASS" in report
+    assert "short_held_only G1: PASS" in report
     assert "10 positive cases are the ones that exposed the defect" in report
 
     rows = _report_rows()
-    rows[50]["verdict"] = "reject"
-    rows[51]["verdict"] = "reject"
-    rows[52]["verdict"] = "reject"
+    rows[100]["verdict"] = "reject"
+    rows[101]["verdict"] = "reject"
+    rows[102]["verdict"] = "reject"
     rows_path.write_text(json.dumps({"rows": rows}), encoding="utf-8")
     assert probe.report_rows(rows_path, report_path) == 1
     report = report_path.read_text(encoding="utf-8")
     assert "G1: FAIL" in report
-    assert "G3: FAIL" in report
+    assert "short_both G3: FAIL" in report or "short_held_only G3: FAIL" in report
 
 
 def test_no_credential_value_in_output(monkeypatch, tmp_path, capsys):
