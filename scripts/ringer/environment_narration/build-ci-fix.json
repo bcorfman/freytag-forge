@@ -1,0 +1,90 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-ci-fix",
+ "max_parallel": 3,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "key": "ci1-hermetic-worker-url",
+   "ownership": [
+    "tests/test_observation_prompt.py",
+    "tests/test_observation_mode.py",
+    "tests/test_observation_shadow.py",
+    "tests/test_boarding_already_seated.py",
+    "tests/test_boarding_engine_text.py",
+    "tests/test_environment_screen.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/tests/test_observation_prompt.py"
+   ],
+   "spec": "You are fixing CI failures in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python`. No network, no live model call, no uv. Do NOT export CLOUDFLARE_WORKER_URL or CLOUDFLARE_WORKER_TOKEN: run every pytest as `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n0 <files>` because CI has no worker configured. Do not git commit. NEVER print or write any credential. NO regular expressions. No story vocabulary in non-test code. CONTEXT: this branch (PR #700) was never run through CI before. CI now fails ~47 tests that all pass on main, so each is a regression or a stale expectation from this branch's work (see .plans/grounded-llm-environment-narration.md, T6a-T6i and T7 records: observation mode is now the product default, `ItemFactsProvider.observe_automatically` True; consumed boarding turns now call the narrator; the 70B profile; story data gained aliases). Unit tests must be hermetic: they never need a live worker or a real URL. YOU MAY EDIT ONLY these test files: tests/test_observation_prompt.py, tests/test_observation_mode.py, tests/test_observation_shadow.py, tests/test_boarding_already_seated.py, tests/test_boarding_engine_text.py, tests/test_environment_screen.py. Runtime code is off limits.\n\nSYMPTOM: with CLOUDFLARE_WORKER_URL unset these tests fail with `dataclasses.FrozenInstanceError: cannot assign to field '__traceback__'` raised while an exception NarrationProviderError('narration service is unavailable') propagates; the cause is `ValueError: CLOUDFLARE_WORKER_URL is not configured` at storygame/runtime/cloudflare.py (~line 318). They pass locally only when the variable is set to a fake URL. They build the real CloudflareTurnProvider with a fake opener/transport and the provider reads the worker URL from the environment at call time. FIX each test file hermetically: give the provider/test the worker URL the way the already-passing tests in the repo do (grep tests/ for CLOUDFLARE_WORKER_URL and for how CloudflareTurnProvider is constructed; prefer passing the URL explicitly if the constructor takes one, else `monkeypatch.setenv('CLOUDFLARE_WORKER_URL', 'https://w.example')` in a fixture local to the file, with the fake opener in place so nothing touches the network). Do not change what any test asserts about behaviour; if a test then fails for a different reason, read it, decide whether the assertion is stale (update it only if the new behaviour is the one documented in the plan's T6f record) or exposes a product defect (then stop that test, leave it failing, and say so loudly in your final report). Run all six files with the variable unset until green. FINISH: ruff check and format the files; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n0 tests/test_observation_prompt.py tests/test_observation_mode.py tests/test_observation_shadow.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_environment_screen.py 2>&1 | tee /tmp/ci-fix.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/ci-fix.out && git diff --quiet -- docs worker data && .venv/bin/python -m ruff check tests/test_observation_prompt.py tests/test_observation_mode.py tests/test_observation_shadow.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_environment_screen.py && .venv/bin/python -m ruff format --check tests/test_observation_prompt.py tests/test_observation_mode.py tests/test_observation_shadow.py tests/test_boarding_already_seated.py tests/test_boarding_engine_text.py tests/test_environment_screen.py",
+   "verified": "six test files pass with no worker URL configured"
+  },
+  {
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "key": "ci2-legacy-prompt-benches",
+   "ownership": [
+    "tests/test_boarding_probe.py",
+    "tests/test_fixed_refusal.py",
+    "tests/test_bench_runtime_mode.py",
+    "scripts/ringer/transcript_1a/boarding_probe.py",
+    "storygame/runtime/item_facts.py",
+    "storygame/runtime/capture.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/tests/test_boarding_probe.py"
+   ],
+   "spec": "You are fixing CI failures in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python`. No network, no live model call, no uv. Do NOT export CLOUDFLARE_WORKER_URL or CLOUDFLARE_WORKER_TOKEN: run every pytest as `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n0 <files>` because CI has no worker configured. Do not git commit. NEVER print or write any credential. NO regular expressions. No story vocabulary in non-test code. CONTEXT: this branch (PR #700) was never run through CI before. CI now fails ~47 tests that all pass on main, so each is a regression or a stale expectation from this branch's work (see .plans/grounded-llm-environment-narration.md, T6a-T6i and T7 records: observation mode is now the product default, `ItemFactsProvider.observe_automatically` True; consumed boarding turns now call the narrator; the 70B profile; story data gained aliases). Unit tests must be hermetic: they never need a live worker or a real URL. YOU MAY EDIT: tests/test_boarding_probe.py, tests/test_fixed_refusal.py, tests/test_bench_runtime_mode.py, scripts/ringer/transcript_1a/boarding_probe.py (find the real path with `ls scripts/ringer/*/boarding_probe.py`), and ONLY IF you prove a real product defect, storygame/runtime/item_facts.py and storygame/runtime/capture.py minimally with a regression test in one of your test files.\n\nSYMPTOMS (fail with the URL unset or set): tests/test_boarding_probe.py (5 tests: `RuntimeError: P1 control prompt has no 'Just before this:' line`); tests/test_fixed_refusal.py::test_capture_real_scene_1a_fixed_refusal_precedes_other_questions (expects the prompt to contain 'Just before this: Kristin tried to move the workstation.'); tests/test_bench_runtime_mode.py::test_runtime_mode_exit_turn_narration_leaves_out_bridge_and_entry (expects 'Kristin sat ... passenger seat' but gets 'Kristin searches the room.'). They pass on main. Likely cause: observation mode became the product default (ItemFactsProvider.observe_automatically = True; WorldCapture.before_turn rebuilds observation_request every turn), which changes the narrator prompt shape (completed-actions / 'Just before this' lines). baseline.py and screen.py in scripts/ringer/environment_narration pin `observe_automatically = False` so legacy-shape comparators still work. DECISION RULE per failing test: (a) if the test/harness exists to capture the LEGACY prompt shape (the boarding probe's frozen P1/P2/P3 prompts and its dry document), make the harness/test pin observe_automatically = False on its provider, exactly as baseline.py does; (b) if the test asserts product behaviour that the new default legitimately changed (check the T6f record in .plans/grounded-llm-environment-narration.md), update the assertion and say why; (c) if the new default DROPS information the narrator needs on a turn where the old path supplied it (for example the fixed-refusal line 'Just before this: Kristin tried to move the workstation.' no longer reaching the narrator prompt on a refused move), that is a product regression: fix it in item_facts.py/capture.py minimally, with a test, and keep the observation prompt unchanged for turns with an observation request. Explain which rule you applied to each failing test in your final report. FINISH: ruff check and format all touched files; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n0 tests/test_boarding_probe.py tests/test_fixed_refusal.py tests/test_bench_runtime_mode.py tests/test_observation_mode.py tests/test_observation_prompt.py tests/test_runtime_capture.py tests/test_3c_world_capture_wiring.py tests/test_boarding_engine_text.py 2>&1 | tee /tmp/ci-fix.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/ci-fix.out && git diff --quiet -- docs worker data && ! git diff -U0 -- storygame | grep -iE '^\\+.*(kristin|laptop|truck|drawer|michelle)' && .venv/bin/python -m ruff check tests/test_boarding_probe.py tests/test_fixed_refusal.py tests/test_bench_runtime_mode.py scripts/ringer/transcript_1a storygame/runtime/item_facts.py storygame/runtime/capture.py && .venv/bin/python -m ruff format --check tests/test_boarding_probe.py tests/test_fixed_refusal.py tests/test_bench_runtime_mode.py scripts/ringer/transcript_1a storygame/runtime/item_facts.py storygame/runtime/capture.py",
+   "verified": "legacy-shape benches pin the legacy prompt; product regressions, if any, are fixed with a test"
+  },
+  {
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "key": "ci3-stale-expectations",
+   "ownership": [
+    "tests/test_affordance_map.py",
+    "tests/test_environment_classifier_smoke.py",
+    "scripts/ringer/environment_narration/classifier_smoke.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/tests/test_affordance_map.py"
+   ],
+   "spec": "You are fixing CI failures in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python`. No network, no live model call, no uv. Do NOT export CLOUDFLARE_WORKER_URL or CLOUDFLARE_WORKER_TOKEN: run every pytest as `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n0 <files>` because CI has no worker configured. Do not git commit. NEVER print or write any credential. NO regular expressions. No story vocabulary in non-test code. CONTEXT: this branch (PR #700) was never run through CI before. CI now fails ~47 tests that all pass on main, so each is a regression or a stale expectation from this branch's work (see .plans/grounded-llm-environment-narration.md, T6a-T6i and T7 records: observation mode is now the product default, `ItemFactsProvider.observe_automatically` True; consumed boarding turns now call the narrator; the 70B profile; story data gained aliases). Unit tests must be hermetic: they never need a live worker or a real URL. YOU MAY EDIT ONLY: tests/test_affordance_map.py, tests/test_environment_classifier_smoke.py and scripts/ringer/environment_narration/classifier_smoke.py.\n\n(1) tests/test_affordance_map.py::test_affordances_and_scene_location_include_aliases: the expected alias list for the first scene's location is stale. Commits on this branch (git log main..HEAD -- data/stories) added more place aliases to data/stories/continuity-initiative/world.yaml (for example 'the living room', 'the front room'). Verify in the YAML that the extra aliases really are declared there and are what the affordance map should expose, then update the test's expectation to match the data (derive it from the data where the test style allows; do not weaken the assertion to a subset check unless the file already does that elsewhere). If the extra aliases are NOT in the data, stop and report a product defect instead.\n(2) tests/test_environment_classifier_smoke.py::test_scoring_distinguishes_strict_and_product_decoding with the parameter case matcher-```json\\n{\"refers\":[],\"same_as\":{}}\\n```-expected1-False-False: the reply is a matcher JSON object wrapped in a markdown fence. Since T6h the product decoder (`extract_json_object` in storygame/runtime/narration_json.py, used by CloudflareTurnProvider) recovers a single JSON object wrapped in text, so the product decodes this reply; the smoke scorer is meant to mirror the PRODUCT's decoding. Read classifier_smoke.py and the test; decide whether the scorer should now mark this reply product-valid (use the same extractor the product uses; strict JSON stays False) and fix the scorer and/or the parametrized expectation accordingly. Keep the other cases of that test meaningful. FINISH: ruff check and format; report pass counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n0 tests/test_affordance_map.py tests/test_environment_classifier_smoke.py tests/test_narration_json_extract.py 2>&1 | tee /tmp/ci-fix.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/ci-fix.out && git diff --quiet -- docs worker data && .venv/bin/python -m ruff check tests/test_affordance_map.py tests/test_environment_classifier_smoke.py scripts/ringer/environment_narration/classifier_smoke.py && .venv/bin/python -m ruff format --check tests/test_affordance_map.py tests/test_environment_classifier_smoke.py scripts/ringer/environment_narration/classifier_smoke.py",
+   "verified": "stale alias and decoding expectations match the committed data and product decoder"
+  }
+ ]
+}

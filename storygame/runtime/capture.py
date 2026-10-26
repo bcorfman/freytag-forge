@@ -132,7 +132,7 @@ class WorldCapture:
         match_info = {}
         if self.provider.item_facts_mode == "single_call" and not engine_refusal and not self.provider.command_consumed:
             match_info = self.provider.prepare_turn(command)
-        if observe_automatically:
+        if observe_automatically and not (fixed and fixed.refused):
             self._set_observation_request(command, boarding, adapter)
         record = {
             "command": command_record,

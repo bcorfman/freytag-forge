@@ -11,6 +11,8 @@ from scripts.ringer.environment_narration import screen
 
 @pytest.fixture(autouse=True)
 def no_network(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://w.example")
+
     def fail_socket(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("network access is forbidden in environment screen tests")
 

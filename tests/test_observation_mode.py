@@ -22,6 +22,11 @@ boarding_probe = importlib.util.module_from_spec(PROBE_SPEC)
 PROBE_SPEC.loader.exec_module(boarding_probe)
 
 
+@pytest.fixture(autouse=True)
+def fake_worker_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://w.example")
+
+
 def _state_at(place_id: str, *, already_aboard: bool = False):
     state = boarding_probe._state_at(PACKAGE, place_id)
     if already_aboard:

@@ -18,6 +18,11 @@ ROOT = Path(__file__).parents[1]
 PACKAGE = load_story_package(ROOT / "data/stories/continuity-initiative")
 
 
+@pytest.fixture(autouse=True)
+def fake_worker_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://w.example")
+
+
 class _Response:
     def __init__(self, body: object) -> None:
         self.body = json.dumps(body).encode()

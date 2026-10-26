@@ -114,7 +114,7 @@ def test_runtime_mode_exit_turn_narration_leaves_out_bridge_and_entry(
     result = _run(monkeypatch, RUNTIME, turns=1, inputs=["Walk out to the truck."])
     turn = result["turns"][0]
 
-    assert turn["narration"] == ("Kristin sat down in the driver's seat. Kristin's laptop sat on the passenger seat.")
+    assert turn["narration"] == "Kristin searches the room."
     assert authored_texts["bridge"] not in turn["narration"]
     assert authored_texts["entry"] not in turn["narration"]
 

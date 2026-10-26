@@ -8,6 +8,11 @@ from storygame.runtime.observation_verifier import ObservationVerifier
 from tests.test_observation_mode import _state_at
 
 
+@pytest.fixture(autouse=True)
+def fake_worker_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://w.example")
+
+
 def _provider():
     state = _state_at("outside_house", already_aboard=True)
     provider = build_capture_provider(state)

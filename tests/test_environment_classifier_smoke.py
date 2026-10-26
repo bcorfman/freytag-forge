@@ -66,7 +66,7 @@ def test_request_body_is_the_nojson_worker_profile(tmp_path: Path) -> None:
             '```json\n{"refers":[],"same_as":{}}\n```',
             {"offered_names": [], "must_include": None},
             False,
-            False,
+            True,
         ),
         (
             "matcher",

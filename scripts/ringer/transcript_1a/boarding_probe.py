@@ -132,6 +132,7 @@ def _control_prompt(package: Any, place_id: str, command: str) -> dict[str, str]
     state = _state_at(package, place_id)
     with _stub_jev(), _stub_item_facts():
         provider = build_capture_provider(state)
+        provider.observe_automatically = False
 
         # The product provider normally sends this optional matcher request. Its
         # valid empty result leaves the same dependency-selected feed as the

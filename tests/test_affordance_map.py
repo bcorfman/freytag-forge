@@ -259,7 +259,15 @@ def test_affordances_and_scene_location_include_aliases():
     assert scene["location"] == {
         "id": "mcgehee_home",
         "name": "Michelle's house",
-        "aliases": ["Michelle's home", "the house", "inside", "indoors"],
+        "aliases": [
+            "Michelle's home",
+            "the house",
+            "inside",
+            "indoors",
+            "the living room",
+            "the front room",
+            "the hallway",
+        ],
     }
     assert all("aliases" in affordance for gate in scene["gates"] for affordance in gate["affordances"])
 

@@ -25,6 +25,8 @@ PROBE_SPEC.loader.exec_module(boarding_probe)
 
 @pytest.fixture(autouse=True)
 def no_sockets(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://w.example")
+
     def fail_socket(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("network access is forbidden in observation prompt tests")
 
