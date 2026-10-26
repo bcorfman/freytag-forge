@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-shadowr3",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 900,
+   "key": "shadow-report-zero-relations",
+   "ownership": [
+    "scripts/ringer/environment_narration/shadow_report.py",
+    "tests/test_shadow_report.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/shadow_report.py"
+   ],
+   "spec": "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no live model call. Do not git commit. NEVER print or write any credential. NO regular expressions in new code. No story vocabulary (no Kristin, truck, laptop, drawer, Michelle) in non-test code. Tests may use the shipped continuity-initiative package through the helpers in tests/test_observation_mode.py (`_state_at`) and tests/test_observation_shadow.py, plus a synthetic second story. Write the tests FIRST, run them and confirm they fail for the right reason, then implement until they pass. Do not edit any file outside YOU MAY EDIT ONLY. Run ruff check and ruff format on your files at the end. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/shadow_report.py and tests/test_shadow_report.py. \n\nBUG. In shadow_report.py `_join`, `turn_would_reject` starts as `not isinstance(shadow, dict) or shadow.get('outcome') != 'ok'`. For an observation turn with ZERO relations the shadow outcome is 'no_relations' (or the shadow record may be missing), so the turn is counted as one enforcement would reject, which inflates the original gate clause 2 (good-turn strict reject rate) and the mixed-turn counts. A turn with zero relations is never rejected by enforcement (nothing is asked). Fix: `turn_would_reject` can be True only when the turn has at least one relation (a relation verdict that is not 'accept', or a shadow outcome other than 'ok', or a missing shadow record, all evaluated only when relations is non-empty). Zero-relation turns still count in `good_turns` (all labels true vacuously) but never as rejected; keep the 2b logic as is. Also make sure `turns_without_shadow` still reports them. \n\nTESTS FIRST in tests/test_shadow_report.py: a synthetic set containing zero-relation turns with outcome 'no_relations' and with a missing shadow record -> clause 2 good-turn reject count excludes them (compute the exact expected counts), and the printed good-turn rejection rate matches; a turn with relations and outcome 'unavailable' is still a rejection. Keep all existing tests green. FINISH: ruff check and format; report counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_shadow_report.py 2>&1 | tee /tmp/shadowr3.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/shadowr3.out && ! grep -nE '^(import re|from re )|\\bre\\.(compile|search|match|sub|findall|fullmatch)' scripts/ringer/environment_narration/shadow_report.py && git diff --quiet -- storygame docs worker data && .venv/bin/python -m ruff check scripts/ringer/environment_narration tests/test_shadow_report.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration tests/test_shadow_report.py",
+   "verified": "zero-relation turns are never counted as enforcement rejections"
+  }
+ ]
+}

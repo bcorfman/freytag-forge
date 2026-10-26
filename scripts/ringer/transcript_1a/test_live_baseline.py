@@ -85,6 +85,116 @@ def test_default_route_keeps_reported_inputs(tmp_path: Path) -> None:
     ]
 
 
+def test_shadow_flag_off_preserves_unshadowed_schema(tmp_path: Path) -> None:
+    out = tmp_path / "off"
+    subprocess.run(
+        [str(PYTHON), str(SCRIPT), "--dry-run", "--route", "reported", "--replicates", "1", "--out", str(out)],
+        check=True,
+    )
+    rows = json.loads((out / "rows.json").read_text())
+    summary = json.loads((out / "summary.json").read_text())
+    shadow_keys = ("observation_shadow", "observation_relations", "observation_request")
+    assert all(key not in turn for turn in rows[0]["turns"] for key in shadow_keys)
+    assert "shadow" not in summary
+
+
+def test_shadow_observe_records_schema_for_all_turns(tmp_path: Path) -> None:
+    out = tmp_path / "observe"
+    subprocess.run(
+        [
+            str(PYTHON),
+            str(SCRIPT),
+            "--shadow",
+            "--dry-run",
+            "--route",
+            "observe",
+            "--replicates",
+            "1",
+            "--out",
+            str(out),
+        ],
+        check=True,
+    )
+    rows = json.loads((out / "rows.json").read_text())
+    summary = json.loads((out / "summary.json").read_text())
+    shadow_keys = ("observation_shadow", "observation_relations", "observation_request")
+    assert len(rows[0]["turns"]) == 13
+    assert all(key in turn for turn in rows[0]["turns"] for key in shadow_keys)
+    assert summary["shadow"] is True
+    assert summary["turns_recorded"] == 13
+    assert summary["observation_turns"] == sum(turn["observation_relations"] is not None for turn in rows[0]["turns"])
+    assert summary["shadow_verifier_requests"] == sum(
+        len(turn["observation_shadow"]["requests"])
+        for turn in rows[0]["turns"]
+        if turn["observation_shadow"] is not None
+    )
+
+
+def test_observe_route_has_exact_inputs() -> None:
+    module_spec = importlib.util.spec_from_file_location("live_baseline", SCRIPT)
+    module = importlib.util.module_from_spec(module_spec)
+    assert module_spec.loader is not None
+    module_spec.loader.exec_module(module)
+    assert module.ROUTES["observe"] == (
+        "inspect the drawer",
+        "pull out the drawer",
+        "feel under the drawer",
+        "feel under the drawer",
+        "go outside",
+        "inspect the truck",
+        "enter the truck",
+        "inspect the passenger seat",
+        "examine my laptop",
+        "get out of the truck",
+        "examine the truck",
+        "go inside",
+        "inspect the drawer",
+    )
+
+
+def test_shadow_restores_relations_wrapper_when_run_raises(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    module_spec = importlib.util.spec_from_file_location("live_baseline", SCRIPT)
+    module = importlib.util.module_from_spec(module_spec)
+    assert module_spec.loader is not None
+    module_spec.loader.exec_module(module)
+    import storygame.runtime.capture as capture_module
+
+    original = capture_module.relations_from_context
+
+    def fail(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("forced test failure")
+
+    monkeypatch.setattr(module, "_replicate", fail)
+    with pytest.raises(RuntimeError) as exc_info:
+        module.main(
+            [
+                "--shadow",
+                "--dry-run",
+                "--replicates",
+                "1",
+                "--turns",
+                "0",
+                "--out",
+                str(tmp_path / "raises"),
+            ]
+        )
+    assert str(exc_info.value) == "forced test failure"
+    assert capture_module.relations_from_context is original
+
+
+def test_shadow_preserves_corrected_narration_rows(tmp_path: Path) -> None:
+    plain_out = tmp_path / "plain"
+    shadow_out = tmp_path / "shadow"
+    common = [str(PYTHON), str(SCRIPT), "--dry-run", "--route", "corrected", "--replicates", "1"]
+    subprocess.run([*common, "--out", str(plain_out)], check=True)
+    subprocess.run([*common, "--shadow", "--out", str(shadow_out)], check=True)
+    plain_rows = json.loads((plain_out / "rows.json").read_text())
+    shadow_rows = json.loads((shadow_out / "rows.json").read_text())
+    assert [turn["narration"] for turn in plain_rows[0]["turns"]] == [
+        turn["narration"] for turn in shadow_rows[0]["turns"]
+    ]
+
+
 def test_movement_route_records_places_and_narrator_calls(tmp_path: Path) -> None:
     out = tmp_path / "movement"
     subprocess.run(

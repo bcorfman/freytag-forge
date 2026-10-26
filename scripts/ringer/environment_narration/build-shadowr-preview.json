@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-shadowr",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 900,
+   "key": "shadow-sample-report",
+   "ownership": [
+    "scripts/ringer/environment_narration/shadow_report.py",
+    "tests/test_shadow_report.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/shadow_report.py"
+   ],
+   "spec": "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no live model call. Do not git commit. NEVER print or write any credential. NO regular expressions in new code. No story vocabulary (no Kristin, truck, laptop, drawer, Michelle) in non-test code. Tests may use the shipped continuity-initiative package through the helpers in tests/test_observation_mode.py (`_state_at`) and tests/test_observation_shadow.py, plus a synthetic second story. Write the tests FIRST, run them and confirm they fail for the right reason, then implement until they pass. Do not edit any file outside YOU MAY EDIT ONLY. Run ruff check and ruff format on your files at the end. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/shadow_report.py (NEW) and tests/test_shadow_report.py (NEW). \n\nCONTEXT. scripts/ringer/transcript_1a/live_baseline.py (read it) with `--shadow` writes rows.json: a list of replicate records, each with `turns`, each turn row having `input`, `narration`, `error`, `observation_request` ({kind, focus} or None), `observation_relations` (list of {thing, place, holder} or None) and `observation_shadow` (None or {outcome, requests, elapsed_s, failure, accepted, question_version, verdicts: [{thing, verdict, score}]}). Verdicts are 'accept', 'reject', 'uncertain' or 'unavailable'. A human (the orchestrator) reads the narrations BLIND to the verdicts and writes labels; this script prints the blind sheet and later joins labels to verdicts. \n\nBUILD a stdlib-only CLI with three subcommands (argparse; no regex). `sheet ROWS_JSON [--out FILE]`: prints markdown, one block per observation turn (turns whose observation_relations is not None and error is None) with the id `r<replicate>t<turn>` (0-based indexes), the player command, the narration text verbatim, and the relation list as 'thing | place | holder' lines numbered 1..n. It must NOT print verdicts, scores, outcome or any observation_shadow content. Also lists, at the end, the ids of turns that were skipped because they had no relations. `labels-template ROWS_JSON`: prints a JSON skeleton {id: {\"1\": null, \"2\": null, ...}} (one key per relation number) for the human to fill with true (the narration presents the thing as present at that place/holder) or false. `join ROWS_JSON LABELS_JSON [--out FILE]`: refuses (exit 2, message) if any label is null/missing for an observation turn that has relations. Computes per relation: label x verdict confusion (verdict accept / reject / uncertain / unavailable x label true / false); FALSE ACCEPTS = verdict accept with label false (listed with id, command, thing, score); strict rejections = label true with verdict not accept; per turn: `would_reject` = any relation not accepted OR shadow outcome not 'ok' (fail closed), split by whether all labels on that turn are true ('good turn') or not; verifier latency p50/p95 (elapsed_s) and requests; counts of turns without a shadow record. Prints the GATE: PASS only if false accepts == 0 AND good-turn strict reject rate <= 0.10 AND verifier p95 elapsed_s <= 2.0 AND at least 30 labelled relations; else FAIL with every failing clause named. Always print n for each rate and the exact one-sided 95% upper bound for zero false accepts (1 - 0.05**(1/n) form is fine; document the formula). Exit code 0 for PASS or FAIL (the report is informational), 2 for refusal. \n\nTESTS FIRST in tests/test_shadow_report.py (hermetic, tmp_path rows files built inline): sheet shows narration and relations and contains none of the strings 'accept', 'reject', 'uncertain', 'score', 'outcome' that came only from the verdict data (use unusual verdict-only markers such as a score 0.8431 and check absence); sheet skips error turns and no-relation turns and lists them; labels-template shape; join refuses on a missing label; join counts a false accept and fails the gate; join passes the gate on a clean synthetic set of 30+ relations with p95 <= 2.0; strict-reject rate and would_reject logic (an 'unavailable' outcome counts as would_reject); upper-bound arithmetic. \n\nFINISH: ruff check and format; report counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_shadow_report.py scripts/ringer/transcript_1a/test_live_baseline.py 2>&1 | tee /tmp/shadowr.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/shadowr.out && ! grep -nE '^(import re|from re )|\\bre\\.(compile|search|match|sub|findall|fullmatch)' scripts/ringer/environment_narration/shadow_report.py && git diff --quiet -- storygame docs worker data && .venv/bin/python -m ruff check scripts/ringer/environment_narration tests/test_shadow_report.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration tests/test_shadow_report.py",
+   "verified": "a blind reading sheet and a label join with a preregistered gate"
+  }
+ ]
+}

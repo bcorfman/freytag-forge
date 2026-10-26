@@ -69,6 +69,21 @@ ROUTES = {
         "go inside",
         "look around",
     ),
+    "observe": (
+        "inspect the drawer",
+        "pull out the drawer",
+        "feel under the drawer",
+        "feel under the drawer",
+        "go outside",
+        "inspect the truck",
+        "enter the truck",
+        "inspect the passenger seat",
+        "examine my laptop",
+        "get out of the truck",
+        "examine the truck",
+        "go inside",
+        "inspect the drawer",
+    ),
 }
 TRACKED = (
     "kristin",
@@ -258,6 +273,27 @@ def _record_steps(engine: Any, capture: Any) -> dict[str, Any]:
     }
 
 
+def _observation_relations(calls: list[tuple[Any, ...]]) -> list[dict[str, Any]] | None:
+    if not calls:
+        return None
+    return [
+        {"thing": relation.thing, "place": relation.place, "holder": relation.holder}
+        for relations in calls
+        for relation in relations
+    ]
+
+
+def _observation_request(capture: Any, state: Any) -> dict[str, str | None] | None:
+    request = getattr(capture.provider, "observation_request", None)
+    if request is None:
+        return None
+    from storygame.runtime.world_model import world_for
+
+    world = world_for(state.package, state.facts)
+    focus = world.name(request.focus) if request.focus is not None else None
+    return {"kind": request.kind, "focus": focus}
+
+
 def _stop_exception(counter: CallCounter) -> CallCapExceeded | QuotaExceeded | None:
     if counter.stop_reason == "MAX_CALLS_EXCEEDED":
         return CallCapExceeded(f"max-calls exceeded ({counter.max_calls})")
@@ -273,6 +309,8 @@ def _replicate(
     inputs: tuple[str, ...],
     record: dict[str, Any],
     on_turn: Any = None,
+    shadow: bool = False,
+    relation_calls: list[tuple[Any, ...]] | None = None,
 ) -> dict[str, Any]:
     from storygame.runtime.capture import WorldCapture, build_capture_provider
     from storygame.runtime.engine import RuntimeEngine
@@ -284,6 +322,10 @@ def _replicate(
     capture_ask = JevClient.from_environment().ask
     provider.semantic_ask = capture_ask
     capture = WorldCapture(provider, capture_ask, fixed_refusal=True, engine_refusal=True)
+    if shadow:
+        from storygame.runtime.observation_verifier import ObservationVerifier
+
+        capture.shadow_verifier = ObservationVerifier(capture_ask)
     engine = RuntimeEngine(state, provider, capture=capture)
     counter.prompts.clear()
     counter.responses.clear()
@@ -298,6 +340,8 @@ def _replicate(
     if stop is not None:
         raise stop
     for command in inputs:
+        if relation_calls is not None:
+            relation_calls.clear()
         counter.prompts.clear()
         counter.responses.clear()
         before = _places(state)
@@ -338,6 +382,13 @@ def _replicate(
             "error": error,
             "notes": [] if getattr(capture, "last_before", None) is not None else ["capture step field unavailable"],
         }
+        if shadow:
+            after = getattr(capture, "last_after", None)
+            row["observation_shadow"] = after.get("observation_shadow") if isinstance(after, dict) else None
+            row["observation_relations"] = (
+                _observation_relations(relation_calls) if relation_calls is not None else None
+            )
+            row["observation_request"] = _observation_request(capture, state)
         record.setdefault("turns", []).append(row)
         if on_turn is not None:
             on_turn()
@@ -357,13 +408,14 @@ def _summary(
     stopped: str | None,
     package: Any,
     out: Path,
+    shadow: bool = False,
 ) -> dict[str, Any]:
     completed = sum(len(row.get("turns", ())) == len(inputs) for row in rows)
     errors = sum(1 for row in rows for turn in row.get("turns", ()) if turn.get("error"))
     sha = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=False
     ).stdout.strip()
-    return {
+    summary = {
         "mode": mode,
         "route": route,
         "replicates_requested": requested,
@@ -382,6 +434,22 @@ def _summary(
         "inputs": list(inputs),
         "semantic_reveal_effective": os.environ.get("FREYTAG_SEMANTIC_REVEAL", "1"),
     }
+    if shadow:
+        summary.update(
+            {
+                "shadow": True,
+                "observation_turns": sum(
+                    turn.get("observation_relations") is not None for row in rows for turn in row.get("turns", ())
+                ),
+                "shadow_verifier_requests": sum(
+                    turn.get("observation_shadow", {}).get("requests", 0)
+                    for row in rows
+                    for turn in row.get("turns", ())
+                    if isinstance(turn.get("observation_shadow"), dict)
+                ),
+            }
+        )
+    return summary
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -393,6 +461,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-calls", type=int, default=200)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--confirm", action="store_true")
+    parser.add_argument("--shadow", action="store_true")
     args = parser.parse_args(argv)
     if not args.dry_run and (not args.confirm or not os.environ.get("CLOUDFLARE_WORKER_URL")):
         print("live mode requires --confirm and CLOUDFLARE_WORKER_URL", file=sys.stderr)
@@ -413,7 +482,21 @@ def main(argv: list[str] | None = None) -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, Any]] = []
     stopped = None
+    relation_calls: list[tuple[Any, ...]] = []
+    capture_module = None
+    original_relations = None
     try:
+        if args.shadow:
+            import storygame.runtime.capture as capture_module
+
+            original_relations = capture_module.relations_from_context
+
+            def record_relations(context: Any) -> tuple[Any, ...]:
+                relations = original_relations(context)
+                relation_calls.append(relations)
+                return relations
+
+            capture_module.relations_from_context = record_relations
         for _ in range(args.replicates):
             record: dict[str, Any] = {"route": args.route, "opening": None, "turns": []}
             rows.append(record)
@@ -426,13 +509,19 @@ def main(argv: list[str] | None = None) -> int:
                 lambda: (args.out / "rows.json").write_text(
                     json.dumps(rows, indent=2, ensure_ascii=False, default=_json) + "\n"
                 ),
+                args.shadow,
+                relation_calls,
             )
             (args.out / "rows.json").write_text(json.dumps(rows, indent=2, ensure_ascii=False, default=_json) + "\n")
     except (CallCapExceeded, QuotaExceeded) as exc:
         stopped = getattr(exc, "code", "MAX_CALLS_EXCEEDED")
     finally:
+        if capture_module is not None and original_relations is not None:
+            capture_module.relations_from_context = original_relations
         (args.out / "rows.json").write_text(json.dumps(rows, indent=2, ensure_ascii=False, default=_json) + "\n")
-        summary = _summary(mode, args.replicates, rows, args.route, inputs, counter, stopped, package, args.out)
+        summary = _summary(
+            mode, args.replicates, rows, args.route, inputs, counter, stopped, package, args.out, args.shadow
+        )
         (args.out / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n")
     return 0
 

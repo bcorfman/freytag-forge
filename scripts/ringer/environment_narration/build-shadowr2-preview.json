@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-shadowr2",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 900,
+   "key": "shadow-report-acceptable",
+   "ownership": [
+    "scripts/ringer/environment_narration/shadow_report.py",
+    "tests/test_shadow_report.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/shadow_report.py"
+   ],
+   "spec": "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no live model call. Do not git commit. NEVER print or write any credential. NO regular expressions in new code. No story vocabulary (no Kristin, truck, laptop, drawer, Michelle) in non-test code. Tests may use the shipped continuity-initiative package through the helpers in tests/test_observation_mode.py (`_state_at`) and tests/test_observation_shadow.py, plus a synthetic second story. Write the tests FIRST, run them and confirm they fail for the right reason, then implement until they pass. Do not edit any file outside YOU MAY EDIT ONLY. Run ruff check and ruff format on your files at the end. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/shadow_report.py and tests/test_shadow_report.py. \n\nCONTEXT. Read both files and .plans/grounded-llm-environment-narration/t8-shadow-sample-prereg.md including Addendum A. shadow_report.py has subcommands sheet, labels-template and join (a blind reading sheet and a join of hand labels with shadow verdicts, with a gate). Addendum A adds a per-turn reading `acceptable` and a new gate clause 2b. \n\nBUILD. (1) `labels-template` adds, for every observation turn, a key \"acceptable\": null next to the numbered relation keys. A turn with zero relations (observation_relations == []) still gets the template entry with only \"acceptable\". (2) `sheet` also prints, for each observation turn, the turn row's `places_before` and `places_after` (compact one-line JSON each, key `places_before`/`places_after`), and the observation request kind and focus name; still NO verdict, score, outcome or shadow content. Zero-relation observation turns are printed too (relations section says 'none'). (3) `join` refuses (exit 2) when any observation turn lacks a boolean `acceptable` label, or when a relation label is missing. It computes clause 2b: among observation turns with acceptable == true, the share that enforcement would reject (any relation verdict not 'accept', or a shadow outcome other than 'ok' when the turn has at least one relation; a turn with zero relations and outcome 'no_relations' is NOT a rejection; a turn with zero relations and a missing shadow record is NOT a rejection), printing n and the share, and adds `2b` to the gate: FAIL when that share is above 0.10 (when n is 0 it is inconclusive and the gate says so). Also print a short table of acceptable == true turns that would be rejected: id, command, and the rejected things with scores. Existing clauses 1, 2, 3, 4 keep their meaning and wording. \n\nTESTS FIRST in tests/test_shadow_report.py (extend; keep existing tests green): template carries acceptable; sheet shows places and request kind but still no verdict-only markers; join refuses without acceptable; 2b computed correctly on a synthetic set (acceptable turn rejected because of over-demanded relations lowers the 2b pass and is listed; an unacceptable turn that is rejected does not count against 2b; zero-relation turns are not rejections); gate wording lists 2b when it fails. \n\nFINISH: ruff check and format; report counts.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_shadow_report.py 2>&1 | tee /tmp/shadowr2.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/shadowr2.out && grep -q 'acceptable' scripts/ringer/environment_narration/shadow_report.py && ! grep -nE '^(import re|from re )|\\bre\\.(compile|search|match|sub|findall|fullmatch)' scripts/ringer/environment_narration/shadow_report.py && git diff --quiet -- storygame docs worker data scripts/ringer/transcript_1a && .venv/bin/python -m ruff check scripts/ringer/environment_narration tests/test_shadow_report.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration tests/test_shadow_report.py",
+   "verified": "the report supports the acceptable reading and gate clause 2b"
+  }
+ ]
+}
