@@ -94,6 +94,7 @@ class WorldCapture:
         self.last_before: dict[str, Any] | None = None
         self.last_after: dict[str, Any] | None = None
         self._pending_preview: CandidatePreview | None = None
+        self._turn_origin: tuple[str | None, str] | None = None
 
     def before_turn(self, command: str) -> dict[str, Any]:
         self._pending_preview = None
@@ -102,6 +103,7 @@ class WorldCapture:
         self._command = command
         package = self.provider.state.package
         world = self.provider._world()
+        self._turn_origin = (world.area(package.world.protagonist_id), self.provider.state.current_scene_id)
         adapter = _ask_adapter(self.ask)
         observe_automatically = self.provider.observe_automatically
         if observe_automatically:
@@ -263,6 +265,19 @@ class WorldCapture:
                 moved.append(candidate_world.name(entity_id))
         return tuple(sorted(set(moved)))
 
+    def _observation_context_for_verification(self, *, entered_scene: bool):
+        if self._turn_origin is not None:
+            origin_area, origin_scene = self._turn_origin
+            world = self.provider._world()
+            protagonist_id = self.provider.state.package.world.protagonist_id
+            if (
+                entered_scene
+                or self.provider.state.current_scene_id != origin_scene
+                or world.area(protagonist_id) != origin_area
+            ):
+                return None
+        return self.provider._observation_context()
+
     def preview_commit(
         self,
         command: str,
@@ -334,7 +349,7 @@ class WorldCapture:
                         for refusal in refusals
                     ),
                 ]
-            context = self.provider._observation_context()
+            context = self._observation_context_for_verification(entered_scene=entered_scene)
             candidate_world = self.provider._world()
             moved_unrelated = self._moved_unrelated(before_parents, candidate_world, context)
             relations = relations_from_context(context) if context is not None else ()
@@ -375,6 +390,9 @@ class WorldCapture:
             if moved_unrelated:
                 outcome = "unrelated_move"
                 failure = "unrelated_move"
+            elif context is None:
+                outcome = "no_relations"
+                failure = None
             else:
                 outcome = "not_required"
                 failure = None
@@ -429,8 +447,19 @@ class WorldCapture:
         observation_shadow = None
         if self.shadow_verifier is not None and self.provider.observation_request is not None:
             try:
-                context = self.provider._observation_context()
-                if context is not None:
+                context = self._observation_context_for_verification(entered_scene=entered_scene)
+                if context is None:
+                    observation_shadow = {
+                        "outcome": "no_relations",
+                        "requests": 0,
+                        "elapsed_s": 0.0,
+                        "failure": None,
+                        "question_version": QUESTION_VERSION,
+                        "accepted": True,
+                        "verdicts": [],
+                        "requirement_dropped": "scene_or_area_changed",
+                    }
+                else:
                     self.shadow_verifier.begin_turn()
                     report = self.shadow_verifier.verify(narration, relations_from_context(context))
                     observation_shadow = {
