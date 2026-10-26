@@ -347,11 +347,39 @@ def _run(
     account: str,
     token: str,
     out: Path,
+    calls: list[dict[str, Any]] | None = None,
+    result: dict[str, Any] | None = None,
+    total_calls: int | None = None,
+    resume_start: int | None = None,
 ) -> dict[str, Any]:
-    result: dict[str, Any] = {"schema": 1, "stage": stage, "rows": [], "stop_reason": None}
+    if result is None:
+        result = {
+            "schema": 1,
+            "stage": stage,
+            "rows": [],
+            "stop_reason": None,
+            "complete": False,
+            "resumed_at_call_index": [],
+        }
+    else:
+        result["complete"] = False
+    if calls is None:
+        calls = planned_calls(document, stage, requested)
+    if total_calls is None:
+        total_calls = len(calls)
+    if resume_start is not None:
+        resumed_at = result.get("resumed_at_call_index")
+        if not isinstance(resumed_at, list):
+            resumed_at = []
+            result["resumed_at_call_index"] = resumed_at
+        resumed_at.append(resume_start)
     consecutive_unusable = 0
-    spent = 0.0
-    for call in planned_calls(document, stage, requested):
+    spent = sum(
+        float(row["actual_cost_usd"])
+        for row in result["rows"]
+        if isinstance(row.get("actual_cost_usd"), (int, float)) and not isinstance(row.get("actual_cost_usd"), bool)
+    )
+    for call in calls:
         row = _call(account, token, call)
         result["rows"].append(row)
         _write_json(out, result)
@@ -375,6 +403,9 @@ def _run(
             result["stop_reason"] = "BUDGET"
             _write_json(out, result)
             break
+    if result["stop_reason"] is None and len(result["rows"]) == total_calls:
+        result["complete"] = True
+        _write_json(out, result)
     return result
 
 
@@ -387,6 +418,60 @@ def _load_rows_document(path: Path) -> list[dict[str, Any]]:
     if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
         raise ValueError(f"rows file {path} has no rows list")
     return rows
+
+
+def _require_complete_rows(rows_paths: list[Path], allow_partial: bool) -> None:
+    if allow_partial:
+        return
+    for path in rows_paths:
+        try:
+            document = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as error:
+            raise ValueError(f"invalid rows file {path}") from error
+        if not isinstance(document, dict) or document.get("complete") is not True:
+            raise ValueError(f"rows file {path} is incomplete; pass --allow-partial")
+
+
+def _load_resume(
+    path: Path, document: dict[str, Any], stage: int, requested: tuple[str, ...]
+) -> tuple[dict[str, Any], list[dict[str, Any]], float, int]:
+    try:
+        existing = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"invalid resume rows file {path}") from error
+    if not isinstance(existing, dict):
+        raise ValueError("resume rows file must be a JSON object")
+    rows = existing.get("rows")
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        raise ValueError("resume rows file must contain a list of row objects")
+    if existing.get("stage") != stage:
+        raise ValueError(f"resume rows stage {existing.get('stage')} does not match --stage {stage}")
+    if existing.get("stop_reason") is not None:
+        raise ValueError("cannot resume a rows file with a non-null stop_reason")
+    if existing.get("complete") is True:
+        raise ValueError("cannot resume a complete rows file")
+    resumed_at = existing.get("resumed_at_call_index", [])
+    if not isinstance(resumed_at, list):
+        raise ValueError("resume rows file resumed_at_call_index must be a list")
+
+    plan = planned_calls(document, stage, requested)
+    if len(rows) > len(plan):
+        raise ValueError("resume rows file has more rows than the plan")
+    for position, row in enumerate(rows):
+        expected = plan[position]
+        if row.get("skipped"):
+            raise ValueError(f"resume row {position + 1} is marked skipped")
+        if row.get("call_index") != position + 1:
+            raise ValueError(f"resume row {position + 1} has a call_index gap")
+        for field in ("context", "start", "sample"):
+            if row.get(field) != expected[field]:
+                raise ValueError(f"resume row {position + 1} does not match the fixed plan for {field}")
+    spent = sum(
+        float(row["actual_cost_usd"])
+        for row in rows
+        if isinstance(row.get("actual_cost_usd"), (int, float)) and not isinstance(row.get("actual_cost_usd"), bool)
+    )
+    return existing, plan[len(rows) :], spent, len(plan)
 
 
 def _sheet(rows_paths: list[Path], out: Path, key_path: Path) -> None:
@@ -548,6 +633,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--rows", type=Path, action="append")
     parser.add_argument("--key", type=Path)
     parser.add_argument("--labels", type=Path)
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--allow-partial", action="store_true")
     return parser
 
 
@@ -555,17 +642,25 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.build_prompts:
+            if args.resume:
+                return _error("--resume requires --dry-run or --run")
             build_prompts(args.rows_source, args.source_sha256, args.probe_dir)
             print(f"built prompts at {_redact(str(args.probe_dir))}")
             return 0
         if args.sheet:
             if not args.rows or args.out is None or args.key is None:
                 return _error("--sheet requires --rows, --out, and --key")
+            if args.resume:
+                return _error("--resume requires --dry-run or --run")
+            _require_complete_rows(args.rows, args.allow_partial)
             _sheet(args.rows, args.out, args.key)
             return 0
         if args.report:
             if not args.rows or args.key is None or args.labels is None or args.out is None:
                 return _error("--report requires --rows, --key, --labels, and --out")
+            if args.resume:
+                return _error("--resume requires --dry-run or --run")
+            _require_complete_rows(args.rows, args.allow_partial)
             _report(args.rows, args.key, args.labels, args.out)
             return 0
         if args.stage is None:
@@ -574,25 +669,61 @@ def main(argv: list[str] | None = None) -> int:
         document = _load_frozen(args.probe_dir)
         calls = planned_calls(document, args.stage, requested)
         if args.dry_run:
+            if args.resume:
+                if args.out is None:
+                    return _error("--dry-run --resume requires --out")
+                existing, remaining, spent, _total_calls = _load_resume(args.out, document, args.stage, requested)
+                estimate = sum(_estimated_call_usd(call) for call in remaining)
+                print(f"existing rows: {len(existing['rows'])}")
+                print(f"remaining calls: {len(remaining)}")
+                print(f"actual cost already spent: ${spent:.6f}")
+                print(f"estimated USD for remaining: ${estimate:.6f}")
+                return 0
             _print_plan(document, args.stage, requested)
             return 0
+        if args.resume and not args.run:
+            return _error("--resume requires --dry-run or --run")
         if not args.confirm:
             return _error("--run requires --confirm")
         if args.max_usd is None:
             return _error("--run requires --max-usd")
         if args.max_calls is None:
             return _error("--run requires --max-calls")
-        if args.max_calls < len(calls):
-            return _error(f"planned calls {len(calls)} exceed --max-calls {args.max_calls}")
-        estimate = sum(_estimated_call_usd(call) for call in calls)
-        if estimate > args.max_usd:
-            return _error(f"estimated USD ${estimate:.6f} exceeds --max-usd ${args.max_usd:.6f}")
         if args.out is None:
             return _error("--run requires --out")
+        existing: dict[str, Any] | None = None
+        total_calls = len(calls)
+        spent = 0.0
+        if args.resume:
+            existing, calls, spent, total_calls = _load_resume(args.out, document, args.stage, requested)
+        if args.max_calls < len(calls):
+            label = "remaining calls" if args.resume else "planned calls"
+            return _error(f"{label} {len(calls)} exceed --max-calls {args.max_calls}")
+        estimate = sum(_estimated_call_usd(call) for call in calls)
+        if args.resume:
+            if spent + estimate > args.max_usd:
+                return _error(
+                    f"existing actual cost ${spent:.6f} plus estimated USD ${estimate:.6f} "
+                    f"exceeds --max-usd ${args.max_usd:.6f}"
+                )
+        elif estimate > args.max_usd:
+            return _error(f"estimated USD ${estimate:.6f} exceeds --max-usd ${args.max_usd:.6f}")
         account, token = _credentials()
         if not account or not token:
             return _error("--run requires CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN or CF_API_TOKEN")
-        result = _run(document, args.stage, requested, args.max_usd, account, token, args.out)
+        result = _run(
+            document,
+            args.stage,
+            requested,
+            args.max_usd,
+            account,
+            token,
+            args.out,
+            calls=calls,
+            result=existing,
+            total_calls=total_calls,
+            resume_start=calls[0]["call_index"] if args.resume and calls else None,
+        )
         print(f"{len(result['rows'])} rows written to {_redact(str(args.out))}")
         return 0
     except (OSError, ValueError, TypeError, json.JSONDecodeError) as error:
