@@ -14,6 +14,7 @@ def _turn(
     places_before=None,
     places_after=None,
     observation_request=None,
+    scene=None,
 ):
     return {
         "input": command,
@@ -24,6 +25,7 @@ def _turn(
         "places_before": places_before,
         "places_after": places_after,
         "observation_request": observation_request,
+        "scene": scene,
     }
 
 
@@ -145,8 +147,8 @@ def test_labels_template_has_one_null_per_relation(tmp_path, capsys):
     assert code == 0
     assert error == ""
     assert json.loads(output) == {
-        "r0t0": {"1": None, "2": None, "acceptable": None},
-        "r0t1": {"1": None, "acceptable": None},
+        "r0t0": {"1": None, "2": None, "acceptable": None, "refind": None, "invented_object": None},
+        "r0t1": {"1": None, "acceptable": None, "refind": None, "invented_object": None},
     }
 
 
@@ -157,7 +159,260 @@ def test_labels_template_includes_acceptable_for_zero_relations(tmp_path, capsys
 
     assert code == 0
     assert error == ""
-    assert json.loads(output) == {"r0t0": {"acceptable": None}}
+    assert json.loads(output) == {"r0t0": {"acceptable": None, "refind": None, "invented_object": None}}
+
+
+def test_join_allows_null_or_absent_defect_tags(tmp_path, capsys):
+    rows_path = _write_json(
+        tmp_path,
+        "rows.json",
+        [{"turns": [_turn(relations=[_relation()], command="Inspect the alcove.")]}],
+    )
+    labels_path = _write_json(
+        tmp_path,
+        "labels.json",
+        {"r0t0": {"acceptable": True, "1": True, "refind": None}},
+    )
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    assert "Missing or null labels" not in output
+    assert "7 re-find of the held card: INCONCLUSIVE" in output
+    assert "8 invented object on the empty seat: INCONCLUSIVE" in output
+
+
+def test_transition_turn_passes_when_requirement_is_dropped(tmp_path, capsys):
+    rows = [
+        {
+            "turns": [
+                _turn(command="Stay here.", relations=None, scene="room"),
+                _turn(
+                    command="Go outside.",
+                    relations=None,
+                    scene="yard",
+                    shadow={
+                        "outcome": "no_narrator_call",
+                        "requests": 0,
+                        "requirement_dropped": "scene_or_area_changed",
+                    },
+                ),
+            ]
+        }
+    ]
+    rows_path = _write_json(tmp_path, "rows.json", rows)
+    labels_path = _write_json(tmp_path, "labels.json", {})
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    assert "5 scene-transition turns drop the requirement: PASS (1/1)" in output
+
+
+def test_transition_turn_fails_when_it_asked_the_verifier(tmp_path, capsys):
+    rows = [
+        {
+            "turns": [
+                _turn(command="Start.", relations=None, scene="room"),
+                _turn(
+                    command="Go outside.",
+                    relations=[_relation()],
+                    scene="yard",
+                    shadow=_shadow(),
+                ),
+            ]
+        }
+    ]
+    rows_path = _write_json(tmp_path, "rows.json", rows)
+    labels_path = _write_json(tmp_path, "labels.json", {"r0t1": {"acceptable": True, "1": True}})
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    assert "5 scene-transition turns drop the requirement: FAIL (r0t1)" in output
+    assert "verifier gate (clauses 1 to 6): FAIL" in output
+
+
+def test_zero_scene_transitions_are_inconclusive(tmp_path, capsys):
+    rows_path = _write_json(
+        tmp_path,
+        "rows.json",
+        [{"turns": [_turn(command="First.", relations=None, scene="room")]}],
+    )
+    labels_path = _write_json(tmp_path, "labels.json", {})
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    assert "5 scene-transition turns drop the requirement: INCONCLUSIVE (n=0)" in output
+
+
+def test_held_item_relations_are_reported_by_hand_label(tmp_path, capsys):
+    rows = [
+        {
+            "turns": [
+                _turn(relations=[_relation("held true", holder="protagonist")]),
+                _turn(relations=[_relation("held false", holder="protagonist")]),
+                _turn(relations=[_relation("room relation", holder="room")]),
+            ]
+        }
+    ]
+    labels_path = _write_json(
+        tmp_path,
+        "labels.json",
+        {
+            "r0t0": {"acceptable": True, "1": True},
+            "r0t1": {"acceptable": True, "1": False},
+            "r0t2": {"acceptable": True, "1": True},
+        },
+    )
+    rows_path = _write_json(tmp_path, "rows.json", rows)
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    held_section = output.split("## 6 held-item mention relations", 1)[1]
+    assert "| true | 2 |" in held_section
+    assert "| false | 1 |" in held_section
+
+
+def test_refind_clause_passes_at_minimum_with_one_true(tmp_path, capsys):
+    turns = []
+    labels = {}
+    for index in range(15):
+        turns.append(
+            _turn(
+                command="Feel under the drawer.",
+                relations=[],
+                shadow={"outcome": "no_relations", "requests": 0, "verdicts": []},
+            )
+        )
+        labels[f"r0t{index}"] = {
+            "acceptable": True,
+            "refind": index == 0,
+        }
+    rows_path = _write_json(tmp_path, "rows.json", [{"turns": turns}])
+    labels_path = _write_json(tmp_path, "labels.json", labels)
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    assert "7 re-find of the held card: PASS (n=15, refind true=1)" in output
+
+
+def test_refind_clause_fails_with_two_true(tmp_path, capsys):
+    turns = [
+        _turn(
+            command="feel under the drawer",
+            relations=[],
+            shadow={"outcome": "no_relations", "requests": 0, "verdicts": []},
+        )
+        for _ in range(15)
+    ]
+    labels = {f"r0t{index}": {"acceptable": True, "refind": index < 2} for index in range(15)}
+    rows_path = _write_json(tmp_path, "rows.json", [{"turns": turns}])
+    labels_path = _write_json(tmp_path, "labels.json", labels)
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    assert "7 re-find of the held card: FAIL (n=15, refind true=2)" in output
+    assert "product-defect gate (clauses 7 and 8): FAIL" in output
+
+
+def test_refind_clause_is_inconclusive_below_minimum(tmp_path, capsys):
+    turns = [
+        _turn(
+            command="feel under the drawer",
+            relations=[],
+            shadow={"outcome": "no_relations", "requests": 0, "verdicts": []},
+        )
+        for _ in range(14)
+    ]
+    labels = {f"r0t{index}": {"acceptable": True, "refind": False} for index in range(14)}
+    rows_path = _write_json(tmp_path, "rows.json", [{"turns": turns}])
+    labels_path = _write_json(tmp_path, "labels.json", labels)
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    assert "7 re-find of the held card: INCONCLUSIVE (n=14, refind true=0)" in output
+
+
+def test_invented_object_clause_passes_at_minimum_with_one_true(tmp_path, capsys):
+    turns = []
+    labels = {}
+    for index in range(6):
+        turns.append(
+            _turn(
+                command="Inspect the passenger seat.",
+                relations=[],
+                shadow={"outcome": "no_relations", "requests": 0, "verdicts": []},
+                places_before={"laptop": "protagonist"},
+                observation_request={"kind": "look", "focus": "passenger_seat"},
+            )
+        )
+        labels[f"r0t{index}"] = {"acceptable": True, "invented_object": index == 0}
+    rows_path = _write_json(tmp_path, "rows.json", [{"turns": turns}])
+    labels_path = _write_json(tmp_path, "labels.json", labels)
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    assert "8 invented object on the empty seat: PASS (n=6, invented_object true=1)" in output
+
+
+def test_invented_object_clause_fails_with_two_true(tmp_path, capsys):
+    turns = [
+        _turn(
+            command="inspect the passenger seat",
+            relations=[],
+            shadow={"outcome": "no_relations", "requests": 0, "verdicts": []},
+            places_before={"laptop": "protagonist"},
+            observation_request={"kind": "look", "focus": "passenger_seat"},
+        )
+        for _ in range(6)
+    ]
+    labels = {f"r0t{index}": {"acceptable": True, "invented_object": index < 2} for index in range(6)}
+    rows_path = _write_json(tmp_path, "rows.json", [{"turns": turns}])
+    labels_path = _write_json(tmp_path, "labels.json", labels)
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    assert "8 invented object on the empty seat: FAIL (n=6, invented_object true=2)" in output
+
+
+def test_invented_object_clause_is_inconclusive_below_minimum(tmp_path, capsys):
+    turns = [
+        _turn(
+            command="inspect the passenger seat",
+            relations=[],
+            shadow={"outcome": "no_relations", "requests": 0, "verdicts": []},
+            places_before={"laptop": "protagonist"},
+            observation_request={"kind": "look", "focus": "passenger_seat"},
+        )
+        for _ in range(5)
+    ]
+    labels = {f"r0t{index}": {"acceptable": True, "invented_object": False} for index in range(5)}
+    rows_path = _write_json(tmp_path, "rows.json", [{"turns": turns}])
+    labels_path = _write_json(tmp_path, "labels.json", labels)
+
+    code, output, error = _run(capsys, ["join", str(rows_path), str(labels_path)])
+
+    assert code == 0
+    assert error == ""
+    assert "8 invented object on the empty seat: INCONCLUSIVE (n=5, invented_object true=0)" in output
 
 
 def test_join_refuses_missing_label(tmp_path, capsys):
