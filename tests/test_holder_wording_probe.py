@@ -1,6 +1,5 @@
 import hashlib
 import json
-from pathlib import Path
 
 import pytest
 
@@ -96,6 +95,10 @@ def test_build_cases_rejects_wrong_holder_count(tmp_path):
     assert "exactly 10" in str(error.value)
 
 
+@pytest.mark.skipif(
+    not probe.DEFAULT_ROWS_PATH.exists(),
+    reason="the rebuilt identity comparison requires the gitignored real rows file",
+)
 def test_frozen_cases_preserve_identity_and_lock():
     cases = probe._load_cases()
     rebuilt = probe.build_cases()
@@ -103,6 +106,11 @@ def test_frozen_cases_preserve_identity_and_lock():
     assert [{key: case[key] for key in case if key != "relation_short"} for case in cases] == [
         {key: case[key] for key in case if key != "relation_short"} for case in rebuilt
     ]
+
+
+def test_frozen_cases_match_lock_without_rows_file():
+    cases = probe._load_cases()
+
     assert probe._lock_matches(cases)
 
 
@@ -144,9 +152,7 @@ def test_dry_run_numbers(capsys):
     ],
 )
 def test_run_mode_refusals(monkeypatch, tmp_path, capsys, arguments, expected):
-    cases = probe.build_cases(
-        Path("/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/shadow-sample/full/rows/rows.json")
-    )
+    cases = probe._load_cases()
     _write_cases_and_lock(monkeypatch, tmp_path, cases)
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
     monkeypatch.delenv("CLOUDFLARE_WORKER_TOKEN", raising=False)
@@ -156,9 +162,7 @@ def test_run_mode_refusals(monkeypatch, tmp_path, capsys, arguments, expected):
 
 
 def test_run_refuses_lock_mismatch(monkeypatch, tmp_path, capsys):
-    cases = probe.build_cases(
-        Path("/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/shadow-sample/full/rows/rows.json")
-    )
+    cases = probe._load_cases()
     _write_cases_and_lock(monkeypatch, tmp_path, cases)
     monkeypatch.setattr(probe, "LOCK_PATH", tmp_path / "wrong.lock.json")
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.invalid")
@@ -169,9 +173,7 @@ def test_run_refuses_lock_mismatch(monkeypatch, tmp_path, capsys):
 
 
 def test_run_refuses_missing_environment(monkeypatch, tmp_path, capsys):
-    cases = probe.build_cases(
-        Path("/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/shadow-sample/full/rows/rows.json")
-    )
+    cases = probe._load_cases()
     _write_cases_and_lock(monkeypatch, tmp_path, cases)
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
     monkeypatch.delenv("CLOUDFLARE_WORKER_TOKEN", raising=False)
@@ -193,9 +195,7 @@ class FakeClient:
 
 
 def test_run_writes_interleaved_rows(monkeypatch, tmp_path):
-    cases = probe.build_cases(
-        Path("/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/shadow-sample/full/rows/rows.json")
-    )
+    cases = probe._load_cases()
     client = FakeClient()
     output = tmp_path / "run.json"
 

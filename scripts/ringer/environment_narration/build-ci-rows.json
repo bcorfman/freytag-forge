@@ -1,0 +1,32 @@
+{
+  "run_name": "grounded-environment-narration",
+  "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-ci-rows",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "holder-tests-without-gitignored-rows",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "ownership": [
+        "tests/test_holder_wording_probe.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_holder_wording_probe.py"
+      ],
+      "spec": "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. YOU MAY EDIT ONLY tests/test_holder_wording_probe.py. Never edit scripts/, storygame/ or data/. No network. Do not git commit. NO regular expressions in new code. PROBLEM. CI fails 7 tests in tests/test_holder_wording_probe.py because they read the GITIGNORED file bench/results/environment-narration/shadow-sample/full/rows/rows.json, which does not exist on a CI checkout: test_frozen_cases_preserve_identity_and_lock (calls probe.build_cases() with the default path), and test_run_mode_refusals (3 parametrizations), test_run_refuses_lock_mismatch, test_run_refuses_missing_environment and test_run_writes_interleaved_rows, which each call `probe.build_cases(Path('/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/shadow-sample/full/rows/rows.json'))` (a hard-coded absolute path) only to obtain a case list. FIX. (1) In those five tests replace that build_cases(...) call with `probe._load_cases()`, which reads the committed frozen cases (scripts/ringer/environment_narration/holder_probe/cases.jsonl) and needs no gitignored file; keep every assertion unchanged. If a test monkeypatches or mutates the case list, copy it first so the committed data is never altered. (2) test_frozen_cases_preserve_identity_and_lock exists to prove the frozen cases still equal a rebuild from the real rows, so keep that comparison but skip the test (pytest.mark.skipif or pytest.skip with a clear reason) when `probe.DEFAULT_ROWS_PATH` does not exist; the lock assertion `probe._lock_matches(cases)` must still run without the rows file, so split it into its own small test if needed. (3) Search the whole file for any other use of the real rows path or of build_cases() with the default path and fix it the same way. VERIFY the CI condition yourself before finishing: create a scratch copy of the tracked files WITHOUT the gitignored data, e.g. `D=$(mktemp -d) && git ls-files -z | xargs -0 cp --parents -t $D` (run from the repo root), then in $D run `PYTHONPATH=$D /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_holder_wording_probe.py`; it must pass with the one skipped test, and it must also pass in the real checkout. Run ruff check and ruff format on the file.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export TMPDIR=/tmp && set -o pipefail && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN PYTHONPATH=/home/bcorfman/dev/freytag-forge .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_holder_wording_probe.py 2>&1 | tee /tmp/ci-rows-real.out | tail -4 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/ci-rows-real.out && D=$(mktemp -d) && git ls-files -z | xargs -0 cp --parents -t $D && test ! -e $D/bench/results/environment-narration/shadow-sample/full/rows/rows.json && (cd $D && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN PYTHONPATH=$D /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_holder_wording_probe.py 2>&1 | tee /tmp/ci-rows-clean.out | tail -4) && ! grep -Eq '[0-9]+ (failed|error)' /tmp/ci-rows-clean.out && ! grep -n 'bench/results/environment-narration/shadow-sample' tests/test_holder_wording_probe.py | grep -v 'skip' && .venv/bin/python -m ruff check tests/test_holder_wording_probe.py && .venv/bin/python -m ruff format --check tests/test_holder_wording_probe.py",
+      "verified": "holder probe tests pass on a checkout without the gitignored shadow-sample rows"
+    }
+  ]
+}
