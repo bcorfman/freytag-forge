@@ -1,0 +1,34 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-enforce-stage1-smoke",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "billed-enforce-stage1-smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/environment-narration/enforce-stage1/smoke"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/enforce-stage1/smoke/rows/rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/enforce-stage1/smoke/rows/summary.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/enforce-stage1/smoke/spent.json"
+   ],
+   "spec": "You are a RUNNER for one billed T9 stage-1 enforcing-verifier sample (smoke stage) in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. It plays the `observe_topup` route (9 commands): inspect the drawer, pull out the drawer, feel under the drawer, feel under the drawer, go outside, inspect the truck, enter the truck, pick up my laptop, inspect the passenger seat through the real product path against a LOCAL Worker on 127.0.0.1 with the enforcing observation verifier ON. This stage is approved in the preregistration .plans/grounded-llm-environment-narration/t9-enforce-stage1-prereg.md. It uses a cap of 70 calls and a ceiling of $0.03. HARD RULES: run COMMAND 1 EXACTLY ONCE. NEVER run it a second time for any reason (not after an error, not after a partial result: a rerun spends money again). Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit. Run COMMAND 1 in the FOREGROUND and wait for it to exit; do not finish while the script is running. The script refuses to run if its port is busy; do not do your own port checks, just run COMMAND 1 once.\n\nCOMMAND 1 (the billed run; a non-zero exit with partial rows is a valid outcome, do not retry):\ncd /home/bcorfman/dev/freytag-forge && bash scripts/ringer/environment_narration/enforce_stage1.sh smoke\n\nThe script starts the local Worker, runs the frozen route, writes rows.json and summary.json under bench/results/environment-narration/enforce-stage1/smoke/rows, writes bench/results/environment-narration/enforce-stage1/smoke/spent.json, and stops the Worker. Report the exit code, the lines the script printed (they contain no secrets), and the contents of spent.json. Do not interpret the results beyond that.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && test -f bench/results/environment-narration/enforce-stage1/smoke/rows/rows.json && test -f bench/results/environment-narration/enforce-stage1/smoke/rows/summary.json && test -f bench/results/environment-narration/enforce-stage1/smoke/spent.json && .venv/bin/python - <<'PY'\nimport json\nbase='bench/results/environment-narration/enforce-stage1/smoke'\nrows=json.load(open(base+'/rows/rows.json'))\nsummary=json.load(open(base+'/rows/summary.json'))\nassert summary['enforce'] is True, 'enforce not on'\nassert summary.get('shadow', False) is False, 'shadow on'\nspent=json.load(open(base+'/spent.json'))\nassert spent['spent_micro_usd'] <= 30000, 'cap exceeded'\nfor row in rows:\n    for turn in row.get('turns', []):\n        assert 'turn_elapsed_s' in turn\n        assert 'enforce_attempts' in turn\n        assert 'narration_attempts' in turn\nif summary.get('stopped_reason') is None:\n    assert len(rows) == 1, 'unexpected replicate count'\n    assert all(len(row.get('turns', [])) == 9 for row in rows), 'incomplete route'\n    for row in rows:\n        assert row['turns'][7]['input'] == 'pick up my laptop', 'wrong eighth command'\n        assert row['turns'][-1]['input'] == 'inspect the passenger seat', 'wrong final command'\nprint('replicates',len(rows),'turns',sum(len(r.get('turns',[])) for r in rows),'stopped',summary.get('stopped_reason'))\nprint('spent',spent)\nPY\n(set -a; . ./.env; set +a; .venv/bin/python - <<'PY'\nimport os\nbase='bench/results/environment-narration/enforce-stage1/smoke'\ntext=''.join(open(os.path.join(directory, filename)).read() for directory, _, filenames in os.walk(base) for filename in filenames)\nfor name in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_WORKER_TOKEN'):\n    value=os.environ.get(name,'').strip()\n    assert not value or value not in text, name+' value leaked into outputs'\nprint('no credential in outputs')\nPY\n)",
+   "verified": "one enforcing-verifier stage-1 sample ran once under the approved cap"
+  }
+ ]
+}

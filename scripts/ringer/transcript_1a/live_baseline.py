@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 import urllib.error
 from pathlib import Path
 from typing import Any
@@ -372,6 +373,7 @@ def _replicate(
 
         capture.shadow_verifier = ObservationVerifier(capture_ask)
     verifier_requests = [0]
+    enforce_attempts: list[dict[str, Any]] = []
     if enforce:
         from storygame.runtime.observation_verifier import ObservationVerifier
 
@@ -381,6 +383,30 @@ def _replicate(
         def counted_verify(narration: str, relations: object):
             report = verify(narration, relations)
             verifier_requests[0] += report.requests
+            enforce_attempts.append(
+                {
+                    "narration": narration,
+                    "relations": [
+                        {"thing": relation.thing, "place": relation.place, "holder": relation.holder}
+                        for relation in relations
+                    ],
+                    "outcome": report.outcome,
+                    "accepted": report.accepted,
+                    "verdicts": [
+                        {
+                            "thing": verdict.relation.thing,
+                            "place": verdict.relation.place,
+                            "holder": verdict.relation.holder,
+                            "verdict": verdict.verdict,
+                            "score": verdict.score,
+                        }
+                        for verdict in report.verdicts
+                    ],
+                    "requests": report.requests,
+                    "failure": report.failure,
+                    "elapsed_s": report.elapsed_s,
+                }
+            )
             return report
 
         capture.enforcing_verifier.verify = counted_verify
@@ -409,7 +435,9 @@ def _replicate(
         if shadow:
             previous_request = capture.provider.observation_request
         verifier_requests[0] = 0
+        enforce_attempts.clear()
         error = None
+        turn_started = time.monotonic() if enforce else None
         try:
             result = engine.turn(command)
             narration = result.narration
@@ -458,6 +486,8 @@ def _replicate(
             row["observation_enforce"] = _enforcement_observation_value(capture, previous_after)
             row["narration_attempts"] = _narration_attempts(counter)
             row["verifier_requests"] = verifier_requests[0]
+            row["enforce_attempts"] = list(enforce_attempts)
+            row["turn_elapsed_s"] = time.monotonic() - turn_started
         record.setdefault("turns", []).append(row)
         if on_turn is not None:
             on_turn()
