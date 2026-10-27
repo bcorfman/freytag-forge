@@ -12,6 +12,7 @@ from storygame.runtime.jev_questions import (
     needs_to_stand,
     opens_container,
     same_or_part,
+    searches_underneath,
     uses_thing,
 )
 
@@ -155,4 +156,26 @@ def test_opens_container_question_uses_opening_wording() -> None:
         assert text in instructions
         assert text in true_criterion
     for text in ("looks at", "closes", "touches", "moves", "carries", "talks about"):
+        assert text in false_criterion
+
+
+def test_searches_underneath_question_uses_under_surface_wording() -> None:
+    captured = {}
+
+    def ask(_state, questions):
+        captured.update(questions)
+        return {"searches_underneath": {"noul": 1.0}}
+
+    assert searches_underneath(ask, "Feel beneath the tray.", "tray") is True
+
+    question = captured["searches_underneath"]
+    assert question["type"] == "noul"
+    instructions = question["instructions"].lower()
+    true_criterion = question["criteria"]["true"].lower()
+    false_criterion = question["criteria"]["false"].lower()
+
+    for text in ("search", "feel", "reach", "look", "under", "beneath", "below"):
+        assert text in instructions
+        assert text in true_criterion
+    for text in ("looks at", "opens", "touches", "moves", "carries", "talks about", "looks inside"):
         assert text in false_criterion

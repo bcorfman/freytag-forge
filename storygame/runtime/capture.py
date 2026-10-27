@@ -17,6 +17,7 @@ from storygame.runtime.jev_questions import (
     opens_container,
     relocates_thing,
     same_or_part,
+    searches_underneath,
     uses_thing,
 )
 from storygame.runtime.observation import ObservationRequest
@@ -231,6 +232,12 @@ class WorldCapture:
             return
         if world.is_a(focus_id, "container") and opens_container(adapter, command, world.name(focus_id)) is True:
             kind = "open"
+        if (
+            kind == "look"
+            and any(world.is_a(focus_id, entity_kind) for entity_kind in ("container", "supporter"))
+            and searches_underneath(adapter, command, world.name(focus_id)) is True
+        ):
+            kind = "under"
         self.provider.observation_request = ObservationRequest(command, kind, focus_id)
 
     @staticmethod
