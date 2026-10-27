@@ -92,14 +92,18 @@ def searches_underneath(ask, command: str, thing_name: str) -> bool | None:
         "searches_underneath": {
             "type": "noul",
             "instructions": (
-                "Decide whether the command has the player search, feel, reach, or look under, beneath, "
-                "or below the thing."
+                "Decide whether the command tells the player to go under the thing. "
+                "The command must say under, underneath, beneath, below, or the underside of the thing."
             ),
             "criteria": {
-                "true": ("The command has the player search, feel, reach, or look under, beneath, or below the thing."),
+                "true": (
+                    "The command says under, underneath, beneath, below, or the underside of the thing. "
+                    "The player searches, feels, reaches, or looks there."
+                ),
                 "false": (
-                    "The command only looks at, opens, touches, moves, carries, talks about, or goes to the thing. "
-                    "It only looks inside the thing without looking under, beneath, or below it."
+                    "The command does not say under, underneath, beneath, below, or the underside. "
+                    "A command that only searches, checks, examines, inspects, opens, touches, moves, carries, "
+                    "or looks inside, behind, or on top of the thing is false."
                 ),
             },
         }
