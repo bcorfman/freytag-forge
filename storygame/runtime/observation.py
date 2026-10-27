@@ -97,7 +97,7 @@ def build_observation_context(
         )
     )
     visible_set = set(visible_ids)
-    required_ids = _required_ids(world, observer_id, request.focus, visible_set)
+    required_ids = _required_ids(world, observer_id, request.focus, visible_set, request.kind)
     required_ids = tuple(sorted(required_ids, key=lambda entity_id: _sort_key(world, entity_id)))
     if len(required_ids) > max_required:
         names = ", ".join(world.name(entity_id) for entity_id in required_ids)
@@ -127,9 +127,20 @@ def _sort_key(world: World, entity_id: str) -> tuple[str, str, str]:
     return name.casefold(), name, entity_id
 
 
-def _required_ids(world: World, observer_id: str, focus_id: str | None, visible_ids: set[str]) -> set[str]:
+def _required_ids(
+    world: World, observer_id: str, focus_id: str | None, visible_ids: set[str], kind: str = "look"
+) -> set[str]:
     if not focus_id or not world.exists(focus_id):
         return set()
+    if kind == "under":
+        return {
+            entity_id
+            for entity_id in visible_ids
+            if _is_item(world, entity_id)
+            and world.sees(observer_id, entity_id)
+            and world.parent(entity_id) == focus_id
+            and world.relation(entity_id) == "under"
+        }
     required = set()
     if _is_item(world, focus_id) and focus_id in visible_ids:
         required.add(focus_id)

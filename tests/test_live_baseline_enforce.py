@@ -177,3 +177,64 @@ def test_enforce_off_preserves_rows_and_sets_false_summary(tmp_path: Path) -> No
     assert all("observation_enforce" not in turn for turn in first_rows[0]["turns"])
     assert all("enforce_attempts" not in turn for turn in first_rows[0]["turns"])
     assert all("turn_elapsed_s" not in turn for turn in first_rows[0]["turns"])
+
+
+def test_observe_under_first_route_and_enforcement_request_recording(tmp_path: Path) -> None:
+    module = _module()
+
+    assert module.ROUTES["observe_under_first"] == (
+        "feel under the drawer",
+        "feel under the drawer",
+        "inspect the drawer",
+        "pull out the drawer",
+    )
+
+    enforced_out = tmp_path / "enforced"
+    assert (
+        module.main(
+            [
+                "--dry-run",
+                "--route",
+                "observe_under_first",
+                "--replicates",
+                "1",
+                "--enforce",
+                "--out",
+                str(enforced_out),
+            ]
+        )
+        == 0
+    )
+    enforced_rows = json.loads((enforced_out / "rows.json").read_text())
+    assert all("observation_request" in turn for turn in enforced_rows[0]["turns"])
+    assert all(
+        turn["observation_request"] is None or isinstance(turn["observation_request"], dict)
+        for turn in enforced_rows[0]["turns"]
+    )
+
+    off_out = tmp_path / "off"
+    assert (
+        module.main(
+            [
+                "--dry-run",
+                "--route",
+                "observe_under_first",
+                "--replicates",
+                "1",
+                "--out",
+                str(off_out),
+            ]
+        )
+        == 0
+    )
+    off_rows = json.loads((off_out / "rows.json").read_text())
+    assert all("observation_request" not in turn for turn in off_rows[0]["turns"])
+
+
+def test_enforce_observation_request_is_none_for_engine_authored_move(tmp_path: Path) -> None:
+    module = _module()
+    _summary, rows = _run(module, tmp_path, "--enforce")
+
+    move = next(turn for turn in rows[0]["turns"] if turn["input"] == "go outside")
+    assert move["narrator_called"] is False
+    assert move["observation_request"] is None

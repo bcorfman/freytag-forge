@@ -87,6 +87,26 @@ def opens_container(ask, command: str, container_name: str) -> bool | None:
     return _answer(ask, {"command": command, "container": container_name}, questions, "opens_container")
 
 
+def searches_underneath(ask, command: str, thing_name: str) -> bool | None:
+    questions = {
+        "searches_underneath": {
+            "type": "noul",
+            "instructions": (
+                "Decide whether the command has the player search, feel, reach, or look under, beneath, "
+                "or below the thing."
+            ),
+            "criteria": {
+                "true": ("The command has the player search, feel, reach, or look under, beneath, or below the thing."),
+                "false": (
+                    "The command only looks at, opens, touches, moves, carries, talks about, or goes to the thing. "
+                    "It only looks inside the thing without looking under, beneath, or below it."
+                ),
+            },
+        }
+    }
+    return _answer(ask, {"command": command, "thing": thing_name}, questions, "searches_underneath")
+
+
 def only_boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
     questions = {
         "only_boards_vehicle": {

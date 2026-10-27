@@ -711,6 +711,17 @@ class ItemFactsProvider(CloudflareTurnProvider):
         constraints = []
         if context is not None and context.required:
             constraints.append(f"- Show these in your reply: {', '.join(context.required)}.")
+        request = self.observation_request
+        if (
+            context is not None
+            and request is not None
+            and request.kind == "open"
+            and context.contingent_things
+            and any(thing.name not in context.required for thing in context.contingent_things)
+        ):
+            focus_name = world.name(request.focus)
+            contingent_names = ", ".join(thing.name for thing in context.contingent_things)
+            constraints.append(f"- If the {focus_name} opens, show what is inside it: {contingent_names}.")
         if context is not None and self._observation_scope_is_empty(world, context):
             focus_id = self.observation_request.focus
             name = world.name(focus_id)

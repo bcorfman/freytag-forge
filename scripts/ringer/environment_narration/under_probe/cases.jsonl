@@ -1,0 +1,49 @@
+{"id":"u-p01","command":"Feel under the drawer.","thing":"drawer","expected":true}
+{"id":"u-p02","command":"Search beneath the drawer.","thing":"drawer","expected":true}
+{"id":"u-p03","command":"Look under the drawer.","thing":"drawer","expected":true}
+{"id":"u-p04","command":"Check below the drawer.","thing":"drawer","expected":true}
+{"id":"u-p05","command":"Run my hand under the drawer.","thing":"drawer","expected":true}
+{"id":"u-p06","command":"Reach beneath the drawer.","thing":"drawer","expected":true}
+{"id":"u-p07","command":"Feel under the passenger seat.","thing":"passenger seat","expected":true}
+{"id":"u-p08","command":"Look under the passenger seat.","thing":"passenger seat","expected":true}
+{"id":"u-p09","command":"Search beneath the passenger seat.","thing":"passenger seat","expected":true}
+{"id":"u-p10","command":"Check under the driver's seat.","thing":"driver's seat","expected":true}
+{"id":"u-p11","command":"Feel under the desk.","thing":"desk","expected":true}
+{"id":"u-p12","command":"Search under the bed.","thing":"bed","expected":true}
+{"id":"u-p13","command":"Look beneath the tray.","thing":"telescope tray","expected":true}
+{"id":"u-p14","command":"Feel under the telescope tray.","thing":"telescope tray","expected":true}
+{"id":"u-p15","command":"Check under the bench.","thing":"skiff bench","expected":true}
+{"id":"u-p16","command":"Reach under the locker.","thing":"locker","expected":true}
+{"id":"u-p17","command":"Search below the workbench.","thing":"workbench","expected":true}
+{"id":"u-p18","command":"Look under the crate.","thing":"crate","expected":true}
+{"id":"u-p19","command":"Feel beneath the table.","thing":"table","expected":true}
+{"id":"u-p20","command":"Slide my hand under the shelf.","thing":"shelf","expected":true}
+{"id":"u-n01","command":"Inspect the drawer.","thing":"drawer","expected":false}
+{"id":"u-n02","command":"Open the drawer.","thing":"drawer","expected":false}
+{"id":"u-n03","command":"Pull out the drawer.","thing":"drawer","expected":false}
+{"id":"u-n04","command":"Search the drawer.","thing":"drawer","expected":false}
+{"id":"u-n05","command":"Feel inside the drawer.","thing":"drawer","expected":false}
+{"id":"u-n06","command":"Look inside the drawer.","thing":"drawer","expected":false}
+{"id":"u-n07","command":"Close the drawer.","thing":"drawer","expected":false}
+{"id":"u-n08","command":"Look behind the drawer.","thing":"drawer","expected":false}
+{"id":"u-n09","command":"Check the top of the drawer.","thing":"drawer","expected":false}
+{"id":"u-n10","command":"Take the pens from the drawer.","thing":"drawer","expected":false}
+{"id":"u-n11","command":"Inspect the passenger seat.","thing":"passenger seat","expected":false}
+{"id":"u-n12","command":"Sit on the passenger seat.","thing":"passenger seat","expected":false}
+{"id":"u-n13","command":"Search the passenger seat.","thing":"passenger seat","expected":false}
+{"id":"u-n14","command":"Put my laptop on the passenger seat.","thing":"passenger seat","expected":false}
+{"id":"u-n15","command":"Look at the driver's seat.","thing":"driver's seat","expected":false}
+{"id":"u-n16","command":"Inspect the telescope tray.","thing":"telescope tray","expected":false}
+{"id":"u-n17","command":"Look in the locker.","thing":"locker","expected":false}
+{"id":"u-n18","command":"Open the crate.","thing":"crate","expected":false}
+{"id":"u-n19","command":"Examine the bench.","thing":"skiff bench","expected":false}
+{"id":"u-n20","command":"Search the table.","thing":"table","expected":false}
+{"id":"u-n21","command":"Clear the desk.","thing":"desk","expected":false}
+{"id":"u-n22","command":"Check on top of the shelf.","thing":"shelf","expected":false}
+{"id":"u-n23","command":"Look behind the bed.","thing":"bed","expected":false}
+{"id":"u-n24","command":"Search the workbench.","thing":"workbench","expected":false}
+{"id":"u-n25","command":"Wipe the table.","thing":"table","expected":false}
+{"id":"u-n26","command":"Push the chair under the desk.","thing":"chair","expected":false,"hard":true}
+{"id":"u-n27","command":"Slide the tray under the telescope.","thing":"tray","expected":false,"hard":true}
+{"id":"u-n28","command":"Lift the crate.","thing":"crate","expected":false}
+{"id":"u-n29","command":"Read the label on the locker.","thing":"locker","expected":false}
