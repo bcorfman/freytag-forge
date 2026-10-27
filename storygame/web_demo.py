@@ -24,6 +24,7 @@ from storygame.runtime.engine import ClarificationTurn, RuntimeEngine
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev import JevClient
 from storygame.runtime.knowledge_audit import build_knowledge_audit
+from storygame.runtime.observation_verifier import ObservationVerifier
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.scripted_provider import ScriptedTurnProvider
 from storygame.runtime.state import RuntimeState, RuntimeStateError
@@ -32,6 +33,7 @@ from storygame.runtime.world_model import display_name, world_for
 from storygame.story_package.loader import StoryPackageError, load_story_package
 
 logger = logging.getLogger(__name__)
+OBSERVATION_ENFORCE_ENV = "FREYTAG_OBSERVATION_ENFORCE"
 
 
 class _Request(BaseModel):
@@ -262,6 +264,8 @@ def create_demo_app(
             capture_provider.semantic_ask = capture_ask
             enabled = getenv("FREYTAG_FIXED_REFUSAL", "") != "0"
             capture = WorldCapture(capture_provider, capture_ask, fixed_refusal=enabled, engine_refusal=enabled)
+            if getenv(OBSERVATION_ENFORCE_ENV, "") == "1":
+                capture.enforcing_verifier = ObservationVerifier(capture_ask)
         return RuntimeEngine(state, provider, capture=capture)
 
     def require_turn_rate_limit(body: TurnRequest, request: Request) -> None:
