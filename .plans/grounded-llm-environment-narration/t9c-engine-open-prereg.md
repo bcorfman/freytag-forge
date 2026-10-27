@@ -30,7 +30,7 @@ Function name, signature, return type and the `noul` type are unchanged. `search
 **4. Story data (I write it; no ChatGPT round).** In `data/stories/continuity-initiative/knowledge.yaml`, `k_sl_1a_f_r2` is rewritten in place (same id and source):
 - `statement`: `Kristin looks over the drawer and is pointed toward the thin gap beneath its lower edge.`
 - `earn_when`: `examines, inspects, searches or checks the drawer without going underneath it`
-- `action_evidence`: `[[examine, inspect, search, check, look, study], [drawer, "drawer's", KMS]]` (the matcher's synonym class already adds feel, investigate, look at and the rest).
+- `action_evidence`: `[[examine, inspect, search, check, look, study, read, trace, run my fingers], [drawer, "drawer's", KMS, initials, carved initials, carving, my initials]]` (the old initials wording stays, so examining the carved initials still earns it) (the matcher's synonym class already adds feel, investigate, look at and the rest).
 - `repeatable: true`; `requires` stays `memory_card_recovered` false, so the nudge ends when the card is found.
 - `delivery_text`: `The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.` It is the scene cue's own sentences without the card, and it is the same text every time, as Brandon asked.
 - The card find (`k_sl_1a_b_r0`, `k_sl_1a_b_r0w`) keeps its evidence `[[look, search, inspect, check], [under, beneath, underside, gap, lower edge, bottom edge], [drawer, KMS, workstation, "drawer's"]]`. The synonym classes make examine, feel, study and the rest count as the verb too, and below, underneath and underside count as the under word; a test pins this for each verb.

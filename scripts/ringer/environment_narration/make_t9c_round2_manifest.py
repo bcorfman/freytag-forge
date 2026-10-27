@@ -1,0 +1,176 @@
+# ruff: noqa: E501
+"""Generate the Ringer build manifest for T9c round 2: real-package nudge tests, route C and run scripts, report clauses."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+E = "scripts/ringer/environment_narration"
+T = "scripts/ringer/transcript_1a"
+OUT = Path(REPO) / E / "build-t9c-round2.json"
+PREREG = ".plans/grounded-llm-environment-narration/t9c-engine-open-prereg.md"
+
+COMMON = (
+    "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. "
+    "export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). "
+    "Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. "
+    "No network, no live model call, no billed call, never run a billed script or the local Worker. Do not git commit. NEVER print or write any credential. NO regular expressions in new code. "
+    "Write the tests FIRST, run them, confirm they fail for the right reason, then implement until they pass. Run ruff check and ruff format on your files at the end. "
+    "Other workers edit OTHER files in this same checkout at the same time; edit only the files you own. "
+    "If a test in a file you do not own fails because of your change, do NOT edit that file: say which test and why in your final message. "
+    f"BACKGROUND. Read {PREREG} fully first; it is the preregistration this build implements (round 1 is already committed: `opens_container` wording, the engine open step with capture-record fields `engine_opened` and `focus_open_state_after`, `KnowledgeDefinition.repeatable`, the specific-match rule in `uniquely_matched_authored_handoff`, the opens_container probe; the story data entry `k_sl_1a_f_r2` in data/stories/continuity-initiative/knowledge.yaml is now repeatable with the gap text). "
+)
+
+PACKAGE_SPEC = (
+    COMMON
+    + "YOUR TASK: tests on the REAL continuity package for the drawer-gap nudge and the card find. YOU MAY EDIT ONLY the NEW file tests/test_drawer_gap_nudge.py (no code or data edits: if a test reveals a code or data fault, keep the test, mark it `pytest.mark.xfail(strict=True, reason=...)` ONLY if it cannot pass, and describe the fault precisely in your final message). "
+    "Use `load_story_package(Path('data/stories/continuity-initiative'))`, `tests.test_observation_mode._state_at('kitchen')` (see tests/test_observation_under_scope.py for the helper style), `KnowledgeProjector` (storygame/runtime/knowledge.py; `project(state, 'player', command)` returns a context whose `reveal_universe` holds the candidates) and `uniquely_matched_authored_handoff` (storygame/runtime/candidate_matcher.py). For each command compute the handoff from the projection's `reveal_universe` and assert which knowledge id it picks (or None). Tests: "
+    "a) the drawer is in reach in the kitchen with the card not recovered: `Inspect the drawer.`, `Examine the drawer.`, `Search the drawer.`, `Check the drawer.`, `Look at the drawer.`, `Study the drawer.`, `Examine the carved initials.` and `Examine my initials.` each pick `k_sl_1a_f_r2` and its delivery text is exactly `The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.`; "
+    "b) the same commands STILL pick it after `drawer_gap_pointed_out` is asserted true and the storylet SL-1A-F is in the state's fired events (repeat: build that state by asserting the fact in `state.facts` and adding the storylet id to `state.fired_event_ids` the way the engine does; read the engine for how); also after being delivered three times in a row; "
+    "c) under forms pick the card find, never the nudge: for each verb of examine, inspect, search, check, look, feel, study with each under word of under, beneath, underneath, below, `<Verb> <underword> the drawer.` (for `look` also `Look under the drawer.`) picks `k_sl_1a_b_r0` (or `k_sl_1a_b_r0w` when the patrol is in the house; use the state where `patrol_in_house` is false) and never `k_sl_1a_f_r2`; "
+    "d) opening commands do not earn the nudge: `Open the drawer.` and `Pull out the drawer.` pick `k_sl_1a_f_r1` (or None) and never `k_sl_1a_f_r2`; commands about other things (`Inspect the truck.`) pick neither; "
+    "e) inside forms: `Look inside the drawer.`, `Search inside the drawer.`, `Examine inside the drawer.` pick the nudge or None but NEVER the card find, and the test records which (the prereg expects the nudge); "
+    "f) after the card is recovered (`memory_card_recovered` true) none of the bare drawer commands picks the nudge; "
+    "g) the package loads, `k_sl_1a_f_r2.repeatable` is True and every other knowledge entry's `repeatable` is False; "
+    "h) a regression: `Pull out the drawer.` still picks `k_sl_1a_f_r1` exactly once-eligible (after it is established it is not picked again). "
+    "Commands are imperative with a direct object (docs/player-input-guide.md)."
+)
+
+ROUTE_SPEC = (
+    COMMON
+    + f"YOUR TASK: route C, new row fields and the run scripts. YOU MAY EDIT ONLY: {T}/live_baseline.py, {T}/test_live_baseline.py (extend only; never weaken an assertion), and these NEW files: {E}/enforce_stage3.sh, {E}/make_t9c_run_manifests.py, {E}/run-t9c-smoke.json, {E}/run-t9c-full.json, tests/test_t9c_run_manifests.py. "
+    "Read live_baseline.py, enforce_stage2.sh, make_t9b_harness_manifest.py (it wrote run-t9b-smoke.json and run-t9b-full.json) and those two JSON files first; model everything on them. "
+    "ROUTE C: add route `observe_look_inside_under` to `ROUTES` with the six commands, in order: `inspect the drawer`, `examine the drawer`, `search the drawer`, `check the drawer`, `look inside the drawer`, `look under the drawer`. Leave routes `observe_topup` and `observe_under_first` exactly as they are. "
+    "ROW FIELDS: every turn row gains `engine_opened` and `focus_open_state_after` copied from the capture record returned by `before_turn` (default False / None when absent), `focus_open_state_committed` (the observation focus's `open` axis value, 'open' or 'closed' or None, read from the committed world state after the turn completes or is rolled back; use the same world access the harness already uses for TRACKED entities) and `handoff_id` (the authored or semantic handoff candidate id delivered on the turn, or None; find where the provider records it, for example `last_reveal_selection['matched']` or the authored handoff, and use the one that reflects what was actually delivered) and `delivered_text` (the authored delivery text appended to the committed turn, or None). Existing fields and the existing report must keep working. "
+    "RUN SCRIPT: `enforce_stage3.sh smoke|full` copied from enforce_stage2.sh with PORT=8797, output under bench/results/environment-narration/t9c-open/{smoke,full}/{a,b,c}, running route A then B then C under ONE local-Worker cap. Smoke: A 1 replicate `--max-calls 90`, B 1 `--max-calls 40`, C 2 `--max-calls 90`, `--max-usd 0.07`. Full: A 10 replicates `--max-calls 800`, B 5 `--max-calls 250`, C 15 `--max-calls 700`, `--max-usd 0.45`. Same flags as the stage 2 script otherwise (enforce on, shadow off, 70B JSON off, 20 s timeout, no retry on timeout, no credential printed). The script must refuse if the port is busy and stop on a quota code, 429, 5xx or the cap, as stage 2 does. "
+    "MANIFESTS: `make_t9c_run_manifests.py` WRITES `run-t9c-smoke.json` and `run-t9c-full.json` as make_t9b_harness_manifest.py wrote the T9b run manifests (runner rules: each stage once, foreground, never rerun, edit nothing, no commit, no credential; the check asserts a stop reason or the exact row counts, and no credential value in outputs). Row counts for the checks: smoke A 1 x 9 turns, B 1 x 4, C 2 x 6; full A 10 x 9, B 5 x 4, C 15 x 6 (rows are per replicate; follow how the T9b manifests count). Workdirs `/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9c-smoke` and `...-t9c-full`. "
+    "TESTS: route C has exactly those six commands in order and the other routes are unchanged; the new row fields appear on a stubbed turn (use the existing test stubs in test_live_baseline.py) with the right defaults; `bash -n` passes on enforce_stage3.sh and it contains PORT=8797 and the six numbers above; the generated manifests equal the committed JSON and mention the caps. Commands are imperative with a direct object."
+)
+
+REPORT_SPEC = (
+    COMMON
+    + f"YOUR TASK: the T9c report: labels and clauses in {E}/enforce_report.py. YOU MAY EDIT ONLY {E}/enforce_report.py and the NEW file tests/test_enforce_report_t9c.py (existing tests of enforce_report must keep passing unchanged; find them with `grep -ln enforce_report tests scripts -r`). Read enforce_report.py and its existing tests first, then 'Stages S and F' in the preregistration. "
+    "ROUTES: A `observe_topup`, B `observe_under_first`, C `observe_look_inside_under` (route C commands in order: inspect the drawer, examine the drawer, search the drawer, check the drawer, look inside the drawer, look under the drawer). The harness rows (built by another worker; assume these exact names) carry per turn: `engine_opened` (bool), `focus_open_state_after` (str or None), `focus_open_state_committed` ('open'|'closed'|None), `handoff_id` (str or None), `delivered_text` (str or None), plus everything the T9b rows already carry. "
+    "LABELS (blind sheet and labels template, as the existing labels are done; the sheet must not show verdicts, and must not show `handoff_id`, `delivered_text`, `engine_opened` or the drawer state): add `gap_restated` (true when the committed narration plus the delivered text tells the player the drawer rides high with a thin gap beneath its lower edge), `contents_shown` (every required supply presented in the committed narration, as `presents_required` already is) and `command_opens` (does the command text tell the player to open the container or say inside, in, into or through it; judged from the command alone). Missing labels are reported exactly as the existing missing-label check does. "
+    "CLAUSES (print each as PASS/FAIL with counts and list failing turn ids; when route rows exist, compute them for the routes present; keep all stage-1 clauses 1 to 7, S1, S2 and S3 behaviour for routes A and B exactly as they are): "
+    "N1: look-group turns are the turns whose normalised command is `inspect the drawer`, `examine the drawer`, `search the drawer` or `check the drawer` on any route; PASS when at least 72 of the pooled look-group turns end with a committed narration (list every other turn with its reason: unsuccessful, and so on). "
+    "N2: PASS when at least 72 of the pooled look-group turns carry label `gap_restated` true AND, on route C, at least 58 of the 60 look-group turns do (list every miss with its `handoff_id`). "
+    "N3: PASS when the card is held by the player after the `look under the drawer` turn in at least 14 of the route C replicates and after the first `feel under the drawer` turn in at least 4 of the route B replicates (reuse the existing S3 card logic and its zero-card-mention-before-found rule), and no card-finding turn carries `handoff_id` of a nudge (the turn that finds the card has `gap_restated` false); list failures. "
+    "N4: of the route C `look inside the drawer` turns, PASS when at least 14 of 15 end committed with `focus_open_state_committed` 'open' and label `contents_shown` true (list every other turn and the reason). "
+    "N5: PASS when zero turns have `engine_opened` true and label `command_opens` false, and zero look-group turns have `engine_opened` true. "
+    "N6: PASS when every unsuccessful turn with `engine_opened` true has `focus_open_state_committed` 'closed' and unchanged places (reuse the existing clause-4 rollback check for places). "
+    "INFORMATION lines (printed, not gated): share of look-group turns by request kind (look/open/under), look-group turns where the drawer is open in the committed world and `engine_opened` is false (narrator opened it), turns where the narrator closed the drawer after the engine opened it (`engine_opened` true and committed 'closed' on a committed turn), handoff outcome counts by `handoff_id`. "
+    "TESTS (tests/test_enforce_report_t9c.py): build small synthetic rows and labels for all three routes; one all-good set where every clause passes; then one synthetic violation per clause (N1 with 4 unsuccessful look turns; N2 with 4 turns lacking `gap_restated`; N2 with 3 route C turns lacking it; N3 with one route C replicate lacking the card; N4 with 2 look-inside turns closed; N5 with an engine open on a command whose `command_opens` is false and one on a look-group turn; N6 with a failed engine-open turn left open) each failing only its own clause; missing labels reported; the blind sheet contains none of the hidden fields. Commands in tests are imperative with a direct object."
+)
+
+CHECK = "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && "
+PYTEST = "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov "
+
+
+def ruff(files: str) -> str:
+    return f".venv/bin/python -m ruff check {files} && .venv/bin/python -m ruff format --check {files}"
+
+
+def pytest_check(out: str, files: str) -> str:
+    return (
+        f"{PYTEST}{files} 2>&1 | tee /tmp/{out}.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/{out}.out && "
+    )
+
+
+PACKAGE_CHECK = (
+    CHECK
+    + pytest_check(
+        "t9c-r2-package",
+        "tests/test_drawer_gap_nudge.py tests/test_knowledge_projection.py tests/test_spine_expected_reveals.py tests/test_reveal_universe.py",
+    )
+    + "! grep -q xfail tests/test_drawer_gap_nudge.py && "
+    + ruff("tests/test_drawer_gap_nudge.py")
+)
+
+ROUTE_FILES = (
+    f"{T}/live_baseline.py {T}/test_live_baseline.py {E}/make_t9c_run_manifests.py tests/test_t9c_run_manifests.py"
+)
+ROUTE_CHECK = (
+    CHECK
+    + pytest_check("t9c-r2-route", f"{T}/test_live_baseline.py tests/test_t9c_run_manifests.py")
+    + f"bash -n {E}/enforce_stage3.sh && grep -q 'PORT=8797' {E}/enforce_stage3.sh && "
+    + f".venv/bin/python {E}/make_t9c_run_manifests.py && "
+    + f"(cd /home/bcorfman/dev/ringer && ./ringer.py lint {REPO}/{E}/run-t9c-smoke.json && ./ringer.py lint {REPO}/{E}/run-t9c-full.json) && "
+    + ruff(ROUTE_FILES)
+)
+
+REPORT_CHECK = (
+    CHECK
+    + pytest_check(
+        "t9c-r2-report",
+        "tests/test_enforce_report_t9c.py $(grep -rl enforce_report tests --include=test_*.py | tr '\\n' ' ')",
+    )
+    + ruff(f"{E}/enforce_report.py tests/test_enforce_report_t9c.py")
+)
+
+
+def _task(key, spec, check, ownership, expect, verified):
+    return {
+        "key": key,
+        "task_type": "code-feature",
+        "engine": "codex",
+        "model": "gpt-5.6-luna",
+        "engine_args": ["-c", "model_reasoning_effort=high"],
+        "full_access": True,
+        "max_attempts": 2,
+        "timeout_s": 3600,
+        "check_timeout_s": 1800,
+        "ownership": ownership,
+        "expect_files": [f"{REPO}/{p}" for p in expect],
+        "spec": spec,
+        "check": check,
+        "verified": verified,
+    }
+
+
+manifest = {
+    "run_name": "grounded-environment-narration",
+    "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9c-round2",
+    "max_parallel": 3,
+    "worktrees": False,
+    "repo": REPO,
+    "tasks": [
+        _task(
+            "t9c-package-tests",
+            PACKAGE_SPEC,
+            PACKAGE_CHECK,
+            ["tests/test_drawer_gap_nudge.py"],
+            ["tests/test_drawer_gap_nudge.py"],
+            "the real package repeats the nudge for look verbs and keeps the under forms on the card find",
+        ),
+        _task(
+            "t9c-route-c",
+            ROUTE_SPEC,
+            ROUTE_CHECK,
+            [
+                f"{T}/live_baseline.py",
+                f"{T}/test_live_baseline.py",
+                f"{E}/enforce_stage3.sh",
+                f"{E}/make_t9c_run_manifests.py",
+                f"{E}/run-t9c-smoke.json",
+                f"{E}/run-t9c-full.json",
+                "tests/test_t9c_run_manifests.py",
+            ],
+            [f"{E}/run-t9c-full.json", "tests/test_t9c_run_manifests.py"],
+            "route C, the new row fields, the stage 3 script and the run manifests match the preregistration",
+        ),
+        _task(
+            "t9c-report",
+            REPORT_SPEC,
+            REPORT_CHECK,
+            [f"{E}/enforce_report.py", "tests/test_enforce_report_t9c.py"],
+            ["tests/test_enforce_report_t9c.py"],
+            "the report computes labels and clauses N1 to N6 as preregistered",
+        ),
+    ],
+}
+
+if __name__ == "__main__":
+    OUT.write_text(json.dumps(manifest, indent=2) + "\n")
