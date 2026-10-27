@@ -1,0 +1,195 @@
+# ruff: noqa: E501
+"""Generate the Ringer build manifest for T9c round 1: Jev wording, engine open step, repeatable nudge, probe harness."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+E = "scripts/ringer/environment_narration"
+OUT = Path(REPO) / E / "build-t9c-round1.json"
+PREREG = ".plans/grounded-llm-environment-narration/t9c-engine-open-prereg.md"
+
+COMMON = (
+    "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. "
+    "export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). "
+    "Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. "
+    "No network, no live model call, no billed call, never run a billed script. Do not git commit. NEVER print or write any credential. NO regular expressions in new code. "
+    "Story-agnostic engine code: no story names, verbs, vocabulary or notice text in non-test code under storygame/. "
+    "Write the tests FIRST, run them, confirm they fail for the right reason, then implement until they pass. Run ruff check and ruff format on your files at the end. "
+    "Other workers edit OTHER files in this same checkout at the same time; edit only the files you own. "
+    "If a test in a file you do not own fails because of your change, do NOT edit that file: say which test and why in your final message. "
+    f"BACKGROUND. Read {PREREG} fully first; it is the preregistration this build implements. Brandon's rules: `inspect`, `examine`, `search`, `check`, `look at` on a drawer are look commands that stay closed and restate the gap in the drawer frame (repeatably); opening, `look inside` and any verb followed by inside, in, into or through opens a closed drawer (the engine does it); `look under` and every verb followed by under, beneath, underneath or below searches under it. "
+)
+
+REWORD_SPEC = (
+    COMMON
+    + "YOUR TASK: reword the Jev question `opens_container`. YOU MAY EDIT ONLY: storygame/runtime/jev_questions.py (only the `opens_container` function's question text) and tests/test_jev_questions.py (only the test(s) that pin the old text of this question, plus new tests). "
+    "Replace the question text with EXACTLY the three strings the preregistration gives under 'The change', item 1 (instructions, true, false). Keep the function name, signature, return type, the `noul` type, the payload keys and the `_answer` call exactly as they are. Do not touch `searches_underneath`. "
+    "TESTS: the pinned-text test asserts the three new strings exactly (read the values out of the captured question dict); add one test that the payload still carries the command and the container name and that a `noul` score above the threshold returns True, below returns False and a missing answer returns None. "
+    "If a test in another file (for example tests/test_observation_mode.py or tests/test_observation_under_scope.py) pins the OLD opens_container text, do not edit it: list the test names in your final message."
+)
+
+OPEN_STEP_SPEC = (
+    COMMON
+    + "YOUR TASK: the engine opens a closed container before narration (preregistration item 1b, 'The engine opens the container'). YOU MAY EDIT ONLY: storygame/runtime/capture.py and the NEW file tests/test_observation_open_step.py. "
+    "In `WorldCapture._set_observation_request` (read it and `before_turn` first, and tests/test_observation_under_scope.py for the helper style), when the request kind comes out `open`, the focus is openable (`world.is_openable`), currently closed (`world.axis_values(id).get('open') == 'closed'`) and visible to the protagonist (`world.sees`), call `world.set_axis(focus, 'open')` on the turn's world before the narrator is called, through the same world/fact path that the boarding, standing and seating steps in `before_turn` use so the change lands in the turn's facts and is rolled back with the engine's whole-turn snapshot on every failure path. Put the decision in a small pure helper next to it. No-op on an open container, a non-openable one, kinds look/under/enter, Jev answer False or None, and out of sight. Nothing else changes. "
+    "Record it: the capture record returned by `before_turn` (find its class; extend it with default values so every existing construction keeps working) gains `engine_opened: bool` (True only when this step changed the axis from closed to open) and `focus_open_state_after: str | None` ('open' or 'closed' for the observation focus after capture, None when there is no container focus). "
+    "TESTS (tests/test_observation_open_step.py; stub the Jev ask as tests/test_observation_under_scope.py does, no network): a) real continuity package (`_state_at('kitchen')` as in that file): kind open + closed drawer -> the drawer's open axis is 'open' after before_turn, `engine_opened` True, other things unchanged (compare a snapshot of every other entity's parent and axes); b) the observation context built afterwards requires the drawer's four supplies and the item-facts user prompt (find `ItemFactsProvider._section_user_prompt` in storygame/runtime/item_facts.py) carries the 'Show these in your reply' line and no conditional 'If the ... opens' line; c) no-op cases each assert `engine_opened` False and the axis unchanged: already open, not openable (use an entity that is a container but not openable, or the synthetic package), Jev False, Jev None, kind look, kind under, kind enter, container out of sight; d) rollback: drive RuntimeEngine with `_ScriptedProvider` (tests/test_observation_enforcement.py) so enforcement rejects twice and the turn fails: afterwards the drawer is closed again and every entity's place is unchanged; e) a second, synthetic story (`_synthetic_package` in tests/test_observation_preview.py, give its tray or another entity the openable closed state through the schema if possible, otherwise build a tiny package fixture in the test file) behaves identically with no story strings in capture.py; f) the commands in the tests are imperative with a direct object (docs/player-input-guide.md): `Open the drawer.`, `Look inside the drawer.`. "
+    "Do not edit tests/test_observation_under_scope.py or any other existing test; if one fails because of your change, report it."
+)
+
+REPEAT_SPEC = (
+    COMMON
+    + "YOUR TASK: (1) a repeatable knowledge entry and (2) a specific-match rule for authored handoffs (preregistration items 2 and 3). YOU MAY EDIT ONLY: storygame/story_package/models.py (only `KnowledgeDefinition`), storygame/runtime/reveal_eligibility.py, storygame/runtime/cloudflare.py (only `CloudflareTurnProvider._eligible_reveal_candidates` and anything needed so a repeatable entry stays eligible), storygame/runtime/candidate_matcher.py, tests/test_candidate_matcher.py (extend only; never weaken an assertion), and the NEW file tests/test_repeatable_knowledge.py. "
+    "(1) `KnowledgeDefinition` gains `repeatable: StrictBool = False`, excluded from serialisation when False (follow how `voiceable` does it) so existing dumps and saves do not change. `explain_reveal` (reveal_eligibility.py) skips the ALREADY_ESTABLISHED and STORYLET_SPENT checks and the SOURCE_INACTIVE check for a repeatable entry; every other rule still applies (audience, requires, reach). `_eligible_reveal_candidates` (cloudflare.py) skips the already-established filter for a repeatable entry. Read how the candidate projection (`KnowledgeProjector._candidates` in storygame/runtime/knowledge.py) and the engine handoff path use `explain_reveal` so that a repeatable entry that matches the player's command is delivered again, its `delivery_text` appended again, every time; if any other place (search for `ALREADY_ESTABLISHED`, `_established`, `fired_event_ids`, `earned`) would drop it a second time, make the smallest change that keeps a repeatable entry eligible and say what you changed. Re-applying its `establishes` effects when already true must be harmless. "
+    "(2) `uniquely_matched_authored_handoff` currently returns None when two candidates match in full. Change it: when more than one candidate matches in full, the candidate with strictly the most `action_evidence` groups wins; a tie for the most still returns None; partial matches never count. `uniquely_matched_candidate` stays as is unless a test shows it must change. No vocabulary, no story ids. "
+    "TESTS (tests/test_repeatable_knowledge.py plus extensions to tests/test_candidate_matcher.py; use synthetic RevealCandidate/KnowledgeDefinition objects and a synthetic package, not the continuity package, which Brandon's story data will use later): a) default `repeatable` False keeps a spent or established entry ineligible (one delivery then never again); b) a repeatable entry is still eligible after its effects hold, after its storylet is spent and when its source storylet is no longer active, but is NOT eligible when `requires` fails, when out of reach, or when not visible to the audience; c) delivered on three consecutive matching turns through the real engine path with a scripted provider, identical text each time, the fact stays true; d) specific-match: two full matches with 3 and 2 evidence groups pick the 3-group entry; equal groups return None; a one-group partial match never beats a full match; every existing candidate-matcher test passes unchanged; e) the evidence matcher's synonym classes still make `examine`, `feel`, `study` count for a `look` group and `below`, `underneath` count for an `under` group (assert on the candidate_matcher functions directly, with authored groups like [['look','search','inspect','check'],['under','beneath','underside','gap'],['drawer']] and the commands `Examine under the drawer.`, `Feel beneath the drawer.`, `Search below the drawer.`, `Check underneath the drawer.`, and that [['examine','inspect','search','check','look','study'],['drawer']] matches `Inspect the drawer.` and `Look at the drawer.` and does not match `Open the drawer.`). Commands in tests are imperative with a direct object (docs/player-input-guide.md). "
+    "Run tests/test_reveal_eligibility.py tests/test_reveal_universe.py tests/test_semantic_reveal_match.py tests/test_established_reveal_match.py tests/test_knowledge_projection.py as well and report any failure your change causes."
+)
+
+PROBE_SPEC = (
+    COMMON
+    + "YOUR TASK: the opens_container Jev probe: corpus, report and runner manifest (preregistration 'Stage P'). Read scripts/ringer/environment_narration/under_question_probe.py, its tests, under_probe/ and under_probe_v2/, make_t9b_probe2_run_manifest.py and run-t9b-probe2-live.json first; model everything on them. YOU MAY EDIT ONLY these NEW files: scripts/ringer/environment_narration/opens_container_probe.py, scripts/ringer/environment_narration/opens_probe/cases.jsonl, scripts/ringer/environment_narration/opens_probe/cases.lock.json, scripts/ringer/environment_narration/make_t9c_probe_run_manifest.py, scripts/ringer/environment_narration/run-t9c-probe-live.json, tests/test_opens_container_probe.py. Import shared helpers from under_question_probe.py rather than editing it. "
+    "CORPUS (`--build-cases` writes cases.jsonl and the lock from literal lists and the grid rule in the script; `--check-corpus` verifies the lock): copy the lists exactly from the preregistration. Grid rule (fixed here): verbs [Inspect, Examine, Search, Check, Look at] (index i), containers [cabinet, chest, locker, toolbox] (index j); under word = ['under','beneath','underneath','below'][(i+j) % 4]; bare command `<Verb> the <container>.` (verb 'Look at' -> `Look at the <container>.`); under command `<Verb> <underword> the <container>.` except verb 'Look at' -> `Look <underword> the <container>.`; inside command `<Verb> inside the <container>.` except verb 'Look at' -> `Look inside the <container>.`. 60 grid cases, each asked BOTH questions (`opens_container` and `searches_underneath`), with expected: opens_container False for bare and under, True for inside; searches_underneath False for bare and inside, True for under. Other lists (each case asks `opens_container` only, expected as the preregistration says): 20 opening positives (expected True), 22 non-opening negatives (False), 3 reported phrases (expected null, `reported: true`), and the 7 regression cases (Open, Pull out, Look inside the drawer true; Inspect, Examine, Search, Close the drawer false; kind `regression`). Case fields {id, command, thing, question, expected, group, kind}; ids g-b01.., g-u01.., g-i01.., o01.., n01.., x01.., r1.. . "
+    "RUN (`--dry-run` prints the request count for 2 samples: 344; `--run --confirm` refuses without `--confirm`, default `--max-calls 344`, stops on a quota code, 429, auth failure or the cap and records the stop reason, writes rows with every raw score): reuse the product Jev client the way under_question_probe.py does for each question (`opens_container(ask, command, thing)` and `searches_underneath(ask, command, thing)` from storygame/runtime/jev_questions.py). "
+    "REPORT (`--report`) prints every score and these gates, with `probe gate: PASS` only if all pass: J1 zero `opens_container` true among the 80 samples of the bare and under grid commands (with the one-sided 95% Wilson bound); J1b at least 36 of 40 `opens_container` true on the inside grid samples (list every miss by case id and verb); J2 `searches_underneath` at least 36 of 40 false on bare, at least 36 of 40 true on under, at least 36 of 40 false on inside (list misses); J3 at least 36 of 40 opening-positive samples true (list misses); J4 zero true among the 44 non-opening-negative samples (list them); R all 6 true-labelled regression samples true and all 8 false-labelled false (list misses); nulls counted separately and never true; the 3 reported phrases printed with scores and no gate. "
+    "RUNNER MANIFEST: `make_t9c_probe_run_manifest.py` WRITES `run-t9c-probe-live.json`, modelled on make_t9b_probe2_run_manifest.py (same runner rules: COMMAND 1 exactly once, foreground, never rerun, edit nothing, no credential, no commit; load .env the way that manifest does) with COMMAND 1 = `opens_container_probe.py --run --confirm --max-calls 344 --max-usd 0.01 --out bench/results/environment-narration/t9c-open/probe/rows.json` and COMMAND 2 = `--report` to `.../probe/report.md`; the check asserts both non-empty, a stop reason or exactly 344 rows, `probe gate` in the report, no credential value in either output. Workdir `/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9c-probe`. "
+    "TESTS (tests/test_opens_container_probe.py; stub the client, no network): a) corpus counts: 60 grid cases (20 bare, 20 under, 20 inside), 20 opening, 22 non-opening, 3 reported, 7 regression; unique ids; b) every command in the opening, non-opening, reported and regression lists occurs in the preregistration file, and none of the opening, non-opening and reported commands occurs in the T9b probe case files (under_probe/cases.jsonl, under_probe_v2/cases.jsonl; the regression cases are exempt; the grid is checked only against the generator rule); c) the lock matches and a modified case fails `--check-corpus`; d) the dry run prints 344 and calls nothing; e) a stubbed run writes 344 rows (grid cases produce two rows per sample, one per question) and honours the call cap with a stop reason; f) the report passes on all-correct stub answers, fails J1 on one true bare-grid answer, fails J1b with 5 missed inside samples, fails J2, J3 (5 missed), J4 (one true) and R (one miss) individually, and counts nulls as not true; g) the generated manifest equals the committed JSON and mentions `--max-calls 344`. Commands in the corpus are imperative with a direct object (docs/player-input-guide.md). Keep each test short."
+)
+
+CHECK = "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && "
+PYTEST = "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov "
+NOVOCAB = "(kristin|laptop|truck|drawer|michelle|memory card|passenger seat|cabinet|locker)"
+
+
+def ruff(files: str) -> str:
+    return f".venv/bin/python -m ruff check {files} && .venv/bin/python -m ruff format --check {files}"
+
+
+def pytest_check(out: str, files: str) -> str:
+    return (
+        f"{PYTEST}{files} 2>&1 | tee /tmp/{out}.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/{out}.out && "
+    )
+
+
+REWORD_CHECK = (
+    CHECK
+    + pytest_check("t9c-r1-reword", "tests/test_jev_questions.py")
+    + "grep -q 'Opening it, pulling it open or out, or going inside, in, into, or through it counts.' storygame/runtime/jev_questions.py && "
+    + "grep -q 'does not say inside, in, into, or through' storygame/runtime/jev_questions.py && "
+    + f"! git diff -U0 -- storygame/runtime/jev_questions.py | grep -E '^\\+' | grep -iE '{NOVOCAB}|\\bre\\.(compile|search|match|sub|findall|fullmatch)' && "
+    + ruff("storygame/runtime/jev_questions.py tests/test_jev_questions.py")
+)
+
+OPEN_CHECK = (
+    CHECK
+    + pytest_check("t9c-r1-open", "tests/test_observation_open_step.py tests/test_observation_enforcement.py")
+    + "grep -q engine_opened storygame/runtime/capture.py && grep -q focus_open_state_after storygame/runtime/capture.py && "
+    + f"! git diff -U0 -- storygame/runtime/capture.py | grep -E '^\\+' | grep -iE '{NOVOCAB}|\\bre\\.(compile|search|match|sub|findall|fullmatch)' && "
+    + ruff("storygame/runtime/capture.py tests/test_observation_open_step.py")
+)
+
+REPEAT_CHECK = (
+    CHECK
+    + pytest_check(
+        "t9c-r1-repeat",
+        "tests/test_repeatable_knowledge.py tests/test_candidate_matcher.py tests/test_reveal_eligibility.py tests/test_reveal_universe.py tests/test_semantic_reveal_match.py tests/test_established_reveal_match.py tests/test_knowledge_projection.py",
+    )
+    + "grep -q repeatable storygame/story_package/models.py && "
+    + f"! git diff -U0 -- storygame/runtime/candidate_matcher.py storygame/runtime/reveal_eligibility.py storygame/story_package/models.py | grep -E '^\\+' | grep -iE '{NOVOCAB}|\\bre\\.(compile|search|match|sub|findall|fullmatch)' && "
+    + ruff(
+        "storygame/story_package/models.py storygame/runtime/reveal_eligibility.py storygame/runtime/cloudflare.py storygame/runtime/candidate_matcher.py tests/test_candidate_matcher.py tests/test_repeatable_knowledge.py"
+    )
+)
+
+PROBE_FILES = f"{E}/opens_container_probe.py {E}/make_t9c_probe_run_manifest.py tests/test_opens_container_probe.py"
+PROBE_CHECK = (
+    CHECK
+    + pytest_check("t9c-r1-probe", "tests/test_opens_container_probe.py tests/test_under_question_probe.py")
+    + f".venv/bin/python {E}/opens_container_probe.py --check-corpus && "
+    + f".venv/bin/python {E}/opens_container_probe.py --dry-run | grep -q 344 && "
+    + f".venv/bin/python {E}/make_t9c_probe_run_manifest.py && "
+    + f"(cd /home/bcorfman/dev/ringer && ./ringer.py lint {REPO}/{E}/run-t9c-probe-live.json) && "
+    + ruff(PROBE_FILES)
+)
+
+
+def _task(key, spec, check, ownership, expect, verified):
+    return {
+        "key": key,
+        "task_type": "code-feature",
+        "engine": "codex",
+        "model": "gpt-5.6-luna",
+        "engine_args": ["-c", "model_reasoning_effort=high"],
+        "full_access": True,
+        "max_attempts": 2,
+        "timeout_s": 3600,
+        "check_timeout_s": 1800,
+        "ownership": ownership,
+        "expect_files": [f"{REPO}/{p}" for p in expect],
+        "spec": spec,
+        "check": check,
+        "verified": verified,
+    }
+
+
+manifest = {
+    "run_name": "grounded-environment-narration",
+    "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9c-round1",
+    "max_parallel": 4,
+    "worktrees": False,
+    "repo": REPO,
+    "tasks": [
+        _task(
+            "t9c-reword",
+            REWORD_SPEC,
+            REWORD_CHECK,
+            ["storygame/runtime/jev_questions.py", "tests/test_jev_questions.py"],
+            ["storygame/runtime/jev_questions.py"],
+            "opens_container carries the preregistered wording",
+        ),
+        _task(
+            "t9c-open-step",
+            OPEN_STEP_SPEC,
+            OPEN_CHECK,
+            ["storygame/runtime/capture.py", "tests/test_observation_open_step.py"],
+            ["tests/test_observation_open_step.py"],
+            "the engine opens a closed container on kind open and rolls it back with the turn",
+        ),
+        _task(
+            "t9c-repeatable",
+            REPEAT_SPEC,
+            REPEAT_CHECK,
+            [
+                "storygame/story_package/models.py",
+                "storygame/runtime/reveal_eligibility.py",
+                "storygame/runtime/cloudflare.py",
+                "storygame/runtime/candidate_matcher.py",
+                "tests/test_candidate_matcher.py",
+                "tests/test_repeatable_knowledge.py",
+            ],
+            ["tests/test_repeatable_knowledge.py"],
+            "a repeatable entry delivers again and the most specific full match wins",
+        ),
+        _task(
+            "t9c-probe",
+            PROBE_SPEC,
+            PROBE_CHECK,
+            [
+                f"{E}/opens_container_probe.py",
+                f"{E}/opens_probe/cases.jsonl",
+                f"{E}/opens_probe/cases.lock.json",
+                f"{E}/make_t9c_probe_run_manifest.py",
+                f"{E}/run-t9c-probe-live.json",
+                "tests/test_opens_container_probe.py",
+            ],
+            [f"{E}/run-t9c-probe-live.json", "tests/test_opens_container_probe.py"],
+            "the opens_container probe corpus, gates and runner manifest match the preregistration",
+        ),
+    ],
+}
+
+if __name__ == "__main__":
+    OUT.write_text(json.dumps(manifest, indent=2) + "\n")
