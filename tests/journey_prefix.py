@@ -89,6 +89,13 @@ def _blocked_for(preferred: tuple[str, ...]) -> set[str]:
     return blocked
 
 
+def _preferred_selection(preferred, offered, picked):
+    return next(
+        (item_id for item_id in preferred if item_id not in picked and any(c.id == item_id for c in offered)),
+        None,
+    )
+
+
 def _offered(engine: RuntimeEngine, state: RuntimeState, blocked: set[str]):
     engine._activate_pacing()
     return tuple(
@@ -112,7 +119,7 @@ def _turn(
 ) -> None:
     if offered is None:
         offered = _offered(engine, state, blocked)
-    wanted = next((item_id for item_id in preferred if any(c.id == item_id for c in offered)), None)
+    wanted = _preferred_selection(preferred, offered, picked)
     selected = wanted or _select_thorough(PLAYED, state, offered)
     provider.selected = (selected,) if selected else ()
     scene_before = state.current_scene_id
@@ -195,7 +202,7 @@ def run(preferred: tuple[str, ...] = ()) -> JourneyRun:
     for index, checkpoint in enumerate(default.checkpoints):
         state.restore_snapshot(checkpoint.snapshot)
         offered = _offered(engine, state, blocked)
-        wanted = next((item_id for item_id in preferred if any(c.id == item_id for c in offered)), None)
+        wanted = _preferred_selection(preferred, offered, checkpoint.picked)
         desired_selection = wanted or _select_thorough(PLAYED, state, offered)
         if desired_selection != checkpoint.default_selection:
             checkpoint_index = index
