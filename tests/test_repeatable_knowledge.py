@@ -13,6 +13,7 @@ from storygame.runtime.reveal_eligibility import (
     NOT_REACHABLE,
     NOT_VISIBLE,
     PREREQUISITE_MISSING,
+    SOURCE_INACTIVE,
     STORYLET_SPENT,
     explain_reveal,
 )
@@ -153,6 +154,51 @@ def test_repeatable_entry_remains_eligible_after_establishment_spending_and_sour
 
     assert result.eligible
     assert result.reason == ELIGIBLE
+
+
+def test_repeatable_entry_with_unestablished_effects_is_ineligible_when_source_is_inactive() -> None:
+    item = _item(repeatable=True)
+    state = _state(item)
+    state.active_event_ids.remove(SOURCE_ID)
+
+    result = explain_reveal(state, "player", item)
+
+    assert not result.eligible
+    assert result.reason == SOURCE_INACTIVE
+
+
+def test_repeatable_entry_with_unestablished_effects_is_ineligible_when_storylet_is_spent() -> None:
+    item = _item(repeatable=True)
+    state = _state(item)
+    state.fired_event_ids.add(SOURCE_ID)
+
+    result = explain_reveal(state, "player", item)
+
+    assert not result.eligible
+    assert result.reason == STORYLET_SPENT
+
+
+def test_repeatable_entry_is_eligible_when_another_route_established_its_effects() -> None:
+    item = _item(repeatable=True)
+    state = _state(item)
+    _establish(state)
+    state.active_event_ids.remove(SOURCE_ID)
+
+    result = explain_reveal(state, "player", item)
+
+    assert result.eligible
+    assert result.reason == ELIGIBLE
+
+
+def test_non_repeatable_entry_still_requires_an_active_source() -> None:
+    item = _item()
+    state = _state(item)
+    state.active_event_ids.remove(SOURCE_ID)
+
+    result = explain_reveal(state, "player", item)
+
+    assert not result.eligible
+    assert result.reason == SOURCE_INACTIVE
 
 
 @pytest.mark.parametrize(
