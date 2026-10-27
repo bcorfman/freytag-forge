@@ -1,0 +1,85 @@
+# ruff: noqa: E501
+"""Generate the Ringer manifest that makes the shadow verifier judge the same post-change world as the enforcement preview."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+OUT = Path(REPO) / "scripts/ringer/environment_narration/build-shadow-post-change.json"
+
+SPEC = (
+    "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. "
+    "export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). "
+    "Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. "
+    "No network, no live model call. Do not git commit. NEVER print or write any credential. NO regular expressions in new code. "
+    "No story vocabulary (no Kristin, truck, laptop, drawer, Michelle, passenger seat) in non-test code. "
+    "Write the tests FIRST, run them, confirm they fail for the right reason, then implement until they pass. "
+    "YOU MAY EDIT ONLY: storygame/runtime/capture.py, the NEW file tests/test_observation_shadow_post_change.py, and tests/test_observation_shadow.py and tests/test_observation_stale_requirement.py ONLY to change an assertion that encodes the old order (shadow verdict before the item facts are applied); say which assertion you changed and why in your final message. "
+    "Run ruff check and ruff format on your files at the end. "
+    "PROBLEM. In `WorldCapture.after_commit` (storygame/runtime/capture.py) the shadow-verifier block builds the observation context and runs the verifier BEFORE `self.provider.apply_item_facts(...)` applies the narrator's proposed world changes for the turn. "
+    "The enforcement path, `WorldCapture.preview_commit`, does it the other way round: it applies the item facts to the candidate state first and builds the context from that post-change world. "
+    "So the shadow measures a different requirement than enforcement would. A live shadow sample showed it: on a turn where the player takes a thing from a supporter, the shadow required 'the thing is on the supporter' (the place BEFORE the turn), although the narration says the player picks it up from there and the post-change world has the player holding it, where `relations_from_context` makes a mention-only relation (no place). "
+    "Six such turns were scored 0.51 to 0.61 (uncertain) and counted as would-be rejections that enforcement would not have made. "
+    "BUILD. Move the shadow-verifier block of `after_commit` so it runs AFTER the existing `try/finally` that applies the item facts (and after `apply_scene_placements` when `entered_scene`), so `self.provider._observation_context()` sees the post-change world exactly as `preview_commit` does. "
+    "Keep everything else as it is: the helper `_observation_context_for_verification(entered_scene=...)` and its stale-requirement rule (scene or area changed during the turn drops the requirement; the record keeps outcome 'no_relations', requests 0, `requirement_dropped`); `self.shadow_verifier.begin_turn()` before `verify`; the exception handler that records outcome 'shadow_error'; the record keys and their order of insertion into `record`; the memo replay (`item_facts_call_memo`) around the apply. "
+    "The shadow request count per turn must not change (one `verify` call for a turn with relations, none otherwise) and no new billed call may be added. Do not call apply twice. Do not change `preview_commit`, `_moved_unrelated`, the verifier, item_facts.py, engine.py, observation.py, docs, worker or data. "
+    "If the shadow block cannot move without changing something outside capture.py, STOP and say exactly what blocks it in your final message instead of working around it. "
+    "TESTS (new file tests/test_observation_shadow_post_change.py; reuse helpers from tests/test_observation_shadow.py, tests/test_observation_enforcement.py, tests/test_observation_preview.py and tests/test_observation_stale_requirement.py; use at least one synthetic story with different vocabulary). Cover: "
+    "a) a turn where the narrator's proposed item facts move a visible thing out of a supporter the player is looking at and into the protagonist's hands: the relations the shadow verifier is asked about (capture them by wrapping/monkeypatching `storygame.runtime.capture.relations_from_context` in the test, as the bench harness does) contain that thing as a mention-only relation (place None) and NOT with the old supporter as its place; "
+    "b) parity: for the same candidate turn, with the shadow verifier and the enforcing verifier both set, the relations passed to the verifier in `preview_commit` and in the shadow block of `after_commit` are equal (same tuple); "
+    "c) an ordinary turn where nothing the player can see moves: the shadow relations are the same as before the change and the record is unchanged (same keys, one verifier ask); "
+    "d) a stale turn (new scene, and separately an area change) still drops the requirement with zero asks and `requirement_dropped` set; "
+    "e) the shadow is still recorded when the item facts produce issues or refusals (apply returns issues); and a shadow ask that raises is still recorded as 'shadow_error' and does not change the turn's other record fields; "
+    "f) default path with shadow and enforcement both off: no asks, record unchanged. "
+    "Keep each test short and independent."
+)
+
+CHECK = (
+    "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && "
+    "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov "
+    "tests/test_observation_shadow_post_change.py tests/test_observation_stale_requirement.py tests/test_observation_shadow.py tests/test_observation_preview.py tests/test_observation_enforcement.py "
+    "tests/test_observation_resume.py tests/test_observation_mode.py tests/test_observation_prompt.py tests/test_observation_context.py tests/test_observation_verifier.py "
+    "tests/test_runtime_capture.py tests/test_3c_world_capture_wiring.py tests/test_3c_item_facts_capture.py tests/test_shadow_report.py 2>&1 | tee /tmp/shadow-post-change.out | tail -8 && "
+    "! grep -Eq '[0-9]+ (failed|error)' /tmp/shadow-post-change.out && "
+    "test -f tests/test_observation_shadow_post_change.py && "
+    "! git diff -U0 -- storygame | grep -E '^\\+' | grep -iE '(kristin|laptop|truck|drawer|michelle)|\\bre\\.(compile|search|match|sub|findall|fullmatch)' && "
+    "test -z \"$(git diff --name-only -- storygame | grep -v '^storygame/runtime/capture.py$')\" && "
+    ".venv/bin/python -m ruff check storygame/runtime/capture.py tests/test_observation_shadow_post_change.py && "
+    ".venv/bin/python -m ruff format --check storygame/runtime/capture.py tests/test_observation_shadow_post_change.py"
+)
+
+manifest = {
+    "run_name": "grounded-environment-narration",
+    "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-shadow-post-change",
+    "max_parallel": 1,
+    "worktrees": False,
+    "repo": REPO,
+    "tasks": [
+        {
+            "key": "shadow-judges-post-change-world",
+            "task_type": "code-fix",
+            "engine": "codex",
+            "model": "gpt-5.6-luna",
+            "engine_args": ["-c", "model_reasoning_effort=high"],
+            "full_access": True,
+            "max_attempts": 2,
+            "timeout_s": 3600,
+            "check_timeout_s": 1800,
+            "ownership": [
+                "storygame/runtime/capture.py",
+                "tests/test_observation_shadow_post_change.py",
+                "tests/test_observation_shadow.py",
+                "tests/test_observation_stale_requirement.py",
+            ],
+            "expect_files": [f"{REPO}/tests/test_observation_shadow_post_change.py"],
+            "spec": SPEC,
+            "check": CHECK,
+            "verified": "the shadow verifier judges the same post-change world as the enforcement preview",
+        }
+    ],
+}
+
+if __name__ == "__main__":
+    OUT.write_text(json.dumps(manifest, indent=2) + "\n")

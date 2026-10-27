@@ -445,6 +445,41 @@ class WorldCapture:
         adapter = _ask_adapter(self.ask)
         narration_prompt = dict(self.provider.last_prompt) if self.provider.last_prompt is not None else None
         observation_shadow = None
+        if preview is not None and preview.required:
+            self.provider.item_facts_call_memo = preview.memo
+        try:
+
+            def confirm(c, s, q, st, p, k):
+                if preview is not None and preview.required:
+                    return preview.memo.remember(
+                        "confirm",
+                        [c, s, q, st, p, k],
+                        lambda: same_or_part(adapter, c, s, q, st, p, k),
+                    )
+                return same_or_part(adapter, c, s, q, st, p, k)
+
+            _previous, issues = self.provider.apply_item_facts(
+                raw,
+                player_input=command,
+                story=narration,
+                confirm=confirm,
+            )
+            if entered_scene:
+                refusals = apply_scene_placements(
+                    self.provider.state.package,
+                    self.provider.state.facts,
+                    self.provider.state.current_scene_id,
+                )
+                issues = [
+                    *issues,
+                    *(
+                        f"scene placement for {refusal.item_id!r} in {refusal.scene_id!r} refused: {refusal.reason}"
+                        for refusal in refusals
+                    ),
+                ]
+        finally:
+            if preview is not None and preview.required:
+                self.provider.item_facts_call_memo = None
         if self.shadow_verifier is not None and self.provider.observation_request is not None:
             try:
                 context = self._observation_context_for_verification(entered_scene=entered_scene)
@@ -488,41 +523,6 @@ class WorldCapture:
                     "accepted": False,
                     "verdicts": [],
                 }
-        if preview is not None and preview.required:
-            self.provider.item_facts_call_memo = preview.memo
-        try:
-
-            def confirm(c, s, q, st, p, k):
-                if preview is not None and preview.required:
-                    return preview.memo.remember(
-                        "confirm",
-                        [c, s, q, st, p, k],
-                        lambda: same_or_part(adapter, c, s, q, st, p, k),
-                    )
-                return same_or_part(adapter, c, s, q, st, p, k)
-
-            _previous, issues = self.provider.apply_item_facts(
-                raw,
-                player_input=command,
-                story=narration,
-                confirm=confirm,
-            )
-            if entered_scene:
-                refusals = apply_scene_placements(
-                    self.provider.state.package,
-                    self.provider.state.facts,
-                    self.provider.state.current_scene_id,
-                )
-                issues = [
-                    *issues,
-                    *(
-                        f"scene placement for {refusal.item_id!r} in {refusal.scene_id!r} refused: {refusal.reason}"
-                        for refusal in refusals
-                    ),
-                ]
-        finally:
-            if preview is not None and preview.required:
-                self.provider.item_facts_call_memo = None
         things_given = (
             set(self.last_before.get("things_given", ()))
             if self.last_before is not None
