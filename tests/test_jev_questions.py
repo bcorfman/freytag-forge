@@ -170,12 +170,36 @@ def test_searches_underneath_question_uses_under_surface_wording() -> None:
 
     question = captured["searches_underneath"]
     assert question["type"] == "noul"
-    instructions = question["instructions"].lower()
-    true_criterion = question["criteria"]["true"].lower()
-    false_criterion = question["criteria"]["false"].lower()
+    assert (
+        question["instructions"] == "Decide whether the command tells the player to go under the thing. "
+        "The command must say under, underneath, beneath, below, or the underside of the thing."
+    )
+    assert (
+        question["criteria"]["true"]
+        == "The command says under, underneath, beneath, below, or the underside of the thing. "
+        "The player searches, feels, reaches, or looks there."
+    )
+    assert (
+        question["criteria"]["false"]
+        == "The command does not say under, underneath, beneath, below, or the underside. "
+        "A command that only searches, checks, examines, inspects, opens, touches, moves, carries, "
+        "or looks inside, behind, or on top of the thing is false."
+    )
 
-    for text in ("search", "feel", "reach", "look", "under", "beneath", "below"):
-        assert text in instructions
-        assert text in true_criterion
-    for text in ("looks at", "opens", "touches", "moves", "carries", "talks about", "looks inside"):
-        assert text in false_criterion
+
+def test_searches_underneath_preserves_payload_and_noul_results() -> None:
+    payload = {}
+
+    def ask_high(_state, questions):
+        payload["state"] = _state
+        payload["questions"] = questions
+        return {"searches_underneath": {"noul": 0.51}}
+
+    assert searches_underneath(ask_high, "Search under the cot.", "cot") is True
+    assert payload["state"] == {"command": "Search under the cot.", "thing": "cot"}
+
+    def ask_low(_state, _questions):
+        return {"searches_underneath": {"noul": 0.5}}
+
+    assert searches_underneath(ask_low, "Search under the cot.", "cot") is False
+    assert searches_underneath(lambda _state, _questions: {}, "Search under the cot.", "cot") is None

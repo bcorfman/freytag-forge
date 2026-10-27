@@ -1,0 +1,122 @@
+# ruff: noqa: E501
+"""Generate the Ringer build manifest for the second T9b Jev probe: reworded question, fresh frozen list, runner manifest."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+E = "scripts/ringer/environment_narration"
+OUT = Path(REPO) / E / "build-t9b-probe2.json"
+PREREG = ".plans/grounded-llm-environment-narration/t9b-probe2-prereg.md"
+
+COMMON = (
+    "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. "
+    "export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). "
+    "Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. "
+    "No network, no live model call, no billed call, never run a billed script. Do not git commit. NEVER print or write any credential. NO regular expressions in new code. "
+    "Write the tests FIRST, run them, confirm they fail for the right reason, then implement until they pass. Run ruff check and ruff format on your files at the end. "
+    "If a test in a file you do not own fails because of your change, do NOT edit that file: say which test and why in your final message. "
+    f"BACKGROUND. The first Jev probe of `searches_underneath` failed its gate (bare 'Search the drawer.' was answered true). {PREREG} (read it fully first; it fixes the new wording, the fresh phrase list, the regression set, the gates and the counts) is the second probe. "
+)
+
+WORDING_SPEC = (
+    COMMON
+    + "YOUR TASK 1: reword the question. YOU MAY EDIT ONLY: storygame/runtime/jev_questions.py (only the `searches_underneath` function body's question text) and tests/test_jev_questions.py (only the test(s) that pin the old text of this question). No story vocabulary in non-test code. "
+    "Replace the question text of `searches_underneath` with EXACTLY the three strings the preregistration gives under 'The wording change': instructions `Decide whether the command tells the player to go under the thing. The command must say under, underneath, beneath, below, or the underside of the thing.`; true `The command says under, underneath, beneath, below, or the underside of the thing. The player searches, feels, reaches, or looks there.`; false `The command does not say under, underneath, beneath, below, or the underside. A command that only searches, checks, examines, inspects, opens, touches, moves, carries, or looks inside, behind, or on top of the thing is false.` Keep the function name, signature, return type, the `noul` type, the payload keys (`command`, `thing`) and the `_answer` call exactly as they are. "
+    "TESTS: update the existing pinned-text test to assert the new three strings exactly (read the string values out of the captured question dict), and add one test that the payload still carries the command and the thing name and that a `noul` score above the threshold returns True, below returns False and a missing answer returns None."
+)
+
+PROBE_SPEC = (
+    COMMON
+    + "YOUR TASK 2: the second probe's corpus, report and runner manifest. YOU MAY EDIT ONLY: scripts/ringer/environment_narration/under_question_probe.py (extend; the default behaviour, the v1 corpus, its lock and every existing test must stay exactly as they are), tests/test_under_question_probe.py (extend only; do not weaken an assertion), and these NEW files: scripts/ringer/environment_narration/under_probe_v2/cases.jsonl, scripts/ringer/environment_narration/under_probe_v2/cases.lock.json, scripts/ringer/environment_narration/make_t9b_probe2_run_manifest.py, scripts/ringer/environment_narration/run-t9b-probe2-live.json, tests/test_under_question_probe_v2.py. "
+    "BUILD 1: a `--corpus {v1,v2}` option (default v1) on every mode of under_question_probe.py that selects the cases directory (`under_probe` or `under_probe_v2`) and its lock. v2 cases: exactly the 60 fresh cases and 4 regression cases of the preregistration, copied exactly from it, in the order of the document (positives, then negatives, then the regression set), as `{id, command, thing, expected, kind}` with kind `fresh` or `regression`; ids `v-p01..v-p24`, `v-n01..v-n36`, `v-r1..v-r4`; the two hard negatives (`Push the bunk under the window.`, `Park the truck under the tree.`) tagged `hard: true`. The thing for a negative is the object named in the command (the preregistration gives the bracketed name for positives and the regression set). Build them from a literal list inside the script (`--build-cases --corpus v2` writes the file and lock). "
+    "BUILD 2: with `--corpus v2` the dry run prints 128 requests for 2 samples; `--run --confirm` refuses without `--confirm` and defaults to `--max-calls 128`; the report prints the three gates of the preregistration and `probe gate: PASS` only when all pass: J1 zero `true` among the 72 fresh-negative samples (with the one-sided 95% Wilson bound), J2 at least 44 of 48 fresh-positive samples true (list every missed positive by case id and score), R zero `true` among the 8 regression samples (list them); nulls counted separately and never true; every score printed. The v1 report and gates stay untouched for `--corpus v1`. "
+    "BUILD 3: `make_t9b_probe2_run_manifest.py` WRITES `run-t9b-probe2-live.json`, modelled on `make_t9b_probe_run_manifest.py` / `run-t9b-probe-live.json` (read both): same runner rules (COMMAND 1 exactly once, foreground, never rerun, edit nothing, no credential, no commit) with COMMAND 1 = `under_question_probe.py --corpus v2 --run --confirm --max-calls 128 --max-usd 0.01 --out bench/results/environment-narration/t9b-scope/probe2/rows.json` (load .env the way the v1 manifest does) and COMMAND 2 = the v2 `--report` to `.../probe2/report.md`; the check asserts both files non-empty, a stop reason or exactly 128 rows, `probe gate` in the report, and no credential value in either output. Workdir `/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9b-probe2`. "
+    "TESTS (tests/test_under_question_probe_v2.py; stub the client, no network): a) the v2 corpus has 24 fresh positives, 36 fresh negatives and 4 regression cases (expected false), unique ids, the two hard negatives tagged; b) every v2 command string occurs in the preregistration file and NONE occurs in the v1 cases file; c) the v2 lock matches and a modified case fails `--check-corpus --corpus v2`; d) the v2 dry run prints 128 and calls nothing; e) a stubbed run writes 128 rows and honours the call cap with a stop reason; f) the v2 report passes on all-correct stub answers, fails J1 on one true fresh negative, fails J2 with 5 missed positive samples, fails R on one true regression sample, counts nulls as not true; g) the v1 corpus, lock and `--check-corpus` (default) are byte-identical to before (compare against the committed v1 files' hashes read at test time from the lock); h) the generated manifest equals the committed JSON and mentions `--corpus v2`, `--max-calls 128` and `128`. Keep each test short."
+)
+
+CHECK = "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && "
+
+WORDING_CHECK = (
+    CHECK
+    + "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_jev_questions.py tests/test_observation_under_scope.py tests/test_observation_mode.py 2>&1 | tee /tmp/t9b-p2-a.out | tail -6 && "
+    "! grep -Eq '[0-9]+ (failed|error)' /tmp/t9b-p2-a.out && "
+    "grep -q 'The command must say under, underneath, beneath, below, or the underside of the thing.' storygame/runtime/jev_questions.py && "
+    "test -z \"$(git diff --name-only -- storygame | grep -v '^storygame/runtime/jev_questions.py$')\" && "
+    "! git diff -U0 -- storygame | grep -E '^\\+' | grep -iE '(kristin|laptop|truck|drawer|michelle|memory card|passenger seat)|\\bre\\.(compile|search|match|sub|findall|fullmatch)' && "
+    ".venv/bin/python -m ruff check storygame/runtime/jev_questions.py tests/test_jev_questions.py && "
+    ".venv/bin/python -m ruff format --check storygame/runtime/jev_questions.py tests/test_jev_questions.py"
+)
+
+PROBE_CHECK = (
+    CHECK
+    + "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_under_question_probe_v2.py tests/test_under_question_probe.py 2>&1 | tee /tmp/t9b-p2-b.out | tail -6 && "
+    "! grep -Eq '[0-9]+ (failed|error)' /tmp/t9b-p2-b.out && "
+    ".venv/bin/python scripts/ringer/environment_narration/under_question_probe.py --check-corpus && "
+    ".venv/bin/python scripts/ringer/environment_narration/under_question_probe.py --check-corpus --corpus v2 && "
+    ".venv/bin/python scripts/ringer/environment_narration/under_question_probe.py --dry-run --corpus v2 | grep -q 128 && "
+    ".venv/bin/python scripts/ringer/environment_narration/make_t9b_probe2_run_manifest.py && "
+    "(cd /home/bcorfman/dev/ringer && ./ringer.py lint /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/run-t9b-probe2-live.json) && "
+    'test -z "$(git status --porcelain -- storygame scripts/ringer/environment_narration/under_probe | head -1)" && '
+    ".venv/bin/python -m ruff check scripts/ringer/environment_narration/under_question_probe.py scripts/ringer/environment_narration/make_t9b_probe2_run_manifest.py tests/test_under_question_probe.py tests/test_under_question_probe_v2.py && "
+    ".venv/bin/python -m ruff format --check scripts/ringer/environment_narration/under_question_probe.py scripts/ringer/environment_narration/make_t9b_probe2_run_manifest.py tests/test_under_question_probe.py tests/test_under_question_probe_v2.py"
+)
+
+
+def _task(key, spec, check, ownership, expect, verified):
+    return {
+        "key": key,
+        "task_type": "code-feature",
+        "engine": "codex",
+        "model": "gpt-5.6-luna",
+        "engine_args": ["-c", "model_reasoning_effort=high"],
+        "full_access": True,
+        "max_attempts": 2,
+        "timeout_s": 3600,
+        "check_timeout_s": 1800,
+        "ownership": ownership,
+        "expect_files": [f"{REPO}/{p}" for p in expect],
+        "spec": spec,
+        "check": check,
+        "verified": verified,
+    }
+
+
+manifest = {
+    "run_name": "grounded-environment-narration",
+    "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9b-probe2-build",
+    "max_parallel": 2,
+    "worktrees": False,
+    "repo": REPO,
+    "tasks": [
+        _task(
+            "t9b-reword",
+            WORDING_SPEC,
+            WORDING_CHECK,
+            ["storygame/runtime/jev_questions.py", "tests/test_jev_questions.py"],
+            ["storygame/runtime/jev_questions.py"],
+            "searches_underneath carries the preregistered wording",
+        ),
+        _task(
+            "t9b-probe2",
+            PROBE_SPEC,
+            PROBE_CHECK,
+            [
+                f"{E}/under_question_probe.py",
+                "tests/test_under_question_probe.py",
+                f"{E}/under_probe_v2/cases.jsonl",
+                f"{E}/under_probe_v2/cases.lock.json",
+                f"{E}/make_t9b_probe2_run_manifest.py",
+                f"{E}/run-t9b-probe2-live.json",
+                "tests/test_under_question_probe_v2.py",
+            ],
+            [f"{E}/run-t9b-probe2-live.json", "tests/test_under_question_probe_v2.py"],
+            "the second probe's fresh corpus, gates and runner manifest match the preregistration",
+        ),
+    ],
+}
+
+if __name__ == "__main__":
+    OUT.write_text(json.dumps(manifest, indent=2) + "\n")

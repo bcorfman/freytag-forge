@@ -1,0 +1,64 @@
+{"id":"v-p01","command":"Feel under the cabinet.","thing":"cabinet","expected":true,"kind":"fresh"}
+{"id":"v-p02","command":"Search under the cot.","thing":"cot","expected":true,"kind":"fresh"}
+{"id":"v-p03","command":"Look under the dashboard.","thing":"dashboard","expected":true,"kind":"fresh"}
+{"id":"v-p04","command":"Check beneath the rug.","thing":"rug","expected":true,"kind":"fresh"}
+{"id":"v-p05","command":"Reach under the sofa.","thing":"sofa","expected":true,"kind":"fresh"}
+{"id":"v-p06","command":"Feel beneath the mattress.","thing":"mattress","expected":true,"kind":"fresh"}
+{"id":"v-p07","command":"Run my fingers under the counter.","thing":"counter","expected":true,"kind":"fresh"}
+{"id":"v-p08","command":"Peer beneath the console.","thing":"console","expected":true,"kind":"fresh"}
+{"id":"v-p09","command":"Sweep my hand under the bunk.","thing":"bunk","expected":true,"kind":"fresh"}
+{"id":"v-p10","command":"Search underneath the cabinet.","thing":"cabinet","expected":true,"kind":"fresh"}
+{"id":"v-p11","command":"Look underneath the truck.","thing":"truck","expected":true,"kind":"fresh"}
+{"id":"v-p12","command":"Check below the desk.","thing":"desk","expected":true,"kind":"fresh"}
+{"id":"v-p13","command":"Feel along the underside of the table.","thing":"table","expected":true,"kind":"fresh"}
+{"id":"v-p14","command":"Examine the underside of the drawer.","thing":"drawer","expected":true,"kind":"fresh"}
+{"id":"v-p15","command":"Inspect beneath the workbench.","thing":"workbench","expected":true,"kind":"fresh"}
+{"id":"v-p16","command":"Examine under the seat.","thing":"seat","expected":true,"kind":"fresh"}
+{"id":"v-p17","command":"Search beneath the pillow.","thing":"pillow","expected":true,"kind":"fresh"}
+{"id":"v-p18","command":"Reach below the shelf.","thing":"shelf","expected":true,"kind":"fresh"}
+{"id":"v-p19","command":"Look under the lantern.","thing":"lantern","expected":true,"kind":"fresh"}
+{"id":"v-p20","command":"Feel beneath the bench.","thing":"bench","expected":true,"kind":"fresh"}
+{"id":"v-p21","command":"Search under the driver's seat.","thing":"driver's seat","expected":true,"kind":"fresh"}
+{"id":"v-p22","command":"Slide my arm under the bed.","thing":"bed","expected":true,"kind":"fresh"}
+{"id":"v-p23","command":"Check under the cooler.","thing":"cooler","expected":true,"kind":"fresh"}
+{"id":"v-p24","command":"Peek beneath the tarp.","thing":"tarp","expected":true,"kind":"fresh"}
+{"id":"v-n01","command":"Search the cabinet.","thing":"cabinet","expected":false,"kind":"fresh"}
+{"id":"v-n02","command":"Check the cot.","thing":"cot","expected":false,"kind":"fresh"}
+{"id":"v-n03","command":"Examine the dashboard.","thing":"dashboard","expected":false,"kind":"fresh"}
+{"id":"v-n04","command":"Inspect the rug.","thing":"rug","expected":false,"kind":"fresh"}
+{"id":"v-n05","command":"Search the sofa.","thing":"sofa","expected":false,"kind":"fresh"}
+{"id":"v-n06","command":"Check the mattress.","thing":"mattress","expected":false,"kind":"fresh"}
+{"id":"v-n07","command":"Examine the counter.","thing":"counter","expected":false,"kind":"fresh"}
+{"id":"v-n08","command":"Search the console.","thing":"console","expected":false,"kind":"fresh"}
+{"id":"v-n09","command":"Search the bunk.","thing":"bunk","expected":false,"kind":"fresh"}
+{"id":"v-n10","command":"Check the truck.","thing":"truck","expected":false,"kind":"fresh"}
+{"id":"v-n11","command":"Examine the desk.","thing":"desk","expected":false,"kind":"fresh"}
+{"id":"v-n12","command":"Inspect the seat.","thing":"seat","expected":false,"kind":"fresh"}
+{"id":"v-n13","command":"Search the cooler.","thing":"cooler","expected":false,"kind":"fresh"}
+{"id":"v-n14","command":"Check the lantern.","thing":"lantern","expected":false,"kind":"fresh"}
+{"id":"v-n15","command":"Look inside the cabinet.","thing":"cabinet","expected":false,"kind":"fresh"}
+{"id":"v-n16","command":"Search inside the console.","thing":"console","expected":false,"kind":"fresh"}
+{"id":"v-n17","command":"Look behind the sofa.","thing":"sofa","expected":false,"kind":"fresh"}
+{"id":"v-n18","command":"Check behind the dashboard.","thing":"dashboard","expected":false,"kind":"fresh"}
+{"id":"v-n19","command":"Look on top of the cabinet.","thing":"cabinet","expected":false,"kind":"fresh"}
+{"id":"v-n20","command":"Feel along the top of the counter.","thing":"counter","expected":false,"kind":"fresh"}
+{"id":"v-n21","command":"Check the back of the bunk.","thing":"bunk","expected":false,"kind":"fresh"}
+{"id":"v-n22","command":"Reach into the cooler.","thing":"cooler","expected":false,"kind":"fresh"}
+{"id":"v-n23","command":"Open the cabinet.","thing":"cabinet","expected":false,"kind":"fresh"}
+{"id":"v-n24","command":"Sit on the mattress.","thing":"mattress","expected":false,"kind":"fresh"}
+{"id":"v-n25","command":"Vacuum the rug.","thing":"rug","expected":false,"kind":"fresh"}
+{"id":"v-n26","command":"Carry the cot.","thing":"cot","expected":false,"kind":"fresh"}
+{"id":"v-n27","command":"Push the sofa against the wall.","thing":"sofa","expected":false,"kind":"fresh"}
+{"id":"v-n28","command":"Close the cooler.","thing":"cooler","expected":false,"kind":"fresh"}
+{"id":"v-n29","command":"Push the bunk under the window.","thing":"bunk","expected":false,"kind":"fresh","hard":true}
+{"id":"v-n30","command":"Park the truck under the tree.","thing":"truck","expected":false,"kind":"fresh","hard":true}
+{"id":"v-n31","command":"Wipe the counter.","thing":"counter","expected":false,"kind":"fresh"}
+{"id":"v-n32","command":"Read the label on the tarp.","thing":"tarp","expected":false,"kind":"fresh"}
+{"id":"v-n33","command":"Take the lantern.","thing":"lantern","expected":false,"kind":"fresh"}
+{"id":"v-n34","command":"Sit on the bench.","thing":"bench","expected":false,"kind":"fresh"}
+{"id":"v-n35","command":"Shake out the pillow.","thing":"pillow","expected":false,"kind":"fresh"}
+{"id":"v-n36","command":"Polish the lantern.","thing":"lantern","expected":false,"kind":"fresh"}
+{"id":"v-r1","command":"Search the drawer.","thing":"drawer","expected":false,"kind":"regression"}
+{"id":"v-r2","command":"Search the passenger seat.","thing":"passenger seat","expected":false,"kind":"regression"}
+{"id":"v-r3","command":"Search the workbench.","thing":"workbench","expected":false,"kind":"regression"}
+{"id":"v-r4","command":"Search the table.","thing":"table","expected":false,"kind":"regression"}

@@ -18,8 +18,12 @@ REPO_DIR = Path(__file__).resolve().parents[3]
 PROBE_DIR = Path(__file__).with_name("under_probe")
 CASES_PATH = PROBE_DIR / "cases.jsonl"
 LOCK_PATH = PROBE_DIR / "cases.lock.json"
+V2_PROBE_DIR = Path(__file__).with_name("under_probe_v2")
+V2_CASES_PATH = V2_PROBE_DIR / "cases.jsonl"
+V2_LOCK_PATH = V2_PROBE_DIR / "cases.lock.json"
 DEFAULT_SAMPLES = 2
 DEFAULT_MAX_CALLS = 98
+V2_DEFAULT_MAX_CALLS = 128
 DEFAULT_MAX_USD = 0.01
 COST_PER_MILLION_INPUT_TOKENS = 0.042
 WILSON_Z = 1.6448536269514722
@@ -76,6 +80,129 @@ FROZEN_CASES = [
     {"id": "u-n29", "command": "Read the label on the locker.", "thing": "locker", "expected": False},
 ]
 
+V2_FROZEN_CASES = [
+    {"id": "v-p01", "command": "Feel under the cabinet.", "thing": "cabinet", "expected": True, "kind": "fresh"},
+    {"id": "v-p02", "command": "Search under the cot.", "thing": "cot", "expected": True, "kind": "fresh"},
+    {"id": "v-p03", "command": "Look under the dashboard.", "thing": "dashboard", "expected": True, "kind": "fresh"},
+    {"id": "v-p04", "command": "Check beneath the rug.", "thing": "rug", "expected": True, "kind": "fresh"},
+    {"id": "v-p05", "command": "Reach under the sofa.", "thing": "sofa", "expected": True, "kind": "fresh"},
+    {"id": "v-p06", "command": "Feel beneath the mattress.", "thing": "mattress", "expected": True, "kind": "fresh"},
+    {
+        "id": "v-p07",
+        "command": "Run my fingers under the counter.",
+        "thing": "counter",
+        "expected": True,
+        "kind": "fresh",
+    },
+    {"id": "v-p08", "command": "Peer beneath the console.", "thing": "console", "expected": True, "kind": "fresh"},
+    {"id": "v-p09", "command": "Sweep my hand under the bunk.", "thing": "bunk", "expected": True, "kind": "fresh"},
+    {"id": "v-p10", "command": "Search underneath the cabinet.", "thing": "cabinet", "expected": True, "kind": "fresh"},
+    {"id": "v-p11", "command": "Look underneath the truck.", "thing": "truck", "expected": True, "kind": "fresh"},
+    {"id": "v-p12", "command": "Check below the desk.", "thing": "desk", "expected": True, "kind": "fresh"},
+    {
+        "id": "v-p13",
+        "command": "Feel along the underside of the table.",
+        "thing": "table",
+        "expected": True,
+        "kind": "fresh",
+    },
+    {
+        "id": "v-p14",
+        "command": "Examine the underside of the drawer.",
+        "thing": "drawer",
+        "expected": True,
+        "kind": "fresh",
+    },
+    {
+        "id": "v-p15",
+        "command": "Inspect beneath the workbench.",
+        "thing": "workbench",
+        "expected": True,
+        "kind": "fresh",
+    },
+    {"id": "v-p16", "command": "Examine under the seat.", "thing": "seat", "expected": True, "kind": "fresh"},
+    {"id": "v-p17", "command": "Search beneath the pillow.", "thing": "pillow", "expected": True, "kind": "fresh"},
+    {"id": "v-p18", "command": "Reach below the shelf.", "thing": "shelf", "expected": True, "kind": "fresh"},
+    {"id": "v-p19", "command": "Look under the lantern.", "thing": "lantern", "expected": True, "kind": "fresh"},
+    {"id": "v-p20", "command": "Feel beneath the bench.", "thing": "bench", "expected": True, "kind": "fresh"},
+    {
+        "id": "v-p21",
+        "command": "Search under the driver's seat.",
+        "thing": "driver's seat",
+        "expected": True,
+        "kind": "fresh",
+    },
+    {"id": "v-p22", "command": "Slide my arm under the bed.", "thing": "bed", "expected": True, "kind": "fresh"},
+    {"id": "v-p23", "command": "Check under the cooler.", "thing": "cooler", "expected": True, "kind": "fresh"},
+    {"id": "v-p24", "command": "Peek beneath the tarp.", "thing": "tarp", "expected": True, "kind": "fresh"},
+    {"id": "v-n01", "command": "Search the cabinet.", "thing": "cabinet", "expected": False, "kind": "fresh"},
+    {"id": "v-n02", "command": "Check the cot.", "thing": "cot", "expected": False, "kind": "fresh"},
+    {"id": "v-n03", "command": "Examine the dashboard.", "thing": "dashboard", "expected": False, "kind": "fresh"},
+    {"id": "v-n04", "command": "Inspect the rug.", "thing": "rug", "expected": False, "kind": "fresh"},
+    {"id": "v-n05", "command": "Search the sofa.", "thing": "sofa", "expected": False, "kind": "fresh"},
+    {"id": "v-n06", "command": "Check the mattress.", "thing": "mattress", "expected": False, "kind": "fresh"},
+    {"id": "v-n07", "command": "Examine the counter.", "thing": "counter", "expected": False, "kind": "fresh"},
+    {"id": "v-n08", "command": "Search the console.", "thing": "console", "expected": False, "kind": "fresh"},
+    {"id": "v-n09", "command": "Search the bunk.", "thing": "bunk", "expected": False, "kind": "fresh"},
+    {"id": "v-n10", "command": "Check the truck.", "thing": "truck", "expected": False, "kind": "fresh"},
+    {"id": "v-n11", "command": "Examine the desk.", "thing": "desk", "expected": False, "kind": "fresh"},
+    {"id": "v-n12", "command": "Inspect the seat.", "thing": "seat", "expected": False, "kind": "fresh"},
+    {"id": "v-n13", "command": "Search the cooler.", "thing": "cooler", "expected": False, "kind": "fresh"},
+    {"id": "v-n14", "command": "Check the lantern.", "thing": "lantern", "expected": False, "kind": "fresh"},
+    {"id": "v-n15", "command": "Look inside the cabinet.", "thing": "cabinet", "expected": False, "kind": "fresh"},
+    {"id": "v-n16", "command": "Search inside the console.", "thing": "console", "expected": False, "kind": "fresh"},
+    {"id": "v-n17", "command": "Look behind the sofa.", "thing": "sofa", "expected": False, "kind": "fresh"},
+    {"id": "v-n18", "command": "Check behind the dashboard.", "thing": "dashboard", "expected": False, "kind": "fresh"},
+    {"id": "v-n19", "command": "Look on top of the cabinet.", "thing": "cabinet", "expected": False, "kind": "fresh"},
+    {
+        "id": "v-n20",
+        "command": "Feel along the top of the counter.",
+        "thing": "counter",
+        "expected": False,
+        "kind": "fresh",
+    },
+    {"id": "v-n21", "command": "Check the back of the bunk.", "thing": "bunk", "expected": False, "kind": "fresh"},
+    {"id": "v-n22", "command": "Reach into the cooler.", "thing": "cooler", "expected": False, "kind": "fresh"},
+    {"id": "v-n23", "command": "Open the cabinet.", "thing": "cabinet", "expected": False, "kind": "fresh"},
+    {"id": "v-n24", "command": "Sit on the mattress.", "thing": "mattress", "expected": False, "kind": "fresh"},
+    {"id": "v-n25", "command": "Vacuum the rug.", "thing": "rug", "expected": False, "kind": "fresh"},
+    {"id": "v-n26", "command": "Carry the cot.", "thing": "cot", "expected": False, "kind": "fresh"},
+    {"id": "v-n27", "command": "Push the sofa against the wall.", "thing": "sofa", "expected": False, "kind": "fresh"},
+    {"id": "v-n28", "command": "Close the cooler.", "thing": "cooler", "expected": False, "kind": "fresh"},
+    {
+        "id": "v-n29",
+        "command": "Push the bunk under the window.",
+        "thing": "bunk",
+        "expected": False,
+        "kind": "fresh",
+        "hard": True,
+    },
+    {
+        "id": "v-n30",
+        "command": "Park the truck under the tree.",
+        "thing": "truck",
+        "expected": False,
+        "kind": "fresh",
+        "hard": True,
+    },
+    {"id": "v-n31", "command": "Wipe the counter.", "thing": "counter", "expected": False, "kind": "fresh"},
+    {"id": "v-n32", "command": "Read the label on the tarp.", "thing": "tarp", "expected": False, "kind": "fresh"},
+    {"id": "v-n33", "command": "Take the lantern.", "thing": "lantern", "expected": False, "kind": "fresh"},
+    {"id": "v-n34", "command": "Sit on the bench.", "thing": "bench", "expected": False, "kind": "fresh"},
+    {"id": "v-n35", "command": "Shake out the pillow.", "thing": "pillow", "expected": False, "kind": "fresh"},
+    {"id": "v-n36", "command": "Polish the lantern.", "thing": "lantern", "expected": False, "kind": "fresh"},
+    {"id": "v-r1", "command": "Search the drawer.", "thing": "drawer", "expected": False, "kind": "regression"},
+    {
+        "id": "v-r2",
+        "command": "Search the passenger seat.",
+        "thing": "passenger seat",
+        "expected": False,
+        "kind": "regression",
+    },
+    {"id": "v-r3", "command": "Search the workbench.", "thing": "workbench", "expected": False, "kind": "regression"},
+    {"id": "v-r4", "command": "Search the table.", "thing": "table", "expected": False, "kind": "regression"},
+]
+
 
 def _credential_values() -> tuple[str, ...]:
     names = (
@@ -111,20 +238,41 @@ def _cases_bytes(cases: list[dict[str, Any]] | tuple[dict[str, Any], ...]) -> by
     return "".join(json.dumps(case, ensure_ascii=False, separators=(",", ":")) + "\n" for case in cases).encode("utf-8")
 
 
-def build_cases() -> list[dict[str, Any]]:
+def _corpus_paths(corpus: str) -> tuple[Path, Path]:
+    if corpus == "v1":
+        return CASES_PATH, LOCK_PATH
+    if corpus == "v2":
+        return V2_CASES_PATH, V2_LOCK_PATH
+    raise ValueError(f"unknown corpus: {corpus}")
+
+
+def _corpus_literal(corpus: str) -> list[dict[str, Any]]:
+    if corpus == "v1":
+        return FROZEN_CASES
+    if corpus == "v2":
+        return V2_FROZEN_CASES
+    raise ValueError(f"unknown corpus: {corpus}")
+
+
+def _corpus_max_calls(corpus: str) -> int:
+    return DEFAULT_MAX_CALLS if corpus == "v1" else V2_DEFAULT_MAX_CALLS
+
+
+def build_cases(corpus: str = "v1") -> list[dict[str, Any]]:
     """Return the preregistered cases from the literal frozen list."""
-    return [dict(case) for case in FROZEN_CASES]
+    return [dict(case) for case in _corpus_literal(corpus)]
 
 
-def _write_cases(cases: list[dict[str, Any]]) -> None:
+def _write_cases(cases: list[dict[str, Any]], corpus: str = "v1") -> None:
     data = _cases_bytes(cases)
-    CASES_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CASES_PATH.write_bytes(data)
-    _write_json(LOCK_PATH, {"sha256": _sha256(data), "count": len(cases)})
+    cases_path, lock_path = _corpus_paths(corpus)
+    cases_path.parent.mkdir(parents=True, exist_ok=True)
+    cases_path.write_bytes(data)
+    _write_json(lock_path, {"sha256": _sha256(data), "count": len(cases)})
 
 
-def _load_cases(path: Path | None = None) -> list[dict[str, Any]]:
-    source = CASES_PATH if path is None else path
+def _load_cases(path: Path | None = None, corpus: str = "v1") -> list[dict[str, Any]]:
+    source = _corpus_paths(corpus)[0] if path is None else path
     try:
         lines = source.read_text(encoding="utf-8").splitlines()
     except FileNotFoundError as error:
@@ -145,9 +293,15 @@ def _load_cases(path: Path | None = None) -> list[dict[str, Any]]:
     return cases
 
 
-def _lock_matches(cases: list[dict[str, Any]], cases_path: Path | None = None, lock_path: Path | None = None) -> bool:
-    source = CASES_PATH if cases_path is None else cases_path
-    lock_source = LOCK_PATH if lock_path is None else lock_path
+def _lock_matches(
+    cases: list[dict[str, Any]],
+    cases_path: Path | None = None,
+    lock_path: Path | None = None,
+    corpus: str = "v1",
+) -> bool:
+    default_cases_path, default_lock_path = _corpus_paths(corpus)
+    source = default_cases_path if cases_path is None else cases_path
+    lock_source = default_lock_path if lock_path is None else lock_path
     try:
         lock = json.loads(lock_source.read_text(encoding="utf-8"))
         data = source.read_bytes()
@@ -382,12 +536,124 @@ def _report_text(rows: list[dict[str, Any]], rows_sha256: str) -> tuple[str, boo
     return "\n".join(lines), j1 and j2
 
 
-def report_rows(rows_path: Path, out: Path) -> int:
+def _v2_row_score(row: dict[str, Any]) -> object:
+    return row.get("score") if "score" in row else row.get("noul")
+
+
+def _report_text_v2(rows: list[dict[str, Any]], rows_sha256: str) -> tuple[str, bool]:
+    frozen = {case["id"]: case for case in V2_FROZEN_CASES}
+    by_case: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        by_case.setdefault(str(row.get("case_id")), []).append(row)
+
+    fresh_positive_rows = [
+        row
+        for row in rows
+        if frozen.get(row.get("case_id"), {}).get("kind") == "fresh"
+        and frozen.get(row.get("case_id"), {}).get("expected") is True
+    ]
+    fresh_negative_rows = [
+        row
+        for row in rows
+        if frozen.get(row.get("case_id"), {}).get("kind") == "fresh"
+        and frozen.get(row.get("case_id"), {}).get("expected") is False
+    ]
+    regression_rows = [row for row in rows if frozen.get(row.get("case_id"), {}).get("kind") == "regression"]
+    fresh_negative_true = sum(row.get("returned") is True for row in fresh_negative_rows)
+    fresh_positive_true = sum(row.get("returned") is True for row in fresh_positive_rows)
+    regression_true = sum(row.get("returned") is True for row in regression_rows)
+    null_answers = sum(row.get("returned") is None for row in rows)
+    j1 = len(fresh_negative_rows) == 72 and fresh_negative_true == 0
+    j2 = len(fresh_positive_rows) == 48 and fresh_positive_true >= 44
+    regression_gate = len(regression_rows) == 8 and regression_true == 0
+    bound = _wilson_upper(fresh_negative_true, len(fresh_negative_rows))
+    bound_text = "n/a" if bound is None else f"{bound * 100:.2f}%"
+
+    lines = [
+        "# Under question probe v2 report",
+        "",
+        f"Rows sha256: {rows_sha256}",
+        f"Rows rendered: {len(rows)}",
+        f"null answers: {null_answers}",
+        "",
+        "## Per-case results",
+        "",
+        "| Case | Command | Expected | Sample answers and scores |",
+        "| --- | --- | ---: | --- |",
+    ]
+    for case in V2_FROZEN_CASES:
+        case_rows = sorted(by_case.get(case["id"], []), key=lambda row: row.get("sample", 0))
+        samples_text = (
+            ", ".join(
+                f"{row.get('sample')}: {_display(row.get('returned'))} (score {_display(_v2_row_score(row))})"
+                for row in case_rows
+            )
+            or "—"
+        )
+        lines.append(f"| {case['id']} | {case['command']} | {_display(case['expected'])} | {samples_text} |")
+
+    missed_positive = [row for row in fresh_positive_rows if row.get("returned") is not True]
+    true_fresh_negative = [row for row in fresh_negative_rows if row.get("returned") is True]
+    true_regression = [row for row in regression_rows if row.get("returned") is True]
+    lines.extend(
+        [
+            "",
+            "## Gates",
+            "",
+            (
+                f"- J1: {'PASS' if j1 else 'FAIL'} — true answers among fresh-negative samples: "
+                f"{fresh_negative_true} of 72; one-sided 95% Wilson upper bound: {bound_text}"
+            ),
+            (
+                f"- J2: {'PASS' if j2 else 'FAIL'} — true answers among fresh-positive samples: "
+                f"{fresh_positive_true} of 48 (required at least 44)"
+            ),
+            f"- R: {'PASS' if regression_gate else 'FAIL'} — true answers among regression samples: "
+            f"{regression_true} of 8",
+            "",
+            "### Missed positives",
+            "",
+        ]
+    )
+    if missed_positive:
+        lines.extend(
+            f"- {row.get('case_id')} sample {row.get('sample')}: score {_display(_v2_row_score(row))}"
+            for row in missed_positive
+        )
+    else:
+        lines.append("- none")
+    lines.extend(["", "### True fresh negatives", ""])
+    if true_fresh_negative:
+        lines.extend(
+            f"- {row.get('case_id')} sample {row.get('sample')}: score {_display(_v2_row_score(row))}"
+            for row in true_fresh_negative
+        )
+    else:
+        lines.append("- none")
+    lines.extend(["", "### True regression answers", ""])
+    if true_regression:
+        lines.extend(
+            f"- {row.get('case_id')} sample {row.get('sample')}: score {_display(_v2_row_score(row))}"
+            for row in true_regression
+        )
+    else:
+        lines.append("- none")
+    passed = j1 and j2 and regression_gate
+    lines.extend(["", f"probe gate: {'PASS' if passed else 'FAIL'}", ""])
+    return "\n".join(lines), passed
+
+
+def report_rows(rows_path: Path, out: Path, corpus: str = "v1") -> int:
     document = json.loads(rows_path.read_text(encoding="utf-8"))
     rows = document.get("rows")
     if not isinstance(rows, list):
         raise ValueError("rows file has no rows list")
-    report, passed = _report_text(rows, _sha256(rows_path.read_bytes()))
+    if corpus == "v1":
+        report, passed = _report_text(rows, _sha256(rows_path.read_bytes()))
+    elif corpus == "v2":
+        report, passed = _report_text_v2(rows, _sha256(rows_path.read_bytes()))
+    else:
+        raise ValueError(f"unknown corpus: {corpus}")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(_redact(report), encoding="utf-8")
     return 0 if passed else 1
@@ -398,10 +664,10 @@ def _error(message: str) -> int:
     return 2
 
 
-def _check_corpus() -> int:
-    cases = _load_cases()
-    literal_matches = cases == FROZEN_CASES
-    lock_matches = _lock_matches(cases)
+def _check_corpus(corpus: str = "v1") -> int:
+    cases = _load_cases(corpus=corpus)
+    literal_matches = cases == _corpus_literal(corpus)
+    lock_matches = _lock_matches(cases, corpus=corpus)
     print(f"case count: {len(cases)}")
     print(f"corpus literal: {'PASS' if literal_matches else 'FAIL'}")
     print(f"corpus lock: {'PASS' if lock_matches else 'FAIL'}")
@@ -416,9 +682,10 @@ def _parser() -> argparse.ArgumentParser:
     modes.add_argument("--dry-run", action="store_true")
     modes.add_argument("--run", action="store_true")
     modes.add_argument("--report", action="store_true")
+    parser.add_argument("--corpus", choices=("v1", "v2"), default="v1")
     parser.add_argument("--samples", type=int, default=DEFAULT_SAMPLES)
     parser.add_argument("--confirm", action="store_true")
-    parser.add_argument("--max-calls", type=int, default=DEFAULT_MAX_CALLS)
+    parser.add_argument("--max-calls", type=int)
     parser.add_argument("--max-usd", type=float, default=DEFAULT_MAX_USD)
     parser.add_argument("--rows", type=Path)
     parser.add_argument("--out", type=Path)
@@ -429,17 +696,17 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.build_cases:
-            cases = build_cases()
-            _write_cases(cases)
-            print(f"built {len(cases)} cases at {_redact(str(CASES_PATH))}")
+            cases = build_cases(args.corpus)
+            _write_cases(cases, args.corpus)
+            print(f"built {len(cases)} cases at {_redact(str(_corpus_paths(args.corpus)[0]))}")
             return 0
         if args.check_corpus:
-            return _check_corpus()
+            return _check_corpus(args.corpus)
         if args.report:
             if args.rows is None or args.out is None:
                 return _error("--report requires --rows and --out")
-            return report_rows(args.rows, args.out)
-        cases = _load_cases()
+            return report_rows(args.rows, args.out, corpus=args.corpus)
+        cases = _load_cases(corpus=args.corpus)
         if args.dry_run:
             _print_dry_run(cases, args.samples)
             return 0
@@ -447,19 +714,20 @@ def main(argv: list[str] | None = None) -> int:
             return _error("run mode requires --confirm")
         if args.out is None:
             return _error("run mode requires --out")
-        if args.max_calls < 1:
+        max_calls = args.max_calls if args.max_calls is not None else _corpus_max_calls(args.corpus)
+        if max_calls < 1:
             return _error("--max-calls must be at least 1")
         ceiling = _ceiling(cases, args.samples)
         if ceiling > args.max_usd:
             return _error(f"USD ceiling ${ceiling:.6f} exceeds --max-usd ${args.max_usd:.6f}")
-        if not _lock_matches(cases):
+        if not _lock_matches(cases, corpus=args.corpus):
             return _error("run mode requires a matching lock")
         if not os.environ.get("CLOUDFLARE_WORKER_URL", "").strip():
             return _error("run mode requires CLOUDFLARE_WORKER_URL")
         if not os.environ.get("CLOUDFLARE_WORKER_TOKEN", "").strip():
             return _error("run mode requires CLOUDFLARE_WORKER_TOKEN")
         client = JevClient.from_environment()
-        document = run_cases(cases, samples=args.samples, max_calls=args.max_calls, out=args.out, client=client)
+        document = run_cases(cases, samples=args.samples, max_calls=max_calls, out=args.out, client=client)
         print(f"{len(document['rows'])} rows written to {_redact(str(args.out))}")
         if document.get("stop_reason"):
             print(f"stop reason: {_redact(str(document['stop_reason']))}")
