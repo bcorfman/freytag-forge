@@ -15,6 +15,11 @@ CARD_THING = "memory_card"
 PLAYER_THING = "kristin"
 SHUFFLE_SEED = 917263
 TAG_NAMES = ("refind", "invented_object", "leak", "wrong_custody", "unrequested_move")
+LOOK_GROUP_COMMANDS = ("inspect the drawer", "examine the drawer", "search the drawer", "check the drawer")
+LOOK_INSIDE_COMMAND = "look inside the drawer"
+LOOK_UNDER_COMMAND = "look under the drawer"
+FEEL_UNDER_COMMAND = "feel under the drawer"
+NUDGE_HANDOFF_ID = "k_sl_1a_f_r2"
 
 
 def _load_json(path: str) -> Any:
@@ -53,11 +58,14 @@ def _scope_rows(rows: list[dict[str, Any]]) -> bool:
 def _card_prose_turns(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     result = {}
     for replicate_index, replicate in enumerate(rows):
-        if _route(replicate) != "observe_under_first":
-            continue
         for turn_index, turn in enumerate(replicate.get("turns", ())):
-            if turn_index > 1:
+            if _route(replicate) == "observe_under_first" and turn_index > 1:
                 break
+            is_route_c = _route(replicate) == "observe_look_inside_under"
+            if is_route_c and _normalise_command(turn.get("input")) != LOOK_UNDER_COMMAND:
+                continue
+            if _route(replicate) not in ("observe_under_first", "observe_look_inside_under"):
+                continue
             before = turn.get("places_before")
             after = turn.get("places_after")
             before_place = before.get(CARD_THING) if isinstance(before, dict) else None
@@ -208,6 +216,10 @@ def _labels_template(rows: list[dict[str, Any]]) -> str:
         if scope_rows:
             entry["underside_search"] = None
             entry["card_found_in_prose"] = None
+        if scope_rows:
+            entry["gap_restated"] = None
+            entry["contents_shown"] = None
+            entry["command_opens"] = None
         template[turn_id] = entry
     return json.dumps(template, indent=2) + "\n"
 
@@ -238,6 +250,7 @@ def _missing_labels(rows: list[dict[str, Any]], labels: Any) -> list[str]:
     labels = labels if isinstance(labels, dict) else {}
     missing = []
     card_prose_turns = _card_prose_turns(rows)
+    t9c_scope = _t9c_scope(rows)
     for turn_id, turn in _turns(rows):
         if not _is_observation(turn):
             pass
@@ -258,6 +271,15 @@ def _missing_labels(rows: list[dict[str, Any]], labels: Any) -> list[str]:
         card_prose_label = _label_entry(labels, turn_id).get("card_found_in_prose")
         if turn_id in card_prose_turns and _bool_label(card_prose_label) is None:
             missing.append(f"{turn_id} card_found_in_prose")
+        if t9c_scope and _is_observation(turn):
+            entry = _label_entry(labels, turn_id)
+            if _bool_label(entry.get("command_opens")) is None:
+                missing.append(f"{turn_id} command_opens")
+            if _committed(turn):
+                if _bool_label(entry.get("gap_restated")) is None:
+                    missing.append(f"{turn_id} gap_restated")
+                if _bool_label(entry.get("contents_shown")) is None:
+                    missing.append(f"{turn_id} contents_shown")
     return missing
 
 
@@ -335,6 +357,44 @@ def _route_names(rows: list[dict[str, Any]]) -> list[str]:
     return result
 
 
+def _t9c_scope(rows: list[dict[str, Any]]) -> bool:
+    return "observe_look_inside_under" in _route_names(rows)
+
+
+def _look_group(turn: dict[str, Any]) -> bool:
+    return _normalise_command(turn.get("input")) in LOOK_GROUP_COMMANDS
+
+
+def _look_group_turns(rows: list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
+    return [(turn_id, turn) for turn_id, turn in _turns(rows) if _look_group(turn)]
+
+
+def _committed(turn: dict[str, Any]) -> bool:
+    return not _is_failed(turn) and turn.get("narration") is not None
+
+
+def _card_found_turn(
+    replicate_index: int, replicate: dict[str, Any], command: str
+) -> tuple[str, dict[str, Any]] | None:
+    for turn_index, turn in enumerate(replicate.get("turns", ())):
+        if _normalise_command(turn.get("input")) != command:
+            continue
+        before = turn.get("places_before")
+        after = turn.get("places_after")
+        before_place = before.get(CARD_THING) if isinstance(before, dict) else None
+        after_place = after.get(CARD_THING) if isinstance(after, dict) else None
+        if after_place == PLAYER_THING and before_place != PLAYER_THING:
+            return _turn_id(replicate_index, turn_index), turn
+    return None
+
+
+def _card_was_mentioned_before(replicate: dict[str, Any], found_turn_index: int) -> bool:
+    for turn in replicate.get("turns", ())[:found_turn_index]:
+        if _committed(turn) and "card" in str(turn.get("narration", "")).casefold():
+            return True
+    return False
+
+
 def _scope_s1(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list[str], int]:
     under_turns = [(turn_id, turn) for turn_id, turn in _turns(rows) if _request_kind(turn) == "under"]
     violations = [
@@ -408,6 +468,156 @@ def _scope_s3(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, 
     else:
         status = "PASS" if passed / len(replicates) >= 0.8 else "FAIL"
     return status, passed, len(replicates), details, leak_count
+
+
+def _t9c_n1(rows: list[dict[str, Any]]) -> tuple[str, int, int, list[str]]:
+    look_turns = _look_group_turns(rows)
+    failures = []
+    for turn_id, turn in look_turns:
+        if not _committed(turn):
+            reason = "unsuccessful" if _is_failed(turn) else "no committed narration"
+            failures.append(f"{turn_id} ({reason})")
+    status = "PASS" if len(look_turns) - len(failures) >= 72 else "FAIL"
+    return status, len(look_turns) - len(failures), len(look_turns), failures
+
+
+def _t9c_n2(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, int, int, int, int, list[str], list[str]]:
+    look_turns = _look_group_turns(rows)
+    misses = []
+    for turn_id, turn in look_turns:
+        if _bool_label(_label_entry(labels, turn_id).get("gap_restated")) is not True:
+            misses.append(f"{turn_id} (handoff_id={turn.get('handoff_id')})")
+    route_c_turns = [
+        (turn_id, turn)
+        for replicate_index, replicate in enumerate(rows)
+        if _route(replicate) == "observe_look_inside_under"
+        for turn_index, turn in enumerate(replicate.get("turns", ()))
+        if _look_group(turn)
+        for turn_id in (_turn_id(replicate_index, turn_index),)
+    ]
+    route_c_misses = [
+        f"{turn_id} (handoff_id={turn.get('handoff_id')})"
+        for turn_id, turn in route_c_turns
+        if _bool_label(_label_entry(labels, turn_id).get("gap_restated")) is not True
+    ]
+    pooled_passed = len(look_turns) - len(misses)
+    route_c_passed = len(route_c_turns) - len(route_c_misses)
+    status = "PASS" if pooled_passed >= 72 and route_c_passed >= 58 else "FAIL"
+    return (
+        status,
+        pooled_passed,
+        len(look_turns),
+        route_c_passed,
+        len(route_c_turns),
+        misses,
+        route_c_misses,
+    )
+
+
+def _t9c_n3(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list[str]]:
+    failures = []
+    route_c_replicates = [
+        (index, replicate) for index, replicate in enumerate(rows) if _route(replicate) == "observe_look_inside_under"
+    ]
+    route_b_replicates = [
+        (index, replicate) for index, replicate in enumerate(rows) if _route(replicate) == "observe_under_first"
+    ]
+    route_c_passed = 0
+    for replicate_index, replicate in route_c_replicates:
+        found = _card_found_turn(replicate_index, replicate, LOOK_UNDER_COMMAND)
+        if found is None:
+            failures.append(f"r{replicate_index} (look under did not hold the card)")
+            continue
+        turn_id, turn = found
+        entry = _label_entry(labels, turn_id)
+        if _bool_label(entry.get("card_found_in_prose")) is not True:
+            failures.append(f"{turn_id} (card_found_in_prose)")
+            continue
+        if _bool_label(entry.get("gap_restated")) is True:
+            failures.append(f"{turn_id} (gap_restated on card find)")
+            continue
+        if turn.get("handoff_id") == NUDGE_HANDOFF_ID:
+            failures.append(f"{turn_id} (nudge handoff_id={turn.get('handoff_id')})")
+            continue
+        found_index = replicate.get("turns", ()).index(turn)
+        if _card_was_mentioned_before(replicate, found_index):
+            failures.append(f"{turn_id} (card mentioned before found)")
+            continue
+        route_c_passed += 1
+    route_b_passed = 0
+    for replicate_index, replicate in route_b_replicates:
+        found = _card_found_turn(replicate_index, replicate, FEEL_UNDER_COMMAND)
+        if found is None:
+            failures.append(f"r{replicate_index} (first feel under did not hold the card)")
+            continue
+        turn_id, turn = found
+        entry = _label_entry(labels, turn_id)
+        if _bool_label(entry.get("card_found_in_prose")) is not True:
+            failures.append(f"{turn_id} (card_found_in_prose)")
+            continue
+        if _bool_label(entry.get("gap_restated")) is True:
+            failures.append(f"{turn_id} (gap_restated on card find)")
+            continue
+        if turn.get("handoff_id") == NUDGE_HANDOFF_ID:
+            failures.append(f"{turn_id} (nudge handoff_id={turn.get('handoff_id')})")
+            continue
+        found_index = replicate.get("turns", ()).index(turn)
+        if _card_was_mentioned_before(replicate, found_index):
+            failures.append(f"{turn_id} (card mentioned before found)")
+            continue
+        route_b_passed += 1
+    route_c_ok = not route_c_replicates or route_c_passed >= 14
+    route_b_ok = not route_b_replicates or route_b_passed >= 4
+    if not route_c_replicates and not route_b_replicates:
+        return "INCONCLUSIVE", failures
+    return ("PASS" if route_c_ok and route_b_ok else "FAIL"), failures
+
+
+def _t9c_n4(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, int, int, list[str]]:
+    turns = [
+        (turn_id, turn)
+        for replicate_index, replicate in enumerate(rows)
+        if _route(replicate) == "observe_look_inside_under"
+        for turn_index, turn in enumerate(replicate.get("turns", ()))
+        if _normalise_command(turn.get("input")) == LOOK_INSIDE_COMMAND
+        for turn_id in (_turn_id(replicate_index, turn_index),)
+    ]
+    failures = []
+    for turn_id, turn in turns:
+        reasons = []
+        if not _committed(turn):
+            reasons.append("unsuccessful")
+        if turn.get("focus_open_state_committed") != "open":
+            reasons.append("closed after commit")
+        if _bool_label(_label_entry(labels, turn_id).get("contents_shown")) is not True:
+            reasons.append("contents_shown false")
+        if reasons:
+            failures.append(f"{turn_id} ({'; '.join(reasons)})")
+    status = "PASS" if len(turns) - len(failures) >= 14 else "FAIL"
+    return status, len(turns) - len(failures), len(turns), failures
+
+
+def _t9c_n5(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list[str]]:
+    failures = []
+    for turn_id, turn in _turns(rows):
+        command_opens = _bool_label(_label_entry(labels, turn_id).get("command_opens"))
+        if turn.get("engine_opened") is True and command_opens is not True:
+            failures.append(f"{turn_id} (engine_opened with command_opens false)")
+        if turn.get("engine_opened") is True and _look_group(turn):
+            failures.append(f"{turn_id} (engine_opened on look-group turn)")
+    return ("PASS" if not failures else "FAIL"), failures
+
+
+def _t9c_n6(rows: list[dict[str, Any]]) -> tuple[str, list[str]]:
+    failures = []
+    for turn_id, turn in _turns(rows):
+        if not _is_failed(turn) or turn.get("engine_opened") is not True:
+            continue
+        if turn.get("focus_open_state_committed") != "closed":
+            failures.append(f"{turn_id} (open state not rolled back)")
+        if turn.get("places_after") != turn.get("places_before"):
+            failures.append(f"{turn_id} (places not rolled back)")
+    return ("PASS" if not failures else "FAIL"), failures
 
 
 def _prompts(replicate: dict[str, Any]) -> list[dict[str, Any]]:
@@ -595,6 +805,22 @@ def _join(
     s1_status, s1_violations, s1_under_count = _scope_s1(rows, labels)
     s2_status, s2_under_count, s2_relations_count = _scope_s2(rows)
     s3_status, s3_passed, s3_replicates, s3_details, s3_leaks = _scope_s3(rows, labels)
+    t9c_scope = _t9c_scope(rows)
+    if t9c_scope:
+        n1_status, n1_committed, n1_total, n1_failures = _t9c_n1(rows)
+        (
+            n2_status,
+            n2_gap,
+            n2_total,
+            n2_route_c_gap,
+            n2_route_c_total,
+            n2_failures,
+            n2_route_c_failures,
+        ) = _t9c_n2(rows, labels)
+        n3_status, n3_failures = _t9c_n3(rows, labels)
+        n4_status, n4_open, n4_total, n4_failures = _t9c_n4(rows, labels)
+        n5_status, n5_failures = _t9c_n5(rows, labels)
+        n6_status, n6_failures = _t9c_n6(rows)
     s2_under_text = "n/a" if s2_under_count is None else str(s2_under_count)
     s2_relations_text = "n/a" if s2_relations_count is None else str(s2_relations_count)
     s2_note = "; n/a on other routes, ignored for verdict" if route_b else ""
@@ -692,6 +918,26 @@ def _join(
         )
     lines.extend(s3_details)
 
+    if t9c_scope:
+        lines.extend(
+            [
+                "",
+                "## T9c clauses",
+                "",
+                f"N1: {n1_status} ({n1_committed}/{n1_total} look-group turns committed; "
+                f"failures: {', '.join(n1_failures) if n1_failures else 'none'})",
+                f"N2: {n2_status} ({n2_gap}/{n2_total} pooled gap labels; "
+                f"route C {n2_route_c_gap}/{n2_route_c_total}; "
+                f"misses: {', '.join(n2_failures) if n2_failures else 'none'}; "
+                f"route C misses: {', '.join(n2_route_c_failures) if n2_route_c_failures else 'none'})",
+                f"N3: {n3_status} (failures: {', '.join(n3_failures) if n3_failures else 'none'})",
+                f"N4: {n4_status} ({n4_open}/{n4_total} route C look-inside turns pass; "
+                f"failures: {', '.join(n4_failures) if n4_failures else 'none'})",
+                f"N5: {n5_status} (failures: {', '.join(n5_failures) if n5_failures else 'none'})",
+                f"N6: {n6_status} (failures: {', '.join(n6_failures) if n6_failures else 'none'})",
+            ]
+        )
+
     lines.extend(
         [
             "",
@@ -709,12 +955,50 @@ def _join(
             *_scope_information(rows, labels),
         ]
     )
+    if t9c_scope:
+        look_turns = _look_group_turns(rows)
+        kind_counts = {kind: 0 for kind in ("look", "open", "under")}
+        for _, turn in look_turns:
+            kind = _request_kind(turn)
+            if kind in kind_counts:
+                kind_counts[kind] += 1
+        kind_total = len(look_turns)
+        kind_text = ", ".join(f"{kind}={kind_counts[kind]}/{kind_total}" for kind in ("look", "open", "under"))
+        narrator_opened = [
+            turn_id
+            for turn_id, turn in look_turns
+            if turn.get("focus_open_state_committed") == "open" and turn.get("engine_opened") is not True
+        ]
+        narrator_closed = [
+            turn_id
+            for turn_id, turn in _turns(rows)
+            if _committed(turn)
+            and turn.get("engine_opened") is True
+            and turn.get("focus_open_state_committed") == "closed"
+        ]
+        handoff_counts = {}
+        for _, turn in _turns(rows):
+            handoff_id = str(turn.get("handoff_id"))
+            handoff_counts[handoff_id] = handoff_counts.get(handoff_id, 0) + 1
+        handoff_text = ", ".join(f"{handoff_id}={count}" for handoff_id, count in sorted(handoff_counts.items()))
+        lines.extend(
+            [
+                f"look-group request kinds: {kind_text}",
+                f"narrator-opened look-group turns: {', '.join(narrator_opened) if narrator_opened else 'none'}",
+                f"narrator-closed-after-engine-open turns: {', '.join(narrator_closed) if narrator_closed else 'none'}",
+                f"handoff outcomes: {handoff_text if handoff_text else 'none'}",
+            ]
+        )
     overall = (
         "PASS"
         if all(
             status == "PASS" for status in (clause_one, clause_two, clause_three, clause_four, clause_five, clause_six)
         )
         and clause_seven in ("PASS", "INCONCLUSIVE")
+        and (
+            not t9c_scope
+            or all(status == "PASS" for status in (n1_status, n2_status, n3_status, n4_status, n5_status, n6_status))
+        )
         else "FAIL"
     )
     if route_b:

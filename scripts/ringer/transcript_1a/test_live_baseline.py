@@ -213,6 +213,65 @@ def test_observe_route_has_exact_inputs() -> None:
     )
 
 
+def test_observe_look_inside_under_route_has_exact_inputs() -> None:
+    module_spec = importlib.util.spec_from_file_location("live_baseline", SCRIPT)
+    module = importlib.util.module_from_spec(module_spec)
+    assert module_spec.loader is not None
+    module_spec.loader.exec_module(module)
+    assert module.ROUTES["observe_look_inside_under"] == (
+        "inspect the drawer",
+        "examine the drawer",
+        "search the drawer",
+        "check the drawer",
+        "look inside the drawer",
+        "look under the drawer",
+    )
+
+
+def test_new_turn_fields_have_defaults_when_capture_record_is_absent() -> None:
+    module_spec = importlib.util.spec_from_file_location("live_baseline", SCRIPT)
+    module = importlib.util.module_from_spec(module_spec)
+    assert module_spec.loader is not None
+    module_spec.loader.exec_module(module)
+    capture = SimpleNamespace(last_before=None, provider=SimpleNamespace(observation_request=None))
+    assert module._turn_telemetry(capture, SimpleNamespace()) == {
+        "engine_opened": False,
+        "focus_open_state_after": None,
+        "focus_open_state_committed": None,
+        "handoff_id": None,
+        "delivered_text": None,
+    }
+
+
+def test_new_turn_fields_are_written_on_stubbed_turn(tmp_path: Path) -> None:
+    out = tmp_path / "telemetry"
+    subprocess.run(
+        [
+            str(PYTHON),
+            str(SCRIPT),
+            "--dry-run",
+            "--route",
+            "observe_look_inside_under",
+            "--replicates",
+            "1",
+            "--turns",
+            "1",
+            "--out",
+            str(out),
+        ],
+        check=True,
+    )
+    rows = json.loads((out / "rows.json").read_text())
+    turn = rows[0]["turns"][0]
+    assert turn["engine_opened"] is False
+    assert turn["focus_open_state_after"] is None
+    assert turn["focus_open_state_committed"] is None
+    assert turn["handoff_id"] == "k_sl_1a_f_r2"
+    assert turn["delivered_text"] == (
+        "The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
+    )
+
+
 def test_shadow_restores_relations_wrapper_when_run_raises(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     module_spec = importlib.util.spec_from_file_location("live_baseline", SCRIPT)
     module = importlib.util.module_from_spec(module_spec)

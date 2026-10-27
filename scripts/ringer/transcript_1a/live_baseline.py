@@ -102,6 +102,14 @@ ROUTES = {
         "inspect the drawer",
         "pull out the drawer",
     ),
+    "observe_look_inside_under": (
+        "inspect the drawer",
+        "examine the drawer",
+        "search the drawer",
+        "check the drawer",
+        "look inside the drawer",
+        "look under the drawer",
+    ),
 }
 TRACKED = (
     "kristin",
@@ -148,6 +156,7 @@ class _LiveResponse:
         self._counter = counter
         self.status = getattr(response, "status", 200)
         self.headers = getattr(response, "headers", {})
+        counter.inspect_status(self.status)
         counter.inspect(str(self.headers))
 
     def read(self, *args: object, **kwargs: object) -> bytes:
@@ -202,6 +211,12 @@ class CallCounter:
                 self.stop_reason = code
                 raise QuotaExceeded(code)
 
+    def inspect_status(self, status: object) -> None:
+        if status == 429:
+            self.stop_reason = "HTTP_429"
+        elif isinstance(status, int) and 500 <= status <= 599:
+            self.stop_reason = "HTTP_5XX"
+
     def dry_urlopen(self, request: object, timeout: float | None = None, **_kwargs: object) -> _Response:
         self.before_call()
         self.capture_prompt(request)
@@ -224,6 +239,7 @@ class CallCounter:
         try:
             response = urlopen(request, timeout=timeout, **kwargs)
         except urllib.error.HTTPError as error:
+            self.inspect_status(error.code)
             quota_error = None
             try:
                 self.inspect(str(error.headers))
@@ -239,7 +255,7 @@ class CallCounter:
                     self.inspect(body.decode(errors="replace"))
                 except QuotaExceeded as exc:
                     quota_error = exc
-            if quota_error is not None:
+            if quota_error is not None or self.stop_reason is not None:
                 raise error
             raise
         return _LiveResponse(response, self)
@@ -314,6 +330,43 @@ def _observation_request(capture: Any, state: Any) -> dict[str, str | None] | No
     world = world_for(state.package, state.facts)
     focus = world.name(request.focus) if request.focus is not None else None
     return {"kind": request.kind, "focus": focus}
+
+
+def _committed_focus_open_state(capture: Any, state: Any) -> str | None:
+    request = getattr(getattr(capture, "provider", None), "observation_request", None)
+    focus_id = getattr(request, "focus", None)
+    if focus_id is None:
+        return None
+    from storygame.runtime.world_model import world_for
+
+    world = world_for(state.package, state.facts)
+    if not world.is_a(focus_id, "container"):
+        return None
+    value = world.axis_values(focus_id).get("open")
+    return value if value in {"open", "closed"} else None
+
+
+def _turn_telemetry(capture: Any, state: Any) -> dict[str, Any]:
+    before = getattr(capture, "last_before", None)
+    before_record = before if isinstance(before, dict) else {}
+    provider = getattr(capture, "provider", None)
+    handoff = getattr(provider, "authored_handoff", None)
+    candidate = getattr(handoff, "candidate", None)
+    handoff_id = getattr(candidate, "id", None)
+    delivered_text = getattr(handoff, "delivery_text", None) if handoff_id is not None else None
+    if handoff_id is None:
+        selection = getattr(provider, "last_reveal_selection", None)
+        if isinstance(selection, dict) and selection.get("outcome") in {"exact_match", "semantic_match"}:
+            matched = selection.get("matched")
+            if isinstance(matched, str):
+                handoff_id = matched
+    return {
+        "engine_opened": bool(before_record.get("engine_opened", False)),
+        "focus_open_state_after": before_record.get("focus_open_state_after"),
+        "focus_open_state_committed": _committed_focus_open_state(capture, state),
+        "handoff_id": handoff_id,
+        "delivered_text": delivered_text if isinstance(delivered_text, str) else None,
+    }
 
 
 def _fresh_after(capture: Any, previous_after: object) -> dict[str, Any] | None:
@@ -479,6 +532,7 @@ def _replicate(
             "error": error,
             "notes": [] if getattr(capture, "last_before", None) is not None else ["capture step field unavailable"],
         }
+        row.update(_turn_telemetry(capture, state))
         if shadow:
             observation_shadow, observation_request = _shadow_observation_values(
                 capture, state, previous_after, previous_request
