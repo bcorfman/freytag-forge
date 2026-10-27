@@ -261,6 +261,10 @@ def _prompts(counter: CallCounter) -> list[dict[str, str]]:
     return list(counter.prompts)
 
 
+def _narration_attempts(counter: CallCounter) -> int:
+    return sum(prompt["system"].startswith("You are the narrator") for prompt in counter.prompts)
+
+
 def _route_inputs(route: str, turns: int | None = None) -> tuple[str, ...]:
     inputs = ROUTES[route]
     return inputs if turns is None else inputs[:turns]
@@ -305,20 +309,33 @@ def _observation_request(capture: Any, state: Any) -> dict[str, str | None] | No
     return {"kind": request.kind, "focus": focus}
 
 
+def _fresh_after(capture: Any, previous_after: object) -> dict[str, Any] | None:
+    after = getattr(capture, "last_after", None)
+    if after is previous_after or not isinstance(after, dict):
+        return None
+    return after
+
+
 def _shadow_observation_values(
     capture: Any,
     state: Any,
     previous_after: object,
     previous_request: object,
 ) -> tuple[Any, dict[str, str | None] | None]:
-    after = getattr(capture, "last_after", None)
-    observation_shadow = after.get("observation_shadow") if isinstance(after, dict) else None
-    if after is previous_after:
-        observation_shadow = None
+    after = _fresh_after(capture, previous_after)
+    observation_shadow = after.get("observation_shadow") if after is not None else None
     observation_request = _observation_request(capture, state)
     if previous_request is not None and capture.provider.observation_request is previous_request:
         observation_request = None
     return observation_shadow, observation_request
+
+
+def _enforcement_observation_value(capture: Any, previous_after: object) -> dict[str, Any] | None:
+    after = _fresh_after(capture, previous_after)
+    if after is None:
+        return None
+    values = {key: after[key] for key in ("observation_preview", "observation_diverged") if key in after}
+    return values or None
 
 
 def _stop_exception(counter: CallCounter) -> CallCapExceeded | QuotaExceeded | None:
@@ -338,6 +355,7 @@ def _replicate(
     on_turn: Any = None,
     shadow: bool = False,
     relation_calls: list[tuple[Any, ...]] | None = None,
+    enforce: bool = False,
 ) -> dict[str, Any]:
     from storygame.runtime.capture import WorldCapture, build_capture_provider
     from storygame.runtime.engine import RuntimeEngine
@@ -353,6 +371,19 @@ def _replicate(
         from storygame.runtime.observation_verifier import ObservationVerifier
 
         capture.shadow_verifier = ObservationVerifier(capture_ask)
+    verifier_requests = [0]
+    if enforce:
+        from storygame.runtime.observation_verifier import ObservationVerifier
+
+        capture.enforcing_verifier = ObservationVerifier(capture_ask)
+        verify = capture.enforcing_verifier.verify
+
+        def counted_verify(narration: str, relations: object):
+            report = verify(narration, relations)
+            verifier_requests[0] += report.requests
+            return report
+
+        capture.enforcing_verifier.verify = counted_verify
     engine = RuntimeEngine(state, provider, capture=capture)
     counter.prompts.clear()
     counter.responses.clear()
@@ -373,9 +404,11 @@ def _replicate(
         counter.responses.clear()
         before = _places(state)
         fired_before = set(state.fired_event_ids)
-        if shadow:
+        if shadow or enforce:
             previous_after = getattr(capture, "last_after", None)
+        if shadow:
             previous_request = capture.provider.observation_request
+        verifier_requests[0] = 0
         error = None
         try:
             result = engine.turn(command)
@@ -421,6 +454,10 @@ def _replicate(
                 _observation_relations(relation_calls) if relation_calls is not None else None
             )
             row["observation_request"] = observation_request
+        if enforce:
+            row["observation_enforce"] = _enforcement_observation_value(capture, previous_after)
+            row["narration_attempts"] = _narration_attempts(counter)
+            row["verifier_requests"] = verifier_requests[0]
         record.setdefault("turns", []).append(row)
         if on_turn is not None:
             on_turn()
@@ -441,6 +478,7 @@ def _summary(
     package: Any,
     out: Path,
     shadow: bool = False,
+    enforce: bool = False,
 ) -> dict[str, Any]:
     completed = sum(len(row.get("turns", ())) == len(inputs) for row in rows)
     errors = sum(1 for row in rows for turn in row.get("turns", ()) if turn.get("error"))
@@ -465,6 +503,7 @@ def _summary(
         "real_calls": counter.real_calls,
         "inputs": list(inputs),
         "semantic_reveal_effective": os.environ.get("FREYTAG_SEMANTIC_REVEAL", "1"),
+        "enforce": enforce,
     }
     if shadow:
         summary.update(
@@ -493,7 +532,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-calls", type=int, default=200)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--confirm", action="store_true")
-    parser.add_argument("--shadow", action="store_true")
+    verifier_group = parser.add_mutually_exclusive_group()
+    verifier_group.add_argument("--shadow", action="store_true")
+    verifier_group.add_argument("--enforce", action="store_true")
     args = parser.parse_args(argv)
     if not args.dry_run and (not args.confirm or not os.environ.get("CLOUDFLARE_WORKER_URL")):
         print("live mode requires --confirm and CLOUDFLARE_WORKER_URL", file=sys.stderr)
@@ -543,6 +584,7 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 args.shadow,
                 relation_calls,
+                args.enforce,
             )
             (args.out / "rows.json").write_text(json.dumps(rows, indent=2, ensure_ascii=False, default=_json) + "\n")
     except (CallCapExceeded, QuotaExceeded) as exc:
@@ -552,7 +594,17 @@ def main(argv: list[str] | None = None) -> int:
             capture_module.relations_from_context = original_relations
         (args.out / "rows.json").write_text(json.dumps(rows, indent=2, ensure_ascii=False, default=_json) + "\n")
         summary = _summary(
-            mode, args.replicates, rows, args.route, inputs, counter, stopped, package, args.out, args.shadow
+            mode,
+            args.replicates,
+            rows,
+            args.route,
+            inputs,
+            counter,
+            stopped,
+            package,
+            args.out,
+            args.shadow,
+            args.enforce,
         )
         (args.out / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n")
     return 0
