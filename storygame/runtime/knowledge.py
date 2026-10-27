@@ -30,6 +30,7 @@ class RevealCandidate(_KnowledgeModel):
     must_convey: tuple[tuple[str, ...], ...]
     action_evidence: tuple[tuple[str, ...], ...] = Field(default=(), exclude=True)
     delivery_text: str | None = Field(default=None, exclude=True)
+    repeatable: bool = Field(default=False, exclude=True)
     action_contract: ActionContract | None = Field(default=None, exclude=True)
 
 
@@ -468,5 +469,6 @@ class KnowledgeProjector:
             must_convey=item.must_convey,
             action_evidence=item.action_evidence,
             delivery_text=item.delivery_text,
+            repeatable=item.repeatable,
             action_contract=item.action_contract,
         )

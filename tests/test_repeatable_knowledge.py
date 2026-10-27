@@ -143,6 +143,16 @@ def test_repeatable_defaults_false_and_false_entries_stay_spent_or_established_i
     assert explain_reveal(spent_state, "player", item).reason == STORYLET_SPENT
 
 
+def test_projected_repeatable_flag_is_carried_but_not_serialized() -> None:
+    projector = KnowledgeProjector()
+    ordinary = projector._candidate(_item())  # noqa: SLF001
+    repeatable = projector._candidate(_item(repeatable=True))  # noqa: SLF001
+
+    assert repeatable.repeatable is True
+    assert "repeatable" not in repeatable.model_dump()
+    assert repeatable.model_dump() == ordinary.model_dump()
+
+
 def test_repeatable_entry_remains_eligible_after_establishment_spending_and_source_inactivation() -> None:
     item = _item(repeatable=True)
     state = _state(item)
@@ -237,6 +247,7 @@ def test_repeatable_entry_survives_cloudflare_established_filter() -> None:
         must_convey=item.must_convey,
         action_evidence=item.action_evidence,
         delivery_text=item.delivery_text,
+        repeatable=item.repeatable,
     )
     provider = CloudflareTurnProvider(worker_url="", token="", state=state)
 

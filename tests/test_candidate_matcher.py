@@ -144,15 +144,46 @@ def test_ambiguous_complete_evidence_does_not_break_ties() -> None:
     assert result is None
 
 
-def test_complete_match_with_more_evidence_groups_wins() -> None:
-    two_groups = ActionEvidenceCandidate(id="two-groups", required_groups=(("recover",), ("recording",)))
-    three_groups = ActionEvidenceCandidate(
-        id="three-groups", required_groups=(("recover",), ("recording",), ("listen",))
+def test_yielding_rule_for_action_candidates() -> None:
+    non_repeatable = ActionEvidenceCandidate(
+        id="non-repeatable", required_groups=(("recover",), ("recording",)), repeatable=False
+    )
+    repeatable = ActionEvidenceCandidate(
+        id="repeatable", required_groups=(("recover",), ("recording",), ("listen",)), repeatable=True
     )
 
-    result = uniquely_matched_candidate("Recover the recording and listen to it.", (two_groups, three_groups))
+    assert uniquely_matched_candidate("Recover the recording and listen to it.", (repeatable, non_repeatable)) == (
+        non_repeatable
+    )
 
-    assert result == three_groups
+    another_non_repeatable = ActionEvidenceCandidate(
+        id="another-non-repeatable", required_groups=(("recover",), ("recording",), ("listen",)), repeatable=False
+    )
+    assert (
+        uniquely_matched_candidate("Recover the recording and listen to it.", (non_repeatable, another_non_repeatable))
+        is None
+    )
+
+    another_repeatable = ActionEvidenceCandidate(
+        id="another-repeatable", required_groups=(("recover",), ("recording",)), repeatable=True
+    )
+    assert (
+        uniquely_matched_candidate("Recover the recording and listen to it.", (repeatable, another_repeatable)) is None
+    )
+    assert uniquely_matched_candidate("Recover the recording and listen to it.", (repeatable,)) == repeatable
+
+    partial_non_repeatable = ActionEvidenceCandidate(
+        id="partial-non-repeatable",
+        required_groups=(("recover",), ("recording",), ("listen",)),
+        repeatable=False,
+    )
+    repeatable_full = ActionEvidenceCandidate(
+        id="repeatable-full", required_groups=(("recover",), ("recording",)), repeatable=True
+    )
+    assert (
+        uniquely_matched_candidate("Recover the recording.", (repeatable_full, partial_non_repeatable))
+        == repeatable_full
+    )
 
 
 def test_equal_complete_matches_still_tie() -> None:
@@ -391,18 +422,72 @@ def test_authored_handoff_rejects_two_matching_candidates() -> None:
     )
 
 
-def test_authored_handoff_prefers_the_full_match_with_more_evidence_groups() -> None:
-    two_groups = WARNING_HANDOFF.model_copy(
-        update={"id": "two-groups", "action_evidence": (("recover",), ("recording",))}
+def test_yielding_rule_for_authored_handoffs() -> None:
+    non_repeatable = WARNING_HANDOFF.model_copy(
+        update={
+            "id": "non-repeatable",
+            "action_evidence": (("recover",), ("recording",)),
+            "repeatable": False,
+        }
     )
-    three_groups = WARNING_HANDOFF.model_copy(
-        update={"id": "three-groups", "action_evidence": (("recover",), ("recording",), ("listen",))}
+    repeatable = WARNING_HANDOFF.model_copy(
+        update={
+            "id": "repeatable",
+            "action_evidence": (("recover",), ("recording",), ("listen",)),
+            "repeatable": True,
+        }
     )
 
-    result = uniquely_matched_authored_handoff("Recover the recording and listen to it.", (two_groups, three_groups))
-
+    result = uniquely_matched_authored_handoff("Recover the recording and listen to it.", (repeatable, non_repeatable))
     assert result is not None
-    assert result.candidate is three_groups
+    assert result.candidate is non_repeatable
+
+    another_non_repeatable = WARNING_HANDOFF.model_copy(
+        update={
+            "id": "another-non-repeatable",
+            "action_evidence": (("recover",), ("recording",), ("listen",)),
+            "repeatable": False,
+        }
+    )
+    assert (
+        uniquely_matched_authored_handoff(
+            "Recover the recording and listen to it.", (non_repeatable, another_non_repeatable)
+        )
+        is None
+    )
+
+    another_repeatable = WARNING_HANDOFF.model_copy(
+        update={
+            "id": "another-repeatable",
+            "action_evidence": (("recover",), ("recording",)),
+            "repeatable": True,
+        }
+    )
+    assert (
+        uniquely_matched_authored_handoff("Recover the recording and listen to it.", (repeatable, another_repeatable))
+        is None
+    )
+    result = uniquely_matched_authored_handoff("Recover the recording and listen to it.", (repeatable,))
+    assert result is not None
+    assert result.candidate is repeatable
+
+    partial_non_repeatable = WARNING_HANDOFF.model_copy(
+        update={
+            "id": "partial-non-repeatable",
+            "action_evidence": (("recover",), ("recording",), ("listen",)),
+            "repeatable": False,
+        }
+    )
+    repeatable_full = WARNING_HANDOFF.model_copy(
+        update={
+            "id": "repeatable-full",
+            "action_evidence": (("recover",), ("recording",)),
+            "repeatable": True,
+        }
+    )
+    result = uniquely_matched_authored_handoff("Recover the recording.", (repeatable_full, partial_non_repeatable))
+    assert result is not None
+    assert result.candidate is repeatable_full
 
 
 def test_authored_handoff_equal_full_matches_still_tie() -> None:

@@ -538,7 +538,11 @@ class CloudflareTurnProvider:
 
         candidates = self._reveal_universe()
         evidence_candidates = tuple(
-            ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence)
+            ActionEvidenceCandidate(
+                id=candidate.id,
+                required_groups=candidate.action_evidence,
+                repeatable=candidate.repeatable,
+            )
             for candidate in candidates
             if candidate.action_evidence
         )
