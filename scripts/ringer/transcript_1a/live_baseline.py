@@ -96,6 +96,12 @@ ROUTES = {
         "pick up my laptop",
         "inspect the passenger seat",
     ),
+    "observe_under_first": (
+        "feel under the drawer",
+        "feel under the drawer",
+        "inspect the drawer",
+        "pull out the drawer",
+    ),
 }
 TRACKED = (
     "kristin",
@@ -432,7 +438,7 @@ def _replicate(
         fired_before = set(state.fired_event_ids)
         if shadow or enforce:
             previous_after = getattr(capture, "last_after", None)
-        if shadow:
+        if shadow or enforce:
             previous_request = capture.provider.observation_request
         verifier_requests[0] = 0
         enforce_attempts.clear()
@@ -483,6 +489,10 @@ def _replicate(
             )
             row["observation_request"] = observation_request
         if enforce:
+            _observation_shadow, observation_request = _shadow_observation_values(
+                capture, state, previous_after, previous_request
+            )
+            row["observation_request"] = observation_request
             row["observation_enforce"] = _enforcement_observation_value(capture, previous_after)
             row["narration_attempts"] = _narration_attempts(counter)
             row["verifier_requests"] = verifier_requests[0]
