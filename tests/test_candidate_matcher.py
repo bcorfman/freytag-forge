@@ -144,6 +144,33 @@ def test_ambiguous_complete_evidence_does_not_break_ties() -> None:
     assert result is None
 
 
+def test_complete_match_with_more_evidence_groups_wins() -> None:
+    two_groups = ActionEvidenceCandidate(id="two-groups", required_groups=(("recover",), ("recording",)))
+    three_groups = ActionEvidenceCandidate(
+        id="three-groups", required_groups=(("recover",), ("recording",), ("listen",))
+    )
+
+    result = uniquely_matched_candidate("Recover the recording and listen to it.", (two_groups, three_groups))
+
+    assert result == three_groups
+
+
+def test_equal_complete_matches_still_tie() -> None:
+    first = ActionEvidenceCandidate(id="first", required_groups=(("recover",), ("recording",)))
+    second = ActionEvidenceCandidate(id="second", required_groups=(("recover",), ("recording",)))
+
+    assert uniquely_matched_candidate("Recover the recording.", (first, second)) is None
+
+
+def test_partial_match_never_beats_a_complete_match() -> None:
+    partial = ActionEvidenceCandidate(id="partial", required_groups=(("recover",), ("recording",), ("listen",)))
+    full = ActionEvidenceCandidate(id="full", required_groups=(("recover",), ("recording",)))
+
+    result = uniquely_matched_candidate("Recover the recording.", (partial, full))
+
+    assert result == full
+
+
 def test_empty_evidence_never_matches() -> None:
     candidate = ActionEvidenceCandidate(id="empty", required_groups=())
 

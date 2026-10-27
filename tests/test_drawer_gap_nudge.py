@@ -45,12 +45,18 @@ def _handoff(state, command: str):
     return uniquely_matched_authored_handoff(command, projection.reveal_universe)
 
 
+def _gap_state():
+    state = _state_at("kitchen")
+    state.active_event_ids.add(GAP_STORYLET)
+    return state
+
+
 def _fact_is_true(state, predicate: str) -> bool:
     return any(fact.predicate == predicate and fact.value == "true" for fact in state.facts.asserted)
 
 
 def _state_after_gap_deliveries(delivery_count: int):
-    state = _state_at("kitchen")
+    state = _gap_state()
     for _ in range(delivery_count):
         state.facts.assert_fact(Fact(predicate=GAP_FACT, subject="story", value="true"))
         state.fired_event_ids.add(GAP_STORYLET)
@@ -58,7 +64,7 @@ def _state_after_gap_deliveries(delivery_count: int):
 
 
 def _card_find_state():
-    state = _state_at("kitchen")
+    state = _gap_state()
     assert not _fact_is_true(state, "patrol_in_house")
     state.active_event_ids.add("SL-1A-E")
     return state
@@ -66,7 +72,7 @@ def _card_find_state():
 
 @pytest.mark.parametrize("command", BARE_DRAWER_COMMANDS)
 def test_bare_drawer_commands_pick_the_gap_nudge(command: str) -> None:
-    state = _state_at("kitchen")
+    state = _gap_state()
 
     assert not _fact_is_true(state, CARD_FACT)
     handoff = _handoff(state, command)
@@ -108,7 +114,7 @@ def test_opening_commands_do_not_pick_the_gap_nudge(command: str) -> None:
 
 
 def test_unrelated_command_picks_neither_drawer_reveal() -> None:
-    handoff = _handoff(_state_at("kitchen"), "Inspect the truck.")
+    handoff = _handoff(_gap_state(), "Inspect the truck.")
 
     assert handoff is None or handoff.candidate.id not in {NUDGE, CARD_FIND, CARD_FIND_PATROL}
 
@@ -118,8 +124,7 @@ def test_unrelated_command_picks_neither_drawer_reveal() -> None:
     ("Look inside the drawer.", "Search inside the drawer.", "Examine inside the drawer."),
 )
 def test_inside_forms_never_pick_the_card_find(command: str) -> None:
-    state = _state_at("kitchen")
-    state.active_event_ids.add(GAP_STORYLET)
+    state = _gap_state()
     handoff = _handoff(state, command)
     picked_id = handoff.candidate.id if handoff is not None else None
 
@@ -129,7 +134,7 @@ def test_inside_forms_never_pick_the_card_find(command: str) -> None:
 
 
 def test_bare_drawer_commands_stop_picking_the_nudge_after_card_recovery() -> None:
-    state = _state_at("kitchen")
+    state = _gap_state()
     state.facts.assert_fact(Fact(predicate=CARD_FACT, subject="story", value="true"))
 
     for command in BARE_DRAWER_COMMANDS:

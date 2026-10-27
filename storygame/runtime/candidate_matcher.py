@@ -160,13 +160,17 @@ def uniquely_matched_candidate(
 ) -> ActionEvidenceCandidate | None:
     """Return one candidate only when all its evidence is present and unnegated.
 
-    This is intentionally conservative. It does not rank partial matches or
-    break ties. It expands authored phrases only within the fixed synonym
-    classes above.
+    Complete matches with more evidence groups take precedence. Partial
+    matches never participate, and equal complete matches remain ambiguous.
+    It expands authored phrases only within the fixed synonym classes above.
     """
 
     matches = [candidate for candidate in candidates if _matches_all(candidate.required_groups, player_input)]
-    return matches[0] if len(matches) == 1 else None
+    if not matches:
+        return None
+    best_group_count = max(len(candidate.required_groups) for candidate in matches)
+    best_matches = [candidate for candidate in matches if len(candidate.required_groups) == best_group_count]
+    return best_matches[0] if len(best_matches) == 1 else None
 
 
 def uniquely_matched_authored_handoff(
