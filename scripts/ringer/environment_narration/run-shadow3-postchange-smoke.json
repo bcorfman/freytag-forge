@@ -1,0 +1,33 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-shadow3-postchange-smoke",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "billed-shadow-sample3-postchange-smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/environment-narration/shadow-sample3-postchange/smoke"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/shadow-sample3-postchange/smoke/rows/rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/shadow-sample3-postchange/smoke/spent.json"
+   ],
+   "spec": "You are a RUNNER for one billed shadow-verifier sample (smoke stage) in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. It plays the 'observe_topup' route (9 commands): inspect the drawer, pull out the drawer, feel under the drawer, feel under the drawer, go outside, inspect the truck, enter the truck, pick up my laptop, inspect the passenger seat through the real product path against a LOCAL Worker on 127.0.0.1 (a cap-enforcing copy of worker/src/index.js) which calls Llama 3.3 70B fp8-fast and the Jev model on the project's Cloudflare Workers AI account, with the shadow observation verifier on (it never changes a turn). This run is a re-run of the top-up route under the corrected shadow order, approved in the preregistration .plans/grounded-llm-environment-narration/t8-shadow-postchange-rerun-prereg.md, and the runner must not start unless the human's go for this stage was given in the task statement (the manifest is only launched by the orchestrator after the go). It uses about 50 calls, cap 70 calls, ceiling $0.03. HARD RULES: run COMMAND 1 EXACTLY ONCE. NEVER run it a second time for any reason (not after an error, not after a partial result: a rerun spends money again). Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit. The script refuses to run if its port is busy (exit 4); do not do your own port checks, just run COMMAND 1 once.\n\nCOMMAND 1 (the billed run; a non-zero exit with partial rows is a valid outcome, do not retry):\ncd /home/bcorfman/dev/freytag-forge && bash scripts/ringer/environment_narration/shadow_sample3_postchange.sh smoke\n\nThe script starts the local Worker, runs the route, writes rows.json and summary.json under bench/results/environment-narration/shadow-sample3-postchange/smoke/rows, writes bench/results/environment-narration/shadow-sample3-postchange/smoke/spent.json, and stops the Worker. Report the exit code, the lines the script printed (they contain no secrets), and the contents of spent.json. Do not interpret the results beyond that.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && test -f bench/results/environment-narration/shadow-sample3-postchange/smoke/rows/rows.json && test -f bench/results/environment-narration/shadow-sample3-postchange/smoke/rows/summary.json && test -f bench/results/environment-narration/shadow-sample3-postchange/smoke/spent.json && .venv/bin/python - <<'PY'\nimport json\nbase='bench/results/environment-narration/shadow-sample3-postchange/smoke'\nrows=json.load(open(base+'/rows/rows.json'))\nsummary=json.load(open(base+'/rows/summary.json'))\nassert summary['shadow'] is True, 'shadow not on'\nprint('replicates',len(rows),'turns',sum(len(r.get('turns',[])) for r in rows),'calls',summary['calls_made'],'stopped',summary['stopped_reason'],'errors',summary['errors'],'observation_turns',summary.get('observation_turns'),'verifier_requests',summary.get('shadow_verifier_requests'))\nspent=json.load(open(base+'/spent.json'))\nprint('spent',spent)\nassert spent['spent_micro_usd'] <= 30000, 'cap exceeded'\nif summary.get('stopped_reason') is None:\n    assert len(rows) == 1, 'unexpected replicate count'\n    assert all(len(row.get('turns', [])) == 9 for row in rows), 'incomplete route'\n    for row in rows:\n        assert row['turns'][-1]['input'] == 'inspect the passenger seat', 'wrong final command'\n        assert row['turns'][7]['input'] == 'pick up my laptop', 'wrong eighth command'\nPY\n(set -a; . ./.env; set +a; .venv/bin/python - <<'PY'\nimport os\nbase='bench/results/environment-narration/shadow-sample3-postchange/smoke'\ntext=''.join(open(os.path.join(directory, filename)).read() for directory, _, filenames in os.walk(base) for filename in filenames)\nfor name in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_WORKER_TOKEN'):\n    value=os.environ.get(name,'').strip()\n    assert not value or value not in text, name+' value leaked into outputs'\nprint('no credential in outputs')\nPY\n)",
+   "verified": "a billed shadow-verifier sample ran once under the approved cap"
+  }
+ ]
+}
