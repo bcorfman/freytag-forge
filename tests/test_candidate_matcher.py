@@ -4,6 +4,7 @@ import pytest
 
 from storygame.runtime.candidate_matcher import (
     ActionEvidenceCandidate,
+    _matches_all,
     uniquely_matched_authored_handoff,
     uniquely_matched_candidate,
 )
@@ -363,11 +364,67 @@ def test_authored_handoff_rejects_two_matching_candidates() -> None:
     )
 
 
+def test_authored_handoff_prefers_the_full_match_with_more_evidence_groups() -> None:
+    two_groups = WARNING_HANDOFF.model_copy(
+        update={"id": "two-groups", "action_evidence": (("recover",), ("recording",))}
+    )
+    three_groups = WARNING_HANDOFF.model_copy(
+        update={"id": "three-groups", "action_evidence": (("recover",), ("recording",), ("listen",))}
+    )
+
+    result = uniquely_matched_authored_handoff("Recover the recording and listen to it.", (two_groups, three_groups))
+
+    assert result is not None
+    assert result.candidate is three_groups
+
+
+def test_authored_handoff_equal_full_matches_still_tie() -> None:
+    first = WARNING_HANDOFF.model_copy(update={"id": "first"})
+    second = WARNING_HANDOFF.model_copy(update={"id": "second"})
+
+    assert uniquely_matched_authored_handoff("Recover the damaged recording and listen to it.", (first, second)) is None
+
+
+def test_authored_handoff_partial_match_never_beats_a_full_match() -> None:
+    partial = WARNING_HANDOFF.model_copy(
+        update={"id": "partial", "action_evidence": (("recover",), ("recording",), ("listen",))}
+    )
+    full = WARNING_HANDOFF.model_copy(update={"id": "full", "action_evidence": (("recover",), ("recording",))})
+
+    result = uniquely_matched_authored_handoff("Recover the recording.", (partial, full))
+
+    assert result is not None
+    assert result.candidate is full
+
+
 def test_authored_handoff_ignores_a_package_candidate_not_in_projection() -> None:
     package_candidates = (WARNING_HANDOFF, FILES_HANDOFF)
     projected_candidates = tuple(candidate for candidate in package_candidates if candidate.id == "warning")
 
     assert uniquely_matched_authored_handoff("Recover the card files and read them.", projected_candidates) is None
+
+
+@pytest.mark.parametrize(
+    "player_input",
+    [
+        "Examine under the drawer.",
+        "Feel beneath the drawer.",
+        "Search below the drawer.",
+        "Check underneath the drawer.",
+    ],
+)
+def test_under_synonym_class_matches_each_authored_group(player_input: str) -> None:
+    groups = (("look", "search", "inspect", "check"), ("under", "beneath", "underside", "gap"), ("drawer",))
+
+    assert _matches_all(groups, player_input)
+
+
+def test_look_synonym_class_matches_outside_drawer_commands_only() -> None:
+    groups = (("examine", "inspect", "search", "check", "look", "study"), ("drawer",))
+
+    assert _matches_all(groups, "Inspect the drawer.")
+    assert _matches_all(groups, "Look at the drawer.")
+    assert not _matches_all(groups, "Open the drawer.")
 
 
 def test_scene_1a_b_migrated_candidates_stay_disjoint() -> None:

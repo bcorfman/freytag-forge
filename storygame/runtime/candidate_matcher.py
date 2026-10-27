@@ -187,9 +187,13 @@ def uniquely_matched_authored_handoff(
             continue
         if _matches_all(candidate.action_evidence, player_input):
             matches.append((candidate, delivery_text))
-    if len(matches) != 1:
+    if not matches:
         return None
-    candidate, delivery_text = matches[0]
+    best_group_count = max(len(candidate.action_evidence) for candidate, _ in matches)
+    best_matches = [match for match in matches if len(match[0].action_evidence) == best_group_count]
+    if len(best_matches) != 1:
+        return None
+    candidate, delivery_text = best_matches[0]
     return AuthoredHandoff(candidate=candidate, delivery_text=delivery_text, source="exact")
 
 

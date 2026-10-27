@@ -148,15 +148,38 @@ def test_opens_container_question_uses_opening_wording() -> None:
 
     question = captured["opens_container"]
     assert question["type"] == "noul"
-    instructions = question["instructions"].lower()
-    true_criterion = question["criteria"]["true"].lower()
-    false_criterion = question["criteria"]["false"].lower()
+    assert question["instructions"] == (
+        "Decide whether the command has the player open the container. "
+        "Opening it, pulling it open or out, or going inside, in, into, or through it counts."
+    )
+    assert question["criteria"]["true"] == (
+        "The command opens the container, pulls it open, pulls it out, or says inside, in, into, "
+        "or through the container. The player looks, feels, or reaches there."
+    )
+    assert question["criteria"]["false"] == (
+        "The command does not open the container and does not say inside, in, into, or through. "
+        "A command that only looks at, inspects, examines, searches, checks, closes, locks, "
+        "touches, moves, carries, or talks about the container, or goes under, behind, or on top "
+        "of it, is false."
+    )
 
-    for text in ("open the container", "look inside it by opening it"):
-        assert text in instructions
-        assert text in true_criterion
-    for text in ("looks at", "closes", "touches", "moves", "carries", "talks about"):
-        assert text in false_criterion
+
+def test_opens_container_preserves_payload_and_noul_results() -> None:
+    payload = {}
+
+    def ask_high(state, questions):
+        payload["state"] = state
+        payload["questions"] = questions
+        return {"opens_container": {"noul": 0.51}}
+
+    assert opens_container(ask_high, "Look inside the drawer.", "drawer") is True
+    assert payload["state"] == {"command": "Look inside the drawer.", "container": "drawer"}
+
+    def ask_low(_state, _questions):
+        return {"opens_container": {"noul": 0.5}}
+
+    assert opens_container(ask_low, "Inspect the drawer.", "drawer") is False
+    assert opens_container(lambda _state, _questions: {}, "Inspect the drawer.", "drawer") is None
 
 
 def test_searches_underneath_question_uses_under_surface_wording() -> None:

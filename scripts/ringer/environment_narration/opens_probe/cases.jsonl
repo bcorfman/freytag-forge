@@ -1,0 +1,112 @@
+{"id":"g-b01","command":"Inspect the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b02","command":"Inspect the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b03","command":"Inspect the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b04","command":"Inspect the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b05","command":"Examine the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b06","command":"Examine the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b07","command":"Examine the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b08","command":"Examine the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b09","command":"Search the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b10","command":"Search the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b11","command":"Search the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b12","command":"Search the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b13","command":"Check the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b14","command":"Check the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b15","command":"Check the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b16","command":"Check the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b17","command":"Look at the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b18","command":"Look at the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b19","command":"Look at the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-b20","command":"Look at the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":false},"group":"grid","kind":"bare"}
+{"id":"g-u01","command":"Inspect under the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u02","command":"Inspect beneath the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u03","command":"Inspect underneath the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u04","command":"Inspect below the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u05","command":"Examine beneath the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u06","command":"Examine underneath the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u07","command":"Examine below the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u08","command":"Examine under the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u09","command":"Search underneath the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u10","command":"Search below the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u11","command":"Search under the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u12","command":"Search beneath the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u13","command":"Check below the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u14","command":"Check under the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u15","command":"Check beneath the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u16","command":"Check underneath the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u17","command":"Look under the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u18","command":"Look beneath the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u19","command":"Look underneath the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-u20","command":"Look below the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":false,"searches_underneath":true},"group":"grid","kind":"under"}
+{"id":"g-i01","command":"Inspect inside the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i02","command":"Inspect inside the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i03","command":"Inspect inside the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i04","command":"Inspect inside the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i05","command":"Examine inside the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i06","command":"Examine inside the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i07","command":"Examine inside the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i08","command":"Examine inside the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i09","command":"Search inside the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i10","command":"Search inside the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i11","command":"Search inside the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i12","command":"Search inside the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i13","command":"Check inside the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i14","command":"Check inside the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i15","command":"Check inside the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i16","command":"Check inside the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i17","command":"Look inside the cabinet.","thing":"cabinet","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i18","command":"Look inside the chest.","thing":"chest","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i19","command":"Look inside the locker.","thing":"locker","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"g-i20","command":"Look inside the toolbox.","thing":"toolbox","question":["opens_container","searches_underneath"],"expected":{"opens_container":true,"searches_underneath":false},"group":"grid","kind":"inside"}
+{"id":"o01","command":"Open the chest.","thing":"chest","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o02","command":"Pull open the locker.","thing":"locker","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o03","command":"Slide open the cabinet.","thing":"cabinet","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o04","command":"Pull out the bottom drawer.","thing":"bottom drawer","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o05","command":"Yank open the crate.","thing":"crate","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o06","command":"Lift open the cooler.","thing":"cooler","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o07","command":"Open the glove box.","thing":"glove box","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o08","command":"Tug open the toolbox.","thing":"toolbox","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o09","command":"Pull open the cabinet.","thing":"cabinet","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o10","command":"Open up the chest.","thing":"chest","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o11","command":"Open the top drawer.","thing":"top drawer","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o12","command":"Pull out the file drawer.","thing":"file drawer","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o13","command":"Look inside the locker.","thing":"locker","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o14","command":"Feel inside the chest.","thing":"chest","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o15","command":"Peek into the cooler.","thing":"cooler","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o16","command":"Reach into the toolbox.","thing":"toolbox","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o17","command":"Look in the cabinet.","thing":"cabinet","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o18","command":"Search in the locker.","thing":"locker","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o19","command":"Go through the chest.","thing":"chest","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"o20","command":"Rummage through the toolbox.","thing":"toolbox","question":"opens_container","expected":true,"group":"opening","kind":"opening"}
+{"id":"n01","command":"Close the cabinet.","thing":"cabinet","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n02","command":"Shut the chest.","thing":"chest","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n03","command":"Push the bottom drawer shut.","thing":"bottom drawer","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n04","command":"Slam the locker shut.","thing":"locker","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n05","command":"Close the glove box.","thing":"glove box","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n06","command":"Lock the locker.","thing":"locker","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n07","command":"Touch the crate.","thing":"crate","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n08","command":"Knock on the locker.","thing":"locker","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n09","command":"Push the cabinet against the wall.","thing":"cabinet","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n10","command":"Carry the toolbox.","thing":"toolbox","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n11","command":"Lift the suitcase.","thing":"suitcase","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n12","command":"Drag the chest to the door.","thing":"chest","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n13","command":"Kick the cooler.","thing":"cooler","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n14","command":"Tap the cabinet.","thing":"cabinet","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n15","command":"Wipe the cabinet.","thing":"cabinet","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n16","command":"Paint the chest.","thing":"chest","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n17","command":"Read the label on the crate.","thing":"crate","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n18","command":"Polish the toolbox.","thing":"toolbox","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n19","command":"Look behind the cabinet.","thing":"cabinet","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n20","command":"Check behind the locker.","thing":"locker","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n21","command":"Look on top of the chest.","thing":"chest","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"n22","command":"Feel along the top of the crate.","thing":"crate","question":"opens_container","expected":false,"group":"non-opening","kind":"non-opening"}
+{"id":"x01","command":"Study the chest.","thing":"chest","question":"opens_container","expected":null,"group":"reported","kind":"reported","reported":true}
+{"id":"x02","command":"Glance at the crate.","thing":"crate","question":"opens_container","expected":null,"group":"reported","kind":"reported","reported":true}
+{"id":"x03","command":"Admire the locker.","thing":"locker","question":"opens_container","expected":null,"group":"reported","kind":"reported","reported":true}
+{"id":"r1","command":"Open the drawer.","thing":"drawer","question":"opens_container","expected":true,"group":"regression","kind":"regression"}
+{"id":"r2","command":"Pull out the drawer.","thing":"drawer","question":"opens_container","expected":true,"group":"regression","kind":"regression"}
+{"id":"r3","command":"Look inside the drawer.","thing":"drawer","question":"opens_container","expected":true,"group":"regression","kind":"regression"}
+{"id":"r4","command":"Inspect the drawer.","thing":"drawer","question":"opens_container","expected":false,"group":"regression","kind":"regression"}
+{"id":"r5","command":"Examine the drawer.","thing":"drawer","question":"opens_container","expected":false,"group":"regression","kind":"regression"}
+{"id":"r6","command":"Search the drawer.","thing":"drawer","question":"opens_container","expected":false,"group":"regression","kind":"regression"}
+{"id":"r7","command":"Close the drawer.","thing":"drawer","question":"opens_container","expected":false,"group":"regression","kind":"regression"}
