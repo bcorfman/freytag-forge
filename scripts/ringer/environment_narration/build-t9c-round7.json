@@ -1,0 +1,32 @@
+{
+  "run_name": "grounded-environment-narration",
+  "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9c-round7",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "t9c-journey-harness",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 1800,
+      "ownership": [
+        "tests/journey_prefix.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/journey_prefix.py"
+      ],
+      "spec": "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no model call, no billed call. Do not git commit. NEVER print or write any credential. NO regular expressions. Run ruff check and ruff format on your files at the end. BACKGROUND. The knowledge entry `k_sl_1a_f_r2` is now `repeatable`: it stays an offered reveal on every 1A turn until the card is recovered. The whole-game journey harness tests/journey_prefix.py picks the first `preferred` realization that is offered on EVERY turn (`wanted = next(item_id for item_id in preferred if any(c.id == item_id for c in offered))`, in `_turn` and in the checkpoint loop of `run`), so for a repeatable realization it picks that entry forever and never moves on: the journey for `k_sl_1a_f_r2` ends in a forced 1A exit and tests/test_game_path_journeys.py::test_every_player_realization_has_an_earned_continuation_to_the_ending[k_sl_1a_f_r2] fails (`assert journey.forced_exits == KNOWN_FORCED_EXITS.get(item_id, [])`). YOUR TASK: YOU MAY EDIT ONLY tests/journey_prefix.py. A preferred realization must be chosen at most once per journey: add a small helper that returns the first preferred id that is offered and is NOT already in the picked list, and use it in both places (`_turn` has `picked`; in the checkpoint-search loop of `run` use the checkpoint's `picked` tuple, as the default walk would have it at that point). Change nothing else: for non-repeatable realizations the behaviour must be identical (they cannot be offered again once picked). VERIFY: run `tests/test_game_path_journeys.py` completely (about 2 minutes with `-n 4`, use `.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider -n 4 tests/test_game_path_journeys.py`), and `tests/test_three_c_prefix.py` and `tests/test_evidence_gap_journeys.py`; all must pass. If `k_sl_1a_f_r2` still fails, do not edit anything else: report the journey's picked list, scenes and forced exits and your diagnosis.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_game_path_journeys.py tests/test_three_c_prefix.py tests/test_evidence_gap_journeys.py 2>&1 | tee /tmp/t9c-r7.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/t9c-r7.out && .venv/bin/python -m ruff check tests/journey_prefix.py && .venv/bin/python -m ruff format --check tests/journey_prefix.py",
+      "verified": "a preferred realization is picked once, so a repeatable entry no longer stalls the journey"
+    }
+  ]
+}

@@ -67,11 +67,12 @@ def together_or_unplaced(world, protagonist_id: str, entity_id: str) -> bool:
 def explain_reveal(state: RuntimeState, audience_id: str, item: KnowledgeDefinition) -> RevealEligibility:
     """Return the first reason ``item`` is not an eligible reveal."""
 
-    if _established(item, state):
+    established = _established(item, state)
+    if not item.repeatable and established:
         return RevealEligibility(False, ALREADY_ESTABLISHED, item.id)
     if not _visible_to(item, audience_id):
         return RevealEligibility(False, NOT_VISIBLE, audience_id)
-    if item.source.storylet_id in state.fired_event_ids:
+    if (not item.repeatable or not established) and item.source.storylet_id in state.fired_event_ids:
         return RevealEligibility(False, STORYLET_SPENT, item.source.storylet_id or "")
     for predicate in item.requires:
         if not predicate_matches(predicate, state.facts):
@@ -81,6 +82,8 @@ def explain_reveal(state: RuntimeState, audience_id: str, item: KnowledgeDefinit
         for entity_id in item.reach_entity_ids:
             if not together_or_unplaced(world, state.package.world.protagonist_id, entity_id):
                 return RevealEligibility(False, NOT_REACHABLE, entity_id)
-    if item.source.kind != "storylet_realization" or item.source.storylet_id not in state.active_event_ids:
+    if (not item.repeatable or not established) and (
+        item.source.kind != "storylet_realization" or item.source.storylet_id not in state.active_event_ids
+    ):
         return RevealEligibility(False, SOURCE_INACTIVE, item.source.storylet_id or item.source.kind)
     return RevealEligibility(True, ELIGIBLE)

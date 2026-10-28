@@ -538,7 +538,11 @@ class CloudflareTurnProvider:
 
         candidates = self._reveal_universe()
         evidence_candidates = tuple(
-            ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence)
+            ActionEvidenceCandidate(
+                id=candidate.id,
+                required_groups=candidate.action_evidence,
+                repeatable=candidate.repeatable,
+            )
             for candidate in candidates
             if candidate.action_evidence
         )
@@ -724,6 +728,7 @@ class CloudflareTurnProvider:
             and candidate.delivery_text.strip()
             and not (
                 (knowledge := self.state.package.knowledge_indexes.by_id.get(candidate.id)) is not None
+                and not getattr(knowledge, "repeatable", False)
                 and KnowledgeProjector._established(knowledge, self.state)
             )
         )
@@ -1474,10 +1479,18 @@ class CloudflareTurnProvider:
             text=handoff.delivery_text,
             grounding_ids=(handoff.candidate.id,),
         )
+        selected_knowledge_ids = (handoff.candidate.id,)
+        knowledge = self.state.package.knowledge_indexes.by_id.get(handoff.candidate.id)
+        if (
+            knowledge is not None
+            and getattr(knowledge, "repeatable", False)
+            and KnowledgeProjector._established(knowledge, self.state)
+        ):
+            selected_knowledge_ids = ()
         composed = proposal.model_copy(
             update={
                 "segments": (*model_segments, delivery),
-                "selected_knowledge_ids": (handoff.candidate.id,),
+                "selected_knowledge_ids": selected_knowledge_ids,
             }
         )
         return self._auto_attribute_committed_knowledge(composed)

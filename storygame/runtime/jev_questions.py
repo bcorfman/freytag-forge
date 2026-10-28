@@ -73,14 +73,19 @@ def opens_container(ask, command: str, container_name: str) -> bool | None:
             "type": "noul",
             "instructions": (
                 "Decide whether the command has the player open the container. "
-                "This includes a command to look inside it by opening it."
+                "Opening it, pulling it open or out, or going inside, in, into, or through it counts."
             ),
             "criteria": {
                 "true": (
-                    "The command has the player open the container. "
-                    "The command can have the player look inside it by opening it."
+                    "The command opens the container, pulls it open, pulls it out, or says inside, in, into, "
+                    "or through the container. The player looks, feels, or reaches there."
                 ),
-                "false": ("The command only looks at, closes, touches, moves, carries, or talks about the container."),
+                "false": (
+                    "The command does not open the container and does not say inside, in, into, or through. "
+                    "A command that only looks at, inspects, examines, searches, checks, closes, locks, "
+                    "touches, moves, carries, or talks about the container, or goes under, behind, or on top "
+                    "of it, is false."
+                ),
             },
         }
     }

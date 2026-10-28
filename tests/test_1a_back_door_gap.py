@@ -47,7 +47,11 @@ def _handoff(command: str):
 def _plain_match(command: str):
     candidates = _candidates(command)
     evidence = tuple(
-        ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence)
+        ActionEvidenceCandidate(
+            id=candidate.id,
+            required_groups=candidate.action_evidence,
+            repeatable=candidate.repeatable,
+        )
         for candidate in candidates
         if candidate.action_evidence
     )

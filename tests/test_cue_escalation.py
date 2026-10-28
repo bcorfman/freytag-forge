@@ -180,7 +180,7 @@ def test_earned_reveal_before_nudge_never_escalates(monkeypatch) -> None:
     provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 12))
     engine = RuntimeEngine(state, provider)
 
-    first = engine.turn("Search the drawer.")
+    first = engine.turn("Inspect the workstation.")
     state.facts.assert_fact(Fact(predicate=FACT_ID, subject="story", value="true"))
     last = first
     for _ in range(9):

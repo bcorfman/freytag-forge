@@ -159,6 +159,7 @@ class KnowledgeDefinition(_Model):
     delivery_text: str | None = None
     action_contract: ActionContract | None = None
     voiceable: StrictBool = Field(default=True, exclude_if=lambda value: value is True)
+    repeatable: StrictBool = Field(default=False, exclude_if=lambda value: value is False)
 
 
 class SceneFrame(_Model):

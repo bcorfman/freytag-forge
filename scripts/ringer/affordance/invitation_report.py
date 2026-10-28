@@ -13,7 +13,7 @@ from scripts.ringer.affordance.cue_eligibility_compare import (
     _matching_reveals,
     _scene_states,
 )
-from storygame.runtime.candidate_matcher import ActionEvidenceCandidate, uniquely_matched_candidate
+from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.story_package.loader import load_story_package
@@ -43,13 +43,8 @@ def _representative_command(item: Any) -> str | None:
 
 def _matcher_result(state: Any, command: str, expected_id: str) -> bool:
     candidates = KnowledgeProjector().project(state, "player", command).candidates
-    evidence = tuple(
-        ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence)
-        for candidate in candidates
-        if candidate.action_evidence
-    )
-    matched = uniquely_matched_candidate(command, evidence)
-    return matched is not None and matched.id == expected_id
+    matched = uniquely_matched_authored_handoff(command, candidates)
+    return matched is not None and matched.candidate.id == expected_id
 
 
 def _row(package: Any, scene_id: str, state_label: str, state: Any, delivery: Any) -> tuple[str, str] | None:

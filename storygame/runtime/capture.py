@@ -48,6 +48,24 @@ def _json_value(value):
     return copy.deepcopy(value)
 
 
+def _should_engine_open(world, protagonist_id: str, kind: str, focus_id: str | None, opens: bool | None) -> bool:
+    return (
+        kind == "open"
+        and opens is True
+        and focus_id is not None
+        and world.is_openable(focus_id)
+        and world.axis_values(focus_id).get("open") == "closed"
+        and world.sees(protagonist_id, focus_id)
+    )
+
+
+def _focus_open_state(world, focus_id: str | None) -> str | None:
+    if focus_id is None or not world.is_a(focus_id, "container"):
+        return None
+    state = world.axis_values(focus_id).get("open")
+    return state if state in {"open", "closed"} else None
+
+
 _PREVIEW_PROVIDER_FIELDS = (
     "_pending_item_facts",
     "_pending_item_facts_present",
@@ -169,8 +187,10 @@ class WorldCapture:
         match_info = {}
         if self.provider.item_facts_mode == "single_call" and not engine_refusal and not self.provider.command_consumed:
             match_info = self.provider.prepare_turn(command)
+        engine_opened = False
+        focus_open_state_after = None
         if observe_automatically and not (fixed and fixed.refused):
-            self._set_observation_request(command, boarding, adapter)
+            engine_opened, focus_open_state_after = self._set_observation_request(command, boarding, adapter)
         record = {
             "command": command_record,
             "steps": list(provider_steps),
@@ -206,6 +226,8 @@ class WorldCapture:
                 *(seating.issues if seating else ()),
             ],
             "match_info": _json_value(match_info),
+            "engine_opened": engine_opened,
+            "focus_open_state_after": focus_open_state_after,
         }
         things_given = list(self.provider._selected_names) if self.provider._selected_names is not None else []
         record["things_given"] = things_given
@@ -213,7 +235,7 @@ class WorldCapture:
         self.last_before = record
         return record
 
-    def _set_observation_request(self, command: str, boarding: SeatingResult, adapter) -> None:
+    def _set_observation_request(self, command: str, boarding: SeatingResult, adapter) -> tuple[bool, str | None]:
         world = self.provider._world()
         focus_id = boarding.vehicle_id
         kind = "enter" if focus_id is not None else "look"
@@ -229,8 +251,11 @@ class WorldCapture:
                     focus_id = entity_id
                     break
         if focus_id is None:
-            return
-        if world.is_a(focus_id, "container") and opens_container(adapter, command, world.name(focus_id)) is True:
+            return False, None
+        opens = None
+        if world.is_a(focus_id, "container"):
+            opens = opens_container(adapter, command, world.name(focus_id))
+        if world.is_a(focus_id, "container") and opens is True:
             kind = "open"
         if (
             kind == "look"
@@ -238,7 +263,18 @@ class WorldCapture:
             and searches_underneath(adapter, command, world.name(focus_id)) is True
         ):
             kind = "under"
+        engine_opened = False
+        if _should_engine_open(
+            world,
+            self.provider.state.package.world.protagonist_id,
+            kind,
+            focus_id,
+            opens,
+        ):
+            result = world.set_axis(focus_id, "open")
+            engine_opened = result.ok and world.axis_values(focus_id).get("open") == "open"
         self.provider.observation_request = ObservationRequest(command, kind, focus_id)
+        return engine_opened, _focus_open_state(world, focus_id)
 
     @staticmethod
     def _descendants(world, root_id: str) -> set[str]:

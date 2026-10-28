@@ -287,7 +287,7 @@ def test_reach_scoped_committed_statements_follow_the_protagonist(monkeypatch: p
     inside_user = _turn_prompt(monkeypatch, inside)["user"]
     outside_user = _turn_prompt(monkeypatch, outside)["user"]
     assert "Kristin opens the drawer and is pointed toward the thin gap" in inside_user
-    assert "Kristin examines the carved initials and is pointed toward the thin gap" in inside_user
+    assert "Kristin looks over the drawer and is pointed toward the thin gap beneath its lower edge." in inside_user
     assert "thin gap" not in outside_user
 
 

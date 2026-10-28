@@ -27,6 +27,7 @@ class ActionEvidenceCandidate:
 
     id: str
     required_groups: tuple[tuple[str, ...], ...]
+    repeatable: bool = False
 
 
 @dataclass(frozen=True)
@@ -160,12 +161,17 @@ def uniquely_matched_candidate(
 ) -> ActionEvidenceCandidate | None:
     """Return one candidate only when all its evidence is present and unnegated.
 
-    This is intentionally conservative. It does not rank partial matches or
-    break ties. It expands authored phrases only within the fixed synonym
+    If any complete match is non-repeatable, repeatable matches yield to it.
+    Partial matches never participate, and equal complete matches remain
+    ambiguous. It expands authored phrases only within the fixed synonym
     classes above.
     """
 
     matches = [candidate for candidate in candidates if _matches_all(candidate.required_groups, player_input)]
+    if not matches:
+        return None
+    if any(not candidate.repeatable for candidate in matches):
+        matches = [candidate for candidate in matches if not candidate.repeatable]
     return matches[0] if len(matches) == 1 else None
 
 
@@ -177,7 +183,8 @@ def uniquely_matched_authored_handoff(
     Delivery is eligible only when the projected candidate has both complete
     action evidence and non-blank authored text. The candidate list is already
     projected, so package knowledge that is protected or not currently offered
-    cannot participate in the decision.
+    cannot participate in the decision. Among complete matches, repeatable
+    candidates yield to any non-repeatable candidate.
     """
 
     matches = []
@@ -187,6 +194,10 @@ def uniquely_matched_authored_handoff(
             continue
         if _matches_all(candidate.action_evidence, player_input):
             matches.append((candidate, delivery_text))
+    if not matches:
+        return None
+    if any(not candidate.repeatable for candidate, _ in matches):
+        matches = [match for match in matches if not match[0].repeatable]
     if len(matches) != 1:
         return None
     candidate, delivery_text = matches[0]

@@ -27,8 +27,7 @@ R1_DELIVERY = (
     "A thin gap beneath its lower edge is wide enough for Kristin's fingers."
 )
 R2_DELIVERY = (
-    "The initials are fresh, deep cuts. The drawer rides high in its frame. "
-    "A thin gap beneath its lower edge is wide enough for Kristin's fingers."
+    "The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
 )
 
 
@@ -49,7 +48,11 @@ def _handoff(command: str):
 def _plain_match(command: str):
     candidates = _candidates(command)
     evidence = tuple(
-        ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence)
+        ActionEvidenceCandidate(
+            id=candidate.id,
+            required_groups=candidate.action_evidence,
+            repeatable=candidate.repeatable,
+        )
         for candidate in candidates
         if candidate.action_evidence
     )
@@ -102,13 +105,6 @@ def test_drawer_gap_reveals_match_only_their_authored_actions(command: str, expe
 @pytest.mark.parametrize(
     "command",
     [
-        "Search the workstation drawer.",
-        "Examine the workstation drawer.",
-        "Search the drawer interior.",
-        "Search the open drawer.",
-        "Search the KMS drawer.",
-        "Examine the drawer's interior.",
-        "Search the drawer.",
         "Search the kitchen.",
         "Inspect Michelle's workstation.",
         "Read the receipt.",
@@ -117,6 +113,28 @@ def test_drawer_gap_reveals_match_only_their_authored_actions(command: str, expe
 def test_drawer_gap_reveals_do_not_steal_unrelated_commands(command: str) -> None:
     assert _handoff(command) is None
     assert _plain_match(command) is None
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "Search the workstation drawer.",
+        "Examine the workstation drawer.",
+        "Search the drawer interior.",
+        "Search the open drawer.",
+        "Search the KMS drawer.",
+        "Examine the drawer's interior.",
+        "Search the drawer.",
+    ],
+)
+def test_drawer_look_commands_match_the_gap_nudge(command: str) -> None:
+    handoff = _handoff(command)
+    plain_match = _plain_match(command)
+
+    assert handoff is not None
+    assert handoff.candidate.id == F_R2
+    assert plain_match is not None
+    assert plain_match.id == F_R2
 
 
 @pytest.mark.parametrize(
@@ -154,7 +172,10 @@ def test_drawer_gap_realizations_have_exact_deliveries_and_fact_metadata() -> No
     r2 = PACKAGE.knowledge_indexes.by_id[F_R2]
 
     assert r1.delivery_text == R1_DELIVERY
+    assert r1.repeatable is False
+    assert r2.statement == "Kristin looks over the drawer and is pointed toward the thin gap beneath its lower edge."
     assert r2.delivery_text == R2_DELIVERY
+    assert r2.repeatable is True
     assert r1.entity_ids == r2.entity_ids == ("kristin", "michelle_drawer")
     assert r1.relevance.priority == r2.relevance.priority == 0
     assert r1.source.storylet_id == r2.source.storylet_id == F_STORYLET
@@ -173,7 +194,7 @@ def test_pointer_fires_then_leaves_the_card_candidate_available() -> None:
     candidates = {candidate.id for candidate in engine.projector.project(engine.state, "player", "").candidates}
     assert CARD_REVEAL in candidates
     assert F_R1 not in candidates
-    assert F_R2 not in candidates
+    assert F_R2 in candidates
 
     engine.provider = _provider(CARD_REVEAL)
     engine.turn("Search the gap beneath the drawer.")

@@ -459,12 +459,13 @@ knowledge:
     priority: 0
   delivery_text: "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
 - id: k_sl_1a_f_r2
-  statement: "Kristin examines the carved initials and is pointed toward the thin gap beneath the drawer."
+  statement: "Kristin looks over the drawer and is pointed toward the thin gap beneath its lower edge."
   reach_entity_ids: [michelle_drawer]
-  earn_when: examines the carved initials
+  earn_when: examines, inspects, searches or checks the drawer without going underneath it
   action_evidence:
-  - [examine, inspect, study, read, look at, check, trace, run my fingers]
-  - [initials, carved initials, carving, my initials]
+  - [examine, inspect, search, check, look, study, read, trace, run my fingers]
+  - [drawer, "drawer's", KMS, initials, carved initials, carving, my initials]
+  repeatable: true
   entity_ids: [kristin, michelle_drawer]
   aliases:
   - drawer gap pointed out
@@ -487,7 +488,7 @@ knowledge:
   relevance:
     entity_ids: [kristin, michelle_drawer]
     priority: 0
-  delivery_text: "The initials are fresh, deep cuts. The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
+  delivery_text: "The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
 - id: k_sl_1a_b_r1
   statement: "Kristin reads Michelle's memory card. Its damaged recording warns her not to trust emergency broadcasts, and the Continuity Initiative files point to a dead drop at a bench in the park."
   earn_when: reads the files on Michelle's recovered memory card
