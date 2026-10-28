@@ -1,0 +1,154 @@
+# ruff: noqa: E501
+"""Generate the Ringer build manifest for T9e round 1: opens_container wording fix and probe v3.
+
+The build runs in a separate git worktree so the main checkout stays untouched while the T9d billed stages run.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+WT = "/home/bcorfman/dev/freytag-forge-t9e"
+MAIN = "/home/bcorfman/dev/freytag-forge"
+E = "scripts/ringer/environment_narration"
+OUT = Path(__file__).resolve().parent / "build-t9e-round1.json"
+PREREG = ".plans/grounded-llm-environment-narration/t9e-check-wording-prereg.md"
+
+COMMON = (
+    f"You are working in freytag-forge (Python 3.12). Working directory: {WT} (a git worktree; NEVER touch {MAIN}, another run is using it). "
+    f"export PYTHONPATH={WT} TMPDIR=/tmp; run `.venv/bin/python` (never uv). "
+    "Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. "
+    "No network, no live model call, no billed call, never run a billed script. Do not git commit. NEVER print or write any credential. NO regular expressions in new code. "
+    "Write the tests FIRST, run them, confirm they fail for the right reason, then implement until they pass. Run ruff check and ruff format on your files at the end. "
+    "Other workers edit OTHER files in this same checkout at the same time; edit only the files you own. "
+    "If a test in a file you do not own fails because of your change, do NOT edit that file: say which test and why in your final message. "
+    "Any generator script you write must write its output files NEXT TO ITSELF using `Path(__file__).resolve().parent` and never a hardcoded absolute output path (CI runs the generators in a different checkout path); the manifest CONTENTS may contain /home/bcorfman/dev/... paths. "
+    f"BACKGROUND. Read {PREREG} fully first; it is the preregistration this build implements. Plain summary: the Jev question `opens_container` answered true for `Check the glove box.` (0.64 and 0.62); the fix states in the question's instructions that checking, inspecting, examining and looking at a container does not open it, and a fresh probe (version 3) tests it."
+)
+
+CHECK = f"cd {WT} && export PYTHONPATH={WT} TMPDIR=/tmp && set -o pipefail && "
+PYTEST = "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov "
+
+
+def ruff(files: str) -> str:
+    return f".venv/bin/python -m ruff check {files} && .venv/bin/python -m ruff format --check {files}"
+
+
+def pytest_check(out: str, files: str) -> str:
+    return (
+        f"{PYTEST}{files} 2>&1 | tee /tmp/{out}.out | tail -6 && ! grep -Eq '[0-9]+ (failed|error)' /tmp/{out}.out && "
+    )
+
+
+WORDING_FILES = "storygame/runtime/jev_questions.py tests/test_jev_questions.py"
+
+WORDING_SPEC = (
+    COMMON
+    + "YOUR TASK: reword the Jev question `opens_container`. YOU MAY EDIT ONLY: storygame/runtime/jev_questions.py (only the `opens_container` function's question text) and tests/test_jev_questions.py (only the test(s) that pin the current text of this question, plus new tests). "
+    "Replace the question text with EXACTLY these three strings (keep the function name, signature, return type, the `noul` type, the payload keys and the `_answer` call as they are; do not touch `searches_underneath` or any other function): "
+    "instructions = 'Decide whether the command has the player open the container. Opening it, pulling it open or out, searching it, or going inside, in, into, or through it counts. Checking, inspecting, examining, or looking at it does not.' ; "
+    "true = 'The command opens the container, pulls it open, pulls it out, searches it, or says inside, in, into, or through the container. The player looks, feels, or reaches there.' (unchanged) ; "
+    "false = 'The command does not open the container, does not search it, and does not say inside, in, into, or through. A command that only checks, inspects, examines, looks at, closes, locks, touches, moves, carries, or talks about the container, or goes behind or on top of it, is false.' "
+    "The pinned-text test asserts the three strings exactly (read the values out of the captured question dict). List every assertion you changed in your final message; never delete, loosen or skip a test. "
+    "VERIFY: run tests/test_jev_questions.py tests/test_observation_under_scope.py tests/test_observation_open_step.py tests/test_search_opens_drawer.py tests/test_observation_mode.py; all must pass. If a test in a file you do not own pins the old text, list it and do not edit it."
+)
+
+WORDING_CHECK = (
+    CHECK
+    + pytest_check(
+        "t9e-r1-wording",
+        "tests/test_jev_questions.py tests/test_observation_under_scope.py tests/test_observation_open_step.py tests/test_search_opens_drawer.py tests/test_observation_mode.py",
+    )
+    + ruff(WORDING_FILES)
+)
+
+PROBE_FILES = f"{E}/opens_container_probe.py {E}/make_t9e_probe_run_manifest.py tests/test_opens_container_probe_v3.py"
+
+PROBE_SPEC = (
+    COMMON
+    + "YOUR TASK: add the version-3 corpus, gates and runner manifest to the opens_container Jev probe (preregistration 'Stage P (probe v3)'). Read scripts/ringer/environment_narration/opens_container_probe.py (it already has `--corpus {v1,v2}`; copy the v2 pattern for v3), tests/test_opens_container_probe_v2.py, the v2 corpus opens_probe_v2/ (cases.jsonl, cases.lock.json), make_t9d_probe_run_manifest.py and run-t9d-probe-live.json first. "
+    f"YOU MAY EDIT ONLY: {E}/opens_container_probe.py, and these NEW files: {E}/opens_probe_v3/cases.jsonl, {E}/opens_probe_v3/cases.lock.json, {E}/make_t9e_probe_run_manifest.py, {E}/run-t9e-probe-live.json, tests/test_opens_container_probe_v3.py. Do NOT change the v1 or v2 corpus, their locks, tests/test_opens_container_probe.py, tests/test_opens_container_probe_v2.py or any v1/v2 behaviour: `--corpus v1` stays the default and everything that works today must keep working byte for byte. "
+    "OPTION: `--corpus {v1,v2,v3}`; v3 selects the corpus directory `opens_probe_v3`, the build/check/dry-run/run/report behaviour below, the default `--max-calls` 206 and the default output directory bench/results/environment-narration/t9e-check/probe/. "
+    "V3 CORPUS (`--corpus v3 --build-cases` writes cases.jsonl and the lock from literal lists in the script; `--check-corpus` verifies the lock; copy the lists EXACTLY from the preregistration section 'Stage P (probe v3)'): "
+    "FL 24 fresh bare look-group negatives (`opens_container` only, expected False); FS 8 fresh search positives (`opens_container` only, expected True); FI 8 fresh inside positives (`opens_container` only, expected True); FU 8 fresh underside commands (`searches_underneath` ONLY, expected True; `opens_container` is NOT asked); the retained miss `Check the glove box.` [glove box] (`opens_container`, expected False, group `miss`); the 12 regression commands R on the container `drawer` exactly as in the T9d corpus (opens_container True for `Open the drawer.`, `Pull out the drawer.`, `Look inside the drawer.`, `Search the drawer.`, `Search inside the drawer.`; False for `Inspect the drawer.`, `Examine the drawer.`, `Check the drawer.`, `Look at the drawer.`, `Close the drawer.`; `searches_underneath` True, `opens_container` not asked, for `Search under the drawer.` and `Look under the drawer.`); the 20 retained opening positives O and 22 retained non-opening negatives N, copied from the v2 corpus (same commands, same expectations). Each case records the container name given in brackets in the preregistration. Reuse the v2 builders for R, O and N where you can. "
+    "REQUESTS: 2 samples per question-case: FL 48, FS 16, FI 16, FU 16, miss 2, R (10 + 2) x 2 = 24, O 40, N 44, total 206. `--dry-run --corpus v3` prints `planned requests: 206`. `--run --confirm` refuses without `--confirm`, default `--max-calls 206`, stops on a quota code, HTTP 429, auth failure or the cap and records the stop reason, and writes rows with every raw score, exactly as v1 and v2 do. "
+    "REPORT (`--report --corpus v3`) prints every score per case and sample and these gates, then a final line `probe gate: PASS` only if M1, M2 and M3 all pass, else `probe gate: FAIL`: "
+    "M1 zero `opens_container` TRUE answers among the 48 FL samples (print the one-sided 95% Wilson upper bound and name every true answer with its score) AND the retained miss `Check the glove box.` false on both samples; "
+    "M2 FS at least 14 of 16 true, FI at least 14 of 16 true, FU `searches_underneath` at least 15 of 16 true (list every miss by case id); "
+    "M3 R all 10 true-labelled and all 10 false-labelled `opens_container` samples right and all 4 `searches_underneath` samples true; O at least 38 of 40 true; N zero true of 44. "
+    "A `None` answer counts as not true for every gate that needs true and as not false for every gate that needs false; print the number of None answers. "
+    f"RUNNER MANIFEST: `{E}/make_t9e_probe_run_manifest.py` WRITES `{E}/run-t9e-probe-live.json` next to itself, modelled on make_t9d_probe_run_manifest.py (same runner rules: COMMAND 1 exactly once, foreground, never rerun, edit nothing, no credential, no commit; load .env the way that manifest does; the manifest CONTENTS use the repo path {MAIN} because the billed run happens from the main checkout after the merge) with COMMAND 1 = `opens_container_probe.py --corpus v3 --run --confirm --max-calls 206 --max-usd 0.01 --out bench/results/environment-narration/t9e-check/probe/rows.json`, COMMAND 2 the safe `--report --corpus v3` render into report.md in that directory, workdir `/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9e-probe`, the 206-row-or-stop-reason check and the credential-leak check as in the T9d manifest, run name `grounded-environment-narration`. "
+    "TESTS (tests/test_opens_container_probe_v3.py; stub the client, no network): a) corpus counts: FL 24, FS 8, FI 8, FU 8, miss 1, R 12, O 20, N 22; unique ids; the 206 request count; b) every fresh command (FL, FS, FI, FU) and the miss occurs in the preregistration file; c) none of the FL, FS, FI and FU commands occurs in the v1 or v2 corpora; d) the report gates: synthetic rows that satisfy everything give `probe gate: PASS`; for each of M1, M2, M3 (and for the glove box part of M1) a synthetic row set that violates exactly that gate gives FAIL and names the miss; None answers are counted; e) `--run` without `--confirm` exits non-zero without a call; f) the generated run manifest matches the committed JSON byte for byte when regenerated into a temp directory outside the repo. "
+    "VERIFY: run tests/test_opens_container_probe_v3.py, tests/test_opens_container_probe_v2.py, tests/test_opens_container_probe.py (all must pass), then `--corpus v3 --check-corpus` and `--corpus v3 --dry-run`."
+)
+
+PROBE_CHECK = (
+    CHECK
+    + pytest_check(
+        "t9e-r1-probe",
+        "tests/test_opens_container_probe_v3.py tests/test_opens_container_probe_v2.py tests/test_opens_container_probe.py",
+    )
+    + f".venv/bin/python {E}/opens_container_probe.py --corpus v3 --check-corpus && "
+    + f".venv/bin/python {E}/opens_container_probe.py --corpus v3 --dry-run | grep -q 'planned requests: 206' && "
+    + f".venv/bin/python {E}/opens_container_probe.py --corpus v2 --dry-run | grep -q 'planned requests: 378' && "
+    + f".venv/bin/python {E}/opens_container_probe.py --dry-run | grep -q 'planned requests: 344' && "
+    + f"(cd /home/bcorfman/dev/ringer && ./ringer.py lint {WT}/{E}/run-t9e-probe-live.json) && "
+    + ruff(PROBE_FILES)
+)
+
+
+def _task(key, spec, check, ownership, expect, verified):
+    return {
+        "key": key,
+        "task_type": "code-feature",
+        "engine": "codex",
+        "model": "gpt-5.6-luna",
+        "engine_args": ["-c", "model_reasoning_effort=high"],
+        "full_access": True,
+        "max_attempts": 2,
+        "timeout_s": 3600,
+        "check_timeout_s": 1800,
+        "ownership": ownership,
+        "expect_files": [f"{WT}/{p}" for p in expect],
+        "spec": spec,
+        "check": check,
+        "verified": verified,
+    }
+
+
+manifest = {
+    "run_name": "grounded-environment-narration",
+    "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9e-round1",
+    "max_parallel": 2,
+    "worktrees": False,
+    "repo": WT,
+    "tasks": [
+        _task(
+            "t9e-wording",
+            WORDING_SPEC,
+            WORDING_CHECK,
+            ["storygame/runtime/jev_questions.py", "tests/test_jev_questions.py"],
+            ["storygame/runtime/jev_questions.py"],
+            "opens_container states that checking, inspecting, examining and looking at do not open",
+        ),
+        _task(
+            "t9e-probe-v3",
+            PROBE_SPEC,
+            PROBE_CHECK,
+            [
+                f"{E}/opens_container_probe.py",
+                f"{E}/opens_probe_v3/cases.jsonl",
+                f"{E}/opens_probe_v3/cases.lock.json",
+                f"{E}/make_t9e_probe_run_manifest.py",
+                f"{E}/run-t9e-probe-live.json",
+                "tests/test_opens_container_probe_v3.py",
+            ],
+            [f"{E}/run-t9e-probe-live.json", "tests/test_opens_container_probe_v3.py"],
+            "the v3 probe corpus, gates M1 to M3 and runner manifest match the preregistration",
+        ),
+    ],
+}
+
+if __name__ == "__main__":
+    OUT.write_text(json.dumps(manifest, indent=2) + "\n")
