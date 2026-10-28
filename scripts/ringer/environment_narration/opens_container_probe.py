@@ -31,9 +31,14 @@ V2_PROBE_DIR = Path(__file__).with_name("opens_probe_v2")
 V2_CASES_PATH = V2_PROBE_DIR / "cases.jsonl"
 V2_LOCK_PATH = V2_PROBE_DIR / "cases.lock.json"
 V2_OUTPUT_DIR = REPO_DIR / "bench/results/environment-narration/t9d-search/probe"
+V3_PROBE_DIR = Path(__file__).with_name("opens_probe_v3")
+V3_CASES_PATH = V3_PROBE_DIR / "cases.jsonl"
+V3_LOCK_PATH = V3_PROBE_DIR / "cases.lock.json"
+V3_OUTPUT_DIR = REPO_DIR / "bench/results/environment-narration/t9e-check/probe"
 DEFAULT_SAMPLES = 2
 DEFAULT_MAX_CALLS = 344
 V2_DEFAULT_MAX_CALLS = 378
+V3_DEFAULT_MAX_CALLS = 206
 DEFAULT_MAX_USD = 0.01
 COST_PER_MILLION_INPUT_TOKENS = 0.042
 WILSON_Z = 1.6448536269514722
@@ -164,6 +169,68 @@ V2_REGRESSION_PHRASES = (
     ("Search under the drawer.", "drawer", "searches_underneath", True),
     ("Look under the drawer.", "drawer", "searches_underneath", True),
 )
+
+V3_FRESH_LOOK_PHRASES = (
+    ("Check the mailbox.", "mailbox"),
+    ("Check the fuse box.", "fuse box"),
+    ("Check the jewelry box.", "jewelry box"),
+    ("Check the safe.", "safe"),
+    ("Check the refrigerator.", "refrigerator"),
+    ("Check the oven.", "oven"),
+    ("Check the backpack.", "backpack"),
+    ("Check the purse.", "purse"),
+    ("Check the handbag.", "handbag"),
+    ("Check the wardrobe.", "wardrobe"),
+    ("Check the nightstand.", "nightstand"),
+    ("Check the toy box.", "toy box"),
+    ("Inspect the safe.", "safe"),
+    ("Inspect the refrigerator.", "refrigerator"),
+    ("Inspect the backpack.", "backpack"),
+    ("Inspect the wardrobe.", "wardrobe"),
+    ("Examine the fuse box.", "fuse box"),
+    ("Examine the jewelry box.", "jewelry box"),
+    ("Examine the purse.", "purse"),
+    ("Examine the toy box.", "toy box"),
+    ("Look at the mailbox.", "mailbox"),
+    ("Look at the oven.", "oven"),
+    ("Look at the handbag.", "handbag"),
+    ("Look at the nightstand.", "nightstand"),
+)
+
+V3_FRESH_SEARCH_PHRASES = (
+    ("Search the mailbox.", "mailbox"),
+    ("Search the fuse box.", "fuse box"),
+    ("Search the jewelry box.", "jewelry box"),
+    ("Search the safe.", "safe"),
+    ("Search the refrigerator.", "refrigerator"),
+    ("Search the backpack.", "backpack"),
+    ("Search the purse.", "purse"),
+    ("Search the wardrobe.", "wardrobe"),
+)
+
+V3_FRESH_INSIDE_PHRASES = (
+    ("Look inside the mailbox.", "mailbox"),
+    ("Check inside the fuse box.", "fuse box"),
+    ("Inspect inside the jewelry box.", "jewelry box"),
+    ("Examine inside the safe.", "safe"),
+    ("Look inside the refrigerator.", "refrigerator"),
+    ("Check inside the oven.", "oven"),
+    ("Examine inside the backpack.", "backpack"),
+    ("Look inside the toy box.", "toy box"),
+)
+
+V3_FRESH_UNDER_PHRASES = (
+    ("Search under the wardrobe.", "wardrobe"),
+    ("Check beneath the nightstand.", "nightstand"),
+    ("Inspect underneath the refrigerator.", "refrigerator"),
+    ("Look under the safe.", "safe"),
+    ("Examine below the oven.", "oven"),
+    ("Feel under the toy box.", "toy box"),
+    ("Search beneath the handbag.", "handbag"),
+    ("Check under the backpack.", "backpack"),
+)
+
+V3_MISS_PHRASES = (("Check the glove box.", "glove box"),)
 
 
 def _grid_case(kind: str, index: int, command: str, container: str, expected: dict[str, bool]) -> dict[str, Any]:
@@ -325,11 +392,61 @@ def _v2_literal_cases() -> list[dict[str, Any]]:
 V2_FROZEN_CASES = _v2_literal_cases()
 
 
+def _v3_literal_cases() -> list[dict[str, Any]]:
+    cases: list[dict[str, Any]] = []
+    cases.extend(
+        _single_case(f"fl{index:02d}", command, thing, False, "fresh-look", "fresh-look")
+        for index, (command, thing) in enumerate(V3_FRESH_LOOK_PHRASES, start=1)
+    )
+    cases.extend(
+        _single_case(f"fs{index:02d}", command, thing, True, "fresh-search", "fresh-search")
+        for index, (command, thing) in enumerate(V3_FRESH_SEARCH_PHRASES, start=1)
+    )
+    cases.extend(
+        _single_case(f"fi{index:02d}", command, thing, True, "fresh-inside", "fresh-inside")
+        for index, (command, thing) in enumerate(V3_FRESH_INSIDE_PHRASES, start=1)
+    )
+    cases.extend(
+        _v2_single_case(
+            f"fu{index:02d}",
+            command,
+            thing,
+            "searches_underneath",
+            True,
+            "fresh-under",
+            "fresh-under",
+        )
+        for index, (command, thing) in enumerate(V3_FRESH_UNDER_PHRASES, start=1)
+    )
+    cases.extend(
+        _single_case(f"m{index:02d}", command, thing, False, "miss", "miss")
+        for index, (command, thing) in enumerate(V3_MISS_PHRASES, start=1)
+    )
+    cases.extend(
+        _v2_single_case(f"r{index:02d}", command, thing, question, expected, "regression", "regression")
+        for index, (command, thing, question, expected) in enumerate(V2_REGRESSION_PHRASES, start=1)
+    )
+    cases.extend(
+        _single_case(f"o{index:02d}", command, thing, True, "opening", "opening")
+        for index, (command, thing) in enumerate(OPENING_PHRASES, start=1)
+    )
+    cases.extend(
+        _single_case(f"n{index:02d}", command, thing, False, "non-opening", "non-opening")
+        for index, (command, thing) in enumerate(NON_OPENING_PHRASES, start=1)
+    )
+    return cases
+
+
+V3_FROZEN_CASES = _v3_literal_cases()
+
+
 def _corpus_paths(corpus: str) -> tuple[Path, Path]:
     if corpus == "v1":
         return CASES_PATH, LOCK_PATH
     if corpus == "v2":
         return V2_CASES_PATH, V2_LOCK_PATH
+    if corpus == "v3":
+        return V3_CASES_PATH, V3_LOCK_PATH
     raise ValueError(f"unknown corpus: {corpus}")
 
 
@@ -358,6 +475,8 @@ def _corpus_literal(corpus: str) -> list[dict[str, Any]]:
         return cases
     if corpus == "v2":
         return V2_FROZEN_CASES
+    if corpus == "v3":
+        return V3_FROZEN_CASES
     raise ValueError(f"unknown corpus: {corpus}")
 
 
@@ -366,6 +485,8 @@ def _corpus_max_calls(corpus: str) -> int:
         return DEFAULT_MAX_CALLS
     if corpus == "v2":
         return V2_DEFAULT_MAX_CALLS
+    if corpus == "v3":
+        return V3_DEFAULT_MAX_CALLS
     raise ValueError(f"unknown corpus: {corpus}")
 
 
@@ -887,6 +1008,126 @@ def _report_text_v2(rows: list[dict[str, Any]], rows_sha256: str) -> tuple[str, 
     return "\n".join(lines), passed
 
 
+def _report_text_v3(rows: list[dict[str, Any]], rows_sha256: str) -> tuple[str, bool]:
+    cases = build_cases("v3")
+    case_by_id = {case["id"]: case for case in cases}
+    fresh_look_rows = _rows_for(rows, cases, "fresh-look", question="opens_container")
+    fresh_search_rows = _rows_for(rows, cases, "fresh-search", question="opens_container")
+    fresh_inside_rows = _rows_for(rows, cases, "fresh-inside", question="opens_container")
+    fresh_under_rows = _rows_for(rows, cases, "fresh-under", question="searches_underneath")
+    miss_rows = _rows_for(rows, cases, "miss", question="opens_container")
+    regression_open_rows = _rows_for(rows, cases, "regression", question="opens_container")
+    regression_under_rows = _rows_for(rows, cases, "regression", question="searches_underneath")
+    opening_rows = _rows_for(rows, cases, "opening", question="opens_container")
+    non_opening_rows = _rows_for(rows, cases, "non-opening", question="opens_container")
+
+    def true_count(items: list[dict[str, Any]]) -> int:
+        return sum(row.get("returned") is True for row in items)
+
+    def misses(items: list[dict[str, Any]], expected: bool) -> list[dict[str, Any]]:
+        return [row for row in items if row.get("returned") is not expected]
+
+    regression_true = [row for row in regression_open_rows if case_by_id[row["case_id"]]["expected"] is True]
+    regression_false = [row for row in regression_open_rows if case_by_id[row["case_id"]]["expected"] is False]
+    m1_fl_true = [row for row in fresh_look_rows if row.get("returned") is True]
+    m1 = (
+        len(fresh_look_rows) == 48
+        and not m1_fl_true
+        and len(miss_rows) == 2
+        and all(row.get("returned") is False for row in miss_rows)
+    )
+    m1_bound = _wilson_upper(len(m1_fl_true), len(fresh_look_rows))
+    m2 = (
+        len(fresh_search_rows) == 16
+        and true_count(fresh_search_rows) >= 14
+        and len(fresh_inside_rows) == 16
+        and true_count(fresh_inside_rows) >= 14
+        and len(fresh_under_rows) == 16
+        and true_count(fresh_under_rows) >= 15
+    )
+    m3_regression = (
+        len(regression_true) == 10
+        and len(regression_false) == 10
+        and len(regression_under_rows) == 4
+        and all(row.get("returned") is True for row in regression_true)
+        and all(row.get("returned") is False for row in regression_false)
+        and all(row.get("returned") is True for row in regression_under_rows)
+    )
+    m3_opening = len(opening_rows) == 40 and true_count(opening_rows) >= 38
+    m3_non_opening = len(non_opening_rows) == 44 and true_count(non_opening_rows) == 0
+    m3 = m3_regression and m3_opening and m3_non_opening
+    null_answers = sum(row.get("returned") is None for row in rows)
+
+    lines = [
+        "# Opens-container probe v3 report",
+        "",
+        f"Rows sha256: {rows_sha256}",
+        f"Rows rendered: {len(rows)}",
+        f"null answers: {null_answers}",
+        "",
+        "## Per-case results",
+        "",
+        "| Case | Command | Question | Expected | Sample answers and scores |",
+        "| --- | --- | --- | ---: | --- |",
+    ]
+    for case in cases:
+        case_rows = sorted(
+            (row for row in rows if row.get("case_id") == case["id"]),
+            key=lambda row: (row.get("question", ""), row.get("sample", 0)),
+        )
+        samples_text = (
+            ", ".join(
+                f"{row.get('question')} sample {row.get('sample')}: "
+                f"{_display(row.get('returned'))} ({_display(row.get('score', row.get('noul')))})"
+                for row in case_rows
+            )
+            or "—"
+        )
+        lines.append(
+            f"| {case['id']} | {case['command']} | {_display(case['question'])} | "
+            f"{_display(case['expected'])} | {samples_text} |"
+        )
+
+    m1_glove_misses = misses(miss_rows, False)
+    m2_misses = misses(fresh_search_rows, True) + misses(fresh_inside_rows, True) + misses(fresh_under_rows, True)
+    m3_misses = (
+        misses(regression_true, True)
+        + misses(regression_false, False)
+        + misses(regression_under_rows, True)
+        + misses(opening_rows, True)
+        + [row for row in non_opening_rows if row.get("returned") is True]
+    )
+    bound_text = "n/a" if m1_bound is None else f"{m1_bound * 100:.2f}%"
+    lines.extend(
+        [
+            "",
+            "## Gates",
+            "",
+            f"- M1: {'PASS' if m1 else 'FAIL'} — FL true opens_container answers: "
+            f"{len(m1_fl_true)} of {len(fresh_look_rows)}; one-sided 95% Wilson upper bound: {bound_text}; "
+            f"glove box false: {sum(row.get('returned') is False for row in miss_rows)} of {len(miss_rows)}",
+            f"- M2: {'PASS' if m2 else 'FAIL'} — FS true: {true_count(fresh_search_rows)} of 16; "
+            f"FI true: {true_count(fresh_inside_rows)} of 16; "
+            f"FU searches_underneath true: {true_count(fresh_under_rows)} of 16",
+            f"- M3: {'PASS' if m3 else 'FAIL'} — R regression labels and underside answers correct; "
+            f"O true: {true_count(opening_rows)} of 40; N true: {true_count(non_opening_rows)} of 44",
+            "",
+            "### M1 FL true answers",
+            "",
+        ]
+    )
+    lines.extend(_miss_lines(m1_fl_true) or ["- none"])
+    lines.extend(["", "### M1 glove box misses", ""])
+    lines.extend(_miss_lines(m1_glove_misses) or ["- none"])
+    lines.extend(["", "### M2 misses by case id", ""])
+    lines.extend(_miss_lines(m2_misses) or ["- none"])
+    lines.extend(["", "### M3 misses by case id", ""])
+    lines.extend(_miss_lines(m3_misses) or ["- none"])
+    passed = m1 and m2 and m3
+    lines.extend(["", f"probe gate: {'PASS' if passed else 'FAIL'}", ""])
+    return "\n".join(lines), passed
+
+
 def report_rows(rows_path: Path, out: Path, corpus: str = "v1") -> int:
     document = json.loads(rows_path.read_text(encoding="utf-8"))
     rows = document.get("rows")
@@ -896,6 +1137,8 @@ def report_rows(rows_path: Path, out: Path, corpus: str = "v1") -> int:
         report, passed = _report_text(rows, _sha256(rows_path.read_bytes()))
     elif corpus == "v2":
         report, passed = _report_text_v2(rows, _sha256(rows_path.read_bytes()))
+    elif corpus == "v3":
+        report, passed = _report_text_v3(rows, _sha256(rows_path.read_bytes()))
     else:
         raise ValueError(f"unknown corpus: {corpus}")
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -926,7 +1169,7 @@ def _parser() -> argparse.ArgumentParser:
     modes.add_argument("--dry-run", action="store_true")
     modes.add_argument("--run", action="store_true")
     modes.add_argument("--report", action="store_true")
-    parser.add_argument("--corpus", choices=("v1", "v2"), default="v1")
+    parser.add_argument("--corpus", choices=("v1", "v2", "v3"), default="v1")
     parser.add_argument("--samples", type=int, default=DEFAULT_SAMPLES)
     parser.add_argument("--confirm", action="store_true")
     parser.add_argument("--max-calls", type=int)
@@ -956,6 +1199,9 @@ def main(argv: list[str] | None = None) -> int:
             if args.corpus == "v2":
                 rows = rows or V2_OUTPUT_DIR / "rows.json"
                 out = out or V2_OUTPUT_DIR / "report.md"
+            elif args.corpus == "v3":
+                rows = rows or V3_OUTPUT_DIR / "rows.json"
+                out = out or V3_OUTPUT_DIR / "report.md"
             if rows is None or out is None:
                 return _error("--report requires --rows and --out")
             return report_rows(rows, out, corpus=args.corpus)
@@ -968,6 +1214,8 @@ def main(argv: list[str] | None = None) -> int:
         out = args.out
         if args.corpus == "v2":
             out = out or V2_OUTPUT_DIR / "rows.json"
+        elif args.corpus == "v3":
+            out = out or V3_OUTPUT_DIR / "rows.json"
         if out is None:
             return _error("run mode requires --out")
         max_calls = args.max_calls if args.max_calls is not None else _corpus_max_calls(args.corpus)
