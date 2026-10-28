@@ -27,8 +27,13 @@ REPO_DIR = Path(__file__).resolve().parents[3]
 PROBE_DIR = Path(__file__).with_name("opens_probe")
 CASES_PATH = PROBE_DIR / "cases.jsonl"
 LOCK_PATH = PROBE_DIR / "cases.lock.json"
+V2_PROBE_DIR = Path(__file__).with_name("opens_probe_v2")
+V2_CASES_PATH = V2_PROBE_DIR / "cases.jsonl"
+V2_LOCK_PATH = V2_PROBE_DIR / "cases.lock.json"
+V2_OUTPUT_DIR = REPO_DIR / "bench/results/environment-narration/t9d-search/probe"
 DEFAULT_SAMPLES = 2
 DEFAULT_MAX_CALLS = 344
+V2_DEFAULT_MAX_CALLS = 378
 DEFAULT_MAX_USD = 0.01
 COST_PER_MILLION_INPUT_TOKENS = 0.042
 WILSON_Z = 1.6448536269514722
@@ -103,6 +108,63 @@ REGRESSION_PHRASES = (
     ("Close the drawer.", "drawer", False),
 )
 
+V2_VERBS = ("Search", "Inspect", "Examine", "Check", "Look at")
+V2_CONTAINERS = ("dresser", "trunk", "suitcase", "cupboard")
+V2_UNDER_WORDS = ("under", "beneath", "underneath", "below")
+
+SEARCH_POSITIVE_PHRASES = (
+    ("Search the sideboard.", "sideboard"),
+    ("Search the armoire.", "armoire"),
+    ("Search the bureau.", "bureau"),
+    ("Search the crate.", "crate"),
+    ("Search the toolbox.", "toolbox"),
+    ("Search the cooler.", "cooler"),
+    ("Search the glove box.", "glove box"),
+    ("Search the bottom drawer.", "bottom drawer"),
+    ("Search the top drawer.", "top drawer"),
+    ("Search the file drawer.", "file drawer"),
+    ("Search the footlocker.", "footlocker"),
+    ("Search the cash box.", "cash box"),
+    ("Search the tackle box.", "tackle box"),
+    ("Search the medicine cabinet.", "medicine cabinet"),
+    ("Search the lunchbox.", "lunchbox"),
+    ("Search the briefcase.", "briefcase"),
+)
+
+LOOK_NEGATIVE_PHRASES = (
+    ("Inspect the sideboard.", "sideboard"),
+    ("Examine the armoire.", "armoire"),
+    ("Check the bureau.", "bureau"),
+    ("Look at the crate.", "crate"),
+    ("Inspect the toolbox.", "toolbox"),
+    ("Examine the cooler.", "cooler"),
+    ("Check the glove box.", "glove box"),
+    ("Look at the bottom drawer.", "bottom drawer"),
+    ("Inspect the top drawer.", "top drawer"),
+    ("Examine the file drawer.", "file drawer"),
+    ("Check the footlocker.", "footlocker"),
+    ("Look at the cash box.", "cash box"),
+    ("Inspect the tackle box.", "tackle box"),
+    ("Examine the medicine cabinet.", "medicine cabinet"),
+    ("Check the lunchbox.", "lunchbox"),
+    ("Look at the briefcase.", "briefcase"),
+)
+
+V2_REGRESSION_PHRASES = (
+    ("Open the drawer.", "drawer", "opens_container", True),
+    ("Pull out the drawer.", "drawer", "opens_container", True),
+    ("Look inside the drawer.", "drawer", "opens_container", True),
+    ("Search the drawer.", "drawer", "opens_container", True),
+    ("Search inside the drawer.", "drawer", "opens_container", True),
+    ("Inspect the drawer.", "drawer", "opens_container", False),
+    ("Examine the drawer.", "drawer", "opens_container", False),
+    ("Check the drawer.", "drawer", "opens_container", False),
+    ("Look at the drawer.", "drawer", "opens_container", False),
+    ("Close the drawer.", "drawer", "opens_container", False),
+    ("Search under the drawer.", "drawer", "searches_underneath", True),
+    ("Look under the drawer.", "drawer", "searches_underneath", True),
+)
+
 
 def _grid_case(kind: str, index: int, command: str, container: str, expected: dict[str, bool]) -> dict[str, Any]:
     return {
@@ -144,6 +206,48 @@ def _grid_cases() -> list[dict[str, Any]]:
     return cases
 
 
+def _v2_grid_cases() -> list[dict[str, Any]]:
+    cases: list[dict[str, Any]] = []
+    for kind in ("bare", "under", "inside"):
+        for verb_index, verb in enumerate(V2_VERBS):
+            for container_index, container in enumerate(V2_CONTAINERS):
+                under_word = V2_UNDER_WORDS[(verb_index + container_index) % len(V2_UNDER_WORDS)]
+                if kind == "bare":
+                    command = f"{verb} the {container}."
+                    question = list(QUESTIONS)
+                    expected = {
+                        "opens_container": verb == "Search",
+                        "searches_underneath": False,
+                    }
+                elif kind == "under":
+                    command = (
+                        f"Look under the {container}." if verb == "Look at" else f"{verb} {under_word} the {container}."
+                    )
+                    question = ["searches_underneath"]
+                    expected = {"searches_underneath": True}
+                else:
+                    command = (
+                        f"Look inside the {container}." if verb == "Look at" else f"{verb} inside the {container}."
+                    )
+                    question = list(QUESTIONS)
+                    expected = {
+                        "opens_container": True,
+                        "searches_underneath": False,
+                    }
+                cases.append(
+                    {
+                        "id": f"g-{kind[0]}{verb_index * len(V2_CONTAINERS) + container_index + 1:02d}",
+                        "command": command,
+                        "thing": container,
+                        "question": question,
+                        "expected": expected,
+                        "group": "grid",
+                        "kind": kind,
+                    }
+                )
+    return cases
+
+
 def _single_case(
     case_id: str, command: str, thing: str, expected: bool | None, group: str, kind: str
 ) -> dict[str, Any]:
@@ -158,8 +262,36 @@ def _single_case(
     }
 
 
-def build_cases() -> list[dict[str, Any]]:
-    cases = _grid_cases()
+def _v2_single_case(
+    case_id: str,
+    command: str,
+    thing: str,
+    question: str,
+    expected: bool | None,
+    group: str,
+    kind: str,
+) -> dict[str, Any]:
+    return {
+        "id": case_id,
+        "command": command,
+        "thing": thing,
+        "question": question,
+        "expected": expected,
+        "group": group,
+        "kind": kind,
+    }
+
+
+def _v2_literal_cases() -> list[dict[str, Any]]:
+    cases = _v2_grid_cases()
+    cases.extend(
+        _single_case(f"s{index:02d}", command, thing, True, "search-positive", "search-positive")
+        for index, (command, thing) in enumerate(SEARCH_POSITIVE_PHRASES, start=1)
+    )
+    cases.extend(
+        _single_case(f"l{index:02d}", command, thing, False, "look-negative", "look-negative")
+        for index, (command, thing) in enumerate(LOOK_NEGATIVE_PHRASES, start=1)
+    )
     cases.extend(
         _single_case(f"o{index:02d}", command, thing, True, "opening", "opening")
         for index, (command, thing) in enumerate(OPENING_PHRASES, start=1)
@@ -175,15 +307,74 @@ def build_cases() -> list[dict[str, Any]]:
         }
         for index, (command, thing) in enumerate(REPORTED_PHRASES, start=1)
     )
-    cases.extend(
-        _single_case(f"r{index}", command, thing, expected, "regression", "regression")
-        for index, (command, thing, expected) in enumerate(REGRESSION_PHRASES, start=1)
-    )
+    for index, (command, thing, question, expected) in enumerate(V2_REGRESSION_PHRASES, start=1):
+        cases.append(
+            _v2_single_case(
+                f"r{index:02d}",
+                command,
+                thing,
+                question,
+                expected,
+                "regression",
+                "regression",
+            )
+        )
     return cases
 
 
-def _load_cases(path: Path | None = None) -> list[dict[str, Any]]:
-    source = CASES_PATH if path is None else path
+V2_FROZEN_CASES = _v2_literal_cases()
+
+
+def _corpus_paths(corpus: str) -> tuple[Path, Path]:
+    if corpus == "v1":
+        return CASES_PATH, LOCK_PATH
+    if corpus == "v2":
+        return V2_CASES_PATH, V2_LOCK_PATH
+    raise ValueError(f"unknown corpus: {corpus}")
+
+
+def _corpus_literal(corpus: str) -> list[dict[str, Any]]:
+    if corpus == "v1":
+        cases = _grid_cases()
+        cases.extend(
+            _single_case(f"o{index:02d}", command, thing, True, "opening", "opening")
+            for index, (command, thing) in enumerate(OPENING_PHRASES, start=1)
+        )
+        cases.extend(
+            _single_case(f"n{index:02d}", command, thing, False, "non-opening", "non-opening")
+            for index, (command, thing) in enumerate(NON_OPENING_PHRASES, start=1)
+        )
+        cases.extend(
+            {
+                **_single_case(f"x{index:02d}", command, thing, None, "reported", "reported"),
+                "reported": True,
+            }
+            for index, (command, thing) in enumerate(REPORTED_PHRASES, start=1)
+        )
+        cases.extend(
+            _single_case(f"r{index}", command, thing, expected, "regression", "regression")
+            for index, (command, thing, expected) in enumerate(REGRESSION_PHRASES, start=1)
+        )
+        return cases
+    if corpus == "v2":
+        return V2_FROZEN_CASES
+    raise ValueError(f"unknown corpus: {corpus}")
+
+
+def _corpus_max_calls(corpus: str) -> int:
+    if corpus == "v1":
+        return DEFAULT_MAX_CALLS
+    if corpus == "v2":
+        return V2_DEFAULT_MAX_CALLS
+    raise ValueError(f"unknown corpus: {corpus}")
+
+
+def build_cases(corpus: str = "v1") -> list[dict[str, Any]]:
+    return [dict(case) for case in _corpus_literal(corpus)]
+
+
+def _load_cases(path: Path | None = None, corpus: str = "v1") -> list[dict[str, Any]]:
+    source = _corpus_paths(corpus)[0] if path is None else path
     try:
         lines = source.read_text(encoding="utf-8").splitlines()
     except FileNotFoundError as error:
@@ -204,10 +395,18 @@ def _load_cases(path: Path | None = None) -> list[dict[str, Any]]:
     return cases
 
 
-def _lock_matches(cases: list[dict[str, Any]]) -> bool:
+def _lock_matches(
+    cases: list[dict[str, Any]],
+    cases_path: Path | None = None,
+    lock_path: Path | None = None,
+    corpus: str = "v1",
+) -> bool:
+    default_cases_path, default_lock_path = _corpus_paths(corpus)
+    source = default_cases_path if cases_path is None else cases_path
+    lock_source = default_lock_path if lock_path is None else lock_path
     try:
-        lock = json.loads(LOCK_PATH.read_text(encoding="utf-8"))
-        data = CASES_PATH.read_bytes()
+        lock = json.loads(lock_source.read_text(encoding="utf-8"))
+        data = source.read_bytes()
     except (OSError, json.JSONDecodeError):
         return False
     return lock == {"sha256": _sha256(data), "count": len(cases)}
@@ -241,8 +440,12 @@ def _score(raw_answer: object, question: str) -> object:
 def _status_stop_reason(client: object) -> str | None:
     for name in ("last_error_code", "error_code"):
         value = getattr(client, name, None)
-        if isinstance(value, str) and "QUOTA" in value.upper():
-            return "quota_code"
+        if isinstance(value, str):
+            normalized = value.upper()
+            if "QUOTA" in normalized:
+                return "quota_code"
+            if "AUTH" in normalized or "UNAUTHORIZED" in normalized or "FORBIDDEN" in normalized:
+                return "auth_failure"
     return _under_status_stop_reason(client)
 
 
@@ -517,12 +720,184 @@ def _report_text(rows: list[dict[str, Any]], rows_sha256: str) -> tuple[str, boo
     return "\n".join(lines), passed
 
 
-def report_rows(rows_path: Path, out: Path) -> int:
+def _v2_row_verb(row: dict[str, Any]) -> str:
+    command = str(row.get("command", ""))
+    if command.startswith("Look "):
+        return "Look at"
+    return command.split(" ", 1)[0]
+
+
+def _v2_wilson_upper(successes: int, trials: int) -> float | None:
+    if trials < 1:
+        return None
+    proportion = successes / trials
+    adjustment = WILSON_Z * WILSON_Z / trials
+    numerator = (
+        proportion
+        + adjustment / 2
+        + WILSON_Z * (proportion * (1 - proportion) / trials + WILSON_Z * WILSON_Z / (4 * trials * trials)) ** 0.5
+    )
+    return numerator / (1 + adjustment)
+
+
+def _report_text_v2(rows: list[dict[str, Any]], rows_sha256: str) -> tuple[str, bool]:
+    cases = build_cases("v2")
+    case_by_id = {case["id"]: case for case in cases}
+    grid_bare_open = _rows_for(rows, cases, "grid", "bare", "opens_container")
+    grid_inside_open = _rows_for(rows, cases, "grid", "inside", "opens_container")
+    grid_bare_under = _rows_for(rows, cases, "grid", "bare", "searches_underneath")
+    grid_under_under = _rows_for(rows, cases, "grid", "under", "searches_underneath")
+    grid_inside_under = _rows_for(rows, cases, "grid", "inside", "searches_underneath")
+    search_rows = _rows_for(rows, cases, "search-positive", question="opens_container")
+    look_rows = _rows_for(rows, cases, "look-negative", question="opens_container")
+    opening_rows = _rows_for(rows, cases, "opening", question="opens_container")
+    non_opening_rows = _rows_for(rows, cases, "non-opening", question="opens_container")
+    reported_rows = _rows_for(rows, cases, "reported", question="opens_container")
+    regression_open_rows = _rows_for(rows, cases, "regression", question="opens_container")
+    regression_under_rows = _rows_for(rows, cases, "regression", question="searches_underneath")
+
+    def true_count(items: list[dict[str, Any]]) -> int:
+        return sum(row.get("returned") is True for row in items)
+
+    def false_count(items: list[dict[str, Any]]) -> int:
+        return sum(row.get("returned") is False for row in items)
+
+    def misses(items: list[dict[str, Any]], expected: bool) -> list[dict[str, Any]]:
+        return [row for row in items if row.get("returned") is not expected]
+
+    bare_search_open = [row for row in grid_bare_open if _v2_row_verb(row) == "Search"]
+    k1_search = len(bare_search_open) == 8 and true_count(bare_search_open) >= 7
+    k1_fresh = len(search_rows) == 32 and true_count(search_rows) >= 29
+    k1 = k1_search and k1_fresh
+    k2_grid = [row for row in grid_bare_open if case_by_id[row["case_id"]]["command"].split(" ", 1)[0] != "Search"]
+    k2_rows = k2_grid + look_rows
+    k2 = len(k2_rows) == 64 and false_count(k2_rows) == 64
+    k2_bound = _v2_wilson_upper(true_count(k2_rows), len(k2_rows))
+    k3 = len(grid_inside_open) == 40 and true_count(grid_inside_open) >= 36
+    k4_bare = len(grid_bare_under) == 40 and false_count(grid_bare_under) >= 36
+    k4_under = len(grid_under_under) == 40 and true_count(grid_under_under) >= 38
+    k4_inside = len(grid_inside_under) == 40 and false_count(grid_inside_under) >= 36
+    k4 = k4_bare and k4_under and k4_inside
+    k5_opening = len(opening_rows) == 40 and true_count(opening_rows) >= 36
+    k5_non_opening = len(non_opening_rows) == 44 and false_count(non_opening_rows) == 44
+    k5 = k5_opening and k5_non_opening
+    regression_true = [row for row in regression_open_rows if case_by_id[row["case_id"]]["expected"] is True]
+    regression_false = [row for row in regression_open_rows if case_by_id[row["case_id"]]["expected"] is False]
+    k6 = (
+        len(regression_true) == 10
+        and len(regression_false) == 10
+        and len(regression_under_rows) == 4
+        and all(row.get("returned") is True for row in regression_true)
+        and all(row.get("returned") is False for row in regression_false)
+        and all(row.get("returned") is True for row in regression_under_rows)
+    )
+    null_answers = sum(row.get("returned") is None for row in rows)
+
+    lines = [
+        "# Opens-container probe v2 report",
+        "",
+        f"Rows sha256: {rows_sha256}",
+        f"Rows rendered: {len(rows)}",
+        f"null answers: {null_answers}",
+        "",
+        "## Per-case results",
+        "",
+        "| Case | Command | Question | Expected | Sample answers and scores |",
+        "| --- | --- | --- | ---: | --- |",
+    ]
+    for case in cases:
+        case_rows = sorted(
+            (row for row in rows if row.get("case_id") == case["id"]),
+            key=lambda row: (row.get("question", ""), row.get("sample", 0)),
+        )
+        samples_text = (
+            ", ".join(
+                f"{row.get('question')} sample {row.get('sample')}: "
+                f"{_display(row.get('returned'))} ({_display(row.get('score', row.get('noul')))})"
+                for row in case_rows
+            )
+            or "—"
+        )
+        lines.append(
+            f"| {case['id']} | {case['command']} | {_display(case['question'])} | "
+            f"{_display(case['expected'])} | {samples_text} |"
+        )
+
+    k1_misses = misses(bare_search_open, True) + misses(search_rows, True)
+    k2_misses = [row for row in k2_rows if row.get("returned") is not False]
+    k3_misses = misses(grid_inside_open, True)
+    k4_misses = misses(grid_bare_under, False) + misses(grid_under_under, True) + misses(grid_inside_under, False)
+    k5_misses = misses(opening_rows, True) + misses(non_opening_rows, False)
+    k6_misses = (
+        [row for row in regression_true if row.get("returned") is not True]
+        + [row for row in regression_false if row.get("returned") is not False]
+        + [row for row in regression_under_rows if row.get("returned") is not True]
+    )
+    bound_text = "n/a" if k2_bound is None else f"{k2_bound * 100:.2f}%"
+    lines.extend(
+        [
+            "",
+            "## Gates",
+            "",
+            f"- K1: {'PASS' if k1 else 'FAIL'} — bare Search true: {true_count(bare_search_open)} of 8; "
+            f"fresh Search true: {true_count(search_rows)} of 32",
+            f"- K2: {'PASS' if k2 else 'FAIL'} — true answers: {true_count(k2_rows)} of 64; "
+            f"one-sided 95% Wilson upper bound: {bound_text}",
+            f"- K3: {'PASS' if k3 else 'FAIL'} — inside true: {true_count(grid_inside_open)} of 40",
+            f"- K4: {'PASS' if k4 else 'FAIL'} — bare false: {false_count(grid_bare_under)} of 40; "
+            f"under true: {true_count(grid_under_under)} of 40; "
+            f"inside false: {false_count(grid_inside_under)} of 40",
+            f"- K5: {'PASS' if k5 else 'FAIL'} — opening true: {true_count(opening_rows)} of 40; "
+            f"non-opening false: {false_count(non_opening_rows)} of 44",
+            f"- K6: {'PASS' if k6 else 'FAIL'} — regression labels and underside answers match",
+            "",
+            "### K1 misses by case id",
+            "",
+        ]
+    )
+    lines.extend(_miss_lines(k1_misses) or ["- none"])
+    lines.extend(["", "### K2 misses", ""])
+    lines.extend(_miss_lines(k2_misses) or ["- none"])
+    lines.extend(["", "### K3 misses by case id and verb", ""])
+    k3_miss_lines = [
+        f"- {row.get('case_id')} sample {row.get('sample')} verb {_v2_row_verb(row)}: "
+        f"score {_display(row.get('score', row.get('noul')))}"
+        for row in k3_misses
+    ]
+    lines.extend(k3_miss_lines or ["- none"])
+    lines.extend(["", "### K4 misses by case id and verb", ""])
+    k4_miss_lines = [
+        f"- {row.get('case_id')} sample {row.get('sample')} verb {_v2_row_verb(row)}: "
+        f"score {_display(row.get('score', row.get('noul')))}"
+        for row in k4_misses
+    ]
+    lines.extend(k4_miss_lines or ["- none"])
+    lines.extend(["", "### K5 misses", ""])
+    lines.extend(_miss_lines(k5_misses) or ["- none"])
+    lines.extend(["", "### K6 misses", ""])
+    lines.extend(_miss_lines(k6_misses) or ["- none"])
+    lines.extend(["", "## Reported phrases (no gate)", ""])
+    for row in reported_rows:
+        lines.append(
+            f"- {row.get('case_id')} sample {row.get('sample')}: "
+            f"{_display(row.get('returned'))} (score {_display(row.get('score', row.get('noul')))})"
+        )
+    passed = k1 and k2 and k3 and k4 and k5 and k6
+    lines.extend(["", f"probe gate: {'PASS' if passed else 'FAIL'}", ""])
+    return "\n".join(lines), passed
+
+
+def report_rows(rows_path: Path, out: Path, corpus: str = "v1") -> int:
     document = json.loads(rows_path.read_text(encoding="utf-8"))
     rows = document.get("rows")
     if not isinstance(rows, list):
         raise ValueError("rows file has no rows list")
-    report, passed = _report_text(rows, _sha256(rows_path.read_bytes()))
+    if corpus == "v1":
+        report, passed = _report_text(rows, _sha256(rows_path.read_bytes()))
+    elif corpus == "v2":
+        report, passed = _report_text_v2(rows, _sha256(rows_path.read_bytes()))
+    else:
+        raise ValueError(f"unknown corpus: {corpus}")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(_redact(report), encoding="utf-8")
     return 0 if passed else 1
@@ -533,10 +908,10 @@ def _error(message: str) -> int:
     return 2
 
 
-def _check_corpus() -> int:
-    cases = _load_cases()
-    literal_matches = cases == build_cases()
-    lock_matches = _lock_matches(cases)
+def _check_corpus(corpus: str = "v1") -> int:
+    cases = _load_cases(corpus=corpus)
+    literal_matches = cases == build_cases(corpus)
+    lock_matches = _lock_matches(cases, corpus=corpus)
     print(f"case count: {len(cases)}")
     print(f"corpus literal: {'PASS' if literal_matches else 'FAIL'}")
     print(f"corpus lock: {'PASS' if lock_matches else 'FAIL'}")
@@ -551,6 +926,7 @@ def _parser() -> argparse.ArgumentParser:
     modes.add_argument("--dry-run", action="store_true")
     modes.add_argument("--run", action="store_true")
     modes.add_argument("--report", action="store_true")
+    parser.add_argument("--corpus", choices=("v1", "v2"), default="v1")
     parser.add_argument("--samples", type=int, default=DEFAULT_SAMPLES)
     parser.add_argument("--confirm", action="store_true")
     parser.add_argument("--max-calls", type=int)
@@ -564,42 +940,51 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.build_cases:
-            cases = build_cases()
+            cases = build_cases(args.corpus)
             data = _cases_bytes(cases)
-            CASES_PATH.parent.mkdir(parents=True, exist_ok=True)
-            CASES_PATH.write_bytes(data)
-            _write_json(LOCK_PATH, {"sha256": _sha256(data), "count": len(cases)})
-            print(f"built {len(cases)} cases at {_redact(str(CASES_PATH))}")
+            cases_path, lock_path = _corpus_paths(args.corpus)
+            cases_path.parent.mkdir(parents=True, exist_ok=True)
+            cases_path.write_bytes(data)
+            _write_json(lock_path, {"sha256": _sha256(data), "count": len(cases)})
+            print(f"built {len(cases)} cases at {_redact(str(cases_path))}")
             return 0
         if args.check_corpus:
-            return _check_corpus()
+            return _check_corpus(args.corpus)
         if args.report:
-            if args.rows is None or args.out is None:
+            rows = args.rows
+            out = args.out
+            if args.corpus == "v2":
+                rows = rows or V2_OUTPUT_DIR / "rows.json"
+                out = out or V2_OUTPUT_DIR / "report.md"
+            if rows is None or out is None:
                 return _error("--report requires --rows and --out")
-            return report_rows(args.rows, args.out)
-        cases = _load_cases()
+            return report_rows(rows, out, corpus=args.corpus)
+        cases = _load_cases(corpus=args.corpus)
         if args.dry_run:
             _print_dry_run(cases, args.samples)
             return 0
         if not args.confirm:
             return _error("run mode requires --confirm")
-        if args.out is None:
+        out = args.out
+        if args.corpus == "v2":
+            out = out or V2_OUTPUT_DIR / "rows.json"
+        if out is None:
             return _error("run mode requires --out")
-        max_calls = args.max_calls if args.max_calls is not None else DEFAULT_MAX_CALLS
+        max_calls = args.max_calls if args.max_calls is not None else _corpus_max_calls(args.corpus)
         if max_calls < 1:
             return _error("--max-calls must be at least 1")
         ceiling = _ceiling(cases, args.samples)
         if ceiling > args.max_usd:
             return _error(f"USD ceiling ${ceiling:.6f} exceeds --max-usd ${args.max_usd:.6f}")
-        if not _lock_matches(cases):
+        if not _lock_matches(cases, corpus=args.corpus):
             return _error("run mode requires a matching lock")
         if not os.environ.get("CLOUDFLARE_WORKER_URL", "").strip():
             return _error("run mode requires CLOUDFLARE_WORKER_URL")
         if not os.environ.get("CLOUDFLARE_WORKER_TOKEN", "").strip():
             return _error("run mode requires CLOUDFLARE_WORKER_TOKEN")
         client = JevClient.from_environment()
-        document = run_cases(cases, samples=args.samples, max_calls=max_calls, out=args.out, client=client)
-        print(f"{len(document['rows'])} rows written to {_redact(str(args.out))}")
+        document = run_cases(cases, samples=args.samples, max_calls=max_calls, out=out, client=client)
+        print(f"{len(document['rows'])} rows written to {_redact(str(out))}")
         if document.get("stop_reason"):
             print(f"stop reason: {_redact(str(document['stop_reason']))}")
         return 0

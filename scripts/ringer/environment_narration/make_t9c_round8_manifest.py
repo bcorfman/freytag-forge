@@ -14,7 +14,7 @@ SPEC = (
     "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. "
     "export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). "
     "No network, no model call, no billed call. Do not git commit. NEVER print or write any credential. NO regular expressions. Run ruff check and ruff format on your files at the end. "
-    "BACKGROUND. scripts/ringer/environment_narration/make_t9c_run_manifests.py defines `REPO = \"/home/bcorfman/dev/freytag-forge\"` and `ENVIRONMENT_NARRATION = Path(REPO) / \"scripts/ringer/environment_narration\"`, then writes run-t9c-smoke.json and run-t9c-full.json into ENVIRONMENT_NARRATION. On the CI runner the checkout is somewhere else, so the generator fails with FileNotFoundError and tests/test_t9c_run_manifests.py::test_generated_t9c_manifests_match_committed_json fails in CI. "
+    'BACKGROUND. scripts/ringer/environment_narration/make_t9c_run_manifests.py defines `REPO = "/home/bcorfman/dev/freytag-forge"` and `ENVIRONMENT_NARRATION = Path(REPO) / "scripts/ringer/environment_narration"`, then writes run-t9c-smoke.json and run-t9c-full.json into ENVIRONMENT_NARRATION. On the CI runner the checkout is somewhere else, so the generator fails with FileNotFoundError and tests/test_t9c_run_manifests.py::test_generated_t9c_manifests_match_committed_json fails in CI. '
     "YOUR TASK: YOU MAY EDIT ONLY scripts/ringer/environment_narration/make_t9c_run_manifests.py. Change ONLY the output directory: `ENVIRONMENT_NARRATION = Path(__file__).resolve().parent`. The `REPO` string and every manifest field built from it (workdir, repo, spec, check, expect_files) must stay exactly as they are, so the committed run-t9c-smoke.json and run-t9c-full.json do not change by one byte. Do not edit the JSON files or the test. "
     "VERIFY: (1) `cp` both JSON files to a scratch dir, run `.venv/bin/python scripts/ringer/environment_narration/make_t9c_run_manifests.py`, and confirm both JSON files are byte-identical to the copies (`cmp`). (2) Copy the whole repo script and the two JSON files to a temp directory that is NOT under /home/bcorfman/dev/freytag-forge (for example `mktemp -d` under /tmp), run the copied generator from there, and confirm it succeeds and writes the JSON files next to itself with identical bytes. (3) Run `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_t9c_run_manifests.py`; it must pass."
 )
@@ -23,9 +23,9 @@ CHECK = (
     "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && "
     "grep -q 'Path(__file__).resolve().parent' scripts/ringer/environment_narration/make_t9c_run_manifests.py && "
     "! grep -q 'ENVIRONMENT_NARRATION = Path(REPO)' scripts/ringer/environment_narration/make_t9c_run_manifests.py && "
-    "test \"$(git diff --stat -- scripts/ringer/environment_narration/run-t9c-smoke.json scripts/ringer/environment_narration/run-t9c-full.json | wc -l)\" = 0 && "
-    "T=$(mktemp -d) && cp scripts/ringer/environment_narration/make_t9c_run_manifests.py \"$T/\" && .venv/bin/python \"$T/make_t9c_run_manifests.py\" && "
-    "cmp \"$T/run-t9c-smoke.json\" scripts/ringer/environment_narration/run-t9c-smoke.json && cmp \"$T/run-t9c-full.json\" scripts/ringer/environment_narration/run-t9c-full.json && "
+    'test "$(git diff --stat -- scripts/ringer/environment_narration/run-t9c-smoke.json scripts/ringer/environment_narration/run-t9c-full.json | wc -l)" = 0 && '
+    'T=$(mktemp -d) && cp scripts/ringer/environment_narration/make_t9c_run_manifests.py "$T/" && .venv/bin/python "$T/make_t9c_run_manifests.py" && '
+    'cmp "$T/run-t9c-smoke.json" scripts/ringer/environment_narration/run-t9c-smoke.json && cmp "$T/run-t9c-full.json" scripts/ringer/environment_narration/run-t9c-full.json && '
     "env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_t9c_run_manifests.py > /tmp/t9c-r8.out 2>&1; rc=$?; tail -4 /tmp/t9c-r8.out; test $rc = 0 && "
     ".venv/bin/python -m ruff check scripts/ringer/environment_narration/make_t9c_run_manifests.py && .venv/bin/python -m ruff format --check scripts/ringer/environment_narration/make_t9c_run_manifests.py"
 )

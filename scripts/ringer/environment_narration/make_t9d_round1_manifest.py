@@ -62,7 +62,9 @@ ORDER_SPEC = (
 
 ORDER_CHECK = (
     CHECK
-    + pytest_check("t9d-r1-order", ORDER_FILES + " tests/test_drawer_gap_nudge.py tests/test_observation_enforcement.py")
+    + pytest_check(
+        "t9d-r1-order", ORDER_FILES + " tests/test_drawer_gap_nudge.py tests/test_observation_enforcement.py"
+    )
     + ruff(ORDER_FILES)
 )
 

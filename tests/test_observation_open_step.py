@@ -93,7 +93,7 @@ def _synthetic_capture(
     )
 
     def ask(_state: object, questions: dict[str, object]) -> dict[str, dict[str, float]]:
-        return {key: {"noul": 1.0} for key in questions}
+        return {key: {"noul": 0.0 if key == "searches_underneath" else 1.0} for key in questions}
 
     record = WorldCapture(provider, ask).before_turn("Open the survey tray.")
     return state, provider, record

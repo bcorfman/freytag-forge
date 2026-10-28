@@ -253,16 +253,16 @@ class WorldCapture:
         if focus_id is None:
             return False, None
         opens = None
-        if world.is_a(focus_id, "container"):
-            opens = opens_container(adapter, command, world.name(focus_id))
-        if world.is_a(focus_id, "container") and opens is True:
-            kind = "open"
-        if (
-            kind == "look"
-            and any(world.is_a(focus_id, entity_kind) for entity_kind in ("container", "supporter"))
-            and searches_underneath(adapter, command, world.name(focus_id)) is True
-        ):
-            kind = "under"
+        is_container = world.is_a(focus_id, "container")
+        is_supporter = world.is_a(focus_id, "supporter")
+        if kind != "enter" and (is_container or is_supporter):
+            underneath = searches_underneath(adapter, command, world.name(focus_id))
+            if underneath is True:
+                kind = "under"
+            elif is_container:
+                opens = opens_container(adapter, command, world.name(focus_id))
+                if opens is True:
+                    kind = "open"
         engine_opened = False
         if _should_engine_open(
             world,

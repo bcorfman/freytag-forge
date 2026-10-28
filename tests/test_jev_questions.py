@@ -150,17 +150,16 @@ def test_opens_container_question_uses_opening_wording() -> None:
     assert question["type"] == "noul"
     assert question["instructions"] == (
         "Decide whether the command has the player open the container. "
-        "Opening it, pulling it open or out, or going inside, in, into, or through it counts."
+        "Opening it, pulling it open or out, searching it, or going inside, in, into, or through it counts."
     )
     assert question["criteria"]["true"] == (
-        "The command opens the container, pulls it open, pulls it out, or says inside, in, into, "
+        "The command opens the container, pulls it open, pulls it out, searches it, or says inside, in, into, "
         "or through the container. The player looks, feels, or reaches there."
     )
     assert question["criteria"]["false"] == (
-        "The command does not open the container and does not say inside, in, into, or through. "
-        "A command that only looks at, inspects, examines, searches, checks, closes, locks, "
-        "touches, moves, carries, or talks about the container, or goes under, behind, or on top "
-        "of it, is false."
+        "The command does not open the container, does not search it, and does not say inside, in, into, or through. "
+        "A command that only looks at, inspects, examines, checks, closes, locks, touches, moves, carries, "
+        "or talks about the container, or goes behind or on top of it, is false."
     )
 
 

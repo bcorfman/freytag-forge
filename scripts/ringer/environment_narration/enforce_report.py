@@ -1,4 +1,10 @@
-"""Report blind labels and enforcement gates for an enforced observation run."""
+"""Report blind labels and enforcement gates for an enforced observation run.
+
+Label guidance: ``command_opens`` is true when command text opens the container,
+pulls it open or out, or searches it.
+
+It is also true when the command says inside, in, into or through it.
+"""
 
 import argparse
 import hashlib
@@ -15,7 +21,9 @@ CARD_THING = "memory_card"
 PLAYER_THING = "kristin"
 SHUFFLE_SEED = 917263
 TAG_NAMES = ("refind", "invented_object", "leak", "wrong_custody", "unrequested_move")
-LOOK_GROUP_COMMANDS = ("inspect the drawer", "examine the drawer", "search the drawer", "check the drawer")
+LOOK_GROUP_COMMANDS = ("inspect the drawer", "examine the drawer", "check the drawer")
+NUDGE_GROUP_COMMANDS = (*LOOK_GROUP_COMMANDS, "search the drawer")
+SEARCH_COMMAND = "search the drawer"
 LOOK_INSIDE_COMMAND = "look inside the drawer"
 LOOK_UNDER_COMMAND = "look under the drawer"
 FEEL_UNDER_COMMAND = "feel under the drawer"
@@ -369,6 +377,39 @@ def _look_group_turns(rows: list[dict[str, Any]]) -> list[tuple[str, dict[str, A
     return [(turn_id, turn) for turn_id, turn in _turns(rows) if _look_group(turn)]
 
 
+def _route_c_turns(rows: list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
+    return [
+        (turn_id, turn)
+        for replicate_index, replicate in enumerate(rows)
+        if _route(replicate) == "observe_look_inside_under"
+        for turn_index, turn in enumerate(replicate.get("turns", ()))
+        for turn_id in (_turn_id(replicate_index, turn_index),)
+    ]
+
+
+def _route_c_look_group_turns(rows: list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
+    return [(turn_id, turn) for turn_id, turn in _route_c_turns(rows) if _look_group(turn)]
+
+
+def _route_c_search_turns(rows: list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
+    return [
+        (turn_id, turn)
+        for turn_id, turn in _route_c_turns(rows)
+        if _normalise_command(turn.get("input")) == SEARCH_COMMAND
+    ]
+
+
+def _route_a_inspect_turns(rows: list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
+    return [
+        (turn_id, turn)
+        for replicate_index, replicate in enumerate(rows)
+        if _route(replicate) == "observe_topup"
+        for turn_index, turn in enumerate(replicate.get("turns", ()))
+        if _normalise_command(turn.get("input")) == "inspect the drawer"
+        for turn_id in (_turn_id(replicate_index, turn_index),)
+    ]
+
+
 def _committed(turn: dict[str, Any]) -> bool:
     return not _is_failed(turn) and turn.get("narration") is not None
 
@@ -471,47 +512,58 @@ def _scope_s3(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, 
 
 
 def _t9c_n1(rows: list[dict[str, Any]]) -> tuple[str, int, int, list[str]]:
-    look_turns = _look_group_turns(rows)
+    look_turns = _route_c_look_group_turns(rows)
     failures = []
     for turn_id, turn in look_turns:
         if not _committed(turn):
             reason = "unsuccessful" if _is_failed(turn) else "no committed narration"
             failures.append(f"{turn_id} ({reason})")
-    status = "PASS" if len(look_turns) - len(failures) >= 72 else "FAIL"
+    status = "PASS" if len(look_turns) - len(failures) >= len(look_turns) - 2 else "FAIL"
     return status, len(look_turns) - len(failures), len(look_turns), failures
 
 
-def _t9c_n2(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, int, int, int, int, list[str], list[str]]:
-    look_turns = _look_group_turns(rows)
+def _t9d_n1s(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, int, int, list[str]]:
+    search_turns = _route_c_search_turns(rows)
     misses = []
-    for turn_id, turn in look_turns:
-        if _bool_label(_label_entry(labels, turn_id).get("gap_restated")) is not True:
-            misses.append(f"{turn_id} (handoff_id={turn.get('handoff_id')})")
+    for turn_id, turn in search_turns:
+        reasons = []
+        if not _committed(turn):
+            reasons.append("unsuccessful")
+        if turn.get("focus_open_state_committed") != "open":
+            reasons.append("closed after commit")
+        if _bool_label(_label_entry(labels, turn_id).get("contents_shown")) is not True:
+            reasons.append("contents_shown false")
+        if reasons:
+            misses.append(f"{turn_id} ({'; '.join(reasons)})")
+    passed = len(search_turns) - len(misses)
+    status = "PASS" if search_turns and len(misses) <= 1 else "FAIL"
+    return status, passed, len(search_turns), misses
+
+
+def _t9c_n2(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, int, int, list[str]]:
     route_c_turns = [
         (turn_id, turn)
-        for replicate_index, replicate in enumerate(rows)
-        if _route(replicate) == "observe_look_inside_under"
-        for turn_index, turn in enumerate(replicate.get("turns", ()))
-        if _look_group(turn)
-        for turn_id in (_turn_id(replicate_index, turn_index),)
+        for turn_id, turn in _route_c_turns(rows)
+        if _normalise_command(turn.get("input")) in NUDGE_GROUP_COMMANDS
     ]
-    route_c_misses = [
+    misses = [
         f"{turn_id} (handoff_id={turn.get('handoff_id')})"
         for turn_id, turn in route_c_turns
         if _bool_label(_label_entry(labels, turn_id).get("gap_restated")) is not True
     ]
-    pooled_passed = len(look_turns) - len(misses)
-    route_c_passed = len(route_c_turns) - len(route_c_misses)
-    status = "PASS" if pooled_passed >= 72 and route_c_passed >= 58 else "FAIL"
-    return (
-        status,
-        pooled_passed,
-        len(look_turns),
-        route_c_passed,
-        len(route_c_turns),
-        misses,
-        route_c_misses,
+    passed = len(route_c_turns) - len(misses)
+    status = "PASS" if passed >= len(route_c_turns) - 2 else "FAIL"
+    return status, passed, len(route_c_turns), misses
+
+
+def _t9d_n2a(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, int, int]:
+    inspect_turns = _route_a_inspect_turns(rows)
+    misses = sum(
+        _bool_label(_label_entry(labels, turn_id).get("gap_restated")) is not True for turn_id, _ in inspect_turns
     )
+    passed = len(inspect_turns) - misses
+    status = "PASS" if inspect_turns and misses <= 1 else "FAIL"
+    return status, passed, len(inspect_turns)
 
 
 def _t9c_n3(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list[str]]:
@@ -599,7 +651,7 @@ def _t9c_n4(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, in
 
 def _t9c_n5(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list[str]]:
     failures = []
-    for turn_id, turn in _turns(rows):
+    for turn_id, turn in _route_c_turns(rows):
         command_opens = _bool_label(_label_entry(labels, turn_id).get("command_opens"))
         if turn.get("engine_opened") is True and command_opens is not True:
             failures.append(f"{turn_id} (engine_opened with command_opens false)")
@@ -647,6 +699,35 @@ def _kind_counts(replicate: dict[str, Any]) -> dict[str, int]:
         kind = _request_kind(turn)
         counts[kind if kind in counts else "none"] += 1
     return counts
+
+
+def _request_kind_text(turns: list[tuple[str, dict[str, Any]]]) -> str:
+    counts = {kind: 0 for kind in ("look", "open", "under")}
+    for _, turn in turns:
+        kind = _request_kind(turn)
+        if kind in counts:
+            counts[kind] += 1
+    total = len(turns)
+    return ", ".join(f"{kind}={counts[kind]}/{total}" for kind in ("look", "open", "under"))
+
+
+def _engine_open_counts(turns: list[tuple[str, dict[str, Any]]]) -> str:
+    counts = {}
+    for _, turn in turns:
+        if turn.get("engine_opened") is not True:
+            continue
+        command = _normalise_command(turn.get("input")) or "(missing command)"
+        counts[command] = counts.get(command, 0) + 1
+    if not counts:
+        return "none"
+    return ", ".join(f"{command}={counts[command]}" for command in sorted(counts))
+
+
+def _delivered_statement_count(turns: list[tuple[str, dict[str, Any]]]) -> int:
+    statement = "Kristin looks over the drawer and is pointed toward the thin gap beneath its lower edge."
+    look_under_turns = [turn for _, turn in turns if _normalise_command(turn.get("input")) == LOOK_UNDER_COMMAND]
+    delivered = sum(_committed(turn) and statement in str(turn.get("narration", "")) for turn in look_under_turns)
+    return delivered
 
 
 def _scope_information(rows: list[dict[str, Any]], labels: dict[str, Any]) -> list[str]:
@@ -806,21 +887,19 @@ def _join(
     s2_status, s2_under_count, s2_relations_count = _scope_s2(rows)
     s3_status, s3_passed, s3_replicates, s3_details, s3_leaks = _scope_s3(rows, labels)
     t9c_scope = _t9c_scope(rows)
+    n2a_status = None
+    n2a_passed = None
+    n2a_total = None
     if t9c_scope:
         n1_status, n1_committed, n1_total, n1_failures = _t9c_n1(rows)
-        (
-            n2_status,
-            n2_gap,
-            n2_total,
-            n2_route_c_gap,
-            n2_route_c_total,
-            n2_failures,
-            n2_route_c_failures,
-        ) = _t9c_n2(rows, labels)
+        n1s_status, n1s_passed, n1s_total, n1s_failures = _t9d_n1s(rows, labels)
+        n2_status, n2_gap, n2_total, n2_failures = _t9c_n2(rows, labels)
         n3_status, n3_failures = _t9c_n3(rows, labels)
         n4_status, n4_open, n4_total, n4_failures = _t9c_n4(rows, labels)
         n5_status, n5_failures = _t9c_n5(rows, labels)
         n6_status, n6_failures = _t9c_n6(rows)
+    if "observe_topup" in routes and _route_a_inspect_turns(rows):
+        n2a_status, n2a_passed, n2a_total = _t9d_n2a(rows, labels)
     s2_under_text = "n/a" if s2_under_count is None else str(s2_under_count)
     s2_relations_text = "n/a" if s2_relations_count is None else str(s2_relations_count)
     s2_note = "; n/a on other routes, ignored for verdict" if route_b else ""
@@ -926,15 +1005,24 @@ def _join(
                 "",
                 f"N1: {n1_status} ({n1_committed}/{n1_total} look-group turns committed; "
                 f"failures: {', '.join(n1_failures) if n1_failures else 'none'})",
-                f"N2: {n2_status} ({n2_gap}/{n2_total} pooled gap labels; "
-                f"route C {n2_route_c_gap}/{n2_route_c_total}; "
-                f"misses: {', '.join(n2_failures) if n2_failures else 'none'}; "
-                f"route C misses: {', '.join(n2_route_c_failures) if n2_route_c_failures else 'none'})",
+                f"N1s: {n1s_status} ({n1s_passed}/{n1s_total} search turns pass; "
+                f"failures: {', '.join(n1s_failures) if n1s_failures else 'none'})",
+                f"N2: {n2_status} ({n2_gap}/{n2_total} route C gap labels; "
+                f"misses: {', '.join(n2_failures) if n2_failures else 'none'})",
                 f"N3: {n3_status} (failures: {', '.join(n3_failures) if n3_failures else 'none'})",
                 f"N4: {n4_status} ({n4_open}/{n4_total} route C look-inside turns pass; "
                 f"failures: {', '.join(n4_failures) if n4_failures else 'none'})",
                 f"N5: {n5_status} (failures: {', '.join(n5_failures) if n5_failures else 'none'})",
                 f"N6: {n6_status} (failures: {', '.join(n6_failures) if n6_failures else 'none'})",
+            ]
+        )
+        if n2a_status is not None:
+            lines.append(f"N2a: {n2a_status} ({n2a_passed}/{n2a_total} route A inspect turns restated the gap)")
+    elif n2a_status is not None:
+        lines.extend(
+            [
+                "",
+                f"N2a: {n2a_status} ({n2a_passed}/{n2a_total} route A inspect turns restated the gap)",
             ]
         )
 
@@ -956,18 +1044,15 @@ def _join(
         ]
     )
     if t9c_scope:
-        look_turns = _look_group_turns(rows)
-        kind_counts = {kind: 0 for kind in ("look", "open", "under")}
-        for _, turn in look_turns:
-            kind = _request_kind(turn)
-            if kind in kind_counts:
-                kind_counts[kind] += 1
-        kind_total = len(look_turns)
-        kind_text = ", ".join(f"{kind}={kind_counts[kind]}/{kind_total}" for kind in ("look", "open", "under"))
+        look_turns = _route_c_look_group_turns(rows)
+        search_turns = _route_c_search_turns(rows)
+        narrator_turns = look_turns + search_turns
         narrator_opened = [
             turn_id
-            for turn_id, turn in look_turns
-            if turn.get("focus_open_state_committed") == "open" and turn.get("engine_opened") is not True
+            for turn_id, turn in narrator_turns
+            if turn.get("focus_open_state_committed") == "open"
+            and turn.get("focus_open_state_after") == "closed"
+            and turn.get("engine_opened") is not True
         ]
         narrator_closed = [
             turn_id
@@ -981,24 +1066,31 @@ def _join(
             handoff_id = str(turn.get("handoff_id"))
             handoff_counts[handoff_id] = handoff_counts.get(handoff_id, 0) + 1
         handoff_text = ", ".join(f"{handoff_id}={count}" for handoff_id, count in sorted(handoff_counts.items()))
+        delivered_count = _delivered_statement_count(_route_c_turns(rows))
         lines.extend(
             [
-                f"look-group request kinds: {kind_text}",
-                f"narrator-opened look-group turns: {', '.join(narrator_opened) if narrator_opened else 'none'}",
+                f"look-group request kinds: {_request_kind_text(look_turns)}",
+                f"search request kinds: {_request_kind_text(search_turns)}",
+                "narrator-opened look-group and search turns: "
+                f"{', '.join(narrator_opened) if narrator_opened else 'none'}",
                 f"narrator-closed-after-engine-open turns: {', '.join(narrator_closed) if narrator_closed else 'none'}",
+                f"engine opens by command: {_engine_open_counts(_route_c_turns(rows))}",
+                f"delivered statement text in prose: {delivered_count}",
                 f"handoff outcomes: {handoff_text if handoff_text else 'none'}",
             ]
         )
+    t9d_statuses = []
+    if t9c_scope:
+        t9d_statuses.extend((n1_status, n1s_status, n2_status, n3_status, n4_status, n5_status, n6_status))
+    if n2a_status is not None:
+        t9d_statuses.append(n2a_status)
     overall = (
         "PASS"
         if all(
             status == "PASS" for status in (clause_one, clause_two, clause_three, clause_four, clause_five, clause_six)
         )
         and clause_seven in ("PASS", "INCONCLUSIVE")
-        and (
-            not t9c_scope
-            or all(status == "PASS" for status in (n1_status, n2_status, n3_status, n4_status, n5_status, n6_status))
-        )
+        and all(status == "PASS" for status in t9d_statuses)
         else "FAIL"
     )
     if route_b:
@@ -1015,6 +1107,8 @@ def _join(
             s1_status,
             s2_status,
         )
+        if n2a_status is not None:
+            t9b_statuses = (*t9b_statuses, n2a_status)
     else:
         t9b_statuses = (clause_one, clause_two, clause_three, clause_four, clause_five, clause_six, clause_seven)
     t9b_overall = "PASS" if all(status == "PASS" for status in t9b_statuses) else "FAIL"
