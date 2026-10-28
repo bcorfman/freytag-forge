@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 REPO = "/home/bcorfman/dev/freytag-forge"
-ENVIRONMENT_NARRATION = Path(REPO) / "scripts/ringer/environment_narration"
+ENVIRONMENT_NARRATION = Path(__file__).resolve().parent
 
 
 def _check(stage: str, replicates: tuple[int, int, int], micro_usd: int) -> str:
