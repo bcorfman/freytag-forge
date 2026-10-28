@@ -1,0 +1,112 @@
+"""Write build-t9f-voiceable.json: mark the two drawer-gap delivery statements as not voiceable."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+SPEC = (
+    "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. "
+    "export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). "
+    "Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q "
+    "-p no:cacheprovider --no-cov <files>`. No network, no live model call. Do not git commit. NEVER print or "
+    "write any credential. NO regular expressions in new code. Engine code must never name a story, a character, "
+    "an item or a scene id; this task changes story DATA and tests only, no engine code. METHOD: write the new "
+    "tests FIRST and run them to see them fail for the right reason, then change the data until they pass. "
+    "Player inputs in tests are imperative commands in the voice of docs/player-input-guide.md. "
+    "READ FIRST: docs/contributor-guide.md, docs/markdown-story-authoring.md (the `voiceable` passage), "
+    "tests/test_voiceable_knowledge.py, tests/test_drawer_gap_nudge.py. "
+    "BACKGROUND (measured in the T9c, T9d and T9e live runs, do not redo). In scene 1A of the continuity-initiative "
+    "story, when the engine delivers the drawer-gap nudge, the patrol officer (a present non-player character) "
+    "sometimes SPEAKS the nudge's knowledge statement as dialogue: 'The federal patrol officer says, \"Kristin "
+    "opens the drawer and is pointed toward the thin gap beneath its lower edge.\"' (T9e route C, three of 15 "
+    "`look inside the drawer` turns). The statements are `k_sl_1a_f_r1` ('Kristin opens the drawer and is pointed "
+    "toward the thin gap beneath its lower edge.') and `k_sl_1a_f_r2` ('Kristin looks over the drawer and is "
+    "pointed toward the thin gap beneath its lower edge.') in data/stories/continuity-initiative/knowledge.yaml. "
+    "Both record what the player character did, not something anyone says. The `voiceable: false` marker "
+    "(KnowledgeDefinition.voiceable; KnowledgeProjector._established_for skips such statements, so they are never a "
+    "'may say this aloud' line and a quote of one fails `dialogue_grounding_not_sayable`; they stay committed "
+    "knowledge) already exists and is set on `k_sl_1a_b_r0` for the same reason. "
+    "BUILD (data only): in data/stories/continuity-initiative/knowledge.yaml add `voiceable: false` to "
+    "`k_sl_1a_f_r1` and `k_sl_1a_f_r2` right after their `statement:` line, in the same style as `k_sl_1a_b_r0`, and "
+    "to NOTHING else. Do not touch any other file under data/ and do not edit storygame/. "
+    "TESTS. Edit tests/test_voiceable_knowledge.py and add NO new test file. (1) The existing test that the real "
+    "package has exactly one `voiceable` False item must now expect exactly the three ids `k_sl_1a_b_r0`, "
+    "`k_sl_1a_f_r1`, `k_sl_1a_f_r2`; update it, that old assertion is stale by design. (2) Add a real-package test: "
+    "with the delivered gap statement established (follow how tests/test_drawer_gap_nudge.py "
+    "`_state_after_gap_deliveries` or `_handoff` establishes it) and the patrol officer present in the protagonist's "
+    "area (follow tests/test_speaker_presence.py and the officer placement in tests/test_voiceable_knowledge.py), the "
+    "built narrator user prompt contains neither 'may say this aloud: Kristin looks over the drawer' nor 'may say "
+    "this aloud: Kristin opens the drawer', and `KnowledgeProjector().project(...)` still lists both ids in "
+    "`committed_knowledge` where they were committed before. (3) Parametrize the existing dialogue-grounding test "
+    "(or add one like it) so an officer segment quoting each of `k_sl_1a_f_r1` and `k_sl_1a_f_r2` is rejected with "
+    "`dialogue_grounding_not_sayable`. (4) The delivery itself is unchanged: tests/test_drawer_gap_nudge.py and "
+    "tests/test_1a_gap_pointer.py must still pass without edits to them (if one fails because it pinned a 'may say "
+    "this aloud' line for these statements, update only that assertion and say so in your final report). "
+    "DOC: if docs/markdown-story-authoring.md names `k_sl_1a_b_r0` or says only one statement is marked, change that "
+    "sentence only; add nothing else. "
+    "Also run tests/test_underside_exhausted.py tests/test_speaker_presence.py tests/test_narration_safety.py "
+    "tests/test_1a_witnessed_recovery.py tests/test_place_scoped_feed.py and report counts."
+)
+
+CHECK = (
+    "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp "
+    "&& set -o pipefail "
+    "&& env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q -p no:cacheprovider "
+    "--no-cov tests/test_voiceable_knowledge.py tests/test_drawer_gap_nudge.py tests/test_1a_gap_pointer.py "
+    "tests/test_underside_exhausted.py tests/test_speaker_presence.py tests/test_1a_witnessed_recovery.py "
+    "tests/test_place_scoped_feed.py 2>&1 | tee /tmp/t9f-focus.out | tail -15 "
+    "&& ! grep -Eq '[0-9]+ failed|FAILED|ERROR' /tmp/t9f-focus.out "
+    "&& env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python scripts/quick_suite.py 2>&1 "
+    "| tee /tmp/t9f-quick.out | grep -E 'passed|failed|FAILED' | tail -5 "
+    "&& ! grep -Eq '[0-9]+ failed|FAILED' /tmp/t9f-quick.out && grep -Eq '[0-9]+ passed' /tmp/t9f-quick.out "
+    "&& test $(grep -c '^  voiceable: false' data/stories/continuity-initiative/knowledge.yaml) -eq 3 "
+    "&& awk '/^- id: /{id=$3} /^  voiceable: false/{print id}' data/stories/continuity-initiative/knowledge.yaml "
+    "| sort | tr '\\n' ' ' | grep -qx 'k_sl_1a_b_r0 k_sl_1a_f_r1 k_sl_1a_f_r2 ' "
+    "&& ! git status --porcelain | cut -c4- | grep -vE '^(data/stories/continuity-initiative/knowledge.yaml|"
+    "docs/markdown-story-authoring.md|tests/test_voiceable_knowledge.py|tests/test_drawer_gap_nudge.py|"
+    "tests/test_1a_gap_pointer.py|scripts/ringer/environment_narration/[^ ]*|tests/test_t9e_run_manifests.py|"
+    "\\.plans/[^ ]*)$' | grep -q . "
+    "&& .venv/bin/python -m ruff check tests/test_voiceable_knowledge.py "
+    "&& .venv/bin/python -m ruff format --check tests/test_voiceable_knowledge.py"
+)
+
+MANIFEST = {
+    "run_name": "grounded-environment-narration",
+    "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9f-voiceable",
+    "max_parallel": 1,
+    "worktrees": False,
+    "repo": "/home/bcorfman/dev/freytag-forge",
+    "tasks": [
+        {
+            "task_type": "code-fix",
+            "engine": "codex",
+            "model": "gpt-5.6-luna",
+            "engine_args": ["-c", "model_reasoning_effort=high"],
+            "full_access": True,
+            "max_attempts": 2,
+            "timeout_s": 3600,
+            "check_timeout_s": 1800,
+            "key": "gap-statements-not-voiceable",
+            "ownership": [
+                "data/stories/continuity-initiative/knowledge.yaml",
+                "tests/test_voiceable_knowledge.py",
+                "tests/test_drawer_gap_nudge.py",
+                "tests/test_1a_gap_pointer.py",
+                "docs/markdown-story-authoring.md",
+            ],
+            "expect_files": ["/home/bcorfman/dev/freytag-forge/tests/test_voiceable_knowledge.py"],
+            "verified": (
+                "exactly the card and the two drawer-gap statements are not voiceable, "
+                "a present officer is never given them to say, and the focused and quick suites pass"
+            ),
+            "spec": SPEC,
+            "check": CHECK,
+        }
+    ],
+}
+
+if __name__ == "__main__":
+    out = Path(__file__).with_name("build-t9f-voiceable.json")
+    out.write_text(json.dumps(MANIFEST, indent=2) + "\n")
+    print(out)

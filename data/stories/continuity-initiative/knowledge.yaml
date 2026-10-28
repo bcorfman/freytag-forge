@@ -430,6 +430,7 @@ knowledge:
   delivery_text: 'Kristin''s fingers find something taped beneath the drawer. She peels it loose. It is Michelle''s memory card, and she pockets it. The officer turns at the sound. "What have you got there?" His hand is already out.'
 - id: k_sl_1a_f_r1
   statement: "Kristin opens the drawer and is pointed toward the thin gap beneath its lower edge."
+  voiceable: false
   reach_entity_ids: [michelle_drawer]
   earn_when: pulls or opens the drawer
   action_evidence:
@@ -460,6 +461,7 @@ knowledge:
   delivery_text: "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
 - id: k_sl_1a_f_r2
   statement: "Kristin looks over the drawer and is pointed toward the thin gap beneath its lower edge."
+  voiceable: false
   reach_entity_ids: [michelle_drawer]
   earn_when: examines, inspects, searches or checks the drawer without going underneath it
   action_evidence:

@@ -1,0 +1,37 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9e-latency",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "billed-t9e-latency",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 2400,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/environment-narration/t9e-check/latency"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9e-check/latency/a/rows/rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9e-check/latency/a/rows/summary.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9e-check/latency/c/rows/rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9e-check/latency/c/rows/summary.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9e-check/latency/spent.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9e-check/latency/worker.log"
+   ],
+   "spec": "You are a RUNNER for one billed T9e clause-6 latency measurement in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. It reruns ONLY route A (observe_topup, 3 replicates) and route C (observe_look_inside_under, 4 replicates) of the T9e stage F with unchanged code to measure end-to-end turn latency; it is a diagnostic, not a replacement for the stage F result. HARD RULES: run COMMAND 1 exactly once in the foreground and never rerun it, even after an error or partial result; do not edit any file; do not commit; do not print, echo or log environment variables, the .env file or any credential; a non-zero exit with partial rows is a valid outcome. The command starts one local Worker on port 8797 (cap --max-usd 0.10), runs route A (--max-calls 270) then route C (--max-calls 120), writes rows under bench/results/environment-narration/t9e-check/latency, and prints spent.json.\n\nCOMMAND 1:\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && bash -s <<'SH'\nset -u\nOUT=/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9e-check/latency\nmkdir -p \"$OUT\"\nset -a; . ./.env; set +a\nunset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN\nPORT=8797\nif (exec 3<>\"/dev/tcp/127.0.0.1/$PORT\") 2> /dev/null; then echo \"port $PORT in use; nothing run\" >&2; exit 4; fi\nnode scripts/ringer/environment_narration/local_worker.mjs --port \"$PORT\" --max-usd 0.10 > \"$OUT/worker.log\" 2>&1 &\nWP=$!\nfor _ in $(seq 1 50); do curl -fs \"http://127.0.0.1:$PORT/__spent\" >/dev/null 2>&1 && break; sleep 0.2; done\ncurl -fs \"http://127.0.0.1:$PORT/__spent\" >/dev/null 2>&1 || { echo \"worker did not start\" >&2; kill $WP; exit 3; }\nexport CLOUDFLARE_WORKER_URL=\"http://127.0.0.1:$PORT\"\n.venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route observe_topup --enforce --replicates 3 --max-calls 270 --confirm --out \"$OUT/a/rows\"; echo \"A exit: $?\"\n.venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route observe_look_inside_under --enforce --replicates 4 --max-calls 120 --confirm --out \"$OUT/c/rows\"; echo \"C exit: $?\"\ncurl -fs \"http://127.0.0.1:$PORT/__spent\" > \"$OUT/spent.json\"; cat \"$OUT/spent.json\"\nkill $WP 2>/dev/null; wait $WP 2>/dev/null\nSH\n\nThen report the script's non-secret output in two sentences. Do not interpret the results.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && .venv/bin/python - <<'PY'\nimport json, re, sys\nsys.path.insert(0, \"scripts/ringer/environment_narration\")\nimport enforce_report as e\nbase = \"bench/results/environment-narration/t9e-check/latency\"\nassert json.load(open(base + \"/spent.json\"))[\"spent_micro_usd\"] <= 100000\nfor route, reps, turns in ((\"a\", 3, 9), (\"c\", 4, 6)):\n    rows = json.load(open(f\"{base}/{route}/rows/rows.json\"))\n    summary = json.load(open(f\"{base}/{route}/rows/summary.json\"))\n    print(route, \"stopped_reason\", summary.get(\"stopped_reason\"), \"rows\", len(rows))\n    assert summary.get(\"stopped_reason\") is not None or (len(rows) == reps and all(len(r[\"turns\"]) == turns for r in rows))\n    values = [float(t[\"turn_elapsed_s\"]) for _, t in e._turns(rows) if e._narration_attempts(t) == 1 and t.get(\"error\") is None]\n    print(route, \"clause 6 turns n=%d p50=%s p95=%s max=%s\" % (len(values), e._nearest_rank(values, .5), e._nearest_rank(values, .95), max(values)))\njev = []; nar = []\nfor line in open(base + \"/worker.log\"):\n    m = re.match(r\"\\S+ (/\\S*) (\\d+) (\\d+)ms\", line)\n    if m and m.group(1) != \"/__spent\":\n        (nar if m.group(1) == \"/\" else jev).append(int(m.group(3)))\nfor name, v in ((\"jev\", jev), (\"narration\", nar)):\n    v.sort(); print(name, \"n\", len(v), \"p50\", v[len(v)//2], \"p95\", v[max(0, int(len(v)*.95)-1)], \"max\", v[-1])\nPY\n(set -a; . ./.env; set +a; .venv/bin/python - <<'PY'\nimport os\nfrom pathlib import Path\nbase = Path(\"bench/results/environment-narration/t9e-check/latency\")\ntext = \"\".join(p.read_text(errors=\"replace\") for p in base.rglob(\"*\") if p.is_file())\nfor name in (\"CLOUDFLARE_AI_TOKEN\", \"CLOUDFLARE_ACCOUNT_ID\", \"CLOUDFLARE_WORKER_TOKEN\"):\n    value = os.environ.get(name, \"\").strip()\n    assert not value or value not in text, name + \" leaked\"\nprint(\"no credential value in outputs\")\nPY\n)",
+   "verified": "route A and C latency rerun completed once under the approved cap"
+  }
+ ]
+}

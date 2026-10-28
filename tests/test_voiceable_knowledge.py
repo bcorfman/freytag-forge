@@ -67,6 +67,16 @@ def _real_recovery_state(*, witnessed: bool) -> RuntimeState:
     return state
 
 
+def _real_gap_and_patrol_state() -> RuntimeState:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.update({"SL-1A-E", "SL-1A-F"})
+    state.facts.assert_fact(Fact(predicate="drawer_gap_pointed_out", subject="story", value="true"))
+    state.fired_event_ids.add("SL-1A-F")
+    state.facts.assert_fact(Fact(predicate="patrol_in_house", subject="story", value="true"))
+    apply_world_effects(PACKAGE, state.facts)
+    return state
+
+
 def test_default_voiceable_claim_is_sayable_for_a_present_speaker() -> None:
     item = _generic_item()
     projection = KnowledgeProjector().project(_generic_state(item), "brandon", "Inspect the survey marker.")
@@ -94,6 +104,20 @@ def test_real_recovery_prompt_omits_non_voiceable_player_action_but_keeps_office
 
     assert "may say this aloud: Kristin finds Michelle" not in user_prompt
     assert "may say this aloud: An officer saw Kristin take Michelle's memory card" in user_prompt
+
+
+def test_real_gap_prompt_omits_non_voiceable_player_actions_but_keeps_committed_knowledge() -> None:
+    state = _real_gap_and_patrol_state()
+    command = "Search the kitchen for signs of a struggle."
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state)
+
+    prompt = provider.assemble_turn_prompt(command)["context"]
+    user_prompt = provider._section_user_prompt(prompt)
+    committed_ids = {item.id for item in KnowledgeProjector().project(state, "player", command).committed_knowledge}
+
+    assert "may say this aloud: Kristin looks over the drawer" not in user_prompt
+    assert "may say this aloud: Kristin opens the drawer" not in user_prompt
+    assert {"k_sl_1a_f_r1", "k_sl_1a_f_r2"} <= committed_ids
 
 
 @pytest.mark.parametrize(
@@ -127,6 +151,28 @@ def test_dialogue_grounding_uses_voiceable_projection(knowledge_id: str, witness
         assert result.segments[0].text == statement
 
 
+@pytest.mark.parametrize("knowledge_id", ["k_sl_1a_f_r1", "k_sl_1a_f_r2"])
+def test_dialogue_grounding_rejects_quoted_gap_statement(knowledge_id: str) -> None:
+    state = _real_gap_and_patrol_state()
+    statement = PACKAGE.knowledge_indexes.by_id[knowledge_id].statement
+    payload = {
+        "segments": [
+            {
+                "kind": "dialogue",
+                "speaker_id": "patrol_officer",
+                "text": statement,
+                "grounding_ids": [knowledge_id],
+            }
+        ],
+        "selected_knowledge_ids": [],
+    }
+
+    with pytest.raises(ProposalValidationError) as caught:
+        RuntimeEngine(state, lambda _: payload).turn("Ask the patrol officer about the drawer.")
+
+    assert caught.value.code == "dialogue_grounding_not_sayable"
+
+
 def test_loader_rejects_non_boolean_voiceable(tmp_path: Path) -> None:
     destination = tmp_path / "package"
     shutil.copytree(PACKAGE_ROOT, destination)
@@ -141,10 +187,10 @@ def test_loader_rejects_non_boolean_voiceable(tmp_path: Path) -> None:
     assert "voiceable" in str(caught.value)
 
 
-def test_real_package_has_exactly_one_non_voiceable_knowledge_item() -> None:
+def test_real_package_has_exactly_the_non_voiceable_knowledge_items() -> None:
     non_voiceable = [item for item in PACKAGE.knowledge.knowledge if item.voiceable is False]
 
-    assert [item.id for item in non_voiceable] == ["k_sl_1a_b_r0"]
+    assert [item.id for item in non_voiceable] == ["k_sl_1a_b_r0", "k_sl_1a_f_r1", "k_sl_1a_f_r2"]
 
 
 def test_default_serialization_omits_voiceable_but_false_round_trips() -> None:
