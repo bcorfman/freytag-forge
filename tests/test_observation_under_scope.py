@@ -111,11 +111,13 @@ def test_unknown_under_answer_keeps_strict_look_scope(monkeypatch: pytest.Monkey
     assert provider.observation_request == ObservationRequest("Search beneath the drawer.", "look", "michelle_drawer")
 
 
-def test_under_question_is_not_asked_for_open_enter_or_non_container(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_under_question_is_asked_first_for_open_and_not_for_enter_or_non_container(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _record, provider, calls = _capture_real(monkeypatch, "Open the drawer.", {"opens_container": True})
     assert provider.observation_request is not None
     assert provider.observation_request.kind == "open"
-    assert "searches_underneath" not in calls
+    assert calls == ["searches_underneath", "opens_container"]
 
     state = _state_at("outside_house")
     provider = build_capture_provider(state)
@@ -126,7 +128,7 @@ def test_under_question_is_not_asked_for_open_enter_or_non_container(monkeypatch
     )
     assert provider.observation_request is not None
     assert provider.observation_request.kind == "enter"
-    assert "searches_underneath" not in calls
+    assert calls == []
 
     state = _state_at("kitchen")
     provider = build_capture_provider(state)
@@ -143,7 +145,7 @@ def test_under_question_is_not_asked_for_open_enter_or_non_container(monkeypatch
     )
     assert provider.observation_request is not None
     assert provider.observation_request.kind == "look"
-    assert "searches_underneath" not in calls
+    assert calls == []
 
 
 def test_supporter_under_scope_is_optional_only_for_under_search(monkeypatch: pytest.MonkeyPatch) -> None:

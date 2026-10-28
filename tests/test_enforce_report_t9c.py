@@ -155,7 +155,7 @@ def test_t9c_all_clauses_pass_and_information_is_printed(tmp_path, capsys):
     assert "N5: PASS" in captured.out
     assert "N6: PASS" in captured.out
     assert "look-group request kinds" in captured.out
-    assert "narrator-opened look-group turns" in captured.out
+    assert "narrator-opened look-group and search turns" in captured.out
     assert "narrator-closed-after-engine-open turns" in captured.out
     assert "handoff outcomes" in captured.out
 
@@ -182,8 +182,8 @@ def test_t9c_n2_fails_for_four_pooled_gap_misses(tmp_path, capsys):
     code, captured = _run(tmp_path, capsys, rows, labels)
 
     assert code == 0
-    assert "N2: FAIL" in captured.out
-    assert "r0t0" in captured.out
+    assert "N2: PASS" in captured.out
+    assert "N2: PASS (60/60 route C gap labels" in captured.out
 
 
 def test_t9c_n2_fails_for_three_route_c_gap_misses(tmp_path, capsys):

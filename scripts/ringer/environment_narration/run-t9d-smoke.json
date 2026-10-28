@@ -1,0 +1,38 @@
+{
+ "run_name": "grounded-environment-narration",
+ "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9d-smoke",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "billed-t9d-smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 3600,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/environment-narration/t9d-search/smoke"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9d-search/smoke/a/rows/rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9d-search/smoke/a/rows/summary.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9d-search/smoke/b/rows/rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9d-search/smoke/b/rows/summary.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9d-search/smoke/c/rows/rows.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9d-search/smoke/c/rows/summary.json",
+    "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9d-search/smoke/spent.json"
+   ],
+   "spec": "You are a RUNNER for one billed T9d search-opens and repeatable-handoff enforced sample (smoke stage) in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. The approved preregistration is .plans/grounded-llm-environment-narration/t9d-search-opens-prereg.md. Run COMMAND 1 exactly once in the foreground; never rerun it, edit any file, commit, print no credential, or finish while it is running. The script uses one local Worker on port 8797, runs route A observe_topup, then route B observe_under_first, then route C observe_look_inside_under only when the prior summary has no stop reason. It has enforcement on, shadow off, 70B JSON off, a 20 second timeout, and no retry on timeout.\n\nCOMMAND 1: cd /home/bcorfman/dev/freytag-forge && bash scripts/ringer/environment_narration/enforce_t9d.sh smoke\n\nThe stage caps are route A --replicates 1 --max-calls 90, route B --replicates 1 --max-calls 40, route C --replicates 2 --max-calls 90, and the one Worker cap is --max-usd 0.07. A quota code, HTTP 429, HTTP 5xx, or call cap stops the stage and preserves partial rows. Expected complete row counts are A 1 x 9 turns, B 1 x 4 turns, and C 2 x 6 turns. Do not interpret the results beyond reporting the script's non-secret output and spent.json.",
+   "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && .venv/bin/python - <<'PY'\nimport json\nimport os\nfrom pathlib import Path\n\nbase = Path(\"bench/results/environment-narration/t9d-search/smoke\")\nassert json.loads((base / \"spent.json\").read_text())[\"spent_micro_usd\"] <= 70000\n\ndef route_rows(name, expected_replicates, expected_turns, last_input):\n    route_base = base / name / \"rows\"\n    assert (route_base / \"rows.json\").is_file()\n    assert (route_base / \"summary.json\").is_file()\n    rows = json.loads((route_base / \"rows.json\").read_text())\n    summary = json.loads((route_base / \"summary.json\").read_text())\n    assert summary[\"enforce\"] is True\n    assert summary.get(\"shadow\", False) is False\n    for row in rows:\n        for turn in row.get(\"turns\", []):\n            for field in (\"turn_elapsed_s\", \"enforce_attempts\", \"narration_attempts\", \"observation_request\", \"engine_opened\", \"focus_open_state_after\", \"focus_open_state_committed\", \"handoff_id\", \"delivered_text\"):\n                assert field in turn\n    if summary.get(\"stopped_reason\") is None:\n        assert len(rows) == expected_replicates\n        assert all(len(row.get(\"turns\", [])) == expected_turns for row in rows)\n        assert all(row[\"turns\"][-1][\"input\"] == last_input for row in rows)\n\nroute_rows(\"a\", 1, 9, \"inspect the passenger seat\")\na_summary = json.loads((base / \"a\" / \"rows\" / \"summary.json\").read_text())\nif a_summary.get(\"stopped_reason\") is None:\n    route_rows(\"b\", 1, 4, \"pull out the drawer\")\n    b_summary = json.loads((base / \"b\" / \"rows\" / \"summary.json\").read_text())\n    if b_summary.get(\"stopped_reason\") is None:\n        route_rows(\"c\", 2, 6, \"look under the drawer\")\nprint(\"checked t9d routes and spent cap\")\nPY\n(set -a; . ./.env; set +a; .venv/bin/python - <<'PY'\nimport os\nfrom pathlib import Path\n\nbase = Path(\"bench/results/environment-narration/t9d-search/smoke\")\ntext = \"\".join(path.read_text(errors=\"replace\") for path in base.rglob(\"*\") if path.is_file())\nfor name in (\"CLOUDFLARE_AI_TOKEN\", \"CLOUDFLARE_ACCOUNT_ID\", \"CLOUDFLARE_WORKER_TOKEN\"):\n    value = os.environ.get(name, \"\").strip()\n    assert not value or value not in text, name + \" value leaked into outputs\"\nprint(\"no credential value in outputs\")\nPY\n)",
+   "verified": "the T9d three-route enforcing-verifier sample ran once under the approved cap"
+  }
+ ]
+}
