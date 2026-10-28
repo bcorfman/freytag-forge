@@ -1,0 +1,33 @@
+{
+  "run_name": "grounded-environment-narration",
+  "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9e-probe",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "billed-t9e-probe",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 1800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/environment-narration/t9e-check/probe"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9e-check/probe/rows.json",
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9e-check/probe/report.md"
+      ],
+      "spec": "You are a RUNNER for one billed T9e Stage-P Jev classification probe in freytag-forge. Working directory: /home/bcorfman/dev/ringer-work/grounded-environment-narration-t9e-probe. It sends 206 requests (103 frozen question cases x 2 samples) through the project's local Worker /jev route. The preregistration is .plans/grounded-llm-environment-narration/t9e-check-wording-prereg.md. HARD RULES: run COMMAND 1 EXACTLY ONCE in the FOREGROUND and never rerun it, even after an error or partial result. Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit. A non-zero probe exit with partial rows is a valid outcome.\n\nCOMMAND 1 (the billed run; run exactly once):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && (set -a; . ./.env; set +a; unset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN; .venv/bin/python scripts/ringer/environment_narration/opens_container_probe.py --corpus v3 --run --confirm --max-calls 206 --max-usd 0.01 --out bench/results/environment-narration/t9e-check/probe/rows.json)\n\nCOMMAND 2 (safe report render; may be rerun if needed):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/environment_narration/opens_container_probe.py --report --corpus v3 --rows bench/results/environment-narration/t9e-check/probe/rows.json --out bench/results/environment-narration/t9e-check/probe/report.md\n\nThen print the report's probe gate section and say in one or two sentences what happened, including any stop reason. Do not interpret quality.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && test -s bench/results/environment-narration/t9e-check/probe/rows.json && test -s bench/results/environment-narration/t9e-check/probe/report.md && (set -a; . ./.env; set +a; .venv/bin/python - <<'PY'\nimport json\nbase='bench/results/environment-narration/t9e-check/probe'\ndocument=json.load(open(base+'/rows.json'))\nrows=document.get('rows')\nassert isinstance(rows,list) and (document.get('stop_reason') or len(rows)==206), 'missing stop reason or 206 rows'\nreport=open(base+'/report.md').read()\nassert 'probe gate' in report.lower(), 'probe gate missing'\ntext=open(base+'/rows.json').read()+report\nimport os\nfor name in (\n    'CLOUDFLARE_AI_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_WORKER_TOKEN',\n    'OPENAI_API_KEY', 'RAILWAY_TOKEN', 'RAILWAY_PROJECT_ID', 'FREYTAG_TEST_CLOCK_TOKEN',\n): \n    value=os.environ.get(name,'').strip()\n    assert not value or value not in text, name+' leaked'\nprint('integrity ok: %d rows, no credential in outputs' % len(rows))\nPY\n)\n",
+      "verified": "probe rows and report rendered once under the approved ceiling"
+    }
+  ]
+}
