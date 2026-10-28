@@ -1,0 +1,40 @@
+{
+  "run_name": "grounded-environment-narration",
+  "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9e-stage-runs-build",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "t9e-stage-runs",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "max_attempts": 2,
+      "timeout_s": 900,
+      "spec": "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge (branch t9e-stage-runs). Do NOT git commit, do not touch any file except the five you own, and never call a model or the network. Use `.venv/bin/python` (never uv) with PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp.\n\nTASK: create T9e copies of the T9d stage-run files. The T9e preregistration (.plans/grounded-llm-environment-narration/t9e-check-wording-prereg.md, section 'After a pass') says stages S and F rerun with the T9d gates and caps unchanged, writing under bench/results/environment-narration/t9e-check/{smoke,full} so the T9d rows are not overwritten.\n\nFor each of these four copies, apply these text substitutions in THIS order to the whole file: (1) `t9d-search-opens-prereg.md` -> `t9e-check-wording-prereg.md`; (2) `t9d-search` -> `t9e-check`; (3) `T9d` -> `T9e`; (4) `t9d` -> `t9e`. Do not change anything else.\n  scripts/ringer/environment_narration/enforce_t9d.sh -> enforce_t9e.sh (keep it executable bit as the source has)\n  scripts/ringer/environment_narration/make_t9d_run_manifests.py -> make_t9e_run_manifests.py\n  tests/test_t9d_run_manifests.py -> tests/test_t9e_run_manifests.py\nThen generate run-t9e-smoke.json and run-t9e-full.json by running the NEW generator: `cd /home/bcorfman/dev/freytag-forge && .venv/bin/python scripts/ringer/environment_narration/make_t9e_run_manifests.py` (it writes next to itself). Do not hand-edit the JSON. A shell `sed -e ... < src > dst` is fine for the copies. Do not modify any t9d file.\n\nFinish by running `.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_t9e_run_manifests.py` and `.venv/bin/ruff format --check` on the two new .py files, and report both outputs.",
+      "check": "bash <<'SH'\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && D=scripts/ringer/environment_narration && sub() { sed -e 's/t9d-search-opens-prereg\\.md/t9e-check-wording-prereg.md/g' -e 's/t9d-search/t9e-check/g' -e 's/T9d/T9e/g' -e 's/t9d/t9e/g' \"$1\"; } && diff <(sub $D/enforce_t9d.sh) $D/enforce_t9e.sh && diff <(sub $D/make_t9d_run_manifests.py) $D/make_t9e_run_manifests.py && diff <(sub tests/test_t9d_run_manifests.py) tests/test_t9e_run_manifests.py && test -x $D/enforce_t9e.sh && grep -c 't9e-check/smoke' $D/run-t9e-smoke.json && grep -c 't9e-check/full' $D/run-t9e-full.json && ! grep -l 't9d' $D/run-t9e-smoke.json $D/run-t9e-full.json && .venv/bin/ruff format --check $D/make_t9e_run_manifests.py tests/test_t9e_run_manifests.py && .venv/bin/python -m pytest -q -p no:cacheprovider --no-cov tests/test_t9e_run_manifests.py tests/test_t9d_run_manifests.py\nSH",
+      "verified": "T9e stage script, generator, manifests and test exist as substituted copies of the T9d ones and pass their tests",
+      "task_type": "code-feature",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "check_timeout_s": 600,
+      "ownership": [
+        "scripts/ringer/environment_narration/enforce_t9e.sh",
+        "scripts/ringer/environment_narration/make_t9e_run_manifests.py",
+        "scripts/ringer/environment_narration/run-t9e-smoke.json",
+        "scripts/ringer/environment_narration/run-t9e-full.json",
+        "tests/test_t9e_run_manifests.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9e.sh",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/make_t9e_run_manifests.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/run-t9e-smoke.json",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/run-t9e-full.json",
+        "/home/bcorfman/dev/freytag-forge/tests/test_t9e_run_manifests.py"
+      ]
+    }
+  ]
+}
