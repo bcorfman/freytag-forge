@@ -99,6 +99,91 @@ def test_t9h_manifests_have_caps_workdirs_checks_and_no_credential_values() -> N
             assert not value or value not in serialized
 
 
+def _first_python_heredoc(check: str) -> str:
+    marker = "<<'PY'\n"
+    start = check.index(marker) + len(marker)
+    end = check.index("\nPY\n", start)
+    return check[start:end]
+
+
+def _run_check_heredoc(check: str, base: Path) -> subprocess.CompletedProcess[str]:
+    source = _first_python_heredoc(check)
+    lines = source.splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith("base = Path("):
+            lines[index] = f"base = Path({str(base)!r})"
+            break
+    else:
+        raise AssertionError("check heredoc has no base assignment")
+    return subprocess.run(
+        [str(PYTHON), "-c", "\n".join(lines)],
+        capture_output=True,
+        text=True,
+    )
+
+
+def _write_route_c(base: Path, *, stopped_reason: str | None, replicates: int) -> None:
+    route_base = base / "c" / "rows"
+    route_base.mkdir(parents=True)
+    turn = {
+        "turn_elapsed_s": 0,
+        "enforce_attempts": 0,
+        "narration_attempts": 0,
+        "observation_request": None,
+        "engine_opened": False,
+        "focus_open_state_after": None,
+        "focus_open_state_committed": None,
+        "handoff_id": None,
+        "delivered_text": None,
+        "call_timings": [],
+        "input": "look under the drawer",
+    }
+    rows = [{"turns": [turn.copy() for _ in range(6)]} for _ in range(replicates)]
+    (route_base / "rows.json").write_text(json.dumps(rows))
+    (route_base / "summary.json").write_text(
+        json.dumps({"enforce": True, "shadow": False, "stopped_reason": stopped_reason})
+    )
+    (base / "spent.json").write_text(json.dumps({"spent_micro_usd": 0}))
+
+
+def test_t9h_expect_files_and_conditional_check_behavior() -> None:
+    for name, stage, replicates in (
+        ("run-t9h-smoke.json", "smoke", 1),
+        ("run-t9h-full.json", "full", 5),
+    ):
+        manifest = json.loads((ENVIRONMENT_NARRATION / name).read_text())
+        task = manifest["tasks"][0]
+        base = f"bench/results/environment-narration/t9h/{stage}"
+        assert task["expect_files"] == [
+            f"{ROOT}/{base}/c/rows/rows.json",
+            f"{ROOT}/{base}/c/rows/summary.json",
+            f"{ROOT}/{base}/spent.json",
+        ]
+
+        check = task["check"]
+        guards = (
+            'if c_summary.get("stopped_reason") is None:\n    route_rows("d"',
+            'if d_summary.get("stopped_reason") is None:\n        route_rows("e"',
+            'if e_summary.get("stopped_reason") is None:\n            route_rows("f"',
+        )
+        positions = [check.index(guard) for guard in guards]
+        assert positions == sorted(positions)
+        assert all(f'route_rows("{route}"' in check for route in ("d", "e", "f"))
+
+        with tempfile.TemporaryDirectory() as directory:
+            stopped_base = Path(directory) / "stopped"
+            _write_route_c(stopped_base, stopped_reason="call cap", replicates=replicates)
+            stopped_result = _run_check_heredoc(check, stopped_base)
+            assert stopped_result.returncode == 0, stopped_result.stderr
+
+            clean_base = Path(directory) / "clean"
+            _write_route_c(clean_base, stopped_reason=None, replicates=replicates)
+            clean_result = _run_check_heredoc(check, clean_base)
+            missing_rows = clean_base / "d" / "rows" / "rows.json"
+            assert clean_result.returncode != 0
+            assert str(missing_rows) in clean_result.stderr
+
+
 def test_t9h_probe_manifest_has_request_cap_and_integrity_check() -> None:
     path = ENVIRONMENT_NARRATION / "run-t9h-probe-live.json"
     manifest = json.loads(path.read_text())

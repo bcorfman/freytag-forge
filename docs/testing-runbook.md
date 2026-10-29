@@ -99,6 +99,23 @@ and without card custody. Unrelated scene edits should leave those captures
 identical; inspect the affected scene separately. Delete the `/tmp/payload-*.json`
 files after reviewing the diff.
 
+For an existing live failure, inspect saved artifacts before making another
+model call. For example:
+
+```bash
+uv run python -m json.tool bench/results/environment-narration/t9h/smoke/e/rows/summary.json
+```
+
+Read each turn's complete prompts and provider responses beside its narration,
+errors, observation request and call timings. JSON parsing only verifies the
+artifact shape. A flat parent map cannot verify relation changes or full
+rollback; compare runtime snapshots and parent/relation/hidden/axis facts in a
+network-free reconstruction when those fields were not recorded. Scene-start
+helpers may use scripted journey checkpoints, which do not prove parity with a
+live prefix. Keep diagnostic results in the active plan. Artifact inspection
+is read-only, costs nothing and needs no cleanup; a live replay is billed and
+follows section 4.
+
 **Pass:** the prompt contains only material the scene has made available. For
 an authored-handoff turn it contains no candidate ID, candidate statement,
 `delivery_text`, `must_convey`, or grounding instruction.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import os
@@ -374,6 +375,106 @@ def _places(state: Any) -> dict[str, Any]:
     return {name: world.parent(name) if name in entity_ids else None for name in TRACKED}
 
 
+def _world_structure(state: Any) -> dict[str, dict[str, Any]]:
+    from storygame.runtime.world_model import world_for
+
+    world = world_for(state.package, state.facts)
+    return {
+        entity_id: {
+            "parent": world.parent(entity_id),
+            "relation": world.relation(entity_id),
+            "hidden": bool(world.is_hidden(entity_id)),
+            "axes": dict(world.axis_values(entity_id)),
+        }
+        for entity_id in world.entity_ids()
+    }
+
+
+def _snapshot_json(state: Any) -> str:
+    snapshot = state.snapshot()
+    payload = snapshot.model_dump(mode="json")
+    payload["facts"]["asserted"] = [
+        fact.model_dump(mode="json") for fact in sorted(snapshot.facts.asserted, key=lambda item: item.key)
+    ]
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def _state_digest(state: Any) -> str:
+    return hashlib.sha256(_snapshot_json(state).encode("utf-8")).hexdigest()
+
+
+def _preview_record(preview: Any, relations: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "outcome": preview.outcome,
+        "failure": preview.failure,
+        "accepted": preview.accepted,
+        "required": bool(preview.required),
+        "moved_unrelated": list(preview.moved_unrelated),
+        "changed": list(preview.changed),
+        "relations": relations,
+        "narration": preview.narration,
+    }
+
+
+def _turn_outcome(narration: str | None, stop_reason: str | None) -> str:
+    if stop_reason == "MAX_CALLS_EXCEEDED":
+        return "stopped_call_cap"
+    if stop_reason is not None:
+        return "stopped_quota"
+    return "committed" if narration is not None else "rejected"
+
+
+def _verifier_http_calls(timings: list[dict[str, Any]]) -> int:
+    return sum(
+        timing.get("kind") == "jev" and any(str(key).startswith("relation_") for key in timing.get("keys", ()))
+        for timing in timings
+    )
+
+
+def _proposed_item_facts(responses: list[str]) -> list[Any]:
+    proposed: list[Any] = []
+
+    def collect(value: Any) -> None:
+        if isinstance(value, dict):
+            if "item_facts" in value:
+                proposed.append(_json(value["item_facts"]))
+            for nested in value.values():
+                if isinstance(nested, (dict, list)):
+                    collect(nested)
+                elif isinstance(nested, str):
+                    try:
+                        collect(json.loads(nested))
+                    except json.JSONDecodeError:
+                        continue
+        elif isinstance(value, list):
+            for nested in value:
+                collect(nested)
+
+    for response in responses:
+        try:
+            collect(json.loads(response))
+        except (TypeError, json.JSONDecodeError):
+            continue
+    return proposed
+
+
+def _preview_relations(capture: Any, candidate_state: Any, entered_scene: bool) -> list[dict[str, Any]]:
+    from storygame.runtime.observation_verifier import relations_from_context
+
+    original_state = capture.provider.state
+    capture.provider.state = candidate_state
+    try:
+        context = capture._observation_context_for_verification(entered_scene=entered_scene)
+        if context is None:
+            return []
+        return [
+            {"thing": relation.thing, "place": relation.place, "holder": relation.holder}
+            for relation in relations_from_context(context)
+        ]
+    finally:
+        capture.provider.state = original_state
+
+
 def _prompts(counter: CallCounter) -> list[dict[str, str]]:
     return list(counter.prompts)
 
@@ -551,6 +652,7 @@ def _replicate(
         capture.shadow_verifier = ObservationVerifier(capture_ask)
     verifier_requests = [0]
     enforce_attempts: list[dict[str, Any]] = []
+    previews: list[dict[str, Any]] = []
     if enforce:
         from storygame.runtime.observation_verifier import ObservationVerifier
 
@@ -587,10 +689,23 @@ def _replicate(
             return report
 
         capture.enforcing_verifier.verify = counted_verify
+
+        original_preview_commit = capture.preview_commit
+
+        def recorded_preview(*args: Any, **kwargs: Any):
+            preview = original_preview_commit(*args, **kwargs)
+            candidate_state = args[2]
+            entered_scene = bool(kwargs.get("entered_scene", False))
+            previews.append(_preview_record(preview, _preview_relations(capture, candidate_state, entered_scene)))
+            return preview
+
+        capture.preview_commit = recorded_preview
     engine = RuntimeEngine(state, provider, capture=capture)
     counter.prompts.clear()
     counter.timings.clear()
     counter.responses.clear()
+    opening_world_before = _world_structure(state) if enforce else None
+    opening_digest_before = _state_digest(state) if enforce else None
     opening = engine.opening()
     record["opening"] = {
         "narration": opening.narration,
@@ -598,6 +713,19 @@ def _replicate(
         "prompts": _prompts(counter),
         "provider_responses": list(counter.responses),
     }
+    if enforce:
+        opening_world_after = _world_structure(state)
+        opening_digest_after = _state_digest(state)
+        record["opening"].update(
+            {
+                "world_before": opening_world_before,
+                "world_after": opening_world_after,
+                "state_digest_before": opening_digest_before,
+                "state_digest_after": opening_digest_after,
+                "state_unchanged": opening_digest_before == opening_digest_after,
+                "proposed_item_facts": _proposed_item_facts(counter.responses),
+            }
+        )
     if route in NEW_ROUTES:
         record["opening"].update(
             {
@@ -622,8 +750,11 @@ def _replicate(
             previous_request = capture.provider.observation_request
         verifier_requests[0] = 0
         enforce_attempts.clear()
+        previews.clear()
         error = None
         turn_started = time.monotonic() if enforce else None
+        world_before = _world_structure(state) if enforce else None
+        digest_before = _state_digest(state) if enforce else None
         try:
             result = engine.turn(command)
             narration = result.narration
@@ -633,6 +764,8 @@ def _replicate(
             narration = None
             selected = []
             error = f"{type(exc).__name__}: {exc}"
+        world_after = _world_structure(state) if enforce else None
+        digest_after = _state_digest(state) if enforce else None
         row = {
             "route": route,
             "input": command,
@@ -680,6 +813,14 @@ def _replicate(
             row["enforce_attempts"] = list(enforce_attempts)
             row["call_timings"] = list(counter.timings)
             row["turn_elapsed_s"] = time.monotonic() - turn_started
+            row["world_before"] = world_before
+            row["world_after"] = world_after
+            row["state_digest_before"] = digest_before
+            row["state_digest_after"] = digest_after
+            row["state_unchanged"] = digest_before == digest_after
+            row["previews"] = list(previews)
+            row["turn_outcome"] = _turn_outcome(narration, counter.stop_reason)
+            row["verifier_http_calls"] = _verifier_http_calls(counter.timings)
         record.setdefault("turns", []).append(row)
         if on_turn is not None:
             on_turn()

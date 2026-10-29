@@ -83,6 +83,22 @@ def test_scene_route_restores_entry_checkpoint_and_placements(route: str, scene_
     assert world_for(package, state.facts).parent(thing_id) == expected_parent
 
 
+def test_park_bench_entry_world_structure_records_under_clues_and_checkpoint() -> None:
+    module = _module()
+    package = load_story_package(PACKAGE_ROOT)
+    state, checkpoint_index = module._start_state(package, "observe_park_bench_1b")
+    structure = module._world_structure(state)
+    walk = __import__("tests.journey_prefix", fromlist=["_default_walk"])._default_walk()
+
+    assert checkpoint_index == next(
+        index for index, checkpoint in enumerate(walk.checkpoints) if checkpoint.snapshot.current_scene_id == "1B"
+    )
+    for entity_id in ("transit_card", "number_sequence", "michelle_photograph"):
+        assert structure[entity_id]["parent"] == "park_bench"
+        assert structure[entity_id]["relation"] == "under"
+        assert structure[entity_id]["hidden"] is False
+
+
 def test_start_checkpoint_index_is_the_first_checkpoint_in_each_scene() -> None:
     module = _module()
     package = load_story_package(PACKAGE_ROOT)
