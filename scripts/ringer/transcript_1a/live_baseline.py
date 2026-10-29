@@ -151,21 +151,38 @@ class _Response:
 
 
 class _LiveResponse:
-    def __init__(self, response: object, counter: CallCounter) -> None:
+    def __init__(self, response: object, counter: CallCounter, timing: dict[str, Any]) -> None:
         self._response = response
         self._counter = counter
+        self._timing = timing
+        self._timing_finished = False
         self.status = getattr(response, "status", 200)
         self.headers = getattr(response, "headers", {})
         counter.inspect_status(self.status)
         counter.inspect(str(self.headers))
 
+    def _finish_timing(self, status: object = None) -> None:
+        if self._timing_finished:
+            return
+        self._timing_finished = True
+        self._counter.finish_timing(self._timing, status)
+
     def read(self, *args: object, **kwargs: object) -> bytes:
-        body = self._response.read(*args, **kwargs)
+        try:
+            body = self._response.read(*args, **kwargs)
+        except Exception:
+            self._finish_timing(self.status)
+            raise
+        self._finish_timing(self.status)
         self._counter.inspect(body.decode(errors="replace"))
         return body
 
     def __enter__(self) -> _LiveResponse:
-        self._response.__enter__()
+        try:
+            self._response.__enter__()
+        except Exception:
+            self._finish_timing(self.status)
+            raise
         return self
 
     def __exit__(self, *args: object) -> object:
@@ -178,9 +195,46 @@ class CallCounter:
         self.dry = dry
         self.calls_made = 0
         self.prompts: list[dict[str, str]] = []
+        self.timings: list[dict[str, Any]] = []
         self.responses: list[str] = []
         self.real_calls = 0
         self.stop_reason: str | None = None
+
+    def _classify(self, request: object) -> tuple[str, list[str]]:
+        url = str(getattr(request, "full_url", ""))
+        payload: object = None
+        try:
+            raw = getattr(request, "data", b"{}")
+            if isinstance(raw, bytes):
+                raw = raw.decode()
+            if isinstance(raw, str):
+                payload = json.loads(raw)
+        except (AttributeError, UnicodeDecodeError, json.JSONDecodeError):
+            payload = None
+        if url.endswith("/jev"):
+            questions = (
+                payload.get("input", {}).get("questions", {})
+                if isinstance(payload, dict) and isinstance(payload.get("input"), dict)
+                else {}
+            )
+            return "jev", list(questions) if isinstance(questions, dict) else []
+        if (
+            isinstance(payload, dict)
+            and isinstance(payload.get("system"), str)
+            and payload["system"].startswith("You are the narrator")
+        ):
+            return "narration", []
+        return "worker", []
+
+    def finish_timing(self, timing: dict[str, Any], status: object) -> None:
+        self.timings.append(
+            {
+                "kind": timing["kind"],
+                "elapsed_s": float(time.monotonic() - timing["started_at"]),
+                "status": status if type(status) is int else None,
+                "keys": list(timing["keys"]),
+            }
+        )
 
     def capture_prompt(self, request: object) -> None:
         try:
@@ -234,11 +288,14 @@ class CallCounter:
         self.before_call()
         self.real_calls += 1
         self.capture_prompt(request)
+        kind, keys = self._classify(request)
+        timing = {"kind": kind, "keys": keys, "started_at": time.monotonic()}
         from urllib.request import urlopen
 
         try:
             response = urlopen(request, timeout=timeout, **kwargs)
         except urllib.error.HTTPError as error:
+            self.finish_timing(timing, error.code)
             self.inspect_status(error.code)
             quota_error = None
             try:
@@ -258,7 +315,14 @@ class CallCounter:
             if quota_error is not None or self.stop_reason is not None:
                 raise error
             raise
-        return _LiveResponse(response, self)
+        except Exception:
+            self.finish_timing(timing, None)
+            raise
+        try:
+            return _LiveResponse(response, self, timing)
+        except Exception:
+            self.finish_timing(timing, getattr(response, "status", None))
+            raise
 
 
 def _json(value: Any) -> Any:
@@ -471,6 +535,7 @@ def _replicate(
         capture.enforcing_verifier.verify = counted_verify
     engine = RuntimeEngine(state, provider, capture=capture)
     counter.prompts.clear()
+    counter.timings.clear()
     counter.responses.clear()
     opening = engine.opening()
     record["opening"] = {
@@ -486,6 +551,7 @@ def _replicate(
         if relation_calls is not None:
             relation_calls.clear()
         counter.prompts.clear()
+        counter.timings.clear()
         counter.responses.clear()
         before = _places(state)
         fired_before = set(state.fired_event_ids)
@@ -551,6 +617,7 @@ def _replicate(
             row["narration_attempts"] = _narration_attempts(counter)
             row["verifier_requests"] = verifier_requests[0]
             row["enforce_attempts"] = list(enforce_attempts)
+            row["call_timings"] = list(counter.timings)
             row["turn_elapsed_s"] = time.monotonic() - turn_started
         record.setdefault("turns", []).append(row)
         if on_turn is not None:

@@ -773,6 +773,115 @@ def _scope_information(rows: list[dict[str, Any]], labels: dict[str, Any]) -> li
     return lines
 
 
+CALL_TIMING_KINDS = ("jev", "narration", "worker")
+
+
+def _timing_elapsed(value: Any) -> float | None:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return None
+    return float(value)
+
+
+def _timing_entry(entry: Any) -> tuple[str, float, list[str]] | None:
+    if not isinstance(entry, dict):
+        return None
+    kind = entry.get("kind")
+    elapsed = _timing_elapsed(entry.get("elapsed_s"))
+    if kind not in CALL_TIMING_KINDS or elapsed is None:
+        return None
+    keys = entry.get("keys")
+    keys = [key for key in keys if isinstance(key, str)] if isinstance(keys, list) else []
+    return kind, elapsed, keys
+
+
+def _call_timing_turn(turn_id: str, turn: dict[str, Any]) -> dict[str, Any] | None:
+    call_timings = turn.get("call_timings")
+    if not isinstance(call_timings, list):
+        return None
+    entries = []
+    for entry in call_timings:
+        timing = _timing_entry(entry)
+        if timing is not None:
+            entries.append(timing)
+    sums = {kind: 0.0 for kind in CALL_TIMING_KINDS}
+    for kind, elapsed, _keys in entries:
+        sums[kind] += elapsed
+    return {"turn_id": turn_id, "turn": turn, "entries": entries, "sums": sums}
+
+
+def _call_timing_information(route_turns: list[tuple[str, dict[str, Any]]]) -> list[str]:
+    timed_turns = [
+        timed_turn for turn_id, turn in route_turns if (timed_turn := _call_timing_turn(turn_id, turn)) is not None
+    ]
+    total_turns = len(route_turns)
+    if not timed_turns:
+        return ["call timing: n/a (rows have no call_timings)"]
+
+    calls = {kind: [] for kind in CALL_TIMING_KINDS}
+    for timed_turn in timed_turns:
+        for kind, elapsed, keys in timed_turn["entries"]:
+            calls[kind].append((elapsed, timed_turn["turn_id"], keys))
+
+    lines = [f"call timing (turns with call_timings: {len(timed_turns)} of {total_turns}):"]
+    for kind in CALL_TIMING_KINDS:
+        elapsed_values = [elapsed for elapsed, _turn_id, _keys in calls[kind]]
+        if not elapsed_values:
+            continue
+        per_turn_sums = [timed_turn["sums"][kind] for timed_turn in timed_turns]
+        lines.append(
+            f"  {kind} calls: n={len(elapsed_values)}, per turn mean "
+            f"{_number(len(elapsed_values) / len(timed_turns))}, "
+            f"call p50 {_number(_nearest_rank(elapsed_values, 0.50))}, "
+            f"p95 {_number(_nearest_rank(elapsed_values, 0.95))}, "
+            f"max {_number(max(elapsed_values))}; per turn sum mean {_number(_mean(per_turn_sums))}"
+        )
+
+    outside_values = []
+    for timed_turn in timed_turns:
+        elapsed = _timing_elapsed(timed_turn["turn"].get("turn_elapsed_s"))
+        if elapsed is not None:
+            call_sum = sum(entry[1] for entry in timed_turn["entries"])
+            outside_values.append(elapsed - call_sum)
+    lines.append(f"  turn time outside calls (engine and waiting): mean {_number(_mean(outside_values))}")
+
+    slow_turns = [
+        timed_turn
+        for timed_turn in timed_turns
+        if _timing_elapsed(timed_turn["turn"].get("turn_elapsed_s")) is not None
+    ]
+    slow_turns.sort(key=lambda timed_turn: timed_turn["turn"]["turn_elapsed_s"], reverse=True)
+    lines.append("  slowest 5 turns:")
+    for timed_turn in slow_turns[:5]:
+        turn = timed_turn["turn"]
+        lines.append(
+            f"    {timed_turn['turn_id']} | {turn.get('input', '')} | "
+            f"total {_number(float(turn['turn_elapsed_s']))} | "
+            + " | ".join(f"{kind} {_number(timed_turn['sums'][kind])}" for kind in CALL_TIMING_KINDS)
+            + f" | narration attempts {_narration_attempts(turn)}"
+        )
+
+    jev_calls = sorted(calls["jev"], key=lambda call: call[0], reverse=True)
+    lines.append("  slowest 5 jev calls:")
+    for elapsed, turn_id, keys in jev_calls[:5]:
+        lines.append(f"    {turn_id} | {'+'.join(keys)} | {_number(elapsed)}")
+    return lines
+
+
+def _call_timing_blocks(rows: list[dict[str, Any]]) -> list[str]:
+    lines = []
+    for route in _route_names(rows):
+        route_turns = []
+        for replicate_index, replicate in enumerate(rows):
+            if _route(replicate) != route:
+                continue
+            route_turns.extend(
+                (_turn_id(replicate_index, turn_index), turn)
+                for turn_index, turn in enumerate(replicate.get("turns", ()))
+            )
+        lines.extend(["", *_call_timing_information(route_turns)])
+    return lines
+
+
 def _join(
     rows: list[dict[str, Any]],
     labels: dict[str, Any],
@@ -1112,6 +1221,7 @@ def _join(
     else:
         t9b_statuses = (clause_one, clause_two, clause_three, clause_four, clause_five, clause_six, clause_seven)
     t9b_overall = "PASS" if all(status == "PASS" for status in t9b_statuses) else "FAIL"
+    lines.extend(_call_timing_blocks(rows))
     lines.extend(["", f"enforcement screen: {overall}", f"t9b screen: {t9b_overall}", ""])
     return "\n".join(lines), []
 
