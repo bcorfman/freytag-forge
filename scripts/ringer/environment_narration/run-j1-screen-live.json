@@ -1,0 +1,34 @@
+{
+  "run_name": "t9h-j1-screen-live",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-j1-screen-live",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "billed-j1-screen",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 3600,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/environment-narration/j1-screen-rows.json",
+        "bench/results/environment-narration/j1-screen-report.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/j1-screen-rows.json",
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/j1-screen-report.md"
+      ],
+      "spec": "You are a RUNNER for one billed Jev probe in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. It sends 1296 small classifier requests (frozen T7 corpus 224 cases x 2 arms x 2 samples, plus 40 held-out cases x 2 arms x 5 samples) through the project's Cloudflare Worker /jev route; the ceiling is about $0.024 and the human approved the run on 2026-10-29 (preregistration .plans/grounded-llm-environment-narration/t9h-j1-screen-prereg.md). The probe is slow, so this run launches it DETACHED and waits for it. HARD RULES: run COMMAND 1 EXACTLY ONCE (then only poll with COMMAND 1b). NEVER run it a second time for any reason (not after an error, not after a partial result: a rerun would spend money again). Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit.\n\nCOMMAND 1 (launches the billed run detached; it returns at once; a non-zero exit of the probe with partial rows is a valid outcome, do not retry):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && (set -a; . ./.env; set +a; unset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN; setsid nohup .venv/bin/python scripts/ringer/environment_narration/j1_screen_probe.py --run --confirm --samples-corpus 2 --samples-heldout 5 --max-calls 1300 --max-usd 0.05 --out bench/results/environment-narration/j1-screen-rows.json > /tmp/j1-screen-run.log 2>&1 < /dev/null & echo $! > /tmp/j1-screen.pid)\n\nCOMMAND 1b (poll; repeat it, one call at a time, until it prints DONE; each call waits at most 40 seconds; do NOT run COMMAND 1 again):\nfor i in 1 2 3 4 5 6 7 8; do if kill -0 $(cat /tmp/j1-screen.pid) 2>/dev/null; then sleep 5; else echo DONE; break; fi; done; echo still-running-or-done; tail -c 300 /tmp/j1-screen-run.log\n\nCOMMAND 2 (renders the report; it may exit 1 when J1m fails the gate, which is a valid outcome; safe to rerun if it fails to render):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && .venv/bin/python scripts/ringer/environment_narration/j1_screen_probe.py --report --rows bench/results/environment-narration/j1-screen-rows.json --out bench/results/environment-narration/j1-screen-report.md\n\nRun COMMAND 2 only after COMMAND 1b printed DONE. Then print the report's GATE section and say in one or two sentences what happened, including any stop reason. Do not interpret quality.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge && set -o pipefail && test -s bench/results/environment-narration/j1-screen-rows.json && test -s bench/results/environment-narration/j1-screen-report.md && grep -qi 'gate' bench/results/environment-narration/j1-screen-report.md && (set -a; . ./.env; set +a; .venv/bin/python - <<'PY2'\nimport json,os\np='bench/results/environment-narration/j1-screen-rows.json'\ndoc=json.load(open(p))\nrows=doc['rows'] if isinstance(doc,dict) and 'rows' in doc else doc\ntext=open(p).read()+open('bench/results/environment-narration/j1-screen-report.md').read()\nfor n in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_WORKER_TOKEN','OPENAI_API_KEY','RAILWAY_TOKEN'):\n    v=os.environ.get(n,'').strip()\n    assert not v or v not in text, n+' leaked'\nassert len(rows)==1296 or doc.get('stop_reason'),'run incomplete: %d rows, no stop reason'%len(rows)\nassert len(rows)>=1,'no rows'\nprint('integrity ok: %d rows, no credential in outputs'%len(rows))\nPY2\n)",
+      "verified": "rows recorded (all 1296 or a stop reason), report rendered, no credential in outputs"
+    }
+  ]
+}
