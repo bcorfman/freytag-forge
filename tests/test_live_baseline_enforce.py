@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+from urllib.request import Request
 
 import pytest
 
@@ -38,6 +39,69 @@ def _run(module, tmp_path: Path, *flags: str, turns: int = 13) -> tuple[dict, li
     ]
     assert module.main(arguments) == 0
     return json.loads((out / "summary.json").read_text()), json.loads((out / "rows.json").read_text())
+
+
+class _LiveFakeResponse:
+    status = 200
+    headers = {}
+
+    def __init__(self, body: object) -> None:
+        self._body = json.dumps(body).encode()
+
+    def read(self, *_args: object, **_kwargs: object) -> bytes:
+        return self._body
+
+    def __enter__(self) -> _LiveFakeResponse:
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        return None
+
+
+def _run_live(
+    monkeypatch: pytest.MonkeyPatch, module: object, output: Path, turns: int
+) -> tuple[list[dict], list[int]]:
+    call_groups: list[int] = []
+    original_live_urlopen = module.CallCounter.live_urlopen
+
+    def tracked_live_urlopen(self: object, *args: object, **kwargs: object) -> object:
+        if not self.timings:
+            call_groups.append(0)
+        call_groups[-1] += 1
+        return original_live_urlopen(self, *args, **kwargs)
+
+    monkeypatch.setattr(module.CallCounter, "live_urlopen", tracked_live_urlopen)
+
+    def fake_urlopen(request: object, **_kwargs: object) -> _LiveFakeResponse:
+        payload = json.loads(getattr(request, "data", b"{}").decode())
+        if str(getattr(request, "full_url", "")).endswith("/jev"):
+            questions = payload["input"]["questions"]
+            body = {"answers": {key: {"noul": 0.0} for key in questions}}
+        else:
+            body = {"narration": json.dumps({"segments": [{"kind": "narration", "text": "The scene continues."}]})}
+        return _LiveFakeResponse(body)
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.delenv("CLOUDFLARE_WORKER_TOKEN", raising=False)
+    assert (
+        module.main(
+            [
+                "--route",
+                "observe",
+                "--replicates",
+                "1",
+                "--turns",
+                str(turns),
+                "--confirm",
+                "--enforce",
+                "--out",
+                str(output),
+            ]
+        )
+        == 0
+    )
+    return json.loads((output / "rows.json").read_text())[0]["turns"], call_groups
 
 
 def test_enforce_and_shadow_are_mutually_exclusive(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
@@ -238,3 +302,66 @@ def test_enforce_observation_request_is_none_for_engine_authored_move(tmp_path: 
     move = next(turn for turn in rows[0]["turns"] if turn["input"] == "go outside")
     assert move["narrator_called"] is False
     assert move["observation_request"] is None
+
+
+def test_enforce_rows_record_call_timings_for_live_calls(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    module = _module()
+    turns, _call_groups = _run_live(monkeypatch, module, tmp_path / "live", turns=3)
+
+    assert turns
+    assert all("call_timings" in turn for turn in turns)
+    assert any(entry["kind"] == "jev" for turn in turns for entry in turn["call_timings"])
+    assert any(entry["kind"] == "narration" for turn in turns for entry in turn["call_timings"])
+    for turn in turns:
+        assert sum(entry["kind"] == "narration" for entry in turn["call_timings"]) == turn["narration_attempts"]
+        for entry in turn["call_timings"]:
+            assert set(entry) == {"kind", "elapsed_s", "status", "keys"}
+            assert entry["kind"] in {"jev", "narration", "worker"}
+            assert isinstance(entry["elapsed_s"], float)
+            assert entry["elapsed_s"] >= 0
+            assert isinstance(entry["status"], (int, type(None)))
+            assert isinstance(entry["keys"], list)
+            assert all(isinstance(key, str) for key in entry["keys"])
+
+
+def test_live_call_timing_uses_monotonic_until_body_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = _module()
+    counter = module.CallCounter(10, False)
+    clock = iter((10.0, 10.25))
+    monkeypatch.setattr(module.time, "monotonic", lambda: next(clock))
+    monkeypatch.setattr("urllib.request.urlopen", lambda *_args, **_kwargs: _LiveFakeResponse({"ok": True}))
+
+    request = Request(
+        "https://worker.example/jev",
+        data=json.dumps({"input": {"questions": {"first": {}, "second": {}}}}).encode(),
+    )
+    response = counter.live_urlopen(request)
+    assert counter.timings == []
+    response.read()
+
+    assert counter.timings == [{"kind": "jev", "elapsed_s": 0.25, "status": 200, "keys": ["first", "second"]}]
+
+
+def test_live_call_timing_records_a_raised_call(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = _module()
+    counter = module.CallCounter(10, False)
+    clock = iter((20.0, 20.5))
+    monkeypatch.setattr(module.time, "monotonic", lambda: next(clock))
+
+    def raise_urlerror(*_args: object, **_kwargs: object) -> object:
+        raise module.urllib.error.URLError("offline")
+
+    monkeypatch.setattr("urllib.request.urlopen", raise_urlerror)
+    request = Request("https://worker.example/other", data=b"{}")
+
+    with pytest.raises(module.urllib.error.URLError):
+        counter.live_urlopen(request)
+
+    assert counter.timings == [{"kind": "worker", "elapsed_s": 0.5, "status": None, "keys": []}]
+
+
+def test_enforce_call_timings_are_cleared_between_turns(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    module = _module()
+    turns, call_groups = _run_live(monkeypatch, module, tmp_path / "live", turns=3)
+
+    assert call_groups[1:] == [len(turn["call_timings"]) for turn in turns]
