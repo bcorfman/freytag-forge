@@ -1156,3 +1156,19 @@ Method: start S2 on the proposed package copy, feed recorded 70B `item_facts` th
 - **Question B, isolated explicit place (does the narration itself say the drain is at the Los Angeles park?):** neither names the park or says where the drain is; both say only "the damaged grounds and the service path nearby". Both NOT EXPLICIT.
 - **Reading:** the 0.58 and 0.57 scores fit question B being asked for a thing whose place is the whole scene. The first verified relations so far (drawer contents, supplies) have a place that the narration names naturally ("in the drawer"); a scene-level place has no natural mention. So the rejections are consistent with an over-demanded location, not with a missing drain. This is a hypothesis from two cases; J0/J1/J2 on frozen cases is what tests it. Both attempts also invent vegetation and debris around the drain, which the project counts only if story-breaking (it is not).
 - Next (billed, needs Brandon's go): J0 current / J1 context only / J2 context plus replacement sentence, six frozen cases x 10 samples = 180 Jev calls, about $0.005, cap $0.01, per the route E plan, proposal 5.
+
+### T9h route E: drain question calibration result (2026-10-29, billed 180 Jev requests, about $0.003)
+- Preregistration: `.plans/grounded-llm-environment-narration/t9h-drain-question-prereg.md`. Brandon gave the go on 2026-10-29. Run: Ringer `t9h-drain-question-probe-live`, `scripts/ringer/environment_narration/run-drain-probe-live.json`; outputs `bench/results/environment-narration/drain-probe-rows.json` and `drain-probe-report.md` (gitignored). Stop reason `max_calls` (the 180-request cap reached, nothing stopped it early).
+- **The first launch was cut off at 92 of 180 requests** with no stop reason: the runner worker's shell command ended while the probe was still writing, and the worker rendered the report from a half-written file (it showed 57 rows, so its G2 FAIL was not a result). Ringer marked it PASS because the check only wanted non-empty files. Brandon chose to run the full probe again. The 92 partial rows are kept as `drain-probe-rows.partial92.json` and are not part of the result (J0 5 accept 10 uncertain, J1 and J2 15 of 15 accept, no negative accepted; the same direction). The rerun launches the probe detached, polls until it exits, and its check requires 180 rows or a stop reason.
+- **Result (rerun, 180 of 180 rows, all outcomes ok):**
+
+| Arm | Positive accept / uncertain / reject (of 30) | Negative accepts (of 30) | Gate |
+| --- | --- | --- | --- |
+| J0 current | 10 / 20 / 0 | 0 | before |
+| J1 context only | 30 / 0 / 0 | 0 | PASS (G1, G2, G3) |
+| J2 context plus sentence | 30 / 0 / 0 | 0 | PASS (G1, G2, G3) |
+
+- Scores: the two recorded drain replies are 0.54 to 0.59 under J0 (`uncertain`, the product rejects), 0.89 to 0.92 under J1 and 0.81 to 0.89 under J2. The missing, remembered and elsewhere drains stay at 0.02 to 0.07 in every arm.
+- **Reading:** the over-demanded location hypothesis holds on these cases: telling the judge the scene name and the thing's starting place turns the two recorded misses into accepts without accepting a missing, remembered or relocated drain. J2's reworded sentence adds nothing over J1, so by the preregistered rule the simpler arm J1 wins (state gains `scene` and `starting_place`; question unchanged).
+- **Limits (from the preregistration):** three positives, three negatives, one drain, single-relation requests; two of the three positives are the replies that exposed the defect. This screen does not qualify a changed verifier. No product change has been made.
+- Next: write a new preregistration that reruns the frozen T7 corpus and fresh held-out locations with the J1 state before any enforcement change (the product would take the scene name from the validated current scene).
