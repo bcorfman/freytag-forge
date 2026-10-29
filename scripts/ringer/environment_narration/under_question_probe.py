@@ -21,9 +21,13 @@ LOCK_PATH = PROBE_DIR / "cases.lock.json"
 V2_PROBE_DIR = Path(__file__).with_name("under_probe_v2")
 V2_CASES_PATH = V2_PROBE_DIR / "cases.jsonl"
 V2_LOCK_PATH = V2_PROBE_DIR / "cases.lock.json"
+V4_PROBE_DIR = Path(__file__).with_name("under_probe_v4")
+V4_CASES_PATH = V4_PROBE_DIR / "cases.jsonl"
+V4_LOCK_PATH = V4_PROBE_DIR / "cases.lock.json"
 DEFAULT_SAMPLES = 2
 DEFAULT_MAX_CALLS = 98
 V2_DEFAULT_MAX_CALLS = 128
+V4_DEFAULT_MAX_CALLS = 48
 DEFAULT_MAX_USD = 0.01
 COST_PER_MILLION_INPUT_TOKENS = 0.042
 WILSON_Z = 1.6448536269514722
@@ -203,6 +207,201 @@ V2_FROZEN_CASES = [
     {"id": "v-r4", "command": "Search the table.", "thing": "table", "expected": False, "kind": "regression"},
 ]
 
+V4_FROZEN_CASES = [
+    {
+        "id": "us01",
+        "command": "Look under the workstation.",
+        "thing": "workstation",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us02",
+        "command": "Search under the park bench.",
+        "thing": "park bench",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us03",
+        "command": "Check beneath the executive desk.",
+        "thing": "executive desk",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us04",
+        "command": "Feel under the sofa.",
+        "thing": "sofa",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us05",
+        "command": "Look under the coffee table.",
+        "thing": "coffee table",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us06",
+        "command": "Inspect underneath the bed.",
+        "thing": "bed",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us07",
+        "command": "Look beneath the bookshelf.",
+        "thing": "bookshelf",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us08",
+        "command": "Search under the chair.",
+        "thing": "chair",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us09",
+        "command": "Check under the stool.",
+        "thing": "stool",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us10",
+        "command": "Feel beneath the counter.",
+        "thing": "counter",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us11",
+        "command": "Look under the picnic table.",
+        "thing": "picnic table",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "us12",
+        "command": "Examine below the bench.",
+        "thing": "bench",
+        "question": "searches_underneath",
+        "expected": True,
+        "label": "US",
+    },
+    {
+        "id": "ub01",
+        "command": "Inspect the workstation.",
+        "thing": "workstation",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub02",
+        "command": "Search the park bench.",
+        "thing": "park bench",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub03",
+        "command": "Examine the executive desk.",
+        "thing": "executive desk",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub04",
+        "command": "Check the sofa.",
+        "thing": "sofa",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub05",
+        "command": "Look at the coffee table.",
+        "thing": "coffee table",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub06",
+        "command": "Inspect the bed.",
+        "thing": "bed",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub07",
+        "command": "Search the bookshelf.",
+        "thing": "bookshelf",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub08",
+        "command": "Examine the chair.",
+        "thing": "chair",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub09",
+        "command": "Check the stool.",
+        "thing": "stool",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub10",
+        "command": "Look at the counter.",
+        "thing": "counter",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub11",
+        "command": "Search the picnic table.",
+        "thing": "picnic table",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+    {
+        "id": "ub12",
+        "command": "Inspect the bench.",
+        "thing": "bench",
+        "question": "searches_underneath",
+        "expected": False,
+        "label": "UB",
+    },
+]
+
 
 def _credential_values() -> tuple[str, ...]:
     names = (
@@ -243,6 +442,8 @@ def _corpus_paths(corpus: str) -> tuple[Path, Path]:
         return CASES_PATH, LOCK_PATH
     if corpus == "v2":
         return V2_CASES_PATH, V2_LOCK_PATH
+    if corpus == "v4":
+        return V4_CASES_PATH, V4_LOCK_PATH
     raise ValueError(f"unknown corpus: {corpus}")
 
 
@@ -251,11 +452,19 @@ def _corpus_literal(corpus: str) -> list[dict[str, Any]]:
         return FROZEN_CASES
     if corpus == "v2":
         return V2_FROZEN_CASES
+    if corpus == "v4":
+        return V4_FROZEN_CASES
     raise ValueError(f"unknown corpus: {corpus}")
 
 
 def _corpus_max_calls(corpus: str) -> int:
-    return DEFAULT_MAX_CALLS if corpus == "v1" else V2_DEFAULT_MAX_CALLS
+    if corpus == "v1":
+        return DEFAULT_MAX_CALLS
+    if corpus == "v2":
+        return V2_DEFAULT_MAX_CALLS
+    if corpus == "v4":
+        return V4_DEFAULT_MAX_CALLS
+    raise ValueError(f"unknown corpus: {corpus}")
 
 
 def build_cases(corpus: str = "v1") -> list[dict[str, Any]]:
@@ -643,6 +852,77 @@ def _report_text_v2(rows: list[dict[str, Any]], rows_sha256: str) -> tuple[str, 
     return "\n".join(lines), passed
 
 
+def _v4_row_score(row: dict[str, Any]) -> object:
+    return row.get("score") if "score" in row else row.get("noul")
+
+
+def _report_text_v4(rows: list[dict[str, Any]], rows_sha256: str) -> tuple[str, bool]:
+    frozen = {case["id"]: case for case in V4_FROZEN_CASES}
+    by_case: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        by_case.setdefault(str(row.get("case_id")), []).append(row)
+
+    us_rows = [row for row in rows if frozen.get(row.get("case_id"), {}).get("label") == "US"]
+    ub_rows = [row for row in rows if frozen.get(row.get("case_id"), {}).get("label") == "UB"]
+    us_true = sum(row.get("returned") is True for row in us_rows)
+    ub_true = sum(row.get("returned") is True for row in ub_rows)
+    ub_false_or_null = sum(row.get("returned") is not True for row in ub_rows)
+    null_answers = sum(row.get("returned") is None for row in rows)
+    p1 = us_true >= 22
+    p2 = ub_false_or_null >= 22
+    bound = _wilson_upper(ub_true, len(ub_rows))
+    bound_text = "n/a" if bound is None else f"{bound * 100:.2f}%"
+
+    lines = [
+        "# Under question probe v4 report",
+        "",
+        f"Rows sha256: {rows_sha256}",
+        f"Rows rendered: {len(rows)}",
+        f"null answers: {null_answers}",
+        "",
+        "## Per-case results",
+        "",
+        "| Case | Command | Label | Sample answers and scores |",
+        "| --- | --- | --- | --- |",
+    ]
+    for case in V4_FROZEN_CASES:
+        case_rows = sorted(by_case.get(case["id"], []), key=lambda row: row.get("sample", 0))
+        samples_text = (
+            ", ".join(
+                f"{row.get('sample')}: {_display(row.get('returned'))} (score {_display(_v4_row_score(row))})"
+                for row in case_rows
+            )
+            or "—"
+        )
+        lines.append(f"| {case['id']} | {case['command']} | {case['label']} | {samples_text} |")
+
+    missed_us = [row for row in us_rows if row.get("returned") is not True]
+    true_ub = [row for row in ub_rows if row.get("returned") is True]
+    lines.extend(
+        [
+            "",
+            "## Gate P",
+            "",
+            f"- P1: {'PASS' if p1 else 'FAIL'} — true US samples: {us_true} of 24 (required at least 22)",
+            f"- P2: {'PASS' if p2 else 'FAIL'} — false-or-null UB samples: {ub_false_or_null} of 24 "
+            f"(required at least 22); true-answer Wilson upper bound: {bound_text}",
+            "",
+            "### Misses",
+            "",
+        ]
+    )
+    misses = [("US", row) for row in missed_us] + [("UB", row) for row in true_ub]
+    if misses:
+        lines.extend(
+            f"- {label} {row.get('case_id')} sample {row.get('sample')}: score {_display(_v4_row_score(row))}"
+            for label, row in misses
+        )
+    else:
+        lines.append("- none")
+    lines.extend(["", f"probe gate: {'PASS' if p1 and p2 else 'FAIL'}", ""])
+    return "\n".join(lines), p1 and p2
+
+
 def report_rows(rows_path: Path, out: Path, corpus: str = "v1") -> int:
     document = json.loads(rows_path.read_text(encoding="utf-8"))
     rows = document.get("rows")
@@ -652,6 +932,8 @@ def report_rows(rows_path: Path, out: Path, corpus: str = "v1") -> int:
         report, passed = _report_text(rows, _sha256(rows_path.read_bytes()))
     elif corpus == "v2":
         report, passed = _report_text_v2(rows, _sha256(rows_path.read_bytes()))
+    elif corpus == "v4":
+        report, passed = _report_text_v4(rows, _sha256(rows_path.read_bytes()))
     else:
         raise ValueError(f"unknown corpus: {corpus}")
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -682,7 +964,7 @@ def _parser() -> argparse.ArgumentParser:
     modes.add_argument("--dry-run", action="store_true")
     modes.add_argument("--run", action="store_true")
     modes.add_argument("--report", action="store_true")
-    parser.add_argument("--corpus", choices=("v1", "v2"), default="v1")
+    parser.add_argument("--corpus", choices=("v1", "v2", "v4"), default="v1")
     parser.add_argument("--samples", type=int, default=DEFAULT_SAMPLES)
     parser.add_argument("--confirm", action="store_true")
     parser.add_argument("--max-calls", type=int)
