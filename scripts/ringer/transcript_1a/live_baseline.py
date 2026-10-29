@@ -110,6 +110,35 @@ ROUTES = {
         "look inside the drawer",
         "look under the drawer",
     ),
+    "observe_supporters_1a": (
+        "inspect the workstation",
+        "search the workstation",
+        "look under the workstation",
+        "examine the workstation chair",
+        "check the workstation chair",
+        "look under the workstation chair",
+    ),
+    "observe_park_bench_1b": (
+        "inspect the park bench",
+        "look under the park bench",
+        "search the park bench",
+        "check the park bench",
+        "look under the park bench",
+        "inspect the storm drain",
+    ),
+    "observe_executive_desk_3b": (
+        "inspect the executive desk",
+        "search the executive desk",
+        "look under the executive desk",
+        "examine the executive desk",
+        "check the executive desk",
+        "look under the executive desk",
+    ),
+}
+NEW_ROUTES = frozenset({"observe_supporters_1a", "observe_park_bench_1b", "observe_executive_desk_3b"})
+ROUTE_START_SCENES = {
+    "observe_park_bench_1b": "1B",
+    "observe_executive_desk_3b": "3B",
 }
 TRACKED = (
     "kristin",
@@ -341,7 +370,8 @@ def _places(state: Any) -> dict[str, Any]:
     from storygame.runtime.world_model import world_for
 
     world = world_for(state.package, state.facts)
-    return {name: world.parent(name) for name in TRACKED}
+    entity_ids = world.entity_ids()
+    return {name: world.parent(name) if name in entity_ids else None for name in TRACKED}
 
 
 def _prompts(counter: CallCounter) -> list[dict[str, str]]:
@@ -355,6 +385,31 @@ def _narration_attempts(counter: CallCounter) -> int:
 def _route_inputs(route: str, turns: int | None = None) -> tuple[str, ...]:
     inputs = ROUTES[route]
     return inputs if turns is None else inputs[:turns]
+
+
+def _start_state(package: Any, route: str) -> tuple[Any, int | None]:
+    from storygame.runtime.state import RuntimeState
+
+    scene_id = ROUTE_START_SCENES.get(route)
+    if scene_id is None:
+        return RuntimeState.bootstrap(package), None
+
+    from tests.journey_prefix import _default_walk
+
+    walk = _default_walk()
+    for checkpoint_index, checkpoint in enumerate(walk.checkpoints):
+        if checkpoint.snapshot.current_scene_id != scene_id:
+            continue
+        snapshot = checkpoint.snapshot
+        state = RuntimeState(package=package, current_scene_id=snapshot.current_scene_id, phase=snapshot.phase)
+        try:
+            state.restore_snapshot(snapshot)
+        except (TypeError, ValueError) as error:
+            raise RuntimeError(
+                f"cannot restore default-policy entry state for route {route!r} in scene {scene_id}: {error}"
+            ) from error
+        return state, checkpoint_index
+    raise RuntimeError(f"default-policy journey never reaches start scene {scene_id} for route {route!r}")
 
 
 def _wire(counter: CallCounter, dry: bool) -> None:
@@ -484,9 +539,8 @@ def _replicate(
     from storygame.runtime.capture import WorldCapture, build_capture_provider
     from storygame.runtime.engine import RuntimeEngine
     from storygame.runtime.jev import JevClient
-    from storygame.runtime.state import RuntimeState
 
-    state = RuntimeState.bootstrap(package)
+    state, start_checkpoint_index = _start_state(package, route)
     provider = build_capture_provider(state)
     capture_ask = JevClient.from_environment().ask
     provider.semantic_ask = capture_ask
@@ -544,6 +598,13 @@ def _replicate(
         "prompts": _prompts(counter),
         "provider_responses": list(counter.responses),
     }
+    if route in NEW_ROUTES:
+        record["opening"].update(
+            {
+                "start_scene": state.current_scene_id,
+                "start_checkpoint_index": start_checkpoint_index,
+            }
+        )
     stop = _stop_exception(counter)
     if stop is not None:
         raise stop

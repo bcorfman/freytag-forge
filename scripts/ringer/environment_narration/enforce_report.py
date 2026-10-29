@@ -28,6 +28,8 @@ LOOK_INSIDE_COMMAND = "look inside the drawer"
 LOOK_UNDER_COMMAND = "look under the drawer"
 FEEL_UNDER_COMMAND = "feel under the drawer"
 NUDGE_HANDOFF_ID = "k_sl_1a_f_r2"
+T9H_ROUTES = ("observe_supporters_1a", "observe_park_bench_1b", "observe_executive_desk_3b")
+STORM_DRAIN_COMMAND = "inspect the storm drain"
 
 
 def _load_json(path: str) -> Any:
@@ -214,6 +216,12 @@ def _sheet(rows: list[dict[str, Any]]) -> str:
 def _labels_template(rows: list[dict[str, Any]]) -> str:
     template = {}
     scope_rows = _scope_rows(rows)
+    t9h_scope = _t9h_scope(rows)
+    turn_routes = {
+        _turn_id(replicate_index, turn_index): _route(replicate)
+        for replicate_index, replicate in enumerate(rows)
+        for turn_index, _turn in enumerate(replicate.get("turns", ()))
+    }
     for turn_id, turn in _turns(rows):
         entry = {
             "presents_required": None,
@@ -228,6 +236,8 @@ def _labels_template(rows: list[dict[str, Any]]) -> str:
             entry["gap_restated"] = None
             entry["contents_shown"] = None
             entry["command_opens"] = None
+        if t9h_scope and turn_routes.get(turn_id) == "observe_look_inside_under":
+            entry["officer_quoted_gap"] = None
         template[turn_id] = entry
     return json.dumps(template, indent=2) + "\n"
 
@@ -259,6 +269,7 @@ def _missing_labels(rows: list[dict[str, Any]], labels: Any) -> list[str]:
     missing = []
     card_prose_turns = _card_prose_turns(rows)
     t9c_scope = _t9c_scope(rows)
+    t9h_scope = _t9h_scope(rows)
     for turn_id, turn in _turns(rows):
         if not _is_observation(turn):
             pass
@@ -279,10 +290,12 @@ def _missing_labels(rows: list[dict[str, Any]], labels: Any) -> list[str]:
         card_prose_label = _label_entry(labels, turn_id).get("card_found_in_prose")
         if turn_id in card_prose_turns and _bool_label(card_prose_label) is None:
             missing.append(f"{turn_id} card_found_in_prose")
-        if t9c_scope and _is_observation(turn):
+        if (t9c_scope or t9h_scope) and _is_observation(turn):
             entry = _label_entry(labels, turn_id)
             if _bool_label(entry.get("command_opens")) is None:
                 missing.append(f"{turn_id} command_opens")
+        if t9c_scope and _is_observation(turn):
+            entry = _label_entry(labels, turn_id)
             if _committed(turn):
                 if _bool_label(entry.get("gap_restated")) is None:
                     missing.append(f"{turn_id} gap_restated")
@@ -367,6 +380,10 @@ def _route_names(rows: list[dict[str, Any]]) -> list[str]:
 
 def _t9c_scope(rows: list[dict[str, Any]]) -> bool:
     return "observe_look_inside_under" in _route_names(rows)
+
+
+def _t9h_scope(rows: list[dict[str, Any]]) -> bool:
+    return any(route in T9H_ROUTES for route in _route_names(rows))
 
 
 def _look_group(turn: dict[str, Any]) -> bool:
@@ -564,6 +581,176 @@ def _t9d_n2a(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, i
     passed = len(inspect_turns) - misses
     status = "PASS" if inspect_turns and misses <= 1 else "FAIL"
     return status, passed, len(inspect_turns)
+
+
+def _t9h_turns(rows: list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
+    return [
+        (turn_id, turn)
+        for replicate_index, replicate in enumerate(rows)
+        if _route(replicate) in T9H_ROUTES
+        for turn_index, turn in enumerate(replicate.get("turns", ()))
+        for turn_id in (_turn_id(replicate_index, turn_index),)
+    ]
+
+
+def _t9h_route_turns(rows: list[dict[str, Any]], route: str) -> list[tuple[str, dict[str, Any]]]:
+    return [
+        (turn_id, turn)
+        for replicate_index, replicate in enumerate(rows)
+        if _route(replicate) == route
+        for turn_index, turn in enumerate(replicate.get("turns", ()))
+        for turn_id in (_turn_id(replicate_index, turn_index),)
+    ]
+
+
+def _t9h_records(rows: list[dict[str, Any]]):
+    for replicate_index, replicate in enumerate(rows):
+        if _route(replicate) not in T9H_ROUTES:
+            continue
+        turns = replicate.get("turns", ())
+        for turn_index, turn in enumerate(turns):
+            next_turn = turns[turn_index + 1] if turn_index + 1 < len(turns) else None
+            yield _turn_id(replicate_index, turn_index), turn, next_turn
+
+
+def _t9h_observations(rows: list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
+    return [(turn_id, turn) for turn_id, turn in _t9h_turns(rows) if _is_observation(turn)]
+
+
+def _t9h_g1(rows: list[dict[str, Any]]) -> tuple[str, str]:
+    observations = _t9h_observations(rows)
+    failed = sum(_is_failed(turn) for _, turn in observations)
+    total = len(observations)
+    status = "INCONCLUSIVE" if total == 0 else ("PASS" if failed <= 1 else "FAIL")
+    detail = f"failed observation turns: {failed}/{total}; Wilson upper bound: {_number(_wilson_upper(failed, total))}"
+    return status, detail
+
+
+def _t9h_g2(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, str]:
+    committed = [(turn_id, turn) for turn_id, turn in _t9h_observations(rows) if _committed(turn)]
+    failures = [
+        turn_id
+        for turn_id, _turn in committed
+        if _bool_label(_label_entry(labels, turn_id).get("presents_required")) is False
+    ]
+    return ("PASS" if not failures else "FAIL"), f"presents_required false: {len(failures)}"
+
+
+def _t9h_g3(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, str]:
+    committed = [(turn_id, turn) for turn_id, turn in _t9h_observations(rows) if _committed(turn)]
+    counts = {tag: sum(_tag_label(labels, turn_id, tag) is True for turn_id, _turn in committed) for tag in TAG_NAMES}
+    limits = {"leak": 0, "wrong_custody": 0, "unrequested_move": 0, "refind": 1, "invented_object": 1}
+    status = "PASS" if all(counts[tag] <= limits[tag] for tag in TAG_NAMES) else "FAIL"
+    detail = ", ".join(f"{tag}={counts[tag]}/{limits[tag]}" for tag in TAG_NAMES)
+    return status, detail
+
+
+def _t9h_g4(rows: list[dict[str, Any]]) -> tuple[str, str]:
+    violations = []
+    for turn_id, turn, next_turn in _t9h_records(rows):
+        if not _is_failed(turn):
+            continue
+        if next_turn is not None and next_turn.get("error") is not None:
+            violations.append(f"{turn_id} next turn")
+        if turn.get("places_after") != turn.get("places_before"):
+            violations.append(f"{turn_id} places")
+        if turn.get("narration") is not None:
+            violations.append(f"{turn_id} narration")
+        if turn.get("error") is None:
+            violations.append(f"{turn_id} error")
+    return ("PASS" if not violations else "FAIL"), f"violations: {len(violations)}"
+
+
+def _t9h_g5(rows: list[dict[str, Any]]) -> tuple[str, str]:
+    violations = [
+        turn_id
+        for turn_id, turn in _t9h_turns(rows)
+        if _narration_attempts(turn) > 2
+        or (isinstance(turn.get("verifier_requests"), (int, float)) and turn["verifier_requests"] > 2)
+    ]
+    return ("PASS" if not violations else "FAIL"), f"violations: {len(violations)}"
+
+
+def _t9h_g6(rows: list[dict[str, Any]]) -> tuple[str, str]:
+    values = [
+        float(turn["turn_elapsed_s"])
+        for _, turn in _t9h_observations(rows)
+        if _narration_attempts(turn) == 1
+        and turn.get("error") is None
+        and isinstance(turn.get("turn_elapsed_s"), (int, float))
+    ]
+    p95 = _nearest_rank(values, 0.95)
+    status = "INCONCLUSIVE" if len(values) < 20 else ("PASS" if p95 <= 10.0 else "FAIL")
+    return status, f"eligible n={len(values)}; p95={_number(p95)}; nearest-rank percentile"
+
+
+def _t9h_g7(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, str]:
+    false_rejects = 0
+    rejected_total = 0
+    for turn_id, turn in _t9h_observations(rows):
+        earlier = _earlier_labels(labels, turn_id)
+        for index, _attempt in enumerate(_rejected_attempts(turn)):
+            rejected_total += 1
+            if index < len(earlier) and earlier[index] is False:
+                false_rejects += 1
+    status = "INCONCLUSIVE" if rejected_total < 5 else ("PASS" if false_rejects <= 1 else "FAIL")
+    return status, f"false rejects: {false_rejects}; rejected attempts: {rejected_total}; limit 1"
+
+
+def _t9h_g8(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, str]:
+    command_mismatches = []
+    engine_opened = []
+    for turn_id, turn in _t9h_turns(rows):
+        if turn.get("engine_opened") is not True:
+            continue
+        engine_opened.append(turn_id)
+        if _bool_label(_label_entry(labels, turn_id).get("command_opens")) is not True:
+            command_mismatches.append(turn_id)
+    status = "PASS" if not engine_opened and not command_mismatches else "FAIL"
+    detail = f"engine_opened: {len(engine_opened)}; command_opens false: {len(command_mismatches)}"
+    return status, detail
+
+
+def _t9h_g9(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, str]:
+    storm_turns = [
+        (turn_id, turn)
+        for turn_id, turn in _t9h_turns(rows)
+        if _normalise_command(turn.get("input")) == STORM_DRAIN_COMMAND
+    ]
+    tag_violations = [
+        turn_id
+        for turn_id, turn in storm_turns
+        if _committed(turn)
+        and (
+            _tag_label(labels, turn_id, "invented_object") is True
+            or _tag_label(labels, turn_id, "unrequested_move") is True
+        )
+    ]
+    engine_violations = [turn_id for turn_id, turn in storm_turns if turn.get("engine_opened") is True]
+    violations = tag_violations + engine_violations
+    status = "PASS" if not violations else "FAIL"
+    return status, f"storm drain violations: {len(violations)}"
+
+
+def _t9h_g10(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, str]:
+    committed = [(turn_id, turn) for turn_id, turn in _route_c_turns(rows) if _committed(turn)]
+    quoted = [
+        turn_id
+        for turn_id, _turn in committed
+        if _bool_label(_label_entry(labels, turn_id).get("officer_quoted_gap")) is True
+    ]
+    missing = [
+        turn_id
+        for turn_id, _turn in committed
+        if _bool_label(_label_entry(labels, turn_id).get("officer_quoted_gap")) is None
+    ]
+    if quoted:
+        status = "FAIL"
+    elif missing:
+        status = "INCONCLUSIVE"
+    else:
+        status = "PASS"
+    return status, f"quoted gap: {len(quoted)}; missing labels: {len(missing)}"
 
 
 def _t9c_n3(rows: list[dict[str, Any]], labels: dict[str, Any]) -> tuple[str, list[str]]:
@@ -770,6 +957,27 @@ def _scope_information(rows: list[dict[str, Any]], labels: dict[str, Any]) -> li
         count = _prompt_search_count(replicate)
         value = "n/a (recorded prompt text has no searches_underneath key)" if count is None else str(count)
         lines.append(f"searches_underneath prompts ({route} r{replicate_index}): {value}")
+    return lines
+
+
+def _t9h_information(rows: list[dict[str, Any]]) -> list[str]:
+    lines = []
+    for route in T9H_ROUTES:
+        route_turns = _t9h_route_turns(rows, route)
+        if not route_turns:
+            continue
+        command_kinds = {}
+        for _turn_id_value, turn in route_turns:
+            command = _normalise_command(turn.get("input")) or "(missing command)"
+            kind = _request_kind(turn) or "none"
+            counts = command_kinds.setdefault(command, {})
+            counts[kind] = counts.get(kind, 0) + 1
+        lines.append(f"request kinds by command ({route}):")
+        for command, counts in command_kinds.items():
+            detail = ", ".join(f"{kind}={counts.get(kind, 0)}" for kind in ("look", "open", "enter", "under", "none"))
+            lines.append(f"  {command}: {detail}")
+        engine_count = sum(turn.get("engine_opened") is True for _, turn in route_turns)
+        lines.append(f"engine_opened count ({route}): {engine_count}")
     return lines
 
 
@@ -996,6 +1204,7 @@ def _join(
     s2_status, s2_under_count, s2_relations_count = _scope_s2(rows)
     s3_status, s3_passed, s3_replicates, s3_details, s3_leaks = _scope_s3(rows, labels)
     t9c_scope = _t9c_scope(rows)
+    t9h_scope = _t9h_scope(rows)
     n2a_status = None
     n2a_passed = None
     n2a_total = None
@@ -1134,6 +1343,40 @@ def _join(
                 f"N2a: {n2a_status} ({n2a_passed}/{n2a_total} route A inspect turns restated the gap)",
             ]
         )
+    if t9h_scope:
+        g1_status, g1_detail = _t9h_g1(rows)
+        g2_status, g2_detail = _t9h_g2(rows, labels)
+        g3_status, g3_detail = _t9h_g3(rows, labels)
+        g4_status, g4_detail = _t9h_g4(rows)
+        g5_status, g5_detail = _t9h_g5(rows)
+        g6_status, g6_detail = _t9h_g6(rows)
+        g7_status, g7_detail = _t9h_g7(rows, labels)
+        g8_status, g8_detail = _t9h_g8(rows, labels)
+        if "observe_park_bench_1b" in routes:
+            g9_status, g9_detail = _t9h_g9(rows, labels)
+        else:
+            g9_status, g9_detail = "n/a", "route observe_park_bench_1b only"
+        if t9c_scope:
+            g10_status, g10_detail = _t9h_g10(rows, labels)
+        else:
+            g10_status, g10_detail = "n/a", "route observe_look_inside_under only"
+        lines.extend(
+            [
+                "",
+                "## T9h clauses",
+                "",
+                f"G1: {g1_status} ({g1_detail})",
+                f"G2: {g2_status} ({g2_detail})",
+                f"G3: {g3_status} ({g3_detail})",
+                f"G4: {g4_status} ({g4_detail})",
+                f"G5: {g5_status} ({g5_detail})",
+                f"G6: {g6_status} ({g6_detail})",
+                f"G7: {g7_status} ({g7_detail})",
+                f"G8: {g8_status} ({g8_detail})",
+                f"G9: {g9_status} ({g9_detail})",
+                f"G10: {g10_status} ({g10_detail})",
+            ]
+        )
 
     lines.extend(
         [
@@ -1152,6 +1395,8 @@ def _join(
             *_scope_information(rows, labels),
         ]
     )
+    if t9h_scope:
+        lines.extend(_t9h_information(rows))
     if t9c_scope:
         look_turns = _route_c_look_group_turns(rows)
         search_turns = _route_c_search_turns(rows)

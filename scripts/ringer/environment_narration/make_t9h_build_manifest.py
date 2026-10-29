@@ -1,0 +1,392 @@
+"""Write build-t9h.json: the free build for the T9h confirmation preregistration."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+PREREG = ".plans/grounded-llm-environment-narration/t9h-confirmation-prereg.md"
+
+COMMON = (
+    "You are working in freytag-forge (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. "
+    "export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; run `.venv/bin/python` (never uv). "
+    "Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q "
+    "-p no:cacheprovider --no-cov <files>`. No network, no live model call, no billed call: every Jev and "
+    "narration call in a test is a stub. Do not git commit. NEVER print or write any credential. NO regular "
+    "expressions in new code. Never name a story, a character, an item or a scene id in engine code under "
+    "storygame/ (scripts and tests may name them). Keep the code in the style of the surrounding file (comment "
+    "density, naming, idiom). Before you finish run `.venv/bin/python -m ruff format <every file you changed>` "
+    "and `.venv/bin/python -m ruff check <the same files>`; the check fails on unformatted files. "
+    "METHOD for code tasks: write the new tests FIRST and run them to see them fail for the right reason, then "
+    "implement until they pass. "
+    "BACKGROUND. Every enforced observation run so far used scene 1A (drawer, truck, passenger seat, laptop) of "
+    "data/stories/continuity-initiative. The T9h preregistration (" + PREREG + ", read it; its text is the "
+    "contract, this brief is the part you own) measures enforcement on targets and scenes not yet seen. It adds "
+    "three routes, a supporter underside probe, per-route gates G1 to G10 and a stage script. This build is free "
+    "and offline. ROUTE NAMES AND COMMANDS (shared by all tasks; ROUTES keys in "
+    "scripts/ringer/transcript_1a/live_baseline.py): "
+    "`observe_supporters_1a` (scene 1A): inspect the workstation / search the workstation / look under the "
+    "workstation / examine the workstation chair / check the workstation chair / look under the workstation chair. "
+    "`observe_park_bench_1b` (scene 1B): inspect the park bench / look under the park bench / search the park "
+    "bench / check the park bench / look under the park bench / inspect the storm drain. "
+    "`observe_executive_desk_3b` (scene 3B): inspect the executive desk / search the executive desk / look under "
+    "the executive desk / examine the executive desk / check the executive desk / look under the executive desk. "
+    "The existing route `observe_look_inside_under` (route C, scene 1A drawer) is the regression route and stays "
+    "unchanged. "
+)
+
+SCENE_START_SPEC = (
+    "You are the HARNESS worker. "
+    + COMMON
+    + "You own ONLY scripts/ringer/transcript_1a/live_baseline.py and a NEW test file "
+    "tests/test_live_baseline_scene_start.py. Never touch any other file (other workers own the report, the "
+    "probe and the stage scripts). "
+    "PROBLEM. `live_baseline.py` always starts a replicate with `RuntimeState.bootstrap`, i.e. in scene 1A. The "
+    "routes `observe_park_bench_1b` and `observe_executive_desk_3b` must start in scene 1B and scene 3B with the "
+    "world state a real player has on entering that scene (earned facts, placements, knowledge), NEVER hand-set "
+    "facts. "
+    "BUILD. (1) Add the three new routes to ROUTES with the commands in BACKGROUND. (2) Add a mapping from route "
+    "name to start scene (`observe_park_bench_1b` -> 1B, `observe_executive_desk_3b` -> 3B; every other route "
+    "starts as today). (3) A start path that restores the state from a REAL default-policy journey: "
+    "tests/journey_prefix.py has `_default_walk()`, whose `checkpoints` hold a `RuntimeSnapshot` taken before "
+    "each turn; the first checkpoint whose snapshot is in the wanted scene is that scene's entry state, "
+    "restored with `state.restore_snapshot`. Scripts already import from tests (see "
+    "scripts/ringer/stage7/three_c_prefix.py), so importing tests.journey_prefix is accepted here; keep the import "
+    "lazy (inside the function) so the other routes do not pay for the walk. NOTE the walk uses "
+    "`PLAYED = _legacy_package(PACKAGE)`, a wrapper of the real package, while the harness uses the real package "
+    "from `load_story_package`. Verify by test that a snapshot restored into a state built from the real package "
+    "has the right `current_scene_id`, phase, the scene entry fact, and the same facts as the walk's own state at "
+    "that checkpoint; if the two packages differ in a way that breaks the restore, say so in your final report and "
+    "restore into the state of the package the walk used, but still run the turns with the harness's own provider "
+    "wiring. (4) The `TRACKED` things (kristin, kristin_laptop, memory_card, michelle_drawer, kristin_truck, "
+    "patrol_officer) are looked up in every row's place record. In scene 1B and 3B some may not exist or not be "
+    "present; make the place record tolerate that (record None for an absent thing, never raise) WITHOUT changing "
+    "any row for the existing routes (tests/test_live_baseline_default_output.py and the enforce tests are the "
+    "reference and must pass unchanged). (5) Each replicate's opening record gets `start_scene` and "
+    "`start_checkpoint_index` for the new routes only. (6) A start in a scene the walk never reaches raises a "
+    "clear error before any call is made; `--dry-run` must still work for the new routes and report the same "
+    "call counts shape as today. "
+    "TESTS (new file; hermetic; stub urlopen and workers as tests/test_live_baseline_enforce.py does, read it "
+    "first): the three route command lists are pinned exactly; a park-bench replicate opens in scene 1B and a "
+    "executive-desk replicate in scene 3B, with the scene entry fact true and the real placements applied "
+    "(assert the thing ids `park_bench` and `rebecca_desk` are placed where the scene puts them, read the story "
+    "data, do not hard-code a guess); a restored start equals what the walk's own state held at that checkpoint "
+    "(compare fact sets); the old routes are unaffected (spot check one row shape against the default-output "
+    "test's reference); a missing tracked thing yields None and does not raise; `--dry-run` works for each new "
+    "route. "
+    "REPORT in your final message, in plain words: for scene 1B and for scene 3B separately, whether the journey "
+    "restore gave a faithful entry state, and what a placements-only start (`RuntimeState(package, "
+    "current_scene_id=..., phase=...)` plus `_assert_scene_entry_fact` and `apply_scene_placements`) would have "
+    "missed, with the fact predicates you compared. If one scene cannot be started faithfully, implement the "
+    "other, make the unfaithful one raise a clear error, and say so. "
+    "Also run tests/test_live_baseline_enforce.py tests/test_live_baseline_default_output.py "
+    "tests/test_enforce_stage1_harness.py tests/test_enforce_stage2_harness.py and report counts."
+)
+
+FOCUS_SPEC = (
+    "You are a read-only PROBE worker. "
+    + COMMON
+    + "You own ONLY two files OUTSIDE the repo: /home/bcorfman/dev/ringer-work/t9h-focus/focus_probe.py and "
+    "/home/bcorfman/dev/ringer-work/t9h-focus/focus.json. Create the directory. Never edit anything under "
+    "/home/bcorfman/dev/freytag-forge (reading and importing it is fine). "
+    "QUESTION. For each target of the T9h routes, does the shipped engine's bounded observation intent engage, and "
+    "what does it decide? Targets and commands: scene 1A: the workstation and the workstation chair (route "
+    "`observe_supporters_1a`); scene 1B: the park bench and the storm drain (route `observe_park_bench_1b`); "
+    "scene 3B: the executive desk (route `observe_executive_desk_3b`); plus the control, scene 1A drawer with "
+    "`inspect the drawer`, `search the drawer`, `look under the drawer`. "
+    "HOW. Write a standalone script (an example of the wiring to copy is "
+    "/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/90bc540a-24b4-49d8-aaa0-52511628a0b5/scratchpad/jev_tally.py: "
+    "stub `CloudflareTurnProvider._request` and `_request_item_facts`, a stub Jev `ask` that answers "
+    "`searches_underneath` true only when the command has under, beneath, underneath or below and "
+    "`opens_container` true only when it has open, pull, search, inside, in or through, an enforcing "
+    "`ObservationVerifier` with the same stub, `RuntimeEngine(state, provider, capture=capture)`). Start each "
+    "scene from a REAL journey checkpoint: `from tests.journey_prefix import _default_walk`, take the first "
+    "checkpoint whose `snapshot.current_scene_id` equals the wanted scene, and `state.restore_snapshot(...)` it. "
+    "Then run each command with `engine.turn(command)` and record, per (scene, command): the resolved focus thing "
+    "id and its kind (container, supporter, other, or none), the observation request kind (look, open, under, or "
+    "none), whether the engine opened a container, which Jev questions were asked and in what order, the things "
+    "the context required, and any exception text. Also record per scene: `current_scene_id`, phase, whether the "
+    "scene entry fact is true, the things placed in the protagonist's area, and the set difference between the "
+    "fact predicates of the restored checkpoint state and those of a placements-only start "
+    "(`RuntimeState(package, current_scene_id=scene, phase=phase)`, `_assert_scene_entry_fact(scene)`, "
+    "`apply_scene_placements(package, state.facts, scene)` from storygame/runtime/world_model.py) so we can see "
+    "what a placements-only start would miss. "
+    'OUTPUT. focus.json: {"scenes": {<scene>: {...}}, "turns": [{scene, command, focus_id, focus_kind, '
+    "request_kind, engine_opened, jev_questions, required_things, error}]}, every field present on every entry "
+    "(null when unknown). In your final message state in plain words, per target, whether enforcement engages, "
+    "and anything surprising (a supporter treated as a container, an engine open on a supporter, no focus "
+    "resolved, an exception). Do not fix anything and do not edit engine code. "
+)
+
+PROBE_SPEC = (
+    "You are the PROBE-CORPUS worker. "
+    + COMMON
+    + "You own ONLY scripts/ringer/environment_narration/under_question_probe.py, the NEW directory "
+    "scripts/ringer/environment_narration/under_probe_v4/ (cases.jsonl and cases.lock.json) and a NEW test file "
+    "tests/test_under_question_probe_v4.py. Never touch the v1 or v2 corpora, opens_container_probe.py or any "
+    "other test (run the existing ones unchanged). "
+    "READ FIRST: scripts/ringer/environment_narration/under_question_probe.py, tests/test_under_question_probe.py, "
+    "tests/test_under_question_probe_v2.py (how corpus v2 is wired: `_corpus_paths`, `_corpus_literal`, "
+    "`_corpus_max_calls`, `report_rows`, `--check-corpus`, `--build-cases`, the lock), and the section "
+    "'Stage P: supporter underside probe' of " + PREREG + ". "
+    "BUILD. Add corpus `v4` the same way v2 was added. Cases (exactly these 24 commands, player-input voice; each "
+    "case asks ONLY the `searches_underneath` question; 2 samples per case). Must be true (US, 12): Look under "
+    "the workstation. / Search under the park bench. / Check beneath the executive desk. / Feel under the sofa. / "
+    "Look under the coffee table. / Inspect underneath the bed. / Look beneath the bookshelf. / Search under the "
+    "chair. / Check under the stool. / Feel beneath the counter. / Look under the picnic table. / Examine below "
+    "the bench. Must be false (UB, 12): Inspect the workstation. / Search the park bench. / Examine the executive "
+    "desk. / Check the sofa. / Look at the coffee table. / Inspect the bed. / Search the bookshelf. / Examine the "
+    "chair. / Check the stool. / Look at the counter. / Search the picnic table. / Inspect the bench. Total 48 "
+    "requests; the v4 default `--max-calls` is 48 and the dry run reports 48. Report gate for v4: P1 at least 22 "
+    "of the 24 US samples true; P2 at least 22 of the 24 UB samples false; a `None` answer counts as not true "
+    "(a miss on a must-be-true case, a correct false on a must-be-false case) and the number of `None` answers is "
+    "reported separately; print every miss with its score and the line `probe gate: PASS` only if P1 and P2 both "
+    "pass, else `probe gate: FAIL`. "
+    "TESTS (new file): the corpus literal equals the 24 commands above with the right labels and question; the "
+    "lock matches; `--check-corpus --corpus v4` passes; no v4 command occurs in the v1 or v2 corpora; every v4 "
+    "command occurs in the preregistration text (read the file in the test); the dry run reports 48 requests; the "
+    "report prints PASS on synthetic rows that meet P1 and P2, FAIL when 3 US samples are false, FAIL when 3 UB "
+    "samples are true, and counts a `None` as not true; the v1 and v2 behaviour is unchanged. "
+    "Also run tests/test_under_question_probe.py tests/test_under_question_probe_v2.py and report counts."
+)
+
+REPORT_SPEC = (
+    "You are the REPORT worker. "
+    + COMMON
+    + "You own ONLY scripts/ringer/environment_narration/enforce_report.py and a NEW test file "
+    "tests/test_enforce_report_t9h.py. Never touch live_baseline.py or any other file. "
+    "READ FIRST: enforce_report.py (the T9c/T9d scopes `_t9c_scope`, `_route_names`, clauses 1 to 7, the printed "
+    "'T9c clauses' block and how a join is per route), tests/test_enforce_report_t9d.py, tests/test_enforce_"
+    "report_timing.py, and 'Stages S and F' in " + PREREG + ". "
+    "BUILD. A T9h scope that is active when the rows' route names are one of `observe_supporters_1a`, "
+    "`observe_park_bench_1b`, `observe_executive_desk_3b`, and prints a 'T9h clauses' block after the T9c block "
+    "(information-only for the old clauses; existing clauses 1 to 7 and their statuses keep their meaning). Gates, "
+    "each printed as `G<n>: PASS|FAIL|INCONCLUSIVE (details)` for the route being joined: "
+    "G1 unsuccessful observation turns at most 1 of the route's observation turns (Wilson upper bound printed); "
+    "G2 zero committed narrations failing `presents_required`; "
+    "G3 zero `leak`, `wrong_custody`, `unrequested_move` tags and at most 1 each of `refind` and "
+    "`invented_object`; "
+    "G4 rollback invariants, zero violations (same rule as clause 4); "
+    "G5 budget, no turn above 2 narration attempts or 2 verifier requests (same as clause 5); "
+    "G6 latency, p95 of turns that needed no recovery at most 10 s, nearest rank, INCONCLUSIVE below 20 turns "
+    "(same as clause 6; keep it a gate, do not soften); "
+    "G7 false rejects at most 1 of rejected attempts, INCONCLUSIVE below 5 rejected (same as clause 7); "
+    "G8 engine audit: zero turns where `engine_opened` is true and the labelled `command_opens` is false, and on "
+    "these three routes zero turns where `engine_opened` is true at all (they hold no container); "
+    "G9 control (route `observe_park_bench_1b` only; other routes print `G9: n/a`): zero committed narrations on "
+    "the `inspect the storm drain` turn labelled `invented_object` or `unrequested_move`, and zero turns where "
+    "`engine_opened` is true on it; "
+    "G10 (route `observe_look_inside_under` only, when joined together with the T9h scope: the older route C "
+    "rows): zero committed narrations labelled `officer_quoted_gap` true. Add `officer_quoted_gap` as an OPTIONAL "
+    "per-turn bool label to the labels template for route C turns only; a missing label on a committed route C "
+    "turn makes G10 INCONCLUSIVE, not FAIL. Other routes print `G10: n/a`. "
+    "Reuse the existing helpers (`_nearest_rank`, `_wilson_upper`, `_number`, `_rate`, `_labels_template`, "
+    "`_missing_labels`); the `_labels_template` and blind `_sheet` must work for the new routes without "
+    "naming a drawer. Printed, not gated, for T9h routes: request kind distribution (`observation_request`) "
+    "by command, `engine_opened` count, the `call timing` block (already printed). The enforcement screen and "
+    "t9b screen lines keep their meaning. "
+    "TESTS (new file, synthetic rows as plain dicts; follow tests/test_enforce_report_t9d.py): for each route "
+    "one passing set and one failing set per gate G1 to G9 (numbers worked out by hand in the test); G10 PASS, "
+    "FAIL and INCONCLUSIVE; G9 and G10 print n/a on the wrong routes; the labels template includes "
+    "`officer_quoted_gap` for route C turns only; the old routes' report text is byte-identical (run the "
+    "existing report test files unchanged). "
+    "Also run tests/test_enforce_report.py tests/test_enforce_report_scope.py tests/test_enforce_report_t9c.py "
+    "tests/test_enforce_report_t9d.py tests/test_enforce_report_timing.py and report counts. If an existing test "
+    "pins the exact tail of the report and now fails only because of an added block for NEW routes, say so; it "
+    "must not fail for the old routes."
+)
+
+STAGE_SPEC = (
+    "You are the STAGE-SCRIPT worker. "
+    + COMMON
+    + "You own ONLY these NEW files in scripts/ringer/environment_narration/: enforce_t9h.sh, "
+    "make_t9h_run_manifests.py, make_t9h_probe_run_manifest.py, run-t9h-smoke.json, run-t9h-full.json, "
+    "run-t9h-probe-live.json, plus the NEW test file tests/test_t9h_run_manifests.py. Never edit an existing "
+    "file. "
+    "READ FIRST, copy their structure exactly: enforce_t9e.sh, make_t9e_run_manifests.py, "
+    "make_t9e_probe_run_manifest.py (or make_t9b_probe2_run_manifest.py for the under_question_probe), "
+    "tests/test_t9e_run_manifests.py, and 'Stages S and F' and 'Stage P' in " + PREREG + ". "
+    "BUILD. (1) enforce_t9h.sh smoke|full: routes in this order, each its own worker run, each only if the "
+    "previous route's summary has stopped_reason null: `observe_look_inside_under` (c), "
+    "`observe_supporters_1a` (d), `observe_park_bench_1b` (e), `observe_executive_desk_3b` (f). Port 8798. Output "
+    "`bench/results/environment-narration/t9h/$STAGE/{c,d,e,f}/rows`. Caps. smoke: c `--replicates 1 "
+    "--max-calls 50`, d, e, f each `--replicates 2 --max-calls 90`, MAX_USD 0.07. full: c `--replicates 5 "
+    "--max-calls 250`, d, e, f each `--replicates 10 --max-calls 450`, MAX_USD 0.45. All other behaviour as "
+    "enforce_t9e.sh (env loading, credentials unset, port-in-use refusal exit 4, worker start check exit 3, spent "
+    "file, kill and wait). (2) make_t9h_run_manifests.py writes run-t9h-smoke.json and run-t9h-full.json: one "
+    "Ringer task each, with a check that asserts the spent cap, per route rows.json and summary.json exist with "
+    "the right replicate and turn counts when the route did not stop (turns: c 6, d 6, e 6, f 6; last input "
+    "`look under the drawer`, `look under the workstation chair`, `inspect the storm drain`, `look under the "
+    "executive desk`), `enforce` is true, every turn has the field `call_timings` in addition to the T9e fields, "
+    "and no credential value appears in any output file; and a task note that the runner must wait for the billed "
+    "process. (3) make_t9h_probe_run_manifest.py writes run-t9h-probe-live.json for "
+    "`under_question_probe.py --corpus v4` with `--max-calls 48 --max-usd 0.01`, output "
+    "`bench/results/environment-narration/t9h/probe/`, a check on the row count (48 requests, or a stop reason) "
+    "and the credential-leak check. "
+    "TESTS (new file): the three JSON files equal what the generators write; the script has the four routes in "
+    "order, the port and caps above; the checks contain the turn counts and last inputs; no manifest contains a "
+    "credential value; `bash -n enforce_t9h.sh` passes. Do not run the script and do not start any worker."
+)
+
+
+def _check(files: str, own: str, ruff_files: str, extra: str = "") -> str:
+    return (
+        "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp "
+        "&& set -o pipefail "
+        f"&& env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q "
+        f"-p no:cacheprovider --no-cov {files} 2>&1 | tee /tmp/t9h-{own}.out | tail -15 "
+        f"&& ! grep -Eq '[0-9]+ failed|FAILED|ERROR' /tmp/t9h-{own}.out && grep -Eq '[0-9]+ passed' /tmp/t9h-{own}.out "
+        f"&& .venv/bin/python -m ruff check {ruff_files} && .venv/bin/python -m ruff format --check {ruff_files}"
+        + extra
+    )
+
+
+def _task(key: str, spec: str, ownership: list[str], expect: str, verified: str, check: str, **extra) -> dict:
+    task = {
+        "task_type": "code-feature",
+        "engine": "codex",
+        "model": "gpt-5.6-luna",
+        "engine_args": ["-c", "model_reasoning_effort=high"],
+        "full_access": True,
+        "max_attempts": 2,
+        "timeout_s": 3600,
+        "check_timeout_s": 1800,
+        "key": key,
+        "ownership": ownership,
+        "expect_files": [expect],
+        "verified": verified,
+        "spec": spec,
+        "check": check,
+    }
+    task.update(extra)
+    return task
+
+
+FOCUS_CHECK = (
+    "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp "
+    "&& set -o pipefail && .venv/bin/python - <<'PY'\n"
+    "import json\n"
+    "from pathlib import Path\n\n"
+    'data = json.loads(Path("/home/bcorfman/dev/ringer-work/t9h-focus/focus.json").read_text())\n'
+    'assert set(data["scenes"]) >= {"1A", "1B", "3B"}, sorted(data["scenes"])\n'
+    "need = {'scene', 'command', 'focus_id', 'focus_kind', 'request_kind', 'engine_opened', 'jev_questions',"
+    " 'required_things', 'error'}\n"
+    'assert len(data["turns"]) >= 21, len(data["turns"])\n'
+    'for turn in data["turns"]:\n'
+    "    missing = need - set(turn)\n"
+    '    assert not missing, (turn.get("command"), sorted(missing))\n'
+    'commands = {(t["scene"], t["command"]) for t in data["turns"]}\n'
+    'for scene, command in [("1A", "inspect the workstation"), ("1B", "look under the park bench"),'
+    ' ("3B", "search the executive desk"), ("1A", "search the drawer")]:\n'
+    "    assert (scene, command) in commands, (scene, command)\n"
+    'print("focus.json complete:", len(data["turns"]), "turns")\n'
+    "PY"
+)
+
+MANIFEST = {
+    "run_name": "grounded-environment-narration",
+    "workdir": "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9h-build",
+    "max_parallel": 4,
+    "worktrees": False,
+    "repo": "/home/bcorfman/dev/freytag-forge",
+    "tasks": [
+        _task(
+            "scene-start-and-routes",
+            SCENE_START_SPEC,
+            [
+                "scripts/ringer/transcript_1a/live_baseline.py",
+                "tests/test_live_baseline_scene_start.py",
+            ],
+            "/home/bcorfman/dev/freytag-forge/tests/test_live_baseline_scene_start.py",
+            "the harness starts a replicate in scene 1B or 3B from a real journey checkpoint, the three T9h "
+            "routes are pinned, and the existing routes' rows are unchanged",
+            _check(
+                "tests/test_live_baseline_scene_start.py tests/test_live_baseline_enforce.py "
+                "tests/test_live_baseline_default_output.py tests/test_enforce_stage1_harness.py "
+                "tests/test_enforce_stage2_harness.py",
+                "scene",
+                "scripts/ringer/transcript_1a/live_baseline.py tests/test_live_baseline_scene_start.py",
+                " && grep -q observe_park_bench_1b scripts/ringer/transcript_1a/live_baseline.py",
+            ),
+        ),
+        _task(
+            "focus-probe",
+            FOCUS_SPEC,
+            [
+                "/home/bcorfman/dev/ringer-work/t9h-focus/focus_probe.py",
+                "/home/bcorfman/dev/ringer-work/t9h-focus/focus.json",
+            ],
+            "/home/bcorfman/dev/ringer-work/t9h-focus/focus.json",
+            "a table of what the observation intent decides for every T9h target, from real scene-entry "
+            "checkpoints, and what a placements-only start would miss",
+            FOCUS_CHECK,
+            task_type="probe",
+        ),
+        _task(
+            "supporter-probe-corpus",
+            PROBE_SPEC,
+            [
+                "scripts/ringer/environment_narration/under_question_probe.py",
+                "scripts/ringer/environment_narration/under_probe_v4/cases.jsonl",
+                "scripts/ringer/environment_narration/under_probe_v4/cases.lock.json",
+                "tests/test_under_question_probe_v4.py",
+            ],
+            "/home/bcorfman/dev/freytag-forge/tests/test_under_question_probe_v4.py",
+            "corpus v4 holds the 24 preregistered supporter commands with gates P1 and P2, and v1 and v2 are unchanged",
+            _check(
+                "tests/test_under_question_probe_v4.py tests/test_under_question_probe.py "
+                "tests/test_under_question_probe_v2.py",
+                "probe",
+                "scripts/ringer/environment_narration/under_question_probe.py tests/test_under_question_probe_v4.py",
+                " && .venv/bin/python scripts/ringer/environment_narration/under_question_probe.py --check-corpus "
+                "--corpus v4",
+            ),
+        ),
+        _task(
+            "report-t9h-gates",
+            REPORT_SPEC,
+            [
+                "scripts/ringer/environment_narration/enforce_report.py",
+                "tests/test_enforce_report_t9h.py",
+            ],
+            "/home/bcorfman/dev/freytag-forge/tests/test_enforce_report_t9h.py",
+            "the enforcement report prints gates G1 to G10 per T9h route and leaves the old routes' text unchanged",
+            _check(
+                "tests/test_enforce_report_t9h.py tests/test_enforce_report.py tests/test_enforce_report_scope.py "
+                "tests/test_enforce_report_t9c.py tests/test_enforce_report_t9d.py "
+                "tests/test_enforce_report_timing.py",
+                "report",
+                "scripts/ringer/environment_narration/enforce_report.py tests/test_enforce_report_t9h.py",
+                " && grep -q G10 scripts/ringer/environment_narration/enforce_report.py",
+            ),
+        ),
+        _task(
+            "stage-scripts-and-run-manifests",
+            STAGE_SPEC,
+            [
+                "scripts/ringer/environment_narration/enforce_t9h.sh",
+                "scripts/ringer/environment_narration/make_t9h_run_manifests.py",
+                "scripts/ringer/environment_narration/make_t9h_probe_run_manifest.py",
+                "scripts/ringer/environment_narration/run-t9h-smoke.json",
+                "scripts/ringer/environment_narration/run-t9h-full.json",
+                "scripts/ringer/environment_narration/run-t9h-probe-live.json",
+                "tests/test_t9h_run_manifests.py",
+            ],
+            "/home/bcorfman/dev/freytag-forge/tests/test_t9h_run_manifests.py",
+            "the T9h stage script and the smoke, full and probe run manifests exist, are generated, and are "
+            "tested (nothing is run)",
+            _check(
+                "tests/test_t9h_run_manifests.py tests/test_t9e_run_manifests.py",
+                "stage",
+                "scripts/ringer/environment_narration/make_t9h_run_manifests.py "
+                "scripts/ringer/environment_narration/make_t9h_probe_run_manifest.py tests/test_t9h_run_manifests.py",
+                " && bash -n scripts/ringer/environment_narration/enforce_t9h.sh",
+            ),
+        ),
+    ],
+}
+
+if __name__ == "__main__":
+    out = Path(__file__).with_name("build-t9h.json")
+    out.write_text(json.dumps(MANIFEST, indent=2) + "\n")
+    print(out)

@@ -1,0 +1,24 @@
+{"id":"us01","command":"Look under the workstation.","thing":"workstation","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us02","command":"Search under the park bench.","thing":"park bench","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us03","command":"Check beneath the executive desk.","thing":"executive desk","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us04","command":"Feel under the sofa.","thing":"sofa","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us05","command":"Look under the coffee table.","thing":"coffee table","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us06","command":"Inspect underneath the bed.","thing":"bed","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us07","command":"Look beneath the bookshelf.","thing":"bookshelf","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us08","command":"Search under the chair.","thing":"chair","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us09","command":"Check under the stool.","thing":"stool","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us10","command":"Feel beneath the counter.","thing":"counter","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us11","command":"Look under the picnic table.","thing":"picnic table","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"us12","command":"Examine below the bench.","thing":"bench","question":"searches_underneath","expected":true,"label":"US"}
+{"id":"ub01","command":"Inspect the workstation.","thing":"workstation","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub02","command":"Search the park bench.","thing":"park bench","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub03","command":"Examine the executive desk.","thing":"executive desk","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub04","command":"Check the sofa.","thing":"sofa","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub05","command":"Look at the coffee table.","thing":"coffee table","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub06","command":"Inspect the bed.","thing":"bed","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub07","command":"Search the bookshelf.","thing":"bookshelf","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub08","command":"Examine the chair.","thing":"chair","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub09","command":"Check the stool.","thing":"stool","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub10","command":"Look at the counter.","thing":"counter","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub11","command":"Search the picnic table.","thing":"picnic table","question":"searches_underneath","expected":false,"label":"UB"}
+{"id":"ub12","command":"Inspect the bench.","thing":"bench","question":"searches_underneath","expected":false,"label":"UB"}
