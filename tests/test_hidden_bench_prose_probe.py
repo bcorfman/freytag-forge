@@ -162,6 +162,7 @@ def test_head_control_payloads_are_not_augmented_after_capture() -> None:
     assert all("LEGACY VISIBLE BENCH OBJECTS:" not in item["user"] for item in old_payloads)
 
 
+@pytest.mark.nightly
 def test_dry_run_has_sixty_calls_and_refuses_both_caps(monkeypatch, capsys) -> None:
     module = _module()
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
@@ -225,6 +226,7 @@ def test_blind_key_is_a_bijection_for_synthetic_and_frozen_rows(tmp_path: Path) 
     module.assert_blind_key_bijection(frozen_rows, frozen_key)
 
 
+@pytest.mark.nightly
 def test_composed_view_is_blind_and_post_hoc(tmp_path: Path) -> None:
     module = _module()
     rows_path = tmp_path / "rows.json"

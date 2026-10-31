@@ -2822,6 +2822,7 @@ def _new_group_scoped_alias_provider(monkeypatch, reply, calls=None):
     return provider
 
 
+@pytest.mark.nightly
 def test_group_scoped_alias_prepare_turn_selects_group(monkeypatch):
     provider = _new_group_scoped_alias_provider(monkeypatch, {"refers": ["prisoners"], "same_as": {}})
 
@@ -2852,6 +2853,7 @@ def _group_narrator_prompt(monkeypatch, group_members=()):
     return provider, provider._section_user_prompt({"player_input": "Ask the prisoners who runs this level."})
 
 
+@pytest.mark.nightly
 def test_group_talk_empty_group_says_nothing(monkeypatch):
     _provider, prompt = _group_narrator_prompt(monkeypatch)
 
@@ -2958,6 +2960,7 @@ def test_entity_label_uses_first_declared_alias():
     assert "With Kristin: the man watching Kristin, Michelle." in provider._things_block(narration=True)
 
 
+@pytest.mark.nightly
 def test_new_place_kind_person_creates_carrier_for_card(monkeypatch):
     provider = _new_place_kind_provider(
         monkeypatch,
@@ -2980,6 +2983,7 @@ def test_new_place_kind_person_creates_carrier_for_card(monkeypatch):
     assert provider.last_item_facts_unplaced() == []
 
 
+@pytest.mark.nightly
 def test_new_place_kind_new_reply_key_place_uses_player_area_without_mapping_check(monkeypatch):
     provider = _new_place_kind_provider(
         monkeypatch,
@@ -3000,6 +3004,7 @@ def test_new_place_kind_new_reply_key_place_uses_player_area_without_mapping_che
     assert provider.last_item_facts_match()["mapping_checks"] == []
 
 
+@pytest.mark.nightly
 def test_new_place_echo_group_creates_group_and_places_mover(monkeypatch):
     provider = _new_place_kind_provider(
         monkeypatch,
@@ -3021,6 +3026,7 @@ def test_new_place_echo_group_creates_group_and_places_mover(monkeypatch):
     assert provider.last_item_facts_unplaced() == []
 
 
+@pytest.mark.nightly
 def test_new_place_echo_place_creates_area_and_places_mover(monkeypatch):
     provider = _new_place_kind_provider(
         monkeypatch,
@@ -3470,6 +3476,7 @@ def test_also_called_record_carries_learned_name() -> None:
     assert judged["item_facts_names"] == learned
 
 
+@pytest.mark.nightly
 def test_scene_exit_reply_does_not_override_next_scene_placements(monkeypatch):
     def request(_provider, payload):
         if payload["system"] == _MATCH_SYSTEM:
@@ -3499,6 +3506,7 @@ def test_scene_exit_reply_does_not_override_next_scene_placements(monkeypatch):
     assert result["item_facts_final"]["Michelle's phone"]["place"] == "Kristin"
 
 
+@pytest.mark.nightly
 def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):
     calls = []
 

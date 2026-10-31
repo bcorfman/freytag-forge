@@ -391,6 +391,7 @@ EXPECTED_HANDOFF_PLACEMENTS = {
 }
 
 
+@pytest.mark.nightly
 def test_nonmatching_filler_preserves_authored_custody_across_2a_to_3c(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

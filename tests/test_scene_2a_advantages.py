@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
@@ -83,6 +85,7 @@ def test_2a_completes_without_either_carried_advantage() -> None:
     assert state.current_scene_id == "2B"
 
 
+@pytest.mark.nightly
 def test_carried_advantages_persist_into_2b() -> None:
     numbers_journey = play(("k_sl_1c_c_copy_numbers", "k_sl_2a_c_r3"))
     route_journey = play(("k_sl_1c_c_secure_route", "k_sl_2a_c_r4"))
@@ -97,6 +100,7 @@ def test_carried_advantages_persist_into_2b() -> None:
         assert Fact(predicate=fact_id, subject="story", value="true") in journey.state.facts.asserted
 
 
+@pytest.mark.nightly
 def test_2a_entry_variants_follow_each_real_journey_advantage() -> None:
     numbers = play(("k_sl_1c_c_copy_numbers", "k_sl_2a_c_r3"))
     route = play(("k_sl_1c_c_secure_route", "k_sl_2a_c_r4"))

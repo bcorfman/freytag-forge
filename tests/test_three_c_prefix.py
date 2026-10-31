@@ -29,6 +29,7 @@ def _package():
     return legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
 
 
+@pytest.mark.nightly
 def test_prefix_round_trip_and_payload_hash(prefix_dir: Path, tmp_path: Path) -> None:
     package = _package()
     store = RuntimeStateSqliteStore(prefix_dir / "checkpoint.sqlite")
@@ -59,6 +60,7 @@ def test_prefix_loaded_state_has_real_3b_reveals_and_facts(prefix_dir: Path) -> 
     assert any(fact.predicate == "scene_3b_entry_known" for fact in state.facts.asserted)
 
 
+@pytest.mark.nightly
 def test_one_scripted_turn_from_prefix_reaches_3c_and_renders_entry(prefix_dir: Path) -> None:
     package = _package()
     state = RuntimeStateSqliteStore(prefix_dir / "checkpoint.sqlite").load(SESSION_ID, package)

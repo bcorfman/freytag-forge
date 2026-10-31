@@ -264,6 +264,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption("--tier-report", default="", help="Write tier, timing, and construction counts as JSON.")
     group.addoption("--shard-index", type=int, default=0, help="Index of the test shard to run.")
     group.addoption("--shard-count", type=int, default=1, help="Number of test shards.")
+    group.addoption("--run-nightly", action="store_true", help="Include tests marked nightly.")
     group.addoption(
         "--strict-test-budgets", action="store_true", help="Fail when unit/component test budgets are exceeded."
     )
@@ -326,6 +327,11 @@ def pytest_runtest_logreport(report: pytest.TestReport) -> None:
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     global _COLLECTED_ITEMS
+    if not config.getoption("--run-nightly"):
+        nightly = [item for item in items if item.get_closest_marker("nightly") is not None]
+        if nightly:
+            config.hook.pytest_deselected(items=nightly)
+            items[:] = [item for item in items if item.get_closest_marker("nightly") is None]
     if not hasattr(config, "workerinput"):
         _COLLECTED_ITEMS = tuple(items)
     duplicate_errors: list[str] = []

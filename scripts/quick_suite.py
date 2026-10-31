@@ -56,6 +56,11 @@ def select_test_files(
     return selected, skipped
 
 
+def missing_selected_files(selected: Iterable[Path], durations: dict[str, float]) -> list[Path]:
+    """Return selected files that have no recorded duration."""
+    return [path for path in selected if _relative(path) not in durations]
+
+
 def _display_command(command: list[str]) -> str:
     return " ".join(repr(part) if " " in part else part for part in command)
 
@@ -78,6 +83,7 @@ def main(argv: list[str] | None = None, *, durations_path: Path = DURATIONS_PATH
     options = _parser().parse_args(own_arguments)
     durations = load_durations(durations_path)
     selected, skipped = select_test_files(threshold=options.threshold, durations_path=durations_path, also=options.also)
+    missing = missing_selected_files(selected, durations)
     predicted_cpu = sum(durations.get(_relative(path), 0.0) for path in selected)
 
     print(f"Selected {len(selected)} test files; skipped {len(skipped)} heavy files.")
@@ -86,6 +92,11 @@ def main(argv: list[str] | None = None, *, durations_path: Path = DURATIONS_PATH
             print(f"SELECTED {_relative(path)} ({durations.get(_relative(path), 0.0):.3f}s)")
         for path, seconds in skipped:
             print(f"SKIPPED {_relative(path)} ({seconds:.3f}s)")
+        if missing:
+            print(f"WARNING: {len(missing)} selected test files are missing from shard durations:")
+            for path in missing:
+                print(f"  {_relative(path)}")
+            print("Fix with: uv run python scripts/regen_shard_durations.py --missing-only")
         print(f"Predicted quick-tier CPU seconds: {predicted_cpu:.3f}")
         return 0
 
@@ -105,6 +116,11 @@ def main(argv: list[str] | None = None, *, durations_path: Path = DURATIONS_PATH
     environment = os.environ.copy()
     environment.setdefault("TMPDIR", "/tmp")
     result = subprocess.run(command, cwd=ROOT, env=environment, check=False)
+    if missing:
+        print(f"WARNING: {len(missing)} selected test files are missing from shard durations:")
+        for path in missing:
+            print(f"  {_relative(path)}")
+        print("Fix with: uv run python scripts/regen_shard_durations.py --missing-only")
     if skipped:
         print("Heavy files skipped:")
         for path, seconds in skipped:

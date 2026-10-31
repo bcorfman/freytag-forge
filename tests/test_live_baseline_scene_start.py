@@ -62,6 +62,7 @@ def test_new_route_command_lists_are_pinned() -> None:
         ("observe_executive_desk_3b", "3B", "rebecca_desk"),
     ],
 )
+@pytest.mark.nightly
 def test_scene_route_restores_entry_checkpoint_and_placements(route: str, scene_id: str, thing_id: str) -> None:
     module = _module()
     package = load_story_package(PACKAGE_ROOT)
@@ -154,6 +155,7 @@ def test_legacy_route_opening_shape_is_unchanged(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("route", ["observe_supporters_1a", "observe_park_bench_1b", "observe_executive_desk_3b"])
+@pytest.mark.nightly
 def test_new_routes_support_dry_run_call_count_shape(tmp_path: Path, route: str) -> None:
     module = _module()
     output = tmp_path / route

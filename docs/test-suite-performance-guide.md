@@ -35,16 +35,17 @@ commit, command, coverage mode, elapsed time, and generated health report.
 
 ## CI
 
-The `tests` workflow runs **Static checks**, **Fast feedback (unit and
-component runtime-safety tests)**, and six **Test shard** jobs. None of them
-measures coverage. Static checks run Ruff's fast syntax/error rules. The fast
-job excludes the authoring-quality suite and boundary-heavy integration tests;
-the shards together run the complete suite with `--no-cov`, four workers each,
-and upload a health artifact. The project-wide 90% coverage floor is enforced
-by `coverage-nightly.yml` (daily, or on manual dispatch), which runs the same
-six shards with `--cov`, combines the data, and reports against `fail_under`.
+The `tests` workflow runs **Static checks** and six **Test shard** jobs. None of
+them measures coverage. Static checks run Ruff's fast syntax/error rules. The
+shards skip tests marked `nightly`, use `--no-cov` with four workers each, and
+upload a health artifact. The project-wide 90% coverage floor is enforced by
+`coverage-nightly.yml` (daily, or on manual dispatch), which runs everything
+with `--run-nightly` and `--cov`, combines the data, and reports against
+`fail_under`.
 Coverage-context and benchmark workflows are informational. Live hosted and
 OpenAI tests remain opt-in and skip without their credentials and flags.
+
+Mark a new end-to-end test that takes more than about 2 seconds `@pytest.mark.nightly`.
 
 ## Manual Cloudflare browser evaluation
 

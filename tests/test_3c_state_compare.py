@@ -8,6 +8,7 @@ import pytest
 from scripts.ringer.stage7 import three_c_state_compare as compare
 
 
+@pytest.mark.nightly
 def test_state_compare_runs_offline_end_to_end(tmp_path: Path) -> None:
     out = tmp_path / "comparison"
     assert compare.main(["--out", str(out)]) == 0

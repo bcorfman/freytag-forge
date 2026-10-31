@@ -49,7 +49,7 @@ jobs:
       - name: Run tests
         env:
           COVERAGE_FILE: .coverage.shard${{ matrix.shard }}
-        run: TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index ${{ matrix.shard }} --shard-count 6
+        run: TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 --run-nightly -n 4 --shard-index ${{ matrix.shard }} --shard-count 6
       - name: Upload coverage data
         uses: actions/upload-artifact@v7
         with:

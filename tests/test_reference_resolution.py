@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from bench.core import advance_state_to_scene
 from storygame.runtime.reference_resolution import resolve_references
 from storygame.runtime.state import RuntimeState
@@ -29,6 +31,7 @@ def test_scoped_alias_counts_but_plain_alias_does_not() -> None:
     assert plain_alias.command == "Talk to Shelly."
 
 
+@pytest.mark.nightly
 def test_answers_match_full_name_distinguishing_word_and_ordinal() -> None:
     state = _state("2B")
     command = "Read the terminal."

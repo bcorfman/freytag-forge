@@ -141,6 +141,7 @@ def _journey_for(combination: tuple[bool, bool, bool]) -> Journey:
 
 
 @pytest.mark.parametrize("combination", product((False, True), repeat=3))
+@pytest.mark.nightly
 def test_every_reachable_evidence_gap_combination(combination: tuple[bool, bool, bool]) -> None:
     """A subset with gaps is labeled fallback, never earned."""
 
@@ -161,6 +162,7 @@ def test_every_reachable_evidence_gap_combination(combination: tuple[bool, bool,
 
 
 @pytest.mark.parametrize("combination", product((False, True), repeat=3))
+@pytest.mark.nightly
 def test_evidence_gap_3c_pressure_text(combination: tuple[bool, bool, bool]) -> None:
     """Each 3C pressure realization follows the selected fallback gaps."""
 

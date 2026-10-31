@@ -38,6 +38,7 @@ def _contexts(document: dict, start_id: str) -> dict:
     return start["contexts"]
 
 
+@pytest.mark.nightly
 def test_dry_document_freezes_the_six_start_matrix_and_is_deterministic(tmp_path: Path) -> None:
     first = tmp_path / "first.json"
     second = tmp_path / "second.json"
@@ -80,6 +81,7 @@ def test_dry_document_freezes_the_six_start_matrix_and_is_deterministic(tmp_path
     assert "Kristin's truck" not in s6["proposed"]["user"]
 
 
+@pytest.mark.nightly
 def test_dry_cost_is_the_sum_of_per_call_ceilings(tmp_path: Path) -> None:
     document = _dry(tmp_path, samples=3)
     cost = document["cost"]
@@ -90,6 +92,7 @@ def test_dry_cost_is_the_sum_of_per_call_ceilings(tmp_path: Path) -> None:
     assert cost["smoke"]["ceiling_usd"] > 0
 
 
+@pytest.mark.nightly
 def test_live_guards_refuse_without_confirmation_url_call_cap_or_budget(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -139,6 +142,7 @@ def _success(model: str, *, narration: str = "A test narration.") -> _FakeRespon
     return _FakeResponse(200, {"model": model, "narration": narration}, {"X-Worker-Revision": "test-rev"})
 
 
+@pytest.mark.nightly
 def test_fake_transport_sends_model_interleaves_and_stops_on_quota(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -175,6 +179,7 @@ def test_fake_transport_sends_model_interleaves_and_stops_on_quota(
     assert result["rows"][3]["status"] == 429
 
 
+@pytest.mark.nightly
 def test_fake_transport_stops_on_rejection_and_echo_mismatch_without_retry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -199,6 +204,7 @@ def test_fake_transport_stops_on_rejection_and_echo_mismatch_without_retry(
     assert len(mismatch_opener.requests) == 1
 
 
+@pytest.mark.nightly
 def test_failed_worker_call_is_recorded_once_without_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://w.example")
     responses = [_FakeResponse(500, {"error": "temporary failure"})]

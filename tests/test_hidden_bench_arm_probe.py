@@ -166,6 +166,7 @@ def test_sheets_hide_arm_and_key_is_bijection(module, document, monkeypatch, tmp
     module.assert_blind_key_bijection(rows_document["rows"], key)
 
 
+@pytest.mark.nightly
 def test_find_sheet_engine_part_keeps_delivery_without_capture_stub(module, document, tmp_path: Path) -> None:
     rows_document = _rows(module, document)
     for row in rows_document["rows"]:
@@ -182,6 +183,7 @@ def test_find_sheet_engine_part_keeps_delivery_without_capture_stub(module, docu
     assert "A short canned narration segment." not in sheet
 
 
+@pytest.mark.nightly
 def test_report_counts_each_arm_and_rejects_tampered_freeze(module, document, tmp_path: Path) -> None:
     rows_document = _rows(module, document)
     rows_path = tmp_path / "rows.json"
