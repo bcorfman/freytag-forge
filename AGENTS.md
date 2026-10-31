@@ -16,6 +16,7 @@
 
 - Start with [the PRD](docs/PRD.md); use the focused runbook and [contributor guide](docs/contributor-guide.md) for the change.
 - Facts are the sole mutable truth; shared runtime stays story-agnostic and LLM-proposal-first.
+- World-model logic (anything that reads or changes only world state) is a `World` method in `packages/worldkeeper` with its tests there; `storygame` only adapts and calls it.
 - Before declaring or placing any story thing, place or NPC, or writing any narrator, match-call or judge prompt line about places, read [the world-model grounding guide](docs/world-model-grounding.md).
 
 ## Player Input

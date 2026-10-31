@@ -20,59 +20,8 @@ changed: [Markdown story authoring](markdown-story-authoring.md),
 - Preserve historical release records as records, not current operating
   guidance.
 
-## Runtime and authoring boundaries
+## Detail files
 
-- Build one story-agnostic engine for every Markdown package. Story, character,
-  premise, and genre behavior belongs only in validated package data.
-- Facts are the sole canonical mutable runtime state. Packages, prose, saves,
-  artifacts, traces, and transcripts are immutable inputs or integrity-checked
-  projections; never treat them as competing mutation authorities.
-- Put opening setup, public presentation, protected knowledge, relationships,
-  location, custody, pacing, and scene purpose in validated package declarations.
-  Correct authoring sources, never generated projections.
-- Do not add story- or genre-specific runtime branches, fixed action tables,
-  hand-edit generated artifacts, accept unvalidated provider output, leak
-  protected knowledge, or change facts after rendering.
-- Keep the hosted adapter as a thin boundary when it is rebuilt. Share code
-  only below that boundary and preserve fail-closed behavior.
-
-## Gameplay, model, and interaction safety
-
-- Keep ordinary play LLM-proposal-first. Only `save`, `load`, `quit`, and
-  `help` are parser control commands; normalize deterministic affordances via
-  the shared proposal/commit contract.
-- Let players attempt story moves freely. Validate bounded consequences,
-  clarify ambiguity, and reserve confirmation for irreparable goal breaks; do
-  not replace interpretation with a fixed command table.
-- Validate all accepted state deltas before rendering. Narration, dialogue, and
-  action segments cannot create uncommitted truth or leak observer- or
-  speaker-protected knowledge.
-- Treat provider responses as untrusted JSON-boundary input. Use an explicit
-  typed structured-output adapter; normalize supported envelopes; parse and
-  validate locally before commit. Provider JSON-object mode is syntax help, not
-  semantic validation.
-- A normal turn makes at most one narration inference request plus one shared
-  recovery request for JSON-mode fallback, malformed output, or transient
-  failure; a delayed duplicate of the same narration request (a hedge, sent
-  only when the first has not answered) counts as that same request, and only
-  one reply is used. The item-facts name-matching request has its own cap of
-  two and does not share the narration budget. Exhaustion is a typed fail-closed
-  error, never fabricated success. Target under ten seconds on the normal path.
-- With `FREYTAG_OPENING_CHECK=1`, an opening check adds one Jev request per opening the command refers to, up to two per attempt.
-- A guard retry may name a rejected term only when the player typed that term; otherwise rejection feedback remains generic.
-- Generate NPC dialogue only from the addressed NPC's permitted current
-  context. Reject parroting, wrong speakers, off-scene or role violations, and
-  unavailable-model fallbacks rather than fabricating a response.
-
-## Design and verification
-
-- Use typed contracts, explicit Protocols/adapters, and constructor-injected
-  dependencies. Validate at boundaries; avoid attribute probes, hidden
-  instantiation, circular dependencies, and silent exception handling.
-- Keep modules near 500 lines and functions near 20 cyclomatic complexity;
-  split only when clarity improves.
-- Write tests first, add cross-genre regression coverage, maintain at least 90%
-  project coverage, and keep collection totals informational rather than gates.
-- Run tests with `TMPDIR=/tmp` in WSL, use `uv run python`, and finish every
-  feature change with Ruff autofix and formatting before rerunning affected
-  verification.
+- [Runtime and authoring boundaries](contributor-guide/runtime-and-authoring-boundaries.md): read this when changing the story engine, package declarations, world-model logic, generated artifacts, or hosted adapter.
+- [Gameplay, model, and interaction safety](contributor-guide/gameplay-model-and-interaction-safety.md): read this when changing player input, turn inference, provider responses, narration, dialogue, opening checks, or guard retries.
+- [Design and verification](contributor-guide/design-and-verification.md): read this when designing modules or dependencies, changing complexity or coverage expectations, or running tests and formatting.
