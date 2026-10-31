@@ -7,6 +7,9 @@ kinds:
   is: [furniture, supporter]
   fixed: false
   enterable: true
+- id: opening
+  is: [thing]
+  fixed: true
 locations:
 - id: mcgehee_home
   name: Michelle's house
@@ -174,9 +177,11 @@ items:
   contents: [pens, binder clips, stapler, spare batteries]
 - id: back_door
   name: back door
+  kind: opening
   fixed: true
 - id: house_gate
   name: house gate
+  kind: opening
   scoped_aliases: [front gate, gate]
   fixed: true
 - id: kristin_truck
@@ -206,14 +211,17 @@ items:
   fixed: true
 - id: facility_gate
   name: facility gate
+  kind: opening
   scoped_aliases: [gate, front gate]
   fixed: true
 - id: service_gate
   name: service gate
+  kind: opening
   aliases: [secured gate]
   fixed: true
 - id: storm_drain
   name: storm drain
+  kind: opening
   aliases: [storm-drain]
   scoped_aliases: [drain, tunnel]
   fixed: true
@@ -231,14 +239,17 @@ items:
   contents_complete: true
 - id: transit_card
   name: Transit token
+  hidden: true
   axes:
   - {intact: [], destroyed: [broken, snapped, crushed]}
   unavailable: destroyed
 - id: michelle_photograph
   name: Michelle's photograph
+  hidden: true
   scoped_aliases: [photograph, photo]
 - id: number_sequence
   name: handwritten number sequence
+  hidden: true
   aliases: [number sequence, handwritten sequence]
 - id: override_codes
   name: emergency override codes
@@ -350,8 +361,17 @@ facts:
   - {move: prisoner_number_record, parent: kristin, text: with Kristin}
   - {reveal: prisoner_number_record}
 - drawer_gap_pointed_out
+- bench_underside_pointed_out
 - official_interest_in_michelle_known
 - house_marked_for_return
+- id: bench_clues_recovered
+  on_assert:
+  - {move: transit_card, parent: kristin, text: with Kristin}
+  - {reveal: transit_card}
+  - {move: number_sequence, parent: kristin, text: with Kristin}
+  - {reveal: number_sequence}
+  - {move: michelle_photograph, parent: kristin, text: with Kristin}
+  - {reveal: michelle_photograph}
 - transport_route_identified
 - brandon_face_known
 - id: brandon_identified

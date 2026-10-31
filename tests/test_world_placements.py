@@ -22,10 +22,13 @@ def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
     shutil.copytree(ROOT / "data/stories/continuity-initiative", root)
     world_path = root / "world.yaml"
     world = yaml.safe_load(world_path.read_text())
-    world["kinds"] = [
+    kind_overrides = [
         {"id": "desk", "is": ["furniture", "supporter"]},
         {"id": "seat", "is": ["supporter"], "enterable": True},
     ]
+    kinds_by_id = {kind["id"]: kind for kind in world["kinds"]}
+    kinds_by_id.update({kind["id"]: kind for kind in kind_overrides})
+    world["kinds"] = list(kinds_by_id.values())
     location_ids = {location["id"] for location in world["locations"]}
     world["locations"].extend(
         location

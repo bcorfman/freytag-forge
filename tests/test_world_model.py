@@ -76,6 +76,7 @@ def test_world_schema_data_is_plain_and_covers_authored_entities() -> None:
         "vehicle",
         "desk",
         "seat",
+        "opening",
         "group",
     }
     for entity in PACKAGE.world.locations:
@@ -290,6 +291,7 @@ def test_shipped_package_declares_no_world_effects() -> None:
     assert set(PACKAGE.world.fact_effects) == {
         "behavioral_experiments_known",
         "memory_card_recovered",
+        "bench_clues_recovered",
         "brandon_identified",
         "facility_perimeter_reached",
         "relay_open",

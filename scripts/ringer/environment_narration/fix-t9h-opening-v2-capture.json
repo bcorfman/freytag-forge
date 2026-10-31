@@ -1,0 +1,34 @@
+{
+  "run_name": "t9h-opening-condition-v2",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-opening-condition-v2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "opening-v2-capture-fix",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/opening_condition_v2.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_opening_condition_v2.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/opening_condition_v2.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_opening_condition_v2.py"
+      ],
+      "verified": "each captured narrator prompt lists the inspected thing under THINGS like a live turn; no forced storylets; tests green",
+      "spec": "You are fixing the offline prompt capture in one bench harness of the freytag-forge repo. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. FREE WORK ONLY: no network, no model call, never start local_worker.mjs, never read or print .env, never run enforce_t9h_opening_v2.sh. Tests stay hermetic. Do not git commit. No regular expressions in new code. Touch ONLY the files you own; never run git checkout, stash, reset or clean; never write under bench/results/. Do not edit the check script. Run ruff check --fix and ruff format on the files you own at the end.\n\nFILES YOU OWN: /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/opening_condition_v2.py and /home/bcorfman/dev/freytag-forge/tests/test_opening_condition_v2.py.\n\nPROBLEM: `--capture` builds the narrator request for `Inspect the <thing>.` with the real engine and a stubbed `CloudflareTurnProvider._request`. Two things make it unlike a live turn:\n1. The stub answers every request whose `__freytag_request_budget` is \"item_facts\" with a narrator-shaped reply. One of those item_facts requests is the referent match (its system prompt is `_MATCH_SYSTEM` in storygame/runtime/item_facts.py, starting \"You match names in a story game\"); it expects JSON like {\"refers\": [...], \"same_as\": {...}, \"kind\": {...}}. Because the stub never names the inspected thing, the engine leaves it out of the narrator's THINGS block. In a live recorded turn (bench/results/environment-narration/t9h-hidden/smoke/rows/rows.json, replicate 0, turn 5, `inspect the storm drain`) the narrator's THINGS block reads `- Kristin. Place: Los Angeles park.` then `- storm drain. Place: Los Angeles park.`. Fix: for the referent-match request, reply {\"refers\": [<the thing's declared name>], \"same_as\": {}, \"kind\": {}} \u2014 the stub must decide which request it is by an exact comparison against the imported `_MATCH_SYSTEM` constant (or `startswith` of the system text on that constant), never by parsing. For any other item_facts request (the second item-facts call, `_SECOND_CALL_SYSTEM`), reply {\"item_facts\": {}}. Keep the narrator reply as now. Read storygame/runtime/item_facts.py to confirm which requests occur and what each expects.\n2. `_scene_state` adds every storylet of the scene to `state.active_event_ids`. A live turn does not do that, and it injects storylet lines (for example a Brandon dialogue line in scene 1B). Remove that forced activation. Record on each captured thing a field `storylets_activated` holding the list of storylet ids the harness forced (now always []).\nAfter the fix, each of the four captured narrator prompts must list `- <declared name>. Place: ...` in THINGS. If a thing still cannot be listed, find out why from the engine and fix the stub, not the check; if it genuinely cannot be reproduced offline, record status \"not reproducible offline\" with the reason.\n\nTESTS: add tests that the real-package capture lists each inspected thing in THINGS, that the referent stub keys on the imported constant, and that storylets_activated is [] for every thing. Keep the existing tests passing.\n\nHOW TO VERIFY BEFORE YOU FINISH: `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_v2.sh`. Finish with a short summary and paste the THINGS block of each captured prompt.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_v2.sh"
+    }
+  ]
+}
