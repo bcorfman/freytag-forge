@@ -1,13 +1,3 @@
-from scripts.generate_spine_expected_reveals import knowledge_items, matching_reveals, scene_prompts
-
-
-def test_1a_research_fragments_earn_d_r1_without_the_file_reading_tie() -> None:
-    prompts = scene_prompts()["1A"]
-    knowledge = knowledge_items()
-    assert matching_reveals(knowledge, "1A", prompts[3]) == {"k_sl_1a_b_r1", "k_sl_1a_d_r1"}
-    assert matching_reveals(knowledge, "1A", prompts[2]) == {"k_sl_1a_d_r1"}
-
-
 def test_research_fragments_then_files_can_both_be_earned() -> None:
     from pathlib import Path
 

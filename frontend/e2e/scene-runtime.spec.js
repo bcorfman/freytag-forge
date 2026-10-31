@@ -512,12 +512,15 @@ test("samples optional storylets without presenting a menu @storylets", async ({
 
 test("keeps the display budget clock independent from turn-based pressure @timed-events", async ({ page }) => {
   await startSceneSession(page);
+  // patrol_arrives_1a is authored at_turn 4 with no other condition.
   await submitTurn(page, "Inspect the house for signs of mounting pressure.");
-  const payload = await submitTurn(page, "Investigate the pressure that follows.");
+  await submitTurn(page, "Investigate the pressure that follows.");
+  await submitTurn(page, "Search the kitchen.");
+  const payload = await submitTurn(page, "Look out the front window.");
   await writeCategoryReport("timed-events", { state: payload.state });
-  expect(payload.state?.story_elapsed_seconds).toBeGreaterThanOrEqual(120);
-  expect(payload.state?.turn_index).toBe(2);
-  expect(payload.state?.fired_pacing_event_ids).toContain("pressure_1a");
+  expect(payload.state?.story_elapsed_seconds).toBeGreaterThanOrEqual(240);
+  expect(payload.state?.turn_index).toBe(4);
+  expect(payload.state?.fired_pacing_event_ids).toContain("patrol_arrives_1a");
 });
 
 test("keeps NPC interaction and reveals bounded to the current scene @npc", async ({ page }) => {

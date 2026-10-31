@@ -6,7 +6,13 @@ from pathlib import Path
 
 import yaml
 
-from storygame.runtime.candidate_matcher import _matches_all
+from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
+from storygame.runtime.cloudflare import CloudflareTurnProvider
+from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
+from storygame.runtime.reveal_eligibility import explain_reveal
+from storygame.runtime.state import RuntimeState
+from storygame.story_package.loader import load_story_package
 
 FRONTEND_ROOT = Path("frontend/e2e")
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
@@ -35,45 +41,60 @@ def knowledge_items() -> dict[str, dict]:
     return {item["id"]: item for item in raw["knowledge"]}
 
 
-def matching_reveals(knowledge: dict[str, dict], scene: str, command: str) -> set[str]:
-    return {
-        item_id
-        for item_id, item in knowledge.items()
-        if item_id.startswith(f"k_sl_{scene.lower()}")
-        and item.get("action_evidence")
-        and _matches_all(tuple(tuple(group) for group in item["action_evidence"]), command)
-    }
+class _ScriptedProvider(CloudflareTurnProvider):
+    """Run the transport's authored-handoff selection without dispatching it."""
+
+    def __init__(self, state: RuntimeState) -> None:
+        super().__init__(worker_url="https://offline.invalid/turn", token="", state=state)
+
+    def __call__(self, player_input: str) -> dict[str, object]:
+        self.assemble_turn_prompt(player_input)
+        candidates = tuple(
+            candidate
+            for candidate in self._reveal_universe()
+            if (item := self.state.package.knowledge_indexes.by_id.get(candidate.id)) is not None
+            and explain_reveal(self.state, "player", item).eligible
+        )
+        handoff = uniquely_matched_authored_handoff(self._evidence_input(player_input), candidates)
+        self.authored_handoff = handoff
+        selected = () if handoff is None else (handoff.candidate.id,)
+        if handoff is not None:
+            item = self.state.package.knowledge_indexes.by_id[handoff.candidate.id]
+            assert explain_reveal(self.state, "player", item).eligible
+            text = item.delivery_text or item.statement
+        else:
+            text = "A concrete authored consequence lands."
+        return {
+            "segments": [{"kind": "narration", "text": text, "grounding_ids": list(selected)}],
+            "selected_knowledge_ids": list(selected),
+        }
 
 
-def expected_reveals(prompts: dict[str, list[str]], knowledge: dict[str, dict]) -> dict[str, list[str]]:
-    """Select player-visible realizations in prompt order, spending each storylet once.
+def simulate_expected_reveals() -> dict[str, list[str]]:
+    """Simulate the hosted prompt walk against the real offline runtime."""
 
-    Package order breaks simultaneous matches, as the scripted walk does. A
-    losing reveal needs its own prompt; matching it alone is not a commitment.
-    This is an offline expectation, not a simulation of pacing or narration.
-    """
-    expected = {}
-    spent = set()
-    for scene, commands in prompts.items():
-        selected = []
-        for command in commands:
-            matches = matching_reveals(knowledge, scene, command)
-            for item_id, item in knowledge.items():
-                audience = item.get("audience", {})
-                if item_id not in matches:
-                    continue
-                source = item["source"]["storylet_id"]
-                if audience.get("kind") == "world_only" or not audience.get("player_visible", False) or source in spent:
-                    continue
-                selected.append(item_id)
-                spent.add(source)
-                break
-        expected[scene] = sorted(selected)
-    return expected
+    package = load_story_package(PACKAGE_ROOT)
+    state = RuntimeState.bootstrap(package)
+    provider = _ScriptedProvider(state)
+    engine = RuntimeEngine(state, provider)
+    prompts = scene_prompts()
+    used: dict[str, int] = {scene: 0 for scene in SCENE_IDS}
+    committed: dict[str, set[str]] = {scene: set() for scene in SCENE_IDS}
+
+    for _ in range(120):
+        scene = state.current_scene_id
+        command = prompts[scene][used[scene] % len(prompts[scene])]
+        used[scene] += 1
+        engine.turn(command)
+        committed[scene].update(state.last_turn_delivery.revealed_knowledge_ids)
+        if Fact(predicate="resolution_complete", subject="story", value="true") in state.facts.asserted:
+            return {scene_id: sorted(committed[scene_id]) for scene_id in SCENE_IDS}
+
+    raise RuntimeError("scripted spine walk did not reach resolution_complete within 120 turns")
 
 
 def main() -> None:
-    expected = expected_reveals(scene_prompts(), knowledge_items())
+    expected = simulate_expected_reveals()
     assert "k_sl_2c_c_r2" in expected["2C"]
     (FRONTEND_ROOT / "spine-expected-reveals.json").write_text(json.dumps(expected, indent=2) + "\n")
 

@@ -1,0 +1,33 @@
+{
+  "run_name": "spine-expected-from-engine",
+  "workdir": "/home/bcorfman/dev/ringer-work/spine-expected-from-engine-r3",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "stale-spine-tests",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1200,
+      "check_timeout_s": 600,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_1c_spine_prompts.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_1a_spine_prompts.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_1a_spine_prompts.py"
+      ],
+      "verified": "executed check: stale file gone, kept eligibility test present, focused pytest and ruff pass",
+      "spec": "You are a code worker in the freytag-forge repository at /home/bcorfman/dev/freytag-forge, branch spine-expected-from-engine, already checked out with other uncommitted work. Edit only your owned files. Do NOT git commit, push, stash, switch branches or revert anything. Never edit scripts/, frontend/, data/ or storygame/.\n\nHOW TO RUN (never use `uv`): `PYTHONPATH=$PWD TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider tests/test_1a_spine_prompts.py tests/test_spine_expected_reveals.py`; Ruff: `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check tests && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format --check tests`.\n\nBACKGROUND. This branch replaced the text-only spine expectation in scripts/generate_spine_expected_reveals.py with an engine simulation: `matching_reveals` and `expected_reveals` were removed (it now exposes `scene_prompts`, `knowledge_items`, `simulate_expected_reveals`), and the 1C spine commands in frontend/e2e/canon-journey.js changed to three new ones. tests/test_spine_expected_reveals.py now covers the expectation for all nine scenes, including 1C exactly. Two older tests pin the old behaviour:\n\n1. tests/test_1c_spine_prompts.py pins the four old 1C commands and text matches against them. Its coverage is superseded by tests/test_spine_expected_reveals.py. Delete the whole file (`git rm` is not allowed; delete it from disk).\n2. tests/test_1a_spine_prompts.py fails at import because it imports `matching_reveals`. Delete `test_1a_research_fragments_earn_d_r1_without_the_file_reading_tie` (it pins the removed text-only matcher). Keep `test_research_fragments_then_files_can_both_be_earned` and any other test that does not use removed names, unchanged in behaviour; fix only the import line so it imports nothing removed (drop unused imports). If after that the file has no tests left, delete it.\n\nOWNED FILES: tests/test_1c_spine_prompts.py, tests/test_1a_spine_prompts.py.\nDONE WHEN: the pytest command above passes and Ruff is clean on tests/.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/spine/check_stale_spine_tests.sh"
+    }
+  ]
+}
