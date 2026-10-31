@@ -27,12 +27,11 @@ export const scenePrompts = {
     "Match the transit token to the handwritten number sequence.",
     "Get out through the storm drains and watch how he opens the secured gate.",
   ],
-  // 1C.1 transport route -> 1C.2 captives -> 1C.3 nationwide network -> 1C.4 architects
+  // 1C.1 loading docks -> 1C.2 study the captives -> copy their numbers
   "1C": [
     "Inspect the electrical load and fresh ventilation at the loading docks.",
-    "Compare the identification numbers on the uniforms in the processing area against the missing-person records.",
-    "Read the logistics computer to trace the transports beyond this site.",
-    "Play the recording the logistics computer has stored.",
+    "Study the prisoners on the processing line through the observation shaft.",
+    "Copy the prisoner numbers from the processing line.",
   ],
   // 2A.1 hideout -> 2A.2 infiltration plan -> 2A.3 entering under cover
   "2A": [

@@ -1,0 +1,58 @@
+{
+  "run_name": "spine-expected-from-engine",
+  "workdir": "/home/bcorfman/dev/ringer-work/spine-expected-from-engine-r2",
+  "max_parallel": 2,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 900,
+      "key": "clock-ids",
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.test.js",
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/scene-runtime.spec.js",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/spine/clock-notes.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.test.js"
+      ],
+      "verified": "executed check: all frontend node tests pass and the hosted timed-events id exists in pacing.yaml",
+      "spec": "You are a code worker in the freytag-forge repository at /home/bcorfman/dev/freytag-forge, branch spine-expected-from-engine, already checked out with other uncommitted work on it. Edit only your owned files. Do NOT git commit, push, switch branches, stash, or revert anything. Never edit story data under data/stories/ or runtime code under storygame/. Another worker edits other files at the same time; leave them alone.\nHOW TO RUN (never use `uv`; your sandbox cannot run it): Python is `/home/bcorfman/dev/freytag-forge/.venv/bin/python` with `PYTHONPATH=$PWD TMPDIR=/tmp`; Ruff is `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff`. Node tests: `cd /home/bcorfman/dev/freytag-forge/frontend && node --test e2e/*.test.js src/*.test.js`.\n\nBACKGROUND. The story package's pacing events were rewritten on 2026-10-24/25 (commits 9a9531a8, 63d84a13, ea6b6a5a in data/stories/continuity-initiative/pacing.yaml): events such as pressure_1a, security_1c, home_search_narrows_1a, park_lockdown_1b and terminal_sweep_1c were removed and others added (patrol_arrives_1a, patrol_enters_1a, officer_presses_1a, patrol_leaves_1a, patrol_returns_1a, transfer_window_1c, ...). Two frontend tests still pin the old ids:\n1. frontend/e2e/package-clock.test.js, test \"loads the real package and resolves turn milestones\": its `projection.eventOrder` assertion fails today (run `node --test e2e/package-clock.test.js` from frontend/ to see it). Replace the hard-coded list with the ids the real package now yields, in the order `loadPackagePacing` (frontend/e2e/package-clock.js) actually produces them. Before writing it, read package-clock.js to understand how eventOrder is ordered, and confirm that the order you pin follows that rule against pacing.yaml (do not just paste the actual output without checking it is right; if the loader is wrong, stop and explain in /home/bcorfman/dev/freytag-forge/scripts/ringer/spine/clock-notes.md instead of pinning a wrong order). Leave its other assertions unchanged unless they also fail.\n2. frontend/e2e/scene-runtime.spec.js, the hosted test \"keeps the display budget clock independent from turn-based pressure @timed-events\" (near line 513): it plays two 1A turns and expects `fired_pacing_event_ids` to contain \"pressure_1a\", which no longer exists. Read pacing.yaml's 1A events and their `when`/trigger rules to find which current 1A pacing event fires by the end of turn 2 under default 60-second turns with no other conditions met by those two generic inputs. Change only that expected id. If no current 1A event can fire by turn 2 under those inputs, do not invent one: write the evidence to /home/bcorfman/dev/freytag-forge/scripts/ringer/spine/clock-notes.md and leave the line unchanged. You cannot run this hosted test; prove your choice offline with a short one-off Python snippet (do not save it in the repo) that bootstraps `RuntimeState.bootstrap(load_story_package(Path(\"data/stories/continuity-initiative\")))`, builds `RuntimeEngine(state, provider)` with a provider returning {\"segments\":[{\"kind\":\"narration\",\"text\":\"Nothing changes.\",\"grounding_ids\":[]}],\"selected_knowledge_ids\":[]}, plays the two inputs from the test, and prints `state.fired_event_ids`. Paste that output into your final summary.\nfrontend/e2e/package-clock-controller.test.js uses \"pressure_1a\" only as a synthetic id in unit fixtures; leave it.\n\nOWNED FILES: frontend/e2e/package-clock.test.js, frontend/e2e/scene-runtime.spec.js (only the one expected id), scripts/ringer/spine/clock-notes.md (optional).\nDONE WHEN: every node test passes from frontend/ (`node --test e2e/*.test.js src/*.test.js`).",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/spine/check_clock_ids.sh"
+    },
+    {
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 900,
+      "key": "ruff-e501",
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/make_t9h_drain_probe_manifest.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/make_t9h_j1_scope_build_manifest.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/make_t9h_drain_probe_manifest.py"
+      ],
+      "verified": "executed check: repo-wide ruff check and format clean; both scripts still import",
+      "spec": "You are a code worker in the freytag-forge repository at /home/bcorfman/dev/freytag-forge, branch spine-expected-from-engine, already checked out with other uncommitted work on it. Edit only your owned files. Do NOT git commit, push, switch branches, stash, or revert anything. Never edit story data under data/stories/ or runtime code under storygame/. Another worker edits other files at the same time; leave them alone.\nHOW TO RUN (never use `uv`; your sandbox cannot run it): Python is `/home/bcorfman/dev/freytag-forge/.venv/bin/python` with `PYTHONPATH=$PWD TMPDIR=/tmp`; Ruff is `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff`. Node tests: `cd /home/bcorfman/dev/freytag-forge/frontend && node --test e2e/*.test.js src/*.test.js`.\n\nTASK. `ruff check .` from /home/bcorfman/dev/freytag-forge reports six E501 (line longer than 120) errors, all in two Ringer manifest-builder scripts:\nscripts/ringer/environment_narration/make_t9h_drain_probe_manifest.py lines 87, 99, 100;\nscripts/ringer/environment_narration/make_t9h_j1_scope_build_manifest.py lines 85, 125, 149.\nFix them by splitting long string literals with implicit concatenation or by wrapping code, so the generated manifest text is byte-for-byte unchanged. Prove that: before editing, copy each file to /tmp/<name>.orig.py; after editing, for each file import both versions with a short one-off snippet and compare every module-level string/dict/list constant (or, if the script only builds the manifest inside a function, call that function with output redirected to /tmp and diff the two outputs). Paste the comparison result into your final summary. Then `ruff format` the two files and confirm `ruff check .` and `ruff format --check .` are clean for the whole repo. Do not change behaviour, names, or anything else in these files.\n\nOWNED FILES: scripts/ringer/environment_narration/make_t9h_drain_probe_manifest.py, scripts/ringer/environment_narration/make_t9h_j1_scope_build_manifest.py.",
+      "check": "bash -c 'set -euo pipefail; cd /home/bcorfman/dev/freytag-forge; uv run ruff check . ; uv run ruff format --check . ; for f in make_t9h_drain_probe_manifest make_t9h_j1_scope_build_manifest; do uv run python -c \"import ast,sys; ast.parse(open(\\\"scripts/ringer/environment_narration/$f.py\\\").read())\"; done; echo ruff clean'"
+    }
+  ]
+}
