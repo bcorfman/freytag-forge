@@ -59,3 +59,15 @@ def test_list_reports_selected_skipped_and_predicted_cpu(tmp_path: Path, capsys)
     assert "SELECTED tests/test_game_path_journeys.py" in output
     assert "SKIPPED tests/test_3c_carried_start.py (15.000s)" in output
     assert "Predicted quick-tier CPU seconds:" in output
+
+
+def test_list_warns_about_missing_durations_and_prints_fix(tmp_path: Path, capsys) -> None:
+    durations = write_durations(tmp_path, {"tests/test_3c_carried_start.py": 15})
+
+    assert quick_suite.main(["--list"], durations_path=durations) == 0
+
+    output = capsys.readouterr().out
+    assert "WARNING:" in output
+    assert "selected test files are missing from shard durations" in output
+    assert "tests/test_quick_suite.py" in output
+    assert "uv run python scripts/regen_shard_durations.py --missing-only" in output

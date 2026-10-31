@@ -31,6 +31,7 @@ persistence behavior. Free; no network.
 
 For the Ringer quick tier, run `uv run python scripts/quick_suite.py [--also PATH ...]`.
 It skips manifest-recorded files at or above the 15-second threshold; `--also` re-includes relevant journeys.
+If the manifest is missing test files, refresh it with `uv run python scripts/regen_shard_durations.py --missing-only`.
 CI and pre-merge verification still run the complete suite.
 
 ```bash
