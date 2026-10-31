@@ -35,6 +35,7 @@ from storygame.story_package.loader import StoryPackageError, load_story_package
 logger = logging.getLogger(__name__)
 OBSERVATION_ENFORCE_ENV = "FREYTAG_OBSERVATION_ENFORCE"
 OBSERVATION_SCENE_STATE_ENV = "FREYTAG_OBSERVATION_SCENE_STATE"
+OPENING_CHECK_ENV = "FREYTAG_OPENING_CHECK"
 
 
 class _Request(BaseModel):
@@ -269,6 +270,7 @@ def create_demo_app(
                 capture.enforcing_verifier = ObservationVerifier(
                     capture_ask,
                     scene_state=getenv(OBSERVATION_SCENE_STATE_ENV, "") == "1",
+                    opening_check=getenv(OPENING_CHECK_ENV, "") == "1",
                 )
         return RuntimeEngine(state, provider, capture=capture)
 

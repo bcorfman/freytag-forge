@@ -14,6 +14,7 @@ BASE_KINDS = {
     "container": ("thing",),
     "supporter": ("thing",),
     "furniture": ("thing",),
+    "opening": ("thing",),
     "vehicle": ("container",),
 }
 
@@ -220,7 +221,7 @@ class WorldSchema:
 
                 fixed = declared_fixed(kind)
             if fixed is None:
-                fixed = "furniture" in _ancestors(kinds, kind)
+                fixed = any(default_kind in _ancestors(kinds, kind) for default_kind in ("furniture", "opening"))
             entities[entity_id] = _Entity(
                 entity_id,
                 entity_data.get("name", ""),

@@ -7,9 +7,6 @@ kinds:
   is: [furniture, supporter]
   fixed: false
   enterable: true
-- id: opening
-  is: [thing]
-  fixed: true
 locations:
 - id: mcgehee_home
   name: Michelle's house

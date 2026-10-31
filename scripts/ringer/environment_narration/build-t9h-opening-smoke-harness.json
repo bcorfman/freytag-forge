@@ -1,0 +1,34 @@
+{
+  "run_name": "t9h-opening-check-wiring",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-opening-check-wiring",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "opening-smoke-harness",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 1200,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/transcript_1a/live_baseline.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_live_baseline_opening_check.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_opening_check.sh"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_live_baseline_opening_check.py"
+      ],
+      "verified": "executed check passes in the CI simulation",
+      "spec": "Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12), branch t9h-opening-check-wiring. Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`; to see tests as CI does run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/ci_sim_pytest.sh <files>`. FREE WORK ONLY: no network, no model call, no Worker, never read or print .env. Tests are hermetic (stub every transport). Do not git commit or touch git state (never checkout, stash, reset, clean, add). Touch ONLY the files you own. No regular expressions in new code, and never parse narration text to decide anything. Match the surrounding code's style and comment density. Do not edit the check script. At the end run ruff check --fix and ruff format on the files you changed. Read first: AGENTS.md, docs/contributor-guide.md (runtime boundaries: facts are the sole mutable truth, the shared runtime stays story-agnostic and LLM-proposal-first) and docs/world-model-grounding.md.\n\nFILES YOU OWN: scripts/ringer/transcript_1a/live_baseline.py, tests/test_live_baseline_opening_check.py (new), scripts/ringer/environment_narration/enforce_t9h_opening_check.sh (new). Read-only for everything else, including storygame/.\n\nCONTEXT: the engine now has an opening condition check behind `ObservationVerifier(..., opening_check=True)` (storygame/runtime/observation_verifier.py, storygame/runtime/opening_check.py, storygame/runtime/capture.py: with the flag on, capture calls `verify(narration, relations, scene=..., opening_subjects=..., command=...)` and VerifierReport carries `opening_verdicts` (thing, verdict, score) and `opening_requests`). We need a small billed live smoke through the real engine, run later by a separate runner; you build the harness only.\n\nCHANGES to live_baseline.py:\n1. A `--opening-check` flag that requires `--enforce` (refuse otherwise, before any work, like `--scene-state` does) and builds the enforcing verifier with `opening_check=True` (alongside `scene_state`). Record it in the run settings/summary next to scene_state.\n2. The `counted_verify` wrapper must accept and forward the new keyword arguments (`opening_subjects`, `command`) when given, and stay call-compatible when they are not. Per enforce attempt record `opening_verdicts` (list of {thing, verdict, score}) and `opening_requests` when the flag is on.\n3. Two new routes, following the existing `observe_storm_drain_1b` pattern exactly (ROUTES, NEW_ROUTES, scene start map): `observe_service_gate_1b`: (\"inspect the service gate\",) starting at scene 1B; `observe_back_door_1a`: (\"inspect the back door\",) starting at scene 1A. Check how `_start_state` places the protagonist for a scene start: the service gate is in `los_angeles_park` (scene 1B), the back door in `kitchen` (scene 1A); if the protagonist does not start where the thing is, say so in your summary and make the route start there the way other routes do, without inventing a new mechanism.\n4. tests/test_live_baseline_opening_check.py (hermetic, stub the transport like tests/test_live_baseline_scene_state.py and tests/test_live_baseline_enforce.py do): `--opening-check` without `--enforce` is refused; with it, the verifier has opening_check on; the attempt record carries opening_verdicts and opening_requests; without it, attempt records are unchanged; the new routes exist and start in the right scene and the thing is visible at the start.\n\nenforce_t9h_opening_check.sh (billed; you never run it): modeled on scripts/ringer/environment_narration/enforce_t9h_drain.sh. Usage `enforce_t9h_opening_check.sh smoke`. OUT=bench/results/environment-narration/t9h-opening-check/smoke. Start ONE local Worker on port 8813 with `--max-usd 0.06`, refuse if the port is busy or any rows dir exists, export CLOUDFLARE_WORKER_URL, then run, in order, for ROUTE in observe_storm_drain_1b observe_service_gate_1b observe_back_door_1a: `.venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route $ROUTE --enforce --scene-state --opening-check --replicates 3 --max-calls 40 --confirm --out \"$OUT/$ROUTE/rows\"`; stop the sequence if a route's summary has a non-null stopped_reason. Do NOT source .env in the script (the runner does that), and keep the literal flag strings shown (the check greps them).\n\nHOW TO VERIFY BEFORE YOU FINISH: `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_wiring.sh smoke-harness`.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_wiring.sh smoke-harness"
+    }
+  ]
+}

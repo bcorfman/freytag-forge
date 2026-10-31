@@ -15,6 +15,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import scoped_alias_entity_ids
 from storygame.runtime.observation import ObservationContext, ObservationRequest, build_observation_context
 from storygame.runtime.observation_preview import CallMemo
+from storygame.runtime.opening_check import OPENING_KIND
 from storygame.runtime.reference_resolution import resolved_reference_names
 from storygame.runtime.reveal_eligibility import together_or_unplaced
 from storygame.runtime.seating import _command_names_thing
@@ -870,6 +871,17 @@ class ItemFactsProvider(CloudflareTurnProvider):
 
     def last_item_facts_match(self):
         return copy.deepcopy(self._last_item_facts_match)
+
+    def opening_subjects(self) -> tuple[str, ...]:
+        """Return resolved command referents whose declared kind is an opening."""
+        world = self._world()
+        subjects = []
+        for name in self._referred_names:
+            entity_id = world.resolve(name)
+            entity = world.schema.entities.get(entity_id) if entity_id is not None else None
+            if entity is not None and world.schema.kind_is(entity.kind, OPENING_KIND):
+                subjects.append(world.name(entity_id))
+        return tuple(dict.fromkeys(subjects))
 
     def last_item_facts_unplaced(self):
         return copy.deepcopy(self._last_item_facts_unplaced)

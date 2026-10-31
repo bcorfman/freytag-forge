@@ -1,0 +1,32 @@
+{
+  "run_name": "t9h-opening-condition-v2",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-opening-condition-v2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "opening-check-smoke-billed",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 2400,
+      "check_timeout_s": 180,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-opening-check/smoke"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-opening-check/smoke/observe_storm_drain_1b/rows/summary.json"
+      ],
+      "verified": "summaries written, opening verdicts recorded, no credential leak",
+      "spec": "You are a RUNNER for one billed live engine smoke in freytag-forge; you write no code. Working directory: /home/bcorfman/dev/freytag-forge. It runs 9 real engine turns (inspect the storm drain, the service gate and the back door, 3 replicates each) with the observation verifier enforcing and the new opening check on, through a local Worker on port 8813 capped at $0.06 and 40 calls per route (several minutes). Step 3 was approved by the user on 2026-10-30. HARD RULES: run COMMAND 1 EXACTLY ONCE (then only poll with COMMAND 1b). NEVER run it a second time for any reason (a rerun spends money again; a partial result is reported, not retried). Do not edit any file. Do not print, echo, cat or log environment variables, the .env file or any credential. Do not git commit.\n\nCOMMAND 1 (launches the billed run detached; it returns at once):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && (set -a; . ./.env; set +a; unset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN; setsid nohup bash scripts/ringer/environment_narration/enforce_t9h_opening_check.sh smoke > /tmp/opening-check-smoke.log 2>&1 < /dev/null & echo $! > /tmp/opening-check-smoke.pid)\n\nCOMMAND 1b (poll; repeat it, one call at a time, until it prints DONE; each call waits at most 40 seconds; do NOT run COMMAND 1 again):\nfor i in 1 2 3 4 5 6 7 8; do if kill -0 $(cat /tmp/opening-check-smoke.pid) 2>/dev/null; then sleep 5; else echo DONE; break; fi; done; echo still-running-or-done; tail -c 700 /tmp/opening-check-smoke.log\n\nWhen it prints DONE, report only the non-secret tail of the log and each route's exit and stop reason. Do not interpret quality.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_smoke.sh"
+    }
+  ]
+}
