@@ -1,0 +1,49 @@
+{
+  "run_name": "staged-de04ad8e-regression",
+  "workdir": "/home/bcorfman/dev/ringer-work/staged-de04ad8e",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "spine",
+      "spec": "You are a hosted-E2E operator on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (Cloudflare neurons), so read the hard rules first.\n\nHARD RULES. Change nothing except: files under artifacts/e2e-* and frontend/test-results/ (generated, gitignored) and the output directory /home/bcorfman/dev/freytag-forge/bench/results/staged-de04ad8e/ . Do not edit or create any tracked file. No git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Staging only: if the API reports any channel other than staging, or a runtime other than scene-v1, stop and report. Run the billed test AT MOST ONCE in this task and never retry; a failed or aborted run is data. Do not run anything else billed. Do not edit code to make a run pass.\n\nWHAT THIS IS: a staged regression check of main de04ad8ea6348dc7c3628ff8d42baea898a620f6 after the worldkeeper boundary-move refactor (PR #735), which changed runtime code. The last staged pass was on 21377382.\n\nSTEPS, in order:\n1. Identity: `mkdir -p bench/results/staged-de04ad8e/spine && source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\" > bench/results/staged-de04ad8e/spine/identity.json`. Expected sha de04ad8ea6348dc7c3628ff8d42baea898a620f6 (if different, record it and stop without running the test).\n2. Delete stale artifacts: `rm -f artifacts/e2e-spine.json artifacts/e2e-spine.md`.\n3. Run `source .env && cd frontend && E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @spine` with a command timeout of at least 50 minutes. A nonzero exit is data, not an error to fix.\n4. Copy artifacts/e2e-spine.json and .md (those that exist) into bench/results/staged-de04ad8e/spine/. If the run failed, write the verbatim failure text (secrets stripped, tail of the command output) to bench/results/staged-de04ad8e/spine/run-failure.txt.\n5. Write bench/results/staged-de04ad8e/spine/operator-note.md (at least 200 characters, strictly factual): sha, channel, runtime; pass or fail; turns played; scenes reached; story_complete; earned exits; chain misses; committed reveals for scene 1C (expected k_sl_1c_a_r1, k_sl_1c_b_r1, k_sl_1c_c_copy_numbers) and 2C; counts of fallback, guard-retry, recovery and missed turns; latency median and max; for a failure, the verbatim failing assertion or infrastructure error (a 404 'session does not exist' or HTTP 503 is infrastructure; say so). Do not interpret beyond the evidence.\n",
+      "timeout_s": 4500,
+      "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && .venv/bin/python scripts/ringer/stage3/check_attempt.py /home/bcorfman/dev/freytag-forge /home/bcorfman/dev/freytag-forge/bench/results/staged-de04ad8e/spine",
+      "expect_files": [
+        "bench/results/staged-de04ad8e/spine/operator-note.md"
+      ],
+      "verified": "staging identity recorded, fresh spine report or verbatim failure, no tracked source changed",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "check_timeout_s": 120
+    },
+    {
+      "key": "canon",
+      "spec": "You are a hosted-E2E operator on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge. This task runs WITHOUT a sandbox and spends real money (Cloudflare neurons), so read the hard rules first.\n\nHARD RULES. Change nothing except: files under artifacts/e2e-* and frontend/test-results/ (generated, gitignored) and the output directory /home/bcorfman/dev/freytag-forge/bench/results/staged-de04ad8e/ . Do not edit or create any tracked file. No git add/commit/checkout/stash/reset/clean/push. Never print, echo, copy or upload .env or any token; `source .env` only inside the commands below. Staging only: if the API reports any channel other than staging, or a runtime other than scene-v1, stop and report. Run the billed test AT MOST ONCE in this task and never retry; a failed or aborted run is data. Do not run anything else billed. Do not edit code to make a run pass.\n\nWHAT THIS IS: a staged regression check of main de04ad8ea6348dc7c3628ff8d42baea898a620f6 after the worldkeeper boundary-move refactor (PR #735), which changed runtime code. The last staged pass was on 21377382.\n\nFollow runbook section 7 (docs/testing-runbook/hosted-probes.md). STEPS, in order:\n1. Identity: `mkdir -p bench/results/staged-de04ad8e/canon && source .env && curl -s \"$E2E_API_BASE_URL/api/v1/version\" > bench/results/staged-de04ad8e/canon/identity.json`. Expected sha de04ad8ea6348dc7c3628ff8d42baea898a620f6 (if different, record it and stop).\n2. Delete stale artifacts: `rm -f artifacts/e2e-llm-canon.json artifacts/e2e-llm-canon-progress.json artifacts/e2e-llm-canon.md artifacts/e2e-llm-canon-progress.md`.\n3. Run `source .env && cd frontend && E2E_PACKAGE_CLOCK=1 E2E_TURN_TIMEOUT_MS=90000 npm run test:e2e -- --grep @llm-canon` with a command timeout of at least 50 minutes. It normally exits NONZERO because scenes fail on narration quality; that is not a failure signal.\n4. The run counts only if artifacts/e2e-llm-canon-progress.json (keys by_scene, completed_turn) holds nine scenes and 30+ turns. If not, it is aborted: record the exact failure text (for example 'Scene 2A exceeded its handoff turn 4') and do NOT retry (the orchestrator decides).\n5. Copy artifacts/e2e-llm-canon*.json and .md that exist into bench/results/staged-de04ad8e/canon/, plus the tail of the command output as canon-run.log (secrets stripped).\n6. Write bench/results/staged-de04ad8e/canon/canon-report.md (under 700 words, strictly factual) with sections: Identity (sha, runtime, channel; say 'smoke' was covered by the spine task in the same round, no separate smoke run), Attempt (counted or aborted, scenes, turns, verbatim failure), Scene verdicts (table: scene, the seven booleans protected_safe, exit_motivated, rewards_investigation, scene_local, progressive, canon_consistent, rich, total out of 63), Failure reasons (for each failed scene the judge's first two reasons verbatim), Limits (one run is a sample; within-run judge noise equals a one or two point difference; quality evidence only, never runtime authority; protected_safe is the load-bearing result).\n",
+      "timeout_s": 5400,
+      "check": "cd /home/bcorfman/dev/freytag-forge && .venv/bin/python bench/checks/no_source_drift.py /home/bcorfman/dev/freytag-forge bench/results/ && .venv/bin/python scripts/ringer/stage2/check_llm_canon.py /home/bcorfman/dev/freytag-forge /home/bcorfman/dev/freytag-forge/artifacts /home/bcorfman/dev/freytag-forge/bench/results/staged-de04ad8e/canon/canon-report.md",
+      "expect_files": [
+        "bench/results/staged-de04ad8e/canon/canon-report.md"
+      ],
+      "verified": "run counts only if nine scenes and 30+ turns, fresh artifacts, staging identity reported",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "full_access": true,
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "check_timeout_s": 120
+    }
+  ]
+}

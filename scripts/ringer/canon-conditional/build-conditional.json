@@ -1,0 +1,34 @@
+{
+  "run_name": "canon-conditional-pacing-events",
+  "workdir": "/home/bcorfman/dev/ringer-work/canon-conditional",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "conditional-events",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.js",
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/scene-runtime.spec.js",
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.test.js"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.js"
+      ],
+      "verified": "executed check: all frontend node tests pass; the projection's conditional set equals the pacing.yaml events with a when; the spec skips only conditional events",
+      "spec": "You are a code-fix worker on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge (branch canon-conditional-pacing-events). Edit ONLY these three files: /home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.js, /home/bcorfman/dev/freytag-forge/frontend/e2e/scene-runtime.spec.js, /home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.test.js. Never edit story data (data/stories/**), Python code, docs, or any other file. Do not git add, commit, stash, reset or checkout. Do not run the Playwright hosted tests (they are billed); run only the node tests: `cd /home/bcorfman/dev/freytag-forge/frontend && node --test src/*.test.js e2e/*.test.js`.\n\nPROBLEM. The hosted @llm-canon test (frontend/e2e/scene-runtime.spec.js, the loop near lines 305-315) asserts that every pacing event in the package's pacing.yaml is in payload.state.fired_pacing_event_ids once the story is in the event's scene at or past its at_turn. But 8 of the 21 events carry a `when:` list of fact conditions (patrol_enters_1a, officer_presses_1a, patrol_leaves_1a, transfer_nudge_1c, transfer_withdrawal_1c, scrutiny_2a, destruction_3b, cover_review_2a). Those fire only if the player has made the facts true, which a fixed canon script need not do. The hosted run aborted with 'Turn 5 is missing pacing event officer_presses_1a' because the canon journey never makes card_challenged true. The browser payload does not expose facts, so the harness cannot evaluate the conditions itself.\n\nREQUIRED BEHAVIOUR. Events WITHOUT a `when` stay required exactly as today. Events WITH a non-empty `when` are NOT required to have fired; if one did fire, it must still be added to the firedPacingEventIds set (so the clock stops steering toward it).\n1. In package-clock.js, record for each event whether its `when` list is non-empty (the loader already validates it with `list(entry.when, ...)` and discards it; keep the validation). Expose a new projection method `isConditional(eventId)` returning a boolean; it must throw the same kind of pacingError as eventPoint for an undeclared event id. Do NOT change what eventPoint returns (its exact object shape is asserted in tests). The projection stays frozen and its method list becomes: storyId, sceneOrder, eventOrder, scenePoint, eventPoint, isConditional.\n2. In scene-runtime.spec.js, in the pacing-event loop: for a due event, if pacing.isConditional(eventId) and the id is not in payload.state?.fired_pacing_event_ids, `continue` without asserting (explain in a short comment why: the payload hides facts, so a conditional event cannot be judged missing); otherwise keep the existing expect(...).toContain(eventId) and add the id to firedPacingEventIds. A conditional event that did fire is added to firedPacingEventIds too.\n3. In package-clock.test.js update the test that asserts Object.keys(projection) for the new method, and add tests: isConditional is true for officer_presses_1a and transfer_nudge_1c and false for patrol_arrives_1a and purge_2c in the real package pacing; isConditional throws for an undeclared id; and a fixture pacing file where an event has a non-empty `when` reports true while one without reports false (reuse the existing withFixture helper). Update existing tests only where the method list changed.\nKeep the code style of the surrounding file. Do not add unrelated refactors.\n",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/canon-conditional/check_conditional.sh"
+    }
+  ]
+}

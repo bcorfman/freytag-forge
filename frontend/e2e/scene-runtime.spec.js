@@ -310,6 +310,10 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
         const eventScene = sceneOrder.indexOf(event.scene_id);
         const inScenePastDue = eventScene === to && observedTurns >= event.target_turn;
         if (!inScenePastDue && eventScene >= to) continue;
+        if (pacing.isConditional(eventId) && !payload.state?.fired_pacing_event_ids?.includes(eventId)) {
+          // The payload hides facts, so a conditional event cannot be judged missing.
+          continue;
+        }
         expect(payload.state?.fired_pacing_event_ids, `Turn ${index + 1} is missing pacing event ${eventId}.`).toContain(eventId);
         firedPacingEventIds.add(eventId);
       }
