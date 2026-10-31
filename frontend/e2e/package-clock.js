@@ -194,8 +194,8 @@ export function loadPackagePacing({ storyId, repoRoot, pacingPath } = {}) {
         `at_turn must fall within scene "${sceneId}" 0..handoff_after_turns`,
       );
     }
-    list(entry.when, "when", storyId, resolvedPacingPath);
-    eventRecords.set(eventId, { sceneId, at });
+    const when = list(entry.when, "when", storyId, resolvedPacingPath);
+    eventRecords.set(eventId, { sceneId, at, conditional: when.length > 0 });
   }
 
   const frozenSceneOrder = Object.freeze(sceneOrder);
@@ -236,6 +236,12 @@ export function loadPackagePacing({ storyId, repoRoot, pacingPath } = {}) {
         throw pacingError(storyId, resolvedPacingPath, eventId, `event "${eventId}" is not declared`);
       }
       return eventMilestones.get(eventId);
+    },
+    isConditional(eventId) {
+      if (!eventMilestones.has(eventId)) {
+        throw pacingError(storyId, resolvedPacingPath, eventId, `event "${eventId}" is not declared`);
+      }
+      return eventRecords.get(eventId).conditional;
     },
   };
 

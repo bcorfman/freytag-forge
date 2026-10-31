@@ -91,6 +91,7 @@ test("loads the real package and resolves turn milestones", () => {
     "eventOrder",
     "scenePoint",
     "eventPoint",
+    "isConditional",
   ]);
   assert.equal(Object.isFrozen(projection.eventOrder), true);
   assert.deepEqual(
@@ -119,6 +120,35 @@ test("loads the real package and resolves turn milestones", () => {
       "relay_power_3b",
       "routes_collapse_3c",
     ],
+  );
+});
+
+test("reports conditional events in the real package pacing", () => {
+  const projection = loadPackagePacing({ storyId: "continuity_initiative", repoRoot });
+
+  assert.equal(projection.isConditional("officer_presses_1a"), true);
+  assert.equal(projection.isConditional("transfer_nudge_1c"), true);
+  assert.equal(projection.isConditional("patrol_arrives_1a"), false);
+  assert.equal(projection.isConditional("purge_2c"), false);
+});
+
+test("reports whether fixture pacing events are conditional", () => {
+  withFixture(
+    `${validScene}  - id: event_conditional
+    scene_id: A
+    at_turn: 1
+    when:
+      - fact: true
+  - id: event_unconditional
+    scene_id: A
+    at_turn: 2
+`,
+    (pacingPath) => {
+      const projection = loadPackagePacing({ storyId: "fixture_story", pacingPath });
+
+      assert.equal(projection.isConditional("event_conditional"), true);
+      assert.equal(projection.isConditional("event_unconditional"), false);
+    },
   );
 });
 
@@ -159,6 +189,7 @@ test("reports unknown story, scene, event, and point identifiers", () => {
   assert.throws(() => projection.scenePoint("9Z", "handoff"), /9Z/);
   assert.throws(() => projection.scenePoint("1A", "target"), /target/);
   assert.throws(() => projection.eventPoint("no_such_event"), /no_such_event/);
+  assert.throws(() => projection.isConditional("no_such_event"), /no_such_event/);
 });
 
 test("reports a missing pacing file with story and path context", () => {
