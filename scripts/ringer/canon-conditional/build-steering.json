@@ -1,0 +1,34 @@
+{
+  "run_name": "canon-conditional-clock-steering",
+  "workdir": "/home/bcorfman/dev/ringer-work/canon-conditional-steering",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "conditional-steering",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.js",
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/scene-runtime.spec.js",
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.test.js"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.js"
+      ],
+      "verified": "executed check: all frontend node tests pass; nextPendingEvent exists, is exported, and the spec uses it; the earlier conditional-set and unconditional-assertion checks still hold",
+      "spec": "You are a code-fix worker on freytag-forge. Your working directory is the real repository /home/bcorfman/dev/freytag-forge (branch canon-conditional-clock-steering). Edit ONLY these three files: /home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.js, /home/bcorfman/dev/freytag-forge/frontend/e2e/scene-runtime.spec.js, /home/bcorfman/dev/freytag-forge/frontend/e2e/package-clock.test.js. Never edit story data (data/stories/**), Python code, docs, or any other file. Do not git add, commit, stash, reset or checkout. Do not run the Playwright hosted tests (they are billed); run only the node tests: `cd /home/bcorfman/dev/freytag-forge/frontend && node --test src/*.test.js e2e/*.test.js`.\n\nBACKGROUND. package-clock.js already exposes `isConditional(eventId)` (true when the event has a non-empty `when` list in pacing.yaml). The hosted @llm-canon test (scene-runtime.spec.js) picks the next clock target in its local function `turnMilestoneFor(currentSceneId, currentTurns)`: the first pacing event of the current scene that is not in `firedPacingEventIds` and has `target_turn >= currentTurns`, else the scene's min, nudge or handoff point.\n\nBUG. A conditional event the canon script never makes true (officer_presses_1a, scene 1A, target_turn 5, needs facts card_challenged and patrol_in_house) never fires. At scene turn 5 it is still the 'pending' target (5 >= 5), the clock is armed with 0 turns needed, the turn advances the scene turn to 6, and the guard 'Turn milestone ... was overshot' throws. Unconditional events do not hit this because they fire exactly when the clock reaches their turn.\n\nREQUIRED BEHAVIOUR. An unfired CONDITIONAL event is a steering target only while its target turn is strictly ahead (target_turn > currentTurns). An unfired UNCONDITIONAL event stays a target while target_turn >= currentTurns, exactly as today. Fired events are never targets.\n1. In package-clock.js add and export a pure function `nextPendingEvent(pacing, sceneId, currentTurns, firedEventIds)` that returns the first pacing eventPoint (in pacing.eventOrder order) matching those rules for sceneId, or undefined. firedEventIds is a Set.\n2. In scene-runtime.spec.js make `turnMilestoneFor` call nextPendingEvent for its pendingEvent (import it next to the existing package-clock imports); leave the rest of the function unchanged.\n3. In package-clock.test.js add tests on the real continuity_initiative package (the existing tests show how to load it): at scene 1A turn 5 with an empty fired set the result is NOT officer_presses_1a (it is the unconditional event that is next, or undefined, whichever the pacing data gives - assert on what the rule implies and name the event you expect, patrol_enters_1a is conditional so it is also skipped at turn 5 and patrol_leaves_1a at turn 7 is the first strictly-ahead conditional target only for turns below 7); at 1A turn 4 with an empty set the result is patrol_arrives_1a; an unfired unconditional event with target equal to currentTurns is still returned; a fired event is skipped; and a conditional event with a target strictly ahead is returned. Work out each expectation from pacing.yaml (data/stories/continuity-initiative/pacing.yaml) before asserting it, and keep the assertions to cases you verified by running the tests.\nKeep the style of the surrounding code. No unrelated refactors.\n",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/canon-conditional/check_steering.sh"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ import {
   submitTurnObserved,
   writeCategoryReport,
 } from "./helpers.js";
-import { canonTurnBudget, loadPackagePacing } from "./package-clock.js";
+import { canonTurnBudget, loadPackagePacing, nextPendingEvent } from "./package-clock.js";
 import { buildKnowledgeTimelineReport, isFixedRefusalLine, recordTurnOutcome } from "./knowledge-timeline-record.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts } from "./canon-journey.js";
@@ -246,14 +246,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
   const knowledgeAvailableByScene = new Map();
 
   const turnMilestoneFor = (currentSceneId, currentTurns) => {
-    const pendingEvent = pacing.eventOrder
-      .map((eventId) => pacing.eventPoint(eventId))
-      .find(
-        (event) =>
-          event.scene_id === currentSceneId &&
-          !firedPacingEventIds.has(event.event_id) &&
-          event.target_turn >= currentTurns,
-      );
+    const pendingEvent = nextPendingEvent(pacing, currentSceneId, currentTurns, firedPacingEventIds);
     if (pendingEvent) return pendingEvent;
 
     const min = pacing.scenePoint(currentSceneId, "min");

@@ -20,6 +20,19 @@ export function canonTurnBudget(pacing, margin = 5) {
   }, margin);
 }
 
+export function nextPendingEvent(pacing, sceneId, currentTurns, firedEventIds) {
+  return pacing.eventOrder
+    .map((eventId) => pacing.eventPoint(eventId))
+    .find(
+      (event) =>
+        event.scene_id === sceneId &&
+        !firedEventIds.has(event.event_id) &&
+        (pacing.isConditional(event.event_id)
+          ? event.target_turn > currentTurns
+          : event.target_turn >= currentTurns),
+    );
+}
+
 function pacingError(storyId, pacingPath, identifier, detail) {
   return new Error(
     `Invalid pacing for story "${storyId}" in "${pacingPath}" (identifier "${identifier}"): ${detail}`,
