@@ -128,6 +128,8 @@ ROUTES = {
         "inspect the storm drain",
     ),
     "observe_storm_drain_1b": ("inspect the storm drain",),
+    "observe_service_gate_1b": ("inspect the service gate",),
+    "observe_back_door_1a": ("inspect the back door",),
     "observe_executive_desk_3b": (
         "inspect the executive desk",
         "search the executive desk",
@@ -138,11 +140,20 @@ ROUTES = {
     ),
 }
 NEW_ROUTES = frozenset(
-    {"observe_supporters_1a", "observe_park_bench_1b", "observe_storm_drain_1b", "observe_executive_desk_3b"}
+    {
+        "observe_supporters_1a",
+        "observe_park_bench_1b",
+        "observe_storm_drain_1b",
+        "observe_service_gate_1b",
+        "observe_back_door_1a",
+        "observe_executive_desk_3b",
+    }
 )
 ROUTE_START_SCENES = {
     "observe_park_bench_1b": "1B",
     "observe_storm_drain_1b": "1B",
+    "observe_service_gate_1b": "1B",
+    "observe_back_door_1a": "1A",
     "observe_executive_desk_3b": "3B",
 }
 TRACKED = (
@@ -836,6 +847,9 @@ def _replicate(
     relation_calls: list[tuple[Any, ...]] | None = None,
     enforce: bool = False,
     scene_state: bool = False,
+    opening_check: bool = False,
+    opening_retry_fact: bool = False,
+    opening_things_fact: bool = False,
     replicate_index: int = 0,
 ) -> dict[str, Any]:
     from storygame.runtime.capture import WorldCapture, build_capture_provider
@@ -844,6 +858,8 @@ def _replicate(
 
     state, start_checkpoint_index = _start_state(package, route)
     provider = build_capture_provider(state)
+    provider.opening_retry_fact = opening_retry_fact
+    provider.opening_things_fact = opening_things_fact
     capture_ask = JevClient.from_environment().ask
     provider.semantic_ask = capture_ask
     capture = WorldCapture(provider, capture_ask, fixed_refusal=True, engine_refusal=True)
@@ -854,14 +870,49 @@ def _replicate(
     verifier_requests = [0]
     enforce_attempts: list[dict[str, Any]] = []
     previews: list[dict[str, Any]] = []
+    retry_feedback_notes: list[str | None] = []
+    retry_feedback_available = False
+    if enforce and opening_check:
+        original_note_rejection = getattr(provider, "note_rejection", None)
+        if callable(original_note_rejection):
+            retry_feedback_available = True
+
+            def record_note_rejection(*args: Any, **kwargs: Any) -> None:
+                original_note_rejection(*args, **kwargs)
+                note = getattr(provider, "_rejection_note", None)
+                retry_feedback_notes.append(note if isinstance(note, str) else None)
+
+            provider.note_rejection = record_note_rejection
+    record["retry_feedback_note_recording"] = (
+        "captured from provider.note_rejection" if retry_feedback_available else "unavailable without engine changes"
+    )
     if enforce:
         from storygame.runtime.observation_verifier import ObservationVerifier
 
-        capture.enforcing_verifier = ObservationVerifier(capture_ask, scene_state=scene_state)
+        capture.enforcing_verifier = ObservationVerifier(
+            capture_ask,
+            scene_state=scene_state,
+            opening_check=opening_check,
+        )
         verify = capture.enforcing_verifier.verify
 
-        def counted_verify(narration: str, relations: object, *, scene: str | None = None):
-            report = verify(narration, relations, scene=scene)
+        def counted_verify(
+            narration: str,
+            relations: object,
+            *,
+            scene: str | None = None,
+            opening_subjects: tuple[str, ...] = (),
+            command: str = "",
+            story_text: str | None = None,
+        ):
+            verify_kwargs: dict[str, Any] = {"scene": scene}
+            if opening_subjects:
+                verify_kwargs["opening_subjects"] = opening_subjects
+            if command:
+                verify_kwargs["command"] = command
+            if story_text is not None:
+                verify_kwargs["story_text"] = story_text
+            report = verify(narration, relations, **verify_kwargs)
             verifier_requests[0] += report.requests
             attempt = {
                 "narration": narration,
@@ -887,6 +938,16 @@ def _replicate(
             }
             if route == "observe_storm_drain_1b" or scene_state:
                 attempt["scene_state"] = report.scene_state
+            if opening_check:
+                attempt["opening_verdicts"] = [
+                    {
+                        "thing": verdict.thing,
+                        "verdict": verdict.verdict,
+                        "score": verdict.score,
+                    }
+                    for verdict in report.opening_verdicts
+                ]
+                attempt["opening_requests"] = report.opening_requests
             enforce_attempts.append(attempt)
             return report
 
@@ -954,6 +1015,7 @@ def _replicate(
         enforce_attempts.clear()
         previews.clear()
         error = None
+        feedback_note_start = len(retry_feedback_notes)
         row: dict[str, Any] = {"_owner_turn": (replicate_index, len(record.get("turns", ())))}
         if enforce:
             row["late_completions_after_turn"] = []
@@ -974,6 +1036,12 @@ def _replicate(
             error = f"{type(exc).__name__}: {exc}"
         finally:
             counter.end_turn()
+        if opening_check:
+            for attempt_index, attempt in enumerate(enforce_attempts):
+                note_index = feedback_note_start + attempt_index
+                attempt["retry_feedback_note"] = (
+                    retry_feedback_notes[note_index] if note_index < len(retry_feedback_notes) else None
+                )
         world_after = _world_structure(state) if enforce else None
         digest_after = _state_digest(state) if enforce else None
         row.update(
@@ -1073,6 +1141,9 @@ def _summary(
     shadow: bool = False,
     enforce: bool = False,
     scene_state: bool = False,
+    opening_check: bool = False,
+    opening_retry_fact: bool = False,
+    opening_things_fact: bool = False,
 ) -> dict[str, Any]:
     completed = sum(len(row.get("turns", ())) == len(inputs) for row in rows)
     errors = sum(1 for row in rows for turn in row.get("turns", ()) if turn.get("error"))
@@ -1099,6 +1170,13 @@ def _summary(
         "semantic_reveal_effective": os.environ.get("FREYTAG_SEMANTIC_REVEAL", "1"),
         "enforce": enforce,
         "scene_state": scene_state,
+        "opening_check": opening_check,
+        "opening_retry_fact": opening_retry_fact,
+        "opening_things_fact": opening_things_fact,
+        "retry_feedback_note_recording": next(
+            (row["retry_feedback_note_recording"] for row in rows if "retry_feedback_note_recording" in row),
+            "unavailable without engine changes",
+        ),
     }
     if shadow:
         summary.update(
@@ -1131,9 +1209,18 @@ def main(argv: list[str] | None = None) -> int:
     verifier_group.add_argument("--shadow", action="store_true")
     verifier_group.add_argument("--enforce", action="store_true")
     parser.add_argument("--scene-state", action="store_true")
+    parser.add_argument("--opening-check", action="store_true")
+    parser.add_argument("--opening-retry-fact", action="store_true")
+    parser.add_argument("--opening-things-fact", action="store_true")
     args = parser.parse_args(argv)
     if args.scene_state and not args.enforce:
         parser.error("--scene-state requires --enforce")
+    if args.opening_check and not args.enforce:
+        parser.error("--opening-check requires --enforce")
+    if args.opening_retry_fact and not args.opening_check:
+        parser.error("--opening-retry-fact requires --opening-check")
+    if args.opening_things_fact and not args.opening_check:
+        parser.error("--opening-things-fact requires --opening-check")
     if not args.dry_run and (not args.confirm or not os.environ.get("CLOUDFLARE_WORKER_URL")):
         print("live mode requires --confirm and CLOUDFLARE_WORKER_URL", file=sys.stderr)
         return 2
@@ -1172,6 +1259,9 @@ def main(argv: list[str] | None = None) -> int:
             record: dict[str, Any] = {
                 "route": args.route,
                 "scene_state": args.scene_state,
+                "opening_check": args.opening_check,
+                "opening_retry_fact": args.opening_retry_fact,
+                "opening_things_fact": args.opening_things_fact,
                 "opening": None,
                 "turns": [],
             }
@@ -1189,6 +1279,9 @@ def main(argv: list[str] | None = None) -> int:
                 relation_calls,
                 args.enforce,
                 args.scene_state,
+                args.opening_check,
+                args.opening_retry_fact,
+                args.opening_things_fact,
                 replicate_index,
             )
             counter.snapshot_record(rows[-1])
@@ -1212,6 +1305,9 @@ def main(argv: list[str] | None = None) -> int:
             args.shadow,
             args.enforce,
             args.scene_state,
+            args.opening_check,
+            args.opening_retry_fact,
+            args.opening_things_fact,
         )
         (args.out / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n")
     return 0

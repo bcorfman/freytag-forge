@@ -1,0 +1,8 @@
+{
+  "type": "noul",
+  "instructions": "Decide whether the narration is consistent with the declared sentence for the thing named in the state. It is consistent when it does not state any open, ajar, lifted, covered, or entered condition, or state what is inside it, including what can be seen, heard or smelled there, such as water, objects, sounds or smells, unless the declared sentence supports it. The declared sentence says whether the engine opened the thing this turn, and an opening the engine performed is supported. Looking at, approaching, kneeling beside, touching the outside, looking into it and seeing only darkness or nothing, hearing nothing from it, or wondering what might be inside are consistent.",
+  "criteria": {
+    "true": "The narration is consistent with the declared sentence. It does not state an unsupported open, ajar, lifted, covered, or entered condition or what is inside it, including what can be seen, heard or smelled there, such as water, objects, sounds or smells, as fact. Seeing only darkness or nothing inside is consistent.",
+    "false": "The narration is not consistent with the declared sentence. It states an unsupported open, ajar, lifted, covered, or entered condition or what is inside it, including what can be seen, heard or smelled there, such as water, objects, sounds or smells, as fact. Seeing only darkness or nothing inside does not count."
+  }
+}

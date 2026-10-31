@@ -180,11 +180,15 @@ class WorldCapture:
         self.last_after: dict[str, Any] | None = None
         self._pending_preview: CandidatePreview | None = None
         self._pending_preview_scene_state = False
+        self._pending_preview_opening_verdicts: tuple[dict[str, object], ...] = ()
+        self._pending_preview_opening_requests = 0
         self._turn_origin: tuple[str | None, str] | None = None
 
     def before_turn(self, command: str) -> dict[str, Any]:
         self._pending_preview = None
         self._pending_preview_scene_state = False
+        self._pending_preview_opening_verdicts = ()
+        self._pending_preview_opening_requests = 0
         if self.enforcing_verifier is not None:
             self.enforcing_verifier.begin_turn()
         self._command = command
@@ -408,6 +412,18 @@ class WorldCapture:
                 return None
         return self.provider._observation_context()
 
+    def _opening_subjects_for(self, verifier: ObservationVerifier | None) -> tuple[str, ...]:
+        if verifier is None or not verifier.opening_check:
+            return ()
+        return self.provider.opening_subjects()
+
+    def failed_opening_things(self) -> tuple[str, ...]:
+        return tuple(
+            str(verdict["thing"])
+            for verdict in self._pending_preview_opening_verdicts
+            if verdict.get("verdict") != "accept" and verdict.get("thing")
+        )
+
     def preview_commit(
         self,
         command: str,
@@ -416,7 +432,8 @@ class WorldCapture:
         *,
         entered_scene: bool,
     ) -> CandidatePreview:
-        if self.enforcing_verifier is None or self.provider.observation_request is None:
+        opening_subjects = self._opening_subjects_for(self.enforcing_verifier)
+        if self.enforcing_verifier is None or (self.provider.observation_request is None and not opening_subjects):
             return CandidatePreview(
                 required=False,
                 accepted=True,
@@ -483,11 +500,38 @@ class WorldCapture:
             candidate_world = self.provider._world()
             moved_unrelated = self._moved_unrelated(before_parents, candidate_world, context)
             relations = relations_from_context(context) if context is not None else ()
-            if relations:
-                report = self.enforcing_verifier.verify(narration, relations, scene=context.scene)
+            if relations or opening_subjects:
+                if self.enforcing_verifier.opening_check:
+                    handoff = getattr(self.provider, "authored_handoff", None)
+                    story_text = (
+                        handoff.delivery_text
+                        if handoff is not None and isinstance(handoff.delivery_text, str)
+                        else None
+                    )
+                    verify_kwargs = {
+                        "scene": context.scene if context is not None else None,
+                        "opening_subjects": opening_subjects,
+                        "command": command,
+                    }
+                    if story_text is not None:
+                        verify_kwargs["story_text"] = story_text
+                    report = self.enforcing_verifier.verify(narration, relations, **verify_kwargs)
+                else:
+                    report = self.enforcing_verifier.verify(
+                        narration, relations, scene=context.scene if context is not None else None
+                    )
                 if report is None:
                     raise RuntimeError("observation verifier returned no report")
                 self._pending_preview_scene_state = report.scene_state
+                self._pending_preview_opening_verdicts = tuple(
+                    {
+                        "thing": verdict.thing,
+                        "verdict": verdict.verdict,
+                        "score": verdict.score,
+                    }
+                    for verdict in report.opening_verdicts
+                )
+                self._pending_preview_opening_requests = report.opening_requests
             changed = tuple(sorted(self.provider._changed_last_turn))
             things_given = set(self.last_before.get("things_given", ())) if self.last_before is not None else set()
             facts_after = _json_value(
@@ -611,10 +655,13 @@ class WorldCapture:
         finally:
             if preview is not None and preview.required:
                 self.provider.item_facts_call_memo = None
-        if self.shadow_verifier is not None and self.provider.observation_request is not None:
+        shadow_opening_subjects = self._opening_subjects_for(self.shadow_verifier)
+        if self.shadow_verifier is not None and (
+            self.provider.observation_request is not None or shadow_opening_subjects
+        ):
             try:
                 context = self._observation_context_for_verification(entered_scene=entered_scene)
-                if context is None:
+                if context is None and not shadow_opening_subjects:
                     observation_shadow = {
                         "outcome": "no_relations",
                         "requests": 0,
@@ -628,9 +675,26 @@ class WorldCapture:
                     }
                 else:
                     self.shadow_verifier.begin_turn()
-                    report = self.shadow_verifier.verify(
-                        narration, relations_from_context(context), scene=context.scene
-                    )
+                    relations = relations_from_context(context) if context is not None else ()
+                    if self.shadow_verifier.opening_check:
+                        handoff = getattr(self.provider, "authored_handoff", None)
+                        story_text = (
+                            handoff.delivery_text
+                            if handoff is not None and isinstance(handoff.delivery_text, str)
+                            else None
+                        )
+                        verify_kwargs = {
+                            "scene": context.scene if context is not None else None,
+                            "opening_subjects": shadow_opening_subjects,
+                            "command": command,
+                        }
+                        if story_text is not None:
+                            verify_kwargs["story_text"] = story_text
+                        report = self.shadow_verifier.verify(narration, relations, **verify_kwargs)
+                    else:
+                        report = self.shadow_verifier.verify(
+                            narration, relations, scene=context.scene if context is not None else None
+                        )
                     observation_shadow = {
                         "outcome": report.outcome,
                         "requests": report.requests,
@@ -648,6 +712,16 @@ class WorldCapture:
                             for verdict in report.verdicts
                         ],
                     }
+                    if self.shadow_verifier.opening_check:
+                        observation_shadow["opening_verdicts"] = [
+                            {
+                                "thing": verdict.thing,
+                                "verdict": verdict.verdict,
+                                "score": verdict.score,
+                            }
+                            for verdict in report.opening_verdicts
+                        ]
+                        observation_shadow["opening_requests"] = report.opening_requests
             except Exception as error:
                 observation_shadow = {
                     "outcome": "shadow_error",
@@ -659,6 +733,9 @@ class WorldCapture:
                     "scene_state": False,
                     "verdicts": [],
                 }
+                if self.shadow_verifier is not None and self.shadow_verifier.opening_check:
+                    observation_shadow["opening_verdicts"] = []
+                    observation_shadow["opening_requests"] = 0
         things_given = (
             set(self.last_before.get("things_given", ()))
             if self.last_before is not None
@@ -688,6 +765,9 @@ class WorldCapture:
                 "verdicts": _json_value(preview.verdicts),
                 "scene_state": self._pending_preview_scene_state,
             }
+            if self.enforcing_verifier is not None and self.enforcing_verifier.opening_check:
+                record["observation_preview"]["opening_verdicts"] = list(self._pending_preview_opening_verdicts)
+                record["observation_preview"]["opening_requests"] = self._pending_preview_opening_requests
             record["observation_diverged"] = tuple(
                 sorted(self.provider._changed_last_turn)
             ) != preview.changed or record["facts_after"] != _json_value(preview.facts_after)
@@ -700,6 +780,8 @@ class WorldCapture:
     def discard(self) -> None:
         self._pending_preview = None
         self._pending_preview_scene_state = False
+        self._pending_preview_opening_verdicts = ()
+        self._pending_preview_opening_requests = 0
         self.provider.discard_pending_item_facts()
         self.provider.prior_steps = ()
         self.provider.prior_notice_steps = ()

@@ -35,6 +35,9 @@ from storygame.story_package.loader import StoryPackageError, load_story_package
 logger = logging.getLogger(__name__)
 OBSERVATION_ENFORCE_ENV = "FREYTAG_OBSERVATION_ENFORCE"
 OBSERVATION_SCENE_STATE_ENV = "FREYTAG_OBSERVATION_SCENE_STATE"
+OPENING_CHECK_ENV = "FREYTAG_OPENING_CHECK"
+OPENING_RETRY_FACT_ENV = "FREYTAG_OPENING_RETRY_FACT"
+OPENING_THINGS_FACT_ENV = "FREYTAG_OPENING_THINGS_FACT"
 
 
 class _Request(BaseModel):
@@ -257,6 +260,8 @@ def create_demo_app(
 
     def engine_for(state: RuntimeState, provider=None) -> RuntimeEngine:
         provider = provider if provider is not None else provider_for(state)
+        provider.opening_retry_fact = getenv(OPENING_RETRY_FACT_ENV, "") == "1"
+        provider.opening_things_fact = getenv(OPENING_THINGS_FACT_ENV, "") == "1"
         capture = None
         if getenv("FREYTAG_WORLD_CAPTURE", "") == "1" and getenv("FREYTAG_TURN_PROVIDER", "") != "scripted":
             capture_provider = provider if isinstance(provider, ItemFactsProvider) else build_capture_provider(state)
@@ -269,6 +274,7 @@ def create_demo_app(
                 capture.enforcing_verifier = ObservationVerifier(
                     capture_ask,
                     scene_state=getenv(OBSERVATION_SCENE_STATE_ENV, "") == "1",
+                    opening_check=getenv(OPENING_CHECK_ENV, "") == "1",
                 )
         return RuntimeEngine(state, provider, capture=capture)
 

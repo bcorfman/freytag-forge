@@ -1,0 +1,34 @@
+{
+  "run_name": "t9h-opening-check-wiring",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-opening-check-wiring",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "arms-harness",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 1200,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/transcript_1a/live_baseline.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_live_baseline_opening_check.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_opening_check.sh"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_live_baseline_opening_check.py"
+      ],
+      "verified": "executed check passes in the CI simulation",
+      "spec": "Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12), branch t9h-opening-check-wiring. Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`; to see tests as CI does run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/ci_sim_pytest.sh <files>`. FREE WORK ONLY: no network, no model call, no Worker, never read or print .env. Tests are hermetic (stub every transport). Do not git commit or touch git state (never checkout, stash, reset, clean, add). Touch ONLY the files you own. No regular expressions in new code, and never parse narration text to decide anything. Match the surrounding code's style and comment density. Do not edit the check script. At the end run ruff check --fix and ruff format on the files you changed. Read first: AGENTS.md, docs/contributor-guide.md (runtime boundaries: facts are the sole mutable truth, the shared runtime stays story-agnostic and LLM-proposal-first) and docs/world-model-grounding.md.\n\nFILES YOU OWN: scripts/ringer/transcript_1a/live_baseline.py, tests/test_live_baseline_opening_check.py, scripts/ringer/environment_narration/enforce_t9h_opening_check.sh. Read-only for everything else.\n\nCONTEXT: two flags were just added to the engine for a side-by-side test: FREYTAG_OPENING_RETRY_FACT (targeted retry feedback after a rejected opening verdict; read storygame/web_demo.py to see which attribute it sets, on the provider or the capture) and FREYTAG_OPENING_THINGS_FACT (sets `provider.opening_things_fact = True`, adding the declared state to an opening's THINGS line). live_baseline.py builds its own engine stack (not via web_demo), so it must set the same attributes itself.\n\nCHANGES:\n1. live_baseline.py: flags `--opening-retry-fact` and `--opening-things-fact`, each requiring `--opening-check` (refuse otherwise before any work), setting exactly the attributes web_demo sets for the two env flags. Record both in the run settings/summary next to opening_check. Per enforce attempt, also record the retry feedback note the provider held for that attempt if it is available without new engine changes (else say so in your summary).\n2. tests/test_live_baseline_opening_check.py: add hermetic tests that each flag is refused without --opening-check, sets the attribute, and is recorded in settings.\n3. enforce_t9h_opening_check.sh: keep the existing `smoke` stage unchanged and add stages `retry)` and `things)`. Each: OUT=bench/results/environment-narration/t9h-opening-check/<stage>, its own local Worker (`retry` port 8814, `things` port 8815) with `--max-usd 0.06`, the same three routes in the same order, each run with `--enforce --scene-state --opening-check` plus `--opening-retry-fact` (retry) or `--opening-things-fact` (things), and `--replicates 5 --max-calls 60`; refuse if the port is busy or a rows dir exists; stop the sequence on a non-null stopped_reason. Keep the literal strings shown (the check greps them). Do not source .env in the script.\n\nHOW TO VERIFY BEFORE YOU FINISH: `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_wiring.sh arms-harness`.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_wiring.sh arms-harness"
+    }
+  ]
+}

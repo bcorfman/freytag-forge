@@ -1,0 +1,61 @@
+{
+  "run_name": "t9h-opening-check-wiring",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-opening-check-wiring",
+  "max_parallel": 2,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "retry-fact",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 1200,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/engine.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/capture.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/observation_preview.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/web_demo.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_opening_retry_fact.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_opening_retry_fact.py"
+      ],
+      "verified": "executed check passes in the CI simulation",
+      "spec": "Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12), branch t9h-opening-check-wiring. Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`; to see tests as CI does run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/ci_sim_pytest.sh <files>`. FREE WORK ONLY: no network, no model call, no Worker, never read or print .env. Tests are hermetic (stub every transport). Do not git commit or touch git state (never checkout, stash, reset, clean, add). Touch ONLY the files you own. No regular expressions in new code, and never parse narration text to decide anything. Match the surrounding code's style and comment density. Do not edit the check script. At the end run ruff check --fix and ruff format on the files you changed. Read first: AGENTS.md, docs/contributor-guide.md (runtime boundaries: facts are the sole mutable truth, the shared runtime stays story-agnostic and LLM-proposal-first) and docs/world-model-grounding.md.\n\nAlso read docs/narrator-writing-guide.md before writing any text the narrator will see: new narrator text targets a 12th-grade reading level, plain words, one idea per sentence, and follows that guide's section format.\n\nCONTEXT: storygame/runtime/opening_check.py and the observation verifier implement an opening condition check behind FREYTAG_OPENING_CHECK=1: for each thing of engine base kind `opening` that the player's command refers to, a Jev question asks whether the narration invents an open, ajar, lifted, covered or entered state or contents; a non-accept verdict fails the attempt through the existing retry path (engine.py `_preview_observation` raises ProposalValidationError code `observation_unverified`; the provider's `note_rejection(code, term)` in storygame/runtime/cloudflare.py picks generic retry feedback). A live smoke showed the check is right, but the narration model invents \"slightly ajar\" on nearly every gate and drain inspection, and the generic retry repeats it. We are testing two independent ways to stop the invention at the source, side by side, each behind its own flag that is OFF by default (with it off, prompts, requests and behaviour are byte-identical to today). The declared sentence for an opening is the one in opening_check.py: \"the <name> has no open or closed value, no declared contents, and is fixed in place.\"\n\nYOUR ARM: TARGETED RETRY FEEDBACK. FILES YOU OWN: storygame/runtime/engine.py, storygame/runtime/cloudflare.py, storygame/runtime/capture.py, storygame/runtime/observation_preview.py, storygame/web_demo.py, tests/test_opening_retry_fact.py (new). Do NOT edit storygame/runtime/item_facts.py (another worker owns it now).\n\nBUILD: a flag `FREYTAG_OPENING_RETRY_FACT=1` (read in web_demo next to FREYTAG_OPENING_CHECK; carried as a provider or capture attribute such as `opening_retry_fact`). When on and an attempt fails because one or more OPENING verdicts were not \"accept\", the retry feedback for the second attempt states the world fact for each failed opening, in plain narrator-facing sentences derived from the declared facts, for example: \"Your last reply described the service gate in a way the world does not support. The service gate has no open or closed state and nothing inside it. Write this turn again. Use only the information in the current prompt.\" Rules: never quote or name any word from the rejected narration (the contributor guide allows naming a rejected term only when the player typed it; the world fact names no rejected term); build the sentence from the thing's declared name and kind only; no story-specific text. Keep the same rejection path, the same retry count, the same capture resume and provider-field restore behaviour (if you add a new error code, add it everywhere `observation_unverified` is handled, or keep the code and carry the failed opening names alongside). When the attempt failed only on relation verdicts, feedback is unchanged. Flag off: feedback byte-identical to today.\nALSO, for the other arm: in web_demo, `FREYTAG_OPENING_THINGS_FACT=1` sets `provider.opening_things_fact = True` on the provider it builds (an attribute the other worker adds to ItemFactsProvider with default False; set it with setattr-free plain assignment, it is a normal attribute). Default off.\nTESTS (hermetic): flag off, feedback unchanged; FREYTAG_OPENING_THINGS_FACT=1 sets the provider attribute and unset leaves it False; flag on with a rejected opening verdict, the second attempt's prompt carries the fact sentence for exactly the failed opening(s) and no word from the rejected narration; a relation-only failure keeps generic feedback; resume and restore still happen; at most two narration attempts.\n\nHOW TO VERIFY BEFORE YOU FINISH: `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_wiring.sh retry-fact`. Finish with the exact feedback text the narrator sees.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_wiring.sh retry-fact"
+    },
+    {
+      "key": "things-fact",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 1200,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/item_facts.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_opening_things_fact.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_opening_things_fact.py"
+      ],
+      "verified": "executed check passes in the CI simulation",
+      "spec": "Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12), branch t9h-opening-check-wiring. Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`; to see tests as CI does run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/ci_sim_pytest.sh <files>`. FREE WORK ONLY: no network, no model call, no Worker, never read or print .env. Tests are hermetic (stub every transport). Do not git commit or touch git state (never checkout, stash, reset, clean, add). Touch ONLY the files you own. No regular expressions in new code, and never parse narration text to decide anything. Match the surrounding code's style and comment density. Do not edit the check script. At the end run ruff check --fix and ruff format on the files you changed. Read first: AGENTS.md, docs/contributor-guide.md (runtime boundaries: facts are the sole mutable truth, the shared runtime stays story-agnostic and LLM-proposal-first) and docs/world-model-grounding.md.\n\nAlso read docs/narrator-writing-guide.md before writing any text the narrator will see: new narrator text targets a 12th-grade reading level, plain words, one idea per sentence, and follows that guide's section format.\n\nCONTEXT: storygame/runtime/opening_check.py and the observation verifier implement an opening condition check behind FREYTAG_OPENING_CHECK=1: for each thing of engine base kind `opening` that the player's command refers to, a Jev question asks whether the narration invents an open, ajar, lifted, covered or entered state or contents; a non-accept verdict fails the attempt through the existing retry path (engine.py `_preview_observation` raises ProposalValidationError code `observation_unverified`; the provider's `note_rejection(code, term)` in storygame/runtime/cloudflare.py picks generic retry feedback). A live smoke showed the check is right, but the narration model invents \"slightly ajar\" on nearly every gate and drain inspection, and the generic retry repeats it. We are testing two independent ways to stop the invention at the source, side by side, each behind its own flag that is OFF by default (with it off, prompts, requests and behaviour are byte-identical to today). The declared sentence for an opening is the one in opening_check.py: \"the <name> has no open or closed value, no declared contents, and is fixed in place.\"\n\nYOUR ARM: NARRATOR MATERIAL IN THINGS. FILES YOU OWN: storygame/runtime/item_facts.py, tests/test_opening_things_fact.py (new). Do NOT edit engine.py, cloudflare.py, capture.py, observation_preview.py or web_demo.py (another worker owns them now).\n\nBUILD: a provider attribute `opening_things_fact: bool = False` on ItemFactsProvider (another worker wires the env flag FREYTAG_OPENING_THINGS_FACT in web_demo to set it; do not touch web_demo). When true, the narrator prompt's THINGS line for a thing of engine base kind `opening` (world.schema.kind_is(kind, \"opening\")) carries its declared state as material, in the same style as the existing state text (see `_state_text` in item_facts.py: lines like \"- Transit token. Held by: Kristin. State: intact. It can be: destroyed.\"). Proposed wording, adjust only to fit the guide: \" It has no open or closed state and nothing inside.\" appended after the place. Story-agnostic: derived from the kind only. Only the narrator's THINGS (narration=True path) changes, not the name-matching or item-facts prompts. Flag off: every prompt byte-identical (tests/test_place_scoped_feed.py goldens must pass unchanged).\nTESTS (hermetic): flag off, the drain turn's narrator prompt is byte-identical to today; flag on, the storm drain, service gate and back door lines carry the sentence and a container (drawer) or plain thing line does not; the matcher and item-facts prompts are unchanged with the flag on.\n\nHOW TO VERIFY BEFORE YOU FINISH: `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_wiring.sh things-fact`. Finish with the exact THINGS line for the service gate with the flag on.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_wiring.sh things-fact"
+    }
+  ]
+}

@@ -58,6 +58,7 @@ changed: [Markdown story authoring](markdown-story-authoring.md),
   one reply is used. The item-facts name-matching request has its own cap of
   two and does not share the narration budget. Exhaustion is a typed fail-closed
   error, never fabricated success. Target under ten seconds on the normal path.
+- With `FREYTAG_OPENING_CHECK=1`, an opening check adds one Jev request per opening the command refers to, up to two per attempt.
 - A guard retry may name a rejected term only when the player typed that term; otherwise rejection feedback remains generic.
 - Generate NPC dialogue only from the addressed NPC's permitted current
   context. Reject parroting, wrong speakers, off-scene or role violations, and

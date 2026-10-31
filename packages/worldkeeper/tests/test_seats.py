@@ -127,3 +127,30 @@ def test_kind_declares_fixed_nearest_wins():
     assert schema.is_fixed("inherited_item") is False
     assert schema.is_fixed("deep") is True
     assert schema.is_fixed("own") is False
+
+
+def test_opening_is_a_fixed_base_kind_and_rejects_redeclaration():
+    schema = WorldSchema.from_data(
+        {
+            "entities": [
+                {"id": "door", "name": "door", "kind": "opening"},
+                {"id": "movable", "name": "movable", "kind": "opening", "fixed": False},
+            ]
+        }
+    )
+
+    assert schema.kind_is("opening", "thing")
+    assert schema.is_fixed("door")
+    assert schema.is_fixed("movable") is False
+
+    inherited = WorldSchema.from_data(
+        {
+            "kinds": [{"id": "hatch", "is": ["opening"]}],
+            "entities": [{"id": "hatch", "name": "hatch", "kind": "hatch"}],
+        }
+    )
+    assert inherited.kind_is("hatch", "opening")
+    assert inherited.is_fixed("hatch")
+
+    with pytest.raises(SchemaError):
+        WorldSchema.from_data({"kinds": [{"id": "opening", "is": ["thing"]}]})

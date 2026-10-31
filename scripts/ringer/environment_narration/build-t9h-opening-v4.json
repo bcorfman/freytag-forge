@@ -1,0 +1,40 @@
+{
+  "run_name": "t9h-opening-condition-v2",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-opening-condition-v2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "opening-v4-variant-e",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/opening_check.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/observation_verifier.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/capture.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_opening_check.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_observation_verifier.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/opening_condition_v3.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_opening_condition_v3.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_opening_v3.sh",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_opening_check.sh"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/opening_check.py"
+      ],
+      "verified": "runtime question equals pinned Variant E; story text appended to declared; v4 cases locked; dry run under $0.05; focused tests green in CI sim; ruff clean",
+      "spec": "You are editing the freytag-forge repo (Python 3.12). Working directory: /home/bcorfman/dev/freytag-forge. Run Python only as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. FREE WORK ONLY: no network, no model call, never read or print .env. Do not git commit. Never run git checkout, stash, reset or clean. The tree has uncommitted work you must keep. Do not edit the check script or anything under /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge (the JSON/JSONL files there are frozen inputs).\n\nFILES YOU OWN: /home/bcorfman/dev/freytag-forge/storygame/runtime/opening_check.py, /home/bcorfman/dev/freytag-forge/storygame/runtime/observation_verifier.py, /home/bcorfman/dev/freytag-forge/storygame/runtime/capture.py, /home/bcorfman/dev/freytag-forge/tests/test_opening_check.py, /home/bcorfman/dev/freytag-forge/tests/test_observation_verifier.py, /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/opening_condition_v3.py, /home/bcorfman/dev/freytag-forge/tests/test_opening_condition_v3.py, /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_opening_v3.sh, /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_opening_check.sh.\n\nBACKGROUND: the runtime 'opening check' asks Jev one 'noul' question per command-referred thing of kind `opening` (a storm drain, a gate, a door) to reject narration that invents an open state. The author changed the policy twice: describing what the inside is like is fine, and anything the story's own authored text for the turn states (for example the 1A reveal 'the back door was forced') is supported. The new wording is Variant E, pinned exactly in /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge/variant-e-question.json. Today the runtime holds Variant D (pinned in variant-d-question.json).\n\nTASK 1, wording: in storygame/runtime/opening_check.py set OPENING_QUESTION to exactly the dict in variant-e-question.json (literal dict in the module, existing style, byte-identical strings; join string pieces so no fragment is a lone short word like \"there, \"). Update the docstring mention of Variant D to Variant E.\n\nTASK 2, story text: opening_state and opening_payload gain a keyword-only `story_text: str | None = None`. When story_text is a non-empty string after strip(), the declared value becomes the existing sentence followed by ' The story states: ' and story_text.strip(); otherwise the declared value is exactly as today. ObservationVerifier.verify and _verify_with_openings gain keyword `story_text: str | None = None` passed to opening_payload for every opening subject. In capture.py, where preview_commit calls self.enforcing_verifier.verify(..., opening_subjects=..., command=...) in the opening_check branch, pass story_text from the provider's current authored handoff: `handoff = getattr(self.provider, \"authored_handoff\", None)` and `story_text = handoff.delivery_text if handoff is not None and isinstance(handoff.delivery_text, str) else None`. Do the same in the shadow-verifier path if it calls verify with opening_subjects. Change nothing else about behaviour; with the flag off nothing changes.\n\nTASK 3, tests: tests/test_opening_check.py: the byte-identity test now compares the question with variant-e-question.json and still checks the state shape against PROBE.variant_b_payload(case)[0] when no story text is given; add one test that a story text is appended to the declared sentence as specified (and that blank story text leaves it unchanged); add one test through the real capture path (follow the existing tests in that file that build a provider/capture for scene 1A or 1B) showing the delivered handoff text reaches the opening question's state when an authored handoff is set, or if that is too heavy, a verifier-level test with a fake ask that records the state. Keep it short.\n\nTASK 4, judge runner generalisation: opening_condition_v3.py gains --cases PATH and --lock PATH (defaults: the current cases-v3.jsonl and lock-v3.json, so v3 behaviour is unchanged) and --relabelled PATH (optional JSON list of case ids; when given, the report's relabelled line uses those ids instead of the built-in list). The question still comes from the runtime OPENING_QUESTION. The case 'declared' field is sent as is (the v4 back-door cases already carry the story text). Update tests/test_opening_condition_v3.py minimally for the new options.\n\nTASK 5, enforce scripts: enforce_t9h_opening_v3.sh takes an optional second argument VERSION (default v3). v3: unchanged (port 8817, cases-v3/lock-v3, OUT t9h-opening-v3). v4: port 8819, --cases /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge/cases-v4.jsonl --lock /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge/lock-v4.json --relabelled /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge/relabelled-v4.json, OUT bench/results/environment-narration/t9h-opening-v4, same caps ($0.05, 900 calls, 0.5 s). In enforce_t9h_opening_check.sh add stage `combined-e`: same ARGS as combined/combined-d, PORT 8821. Do NOT run either script (billed).\n\nFinish with ruff check --fix and ruff format on the Python files you touched.\n\nHOW TO VERIFY: `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_v3.sh build v4` (runtime question equals variant-e-question.json byte for byte, story text appended as specified, frozen v4 cases match their lock, v4 dry run under $0.05, focused tests in a CI simulation, ruff). Finish with a short summary and git diff --stat.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_v3.sh build v4"
+    }
+  ]
+}

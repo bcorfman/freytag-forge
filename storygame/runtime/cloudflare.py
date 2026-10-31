@@ -89,6 +89,18 @@ _REJECTION_FEEDBACK = {
 }
 
 
+def _opening_rejection_feedback(opening_things: tuple[str, ...]) -> str:
+    facts = []
+    for thing in opening_things:
+        facts.extend(
+            (
+                f"Your last reply described the {thing} in a way the world does not support.",
+                f"The {thing} has no open or closed state and nothing inside it.",
+            )
+        )
+    return " ".join((*facts, "Write this turn again.", "Use only the information in the current prompt."))
+
+
 def _is_timeout(error: BaseException) -> bool:
     return isinstance(error, TimeoutError) or (isinstance(error, URLError) and isinstance(error.reason, TimeoutError))
 
@@ -303,6 +315,7 @@ class CloudflareTurnProvider:
 
     allowed_reply_keys = {"segments", "selected_knowledge_ids"}
     absent_thing_rule: bool = False
+    opening_retry_fact: bool = False
 
     def __init__(
         self,
@@ -442,8 +455,16 @@ class CloudflareTurnProvider:
             return ITEM_FACTS_REQUEST_BUDGET
         return max(0, ITEM_FACTS_REQUEST_BUDGET - self._turn_item_facts_request_count)
 
-    def note_rejection(self, code: str | None, term: str | None = None) -> None:
+    def note_rejection(
+        self,
+        code: str | None,
+        term: str | None = None,
+        *,
+        opening_things: tuple[str, ...] = (),
+    ) -> None:
         feedback = _REJECTION_FEEDBACK.get(code, _GENERIC_REJECTION)
+        if code == "observation_unverified" and self.opening_retry_fact and opening_things:
+            feedback = _opening_rejection_feedback(opening_things)
         if code == "narration_known_term_leak" and term:
             feedback = (
                 f'{feedback} The player wrote "{term}". '

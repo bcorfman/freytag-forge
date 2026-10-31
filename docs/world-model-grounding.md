@@ -85,11 +85,13 @@ issue.
   new scene. Things the protagonist carries move with her, and nothing else
   does.
 - **Pick the kind that fits.** Use `container`, `supporter`, `vehicle`,
-  `seat` or a story sub-kind. The kind decides the relation (in or on), so the
-  reply never has to say it. Only `under` needs a flag.
-- **Mark `fixed: true` on anything that cannot move**, such as doors,
-  desks, bolted benches and built-in seats. The engine refuses a narrated move
-  for a fixed thing.
+  `seat`, `opening` or a story sub-kind. The kind decides the relation (in or
+  on), so the reply never has to say it. Only `under` needs a flag. Use
+  `opening` for a fixed door, gate, hatch or drain with no declared open or
+  closed state and no contents. Narration may not invent one.
+- **Mark `fixed: true` on anything that cannot move**, unless its kind already
+  defaults to fixed, such as `opening`. The engine refuses a narrated move for
+  a fixed thing.
 - **Seats.** A seat with `seat_for` needs `enter_text` and `leave_text`. A
   seat without `seat_for` (a park bench) must have neither. A vehicle's visible
   seat with `seat_for` makes the engine seat the character when a command
