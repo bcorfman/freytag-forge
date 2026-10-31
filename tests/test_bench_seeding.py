@@ -67,6 +67,7 @@ def test_missing_entry_state_keeps_bare_behavior() -> None:
 
 
 @pytest.mark.parametrize("entry_state", [None, "thorough"])
+@pytest.mark.nightly
 def test_entry_facts_are_asserted_for_bare_and_thorough_seeding(entry_state: str | None) -> None:
     fact_id = "evidence_gap_processing_numbers"
     _, state = core.seeded_state_for_scene(_variation(entry_state, [fact_id]), "3C")

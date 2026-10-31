@@ -32,12 +32,12 @@ persistence behavior. Free; no network.
 For the Ringer quick tier, run `uv run python scripts/quick_suite.py [--also PATH ...]`.
 It skips manifest-recorded files at or above the 15-second threshold; `--also` re-includes relevant journeys.
 If the manifest is missing test files, refresh it with `uv run python scripts/regen_shard_durations.py --missing-only`.
-CI and pre-merge verification still run the complete suite.
+PR CI skips tests marked `nightly`; the nightly workflow runs them.
 
 ```bash
 TMPDIR=/tmp uv run pytest -q                                  # full suite without coverage
 TMPDIR=/tmp uv run pytest -q --cov                           # full suite + 90% coverage gate
-TMPDIR=/tmp uv run python scripts/quick_suite.py -- -n 4 -m "(unit or component) and not authoring_quality"  # CI fast feedback
+TMPDIR=/tmp uv run pytest -q --run-nightly  # full suite including nightly end-to-end tests
 TMPDIR=/tmp uv run pytest -q --no-cov -m authoring_quality    # package authoring checks
 TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index N --shard-count 6  # one CI coverage shard; files are assigned by tests/shard_durations.json
 uv run coverage combine coverage-data && uv run coverage report  # nightly gate (coverage-nightly.yml)
@@ -52,8 +52,8 @@ reports no remaining issues; `npm test` passes and Vite writes `frontend/dist/`.
 
 **Cleanup:** None. `frontend/dist/` is generated; delete it freely.
 
-**Notes:** CI (`.github/workflows/test.yml`) runs static checks, fast feedback,
-and six `--no-cov` test shards, then deploys the tested SHA to staging and reruns
+**Notes:** CI (`.github/workflows/test.yml`) runs static checks and six `--no-cov`
+test shards, then deploys the tested SHA to staging and reruns
 `tests/test_web_demo.py tests/test_cloudflare_transport.py` against the
 adapter contract. `coverage-nightly.yml` enforces the 90% coverage floor on a
 schedule, not on pushes. `frozen-runtime-regression.yml` runs

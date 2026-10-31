@@ -114,6 +114,7 @@ def test_enforce_and_shadow_are_mutually_exclusive(capsys: pytest.CaptureFixture
     assert "not allowed with argument" in capsys.readouterr().err
 
 
+@pytest.mark.nightly
 def test_enforce_records_observation_data_counts_and_summary(tmp_path: Path) -> None:
     module = _module()
     summary, rows = _run(module, tmp_path, "--enforce")
@@ -129,6 +130,7 @@ def test_enforce_records_observation_data_counts_and_summary(tmp_path: Path) -> 
     )
 
 
+@pytest.mark.nightly
 def test_enforce_clears_observation_for_engine_authored_moves(tmp_path: Path) -> None:
     module = _module()
     _summary, rows = _run(module, tmp_path, "--enforce")
@@ -230,6 +232,7 @@ def test_enforce_records_empty_attempts_for_a_turn_without_relations(tmp_path: P
     assert move["enforce_attempts"] == []
 
 
+@pytest.mark.nightly
 def test_enforce_off_preserves_rows_and_sets_false_summary(tmp_path: Path) -> None:
     module = _module()
     first_summary, first_rows = _run(module, tmp_path / "first")
@@ -243,6 +246,7 @@ def test_enforce_off_preserves_rows_and_sets_false_summary(tmp_path: Path) -> No
     assert all("turn_elapsed_s" not in turn for turn in first_rows[0]["turns"])
 
 
+@pytest.mark.nightly
 def test_observe_under_first_route_and_enforcement_request_recording(tmp_path: Path) -> None:
     module = _module()
 
@@ -295,6 +299,7 @@ def test_observe_under_first_route_and_enforcement_request_recording(tmp_path: P
     assert all("observation_request" not in turn for turn in off_rows[0]["turns"])
 
 
+@pytest.mark.nightly
 def test_enforce_observation_request_is_none_for_engine_authored_move(tmp_path: Path) -> None:
     module = _module()
     _summary, rows = _run(module, tmp_path, "--enforce")

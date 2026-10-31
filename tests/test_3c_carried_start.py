@@ -43,6 +43,7 @@ def test_families_diff_is_only_the_three_d_r2_phrases() -> None:
     assert pump_entry == family_entry
 
 
+@pytest.mark.nightly
 def test_carried_run_row_uses_scene_turns_from_one_without_network() -> None:
     variation, _package = _arm_package("pump")
 
@@ -69,6 +70,7 @@ def test_carried_run_row_uses_scene_turns_from_one_without_network() -> None:
     assert row["committed_reveal_ids"]
 
 
+@pytest.mark.nightly
 def test_checker_accepts_carried_dry_run_and_rejects_tampered_cap(tmp_path: Path) -> None:
     artifact = ROOT / "bench/results/stage7-3c-carried-dry"
     for name in ("source.json", "plan.json"):

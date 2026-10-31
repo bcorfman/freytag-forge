@@ -1,4 +1,7 @@
-"""Regenerate the test-file duration manifest from a tier report."""
+"""Regenerate the test-file duration manifest from a tier report.
+
+Durations measure the default selection without ``--run-nightly`` because PR shard balance matters.
+"""
 
 from __future__ import annotations
 
@@ -77,11 +80,13 @@ def _run_pytest(report_path: Path, files: list[str] | None = None) -> int:
         "--no-cov",
         "-p",
         "no:cacheprovider",
+        "--deselect",
+        "tests/test_regen_shard_durations.py::test_real_manifest_covers_test_files",
         "-n",
         "4",
         "--tier-report",
         str(report_path),
-        *(files or []),
+        *(files or ["tests"]),
     ]
     environment = os.environ.copy()
     environment.setdefault("TMPDIR", "/tmp")
@@ -111,7 +116,15 @@ def main(argv: list[str] | None = None, *, durations_path: Path = DURATIONS_PATH
                 print(f"Refusing to write shard durations: pytest exited with status {exit_status}.", file=sys.stderr)
                 return exit_status or 1
         report_seconds = _report_seconds(report_path)
-        file_seconds = merge_missing(existing, report_seconds) if options.missing_only else report_seconds
+        if options.missing_only:
+            file_seconds = merge_missing(existing, report_seconds)
+        else:
+            present = test_files()
+            file_seconds = {
+                name: report_seconds.get(name, existing[name])
+                for name in present
+                if name in report_seconds or name in existing
+            }
         write_payload(file_seconds, durations_path)
     finally:
         if temporary_path is not None:

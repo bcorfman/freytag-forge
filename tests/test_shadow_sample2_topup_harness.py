@@ -3,6 +3,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from scripts.ringer.transcript_1a.live_baseline import ROUTES
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -131,6 +133,7 @@ def test_unknown_topup_stage_exits_before_starting_anything():
     assert result.stderr == "usage: shadow_sample2_topup.sh smoke|full\n"
 
 
+@pytest.mark.nightly
 def test_observe_topup_shadow_dry_run_records_planned_calls_and_matching_turn_keys(tmp_path):
     _observe_summary, observe_rows = _run_dry("observe", tmp_path / "observe")
     topup_summary, topup_rows = _run_dry("observe_topup", tmp_path / "topup")

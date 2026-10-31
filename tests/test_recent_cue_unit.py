@@ -102,6 +102,7 @@ def test_accepted_unrelated_turn_expires_cue(monkeypatch: pytest.MonkeyPatch) ->
     assert state.turn_records[-1].reveal_ids == ()
 
 
+@pytest.mark.nightly
 def test_late_scene_cue_survives_saturated_turn_record_ids(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", "0")
     state = _state()

@@ -4,6 +4,8 @@ import importlib.util
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
@@ -32,6 +34,7 @@ def _arms_by_path():
     }
 
 
+@pytest.mark.nightly
 def test_candidate_reuses_the_existing_storm_drain_and_adds_no_world_entities() -> None:
     module = _module()
     captures = module.capture_arms()
@@ -58,6 +61,7 @@ def test_candidate_reuses_the_existing_storm_drain_and_adds_no_world_entities() 
     assert set(loaded.knowledge_indexes.by_id) == set(control.knowledge_indexes.by_id)
 
 
+@pytest.mark.nightly
 def test_candidate_changes_only_affected_scene_requests_and_never_scene_1b2_or_other_scene() -> None:
     module = _module()
     by_path = _arms_by_path()
@@ -71,6 +75,7 @@ def test_candidate_changes_only_affected_scene_requests_and_never_scene_1b2_or_o
     assert module.CANDIDATE_PHRASE not in control_scene["user"]
 
 
+@pytest.mark.nightly
 def test_candidate_reaches_the_1b_requests_without_future_reveal_leak() -> None:
     module = _module()
     by_path = _arms_by_path()

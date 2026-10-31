@@ -271,6 +271,7 @@ def test_rejected_nudge_restores_state_then_accepted_nudge_records_stage_two(mon
     )
 
 
+@pytest.mark.nightly
 def test_scene_reentry_clears_cues_and_allows_a_new_escalation(monkeypatch) -> None:
     state = _state()
     provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 24))

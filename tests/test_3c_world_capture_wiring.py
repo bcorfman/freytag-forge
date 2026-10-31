@@ -82,6 +82,7 @@ def test_every_capture_ask_is_counted_and_cap_is_checked_before_send():
     assert capped.cloudflare_requests == 1
 
 
+@pytest.mark.nightly
 def test_item_facts_dry_run_marks_world_capture_without_creating_jev_client(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         probe.JevClient,

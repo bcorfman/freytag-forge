@@ -3,6 +3,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 ENVIRONMENT_NARRATION = ROOT / "scripts/ringer/environment_narration"
 SCRIPT = ENVIRONMENT_NARRATION / "shadow_sample2.sh"
@@ -102,6 +104,7 @@ def test_shadow2_generator_is_idempotent():
     assert after == before
 
 
+@pytest.mark.nightly
 def test_observe_shadow_dry_run_records_planned_calls_without_real_calls(tmp_path):
     output_dir = tmp_path / "dry-run"
     result = subprocess.run(

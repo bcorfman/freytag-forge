@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 
@@ -24,6 +26,7 @@ def _module():
     return module
 
 
+@pytest.mark.nightly
 def test_tampered_1b2_details_are_reported_as_exposure(tmp_path: Path) -> None:
     # A public beat detail containing a hidden clue name must be visible in Findings.
     tampered = tmp_path / "continuity-initiative"
@@ -50,6 +53,7 @@ def test_tampered_1b2_details_are_reported_as_exposure(tmp_path: Path) -> None:
     )
 
 
+@pytest.mark.nightly
 def test_real_package_cli_writes_exactly_eight_captures(tmp_path: Path) -> None:
     # The hermetic CLI completes even when the exposure verdict is a finding.
     report_path = tmp_path / "report.md"
@@ -91,6 +95,7 @@ def test_recovered_capture_state_uses_on_assert_world_effects() -> None:
         assert not world.is_hidden(item_id)
 
 
+@pytest.mark.nightly
 def test_json_mode_emits_capture_document(tmp_path: Path) -> None:
     # JSON mode remains machine-readable while the report file stays Markdown.
     report_path = tmp_path / "report.md"

@@ -27,6 +27,7 @@ def _rows(summary: dict[str, object]) -> dict[str, dict[str, object]]:
 
 
 @pytest.mark.parametrize("name", ["thorough", "staller", "wrong_lead"])
+@pytest.mark.nightly
 def test_persona_summary_is_json_serializable(name: str, summaries: dict[str, dict[str, object]]) -> None:
     json.dumps(summaries[name])
 

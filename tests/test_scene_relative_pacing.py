@@ -61,6 +61,7 @@ def test_min_turns_floor_blocks_a_committed_trigger_until_source_turns_are_playe
     assert state.current_scene_id == "1B"
 
 
+@pytest.mark.nightly
 def test_each_scene_entry_starts_with_a_full_relative_turn_allowance() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, _quiet_turn)

@@ -30,6 +30,7 @@ def _load(out: Path) -> dict[str, object]:
     return json.loads(out.read_text())
 
 
+@pytest.mark.nightly
 def test_output_is_byte_identical_across_two_runs(tmp_path: Path) -> None:
     first = tmp_path / "first.json"
     second = tmp_path / "second.json"

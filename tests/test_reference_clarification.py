@@ -58,6 +58,7 @@ def test_answer_splices_only_the_ambiguous_noun() -> None:
     )
 
 
+@pytest.mark.nightly
 def test_story_complete_and_pending_break_skip_resolution() -> None:
     complete_state = _state("2B")
     complete_state.story_complete = True

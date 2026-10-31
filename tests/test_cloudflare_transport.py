@@ -188,6 +188,7 @@ def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None
     assert "statement" in next(item for item in unbeat_context["candidates"] if item["id"] == "k_sl_1a_c_r2")
 
 
+@pytest.mark.nightly
 def test_recalled_earlier_knowledge_has_its_own_prompt_section(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     advance_state_to_scene(PACKAGE, state, "2C")
