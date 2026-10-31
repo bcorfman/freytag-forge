@@ -11,9 +11,11 @@ const ACCOUNT_ID = "test-account";
 const AI_TOKEN = "test-ai-token";
 const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
-function fakeWorkersAiFetch(calls) {
+function fakeWorkersAiFetch(calls, { delayMs = 0, started } = {}) {
   return async (url, init) => {
     calls.push({ url, init });
+    started?.();
+    if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
     if (String(url).endsWith("/ai/run")) {
       return new Response(JSON.stringify({
         success: true,
@@ -53,7 +55,13 @@ function requestBody(overrides = {}) {
   };
 }
 
-async function callRunner(runner, { path = "/", body = requestBody(), token = TOKEN, method = "POST" } = {}) {
+async function callRunner(runner, {
+  path = "/",
+  body = requestBody(),
+  token = TOKEN,
+  method = "POST",
+  requestFetch = fetch
+} = {}) {
   const server = createServer((request, response) => {
     runner.handle(request, response).catch((error) => {
       response.statusCode = 500;
@@ -63,7 +71,7 @@ async function callRunner(runner, { path = "/", body = requestBody(), token = TO
   server.listen(0, "127.0.0.1");
   await once(server, "listening");
   const address = server.address();
-  const response = await fetch(`http://127.0.0.1:${address.port}${path}`, {
+  const response = await requestFetch(`http://127.0.0.1:${address.port}${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -109,6 +117,33 @@ test("/jev uses the same Worker call path and returns Jev answers", async () => 
   assert.match(calls[0].url, /\/ai\/run$/);
 });
 
+test("concurrent POSTs without fetchImpl overlap model calls", async () => {
+  const calls = [];
+  let resolveStarted;
+  const started = new Promise((resolve) => { resolveStarted = resolve; });
+  const runner = createLocalWorker({ env: makeEnv() });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = fakeWorkersAiFetch(calls, { delayMs: 400, started: resolveStarted });
+
+  try {
+    const began = performance.now();
+    const first = callRunner(runner, { requestFetch: originalFetch });
+    const second = callRunner(runner, { requestFetch: originalFetch });
+    await started;
+    const spent = await callRunner(runner, { path: "/__spent", method: "GET", requestFetch: originalFetch });
+    const results = await Promise.all([first, second]);
+    const elapsed = performance.now() - began;
+
+    assert.equal(spent.response.status, 200);
+    assert.equal(results[0].response.status, 200);
+    assert.equal(results[1].response.status, 200);
+    assert.equal(calls.length, 2);
+    assert.ok(elapsed < 600, `expected overlap under 600ms, got ${Math.round(elapsed)}ms`);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("wrong token returns 401 without calling Workers AI", async () => {
   const calls = [];
   const runner = createLocalWorker({ env: makeEnv(), fetchImpl: fakeWorkersAiFetch(calls) });
@@ -136,6 +171,33 @@ test("the daily budget rejects the second 1-micro-USD call before Workers AI", a
   assert.equal(second.response.status, 429);
   assert.equal(second.body.code, "AI_DAILY_BUDGET_EXCEEDED");
   assert.equal(calls.length, 1);
+});
+
+test("concurrent requests cannot exceed the daily spend cap", async () => {
+  const calls = [];
+  const runner = createLocalWorker({
+    env: makeEnv({
+      DAILY_BUDGET_USD: "0.000001",
+      MODEL_PRICES_JSON: JSON.stringify({ [MODEL]: { input: 0, output: 0.01 } })
+    })
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = fakeWorkersAiFetch(calls, { delayMs: 400 });
+
+  try {
+    const [first, second] = await Promise.all([
+      callRunner(runner, { requestFetch: originalFetch }),
+      callRunner(runner, { requestFetch: originalFetch })
+    ]);
+
+    assert.deepEqual([first.response.status, second.response.status].sort(), [200, 429]);
+    const rejected = [first, second].find((result) => result.response.status === 429);
+    assert.equal(rejected.body.code, "AI_DAILY_BUDGET_EXCEEDED");
+    assert.equal(calls.length, 1);
+    assert.equal(runner.spentMicroUsd(), 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("/__spent reports a positive amount after a call", async () => {

@@ -1,0 +1,36 @@
+{
+  "run_name": "t9h-hedge",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-hedge",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "hedge",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 1200,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/hedged_request.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/jev.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hedged_request.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/hedged_request.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hedged_request.py"
+      ],
+      "verified": "hedge tests green, existing transport and jev tests green, route E dry-run S1-S6 PASS",
+      "spec": "You are the RUNTIME worker adding request hedging for tail latency in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no live model call, no credentials. Do not git commit. NO regular expressions in new code. Match the surrounding style, comments and naming; read docs/contributor-guide.md (provider and budget rules) first. The tree holds unrelated uncommitted edits: touch ONLY the files you own and never run git checkout, stash, reset or clean. FILES YOU OWN: /home/bcorfman/dev/freytag-forge/storygame/runtime/hedged_request.py, /home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py, /home/bcorfman/dev/freytag-forge/storygame/runtime/jev.py, /home/bcorfman/dev/freytag-forge/tests/test_hedged_request.py. Read anything else. Run ruff check --fix and ruff format on your files at the end. Tests are hermetic (fake transports, short real delays of at most 0.3 s, no live Worker), few but complete; update tests whose old behaviour you deliberately change.\n\nPROBLEM (measured). In a real Route E smoke the per-turn calls were: the item-facts referent match (kind `worker`, sent by `ItemFactsProvider` through `CloudflareTurnProvider._request_item_facts`), Jev classification calls (`storygame/runtime/jev.py`, POST to `/jev`), and one narration request. The referent match answered in 0.5 to 1.6 s on 14 of 18 calls but stalled 5.9, 7.6, 8.2 and 20.0 s on four (20.0 s is the request timeout): the stalls were 42 of its 52.5 s total. Jev calls had mean 0.38 s but one 7.6 s stall. These look like provider queueing stalls, not inherent cost, so a duplicate request often answers fast. Mean turn time was 9.8 s with turns up to 32 s; the project target is under 10 s on the normal path.\n\nCHANGE. Add `storygame/runtime/hedged_request.py`: a small, typed, dependency-light helper (for example `hedged_call(send, *, delay_s, ...)`) that runs `send()` on a worker thread, and if no result has arrived after `delay_s` starts ONE duplicate `send()` (never more than one hedge), returns the first SUCCESSFUL result, and ignores the loser (it cannot be cancelled; let it finish on a daemon thread, discard its result and swallow its exception). Rules: (1) if the primary raises before the hedge starts, re-raise at once exactly as today and do not hedge; (2) an ANSWERED error (urllib HTTPError, any typed provider error) from either attempt is not retried by hedging: if the first attempt to finish is an error, raise it, unless the other attempt is still running and may succeed, in which case wait for it and raise the first error only if it also fails; (3) if both fail, raise the FIRST failure; (4) the total wait is still bounded by the existing request timeout, never longer; (5) constructor-inject the clock and the thread starter so tests are deterministic, with real short delays in at most a couple of tests; (6) expose a typed result recording whether a hedge fired and which attempt won, so callers can count extra HTTP requests.\nWIRING: use the helper for (a) `CloudflareTurnProvider._request_item_facts` calls and (b) the Jev POST in `storygame/runtime/jev.py`, with `delay_s` constants of 2.5 s for both, named and documented next to the existing timeout constant; read the delay from an environment variable `FREYTAG_HEDGE_DELAY_S` when set (0 disables hedging) so a bench can turn it off. DO NOT hedge the narration request: the contract (docs/contributor-guide.md) allows exactly one narration request per turn. A hedge is one LOGICAL request: it must not increment `item_facts_match_calls`, the item-facts request budget or any narration or recovery counter a second time. Record the extra HTTP duplicate in the recorder-visible call timings if the existing timing wrapper sees both HTTP requests (do not change `scripts/`), and say in your summary whether the budgets and timings behave as described. Hedging must not change any request payload byte, any reply handling, or any other behaviour. No story-specific code.\n\nTESTS (tests/test_hedged_request.py plus changes to existing tests only if they break): fast primary returns without a hedge and no duplicate is sent; slow primary plus fast hedge returns the hedge result; both slow raises the same timeout error as before within the timeout; an answered HTTPError is not hedged and is raised once; primary failing before the delay is raised without a hedge; the loser's exception is swallowed; `FREYTAG_HEDGE_DELAY_S=0` disables hedging; wiring tests that the item-facts request and the Jev request both go through the helper and that narration does not; logical budget counters are unchanged after a hedged item-facts request.\nHOW TO VERIFY: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_hedge.sh`. Do not edit it. Final output: a short summary including the exact delay constants, what happens to budgets and timings, and anything you could not do.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_hedge.sh"
+    }
+  ]
+}

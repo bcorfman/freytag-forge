@@ -171,6 +171,11 @@ new_fact_ids:
   used_by_storylets:
   - SL-1A-F
   used_by_transitions: []
+- id: bench_underside_pointed_out
+  definition: Kristin has been pointed toward the shadowed space beneath the park bench.
+  used_by_storylets:
+  - SL-1B-E
+  used_by_transitions: []
 - id: official_interest_in_michelle_known
   definition: Kristin knows the welfare patrol was specifically interested in Dr. McGehee’s research.
   used_by_storylets:
@@ -180,6 +185,13 @@ new_fact_ids:
   definition: Michelle’s home has been marked by the patrol for a likely return.
   used_by_storylets:
   - SL-1A-C
+  used_by_transitions: []
+- id: bench_clues_recovered
+  definition: Kristin has recovered the three clues hidden under the park bench.
+  used_by_storylets:
+  - SL-1B-D
+  - SL-1B-A
+  - SL-1B-B
   used_by_transitions: []
 - id: transport_route_identified
   definition: Kristin and Brandon have enough evidence to follow the removal operation’s physical transport route
@@ -911,12 +923,49 @@ storylets:
     - scene_id_not: 1A
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1B-D
+  scene_id: 1B
+  title: Beneath the Park Bench
+  activation:
+    scene_id: 1B
+    conditions:
+    - fact_id: bench_clues_recovered
+      equals: false
+    pacing:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 12
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let a search beneath the park bench recover Michelle's clues before the park closes.
+  realization_options:
+  - id: SL-1B-D-R1
+    dramatic_intent: Kristin searches beneath the park bench and keeps the transit token, handwritten number sequence and Michelle's photograph.
+    source_beats: [scene-1b1--michelles-dead-drop]
+    operations:
+    - op: assert
+      fact_id: bench_clues_recovered
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - brandon_history
+    - janus_selection_system
+    - janus_phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: bench_clues_recovered
+      equals: true
+  abort_when:
+  - scene_id_not: 1B
+  non_coercion_note: Offer as a consequence of free-text investigation. Do not present it as a choice or required command; equivalent careful searches may validate the same operation.
 - id: SL-1B-A
   scene_id: 1B
   title: The Dead Drop Has More Than One Meaning
   activation:
     scene_id: 1B
-    conditions: []
+    conditions:
+    - fact_id: bench_clues_recovered
+      equals: true
     pacing:
       earliest_turn: 0
       target_turn: 2
@@ -960,6 +1009,41 @@ storylets:
     - scene_id_not: 1B
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1B-E
+  scene_id: 1B
+  title: The Bench Points Beneath
+  activation:
+    scene_id: 1B
+    conditions:
+    - fact_id: bench_clues_recovered
+      equals: false
+    pacing:
+      earliest_turn: 0
+      target_turn: 3
+      latest_turn: 12
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let a plain look at the park bench point Kristin toward the space beneath the bench without recovering the clues.
+  realization_options:
+  - id: SL-1B-E-R1
+    dramatic_intent: Kristin looks the park bench over and notices the shadowed space beneath it without finding anything.
+    source_beats: [scene-1b1--michelles-dead-drop]
+    operations:
+    - op: assert
+      fact_id: bench_underside_pointed_out
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - brandon_history
+    - janus_selection_system
+    - janus_phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: bench_underside_pointed_out
+      equals: true
+    abort_when:
+    - scene_id_not: 1B
+  non_coercion_note: Offer as a consequence of free-text investigation. Do not present it as a choice or required command; equivalent careful looks at the bench may validate the same operation.
 - id: SL-1B-B
   scene_id: 1B
   title: Is Brandon Hunter or Rescuer?
@@ -999,7 +1083,7 @@ storylets:
     - janus_selection_system
     - janus_phase_two
   - id: SL-1B-B-R2
-    dramatic_intent: Kristin confronts him with the photograph; Brandon admits prior Initiative work and that the
+    dramatic_intent: Kristin questions the man about Michelle; Brandon admits he knew her and that the
       missing may still be alive, but withholds the protected JANUS role.
     source_beats: [scene-1b2--the-man-following-her, scene-1b3--brandons-warning]
     operations:

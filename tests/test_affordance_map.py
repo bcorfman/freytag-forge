@@ -190,6 +190,7 @@ def test_whole_package_findings_match_recorded_gaps():
             "michelle_photograph",
             "brandon_hideout",
             "service_level",
+            "transit_card",
         )
     ] + [
         {"check": 3, "scene_id": "1C", "gate": "t_1c_2a:facility_infiltration_needed", "subject": subject}

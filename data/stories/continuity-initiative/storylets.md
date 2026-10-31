@@ -313,6 +313,48 @@ Each entry below is authoring data, not a player action menu.
 
 ## Storylets for [Scene 1B — The Lead in the Park](plot.md#scene-1b--the-lead-in-the-park)
 
+### SL-1B-D — Beneath the Park Bench
+
+**Source beats:** [1B.1 — Michelle’s Dead Drop](plot.md#scene-1b1--michelles-dead-drop)
+
+**Allowed scene:** `1B`
+
+**Available when**
+- Kristin has not recovered the clues under the park bench.
+
+**Participants / items**
+- Kristin Schweitzer
+- Park bench
+- Transit token
+- Handwritten number sequence
+- Michelle's photograph
+
+**Dramatic purpose**
+- Reward an underside search with the clues Michelle left for Kristin.
+
+**Possible realizations**
+- Kristin searches beneath the bench, retrieves all three clues, and keeps them with her.
+
+**Effects**
+- Sets `bench_clues_recovered`.
+
+**Completion**
+- Kristin has recovered the three clues.
+
+**Abort**
+- Kristin leaves scene 1B.
+
+**Protected boundary**
+- Finding the clues does not identify the route or the photographed man.
+- It does not identify Brandon, establish trust, or reveal the fate of the missing.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 12`
+
+---
+
 ### SL-1B-A — The Dead Drop Has More Than One Meaning
 
 **Source beats:** [1B.1 — Michelle’s Dead Drop](plot.md#scene-1b1--michelles-dead-drop)
@@ -320,8 +362,7 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `1B`
 
 **Available when**
-- Kristin reaches the park/dead-drop area.
-- The dead-drop materials remain recoverable.
+- Kristin has recovered the three clues beneath the park bench.
 
 **Participants / items**
 - Kristin Schweitzer
@@ -329,7 +370,6 @@ Each entry below is authoring data, not a player action menu.
 - Transit token
 - Handwritten number sequence
 - Photograph of Michelle with Brandon
-- List of earlier disappearance dates
 
 **Dramatic purpose**
 - Let the player decide which clue feels most important while all clues still point toward the authored transport/test history.
@@ -344,11 +384,10 @@ Each entry below is authoring data, not a player action menu.
 **Effects**
 - May reveal evidence of earlier secret tests.
 - May set `brandon_face_known`.
-- May establish possession of the `transit_card`.
 - May make the transport route more compelling to investigate.
 
 **Completion**
-- Kristin has recovered the dead-drop materials or enough of them to continue.
+- Kristin has identified the transport route or recognized the man in the photograph.
 
 **Abort**
 - The park situation is overtaken by the pursuit/ambush.
@@ -360,6 +399,48 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 2`
 - latest: `turn 3`
+
+---
+
+### SL-1B-E — The Bench Points Beneath
+
+**Source beats:** [1B.1 — Michelle’s Dead Drop](plot.md#scene-1b1--michelles-dead-drop)
+
+**Allowed scene:** `1B`
+
+**Available when**
+- Kristin has not recovered the clues under the park bench.
+
+**Participants / items**
+- Kristin Schweitzer
+- Park bench
+
+**Dramatic purpose**
+- Give a plain look at the bench a short authored reply.
+- Point Kristin toward the space beneath the bench without recovering the clues.
+
+**Possible realizations**
+- Kristin looks the bench over and notices the shadowed space beneath it.
+
+**Effects**
+- Sets `bench_underside_pointed_out`.
+- Does not recover the clues.
+
+**Completion**
+- Kristin has been pointed toward the space beneath the park bench.
+
+**Abort**
+- Kristin leaves scene 1B.
+
+**Protected boundary**
+- Does not name or reveal what is beneath the bench, and does not identify Brandon, trust, or the fate of the missing.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 3`
+- latest: `turn 12`
+
+**Non-coercion note:** Offer as a consequence of free-text investigation. Do not present it as a choice or required command; equivalent careful looks at the bench may validate the same operation.
 
 ---
 
@@ -1989,7 +2070,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 | Playable scene | Storylets | Primary function |
 |---|---|---|
 | [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-D` | Crime-scene inference, Michelle’s evidence, first authority pressure |
-| [1B](plot.md#scene-1b--the-lead-in-the-park) | `SL-1B-A` … `SL-1B-C` | Dead-drop clues, Brandon trust, pursuit |
+| [1B](plot.md#scene-1b--the-lead-in-the-park) | `SL-1B-A` … `SL-1B-E` | Hidden clue recovery, bench lead, clue interpretation, Brandon trust, pursuit |
 | [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-D` | Facility discovery, living captives, one advantage, costly recovery after a missed window |
 | [2A](plot.md#scene-2a--false-identities) | `SL-2A-A` … `SL-2A-C` | Brandon context, infiltration preparation, entry complication |
 | [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-A` … `SL-2B-C` | JANUS, Kristin-as-bait, Brandon’s role, Michelle’s resistance |

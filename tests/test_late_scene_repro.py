@@ -394,6 +394,18 @@ EXPECTED_HANDOFF_PLACEMENTS = {
 def test_nonmatching_filler_preserves_authored_custody_across_2a_to_3c(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from storygame import personas
+
+    select_thorough = personas._select_thorough
+
+    def select_without_bench_discovery(package, state, candidates):
+        return select_thorough(
+            package,
+            state,
+            tuple(candidate for candidate in candidates if candidate.id != "k_sl_1b_d_r1"),
+        )
+
+    monkeypatch.setattr(personas, "_select_thorough", select_without_bench_discovery)
     state = RuntimeState.bootstrap(PACKAGE)
     advance_state_to_scene(PACKAGE, state, "2A")
     engine = _engine(monkeypatch, state)
@@ -409,4 +421,6 @@ def test_nonmatching_filler_preserves_authored_custody_across_2a_to_3c(
         assert {entity_id: (world.parent(entity_id), world.relation(entity_id)) for entity_id in expected} == expected
 
     world = world_for(PACKAGE, state.facts)
-    assert (world.parent("transit_card"), world.relation("transit_card")) == ("park_bench", "under")
+    for entity_id in ("transit_card", "number_sequence", "michelle_photograph"):
+        assert (world.parent(entity_id), world.relation(entity_id)) == ("park_bench", "under")
+        assert world.is_hidden(entity_id)

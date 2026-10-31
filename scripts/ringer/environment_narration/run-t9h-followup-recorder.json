@@ -1,0 +1,38 @@
+{
+  "run_name": "t9h-followup-recorder",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-followup-recorder",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "recorder",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/transcript_1a/live_baseline.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_live_baseline_evidence.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_clues_smoke_report.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_clues_smoke_report.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/transcript_1a/live_baseline.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_live_baseline_evidence.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_clues_smoke_report.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_clues_smoke_report.py"
+      ],
+      "verified": "focused tests green, ruff clean, free checks pass",
+      "spec": "You are the RECORDER worker for the T9h Route E smoke runner in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv; uv cannot run in your sandbox). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no live model call, no billed call, no credentials. Do not git commit. NO regular expressions in new code and never parse narration text to decide anything. Match the surrounding code's style, comment density and naming. The working tree holds unrelated uncommitted edits (some in the files you own): preserve every existing edit, touch ONLY the files you own, and never run git checkout, stash, reset or clean. At the end run `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check --fix` and `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format` on the files you own. Tests must be hermetic, few but complete: add a test only when it covers something useful in full, and update tests whose old behaviour you deliberately change.\n\nFILES YOU OWN: /home/bcorfman/dev/freytag-forge/scripts/ringer/transcript_1a/live_baseline.py, /home/bcorfman/dev/freytag-forge/tests/test_live_baseline_evidence.py, /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_clues_smoke_report.py and /home/bcorfman/dev/freytag-forge/tests/test_hidden_clues_smoke_report.py. Read anything. Touch nothing else.\n\nPROBLEM. The smoke reporter's gates S1 and S3 need to know, per recorded turn, which STORY facts (for example `bench_clues_recovered`) are true after the turn. The runner writes each turn row in live_baseline.py (see the rows built near the `world_after`, `state_digest_before`, `state_digest_after` and `selected_knowledge_ids` assignments, and the opening row) but records no story-fact snapshot, so on real rows S1 and S3 can only say `insufficient evidence`. Note that the name `facts_after` is already used elsewhere in this test module for ITEM facts (place/state of things); do not reuse it for this.\n\nDO:\n1. In live_baseline.py record a new key `story_facts_after` on the opening row and on every recorded turn row (the same rows that carry `world_after`): a flat dict mapping every story fact id in the runtime state's fact store to its current value (bool, as stored), read from the same runtime state object the runner already uses (find how `_world_structure(state)` and the digest read the state; use the state's fact store, not the narration and not a prompt). It must be a plain JSON-serialisable dict with sorted keys for stable output. Record it for rejected turns too (it must equal the previous turn's snapshot when the turn rolled back).\n2. In hidden_clues_smoke_report.py read the new key `story_facts_after` instead of `facts_after` wherever the repaired reporter looks for story-fact evidence (S1 recovery, S3 transitions, S4 interpretation facts if it uses it). A recovery fact counts as present when its value is True. Keep every other behaviour. If `story_facts_after` is absent from a turn, the gate still reports `insufficient evidence`.\n3. Update tests: in test_live_baseline_evidence.py add one complete test that runs the recorder over its existing hermetic fixture and asserts `story_facts_after` is present on the opening row and each turn row, is a dict of bools, and equals the previous snapshot on a rejected turn. In test_hidden_clues_smoke_report.py move the fixtures from `facts_after` to `story_facts_after` and keep all existing gate tests passing.\n4. Item-facts and shared-recovery request counts and the private selector traffic distinction: look at how `_narration_attempts` and `verifier_requests` are counted. Only if a counter for item-facts or shared-recovery calls ALREADY exists, record it on the turn row under `item_facts_requests` / `shared_recovery_requests` and let the reporter's S6 read it. If no such counter exists, change nothing for them and say so in your final summary. Never invent a count.\n\nHOW TO VERIFY: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_followup_recorder.sh`. Do not edit it. Final output: a short summary of what changed and every field you could not record.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_followup_recorder.sh"
+    }
+  ]
+}

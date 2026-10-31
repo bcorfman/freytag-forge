@@ -116,9 +116,11 @@ live prefix. Keep diagnostic results in the active plan. Artifact inspection
 is read-only, costs nothing and needs no cleanup; a live replay is billed and
 follows section 4.
 
-**Pass:** the prompt contains only material the scene has made available. For
-an authored-handoff turn it contains no candidate ID, candidate statement,
-`delivery_text`, `must_convey`, or grounding instruction.
+**Pass:** the prompt contains only material the scene has made available.
+For an authored-handoff turn, private candidate metadata stays out of the
+narrator request. The selected delivery sentence may be shown as the text the
+game will append. Check the complete player text after runtime composition,
+including delivery and cues.
 
 **Notes:** Player inputs in scripts and examples are imperative commands
 ("Search the kitchen."), never first person. See the [player-input guide](player-input-guide.md).
@@ -170,6 +172,8 @@ uv run python -m bench.candidate_selection_report --in /tmp/bench-1a/all-turn-re
   distinguishable. Never report a one- or two-point difference as real.
 - Bench scenes start from a bare arrival state (only the entry fact committed),
   so a mid-story scene can fail safety checks a real playthrough would not.
+
+For the live-baseline / hidden-clues smoke report, `narration_attempts` is the logical count, `narration_http_prompts` is the raw HTTP count, late completions are listed under `late_completions_after_turn`, and the drain section is labelled `drain outcomes`.
 
 **Stop conditions:** HTTP 429 with `X-Narration-Error-Code: AI_QUOTA_EXCEEDED`
 or `AI_DAILY_BUDGET_EXCEEDED` is a daily model limit; stop until 00:00 UTC.

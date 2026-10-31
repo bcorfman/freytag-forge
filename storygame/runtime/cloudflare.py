@@ -8,10 +8,12 @@ import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from os import getenv
+from threading import local
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
+from storygame.runtime import hedged_request
 from storygame.runtime.candidate_matcher import (
     _NEGATIONS,  # noqa: F401 - compatibility import for callers of cloudflare._NEGATIONS
     ActionEvidenceCandidate,
@@ -34,6 +36,7 @@ from storygame.runtime.cue_lifecycle import (
     staged_cue_reveal_is_reachable,
 )
 from storygame.runtime.facts import Fact
+from storygame.runtime.hedged_request import HedgedResult, configured_hedge_delay, hedged_call
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
 from storygame.runtime.narration_json import escape_stray_quotes, extract_json_object
 from storygame.runtime.recent_cue import recent_cue_referent_text
@@ -61,6 +64,10 @@ logger = logging.getLogger(__name__)
 
 MAX_TURN_SEGMENTS = 5
 REQUEST_TIMEOUT_SECONDS = 20.0
+# A duplicate starts after 2.5 seconds; FREYTAG_HEDGE_DELAY_S=0 disables it.
+HEDGE_DELAY_SECONDS = 2.5
+# A narration duplicate starts after 4.5 seconds; FREYTAG_HEDGE_NARRATION_S=0 disables it.
+NARRATION_HEDGE_DELAY_S = 4.5
 TURN_REQUEST_BUDGET = 2
 ITEM_FACTS_REQUEST_BUDGET = 2
 _REQUEST_BUDGET_FIELD = "__freytag_request_budget"
@@ -84,6 +91,18 @@ _REJECTION_FEEDBACK = {
 
 def _is_timeout(error: BaseException) -> bool:
     return isinstance(error, TimeoutError) or (isinstance(error, URLError) and isinstance(error.reason, TimeoutError))
+
+
+def _configured_narration_hedge_delay(default: float) -> float:
+    """Return the narration hedge delay, with zero disabling hedging."""
+
+    configured = getenv("FREYTAG_HEDGE_NARRATION_S")
+    if configured is None:
+        return default
+    try:
+        return max(0.0, float(configured))
+    except ValueError:
+        return default
 
 
 DEFAULT_OUTPUT_EXAMPLE = (
@@ -315,6 +334,9 @@ class CloudflareTurnProvider:
         self.recovery_count = 0
         self._turn_request_count: int | None = None
         self._turn_item_facts_request_count: int | None = None
+        self._request_budget_reservation = local()
+        self.last_narration_hedge: HedgedResult[bytes] | None = None
+        self.last_item_facts_hedge: HedgedResult[object] | None = None
         self.reply_keys_dropped: dict[str, int] = {}
         self.semantic_ask = semantic_ask
         self.semantic_fallback_calls = 0
@@ -2108,14 +2130,26 @@ class CloudflareTurnProvider:
     def _request_item_facts(self, payload: dict[str, object]) -> object:
         """Send a name-matching request against the separate item-facts budget."""
 
-        return CloudflareTurnProvider._request(
-            self,
-            {**payload, _REQUEST_BUDGET_FIELD: "item_facts"},
-        )
+        request_payload = {**payload, _REQUEST_BUDGET_FIELD: "item_facts"}
+        self.last_item_facts_hedge = None
+        self._reserve_request_budget("item_facts")
 
-    def _request(self, payload: dict[str, object]) -> object:
-        request_budget = payload.get(_REQUEST_BUDGET_FIELD, "narration")
-        wire_payload = {key: value for key, value in payload.items() if key != _REQUEST_BUDGET_FIELD}
+        def send() -> object:
+            self._request_budget_reservation.item_facts = True
+            try:
+                return CloudflareTurnProvider._request(self, request_payload)
+            finally:
+                self._request_budget_reservation.item_facts = False
+
+        result = hedged_call(
+            send,
+            delay_s=configured_hedge_delay(HEDGE_DELAY_SECONDS),
+            timeout_s=float(getenv("CLOUDFLARE_TIMEOUT", str(REQUEST_TIMEOUT_SECONDS))),
+        )
+        self.last_item_facts_hedge = result
+        return result.value
+
+    def _reserve_request_budget(self, request_budget: object) -> None:
         if request_budget == "item_facts":
             if (
                 self._turn_item_facts_request_count is not None
@@ -2140,7 +2174,35 @@ class CloudflareTurnProvider:
             self._turn_item_facts_request_count += 1
         elif self._turn_request_count is not None:
             self._turn_request_count += 1
+
+    def _request(self, payload: dict[str, object]) -> object:
+        wire_payload = self._prepare_request(payload)
+        request_budget = payload.get(_REQUEST_BUDGET_FIELD, "narration")
+        if request_budget == "narration":
+            self.last_narration_hedge = None
+            result = hedged_request.hedged_call(
+                lambda: self._send_http(wire_payload),
+                delay_s=_configured_narration_hedge_delay(NARRATION_HEDGE_DELAY_S),
+                timeout_s=float(getenv("CLOUDFLARE_TIMEOUT", str(REQUEST_TIMEOUT_SECONDS))),
+            )
+            self.last_narration_hedge = result
+            response_body = result.value
+        else:
+            response_body = self._send_http(wire_payload)
+        return self._decode_response(response_body)
+
+    def _prepare_request(self, payload: dict[str, object]) -> dict[str, object]:
+        request_budget = payload.get(_REQUEST_BUDGET_FIELD, "narration")
+        wire_payload = {key: value for key, value in payload.items() if key != _REQUEST_BUDGET_FIELD}
+        reserved = request_budget in {"item_facts", "narration"} and getattr(
+            self._request_budget_reservation, request_budget, False
+        )
+        if not reserved:
+            self._reserve_request_budget(request_budget)
         self.last_prompt = {"system": wire_payload["system"], "user": wire_payload["user"]}
+        return wire_payload
+
+    def _send_http(self, wire_payload: dict[str, object]) -> bytes:
         headers = {
             "Content-Type": "application/json",
             "User-Agent": BROWSER_USER_AGENT,
@@ -2149,7 +2211,10 @@ class CloudflareTurnProvider:
             headers["Authorization"] = f"Bearer {self.token}"
         request = Request(self.worker_url, data=json.dumps(wire_payload).encode(), headers=headers, method="POST")
         with urlopen(request, timeout=float(getenv("CLOUDFLARE_TIMEOUT", str(REQUEST_TIMEOUT_SECONDS)))) as response:  # noqa: S310
-            body = json.loads(response.read())
+            return response.read()
+
+    def _decode_response(self, response_body: bytes) -> object:
+        body = json.loads(response_body)
         if isinstance(body, dict) and body.get("status") == "error":
             raise NarrationProviderError(str(body.get("message", "narration service failed")), 502)
         if isinstance(body, dict) and isinstance(body.get("narration"), str):

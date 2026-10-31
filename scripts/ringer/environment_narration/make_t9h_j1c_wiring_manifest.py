@@ -1,0 +1,129 @@
+# ruff: noqa: E501
+"""Write build-t9h-j1c-wiring.json: step 3 of the J1c wiring plan, the flagged product change."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+PLAN = f"{REPO}/.plans/grounded-llm-environment-narration/t9h-j1c-wiring-plan.md"
+PROBE = f"{REPO}/scripts/ringer/environment_narration/j1c_wiring_probe.py"
+OWNED = [
+    f"{REPO}/storygame/runtime/observation.py",
+    f"{REPO}/storygame/runtime/observation_verifier.py",
+    f"{REPO}/storygame/runtime/item_facts.py",
+    f"{REPO}/storygame/runtime/capture.py",
+    f"{REPO}/storygame/web_demo.py",
+    f"{REPO}/tests/test_observation_scene_state.py",
+]
+
+SPEC = (
+    f"You are the BUILD worker. Working directory: {REPO} (Python 3.12). export PYTHONPATH={REPO} TMPDIR=/tmp; run "
+    "`.venv/bin/python` (never uv). Run tests with `env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN "
+    ".venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no live model call, no billed "
+    "call, no Worker. Do not git commit. NEVER print or write any credential. NO regular expressions. Keep the code "
+    "in the style of the surrounding files (comment density, naming, idiom); the shared runtime stays "
+    "story-agnostic: no story ids or strings in storygame/. METHOD: write the tests FIRST, watch them fail for the "
+    "right reason, then implement. "
+    "You own ONLY these files: " + ", ".join(OWNED) + ". You may also edit an existing test under tests/ ONLY where "
+    "a signature or dataclass change you make breaks it, and only to the minimum needed; say which in your report. "
+    f"Never touch other files. Read the plan FIRST: {PLAN} (section Design). "
+    "WHAT TO BUILD, behind a flag that defaults OFF so nothing changes when it is unset. When a required relation's "
+    "thing has no holder and its immediate parent entity IS the current scene's location (scene.metadata."
+    "location_id), that relation is 'scene-level'. When the flag is on and at least one relation in a verifier "
+    "request is scene-level, the request state becomes {'narration': text, 'scene': <label of the scene's "
+    "location>, 'starting_places': {thing name: its place label, for the scene-level relations ONLY}}; otherwise the "
+    "state is exactly {'narration': text}. The per-relation questions never change. "
+    "1) observation.py: ObservedThing gets `scene_level: bool = False` (last field, default keeps old "
+    "constructions valid); ObservationContext gets `scene: str | None = None` (last field); "
+    "build_observation_context gets a keyword-only `scene_location_id: str | None = None`; when given, "
+    "scene = label(world, scene_location_id) (use the same label callable as places), and a visible/contingent "
+    "thing is scene_level iff holder_id is None and world.parent(entity_id) == scene_location_id. Compare ENTITY "
+    "IDS, never display strings. prompt_fields output must stay unchanged. "
+    "2) observation_verifier.py: Relation gets `scene_level: bool = False` (last); relations_from_context copies "
+    "ObservedThing.scene_level for unheld things; ObservationVerifier.__init__ gets keyword `scene_state: bool = "
+    "False`; verify gets keyword-only `scene: str | None = None`; build the state in one small function "
+    "(`_state_for(narration, relations, scene)`) that returns the J1c state only when self scene_state is on, "
+    "scene is not None and a relation is scene_level; VerifierReport gets `scene_state: bool = False` (last field) "
+    "set True exactly when the J1c state was sent. Thresholds, budgets and failure handling unchanged. "
+    "3) item_facts.py `_observation_context` passes scene_location_id from the current scene "
+    "(next scene in self.state.package.scenes whose metadata.scene_id == self.state.current_scene_id). "
+    "4) capture.py: both `verify` calls (enforcing in preview_commit, shadow) pass scene=context.scene; if the "
+    "shadow/enforcing report dicts that capture records list report fields, add a `scene_state` entry next to the "
+    "others so the enforced run can be read per turn. "
+    "5) web_demo.py: constant OBSERVATION_SCENE_STATE_ENV = 'FREYTAG_OBSERVATION_SCENE_STATE'; where the enforcing "
+    "verifier is built, pass scene_state=(getenv(OBSERVATION_SCENE_STATE_ENV, '') == '1'). "
+    "TESTS in the NEW file tests/test_observation_scene_state.py, hermetic with a fake ask that records (state, "
+    "questions): (a) flag on, a scene-level relation: state has narration, scene (the location label) and "
+    "starting_places with that relation only; (b) flag on, a relation whose parent is NOT the scene location "
+    "(drawer contents): state is exactly {'narration': ...} and the question dict equals the one with the flag "
+    "off; (c) a held relation is never scene-level; (d) flag off: V0 state for every relation, even scene-level; "
+    "(e) mixed batch: starting_places carries only the scene-level entries and scene is sent; (f) the question "
+    "text of every relation is identical with the flag on and off; (g) VerifierReport.scene_state is True only when "
+    "the J1c state was sent; (h) build_observation_context with a real small world: a thing placed directly in the "
+    "scene location is scene_level and ObservationContext.scene is the location's name, a thing in a container "
+    "is not; (i) EQUALITY with the probe: for the same (thing, place, scene_level) items the verifier's state "
+    f"equals `j1c_state(narration, items, scene)` imported from scripts.ringer.environment_narration.j1c_wiring_probe "
+    f"({PROBE}); (j) a story-data test over the compiled continuity-initiative package (find how existing tests "
+    "load it): for the scene that holds the storm drain, the drain's parent is that scene's location_id so the "
+    "relation is scene-level; assert ONLY that, plus that the flag-off default engine path (web_demo engine_for "
+    "with FREYTAG_OBSERVATION_ENFORCE=1 and the new env unset) builds a verifier with scene_state False and, with "
+    "the new env '1', scene_state True (follow tests/test_web_demo_observation_enforce.py for how that is tested). "
+    "Add only tests that cover real behavior; no redundant ones. Existing tests/test_observation_*.py and "
+    "tests/test_web_demo_observation_enforce.py, tests/test_runtime_capture.py and tests/test_3c_world_capture_wiring.py "
+    "must stay green. "
+    "FINALLY: run a one-off python snippet (do NOT commit it as a test) over the compiled continuity-initiative "
+    "package that prints, per scene, how many items in scene.metadata.item_ids / item_placements have the scene's "
+    "location as their parent after placement (this is the plan's free check); include its output in your report. "
+    "Then run `.venv/bin/python -m ruff check --fix` and `ruff format` on your owned files and report the test counts."
+)
+
+TEST_FILES = (
+    "tests/test_observation_scene_state.py tests/test_observation_verifier.py tests/test_observation_context.py "
+    "tests/test_observation_shadow.py tests/test_observation_preview.py tests/test_observation_enforcement.py "
+    "tests/test_web_demo_observation_enforce.py tests/test_runtime_capture.py tests/test_3c_world_capture_wiring.py "
+    "tests/test_j1c_wiring_probe.py"
+)
+
+CHECK = (
+    f"cd {REPO} && export PYTHONPATH={REPO} TMPDIR=/tmp && set -o pipefail "
+    "&& env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN .venv/bin/python -m pytest -q "
+    f"-p no:cacheprovider --no-cov {TEST_FILES} "
+    "2>&1 | tee /tmp/j1c-wiring-build-tests.out | tail -15 "
+    "&& ! grep -Eq '[0-9]+ failed|FAILED|ERROR' /tmp/j1c-wiring-build-tests.out "
+    "&& grep -Eq '[0-9]+ passed' /tmp/j1c-wiring-build-tests.out "
+    "&& .venv/bin/python -m ruff check " + " ".join(o.removeprefix(REPO + "/") for o in OWNED) + " "
+    "&& .venv/bin/python -m ruff format --check " + " ".join(o.removeprefix(REPO + "/") for o in OWNED)
+)
+
+MANIFEST = {
+    "run_name": "t9h-j1c-wiring-build",
+    "workdir": "/home/bcorfman/dev/ringer-work/t9h-j1c-wiring-build",
+    "max_parallel": 1,
+    "worktrees": False,
+    "repo": REPO,
+    "tasks": [
+        {
+            "key": "j1c-wiring",
+            "task_type": "code-feature",
+            "engine": "codex",
+            "model": "gpt-5.6-luna",
+            "engine_args": ["-c", "model_reasoning_effort=high"],
+            "full_access": True,
+            "max_attempts": 2,
+            "timeout_s": 3600,
+            "check_timeout_s": 1800,
+            "ownership": OWNED,
+            "expect_files": OWNED,
+            "verified": "J1c scene state in the observation verifier behind FREYTAG_OBSERVATION_SCENE_STATE, tests pass, default off",
+            "spec": SPEC,
+            "check": CHECK,
+        }
+    ],
+}
+
+if __name__ == "__main__":
+    out = Path(__file__).with_name("build-t9h-j1c-wiring.json")
+    out.write_text(json.dumps(MANIFEST, indent=2) + "\n")
+    print(out)

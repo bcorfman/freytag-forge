@@ -58,6 +58,30 @@ def test_world_structure_records_every_entity_and_all_mutable_world_fields() -> 
     assert created.id in after
 
 
+def test_world_structure_records_hidden_unplaced_entities_stably() -> None:
+    module = _module()
+    package = load_story_package(PACKAGE_ROOT)
+    state, _ = module._start_state(package, "observe_park_bench_1b")
+    world = world_for(package, state.facts)
+    created = world.create("hidden unplaced lantern")
+    assert created.ok
+    state.facts.assert_fact(Fact(predicate="wk_hidden", subject=created.id, value="true"))
+
+    first = module._world_structure(state)
+    first_digest = module._state_digest(state)
+    second = module._world_structure(state)
+    second_digest = module._state_digest(state)
+
+    assert first[created.id] == {
+        "parent": None,
+        "relation": None,
+        "hidden": True,
+        "axes": {},
+    }
+    assert second[created.id] == first[created.id]
+    assert second_digest == first_digest
+
+
 def test_world_structure_helper_handles_a_synthetic_world_with_other_names(monkeypatch) -> None:
     module = _module()
 
@@ -300,6 +324,53 @@ def test_enforced_row_evidence_is_serializable_and_preserves_legacy_values(tmp_p
     assert isinstance(turn["world_after"], dict)
     assert len(turn["previews"]) == 1
     json.dumps(row)
+
+
+def test_enforced_rows_record_story_fact_snapshots_after_each_turn(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    module = _module()
+    from storygame.runtime.engine import RuntimeEngine
+
+    original_turn = RuntimeEngine.turn
+
+    def reject_second_turn(self, command):
+        if command == "look under the park bench":
+            return SimpleNamespace(narration=None, selected_knowledge_ids=())
+        return original_turn(self, command)
+
+    monkeypatch.setattr(RuntimeEngine, "turn", reject_second_turn)
+    output = tmp_path / "run"
+    assert (
+        module.main(
+            [
+                "--dry-run",
+                "--route",
+                "observe_park_bench_1b",
+                "--replicates",
+                "1",
+                "--turns",
+                "3",
+                "--enforce",
+                "--out",
+                str(output),
+            ]
+        )
+        == 0
+    )
+
+    record = json.loads((output / "rows.json").read_text())[0]
+    opening = record["opening"]
+    turns = record["turns"]
+    assert isinstance(opening["story_facts_after"], dict)
+    assert list(opening["story_facts_after"]) == sorted(opening["story_facts_after"])
+    assert all(isinstance(value, bool) for value in opening["story_facts_after"].values())
+    for turn in turns:
+        assert isinstance(turn["story_facts_after"], dict)
+        assert list(turn["story_facts_after"]) == sorted(turn["story_facts_after"])
+        assert all(isinstance(value, bool) for value in turn["story_facts_after"].values())
+    assert turns[1]["turn_outcome"] == "rejected"
+    assert turns[1]["story_facts_after"] == turns[0]["story_facts_after"]
 
 
 def test_opening_evidence_is_only_added_when_enforcing(tmp_path) -> None:

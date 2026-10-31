@@ -1,0 +1,38 @@
+{
+  "run_name": "t9h-drain-condition-step-2",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-drain-condition-step-2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "add-pacing-and-fresh-stage",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 1200,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge_probe.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_drain_condition_judge.sh",
+        "/home/bcorfman/dev/freytag-forge/tests/test_drain_condition_judge_probe.py",
+        "/home/bcorfman/dev/freytag-forge/.plans/grounded-llm-environment-narration/t9h-drain-condition-judge-prereg.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge_probe.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_drain_condition_judge.sh",
+        "/home/bcorfman/dev/freytag-forge/tests/test_drain_condition_judge_probe.py",
+        "/home/bcorfman/dev/freytag-forge/.plans/grounded-llm-environment-narration/t9h-drain-condition-judge-prereg.md"
+      ],
+      "verified": "pacing flag, fresh judge2 stage at cap 0.08, prereg addendum, frozen cases untouched, tests green",
+      "spec": "Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. FREE WORK ONLY: no network, no model call, no billed call, no Worker, no credentials, never read or print .env. Do not git commit. NO regular expressions. Match the surrounding style. Touch ONLY your files; never run git checkout, stash, reset or clean; never modify anything under bench/results/, and never touch cases.jsonl or lock.json. At the end run ruff check --fix and ruff format on your .py files. FILES YOU OWN: /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge_probe.py, /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_drain_condition_judge.sh, /home/bcorfman/dev/freytag-forge/tests/test_drain_condition_judge_probe.py, /home/bcorfman/dev/freytag-forge/.plans/grounded-llm-environment-narration/t9h-drain-condition-judge-prereg.md. Do not edit either check script.\n\nBACKGROUND. The first 2100-call run of `drain_condition_judge_probe.py` stopped at call 246 on an upstream Workers AI HTTP 429: 'Unified billing rate limit exceeded for this gateway. Please reduce request rate or use BYOK.' The probe sent about 5 requests a second with no pacing. Observed cost was $0.0069 for 245 calls (about $0.0000282 a call), so 2100 calls cost about $0.059 and the $0.06 cap is too tight. The user approved ONE new complete run in a fresh directory with request pacing and a cap of $0.08. Nothing else changes: the 140 cases, their labels, the three question variants (wording), Variant B as the candidate, the per-case median rule, the four-condition gate (49 of 54, 42 of 46, 9 of 10, 27 of 30), 2100 calls and the stop rules all stay exactly as they are. The original `judge` stage and its output directory (bench/results/.../t9h-drain-condition/step2) must remain untouched and un-reusable.\n\nCHANGES. (1) Probe: add `--min-interval-s FLOAT` (default 0.0 so existing behaviour and tests are unchanged; negative is an error) that enforces a minimum time between the START of consecutive requests in --run mode (use a monotonic clock; the sleep belongs in the run loop, injectable for tests so tests never really sleep). --dry-run prints the interval and the estimated minimum duration (calls x interval). Pacing is the only behavioural change; do not change payloads, scoring, ordering or the stop rules. (2) Wrapper `enforce_t9h_drain_condition_judge.sh`: keep the `judge` stage exactly as it is; add a `judge2` stage: local Worker on port 8810 with --max-usd 0.08, output directory bench/results/environment-narration/t9h-drain-condition/step2-complete (rows.json and worker.log there), refuse if that rows path exists or the port is busy, and run `--run --confirm --max-calls 2100 --max-usd 0.08 --min-interval-s 0.5 --out <rows>`. (3) Preregistration: append a section headed `## Addendum 2026-10-30: complete run after an upstream rate limit` stating, in plain words: the first run stopped at call 246 on an upstream 429 (rate limit, not the budget guard) with $0.0069 spent; its rows are kept and read as INCONCLUSIVE; the user approved one new complete run in the fresh directory step2-complete with request pacing (minimum 0.5 s between request starts) and a cap of $0.08 (the observed cost implies about $0.059); and the exact sentence `No cases, variants, labels or gate numbers changed.` The addendum must also state that the first run's single-sample look is information only and is not used to choose anything. Keep every existing sentence of the preregistration unchanged. (4) Tests: pacing is enforced between starts with a fake clock, a negative interval errors, default 0.0 leaves behaviour unchanged, dry-run prints the interval.\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_drain_condition_judge_rerun.sh`. Finish with a short summary and the exact CLI.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_drain_condition_judge_rerun.sh"
+    }
+  ]
+}

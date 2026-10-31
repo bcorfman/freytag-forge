@@ -1142,11 +1142,22 @@ def test_prepare_turn_gives_visible_contents_under_referred_park_bench(monkeypat
 
     provider.prepare_turn("Look under the park bench.")
 
+    world = provider._world()
+    clue_ids = ("transit_card", "number_sequence", "michelle_photograph")
+    assert all(world.is_hidden(clue_id) for clue_id in clue_ids)
+    assert all(world.parent(clue_id) == "park_bench" for clue_id in clue_ids)
     names = provider._thing_names()
-    assert "handwritten number sequence" in names
-    assert "Michelle's photograph" in names
-    assert "Transit token" in names
-    assert "- handwritten number sequence." in provider._things_block()
+    assert all(name not in names for name in ("handwritten number sequence", "Michelle's photograph", "Transit token"))
+    assert "handwritten number sequence" not in provider._things_block()
+
+    provider.state.facts.assert_fact(Fact(predicate="bench_clues_recovered", subject="story", value="true"))
+    assert apply_world_effects(PACKAGE, provider.state.facts) == ()
+    provider.prepare_turn("Look under the park bench.")
+
+    world = provider._world()
+    assert all(not world.is_hidden(clue_id) for clue_id in clue_ids)
+    assert all(world.parent(clue_id) == "kristin" for clue_id in clue_ids)
+    assert all(world.place_label(clue_id) == "with Kristin" for clue_id in clue_ids)
 
 
 def test_prepare_turn_without_referred_park_bench_omits_its_contents(monkeypatch):
@@ -3046,17 +3057,17 @@ def test_new_name_mapped_to_player_character_stays_new(monkeypatch):
 
     _facts, issues = provider.apply_item_facts(
         {
-            "handwritten number sequence": {"place": "stranger in the park"},
+            "Michelle's phone": {"place": "stranger in the park"},
             "stranger in the park": {"place": "service path"},
         },
-        player_input="Inspect the handwritten number sequence and the stranger in the park.",
+        player_input="Inspect Michelle's phone and the stranger in the park.",
     )
 
     world = provider._world()
     stranger_id = world.resolve("stranger in the park")
     assert stranger_id is not None
     assert stranger_id != world.resolve("Kristin")
-    assert world.parent(world.resolve("handwritten number sequence")) == stranger_id
+    assert world.parent(world.resolve("Michelle's phone")) == stranger_id
     assert provider.last_item_facts_match()["resolutions"]["stranger in the park"] == "new"
     assert "item_facts match mapped 'stranger in the park' to the player character; kept as new" in issues
 

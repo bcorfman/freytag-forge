@@ -1,0 +1,35 @@
+{
+  "run_name": "t9h-narration-hedge",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-narration-hedge",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "narration-hedge",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 1500,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_cloudflare_transport.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_narration_hedge.py",
+        "/home/bcorfman/dev/freytag-forge/docs/contributor-guide.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_narration_hedge.py"
+      ],
+      "verified": "hedge tests green, budgets unchanged, guide updated in place, route E dry-run S1-S6 PASS",
+      "spec": "You are the RUNTIME worker adding a narration hedge in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no live model call, no credentials. Do not git commit. NO regular expressions in new code. Match the surrounding style; read docs/contributor-guide.md first. The tree holds unrelated uncommitted edits: touch ONLY the files you own and never run git checkout, stash, reset or clean. FILES YOU OWN: /home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py, /home/bcorfman/dev/freytag-forge/tests/test_cloudflare_transport.py, /home/bcorfman/dev/freytag-forge/tests/test_narration_hedge.py, /home/bcorfman/dev/freytag-forge/docs/contributor-guide.md. READ-ONLY for you: storygame/runtime/hedged_request.py (another task may edit it; import and use it, do not change it). Run ruff check --fix and ruff format on the Python files you changed. Tests are hermetic (fake transports, delays of at most 0.3 s), few but complete.\n\nBRANDON'S DECISION (approved): hedge the narration request. A hedge is a staggered duplicate: the narration request is sent at once as today; only if no reply has arrived after the hedge delay is ONE identical second request sent; both are then in flight; the first SUCCESSFUL reply is used and the other is discarded. It is NOT a retry (a retry waits for failure) and NOT two requests from the start. A hedge counts as the SAME one narration request for every budget and counter.\n\nMEASURED PROBLEM. On a real Route E run (30 turns) narration was 67% of turn time (mean 5.6 s, floor 2.2 to 2.8 s) and its slow calls did not track reply length, so they are provider stalls; one stall ran out the 20 s request timeout and failed a find turn with `NarrationProviderError: narration service is unavailable`. The short-call hedge already exists in storygame/runtime/hedged_request.py (`hedged_call`, `configured_hedge_delay`) and is wired for the item-facts match and Jev calls with a 2.5 s delay.\n\nCHANGE. (1) In storygame/runtime/cloudflare.py wrap ONLY the narration HTTP send with `hedged_call`, with a named, documented constant `NARRATION_HEDGE_DELAY_S = 4.5` next to the existing timeout constants. Wrap at the level of the raw send inside the narration path so that every counter sees one logical request: the narration budget, the shared recovery budget, `narration_attempts`, any attempt or request counter, retry-on-connection-failure logic, typed errors and the JSON-mode fallback path must behave exactly as today with a hedge in flight, and a hedge must never count as a recovery attempt. The total wait stays bounded by the existing request timeout (the hedge delay comes out of it, never added to it). An answered error is raised as today. Read the delay with `configured_hedge_delay`-style handling from the env var `FREYTAG_HEDGE_NARRATION_S` (0 disables narration hedging; unset gives 4.5); keep the existing `FREYTAG_HEDGE_DELAY_S` behaviour for the short calls unchanged and independent. (2) Never hedge the opening request differently from a turn request unless you must; tell me in the summary if the opening shares the path. (3) Update docs/contributor-guide.md IN PLACE (edit the existing sentence; do not add a dated entry or a new section, keep the file's length about the same): the rule `A normal turn makes at most one narration inference request plus one shared recovery request...` must keep its meaning and gain one clause saying a delayed duplicate of the same narration request (a hedge, sent only when the first has not answered) counts as that same request and only one reply is used. Keep the phrase `at most one narration` verbatim. Do not weaken fail-closed behaviour: if both attempts fail, the first failure is raised and nothing is fabricated.\nRULES: no change to any prompt or payload byte; no story-specific code; the spend guard is the Worker cap, so say in your summary how many extra HTTP requests a hedge adds and that they are not counted as extra logical requests in `narration_attempts`.\nTESTS in tests/test_narration_hedge.py: a fast narration reply sends exactly one HTTP request; a slow first reply plus fast second returns the second and counts one narration attempt; both slow raises the same timeout error as before within the timeout; an answered HTTP error is raised once and not hedged; budgets and counters are identical with hedging on and off for the same fake transport; `FREYTAG_HEDGE_NARRATION_S=0` restores the single-request behaviour; the loser's late result or exception is swallowed; the shared recovery path (malformed reply then recovery) still makes exactly one recovery request.\nHOW TO VERIFY: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_narration_hedge.sh`. Do not edit it. Final output: a short summary including the delay constant, extra-request behaviour, and whether the opening shares the path.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_narration_hedge.sh"
+    }
+  ]
+}

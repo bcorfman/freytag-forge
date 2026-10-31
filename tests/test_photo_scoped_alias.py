@@ -6,11 +6,12 @@ import pytest
 
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
-from storygame.runtime.world_model import apply_scene_placements
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -71,7 +72,7 @@ def test_photo_scoped_aliases_resolve_in_1b_when_placed() -> None:
 @pytest.mark.parametrize(
     ("player_input", "expected_id", "storylet_id"),
     (
-        ("Examine Michelle's photograph beneath the park bench.", "k_sl_1b_a_r2", "SL-1B-A"),
+        ("Examine Michelle's recovered photograph.", "k_sl_1b_a_r2", "SL-1B-A"),
         ("Show Michelle's photograph to the man.", "k_sl_1b_b_r1", "SL-1B-B"),
     ),
 )
@@ -79,6 +80,8 @@ def test_photo_reveals_match_their_authored_commands(player_input: str, expected
     state = _state("1B")
 
     apply_scene_placements(PACKAGE, state.facts, "1B")
+    state.facts.assert_fact(Fact(predicate="bench_clues_recovered", subject="story", value="true"))
+    apply_world_effects(PACKAGE, state.facts)
     state.active_event_ids.add(storylet_id)
     projection = KnowledgeProjector().project(state, "player", player_input)
     handoff = uniquely_matched_authored_handoff(player_input, projection.candidates)

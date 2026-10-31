@@ -1,0 +1,34 @@
+{
+  "run_name": "t9h-1b2-capture",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-1b2-capture",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "1b2-capture",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_1b2_capture.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_1b2_capture.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_1b2_capture.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_1b2_capture.py"
+      ],
+      "verified": "free checks pass",
+      "spec": "You are the CAPTURE worker for the scene 1B.2 hidden-clue exposure check in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no model call, no credentials. Do not git commit. NO regular expressions in new code and never parse narration text to decide anything. Match the surrounding style. The tree holds unrelated uncommitted edits: touch ONLY the files you own and never run git checkout, stash, reset or clean. NEVER modify data/, storygame/, docs/, bench/results/ or .plans/. At the end run ruff check --fix and ruff format on your files. Tests are hermetic, few but complete.\nFILES YOU OWN (create): /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_1b2_capture.py and /home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_1b2_capture.py. You may READ anything and import helpers from /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_prose_probe.py by file path via importlib (its scene 1B state builder and world-aware provider construction), and from bench/core.py (`prompt_for`, `resolve_beat`, how a named beat is forced live).\n\nQUESTION. Scene 1B.2 ('The Man Following Her') has public Details that name 'Michelle photograph', and its beat text mentions the photograph. The three bench clues (Transit token, handwritten number sequence, Michelle's photograph) are `hidden: true` until `bench_clues_recovered` is asserted. Prior captures covered only the 1B.1 opening, pre-find and find states. Does any narrator request in the 1B.2 beat, on the photo-free path, expose a hidden clue name before recovery, and does recovery restore them correctly? This is a FREE, hermetic request capture (stub the network; keep the real world, reveal validator, provider, hidden-item filtering and composition).\n\nBUILD `hidden_bench_1b2_capture.py` with CLI `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_1b2_capture.py [--out REPORT.md] [--json]`. For each of two world states, `unrecovered` (the working-tree package at scene 1B, Kristin on the park bench, all 1B storylets active, bench_clues_recovered false) and `recovered` (the same state after asserting `bench_clues_recovered` through the real fact/on_assert path so the three clues move to Kristin and are revealed; do not move them by hand), force the 1B.2 beat live (use the same mechanism bench `prompt_for(..., beat=...)` uses to make a named beat live; find the beat id of scene 1B.2) and capture the world-aware narrator request (system and user text, plus composed_segments for any appended cue or delivery) for each of these imperative inputs: `Ask the man about Michelle.`, `Show Michelle's photograph to the man.`, `Inspect the park bench.`. That is 6 captures. Also capture the 1B.2 opening request in each state.\nFor every capture, report whether each of these plain strings appears, case-insensitively, anywhere in the system text, user text or composed segment text: `transit token`, `number sequence`, `handwritten sequence`, `michelle's photograph`, `michelle photograph`, `photograph`, `photo`. For every hit print the exact line it sits on and which section (system, user, composed segment) so a reader sees the source (for example the public Details line). Verdict per (state, input): in `unrecovered`, PASS only if there are zero hits; in `recovered`, report hits as informational and also report whether the three clue names appear in the THINGS block with Kristin as holder (the expected custody line), without judging prose. The report is Markdown with one row per capture and a Findings section. Exit 1 if any `unrecovered` capture has a hit (an exposure finding), 0 otherwise; exit 2 on a tool error. The tool must never edit the package.\nTESTS: (1) tamper test on a temp copy of the package (inject a clue name into the 1B.2 Details line) is detected as an exposure; (2) the real package run completes and produces exactly 8 captures in the report; (3) recovered state really has the clues held by Kristin via on_assert, not moved by hand. Do not assert whether the real package passes or fails the exposure check; the tests must hold either way.\nHOW TO VERIFY: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_1b2.sh` (accepts exit 0 or 1 from your tool). Do not edit it. Final output: short summary AND the verdict table of the real run (which captures expose which names and from which source line).",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_1b2.sh"
+    }
+  ]
+}

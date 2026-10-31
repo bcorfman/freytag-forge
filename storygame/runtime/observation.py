@@ -26,6 +26,7 @@ class ObservedThing:
     name: str
     place: str | None
     holder: str | None = None
+    scene_level: bool = False
 
 
 @dataclass(frozen=True)
@@ -40,6 +41,7 @@ class ObservationContext:
     required: tuple[str, ...]
     omitted_optional: tuple[str, ...]
     scope_complete: bool
+    scene: str | None = None
 
     def prompt_fields(self) -> dict[str, str | bool | list[str]]:
         """Return JSON-safe public fields without internal entity IDs."""
@@ -74,6 +76,7 @@ def build_observation_context(
     completed_actions: Iterable[str] = (),
     max_required: int = 32,
     max_optional: int = 32,
+    scene_location_id: str | None = None,
 ) -> ObservationContext:
     """Build a deterministic public projection using only worldkeeper queries."""
     if label is None:
@@ -114,11 +117,16 @@ def build_observation_context(
         observer=entity_label(world, observer_id),
         action=request.action,
         completed_actions=tuple(completed_actions),
-        visible_things=tuple(_observed(world, entity_id, entity_label) for entity_id in selected_ids),
-        contingent_things=tuple(_observed(world, entity_id, entity_label) for entity_id in contingent_ids),
+        visible_things=tuple(
+            _observed(world, entity_id, entity_label, scene_location_id) for entity_id in selected_ids
+        ),
+        contingent_things=tuple(
+            _observed(world, entity_id, entity_label, scene_location_id) for entity_id in contingent_ids
+        ),
         required=tuple(world.name(entity_id) for entity_id in required_ids),
         omitted_optional=omitted_optional,
         scope_complete=bool(request.focus and world.contents_complete(request.focus)),
+        scene=entity_label(world, scene_location_id) if scene_location_id is not None else None,
     )
 
 
@@ -202,13 +210,19 @@ def _contingent_ids(world: World, request: ObservationRequest) -> tuple[str, ...
     )
 
 
-def _observed(world: World, entity_id: str, label: Callable[[World, str], str]) -> ObservedThing:
+def _observed(
+    world: World,
+    entity_id: str,
+    label: Callable[[World, str], str],
+    scene_location_id: str | None = None,
+) -> ObservedThing:
     parent_id = world.parent(entity_id)
     holder_id = world.holder(entity_id)
     return ObservedThing(
         name=world.name(entity_id),
         place=label(world, parent_id) if parent_id else None,
         holder=label(world, holder_id) if holder_id else None,
+        scene_level=(scene_location_id is not None and holder_id is None and parent_id == scene_location_id),
     )
 
 

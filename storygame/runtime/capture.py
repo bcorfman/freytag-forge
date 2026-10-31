@@ -8,6 +8,7 @@ from typing import Any
 
 from storygame.runtime.fixed_refusal import fixed_refusal_text, refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
+from storygame.runtime.jev_prefetch import ConcurrentCall, JevPrefetch, batching_enabled, question_specs
 from storygame.runtime.jev_questions import (
     boards_vehicle,
     moves_thing,
@@ -27,7 +28,13 @@ from storygame.runtime.observation_verifier import (
     ObservationVerifier,
     relations_from_context,
 )
-from storygame.runtime.seating import SeatingResult, board_vehicle, seat_before_use, stand_before_leave
+from storygame.runtime.seating import (
+    SeatingResult,
+    _command_names_thing,
+    board_vehicle,
+    seat_before_use,
+    stand_before_leave,
+)
 from storygame.runtime.taking import TakingResult, take_before_put
 from storygame.runtime.world_model import apply_scene_placements
 
@@ -64,6 +71,65 @@ def _focus_open_state(world, focus_id: str | None) -> str | None:
         return None
     state = world.axis_values(focus_id).get("open")
     return state if state in {"open", "closed"} else None
+
+
+def _prefetch_targets(world, package, command: str, *, fixed_refusal: bool) -> tuple[tuple[str, ...], ...]:
+    relocates: list[str] = []
+    if fixed_refusal:
+        protagonist_area = world.area(package.protagonist_id)
+        for item in package.world.items:
+            if not (
+                (world.schema.is_fixed(item.id) or item.fixed)
+                and world.is_visible(item.id)
+                and not world.is_a(item.id, "area")
+            ):
+                continue
+            item_area = world.area(item.id)
+            if protagonist_area is None or item_area != protagonist_area:
+                continue
+            if _command_names_thing(command, world.names(item.id)):
+                relocates.append(world.name(item.id))
+    visible_vehicles = []
+    for item in package.world.items:
+        if not world.is_a(item.id, "vehicle") or not world.is_visible(item.id):
+            continue
+        seats = tuple(seat.id for seat in package.world.items if seat.seat_for == item.id and world.is_visible(seat.id))
+        visible_vehicles.append((item.id, seats))
+    seated_parent = world.parent(package.protagonist_id)
+    seated_entity = world.schema.entities.get(seated_parent) if seated_parent else None
+    seated_vehicle = seated_entity.seat_for if seated_entity and seated_entity.seat_for else None
+    candidates = [
+        (vehicle_id, seats) for vehicle_id, seats in visible_vehicles if seats and vehicle_id != seated_vehicle
+    ]
+    names_vehicle = any(_command_names_thing(command, world.names(vehicle_id)) for vehicle_id, _ in visible_vehicles)
+    boards: list[str] = []
+    if seated_vehicle and any(vehicle_id == seated_vehicle for vehicle_id, _ in visible_vehicles):
+        named = _command_names_thing(command, world.names(seated_vehicle))
+        if named or not names_vehicle:
+            boards.append(world.name(seated_vehicle))
+    named_candidates = [
+        vehicle_id for vehicle_id, _ in sorted(candidates) if _command_names_thing(command, world.names(vehicle_id))
+    ]
+    if names_vehicle:
+        boards.extend(world.name(vehicle_id) for vehicle_id in named_candidates)
+    else:
+        protagonist_area = world.area(package.protagonist_id)
+        contextual = [
+            vehicle_id
+            for vehicle_id, _ in sorted(candidates)
+            if protagonist_area is not None and world.area(vehicle_id) == protagonist_area
+        ]
+        if len(contextual) == 1:
+            boards.extend(world.name(vehicle_id) for vehicle_id in contextual)
+
+    searches = [
+        world.name(item.id)
+        for item in package.world.items
+        if (world.is_a(item.id, "container") or world.is_a(item.id, "supporter"))
+        and world.is_visible(item.id)
+        and _command_names_thing(command, world.names(item.id))
+    ]
+    return tuple(relocates), tuple(dict.fromkeys(boards)), tuple(dict.fromkeys(searches))
 
 
 _PREVIEW_PROVIDER_FIELDS = (
@@ -113,17 +179,34 @@ class WorldCapture:
         self.last_before: dict[str, Any] | None = None
         self.last_after: dict[str, Any] | None = None
         self._pending_preview: CandidatePreview | None = None
+        self._pending_preview_scene_state = False
         self._turn_origin: tuple[str | None, str] | None = None
 
     def before_turn(self, command: str) -> dict[str, Any]:
         self._pending_preview = None
+        self._pending_preview_scene_state = False
         if self.enforcing_verifier is not None:
             self.enforcing_verifier.begin_turn()
         self._command = command
         package = self.provider.state.package
         world = self.provider._world()
         self._turn_origin = (world.area(package.world.protagonist_id), self.provider.state.current_scene_id)
-        adapter = _ask_adapter(self.ask)
+        relocates, boards, searches = _prefetch_targets(world, package, command, fixed_refusal=self.fixed_refusal)
+        prefetch = JevPrefetch(
+            self.ask,
+            question_specs(command, relocates=relocates, boards=boards, searches=searches),
+        )
+        prefetch.start()
+        referent_match = None
+        if (
+            batching_enabled()
+            and self.provider.item_facts_mode == "single_call"
+            and not self.fixed_refusal
+            and not boards
+        ):
+            referent_match = ConcurrentCall(lambda: self.provider.prepare_turn(command))
+            referent_match.start()
+        adapter = _ask_adapter(prefetch.ask)
         observe_automatically = self.provider.observe_automatically
         if observe_automatically:
             self.provider.observation_request = None
@@ -186,7 +269,7 @@ class WorldCapture:
         )
         match_info = {}
         if self.provider.item_facts_mode == "single_call" and not engine_refusal and not self.provider.command_consumed:
-            match_info = self.provider.prepare_turn(command)
+            match_info = referent_match.join() if referent_match is not None else self.provider.prepare_turn(command)
         engine_opened = False
         focus_open_state_after = None
         if observe_automatically and not (fixed and fixed.refused):
@@ -232,6 +315,7 @@ class WorldCapture:
         things_given = list(self.provider._selected_names) if self.provider._selected_names is not None else []
         record["things_given"] = things_given
         record["item_facts_before"] = _json_value(self.provider.facts_for_names(things_given, structural=True))
+        prefetch.join(raise_error=False)
         self.last_before = record
         return record
 
@@ -397,9 +481,10 @@ class WorldCapture:
             moved_unrelated = self._moved_unrelated(before_parents, candidate_world, context)
             relations = relations_from_context(context) if context is not None else ()
             if relations:
-                report = self.enforcing_verifier.verify(narration, relations)
+                report = self.enforcing_verifier.verify(narration, relations, scene=context.scene)
                 if report is None:
                     raise RuntimeError("observation verifier returned no report")
+                self._pending_preview_scene_state = report.scene_state
             changed = tuple(sorted(self.provider._changed_last_turn))
             things_given = set(self.last_before.get("things_given", ())) if self.last_before is not None else set()
             facts_after = _json_value(
@@ -534,12 +619,15 @@ class WorldCapture:
                         "failure": None,
                         "question_version": QUESTION_VERSION,
                         "accepted": True,
+                        "scene_state": False,
                         "verdicts": [],
                         "requirement_dropped": "scene_or_area_changed",
                     }
                 else:
                     self.shadow_verifier.begin_turn()
-                    report = self.shadow_verifier.verify(narration, relations_from_context(context))
+                    report = self.shadow_verifier.verify(
+                        narration, relations_from_context(context), scene=context.scene
+                    )
                     observation_shadow = {
                         "outcome": report.outcome,
                         "requests": report.requests,
@@ -547,6 +635,7 @@ class WorldCapture:
                         "failure": report.failure,
                         "question_version": QUESTION_VERSION,
                         "accepted": report.accepted,
+                        "scene_state": report.scene_state,
                         "verdicts": [
                             {
                                 "thing": verdict.relation.thing,
@@ -564,6 +653,7 @@ class WorldCapture:
                     "failure": type(error).__name__,
                     "question_version": QUESTION_VERSION,
                     "accepted": False,
+                    "scene_state": False,
                     "verdicts": [],
                 }
         things_given = (
@@ -593,6 +683,7 @@ class WorldCapture:
                 "accepted": preview.accepted,
                 "changed": list(preview.changed),
                 "verdicts": _json_value(preview.verdicts),
+                "scene_state": self._pending_preview_scene_state,
             }
             record["observation_diverged"] = tuple(
                 sorted(self.provider._changed_last_turn)
@@ -605,6 +696,7 @@ class WorldCapture:
 
     def discard(self) -> None:
         self._pending_preview = None
+        self._pending_preview_scene_state = False
         self.provider.discard_pending_item_facts()
         self.provider.prior_steps = ()
         self.provider.prior_notice_steps = ()
@@ -634,6 +726,7 @@ class WorldCapture:
         result["command"] = self._command
         if self._pending_preview is not None:
             result["observation_preview"] = self._pending_preview.to_json()
+            result["observation_scene_state"] = self._pending_preview_scene_state
         return result
 
     def resume(self, context: dict[str, Any]) -> None:
@@ -676,6 +769,7 @@ class WorldCapture:
         self._pending_preview = (
             CandidatePreview.from_json(context["observation_preview"]) if "observation_preview" in context else None
         )
+        self._pending_preview_scene_state = bool(context.get("observation_scene_state", False))
 
 
 def capture_prompt_variant(package) -> dict[str, Any]:

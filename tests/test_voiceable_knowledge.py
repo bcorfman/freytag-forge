@@ -190,7 +190,13 @@ def test_loader_rejects_non_boolean_voiceable(tmp_path: Path) -> None:
 def test_real_package_has_exactly_the_non_voiceable_knowledge_items() -> None:
     non_voiceable = [item for item in PACKAGE.knowledge.knowledge if item.voiceable is False]
 
-    assert [item.id for item in non_voiceable] == ["k_sl_1a_b_r0", "k_sl_1a_f_r1", "k_sl_1a_f_r2"]
+    assert [item.id for item in non_voiceable] == [
+        "k_sl_1a_b_r0",
+        "k_sl_1a_f_r1",
+        "k_sl_1a_f_r2",
+        "k_sl_1b_d_r1",
+        "k_sl_1b_e_r1",
+    ]
 
 
 def test_default_serialization_omits_voiceable_but_false_round_trips() -> None:

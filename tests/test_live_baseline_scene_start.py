@@ -96,7 +96,8 @@ def test_park_bench_entry_world_structure_records_under_clues_and_checkpoint() -
     for entity_id in ("transit_card", "number_sequence", "michelle_photograph"):
         assert structure[entity_id]["parent"] == "park_bench"
         assert structure[entity_id]["relation"] == "under"
-        assert structure[entity_id]["hidden"] is False
+        assert structure[entity_id]["hidden"] is True
+    assert not state.facts.matching("bench_clues_recovered")
 
 
 def test_start_checkpoint_index_is_the_first_checkpoint_in_each_scene() -> None:

@@ -1,0 +1,34 @@
+{
+  "run_name": "t9h-followup-audit",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-followup-audit",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "audit-tool",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/hidden_thing_audit.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_thing_audit.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/hidden_thing_audit.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_thing_audit.py"
+      ],
+      "verified": "focused tests green, ruff clean, free checks pass",
+      "spec": "You are the AUDIT-TOOL worker for freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv; uv cannot run in your sandbox). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no live model call, no billed call, no credentials. Do not git commit. NO regular expressions in new code and never parse narration text to decide anything. Match the surrounding code's style, comment density and naming. The working tree holds unrelated uncommitted edits (some in the files you own): preserve every existing edit, touch ONLY the files you own, and never run git checkout, stash, reset or clean. At the end run `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check --fix` and `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format` on the files you own. Tests must be hermetic, few but complete: add a test only when it covers something useful in full, and update tests whose old behaviour you deliberately change.\n\nFILES YOU OWN (create): /home/bcorfman/dev/freytag-forge/scripts/hidden_thing_audit.py and /home/bcorfman/dev/freytag-forge/tests/test_hidden_thing_audit.py. Read anything. Never modify anything else, in particular nothing under data/stories/.\n\nPURPOSE. A free, read-only, STORY-AGNOSTIC report on every hidden thing in a story package: how it is placed, how it is earned, and whether its authored text lines up. It reports; it never edits a package and never passes or fails a story. It must run on any story package, not only continuity-initiative, so load packages through the real loader (`storygame.story_package.loader.load_story_package`) and read the typed package objects (world items, facts with `on_assert` effects, knowledge entries, handoff deliveries, storylets, disclosure guards); do not hard-code item ids, scenes or names. Where the typed objects hide a detail you need, read the package's YAML through the same loader models rather than ad-hoc regex.\n\nCLI: `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/hidden_thing_audit.py PACKAGE_DIR [--json] [--out FILE]`. Default output is Markdown, `--json` gives machine-readable. Exit 0 whenever the audit ran (findings are not failures); exit 2 on a package that cannot load.\n\nFOR EACH hidden item (hidden: true) report these columns:\n- id, display name, aliases and scoped aliases.\n- declared placement: the scene(s) whose placements put it somewhere, the parent it sits in or under, and whether that parent is `fixed`.\n- reveal path: the story fact(s) whose `on_assert` effects reveal or move it, and the knowledge entries and handoff deliveries that establish or assert those facts (their ids, `earn_when`, `delivery_text` or handoff text, `voiceable`).\n- earn kind: `search` when a knowledge entry reveals it by an action on its parent (it has `reach_entity_ids` or `action_evidence`), `handoff` when only a handoff delivery or pacing deadline asserts the fact, `unreached` when nothing asserts the fact.\n- `delivery_names_item`: whether the delivery text of its reveal path contains the item's name or any alias as a plain casefolded substring (a deterministic check of AUTHORED text, never of model narration). Report `n/a` when there is no delivery.\n- `leak_terms_cover_name`: whether the establishing knowledge entry's `leak_terms` contain the item's name or an alias; `has_disclosure_guard`: whether a disclosure guard's unlock_fact is one of its reveal-path facts.\n- `pointer`: whether an entry elsewhere in the same scene points at the parent without earning it (a repeatable public entry that requires the recovery fact to be false), reported as the entry id or `none`.\n- `public_mentions_before_reveal`: the Details lines or scene text (from the package's scene metadata, not model output) in scenes up to and including the earning scene that mention the item's name or an alias as a plain substring, with the scene id; this is the early-name exposure risk.\n- downstream: ids of knowledge entries, storylets and handoffs that REQUIRE a reveal-path fact, so a reader sees what depends on the item.\nA short summary table at the top lists one row per hidden item with its earn kind and the columns that are `no`/`none`. Add a final section `Not checked` stating plainly that the audit reads authored files only and proves nothing about narration.\n\nTESTS: (1) a small synthetic package built in tmp_path with different nouns than the real story (two hidden items under a fixed chest, one earned by a search entry with a pointer, one by a handoff only, one hidden item nothing reveals) with expected columns asserted exactly; build it with the real loader's accepted format (look at how existing tests such as tests/test_markdown_story_package.py or tests/test_hidden_bench_discovery.py build a package, and reuse a helper if one exists). (2) The real continuity-initiative package loads and the audit lists exactly the items declared `hidden: true` in its world.yaml (derive the expected ids in the test from the package, not a literal list) and runs read-only. (3) `--json` output parses and matches the Markdown's row count.\n\nHOW TO VERIFY: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_followup_audit.sh`. Do not edit it. Final output: a short summary.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_followup_audit.sh"
+    }
+  ]
+}

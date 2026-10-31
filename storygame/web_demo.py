@@ -34,6 +34,7 @@ from storygame.story_package.loader import StoryPackageError, load_story_package
 
 logger = logging.getLogger(__name__)
 OBSERVATION_ENFORCE_ENV = "FREYTAG_OBSERVATION_ENFORCE"
+OBSERVATION_SCENE_STATE_ENV = "FREYTAG_OBSERVATION_SCENE_STATE"
 
 
 class _Request(BaseModel):
@@ -265,7 +266,10 @@ def create_demo_app(
             enabled = getenv("FREYTAG_FIXED_REFUSAL", "") != "0"
             capture = WorldCapture(capture_provider, capture_ask, fixed_refusal=enabled, engine_refusal=enabled)
             if getenv(OBSERVATION_ENFORCE_ENV, "") == "1":
-                capture.enforcing_verifier = ObservationVerifier(capture_ask)
+                capture.enforcing_verifier = ObservationVerifier(
+                    capture_ask,
+                    scene_state=getenv(OBSERVATION_SCENE_STATE_ENV, "") == "1",
+                )
         return RuntimeEngine(state, provider, capture=capture)
 
     def require_turn_rate_limit(body: TurnRequest, request: Request) -> None:

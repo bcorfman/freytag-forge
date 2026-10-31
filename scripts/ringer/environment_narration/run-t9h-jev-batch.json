@@ -1,0 +1,42 @@
+{
+  "run_name": "t9h-jev-batch",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-jev-batch",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "jev-batch",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 1500,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/capture.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/jev_questions.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/jev.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/seating.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/fixed_refusal.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/hedged_request.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_jev_batching.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_jev_questions.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_runtime_jev.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_jev_use.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/jev_prefetch.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_jev_batching.py"
+      ],
+      "verified": "fewer stubbed Jev calls, behaviour unchanged, existing jev/transport tests green, S1-S6 PASS",
+      "spec": "You are the RUNTIME worker cutting per-turn Jev round trips in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no live model call, no credentials. Do not git commit. NO regular expressions in new code. Match the surrounding style; read docs/contributor-guide.md first. The tree holds unrelated uncommitted edits: touch ONLY the files you own and never run git checkout, stash, reset or clean. FILES YOU OWN: /home/bcorfman/dev/freytag-forge/storygame/runtime/capture.py, /home/bcorfman/dev/freytag-forge/storygame/runtime/jev_questions.py, /home/bcorfman/dev/freytag-forge/storygame/runtime/jev.py, /home/bcorfman/dev/freytag-forge/storygame/runtime/seating.py, /home/bcorfman/dev/freytag-forge/storygame/runtime/fixed_refusal.py, /home/bcorfman/dev/freytag-forge/storygame/runtime/hedged_request.py, /home/bcorfman/dev/freytag-forge/tests/test_jev_batching.py, /home/bcorfman/dev/freytag-forge/tests/test_jev_questions.py, /home/bcorfman/dev/freytag-forge/tests/test_runtime_jev.py, /home/bcorfman/dev/freytag-forge/tests/test_jev_use.py. Read anything. If a needed change lies outside these files, do the part you can and say exactly what is blocked in your summary. Run ruff check --fix and ruff format on the files you changed. Tests are hermetic and few but complete; update tests whose old behaviour you deliberately change.\n\nPROBLEM (measured on a real Route E run, 30 turns). Each turn makes 3 to 6 Jev HTTP calls, in sequence, plus one 70B referent-match call and one narration call. Only the reveal matcher is batched (one `/jev` call carries up to four candidate questions). Three per-turn classifiers are each their own sequential HTTP call: `relocates_thing` (every turn), `boards_vehicle` (every turn; `only_boards_vehicle` only after it answers yes) and `searches_underneath` (most turns), asked from different stages (see storygame/runtime/capture.py around the `relocates_thing`, `boards_vehicle` and `searches_underneath` lambdas, fixed_refusal.py, seating.py, jev_questions.py). The Jev API already takes several named questions in one request (`JevClient.ask(state, questions)`; see how `reaches_reveals` builds a multi-question call). Jev calls were 16% of turn time and carry stall exposure on every extra round trip.\n\nCHANGE. (1) Batch: add a small prefetch layer so that the independent classifier questions a turn is known to need are sent in ONE `/jev` request and their answers are cached for the stages that later ask them. Independent means the question text depends only on the player command and entities already known from engine state at the start of the turn (not on the answer to another question and not on the referent-match result). A stage that asks a question the prefetch did not include, or whose cached answer is missing or malformed, falls back to its own individual call exactly as today; a question that depends on an earlier answer (`only_boards_vehicle` after `boards_vehicle`) is never prefetched. Cache keys must be the exact question text plus its state payload so a hit returns precisely what the individual call would have returned; never reuse an answer across turns. (2) Concurrency: the prefetch request and the existing referent-match request depend only on the command, so run them concurrently on threads started and joined inside the turn, joining before either result is used (reuse the thread conventions of storygame/runtime/hedged_request.py; keep exception behaviour identical: an error in either surfaces exactly where it surfaced before). Do not run anything concurrently that mutates state. (3) Flag: the env var `FREYTAG_JEV_BATCH=0` disables both batching and concurrency (default on).\nRULES: no change to any question text, threshold, answer interpretation, prompt, payload byte of any non-Jev request, budget or counter semantics (logical budgets stay as they are; the item-facts request count must not change). Story-agnostic, no story ids. Typed contracts and constructor injection, no attribute probing. Keep modules near 500 lines (cloudflare.py is already far over; put new code in a new module, for example storygame/runtime/jev_prefetch.py, and add it to your owned files).\nTESTS in tests/test_jev_batching.py: one request carries the independent questions and later stages read the cache with zero extra calls; a stage that needs an unprefetched question falls back to one individual call; `only_boards_vehicle` is never prefetched and still asked only after a yes; a malformed or missing cached answer falls back; cache never crosses turns; `FREYTAG_JEV_BATCH=0` restores the old call pattern; prefetch and referent match overlap in time (fake transports with a short delay) and an exception from each surfaces as before; answers are identical with batching on and off for the same fake Jev.\nHOW TO VERIFY: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_batch.sh`. Do not edit it. It requires the stubbed Route E dry-run to make fewer Jev HTTP calls with batching on than off, with S1 to S6 still PASS. Final output: a short summary with the before and after stubbed Jev call counts per turn and anything blocked.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_batch.sh"
+    }
+  ]
+}

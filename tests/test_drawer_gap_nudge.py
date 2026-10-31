@@ -12,6 +12,7 @@ from tests.test_observation_mode import _state_at
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 NUDGE = "k_sl_1a_f_r2"
+BENCH_NUDGE = "k_sl_1b_e_r1"
 CARD_FIND = "k_sl_1a_b_r0"
 CARD_FIND_PATROL = "k_sl_1a_b_r0w"
 OPEN_DRAWER = "k_sl_1a_f_r1"
@@ -142,9 +143,10 @@ def test_bare_drawer_commands_stop_picking_the_nudge_after_card_recovery() -> No
         assert handoff is None or handoff.candidate.id != NUDGE
 
 
-def test_real_package_repeatable_flag_is_only_on_the_gap_nudge() -> None:
-    assert PACKAGE.knowledge_indexes.by_id[NUDGE].repeatable is True
-    assert all(item.repeatable is False for item in PACKAGE.knowledge.knowledge if item.id != NUDGE)
+def test_real_package_repeatable_flags_are_only_on_the_gap_nudges() -> None:
+    repeatable_ids = {item.id for item in PACKAGE.knowledge.knowledge if item.repeatable}
+
+    assert repeatable_ids == {NUDGE, BENCH_NUDGE}
 
 
 def test_pull_out_drawer_open_reveal_is_eligible_once() -> None:

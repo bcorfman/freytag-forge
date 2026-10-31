@@ -27,6 +27,12 @@ def test_scene_1b_places_the_drop_and_truck() -> None:
     for item_id in ("transit_card", "number_sequence", "michelle_photograph"):
         assert world.parent(item_id) == "park_bench"
         assert world.relation(item_id) == "under"
+        assert world.is_hidden(item_id)
+
+    state.facts.assert_fact(Fact(predicate="bench_clues_recovered", subject="story", value="true"))
+    apply_world_effects(PACKAGE, state.facts)
+    for item_id in ("transit_card", "number_sequence", "michelle_photograph"):
+        assert world.parent(item_id) == "kristin"
         assert not world.is_hidden(item_id)
 
     assert world.parent("kristin_truck") == "los_angeles_park"

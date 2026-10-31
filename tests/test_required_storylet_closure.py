@@ -76,8 +76,8 @@ def test_real_package_keeps_old_required_storylets_and_adds_prerequisite_closure
 
     assert len(old) == 31
     assert old <= required
-    assert required - old == {"SL-1A-E", "SL-2A-E", "SL-3A-B", "SL-3B-E"}
-    assert len(required) == 35
+    assert required - old == {"SL-1A-E", "SL-1B-D", "SL-2A-E", "SL-3A-B", "SL-3B-E"}
+    assert len(required) == 36
 
 
 def test_optional_same_scene_producer_is_pulled_into_closure() -> None:

@@ -27,11 +27,15 @@ facts:
   purpose: Kristin has recovered Michelle’s memory card.
 - id: drawer_gap_pointed_out
   purpose: Kristin has been pointed toward the thin gap beneath Michelle’s workstation drawer.
+- id: bench_underside_pointed_out
+  purpose: Kristin has been pointed toward the shadowed space beneath the park bench.
 - id: official_interest_in_michelle_known
   purpose: Kristin knows the welfare patrol was specifically interested in Michelle’s
     research and findings.
 - id: house_marked_for_return
   purpose: Michelle's house has been marked by the patrol for a likely return.
+- id: bench_clues_recovered
+  purpose: Kristin has recovered the three clues hidden under the park bench.
 - id: transport_route_identified
   purpose: Kristin and Brandon have enough evidence to follow the removal operation’s
     physical transport route toward a specific industrial/freight destination.
@@ -713,6 +717,72 @@ knowledge:
   - [watch, check, inspect, examine, look at]
   - [gate, front gate, reflective tape]
   delivery_text: "After the patrol leaves, Kristin finds a strip of reflective tape on the front gate. The officers marked the house. They plan to come back."
+- id: k_sl_1b_d_r1
+  statement: Kristin finds Michelle's transit token, handwritten number sequence and photograph under the park bench and keeps them with her.
+  voiceable: false
+  reach_entity_ids: [park_bench]
+  earn_when: looks, searches, inspects or checks beneath the park bench
+  action_evidence:
+  - [look, search, inspect, check]
+  - [under, beneath, underside]
+  - [park bench, bench]
+  entity_ids: [kristin, park_bench, transit_card, number_sequence, michelle_photograph]
+  aliases: [bench clues recovered]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1B]
+  requires: []
+  establishes:
+  - op: assert
+    fact_id: bench_clues_recovered
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1B-D
+    realization_id: SL-1B-D-R1
+  relevance:
+    entity_ids: [park_bench]
+    priority: 10
+  leak_terms:
+  - transit token
+  - handwritten number sequence
+  - number sequence
+  - handwritten sequence
+  - Michelle's photograph
+  - Michelle's photo
+  - bench clues recovered
+  delivery_text: "Kristin reaches beneath the park bench. She retrieves a transit token, a handwritten number sequence and Michelle's photograph. She keeps all three with her."
+- id: k_sl_1b_e_r1
+  statement: "Kristin looks over the park bench and is pointed toward the shadowed space beneath it."
+  voiceable: false
+  reach_entity_ids: [park_bench]
+  earn_when: examines, inspects, searches or checks the park bench without going underneath it
+  action_evidence:
+  - [examine, inspect, search, check, look, study, run my hands]
+  - [park bench, bench]
+  repeatable: true
+  entity_ids: [kristin, park_bench]
+  aliases:
+  - bench underside pointed out
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1B
+  requires:
+  - fact_id: bench_clues_recovered
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: bench_underside_pointed_out
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1B-E
+    realization_id: SL-1B-E-R1
+  relevance:
+    entity_ids: [kristin, park_bench]
+    priority: 0
+  delivery_text: "The bench is ordinary. The space beneath it is shadowed and deep enough for Kristin to reach under."
 - id: k_sl_1b_a_r1
   statement: 'Kristin matches the transit token and number sequence to a freight route leading out of the city.'
   earn_when: matches the transit token to the handwritten number sequence
@@ -728,7 +798,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1B
-  requires: []
+  requires:
+  - fact_id: bench_clues_recovered
+    equals: true
   establishes:
   - op: assert
     fact_id: transport_route_identified
@@ -743,8 +815,8 @@ knowledge:
   delivery_text: >-
     Kristin matches the transit token and handwritten number sequence to a freight route out of the city.
 - id: k_sl_1b_a_r2
-  statement: 'A photograph hidden in Michelle’s dead drop gives Kristin the face of the man who has been following her.'
-  earn_when: examines Michelle's photograph beneath the park bench
+  statement: 'The photograph recovered from Michelle’s dead drop gives Kristin the face of the man who has been following her.'
+  earn_when: examines Michelle's recovered photograph
   action_evidence:
   - [look at, inspect, examine, study, check]
   - [Michelle's photograph, Michelle's photo, photograph, photo, picture]
@@ -756,7 +828,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1B
-  requires: []
+  requires:
+  - fact_id: bench_clues_recovered
+    equals: true
   establishes:
   - op: assert
     fact_id: brandon_face_known
@@ -787,7 +861,9 @@ knowledge:
     player_visible: true
   available_in_scenes:
   - 1B
-  requires: []
+  requires:
+  - fact_id: bench_clues_recovered
+    equals: true
   establishes:
   - op: assert
     fact_id: trust_brandon

@@ -129,13 +129,16 @@ export function createLocalWorker({ env = process.env, fetchImpl } = {}) {
 }
 
 async function invokeWorker(request, env, fetchImpl) {
+  if (fetchImpl === undefined) return worker.fetch(request, env);
+
   let release;
   const previous = fetchQueue;
   fetchQueue = new Promise((resolve) => { release = resolve; });
+  // This queue is only reached when fetchImpl is supplied for a global swap.
   await previous;
 
   const originalFetch = globalThis.fetch;
-  if (fetchImpl !== undefined) globalThis.fetch = fetchImpl;
+  globalThis.fetch = fetchImpl;
   try {
     return await worker.fetch(request, env);
   } finally {

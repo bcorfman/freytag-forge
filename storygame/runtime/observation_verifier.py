@@ -17,6 +17,7 @@ class Relation:
     thing: str
     place: str | None = None
     holder: str | None = None
+    scene_level: bool = False
 
 
 def relations_from_context(context: ObservationContext) -> tuple[Relation, ...]:
@@ -27,7 +28,7 @@ def relations_from_context(context: ObservationContext) -> tuple[Relation, ...]:
         if matching is None or matching.holder is not None:
             relations.append(Relation(thing=name))
         else:
-            relations.append(Relation(thing=name, place=matching.place))
+            relations.append(Relation(thing=name, place=matching.place, scene_level=matching.scene_level))
     return tuple(relations)
 
 
@@ -45,6 +46,7 @@ class VerifierReport:
     requests: int
     elapsed_s: float
     failure: str | None
+    scene_state: bool = False
 
     @property
     def accepted(self) -> bool:
@@ -64,6 +66,7 @@ class ObservationVerifier:
         reject_below: float = 0.35,
         max_requests_per_turn: int = 2,
         clock=time.monotonic,
+        scene_state: bool = False,
     ) -> None:
         if not 0 <= reject_below < accept_above <= 1:
             raise ValueError("thresholds must satisfy 0 <= reject_below < accept_above <= 1")
@@ -74,12 +77,13 @@ class ObservationVerifier:
         self._reject_below = reject_below
         self._max_requests_per_turn = max_requests_per_turn
         self._clock = clock
+        self.scene_state = scene_state
         self._requests_this_turn = 0
 
     def begin_turn(self) -> None:
         self._requests_this_turn = 0
 
-    def verify(self, narration: str, relations: Sequence[Relation]) -> VerifierReport:
+    def verify(self, narration: str, relations: Sequence[Relation], *, scene: str | None = None) -> VerifierReport:
         relations = tuple(relations)
         if not relations:
             return VerifierReport((), "no_relations", 0, 0.0, None)
@@ -88,7 +92,8 @@ class ObservationVerifier:
             return VerifierReport(verdicts, "budget_exhausted", 0, 0.0, "request_budget")
 
         questions = {f"relation_{index}": _question_for(relation) for index, relation in enumerate(relations)}
-        state = {"narration": narration}
+        state = self._state_for(narration, relations, scene)
+        scene_state_sent = "starting_places" in state
         self._requests_this_turn += 1
         started = self._clock()
         try:
@@ -96,12 +101,12 @@ class ObservationVerifier:
         except Exception:
             elapsed_s = self._clock() - started
             verdicts = tuple(RelationVerdict(relation, "unavailable", None) for relation in relations)
-            return VerifierReport(verdicts, "unavailable", 1, elapsed_s, "ask_raised")
+            return VerifierReport(verdicts, "unavailable", 1, elapsed_s, "ask_raised", scene_state_sent)
         elapsed_s = self._clock() - started
 
         if answers is None:
             verdicts = tuple(RelationVerdict(relation, "unavailable", None) for relation in relations)
-            return VerifierReport(verdicts, "unavailable", 1, elapsed_s, "ask_returned_none")
+            return VerifierReport(verdicts, "unavailable", 1, elapsed_s, "ask_returned_none", scene_state_sent)
 
         verdicts = []
         valid_count = 0
@@ -130,7 +135,14 @@ class ObservationVerifier:
         else:
             outcome = "ok"
             failure = None
-        return VerifierReport(tuple(verdicts), outcome, 1, elapsed_s, failure)
+        return VerifierReport(tuple(verdicts), outcome, 1, elapsed_s, failure, scene_state_sent)
+
+    def _state_for(self, narration: str, relations: Sequence[Relation], scene: str | None) -> dict[str, object]:
+        if self.scene_state and scene is not None:
+            starting_places = {relation.thing: relation.place for relation in relations if relation.scene_level}
+            if starting_places:
+                return {"narration": narration, "scene": scene, "starting_places": starting_places}
+        return {"narration": narration}
 
 
 def _question_for(relation: Relation) -> dict[str, object]:
