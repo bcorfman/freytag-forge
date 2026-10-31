@@ -48,6 +48,18 @@ jobs:
           gh api "repos/${GITHUB_REPOSITORY}/commits/${candidate_sha}/status" --jq '.statuses[] | select(.context == "staging-deployment" and .state == "success")' | grep -q . || { echo "SHA was not staged successfully." >&2; exit 1; }
           echo "Promoting staging candidate: $candidate_sha" >> "$GITHUB_STEP_SUMMARY"
           echo "sha=$candidate_sha" >> "$GITHUB_OUTPUT"
+      - name: Require a passing nightly run for the SHA
+        env:
+          CANDIDATE_SHA: ${{ steps.validate.outputs.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          nightly_run_count="$(gh run list --workflow coverage-nightly.yml --commit "$CANDIDATE_SHA" --status success --limit 1 --json databaseId --jq length)"
+          if test "$nightly_run_count" -ne 1; then
+            echo "No successful coverage-nightly run exists for SHA $CANDIDATE_SHA; run gh workflow run coverage-nightly.yml --ref main to get one." >&2
+            exit 1
+          fi
+          echo "$CANDIDATE_SHA is nightly-verified" >> "$GITHUB_STEP_SUMMARY"
 
   deploy-production:
     name: Deploy production
