@@ -4,6 +4,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/ringer/transcript_1a/live_baseline.py"
 
@@ -39,6 +41,7 @@ def _run(module, output: Path) -> tuple[dict, list[dict]]:
     )
 
 
+@pytest.mark.nightly
 def test_default_run_preserves_legacy_output_and_marks_enforcement_off(tmp_path: Path) -> None:
     module = _module()
     first_summary, first_rows = _run(module, tmp_path / "first")

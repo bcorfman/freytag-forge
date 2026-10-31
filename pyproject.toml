@@ -56,6 +56,7 @@ markers = [
     "runtime_safety: runtime safety and behavior contract",
     "authoring_quality: offline authoring completeness and causal-quality contract",
     "live_e2e: operator-owned test that intentionally reaches the deployed hosted demo",
+    "nightly: slow end-to-end test that runs in the nightly workflow, not PR CI",
 ]
 
 [tool.coverage.run]

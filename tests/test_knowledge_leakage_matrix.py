@@ -8,6 +8,8 @@ from functools import cache
 from hashlib import sha256
 from pathlib import Path
 
+import pytest
+
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.narration_safety import NarrationSafetyValidator
@@ -223,6 +225,7 @@ def _redacted_knowledge(ids: set[str]) -> list[dict[str, int | str]]:
     ]
 
 
+@pytest.mark.nightly
 def test_leakage_matrix_context_snapshot_stays_within_the_declared_payload_budget() -> None:
     observations = _build_leakage_matrix()
     snapshot: list[dict[str, object]] = []

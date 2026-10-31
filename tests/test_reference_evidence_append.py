@@ -74,6 +74,7 @@ def test_ambiguous_reference_still_asks_without_provider_call() -> None:
     assert resolve_references(state, "Read the next terminal.").question is not None
 
 
+@pytest.mark.nightly
 def test_negated_copy_does_not_earn_reveal(monkeypatch: pytest.MonkeyPatch) -> None:
     state = _state("2C", "janus_evidence")
     provider = _provider(state, monkeypatch)

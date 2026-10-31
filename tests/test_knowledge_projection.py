@@ -182,6 +182,7 @@ def test_moving_2a_knowledge_does_not_hide_the_2b_frame() -> None:
     assert projection.scene_hidden_ids == ()
 
 
+@pytest.mark.nightly
 def test_naming_only_brandon_does_not_recall_earlier_scene_knowledge() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     advance_state_to_scene(PACKAGE, state, "2C")
@@ -194,6 +195,7 @@ def test_naming_only_brandon_does_not_recall_earlier_scene_knowledge() -> None:
     assert "k_sl_2a_c_r2" not in committed_ids
 
 
+@pytest.mark.nightly
 def test_naming_a_corridor_recalls_earlier_scene_knowledge() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     advance_state_to_scene(PACKAGE, state, "2C")

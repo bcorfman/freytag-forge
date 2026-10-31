@@ -77,6 +77,7 @@ def _labels_for_rows(
     return labels_path
 
 
+@pytest.mark.nightly
 def test_capture_finds_recorded_prompt_and_validates_offline_arms() -> None:
     module = _module()
     document = module.capture_payloads(DRAIN_FIXTURE)
@@ -104,6 +105,7 @@ def test_recorded_prompt_without_details_fails(tmp_path: Path, monkeypatch) -> N
     assert "details" in str(error.value)
 
 
+@pytest.mark.nightly
 def test_control_and_candidate_differ_only_by_suffix() -> None:
     module = _module()
     document = module.capture_payloads(DRAIN_FIXTURE)
@@ -117,6 +119,7 @@ def test_control_and_candidate_differ_only_by_suffix() -> None:
     )
 
 
+@pytest.mark.nightly
 def test_dry_run_counts_twenty_and_refuses_caps(monkeypatch, capsys) -> None:
     module = _module()
     monkeypatch.setattr(module, "RECORDED_ROWS_PATH", DRAIN_FIXTURE)

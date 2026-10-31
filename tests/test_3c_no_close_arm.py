@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 import three_c_probe as probe
 
 from bench.core import load_variation
@@ -25,6 +26,7 @@ def _escape_delivery_line() -> str:
     )
 
 
+@pytest.mark.nightly
 def test_existing_arm_dry_run_remains_byte_stable(tmp_path: Path) -> None:
     generated = tmp_path / "generated"
     generated.mkdir()

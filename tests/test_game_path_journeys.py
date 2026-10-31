@@ -83,6 +83,7 @@ PLAYER_REALIZATIONS = [
 ]
 
 
+@pytest.mark.nightly
 def test_the_default_policy_earns_the_whole_chain_without_a_deadline() -> None:
     journey = play()
 
@@ -94,6 +95,7 @@ def test_the_default_policy_earns_the_whole_chain_without_a_deadline() -> None:
 
 
 @pytest.mark.parametrize("item_id", PLAYER_REALIZATIONS)
+@pytest.mark.nightly
 def test_every_player_realization_has_an_earned_continuation_to_the_ending(item_id: str) -> None:
     preferred = CHAINS.get(item_id, (item_id,))
 

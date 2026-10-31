@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from storygame.personas import PERSONAS, _resolution_complete, _ScriptedProvider, _select_thorough, _turn_cap
 from storygame.runtime.contracts import RuntimeContractError
 from storygame.runtime.engine import RuntimeEngine
@@ -60,9 +62,11 @@ def _assert_equivalent(preferred: tuple[str, ...]) -> None:
     assert actual.state.turn_records == expected.state.turn_records
 
 
+@pytest.mark.nightly
 def test_shared_prefix_matches_an_early_branch() -> None:
     _assert_equivalent(("k_sl_1a_b_r0",))
 
 
+@pytest.mark.nightly
 def test_shared_prefix_matches_a_late_branch() -> None:
     _assert_equivalent(("k_sl_3b_b_r2",))

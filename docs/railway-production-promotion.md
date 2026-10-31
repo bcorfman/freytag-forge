@@ -35,7 +35,9 @@ deployments without cancelling an active promotion.
    `staging-deployment` only on success.
 2. Review the staged `/dev/` experience and dispatch the protected production
    workflow. Blank SHA chooses the newest successful staged commit; a supplied
-   full SHA must already have the successful status.
+   full SHA must already have the successful status. Promotion also requires a
+   successful `coverage-nightly` run on that exact SHA; manually dispatching
+   `coverage-nightly` on `main` covers a SHA that is `main`'s head.
 3. Production verifies API identity, publishes root Pages, runs hosted E2E, and
    records `production-promotion` only after all gates pass.
 

@@ -54,6 +54,7 @@ def _normal_response(_request: object, **_kwargs: object) -> _Response:
     )
 
 
+@pytest.mark.nightly
 def test_semantic_match_inside_projection_cap_still_commits(monkeypatch: pytest.MonkeyPatch) -> None:
     state = _state_at_2c()
     target = KnowledgeProjector().project(state, "player", "Inspect the wall.").candidates[-1]

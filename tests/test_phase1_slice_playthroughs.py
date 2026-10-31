@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from storygame.personas import _ScriptedProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState
@@ -142,6 +144,7 @@ def test_slice_c_missed_window_recovery_has_base_2a_entry() -> None:
     assert state.current_scene_id == "2B"
 
 
+@pytest.mark.nightly
 def test_slice_d_save_load_matches_uninterrupted_copy_and_missed_window() -> None:
     missed, missed_texts = _missed_window_run()
     missed_loaded, missed_loaded_texts = _missed_window_run(restore_after_miss=True)

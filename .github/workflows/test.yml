@@ -32,35 +32,6 @@ jobs:
       - name: Lint
         run: uv run ruff check --select E9,F63,F7,F82 .
 
-  fast-feedback:
-    name: Fast feedback (unit and component)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          version: latest
-      - name: Locate uv cache
-        id: uv-cache-dir
-        run: echo "dir=$(uv cache dir)" >> "$GITHUB_OUTPUT"
-      - name: Cache uv dependencies
-        id: uv-cache
-        uses: actions/cache@v5
-        with:
-          path: ${{ steps.uv-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
-      - name: Record dependency cache result
-        run: |
-          if [ "${{ steps.uv-cache.outputs.cache-hit }}" = "true" ]; then
-            echo "uv dependency cache: hit" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "uv dependency cache: miss" >> "$GITHUB_STEP_SUMMARY"
-          fi
-      - name: Install dependencies
-        run: uv sync --locked
-      - name: Run fast feedback tests
-        run: TMPDIR=/tmp uv run python scripts/quick_suite.py -- -n 4 -m "(unit or component) and not authoring_quality"
-
   test-shard:
     name: Test shard ${{ matrix.shard }}
     strategy:
@@ -104,7 +75,7 @@ jobs:
   deploy-staging:
     name: Deploy staging
     if: github.ref == 'refs/heads/main' && success()
-    needs: [cutover-contracts, fast-feedback, test-shard]
+    needs: [cutover-contracts, test-shard]
     runs-on: ubuntu-latest
     environment:
       name: freytag-forge / staging
