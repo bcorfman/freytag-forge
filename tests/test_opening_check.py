@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 import threading
 from pathlib import Path
+from types import SimpleNamespace
 
 from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.cloudflare import CloudflareTurnProvider
@@ -34,7 +36,7 @@ def _answers(questions: object, score: float = 1.0) -> dict[str, dict[str, float
     return {key: {"noul": score} for key in questions} if isinstance(questions, dict) else {}
 
 
-def test_runtime_payload_is_byte_identical_to_variant_b() -> None:
+def test_runtime_state_shape_is_unchanged_and_question_is_variant_e() -> None:
     from storygame.runtime.opening_check import opening_payload
 
     case = {
@@ -45,11 +47,24 @@ def test_runtime_payload_is_byte_identical_to_variant_b() -> None:
     }
 
     expected_state, _expected_questions = PROBE.variant_b_payload(case)
-    expected_questions = {PROBE.QUESTION_KEY: PROBE._variant_b_question()}
     state, questions = opening_payload(case["narration"], case["thing"], case["command"])
+    pinned = json.loads(
+        (ROOT / "scripts/ringer/environment_narration/drain_condition_judge/variant-e-question.json").read_text()
+    )
 
     assert state == expected_state
-    assert questions == expected_questions
+    assert questions["condition_consistent"] == pinned
+
+
+def test_story_text_is_appended_only_when_nonblank() -> None:
+    from storygame.runtime.opening_check import opening_state
+
+    base = "the back door has no open or closed value, no declared contents, and is fixed in place."
+    state = opening_state(
+        "Narration.", "back door", "inspect the back door", story_text="  The back door was forced.  "
+    )
+    assert state["declared"] == f"{base} The story states: The back door was forced."
+    assert opening_state("Narration.", "back door", "inspect the back door", story_text="  ")["declared"] == base
 
 
 def test_flag_off_keeps_the_old_request_and_report_shape() -> None:
@@ -195,6 +210,7 @@ def test_capture_enforcing_and_shadow_paths_forward_opening_subjects() -> None:
             seed_from_package=True,
         )
         provider.opening_subjects = lambda: ("storm drain",)
+        provider.authored_handoff = SimpleNamespace(delivery_text="The back door was forced.")
         provider._pending_item_facts_present = True
         calls: list[tuple[object, object]] = []
 
@@ -224,3 +240,4 @@ def test_capture_enforcing_and_shadow_paths_forward_opening_subjects() -> None:
             assert record["observation_shadow"]["accepted"] is True
             assert record["observation_shadow"]["opening_verdicts"][0]["thing"] == "storm drain"
         assert any(request[0]["thing"] == "storm drain" for request in calls)
+        assert any(request[0]["declared"].endswith("The story states: The back door was forced.") for request in calls)

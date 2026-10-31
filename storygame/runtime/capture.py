@@ -502,13 +502,20 @@ class WorldCapture:
             relations = relations_from_context(context) if context is not None else ()
             if relations or opening_subjects:
                 if self.enforcing_verifier.opening_check:
-                    report = self.enforcing_verifier.verify(
-                        narration,
-                        relations,
-                        scene=context.scene if context is not None else None,
-                        opening_subjects=opening_subjects,
-                        command=command,
+                    handoff = getattr(self.provider, "authored_handoff", None)
+                    story_text = (
+                        handoff.delivery_text
+                        if handoff is not None and isinstance(handoff.delivery_text, str)
+                        else None
                     )
+                    verify_kwargs = {
+                        "scene": context.scene if context is not None else None,
+                        "opening_subjects": opening_subjects,
+                        "command": command,
+                    }
+                    if story_text is not None:
+                        verify_kwargs["story_text"] = story_text
+                    report = self.enforcing_verifier.verify(narration, relations, **verify_kwargs)
                 else:
                     report = self.enforcing_verifier.verify(
                         narration, relations, scene=context.scene if context is not None else None
@@ -670,13 +677,20 @@ class WorldCapture:
                     self.shadow_verifier.begin_turn()
                     relations = relations_from_context(context) if context is not None else ()
                     if self.shadow_verifier.opening_check:
-                        report = self.shadow_verifier.verify(
-                            narration,
-                            relations,
-                            scene=context.scene if context is not None else None,
-                            opening_subjects=shadow_opening_subjects,
-                            command=command,
+                        handoff = getattr(self.provider, "authored_handoff", None)
+                        story_text = (
+                            handoff.delivery_text
+                            if handoff is not None and isinstance(handoff.delivery_text, str)
+                            else None
                         )
+                        verify_kwargs = {
+                            "scene": context.scene if context is not None else None,
+                            "opening_subjects": shadow_opening_subjects,
+                            "command": command,
+                        }
+                        if story_text is not None:
+                            verify_kwargs["story_text"] = story_text
+                        report = self.shadow_verifier.verify(narration, relations, **verify_kwargs)
                     else:
                         report = self.shadow_verifier.verify(
                             narration, relations, scene=context.scene if context is not None else None

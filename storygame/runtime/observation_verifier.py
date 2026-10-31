@@ -107,11 +107,19 @@ class ObservationVerifier:
         scene: str | None = None,
         opening_subjects: Sequence[str] = (),
         command: str = "",
+        story_text: str | None = None,
     ) -> VerifierReport:
         relations = tuple(relations)
         opening_subjects = tuple(opening_subjects)
         if self.opening_check and opening_subjects:
-            return self._verify_with_openings(narration, relations, opening_subjects, command, scene)
+            return self._verify_with_openings(
+                narration,
+                relations,
+                opening_subjects,
+                command,
+                scene,
+                story_text=story_text,
+            )
         if not relations:
             return VerifierReport((), "no_relations", 0, 0.0, None)
         if self._requests_this_turn >= self._max_requests_per_turn:
@@ -171,6 +179,8 @@ class ObservationVerifier:
         opening_subjects: Sequence[str],
         command: str,
         scene: str | None,
+        *,
+        story_text: str | None = None,
     ) -> VerifierReport:
         relation_questions = {f"relation_{index}": _question_for(relation) for index, relation in enumerate(relations)}
         relation_state = self._state_for(narration, relations, scene)
@@ -194,7 +204,7 @@ class ObservationVerifier:
             if self._opening_requests_this_turn >= 2:
                 opening_verdicts[index] = OpeningVerdict(thing, "unavailable", None)
                 continue
-            state, questions = opening_payload(narration, thing, command)
+            state, questions = opening_payload(narration, thing, command, story_text=story_text)
             opening_call = ConcurrentCall(lambda state=state, questions=questions: self._ask(state, questions))
             opening_calls.append((index, thing, opening_call))
             self._opening_requests_this_turn += 1

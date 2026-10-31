@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # T9h opening-condition check smoke run with the enforcing verifier enabled.
-# Usage: enforce_t9h_opening_check.sh smoke. This run is billed; never rerun after a partial result.
+# Usage: enforce_t9h_opening_check.sh smoke|retry|things|combined|combined-d|combined-e. This run is billed; never rerun after a partial result.
 set -u
 STAGE="${1:-}"
 case "$STAGE" in
@@ -13,7 +13,10 @@ case "$STAGE" in
   things)
     ARGS="--opening-things-fact --replicates 5 --max-calls 60"
     ;;
-  *) echo "usage: enforce_t9h_opening_check.sh smoke|retry|things" >&2; exit 2 ;;
+  combined|combined-d|combined-e|combined-e2)
+    ARGS="--opening-things-fact --opening-retry-fact --replicates 5 --max-calls 60"
+    ;;
+  *) echo "usage: enforce_t9h_opening_check.sh smoke|retry|things|combined|combined-d|combined-e|combined-e2" >&2; exit 2 ;;
 esac
 
 ROOT=/home/bcorfman/dev/freytag-forge
@@ -24,6 +27,14 @@ if [ "$STAGE" = "retry" ]; then
   PORT=8814
 elif [ "$STAGE" = "things" ]; then
   PORT=8815
+elif [ "$STAGE" = "combined" ]; then
+  PORT=8816
+elif [ "$STAGE" = "combined-d" ]; then
+  PORT=8818
+elif [ "$STAGE" = "combined-e" ]; then
+  PORT=8821
+elif [ "$STAGE" = "combined-e2" ]; then
+  PORT=8822
 fi
 cd "$ROOT" || exit 2
 mkdir -p "$OUT"

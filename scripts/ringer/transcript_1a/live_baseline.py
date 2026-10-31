@@ -903,12 +903,15 @@ def _replicate(
             scene: str | None = None,
             opening_subjects: tuple[str, ...] = (),
             command: str = "",
+            story_text: str | None = None,
         ):
             verify_kwargs: dict[str, Any] = {"scene": scene}
             if opening_subjects:
                 verify_kwargs["opening_subjects"] = opening_subjects
             if command:
                 verify_kwargs["command"] = command
+            if story_text is not None:
+                verify_kwargs["story_text"] = story_text
             report = verify(narration, relations, **verify_kwargs)
             verifier_requests[0] += report.requests
             attempt = {

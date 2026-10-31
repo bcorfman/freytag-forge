@@ -13,22 +13,28 @@ OPENING_QUESTION = {
     "type": "noul",
     "instructions": (
         "Decide whether the narration is consistent with the declared sentence for the thing named in the state. "
-        "It is consistent when it does not state any open, ajar, lifted, covered, or entered condition, or state what "
-        "is inside it, including what can be seen, heard or smelled there, such as darkness, water, objects, sounds "
-        "or smells, unless the declared sentence supports it. The declared sentence says whether the engine opened the "
-        "thing this turn, and an opening the engine performed is supported. Looking at, approaching, kneeling beside, "
-        "touching the outside, or wondering what might be inside are consistent."
+        "It is consistent when it does not state any open, ajar, lifted, covered, or entered condition, and does not "
+        "place a distinct object or person inside it, such as a note, a bag, a phone, a tool, a body or a clue, "
+        "unless the declared sentence supports it. The declared sentence says whether the engine opened the thing this "
+        "turn, and an opening the engine performed is supported. Anything the declared sentence says the story states, "
+        "such as damage to the thing, is supported. Looking at, approaching, kneeling beside, touching the outside, "
+        "looking into it, describing what it is like inside, such as darkness, smells, sounds, water, dirt, leaves, "
+        "debris or that it is empty, or wondering what might be inside are consistent."
     ),
     "criteria": {
         "true": (
             "The narration is consistent with the declared sentence. It does not state an unsupported open, ajar, "
-            "lifted, covered, or entered condition or what is inside it, including what can be seen, heard or smelled "
-            "there, such as darkness, water, objects, sounds or smells, as fact."
+            "lifted, covered, or entered condition, and it does not place a distinct object or person "
+            "inside it as fact. Describing what it is like inside, such as darkness, smells, sounds, water, dirt, "
+            "leaves, debris or that it "
+            "is empty, is consistent."
         ),
         "false": (
             "The narration is not consistent with the declared sentence. It states an unsupported open, ajar, lifted, "
-            "covered, or entered condition or what is inside it, including what can be seen, heard or smelled there, "
-            "such as darkness, water, objects, sounds or smells, as fact."
+            "covered, or entered condition, or it places a distinct object or person inside it as fact. "
+            "Describing what it is like inside, such as darkness, smells, sounds, water, dirt, leaves, "
+            "debris or that it is empty, does not "
+            "count."
         ),
     },
 }
@@ -41,18 +47,33 @@ class OpeningVerdict:
     score: float | None
 
 
-def opening_state(narration: str, thing: str, command: str) -> dict[str, str]:
-    """Build the measured Variant B state for one declared opening."""
+def opening_state(
+    narration: str,
+    thing: str,
+    command: str,
+    *,
+    story_text: str | None = None,
+) -> dict[str, str]:
+    """Build the measured Variant E state for one declared opening."""
+    declared = f"the {thing} has no open or closed value, no declared contents, and is fixed in place."
+    if story_text is not None and story_text.strip():
+        declared += f" The story states: {story_text.strip()}"
     return {
         "narration": narration,
         "thing": thing,
         "command": command,
-        "declared": f"the {thing} has no open or closed value, no declared contents, and is fixed in place.",
+        "declared": declared,
     }
 
 
-def opening_payload(narration: str, thing: str, command: str) -> tuple[dict[str, str], dict[str, dict[str, object]]]:
-    return opening_state(narration, thing, command), {
+def opening_payload(
+    narration: str,
+    thing: str,
+    command: str,
+    *,
+    story_text: str | None = None,
+) -> tuple[dict[str, str], dict[str, dict[str, object]]]:
+    return opening_state(narration, thing, command, story_text=story_text), {
         OPENING_QUESTION_KEY: copy.deepcopy(OPENING_QUESTION),
     }
 
