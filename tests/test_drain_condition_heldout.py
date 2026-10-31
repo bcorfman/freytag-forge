@@ -3,12 +3,19 @@ from pathlib import Path
 
 from scripts.ringer.environment_narration import drain_condition_heldout as module
 
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE_FIXTURE = ROOT / "tests/fixtures/t9h_ci/drain_condition/heldout/source.json"
+
+
+def _build(output: Path) -> int:
+    return module.main(["--build", "--source-file", str(SOURCE_FIXTURE), "--out", str(output)])
+
 
 def test_build_is_deterministic_and_balanced(tmp_path: Path) -> None:
     first = tmp_path / "first"
     second = tmp_path / "second"
-    assert module.main(["--build", "--out", str(first)]) == 0
-    assert module.main(["--build", "--out", str(second)]) == 0
+    assert _build(first) == 0
+    assert _build(second) == 0
     assert (first / "heldout.json").read_bytes() == (second / "heldout.json").read_bytes()
 
     rows = json.loads((first / "heldout.json").read_text(encoding="utf-8"))["rows"]
@@ -24,7 +31,7 @@ def test_build_is_deterministic_and_balanced(tmp_path: Path) -> None:
 
 def test_declared_state_is_well_formed_and_missing_state_has_a_reason(tmp_path: Path) -> None:
     output = tmp_path / "heldout"
-    module.main(["--build", "--out", str(output)])
+    _build(output)
     rows = json.loads((output / "heldout.json").read_text(encoding="utf-8"))["rows"]
 
     drawer = next(
@@ -83,7 +90,7 @@ def test_recorded_turn_fields_are_copied_without_reading_narration() -> None:
 
 def test_authored_rows_inherit_declared_state_from_their_source(tmp_path: Path) -> None:
     output = tmp_path / "heldout"
-    module.main(["--build", "--out", str(output)])
+    _build(output)
     rows = json.loads((output / "heldout.json").read_text(encoding="utf-8"))["rows"]
     real_rows = [row for row in rows if not row["authored"]]
     for authored in (row for row in rows if row["authored"]):
@@ -107,7 +114,7 @@ def test_blind_sheet_is_deterministic_and_does_not_expose_metadata(tmp_path: Pat
     heldout = tmp_path / "heldout"
     first = tmp_path / "sheet-one"
     second = tmp_path / "sheet-two"
-    module.main(["--build", "--out", str(heldout)])
+    _build(heldout)
     heldout_path = heldout / "heldout.json"
     module.main(["--blind-sheet", "--heldout", str(heldout_path), "--out", str(first)])
     module.main(["--blind-sheet", "--heldout", str(heldout_path), "--out", str(second)])

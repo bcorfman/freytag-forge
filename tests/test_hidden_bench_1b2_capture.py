@@ -30,10 +30,9 @@ def test_tampered_1b2_details_are_reported_as_exposure(tmp_path: Path) -> None:
     shutil.copytree(PACKAGE_ROOT, tampered)
     plot_path = tampered / "plot.md"
     plot = plot_path.read_text(encoding="utf-8")
-    original = (
-        "**Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; "
-        "Michelle photograph; Continuity Initiative"
-    )
+    scene_heading = "### Scene 1B.2 — The Man Following Her"
+    heading_index = plot.splitlines().index(scene_heading)
+    original = next(line for line in plot.splitlines()[heading_index + 1 :] if line.startswith("**Details:**"))
     replacement = f"{original}; hidden clue Michelle photograph"
     assert original in plot
     plot_path.write_text(plot.replace(original, replacement, 1), encoding="utf-8")
@@ -73,6 +72,7 @@ def test_real_package_cli_writes_exactly_eight_captures(tmp_path: Path) -> None:
     rows = [line for line in report.splitlines() if line.startswith("| ") and line.split("|", 2)[1].strip().isdigit()]
     assert len(rows) == 8
     assert "Captures: 8." in report
+    assert "FAIL exposure" not in report
 
 
 def test_recovered_capture_state_uses_on_assert_world_effects() -> None:

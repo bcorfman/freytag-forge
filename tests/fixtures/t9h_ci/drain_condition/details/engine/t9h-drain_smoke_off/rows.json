@@ -1,0 +1,47 @@
+[
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously. She notices that the storm drain is partially hidden by the damaged grounds, and she has to push aside some debris to get a closer look. As she peers into the storm drain, she says to herself, \"This could be a possible lead, but I need to be careful, the patrols are nearby.\" A transit token and a handwritten number sequence lie beside Michelle's photograph."
+          },
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. As she approaches the storm drain, she notices it's partially hidden by the damaged grounds and overgrown vegetation. She peers into the storm drain, trying to see if there's anything unusual or if it might be a possible lead to find Michelle. A transit token and a handwritten number sequence lie beside Michelle's photograph."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She approaches the storm drain cautiously, noticing that it appears to be slightly ajar, as if someone or something had recently passed through it. \"What could be down there?\" she wonders, her practical mind considering the possibilities, but her persistence driving her to investigate further. A transit token and a handwritten number sequence lie beside Michelle's photograph."
+          },
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the overgrown vegetation. She pushes aside the debris and peers into the drain, trying to see if there's anything unusual inside. The storm drain appears to be empty, but Kristin notices that the grate covering the entrance is slightly ajar, as if someone or something had recently passed through it. \"What could have gone through here?\" she wonders to herself. A transit token and a handwritten number sequence lie beside Michelle's photograph."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols. As she approaches the storm drain, she notices it's partially hidden by the damaged grounds and overgrown vegetation. She peers into the storm drain, trying to see if there's anything unusual or if it might be a possible lead to find Michelle. A transit token and a handwritten number sequence lie beside Michelle's photograph."
+          },
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols. She approaches the storm drain cautiously, noticing that it's partially hidden by the damaged grounds. As she inspects the storm drain, she says to herself, \"This could be a possible lead, but I need to be careful, patrols are nearby.\" A transit token and a handwritten number sequence lie beside Michelle's photograph."
+          }
+        ]
+      }
+    ]
+  }
+]

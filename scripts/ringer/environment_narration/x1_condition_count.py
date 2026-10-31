@@ -69,17 +69,17 @@ def _condition_info(item_facts: Any, world: Any) -> tuple[bool, bool]:
     return with_condition, with_undeclared_condition
 
 
-def _row_labels(stage: str) -> dict[int, dict[str, Any]]:
-    stage_root = DETAILS_ROOT / stage
+def _row_labels(stage: str, details_root: Path = DETAILS_ROOT) -> dict[int, dict[str, Any]]:
+    stage_root = details_root / stage
     sheet = stage_root / ("sheet.md" if stage == "screen" else "sheet")
     key = _read_json(sheet / "blind_key.json")
     labels = _read_json(sheet / "labels.json")
     return {int(entry["row_index"]): labels[opaque_id] for opaque_id, entry in key.items()}
 
 
-def _rows(stage: str) -> list[dict[str, Any]]:
-    document = _read_json(DETAILS_ROOT / stage / "rows.json")
-    labels = _row_labels(stage)
+def _rows(stage: str, details_root: Path = DETAILS_ROOT) -> list[dict[str, Any]]:
+    document = _read_json(details_root / stage / "rows.json")
+    labels = _row_labels(stage, details_root)
     rows = []
     for row_index, row in enumerate(document["rows"], start=1):
         response = json.loads(row["response_text"])
@@ -102,9 +102,9 @@ def _rows(stage: str) -> list[dict[str, Any]]:
     return rows
 
 
-def _count() -> dict[str, Any]:
+def _count(details_root: Path = DETAILS_ROOT) -> dict[str, Any]:
     world = _world()
-    rows = _rows("screen") + _rows("confirm")
+    rows = _rows("screen", details_root) + _rows("confirm", details_root)
     forbidden_rows = [row for row in rows if row["forbidden"]]
     clean_rows = [row for row in rows if not row["forbidden"]]
     annotated = []
@@ -164,9 +164,10 @@ def _count() -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--corpus-build-only", action="store_true", required=True)
+    parser.add_argument("--details-root", type=Path, default=DETAILS_ROOT)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
-    result = _count()
+    result = _count(args.details_root)
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "x1_count.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(

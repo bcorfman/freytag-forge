@@ -199,9 +199,8 @@ def test_capture_real_scene_1a_fixed_refusal_precedes_other_questions(monkeypatc
     requested: list[str] = []
 
     def ask(_state, questions):
-        key = next(iter(questions))
-        requested.append(key)
-        return {key: {"noul": 1.0}}
+        requested.extend(questions)
+        return {key: {"noul": 1.0} for key in questions}
 
     with patch.object(CloudflareTurnProvider, "_request", return_value={"refers": ["workstation"], "same_as": {}}):
         capture = WorldCapture(provider, ask, fixed_refusal=True)
@@ -214,7 +213,11 @@ def test_capture_real_scene_1a_fixed_refusal_precedes_other_questions(monkeypatc
     prompt = provider.assemble_turn_prompt("Carry the workstation to the truck.")
     rendered = prompt.get("user") or provider._section_user_prompt(prompt["context"])
     assert "Just before this: Kristin tried to move the workstation." in rendered
-    assert requested == ["relocates_thing"]
+    assert any(key.split(":", 1)[0] == "relocates_thing" for key in requested)
+    assert record["fixed_refusal_steps"] == [step]
+    assert record["taking_steps"] == []
+    assert record["boarding_steps"] == []
+    assert record["seating_steps"] == []
     assert world.parent("michelle_workstation") == "kitchen"
 
 
@@ -357,7 +360,10 @@ def test_names_other_action_question_joins_refused_names(monkeypatch: pytest.Mon
     def ask(state, questions):
         key = next(iter(questions))
         requested.append((key, questions, state))
-        return {key: {"noul": 1.0 if key == "relocates_thing" and "Extract" in state["command"] else 0.0}}
+        return {
+            key: {"noul": 1.0 if key.split(":", 1)[0] == "relocates_thing" and "Extract" in state["command"] else 0.0}
+            for key in questions
+        }
 
     capture = WorldCapture(provider, ask, fixed_refusal=True, engine_refusal=True)
     capture.before_turn("Extract the drawer from the workstation.")

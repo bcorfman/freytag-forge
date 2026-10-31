@@ -386,9 +386,9 @@ def _defect_candidates(world: Any, path: Path, data: dict[str, Any]) -> list[dic
     return candidates
 
 
-def _candidates(world: Any) -> list[dict[str, Any]]:
+def _candidates(world: Any, source_files: tuple[Path, ...] = SOURCE_FILES) -> list[dict[str, Any]]:
     candidates = []
-    for path in SOURCE_FILES:
+    for path in source_files:
         if not path.is_file():
             continue
         data = _read_json(path)
@@ -400,8 +400,8 @@ def _candidates(world: Any) -> list[dict[str, Any]]:
     return candidates
 
 
-def _select_real(world: Any) -> list[dict[str, Any]]:
-    candidates = _candidates(world)
+def _select_real(world: Any, source_files: tuple[Path, ...] = SOURCE_FILES) -> list[dict[str, Any]]:
+    candidates = _candidates(world, source_files)
     if len(candidates) < REAL_ROW_LIMIT:
         raise ValueError(f"only {len(candidates)} usable real held-out rows were found")
 
@@ -486,9 +486,9 @@ def _authored_rows(real_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
-def build() -> dict[str, Any]:
+def build(source_files: tuple[Path, ...] = SOURCE_FILES) -> dict[str, Any]:
     world = _world()
-    real_rows = _select_real(world)
+    real_rows = _select_real(world, source_files)
     rows = real_rows + _authored_rows(real_rows)
     for row in rows:
         row.pop("_status", None)
@@ -645,10 +645,12 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--build", action="store_true")
     mode.add_argument("--blind-sheet", action="store_true")
     parser.add_argument("--heldout", type=Path)
+    parser.add_argument("--source-file", action="append", type=Path)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.build:
-        document = build()
+        source_files = tuple(args.source_file) if args.source_file else SOURCE_FILES
+        document = build(source_files)
         args.out.mkdir(parents=True, exist_ok=True)
         (args.out / "heldout.json").write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
         _print_summary(document["rows"])

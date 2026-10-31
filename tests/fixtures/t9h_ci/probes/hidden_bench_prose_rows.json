@@ -1,0 +1,488 @@
+{
+  "schema": 1,
+  "stage": "t9h-hidden-prose",
+  "calls_planned": 60,
+  "rows": [
+    {
+      "call_index": 1,
+      "payload_id": "p0-opening",
+      "arm": "P0",
+      "state": "opening",
+      "sample": 1,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin examines the ordinary bench, her eyes scanning the surface for any signs of Michelle's presence. She notices a few items that catch her attention, including a transit token and a photograph of Michelle. \\\"What is this doing here?\\\" she wonders.\"}, {\"kind\": \"narration\", \"text\": \"She picks up the photograph, studying it carefully, and then sets it back down beside the transit token. Her gaze falls upon a handwritten number sequence, which appears to be some sort of code. \\\"This must be a lead,\\\" she thinks.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's mind begins to racing with possibilities as she tries to decipher the meaning behind the number sequence. She knows she must be careful, as the checkpoints and emergency patrols are likely to be watching her every move. \\\"I need to get out of here, and fast,\\\" she says to herself.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 2,
+      "payload_id": "p0-opening",
+      "arm": "P0",
+      "state": "opening",
+      "sample": 2,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin Schweitzer kneels beside the ordinary bench, her eyes scanning the area for any signs of Michelle or clues to her whereabouts. She notices a few objects on the bench, including a transit token, a photograph of Michelle, and a handwritten number sequence. \\\"What does this mean?\\\" she says to herself, studying the number sequence.\"}, {\"kind\": \"narration\", \"text\": \"The damaged grounds and service path behind her seem to stretch on endlessly, and the checkpoints and emergency patrols in the distance make her feel exposed and vulnerable. She glances around cautiously, wondering if she is being watched. \\\"I need to be careful,\\\" she whispers.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's practical mind kicks in, and she begins to think about her next move, trying to decipher the clues and follow Michelle's lead. She looks at the photograph of Michelle, feeling a surge of determination and concern for her friend. \\\"I have to find you, Shelly,\\\" she says, her voice barely above a whisper.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 3,
+      "payload_id": "p0-opening",
+      "arm": "P0",
+      "state": "opening",
+      "sample": 3,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin examines the ordinary bench, her eyes scanning the surface for any signs of Michelle's presence. She notices a few items that catch her attention, including a transit token, a photograph of Michelle, and a handwritten number sequence. \\\"What does this mean?\\\" she wonders to herself.\"}, {\"kind\": \"narration\", \"text\": \"The damaged grounds and service path surrounding the bench seem to stretch out endlessly, with checkpoints and emergency patrols visible in the distance. Kristin feels a sense of unease, knowing that she needs to be careful to avoid detection. She glances around cautiously, taking in her surroundings.\"}, {\"kind\": \"narration\", \"text\": \"As she kneels beside the bench, Kristin's mind is racing with questions and concerns. She thinks about Michelle, and how she might have ended up here. \\\"Where are you, Shelly?\\\" she whispers, her voice barely audible. The only response is the sound of her own breathing, and the distant hum of the patrols.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 4,
+      "payload_id": "p0-opening",
+      "arm": "P0",
+      "state": "opening",
+      "sample": 4,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin examines the ordinary bench, her eyes scanning the surface for any sign of Michelle. She notices a transit token, Michelle's photograph, and a handwritten number sequence on the bench. \\\"What does this mean?\\\" she wonders.\"}, {\"kind\": \"narration\", \"text\": \"The damaged grounds and service path behind her seem to stretch on forever, making her feel exposed and vulnerable. She glances around, checking for any emergency patrols or checkpoints. \\\"I need to be careful,\\\" she tells herself.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's practical mind kicks in, and she begins to analyze the clues on the bench. She studies the handwritten number sequence, trying to decipher its significance. \\\"Is this a code, or just a random sequence?\\\" she asks herself, her persistence driving her to uncover the truth.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 5,
+      "payload_id": "p0-opening",
+      "arm": "P0",
+      "state": "opening",
+      "sample": 5,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin examines the ordinary bench, her eyes scanning the area for any signs of Michelle or clues to her whereabouts. She notices a few objects on the bench, including a transit token, Michelle's photograph, and a handwritten number sequence. \\\"What does this mean?\\\" she says to herself, puzzled.\"}, {\"kind\": \"narration\", \"text\": \"The damaged grounds and service path surrounding the bench seem to stretch on endlessly, with checkpoints and emergency patrols visible in the distance. Kristin feels a sense of unease, knowing she needs to be careful to avoid detection. She glances around cautiously, her mind racing with thoughts of Michelle and her possible location.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's gaze returns to the objects on the bench, and she picks up the photograph, studying it carefully. \\\"This is definitely Shelly's picture,\\\" she says, her voice barely above a whisper. She turns the photo over, searching for any hidden messages or clues, but finds nothing.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 6,
+      "payload_id": "p0-opening",
+      "arm": "P0",
+      "state": "opening",
+      "sample": 6,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin examines the ordinary bench, her eyes scanning the area for any signs of Michelle. She notices a few objects on the bench, including a transit token, a photograph of Michelle, and a handwritten number sequence. \\\"What does this mean?\\\" she says to herself.\"}, {\"kind\": \"narration\", \"text\": \"She picks up the photograph, studying it carefully. The image shows Michelle with a serious expression, and Kristin wonders what was going through her mind when it was taken. \\\"Shelly, where are you?\\\" she whispers.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's gaze falls on the handwritten number sequence, and she tries to decipher its significance. She turns the paper over, looking for any other clues, but there's nothing else. \\\"This must be a lead, but where does it point?\\\" she thinks.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 7,
+      "payload_id": "p0-opening",
+      "arm": "P0",
+      "state": "opening",
+      "sample": 7,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin examines the ordinary bench, her eyes scanning the surface for any signs of Michelle's presence. She notices a few objects lying on the bench, including a transit token, a photograph of Michelle, and a piece of paper with a handwritten number sequence. \\\"What does this mean?\\\" she wonders.\"}, {\"kind\": \"narration\", \"text\": \"She picks up the photograph, studying it carefully, and then looks at the handwritten number sequence, trying to decipher its significance. The transit token seems out of place, but she tucks it into her pocket, thinking it might be useful later. \\\"This has to be more than just a random collection of items,\\\" she thinks.\"}, {\"kind\": \"narration\", \"text\": \"As she continues to examine the objects, Kristin becomes aware of the damaged grounds and the service path nearby, and she knows she needs to be careful, given the checkpoints and emergency patrols in the area. She glances around, taking in her surroundings, and says to herself, \\\"I need to keep moving and find out where Michelle's lead takes me.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 8,
+      "payload_id": "p0-opening",
+      "arm": "P0",
+      "state": "opening",
+      "sample": 8,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin Schweitzer kneels beside the ordinary bench, her eyes scanning the surrounding area for any signs of Michelle or potential threats. She notices the damaged grounds and the service path nearby, and wonders what could have led her friend to this spot. \\\"What was Shelly thinking, coming here?\\\" she says to herself.\"}, {\"kind\": \"narration\", \"text\": \"As she examines the bench, she sees a transit token, Michelle's photograph, and a handwritten number sequence. She picks up the photograph, studying it carefully, and says, \\\"This is definitely Shelly's, but what does it mean?\\\" She looks around cautiously, aware of the checkpoints and emergency patrols in the area.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's practical mind kicks in, and she starts to think about her next move, considering the risks and potential consequences of being caught. She glances at the handwritten number sequence, trying to decipher its significance, and mutters, \\\"This could be a clue, but to what?\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 9,
+      "payload_id": "p0-opening",
+      "arm": "P0",
+      "state": "opening",
+      "sample": 9,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin examines the ordinary bench, her eyes scanning the surface for any signs of Michelle's presence. She notices a few items that catch her attention, including a transit token, a photograph of Michelle, and a handwritten number sequence. \\\"What does this mean?\\\" she wonders.\"}, {\"kind\": \"narration\", \"text\": \"The damaged grounds and service path surrounding the bench seem ominous, and Kristin is aware of the checkpoints and emergency patrols in the area. She knows she needs to be careful to avoid drawing attention to herself. \\\"I have to keep moving,\\\" she thinks.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's practical nature kicks in as she assesses the situation, trying to piece together the clues and determine her next step. She looks at the photograph of Michelle, feeling a surge of determination to find her friend. \\\"I'll follow your lead, Shelly,\\\" she says to herself.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 10,
+      "payload_id": "p0-opening",
+      "arm": "P0",
+      "state": "opening",
+      "sample": 10,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin examines the ordinary bench, her eyes scanning the surface for any signs of Michelle's presence. She notices a few objects on the bench, including a transit token, a photograph of Michelle, and a handwritten number sequence. \\\"What does this mean?\\\" she wonders.\"}, {\"kind\": \"narration\", \"text\": \"The damaged grounds and service path behind the bench seem to stretch on endlessly, with checkpoints and emergency patrols visible in the distance. Kristin feels a sense of unease, knowing she needs to be careful to avoid detection. She glances around cautiously, trying to take in every detail.\"}, {\"kind\": \"narration\", \"text\": \"As she studies the objects on the bench, Kristin's mind racing with possibilities, she hears the distant sound of footsteps and murmured voices. \\\"I need to focus,\\\" she tells herself, trying to stay calm and think clearly about her next move. The photograph of Michelle seems to stare back at her, a reminder of her friend's absence.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 11,
+      "payload_id": "p1-opening",
+      "arm": "P1",
+      "state": "opening",
+      "sample": 1,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin Schweitzer kneels beside the ordinary bench, her eyes scanning the surrounding area for any signs of Michelle or potential danger. She says to herself, \\\"I have to be careful, the checkpoints and emergency patrols are everywhere.\\\" The damaged grounds and service path stretch out before her, a reminder of the park's current state.\"}, {\"kind\": \"narration\", \"text\": \"The bench looks unremarkable, but Kristin knows that Michelle must have left something here for her to find. She examines the bench more closely, searching for any clues or hidden messages. \\\"What was Michelle trying to tell me?\\\" she wonders.\"}, {\"kind\": \"narration\", \"text\": \"As she searches, Kristin is aware of the silence and stillness of the park, a stark contrast to the bustling streets outside. She hears the distant sound of patrols and wonders how long it will take for them to notice her. \\\"I need to find what I'm looking for and get out of here, fast,\\\" she thinks.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 12,
+      "payload_id": "p1-opening",
+      "arm": "P1",
+      "state": "opening",
+      "sample": 2,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin kneels beside the ordinary bench, her eyes scanning the surrounding area. She notes the damaged grounds and the service path nearby. \\\"I need to be careful,\\\" she says to herself.\"}, {\"kind\": \"narration\", \"text\": \"The checkpoints and emergency patrols are a concern, making her feel exposed in the open park. She glances around, trying to take in every detail. \\\"Where could Shelly have left a lead?\\\" she wonders.\"}, {\"kind\": \"narration\", \"text\": \"The park is quiet, with an eerie stillness that makes Kristin's skin prickle. She examines the bench more closely, searching for any sign of Michelle's presence. \\\"What am I looking for?\\\" she asks herself, her practical mind trying to focus on the task at hand.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 13,
+      "payload_id": "p1-opening",
+      "arm": "P1",
+      "state": "opening",
+      "sample": 3,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin Schweitzer kneels beside the ordinary bench, her eyes scanning the surrounding area for any signs of Michelle or potential threats. She notes the damaged grounds and the service path nearby, wondering what could have led her friend to this spot. \\\"What was Shelly thinking, coming here?\\\" she whispers to herself.\"}, {\"kind\": \"narration\", \"text\": \"The park is eerily quiet, with only the occasional sound of emergency patrols in the distance breaking the silence. Kristin's instincts tell her to be cautious, to keep a low profile and avoid the checkpoints. She glances around, taking in the lay of the land and searching for any possible escape routes.\"}, {\"kind\": \"narration\", \"text\": \"As she examines the bench, Kristin notices that it appears to be just a ordinary park bench, with no obvious clues or markings. She wonders if Michelle might have left something nearby, perhaps hidden from view. \\\"Where do I even start looking?\\\" she thinks, her mind racing with possibilities.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 14,
+      "payload_id": "p1-opening",
+      "arm": "P1",
+      "state": "opening",
+      "sample": 4,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin Schweitzer kneels beside the ordinary bench, her eyes scanning the damaged grounds and service path. She says to herself, \\\"This is where the lead ends, now what?\\\" She looks around cautiously, aware of the checkpoints and emergency patrols.\"}, {\"kind\": \"narration\", \"text\": \"The park is quieter than the streets around it, but Kristin can't shake off the feeling of being exposed. She glances at the bench, wondering if Michelle left something for her. \\\"What am I looking for?\\\" she whispers.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's practical mind takes over, and she begins to examine the bench and its surroundings. She checks for any visible signs of disturbance or hidden messages. \\\"Shelly, what did you want me to find?\\\" she says, her voice barely above a whisper.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 15,
+      "payload_id": "p1-opening",
+      "arm": "P1",
+      "state": "opening",
+      "sample": 5,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin kneels beside the ordinary bench, her eyes scanning the surrounding area. \\\"I have to find something,\\\" she says to herself. The damaged grounds stretch out before her, a stark contrast to the usual tranquility of a park.\"}, {\"kind\": \"narration\", \"text\": \"She examines the bench, searching for any sign of Michelle's presence. The service path behind her is empty, but she knows that could change at any moment. \\\"Stay focused,\\\" she reminds herself.\"}, {\"kind\": \"narration\", \"text\": \"The checkpoints and emergency patrols are a constant threat, making her feel exposed and vulnerable. Kristin's practical nature kicks in, and she begins to think of ways to minimize her risk. \\\"I need to keep moving,\\\" she says, her voice barely above a whisper.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 16,
+      "payload_id": "p1-opening",
+      "arm": "P1",
+      "state": "opening",
+      "sample": 6,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin Schweitzer kneels beside the ordinary bench, her eyes scanning the damaged grounds and the service path nearby. She says to herself, \\\"I have to be careful, the checkpoints and emergency patrols are everywhere.\\\" She glances around, taking in the quiet atmosphere of the park.\"}, {\"kind\": \"narration\", \"text\": \"The bench looks unremarkable, but Kristin knows that Michelle must have left a lead here for her to follow. She examines the bench more closely, searching for any sign of a clue. \\\"What am I looking for?\\\" she wonders.\"}, {\"kind\": \"narration\", \"text\": \"As she searches, Kristin is aware of the potential dangers lurking in the park, from the emergency patrols to the unknown threats that may be hiding in the shadows. She thinks, \\\"I need to stay focused and keep moving if I'm going to survive this and find Shelly.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 17,
+      "payload_id": "p1-opening",
+      "arm": "P1",
+      "state": "opening",
+      "sample": 7,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin Schweitzer kneels beside the ordinary bench, her eyes scanning the surrounding area. \\\"I have to be careful,\\\" she says to herself, aware of the checkpoints and emergency patrols. The damaged grounds stretch out before her, a testament to the park's neglected state.\"}, {\"kind\": \"narration\", \"text\": \"She examines the bench, searching for any sign of Michelle's presence. The service path behind her is empty, but she knows that could change at any moment. \\\"Stay focused,\\\" she reminds herself, her practical nature taking over.\"}, {\"kind\": \"narration\", \"text\": \"As she searches, the quiet of the park seems to press in around her, making her feel exposed and vulnerable. She glances around, her persistence driving her to keep moving forward. \\\"I have to find Shelly,\\\" she whispers, her determination evident.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 18,
+      "payload_id": "p1-opening",
+      "arm": "P1",
+      "state": "opening",
+      "sample": 8,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin Schweitzer kneels beside the ordinary bench, her eyes scanning the surrounding area. She says to herself, \\\"This is where the lead ends, now what?\\\" The damaged grounds stretch out before her, a testament to the turmoil that has engulfed the city.\"}, {\"kind\": \"narration\", \"text\": \"The service path behind her is empty, but she knows that can change at any moment. \\\"I need to keep moving,\\\" she thinks, her mind racing with the possibilities. The checkpoints and emergency patrols are a constant threat, making her feel exposed and vulnerable.\"}, {\"kind\": \"narration\", \"text\": \"As she searches the bench and its surroundings, Kristin's thoughts are with her friend Michelle, wondering what she might have left behind. \\\"Shelly, what were you thinking?\\\" she whispers, her voice barely audible over the sound of her own heartbeat. The park is quiet, but she knows that silence can be deceiving.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 19,
+      "payload_id": "p1-opening",
+      "arm": "P1",
+      "state": "opening",
+      "sample": 9,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin Schweitzer kneels beside the ordinary bench, her eyes scanning the damaged grounds and service path nearby. She says to herself, \\\"This is where the lead ends, now what?\\\" The checkpoints and emergency patrols are a constant reminder of the risks she's taking.\"}, {\"kind\": \"narration\", \"text\": \"The park is quiet, with an eerie feeling that someone might be watching her. Kristin glances around, taking in the scene, and notices the bench seems out of place among the damaged surroundings. She wonders, \\\"What was Michelle thinking, leaving a clue here?\\\"\"}, {\"kind\": \"narration\", \"text\": \"Kristin's practical nature kicks in, and she begins to examine the bench more closely, searching for any hidden clues or markings. She mutters, \\\"There has to be something here, something that will lead me to Shelly.\\\" The silence of the park is only broken by the distant hum of patrols.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 20,
+      "payload_id": "p1-opening",
+      "arm": "P1",
+      "state": "opening",
+      "sample": 10,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin kneels beside the ordinary bench, her eyes scanning the surrounding area for any signs of Michelle or potential danger. She notes the damaged grounds and the service path nearby, wondering if these details might be relevant to her search. \\\"What am I looking for?\\\" she whispers to herself.\"}, {\"kind\": \"narration\", \"text\": \"The park is eerily quiet, the only sounds being the distant hum of emergency patrols and the creaking of trees in the wind. Kristin's practical nature tells her to be cautious, to consider the possibility of checkpoints and patrols in the area. She glances around, trying to get her bearings and plan her next move.\"}, {\"kind\": \"narration\", \"text\": \"As she examines the bench more closely, Kristin notices that it appears to be just a ordinary bench, with no obvious clues or markings. She wonders if Michelle might have left something nearby, or if the bench itself is somehow significant. \\\"Shelly, where are you?\\\" she says softly, her voice barely audible over the wind.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 21,
+      "payload_id": "p0-prefind",
+      "arm": "P0",
+      "state": "prefind",
+      "sample": 1,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench, her eyes scanning the surrounding area for any signs of trouble. She notices the damaged grounds and the service path nearby, and she can see the checkpoints and emergency patrols in the distance. \"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she sees a few objects lying on it, including a transit token, a photograph, and a piece of paper with a handwritten number sequence. She picks up the photograph and examines it, recognizing the face as her friend Michelle's. \"}, {\"kind\": \"narration\", \"text\": \"She turns the photograph over, looking for any clues or notes, and then sets it back down on the bench, her eyes fixed on the number sequence. She says to herself, \\\"What does this mean?\\\" \"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 22,
+      "payload_id": "p0-prefind",
+      "arm": "P0",
+      "state": "prefind",
+      "sample": 2,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench, her eyes scanning the surrounding area for any signs of trouble. She notices the damaged grounds and the service path nearby, and she can see the checkpoints and emergency patrols in the distance. \"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she sees a few objects lying on it, including a transit token, a photograph, and a piece of paper with a handwritten number sequence. She picks up the photograph and examines it, \\\"this looks like a picture of Shelly\\\". \"}, {\"kind\": \"narration\", \"text\": \"She turns the photograph over, looking for any clues or notes, and then sets it back down on the bench. She picks up the piece of paper with the handwritten number sequence and studies it, trying to decipher its meaning. \"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 23,
+      "payload_id": "p0-prefind",
+      "arm": "P0",
+      "state": "prefind",
+      "sample": 3,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin approaches the ordinary park bench, her eyes scanning the surrounding area for any signs of Michelle or potential dangers. She notices the damaged grounds and the service path nearby, and the checkpoints and emergency patrols in the distance. \"}, {\"kind\": \"narration\", \"text\": \"As she inspects the bench, she sees a few objects lying on it, including a transit token, a photograph of Michelle, and a handwritten number sequence. She picks up the photograph, studying it carefully, and then looks at the number sequence, trying to decipher its meaning. \"}, {\"kind\": \"narration\", \"text\": \"She turns the photograph over, checking if there are any notes or markings on the back, and then looks around the bench again, searching for any other clues that might have been left behind. She says to herself, \\\"What was Michelle doing here?\\\" \"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 24,
+      "payload_id": "p0-prefind",
+      "arm": "P0",
+      "state": "prefind",
+      "sample": 4,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench, her eyes scanning the surrounding area for any signs of trouble. She notices the damaged grounds and the service path nearby, and wonders what could have caused the damage. She says to herself, \\\"This doesn't look right.\\\"\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she sees a few objects lying on it, including a transit token, a photograph, and a piece of paper with a handwritten number sequence. She picks up the photograph and examines it, recognizing the face as her friend Michelle's. She says, \\\"Shelly, what were you doing here?\\\"\"}, {\"kind\": \"narration\", \"text\": \"She looks at the other objects on the bench, trying to make sense of them. The transit token seems out of place, and the handwritten number sequence appears to be some sort of code. She wonders if these objects might be clues to Michelle's disappearance. She says, \\\"I need to be careful, patrols are nearby.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 25,
+      "payload_id": "p0-prefind",
+      "arm": "P0",
+      "state": "prefind",
+      "sample": 5,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench, her eyes scanning the surrounding area for any signs of danger. She notices the damaged grounds and the service path nearby, and wonders what could have caused the damage. \"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she sees a few objects lying on it, including a transit token, a photograph, and a piece of paper with a handwritten number sequence. She picks up the photograph and examines it, \\\"this looks like Michelle\\\". \"}, {\"kind\": \"narration\", \"text\": \"She turns the photograph over, looking for any clues or notes, and then sets it back down on the bench. She picks up the piece of paper with the handwritten number sequence, studying it carefully, \\\"what does this mean?\\\" \"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 26,
+      "payload_id": "p0-prefind",
+      "arm": "P0",
+      "state": "prefind",
+      "sample": 6,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols. She says to herself, \\\"I need to be careful, I don't know what I'm up against.\\\" \"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she notices a few objects on it, including a transit token, a photograph, and a piece of paper with a handwritten number sequence. She picks up the photograph and examines it, \\\"This is Shelly, my friend Michelle.\\\" \"}, {\"kind\": \"narration\", \"text\": \"The photograph appears to be a recent one, and Kristin wonders how it ended up here. She looks at the handwritten number sequence, trying to decipher its meaning, \\\"What does this code mean, and why is it here with Shelly's picture?\\\" \"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 27,
+      "payload_id": "p0-prefind",
+      "arm": "P0",
+      "state": "prefind",
+      "sample": 7,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench, her eyes scanning the surrounding area for any signs of trouble. She notices the damaged grounds and the service path nearby, and sees the checkpoints and emergency patrols in the distance. She says to herself, \\\"I need to be careful here.\\\"\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she sees a few objects on it, including a transit token, a photograph, and a piece of paper with a handwritten number sequence. She picks up the photograph and examines it, recognizing the face as her friend Michelle's. She wonders, \\\"What is Michelle's photograph doing here?\\\"\"}, {\"kind\": \"narration\", \"text\": \"Kristin's eyes narrow as she studies the photograph, trying to recall the last time she saw Michelle and what might have happened to her. She glances around cautiously, remembering Brandon's warning, \\\"Keep your voice down; patrols are nearby.\\\" She decides to investigate the other objects on the bench further.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 28,
+      "payload_id": "p0-prefind",
+      "arm": "P0",
+      "state": "prefind",
+      "sample": 8,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench, her eyes scanning the surrounding area for any signs of trouble. She says to herself, \\\"I need to be careful, patrols are nearby.\\\" She approaches the bench cautiously.\"}, {\"kind\": \"narration\", \"text\": \"As she inspects the bench, she notices a few objects that catch her attention. There's a transit token, a photograph of Michelle, and a handwritten number sequence on the bench. She picks up the photograph and says, \\\"This is Shelly, what is she doing here?\\\"\"}, {\"kind\": \"narration\", \"text\": \"She examines the photograph more closely, looking for any clues that might lead her to Michelle. The handwritten number sequence next to the photograph reads \\\"3-1-4-1-5\\\", she wonders what it could mean. She says, \\\"This must be a clue, but what does it mean?\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 29,
+      "payload_id": "p0-prefind",
+      "arm": "P0",
+      "state": "prefind",
+      "sample": 9,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench, her eyes scanning the surrounding area for any signs of trouble. She notices the damaged grounds and the service path nearby, and wonders what could have caused the damage. \"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she sees a few objects lying on it, including a transit token, a photograph, and a piece of paper with a handwritten number sequence. She picks up the photograph and examines it, \\\"this looks like Michelle\\\". \"}, {\"kind\": \"narration\", \"text\": \"She turns the photograph over, looking for any clues or notes that Michelle might have left behind. The handwritten number sequence on the piece of paper catches her eye, and she wonders what it could mean. \"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 30,
+      "payload_id": "p0-prefind",
+      "arm": "P0",
+      "state": "prefind",
+      "sample": 10,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench, her eyes scanning the surrounding area for any signs of trouble. She notices the damaged grounds and the service path nearby, and wonders what could have caused the damage. She says to herself, \\\"This doesn't look right.\\\"\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she sees a few objects lying on it, including a transit token, a photograph, and a piece of paper with a handwritten number sequence. She picks up the photograph and examines it, \\\"This is Shelly, my friend Michelle.\\\"\"}, {\"kind\": \"narration\", \"text\": \"The photograph appears to be a recent one, and Kristin recognizes the background as a place Michelle had mentioned visiting. She looks at the handwritten number sequence, trying to decipher its meaning, and says, \\\"What is this code?\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 31,
+      "payload_id": "p1-prefind",
+      "arm": "P1",
+      "state": "prefind",
+      "sample": 1,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the ordinary park bench, her eyes scanning the surrounding area for any signs of Michelle or potential threats. She notices the damaged grounds and the service path nearby, and is aware of the checkpoints and emergency patrols that make the park feel exposed. \\\"I need to be careful,\\\" she thinks to herself.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she looks for any distinguishing features or possible clues that might lead her to Michelle. The bench appears to be a standard issue park bench, with no visible signs of disturbance or unusual activity. \\\"Keep your voice down; patrols are nearby,\\\" Brandon had warned her earlier.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's hand rests on the back of the bench, and she leans in to take a closer look. The space beneath the bench is shadowed, and she wonders what might be lurking in the darkness. She pauses for a moment, considering her next move, as the sound of distant patrols echoes through the park.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 32,
+      "payload_id": "p1-prefind",
+      "arm": "P1",
+      "state": "prefind",
+      "sample": 2,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols. She says, \\\"I need to be careful, can't let them see me.\\\" She approaches the bench cautiously, looking for any clues that might lead her to Michelle.\"}, {\"kind\": \"narration\", \"text\": \"As she reaches the bench, she examines it carefully, checking for any visible marks or signs of disturbance. The bench appears to be in good condition, despite the damaged grounds around it. She runs her hand over the surface, feeling for any irregularities.\"}, {\"kind\": \"narration\", \"text\": \"Kristin leans down to get a closer look at the space beneath the bench, her hand reaching out to explore the shadowed area. She says, \\\"Maybe Shelly left something here, a message or a clue.\\\" She prepares to reach under the bench, her heart racing with anticipation.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 33,
+      "payload_id": "p1-prefind",
+      "arm": "P1",
+      "state": "prefind",
+      "sample": 3,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the ordinary park bench, her eyes scanning the surrounding area for any signs of Michelle or potential threats. She approaches the bench cautiously, taking in its simple design. \\\"I need to be careful,\\\" she says to herself.\"}, {\"kind\": \"narration\", \"text\": \"As she reaches the bench, Kristin examines it more closely, looking for any distinguishing features or possible clues. The bench appears to be in decent condition, despite the damaged grounds of the park. She runs her hand over the surface, feeling for anything unusual.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's inspection of the bench is meticulous, but she doesn't notice anything out of the ordinary yet. She glances around, noticing the service path and the checkpoints in the distance, reminding herself to stay alert. \\\"Keep your voice down; patrols are nearby,\\\" Brandon's warning echoes in her mind.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 34,
+      "payload_id": "p1-prefind",
+      "arm": "P1",
+      "state": "prefind",
+      "sample": 4,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols. She says, \\\"I need to be careful, can't let them see me.\\\" \"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she notices the damaged grounds and the service path nearby, but her focus remains on the bench. \\\"I'm looking for any clue that might lead me to Shelly,\\\" she says to herself.\"}, {\"kind\": \"narration\", \"text\": \"She reaches the bench and examines it closely, looking for anything out of the ordinary. Brandon Corfman, who is standing nearby, warns her, \\\"Keep your voice down; patrols are nearby.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 35,
+      "payload_id": "p1-prefind",
+      "arm": "P1",
+      "state": "prefind",
+      "sample": 5,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks cautiously towards the park bench, her eyes scanning the surrounding area for any signs of patrols. She approaches the bench, noticing it's in a relatively secluded spot near the service path. \"}, {\"kind\": \"narration\", \"text\": \"As she reaches the bench, she examines it more closely, taking in its ordinary appearance. The bench looks like it's been there for a while, with no distinguishing features that catch her eye. \"}, {\"kind\": \"narration\", \"text\": \"Kristin leans in slightly to get a better look, her hand on the back of the bench for support. She glances around again, making sure she's still alone, before focusing her attention on the bench's underside. \"}]}"
+    },
+    {
+      "call_index": 36,
+      "payload_id": "p1-prefind",
+      "arm": "P1",
+      "state": "prefind",
+      "sample": 6,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols. \\\"I need to be careful,\\\" she thinks to herself. She approaches the bench cautiously.\"}, {\"kind\": \"narration\", \"text\": \"As she reaches the bench, she examines it carefully, looking for any unusual features or markings. The bench appears to be in good condition, despite the damaged grounds around it. \\\"This doesn't seem out of the ordinary,\\\" she says quietly.\"}, {\"kind\": \"narration\", \"text\": \"She glances around the bench, taking in the service path and the checkpoints in the distance. She notices the emergency patrols moving through the park, their presence making her feel uneasy. \\\"I should keep moving,\\\" she thinks, her hand on the bench.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 37,
+      "payload_id": "p1-prefind",
+      "arm": "P1",
+      "state": "prefind",
+      "sample": 7,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus remains on the bench. \\\"I need to be careful,\\\" she says to herself.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she slows down her pace, taking in every detail of the bench and its surroundings. The bench appears to be in decent condition, despite the damaged grounds. She looks around cautiously, aware of the emergency patrols in the area.\"}, {\"kind\": \"narration\", \"text\": \"Kristin reaches the bench and stands beside it, her hand on the backrest as she inspects it more closely. She says, \\\"This looks like a normal bench,\\\" and pauses, taking a deep breath. She glances around, checking for any signs of Michelle or potential pursuers.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 38,
+      "payload_id": "p1-prefind",
+      "arm": "P1",
+      "state": "prefind",
+      "sample": 8,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks cautiously towards the park bench, her eyes scanning the surrounding area for any signs of patrols. \\\"I need to be careful,\\\" she says to herself. She approaches the bench, taking in its ordinary appearance.\"}, {\"kind\": \"narration\", \"text\": \"As she draws closer, she notices the bench is situated near the service path, and the damaged grounds stretch out around it. She can see the checkpoints in the distance, and the emergency patrols moving through the area.\"}, {\"kind\": \"narration\", \"text\": \"Kristin reaches out to touch the bench, her hand making contact with the worn wood. She looks underneath it, noticing the shadowed space beneath. \\\"Keep your voice down; patrols are nearby,\\\" Brandon Corfman's warning echoes in her mind.\"}]}"
+    },
+    {
+      "call_index": 39,
+      "payload_id": "p1-prefind",
+      "arm": "P1",
+      "state": "prefind",
+      "sample": 9,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the bench. \\\"I need to be careful,\\\" she says to herself.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she slows down her pace, taking in every detail. The bench looks like it has been untouched for a while, with no visible signs of disturbance or clues. Kristin's practical mind tells her to check the bench thoroughly.\"}, {\"kind\": \"narration\", \"text\": \"She reaches out to touch the bench, running her hand over the surface to see if there's anything unusual. The wood feels rough and weathered, but otherwise, it seems like a normal bench. Kristin leans in slightly, trying to get a better look at the space beneath it.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 40,
+      "payload_id": "p1-prefind",
+      "arm": "P1",
+      "state": "prefind",
+      "sample": 10,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols. She says, \\\"I need to be careful, can't let them see me.\\\" \"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she notices the damaged grounds around it, a stark contrast to the usual serene atmosphere of a park. \"}]}"
+    },
+    {
+      "call_index": 41,
+      "payload_id": "p0-find",
+      "arm": "P0",
+      "state": "find",
+      "sample": 1,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench and lifts up the edge of it, looking underneath. She says, \\\"Maybe Shelly left something here.\\\" \"}, {\"kind\": \"narration\", \"text\": \"As she looks under the bench, she notices a small piece of paper that has been torn and crumpled up. She reaches under to grab it, hoping it might be a clue to her friend's whereabouts.\"}, {\"kind\": \"narration\", \"text\": \"She smooths out the paper and examines it, trying to make out what is written on it, all while keeping a watchful eye out for the nearby patrols. \\\"Keep your voice down; patrols are nearby,\\\" she hears Brandon Corfman say from behind her.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 42,
+      "payload_id": "p0-find",
+      "arm": "P0",
+      "state": "find",
+      "sample": 2,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin carefully approaches the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols. She says to herself, \\\"I need to be quick and quiet.\\\" She slowly lifts the edge of the bench to peer underneath.\"}, {\"kind\": \"narration\", \"text\": \"As she looks under the bench, she notices a small piece of paper that appears to have been torn from a notebook. It's partially hidden by the bench's supports, but she can see some scribbled writing on it. She mutters, \\\"What's this?\\\"\"}, {\"kind\": \"narration\", \"text\": \"Kristin gently pulls out the paper, trying not to make any noise that might attract unwanted attention. She examines the writing, which seems to be a hastily written note. She says, \\\"This might be a clue, but what does it mean?\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 43,
+      "payload_id": "p0-find",
+      "arm": "P0",
+      "state": "find",
+      "sample": 3,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench and lifts up the edge of the seat to peer underneath. \"}, {\"kind\": \"narration\", \"text\": \"She checks to see if anything is hidden beneath it, her eyes scanning the area. \"}, {\"kind\": \"narration\", \"text\": \"As she looks under the bench, she notices some scraps of paper that appear to have been torn from a notebook, but they are empty except for a few scribbled notes that seem to be a code.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 44,
+      "payload_id": "p0-find",
+      "arm": "P0",
+      "state": "find",
+      "sample": 4,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin carefully approaches the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols. She says, \\\"I need to check under here.\\\" \"}, {\"kind\": \"narration\", \"text\": \"She gets down on her hands and knees, peering under the bench to see if anything is hidden. The damaged grounds around her make it difficult to move quietly.\"}, {\"kind\": \"narration\", \"text\": \"As she looks under the bench, she notices a small piece of paper that has been torn and partially buried in the dirt. She reaches under to grab it, hoping it might be a clue to Michelle's whereabouts.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 45,
+      "payload_id": "p0-find",
+      "arm": "P0",
+      "state": "find",
+      "sample": 5,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench and lifts up the edge of it, peeking underneath. She says, \\\"Maybe Shelly left something here.\\\" She checks the ground carefully.\"}, {\"kind\": \"narration\", \"text\": \"As she looks under the bench, she notices a small piece of paper that has been torn and crumpled up. She reaches down to pick it up, smoothing it out to see if there's anything written on it.\"}, {\"kind\": \"narration\", \"text\": \"The paper appears to have some scribbled notes, possibly a code or a message, but it's hard to decipher. Kristin tucks the paper into her pocket, thinking it might be important later. She looks around cautiously, remembering Brandon's warning, \\\"Keep your voice down; patrols are nearby.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 46,
+      "payload_id": "p0-find",
+      "arm": "P0",
+      "state": "find",
+      "sample": 6,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin carefully approaches the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols. She says, \\\"I need to check under here\\\" as she bends down to look. The damaged grounds around her make every step feel uncertain.\"}, {\"kind\": \"narration\", \"text\": \"As she lifts the edge of the bench, she peers into the darkness underneath, her eyes adjusting slowly. \\\"What am I looking for?\\\" she mutters to herself, trying to recall any details Michelle might have mentioned.\"}, {\"kind\": \"narration\", \"text\": \"The service path nearby seems deserted, but Kristin knows that could change at any moment. She whispers, \\\"Come on, Shelly, where are you?\\\" as she searches, her hand feeling around the dusty space under the bench.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 47,
+      "payload_id": "p0-find",
+      "arm": "P0",
+      "state": "find",
+      "sample": 7,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary bench near the service path, her eyes scanning the surrounding area for any signs of patrols. She says to herself, \\\"I need to be careful, can't let them see me searching.\\\" She slowly lifts up the bench, peeking underneath.\"}, {\"kind\": \"narration\", \"text\": \"As she looks under the bench, she notices a small piece of paper that appears to have been torn from a notebook. \\\"This could be something,\\\" she thinks, her heart beating slightly faster with anticipation. She gently pulls out the paper, trying not to make any noise.\"}, {\"kind\": \"narration\", \"text\": \"The paper has some scribbled notes on it, but one phrase catches her eye: \\\"Meet me at the old oak\\\". She wonders if this could be a clue left by Michelle, and her mind starts racing with possibilities. \\\"What does this mean?\\\" she whispers to herself, looking around cautiously.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 48,
+      "payload_id": "p0-find",
+      "arm": "P0",
+      "state": "find",
+      "sample": 8,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin carefully approaches the ordinary bench, her eyes scanning the surrounding area for any signs of patrols. She says, \\\"I need to be quick, can't let them see me.\\\"\"}, {\"kind\": \"narration\", \"text\": \"She lifts the edge of the bench, peeking underneath to see if anything is hidden. The damaged grounds beneath the bench are visible, but she doesn't see anything out of the ordinary at first glance.\"}, {\"kind\": \"narration\", \"text\": \"As she takes a closer look, she notices a small piece of paper that has been torn and crumpled, partially hidden by the bench's support beam. She reaches under to grab it, hoping it might be a clue to Michelle's whereabouts.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 49,
+      "payload_id": "p0-find",
+      "arm": "P0",
+      "state": "find",
+      "sample": 9,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the ordinary park bench and lifts up the edge of it, peering underneath. She says, \\\"Maybe Shelly left something here.\\\" She examines the ground closely.\"}, {\"kind\": \"narration\", \"text\": \"As she looks under the bench, she notices a small piece of paper that has been torn and crumpled up. She reaches under to grab it, smoothing it out to see if it's anything important.\"}, {\"kind\": \"narration\", \"text\": \"The paper appears to be a receipt from a local store, but there's a handwritten note on the back that reads, \\\"Meet me at the old oak at midnight.\\\" Kristin's eyes scan the surrounding area, wondering if she's being watched.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 50,
+      "payload_id": "p0-find",
+      "arm": "P0",
+      "state": "find",
+      "sample": 10,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin carefully makes her way over to the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols. She says to herself, \\\"I need to be quick and quiet.\\\" She lifts up the bench, looking underneath.\"}, {\"kind\": \"narration\", \"text\": \"As she lifts the bench, she notices a small piece of paper that has been tucked away underneath. She pulls it out, examining it closely. \\\"This could be a clue,\\\" she thinks.\"}, {\"kind\": \"narration\", \"text\": \"The paper appears to be a torn piece of a note, with some scribbled writing on it. Kristin's heart racing, she tries to decipher the writing, hoping it might lead her to Michelle. She mutters, \\\"Come on, Shelly, where are you?\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 51,
+      "payload_id": "p1-find",
+      "arm": "P1",
+      "state": "find",
+      "sample": 1,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin approaches the ordinary park bench, her eyes scanning the damaged grounds and service path, aware of the checkpoints and emergency patrols nearby.\"}, {\"kind\": \"narration\", \"text\": \"She glances around cautiously, noticing Brandon Corfman watching her from a distance, his expression guarded.\"}, {\"kind\": \"narration\", \"text\": \"Brandon Corfman says, \\\"Keep your voice down; patrols are nearby,\\\" as Kristin prepares to investigate the bench.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 52,
+      "payload_id": "p1-find",
+      "arm": "P1",
+      "state": "find",
+      "sample": 2,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin approaches the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus remains on the bench. \\\"I need to be careful,\\\" she says to herself.\"}, {\"kind\": \"narration\", \"text\": \"She glances around cautiously, checking for any emergency patrols that might be nearby. Brandon's warning echoes in her mind, \\\"Keep your voice down; patrols are nearby.\\\" She takes a deep breath and prepares to investigate the bench.\"}, {\"kind\": \"narration\", \"text\": \"Kristin positions herself to look under the park bench, her hand reaching out to lift the edge of the bench or peer into the space beneath it. She is about to investigate the area under the bench, searching for any clues that might lead her to Michelle.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 53,
+      "payload_id": "p1-find",
+      "arm": "P1",
+      "state": "find",
+      "sample": 3,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks cautiously towards the ordinary park bench, her eyes scanning the damaged grounds and service path for any signs of danger. She notices the checkpoints and emergency patrols in the distance, making her feel exposed. \\\"Keep your voice down; patrols are nearby,\\\" Brandon Corfman whispers to her.\"}, {\"kind\": \"narration\", \"text\": \"She approaches the bench, her heart racing with anticipation and fear. The bench sits unassumingly near the service path, seemingly out of place in the midst of the damaged park. Kristin's practical nature tells her to be careful, but her persistence drives her to investigate.\"}, {\"kind\": \"narration\", \"text\": \"Kristin reaches the bench and pauses for a moment, looking around to ensure she is not being watched. She takes a deep breath, then leans down to peer under the bench. Brandon Corfman stands nearby, his eyes fixed on the surroundings, his expression guarded.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 54,
+      "payload_id": "p1-find",
+      "arm": "P1",
+      "state": "find",
+      "sample": 4,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks cautiously towards the ordinary park bench, her eyes scanning the damaged grounds and service path for any signs of danger.\"}, {\"kind\": \"narration\", \"text\": \"She glances around, noticing the checkpoints and emergency patrols in the distance, making her feel exposed and vulnerable.\"}, {\"kind\": \"narration\", \"text\": \"She approaches the bench, her heart racing with anticipation and concern for her friend Michelle, and prepares to look underneath it.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 55,
+      "payload_id": "p1-find",
+      "arm": "P1",
+      "state": "find",
+      "sample": 5,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin approaches the ordinary park bench, her eyes scanning the surrounding area for any signs of patrols. She notices the damaged grounds and the service path nearby, but her focus is on the bench. \"}, {\"kind\": \"narration\", \"text\": \"She walks around the bench, checking to see if anyone is watching her. Brandon Corfman, who is standing a short distance away, catches her eye and says, \\\"Keep your voice down; patrols are nearby.\\\" \"}]}"
+    },
+    {
+      "call_index": 56,
+      "payload_id": "p1-find",
+      "arm": "P1",
+      "state": "find",
+      "sample": 6,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin approaches the ordinary bench near the service path, her eyes scanning the surrounding area for any signs of patrols. She says, \\\"I need to be careful, can't let them see me.\\\" \"}, {\"kind\": \"narration\", \"text\": \"She glances around cautiously, noticing the damaged grounds and the service path nearby, before focusing her attention on the bench. Brandon Corfman warns, \\\"Keep your voice down; patrols are nearby.\\\" \"}, {\"kind\": \"narration\", \"text\": \"Kristin nods, understanding the need for discretion, and begins to move towards the bench, her hands reaching out to lift the edge of the seat. She says, \\\"I hope I can find something.\\\" \"}]}"
+    },
+    {
+      "call_index": 57,
+      "payload_id": "p1-find",
+      "arm": "P1",
+      "state": "find",
+      "sample": 7,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the ordinary park bench, her eyes scanning the damaged grounds around her. She notices the service path nearby, but her focus is on the bench. \"}, {\"kind\": \"narration\", \"text\": \"She approaches the bench cautiously, aware of the checkpoints and emergency patrols in the area. Brandon Corfman whispers to her, \\\"Keep your voice down; patrols are nearby.\\\" \"}, {\"kind\": \"narration\", \"text\": \"Kristin nods and slowly begins to bend down to look under the bench, her movements deliberate and careful. She says, \\\"I need to check something\\\" and Brandon responds, \\\"I won't tell you that.\\\" \"}]}"
+    },
+    {
+      "call_index": 58,
+      "payload_id": "p1-find",
+      "arm": "P1",
+      "state": "find",
+      "sample": 8,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks cautiously towards the ordinary park bench, her eyes scanning the damaged grounds and service path for any signs of trouble. She notices the checkpoints and emergency patrols in the distance, making her feel exposed. \\\"I need to be careful,\\\" she says to herself.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the bench, she slows down, looking around to see if anyone is watching. Brandon Corfman's warning echoes in her mind, \\\"Keep your voice down; patrols are nearby.\\\" She glances at the bench, wondering what she might find.\"}, {\"kind\": \"narration\", \"text\": \"Kristin bends down, her hand reaching out to lift the edge of the bench. She peers into the darkness underneath, her heart racing with anticipation. \\\"What am I looking for?\\\" she whispers, her eyes straining to see into the shadows.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 59,
+      "payload_id": "p1-find",
+      "arm": "P1",
+      "state": "find",
+      "sample": 9,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin approaches the ordinary park bench, her eyes scanning the damaged grounds and service path nearby. She notices the checkpoints and emergency patrols, feeling a sense of exposure. \\\"I need to be careful,\\\" she says to herself.\"}, {\"kind\": \"narration\", \"text\": \"She glances around cautiously, then leans down to peer under the bench. The bench is close to the service path, and she can see the edge of the path and the damaged grounds from her vantage point. \\\"Keep your voice down; patrols are nearby,\\\" Brandon Corfman warns her, his voice low.\"}, {\"kind\": \"narration\", \"text\": \"Kristin's hand reaches out, her fingers stretching towards the underside of the bench. She is about to touch something, but the story doesn't reveal what it is yet. Brandon Corfman stands nearby, watching her with a guarded expression, saying \\\"I won't tell you that.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "call_index": 60,
+      "payload_id": "p1-find",
+      "arm": "P1",
+      "state": "find",
+      "sample": 10,
+      "response_text": "{\"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin approaches the ordinary bench near the service path, her eyes scanning the damaged grounds of the park. She says, \\\"I need to check under here.\\\" \"}, {\"kind\": \"narration\", \"text\": \"She glances around cautiously, noticing the checkpoints and emergency patrols in the distance, their presence making her feel exposed. Brandon Corfman warns, \\\"Keep your voice down; patrols are nearby.\\\" \"}, {\"kind\": \"narration\", \"text\": \"Kristin's hand reaches out, and she starts to bend down to look under the bench, her movements slow and deliberate. Brandon says, \\\"I won't tell you that.\\\" \"}]}"
+    }
+  ],
+  "stop_reason": null
+}

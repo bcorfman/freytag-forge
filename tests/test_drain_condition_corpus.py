@@ -9,6 +9,36 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/ringer/environment_narration/drain_condition_corpus.py"
+FIXTURE_ROOT = ROOT / "tests/fixtures/t9h_ci/drain_condition/details"
+DETAIL_SOURCES = (
+    (
+        "t9h-drain-details/screen",
+        str(FIXTURE_ROOT / "screen/rows.json"),
+        str(FIXTURE_ROOT / "screen/sheet.md/blind_key.json"),
+        str(FIXTURE_ROOT / "screen/sheet.md/labels.json"),
+    ),
+    (
+        "t9h-drain-details/confirm",
+        str(FIXTURE_ROOT / "confirm/rows.json"),
+        str(FIXTURE_ROOT / "confirm/sheet/blind_key.json"),
+        str(FIXTURE_ROOT / "confirm/sheet/labels.json"),
+    ),
+)
+ENGINE_SOURCES = tuple(
+    (
+        run,
+        str(FIXTURE_ROOT / "engine" / run.replace("/", "_") / "rows.json"),
+    )
+    for run in (
+        "t9h-hidden/smoke",
+        "t9h-latency/hedge-short",
+        "t9h-latency/all-on",
+        "t9h-latency/on-2",
+        "t9h-latency/off-2",
+        "t9h-drain/smoke/off",
+        "t9h-drain/smoke/on",
+    )
+)
 
 
 def _module():
@@ -30,8 +60,8 @@ def _labels(module, key: dict[str, object], value: bool = False) -> dict[str, di
 
 def test_real_build_is_deterministic_and_carries_the_known_labels() -> None:
     module = _module()
-    first = module.build_corpus()
-    second = module.build_corpus()
+    first = module.build_corpus(DETAIL_SOURCES, ENGINE_SOURCES)
+    second = module.build_corpus(DETAIL_SOURCES, ENGINE_SOURCES)
 
     assert first == second
     assert len(first["rows"]) == 100

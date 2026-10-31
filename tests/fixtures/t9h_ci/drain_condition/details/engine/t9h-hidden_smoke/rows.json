@@ -1,0 +1,47 @@
+[
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area cautiously. As she approaches the storm drain, she notices it's partially hidden by the damaged grounds and overgrown vegetation. She kneels down to inspect the storm drain more closely, her hand still clutching the Transit token."
+          },
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the damaged grounds and some debris. She kneels down to get a closer look, her hand on the Transit token in her pocket. The storm drain appears to be old and worn, with rust and grime covering its surface. Kristin peers into the darkness, trying to see if there's anything unusual or out of place inside."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the damaged grounds. She kneels down to get a closer look, her hand on the Transit token in her pocket. The storm drain appears to be old and rusty, with leaves and debris accumulated around it. Kristin wonders if Michelle might have passed through here, and if there are any clues to be found."
+          },
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the overgrown vegetation. She pushes aside the debris and peers into the drain, trying to see if there's anything unusual inside. The storm drain appears to be a potential hiding spot or escape route, and Kristin wonders if Michelle might have used it. She looks around cautiously, knowing that the checkpoints and emergency patrols are still a threat."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the damaged grounds. She kneels down to inspect it closer, looking for any clues or signs of Michelle's presence. The storm drain appears to be old and rusty, with leaves and debris accumulated around it. Kristin peers into the drain, but it's too dark to see anything inside. She wonders if Michelle might have passed through here, but she needs to be careful not to draw attention to herself."
+          },
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the overgrown vegetation. She pushes aside the debris and peers into the drain, trying to see if there's anything unusual inside. The storm drain is dark and musty, but Kristin can make out the sound of running water echoing from within. She wonders if Michelle might have passed through here, and if there are any clues to be found."
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -197,6 +197,11 @@ class WorldCapture:
             question_specs(command, relocates=relocates, boards=boards, searches=searches),
         )
         prefetch.start()
+        adapter = _ask_adapter(prefetch.ask)
+        observe_automatically = self.provider.observe_automatically
+        if observe_automatically:
+            self.provider.observation_request = None
+            self.provider._referred_names = []
         referent_match = None
         if (
             batching_enabled()
@@ -206,11 +211,9 @@ class WorldCapture:
         ):
             referent_match = ConcurrentCall(lambda: self.provider.prepare_turn(command))
             referent_match.start()
-        adapter = _ask_adapter(prefetch.ask)
-        observe_automatically = self.provider.observe_automatically
-        if observe_automatically:
-            self.provider.observation_request = None
-            self.provider._referred_names = []
+        referent_match_result = None
+        if referent_match is not None:
+            referent_match_result = referent_match.join()
         fixed = (
             refuse_fixed_move(
                 world,
@@ -269,7 +272,7 @@ class WorldCapture:
         )
         match_info = {}
         if self.provider.item_facts_mode == "single_call" and not engine_refusal and not self.provider.command_consumed:
-            match_info = referent_match.join() if referent_match is not None else self.provider.prepare_turn(command)
+            match_info = referent_match_result if referent_match is not None else self.provider.prepare_turn(command)
         engine_opened = False
         focus_open_state_after = None
         if observe_automatically and not (fixed and fixed.refused):

@@ -1,0 +1,74 @@
+[
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously due to the presence of checkpoints and emergency patrols. As she approaches the storm drain, she notices it appears slightly ajar, as if someone or something had recently passed through it. She says to herself, \"This could be a lead, but I need to be careful; the patrols are getting closer.\""
+          },
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols. She notices that the storm drain is partially hidden by the damaged grounds, making it a slightly more secluded spot. As she approaches the storm drain, she sees that it's a typical metal grate covering a drainage tunnel. She looks around cautiously before kneeling down to inspect it more closely. \"What could Michelle have been looking for here?\" she wonders, peering into the darkness of the tunnel. She notices that the grate seems to be slightly ajar, as if someone had recently passed through it."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area cautiously, aware of the checkpoints and emergency patrols nearby. As she approaches the storm drain, she notices it's partially hidden by the damaged grounds and overgrown vegetation. She peers into the storm drain, trying to see if there's anything unusual or if it might be a possible lead to find Michelle."
+          },
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she peers into its opening, trying to see if there's anything unusual or out of place. The storm drain appears to be a standard issue, but she notices that it's slightly ajar, as if someone or something had recently passed through it. She looks around cautiously, remembering Brandon's warning to keep her voice down, and whispers to herself, \"What's going on here?\" She then proceeds to push the storm drain open, trying to get a better look inside."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. As she approaches the storm drain, she notices it's partially hidden by the damaged grounds and overgrown vegetation. She peers into the storm drain, trying to see if there's anything unusual or if it might be a possible lead to find Michelle."
+          },
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the damaged grounds. She kneels down to get a closer look, trying to peer into the darkness of the drain. \"What could be down there?\" she thinks to herself, wondering if Michelle might have left a clue or hidden something inside. She carefully examines the storm drain, searching for any signs of recent activity or hidden compartments."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously, aware of the nearby checkpoints and emergency patrols. As she approaches the storm drain, she notices it appears slightly ajar, as if someone or something had recently passed through it. She says to herself, \"This could be a lead, but I need to be careful; patrols are nearby, and I don't want to draw attention to myself.\""
+          },
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously, aware of the nearby checkpoints and emergency patrols. As she approaches the storm drain, she notices it appears slightly ajar, as if someone or something had recently passed through it. She bends down to inspect it closer, her hand on the edge of the drain, and says to herself, \"This could be a lead, but I need to be careful.\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area cautiously due to the nearby checkpoints and emergency patrols. As she approaches the storm drain, she notices it's partially hidden by the damaged grounds of the park, and she wonders if it might be a potential lead in her search for Michelle. She peers into the storm drain, trying to see if there's anything unusual or any sign of Michelle's presence, and says to herself, \"This could be a way to move undetected, but it's also risky.\""
+          }
+        ]
+      }
+    ]
+  }
+]

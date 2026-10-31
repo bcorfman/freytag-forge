@@ -78,7 +78,12 @@ def _force_beat_live(package: Any, state: Any, provider: Any) -> None:
     state.active_event_ids.update(storylets)
 
 
-def _hit_lines(system: str, user: str, composed_segments: list[dict[str, str]]) -> dict[str, list[dict[str, str]]]:
+def _hit_lines(
+    system: str,
+    user: str,
+    composed_segments: list[dict[str, str]],
+    player_input: str | None,
+) -> dict[str, list[dict[str, str]]]:
     sections: list[tuple[str, str]] = [("system", system), ("user", user)]
     sections.extend(
         (
@@ -90,6 +95,8 @@ def _hit_lines(system: str, user: str, composed_segments: list[dict[str, str]]) 
     hits: dict[str, list[dict[str, str]]] = {term: [] for term in TERMS}
     for section, text in sections:
         for line in text.splitlines():
+            if player_input is not None and line in (player_input, f"- {player_input}"):
+                continue
             folded = line.casefold()
             for term in TERMS:
                 if term in folded:
@@ -159,7 +166,7 @@ def capture_one(package: Any, state_name: str, player_input: str | None) -> dict
         "system": request["system"],
         "user": request["user"],
         "composed_segments": composed_segments,
-        "hits": _hit_lines(request["system"], request["user"], composed_segments),
+        "hits": _hit_lines(request["system"], request["user"], composed_segments, player_input),
         "custody": _custody(things_block) if state_name == "recovered" else None,
     }
 

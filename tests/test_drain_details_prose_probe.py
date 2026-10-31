@@ -9,6 +9,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/ringer/environment_narration/drain_details_prose_probe.py"
+DRAIN_FIXTURE = ROOT / "tests/fixtures/t9h_ci/probes/drain_details_smoke_rows.json"
 
 
 def _module():
@@ -78,7 +79,7 @@ def _labels_for_rows(
 
 def test_capture_finds_recorded_prompt_and_validates_offline_arms() -> None:
     module = _module()
-    document = module.capture_payloads()
+    document = module.capture_payloads(DRAIN_FIXTURE)
 
     assert {payload["arm"] for payload in document["payloads"]} == set(module.ARMS)
     assert document["payloads"][0]["system"].startswith("You are the narrator")
@@ -89,7 +90,7 @@ def test_capture_finds_recorded_prompt_and_validates_offline_arms() -> None:
 
 def test_recorded_prompt_without_details_fails(tmp_path: Path, monkeypatch) -> None:
     module = _module()
-    source = json.loads(module.RECORDED_ROWS_PATH.read_text())
+    source = json.loads(DRAIN_FIXTURE.read_text())
     prompt = next(
         prompt for prompt in source[0]["turns"][5]["prompts"] if prompt["system"].startswith("You are the narrator")
     )
@@ -105,7 +106,7 @@ def test_recorded_prompt_without_details_fails(tmp_path: Path, monkeypatch) -> N
 
 def test_control_and_candidate_differ_only_by_suffix() -> None:
     module = _module()
-    document = module.capture_payloads()
+    document = module.capture_payloads(DRAIN_FIXTURE)
     control, candidate = document["payloads"]
 
     assert control["system"] == candidate["system"]
@@ -118,6 +119,7 @@ def test_control_and_candidate_differ_only_by_suffix() -> None:
 
 def test_dry_run_counts_twenty_and_refuses_caps(monkeypatch, capsys) -> None:
     module = _module()
+    monkeypatch.setattr(module, "RECORDED_ROWS_PATH", DRAIN_FIXTURE)
     monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
     monkeypatch.delenv("CLOUDFLARE_WORKER_TOKEN", raising=False)
 

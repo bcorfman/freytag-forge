@@ -9,6 +9,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/ringer/environment_narration/hidden_bench_prose_probe.py"
+FROZEN_ROWS_FIXTURE = ROOT / "tests/fixtures/t9h_ci/probes/hidden_bench_prose_rows.json"
+FROZEN_KEY_FIXTURE = ROOT / "tests/fixtures/t9h_ci/probes/hidden_bench_prose_blind_key.json"
 
 
 def _module():
@@ -218,10 +220,8 @@ def test_blind_key_is_a_bijection_for_synthetic_and_frozen_rows(tmp_path: Path) 
     synthetic_key = json.loads((output / "blind_key.json").read_text())
     module.assert_blind_key_bijection(synthetic_rows, synthetic_key)
 
-    frozen_rows_path = ROOT / "bench/results/environment-narration/t9h-hidden/prose/rows.json"
-    frozen_key_path = ROOT / "bench/results/environment-narration/t9h-hidden/prose/sheets.md/blind_key.json"
-    frozen_rows = json.loads(frozen_rows_path.read_text())["rows"]
-    frozen_key = json.loads(frozen_key_path.read_text())
+    frozen_rows = json.loads(FROZEN_ROWS_FIXTURE.read_text())["rows"]
+    frozen_key = json.loads(FROZEN_KEY_FIXTURE.read_text())
     module.assert_blind_key_bijection(frozen_rows, frozen_key)
 
 

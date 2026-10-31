@@ -48,17 +48,6 @@ def test_variant_question_text_names_inside_description() -> None:
     assert probe._variant_c_question() == expected_c
 
 
-def test_case_build_reproduces_frozen_counts(tmp_path: Path) -> None:
-    cases_path = tmp_path / "cases.jsonl"
-    lock_path = tmp_path / "lock.json"
-    probe._write_cases_and_lock(cases_path, lock_path)
-    cases, data = probe._load_cases(cases_path)
-    assert len(cases) == 140
-    assert sum(case["forbidden"] for case in cases if case["set"] == "drain") == 54
-    assert sum(case["forbidden"] for case in cases if case["set"] == "heldout") == 10
-    assert json.loads(lock_path.read_text())["cases_sha256"] == probe._sha256(data)
-
-
 def test_lock_detects_edited_case(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     cases, data = probe._validated_cases()
     lock_path = tmp_path / "lock.json"

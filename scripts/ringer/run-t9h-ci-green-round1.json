@@ -1,0 +1,166 @@
+{
+  "run_name": "t9h-ci-green",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-ci-green",
+  "max_parallel": 6,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "artifacts-drain-condition",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_drain_condition_corpus.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_drain_condition_heldout.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_drain_condition_judge_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_x1_condition_count.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_corpus.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_heldout.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge_probe.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/x1_condition_count.py",
+        "/home/bcorfman/dev/freytag-forge/tests/fixtures/t9h_ci/drain_condition",
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/artifacts-drain-condition.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/artifacts-drain-condition.md"
+      ],
+      "verified": "failing tests pass in the CI simulation and locally without skips; report accounts for each test",
+      "spec": "Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12), on branch t9h-stage-s-result (PR #729), whose CI fails. Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. To see a test the way CI sees it (gitignored artifacts such as bench/results/ and .env absent, a different checkout path), run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/ci_sim_pytest.sh <test files>`. FREE WORK ONLY: no network, no model call, no Worker, never read or print .env. Do not git commit, push, or touch git state (never checkout, stash, reset, clean, add). Other workers edit other files in this same tree at the same time: touch ONLY the files you own. Never edit anything under bench/results/ (read it if useful). Do not edit any check script. Match the surrounding code's style; no regular expressions in new code. At the end run ruff check --fix and ruff format on the .py files you changed.\n\nFILES YOU OWN: the four test files tests/test_drain_condition_corpus.py, tests/test_drain_condition_heldout.py, tests/test_drain_condition_judge_probe.py, tests/test_x1_condition_count.py; the four tools they test in scripts/ringer/environment_narration/ (drain_condition_corpus.py, drain_condition_heldout.py, drain_condition_judge_probe.py, x1_condition_count.py; path parameters only, behaviour unchanged); the new fixture directory tests/fixtures/t9h_ci/drain_condition/; and your report.\n\nFAILING ON CI (they read gitignored files under bench/results/environment-narration/ that exist only on the developer's machine): test_drain_condition_corpus.py::test_real_build_is_deterministic_and_carries_the_known_labels; test_drain_condition_heldout.py::test_authored_rows_inherit_declared_state_from_their_source, ::test_blind_sheet_is_deterministic_and_does_not_expose_metadata, ::test_build_is_deterministic_and_balanced, ::test_declared_state_is_well_formed_and_missing_state_has_a_reason; test_drain_condition_judge_probe.py::test_case_build_reproduces_frozen_counts; test_x1_condition_count.py::test_real_corpus_reproduces_known_x1_counts. Note: drain_condition_judge_probe.py's frozen cases are already committed at scripts/ringer/environment_narration/drain_condition_judge/cases.jsonl with lock.json; prefer testing against those over the gitignored corpus.\n\nHOW TO FIX A TEST THAT READS A LOCAL ARTIFACT (repo rule: unit tests are hermetic; tests are added only when complete and useful, and deleted aggressively on evidence). For each failing test choose ONE and say which in your report: (a) COMMIT A MINIMAL FIXTURE: copy only the slice of the artifact the test needs into your fixture directory (trim to the needed rows and fields; plain JSON or JSONL; no credentials), and point the test at it; if the tool hard-codes the artifact path, add an optional path parameter or argument whose default is unchanged, so the tool's real behaviour is untouched; (b) REWRITE AS SYNTHETIC: build a tiny input in tmp_path that exercises the same behaviour; or (c) DELETE the test when it only re-checks a one-off frozen result that is already recorded in the plan files under .plans/ and the tool's behaviour is covered by other hermetic tests in the same file (name the covering tests). Never turn a missing artifact into a skip or xfail, never weaken an assertion about tool behaviour, never change what the tool computes. Keep every other test in the file passing. Your fixture directory has a shared size cap of 400 KB across all workers (tests/fixtures/t9h_ci/); keep yours under 150 KB.\n\nREPORT: write /home/bcorfman/dev/ringer-work/t9h-ci-green/artifacts-drain-condition.md with one line per failing test above: its name, the choice (fixture, synthetic, or deleted), and for a deletion the covering tests and the .plans/ record of the frozen result. Also list fixture files and their sizes.\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh artifacts-drain-condition`. It needs your report.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh artifacts-drain-condition"
+    },
+    {
+      "key": "artifacts-probes",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_drain_details_prose_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_matcher_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_prose_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_t9h_run_manifests.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_details_prose_probe.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_matcher_probe.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_prose_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/fixtures/t9h_ci/probes",
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/artifacts-probes.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/artifacts-probes.md"
+      ],
+      "verified": "failing tests pass in the CI simulation and locally without skips; report accounts for each test",
+      "spec": "Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12), on branch t9h-stage-s-result (PR #729), whose CI fails. Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. To see a test the way CI sees it (gitignored artifacts such as bench/results/ and .env absent, a different checkout path), run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/ci_sim_pytest.sh <test files>`. FREE WORK ONLY: no network, no model call, no Worker, never read or print .env. Do not git commit, push, or touch git state (never checkout, stash, reset, clean, add). Other workers edit other files in this same tree at the same time: touch ONLY the files you own. Never edit anything under bench/results/ (read it if useful). Do not edit any check script. Match the surrounding code's style; no regular expressions in new code. At the end run ruff check --fix and ruff format on the .py files you changed.\n\nFILES YOU OWN: tests/test_drain_details_prose_probe.py, tests/test_hidden_bench_matcher_probe.py, tests/test_hidden_bench_prose_probe.py, tests/test_t9h_run_manifests.py; the tools scripts/ringer/environment_narration/drain_details_prose_probe.py, hidden_bench_matcher_probe.py, hidden_bench_prose_probe.py (path parameters only, behaviour unchanged); the new fixture directory tests/fixtures/t9h_ci/probes/; and your report. Do NOT edit the committed Ringer manifests (*.json) or their make_*_manifest.py generators.\n\nFAILING ON CI: test_drain_details_prose_probe.py::test_capture_finds_recorded_prompt_and_validates_offline_arms, ::test_control_and_candidate_differ_only_by_suffix, ::test_dry_run_counts_twenty_and_refuses_caps, ::test_recorded_prompt_without_details_fails (they read bench/results/environment-narration/t9h-hidden/smoke/rows/rows.json); test_hidden_bench_matcher_probe.py::test_429_stops_after_the_failing_row, ::test_dry_run_refuses_an_over_budget_plan, ::test_shortlists_use_projection_and_head_package_has_no_new_candidates (find out what local state they depend on; run them in the CI simulation and read the failure); test_hidden_bench_prose_probe.py::test_blind_key_is_a_bijection_for_synthetic_and_frozen_rows (reads bench/results/environment-narration/t9h-hidden/prose/rows.json); test_t9h_run_manifests.py::test_t9h_expect_files_and_conditional_check_behavior (compares absolute paths built from the checkout root against literal /home/bcorfman/... paths in committed manifests; make the test independent of the checkout path without changing the manifests: for example compare against the manifest's own literal root, or compare paths relative to the repo root). For a test whose failure is not an artifact read, fix the real cause in the test and say what it was.\n\nHOW TO FIX A TEST THAT READS A LOCAL ARTIFACT (repo rule: unit tests are hermetic; tests are added only when complete and useful, and deleted aggressively on evidence). For each failing test choose ONE and say which in your report: (a) COMMIT A MINIMAL FIXTURE: copy only the slice of the artifact the test needs into your fixture directory (trim to the needed rows and fields; plain JSON or JSONL; no credentials), and point the test at it; if the tool hard-codes the artifact path, add an optional path parameter or argument whose default is unchanged, so the tool's real behaviour is untouched; (b) REWRITE AS SYNTHETIC: build a tiny input in tmp_path that exercises the same behaviour; or (c) DELETE the test when it only re-checks a one-off frozen result that is already recorded in the plan files under .plans/ and the tool's behaviour is covered by other hermetic tests in the same file (name the covering tests). Never turn a missing artifact into a skip or xfail, never weaken an assertion about tool behaviour, never change what the tool computes. Keep every other test in the file passing. Your fixture directory has a shared size cap of 400 KB across all workers (tests/fixtures/t9h_ci/); keep yours under 150 KB.\n\nREPORT: write /home/bcorfman/dev/ringer-work/t9h-ci-green/artifacts-probes.md with one line per failing test above: its name, the cause, the choice (fixture, synthetic, deleted, or test fixed), and for a deletion the covering tests and the .plans/ record. Also list fixture files and their sizes.\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh artifacts-probes`. It needs your report.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh artifacts-probes"
+    },
+    {
+      "key": "capture-1b2",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_1b2_capture.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_1b2_capture.py",
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/capture-1b2.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/capture-1b2.md"
+      ],
+      "verified": "failing tests pass in the CI simulation and locally without skips; report accounts for each test",
+      "spec": "Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12), on branch t9h-stage-s-result (PR #729), whose CI fails. Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. To see a test the way CI sees it (gitignored artifacts such as bench/results/ and .env absent, a different checkout path), run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/ci_sim_pytest.sh <test files>`. FREE WORK ONLY: no network, no model call, no Worker, never read or print .env. Do not git commit, push, or touch git state (never checkout, stash, reset, clean, add). Other workers edit other files in this same tree at the same time: touch ONLY the files you own. Never edit anything under bench/results/ (read it if useful). Do not edit any check script. Match the surrounding code's style; no regular expressions in new code. At the end run ruff check --fix and ruff format on the .py files you changed.\n\nFILES YOU OWN: tests/test_hidden_bench_1b2_capture.py, scripts/ringer/environment_narration/hidden_bench_1b2_capture.py, and your report.\n\nFAILING (locally and on CI): test_hidden_bench_1b2_capture.py::test_tampered_1b2_details_are_reported_as_exposure. The test hard-codes the scene 1B.2 Details line of data/stories/continuity-initiative/plot.md as it USED to read ('**Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; Michelle photograph; Continuity Initiative') and tampers it. The story author has since removed 'Michelle photograph' from that line on purpose (it leaked a hidden clue to the narrator); plot.md line 214 now reads '**Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; Continuity Initiative'. Do NOT edit plot.md. Fix the test so it reads the current Details line from the package (or from plot.md) instead of a stale literal, and still proves that a tampered line naming a hidden clue is reported as exposure. If the tool itself assumes the old line, fix that too and say so. Also check that the remaining tests in the file still describe the current story (the clean package must now report no exposure, if the tool reports that).\n\nREPORT: write /home/bcorfman/dev/ringer-work/t9h-ci-green/capture-1b2.md naming the test test_tampered_1b2_details_are_reported_as_exposure, the cause, and what you changed.\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh capture-1b2`. It needs your report.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh capture-1b2"
+    },
+    {
+      "key": "scout-fixed-refusal",
+      "task_type": "code-review",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 300,
+      "ownership": [
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/scout-fixed-refusal.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/scout-fixed-refusal.md"
+      ],
+      "verified": "report with cause, evidence, fix and files sections naming real files",
+      "spec": "You are a READ-ONLY scout. You may run tests and write throwaway scripts under /tmp, but you must NOT modify any file in the repository. Your only deliverable is the report file named below.\n\nWorking directory: /home/bcorfman/dev/freytag-forge (Python 3.12), on branch t9h-stage-s-result (PR #729), whose CI fails. Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. To see a test the way CI sees it (gitignored artifacts such as bench/results/ and .env absent, a different checkout path), run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/ci_sim_pytest.sh <test files>`. FREE WORK ONLY: no network, no model call, no Worker, never read or print .env. Do not git commit, push, or touch git state (never checkout, stash, reset, clean, add). Other workers edit other files in this same tree at the same time: touch ONLY the files you own. Never edit anything under bench/results/ (read it if useful). Do not edit any check script. Match the surrounding code's style; no regular expressions in new code. At the end run ruff check --fix and ruff format on the .py files you changed.\n\nTASK: find the root cause of two failing tests in tests/test_fixed_refusal.py (they fail locally and on CI): ::test_capture_real_scene_1a_fixed_refusal_precedes_other_questions (AssertionError: assert ['boards_vehicle', 'relocates_thing'] == ['relocates_thing'], the Jev question order or set changed) and ::test_names_other_action_question_joins_refused_names (AssertionError: assert 'workstation' == 'drawer and workstation'). They were passing at some earlier commit. Use `git log` and `git bisect`-style reasoning over the recent commits on this branch (the last two commits d7f0c8e5 and b2d579f8 bundle many runtime changes: storygame/runtime/capture.py, item_facts.py, jev.py, jev_questions.py, jev_prefetch.py, hedged_request.py, observation.py) to identify which change caused each failure: you may check out older versions of single files into /tmp with `git show <sha>:<path> > /tmp/...` and compare, but never change the working tree. Decide whether the runtime behaviour regressed (a bug) or the test expectation is stale because of an intended change (for example Jev batching or prefetch asking boards_vehicle earlier on purpose); cite the plan record in .plans/grounded-llm-environment-narration.md if it states the intent.\n\nREPORT: write /home/bcorfman/dev/ringer-work/t9h-ci-green/scout-fixed-refusal.md with these markdown section headings: `## Cause` (the root cause, precise, with the exact code lines by path:line), `## Evidence` (the commands you ran and what they showed; quote the decisive output), `## Fix` (the smallest correct fix; say whether the CODE is wrong or the TEST expectation is stale, and why; if a product behaviour decision is involved, say so plainly instead of choosing), `## Files` (every file the fix would change, repo-relative paths). Do not speculate past your evidence; mark anything unverified as unverified.\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh scout-fixed-refusal`.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh scout-fixed-refusal"
+    },
+    {
+      "key": "scout-open-step",
+      "task_type": "code-review",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 300,
+      "ownership": [
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/scout-open-step.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/scout-open-step.md"
+      ],
+      "verified": "report with cause, evidence, fix and files sections naming real files",
+      "spec": "You are a READ-ONLY scout. You may run tests and write throwaway scripts under /tmp, but you must NOT modify any file in the repository. Your only deliverable is the report file named below.\n\nWorking directory: /home/bcorfman/dev/freytag-forge (Python 3.12), on branch t9h-stage-s-result (PR #729), whose CI fails. Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. To see a test the way CI sees it (gitignored artifacts such as bench/results/ and .env absent, a different checkout path), run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/ci_sim_pytest.sh <test files>`. FREE WORK ONLY: no network, no model call, no Worker, never read or print .env. Do not git commit, push, or touch git state (never checkout, stash, reset, clean, add). Other workers edit other files in this same tree at the same time: touch ONLY the files you own. Never edit anything under bench/results/ (read it if useful). Do not edit any check script. Match the surrounding code's style; no regular expressions in new code. At the end run ruff check --fix and ruff format on the .py files you changed.\n\nTASK: find the root cause of four failing tests (they fail locally and on CI): tests/test_observation_open_step.py::test_open_step_is_inert_when_the_container_is_not_openable (AssertionError: assert None == ObservationRequest(action='Open the survey tray.', kind='open', focus='tray')), tests/test_observation_open_step.py::test_open_step_works_for_a_second_synthetic_story (assert False is True), and tests/test_search_opens_drawer.py::test_synthetic_openable_container_obeys_under_first[answers0-under-closed-False] and [answers1-open-open-True] (assert [] == ['searches_underneath'] / ['searches_underneath', 'opens_container']: the Jev questions were never asked). They were passing at an earlier commit. Use git history over the recent runtime changes (the last two commits d7f0c8e5 and b2d579f8 bundle changes to storygame/runtime/observation.py, observation_verifier.py, capture.py, item_facts.py, jev.py, jev_questions.py, jev_prefetch.py) to identify the cause: compare older file versions via `git show <sha>:<path>` into /tmp, never changing the tree. Likely suspects to confirm or rule out: the Jev classifier batching/prefetch (FREYTAG_JEV_BATCH, jev_prefetch.py) answering or skipping questions so the synthetic stubs are never called, and the observation scope or scene_state changes. Decide whether the runtime regressed or the tests' synthetic stubs no longer match an intended interface (and if so, what the right test setup is).\n\nREPORT: write /home/bcorfman/dev/ringer-work/t9h-ci-green/scout-open-step.md with these markdown section headings: `## Cause` (the root cause, precise, with the exact code lines by path:line), `## Evidence` (the commands you ran and what they showed; quote the decisive output), `## Fix` (the smallest correct fix; say whether the CODE is wrong or the TEST expectation is stale, and why; if a product behaviour decision is involved, say so plainly instead of choosing), `## Files` (every file the fix would change, repo-relative paths). Do not speculate past your evidence; mark anything unverified as unverified.\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh scout-open-step`.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh scout-open-step"
+    },
+    {
+      "key": "scout-race",
+      "task_type": "code-review",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 300,
+      "ownership": [
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/scout-race.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/t9h-ci-green/scout-race.md"
+      ],
+      "verified": "report with cause, evidence, fix and files sections naming real files",
+      "spec": "You are a READ-ONLY scout. You may run tests and write throwaway scripts under /tmp, but you must NOT modify any file in the repository. Your only deliverable is the report file named below.\n\nWorking directory: /home/bcorfman/dev/freytag-forge (Python 3.12), on branch t9h-stage-s-result (PR #729), whose CI fails. Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. To see a test the way CI sees it (gitignored artifacts such as bench/results/ and .env absent, a different checkout path), run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/ci_sim_pytest.sh <test files>`. FREE WORK ONLY: no network, no model call, no Worker, never read or print .env. Do not git commit, push, or touch git state (never checkout, stash, reset, clean, add). Other workers edit other files in this same tree at the same time: touch ONLY the files you own. Never edit anything under bench/results/ (read it if useful). Do not edit any check script. Match the surrounding code's style; no regular expressions in new code. At the end run ruff check --fix and ruff format on the .py files you changed.\n\nTASK: CI once failed tests/test_observation_resume.py::test_preview_faults_fail_closed_with_exact_rollback[True-none_verifier] with `RuntimeError: Set changed size during iteration`; it passes locally most of the time. This smells like a thread-safety bug introduced by the new concurrency: storygame/runtime/hedged_request.py (a delayed duplicate request on another thread, first success wins) and storygame/runtime/jev_prefetch.py (Jev classifier prefetch running beside the item-facts referent match), wired through storygame/runtime/cloudflare.py, item_facts.py and capture.py. Find the set that is iterated on one thread while another thread mutates it: read the test, run it repeatedly to reproduce (for example a shell loop of 200 runs of that one test id, or with -n 8 over many copies; record the failure rate), and capture the full traceback that shows the iterating line and, if you can, the mutating line. If you cannot reproduce, reason from the code and say clearly that it is unverified. Propose the smallest correct fix (for example copy-before-iterate is NOT acceptable if it hides a real cross-thread write to shared turn state; say whether the background thread should not touch that state at all, or whether a lock or a snapshot is right) and a deterministic test that would catch it.\n\nREPORT: write /home/bcorfman/dev/ringer-work/t9h-ci-green/scout-race.md with these markdown section headings: `## Cause` (the root cause, precise, with the exact code lines by path:line), `## Evidence` (the commands you ran and what they showed; quote the decisive output), `## Fix` (the smallest correct fix; say whether the CODE is wrong or the TEST expectation is stale, and why; if a product behaviour decision is involved, say so plainly instead of choosing), `## Files` (every file the fix would change, repo-relative paths). Do not speculate past your evidence; mark anything unverified as unverified.\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh scout-race`.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/check_ci_green.sh scout-race"
+    }
+  ]
+}

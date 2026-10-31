@@ -3,9 +3,12 @@ from pathlib import Path
 
 from scripts.ringer.environment_narration import x1_condition_count as module
 
+ROOT = Path(__file__).resolve().parents[1]
+DETAILS_FIXTURE = ROOT / "tests/fixtures/t9h_ci/drain_condition/details"
+
 
 def test_real_corpus_reproduces_known_x1_counts(tmp_path: Path) -> None:
-    assert module.main(["--corpus-build-only", "--out", str(tmp_path)]) == 0
+    assert module.main(["--corpus-build-only", "--details-root", str(DETAILS_FIXTURE), "--out", str(tmp_path)]) == 0
     result = json.loads((tmp_path / "x1_count.json").read_text(encoding="utf-8"))
 
     assert result["labeled_forbidden"] == 18

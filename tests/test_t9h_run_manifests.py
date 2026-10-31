@@ -154,10 +154,12 @@ def test_t9h_expect_files_and_conditional_check_behavior() -> None:
         manifest = json.loads((ENVIRONMENT_NARRATION / name).read_text())
         task = manifest["tasks"][0]
         base = f"bench/results/environment-narration/t9h/{stage}"
+        manifest_root, separator, _suffix = task["expect_files"][0].partition("/bench/results/")
+        assert separator
         assert task["expect_files"] == [
-            f"{ROOT}/{base}/c/rows/rows.json",
-            f"{ROOT}/{base}/c/rows/summary.json",
-            f"{ROOT}/{base}/spent.json",
+            f"{manifest_root}/{base}/c/rows/rows.json",
+            f"{manifest_root}/{base}/c/rows/summary.json",
+            f"{manifest_root}/{base}/spent.json",
         ]
 
         check = task["check"]

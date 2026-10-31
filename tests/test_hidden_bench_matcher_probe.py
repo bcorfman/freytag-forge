@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -35,7 +36,22 @@ class _FakeClient:
 
 
 def _packages() -> dict[str, object]:
-    return {"P1": PACKAGE, "P0": probe._head_package()}
+    baseline = deepcopy(PACKAGE)
+    blocked = {probe.DISCOVERY, probe.POINTER}
+    baseline_catalog = baseline.knowledge.model_copy(
+        update={"knowledge": tuple(item for item in baseline.knowledge.knowledge if item.id not in blocked)}
+    )
+    baseline_indexes = baseline.knowledge_indexes.model_copy(
+        update={
+            "by_id": {key: value for key, value in baseline.knowledge_indexes.by_id.items() if key not in blocked},
+            "scene_to_candidates": {
+                scene: tuple(item for item in candidate_ids if item not in blocked)
+                for scene, candidate_ids in baseline.knowledge_indexes.scene_to_candidates.items()
+            },
+        }
+    )
+    baseline = baseline.model_copy(update={"knowledge": baseline_catalog, "knowledge_indexes": baseline_indexes})
+    return {"P1": PACKAGE, "P0": baseline}
 
 
 def test_shortlists_use_projection_and_head_package_has_no_new_candidates() -> None:
@@ -84,7 +100,11 @@ def test_dry_measurement_has_120_evaluations_and_fresh_provider_each_time(
     assert all(row["http_call_count"] == 1 for row in rows)
 
 
-def test_dry_run_refuses_an_over_budget_plan(capsys: pytest.CaptureFixture[str]) -> None:
+def test_dry_run_refuses_an_over_budget_plan(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    packages = _packages()
+    monkeypatch.setattr(probe, "_load_packages", lambda: packages)
     result = probe.main(["--dry-run", "--max-calls", "119", "--max-usd", "0.02"])
     assert result == 1
     assert "planned HTTP calls: 120" in capsys.readouterr().out
