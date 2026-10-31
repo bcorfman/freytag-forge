@@ -605,7 +605,7 @@ class World:
     def moved_since(
         self, before_parents: Mapping[str, str | None], excluded_ids: Collection[str] = ()
     ) -> tuple[str, ...]:
-        """Return moved thing IDs, ordered as the legacy helper ordered their names."""
+        """Return moved thing IDs in the order used by storygame names."""
         excluded = set(excluded_ids)
         moved = []
         for entity_id, old_parent in before_parents.items():
@@ -623,13 +623,13 @@ class World:
         return seat_id if seat is not None and seat.seat_for else None
 
     def reachable_from_seat(self, seat_id, holder_id) -> tuple[str, ...]:
-        """Return the legacy seat-reach names for a holder's departure question."""
+        """Return entity IDs reachable from a seat for a holder's departure question."""
         seat = self.schema.entities.get(seat_id)
         if seat is None or not seat.seat_for:
             return ()
         seat_for = seat.seat_for
         return tuple(
-            self.name(entity_id)
+            entity_id
             for entity_id in self.entity_ids()
             if entity_id in {seat_id, seat_for}
             or (
@@ -641,7 +641,7 @@ class World:
     def takeable_items(
         self, item_ids: Iterable[str], protagonist_id, fixed_ids: Collection[str] = ()
     ) -> tuple[str, ...]:
-        """Return package item IDs eligible for the legacy take prompt."""
+        """Return package item IDs eligible for the take prompt."""
         protagonist_area = self.area(protagonist_id)
         fixed = set(fixed_ids)
         candidates = [

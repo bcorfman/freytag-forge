@@ -229,7 +229,7 @@ def stand_before_leave(
     seat = world.current_seat(protagonist)
     if not seat:
         return SeatingResult(player_input, (), False, ())
-    within_reach = world.reachable_from_seat(seat, protagonist)
+    within_reach = tuple(world.name(entity_id) for entity_id in world.reachable_from_seat(seat, protagonist))
     answer = needs_to_stand(player_input, world.name(seat), within_reach)
     if answer is None:
         return SeatingResult(player_input, (), True, (f"standing question unanswered for '{world.name(seat)}'",))

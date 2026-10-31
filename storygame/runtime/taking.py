@@ -29,24 +29,7 @@ def take_before_put(world, package, player_input: str, moves_thing: Callable[[st
     items = {item.id: item for item in package.world.items}
     item_ids = tuple(item.id for item in package.world.items)
     fixed_ids = {item.id for item in package.world.items if item.fixed}
-    if hasattr(world, "takeable_items"):
-        candidates = world.takeable_items(item_ids, protagonist, fixed_ids)
-    else:
-        protagonist_area = world.area(protagonist)
-        candidates = tuple(
-            sorted(
-                item_id
-                for item_id in item_ids
-                if world.is_visible(item_id)
-                and not world.is_a(item_id, "vehicle")
-                and not world.schema.is_fixed(item_id)
-                and item_id not in fixed_ids
-                and world.holder(item_id) != protagonist
-                and protagonist_area is not None
-                and world.area(item_id) is not None
-                and world.area(item_id) == protagonist_area
-            )
-        )
+    candidates = world.takeable_items(item_ids, protagonist, fixed_ids)
 
     asked = False
     issues: list[str] = []
