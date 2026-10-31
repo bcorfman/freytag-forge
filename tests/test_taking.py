@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from worldkeeper import MemoryBackend, World, WorldSchema
+
 from storygame.runtime.taking import take_before_put
 
 
@@ -19,60 +21,6 @@ class NPC:
     aliases: tuple[str, ...] = ()
 
 
-class Result:
-    def __init__(self, ok=True, reason="blocked"):
-        self.ok = ok
-        self.reason = reason
-
-
-class World:
-    def __init__(self, items, parents, areas, fixed=(), vehicles=()):
-        self.items = items
-        self.parents = dict(parents)
-        self.areas = dict(areas)
-        self.fixed = set(fixed)
-        self.vehicles = set(vehicles)
-        self.schema = self
-
-    def is_fixed(self, item_id):
-        return item_id in self.fixed
-
-    def is_visible(self, _item_id):
-        return True
-
-    def holder(self, item_id):
-        parent = self.parents.get(item_id)
-        return parent if parent == "kristin" else None
-
-    def area(self, item_id):
-        return self.areas.get(item_id)
-
-    def names(self, item_id):
-        item = next(item for item in self.items if item.id == item_id)
-        return (item.name, *item.aliases)
-
-    def name(self, item_id):
-        if item_id == "kristin":
-            return "Kristin"
-        return {
-            "park_bench": "park bench",
-            "park": "park",
-            "other_area": "other area",
-        }.get(item_id, next((item.name for item in self.items if item.id == item_id), item_id))
-
-    def parent(self, item_id):
-        return self.parents.get(item_id)
-
-    def is_a(self, item_id, kind):
-        if kind == "vehicle":
-            return item_id in self.vehicles
-        return kind == "area" and item_id in {"park", "other_area"}
-
-    def move(self, item_id, parent):
-        self.parents[item_id] = parent
-        return Result()
-
-
 def package(items):
     class WorldPackage:
         npcs = [NPC("kristin", "Kristin")]
@@ -85,7 +33,40 @@ def package(items):
 def make_world(items, parents=None, areas=None, fixed=(), vehicles=()):
     parents = parents or {item.id: "park_bench" for item in items}
     areas = areas or {"kristin": "park", **{item.id: "park" for item in items}}
-    return World(items, parents, areas, fixed, vehicles)
+    item_ids = {item.id for item in items}
+    area_ids = set(areas.values())
+    area_refs = {area_id: area_id if area_id not in item_ids else f"{area_id}_location" for area_id in area_ids}
+    helper_ids = {parent_id for parent_id in parents.values() if parent_id not in item_ids | area_ids | {"kristin"}}
+    helper_names = {"park_bench": "park bench", "other_area": "other area"}
+    entities = [{"id": area_refs[area_id], "name": area_id, "kind": "area"} for area_id in sorted(area_ids)]
+    entities.append({"id": "kristin", "name": "Kristin", "kind": "character"})
+    entities.extend(
+        {"id": helper_id, "name": helper_names.get(helper_id, helper_id), "kind": "supporter"}
+        for helper_id in sorted(helper_ids)
+    )
+    for item in items:
+        entity = {
+            "id": item.id,
+            "name": item.name,
+            "kind": "vehicle" if item.id in vehicles else "thing",
+            "aliases": list(item.aliases),
+        }
+        if item.fixed is not None or item.id in fixed:
+            entity["fixed"] = item.fixed is True or item.id in fixed
+        entities.append(entity)
+
+    world = World(WorldSchema.from_data({"entities": entities}), MemoryBackend())
+    assert world.seed().ok
+    assert world.move("kristin", area_refs[areas["kristin"]]).ok
+    for helper_id in sorted(helper_ids):
+        helper_area = next(
+            area_refs[areas[item_id]] for item_id in item_ids if parents.get(item_id) == helper_id and item_id in areas
+        )
+        assert world.place(helper_id, helper_area).ok
+    for item in items:
+        parent_id = area_refs.get(parents[item.id], parents[item.id])
+        assert world.place(item.id, parent_id).ok
+    return world
 
 
 def test_takes_named_photograph_and_formats_command():
@@ -139,7 +120,7 @@ def test_take_before_put_never_takes_a_vehicle():
         lambda _command, name: asked_names.append(name) or True,
     )
 
-    assert world.parents["truck"] == "park_bench"
+    assert world.parent("truck") == "park_bench"
     assert all("truck" not in step.lower() for step in result.steps)
     assert "Kristin's truck" not in asked_names
 

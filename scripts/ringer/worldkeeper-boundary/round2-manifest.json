@@ -1,0 +1,83 @@
+{
+  "run_name": "worldkeeper-boundary",
+  "workdir": "/home/bcorfman/dev/ringer-work/worldkeeper-boundary-round2",
+  "max_parallel": 3,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "key": "item-facts",
+      "ownership": [
+        "storygame/runtime/item_facts.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/worldkeeper-boundary-round2/item-facts.patch"
+      ],
+      "verified": "executed check: old tree walks removed, World helpers called, only owned files changed, ruff clean, ~1,300 focused tests pass; patch exported",
+      "spec": "You are a code worker. Your current working directory IS a git worktree of the freytag-forge repository (branch worldkeeper-boundary-moves, detached at its HEAD); edit files here directly, never in /home/bcorfman/dev/freytag-forge. Do NOT git commit, push, switch branches, stash or revert. Edit ONLY the files listed under OWNED FILES. Never edit packages/worldkeeper (round 1 already added and tested the helpers), tests/, docs/ or data/.\n\nWHY: a firm project rule says world-model logic (anything that reads or changes only world state) lives in packages/worldkeeper as World or WorldSchema methods; storygame only adapts and calls it. Round 1 added the helpers in packages/worldkeeper/src/worldkeeper/model.py with tests in packages/worldkeeper/tests/test_boundary_helpers.py. Read both, plus scripts/ringer/worldkeeper-boundary/round1-notes.md (which says exactly what each helper replaces and any argument-order or return-type difference) and the audit entries for your files in scripts/ringer/worldkeeper-boundary/audit-reports/*.json (their 'risks' fields).\n\nWHAT TO DO: replace the storygame tree walks named below with calls to the World/WorldSchema helpers and delete the storygame helpers that become unused. This is a pure refactor: behaviour, ordering, return types seen by callers, log lines and player-visible text must not change. Keep the story-, prose- and model-facing parts exactly where they are. Where a helper returns ids but the old code returned names or a set, convert at the call site. Do not add new tests and do not change existing ones; if an existing test fails, your change altered behaviour: fix the change, not the test.\n\nOWNED FILES: storygame/runtime/item_facts.py\n\nIn storygame/runtime/item_facts.py:\n- `_observation_scope_is_empty`: replace the manual parent climb (around lines 693-697) with `world.contains(ancestor_id, entity_id)` (note its argument order).\n- `_observation_underside_is_exhausted`: replace the direct under-contents query (around lines 717-723) with `world.under_contents(focus_id)`; the authored-candidate part from the story package stays.\n- `_apply_move`: replace the visible-seat enumeration (around lines 1290-1300, the comprehension testing `seat_for == place_parent` and is_visible, then sorted, first) with `sorted(world.seats(place_parent))` and take the first; round 1 confirmed this is identical.\n- `_fact_move_overrides` stays as it is (a client comprehension over existing World calls).\n\nHOW TO RUN (never use `uv`; your sandbox cannot run it): Python is `/home/bcorfman/dev/freytag-forge/.venv/bin/python` with `PYTHONPATH=$PWD TMPDIR=/tmp` from your worktree root. Ruff: `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format <your files> && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check <your files>`.\nDONE WHEN, from your worktree root, `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_round2.py item-facts /home/bcorfman/dev/ringer-work/worldkeeper-boundary-round2/item-facts.patch` prints PASS. It checks the old walks are gone and the helpers are called, that you changed only your owned files, ruff, and runs every test file that imports the eight affected modules plus the worldkeeper tests (about 1,300 tests, about 30 s with -n 8).",
+      "check": "/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_round2.py item-facts /home/bcorfman/dev/ringer-work/worldkeeper-boundary-round2/item-facts.patch"
+    },
+    {
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "key": "capture-observation",
+      "ownership": [
+        "storygame/runtime/capture.py",
+        "storygame/runtime/observation.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/worldkeeper-boundary-round2/capture-observation.patch"
+      ],
+      "verified": "executed check: old tree walks removed, World helpers called, only owned files changed, ruff clean, ~1,300 focused tests pass; patch exported",
+      "spec": "You are a code worker. Your current working directory IS a git worktree of the freytag-forge repository (branch worldkeeper-boundary-moves, detached at its HEAD); edit files here directly, never in /home/bcorfman/dev/freytag-forge. Do NOT git commit, push, switch branches, stash or revert. Edit ONLY the files listed under OWNED FILES. Never edit packages/worldkeeper (round 1 already added and tested the helpers), tests/, docs/ or data/.\n\nWHY: a firm project rule says world-model logic (anything that reads or changes only world state) lives in packages/worldkeeper as World or WorldSchema methods; storygame only adapts and calls it. Round 1 added the helpers in packages/worldkeeper/src/worldkeeper/model.py with tests in packages/worldkeeper/tests/test_boundary_helpers.py. Read both, plus scripts/ringer/worldkeeper-boundary/round1-notes.md (which says exactly what each helper replaces and any argument-order or return-type difference) and the audit entries for your files in scripts/ringer/worldkeeper-boundary/audit-reports/*.json (their 'risks' fields).\n\nWHAT TO DO: replace the storygame tree walks named below with calls to the World/WorldSchema helpers and delete the storygame helpers that become unused. This is a pure refactor: behaviour, ordering, return types seen by callers, log lines and player-visible text must not change. Keep the story-, prose- and model-facing parts exactly where they are. Where a helper returns ids but the old code returned names or a set, convert at the call site. Do not add new tests and do not change existing ones; if an existing test fails, your change altered behaviour: fix the change, not the test.\n\nOWNED FILES: storygame/runtime/capture.py, storygame/runtime/observation.py\n\nIn storygame/runtime/capture.py:\n- delete `_descendants`; callers use `world.descendants(root_id)` (wrap in set() where the old set was relied on).\n- delete `_focus_open_state`; callers use `world.open_state(focus_id)`.\n- `_should_engine_open`: keep the function (the command-kind and `opens is True` tests are storygame concerns) but express its world part with `world.open_state(focus_id) == \"closed\"` and `world.sees(...)` exactly as round1-notes.md describes; behaviour must not change.\n- `_moved_unrelated`: keep building the exclusions here; replace the parent-comparison loop with `world.moved_since(before_parents, excluded_ids)` and map ids to names as round1-notes.md says, so the function returns the same values in the same order.\nIn storygame/runtime/observation.py:\n- delete `_is_item`, `_candidate_ids`, `_required_ids` and `_descendants`; callers use `world.is_item`, `world.observable_items`, `world.required_observations` and `world.descendants`.\n\nHOW TO RUN (never use `uv`; your sandbox cannot run it): Python is `/home/bcorfman/dev/freytag-forge/.venv/bin/python` with `PYTHONPATH=$PWD TMPDIR=/tmp` from your worktree root. Ruff: `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format <your files> && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check <your files>`.\nDONE WHEN, from your worktree root, `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_round2.py capture-observation /home/bcorfman/dev/ringer-work/worldkeeper-boundary-round2/capture-observation.patch` prints PASS. It checks the old walks are gone and the helpers are called, that you changed only your owned files, ruff, and runs every test file that imports the eight affected modules plus the worldkeeper tests (about 1,300 tests, about 30 s with -n 8).",
+      "check": "/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_round2.py capture-observation /home/bcorfman/dev/ringer-work/worldkeeper-boundary-round2/capture-observation.patch"
+    },
+    {
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "key": "seating-misc",
+      "ownership": [
+        "storygame/runtime/traversal.py",
+        "storygame/runtime/narration_safety.py",
+        "storygame/runtime/seating.py",
+        "storygame/runtime/taking.py",
+        "storygame/runtime/fixed_refusal.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/worldkeeper-boundary-round2/seating-misc.patch"
+      ],
+      "verified": "executed check: old tree walks removed, World helpers called, only owned files changed, ruff clean, ~1,300 focused tests pass; patch exported",
+      "spec": "You are a code worker. Your current working directory IS a git worktree of the freytag-forge repository (branch worldkeeper-boundary-moves, detached at its HEAD); edit files here directly, never in /home/bcorfman/dev/freytag-forge. Do NOT git commit, push, switch branches, stash or revert. Edit ONLY the files listed under OWNED FILES. Never edit packages/worldkeeper (round 1 already added and tested the helpers), tests/, docs/ or data/.\n\nWHY: a firm project rule says world-model logic (anything that reads or changes only world state) lives in packages/worldkeeper as World or WorldSchema methods; storygame only adapts and calls it. Round 1 added the helpers in packages/worldkeeper/src/worldkeeper/model.py with tests in packages/worldkeeper/tests/test_boundary_helpers.py. Read both, plus scripts/ringer/worldkeeper-boundary/round1-notes.md (which says exactly what each helper replaces and any argument-order or return-type difference) and the audit entries for your files in scripts/ringer/worldkeeper-boundary/audit-reports/*.json (their 'risks' fields).\n\nWHAT TO DO: replace the storygame tree walks named below with calls to the World/WorldSchema helpers and delete the storygame helpers that become unused. This is a pure refactor: behaviour, ordering, return types seen by callers, log lines and player-visible text must not change. Keep the story-, prose- and model-facing parts exactly where they are. Where a helper returns ids but the old code returned names or a set, convert at the call site. Do not add new tests and do not change existing ones; if an existing test fails, your change altered behaviour: fix the change, not the test.\n\nOWNED FILES: storygame/runtime/traversal.py, storygame/runtime/narration_safety.py, storygame/runtime/seating.py, storygame/runtime/taking.py, storygame/runtime/fixed_refusal.py\n\n- storygame/runtime/traversal.py: delete `_contains(entity_id, ancestor_id)`; callers use `world.contains(ancestor_id, entity_id)` (argument order swapped).\n- storygame/runtime/narration_safety.py: delete `NarrationSafetyValidator._related_area_ids` and `_location_ancestor_ids` (NOT the unrelated text helper `_contains`). Callers use `schema.related_areas(area_id)` and `schema.area_ancestors(area_id)` on a WorldSchema built once per call with `WorldSchema.from_data(world_schema_data(package))` (`world_schema_data` is in storygame/runtime/world_model.py; round 1 confirmed it holds every package location with the same parent). Keep set semantics where callers expect a mutable set. If the validator runs per segment, build the schema once per validate call, not per lookup.\n- storygame/runtime/seating.py: `seat_before_use` uses `world.current_seat(...)` for the seat and its visible-seat setup; `stand_before_leave` uses `world.reachable_from_seat(seat_id, holder_id)` for its reachability set; `board_vehicle` uses `world.visible_vehicle_seats(vehicle_ids)` for its visible vehicle/seat options. Questions, callbacks, package text and returned commands stay.\n- storygame/runtime/taking.py: `take_before_put` uses `world.takeable_items(item_ids, protagonist_id, fixed_ids)` with the package's item.fixed bits turned into a plain set of ids.\n- storygame/runtime/fixed_refusal.py: `refuse_fixed_move` uses `world.fixed_visible_items(item_ids, protagonist_id, fixed_ids, scope_ids)` with the in-scope override as a plain id set.\nRead round1-notes.md for each helper's exact contract before switching.\n\nHOW TO RUN (never use `uv`; your sandbox cannot run it): Python is `/home/bcorfman/dev/freytag-forge/.venv/bin/python` with `PYTHONPATH=$PWD TMPDIR=/tmp` from your worktree root. Ruff: `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format <your files> && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check <your files>`.\nDONE WHEN, from your worktree root, `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_round2.py seating-misc /home/bcorfman/dev/ringer-work/worldkeeper-boundary-round2/seating-misc.patch` prints PASS. It checks the old walks are gone and the helpers are called, that you changed only your owned files, ruff, and runs every test file that imports the eight affected modules plus the worldkeeper tests (about 1,300 tests, about 30 s with -n 8).",
+      "check": "/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_round2.py seating-misc /home/bcorfman/dev/ringer-work/worldkeeper-boundary-round2/seating-misc.patch"
+    }
+  ]
+}

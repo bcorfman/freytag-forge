@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import re
 
+from worldkeeper import WorldSchema
+
 from storygame.runtime.contracts import NarrationSegment, ResolvedTurnProposal
 from storygame.runtime.knowledge import KnowledgeGuards, KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
+from storygame.runtime.world_model import world_schema_data
 from storygame.story_package.loader import guarded_narration_terms
 
 _WORD_BOUNDARY = r"(?<!\w){form}(?!\w)"
@@ -26,7 +29,10 @@ class NarrationSafetyValidator:
     ) -> TurnKnowledgeContext:
         post_projection = projector.project(candidate_state, "player", player_input)
         self._validate_selection_backing(state, proposal)
-        self._validate_segments(state, candidate_state, proposal.segments, post_projection, projector, player_input)
+        schema = WorldSchema.from_data(world_schema_data(state.package))
+        self._validate_segments(
+            state, candidate_state, proposal.segments, post_projection, projector, player_input, schema
+        )
         return post_projection
 
     def _validate_selection_backing(self, state: RuntimeState, proposal: ResolvedTurnProposal) -> None:
@@ -78,6 +84,7 @@ class NarrationSafetyValidator:
         post_projection: TurnKnowledgeContext,
         projector: KnowledgeProjector,
         player_input: str,
+        schema: WorldSchema,
     ) -> None:
         indexes = state.package.knowledge_indexes
         allowed_knowledge = {item.id for item in post_projection.committed_knowledge}
@@ -85,8 +92,8 @@ class NarrationSafetyValidator:
         scene = next(
             item for item in state.package.scenes if item.metadata.scene_id == candidate_state.current_scene_id
         )
-        allowed_entities.update(self._scene_entity_ids(state.package, scene))
-        allowed_entities.update(self._entered_scene_entity_ids(state.package, candidate_state))
+        allowed_entities.update(self._scene_entity_ids(state.package, scene, schema))
+        allowed_entities.update(self._entered_scene_entity_ids(state.package, candidate_state, schema))
         npc_ids = {npc.id for npc in state.package.world.npcs}
         known_terms = guarded_narration_terms(indexes)
         handoff_terms = {
@@ -106,7 +113,7 @@ class NarrationSafetyValidator:
         location_ids = {location.id for location in state.package.world.locations}
         for entity_id in tuple(nameable_entity_ids):
             if entity_id in location_ids:
-                nameable_entity_ids.update(self._location_ancestor_ids(state.package, entity_id))
+                nameable_entity_ids.update(schema.area_ancestors(entity_id))
         fixed_entity_ids = {item.id for item in state.package.world.items if item.fixed is True}
         available_entity_ids = nameable_entity_ids & fixed_entity_ids
         nameable_npc_ids = nameable_entity_ids & npc_ids
@@ -302,7 +309,7 @@ class NarrationSafetyValidator:
         )
 
     @staticmethod
-    def _entered_scene_entity_ids(package: object, state: RuntimeState) -> set[str]:
+    def _entered_scene_entity_ids(package: object, state: RuntimeState, schema: WorldSchema) -> set[str]:
         """Allow what earlier scenes could name, once the player has entered them.
 
         A thing the player has already met is not a spoiler. The scene-entry
@@ -313,20 +320,22 @@ class NarrationSafetyValidator:
         for scene in package.scenes:
             entry_fact = f"scene_{scene.metadata.scene_id.lower()}_entry_known"
             if any(str(fact.value).lower() == "true" for fact in state.facts.matching(entry_fact)):
-                entity_ids.update(NarrationSafetyValidator._scene_entity_ids(package, scene))
+                entity_ids.update(NarrationSafetyValidator._scene_entity_ids(package, scene, schema))
         return entity_ids
 
     @staticmethod
-    def _scene_entity_ids(package: object, scene: object) -> set[str]:
+    def _scene_entity_ids(package: object, scene: object, schema: WorldSchema | None = None) -> set[str]:
         """Return entities that the current scene may name."""
 
+        if schema is None:
+            schema = WorldSchema.from_data(world_schema_data(package))
         metadata = scene.metadata
         entity_ids = {metadata.location_id, *metadata.participant_ids, *metadata.item_ids}
-        entity_ids.update(NarrationSafetyValidator._related_area_ids(package, metadata.location_id))
+        entity_ids.update(schema.related_areas(metadata.location_id))
         participant_ids = set(metadata.participant_ids)
         for location in package.world.locations:
             if location.owner in participant_ids:
-                entity_ids.update(NarrationSafetyValidator._related_area_ids(package, location.id))
+                entity_ids.update(schema.related_areas(location.id))
         entity_ids.update(
             placement.parent
             for placement in metadata.item_placements.values()
@@ -337,40 +346,6 @@ class NarrationSafetyValidator:
         for placement in metadata.character_placements.values():
             entity_ids.add(placement.parent)
             if placement.parent in locations:
-                entity_ids.update(NarrationSafetyValidator._related_area_ids(package, placement.parent))
+                entity_ids.update(schema.related_areas(placement.parent))
         entity_ids.update(group_id for group_id in metadata.character_placements if group_id in groups)
         return entity_ids
-
-    @staticmethod
-    def _related_area_ids(package: object, location_id: str) -> set[str]:
-        """Allow the scene area and every area above or below it in the area tree."""
-
-        locations = {location.id: location for location in package.world.locations}
-        related = {location_id}
-        current = locations.get(location_id)
-        while current is not None and current.parent is not None:
-            related.add(current.parent)
-            current = locations.get(current.parent)
-
-        descendants = {location_id}
-        changed = True
-        while changed:
-            changed = False
-            for location in locations.values():
-                if location.parent in descendants and location.id not in descendants:
-                    descendants.add(location.id)
-                    changed = True
-        related.update(descendants)
-        return related
-
-    @staticmethod
-    def _location_ancestor_ids(package: object, location_id: str) -> set[str]:
-        """Return the location ancestors of a named location."""
-
-        locations = {location.id: location for location in package.world.locations}
-        ancestors: set[str] = set()
-        current = locations.get(location_id)
-        while current is not None and current.parent is not None:
-            ancestors.add(current.parent)
-            current = locations.get(current.parent)
-        return ancestors

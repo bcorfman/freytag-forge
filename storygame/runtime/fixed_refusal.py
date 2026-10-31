@@ -43,25 +43,10 @@ def refuse_fixed_move(
     *,
     in_scope: Callable[[str], bool] | None = None,
 ) -> FixedRefusalResult:
-    protagonist_area = world.area(package.protagonist_id)
-    candidates = []
-    for item in package.world.items:
-        item_id = item.id
-        if (
-            (world.schema.is_fixed(item_id) or item.fixed)
-            and world.is_visible(item_id)
-            and not world.is_a(item_id, "area")
-            and (
-                in_scope(item_id)
-                if in_scope is not None
-                else (
-                    protagonist_area is not None
-                    and world.area(item_id) is not None
-                    and world.area(item_id) == protagonist_area
-                )
-            )
-        ):
-            candidates.append(item_id)
+    item_ids = tuple(item.id for item in package.world.items)
+    fixed_ids = {item.id for item in package.world.items if item.fixed}
+    scope_ids = {item_id for item_id in item_ids if in_scope(item_id)} if in_scope is not None else None
+    candidates = world.fixed_visible_items(item_ids, package.protagonist_id, fixed_ids, scope_ids)
 
     asked = False
     issues: list[str] = []

@@ -26,23 +26,10 @@ def _with_article(name: str) -> str:
 
 def take_before_put(world, package, player_input: str, moves_thing: Callable[[str, str], bool | None]) -> TakingResult:
     protagonist = package.protagonist_id
-    protagonist_area = world.area(protagonist)
     items = {item.id: item for item in package.world.items}
-    candidates = []
-    for item in package.world.items:
-        item_id = item.id
-        item_area = world.area(item_id)
-        if (
-            world.is_visible(item_id)
-            and not world.is_a(item_id, "vehicle")
-            and not world.schema.is_fixed(item_id)
-            and not item.fixed
-            and world.holder(item_id) != protagonist
-            and protagonist_area is not None
-            and item_area is not None
-            and item_area == protagonist_area
-        ):
-            candidates.append(item_id)
+    item_ids = tuple(item.id for item in package.world.items)
+    fixed_ids = {item.id for item in package.world.items if item.fixed}
+    candidates = world.takeable_items(item_ids, protagonist, fixed_ids)
 
     asked = False
     issues: list[str] = []

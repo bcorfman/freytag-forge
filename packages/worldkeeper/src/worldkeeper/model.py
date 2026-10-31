@@ -1,7 +1,7 @@
 """Fact-backed schema and world operations."""
 
 import re
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Collection, Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -129,6 +129,40 @@ class WorldSchema:
         """Return an entity's effective fixed flag."""
         entity = self.entities.get(entity_id)
         return bool(entity and entity.fixed)
+
+    def related_areas(self, area_id: str) -> frozenset[str]:
+        """Return an area, its declared ancestors, and its declared descendants."""
+        area_entities = tuple(entity for entity in self.entities.values() if self.kind_is(entity.kind, "area"))
+        related = {area_id}
+        current = self.entities.get(area_id)
+        seen = set()
+        while current is not None and current.parent is not None and current.id not in seen:
+            seen.add(current.id)
+            related.add(current.parent)
+            current = self.entities.get(current.parent)
+
+        descendants = {area_id}
+        changed = True
+        while changed:
+            changed = False
+            for entity in area_entities:
+                if entity.parent in descendants and entity.id not in descendants:
+                    descendants.add(entity.id)
+                    changed = True
+        related.update(descendants)
+        return frozenset(related)
+
+    def area_ancestors(self, area_id: str) -> frozenset[str]:
+        """Return declared area parents, excluding the requested area itself."""
+        ancestors = set()
+        current = self.entities.get(area_id)
+        seen = set()
+        while current is not None and current.parent is not None and current.id not in seen:
+            seen.add(current.id)
+            ancestors.add(current.parent)
+            current = self.entities.get(current.parent)
+        ancestors.discard(area_id)
+        return frozenset(ancestors)
 
     @classmethod
     def from_data(cls, data: Mapping):
@@ -487,6 +521,177 @@ class World:
             seen_ids.add(current_parent)
             current_parent = self.parent(current_parent)
         return tuple(chain)
+
+    def descendants(self, entity_id) -> tuple[str, ...]:
+        """Return each direct or indirect child once in breadth-first order."""
+        found = []
+        pending = list(self.contents(entity_id))
+        seen = {entity_id}
+        while pending:
+            child_id = pending.pop(0)
+            if child_id in seen:
+                continue
+            seen.add(child_id)
+            found.append(child_id)
+            pending.extend(self.contents(child_id))
+        return tuple(found)
+
+    def contains(self, ancestor_id, entity_id) -> bool:
+        """Return whether an entity is the ancestor itself or below it."""
+        return entity_id == ancestor_id or ancestor_id in self.chain(entity_id)
+
+    def under_contents(self, entity_id) -> tuple[str, ...]:
+        """Return direct children below a supporter in contents order."""
+        return tuple(child_id for child_id in self.contents(entity_id) if self.relation(child_id) == "under")
+
+    def open_state(self, entity_id: str | None) -> str | None:
+        """Return a container's supported open state, if it has one."""
+        if entity_id is None or not self.is_openable(entity_id):
+            return None
+        state = self.axis_values(entity_id).get("open")
+        return state if state in {"open", "closed"} else None
+
+    def is_item(self, entity_id) -> bool:
+        """Return whether an entity is a non-container, non-fixture thing."""
+        return self.is_a(entity_id, "thing") and not any(
+            self.is_a(entity_id, kind) for kind in ("container", "supporter", "furniture", "vehicle")
+        )
+
+    def observable_items(self, observer_id, focus_id) -> tuple[str, ...]:
+        """Return item candidates for an observation, preserving world ordering."""
+        if not focus_id or not self.exists(focus_id):
+            observer_area = self.area(observer_id)
+            return tuple(
+                entity_id
+                for entity_id in self.entity_ids()
+                if self.is_item(entity_id) and self.area(entity_id) == observer_area
+            )
+        if self.is_a(focus_id, "area"):
+            return tuple(
+                entity_id
+                for entity_id in self.entity_ids()
+                if self.is_item(entity_id) and self.area(entity_id) == focus_id
+            )
+        if self.is_a(focus_id, "container") or self.is_a(focus_id, "supporter"):
+            return self.descendants(focus_id)
+        if self.is_item(focus_id):
+            return (focus_id,)
+        return ()
+
+    def required_observations(
+        self, observer_id, focus_id, visible_ids: Collection[str], kind: str = "look"
+    ) -> set[str]:
+        """Return visible item IDs required by a focused observation."""
+        if not focus_id or not self.exists(focus_id):
+            return set()
+        if kind == "under":
+            return {
+                entity_id
+                for entity_id in visible_ids
+                if self.is_item(entity_id)
+                and self.sees(observer_id, entity_id)
+                and self.parent(entity_id) == focus_id
+                and self.relation(entity_id) == "under"
+            }
+        required = set()
+        if self.is_item(focus_id) and focus_id in visible_ids:
+            required.add(focus_id)
+        if self.is_a(focus_id, "container") or self.is_a(focus_id, "supporter"):
+            for entity_id in self.descendants(focus_id):
+                if entity_id in visible_ids and self.is_item(entity_id) and self.sees(observer_id, entity_id):
+                    required.add(entity_id)
+        return required
+
+    def moved_since(
+        self, before_parents: Mapping[str, str | None], excluded_ids: Collection[str] = ()
+    ) -> tuple[str, ...]:
+        """Return moved thing IDs in the order used by storygame names."""
+        excluded = set(excluded_ids)
+        moved = []
+        for entity_id, old_parent in before_parents.items():
+            if entity_id in excluded or not self.is_a(entity_id, "thing"):
+                continue
+            new_parent = self.parent(entity_id)
+            if old_parent is not None and new_parent is not None and old_parent != new_parent:
+                moved.append(entity_id)
+        return tuple(sorted(set(moved), key=lambda current: (self.name(current), current)))
+
+    def current_seat(self, entity_id) -> str | None:
+        """Return the declared seat currently holding an entity, if any."""
+        seat_id = self.parent(entity_id)
+        seat = self.schema.entities.get(seat_id) if seat_id else None
+        return seat_id if seat is not None and seat.seat_for else None
+
+    def reachable_from_seat(self, seat_id, holder_id) -> tuple[str, ...]:
+        """Return entity IDs reachable from a seat for a holder's departure question."""
+        seat = self.schema.entities.get(seat_id)
+        if seat is None or not seat.seat_for:
+            return ()
+        seat_for = seat.seat_for
+        return tuple(
+            entity_id
+            for entity_id in self.entity_ids()
+            if entity_id in {seat_id, seat_for}
+            or (
+                self.is_visible(entity_id)
+                and (seat_for in self.chain(entity_id) or self.holder(entity_id) == holder_id)
+            )
+        )
+
+    def takeable_items(
+        self, item_ids: Iterable[str], protagonist_id, fixed_ids: Collection[str] = ()
+    ) -> tuple[str, ...]:
+        """Return package item IDs eligible for the take prompt."""
+        protagonist_area = self.area(protagonist_id)
+        fixed = set(fixed_ids)
+        candidates = [
+            item_id
+            for item_id in item_ids
+            if self.is_visible(item_id)
+            and not self.is_a(item_id, "vehicle")
+            and not self.schema.is_fixed(item_id)
+            and item_id not in fixed
+            and self.holder(item_id) != protagonist_id
+            and protagonist_area is not None
+            and self.area(item_id) is not None
+            and self.area(item_id) == protagonist_area
+        ]
+        return tuple(sorted(candidates))
+
+    def fixed_visible_items(
+        self,
+        item_ids: Iterable[str],
+        protagonist_id,
+        fixed_ids: Collection[str] = (),
+        scope_ids: Collection[str] | None = None,
+    ) -> tuple[str, ...]:
+        """Return fixed visible non-area item IDs in the requested scope."""
+        fixed = set(fixed_ids)
+        scope = set(scope_ids) if scope_ids is not None else None
+        protagonist_area = self.area(protagonist_id)
+        candidates = [
+            item_id
+            for item_id in item_ids
+            if (self.schema.is_fixed(item_id) or item_id in fixed)
+            and self.is_visible(item_id)
+            and not self.is_a(item_id, "area")
+            and (
+                item_id in scope
+                if scope is not None
+                else protagonist_area is not None
+                and self.area(item_id) is not None
+                and self.area(item_id) == protagonist_area
+            )
+        ]
+        return tuple(sorted(candidates))
+
+    def visible_vehicle_seats(self, vehicle_ids: Iterable[str]) -> tuple[tuple[str, tuple[str, ...]], ...]:
+        """Return visible vehicles and their visible declared seats."""
+        return tuple(
+            (vehicle_id, tuple(sorted(self.seats(vehicle_id))))
+            for vehicle_id in vehicle_ids
+            if self.is_a(vehicle_id, "vehicle") and self.is_visible(vehicle_id)
+        )
 
     def area(self, entity_id):
         """Return the containing area, if placed."""

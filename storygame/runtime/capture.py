@@ -59,18 +59,9 @@ def _should_engine_open(world, protagonist_id: str, kind: str, focus_id: str | N
     return (
         kind == "open"
         and opens is True
-        and focus_id is not None
-        and world.is_openable(focus_id)
-        and world.axis_values(focus_id).get("open") == "closed"
+        and world.open_state(focus_id) == "closed"
         and world.sees(protagonist_id, focus_id)
     )
-
-
-def _focus_open_state(world, focus_id: str | None) -> str | None:
-    if focus_id is None or not world.is_a(focus_id, "container"):
-        return None
-    state = world.axis_values(focus_id).get("open")
-    return state if state in {"open", "closed"} else None
 
 
 def _prefetch_targets(world, package, command: str, *, fixed_refusal: bool) -> tuple[tuple[str, ...], ...]:
@@ -365,19 +356,8 @@ class WorldCapture:
             result = world.set_axis(focus_id, "open")
             engine_opened = result.ok and world.axis_values(focus_id).get("open") == "open"
         self.provider.observation_request = ObservationRequest(command, kind, focus_id)
-        return engine_opened, _focus_open_state(world, focus_id)
-
-    @staticmethod
-    def _descendants(world, root_id: str) -> set[str]:
-        found = set()
-        pending = list(world.contents(root_id))
-        while pending:
-            entity_id = pending.pop()
-            if entity_id in found:
-                continue
-            found.add(entity_id)
-            pending.extend(world.contents(entity_id))
-        return found
+        focus_is_container = focus_id is not None and world.is_a(focus_id, "container")
+        return engine_opened, world.open_state(focus_id) if focus_is_container else None
 
     def _moved_unrelated(self, before_parents, candidate_world, context) -> tuple[str, ...]:
         request = self.provider.observation_request
@@ -389,15 +369,9 @@ class WorldCapture:
                 entity_id = candidate_world.resolve(thing.name)
                 if entity_id is not None:
                     excluded.add(entity_id)
-                    excluded.update(self._descendants(candidate_world, entity_id))
-        moved = []
-        for entity_id, old_parent in before_parents.items():
-            if entity_id in excluded or not candidate_world.is_a(entity_id, "thing"):
-                continue
-            new_parent = candidate_world.parent(entity_id)
-            if old_parent is not None and new_parent is not None and old_parent != new_parent:
-                moved.append(candidate_world.name(entity_id))
-        return tuple(sorted(set(moved)))
+                    excluded.update(set(candidate_world.descendants(entity_id)))
+        moved_ids = candidate_world.moved_since(before_parents, excluded)
+        return tuple(dict.fromkeys(candidate_world.name(entity_id) for entity_id in moved_ids))
 
     def _observation_context_for_verification(self, *, entered_scene: bool):
         if self._turn_origin is not None:
