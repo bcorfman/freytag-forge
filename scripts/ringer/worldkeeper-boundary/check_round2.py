@@ -3,6 +3,7 @@
 Usage: check_round2.py <group> <patch output path>
 """
 
+import os
 import re
 import subprocess
 import sys
@@ -55,7 +56,7 @@ MODULES = "item_facts|capture|observation|seating|taking|fixed_refusal|traversal
 
 
 def run(cmd: list[str]) -> subprocess.CompletedProcess:
-    env = {"PYTHONPATH": str(Path.cwd()), "TMPDIR": "/tmp", "PATH": "/usr/bin:/bin"}
+    env = {**os.environ, "PYTHONPATH": str(Path.cwd()), "TMPDIR": "/tmp"}
     return subprocess.run(cmd, capture_output=True, text=True, env=env)
 
 

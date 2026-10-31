@@ -15,15 +15,6 @@ class TraversalResolution:
     refusal_reason: str | None
 
 
-def _contains(world: World, entity_id: str, ancestor_id: str) -> bool:
-    current = entity_id
-    while current is not None:
-        if current == ancestor_id:
-            return True
-        current = world.parent(current)
-    return False
-
-
 def _fact_true(facts: FactStore, fact_id: str) -> bool:
     return any(fact.value == "true" for fact in facts.matching(fact_id, "story"))
 
@@ -56,7 +47,7 @@ def match_traversal_command(package: StoryPackage, facts: FactStore, world: Worl
     if current_place is None:
         return None
     routes = tuple(
-        connection for connection in package.connections if _contains(world, current_place, connection.from_place_id)
+        connection for connection in package.connections if world.contains(connection.from_place_id, current_place)
     )
     if not routes:
         return None
@@ -90,12 +81,12 @@ def resolve_traversal(
     current_place = world.parent(package.world.protagonist_id)
     if current_place is None:
         return TraversalResolution(None, "no_route")
-    if _contains(world, current_place, destination_id):
+    if world.contains(destination_id, current_place):
         return TraversalResolution(None, "already_there")
     routes = tuple(
         connection
         for connection in package.connections
-        if connection.to_place_id == destination_id and _contains(world, current_place, connection.from_place_id)
+        if connection.to_place_id == destination_id and world.contains(connection.from_place_id, current_place)
     )
     if not routes:
         return TraversalResolution(None, "no_route")

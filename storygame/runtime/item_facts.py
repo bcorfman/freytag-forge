@@ -691,10 +691,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
             return False
         for thing in context.visible_things:
             entity_id = world.resolve(thing.name)
-            while entity_id:
-                if entity_id == focus_id:
-                    return False
-                entity_id = world.parent(entity_id)
+            if world.contains(focus_id, entity_id):
+                return False
         return True
 
     def _observation_underside_is_exhausted(self, world, context: ObservationContext) -> bool:
@@ -717,10 +715,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         for item_id in authored_items:
             if world.parent(item_id) == focus_id and world.relation(item_id) == "under":
                 return False
-        return not any(
-            world.parent(entity_id) == focus_id and world.relation(entity_id) == "under"
-            for entity_id in world.contents(focus_id)
-        )
+        return not world.under_contents(focus_id)
 
     def _section_user_prompt(self, user):
         rendered = super()._section_user_prompt(user)
@@ -1287,15 +1282,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     return
                 place_parent = area
         if entity_id == self.state.package.world.protagonist_id and world.is_a(place_parent, "vehicle"):
-            visible_seats = sorted(
-                candidate_id
-                for candidate_id in world.entity_ids()
-                if (
-                    world.schema.entities.get(candidate_id)
-                    and world.schema.entities[candidate_id].seat_for == place_parent
-                    and world.is_visible(candidate_id)
-                )
-            )
+            visible_seats = sorted(world.seats(place_parent))
             if visible_seats:
                 place_parent = visible_seats[0]
         under = value.get("under") is True

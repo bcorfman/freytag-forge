@@ -61,12 +61,6 @@ class ObservationScopeTooLarge(ValueError):
     """The required portion of an observation cannot fit its configured bound."""
 
 
-def _is_item(world: World, entity_id: str) -> bool:
-    return world.is_a(entity_id, "thing") and not any(
-        world.is_a(entity_id, kind) for kind in ("container", "supporter", "furniture", "vehicle")
-    )
-
-
 def build_observation_context(
     world: World,
     observer_id: str,
@@ -93,14 +87,14 @@ def build_observation_context(
         sorted(
             (
                 entity_id
-                for entity_id in _candidate_ids(world, observer_id, request.focus)
-                if _is_item(world, entity_id) and world.is_visible(entity_id) and world.sees(observer_id, entity_id)
+                for entity_id in world.observable_items(observer_id, request.focus)
+                if world.is_item(entity_id) and world.is_visible(entity_id) and world.sees(observer_id, entity_id)
             ),
             key=lambda entity_id: _sort_key(world, entity_id),
         )
     )
     visible_set = set(visible_ids)
-    required_ids = _required_ids(world, observer_id, request.focus, visible_set, request.kind)
+    required_ids = world.required_observations(observer_id, request.focus, visible_set, request.kind)
     required_ids = tuple(sorted(required_ids, key=lambda entity_id: _sort_key(world, entity_id)))
     if len(required_ids) > max_required:
         names = ", ".join(world.name(entity_id) for entity_id in required_ids)
@@ -135,61 +129,6 @@ def _sort_key(world: World, entity_id: str) -> tuple[str, str, str]:
     return name.casefold(), name, entity_id
 
 
-def _required_ids(
-    world: World, observer_id: str, focus_id: str | None, visible_ids: set[str], kind: str = "look"
-) -> set[str]:
-    if not focus_id or not world.exists(focus_id):
-        return set()
-    if kind == "under":
-        return {
-            entity_id
-            for entity_id in visible_ids
-            if _is_item(world, entity_id)
-            and world.sees(observer_id, entity_id)
-            and world.parent(entity_id) == focus_id
-            and world.relation(entity_id) == "under"
-        }
-    required = set()
-    if _is_item(world, focus_id) and focus_id in visible_ids:
-        required.add(focus_id)
-    if world.is_a(focus_id, "container") or world.is_a(focus_id, "supporter"):
-        for entity_id in _descendants(world, focus_id):
-            if entity_id in visible_ids and _is_item(world, entity_id) and world.sees(observer_id, entity_id):
-                required.add(entity_id)
-    return required
-
-
-def _candidate_ids(world: World, observer_id: str, focus_id: str | None) -> tuple[str, ...]:
-    if not focus_id or not world.exists(focus_id):
-        observer_area = world.area(observer_id)
-        return tuple(
-            entity_id
-            for entity_id in world.entity_ids()
-            if _is_item(world, entity_id) and world.area(entity_id) == observer_area
-        )
-    if world.is_a(focus_id, "area"):
-        return tuple(
-            entity_id
-            for entity_id in world.entity_ids()
-            if _is_item(world, entity_id) and world.area(entity_id) == focus_id
-        )
-    if world.is_a(focus_id, "container") or world.is_a(focus_id, "supporter"):
-        return _descendants(world, focus_id)
-    if _is_item(world, focus_id):
-        return (focus_id,)
-    return ()
-
-
-def _descendants(world: World, root_id: str) -> tuple[str, ...]:
-    found = []
-    pending = list(world.contents(root_id))
-    while pending:
-        entity_id = pending.pop(0)
-        found.append(entity_id)
-        pending.extend(world.contents(entity_id))
-    return tuple(found)
-
-
 def _contingent_ids(world: World, request: ObservationRequest) -> tuple[str, ...]:
     if (
         request.kind != "open"
@@ -203,7 +142,7 @@ def _contingent_ids(world: World, request: ObservationRequest) -> tuple[str, ...
             (
                 entity_id
                 for entity_id in world.given_with(request.focus)
-                if not world.is_hidden(entity_id) and _is_item(world, entity_id)
+                if not world.is_hidden(entity_id) and world.is_item(entity_id)
             ),
             key=lambda entity_id: _sort_key(world, entity_id),
         )

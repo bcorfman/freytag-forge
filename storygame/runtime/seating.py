@@ -43,13 +43,7 @@ def _command_names_thing(command: str, names: tuple[str, ...]) -> bool:
 def seat_before_use(world, package, player_input: str, uses_thing: Callable[[str, str], bool | None]) -> SeatingResult:
     protagonist = package.protagonist_id
     items = {item.id: item for item in package.world.items}
-    current_seat = world.parent(protagonist)
-    if (
-        not current_seat
-        or not world.schema.entities.get(current_seat)
-        or not world.schema.entities[current_seat].seat_for
-    ):
-        current_seat = None
+    current_seat = world.current_seat(protagonist)
 
     protagonist_area = world.area(protagonist)
     seats = sorted(
@@ -130,20 +124,14 @@ def board_vehicle(
     parent = world.parent(protagonist)
     parent_entity = world.schema.entities.get(parent) if parent else None
     seated_vehicle = parent_entity.seat_for if parent_entity and parent_entity.seat_for else None
-    visible_vehicles = []
+    visible_vehicles = list(world.visible_vehicle_seats(item.id for item in package.world.items))
     candidates = []
-    for item in package.world.items:
-        if not world.is_a(item.id, "vehicle") or not world.is_visible(item.id):
-            continue
-        seats = sorted(
-            seat.id for seat in package.world.items if seat.seat_for == item.id and world.is_visible(seat.id)
-        )
-        visible_vehicles.append((item.id, seats))
+    for item_id, seats in visible_vehicles:
         if not seats:
             continue
-        if seated_vehicle == item.id:
+        if seated_vehicle == item_id:
             continue
-        candidates.append((item.id, seats))
+        candidates.append((item_id, seats))
 
     asked = False
     issues: list[str] = []
@@ -238,19 +226,10 @@ def stand_before_leave(
     world, package, player_input: str, needs_to_stand: Callable[[str, str, tuple[str, ...]], bool | None]
 ) -> SeatingResult:
     protagonist = package.protagonist_id
-    seat = world.parent(protagonist)
-    if not seat or not world.schema.entities.get(seat) or not world.schema.entities[seat].seat_for:
+    seat = world.current_seat(protagonist)
+    if not seat:
         return SeatingResult(player_input, (), False, ())
-    seat_for = world.schema.entities[seat].seat_for
-    within_reach = tuple(
-        world.name(entity_id)
-        for entity_id in world.entity_ids()
-        if entity_id in {seat, seat_for}
-        or (
-            world.is_visible(entity_id)
-            and (seat_for in world.chain(entity_id) or world.holder(entity_id) == protagonist)
-        )
-    )
+    within_reach = world.reachable_from_seat(seat, protagonist)
     answer = needs_to_stand(player_input, world.name(seat), within_reach)
     if answer is None:
         return SeatingResult(player_input, (), True, (f"standing question unanswered for '{world.name(seat)}'",))
