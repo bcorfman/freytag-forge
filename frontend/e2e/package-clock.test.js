@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { canonTurnBudget, loadPackagePacing } from "./package-clock.js";
+import { canonTurnBudget, loadPackagePacing, nextPendingEvent } from "./package-clock.js";
 
 const repoRoot = join(import.meta.dirname, "../..");
 
@@ -130,6 +130,29 @@ test("reports conditional events in the real package pacing", () => {
   assert.equal(projection.isConditional("transfer_nudge_1c"), true);
   assert.equal(projection.isConditional("patrol_arrives_1a"), false);
   assert.equal(projection.isConditional("purge_2c"), false);
+});
+
+test("selects pending real-package events by conditionality and turn", () => {
+  const pacing = loadPackagePacing({ storyId: "continuity_initiative", repoRoot });
+
+  const atTurnFive = nextPendingEvent(pacing, "1A", 5, new Set());
+  assert.equal(atTurnFive?.event_id, "patrol_leaves_1a");
+  assert.notEqual(atTurnFive?.event_id, "officer_presses_1a");
+
+  const atTurnFour = nextPendingEvent(pacing, "1A", 4, new Set());
+  assert.equal(atTurnFour?.event_id, "patrol_arrives_1a");
+  assert.equal(atTurnFour?.target_turn, 4);
+  assert.equal(pacing.isConditional(atTurnFour.event_id), false);
+
+  const afterPatrolArrives = nextPendingEvent(
+    pacing,
+    "1A",
+    4,
+    new Set(["patrol_arrives_1a"]),
+  );
+  assert.equal(afterPatrolArrives?.event_id, "patrol_enters_1a");
+  assert.equal(afterPatrolArrives?.target_turn > 4, true);
+  assert.equal(pacing.isConditional(afterPatrolArrives.event_id), true);
 });
 
 test("reports whether fixture pacing events are conditional", () => {
