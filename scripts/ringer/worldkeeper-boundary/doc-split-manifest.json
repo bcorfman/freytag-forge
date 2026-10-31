@@ -1,0 +1,129 @@
+{
+  "run_name": "docs-progressive-disclosure",
+  "workdir": "/home/bcorfman/dev/ringer-work/doc-split",
+  "max_parallel": 5,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "task_type": "docs",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 120,
+      "key": "testing-runbook",
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/docs/testing-runbook.md",
+        "/home/bcorfman/dev/freytag-forge/docs/testing-runbook/"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/docs/testing-runbook.md"
+      ],
+      "verified": "executed check: summary under budget, every detail file linked and under budget, every original sentence kept, every doc link and anchor resolves",
+      "spec": "You are a documentation worker in the freytag-forge repository at /home/bcorfman/dev/freytag-forge, branch docs-progressive-disclosure, already checked out with other uncommitted work on it. Do NOT git commit, push, switch branches, stash or revert. Edit ONLY docs/testing-runbook.md and files you create under docs/testing-runbook/. Never touch any other file: other workers are splitting other docs at the same time.\n\nGOAL: progressive disclosure. docs/testing-runbook.md (how to verify freytag-forge: which command checks which boundary) is too long for an LLM agent to load every time. Turn it into a short summary file at the SAME path (AGENTS.md and other docs link to it) plus detail files under docs/testing-runbook/, so an agent reads the summary and opens only the detail file its task needs.\n\nTHE SUMMARY FILE must contain, in this order: the existing title; one or two sentences on what the doc covers; the few rules that apply to EVERY task this doc governs (keep their original wording; these are the lines an agent must not miss even if it opens nothing else); and an index with one line per detail file in the form `- [Title](testing-runbook/<file>.md): read this when <the task that needs it>.` The 'read this when' trigger is the key part: say concretely which task or question sends the reader there. Hard limit: 400 words.\nDETAIL FILES: docs/testing-runbook/<kebab-topic>.md, each one coherent topic (group the original sections by the task that needs them, not one file per heading), each at most 900 words, each starting with a `# Title` and a one-line `Part of [the ...](../testing-runbook.md).` back link. Prefer 4 to 8 detail files for a long doc; fewer for a short one.\n\nPRESERVE CONTENT: move text, do not rewrite it. Every sentence of the original must survive verbatim in the summary or a detail file (line wrapping, list markers and headings may change). You may change only: headings, the order of sections, and cross-references that the split breaks (e.g. 'See section 8' becomes a link to the detail file that now holds it). Do not drop, summarise away or merge rules. Code blocks keep every line.\nLINKS: fix every relative link and #anchor in the moved text for its new location (a link like `(PRD.md)` in a file under docs/testing-runbook/ becomes `(../PRD.md)`; `(../bench/README.md)` becomes `(../../bench/README.md)`). Every relative link in docs/, AGENTS.md and README.md must still resolve.\n\nThe original is snapshotted at /home/bcorfman/dev/ringer-work/doc-split/orig/testing-runbook.md; work from it.\nHOW TO CHECK (never use `uv`): `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_doc_split.py /home/bcorfman/dev/ringer-work/doc-split/orig/testing-runbook.md /home/bcorfman/dev/freytag-forge/docs/testing-runbook.md /home/bcorfman/dev/freytag-forge/docs/testing-runbook 400 900`. It prints every missing sentence, oversize file, unlinked detail file and broken link. It checks links in your files and in docs that link to yours. DONE WHEN it prints PASS.",
+      "check": "/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_doc_split.py /home/bcorfman/dev/ringer-work/doc-split/orig/testing-runbook.md /home/bcorfman/dev/freytag-forge/docs/testing-runbook.md /home/bcorfman/dev/freytag-forge/docs/testing-runbook 400 900"
+    },
+    {
+      "task_type": "docs",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 120,
+      "key": "world-model-grounding",
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/docs/world-model-grounding.md",
+        "/home/bcorfman/dev/freytag-forge/docs/world-model-grounding/"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/docs/world-model-grounding.md"
+      ],
+      "verified": "executed check: summary under budget, every detail file linked and under budget, every original sentence kept, every doc link and anchor resolves",
+      "spec": "You are a documentation worker in the freytag-forge repository at /home/bcorfman/dev/freytag-forge, branch docs-progressive-disclosure, already checked out with other uncommitted work on it. Do NOT git commit, push, switch branches, stash or revert. Edit ONLY docs/world-model-grounding.md and files you create under docs/world-model-grounding/. Never touch any other file: other workers are splitting other docs at the same time.\n\nGOAL: progressive disclosure. docs/world-model-grounding.md (how to ground story things, places and people in the world model) is too long for an LLM agent to load every time. Turn it into a short summary file at the SAME path (AGENTS.md and other docs link to it) plus detail files under docs/world-model-grounding/, so an agent reads the summary and opens only the detail file its task needs.\n\nTHE SUMMARY FILE must contain, in this order: the existing title; one or two sentences on what the doc covers; the few rules that apply to EVERY task this doc governs (keep their original wording; these are the lines an agent must not miss even if it opens nothing else); and an index with one line per detail file in the form `- [Title](world-model-grounding/<file>.md): read this when <the task that needs it>.` The 'read this when' trigger is the key part: say concretely which task or question sends the reader there. Hard limit: 400 words.\nDETAIL FILES: docs/world-model-grounding/<kebab-topic>.md, each one coherent topic (group the original sections by the task that needs them, not one file per heading), each at most 900 words, each starting with a `# Title` and a one-line `Part of [the ...](../world-model-grounding.md).` back link. Prefer 4 to 8 detail files for a long doc; fewer for a short one.\n\nPRESERVE CONTENT: move text, do not rewrite it. Every sentence of the original must survive verbatim in the summary or a detail file (line wrapping, list markers and headings may change). You may change only: headings, the order of sections, and cross-references that the split breaks (e.g. 'See section 8' becomes a link to the detail file that now holds it). Do not drop, summarise away or merge rules. Code blocks keep every line.\nLINKS: fix every relative link and #anchor in the moved text for its new location (a link like `(PRD.md)` in a file under docs/world-model-grounding/ becomes `(../PRD.md)`; `(../bench/README.md)` becomes `(../../bench/README.md)`). Every relative link in docs/, AGENTS.md and README.md must still resolve.\n\nThe original is snapshotted at /home/bcorfman/dev/ringer-work/doc-split/orig/world-model-grounding.md; work from it.\nHOW TO CHECK (never use `uv`): `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_doc_split.py /home/bcorfman/dev/ringer-work/doc-split/orig/world-model-grounding.md /home/bcorfman/dev/freytag-forge/docs/world-model-grounding.md /home/bcorfman/dev/freytag-forge/docs/world-model-grounding 400 900`. It prints every missing sentence, oversize file, unlinked detail file and broken link. It checks links in your files and in docs that link to yours. DONE WHEN it prints PASS.",
+      "check": "/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_doc_split.py /home/bcorfman/dev/ringer-work/doc-split/orig/world-model-grounding.md /home/bcorfman/dev/freytag-forge/docs/world-model-grounding.md /home/bcorfman/dev/freytag-forge/docs/world-model-grounding 400 900"
+    },
+    {
+      "task_type": "docs",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 120,
+      "key": "markdown-story-authoring",
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/docs/markdown-story-authoring.md",
+        "/home/bcorfman/dev/freytag-forge/docs/markdown-story-authoring/"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/docs/markdown-story-authoring.md"
+      ],
+      "verified": "executed check: summary under budget, every detail file linked and under budget, every original sentence kept, every doc link and anchor resolves",
+      "spec": "You are a documentation worker in the freytag-forge repository at /home/bcorfman/dev/freytag-forge, branch docs-progressive-disclosure, already checked out with other uncommitted work on it. Do NOT git commit, push, switch branches, stash or revert. Edit ONLY docs/markdown-story-authoring.md and files you create under docs/markdown-story-authoring/. Never touch any other file: other workers are splitting other docs at the same time.\n\nGOAL: progressive disclosure. docs/markdown-story-authoring.md (the Markdown story-package format and its fields) is too long for an LLM agent to load every time. Turn it into a short summary file at the SAME path (AGENTS.md and other docs link to it) plus detail files under docs/markdown-story-authoring/, so an agent reads the summary and opens only the detail file its task needs.\n\nTHE SUMMARY FILE must contain, in this order: the existing title; one or two sentences on what the doc covers; the few rules that apply to EVERY task this doc governs (keep their original wording; these are the lines an agent must not miss even if it opens nothing else); and an index with one line per detail file in the form `- [Title](markdown-story-authoring/<file>.md): read this when <the task that needs it>.` The 'read this when' trigger is the key part: say concretely which task or question sends the reader there. Hard limit: 400 words.\nDETAIL FILES: docs/markdown-story-authoring/<kebab-topic>.md, each one coherent topic (group the original sections by the task that needs them, not one file per heading), each at most 900 words, each starting with a `# Title` and a one-line `Part of [the ...](../markdown-story-authoring.md).` back link. Prefer 4 to 8 detail files for a long doc; fewer for a short one.\n\nPRESERVE CONTENT: move text, do not rewrite it. Every sentence of the original must survive verbatim in the summary or a detail file (line wrapping, list markers and headings may change). You may change only: headings, the order of sections, and cross-references that the split breaks (e.g. 'See section 8' becomes a link to the detail file that now holds it). Do not drop, summarise away or merge rules. Code blocks keep every line.\nLINKS: fix every relative link and #anchor in the moved text for its new location (a link like `(PRD.md)` in a file under docs/markdown-story-authoring/ becomes `(../PRD.md)`; `(../bench/README.md)` becomes `(../../bench/README.md)`). Every relative link in docs/, AGENTS.md and README.md must still resolve.\n\nThe original is snapshotted at /home/bcorfman/dev/ringer-work/doc-split/orig/markdown-story-authoring.md; work from it.\nHOW TO CHECK (never use `uv`): `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_doc_split.py /home/bcorfman/dev/ringer-work/doc-split/orig/markdown-story-authoring.md /home/bcorfman/dev/freytag-forge/docs/markdown-story-authoring.md /home/bcorfman/dev/freytag-forge/docs/markdown-story-authoring 400 900`. It prints every missing sentence, oversize file, unlinked detail file and broken link. It checks links in your files and in docs that link to yours. DONE WHEN it prints PASS.",
+      "check": "/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_doc_split.py /home/bcorfman/dev/ringer-work/doc-split/orig/markdown-story-authoring.md /home/bcorfman/dev/freytag-forge/docs/markdown-story-authoring.md /home/bcorfman/dev/freytag-forge/docs/markdown-story-authoring 400 900"
+    },
+    {
+      "task_type": "docs",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 120,
+      "key": "jev-guard-rules",
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/docs/jev-guard-rules.md",
+        "/home/bcorfman/dev/freytag-forge/docs/jev-guard-rules/"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/docs/jev-guard-rules.md"
+      ],
+      "verified": "executed check: summary under budget, every detail file linked and under budget, every original sentence kept, every doc link and anchor resolves",
+      "spec": "You are a documentation worker in the freytag-forge repository at /home/bcorfman/dev/freytag-forge, branch docs-progressive-disclosure, already checked out with other uncommitted work on it. Do NOT git commit, push, switch branches, stash or revert. Edit ONLY docs/jev-guard-rules.md and files you create under docs/jev-guard-rules/. Never touch any other file: other workers are splitting other docs at the same time.\n\nGOAL: progressive disclosure. docs/jev-guard-rules.md (the Jev guard rules) is too long for an LLM agent to load every time. Turn it into a short summary file at the SAME path (AGENTS.md and other docs link to it) plus detail files under docs/jev-guard-rules/, so an agent reads the summary and opens only the detail file its task needs.\n\nTHE SUMMARY FILE must contain, in this order: the existing title; one or two sentences on what the doc covers; the few rules that apply to EVERY task this doc governs (keep their original wording; these are the lines an agent must not miss even if it opens nothing else); and an index with one line per detail file in the form `- [Title](jev-guard-rules/<file>.md): read this when <the task that needs it>.` The 'read this when' trigger is the key part: say concretely which task or question sends the reader there. Hard limit: 400 words.\nDETAIL FILES: docs/jev-guard-rules/<kebab-topic>.md, each one coherent topic (group the original sections by the task that needs them, not one file per heading), each at most 900 words, each starting with a `# Title` and a one-line `Part of [the ...](../jev-guard-rules.md).` back link. Prefer 4 to 8 detail files for a long doc; fewer for a short one.\n\nPRESERVE CONTENT: move text, do not rewrite it. Every sentence of the original must survive verbatim in the summary or a detail file (line wrapping, list markers and headings may change). You may change only: headings, the order of sections, and cross-references that the split breaks (e.g. 'See section 8' becomes a link to the detail file that now holds it). Do not drop, summarise away or merge rules. Code blocks keep every line.\nLINKS: fix every relative link and #anchor in the moved text for its new location (a link like `(PRD.md)` in a file under docs/jev-guard-rules/ becomes `(../PRD.md)`; `(../bench/README.md)` becomes `(../../bench/README.md)`). Every relative link in docs/, AGENTS.md and README.md must still resolve.\n\nThe original is snapshotted at /home/bcorfman/dev/ringer-work/doc-split/orig/jev-guard-rules.md; work from it.\nHOW TO CHECK (never use `uv`): `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_doc_split.py /home/bcorfman/dev/ringer-work/doc-split/orig/jev-guard-rules.md /home/bcorfman/dev/freytag-forge/docs/jev-guard-rules.md /home/bcorfman/dev/freytag-forge/docs/jev-guard-rules 400 900`. It prints every missing sentence, oversize file, unlinked detail file and broken link. It checks links in your files and in docs that link to yours. DONE WHEN it prints PASS.",
+      "check": "/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_doc_split.py /home/bcorfman/dev/ringer-work/doc-split/orig/jev-guard-rules.md /home/bcorfman/dev/freytag-forge/docs/jev-guard-rules.md /home/bcorfman/dev/freytag-forge/docs/jev-guard-rules 400 900"
+    },
+    {
+      "task_type": "docs",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 120,
+      "key": "contributor-guide",
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/docs/contributor-guide.md",
+        "/home/bcorfman/dev/freytag-forge/docs/contributor-guide/"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/docs/contributor-guide.md"
+      ],
+      "verified": "executed check: summary under budget, every detail file linked and under budget, every original sentence kept, every doc link and anchor resolves",
+      "spec": "You are a documentation worker in the freytag-forge repository at /home/bcorfman/dev/freytag-forge, branch docs-progressive-disclosure, already checked out with other uncommitted work on it. Do NOT git commit, push, switch branches, stash or revert. Edit ONLY docs/contributor-guide.md and files you create under docs/contributor-guide/. Never touch any other file: other workers are splitting other docs at the same time.\n\nGOAL: progressive disclosure. docs/contributor-guide.md (repository-wide engineering rules) is too long for an LLM agent to load every time. Turn it into a short summary file at the SAME path (AGENTS.md and other docs link to it) plus detail files under docs/contributor-guide/, so an agent reads the summary and opens only the detail file its task needs.\n\nTHE SUMMARY FILE must contain, in this order: the existing title; one or two sentences on what the doc covers; the few rules that apply to EVERY task this doc governs (keep their original wording; these are the lines an agent must not miss even if it opens nothing else); and an index with one line per detail file in the form `- [Title](contributor-guide/<file>.md): read this when <the task that needs it>.` The 'read this when' trigger is the key part: say concretely which task or question sends the reader there. Hard limit: 300 words.\nDETAIL FILES: docs/contributor-guide/<kebab-topic>.md, each one coherent topic (group the original sections by the task that needs them, not one file per heading), each at most 900 words, each starting with a `# Title` and a one-line `Part of [the ...](../contributor-guide.md).` back link. Prefer 4 to 8 detail files for a long doc; fewer for a short one.\n\nPRESERVE CONTENT: move text, do not rewrite it. Every sentence of the original must survive verbatim in the summary or a detail file (line wrapping, list markers and headings may change). You may change only: headings, the order of sections, and cross-references that the split breaks (e.g. 'See section 8' becomes a link to the detail file that now holds it). Do not drop, summarise away or merge rules. Code blocks keep every line.\nLINKS: fix every relative link and #anchor in the moved text for its new location (a link like `(PRD.md)` in a file under docs/contributor-guide/ becomes `(../PRD.md)`; `(../bench/README.md)` becomes `(../../bench/README.md)`). Every relative link in docs/, AGENTS.md and README.md must still resolve.\n\nThe original is snapshotted at /home/bcorfman/dev/ringer-work/doc-split/orig/contributor-guide.md; work from it.\nHOW TO CHECK (never use `uv`): `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_doc_split.py /home/bcorfman/dev/ringer-work/doc-split/orig/contributor-guide.md /home/bcorfman/dev/freytag-forge/docs/contributor-guide.md /home/bcorfman/dev/freytag-forge/docs/contributor-guide 300 900`. It prints every missing sentence, oversize file, unlinked detail file and broken link. It checks links in your files and in docs that link to yours. DONE WHEN it prints PASS.",
+      "check": "/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/worldkeeper-boundary/check_doc_split.py /home/bcorfman/dev/ringer-work/doc-split/orig/contributor-guide.md /home/bcorfman/dev/freytag-forge/docs/contributor-guide.md /home/bcorfman/dev/freytag-forge/docs/contributor-guide 300 900"
+    }
+  ]
+}
