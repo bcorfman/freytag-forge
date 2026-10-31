@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import copy
 import json
+from threading import Event, Thread
 
 import pytest
 
+from storygame.runtime import capture as capture_module
 from storygame.runtime.capture import WorldCapture
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
@@ -254,6 +256,97 @@ def test_preview_faults_fail_closed_with_exact_rollback(
     assert len(match_calls) <= 2
     assert engine.last_attempt is not None
     assert engine.last_attempt.outcome == "rejected"
+
+
+def test_referent_match_finishes_before_implicit_taking(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("FREYTAG_JEV_BATCH", raising=False)
+    state = RuntimeState.bootstrap(_synthetic_package())
+    provider = _provider(
+        state,
+        [("The calibrated lens is visible.", {"calibrated lens": {"place": "survey tray"}})],
+        request=ObservationRequest("Inspect the survey tray.", "look", "tray"),
+    )
+    prefetch_started = Event()
+    referent_match_started = Event()
+    overlap_confirmed = Event()
+    prepare_completed = Event()
+    take_started = Event()
+    world_move_started = Event()
+    calls = []
+
+    def ask(_state, questions):
+        if len(questions) > 1:
+            prefetch_started.set()
+            referent_match_started.wait()
+            overlap_confirmed.set()
+        return {key: {"noul": 1.0 if key.split(":", 1)[0] == "moves_thing" else 0.0} for key in questions}
+
+    def request_item_facts(_provider, _payload):
+        referent_match_started.set()
+        prefetch_started.wait()
+        overlap_confirmed.set()
+        return {"same_as": {"calibrated lens": "lens"}}
+
+    class GatedConcurrentCall:
+        def __init__(self, target):
+            self.target = target
+            self.release = Event()
+            self.thread = None
+            self.value = None
+            self.error = None
+            calls.append(self)
+
+        def start(self):
+            self.thread = Thread(target=self._run, daemon=True)
+            self.thread.start()
+
+        def join(self):
+            self.release.set()
+            self.thread.join()
+            if self.error is not None:
+                raise self.error
+            return self.value
+
+        def _run(self):
+            self.release.wait()
+            try:
+                self.value = self.target()
+                prepare_completed.set()
+            except BaseException as error:
+                self.error = error
+
+    monkeypatch.setattr(capture_module, "ConcurrentCall", GatedConcurrentCall)
+    monkeypatch.setattr(capture_module, "_prefetch_targets", lambda *_args, **_kwargs: (("one", "two"), (), ()))
+    monkeypatch.setattr(CloudflareTurnProvider, "_request_item_facts", request_item_facts)
+    world_type = type(provider._world())
+    original_world_move = world_type.move
+
+    def checked_world_move(world, entity_id, parent_id, *, under=False):
+        if not prepare_completed.is_set():
+            raise AssertionError("world.move began before referent matching completed")
+        world_move_started.set()
+        return original_world_move(world, entity_id, parent_id, under=under)
+
+    monkeypatch.setattr(world_type, "move", checked_world_move)
+    original_take_before_put = capture_module.take_before_put
+
+    def checked_take_before_put(world, package, command, moves_thing):
+        if not prepare_completed.is_set():
+            calls[0].release.set()
+            calls[0].thread.join()
+            raise AssertionError("implicit taking began before referent matching completed")
+        take_started.set()
+        return original_take_before_put(world, package, command, moves_thing)
+
+    monkeypatch.setattr(capture_module, "take_before_put", checked_take_before_put)
+    capture = WorldCapture(provider, ask)
+
+    capture.before_turn("Inspect the survey tray.")
+
+    assert take_started.is_set()
+    assert world_move_started.is_set()
+    assert prepare_completed.is_set()
+    assert overlap_confirmed.is_set()
 
 
 def test_first_preview_fault_retries_and_commits_once(monkeypatch: pytest.MonkeyPatch) -> None:

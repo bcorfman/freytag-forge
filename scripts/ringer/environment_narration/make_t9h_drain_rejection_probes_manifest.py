@@ -1,0 +1,162 @@
+# ruff: noqa: E501
+"""Write the Ringer manifest that builds the two billed drain-rejection probes (dry-run only). Free."""
+
+import json
+from pathlib import Path
+
+ROOT = "/home/bcorfman/dev/freytag-forge"
+PY = f"{ROOT}/.venv/bin/python"
+ED = f"{ROOT}/scripts/ringer/environment_narration"
+CHECK = f"{ED}/check_t9h_drain_rejection_probes.sh"
+PLAN = f"{ROOT}/.plans/chatgpt-t9h-drain-rejection-plan.md"
+
+COMMON = (
+    f"Working directory: {ROOT} (Python 3.12). Run Python as `{PY}` only (never uv; uv cannot run in your sandbox). "
+    f"Run tests with: `export PYTHONPATH={ROOT} TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN "
+    f"{PY} -m pytest -q -p no:cacheprovider --no-cov <files>`. You are BUILDING a billed probe, not running it: no "
+    "network, no live model call, no billed call, no Worker, no credentials, never read or print .env. Your script must "
+    "refuse to spend unless `--run --confirm` is given, enforce `--max-calls` and `--max-usd` before sending anything "
+    "(refuse when the planned ceiling exceeds the cap), stop on the first quota or 429/5xx signal, and never rerun or "
+    "overwrite existing rows. Do not git commit. NO regular expressions in new code and never parse narration text to "
+    "decide anything. Match the surrounding code's style, comment density and naming. The working tree holds unrelated "
+    "uncommitted edits by other people: touch ONLY the files you own and never run git checkout, git stash, git reset or "
+    "git clean. Do not edit frozen artifacts under bench/results/. At the end run "
+    f"`{PY} -m ruff check --fix` and `{PY} -m ruff format` on the .py files you own. Player inputs in tests are "
+    "imperative commands. Tests are hermetic with a fake transport. READ FIRST (read-only): "
+    f"{PLAN} (especially P2 and P3 and 'How the full enforced stage should change'), the narrator-writing guide and "
+    "scene-fixing guide in docs/. Do not edit the check script."
+)
+
+PROBES = [
+    {
+        "key": "build-replay",
+        "check": "replay",
+        "owns": [
+            "scripts/ringer/environment_narration/drain_replay_probe.py",
+            "scripts/ringer/environment_narration/drain_replay/cases.jsonl",
+            "scripts/ringer/environment_narration/enforce_t9h_drain_replay.sh",
+            "tests/test_drain_replay_probe.py",
+            ".plans/grounded-llm-environment-narration/t9h-drain-replay-prereg.md",
+        ],
+        "brief": (
+            "Build the P2 'cheapest billed causal check': replay six frozen cases through the Jev relation verifier "
+            "under two arms, V0 (input {narration}) and J1c (input with scene and starting_places for scene-level "
+            "relations, via the existing j1c_state / ObservationVerifier(scene_state=True) wiring), 5 samples each = 60 "
+            "calls, estimated $0.001-$0.002, caps --max-calls 60 and --max-usd 0.005. Model it on "
+            "scripts/ringer/environment_narration/j1c_wiring_probe.py and j1_scope_probe.py (reuse their helpers, "
+            "CLI modes --validate, --dry-run, --run --confirm, --report, SHA-256 lock, redaction), and the wrapper on "
+            "enforce_t9h_hidden_prose.sh (it starts scripts/ringer/environment_narration/local_worker.mjs on a free port "
+            "such as 8803 with --max-usd 0.005, sets CLOUDFLARE_WORKER_URL, refuses if rows exist). Cases, frozen in "
+            "drain_replay/cases.jsonl with labels BEFORE any score exists (record the file's SHA-256 in the prereg): "
+            "(1) and (2) two location-valid drain narrations taken VERBATIM from the recorded rejected first attempts: "
+            "read bench/results/environment-narration/t9h-hidden/smoke/rows/rows.json (replicate 0, the drain turn, "
+            "first verifier attempt, see `enforce_attempts`) and t9h-latency/hedge-short/rows/rows.json (replicate 4, "
+            "first attempt); label location_valid=true; (3) 'missing': one of those narrations edited minimally so the "
+            "storm drain is never mentioned, label false; (4) 'remembered': the drain only recalled from earlier, not "
+            "present now, label false; (5) 'elsewhere': the drain placed at a different place than the Los Angeles park, "
+            "label false; (6) the recorded invented-'slightly ajar' reply from "
+            "bench/results/environment-narration/t9h-drain/smoke/on/rows/rows.json (replicate 0, drain turn), label "
+            "location_valid=true and condition_policy='problematic' (reported separately, never required to be rejected "
+            "by a relation-only judge). Every case carries source file, replicate, turn and attempt ids so the human can "
+            "trace it. The asked relation for all six is thing 'storm drain', place 'Los Angeles park', holder null, "
+            "scene-level, scene 'Los Angeles park', starting_places {'storm drain': 'Los Angeles park'}. Do not change the "
+            "question text, the criteria, or the thresholds: accept strictly above .65, reject strictly below .35.\n"
+            "PREREG (.plans/.../t9h-drain-replay-prereg.md, written now, stating it is frozen before any score): the "
+            "question (does J1c's scene context transfer to the real drain narrations), the 60-call design, caps, and "
+            "pass rules: for each location-valid case with condition_policy not problematic, J1c accepts at least 4 of 5 "
+            "samples; for the three location-invalid cases J1c accepts 0 of 5 samples; V0 is reported only (expected to "
+            "reproduce the recorded uncertainty); case 6 is reported separately as 'location accepted / condition not "
+            "judged'. State that this cannot qualify action safety and that a stub proves nothing about judgment.\n"
+            "TESTS: fake ask; `--validate` detects an edited case via the lock; dry-run counts 60 calls; cap refusal; "
+            "`--run` without `--confirm` refuses; stop on 429; per-arm payload shapes match the plan (V0 exactly "
+            "{narration}; J1c adds scene and starting_places); report applies the pass rules and handles a partial run."
+        ),
+    },
+    {
+        "key": "build-screen",
+        "check": "screen",
+        "owns": [
+            "scripts/ringer/environment_narration/drain_details_prose_probe.py",
+            "scripts/ringer/environment_narration/enforce_t9h_drain_details.sh",
+            "tests/test_drain_details_prose_probe.py",
+            ".plans/grounded-llm-environment-narration/t9h-drain-details-prereg.md",
+        ],
+        "brief": (
+            "Build the P3 'cheapest billed check': the recorded drain narrator prompt, control versus the same prompt with "
+            "the ONE Details-line addition, 10 samples per arm = 20 narration calls (default), approximately $0.014, caps "
+            "--max-calls 20 and --max-usd 0.03; a `--samples N` flag scales the plan for the later 15-per-arm "
+            "confirmation (30 calls, cap $0.04) but the default and the wrapper's default are 10. Model it on "
+            "scripts/ringer/environment_narration/hidden_bench_prose_probe.py (CLI modes --capture, --validate, --dry-run, "
+            "--run --confirm, --sheets, --report, label file, shuffled blind sheets, SHUFFLE_SEED, SHA-256 lock) and its "
+            "wrapper enforce_t9h_hidden_prose.sh (local_worker.mjs on a free port such as 8804 with --max-usd 0.03).\n"
+            "PROMPT SOURCE: the control prompt is the EXACT recorded drain-turn narrator request (system and user text) "
+            "from bench/results/environment-narration/t9h-hidden/smoke/rows/rows.json, replicate 0, turn 5 (`inspect the "
+            "storm drain`), first narrator attempt (use `prompts` in that turn; the first prompt whose system starts with "
+            "'You are the narrator'). The candidate is the SAME request with exactly one edit: in the SCENE section the "
+            "line `**Details:** ordinary park bench; damaged grounds; service path; checkpoints; emergency patrols` "
+            "(find how it is rendered in the recorded prompt; it may not carry the markdown bold) gains the suffix "
+            "`; storm drain opening in the damaged grounds`. --capture/--validate must fail loudly if the recorded prompt "
+            "does not contain the old details text exactly once, or if control and candidate differ anywhere except that "
+            "suffix. Also cross-check with scripts/ringer/environment_narration/drain_details_capture.py "
+            "(capture_arms()) that the offline in-memory arms differ only in the same way, and record whether the recorded "
+            "prompt and the offline control prompt agree (report only; the recorded one is the billed control). Send each "
+            "request through the project's narration path exactly as hidden_bench_prose_probe.py does (same model, "
+            "temperature and parameters; the narrator is the 70B on the project Worker), unmodified; no negative command "
+            "restraints.\n"
+            "LABELS (the human reads every narration and labels each separately, six boolean keys per row): "
+            "opens_or_enters_drain (player-caused opening, lifting or entering beyond inspecting), "
+            "invents_ajar_or_cover_state, asserts_definite_contents, speculative_only (tentative speculation), "
+            "wrong_place, capture_prose_disagree (item_facts the reply proposes disagree with its prose). The blind sheet "
+            "must not show arm names. `--report` joins labels and prints the per-arm rates and the gate: the control must "
+            "reproduce the defect (at least 1 of 10 rows with opens_or_enters_drain, invents_ajar_or_cover_state or "
+            "asserts_definite_contents true) AND the candidate must have zero rows with any of those three; otherwise "
+            "'screen: FAIL' (or 'control did not reproduce the defect: INCONCLUSIVE'). State in the report that one passing "
+            "screen is not an enforcement guarantee and that the 15-per-arm confirmation is a separate run.\n"
+            "PREREG (.plans/.../t9h-drain-details-prereg.md, written now, stating it is frozen before any output exists): "
+            "question, prompt provenance, the single edit, 20-call design, caps, labels, the gate above and the stop "
+            "rules. Mark the plot.md edit as conditional on this screen and on the confirmation, never applied by the "
+            "probe. TESTS: hermetic with a fake transport: capture finds the recorded prompt; a recorded prompt without "
+            "the old details text fails; control/candidate differ only by the suffix; dry-run counts 20; cap refusal; "
+            "`--run` without `--confirm` refuses; stop on 429; sheet is blind (no arm names); report gate cases "
+            "(PASS, FAIL, INCONCLUSIVE); partial run handled."
+        ),
+    },
+]
+
+
+def task(entry: dict) -> dict:
+    owned = [f"{ROOT}/{path}" for path in entry["owns"]]
+    return {
+        "key": entry["key"],
+        "task_type": "code-feature",
+        "engine": "codex",
+        "model": "gpt-5.6-luna",
+        "engine_args": ["-c", "model_reasoning_effort=high"],
+        "full_access": True,
+        "max_attempts": 2,
+        "timeout_s": 3600,
+        "check_timeout_s": 900,
+        "ownership": owned,
+        "expect_files": owned,
+        "verified": "focused tests green, ruff clean, validate and dry-run pass, caps refuse overspend",
+        "spec": (
+            f"{COMMON}\n\nFILES YOU OWN (edit only these): {', '.join(owned)}. You may READ anything. NEVER modify "
+            f"anything else.\n\n{entry['brief']}\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash {CHECK} {entry['check']}`. "
+            "Do not edit the check. When done, print a short summary: what you built, the exact CLI, and any case or "
+            "input you could not trace."
+        ),
+        "check": f"bash {CHECK} {entry['check']}",
+    }
+
+
+manifest = {
+    "run_name": "t9h-drain-rejection-p1-p3",
+    "workdir": "/home/bcorfman/dev/ringer-work/t9h-drain-rejection-p1-p3",
+    "max_parallel": 2,
+    "worktrees": False,
+    "repo": ROOT,
+    "tasks": [task(entry) for entry in PROBES],
+}
+out = Path(__file__).with_name("run-t9h-drain-rejection-probes.json")
+out.write_text(json.dumps(manifest, indent=2) + "\n")
+print(out)

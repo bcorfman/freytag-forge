@@ -99,9 +99,28 @@ and without card custody. Unrelated scene edits should leave those captures
 identical; inspect the affected scene separately. Delete the `/tmp/payload-*.json`
 files after reviewing the diff.
 
-**Pass:** the prompt contains only material the scene has made available. For
-an authored-handoff turn it contains no candidate ID, candidate statement,
-`delivery_text`, `must_convey`, or grounding instruction.
+For an existing live failure, inspect saved artifacts before making another
+model call. For example:
+
+```bash
+uv run python -m json.tool bench/results/environment-narration/t9h/smoke/e/rows/summary.json
+```
+
+Read each turn's complete prompts and provider responses beside its narration,
+errors, observation request and call timings. JSON parsing only verifies the
+artifact shape. A flat parent map cannot verify relation changes or full
+rollback; compare runtime snapshots and parent/relation/hidden/axis facts in a
+network-free reconstruction when those fields were not recorded. Scene-start
+helpers may use scripted journey checkpoints, which do not prove parity with a
+live prefix. Keep diagnostic results in the active plan. Artifact inspection
+is read-only, costs nothing and needs no cleanup; a live replay is billed and
+follows section 4.
+
+**Pass:** the prompt contains only material the scene has made available.
+For an authored-handoff turn, private candidate metadata stays out of the
+narrator request. The selected delivery sentence may be shown as the text the
+game will append. Check the complete player text after runtime composition,
+including delivery and cues.
 
 **Notes:** Player inputs in scripts and examples are imperative commands
 ("Search the kitchen."), never first person. See the [player-input guide](player-input-guide.md).
@@ -153,6 +172,8 @@ uv run python -m bench.candidate_selection_report --in /tmp/bench-1a/all-turn-re
   distinguishable. Never report a one- or two-point difference as real.
 - Bench scenes start from a bare arrival state (only the entry fact committed),
   so a mid-story scene can fail safety checks a real playthrough would not.
+
+For the live-baseline / hidden-clues smoke report, `narration_attempts` is the logical count, `narration_http_prompts` is the raw HTTP count, late completions are listed under `late_completions_after_turn`, and the drain section is labelled `drain outcomes`.
 
 **Stop conditions:** HTTP 429 with `X-Narration-Error-Code: AI_QUOTA_EXCEEDED`
 or `AI_DAILY_BUDGET_EXCEEDED` is a daily model limit; stop until 00:00 UTC.

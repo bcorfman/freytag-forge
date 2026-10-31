@@ -12,6 +12,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -45,6 +46,7 @@ def _establish(state: RuntimeState, knowledge_id: str) -> None:
     for effect in item.establishes:
         value = str(effect.value).lower() if isinstance(effect.value, bool) else str(effect.value)
         state.facts.assert_fact(Fact(predicate=effect.fact_id, subject="story", value=value))
+    apply_world_effects(PACKAGE, state.facts)
 
 
 def _positioned_state(scene: object, local_storylets: tuple[object, ...]) -> RuntimeState:
@@ -57,7 +59,16 @@ def _positioned_state(scene: object, local_storylets: tuple[object, ...]) -> Run
         for item in local_storylets
         if item.source.storylet_id is not None  # type: ignore[union-attr]
     )
+    apply_scene_placements(PACKAGE, state.facts, metadata.scene_id)
     return state
+
+
+def _probe_command(item: object) -> str:
+    action_evidence = getattr(item, "action_evidence", ())
+    if not action_evidence:
+        return "Inspect the immediate situation."
+    words = [group[0] for group in action_evidence]
+    return f"{' '.join(words).capitalize()}."
 
 
 def _timeline_positions() -> dict[str, int]:
@@ -162,7 +173,8 @@ def _build_leakage_matrix() -> tuple[_MatrixObservation, ...]:
         for audience_id in dict.fromkeys(audience_ids):
             state = _positioned_state(scene, local_storylets)
             for item in local_storylets:
-                before = projector.project(state, audience_id, "Inspect the immediate situation.")
+                player_input = _probe_command(item)
+                before = projector.project(state, audience_id, player_input)
                 observations.append(
                     _MatrixObservation(
                         scene_id=scene_id,
@@ -175,7 +187,7 @@ def _build_leakage_matrix() -> tuple[_MatrixObservation, ...]:
                 )
                 if KnowledgeProjector._visible_to(item, audience_id):
                     _establish(state, item.id)
-                after = projector.project(state, audience_id, "Inspect the immediate situation.")
+                after = projector.project(state, audience_id, player_input)
                 observations.append(
                     _MatrixObservation(
                         scene_id=scene_id,

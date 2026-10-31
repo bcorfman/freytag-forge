@@ -217,5 +217,6 @@ def test_1b_narrator_request_omits_carried_card_and_npc_card_knowledge(
     narrator_request = requests[-1]
     user_prompt = narrator_request["user"]
     assert "- Kristin. Place: Los Angeles park." in user_prompt
-    assert "- Transit token. Place: park bench." in user_prompt
+    for clue_name in ("Transit token", "handwritten number sequence", "Michelle's photograph"):
+        assert clue_name.casefold() not in user_prompt.casefold()
     assert CARD_NAME.casefold() not in user_prompt.casefold()

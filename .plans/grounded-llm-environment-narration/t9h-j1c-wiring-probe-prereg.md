@@ -1,0 +1,33 @@
+# T9h route E wiring probe: product-form scene value and mixed batches (preregistration, DRAFT, nothing built, nothing billed)
+
+Status: DONE 2026-10-30, **PASSED all five gates** (billed run `t9h-j1c-wiring-live-20261030T011120Z-p2651970`, 420 rows, no stop reason, result in the active plan). Harness built free 2026-10-30 (Ringer run `t9h-j1c-wiring-probe-build-20261030T003419Z-p2640327`; Ringer marked it FAIL only because my check grepped for `os.replace` in the new file, while the atomic write lives in the imported scope helper; the 27 tests, `--validate`, `--dry-run` (420 requests, ceiling $0.0081), ruff and the `j1c_state` check all pass; I read the derived relations of `m-1-1`, `m-2-2` and `m-4-3` and they match this document); billed run executed on Brandon's go. Original: DRAFT 2026-10-29, step 2 of `t9h-j1c-wiring-plan.md` (Brandon approved that plan on 2026-10-29). The harness is built free; the billed run needs Brandon's go after the build. No new cases are authored: everything is derived by fixed rules from the locked scope cases (`j1_scope/cases.jsonl`, SHA-256 `bb5614285eb090fca071f1a761237fbfe0fa1447fcaafa3c6668d2c32ba1ae34`).
+
+**Question.** Does J1c still hold when it is sent the way the product will send it: (a) with the scene's location label as both `scene` and the starting place, in place of the authored title and "the ..." phrases the screens used, and (b) in a batched request that mixes scene-level and specific-place relations about one narration?
+
+**Product form (a and b).** The product's place for a thing is the label of its parent (the area name, without an article, as in "Los Angeles park"). The label used here is the locked case's `scene_place` with a leading "the " removed and the first letter capitalised ("Mountain observatory"). In every request below, both arms use this label wherever the old runs used the "the ..." phrase: in the relation's place (so the question text reads "at place Mountain observatory"), and, for the J1c arm, as `scene` and as the starting place. Positive narrations still never contain it (the lock's authoring rule covers the stripped form).
+
+**Arms.** `V0`: state `{"narration"}`, one question per relation. `J1c`: if at least one relation in the request is scene-level and unheld, state `{"narration", "scene": <label>, "starting_places": {thing: label for each scene-level relation}}`, otherwise V0's state. Questions are the product's `_question_for(relation)`, unchanged. Same Worker `/jev` route, thresholds 0.65 and 0.35, 5 samples per request, fixed-seed order with arms interleaved, no retries.
+
+**Set A: product form, single relation.** The 30 scene-level cases of the scope set (12 positives, 12 look-alikes, 6 others), rebuilt in product form. 30 x 2 arms x 5 = 300 requests.
+
+**Set B: mixed batches (12 requests).** Built by fixed position rules from the locked cases; the primary narration is one locked narration (or two joined with a space), the relations are listed primary first. Per story n:
+- `m-n-1` (both present): narration = case `f-n-01` followed by case `f-n-06` (a scene-level positive and a specific-place positive of the same story); relations = their two things, both labelled accept. Six cases.
+- Stories 1 to 3, `m-n-2` (one present, a specific-place thing absent): narration = `f-n-02`; relations = `f-n-02`'s thing (scene-level, accept) and `f-n-10`'s thing at its specific place (reject; the narration does not show it). Three cases.
+- Stories 4 to 6, `m-n-3` (one present, a scene-level thing absent): narration = `f-n-07`; relations = `f-n-07`'s thing (specific place, accept) and `f-n-05`'s thing at the scene level (reject). Three cases.
+The builder fails if a reject-labelled thing's name (lowercase) appears in the narration. The pairing is fixed by position, not by score; I knew the scope result for `f-4-02` (the tin kettle, 5 uncertain samples) when I fixed it, and the rules happen not to use it. Relations: 18 accept-labelled (12 in `m-n-1`, 3 + 3 in the others) and 6 reject-labelled. 12 x 2 arms x 5 = 120 requests.
+
+**Counts and cost.** **420 requests** (the plan estimated under 300; the 12 mixed batches and product form for all 30 scene-level cases need more). `--dry-run` prints the ceiling (expect under $0.01); `--max-calls 440 --max-usd 0.02`. Stops after 3 consecutive unusable replies or on HTTP 429/5xx.
+
+**Gate (J1c must pass all five; V0 beside it).**
+- A1: zero accepts among the 90 negative samples of Set A (18 cases x 5).
+- A2: at least 54 of the 60 positive samples of Set A are `accept`, and no fewer than V0's count (the scope screen's bar, so the two are comparable).
+- B1: zero accepts among the 30 reject-labelled relation samples of Set B.
+- B2: at least 80 of the 90 accept-labelled relation samples of Set B are `accept`.
+- B3: on the accept-labelled specific-place relations of Set B (9 relations, 45 samples) J1c has at most 2 fewer accepts than V0 (the shared state may not cost the specific-place relation).
+Report also: every non-reject sample on a reject-labelled relation with its score, per-relation score ranges, sample-to-sample disagreement, latency p50 and p95, model and version, and the number of requests whose J1c state differed from V0's.
+
+**Reading the outcomes.** All pass: the plan's step 3 goes ahead as designed (location label as `scene`; scene-level entries only in `starting_places`). A1 or A2 fails: the label form is not equivalent to the screened title form; stop and redesign the scene value (for example a story-level scene title in the package) before any product change. B1 or B3 fails: the shared state harms a batch; redesign (for example one request per scene-level relation) before any product change. B2 alone fails: report which relations missed; no wiring until understood.
+
+**Limits.** The sets are the already-seen scope cases re-expressed (A) and 12 mechanically paired requests (B), so this checks the two untested conditions and nothing broader; the effective n is the relation count (A: 30 cases, B: 24 relations). Concatenated narrations (`m-n-1`) are longer than real turns. The label rule is my reading of the product's labels; the plan's step 3 adds a test that the product's request state equals the probe's for the same inputs, and the enforced stage run is what confirms it live. A pass does not qualify enforcement.
+
+**Steps (free until the last).** (1) One Ringer build task: `j1c_wiring_probe.py` reusing the scope probe helpers, the deterministic derivation of Sets A and B from the locked cases, `--validate`, `--dry-run`, `--run`, `--report`, hermetic tests. (2) Brandon's go for the billed run: one Ringer probe task launched detached and polled, whose check requires every planned row or a recorded stop reason.

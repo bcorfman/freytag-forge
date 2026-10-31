@@ -25,7 +25,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProvid
 from storygame.runtime.facts import Fact
 from storygame.runtime.item_facts import _MATCH_SYSTEM, ItemFactsProvider
 from storygame.runtime.knowledge import KnowledgeProjector
-from storygame.runtime.world_model import world_for
+from storygame.runtime.world_model import apply_world_effects, world_for
 from tests._legacy_package import legacy_package
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,7 +43,7 @@ def no_implicit_taking_network(monkeypatch):
     monkeypatch.setattr(core, "ask_moves_thing", lambda *_args: False)
 
 
-def test_bench_takes_photograph_before_put(monkeypatch):
+def test_bench_put_uses_recovered_photograph_without_retaking(monkeypatch):
     variation = load_variation(ROOT / "bench" / "variations" / "item-facts-package-two-scene.json")
     variation["_fixed_turns"] = 1
     requests = []
@@ -59,6 +59,14 @@ def test_bench_takes_photograph_before_put(monkeypatch):
             worker_url="", token="", state=state, item_facts={}, mode="single_call", seed_from_package=True
         )
 
+    original_package_and_state = core.package_and_state
+
+    def package_and_state_with_recovered_clues(variation, scene_id=None):
+        package, state = original_package_and_state(variation, scene_id)
+        state.facts.assert_fact(Fact(predicate="bench_clues_recovered", subject="story", value="true"))
+        apply_world_effects(package, state.facts)
+        return package, state
+
     def request(_provider, payload):
         requests.append(payload)
         if payload["system"] == _MATCH_SYSTEM:
@@ -69,6 +77,7 @@ def test_bench_takes_photograph_before_put(monkeypatch):
         }
 
     monkeypatch.setattr(core, "provider_for", provider_for_with_item_facts)
+    monkeypatch.setattr(core, "package_and_state", package_and_state_with_recovered_clues)
     monkeypatch.setattr(core, "ask_moves_thing", lambda *_args: True)
     monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
 
@@ -80,10 +89,9 @@ def test_bench_takes_photograph_before_put(monkeypatch):
 
     assert result["status"] == "ok"
     turn = result["turns"][0]
-    step = "Kristin picked up Michelle's photograph from the park bench."
-    assert turn["taking_steps"] == [step]
-    assert turn["taking_asked"] is True
-    assert any(f"Just before this: {step}" in request["user"] for request in requests)
+    assert turn["taking_steps"] == []
+    assert turn["taking_asked"] is False
+    assert not any("picked up Michelle's photograph from the park bench" in request["user"] for request in requests)
     assert turn["item_facts_before"]["Michelle's photograph"]["place"] == "Kristin"
     assert providers[0].prior_steps == ()
 

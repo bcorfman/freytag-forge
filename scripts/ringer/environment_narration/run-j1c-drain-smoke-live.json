@@ -1,0 +1,33 @@
+{
+  "run_name": "t9h-j1c-drain-smoke-live",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-j1c-drain-smoke-live",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "billed-drain-smoke",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 3600,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/environment-narration/t9h-drain/smoke"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-drain/smoke/off/rows/summary.json",
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-drain/smoke/spent.json"
+      ],
+      "spec": "You are a RUNNER for one billed smoke stage in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. The script enforce_t9h_drain.sh smoke starts a local Worker and runs the enforced storm-drain bench route for 3 replicates with the verifier off, then 3 with the J1c scene state on, using the project's Cloudflare AI budget; the cap is $0.04 and the human approved the run on 2026-10-30 (preregistration .plans/grounded-llm-environment-narration/t9h-j1c-drain-enforced-prereg.md). It is slow, so this run launches it DETACHED and waits for it. HARD RULES: run COMMAND 1 EXACTLY ONCE (then only poll with COMMAND 1b). NEVER run it a second time for any reason (not after an error, not after a partial result: a rerun would spend money again). Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit.\n\nCOMMAND 1 (launches the billed stage detached; it returns at once):\ncd /home/bcorfman/dev/freytag-forge && (setsid nohup bash scripts/ringer/environment_narration/enforce_t9h_drain.sh smoke > /tmp/t9h-drain-smoke.log 2>&1 < /dev/null & echo $! > /tmp/t9h-drain-smoke.pid)\n\nCOMMAND 1b (poll; repeat it, one call at a time, until it prints DONE; each call waits at most 40 seconds; do NOT run COMMAND 1 again):\nfor i in 1 2 3 4 5 6 7 8; do if kill -0 $(cat /tmp/t9h-drain-smoke.pid) 2>/dev/null; then sleep 5; else echo DONE; break; fi; done; echo still-running-or-done; tail -c 400 /tmp/t9h-drain-smoke.log\n\nAfter COMMAND 1b printed DONE, print these (read-only):\nfor arm in off on; do echo == $arm; .venv/bin/python -c \"import json,sys; s=json.load(open(sys.argv[1])); print({k:s.get(k) for k in ('stopped_reason','completed','errors','enforce','scene_state')})\" bench/results/environment-narration/t9h-drain/smoke/$arm/rows/summary.json; done; cat bench/results/environment-narration/t9h-drain/smoke/spent.json\nThen say in one or two sentences what happened, including any stop reason. Do not interpret quality.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && test -s bench/results/environment-narration/t9h-drain/smoke/off/rows/summary.json && test -s bench/results/environment-narration/t9h-drain/smoke/off/rows/rows.json && test -s bench/results/environment-narration/t9h-drain/smoke/spent.json && (set -a; . ./.env; set +a; .venv/bin/python - <<'PY2'\nimport json,os,pathlib\nbase=pathlib.Path('bench/results/environment-narration/t9h-drain/smoke')\ntext=''.join(p.read_text(errors='ignore') for p in base.rglob('*') if p.is_file() and p.suffix in ('.json','.log'))\nfor n in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_WORKER_TOKEN','OPENAI_API_KEY','RAILWAY_TOKEN'):\n    v=os.environ.get(n,'').strip()\n    assert not v or v not in text, n+' leaked'\noff=json.load(open(base/'off/rows/summary.json'))\nassert 'stopped_reason' in off\non=base/'on/rows/summary.json'\nif off['stopped_reason'] is None:\n    assert on.exists(), 'ON arm missing although OFF finished'\n    s=json.load(open(on)); assert s.get('scene_state') is True, 'ON arm did not run with scene_state'\n    rows=json.load(open(base/'on/rows/rows.json'))\n    atts=[a for r in rows for t in r.get('turns',[]) for a in t.get('enforce_attempts',[])]\n    assert all('scene_state' in a for a in atts),'attempt without scene_state record'\nprint('integrity ok')\nPY2\n)",
+      "verified": "OFF arm finished or stopped with a reason; ON arm ran with scene_state when OFF finished; no credential in outputs"
+    }
+  ]
+}

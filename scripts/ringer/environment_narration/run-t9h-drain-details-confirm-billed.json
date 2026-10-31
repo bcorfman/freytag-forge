@@ -1,0 +1,32 @@
+{
+  "run_name": "t9h-drain-rejection-p1-p3",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-drain-rejection-p1-p3",
+  "max_parallel": 2,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "billed-confirm",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 3600,
+      "check_timeout_s": 300,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-drain-details/confirm/rows.json"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-drain-details/confirm/rows.json"
+      ],
+      "verified": "rows recorded (all planned calls or a stop reason), no credential in outputs",
+      "spec": "You are a RUNNER for one billed probe in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. It sends 30 narration requests (the recorded drain prompt, control vs one Details-line addition, 15 samples each), estimated about $0.035, through the project's local Worker, hard-capped at 30 calls and $0.06. The user approved this run on 2026-10-30; the preregistration is .plans/grounded-llm-environment-narration/t9h-drain-details-prereg.md. HARD RULES: run COMMAND 1 EXACTLY ONCE in the FOREGROUND and never rerun it, even after an error or partial result (a rerun would spend money again). Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit. A non-zero exit with partial rows is a valid outcome. Wait for the billed process to finish.\n\nCOMMAND 1 (the billed run; run exactly once):\ncd /home/bcorfman/dev/freytag-forge && (set -a; . ./.env; set +a; unset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN; bash scripts/ringer/environment_narration/enforce_t9h_drain_details.sh confirm)\n\nThen report only the probe's non-secret output, including any stop reason. Do not interpret quality.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge && set -o pipefail && test -s bench/results/environment-narration/t9h-drain-details/confirm/rows.json && (set -a; . ./.env; set +a; .venv/bin/python - <<'PY2'\nimport json,os\np='bench/results/environment-narration/t9h-drain-details/confirm/rows.json'\ndoc=json.load(open(p))\nrows=doc['rows'] if isinstance(doc,dict) and 'rows' in doc else doc\ntext=open(p).read()\nfor n in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_WORKER_TOKEN','OPENAI_API_KEY','RAILWAY_TOKEN'):\n    v=os.environ.get(n,'').strip()\n    assert not v or v not in text, n+' leaked'\nplanned=30\nstop=doc.get('stop_reason') if isinstance(doc,dict) else None\nassert len(rows)==planned or stop, 'incomplete run without a stop reason: %d rows'%len(rows)\nprint('integrity ok: %d rows, stop_reason %r, no credential in outputs'%(len(rows),stop))\nPY2\n)"
+    }
+  ]
+}

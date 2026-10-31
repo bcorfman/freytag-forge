@@ -15,6 +15,77 @@ def _answer(ask: Callable[[object, object], dict | None], state, questions, key:
         return None
 
 
+def _noul_question(instructions: str, true: str, false: str) -> dict[str, object]:
+    return {
+        "type": "noul",
+        "instructions": instructions,
+        "criteria": {"true": true, "false": false},
+    }
+
+
+def boards_vehicle_payload(command: str, vehicle_name: str) -> tuple[dict[str, str], dict[str, dict[str, object]]]:
+    instructions = (
+        "Decide whether the command has the player go to the vehicle to use it. "
+        "A command that only says go to the vehicle means the player gets in. "
+        "The command can have the player get into it. "
+        "The command can have the player sit in it. "
+        "The command can have the player drive it."
+    )
+    true = (
+        "The command has the player go to the vehicle to use it. "
+        "A command that only says go to the vehicle means the player gets in. "
+        "The command has the player get into it. "
+        "The command has the player sit in it. "
+        "The command has the player drive it."
+    )
+    false = (
+        "The command is not boarding if it only walks over to or walks up to the vehicle. "
+        "It is not boarding if it only approaches, looks at, touches, or talks about the vehicle. "
+        "It is not boarding if it leaves the vehicle."
+    )
+    return {"command": command, "vehicle": vehicle_name}, {"boards_vehicle": _noul_question(instructions, true, false)}
+
+
+def searches_underneath_payload(command: str, thing_name: str) -> tuple[dict[str, str], dict[str, dict[str, object]]]:
+    instructions = (
+        "Decide whether the command tells the player to go under the thing. "
+        "The command must say under, underneath, beneath, below, or the underside of the thing."
+    )
+    true = (
+        "The command says under, underneath, beneath, below, or the underside of the thing. "
+        "The player searches, feels, reaches, or looks there."
+    )
+    false = (
+        "The command does not say under, underneath, beneath, below, or the underside. "
+        "A command that only searches, checks, examines, inspects, opens, touches, moves, carries, "
+        "or looks inside, behind, or on top of the thing is false."
+    )
+    return {"command": command, "thing": thing_name}, {"searches_underneath": _noul_question(instructions, true, false)}
+
+
+def relocates_thing_payload(command: str, thing_name: str) -> tuple[dict[str, str], dict[str, dict[str, object]]]:
+    instructions = (
+        "Relocating a thing means the command lifts it, picks it up, carries it, drags it, pushes it, "
+        "slides it, takes it out or off of where it is, removes it, detaches it, or puts it somewhere else. "
+        "It also means it tilts it, tips it over, rotates it, turns it around, rolls it, nudges it, shifts it, "
+        "or repositions it."
+    )
+    true = (
+        "The command makes the player relocate this thing. A command that lifts this thing and then puts "
+        "it back where it was, or lowers it back into place, still relocates it."
+    )
+    false = (
+        "The command uses the thing where it is: opening, closing, sitting in, looking at, reading, or "
+        "searching it. It also covers a command that moves some other thing onto, into, off, or out of "
+        "this thing. If this thing is only "
+        "the place another thing is taken from or put on, such as "
+        "retrieving a laptop from the passenger seat or putting a laptop on the workstation, it does not "
+        "count as relocating this thing. A part used as designed is not relocating the thing: a door swung "
+        "open or shut, a drawer slid open or shut, a lid opened, or a screen tilted back on its own hinge."
+    )
+    return {"command": command, "thing": thing_name}, {"relocates_thing": _noul_question(instructions, true, false)}
+
+
 def uses_thing(ask, command: str, thing_name: str) -> bool | None:
     questions = {
         "uses_thing": {
@@ -38,33 +109,8 @@ def uses_thing(ask, command: str, thing_name: str) -> bool | None:
 
 
 def boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
-    questions = {
-        "boards_vehicle": {
-            "type": "noul",
-            "instructions": (
-                "Decide whether the command has the player go to the vehicle to use it. "
-                "A command that only says go to the vehicle means the player gets in. "
-                "The command can have the player get into it. "
-                "The command can have the player sit in it. "
-                "The command can have the player drive it."
-            ),
-            "criteria": {
-                "true": (
-                    "The command has the player go to the vehicle to use it. "
-                    "A command that only says go to the vehicle means the player gets in. "
-                    "The command has the player get into it. "
-                    "The command has the player sit in it. "
-                    "The command has the player drive it."
-                ),
-                "false": (
-                    "The command is not boarding if it only walks over to or walks up to the vehicle. "
-                    "It is not boarding if it only approaches, looks at, touches, or talks about the vehicle. "
-                    "It is not boarding if it leaves the vehicle."
-                ),
-            },
-        }
-    }
-    return _answer(ask, {"command": command, "vehicle": vehicle_name}, questions, "boards_vehicle")
+    state, questions = boards_vehicle_payload(command, vehicle_name)
+    return _answer(ask, state, questions, "boards_vehicle")
 
 
 def opens_container(ask, command: str, container_name: str) -> bool | None:
@@ -93,27 +139,8 @@ def opens_container(ask, command: str, container_name: str) -> bool | None:
 
 
 def searches_underneath(ask, command: str, thing_name: str) -> bool | None:
-    questions = {
-        "searches_underneath": {
-            "type": "noul",
-            "instructions": (
-                "Decide whether the command tells the player to go under the thing. "
-                "The command must say under, underneath, beneath, below, or the underside of the thing."
-            ),
-            "criteria": {
-                "true": (
-                    "The command says under, underneath, beneath, below, or the underside of the thing. "
-                    "The player searches, feels, reaches, or looks there."
-                ),
-                "false": (
-                    "The command does not say under, underneath, beneath, below, or the underside. "
-                    "A command that only searches, checks, examines, inspects, opens, touches, moves, carries, "
-                    "or looks inside, behind, or on top of the thing is false."
-                ),
-            },
-        }
-    }
-    return _answer(ask, {"command": command, "thing": thing_name}, questions, "searches_underneath")
+    state, questions = searches_underneath_payload(command, thing_name)
+    return _answer(ask, state, questions, "searches_underneath")
 
 
 def only_boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
@@ -151,33 +178,8 @@ def moves_thing(ask, command: str, thing_name: str) -> bool | None:
 
 
 def relocates_thing(ask, command: str, thing_name: str) -> bool | None:
-    questions = {
-        "relocates_thing": {
-            "type": "noul",
-            "instructions": (
-                "Relocating a thing means the command lifts it, picks it up, carries it, drags it, pushes it, "
-                "slides it, takes it out or off of where it is, removes it, detaches it, or puts it somewhere else. "
-                "It also means it tilts it, tips it over, rotates it, turns it around, rolls it, nudges it, shifts it, "
-                "or repositions it."
-            ),
-            "criteria": {
-                "true": (
-                    "The command makes the player relocate this thing. A command that lifts this thing and then puts "
-                    "it back where it was, or lowers it back into place, still relocates it."
-                ),
-                "false": (
-                    "The command uses the thing where it is: opening, closing, sitting in, looking at, reading, or "
-                    "searching it. It also covers a command that moves some other thing onto, into, off, or out of "
-                    "this thing. If this thing is only "
-                    "the place another thing is taken from or put on, such as "
-                    "retrieving a laptop from the passenger seat or putting a laptop on the workstation, it does not "
-                    "count as relocating this thing. A part used as designed is not relocating the thing: a door swung "
-                    "open or shut, a drawer slid open or shut, a lid opened, or a screen tilted back on its own hinge."
-                ),
-            },
-        }
-    }
-    return _answer(ask, {"command": command, "thing": thing_name}, questions, "relocates_thing")
+    state, questions = relocates_thing_payload(command, thing_name)
+    return _answer(ask, state, questions, "relocates_thing")
 
 
 def names_other_action(ask, command: str, things_text: str) -> bool | None:

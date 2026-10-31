@@ -1,0 +1,116 @@
+{
+  "sample-001": {
+    "row_index": 8,
+    "payload_id": "control",
+    "arm": "control",
+    "sample": 8
+  },
+  "sample-002": {
+    "row_index": 4,
+    "payload_id": "control",
+    "arm": "control",
+    "sample": 4
+  },
+  "sample-003": {
+    "row_index": 17,
+    "payload_id": "candidate",
+    "arm": "candidate",
+    "sample": 7
+  },
+  "sample-004": {
+    "row_index": 3,
+    "payload_id": "control",
+    "arm": "control",
+    "sample": 3
+  },
+  "sample-005": {
+    "row_index": 15,
+    "payload_id": "candidate",
+    "arm": "candidate",
+    "sample": 5
+  },
+  "sample-006": {
+    "row_index": 11,
+    "payload_id": "candidate",
+    "arm": "candidate",
+    "sample": 1
+  },
+  "sample-007": {
+    "row_index": 14,
+    "payload_id": "candidate",
+    "arm": "candidate",
+    "sample": 4
+  },
+  "sample-008": {
+    "row_index": 1,
+    "payload_id": "control",
+    "arm": "control",
+    "sample": 1
+  },
+  "sample-009": {
+    "row_index": 5,
+    "payload_id": "control",
+    "arm": "control",
+    "sample": 5
+  },
+  "sample-010": {
+    "row_index": 13,
+    "payload_id": "candidate",
+    "arm": "candidate",
+    "sample": 3
+  },
+  "sample-011": {
+    "row_index": 9,
+    "payload_id": "control",
+    "arm": "control",
+    "sample": 9
+  },
+  "sample-012": {
+    "row_index": 7,
+    "payload_id": "control",
+    "arm": "control",
+    "sample": 7
+  },
+  "sample-013": {
+    "row_index": 18,
+    "payload_id": "candidate",
+    "arm": "candidate",
+    "sample": 8
+  },
+  "sample-014": {
+    "row_index": 19,
+    "payload_id": "candidate",
+    "arm": "candidate",
+    "sample": 9
+  },
+  "sample-015": {
+    "row_index": 12,
+    "payload_id": "candidate",
+    "arm": "candidate",
+    "sample": 2
+  },
+  "sample-016": {
+    "row_index": 2,
+    "payload_id": "control",
+    "arm": "control",
+    "sample": 2
+  },
+  "sample-017": {
+    "row_index": 16,
+    "payload_id": "candidate",
+    "arm": "candidate",
+    "sample": 6
+  },
+  "sample-018": {
+    "row_index": 6,
+    "payload_id": "control",
+    "arm": "control",
+    "sample": 6
+  },
+  "sample-019": {
+    "row_index": 10,
+    "payload_id": "control",
+    "arm": "control",
+    "sample": 10
+  }
+}

@@ -25,9 +25,10 @@
     "k_sl_1b_b_r2",
     "k_sl_1b_c_r1",
     "k_sl_1b_c_r2",
+    "k_sl_1b_d_r1",
     "k_sl_1c_a_r1",
     "k_sl_1c_b_r1",
-    "k_sl_1c_c_r1",
+    "k_sl_1c_c_copy_numbers",
     "k_sl_2a_b_r1",
     "k_sl_2a_b_r2",
     "k_sl_2a_c_r1",
@@ -63,7 +64,7 @@
     "k_sl_3b_d_r2",
     "k_sl_3b_e_r1"
   ],
-  "entry_text": "The broadcast chamber lights steadied as Brandon's relay held open. Outside, Charles's emergency deluge was filling the outer access level and forcing water toward the maintenance routes; inside, the evidence was ready to leave for good.\n\n",
+  "entry_text": "The broadcast chamber lights are steady. Brandon's relay is open. Michelle's evidence package is ready to send. Water is entering the outer access level.\n\n",
   "facts": [
     {
       "object": null,
@@ -80,6 +81,12 @@
     {
       "object": null,
       "predicate": "behavioral_experiments_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "bench_clues_recovered",
       "subject": "story",
       "value": "true"
     },
@@ -307,12 +314,6 @@
     },
     {
       "object": null,
-      "predicate": "national_detention_network_known",
-      "subject": "story",
-      "value": "true"
-    },
-    {
-      "object": null,
       "predicate": "override_codes_deadline_known",
       "subject": "story",
       "value": "true"
@@ -331,6 +332,36 @@
     },
     {
       "object": null,
+      "predicate": "patrol_departed",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "patrol_in_house",
+      "subject": "story",
+      "value": "false"
+    },
+    {
+      "object": null,
+      "predicate": "patrol_in_house",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "patrol_on_scene",
+      "subject": "story",
+      "value": "false"
+    },
+    {
+      "object": null,
+      "predicate": "patrol_on_scene",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
       "predicate": "patrol_return_pressure",
       "subject": "story",
       "value": "true"
@@ -338,6 +369,12 @@
     {
       "object": null,
       "predicate": "prisoner_records_corrupted",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "processing_numbers_copied",
       "subject": "story",
       "value": "true"
     },
@@ -447,19 +484,7 @@
       "object": null,
       "predicate": "story_elapsed_seconds",
       "subject": "story",
-      "value": "3780"
-    },
-    {
-      "object": null,
-      "predicate": "terminal_security_escalating",
-      "subject": "story",
-      "value": "true"
-    },
-    {
-      "object": null,
-      "predicate": "terminal_sweep_closing",
-      "subject": "story",
-      "value": "true"
+      "value": "3660"
     },
     {
       "object": null,
@@ -536,6 +561,12 @@
     {
       "object": "captive",
       "predicate": "wk_axis",
+      "subject": "patrol_officer",
+      "value": "free"
+    },
+    {
+      "object": "captive",
+      "predicate": "wk_axis",
       "subject": "rebecca",
       "value": "free"
     },
@@ -591,6 +622,12 @@
       "object": "true",
       "predicate": "wk_moved",
       "subject": "override_codes",
+      "value": null
+    },
+    {
+      "object": "true",
+      "predicate": "wk_moved",
+      "subject": "patrol_officer",
       "value": null
     },
     {
@@ -764,12 +801,6 @@
     {
       "object": null,
       "predicate": "wk_parent",
-      "subject": "logistics_terminal",
-      "value": "freight_terminal"
-    },
-    {
-      "object": null,
-      "predicate": "wk_parent",
       "subject": "maintenance_network",
       "value": "purge_chamber"
     },
@@ -837,7 +868,7 @@
       "object": null,
       "predicate": "wk_parent",
       "subject": "michelle_photograph",
-      "value": "park_bench"
+      "value": "kristin"
     },
     {
       "object": null,
@@ -849,13 +880,13 @@
       "object": null,
       "predicate": "wk_parent",
       "subject": "number_sequence",
-      "value": "park_bench"
+      "value": "kristin"
     },
     {
       "object": null,
       "predicate": "wk_parent",
       "subject": "observation_shaft",
-      "value": "service_level"
+      "value": "loading_docks"
     },
     {
       "object": null,
@@ -868,6 +899,24 @@
       "predicate": "wk_parent",
       "subject": "park_bench",
       "value": "los_angeles_park"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "patrol_officer",
+      "value": "patrol_staging"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "prisoner_number_record",
+      "value": "kristin"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
+      "subject": "processing_line",
+      "value": "service_level"
     },
     {
       "object": null,
@@ -933,7 +982,7 @@
       "object": null,
       "predicate": "wk_parent",
       "subject": "transit_card",
-      "value": "park_bench"
+      "value": "kristin"
     },
     {
       "object": null,
@@ -958,6 +1007,12 @@
       "predicate": "wk_place_text",
       "subject": "brandon",
       "value": "watching Kristin in the park"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "captives",
+      "value": "moving through the processing line below"
     },
     {
       "object": null,
@@ -1006,6 +1061,36 @@
       "predicate": "wk_place_text",
       "subject": "michelle_phone",
       "value": "on the kitchen floor"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "michelle_photograph",
+      "value": "with Kristin"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "number_sequence",
+      "value": "with Kristin"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "patrol_officer",
+      "value": "at Michelle's workstation"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "prisoner_number_record",
+      "value": "with Kristin"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "transit_card",
+      "value": "with Kristin"
     },
     {
       "object": null,
@@ -1184,12 +1269,6 @@
     {
       "object": null,
       "predicate": "wk_relation",
-      "subject": "logistics_terminal",
-      "value": "in"
-    },
-    {
-      "object": null,
-      "predicate": "wk_relation",
       "subject": "maintenance_network",
       "value": "in"
     },
@@ -1257,7 +1336,7 @@
       "object": null,
       "predicate": "wk_relation",
       "subject": "michelle_photograph",
-      "value": "under"
+      "value": "carried_by"
     },
     {
       "object": null,
@@ -1269,7 +1348,7 @@
       "object": null,
       "predicate": "wk_relation",
       "subject": "number_sequence",
-      "value": "under"
+      "value": "carried_by"
     },
     {
       "object": null,
@@ -1287,6 +1366,24 @@
       "object": null,
       "predicate": "wk_relation",
       "subject": "park_bench",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "patrol_officer",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "prisoner_number_record",
+      "value": "carried_by"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
+      "subject": "processing_line",
       "value": "in"
     },
     {
@@ -1353,7 +1450,7 @@
       "object": null,
       "predicate": "wk_relation",
       "subject": "transit_card",
-      "value": "under"
+      "value": "carried_by"
     },
     {
       "object": null,
@@ -1386,6 +1483,12 @@
       "value": null
     },
     {
+      "object": "bench_clues_recovered",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
       "object": "brandon_identified",
       "predicate": "world_effects_applied",
       "subject": "story",
@@ -1410,6 +1513,30 @@
       "value": null
     },
     {
+      "object": "patrol_departed",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "patrol_in_house",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "patrol_on_scene",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "processing_numbers_copied",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
       "object": "rebecca_office_reached",
       "predicate": "world_effects_applied",
       "subject": "story",
@@ -1422,7 +1549,7 @@
       "value": null
     }
   ],
-  "git_sha": "5633582d41a90ed220da7be76ec5df881d7b30cb",
+  "git_sha": "74b0e58d3eaf2a52a6f38785c04fa1a39ed6443d",
   "knowledge_status": {
     "janus_selection": {
       "available": false,
@@ -1438,50 +1565,48 @@
       ]
     }
   },
-  "package_content_hash": "9768c5ca33ec122e25f249c1d61a260f4099e78c764f48aae7b7eb5709cb8277",
+  "package_content_hash": "a11139017124557870c19f8f8fbc4ab16080932b6704ccf14225153aaab6b3c7",
   "package_id": "continuity_initiative",
   "scene": "3B",
   "transcript_lines": [
     "Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle\u2019s undamaged phone to a removal too deliberate to be looting.",
     "A memory card is taped beneath the KMS drawer. Michelle left it there.",
     "A concrete authored consequence lands.",
+    "A concrete authored consequence lands. A federal emergency patrol pulls up outside Michelle's house. Two officers get out. One walks to the front door. The other looks over the street.",
+    "The card holds Michelle's saved files and a damaged recording. The recording warns, \"Do not trust the emergency broadcasts.\" The files name the Continuity Initiative and point to a dead drop at a bench in the park. The front door opens. An officer walks in and heads straight for Michelle's workstation.",
     "A concrete authored consequence lands.",
-    "The card holds Michelle's saved files and a damaged recording. The recording warns, \"Do not trust the emergency broadcasts.\" The files name the Continuity Initiative and point to a dead drop at a bench in the park.",
+    "A concrete authored consequence lands. The patrol pulls away from the curb.",
     "A concrete authored consequence lands.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands. Kristin starts the truck and heads for the park, avoiding checkpoints and emergency patrols. The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.",
+    "The patrol is coming back to the house. The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.",
+    "Kristin reaches beneath the park bench. She retrieves a transit token, a handwritten number sequence and Michelle's photograph. She keeps all three with her.",
     "The man says his name is Brandon Corfman. He says the missing people are being moved alive. A tactical team is closing across the park. Brandon says he can open the secured service gate beside the storm drain. He tells Kristin to follow him.",
     "As patrols close in, Brandon opens a secured service gate. He leads Kristin through it.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
+    "A concrete authored consequence lands. The park pursuit was behind them. Kristin and Brandon headed for the freight terminal along the transport route. Michelle's lead brought Kristin and Brandon to the freight terminal. It was supposed to be abandoned. Fresh tire tracks crossed the loading docks. The air vents hummed. Brandon said, \"Check the loading docks for signs of activity. The observation shaft gives us a view below. Let's find out what is happening before we try to get inside.\"",
     "A concrete authored consequence lands.",
-    "A concrete authored consequence lands. The park pursuit was behind them. Kristin and Brandon headed for the freight terminal along the transport route. Michelle's lead brought Kristin and Brandon to a freight terminal that was supposed to be abandoned. Fresh tire tracks, humming air vents, and unusually heavy electrical service said otherwise. They kept to the shadow of the loading docks, looking for a way into whatever lay below.",
-    "Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running. The observation shaft overlooks the processing line. Kristin can read the identification numbers on the uniforms below.",
-    "Kristin matches sedated prisoners in the processing area to missing-person records. They are alive. The logistics computer waits beside the service entrance.",
-    "The logistics computer shows Kristin that Los Angeles is one regional hub. The detention network spans the country.",
+    "Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running. Brandon says, \"Study the people through the observation shaft. We need to know what is happening on the processing line.\"",
+    "Kristin studies the sedated prisoners through the observation shaft. They are alive. Brandon says, \"Copy the prisoner numbers if you want stronger proof. Or ask me about the transfer route. I can help with the service entrance. That will cost us the chance to copy the full set of numbers. There is time for one choice before the transfer leaves.\"",
+    "Kristin copies the visible prisoner numbers and matches them to missing-person records. Brandon says, \"That gives us stronger proof. We still need a way inside.\" Kristin and Brandon withdraw from the terminal to prepare a way inside. Brandon's hideout was buried inside a dead communications center: servers, salvaged hardware, and years of leaked Continuity Initiative documents. Somewhere beneath the city the facility waited, and its unstable cooling-water and ventilation readings were exactly the kind of flaw a pair of outside inspectors might be sent to examine.\n\nKristin still has the copied prisoner numbers. She needs a way into the facility.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
-    "A concrete authored consequence lands. The observation shaft showed them living captives in an active regional command center, but the main facility could not be reached from the service level without triggering security. Kristin and Brandon withdrew to prepare a way inside. Brandon's hideout was buried inside a dead communications center: servers, salvaged hardware, and years of leaked Continuity Initiative documents. Somewhere beneath the city the facility waited, and its unstable cooling-water and ventilation readings were exactly the kind of flaw a pair of outside inspectors might be sent to examine.",
+    "A concrete authored consequence lands.",
     "Kristin finds a cooling weakness she can use for a real inspection warning. Brandon builds their cover around it. At the facility checkpoint, Kristin must show the inspector credentials.",
     "Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks. A supervisor questions why their inspection was not scheduled. Kristin can explain the unscheduled inspection to the supervisor.",
-    "Kristin and Brandon open a restricted infrastructure corridor. They have access to the facility and its limited inspection console.",
+    "Kristin and Brandon open a restricted infrastructure corridor. They have access to the facility and its limited inspection console. Kristin and Brandon gained access to the infrastructure corridors under their inspection cover. They continued into the records archive. Inside the records archive, the archive terminals are ready to search. They hold the Initiative's selection files, including Michelle's file.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
-    "A concrete authored consequence lands. Kristin and Brandon gained access to the infrastructure corridors under their inspection cover. They continued into the records archive. Inside the records archive, the archive terminals are ready to search. They hold the Initiative's selection files, including Michelle's file.",
+    "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
     "JANUS ranked every American for detention, leverage, or control. Michelle's file holds nothing more. Brandon's name may be in the development records.",
     "Brandon's name is in the first JANUS records. He admits he helped write the system. A warning message blinks on the medical terminal.",
-    "Michelle is changing classifications. She is hiding vulnerable prisoners. Maintenance reports wait on the next terminal.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands. The JANUS evidence in the archive showed what the system was built to do. Kristin and Brandon understood how much danger that evidence put them in. The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count. Kristin carried the copied JANUS files. She could check them now.",
-    "A concrete authored consequence lands.",
+    "Michelle is changing classifications. She is hiding vulnerable prisoners. Maintenance reports wait on the next terminal. The JANUS evidence in the archive showed what the system was built to do. Kristin and Brandon understood how much danger that evidence put them in. The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count. Kristin carried the copied JANUS files. She could check them now.",
     "After Michelle corrupts the records, Charles orders valuable captives transferred. He orders everyone else destroyed within hours. The copied files lie close at hand.",
+    "A concrete authored consequence lands.",
     "Kristin and Brandon have enough evidence to expose the conspiracy. Sending it now would reveal their position and seal the detention sectors. A message from Michelle is waiting.",
     "Michelle's encrypted message marks a maintenance access route into her holding block. Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors.",
     "A concrete authored consequence lands.",
@@ -1506,7 +1631,7 @@
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands."
   ],
-  "turn_index": 63,
+  "turn_index": 61,
   "world_parents": {
     "archive_terminals": "janus_archive",
     "back_door": "kitchen",
@@ -1521,6 +1646,7 @@
     "detention_level": "regional_facility",
     "detention_medical_records": "medical_level",
     "drainage_pump_controls": null,
+    "emergency_speakers": null,
     "emergency_surface_gates": "facility_escape",
     "executive_office": "regional_facility",
     "facility_escape": "regional_facility",
@@ -1539,7 +1665,6 @@
     "kristin_laptop": "truck_passenger_seat",
     "kristin_truck": "freight_terminal",
     "loading_docks": "freight_terminal",
-    "logistics_terminal": "freight_terminal",
     "los_angeles_park": null,
     "maintenance_network": "purge_chamber",
     "mcgehee_home": null,
@@ -1553,14 +1678,18 @@
     "michelle_drawer_spare_batteries": "michelle_drawer",
     "michelle_drawer_stapler": "michelle_drawer",
     "michelle_phone": "kitchen",
-    "michelle_photograph": "park_bench",
+    "michelle_photograph": "kristin",
     "michelle_workstation": "kitchen",
-    "number_sequence": "park_bench",
-    "observation_shaft": "service_level",
+    "number_sequence": "kristin",
+    "observation_shaft": "loading_docks",
     "outside_house": null,
     "override_codes": "kristin",
     "park_bench": "los_angeles_park",
+    "patrol_officer": "patrol_staging",
+    "patrol_staging": null,
     "portable_archive": null,
+    "prisoner_number_record": "kristin",
+    "processing_line": "service_level",
     "purge_chamber": "regional_facility",
     "rebecca": "executive_office",
     "rebecca_desk": "executive_office",
@@ -1572,9 +1701,10 @@
     "service_level": "freight_terminal",
     "stolen_radio": "detention_level",
     "storm_drain": "los_angeles_park",
-    "transit_card": "park_bench",
+    "transit_card": "kristin",
     "truck_driver_seat": "kristin_truck",
     "truck_passenger_seat": "kristin_truck",
+    "watertight_barrier": null,
     "workstation_chair": "kitchen"
   }
 }

@@ -23,6 +23,8 @@ from storygame.story_package.loader import load_story_package
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 PLAYED = _legacy_package(PACKAGE)
 
+BENCH_DISCOVERY_REQUIRED = frozenset({"k_sl_1b_a_r1", "k_sl_1b_a_r2", "k_sl_1b_b_r1"})
+
 
 @dataclass(frozen=True)
 class PrefixCheckpoint:
@@ -94,6 +96,12 @@ def _preferred_selection(preferred, offered, picked):
         (item_id for item_id in preferred if item_id not in picked and any(c.id == item_id for c in offered)),
         None,
     )
+
+
+def _with_bench_discovery(preferred: tuple[str, ...]) -> tuple[str, ...]:
+    if BENCH_DISCOVERY_REQUIRED.intersection(preferred) and "k_sl_1b_d_r1" not in preferred:
+        return ("k_sl_1b_d_r1", *preferred)
+    return preferred
 
 
 def _offered(engine: RuntimeEngine, state: RuntimeState, blocked: set[str]):
@@ -191,6 +199,7 @@ def _default_walk() -> DefaultWalk:
 def run(preferred: tuple[str, ...] = ()) -> JourneyRun:
     """Replay only the suffix after the first policy decision divergence."""
 
+    preferred = _with_bench_discovery(preferred)
     blocked = _blocked_for(preferred)
     default = _default_walk()
     # The decision replay must use the checkpoint's restored state and engine,

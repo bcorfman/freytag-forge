@@ -123,7 +123,7 @@ def test_shadow_exception_is_swallowed_with_exception_class() -> None:
     _state, provider = _provider()
     verifier = ObservationVerifier(lambda _state, _questions: {})
 
-    def explode(_narration, _relations):
+    def explode(_narration, _relations, *, scene=None):
         raise LookupError("shadow failure")
 
     verifier.verify = explode
@@ -136,6 +136,7 @@ def test_shadow_exception_is_swallowed_with_exception_class() -> None:
         "failure": "LookupError",
         "question_version": ObservationVerifier.QUESTION_VERSION,
         "accepted": False,
+        "scene_state": False,
         "verdicts": [],
     }
 

@@ -158,7 +158,7 @@ def test_shadow_error_keeps_other_record_fields_unchanged() -> None:
     _set_raw(provider, {})
     verifier = ObservationVerifier(capture.ask)
 
-    def explode(_narration, _relations):
+    def explode(_narration, _relations, *, scene=None):
         raise LookupError("shadow failure")
 
     verifier.verify = explode

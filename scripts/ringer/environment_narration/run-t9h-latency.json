@@ -1,0 +1,33 @@
+{
+  "run_name": "t9h-latency-hedge-short",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-latency",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "billed-t9h-latency-hedge-short",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 3600,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/environment-narration/t9h-latency/hedge-short"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-latency/hedge-short/rows/rows.json",
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-latency/hedge-short/rows/summary.json"
+      ],
+      "spec": "You are a RUNNER for one billed T9h hedged short-call latency run in freytag-forge. Working directory: /home/bcorfman/dev/ringer-work/t9h-latency. It runs 5 replicates of 6 turns through a local Worker, capped at 240 HTTP calls and $0.07 (enforcing verifier on, shadow off, no scene-state flag). The preregistration is .plans/grounded-llm-environment-narration/t9h-latency-prereg.md. HARD RULES: run COMMAND 1 EXACTLY ONCE in the FOREGROUND and never rerun it, even after an error or partial result. Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit. A non-zero exit with partial rows is a valid outcome. Wait for the billed process to finish.\n\nCOMMAND 1 (the billed run; run exactly once):\ncd /home/bcorfman/dev/freytag-forge && (set -a; . ./.env; set +a; unset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN; bash scripts/ringer/environment_narration/enforce_t9h_latency.sh)\n\nThen report only the script's non-secret output, including any stop reason. Do not interpret results.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && test -s bench/results/environment-narration/t9h-latency/hedge-short/rows/rows.json && test -s bench/results/environment-narration/t9h-latency/hedge-short/rows/summary.json && (set -a; . ./.env; set +a; .venv/bin/python - <<'PY'\nimport json, os\nbase='bench/results/environment-narration/t9h-latency/hedge-short'\nsummary=json.load(open(base+'/rows/summary.json'))\nassert 'stopped_reason' in summary, 'summary has no stopped_reason'\nassert summary.get('enforce') is True and not summary.get('shadow', False), 'enforcement flags wrong'\nspent=json.load(open(base+'/spent.json'))['spent_micro_usd'] if os.path.exists(base+'/spent.json') else 0\nassert spent <= 70000, 'spend over cap'\nfor p in (base+'/rows/rows.json', base+'/rows/summary.json', base+'/worker.log'):\n    t=open(p).read() if os.path.exists(p) else ''\n    for name in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_WORKER_TOKEN','OPENAI_API_KEY','RAILWAY_TOKEN','RAILWAY_PROJECT_ID','FREYTAG_TEST_CLOCK_TOKEN'):\n        v=os.environ.get(name,'').strip()\n        assert not v or v not in t, name+' value leaked in '+p\nprint('integrity ok: stopped_reason=%r, spent_micro_usd=%s, no credential value in outputs' % (summary['stopped_reason'], spent))\nPY\n)\n",
+      "verified": "prose rows were written once under the approved ceiling"
+    }
+  ]
+}

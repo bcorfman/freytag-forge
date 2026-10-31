@@ -1,0 +1,36 @@
+{
+  "run_name": "t9h-drain-condition-step-2",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-drain-condition-step-2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "revise-variant-wording",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_drain_condition_judge_probe.py",
+        "/home/bcorfman/dev/freytag-forge/.plans/grounded-llm-environment-narration/t9h-drain-condition-judge-prereg.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_drain_condition_judge_probe.py",
+        "/home/bcorfman/dev/freytag-forge/.plans/grounded-llm-environment-narration/t9h-drain-condition-judge-prereg.md"
+      ],
+      "verified": "variants name the inside description, prereg text matches the code verbatim, tests green",
+      "spec": "Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. FREE WORK ONLY: no network, no model call, no billed call, no credentials, never read or print .env. Do not git commit. NO regular expressions. Match the surrounding style. Touch ONLY your files; never run git checkout, stash, reset or clean; never modify anything under bench/results/ or the cases.jsonl / lock.json files (the cases are frozen and must not change). At the end run ruff check --fix and ruff format on your .py files. FILES YOU OWN: /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_judge_probe.py, /home/bcorfman/dev/freytag-forge/tests/test_drain_condition_judge_probe.py, /home/bcorfman/dev/freytag-forge/.plans/grounded-llm-environment-narration/t9h-drain-condition-judge-prereg.md. Do not edit the check script.\n\nWHAT TO CHANGE. `drain_condition_judge_probe.py` and its preregistration define three frozen Jev question variants (A, B, C) that decide whether a narration states an unsupported open, ajar, lifted, covered, entered or contents condition. No score exists yet, so the wording may still change. Problem: the variants say only 'contents', but the labels the cases were frozen with also count the INSIDE described as fact, such as darkness inside, water, sounds, smells or objects seen inside, as forbidden. A judge told only 'contents' would likely accept 'she peers into the darkness of the drain'. Fix: in all three variants, wherever the instructions or the TRUE and FALSE criteria say contents (or what is inside it), say instead: 'what is inside it, including what can be seen, heard or smelled there, such as darkness, water, objects, sounds or smells'. Keep every other sentence, the state fields, the orientation (TRUE = consistent), the 'looking at, approaching, kneeling beside, touching the outside, or wondering what might be inside are consistent' sentence, Variant C's extra sentence, the gate, the counts, the caps and the case files exactly as they are. Plain words, 12th-grade level, no story-specific word. Then update the preregistration's 'Frozen question variants' section so every quoted instruction and criterion sentence is VERBATIM what the code sends (the check compares them), and add one sentence to the preregistration under the variants saying the wording was revised once before any score existed to name the inside description, with the reason above. Update the tests that assert the variant text.\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_drain_condition_judge.sh`. Finish with a short summary.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_drain_condition_judge.sh"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously. She kneels down to inspect it, noticing that it appears to be slightly ajar, as if someone or something had recently passed through it. \"What's going on here?\" she mutters to herself, her practical mind racing with possibilities, but she keeps her voice down, remembering Brandon's warning that patrols are nearby. A transit token and a handwritten number sequence lie beside Michelle's photograph."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols. She approaches the drain cautiously, noticing it's partially hidden by the damaged grounds. As she inspects the storm drain, she sees that it's old and rusty, with leaves and debris accumulated around it. The drain itself appears to be intact, but she wonders if it might be a possible hiding spot or escape route. She hears the distant sound of patrols and remembers Brandon's warning to keep her voice down. \"Keep your voice down; patrols are nearby,\" she recalls him saying, and she continues to examine the storm drain quietly. A transit token and a handwritten number sequence lie beside Michelle's photograph."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. As she approaches the storm drain, she notices it's partially hidden by the damaged grounds and overgrown vegetation. She peers into the storm drain, trying to see if there's anything unusual or if it might be a possible lead to find Michelle. A transit token and a handwritten number sequence lie beside Michelle's photograph."
+          }
+        ]
+      }
+    ]
+  }
+]

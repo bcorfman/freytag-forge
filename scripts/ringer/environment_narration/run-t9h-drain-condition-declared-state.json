@@ -1,0 +1,34 @@
+{
+  "run_name": "t9h-drain-condition-steps-0-1",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-drain-condition-steps-0-1",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "step1-heldout-declared-state",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_heldout.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_drain_condition_heldout.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_heldout.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_drain_condition_heldout.py"
+      ],
+      "verified": "declared_state recorded on at least 30 rows, shown on the blind sheet without leaking, tests green",
+      "spec": "Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. FREE WORK ONLY: no network, no model call, no credentials, never read or print .env. Do not git commit. NO regular expressions in new code and never parse narration text. Match the surrounding code's style. The tree holds unrelated uncommitted edits: touch ONLY your files, never run git checkout, stash, reset or clean, never modify anything under bench/results/. At the end run ruff check --fix and ruff format on your .py file. FILES YOU OWN: /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/drain_condition_heldout.py, /home/bcorfman/dev/freytag-forge/tests/test_drain_condition_heldout.py. Do not edit the check script.\n\nBACKGROUND. `drain_condition_heldout.py` builds a held-out set of narrations about things other than the storm drain (drawer, truck, passenger seat, laptop) so a later check of 'does the narration assert an open/ajar/lifted/entered state or contents the world does not declare' can be tested across things. A person must label each row forbidden or clean, but that label is defined RELATIVE to what the world declares for the thing at that turn (a drawer that the world holds open with declared contents may legitimately be described that way; a declared-closed one may not). The rows currently carry no declared state, so they cannot be labeled.\n\nTASK. Add a `declared_state` object to every row that has one available, and show it on the blind sheet. For each real row, find the thing's declared state at the recorded turn: read the recorded row's `world_before` (or equivalent recorded world structure for that turn in the same rows file; in the defect-probe files find whatever world or custody fields are recorded) and, where the recorded world is not enough, the declared thing in data/stories/continuity-initiative/world.yaml (use the story package loader like tests/test_scene_1b_grounding.py and the world-model API; do not parse yaml by hand if the loader exposes it). Record: {source (file and field used), open_state (the declared or recorded open/closed value, or null if the thing declares none), declared_contents (list of declared contents names the world holds in the thing at that turn, possibly empty), hidden_contents_present (bool, true when something is held but not yet revealed), fixed (bool), notes}. If a row's declared state cannot be recovered from recorded fields, set declared_state to null and say why in `declared_state_missing_reason`; never guess. Authored rows inherit the declared_state of their source row. The blind sheet (`--blind-sheet`) must print, under each narration, a line `Declared: ...` rendered from declared_state in neutral words that do NOT contain the thing's name (use 'the object'), the source file, or any label word; sheets stay shuffled with a fixed seed. Keep every existing mode, output field and test working. At least 30 of the 49 rows must end up with a non-null declared_state; report the exact count per thing and the reason for each null in your summary.\n\nTESTS: update tests/test_drain_condition_heldout.py: declared_state present and well-formed on a fixture row; a row with no recoverable state gets null plus a reason; the blind sheet shows the Declared line and leaks no thing name or source; authored rows inherit.\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_drain_condition_free.sh heldout`. Finish with a short summary.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_drain_condition_free.sh heldout"
+    }
+  ]
+}

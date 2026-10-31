@@ -197,21 +197,25 @@ bridge_text:
 
 **Plot:** Kristin follows clues left by Michelle and discovers that the disappearances were coordinated through disguised emergency operations.
 
+**Hidden canon:** Michelle left a transit token, a handwritten number sequence and her photograph under the park bench. All three stay hidden until Kristin searches beneath the bench. She retrieves them together and keeps them with her. Finding them does not identify the transport route or the man in the photograph.
+
 ### Scene 1B.1 — Michelle’s Dead Drop
 
 **Details:** ordinary park bench; damaged grounds; service path; checkpoints; emergency patrols
 
-Michelle’s files reference an ordinary park bench where she exchanged information with a confidential source. Kristin travels there while avoiding checkpoints and emergency patrols. The bench could be nothing, or it could hold the only lead Michelle prepared for her.
+Michelle’s files reference an ordinary park bench where she exchanged information with a confidential source. Kristin travels there while avoiding checkpoints and emergency patrols. The bench could be nothing, or it could hold the only lead Michelle prepared for her. Looking the bench over shows the shadowed space beneath it, deep enough for Kristin to reach under.
+
+Kristin searches beneath the park bench and retrieves Michelle's transit token, handwritten number sequence and photograph. She keeps all three with her. Comparing the token with the sequence identifies a freight route out of the city. Studying the photograph reveals that it shows the man watching her. Showing it to him gives him a reason to identify himself.
 
 The records suggest that the mass disappearance was preceded by years of secret tests.
 
 ### Scene 1B.2 — The Man Following Her
 
-**Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; Michelle photograph; Continuity Initiative
+**Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; Continuity Initiative
 
 Kristin notices a man watching her from across the park. Believing the man works for the government, Kristin attempts to escape through abandoned service tunnels beneath the park. If Kristin speaks to him before he is identified, the man refuses to give his name and tells her to keep her voice down because patrols are nearby.
 
-The man watching Kristin waits near the service path, close enough for Kristin to show him Michelle's photograph.
+The man watching Kristin waits near the service path. Once Kristin has recovered Michelle's photograph, she can show it to him. She can also question him about Michelle.
 
 The man follows but saves Kristin when an emergency patrol corners her. He identifies himself as Brandon Corfman, the person in Michelle’s photograph.
 

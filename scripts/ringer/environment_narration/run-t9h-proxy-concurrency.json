@@ -1,0 +1,33 @@
+{
+  "run_name": "t9h-proxy-concurrency",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-proxy-concurrency",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "proxy-concurrency",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 600,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/local_worker.mjs",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/local_worker.test.mjs"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/local_worker.test.mjs"
+      ],
+      "verified": "concurrent requests overlap, spend cap holds under concurrency, existing proxy tests pass",
+      "spec": "You are the TOOLING worker fixing request serialization in the local Worker proxy used for billed benches in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. FILES YOU OWN: /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/local_worker.mjs and /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/local_worker.test.mjs. Read anything; touch nothing else (never the worker/ source, never storygame/). No network, no live model call, no credentials; do not print or log any credential. Do not git commit. Never run git checkout, stash, reset or clean. Run the tests with `cd /home/bcorfman/dev/freytag-forge && node --test scripts/ringer/environment_narration/local_worker.test.mjs`.\n\nDEFECT. In local_worker.mjs, `invokeWorker(request, env, fetchImpl)` makes EVERY non-`/__spent` request wait for the previous one through a module-level `fetchQueue` promise chain (`await previous` before `worker.fetch`, `release()` in `finally` after it). The queue exists so the code can temporarily swap `globalThis.fetch` for a test-supplied `fetchImpl` safely. But when `fetchImpl` is undefined (every real billed run) it still serialises: the proxy then has only ONE model request in flight at a time. Consequences measured on real runs: a stalled model call blocks every request behind it (the logged durations include the queue wait), and the game's concurrency (a hedged duplicate request sent after a delay, a Jev prefetch running beside the referent match) cannot overlap at all, so those speed-ups cannot work through this proxy. In production the Cloudflare Worker handles requests concurrently, so this is a harness artifact.\nFIX. Keep the queue ONLY for the case where a `fetchImpl` is supplied (the global swap). When `fetchImpl` is undefined, call `worker.fetch(request, env)` directly with no queue and no global swap, so concurrent requests run concurrently. The spend cap must stay correct under concurrency: read how `DailyBudget` and `spentMicroUsd` accumulate spend and make sure two overlapping requests cannot both pass the budget check when only one fits (if the Worker's own `DailyBudget` is not atomic across overlapping calls, serialise ONLY the budget check-and-record step in the proxy, not the model call; if that needs a change outside your files, say so in your summary and keep the cap correct by leaving that part serialised). The cap is the hard spend guard on billed runs, so a bug here costs money: add a test that concurrent requests cannot exceed `maxUsd`.\nTESTS in local_worker.test.mjs (node:test, hermetic, no network): with `fetchImpl` undefined and `globalThis.fetch` stubbed by the test (restore it afterwards) to answer after about 400 ms, two concurrent POSTs through the proxy finish in well under the sum of their delays (assert total under 1.5 x one delay); with `fetchImpl` supplied the existing behaviour is unchanged and existing tests still pass; the concurrency test name must contain the word `concurrent`; a spend-cap-under-concurrency test as above; `/__spent` still answers while a request is in flight.\nHOW TO VERIFY: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_proxy.sh`. Do not edit it. Final output: a short summary, including whether the budget check is atomic under overlap.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_proxy.sh"
+    }
+  ]
+}

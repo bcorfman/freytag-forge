@@ -277,7 +277,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 41
+    assert len(package.storylets) == 43
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
@@ -359,12 +359,12 @@ def test_loader_rejects_item_placement_for_an_item_not_in_the_scene(tmp_path: Pa
     contents = plot.read_text(encoding="utf-8")
     contents = contents.replace(
         "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n",
-        "  transit_card: {parent: kitchen, text: on the table}\n",
+        "  stolen_radio: {parent: kitchen, text: on the table}\n",
         1,
     )
     plot.write_text(contents, encoding="utf-8")
 
-    with pytest.raises(StoryPackageError, match="scene 1A.*transit_card"):
+    with pytest.raises(StoryPackageError, match="scene 1A.*stolen_radio"):
         load_story_package(package)
 
 
@@ -617,6 +617,8 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_1b_a_r2",
         "k_sl_1b_b_r1",
         "k_sl_1b_b_r2",
+        "k_sl_1b_d_r1",
+        "k_sl_1b_e_r1",
         "k_sl_1b_c_r1",
         "k_sl_1b_c_r2",
         "k_sl_1c_a_r1",

@@ -1,0 +1,42 @@
+{
+  "run_name": "t9h-hidden-clues",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-hidden-clues",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "hidden-clues-story-edits",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 600,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/world.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/knowledge.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/handoffs.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylet-routes.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylets.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/world.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/knowledge.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/handoffs.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylet-routes.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylets.md"
+      ],
+      "verified": "plan sections 1-6 applied exactly, unchanged story files untouched, real package loads",
+      "spec": "You are the EDIT worker. Working directory: /home/bcorfman/dev/freytag-forge. You apply a set of AUTHORED, APPROVED text edits to six story-package files. This is a plot change that Brandon has approved; you are a typist, not an author. Do NOT improve, reword, reorder, re-indent or 'fix' any edit text. Do not run billed or networked commands. Do not git commit. NEVER touch any file other than the six you own.\n\nYOU OWN ONLY THESE FILES (edit in place):\n/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md\n/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/world.yaml\n/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/knowledge.yaml\n/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/handoffs.yaml\n/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylet-routes.yaml\n/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylets.md\n\nSOURCE MATERIAL: /home/bcorfman/dev/freytag-forge/.plans/chatgpt-t9h-route-e-hidden-clues-plan.md, section 'Exact proposed source edits' (lines 124-602), subsections 1 to 6. Each subsection gives, per file, an 'old' span (copy from the file exactly; 'absent' means insert at the stated anchor, not replace a file) and a 'new' span. Apply EVERY old->new pair and every insertion in subsections 1 (plot.md), 2 (world.yaml), 3 (knowledge.yaml), 4 (handoffs.yaml), 5 (storylet-routes.yaml) and 6 (storylets.md) character for character, including the new SL-1B-D record, the new fact records, the three 'requires: []' -> 'requires:' replacements in knowledge.yaml (k_sl_1b_a_r1, k_sl_1b_a_r2, k_sl_1b_b_r1 ONLY; leave k_sl_1b_b_r2 and every other record ungated), the k_sl_1b_a_r2 statement and earn_when change, and the storylets.md summary-table row. Subsection 7 lists files that must stay UNCHANGED (pacing.yaml and others): do not touch them. Anchors: in world.yaml the new fact goes immediately before the bare list item '- transport_route_identified' in the facts section; in knowledge.yaml immediately before '- id: transport_route_identified' in the facts list, and the new knowledge record immediately before '- id: k_sl_1b_a_r1'; in storylet-routes.yaml the new fact registry entry goes before '- id: transport_route_identified' in the fact registry, and the SL-1B-D storylet immediately before the SL-1B-A storylet DEFINITION (SL-1B-A also appears in other places, so find the storylet list entry that defines it). Match the host file's indentation and list style (the plan's snippets may be indented differently from the host file; keep the host file's style and the plan's words).\n\nHOW TO VERIFY AS YOU GO: run `/home/bcorfman/dev/freytag-forge/.venv/bin/python /tmp/claude-1000/-home-bcorfman-dev-freytag-forge/8463128a-3b3e-4bff-8d80-fa05839de025/scratchpad/check_story_edits.py` from /home/bcorfman/dev/freytag-forge. It prints every edit still missing or wrongly present. Iterate until it prints 'story edits verified'. Do not edit that script. In your report, say which anchors, if any, you had to interpret and how.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && /home/bcorfman/dev/freytag-forge/.venv/bin/python /tmp/claude-1000/-home-bcorfman-dev-freytag-forge/8463128a-3b3e-4bff-8d80-fa05839de025/scratchpad/check_story_edits.py"
+    }
+  ]
+}

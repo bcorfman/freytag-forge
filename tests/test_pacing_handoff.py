@@ -329,12 +329,12 @@ def test_hint_then_handoff_delivers_only_missing_facts_costs_and_transition() ->
     engine = RuntimeEngine(state, provider)
 
     cue = engine.turn("Search the desk.")
-    assert state.delivered_cue_ids == ("transport_route_identified",)
+    assert state.delivered_cue_ids == ("brandon_identified",)
     assert state.staged_cue_fact_id is None
     assert state.staged_handoff_fact_ids == ()
-    assert Fact(predicate="transport_route_identified", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="brandon_identified", subject="story", value="true") not in state.facts.asserted
     assert cue.segments[0].text == "A clue catches my attention."
-    assert state.last_turn_delivery.cue_fact_id == "transport_route_identified"
+    assert state.last_turn_delivery.cue_fact_id == "brandon_identified"
     assert state.last_turn_delivery.handoff_staged is False
 
     state.turn_index = window.handoff_after_turns - 1

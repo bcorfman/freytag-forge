@@ -1,0 +1,38 @@
+{
+  "run_name": "t9h-hidden-clues",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-hidden-clues-pointer-fix",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "bench-pointer-fix",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 600,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/knowledge.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylet-routes.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylets.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/knowledge.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylet-routes.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylets.md"
+      ],
+      "verified": "no 'seat' in the pointer wording, SL-1B-E ordered D, A, E, B, C in both files, package loads",
+      "spec": "You are the EDIT worker. Working directory: /home/bcorfman/dev/freytag-forge. Apply two small AUTHORED, APPROVED corrections to the scene 1B bench-pointer text you may see in four story files. You are a typist: use the wording below exactly. No billed or networked commands. Do not git commit. NEVER touch any file other than the four you own.\n\nYOU OWN ONLY THESE FILES (edit in place):\n/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md\n/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/knowledge.yaml\n/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylet-routes.yaml\n/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/storylets.md\n\nCONTEXT: a new public observation (storylet SL-1B-E, knowledge k_sl_1b_e_r1, fact bench_underside_pointed_out) points a player at the space beneath the park bench. The package audit rejects its wording because the word 'seat' cannot be told from the truck's driver and passenger seats (finding ambiguous_owned_item), and a test requires a scene's storylets to appear in the files in target-turn order.\n\nCORRECTION 1 (wording): remove the word 'seat' from everything that belongs to the new pointer, using these exact replacements:\n- plot.md, the sentence appended to the 1B.1 paragraph: 'Looking the bench over shows the shadowed space beneath its seat, deep enough for Kristin to reach under.' becomes 'Looking the bench over shows the shadowed space beneath it, deep enough for Kristin to reach under.'\n- knowledge.yaml, record k_sl_1b_e_r1: statement becomes \"Kristin looks over the park bench and is pointed toward the shadowed space beneath it.\" and delivery_text becomes \"The bench is ordinary. The space beneath it is shadowed and deep enough for Kristin to reach under.\"\n- storylet-routes.yaml, storylet SL-1B-E: in pressure_role and in the realization's dramatic_intent replace 'beneath its seat' with 'beneath the bench' (pressure_role) and 'beneath it' (dramatic_intent) so each still reads as a natural sentence; touch no other word.\n- storylets.md, section SL-1B-E: in Dramatic purpose and Possible realizations replace any 'beneath the seat' / 'beneath its seat' with 'beneath the bench' / 'beneath it' so each reads naturally.\nDo not touch any other occurrence of 'seat' anywhere (the truck's seats and the park bench's own kind are unrelated).\n\nCORRECTION 2 (order): SL-1B-E currently sits between SL-1B-D and SL-1B-A. Move the whole SL-1B-E block (every line of that storylet, with its exact content and separators) so the 1B order in BOTH storylet-routes.yaml and storylets.md is SL-1B-D, SL-1B-A, SL-1B-E, SL-1B-B, SL-1B-C. In storylets.md keep the '---' separator style between records identical to its neighbours. Change nothing else, and do not reorder knowledge.yaml.\n\nVERIFY: run `/home/bcorfman/dev/freytag-forge/.venv/bin/python /tmp/claude-1000/-home-bcorfman-dev-freytag-forge/8463128a-3b3e-4bff-8d80-fa05839de025/scratchpad/check_pointer_fix.py` from /home/bcorfman/dev/freytag-forge until it prints 'pointer fix verified' (it also reruns the earlier structural check and loads the real package). Do not edit that script. Report anything you had to interpret.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && /home/bcorfman/dev/freytag-forge/.venv/bin/python /tmp/claude-1000/-home-bcorfman-dev-freytag-forge/8463128a-3b3e-4bff-8d80-fa05839de025/scratchpad/check_pointer_fix.py"
+    }
+  ]
+}

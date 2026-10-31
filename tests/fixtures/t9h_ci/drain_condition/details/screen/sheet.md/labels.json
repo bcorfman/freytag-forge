@@ -1,0 +1,154 @@
+{
+  "sample-001": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": true,
+    "asserts_definite_contents": false,
+    "speculative_only": false,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-002": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": true,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-003": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-004": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-005": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-006": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-007": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-008": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": true,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-009": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": true,
+    "asserts_definite_contents": false,
+    "speculative_only": false,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-010": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-011": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": true,
+    "asserts_definite_contents": false,
+    "speculative_only": false,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-012": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": false,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-013": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-014": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": false,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-015": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-016": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": false,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-017": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-018": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": true,
+    "asserts_definite_contents": false,
+    "speculative_only": false,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  },
+  "sample-019": {
+    "opens_or_enters_drain": false,
+    "invents_ajar_or_cover_state": false,
+    "asserts_definite_contents": false,
+    "speculative_only": true,
+    "wrong_place": false,
+    "capture_prose_disagree": false
+  }
+}

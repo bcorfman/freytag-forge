@@ -649,12 +649,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if request is None:
             return None
         current_world = world if world is not None else self._world()
+        scene = next(
+            scene for scene in self.state.package.scenes if scene.metadata.scene_id == self.state.current_scene_id
+        )
         return build_observation_context(
             current_world,
             self.state.package.world.protagonist_id,
             request,
             label=self._entity_label,
             completed_actions=self._observation_completed_actions(),
+            scene_location_id=scene.metadata.location_id,
         )
 
     def _observation_thing_line(self, thing) -> str:

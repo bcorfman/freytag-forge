@@ -1,0 +1,32 @@
+{
+  "run_name": "t9h-drain-condition-step-2",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-drain-condition-step-2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "billed-judge-calibration",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 7200,
+      "check_timeout_s": 300,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-drain-condition/step2/rows.json"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-drain-condition/step2/rows.json"
+      ],
+      "verified": "rows recorded (all 2100 or a stop reason), no credential in outputs",
+      "spec": "You are a RUNNER for one billed Jev probe in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge. It sends 2100 small classifier requests (140 frozen cases x 3 question variants x 5 samples) through the project's local Worker /jev route, hard-capped at 2100 calls and $0.06 (estimated about $0.04). The user approved this run on 2026-10-30; the preregistration is .plans/grounded-llm-environment-narration/t9h-drain-condition-judge-prereg.md. The probe is slow, so this run launches it DETACHED and waits for it. HARD RULES: run COMMAND 1 EXACTLY ONCE (then only poll with COMMAND 1b). NEVER run it a second time for any reason (not after an error, not after a partial result: a rerun would spend money again). Do not edit any file. Do not print, echo, cat or log environment variables or the .env file or any credential. Do not git commit.\n\nCOMMAND 1 (launches the billed run detached; it returns at once; a non-zero exit with partial rows is a valid outcome, do not retry):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && (set -a; . ./.env; set +a; unset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN; setsid nohup bash scripts/ringer/environment_narration/enforce_t9h_drain_condition_judge.sh judge > /tmp/drain-condition-judge-run.log 2>&1 < /dev/null & echo $! > /tmp/drain-condition-judge.pid)\n\nCOMMAND 1b (poll; repeat it, one call at a time, until it prints DONE; each call waits at most 40 seconds; do NOT run COMMAND 1 again):\nfor i in 1 2 3 4 5 6 7 8; do if kill -0 $(cat /tmp/drain-condition-judge.pid) 2>/dev/null; then sleep 5; else echo DONE; break; fi; done; echo still-running-or-done; tail -c 600 /tmp/drain-condition-judge-run.log\n\nWhen it prints DONE, report only the non-secret tail of the log, including any stop reason. Do not interpret quality.",
+      "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && test -s bench/results/environment-narration/t9h-drain-condition/step2/rows.json && (set -a; . ./.env; set +a; .venv/bin/python - <<'PY2'\nimport json,os\np='bench/results/environment-narration/t9h-drain-condition/step2/rows.json'\ndoc=json.load(open(p))\nrows=doc['rows'] if isinstance(doc,dict) and 'rows' in doc else doc\ntext=open(p).read()+open('bench/results/environment-narration/t9h-drain-condition/step2/worker.log').read()\nfor n in ('CLOUDFLARE_AI_TOKEN','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_WORKER_TOKEN','OPENAI_API_KEY','RAILWAY_TOKEN'):\n    v=os.environ.get(n,'').strip()\n    assert not v or v not in text, n+' leaked'\nstop=doc.get('stop_reason') if isinstance(doc,dict) else None\nassert len(rows)==2100 or stop, 'incomplete run without a stop reason: %d rows'%len(rows)\nprint('integrity ok: %d rows, stop_reason %r, no credential in outputs'%(len(rows),stop))\nPY2\n)"
+    }
+  ]
+}

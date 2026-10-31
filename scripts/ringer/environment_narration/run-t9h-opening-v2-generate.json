@@ -1,0 +1,32 @@
+{
+  "run_name": "t9h-opening-condition-v2",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-opening-condition-v2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "opening-v2-generate2-billed",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 2400,
+      "check_timeout_s": 180,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-opening-v2/generate-2/rows.json"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-opening-v2/generate-2/rows.json"
+      ],
+      "verified": "40 complete narration rows, no stop reason",
+      "spec": "You are a RUNNER for one billed narration stage in freytag-forge; you write no code. Working directory: /home/bcorfman/dev/freytag-forge. It captures four narrator prompts offline, starts a local Worker on port 8811 with a $0.057 spend guard and sends 40 narration requests (10 per prompt) plus at most 4 retries of timed-out samples, hard-capped at 44 calls and $0.057 (estimated about $0.03); an earlier run stopped on an upstream timeout and is kept as partial. Preregistration: .plans/grounded-llm-environment-narration/t9h-opening-condition-v2-prereg.md, approved by the user on 2026-10-30. HARD RULES: run COMMAND 1 EXACTLY ONCE (then only poll with COMMAND 1b). NEVER run it a second time for any reason (a rerun spends money again; a partial result is reported, not retried). Do not edit any file. Do not print, echo, cat or log environment variables, the .env file or any credential. Do not git commit. Do not open or summarize the narrations.\n\nCOMMAND 1 (launches the billed run detached; it returns at once):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && (set -a; . ./.env; set +a; unset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN; setsid nohup bash scripts/ringer/environment_narration/enforce_t9h_opening_v2.sh generate > /tmp/opening-v2-generate2.log 2>&1 < /dev/null & echo $! > /tmp/opening-v2-generate2.pid)\n\nCOMMAND 1b (poll; repeat it, one call at a time, until it prints DONE; each call waits at most 40 seconds; do NOT run COMMAND 1 again):\nfor i in 1 2 3 4 5 6 7 8; do if kill -0 $(cat /tmp/opening-v2-generate2.pid) 2>/dev/null; then sleep 5; else echo DONE; break; fi; done; echo still-running-or-done; tail -c 700 /tmp/opening-v2-generate2.log\n\nWhen it prints DONE, report only the non-secret tail of the log, the row count and stop_reason of bench/results/environment-narration/t9h-opening-v2/generate-2/rows.json, and the spend reported by curl-free means (the worker.log tail). Do not interpret quality.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_v2_generate.sh"
+    }
+  ]
+}

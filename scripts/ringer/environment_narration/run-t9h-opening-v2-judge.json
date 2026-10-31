@@ -1,0 +1,34 @@
+{
+  "run_name": "t9h-opening-condition-v2",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-opening-condition-v2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "opening-v2-judge-billed",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 2400,
+      "check_timeout_s": 180,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-opening-v2/judge/rows.json",
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-opening-v2/report.md"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-opening-v2/judge/rows.json",
+        "/home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-opening-v2/report.md"
+      ],
+      "verified": "200 judge rows or a recorded stop reason, report written, no credential leak",
+      "spec": "You are a RUNNER for one billed Jev judge stage in freytag-forge; you write no code. Working directory: /home/bcorfman/dev/freytag-forge. It sends 200 small classifier requests (40 frozen, locked cases x Variant B x 5 samples) through the project's local Worker /jev route on port 8812, hard-capped at 200 calls and $0.02, paced at 0.5 s (about 3 minutes; ceiling about $0.006), then writes report.md. Preregistration: .plans/grounded-llm-environment-narration/t9h-opening-condition-v2-prereg.md, approved by the user on 2026-10-30. HARD RULES: run COMMAND 1 EXACTLY ONCE (then only poll with COMMAND 1b). NEVER run it a second time for any reason (a rerun spends money again; a partial result is reported, not retried). Do not edit any file. Do not print, echo, cat or log environment variables, the .env file or any credential. Do not git commit.\n\nCOMMAND 1 (launches the billed run detached; it returns at once):\ncd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && (set -a; . ./.env; set +a; unset OPENAI_API_KEY RAILWAY_TOKEN RAILWAY_PROJECT_ID FREYTAG_TEST_CLOCK_TOKEN; setsid nohup bash scripts/ringer/environment_narration/enforce_t9h_opening_v2.sh judge > /tmp/opening-v2-judge.log 2>&1 < /dev/null & echo $! > /tmp/opening-v2-judge.pid)\n\nCOMMAND 1b (poll; repeat it, one call at a time, until it prints DONE; each call waits at most 40 seconds; do NOT run COMMAND 1 again):\nfor i in 1 2 3 4 5 6 7 8; do if kill -0 $(cat /tmp/opening-v2-judge.pid) 2>/dev/null; then sleep 5; else echo DONE; break; fi; done; echo still-running-or-done; tail -c 700 /tmp/opening-v2-judge.log\n\nWhen it prints DONE, report only the non-secret tail of the log and the verdict line printed by the report step. Do not interpret quality.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_v2_judge.sh"
+    }
+  ]
+}

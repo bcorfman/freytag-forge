@@ -1,0 +1,34 @@
+{
+  "run_name": "t9h-audit-kinds",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-audit-kinds",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "audit-kinds",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/hidden_thing_audit.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_thing_audit.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/hidden_thing_audit.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_thing_audit.py"
+      ],
+      "verified": "free checks pass",
+      "spec": "You are the FIX worker for the hidden-thing audit's earn-kind classification in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. No network, no model call, no credentials. Do not git commit. NO regular expressions in new code and never parse narration text to decide anything. Match the surrounding style. The tree holds unrelated uncommitted edits: touch ONLY the files you own and never run git checkout, stash, reset or clean. NEVER modify data/, storygame/, docs/, bench/results/ or .plans/. At the end run ruff check --fix and ruff format on your files. Tests are hermetic, few but complete.\nFILES YOU OWN: /home/bcorfman/dev/freytag-forge/scripts/hidden_thing_audit.py and /home/bcorfman/dev/freytag-forge/tests/test_hidden_thing_audit.py. Read anything.\nDEFECT. The audit labels every hidden item's `Earn kind` as `search` when a knowledge entry reveals it, even for things that are not found by searching: the real package's `override_codes` (placed in the imprisoned senior official, earned by `speaks with the senior official` or `checks the gate-status panel`) and `prisoner_number_record` (placed in the processing line, earned by `copies the prisoner numbers`). Only items placed UNDER a container (the memory card under the drawer, the bench clues under the park bench) are searched for. Fix the classification using TYPED data only (the declared placement relation, the parent's kind and whether the parent is a character, the knowledge entry's reach and action fields), never the earn_when prose. Use these kinds: `search` (placed under a parent and revealed by an entry that reaches that parent), `given_by_character` (placed in a character/NPC parent), `action_result` (placed in a non-character parent that is not under, revealed by a knowledge entry), `handoff_only` (only a handoff delivery asserts the fact), `unreached`. Update the Markdown summary and the JSON, and add a one-line legend. Update the existing tests that pinned the old labels and add one test per new kind using the synthetic package (add what the synthetic package needs: a character-held item and a non-character action result). Keep every other column unchanged.\nHOW TO VERIFY: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_followup_audit.sh` and also `/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/hidden_thing_audit.py /home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative --json --out /tmp/audit-kinds.json` then confirm override_codes is given_by_character, prisoner_number_record is action_result, memory_card and the three bench clues are search. Do not edit the check. Final output: a short summary.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_followup_audit.sh"
+    }
+  ]
+}

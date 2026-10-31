@@ -1,0 +1,77 @@
+[
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the damaged grounds. She kneels down to inspect it closer, looking for any clues or signs of Michelle's presence. The storm drain appears to be ordinary, but Kristin notices that the grate is slightly ajar. She wonders if someone or something might have passed through it recently."
+          },
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously, aware of the nearby checkpoints and emergency patrols. As she approaches the storm drain, she notices it appears to be slightly ajar, as if someone or something had recently passed through it. She says to herself, \"This could be a lead, but I need to be careful, patrols are nearby.\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously due to the presence of checkpoints and emergency patrols. As she approaches the storm drain, she notices it appears slightly ajar, as if someone or something had recently passed through it. She says to herself, \"This could be a lead, but I need to be careful; the patrols are nearby, and I don't want to draw attention to myself.\""
+          },
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the overgrown vegetation. She pushes aside the debris and peers into the drain, trying to see if there's anything unusual inside. The storm drain appears to be dark and musty, with a faint smell of decay emanating from it. Kristin wonders if Michelle might have passed through here, and if there are any clues that could lead her to her friend."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. As she approaches the storm drain, she notices it's partially hidden by the damaged grounds and overgrown vegetation. She peers into the storm drain, trying to see if there's anything unusual or if it might be a possible lead to find Michelle."
+          },
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously, aware of the nearby checkpoints and emergency patrols. As she approaches the storm drain, she notices it appears to be slightly ajar, as if someone or something had recently passed through it. She says to herself, \"This could be a lead, but I need to be careful, patrols are nearby, and I don't want to draw attention to myself.\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks towards the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices that the storm drain is partially hidden by the damaged grounds, making it a slightly more secluded spot. As she approaches the storm drain, she peers inside, trying to see if there's anything unusual or if it might be a possible lead to find Michelle. The darkness makes it difficult to see very far in. She pauses for a moment, considering whether to investigate further, and says to herself, \"This could be a place to hide, but is it connected to Shelly's disappearance?\""
+          },
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols. She notices the damaged grounds and checkpoints in the distance, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the damaged park infrastructure. She kneels down to get a closer look, her hand on the edge of the drain. She peers into the storm drain, trying to see if there's anything inside. The darkness makes it difficult to see, but she notices that the drain seems to be intact, despite the damage to the surrounding area."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the storm drain",
+        "enforce_attempts": [
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously, aware of the nearby checkpoints and emergency patrols. As she approaches the storm drain, she notices it appears to be slightly ajar, as if someone or something had recently passed through it. She says to herself, \"This could be a lead, but I need to be careful; the patrols are everywhere.\""
+          },
+          {
+            "narration": "Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain. As she approaches the storm drain, she sees that it's partially hidden by the overgrown vegetation. She pushes aside the debris and peers into the drain, trying to see if there's anything unusual inside. The storm drain is dark and musty, but Kristin can see that it's empty except for some stagnant water and debris. She wonders if Michelle might have passed through here, but there's no sign of her."
+          }
+        ]
+      }
+    ]
+  }
+]

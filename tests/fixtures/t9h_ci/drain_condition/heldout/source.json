@@ -1,0 +1,1132 @@
+[
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          },
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed"
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          },
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          },
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          },
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          },
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          },
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          },
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          },
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          },
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          },
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          },
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          },
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          },
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          },
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          },
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          },
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          },
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          },
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          },
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          },
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the passenger seat",
+        "narration": "The passenger seat remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The passenger seat remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the truck",
+        "narration": "The truck remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The truck remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": null,
+        "focus_open_state_committed": null,
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  },
+  {
+    "turns": [
+      {
+        "input": "inspect the drawer",
+        "narration": "The drawer remains in view.",
+        "narrator_called": true,
+        "enforce_attempts": [
+          {
+            "narration": "The drawer remains in view."
+          }
+        ],
+        "engine_opened": false,
+        "focus_open_state_after": "closed",
+        "focus_open_state_committed": "closed",
+        "before": {
+          "kristin": "mcgehee_home",
+          "kristin_laptop": "truck_passenger_seat",
+          "memory_card": "michelle_drawer",
+          "michelle_drawer": "michelle_workstation",
+          "kristin_truck": "outside_house",
+          "truck_driver_seat": "kristin_truck",
+          "truck_passenger_seat": "kristin_truck",
+          "patrol_officer": null
+        }
+      }
+    ]
+  }
+]

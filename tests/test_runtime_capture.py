@@ -9,9 +9,10 @@ from storygame.runtime.capture import WorldCapture, build_capture_provider, capt
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.contracts import RuntimeContractError
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import world_for
+from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.web_demo import create_demo_app
 
@@ -51,6 +52,8 @@ def _state_1b() -> RuntimeState:
     state = RuntimeState.bootstrap(PACKAGE)
     state.current_scene_id = "1B"
     state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == "1B")
+    state.facts.assert_fact(Fact(predicate="bench_clues_recovered", subject="story", value="true"))
+    apply_world_effects(PACKAGE, state.facts)
     return state
 
 

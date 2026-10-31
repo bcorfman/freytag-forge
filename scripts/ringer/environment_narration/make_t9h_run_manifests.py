@@ -21,8 +21,8 @@ def _check(stage: str, replicates: tuple[int, int, int, int], micro_usd: int) ->
         + f'assert json.loads((base / "spent.json").read_text())["spent_micro_usd"] <= {micro_usd}\n\n'
         + "def route_rows(name, expected_replicates, expected_turns, last_input):\n"
         + '    route_base = base / name / "rows"\n'
-        + '    assert (route_base / "rows.json").is_file()\n'
-        + '    assert (route_base / "summary.json").is_file()\n'
+        + '    assert (route_base / "rows.json").is_file(), f"missing {route_base / \'rows.json\'}"\n'
+        + '    assert (route_base / "summary.json").is_file(), f"missing {route_base / \'summary.json\'}"\n'
         + '    rows = json.loads((route_base / "rows.json").read_text())\n'
         + '    summary = json.loads((route_base / "summary.json").read_text())\n'
         + '    assert summary["enforce"] is True\n'
@@ -106,12 +106,6 @@ def _manifest(stage: str, args: tuple[str, str, str, str], usd: str, micro_usd: 
                 "expect_files": [
                     f"{REPO}/{base}/c/rows/rows.json",
                     f"{REPO}/{base}/c/rows/summary.json",
-                    f"{REPO}/{base}/d/rows/rows.json",
-                    f"{REPO}/{base}/d/rows/summary.json",
-                    f"{REPO}/{base}/e/rows/rows.json",
-                    f"{REPO}/{base}/e/rows/summary.json",
-                    f"{REPO}/{base}/f/rows/rows.json",
-                    f"{REPO}/{base}/f/rows/summary.json",
                     f"{REPO}/{base}/spent.json",
                 ],
                 "spec": spec,

@@ -1,0 +1,31 @@
+{
+  "run_name": "t9h-opening-condition-v2",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-opening-condition-v2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "opening-kind-edit",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": ["-c", "model_reasoning_effort=high"],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 600,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/world.yaml",
+        "/home/bcorfman/dev/freytag-forge/tests/test_world_placements.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/world.yaml",
+        "/home/bcorfman/dev/freytag-forge/tests/test_world_placements.py"
+      ],
+      "verified": "world.yaml differs from the backup only by the opening kind and five kind lines; package loads; focused tests green; ruff clean",
+      "spec": "You are editing one story data file and one test helper in the freytag-forge repo. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. FREE WORK ONLY: no network, no model call, never read or print .env. Do not git commit. The working tree holds unrelated uncommitted edits, including in world.yaml itself (hidden: true on the bench clues and a bench_clues_recovered entry): keep every one of them. Never run git checkout, stash, reset or clean. Do not edit the check script.\n\nFILES YOU OWN (edit only these): /home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/world.yaml and /home/bcorfman/dev/freytag-forge/tests/test_world_placements.py.\n\nWHY: the story declares five fixed openings (back_door, house_gate, facility_gate, service_gate, storm_drain) with only `fixed: true` and no kind. The story already declares sub-kinds under `kinds:` (desk, seat). We are giving these five a story sub-kind so later checks can be scoped by declared kind instead of by the absence of declarations.\n\nEDIT 1, world.yaml: (a) append one entry to the top-level `kinds:` list, after `seat`, exactly: `- id: opening` / `  is: [thing]` / `  fixed: true`. It declares nothing else: no axes, no contents, no enterable, no openable. (b) In the `items:` list, add the line `  kind: opening` to each of the five entries back_door, house_gate, facility_gate, service_gate and storm_drain, placed directly after its `name:` line. Keep their existing `fixed: true`, aliases and scoped_aliases unchanged. Change NOTHING else in the file: no reformatting, no reordering, no other entries. Prefer a text edit over loading and re-dumping YAML (re-dumping would reformat the file).\n\nEDIT 2, tests/test_world_placements.py: the helper `placement_package` copies the real story and then REPLACES `world[\"kinds\"]` wholesale with a desk and a seat entry, which now drops the story's `opening` kind and makes the package fail to load (\"item 'back_door' has unknown kind 'opening'\"). Change the helper so it keeps every story kind that it does not override: keep its desk and seat definitions exactly as written, and keep any other kind from the story's own list (for example by building a dict keyed by id from the story list and updating it with the helper's two entries). Do not change any assertion. Run ruff check --fix and ruff format on that test file at the end.\n\nHOW TO VERIFY BEFORE YOU FINISH: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_kind.sh /home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-opening-v2/world.before.yaml`. It compares world.yaml against the backup (only the kind block and the five kind lines may differ), loads the package, and runs 19 focused test files with six failures that predate this work deselected. Finish with a short summary and the `git diff` of both files.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_kind.sh /home/bcorfman/dev/freytag-forge/bench/results/environment-narration/t9h-opening-v2/world.before.yaml"
+    }
+  ]
+}

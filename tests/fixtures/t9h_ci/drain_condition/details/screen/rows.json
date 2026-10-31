@@ -1,0 +1,99 @@
+{
+  "rows": [
+    {
+      "arm": "control",
+      "sample": 1,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"condition\": [\"partially hidden\", \"unused\"], \"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she sees that it's partially hidden by the overgrown vegetation. She pushes aside the debris and peers into the drain, trying to see if there's anything unusual inside.\"}, {\"kind\": \"narration\", \"text\": \"The storm drain is dark and musty, but Kristin notices that it looks like it hasn't been used in a while. She wonders if it might be a possible hiding spot or a way to escape the patrols.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "control",
+      "sample": 2,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously, aware of the checkpoints and emergency patrols nearby.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it's partially hidden by the damaged grounds and overgrown vegetation.\"}, {\"kind\": \"narration\", \"text\": \"She peers into the storm drain, trying to see if there's anything unusual or if it might be a possible lead to find Michelle.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "control",
+      "sample": 3,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the storm drain, her eyes scanning the surrounding area for any signs of danger. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she sees that it's partially hidden by the damaged grounds. She kneels down to get a closer look, her hand on the ground to balance herself.\"}, {\"kind\": \"narration\", \"text\": \"The storm drain appears to be old and rusty, with debris and leaves accumulated around it. Kristin wonders if Michelle might have passed through here, and if there are any clues inside.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "control",
+      "sample": 4,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she sees that it's partially hidden by the overgrown vegetation. She pushes aside the debris and peers into the drain, trying to see if there's anything unusual inside.\"}, {\"kind\": \"narration\", \"text\": \"The storm drain is dark and musty, but Kristin notices that it looks like it hasn't been used in a while. She wonders if it might be a possible hiding spot or a way to escape the park without being seen.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "control",
+      "sample": 5,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"condition\": [\"slightly ajar\"], \"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously due to the nearby checkpoints and emergency patrols.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it appears slightly ajar, as if someone or something had recently passed through it.\"}, {\"kind\": \"narration\", \"text\": \"She says to herself, \\\"This could be a lead, but I need to be careful; the patrols are getting closer.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "control",
+      "sample": 6,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"condition\": [\"slightly ajar\"], \"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously due to the nearby checkpoints and emergency patrols.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it appears slightly ajar, which catches her attention.\"}, {\"kind\": \"narration\", \"text\": \"She says to herself, \\\"This doesn't look right, I need to check it out.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "control",
+      "sample": 7,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she sees that it's partially hidden by the overgrown vegetation. She kneels down to get a closer look, her hand on the Transit token in her pocket.\"}, {\"kind\": \"narration\", \"text\": \"The storm drain appears to be old and rusty, with leaves and debris accumulated around it. Kristin wonders if it might be a possible lead in finding Michelle, or if it's just a ordinary park feature.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "control",
+      "sample": 8,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"held_item\": \"Transit token\", \"place\": \"Los Angeles park\"}, \"storm drain\": {\"condition\": [\"slightly ajar\"], \"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously due to the presence of checkpoints and emergency patrols.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it appears slightly ajar, as if someone or something had recently passed through it.\"}, {\"kind\": \"narration\", \"text\": \"She says to herself, \\\"This could be a lead, but I need to be careful; the patrols are nearby, and I don't want to draw attention to myself.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "control",
+      "sample": 9,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"condition\": [\"partially hidden\", \"slightly ajar\"], \"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain, her eyes scanning the surrounding area for any signs of patrols or checkpoints. She notices the damaged grounds and the service path nearby, but her focus is on the storm drain.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she sees that it's partially hidden by the overgrown vegetation and debris from the damaged park. She kneels down to get a closer look, her hand instinctively going to the Transit token in her hand.\"}, {\"kind\": \"narration\", \"text\": \"She peers into the storm drain, trying to see if there's anything unusual or if it might be a possible lead to finding Michelle. The darkness inside makes it difficult to see, but she notices that the drain seems to be slightly ajar, as if someone or something had recently passed through it.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "control",
+      "sample": 10,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain, her eyes scanning the surrounding area cautiously, aware of the checkpoints and emergency patrols nearby.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it's partially hidden by the damaged grounds and overgrown vegetation, making it a potential spot to remain unseen for a moment.\"}, {\"kind\": \"narration\", \"text\": \"She peers into the storm drain, trying to see if there's anything unusual or if it might be a lead to finding Michelle, saying to herself, \\\"This could be a place to hide, but is it connected to Shelly's disappearance?\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "candidate",
+      "sample": 1,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain in the damaged grounds of the Los Angeles park, being cautious of the checkpoints and emergency patrols nearby.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it's partially hidden by the debris from the damaged grounds, and she has to push some of the rubble aside to get a better look.\"}, {\"kind\": \"narration\", \"text\": \"She peers into the storm drain opening, trying to see if there's anything inside, and says to herself, \\\"This could be a possible lead to find Shelly.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "candidate",
+      "sample": 2,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain in the damaged grounds of the Los Angeles park, her eyes scanning the area cautiously due to the nearby checkpoints and emergency patrols.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it's partially hidden by the debris from the damaged grounds, and she has to push some of the rubble aside to get a clearer view.\"}, {\"kind\": \"narration\", \"text\": \"She peers into the storm drain opening, trying to see if there's anything inside that could be a clue to Michelle's disappearance, and wonders if this could be a lead worth exploring.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "candidate",
+      "sample": 3,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the storm drain in the damaged grounds of the Los Angeles park, being cautious of the checkpoints and emergency patrols.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it's partially hidden by the debris from the damaged grounds, and she wonders if Michelle might have passed through here.\"}, {\"kind\": \"narration\", \"text\": \"She carefully makes her way around the debris and peers into the storm drain opening, trying to see if there are any signs of Michelle or anything unusual.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "candidate",
+      "sample": 4,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain in the damaged grounds of the Los Angeles park, being cautious of the checkpoints and emergency patrols nearby.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it's partially hidden by the debris from the damaged grounds, and she has to push aside some of the rubble to get a closer look.\"}, {\"kind\": \"narration\", \"text\": \"She peers into the storm drain opening, trying to see if there's anything inside that could be a lead on Michelle's whereabouts, and says to herself, \\\"This could be a way to move undetected, but it's also potentially dangerous.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "candidate",
+      "sample": 5,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks towards the storm drain in the damaged grounds of the Los Angeles park, being cautious of the checkpoints and emergency patrols nearby.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it's partially hidden by the debris from the damaged grounds, and she has to navigate through the rubble to get a closer look.\"}, {\"kind\": \"narration\", \"text\": \"She peers into the storm drain opening, trying to see if there's anything unusual or if it might be a lead to find her friend Michelle.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "candidate",
+      "sample": 6,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain in the damaged grounds of the Los Angeles park, being cautious of the checkpoints and emergency patrols nearby.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it's partially hidden by the debris from the damaged grounds, and she has to push some of the rubble aside to get a better look.\"}, {\"kind\": \"narration\", \"text\": \"She peers into the storm drain opening, trying to see if there's anything inside, and wonders if this could be a lead to finding her friend Michelle.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "candidate",
+      "sample": 7,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain in the damaged grounds of the Los Angeles park, looking around cautiously due to the nearby checkpoints and emergency patrols.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it's partially hidden by the debris from the damaged grounds, and she has to push some of the rubble aside to get a clearer view.\"}, {\"kind\": \"narration\", \"text\": \"She peers into the storm drain opening, trying to see if there's anything inside that could be a lead on Michelle's whereabouts, and says to herself, \\\"This could be a way to move undetected, but it's also potentially dangerous.\\\"\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "candidate",
+      "sample": 8,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain in the damaged grounds of the Los Angeles park, her eyes scanning the area cautiously due to the nearby checkpoints and emergency patrols.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices it's partially hidden by the damaged grounds and could potentially provide a hiding spot or a lead on Michelle's whereabouts.\"}, {\"kind\": \"narration\", \"text\": \"She peers into the storm drain opening, trying to see if there's anything inside that could be a clue, such as Michelle's photograph or any other indication of what might have happened to her friend.\"}], \"selected_knowledge_ids\": []}"
+    },
+    {
+      "arm": "candidate",
+      "sample": 9,
+      "response_text": "{\"item_facts\": {\"Kristin\": {\"place\": \"Los Angeles park\"}, \"Transit token\": {\"condition\": [\"intact\"], \"held_by\": \"Kristin\"}, \"storm drain\": {\"place\": \"Los Angeles park\"}}, \"segments\": [{\"kind\": \"narration\", \"text\": \"Kristin walks over to the storm drain in the damaged grounds of the Los Angeles park, her eyes scanning the area cautiously.\"}, {\"kind\": \"narration\", \"text\": \"As she approaches the storm drain, she notices that the opening is partially hidden by debris and overgrown vegetation.\"}, {\"kind\": \"narration\", \"text\": \"She kneels down to inspect the storm drain more closely, her hand on the Transit token in her pocket.\"}], \"selected_knowledge_ids\": []}"
+    }
+  ]
+}

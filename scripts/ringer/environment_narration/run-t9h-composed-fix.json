@@ -1,0 +1,38 @@
+{
+  "run_name": "t9h-composed-fix",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-composed-fix",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "composed-fix",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_prose_probe.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_arm_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_prose_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_arm_probe.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_prose_probe.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_arm_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_prose_probe.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_arm_probe.py"
+      ],
+      "verified": "real re-sample replies compose, stub text gone, earlier checks still pass",
+      "spec": "You are the FIX worker for two probe-tool defects in freytag-forge. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov /home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_prose_probe.py /home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_arm_probe.py`. No network, no model call, no credentials. Do not git commit. NO regular expressions in new code and never parse narration text to decide anything. Match the surrounding style. The tree holds unrelated uncommitted edits: touch ONLY the four files you own and never run git checkout, stash, reset or clean. NEVER modify anything under bench/results/, data/, storygame/, docs/ or .plans/. At the end run ruff check --fix and ruff format on your files. FILES YOU OWN: /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_prose_probe.py, /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/hidden_bench_arm_probe.py, /home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_prose_probe.py, /home/bcorfman/dev/freytag-forge/tests/test_hidden_bench_arm_probe.py.\n\nDEFECT 1. `hidden_bench_prose_probe.py --composed-view` validates each recorded reply with `TurnProposal.model_validate(json.loads(response_text))` (the helper near line 369). Replies recorded through the world-aware provider carry an extra top-level key `item_facts` (the provider's `ItemFactsProvider.allowed_reply_keys` is `CloudflareTurnProvider.allowed_reply_keys | {\"item_facts\"}`), which TurnProposal rejects, so EVERY real reply is marked `not composable` and the delivery is never appended. Fix: before validating, drop only the top-level keys that the world-aware provider declares as allowed extras (derive them from the provider classes' `allowed_reply_keys`, a typed set difference; do not hard-code the key name, and do not touch nested content). A reply with any other unknown key, or invalid JSON, must still be `not composable`. Add tests: a reply with `item_facts` composes and gets the P1 find delivery appended; a reply with an unknown extra key is still not composable.\nDEFECT 2. `hidden_bench_arm_probe.py --sheets` shows, under `Engine (appended by the game):`, the capture-time stub segment `A short canned narration segment.` followed by the real delivery. Only the engine-appended segments (those after the model's own narration segments, such as the authored delivery or staged cue) belong there. Fix it in the arm probe, using the typed composed segment list and the position of the stubbed model segment (the provider-composed list is [model segment(s), appended segment(s)]; drop the stub model segment(s) by position or kind recorded at capture, not by comparing text). Add a test that the sheet's engine part for a find row contains the delivery and not the stub text.\n\nHOW TO VERIFY: run `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_composed_fix.sh`. Do not edit it. Final output: a short summary.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_composed_fix.sh"
+    }
+  ]
+}

@@ -29,25 +29,23 @@ deliveries:
   source_kind: observation
   source_entity_id: kristin
   must_convey:
-  - [transit token, handwritten sequence, Michelle's dead drop, number sequence, Michelle's drop]
-  - [freight terminal, transport route, evacuation tunnels, freight yard, old freight yard, yard route]
+  - [transport route, freight route]
+  - [freight terminal, freight yard, old freight yard]
   fallback_text: >-
-    The transit token and handwritten sequence from Michelle's dead drop identify the transport route. They point Kristin
-    toward the supposedly abandoned freight terminal and its evacuation tunnels.
-  cue_text: A transit token and a handwritten number sequence lie beside Michelle's photograph.
+    The transport route leads toward the supposedly abandoned freight terminal and its evacuation tunnels.
+  cue_text: Michelle's trail points past this park, if Kristin can work out where.
 - fact_id: brandon_identified
   scene_id: 1B
   source_kind: npc
   source_entity_id: brandon
   must_convey:
-  - [Brandon Corfman, Brandon, Michelle's photograph, Michelle's photo, photo of Michelle, picture of Michelle]
-  - [identified himself, person in Michelle's photograph, source in the photograph, Brandon introduced himself, the man in Michelle's photo, identified the man in the photo, admitted he was the one in Michelle's photo]
+  - [Brandon Corfman, Brandon]
+  - [identified himself, introduced himself, says his name is, said his name was]
   costs:
   - {op: retract, fact_id: trust_brandon, value: true}
   fallback_text: >-
-    The man identified himself as Brandon Corfman, the person in Michelle's photograph. Kristin finally knew the source
-    in the photograph had found her in the park.
-  cue_text: The man watching Kristin waits near the service path. Michelle's photograph may be worth showing him.
+    The man identified himself as Brandon Corfman, Michelle's contact.
+  cue_text: The man watching Kristin waits near the service path.
 - fact_id: missing_may_be_alive
   scene_id: 1B
   source_kind: message

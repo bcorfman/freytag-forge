@@ -1,0 +1,7 @@
+{
+  "corpus_cases": 224,
+  "corpus_combined_hash": "1f18f4b41778876b7c5066a1a3d75e9db910d075e8c1ee337ab5b79b0641dc52",
+  "corpus_relations": 274,
+  "heldout_cases": 40,
+  "heldout_sha256": "667593d2670d65127e0436759374d5d8aa47b459e6d7c54dbe842883845f4ee9"
+}

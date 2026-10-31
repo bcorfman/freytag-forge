@@ -313,9 +313,12 @@ def test_enforce_rows_record_call_timings_for_live_calls(monkeypatch: pytest.Mon
     assert any(entry["kind"] == "jev" for turn in turns for entry in turn["call_timings"])
     assert any(entry["kind"] == "narration" for turn in turns for entry in turn["call_timings"])
     for turn in turns:
-        assert sum(entry["kind"] == "narration" for entry in turn["call_timings"]) == turn["narration_attempts"]
+        assert sum(entry["kind"] == "narration" for entry in turn["call_timings"]) == turn["narration_http_prompts"]
+        if turn["narration_attempts"] is not None:
+            assert turn["narration_attempts"] == len(turn["enforce_attempts"])
         for entry in turn["call_timings"]:
-            assert set(entry) == {"kind", "elapsed_s", "status", "keys"}
+            assert set(entry) == {"owner", "kind", "elapsed_s", "status", "keys", "jev_dispatches"}
+            assert set(entry["owner"]) == {"replicate_index", "turn_index", "dispatch_number"}
             assert entry["kind"] in {"jev", "narration", "worker"}
             assert isinstance(entry["elapsed_s"], float)
             assert entry["elapsed_s"] >= 0
@@ -339,7 +342,16 @@ def test_live_call_timing_uses_monotonic_until_body_read(monkeypatch: pytest.Mon
     assert counter.timings == []
     response.read()
 
-    assert counter.timings == [{"kind": "jev", "elapsed_s": 0.25, "status": 200, "keys": ["first", "second"]}]
+    assert counter.timings == [
+        {
+            "owner": {"replicate_index": 0, "turn_index": 0, "dispatch_number": 1},
+            "kind": "jev",
+            "elapsed_s": 0.25,
+            "status": 200,
+            "keys": ["first", "second"],
+            "jev_dispatches": [{"state_keys": [], "question_names": ["first", "second"]}],
+        }
+    ]
 
 
 def test_live_call_timing_records_a_raised_call(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -357,7 +369,16 @@ def test_live_call_timing_records_a_raised_call(monkeypatch: pytest.MonkeyPatch)
     with pytest.raises(module.urllib.error.URLError):
         counter.live_urlopen(request)
 
-    assert counter.timings == [{"kind": "worker", "elapsed_s": 0.5, "status": None, "keys": []}]
+    assert counter.timings == [
+        {
+            "owner": {"replicate_index": 0, "turn_index": 0, "dispatch_number": 1},
+            "kind": "worker",
+            "elapsed_s": 0.5,
+            "status": None,
+            "keys": [],
+            "jev_dispatches": [],
+        }
+    ]
 
 
 def test_enforce_call_timings_are_cleared_between_turns(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

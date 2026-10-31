@@ -1,0 +1,36 @@
+{
+  "run_name": "t9h-opening-condition-v2",
+  "workdir": "/home/bcorfman/dev/ringer-work/t9h-opening-condition-v2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "opening-v2-timeout-retry",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "full_access": true,
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/opening_condition_v2.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_opening_v2.sh",
+        "/home/bcorfman/dev/freytag-forge/tests/test_opening_condition_v2.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/opening_condition_v2.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_opening_v2.sh",
+        "/home/bcorfman/dev/freytag-forge/tests/test_opening_condition_v2.py"
+      ],
+      "verified": "timeouts recorded and retried once within 44 calls; other errors stop; enforce writes generate-2 with a $0.057 guard; tests green",
+      "spec": "You are changing the billed-run loop of one bench harness in the freytag-forge repo. Working directory: /home/bcorfman/dev/freytag-forge (Python 3.12). Run Python as `/home/bcorfman/dev/freytag-forge/.venv/bin/python` only (never uv). Run tests with: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; env -u CLOUDFLARE_WORKER_URL -u CLOUDFLARE_WORKER_TOKEN /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov <files>`. FREE WORK ONLY: no network, no model call, never start local_worker.mjs, never run enforce_t9h_opening_v2.sh, never read or print .env. Tests stay hermetic. Do not git commit. No regular expressions in new code. Touch ONLY the files you own; never run git checkout, stash, reset or clean; never write under bench/results/. Do not edit the check script. Run ruff check --fix and ruff format on the .py files you own at the end.\n\nFILES YOU OWN: /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/opening_condition_v2.py, /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/enforce_t9h_opening_v2.sh, /home/bcorfman/dev/freytag-forge/tests/test_opening_condition_v2.py.\n\nWHY: the first billed `--run` stopped at row 4 of 40 with stop_reason \"request_error\": the narration request stalled upstream until the 20 s request timeout (storygame/runtime/hedged_request.py and CloudflareTurnProvider._request in storygame/runtime/cloudflare.py raise on a hedged timeout). The harness threw the exception away, so the cause had to be inferred from file timestamps.\n\nCHANGE `run_rows` (the `--run` mode) in opening_condition_v2.py:\n1. Every failed call is recorded in a top-level list `failed_calls`: {call_index, thing_id, sample, error_type (the exception class name), error (str(error) truncated to 300 characters, with any value of the CLOUDFLARE_WORKER_TOKEN environment variable replaced by \"<redacted>\"), status (the HTTP status if any, else null)}.\n2. A call is a TIMEOUT when the exception or its cause/context chain contains a TimeoutError or socket.timeout instance, or the hedged-request timeout error type defined in storygame/runtime/hedged_request.py (read that module to find what it raises); decide by exception type, never by parsing message text. A timed-out sample is NOT a stop: record it and keep going with the next planned call. After all planned calls, retry each timed-out sample ONCE, in order. A sample that fails again stays missing.\n3. Stop the run (stop_reason as now, via `_stop_reason`) on any non-timeout error, and stop with stop_reason \"three_consecutive_failures\" after 3 consecutive failed calls of any kind.\n4. Count every HTTP attempt (first tries and retries) against --max-calls; the planned 40 plus retries must fit; refuse up front only when the planned first-try count exceeds --max-calls (so --max-calls 44 allows 4 retries; never send more than --max-calls requests). If the cap is hit before all retries, stop_reason \"max_calls\".\n5. stop_reason is None only when every planned (thing, sample) has a row. Rows keep their current fields; a retried sample's row records `attempt: 2` (first-try rows `attempt: 1`). Rows stay sorted by call order as sent. The token estimate and USD ceiling include the extra calls allowed by --max-calls (use max-calls, not the planned count, for the ceiling) so the ceiling check is conservative.\nUPDATE enforce_t9h_opening_v2.sh `generate`: write to `$OUT/generate-2/` (rows `$OUT/generate-2/rows.json`, worker log `$OUT/generate-2/worker.log`), start the local Worker with `--max-usd 0.057`, and run `--run --confirm --samples 10 --max-calls 44 --max-usd 0.057`. Keep the port guard and refuse-if-rows-exist for generate-2. Do not touch the judge branch except to keep its literal flags.\nTESTS: stub `CloudflareTurnProvider._request` (or the provider) so that: a timeout on one sample is recorded and retried at the end and the run completes with stop_reason None and 40 rows; a second timeout on the retry leaves the sample missing and stop_reason not None; a non-timeout error (for example a NarrationProviderError with status 503) stops the run at once with a recorded failed call; three consecutive timeouts stop with \"three_consecutive_failures\"; the total requests never exceed --max-calls; the token value never appears in failed_calls. Keep all existing tests passing.\n\nHOW TO VERIFY BEFORE YOU FINISH: `bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_v2.sh`. Finish with a short summary of the retry rule as implemented and the exception types treated as timeouts.",
+      "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/environment_narration/check_t9h_opening_v2.sh"
+    }
+  ]
+}
