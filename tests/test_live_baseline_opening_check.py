@@ -102,6 +102,34 @@ def test_opening_check_requires_enforcement(capsys: pytest.CaptureFixture[str], 
     assert "--opening-check requires --enforce" in capsys.readouterr().err
 
 
+@pytest.mark.parametrize(
+    ("flag", "message"),
+    [
+        ("--opening-retry-fact", "--opening-retry-fact requires --opening-check"),
+        ("--opening-things-fact", "--opening-things-fact requires --opening-check"),
+    ],
+)
+def test_opening_fact_flags_require_opening_check(
+    flag: str, message: str, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    module = _module()
+
+    with pytest.raises(SystemExit) as raised:
+        module.main(
+            [
+                "--dry-run",
+                "--route",
+                "observe_back_door_1a",
+                flag,
+                "--out",
+                str(tmp_path / "invalid"),
+            ]
+        )
+
+    assert raised.value.code == 2
+    assert message in capsys.readouterr().err
+
+
 def test_opening_check_configures_verifier_and_records_opening_data(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -165,6 +193,45 @@ def test_opening_check_off_keeps_attempt_shape(monkeypatch: pytest.MonkeyPatch, 
         for turn in rows[0]["turns"]
         for attempt in turn["enforce_attempts"]
     )
+
+
+@pytest.mark.parametrize(
+    ("flag", "attribute"),
+    [
+        ("--opening-retry-fact", "opening_retry_fact"),
+        ("--opening-things-fact", "opening_things_fact"),
+    ],
+)
+def test_opening_fact_flags_set_provider_and_record_settings(
+    flag: str, attribute: str, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    module = _module()
+    from storygame.runtime import capture as capture_module
+
+    providers = []
+    original_build = capture_module.build_capture_provider
+
+    def recording_build(state):
+        provider = original_build(state)
+        providers.append(provider)
+        return provider
+
+    monkeypatch.setattr(capture_module, "build_capture_provider", recording_build)
+    rows, summary = _run(
+        module,
+        tmp_path / attribute,
+        "--enforce",
+        "--opening-check",
+        flag,
+        monkeypatch=monkeypatch,
+    )
+
+    assert providers
+    assert getattr(providers[0], attribute) is True
+    assert summary["opening_check"] is True
+    assert summary[attribute] is True
+    assert rows[0]["opening_check"] is True
+    assert rows[0][attribute] is True
 
 
 @pytest.mark.parametrize(

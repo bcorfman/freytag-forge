@@ -266,6 +266,7 @@ _SECOND_CALL_SYSTEM = 'You keep track of things in a story. Read THINGS, PLAYER 
 
 class ItemFactsProvider(CloudflareTurnProvider):
     allowed_reply_keys = CloudflareTurnProvider.allowed_reply_keys | {"item_facts"}
+    opening_things_fact: bool = False
 
     def __init__(
         self,
@@ -278,6 +279,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         drop_rules=(),
         held_by=True,
         mark_fixed=False,
+        opening_things_fact: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -290,6 +292,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.held_by = held_by
         self.mark_fixed = mark_fixed
         self.mark_fixed_variant = fixed_marker_variant(mark_fixed)
+        self.opening_things_fact = opening_things_fact
         self._pending_item_facts = None
         self._pending_item_facts_present = False
         self._held_item_facts = {}
@@ -346,6 +349,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         drop_rules=(),
         held_by=True,
         mark_fixed=False,
+        opening_things_fact: bool = False,
     ):
         base = CloudflareTurnProvider.from_environment(state, prompt_variant=prompt_variant)
         return cls(
@@ -362,6 +366,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             drop_rules=drop_rules,
             held_by=held_by,
             mark_fixed=mark_fixed,
+            opening_things_fact=opening_things_fact,
         )
 
     def _world(self, *, axes=None):
@@ -485,6 +490,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 parent_id = world.parent(entity_id) if entity_id else None
                 label = "Held by" if self.held_by and parent_id and world.is_a(parent_id, "character") else "Place"
                 line += f" {label}: {place.strip()}."
+            if (
+                self.opening_things_fact
+                and narration
+                and name in self._referred_names
+                and entity_id
+                and world.schema.kind_is(world.schema.entities[entity_id].kind, "opening")
+            ):
+                line += " It has no open or closed state and nothing inside."
             if facts["condition"]:
                 axis_values = world.axis_values(entity_id) if entity_id else {}
                 line += self._state_text(world, entity_id, narration=narration and name in self._referred_names)

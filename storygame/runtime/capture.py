@@ -417,6 +417,13 @@ class WorldCapture:
             return ()
         return self.provider.opening_subjects()
 
+    def failed_opening_things(self) -> tuple[str, ...]:
+        return tuple(
+            str(verdict["thing"])
+            for verdict in self._pending_preview_opening_verdicts
+            if verdict.get("verdict") != "accept" and verdict.get("thing")
+        )
+
     def preview_commit(
         self,
         command: str,

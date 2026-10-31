@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # Integrity check for the billed T9h opening-check smoke: summaries written, opening verdicts recorded, no credential leak.
 set -uo pipefail
+STAGE="${1:-smoke}"
 ROOT=/home/bcorfman/dev/freytag-forge
 cd "$ROOT" || exit 2
-(set -a; . ./.env; set +a; "$ROOT/.venv/bin/python" - <<'PY'
+(set -a; . ./.env; set +a; "$ROOT/.venv/bin/python" - "$STAGE" <<'PY'
 import json
 import os
 import sys
 from pathlib import Path
 
-out = Path("bench/results/environment-narration/t9h-opening-check/smoke")
+out = Path("bench/results/environment-narration/t9h-opening-check") / sys.argv[1]
 errors, text = [], ""
 for route in ("observe_storm_drain_1b", "observe_service_gate_1b", "observe_back_door_1a"):
     summary = out / route / "rows/summary.json"

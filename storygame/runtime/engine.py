@@ -82,7 +82,13 @@ class TurnProviderHandoff(Protocol):
 
 @runtime_checkable
 class TurnProviderRejection(Protocol):
-    def note_rejection(self, code: str | None, term: str | None = None) -> None: ...
+    def note_rejection(
+        self,
+        code: str | None,
+        term: str | None = None,
+        *,
+        opening_things: tuple[str, ...] = (),
+    ) -> None: ...
 
 
 @runtime_checkable
@@ -559,6 +565,7 @@ class RuntimeEngine(CanonicalEventMixin):
                     )
                     rejection = self._provider_rejection()
                     if rejection is not None:
+                        opening_things = self.capture.failed_opening_things() if self.capture else ()
                         typed_term = (
                             error.term
                             if error.term
@@ -570,7 +577,13 @@ class RuntimeEngine(CanonicalEventMixin):
                             )
                             else None
                         )
-                        if typed_term is None:
+                        if (
+                            error.code == "observation_unverified"
+                            and opening_things
+                            and getattr(rejection, "opening_retry_fact", False)
+                        ):
+                            rejection.note_rejection(error.code, opening_things=opening_things)
+                        elif typed_term is None:
                             rejection.note_rejection(error.code)
                         else:
                             rejection.note_rejection(error.code, typed_term)

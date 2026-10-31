@@ -169,3 +169,15 @@ Approved by the user ("Go ahead"). Built through Ringer (`t9h-opening-check-wiri
 - Full suite in the CI simulation: 3831 passed.
 
 **Live smoke** (`enforce_t9h_opening_check.sh smoke`, enforcing verifier, scene state and opening check on, 3 replicates per route, $0.0233; `bench/results/environment-narration/t9h-opening-check/smoke`): storm drain 1 of 3 turns committed, service gate 0 of 3, back door 3 of 3. The check judged every attempt as a reader would: all "slightly ajar" or "pushes it open" attempts rejected (scores 0.04 to 0.09), clean attempts accepted (0.74 to 0.91), one back-door attempt uncertain (0.57) then accepted on retry. The failure is upstream: the narrator invents "ajar" on nearly every gate and drain inspection and the generic retry repeats it, so enforcing the check alone turns those inspections into failed turns. Not shippable on until the narrator stops inventing the state. Options are in the plan's next-step line.
+
+## 14. Side by side: retry fact vs THINGS material (2026-10-30; $0.0727 billed for both arms)
+
+The user chose to compare both fixes. Each sits behind its own flag, off by default: `FREYTAG_OPENING_RETRY_FACT` (after a rejected opening verdict the retry feedback states "The <thing> has no open or closed state and nothing inside it." and names no word from the rejected reply) and `FREYTAG_OPENING_THINGS_FACT` (a command-referred opening's THINGS line gets " It has no open or closed state and nothing inside."). Live enforced smoke, opening check on, 5 replicates per route (baseline 3), `bench/results/environment-narration/t9h-opening-check/{smoke,retry,things}`:
+
+| Arm | Drain committed (first try) | Service gate | Back door | Median turn | Over 10 s |
+| --- | --- | --- | --- | --- | --- |
+| baseline (check only) | 1/3 (1/3) | 0/3 (0/3) | 3/3 (2/3) | 7.8 s | 3/9 |
+| retry fact | 5/5 (0/5) | 5/5 (0/5) | 5/5 (4/5) | 9.4 s | 6/15 |
+| THINGS material | 5/5 (2/5) | 5/5 (4/5) | 5/5 (1/5) | 7.5 s | 2/15 |
+
+Reading: both arms commit every turn. The retry fact never changes the first attempt (the narrator still invents "ajar" first on every gate and drain turn), so every such turn pays a second narration. THINGS material stops most inventions on the first attempt and is the faster arm. Its four back-door retries were all `uncertain` (0.53 to 0.61) on the "forced open" reveal wording, the known gray zone where the judge does not see the story's reveal; the retry then accepted. Accepted narrations read clean by eye in both arms. Small samples (5 per route); this is a smoke, not a gate. Recommendation: combine the two (material first, retry fact as the fallback), and look at the back-door uncertainty (for example give the judge the authored reveal as part of the declared sentence), then run one combined smoke.

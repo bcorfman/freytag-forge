@@ -91,6 +91,30 @@ PY
     run_tests tests/test_live_baseline_enforce.py tests/test_live_baseline_scene_state.py tests/test_live_baseline_opening_check.py tests/test_live_baseline_scene_start.py
     "$PY" -m ruff check scripts/ringer/transcript_1a/live_baseline.py tests/test_live_baseline_opening_check.py && "$PY" -m ruff format --check scripts/ringer/transcript_1a/live_baseline.py tests/test_live_baseline_opening_check.py || exit 1
     ;;
-  *) echo "usage: check_t9h_opening_wiring.sh kind|wiring|smoke-harness" >&2; exit 2 ;;
+  retry-fact)
+    [ -f tests/test_opening_retry_fact.py ] || { echo "FAIL: tests/test_opening_retry_fact.py missing" >&2; exit 1; }
+    for f in FREYTAG_OPENING_RETRY_FACT FREYTAG_OPENING_THINGS_FACT; do grep -q "$f" storygame/web_demo.py || { echo "FAIL: web_demo lacks $f" >&2; exit 1; }; done
+    run_tests tests/test_opening_retry_fact.py tests/test_opening_check.py tests/test_observation_enforcement.py tests/test_observation_resume.py tests/test_web_demo_observation_enforce.py tests/test_runtime_capture.py tests/test_narration_json.py tests/test_observation_preview.py
+    "$PY" -m ruff check storygame tests/test_opening_retry_fact.py && "$PY" -m ruff format --check storygame tests/test_opening_retry_fact.py || exit 1
+    ;;
+  things-fact)
+    [ -f tests/test_opening_things_fact.py ] || { echo "FAIL: tests/test_opening_things_fact.py missing" >&2; exit 1; }
+    run_tests tests/test_opening_things_fact.py tests/test_place_scoped_feed.py tests/test_package_view_scope.py tests/test_narration_json.py tests/test_environment_baseline.py tests/test_drain_scene_state_payload.py tests/test_scene_1b_grounding.py tests/test_opening_condition_v2.py
+    "$PY" -m ruff check storygame tests/test_opening_things_fact.py && "$PY" -m ruff format --check storygame tests/test_opening_things_fact.py || exit 1
+    ;;
+  arms-harness)
+    S=scripts/ringer/environment_narration/enforce_t9h_opening_check.sh
+    bash -n "$S" || exit 1
+    for needle in "retry)" "things)" "--opening-retry-fact" "--opening-things-fact" "--replicates 5" "--max-usd 0.06"; do
+      grep -qF -- "$needle" "$S" || { echo "FAIL: $S lacks '$needle'" >&2; exit 1; }
+    done
+    for flag in --opening-retry-fact --opening-things-fact; do
+      rm -rf /tmp/ow-arm$flag
+      "$PY" scripts/ringer/transcript_1a/live_baseline.py --route observe_service_gate_1b --replicates 1 --enforce --scene-state --opening-check $flag --dry-run --out /tmp/ow-arm$flag > /tmp/ow-arm$flag.out 2>&1 || { tail -20 /tmp/ow-arm$flag.out; echo "FAIL: dry run with $flag" >&2; exit 1; }
+    done
+    run_tests tests/test_live_baseline_opening_check.py tests/test_live_baseline_enforce.py tests/test_live_baseline_scene_state.py
+    "$PY" -m ruff check scripts/ringer/transcript_1a/live_baseline.py && "$PY" -m ruff format --check scripts/ringer/transcript_1a/live_baseline.py || exit 1
+    ;;
+  *) echo "usage: check_t9h_opening_wiring.sh kind|wiring|smoke-harness|retry-fact|things-fact|arms-harness" >&2; exit 2 ;;
 esac
 echo PASS

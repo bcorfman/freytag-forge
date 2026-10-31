@@ -848,6 +848,8 @@ def _replicate(
     enforce: bool = False,
     scene_state: bool = False,
     opening_check: bool = False,
+    opening_retry_fact: bool = False,
+    opening_things_fact: bool = False,
     replicate_index: int = 0,
 ) -> dict[str, Any]:
     from storygame.runtime.capture import WorldCapture, build_capture_provider
@@ -856,6 +858,8 @@ def _replicate(
 
     state, start_checkpoint_index = _start_state(package, route)
     provider = build_capture_provider(state)
+    provider.opening_retry_fact = opening_retry_fact
+    provider.opening_things_fact = opening_things_fact
     capture_ask = JevClient.from_environment().ask
     provider.semantic_ask = capture_ask
     capture = WorldCapture(provider, capture_ask, fixed_refusal=True, engine_refusal=True)
@@ -866,6 +870,22 @@ def _replicate(
     verifier_requests = [0]
     enforce_attempts: list[dict[str, Any]] = []
     previews: list[dict[str, Any]] = []
+    retry_feedback_notes: list[str | None] = []
+    retry_feedback_available = False
+    if enforce and opening_check:
+        original_note_rejection = getattr(provider, "note_rejection", None)
+        if callable(original_note_rejection):
+            retry_feedback_available = True
+
+            def record_note_rejection(*args: Any, **kwargs: Any) -> None:
+                original_note_rejection(*args, **kwargs)
+                note = getattr(provider, "_rejection_note", None)
+                retry_feedback_notes.append(note if isinstance(note, str) else None)
+
+            provider.note_rejection = record_note_rejection
+    record["retry_feedback_note_recording"] = (
+        "captured from provider.note_rejection" if retry_feedback_available else "unavailable without engine changes"
+    )
     if enforce:
         from storygame.runtime.observation_verifier import ObservationVerifier
 
@@ -992,6 +1012,7 @@ def _replicate(
         enforce_attempts.clear()
         previews.clear()
         error = None
+        feedback_note_start = len(retry_feedback_notes)
         row: dict[str, Any] = {"_owner_turn": (replicate_index, len(record.get("turns", ())))}
         if enforce:
             row["late_completions_after_turn"] = []
@@ -1012,6 +1033,12 @@ def _replicate(
             error = f"{type(exc).__name__}: {exc}"
         finally:
             counter.end_turn()
+        if opening_check:
+            for attempt_index, attempt in enumerate(enforce_attempts):
+                note_index = feedback_note_start + attempt_index
+                attempt["retry_feedback_note"] = (
+                    retry_feedback_notes[note_index] if note_index < len(retry_feedback_notes) else None
+                )
         world_after = _world_structure(state) if enforce else None
         digest_after = _state_digest(state) if enforce else None
         row.update(
@@ -1112,6 +1139,8 @@ def _summary(
     enforce: bool = False,
     scene_state: bool = False,
     opening_check: bool = False,
+    opening_retry_fact: bool = False,
+    opening_things_fact: bool = False,
 ) -> dict[str, Any]:
     completed = sum(len(row.get("turns", ())) == len(inputs) for row in rows)
     errors = sum(1 for row in rows for turn in row.get("turns", ()) if turn.get("error"))
@@ -1139,6 +1168,12 @@ def _summary(
         "enforce": enforce,
         "scene_state": scene_state,
         "opening_check": opening_check,
+        "opening_retry_fact": opening_retry_fact,
+        "opening_things_fact": opening_things_fact,
+        "retry_feedback_note_recording": next(
+            (row["retry_feedback_note_recording"] for row in rows if "retry_feedback_note_recording" in row),
+            "unavailable without engine changes",
+        ),
     }
     if shadow:
         summary.update(
@@ -1172,11 +1207,17 @@ def main(argv: list[str] | None = None) -> int:
     verifier_group.add_argument("--enforce", action="store_true")
     parser.add_argument("--scene-state", action="store_true")
     parser.add_argument("--opening-check", action="store_true")
+    parser.add_argument("--opening-retry-fact", action="store_true")
+    parser.add_argument("--opening-things-fact", action="store_true")
     args = parser.parse_args(argv)
     if args.scene_state and not args.enforce:
         parser.error("--scene-state requires --enforce")
     if args.opening_check and not args.enforce:
         parser.error("--opening-check requires --enforce")
+    if args.opening_retry_fact and not args.opening_check:
+        parser.error("--opening-retry-fact requires --opening-check")
+    if args.opening_things_fact and not args.opening_check:
+        parser.error("--opening-things-fact requires --opening-check")
     if not args.dry_run and (not args.confirm or not os.environ.get("CLOUDFLARE_WORKER_URL")):
         print("live mode requires --confirm and CLOUDFLARE_WORKER_URL", file=sys.stderr)
         return 2
@@ -1216,6 +1257,8 @@ def main(argv: list[str] | None = None) -> int:
                 "route": args.route,
                 "scene_state": args.scene_state,
                 "opening_check": args.opening_check,
+                "opening_retry_fact": args.opening_retry_fact,
+                "opening_things_fact": args.opening_things_fact,
                 "opening": None,
                 "turns": [],
             }
@@ -1234,6 +1277,8 @@ def main(argv: list[str] | None = None) -> int:
                 args.enforce,
                 args.scene_state,
                 args.opening_check,
+                args.opening_retry_fact,
+                args.opening_things_fact,
                 replicate_index,
             )
             counter.snapshot_record(rows[-1])
@@ -1258,6 +1303,8 @@ def main(argv: list[str] | None = None) -> int:
             args.enforce,
             args.scene_state,
             args.opening_check,
+            args.opening_retry_fact,
+            args.opening_things_fact,
         )
         (args.out / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n")
     return 0

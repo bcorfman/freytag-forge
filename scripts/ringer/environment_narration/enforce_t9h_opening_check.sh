@@ -7,13 +7,24 @@ case "$STAGE" in
   smoke)
     ARGS="--replicates 3 --max-calls 40"
     ;;
-  *) echo "usage: enforce_t9h_opening_check.sh smoke" >&2; exit 2 ;;
+  retry)
+    ARGS="--opening-retry-fact --replicates 5 --max-calls 60"
+    ;;
+  things)
+    ARGS="--opening-things-fact --replicates 5 --max-calls 60"
+    ;;
+  *) echo "usage: enforce_t9h_opening_check.sh smoke|retry|things" >&2; exit 2 ;;
 esac
 
 ROOT=/home/bcorfman/dev/freytag-forge
 PORT=8813
 OUT="$ROOT/bench/results/environment-narration/t9h-opening-check/$STAGE"
 ROUTES="observe_storm_drain_1b observe_service_gate_1b observe_back_door_1a"
+if [ "$STAGE" = "retry" ]; then
+  PORT=8814
+elif [ "$STAGE" = "things" ]; then
+  PORT=8815
+fi
 cd "$ROOT" || exit 2
 mkdir -p "$OUT"
 export PYTHONPATH="$ROOT" TMPDIR=/tmp
