@@ -66,8 +66,8 @@ def test_dry_run_prefixes_pass_checker_and_do_not_spend_prefix_player_requests(t
     assert not any(turn["scripted"] for turn in row["turns"][row["scripted_turns"] :])
     summary = json.loads((tmp_path / "summary.json").read_text())
     assert summary["player_requests"] == len(row["commands"]) - row["scripted_turns"]
-    assert row["nudge_seen_turn"] is None
-    assert row["withdrawal_seen_turn"] is None
+    assert row["nudge_seen_turn"] == (6 if prefix == "missed_window" else None)
+    assert row["withdrawal_seen_turn"] == (8 if prefix == "missed_window" else None)
 
 
 def test_stall_prefix_passes_checker_and_has_clean_deadline_handoff(tmp_path: Path) -> None:

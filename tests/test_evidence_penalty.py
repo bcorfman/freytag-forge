@@ -11,6 +11,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import FactPredicate, PacingEvent, PacingRealization
 
@@ -21,25 +22,24 @@ GAPS = (
     "evidence_gap_development_record",
     "evidence_gap_marked_site_list",
 )
-FORCED_DELIVERIES = (
-    ("2B", "brandon_janus_role_known", "evidence_gap_development_record"),
-    ("3B", "detention_locations_secured", "evidence_gap_marked_site_list"),
-)
+FORCED_DELIVERIES = (("3B", "detention_locations_secured", "evidence_gap_marked_site_list"),)
 EARNED_DELIVERIES = (
-    ("2B", "brandon_janus_role_known", "janus_evidence", "k_sl_2b_b_r1"),
-    ("2C", "evidence_ready_to_transmit", "janus_evidence", "k_sl_2c_c_r1"),
+    ("2B", "brandon_janus_role_known", "janus_evidence", "k_sl_2b_b_r4"),
+    ("2C", "evidence_ready_to_transmit", "janus_evidence", "k_sl_2c_d_r3"),
     ("3B", "detention_locations_secured", "human_security_control", "k_sl_3b_b_r1"),
 )
 
 
 def _state(scene_id: str, *, turn_index: int = 0) -> RuntimeState:
     scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == scene_id)
-    return RuntimeState(
+    state = RuntimeState(
         package=PACKAGE,
         current_scene_id=scene_id,
         phase=scene.metadata.freytag_phase,
         turn_index=turn_index,
     )
+    apply_scene_placements(PACKAGE, state.facts, scene_id)
+    return state
 
 
 def _asserted(state: RuntimeState, fact_id: str) -> bool:
@@ -203,11 +203,21 @@ def test_earned_delivery_leaves_its_evidence_gap_unset(
     state.facts.assert_fact(Fact(predicate=prerequisite, subject="story", value="true"))
     if scene_id == "3B":
         state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
-    delivery_text = PACKAGE.knowledge_indexes.by_id[knowledge_id].delivery_text
+    if knowledge_id == "k_sl_2c_d_r3":
+        for effect in PACKAGE.knowledge_indexes.by_id["k_sl_2b_b_r4"].establishes:
+            state.facts.assert_fact(Fact(predicate=effect.fact_id, subject="story", value=str(effect.value).lower()))
+    item = PACKAGE.knowledge_indexes.by_id[knowledge_id]
+    delivery_text = item.delivery_text
     engine = RuntimeEngine(
         state,
         lambda _input: {
-            "segments": [{"kind": "narration", "text": delivery_text}],
+            "segments": [
+                {
+                    "kind": "narration",
+                    "text": delivery_text,
+                    "grounding_ids": [knowledge_id],
+                }
+            ],
             "selected_knowledge_ids": [knowledge_id],
         },
     )

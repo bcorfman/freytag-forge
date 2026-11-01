@@ -43,8 +43,6 @@ CHAINS: dict[str, tuple[str, ...]] = {
     "k_sl_1b_a_r1": ("k_sl_1b_d_r1", "k_sl_1b_a_r1"),
     "k_sl_1b_a_r2": ("k_sl_1b_d_r1", "k_sl_1b_a_r2"),
     "k_sl_1b_b_r1": ("k_sl_1b_d_r1", "k_sl_1b_b_r1"),
-    "k_sl_2a_c_r3": ("k_sl_1c_c_copy_numbers", "k_sl_2a_c_r3"),
-    "k_sl_2a_c_r4": ("k_sl_1c_c_secure_route", "k_sl_2a_c_r4"),
 }
 
 # Named issues N-1 and N-2 were fixed by widening the two bridge activations.

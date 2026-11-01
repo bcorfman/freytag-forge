@@ -178,6 +178,44 @@ facts:
 - id: facility_infiltration_needed
   purpose: Kristin and Brandon understand that direct rescue or observation is insufficient
     and that controlled deeper access to the facility is necessary.
+- id: cover_suspected
+  purpose: The doubtful inspection has put Kristin and Brandon under closer watch for the archive audit.
+- id: supervisor_convinced
+  purpose: The shift supervisor accepts Kristin's diagnosis of the real cooling fault.
+- id: inspection_console_used
+  purpose: Kristin has used the limited inspection console during the real fault diagnosis.
+- id: brandon_name_kept
+  purpose: Kristin kept Brandon's name in the JANUS build record.
+- id: brandon_name_erased
+  purpose: Kristin allowed Brandon's name to be erased from the JANUS build record.
+- id: michelle_reply_received
+  purpose: Michelle answered Kristin once through the medical terminal.
+- id: committed_to_transmit
+  purpose: Kristin physically committed to sending the JANUS evidence through the uplink.
+- id: committed_to_rescue
+  purpose: Kristin physically committed to freeing captives from the transfer carts.
+- id: detention_sectors_sealed
+  purpose: The detention sectors sealed when Kristin began transmitting the evidence.
+- id: evidence_not_transmitted
+  purpose: Kristin rescued captives before sending the copied evidence.
+- id: inspection_window_missed
+  purpose: The supervisor's inspection window closed before Kristin resolved the incident.
+- id: audit_window_missed
+  purpose: The archive audit reached the stacks before Kristin resolved the incident.
+- id: purge_window_missed
+  purpose: The purge alarm forced the group out before Kristin made a commitment.
+- id: supervisor_escorting
+  purpose: The shift supervisor is escorting Kristin and Brandon into the inspection under watch.
+- id: inspection_recovery_ready
+  purpose: The escorted inspection has lasted long enough for the missed-window recovery to carry them into the corridors.
+- id: audit_recovery_ready
+  purpose: The archive audit has lasted long enough for the missed-window recovery to close the archive crisis.
+- id: purge_recovery_ready
+  purpose: The purge alarm has lasted long enough for the neutral route recovery to move the group onward.
+- id: audit_reaches_stacks
+  purpose: The live audit has reached Kristin and Brandon in the archive stacks.
+- id: purge_alarm_active
+  purpose: The purge alarm is active while Michelle's neutral route remains open.
 - id: detention_uprising_started
   purpose: Michelle’s resistance has openly begun coordinated action and the protagonists
     are committed to moving toward the command/broadcast levels.
@@ -282,14 +320,14 @@ scene_frames:
     The service entrance is at the freight terminal.
   pressure: Observe the transfer and choose what to secure
 - scene_id: 2A
-  situation: Brandon's fortified hideout inside an abandoned communications center, stocked with servers and leaked Initiative documents. The facility's strained cooling-water and ventilation systems offer a narrow pretext for an unscheduled inspection.
-  pressure: Enter the facility under false identities
+  situation: The facility gate at night. A shift supervisor has come out to meet two unscheduled inspectors. The facility's strained cooling-water and ventilation systems are the only pretext for the visit, and the fault is real.
+  pressure: Prove the cooling fault is real to get inside
 - scene_id: 2B
-  situation: The facility's restricted records archive, with rows of terminals and a medical terminal tied to the detention levels. Kristin and Brandon must find usable evidence before their cover is reviewed.
-  pressure: Find evidence in the records archive
+  situation: The facility's restricted records archive, with rows of terminals and a medical terminal tied to the detention levels. An audit sweep is working down the aisles toward Kristin and Brandon.
+  pressure: Find the truth in the archive before the audit reaches them
 - scene_id: 2C
-  situation: "The command levels during an accelerating crisis: transfer orders for the captives on the detention level, and a maintenance network. Security activity is increasing faster than Kristin can explain, and Michelle's phrasing may be hidden somewhere in the traffic."
-  pressure: Choose the next move under growing pressure
+  situation: "A command corridor on the command levels, closed at both ends by guards. Transfer orders for the captives are moving, and a maintenance network runs through the walls. Security activity is rising faster than Kristin can explain."
+  pressure: Decide what to do before the purge begins
 - scene_id: 3A
   situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels."
   pressure: Reach Michelle and join the uprising
@@ -1213,632 +1251,248 @@ knowledge:
     Brandon leads Kristin through the service entrance. He shows her the service approach.
     The full set of prisoner numbers is lost. The sweep closes in.
     Brandon says, "We have to pull back. We can prepare now that we know the approach."
-- id: k_sl_2a_a_r1
-  statement: 'Kristin finds years of leaked code, emergency supplies, and Continuity files in Brandon’s fortified hideout.'
-  earn_when: reviews, reads, or studies Continuity Initiative documents, Brandon's documents, or documents in Brandon's hideout
+- id: k_sl_2a_c_r5
+  statement: 'Kristin proves that the cooling fault is real and gains access to the restricted infrastructure corridors.'
+  earn_when: diagnoses the cooling fault at the manifold and explains the pressure and ventilation problem to the shift supervisor
   action_evidence:
-  - [search, inspect, examine, look through, review, read, study]
-  - [Brandon's hideout, hideout, servers, leaked documents, Continuity files, Continuity Initiative documents, Brandon's documents, documents]
-  entity_ids: [brandon_hideout, hideout_servers]
-  aliases:
-  - brandon prepared before event
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2A
+  - [feel, read, trace, inspect, check, test, diagnose, explain, show]
+  - [cooling manifold, cooling water, water pressure, pressure gauge, pipe, ventilation, vent, cooling fault, pressure problem]
+  - [real, genuine, convincing, precise]
+  entity_ids: [kristin, brandon, shift_supervisor, regional_facility, infrastructure_corridors, inspection_console]
+  aliases: [restricted corridor access, console used]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
   requires: []
   establishes:
   - op: assert
-    fact_id: brandon_prepared_before_event
+    fact_id: supervisor_convinced
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2A-A
-    realization_id: SL-2A-A-R1
-  relevance:
-    entity_ids: []
-    priority: 0
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  - op: assert
+    fact_id: rebecca_observing_infiltrators
+    value: true
+  - op: assert
+    fact_id: inspection_console_used
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-C, realization_id: SL-2A-C-R5}
+  relevance: {entity_ids: [shift_supervisor, regional_facility, infrastructure_corridors, inspection_console], priority: 10}
+  must_convey:
+  - [genuine cooling-water pressure fault, cooling-water pressure fault, genuine pressure problem, genuine cooling fault]
+  - [real ventilation fault, ventilation fault, ventilation problem]
+  - [restricted infrastructure corridors, infrastructure corridors, restricted corridor access]
+  - [limited console, console]
   delivery_text: >-
-    Kristin finds years of leaked code, emergency supplies, and Continuity files in Brandon's fortified hideout.
-- id: k_sl_2a_a_r2
-  statement: 'Brandon says he tried to expose the program before the disappearances, but Kristin cannot tell foresight from guilt.'
-  earn_when: questions Brandon about his attempt to expose the program
+    Kristin proves that the genuine cooling-water pressure fault is real. She finds a ventilation fault.
+    The shift supervisor grants access to the restricted infrastructure corridors.
+    The limited console can report faults and cycle noncritical systems.
+    It cannot open detention cells or change the main flood controls.
+- id: k_sl_2a_c_r6
+  statement: 'Kristin gives a vague or overlong diagnosis, and the shift supervisor lets them in under closer watch.'
+  earn_when: gives a vague or overlong explanation of the cooling and ventilation faults to the shift supervisor
   action_evidence:
-  - [ask, question, press]
-  - [Brandon, Brandon Corfman]
-  - [expose the program, warn about the program, before the disappearances]
-  entity_ids: []
-  aliases:
-  - brandon prepared before event
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2A
+  - [explain, explanation, describe, answer, diagnose, tell, warn, show]
+  - [cooling, cooling water, water pressure, pressure, ventilation, vent, fault, manifold]
+  - [vague, general, unclear, overlong, too much detail, long explanation]
+  entity_ids: [kristin, brandon, shift_supervisor, regional_facility, infrastructure_corridors, inspection_console]
+  aliases: [restricted corridor access, cover suspected, console used]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
   requires: []
   establishes:
   - op: assert
-    fact_id: brandon_prepared_before_event
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2A-A
-    realization_id: SL-2A-A-R2
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: >-
-    Brandon says he tried to expose the program before the disappearances. Kristin cannot tell whether he saw them coming or feels guilty.
-- id: k_sl_2a_b_r1
-  statement: 'Kristin turns the facility’s cooling weakness into a credible inspection emergency, and Brandon builds their cover around it.'
-  earn_when: checks the facility's cooling weakness
-  action_evidence:
-  - [inspect, test, check, investigate, pull, read, study]
-  - [cooling system, cooling water, cooling weakness, water pressure]
-  entity_ids: []
-  aliases:
-  - false identities ready
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2A
-  requires:
-  - fact_id: facility_infiltration_needed
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: false_identities_ready
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2A-B
-    realization_id: SL-2A-B-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: >-
-    Kristin finds a cooling weakness she can use for a real inspection warning. Brandon builds their cover around it. At the facility checkpoint, Kristin must show the inspector credentials.
-- id: k_sl_2a_b_r2
-  statement: 'Brandon prepares technical credentials while Kristin chooses how much of the real cooling-water and ventilation risk to put in their lie.'
-  earn_when: completes, fills out, fills in, finishes, fills, shows, presents, flashes, or hands over the inspector forms or credentials with Brandon
-  action_evidence:
-  - [prepare, draft, assemble, review, build, make, create, forge, complete, fill out, fill in, finish, fill, show, present, flash, hand over, ask]
-  - [technical credentials, inspector credentials, inspection credentials, credentials, inspector forms, blank inspector forms, completed inspector forms, inspection forms, forms]
-  entity_ids: []
-  aliases:
-  - false identities ready
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2A
-  requires:
-  - fact_id: facility_infiltration_needed
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: false_identities_ready
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2A-B
-    realization_id: SL-2A-B-R2
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: >-
-    Brandon prepares technical credentials. Kristin weighs how much of the real cooling-water and ventilation risk to put in their lie. At the facility checkpoint, Kristin must show the inspector credentials.
-- id: k_sl_2a_e_r1
-  statement: "Kristin and Brandon are at the facility perimeter. Their false identities have passed the first security checks."
-  earn_when: "enters or follows Brandon into the secured facility, shows or presents my completed inspector forms to the guard, present my inspector credentials at, present my inspector credentials to, present our inspector credentials at, present our inspector credentials to, or follows Brandon's inspection route to the facility"
-  action_evidence:
-  - ["go to", "head to", "drive to", "travel to", "get to", "set out for", "head out to", "drive out to", "make for", "proceed to", "take Brandon to", "drive Brandon to", "bring Brandon to", "lead Brandon to", "show the checkpoint", "show the guard", "show the security guard", "hand the guard", "hand the checkpoint guard", "present our credentials at", "present my credentials at", "present my inspector credentials at", "present my inspector credentials to", "present our inspector credentials at", "present our inspector credentials to", "present the inspector credentials", "flash my credentials at", "flash my inspector credentials", "flash our inspector credentials", "show my credentials at", "show our credentials at", "show my inspector credentials at", "show our inspector credentials at", "show the inspector credentials", "show the credentials", "show the inspection credentials", "present the credentials", "hand over the credentials", "enter", "follow Brandon into", "show my completed inspector forms to", "present my completed inspector forms to", "present the inspector forms to", "show the inspector forms to", "follow Brandon's inspection route to"]
-  - ["the facility", "facility perimeter", "the facility perimeter", "checkpoint", "checkpoints", "security checkpoint", "security checkpoints", "checkpoint guard", "checkpoint guards", "the guard", "identity check", "identity checks", "security check", "security checks", "inspector credentials", "inspection credentials", "the secured facility", "secured facility", "the facility with Brandon", "inspector forms"]
-  entity_ids: []
-  aliases:
-  - facility perimeter reached
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2A
-  requires:
-  - fact_id: false_identities_ready
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: facility_perimeter_reached
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2A-E
-    realization_id: SL-2A-E-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks. A supervisor questions why their inspection was not scheduled. Kristin can explain the unscheduled inspection to the supervisor."
-- id: k_sl_2a_c_r1
-  statement: 'Kristin persuades a doubtful supervisor that a cooling-water imbalance and ventilation fault could disable the service level, gaining corridor access.'
-  earn_when: explains or warns the supervisor about cooling, ventilation, warning, unscheduled inspection, cooling-water, or cooling-system faults
-  action_evidence:
-  - [tell the supervisor, warn the supervisor, convince the supervisor, explain to the supervisor, tell the security officer, warn the security officer, explain the cooling-water inspection to the supervisor, explain the emergency cooling-water inspection to the supervisor, explain the cooling to the supervisor, explain the inspection to the supervisor, warn the supervisor about, tell the supervisor about, to the supervisor]
-  - [cooling, cooling water, water pressure, water system, ventilation, vent, air sensor, warning, unscheduled inspection, cooling-water, cooling-system]
-  entity_ids: []
-  aliases:
-  - restricted corridor access
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2A
-  requires:
-  - fact_id: false_identities_ready
-    equals: true
-  - fact_id: facility_perimeter_reached
-    equals: true
-  establishes:
-  - op: assert
     fact_id: restricted_corridor_access
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2A-C
-    realization_id: SL-2A-C-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  must_convey:
-  - [cooling-water imbalance, cooling-system risk, water-pressure fault, cooling failure, cooling leak, water system problem]
-  - [ventilation fault, ventilation monitor, service-level shutdown, sensor fault, ventilation warning]
-  - [corridor access, access, restricted access, infrastructure access, corridor entrance]
-  - [supervisor, security supervisor, facility supervisor, security officer, inspection supervisor]
-  leak_terms: [cooling failure, cooling leak, cooling-system risk, cooling-water imbalance, corridor access, corridor entrance, facility supervisor, infrastructure access, inspection supervisor, restricted access, restricted corridor access, security supervisor, sensor fault, service-level shutdown, ventilation fault, ventilation monitor, ventilation warning, water system problem, water-pressure fault]
-  delivery_text: >-
-    Kristin convinces the supervisor that a cooling-water imbalance and ventilation fault could shut down the service level. He grants corridor access.
-- id: k_sl_2a_c_r1_rebecca_observes
-  statement: Rebecca has ordered the infiltrators watched.
-  entity_ids: [rebecca, kristin, brandon, regional_facility]
-  aliases:
-  - Rebecca ordered surveillance
-  - infiltrators watched
-  audience:
-    kind: world_only
-    player_visible: false
-  available_in_scenes:
-  - 2A
-  requires:
-  - fact_id: false_identities_ready
-    equals: true
-  - fact_id: facility_perimeter_reached
-    equals: true
-  establishes:
   - op: assert
     fact_id: rebecca_observing_infiltrators
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2A-C
-    realization_id: SL-2A-C-R1
-  relevance:
-    entity_ids: [rebecca, regional_facility]
-    priority: 0
-- id: k_sl_2a_c_r2
-  statement: Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility and its limited inspection console.
-  earn_when: enters the restricted infrastructure corridor
-  action_evidence:
-  - [enter, go into, walk into, access]
-  - [restricted infrastructure corridor, infrastructure corridor, service corridor, access corridor, restricted infrastructure corridors, infrastructure corridors, service corridors]
-  entity_ids: [kristin, brandon, regional_facility, infrastructure_corridors, inspection_console]
-  aliases:
-  - restricted corridor access
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2A
-  requires:
-  - fact_id: false_identities_ready
-    equals: true
-  - fact_id: facility_perimeter_reached
-    equals: true
-  establishes:
   - op: assert
-    fact_id: restricted_corridor_access
+    fact_id: inspection_console_used
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2A-C
-    realization_id: SL-2A-C-R2
-  relevance:
-    entity_ids: [regional_facility]
-    priority: 10
+  - op: assert
+    fact_id: cover_suspected
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-C, realization_id: SL-2A-C-R6}
+  relevance: {entity_ids: [shift_supervisor, regional_facility, infrastructure_corridors, inspection_console], priority: 10}
   must_convey:
-  - [opened, open, access, gained access, opened access, corridor opened]
-  - [restricted infrastructure corridor, infrastructure corridor, service corridor, access corridor, restricted passage]
-  - [they have access to the facility]
-  leak_terms:
-  - restricted corridor access
-  - opened access
-  - gained access
-  - corridor opened
-  - restricted infrastructure corridor
-  - service corridor
-  - access corridor
-  - restricted passage
-  - they have access to the facility
+  - [cooling-water pressure fault, cooling fault, pressure problem]
+  - [ventilation fault, ventilation problem]
+  - [restricted infrastructure corridors, infrastructure corridors, restricted corridor access]
+  - [supervisor]
+  - [follow-up audit, closer watch, cover suspected]
+  - [limited console, console]
   delivery_text: >-
-    Kristin and Brandon open a restricted infrastructure corridor. They have access to the facility and its limited inspection console.
-- id: k_sl_2a_c_r2_rebecca_observes
-  statement: Rebecca has ordered the infiltrators watched.
-  entity_ids: [rebecca, kristin, brandon, regional_facility]
-  aliases:
-  - Rebecca ordered surveillance
-  - infiltrators watched
-  audience:
-    kind: world_only
-    player_visible: false
-  available_in_scenes:
-  - 2A
-  requires:
-  - fact_id: false_identities_ready
-    equals: true
-  - fact_id: facility_perimeter_reached
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: rebecca_observing_infiltrators
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2A-C
-    realization_id: SL-2A-C-R2
-  relevance:
-    entity_ids: [rebecca, regional_facility]
-    priority: 0
-- id: k_sl_2a_c_r3
-  statement: Kristin uses the copied prisoner numbers to support her explanation to the supervisor and gains restricted corridor access.
-  earn_when: uses, cites, shows, or explains the copied prisoner numbers to the supervisor
+    Kristin gives a vague account of the cooling-water pressure fault and the ventilation fault.
+    The shift supervisor logs them for a follow-up audit.
+    He lets them enter the restricted infrastructure corridors under closer watch.
+    The limited console can report faults and cycle noncritical systems.
+    It cannot open detention cells or change the main flood controls.
+- id: k_sl_2b_b_r4
+  statement: 'Kristin pulls her own JANUS file first, learns she was bait, and keeps Brandon’s name in the build record.'
+  earn_when: pulls Kristin's file first and refuses to erase Brandon's name from the JANUS build record
   action_evidence:
-  - [use, cite, show, explain, present, point out, tell]
-  - [copied prisoner numbers, prisoner numbers, identification numbers, missing-person records]
-  - [supervisor, security supervisor, facility supervisor, security officer]
-  entity_ids: [kristin, brandon, regional_facility]
-  aliases:
-  - restricted corridor access
+  - [pull, open, read, retrieve, check, examine, inspect]
+  - [Kristin's file, Kristin's own file, my file, own record, RETAINED, JANUS file, build record]
+  - [keep, leave, refuse, refuse to erase, preserve]
+  - [Brandon's name, Brandon Corfman, author's name, name in the build record]
+  entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files]
+  aliases: [Brandon's name kept, Kristin was bait, JANUS evidence]
   audience: {kind: public, player_visible: true}
-  available_in_scenes: [2A]
-  requires:
-  - fact_id: false_identities_ready
-    equals: true
-  - fact_id: facility_perimeter_reached
-    equals: true
-  - fact_id: processing_numbers_copied
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: restricted_corridor_access
-    value: true
-  - op: assert
-    fact_id: rebecca_observing_infiltrators
-    value: true
-  - op: assert
-    fact_id: processing_numbers_used_in_confrontation
-    value: true
-  source: {kind: storylet_realization, storylet_id: SL-2A-C, realization_id: SL-2A-C-R3}
-  relevance: {entity_ids: [regional_facility], priority: 10}
-  must_convey:
-  - [copied prisoner numbers]
-  - [to support the cooling-water explanation]
-  - [grants restricted corridor access]
-  delivery_text: Kristin uses the copied prisoner numbers to support the cooling-water explanation. The supervisor grants restricted corridor access.
-- id: k_sl_2a_c_r4
-  statement: Kristin uses the known service approach to make the inspection route credible and gains restricted corridor access with less scrutiny.
-  earn_when: explains, shows, or uses the known service route or service entrance with the supervisor
-  action_evidence:
-  - [explain, show, use, describe, present, tell]
-  - [known service route, service route, transfer route, service entrance, service level]
-  - [supervisor, security supervisor, facility supervisor, security officer]
-  entity_ids: [kristin, brandon, regional_facility, service_entrance]
-  aliases:
-  - restricted corridor access
-  audience: {kind: public, player_visible: true}
-  available_in_scenes: [2A]
-  requires:
-  - fact_id: false_identities_ready
-    equals: true
-  - fact_id: facility_perimeter_reached
-    equals: true
-  - fact_id: service_level_access_known
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: restricted_corridor_access
-    value: true
-  - op: assert
-    fact_id: rebecca_observing_infiltrators
-    value: true
-  - op: assert
-    fact_id: service_route_used_in_confrontation
-    value: true
-  source: {kind: storylet_realization, storylet_id: SL-2A-C, realization_id: SL-2A-C-R4}
-  relevance: {entity_ids: [regional_facility, service_entrance], priority: 10}
-  must_convey:
-  - [known service approach]
-  - [reduces his scrutiny]
-  - [grants restricted corridor access]
-  delivery_text: Kristin uses the known service approach to explain the inspection route. The supervisor reduces his scrutiny and grants restricted corridor access.
-- id: k_sl_2b_a_r1
-  statement: 'In the archive, Kristin secures JANUS files showing how Americans were ranked for detention, leverage, or control.'
-  earn_when: searches the archive terminals for Michelle's record
-  action_evidence:
-  - [search, read, open, check, review]
-  - [michelle, michelle's record, michelle's records, michelle's file, michelle's files, michelle's selection file, michelle's selection files, selection file, selection files]
-  entity_ids: []
-  aliases:
-  - janus evidence
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2B
+  available_in_scenes: [2B]
   requires: []
   establishes:
   - op: assert
     fact_id: janus_known
     value: true
   - op: assert
-    fact_id: michelle_selected_for_resistance_influence
-    value: true
-  - op: assert
     fact_id: janus_evidence
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2B-A
-    realization_id: SL-2B-A-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "JANUS ranked every American for detention, leverage, or control. Michelle's file holds nothing more. Brandon's name may be in the development records."
-- id: k_sl_2b_a_r2
-  statement: 'JANUS records show Kristin was left behind because Charles expected her to lead investigators to Brandon.'
-  earn_when: searches the archive terminals for my record
-  action_evidence:
-  - [search, read, open, check, review, pull up]
-  - [my own record, my record, kristin's record, kristin record, record about me, my file, my files]
-  entity_ids: []
-  aliases:
-  - janus evidence
-  - kristin deliberately left behind
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2B
-  requires: []
-  establishes:
-  - op: assert
-    fact_id: janus_evidence
-    value: true
-  - op: assert
-    fact_id: kristin_deliberately_left_behind
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2B-A
-    realization_id: SL-2B-A-R2
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "Charles left Kristin behind on purpose. He expected her to lead investigators to Brandon. Security logs for Michelle's evidence are still open."
-- id: k_sl_2b_b_r1
-  statement: 'Kristin finds Brandon’s name in the original JANUS records, forcing him to admit he helped write the system.'
-  earn_when: searches the development records for Brandon or reads Brandon's record or earlier messages
-  action_evidence:
-  - [search, read, open, check, review, show, find, examine, inspect]
-  - [development record, development records, Brandon's record, Brandon's records, Brandon's file, Brandon's earlier messages, earlier messages, original JANUS records, JANUS development records]
-  entity_ids: []
-  aliases:
-  - brandon janus role known
-  - janus evidence
-  - brandon claimed reform motive
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2B
-  requires:
-  - fact_id: janus_evidence
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: brandon_janus_role_known
-    value: true
-  - op: assert
-    fact_id: brandon_claimed_reform_motive
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2B-B
-    realization_id: SL-2B-B-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "Brandon's name is in the first JANUS records. He admits he helped write the system. A warning message blinks on the medical terminal."
-- id: k_sl_2b_b_r2
-  statement: 'Brandon says he tried to destroy JANUS after learning its purpose, but Kristin fears he still wants to hide his guilt.'
-  earn_when: confronts Brandon about the development records
-  action_evidence:
-  - [ask, confront, question, speak to, talk to]
-  - [brandon]
-  - [why he helped write, he helped write, helped write, write the software, development record, development records, earlier messages, earlier message, his earlier messages, JANUS]
-  entity_ids: []
-  aliases:
-  - brandon janus role known
-  - brandon claimed reform motive
-  - janus evidence
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2B
-  requires:
-  - fact_id: janus_evidence
-    equals: true
-  establishes:
-  - op: assert
-    fact_id: brandon_janus_role_known
-    value: true
-  - op: assert
-    fact_id: brandon_claimed_reform_motive
-    value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2B-B
-    realization_id: SL-2B-B-R2
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "Brandon says he tried to destroy JANUS after he learned its purpose. Kristin fears he still wants to hide his guilt. Maintenance reports are stacked beside the medical terminal."
-- id: k_sl_2b_b_r3
-  statement: 'Kristin learns Charles expected her to seek Brandon and left Michelle’s evidence accessible so she would expose Brandon’s hidden network.'
-  earn_when: checks the security logs for Michelle's evidence
-  action_evidence:
-  - [search, read, open, check, review, examine, inspect]
-  - [security log, security logs, access log, access logs]
-  - [michelle's evidence, michelle evidence, charles, hidden network, brandon's network, brandon network]
-  entity_ids: []
-  aliases:
-  - kristin was bait
-  - janus evidence
-  - brandon hidden network
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2B
-  requires:
-  - fact_id: janus_evidence
-    equals: true
-  establishes:
   - op: assert
     fact_id: kristin_was_bait
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2B-B
-    realization_id: SL-2B-B-R3
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "Charles expected Kristin to seek Brandon. He left Michelle's evidence where she could find it and expose Brandon's hidden network. Corrupted files flicker on the medical terminal."
-- id: k_sl_2b_c_r1
-  statement: 'Corrupted records and familiar phrases reveal that Michelle is altering classifications and hiding vulnerable prisoners.'
-  earn_when: opens the corrupted prisoner files or examines the medical terminal or its warning messages
-  action_evidence:
-  - [search, read, open, check, review, compare, examine, inspect, access, confirm]
-  - [corrupted prisoner file, corrupted prisoner files, corrupted file, corrupted files, inspect the medical terminal, patient record, patient records, Michelle's patient record, prisoner file, prisoner files, prisoner record, prisoner records, warning message, delayed transfer, delayed transfers, delayed transfer notices, corrupted records]
-  entity_ids: []
-  aliases:
-  - michelle resistance known
-  - janus evidence
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2B
-  requires:
-  - fact_id: janus_evidence
-    equals: true
-  establishes:
   - op: assert
-    fact_id: prisoner_records_corrupted
+    fact_id: michelle_selected_for_resistance_influence
     value: true
   - op: assert
-    fact_id: michelle_resistance_known
+    fact_id: brandon_name_kept
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2B-C
-    realization_id: SL-2B-C-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "Michelle is changing classifications. She is hiding vulnerable prisoners. Maintenance reports wait on the next terminal."
-- id: k_sl_2b_c_r2
-  statement: 'Michelle’s coded maintenance messages show she has organized prisoners to prepare an uprising from inside. A decoded message reads: “The prisoners are ready to rise up.”'
-  earn_when: reads the maintenance reports
-  action_evidence:
-  - [search, read, open, check, review, examine, inspect]
-  - [maintenance report, maintenance reports, maintenance message, maintenance messages, coded message, coded messages]
-  entity_ids: []
-  aliases:
-  - michelle resistance known
-  - janus evidence
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2B
-  requires:
-  - fact_id: janus_evidence
-    equals: true
-  establishes:
   - op: assert
-    fact_id: michelle_resistance_known
+    fact_id: brandon_janus_role_known
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2B-C
-    realization_id: SL-2B-C-R2
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "Michelle has organized prisoners. She is preparing an uprising from inside. A decoded message reads: “The prisoners are ready to rise up.” Brandon's earlier messages are still open on the remote terminal."
-- id: k_sl_2c_a_r1
-  statement: 'Rebecca privately offers Brandon safe passage and Michelle’s release if he helps her remove Charles.'
-  earn_when: "asks Brandon about Rebecca's offer"
+  - op: assert
+    fact_id: brandon_claimed_reform_motive
+    value: true
+  - op: assert
+    fact_id: archive_crisis_understood
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2B-B, realization_id: SL-2B-B-R4}
+  relevance: {entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files], priority: 10}
+  must_convey:
+  - [Kristin's own file, Kristin's file, RETAINED, predicted to lead investigators to CORFMAN]
+  - [JANUS, JANUS build record, Brandon Corfman, built JANUS, helped write JANUS]
+  - [was bait, left behind as bait, expected to lead investigators]
+  - [keeps his name, name stays, keep Brandon's name]
+  - [JANUS files copied, copied files, JANUS evidence]
+  delivery_text: >-
+    Kristin pulls her own file first.
+    It says she was retained to lead investigators to Corfman.
+    Kristin was bait.
+    The file names the system JANUS.
+    The build record names Brandon Corfman as an author.
+    Brandon admits that he helped write JANUS.
+    He says he tried to stop it after he learned its purpose.
+    Kristin keeps his name in the record.
+    The JANUS files are copied.
+    Kristin carries the copied files.
+- id: k_sl_2b_b_r5
+  statement: 'Kristin pulls her own JANUS file first, learns she was bait, and lets Brandon erase his name from the build record.'
+  earn_when: pulls Kristin's file first and lets Brandon erase his name from the JANUS build record
   action_evidence:
-  - ["read", "check", "ask", "question", "discuss", "study", "open", "assess", "weigh", "evaluate"]
-  - ["private message", "Brandon's message", "Brandon's messages", "offer", "offers", "offered", "safe passage", "Michelle's release"]
-  entity_ids: []
-  aliases:
-  - rebecca offer active
-  audience:
-    kind: world_only
-    player_visible: false
-  available_in_scenes:
-  - 2C
+  - [pull, open, read, retrieve, check, examine, inspect]
+  - [Kristin's file, Kristin's own file, my file, own record, RETAINED, JANUS file, build record]
+  - [let, allow, permit, agree, erase, delete]
+  - [Brandon's name, Brandon Corfman, author's name, name in the build record, his name]
+  entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files]
+  aliases: [Brandon's name erased, Kristin was bait, JANUS evidence]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2B]
   requires: []
   establishes:
   - op: assert
-    fact_id: rebecca_offer_active
+    fact_id: janus_known
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2C-A
-    realization_id: SL-2C-A-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "Rebecca offers Brandon safe passage and Michelle's release if he helps her remove Charles."
-- id: k_sl_2c_a_r2
-  statement: 'Rebecca tells Brandon that Charles will discard conspirators as well as prisoners, then asks him to join her instead.'
-  earn_when: "asks why Rebecca turned against Charles"
+  - op: assert
+    fact_id: janus_evidence
+    value: true
+  - op: assert
+    fact_id: kristin_was_bait
+    value: true
+  - op: assert
+    fact_id: michelle_selected_for_resistance_influence
+    value: true
+  - op: assert
+    fact_id: brandon_name_erased
+    value: true
+  - op: assert
+    fact_id: brandon_janus_role_known
+    value: true
+  - op: assert
+    fact_id: brandon_claimed_reform_motive
+    value: true
+  - op: assert
+    fact_id: archive_crisis_understood
+    value: true
+  - op: assert
+    fact_id: evidence_gap_development_record
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2B-B, realization_id: SL-2B-B-R5}
+  relevance: {entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files], priority: 10}
+  must_convey:
+  - [Kristin's own file, Kristin's file, RETAINED, predicted to lead investigators to CORFMAN]
+  - [JANUS, JANUS build record, Brandon Corfman, built JANUS, helped write JANUS]
+  - [was bait, left behind as bait, expected to lead investigators]
+  - [erase his name, name is gone, delete his name]
+  - [JANUS files copied, copied files, JANUS evidence]
+  - [record now has a gap, development record gap, missing name from the development record]
+  delivery_text: >-
+    Kristin pulls her own file first.
+    It says she was retained to lead investigators to Corfman.
+    Kristin was bait.
+    The file names the system JANUS.
+    The build record names Brandon Corfman as an author.
+    Brandon admits that he helped write JANUS.
+    He says he tried to stop it after he learned its purpose.
+    Kristin lets him erase his name from the record.
+    The development record now has a gap.
+    The JANUS files are copied.
+    Kristin carries the copied files.
+- id: k_sl_2b_c_r3
+  statement: 'Michelle answers Kristin once through the medical terminal and confirms that she is alive and active inside the facility.'
+  earn_when: types one reply to the maintenance line on the medical terminal
   action_evidence:
-  - ["ask", "question", "discuss", "confront", "press", "probe", "study"]
-  - ["Rebecca turned", "Rebecca's betrayal", "Rebecca's defection", "against Charles"]
-  entity_ids: []
-  aliases:
-  - rebecca offer active
-  - antagonist split known
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2C
+  - [type, write, enter, send, reply, answer]
+  - [one reply, reply, message, maintenance line, medical terminal, Shelly, Michelle]
+  entity_ids: [kristin, michelle, janus_archive, medical_terminal]
+  aliases: [Michelle reply received, Michelle resistance known]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2B]
+  requires:
+  - fact_id: janus_evidence
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: michelle_resistance_known
+    value: true
+  - op: assert
+    fact_id: michelle_reply_received
+    value: true
+  - op: assert
+    fact_id: archive_crisis_understood
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2B-C, realization_id: SL-2B-C-R3}
+  relevance: {entity_ids: [michelle, janus_archive, medical_terminal], priority: 10}
+  must_convey:
+  - [Michelle, Shelly, private phrasing]
+  - [alive, alive inside the facility, still alive]
+  - [active, working inside the facility, acting from inside]
+  - [will send a route, send a route, route]
+  delivery_text: >-
+    Kristin types one reply to the maintenance line.
+    Michelle answers once.
+    She is alive.
+    She is working inside the facility.
+    She will send a route.
+- id: k_sl_2c_d_r3
+  statement: 'Kristin starts the uplink as the detention sectors seal and receives Michelle’s route to the combined plan.'
+  earn_when: heads to the uplink and starts sending the copied JANUS files
+  action_evidence:
+  - [head, go, move, start, begin, send, transmit, upload]
+  - [uplink, broadcast uplink, copied files, JANUS files, JANUS evidence, evidence]
+  entity_ids: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files]
+  aliases: [committed to transmit, detention sectors sealed, combined broadcast rescue plan known]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C]
   requires: []
   establishes:
   - op: assert
@@ -1847,236 +1501,94 @@ knowledge:
   - op: assert
     fact_id: antagonist_split_known
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2C-A
-    realization_id: SL-2C-A-R2
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "Rebecca tells Brandon that Charles will discard conspirators and prisoners. She asks him to join her instead."
-- id: k_sl_2c_b_r1
-  statement: 'After Michelle corrupts the records, Charles orders valuable captives transferred and everyone else destroyed within hours.'
-  earn_when: "checks the transfer orders or the purge files"
-  action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review", "find", "trace", "identify", "locate", "track", "examine"]
-  - ["transfer order", "transfer orders", "purge order", "purge orders", "purge schedule", "Charles's order", "Charles's orders", "Project Purge", "Project Purge files", "purge file", "purge files", "command record", "command records", "transfer schedule", "transfer schedules", "transfer destination", "transfer destinations", "transfer cart", "transfer carts", "contingency plan", "Charles's contingency plan"]
-  entity_ids: []
-  aliases:
-  - purge clock started
-  - purge clock
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2C
-  requires: []
-  establishes:
+  - op: assert
+    fact_id: committed_to_transmit
+    value: true
+  - op: assert
+    fact_id: detention_sectors_sealed
+    value: true
   - op: assert
     fact_id: purge_clock_started
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2C-B
-    realization_id: SL-2C-B-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "After Michelle corrupts the records, Charles orders valuable captives transferred. He orders everyone else destroyed within hours. The copied files lie close at hand."
-- id: k_sl_2c_b_r2
-  statement: 'Charles prepares a broadcast of selected survivors while the purge order turns the detention sectors into a deadline.'
-  earn_when: "checks the broadcast schedule"
+  - op: assert
+    fact_id: evidence_ready_to_transmit
+    value: true
+  - op: assert
+    fact_id: combined_broadcast_rescue_plan_known
+    value: true
+  - op: assert
+    fact_id: rebecca_office_required_for_broadcast
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R3}
+  relevance: {entity_ids: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files], priority: 10}
+  must_convey:
+  - [Rebecca offers, help remove Charles, Michelle goes free]
+  - [purge order, purge clock, purge begins within hours]
+  - [starts sending the evidence, transmit the evidence, uplink]
+  - [detention sectors seal, detention sectors sealed]
+  - [Michelle's route, maintenance route, route to Michelle]
+  - [Rebecca's secured office, Rebecca's office]
+  - [broadcast the evidence, open the detention cells, combined plan]
+  delivery_text: >-
+    Rebecca offers a way to remove Charles. She promises Michelle's release.
+    The purge order starts a clock.
+    Kristin heads to the uplink and starts sending the copied files.
+    The detention sectors seal.
+    Michelle's route leads to Rebecca's secured office.
+    The office can broadcast the evidence and open the detention cells.
+- id: k_sl_2c_d_r4
+  statement: 'Kristin commits to rescue, accepts that the evidence is not transmitted, and receives Michelle’s route to the combined plan.'
+  earn_when: heads to the transfer carts and frees a cart of captives
   action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review"]
-  - ["broadcast schedule", "broadcast schedules", "broadcast plan", "broadcast plans", "selected survivor", "selected survivors", "survivor list", "survivor lists"]
-  entity_ids: []
-  aliases:
-  - purge clock started
-  - purge clock
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2C
+  - [head, go, move, reach, free, release, open]
+  - [transfer carts, rescue cart, cart of captives, frees a cart of captives, free a cart of captives, prisoners, rescue]
+  entity_ids: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files]
+  aliases: [committed to rescue, evidence not transmitted, combined broadcast rescue plan known]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C]
   requires: []
   establishes:
   - op: assert
+    fact_id: rebecca_offer_active
+    value: true
+  - op: assert
+    fact_id: antagonist_split_known
+    value: true
+  - op: assert
+    fact_id: committed_to_rescue
+    value: true
+  - op: assert
+    fact_id: evidence_not_transmitted
+    value: true
+  - op: assert
     fact_id: purge_clock_started
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2C-B
-    realization_id: SL-2C-B-R2
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "Charles prepares a broadcast of selected survivors. The purge order means time is running out in the detention sectors. The copied files lie close at hand."
-- id: k_sl_2c_c_r1
-  statement: 'Kristin and Brandon have enough evidence to expose the conspiracy, but sending it now would reveal their position and seal the detention sectors.'
-  earn_when: "checks, secures, or copies the copied files"
-  action_evidence:
-  - ["read", "check", "search", "study", "open", "inspect", "review", "secure", "copy", "finish copying", "save", "verify", "back up", "download", "transfer", "examine", "analyze", "eject", "monitor", "take", "retrieve", "get", "grab", "pick up", "pull up", "use", "access", "view", "look at", "load", "plug in", "bring up", "show"]
-  - ["copied file", "copied files", "archive file", "archive files", "proof", "evidence", "JANUS evidence", "JANUS files", "copied JANUS files", "portable drive", "JANUS records", "copied JANUS records", "development records", "JANUS development records", "USB drive", "my USB drive", "USB drive transfer", "USB drive's"]
-  entity_ids: []
-  aliases:
-  - evidence ready to transmit
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2C
-  requires:
-  - fact_id: janus_evidence
-    equals: true
-  establishes:
   - op: assert
     fact_id: evidence_ready_to_transmit
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2C-C
-    realization_id: SL-2C-C-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  must_convey:
-  - [evidence, proof, evidence transmission, transmit proof, evidence for broadcast, the proof]
-  - [reveal their position, expose their position, seal the detention sectors, seal the cells, risk the captives, rescue impossible]
-  delivery_text: "Kristin and Brandon have enough evidence to expose the conspiracy. Sending it now would reveal their position and seal the detention sectors. A message from Michelle is waiting."
-  action_contract:
-    targets: [copied JANUS files, copied files, JANUS evidence, JANUS files, proof, evidence, USB drive, my USB drive]
-    act: "Check, secure or copy the copied JANUS files."
-    positive:
-    - "Finish copying the files onto my drive."
-    - "Check the copied JANUS files."
-    - "Back up the JANUS files to my USB drive."
-    near_miss:
-    - "Send the copied files to Michelle."
-    - "Ask Brandon about the copied files."
-    - "Open Michelle's message."
-    - "Delete the copied files."
-- id: k_sl_2c_c_r2
-  statement: 'Brandon wants to send the evidence now. He will risk the captives. He accepts that this makes rescue impossible.'
-  earn_when: "argues about or tries to send the proof"
-  action_evidence:
-  - ["argue", "discuss", "debate", "ask", "weigh", "consider", "decide", "broadcast", "send", "transmit", "release", "upload", "publish", "assess", "evaluate"]
-  - ["send now", "sending the", "sending files", "sending the proof", "the risk", "risk now", "JANUS evidence", "my JANUS evidence", "the JANUS evidence", "the evidence", "our evidence", "copied files", "the copied files"]
-  entity_ids: []
-  aliases:
-  - evidence ready to transmit
-  audience:
-    kind: public
-    player_visible: true
-  available_in_scenes:
-  - 2C
-  requires:
-  - fact_id: janus_evidence
-    equals: true
-  establishes:
   - op: assert
-    fact_id: evidence_ready_to_transmit
+    fact_id: combined_broadcast_rescue_plan_known
     value: true
-  source:
-    kind: storylet_realization
-    storylet_id: SL-2C-C
-    realization_id: SL-2C-C-R2
-  relevance:
-    entity_ids: []
-    priority: 0
+  - op: assert
+    fact_id: rebecca_office_required_for_broadcast
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R4}
+  relevance: {entity_ids: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files], priority: 10}
   must_convey:
-  - [evidence, proof, transmit the evidence, broadcast proof, send the evidence, ready to transmit]
-  - [risk the captives, seal the detention sectors, rescue impossible, choose rescue, choose evidence]
-  leak_terms: [evidence ready to transmit, broadcast proof, send the evidence, ready to transmit, risk the captives, seal the detention sectors, rescue impossible, choose rescue, choose evidence]
-  delivery_text: "Brandon says the proof must go out now. He will risk the captives, even if that makes rescue impossible. A message from Michelle is waiting."
-- id: k_sl_2c_d_r1
-  statement: "Michelle's encrypted message marks a maintenance access route into her holding block and reveals that Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
-  earn_when: "decodes or reads Michelle's coded message"
-  action_evidence:
-  - ["decode", "read", "check", "study", "open", "search", "inspect", "decrypt", "examine", "analyze", "compare"]
-  - ["Michelle's message", "Michelle's coded", "coded message", "coded messages", "encrypted message", "encrypted messages", "message from Michelle", "the message from Michelle", "decrypted message", "Michelle's decrypted message", "safe-house message", "Michelle's safe-house message", "Michelle's maintenance message", "encrypted transfer messages", "decrypted transfer messages", "decoded messages", "cryptic message", "cryptic messages", "Michelle's maintenance codes"]
-  entity_ids: [holding_block]
-  aliases: [combined broadcast rescue plan known]
-  audience: {kind: public, player_visible: true}
-  available_in_scenes: [2C]
-  requires:
-  - {fact_id: purge_clock_started, equals: true}
-  - {fact_id: evidence_ready_to_transmit, equals: true}
-  establishes:
-  - {op: assert, fact_id: rebecca_office_required_for_broadcast, value: true}
-  - {op: assert, fact_id: combined_broadcast_rescue_plan_known, value: true}
-  source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R1}
-  relevance: {entity_ids: [], priority: 0}
-  must_convey:
-  - [Michelle's encrypted message, coded message, message, Michelle's coded note, encrypted message from Michelle]
-  - [maintenance access route, maintenance path, local access route, route to Michelle]
-  - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office]
-  - [open the detention cells, open the cells, rescue the prisoners, release the prisoners]
-  - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
-  leak_terms:
-  - Michelle's coded note
-  - maintenance access route
-  - maintenance path
-  - local access route
-  - route to Michelle
-  - Rebecca's secured office
-  - Rebecca's office
-  - secured office
-  - Rebecca's locked office
-  - open the detention cells
-  - open the cells
-  - rescue the prisoners
-  - release the prisoners
-  - broadcast the evidence
-  - broadcast proof
-  - send the evidence
-  - combined broadcast rescue plan known
-  delivery_text: "Michelle's encrypted message marks a maintenance access route into her holding block. Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors."
-- id: k_sl_2c_d_r2
-  statement: "Kristin traces Michelle's maintenance code route into her holding block, then to Rebecca's office, and learns the plan can rescue the captives only if they seize the controls to broadcast the evidence."
-  earn_when: "follows the maintenance route"
-  action_evidence:
-  - ["follow", "trace", "search", "check", "study", "inspect", "review"]
-  - ["maintenance route", "maintenance routes", "maintenance report", "maintenance reports", "route marker", "route markers", "Michelle's route", "maintenance trace", "maintenance line", "Michelle's maintenance codes"]
-  - ["route", "routes", "marker", "markers", "trace", "line"]
-  entity_ids: [holding_block]
-  aliases: [combined broadcast rescue plan known]
-  audience: {kind: public, player_visible: true}
-  available_in_scenes: [2C]
-  requires:
-  - {fact_id: purge_clock_started, equals: true}
-  - {fact_id: evidence_ready_to_transmit, equals: true}
-  establishes:
-  - {op: assert, fact_id: rebecca_office_required_for_broadcast, value: true}
-  - {op: assert, fact_id: combined_broadcast_rescue_plan_known, value: true}
-  source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R2}
-  relevance: {entity_ids: [], priority: 0}
-  must_convey:
-  - [Michelle's maintenance code, maintenance code, coded message, Michelle's code]
-  - [maintenance code route, maintenance path, local access route, coded path]
-  - [Rebecca's office, secured office, Rebecca's secured office, Rebecca's locked office]
-  - [open the detention cells, rescue the captives, release the prisoners, open the cells]
-  - [broadcast the evidence, transmit the evidence, broadcast proof, send the evidence]
-  leak_terms:
-  - Michelle's maintenance code
-  - maintenance code
-  - Michelle's code
-  - maintenance code route
-  - maintenance path
-  - local access route
-  - coded path
-  - Rebecca's office
-  - secured office
-  - Rebecca's secured office
-  - Rebecca's locked office
-  - open the detention cells
-  - rescue the captives
-  - release the prisoners
-  - open the cells
-  - broadcast the evidence
-  - broadcast proof
-  - send the evidence
-  - combined broadcast rescue plan known
-  delivery_text: "Kristin traces Michelle's maintenance code route into her holding block, then to Rebecca's office. Kristin and Brandon can rescue the captives only by seizing the controls to broadcast the evidence."
+  - [Rebecca offers, help remove Charles, Michelle goes free]
+  - [purge order, purge clock, purge begins within hours]
+  - [rescue cart, frees a cart of captives, rescue]
+  - [evidence is not transmitted, evidence remains in Kristin's hands]
+  - [Michelle's route, maintenance route, route to Michelle]
+  - [Rebecca's secured office, Rebecca's office]
+  - [broadcast the evidence, open the detention cells, combined plan]
+  delivery_text: >-
+    Rebecca offers a way to remove Charles. She promises Michelle's release.
+    The purge order starts a clock.
+    Kristin heads to the transfer carts and frees a cart of captives.
+    The evidence is not transmitted.
+    Michelle's route leads to Rebecca's secured office.
+    The office can broadcast the evidence and open the detention cells.
 - id: k_sl_3a_a_r1
   statement: 'Kristin reaches Michelle alive, only to find her directing prisoners through stolen radios and coded announcements.'
   earn_when: "finds Michelle in detention, frees the captives, or helps Michelle"
@@ -3130,9 +2642,9 @@ knowledge:
   establishes: [{op: assert, fact_id: scene_1c_entry_known, value: true}]
   source: {kind: scene_entry}
 - id: k_scene_2a_entry
-  statement: Kristin must plan a way into the facility. False identities are a possible cover.
+  statement: Kristin and Brandon are at the facility gate and must prove the cooling fault is real to get inside.
   entity_ids: [kristin, regional_facility]
-  aliases: [false identities, facility entrance]
+  aliases: [facility entrance, facility gate]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2A]
   establishes: [{op: assert, fact_id: scene_2a_entry_known, value: true}]
@@ -3178,3 +2690,146 @@ knowledge:
   available_in_scenes: [3C]
   establishes: [{op: assert, fact_id: scene_3c_entry_known, value: true}]
   source: {kind: scene_entry}
+- id: k_inspection_window_missed
+  statement: The supervisor's inspection window closed before Kristin resolved the facility-gate incident.
+  aliases: [inspection window missed, inspection window closes]
+  leak_terms: []
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  establishes: [{op: assert, fact_id: inspection_window_missed, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: bridge_2a_missed_window_recovery}
+- id: k_supervisor_escorting
+  statement: The shift supervisor escorts Kristin and Brandon into the inspection under watch.
+  aliases: [supervisor escorting, inspection under watch]
+  leak_terms: []
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  establishes: [{op: assert, fact_id: supervisor_escorting, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-2A-D, realization_id: SL-2A-D-R1}
+- id: k_inspection_recovery_ready
+  statement: The escorted inspection is ready to carry Kristin and Brandon into the corridors.
+  entity_ids: [shift_supervisor, regional_facility, infrastructure_corridors]
+  aliases: [recovery ready]
+  audience: {kind: world_only, player_visible: false}
+  available_in_scenes: [2A]
+  establishes: [{op: assert, fact_id: inspection_recovery_ready, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-2A-D, realization_id: SL-2A-D-R1}
+- id: k_audit_recovery_ready
+  statement: The archive audit is ready for the missed-window recovery.
+  aliases: [audit recovery ready]
+  leak_terms: []
+  audience: {kind: world_only, player_visible: false}
+  available_in_scenes: [2B]
+  establishes: [{op: assert, fact_id: audit_recovery_ready, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-2B-D, realization_id: SL-2B-D-R1}
+- id: k_purge_recovery_ready
+  statement: The purge alarm is ready for the neutral route recovery.
+  aliases: [purge recovery ready]
+  leak_terms: []
+  audience: {kind: world_only, player_visible: false}
+  available_in_scenes: [2C]
+  establishes: [{op: assert, fact_id: purge_recovery_ready, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-2C-E, realization_id: SL-2C-E-R1}
+- id: k_sl_2a_d_route_effects
+  statement: The missed-window inspection recovery carries its route effects.
+  aliases: [inspection recovery route effects]
+  audience: {kind: characters, character_ids: [charles], player_visible: false}
+  available_in_scenes: [2A]
+  establishes:
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  - op: assert
+    fact_id: rebecca_observing_infiltrators
+    value: true
+  - op: assert
+    fact_id: inspection_console_used
+    value: true
+  - op: assert
+    fact_id: cover_suspected
+    value: true
+  must_convey: [[inspection recovery, route effects]]
+  source: {kind: storylet_realization, storylet_id: SL-2A-D, realization_id: SL-2A-D-R1}
+- id: k_sl_2b_d_route_effects
+  statement: The missed-window archive recovery carries its route effects.
+  aliases: [archive recovery route effects]
+  audience: {kind: characters, character_ids: [charles], player_visible: false}
+  available_in_scenes: [2B]
+  establishes:
+  - op: assert
+    fact_id: brandon_name_kept
+    value: true
+  - op: assert
+    fact_id: janus_known
+    value: true
+  - op: assert
+    fact_id: kristin_was_bait
+    value: true
+  - op: assert
+    fact_id: michelle_selected_for_resistance_influence
+    value: true
+  - op: assert
+    fact_id: brandon_janus_role_known
+    value: true
+  - op: assert
+    fact_id: brandon_claimed_reform_motive
+    value: true
+  - op: assert
+    fact_id: janus_evidence
+    value: true
+  - op: assert
+    fact_id: michelle_resistance_known
+    value: true
+  - op: assert
+    fact_id: michelle_reply_received
+    value: true
+  - op: assert
+    fact_id: archive_crisis_understood
+    value: true
+  must_convey: [[archive recovery, route effects]]
+  source: {kind: storylet_realization, storylet_id: SL-2B-D, realization_id: SL-2B-D-R1}
+- id: k_sl_2c_e_route_effects
+  statement: The missed-window purge recovery carries its route effects.
+  aliases: [purge recovery route effects]
+  audience: {kind: characters, character_ids: [charles], player_visible: false}
+  available_in_scenes: [2C]
+  establishes:
+  - op: assert
+    fact_id: rebecca_offer_active
+    value: true
+  - op: assert
+    fact_id: antagonist_split_known
+    value: true
+  - op: assert
+    fact_id: purge_clock_started
+    value: true
+  - op: assert
+    fact_id: evidence_ready_to_transmit
+    value: true
+  - op: assert
+    fact_id: rebecca_office_required_for_broadcast
+    value: true
+  - op: assert
+    fact_id: combined_broadcast_rescue_plan_known
+    value: true
+  - op: assert
+    fact_id: purge_alarm_active
+    value: true
+  must_convey: [[purge recovery, route effects]]
+  source: {kind: storylet_realization, storylet_id: SL-2C-E, realization_id: SL-2C-E-R1}
+- id: k_audit_window_missed
+  statement: The archive audit reached the stacks before Kristin resolved the archive incident.
+  aliases: [audit window missed, audit reaches the stacks]
+  leak_terms: []
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2B]
+  establishes: [{op: assert, fact_id: audit_window_missed, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: bridge_2b_missed_window_recovery}
+- id: k_purge_window_missed
+  statement: The purge window closed before Kristin resolved the command-corridor incident.
+  aliases: [purge window missed, purge alarm]
+  leak_terms: []
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C]
+  establishes: [{op: assert, fact_id: purge_window_missed, value: true}]
+  source: {kind: canonical_route_event, canonical_event_id: bridge_2c_missed_window_recovery}

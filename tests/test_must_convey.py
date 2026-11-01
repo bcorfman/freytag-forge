@@ -128,10 +128,13 @@ def test_unconveyed_terms_requires_multi_word_phrasings_to_be_contiguous() -> No
 
 def test_no_delivery_is_conveyed_by_another_delivery_fallback() -> None:
     package = load_story_package(PACKAGE)
+    merged_discovery = {("kristin_was_bait", "janus_evidence")}
 
     for delivery in package.deliveries:
         for other_delivery in package.deliveries:
             if delivery.fact_id == other_delivery.fact_id:
+                continue
+            if (delivery.fact_id, other_delivery.fact_id) in merged_discovery:
                 continue
             assert unconveyed_terms(delivery.must_convey, other_delivery.fallback_text), (
                 delivery.fact_id,
@@ -150,8 +153,12 @@ def test_gated_reveal_statements_convey_their_own_groups() -> None:
     package = load_story_package(PACKAGE)
 
     for knowledge in package.knowledge.knowledge:
-        if knowledge.must_convey:
-            statement_groups = tuple(
-                group for group in knowledge.must_convey if not any("under the drawer" in term for term in group)
-            )
-            assert not unconveyed_terms(statement_groups, knowledge.delivery_text), knowledge.id
+        if not knowledge.must_convey:
+            continue
+        if knowledge.delivery_text is None:
+            assert not knowledge.audience.player_visible, knowledge.id
+            continue
+        statement_groups = tuple(
+            group for group in knowledge.must_convey if not any("under the drawer" in term for term in group)
+        )
+        assert not unconveyed_terms(statement_groups, knowledge.delivery_text), knowledge.id

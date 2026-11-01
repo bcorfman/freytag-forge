@@ -12,7 +12,7 @@ from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 LEAK = "Rebecca's secured office can broadcast the evidence."
-CLEAN = "Kristin considers whether to transmit the evidence."
+CLEAN = "Kristin waits for Rebecca's next move."
 
 
 def _scene_2c_state() -> RuntimeState:

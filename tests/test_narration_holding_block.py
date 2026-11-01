@@ -1,4 +1,4 @@
-"""Holding-block names become available only after Michelle's route is earned."""
+"""Act 2 route names become available only after their authored reveal is earned."""
 
 from __future__ import annotations
 
@@ -43,11 +43,11 @@ def _validate(scene_id: str, text: str, knowledge_id: str | None = None) -> None
     )
 
 
-def test_earned_holding_block_allows_its_parent_location() -> None:
+def test_earned_rebecca_office_allows_its_parent_location() -> None:
     _validate(
         "2C",
-        "Kristin enters the holding block on the detention level.",
-        "k_sl_2c_d_r1",
+        "Kristin enters Rebecca's secured office.",
+        "k_sl_2c_d_r3",
     )
 
 
@@ -60,7 +60,3 @@ def test_unearned_holding_block_is_rejected() -> None:
 def test_scene_1a_cannot_name_the_detention_locations(name: str) -> None:
     with pytest.raises(ProposalValidationError, match=name):
         _validate("1A", f"Kristin enters the {name}.")
-
-
-def test_earning_holding_block_makes_detention_level_nameable() -> None:
-    _validate("2C", "Kristin enters the detention level.", "k_sl_2c_d_r1")

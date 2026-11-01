@@ -149,8 +149,9 @@ def check(out: Path, n: int, mode: str) -> list[str]:
             planned = plan_prefix.get(arm, {})
             if prefix != planned:
                 errors.append(f"carried {arm} prefix records differ between source and plan")
-            if prefix.get("turn_index") != 63 or not prefix.get("committed_reveal_ids"):
-                errors.append(f"carried {arm} prefix is missing turn_index 63 or reveal ids")
+            prefix_turn = prefix.get("turn_index")
+            if not isinstance(prefix_turn, int) or prefix_turn < 1 or not prefix.get("committed_reveal_ids"):
+                errors.append(f"carried {arm} prefix is missing its turn_index or reveal ids")
             if not prefix.get("committed_reveal_ids_hash") or not prefix.get("entry_text"):
                 errors.append(f"carried {arm} prefix is missing reveal hash or rendered entry text")
         if source.get("rendered_entry_text") != {
@@ -333,8 +334,8 @@ def check(out: Path, n: int, mode: str) -> list[str]:
         if start == "carried":
             if any(row.get("start_label") != CARRIED_LABEL for row in rows):
                 errors.append("carried row start label is missing or incorrect")
-            if any(row.get("prefix_turn_index") != 63 for row in rows):
-                errors.append("carried row is missing prefix turn_index 63")
+            if any(row.get("prefix_turn_index") != row.get("scripted_prefix", {}).get("turn_index") for row in rows):
+                errors.append("carried row prefix turn_index differs from its recorded scripted prefix")
             if any(not row.get("prefix_committed_reveal_ids_hash") for row in rows):
                 errors.append("carried row is missing prefix reveal ids hash")
             if any(row.get("bridge_text_shown") is None or not row.get("entry_text_shown") for row in rows):

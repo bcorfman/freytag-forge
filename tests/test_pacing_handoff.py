@@ -396,27 +396,21 @@ def test_gate_fact_that_is_already_true_has_no_cue() -> None:
     assert state.staged_cue_fact_id is None
 
 
-def test_scene_2a_handoff_asserts_hidden_bridge_fact_without_projecting_it() -> None:
+def test_scene_2a_missed_window_waits_for_incident_recovery_without_an_outcome() -> None:
     state = _state_2a()
-    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "2A")
-    state.turn_index = window.handoff_after_turns - 4
     engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Wait."}]})
 
-    engine.turn("Approach the facility entrance.")
-    engine.turn("Inspect the security desk.")
-    engine.turn("Watch the security desk.")
-    handoff = engine.turn("Watch the guard rotation.")
+    for _ in range(5):
+        engine.turn("Watch the shift supervisor and the cooling manifold.")
 
-    assert state.current_scene_id == "2B"
-    assert Fact(predicate="false_identities_ready", subject="story", value="true") in state.facts.asserted
-    assert Fact(predicate="rebecca_observing_infiltrators", subject="story", value="true") in state.facts.asserted
-    assert "bridge_2a_restricted_access" in state.fired_event_ids
-    assert state.last_turn_delivery.handoff_staged is True
-    assert any("false credentials" in segment.text.casefold() for segment in handoff.segments)
+    assert state.current_scene_id == "2A"
+    assert Fact(predicate="inspection_window_missed", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="restricted_corridor_access", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="cover_suspected", subject="story", value="true") not in state.facts.asserted
 
     projection = KnowledgeProjector().project(state, "player", "Look around.")
     projected_ids = {item.id for item in (*projection.committed_knowledge, *projection.candidates)}
-    assert "k_sl_2a_c_r2_rebecca_observes" not in projected_ids
+    assert {"k_sl_2a_c_r5", "k_sl_2a_c_r6"} <= projected_ids
     assert "rebecca_observing_infiltrators" not in projection.model_dump_json()
 
 

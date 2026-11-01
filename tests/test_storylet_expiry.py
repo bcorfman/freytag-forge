@@ -67,8 +67,20 @@ def test_required_storylet_stays_active_past_latest_turn() -> None:
         assert Fact(predicate="continuity_initiative_known", subject="story", value="true") not in state.facts.asserted
 
 
-def test_real_package_has_thirty_six_required_storylets() -> None:
-    assert len(required_storylet_ids(PACKAGE)) == 36
+def test_real_package_requires_every_incident_route_storylet() -> None:
+    required = required_storylet_ids(PACKAGE)
+    storylet_ids = {storylet.id for storylet in PACKAGE.storylet_routes.storylets}
+    incident_storylets = {
+        storylet_id
+        for incident in PACKAGE.incidents
+        for storylet_id in (
+            incident.recovery_storylet_id,
+            *(outcome.storylet_id for outcome in incident.outcomes),
+        )
+        if storylet_id is not None
+    }
+
+    assert incident_storylets <= required <= storylet_ids
 
 
 def test_resolution_scene_stages_cues_but_not_deadline_escalation() -> None:

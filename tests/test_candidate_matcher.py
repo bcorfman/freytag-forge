@@ -273,49 +273,44 @@ def test_scene_1a_card_reveal_accepts_natural_synonyms(player_input: str) -> Non
 @pytest.mark.parametrize(
     ("player_input",),
     [
-        ("Retrieve my copied JANUS files.",),
-        ("Take the copied files.",),
-        ("Use my copied files on the purge-control console.",),
-        ("Copy Michelle's prisoner status records to my USB drive.",),
-        ("Take the evidence.",),
-        ("Show the proof.",),
+        ("Go to the uplink and start sending the copied JANUS evidence.",),
+        ("Transmit the JANUS files from the broadcast uplink.",),
     ],
 )
-def test_scene_2c_c_r1_matches_natural_player_actions(player_input: str) -> None:
+def test_scene_2c_transmit_matches_natural_player_actions(player_input: str) -> None:
     handoff = uniquely_matched_authored_handoff(player_input, SCENE_2C_CANDIDATES)
 
     assert handoff is not None
-    assert handoff.candidate.id == "k_sl_2c_c_r1"
+    assert handoff.candidate.id == "k_sl_2c_d_r3"
 
 
 @pytest.mark.parametrize(
     ("player_input",),
     [
-        ("Check my copied JANUS files.",),
-        ("Open the JANUS files.",),
-        ("Review the copied files.",),
-        ("Inspect the JANUS evidence.",),
-        ("Read my copied JANUS files.",),
+        ("Reach the transfer carts and free a cart of captives.",),
+        ("Go to the transfer carts and rescue the prisoners.",),
     ],
 )
-def test_scene_2c_c_r1_matches_entry_text_actions(player_input: str) -> None:
+def test_scene_2c_rescue_matches_natural_player_actions(player_input: str) -> None:
     handoff = uniquely_matched_authored_handoff(player_input, SCENE_2C_CANDIDATES)
 
     assert handoff is not None
-    assert handoff.candidate.id == "k_sl_2c_c_r1"
+    assert handoff.candidate.id == "k_sl_2c_d_r4"
 
 
 def test_scene_2c_entry_text_hands_off_the_copied_files() -> None:
     scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "2C")
 
-    assert scene.metadata.entry_text.endswith("Kristin carried the copied JANUS files. She could check them now.\n\n")
+    assert scene.metadata.entry_text.endswith("Kristin still carried the copied JANUS files.\n\n")
 
 
-def test_scene_2c_c_r2_matches_sending_the_copied_files() -> None:
-    handoff = uniquely_matched_authored_handoff("Send the copied files.", SCENE_2C_CANDIDATES)
+def test_scene_2c_d_r3_matches_sending_the_copied_files() -> None:
+    handoff = uniquely_matched_authored_handoff(
+        "Head to the uplink and start sending the copied files.", SCENE_2C_CANDIDATES
+    )
 
     assert handoff is not None
-    assert handoff.candidate.id == "k_sl_2c_c_r2"
+    assert handoff.candidate.id == "k_sl_2c_d_r3"
 
 
 @pytest.mark.parametrize(
@@ -329,8 +324,8 @@ def test_scene_2c_unrelated_actions_match_neither_evidence_candidate(player_inpu
     handoff = uniquely_matched_authored_handoff(player_input, SCENE_2C_CANDIDATES)
 
     assert handoff is None or handoff.candidate.id not in {
-        "k_sl_2c_c_r1",
-        "k_sl_2c_c_r2",
+        "k_sl_2c_d_r3",
+        "k_sl_2c_d_r4",
     }
 
 
@@ -343,15 +338,15 @@ def test_scene_2c_asking_brandon_to_retrieve_files_stays_tied() -> None:
 @pytest.mark.parametrize(
     ("player_input",),
     [
-        ("Explain the unscheduled inspection to the supervisor.",),
-        ("Warn the supervisor about the cooling-water fault.",),
+        ("Diagnose the real cooling-water pressure fault for the supervisor.",),
+        ("Read the pressure gauge and give a precise explanation of the ventilation fault.",),
     ],
 )
-def test_scene_2a_c_r1_matches_natural_player_actions(player_input: str) -> None:
+def test_scene_2a_c_r5_matches_natural_player_actions(player_input: str) -> None:
     handoff = uniquely_matched_authored_handoff(player_input, SCENE_2A_CANDIDATES)
 
     assert handoff is not None
-    assert handoff.candidate.id == "k_sl_2a_c_r1"
+    assert handoff.candidate.id == "k_sl_2a_c_r5"
 
 
 @pytest.mark.parametrize(
@@ -365,15 +360,15 @@ def test_scene_2a_unrelated_actions_match_neither_evidence_candidate(player_inpu
     handoff = uniquely_matched_authored_handoff(player_input, SCENE_2A_CANDIDATES)
 
     assert handoff is None or handoff.candidate.id not in {
-        "k_sl_2a_c_r1",
-        "k_sl_2a_c_r2",
+        "k_sl_2a_c_r5",
+        "k_sl_2a_c_r6",
     }
 
 
-def test_scene_2a_e_r1_delivery_text_points_to_the_supervisor_action() -> None:
-    item = next(item for item in PACKAGE.knowledge.knowledge if item.id == "k_sl_2a_e_r1")
+def test_scene_2a_c_r5_delivery_text_points_to_the_supervisor_action() -> None:
+    item = next(item for item in PACKAGE.knowledge.knowledge if item.id == "k_sl_2a_c_r5")
 
-    assert item.delivery_text.endswith("Kristin can explain the unscheduled inspection to the supervisor.")
+    assert "shift supervisor grants access" in item.delivery_text
 
 
 def test_authored_handoff_returns_the_projected_candidate_and_delivery() -> None:

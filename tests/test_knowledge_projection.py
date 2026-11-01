@@ -47,7 +47,7 @@ def _assert_story_fact(state: RuntimeState, fact_id: str) -> None:
     state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
 
 
-def test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone_talk() -> None:
+def test_michelles_route_terms_no_longer_collide_with_ordinary_phone_talk() -> None:
     term_to_knowledge = PACKAGE.knowledge_indexes.term_to_knowledge
 
     assert (
@@ -59,11 +59,11 @@ def test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone
         }
         & term_to_knowledge.keys()
     )
-    assert set(term_to_knowledge.get("michelle's encrypted message", ())) == {"k_sl_2c_d_r1"}
+    assert set(term_to_knowledge.get("michelle's encrypted message", ())) == set()
     assert set(term_to_knowledge.get("her encrypted message", ())) == set()
-    assert set(term_to_knowledge.get("encrypted message from michelle", ())) == {"k_sl_2c_d_r1"}
+    assert set(term_to_knowledge.get("encrypted message from michelle", ())) == set()
     assert set(term_to_knowledge.get("michelle's encrypted note", ())) == set()
-    assert set(term_to_knowledge.get("coded message", ())) == {"k_sl_2c_d_r1", "k_sl_2c_d_r2"}
+    assert set(term_to_knowledge.get("coded message", ())) == set()
 
     leak_term_to_knowledge = PACKAGE.knowledge_indexes.leak_term_to_knowledge
     assert set(leak_term_to_knowledge.get("michelle's encrypted message", ())) == set()
@@ -72,7 +72,7 @@ def test_michelles_encrypted_message_terms_no_longer_collide_with_ordinary_phone
     assert set(leak_term_to_knowledge.get("rescue efforts", ())) == set()
     assert set(leak_term_to_knowledge.get("security officer", ())) == set()
     assert set(term_to_knowledge.get("rescue efforts", ())) == {"k_resolution_kristin_rescue"}
-    assert set(term_to_knowledge.get("security officer", ())) == {"k_sl_2a_c_r1"}
+    assert set(term_to_knowledge.get("security officer", ())) == set()
 
 
 @pytest.mark.parametrize(
@@ -161,19 +161,20 @@ def test_protagonist_effect_knowledge_still_blanks_frame() -> None:
     assert projection.scene_frame == ""
 
 
-def test_moving_2a_knowledge_is_scene_local() -> None:
+def test_inspection_2a_knowledge_is_scene_local() -> None:
     state = _scene_state("2A")
-    _assert_story_fact(state, "facility_perimeter_reached")
+    state.active_event_ids.add("SL-2A-C")
 
-    projection = KnowledgeProjector().project(state, "player", "Approach the facility entrance.")
+    projection = KnowledgeProjector().project(
+        state, "player", "Diagnose the real cooling-water pressure fault and ventilation problem to the supervisor."
+    )
 
-    assert projection.scene_frame == ""
-    assert "k_sl_2a_e_r1" in projection.scene_hidden_ids
+    assert "k_sl_2a_c_r5" in _ids(projection.candidates)
+    assert all(item.id.startswith("k_sl_2a") for item in projection.candidates)
 
 
 def test_moving_2a_knowledge_does_not_hide_the_2b_frame() -> None:
     state = _scene_state("2B")
-    _assert_story_fact(state, "facility_perimeter_reached")
 
     projection = KnowledgeProjector().project(state, "player", "Approach the facility entrance.")
     frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "2B")
@@ -192,17 +193,18 @@ def test_naming_only_brandon_does_not_recall_earlier_scene_knowledge() -> None:
     items_by_id = {item.id: item for item in PACKAGE.knowledge.knowledge}
 
     assert all(state.current_scene_id in items_by_id[item_id].available_in_scenes for item_id in committed_ids)
-    assert "k_sl_2a_c_r2" not in committed_ids
+    assert not any(item_id.startswith("k_sl_2a") for item_id in committed_ids)
 
 
 @pytest.mark.nightly
 def test_naming_a_corridor_recalls_earlier_scene_knowledge() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     advance_state_to_scene(PACKAGE, state, "2C")
+    _establish(state, "k_sl_2a_c_r5")
 
     projection = KnowledgeProjector().project(state, "player", "Ask Brandon about the infrastructure corridors.")
 
-    assert "k_sl_2a_c_r2" in _ids(projection.committed_knowledge)
+    assert "k_sl_2a_c_r5" in _ids(projection.committed_knowledge)
 
 
 def test_scene_entry_is_not_recalled_after_leaving_its_scene() -> None:

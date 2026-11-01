@@ -204,10 +204,7 @@ def test_recalled_earlier_knowledge_has_its_own_prompt_section(monkeypatch) -> N
     provider("Ask Brandon about the infrastructure corridors.")
 
     user = captured["payload"]["user"]
-    statement = (
-        "Kristin and Brandon have opened a restricted infrastructure corridor, gaining access to the facility and its "
-        "limited inspection console."
-    )
+    statement = PACKAGE.knowledge_indexes.by_id["k_sl_2a_c_r6"].statement
     earlier = user.split("EARLIER IN THE STORY:\n", 1)[1].split("\n\nCONSTRAINTS:", 1)[0]
     scene = user.split("SCENE:\n", 1)[1].split("\n\nEARLIER IN THE STORY:", 1)[0]
     assert f"- {statement}" in earlier

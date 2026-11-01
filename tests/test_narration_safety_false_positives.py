@@ -98,5 +98,5 @@ def test_servers_are_scoped_to_the_hideout_item() -> None:
 
 
 def test_unrelated_future_alias_remains_guarded() -> None:
-    error = _rejects(_scene_state("1A"), "The cooling-water imbalance is dangerous.")
+    error = _rejects(_scene_state("1A"), "The restricted infrastructure corridors are dangerous.")
     assert error.code == "narration_known_term_leak"

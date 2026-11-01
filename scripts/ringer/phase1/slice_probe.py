@@ -183,23 +183,12 @@ def _provider_payload(selected: str | None, text: str | None = None) -> dict[str
         "k_sl_1c_c_copy_numbers": "Kristin copies the prisoner numbers and matches them to missing-person records.",
         "k_sl_1c_c_secure_route": "Brandon explains the transfer route and opens the service entrance.",
         "k_sl_1c_d_r1": "Brandon leads Kristin through the service entrance while the sweep closes in.",
-        "k_sl_2a_c_r3": (
-            "Kristin uses the copied prisoner numbers to support the cooling-water explanation. "
-            "The supervisor grants restricted corridor access."
+        "k_sl_2a_c_r5": (
+            "Kristin shows the supervisor the genuine cooling-water pressure fault and a real ventilation fault. "
+            "The supervisor grants access to the restricted infrastructure corridors. "
+            "The limited console can report faults and cycle noncritical systems."
         ),
-        "k_sl_2a_c_r1": (
-            "Kristin convinces the supervisor that a cooling-water imbalance and ventilation fault could shut down "
-            "the service level. He grants corridor access."
-        ),
-        "k_sl_2a_c_r4": (
-            "Kristin uses the known service route and the known service approach to explain the inspection approach; "
-            "the supervisor reduces his scrutiny and grants restricted corridor access."
-        ),
-        "k_sl_2a_b_r1": "Kristin checks the cooling-water weakness and Brandon builds their inspection cover.",
-        "k_sl_2a_e_r1": (
-            "Kristin presents the inspector credentials at the facility checkpoint and reaches the facility perimeter."
-        ),
-        "k_sl_2a_a_r1": "Kristin explains the cooling-water risk to the supervisor.",
+        "k_sl_2a_c_r6": "Kristin explains the vague cooling-water fault to the supervisor.",
     }.get(selected, "The investigation continues.")
     segment: dict[str, Any] = {"kind": "narration", "text": text}
     payload: dict[str, Any] = {"segments": [segment]}
@@ -252,18 +241,14 @@ def _commands_for(mode: str) -> tuple[list[str], list[str | None]]:
                 "Inspect the loading docks for power and ventilation.",
                 "Watch the processing line for Michelle.",
                 "Copy the prisoner numbers.",
-                "Check the cooling-water weakness.",
-                "Present the inspector credentials at the facility checkpoint.",
-                "Use the copied prisoner numbers to explain the cooling-water inspection to the supervisor.",
-                *["Check the restricted corridor for a safe passage."] * 5,
+                "Show the supervisor the real cooling-water pressure fault.",
+                *["Check the restricted corridor for a safe passage."] * 7,
             ],
             [
                 "k_sl_1c_a_r1",
                 "k_sl_1c_b_r2",
                 "k_sl_1c_c_copy_numbers",
-                "k_sl_2a_b_r1",
-                "k_sl_2a_e_r1",
-                "k_sl_2a_c_r3",
+                "k_sl_2a_c_r5",
                 None,
                 None,
                 None,
@@ -436,47 +421,23 @@ def run(out: Path, n: int, dry: bool, confirm: bool, prefix: str = "none") -> in
                 commands, selections = _commands_for("dry")
                 if prefix == "missed_window":
                     commands = [
-                        "Follow Brandon through the service entrance.",
-                        "Check the cooling-water weakness.",
-                        "Present the inspector credentials at the facility checkpoint.",
-                        "Use the known service route to explain the inspection approach to the supervisor.",
-                        *["Check the restricted corridor for a safe passage."] * 7,
+                        "Show the supervisor the real cooling-water pressure fault.",
+                        *["Check the restricted corridor for a safe passage."] * 10,
                     ]
-                    selections = [
-                        "k_sl_1c_d_r1",
-                        "k_sl_2a_b_r1",
-                        "k_sl_2a_e_r1",
-                        "k_sl_2a_c_r4",
-                        *([None] * 5),
-                    ]
+                    selections = [None] * 11
                 elif prefix == "secure_route":
                     commands = [
-                        "Check the cooling-water weakness.",
-                        "Present the inspector credentials at the facility checkpoint.",
-                        "Use the known service route to explain the inspection approach to the supervisor.",
-                        *["Check the restricted corridor for a safe passage."] * 5,
+                        "Show the supervisor the real cooling-water pressure fault.",
+                        *["Check the restricted corridor for a safe passage."] * 7,
                     ]
-                    selections = [
-                        "k_sl_2a_b_r1",
-                        "k_sl_2a_e_r1",
-                        "k_sl_2a_c_r4",
-                        *([None] * 5),
-                    ]
+                    selections = ["k_sl_2a_c_r5", *([None] * 7)]
                 elif prefix == "stall":
                     commands = [
                         "Ask Brandon how he prepared for this.",
-                        "Check the cooling-water weakness.",
-                        "Present the inspector credentials at the facility checkpoint.",
-                        "Explain the cooling-water risk to the supervisor.",
-                        *["Check the restricted corridor for a safe passage."] * 7,
+                        "Show the supervisor the real cooling-water pressure fault.",
+                        *["Check the restricted corridor for a safe passage."] * 9,
                     ]
-                    selections = [
-                        "k_sl_2a_a_r1",
-                        "k_sl_2a_b_r1",
-                        "k_sl_2a_e_r1",
-                        "k_sl_2a_c_r1",
-                        *([None] * 7),
-                    ]
+                    selections = [None, "k_sl_2a_c_r5", *([None] * 9)]
                 if prefix == "missed_window":
                     selections = [None, "k_sl_1c_a_r1", None, "k_sl_1c_b_r2", None] + selections
                 elif prefix == "secure_route":

@@ -96,121 +96,265 @@ deliveries:
   - [Brandon, Brandon's help]
   - [transfer route, service entrance]
   fallback_text: Brandon explains the transfer route and opens the service entrance.
+- fact_id: restricted_corridor_access
+  scene_id: 2A
+  source_kind: npc
+  source_entity_id: shift_supervisor
+  must_convey:
+  - [shift supervisor, supervisor]
+  - [real cooling-water pressure fault, cooling-water fault, pressure problem]
+  - [real ventilation fault, ventilation fault]
+  - [restricted infrastructure corridors, restricted corridor access]
+  fallback_text: >-
+    The shift supervisor walks Kristin and Brandon to the cooling manifold.
+    The real cooling-water pressure fault is present.
+    The cooling-water pressure fault is real.
+    A ventilation fault is present.
+    He grants them access to the restricted infrastructure corridors.
+- fact_id: supervisor_convinced
+  scene_id: 2A
+  source_kind: npc
+  source_entity_id: shift_supervisor
+  must_convey:
+  - [convincing diagnosis, diagnosis is convincing, convinced]
+  - [supervisor, shift supervisor]
+  - [clean access, restricted infrastructure corridors, access]
+  fallback_text: >-
+    The shift supervisor is convinced that Kristin's cooling diagnosis is genuine.
+    He grants them clean access to the restricted infrastructure corridors.
+- fact_id: inspection_console_used
+  scene_id: 2A
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [inspection console, limited inspection console]
+  - [report faults, cycle noncritical systems]
+  - [cannot open detention cells, cannot change the main flood controls]
+  fallback_text: >-
+    Kristin uses the limited inspection console.
+    It can report faults and cycle noncritical systems.
+    It cannot open detention cells or change the main flood controls.
 - fact_id: rebecca_observing_infiltrators
   scene_id: 2A
   source_kind: inference
   must_convey:
   - [watch, watches, under watch, scrutiny]
-  - [supervisor, inspection team, inspectors]
-  fallback_text: The supervisor keeps the inspection team under watch.
-- fact_id: false_identities_ready
+  - [camera, Brandon, marked, stays on him]
+  fallback_text: A camera keeps watching Brandon while the shift supervisor keeps the inspection team under scrutiny.
+- fact_id: cover_suspected
   scene_id: 2A
   source_kind: npc
-  source_entity_id: brandon
+  source_entity_id: shift_supervisor
   must_convey:
-  - [Brandon creates false credentials, false credentials, technical inspectors, Brandon builds their credentials, inspector credentials, fake credentials]
-  - [false identities, inspection cover, inspectors' cover, technical-inspection cover, fake identities, inspector cover]
+  - [follow-up audit, audit]
+  - [closer watch, watches them, keeps watch]
   fallback_text: >-
-    Brandon creates false credentials presenting them as technical inspectors. Their inspection cover gives Kristin and
-    Brandon the false identities they need to enter the facility.
-  cue_text: Brandon has laid out blank inspector forms beside the servers in the hideout.
+    The shift supervisor logs them for a follow-up audit.
+    He lets them enter under closer watch.
+- fact_id: inspection_window_missed
+  scene_id: 2A
+  source_kind: observation
+  source_entity_id: shift_supervisor
+  must_convey:
+  - [patience ends, inspection window closes, window is missed]
+  - [supervisor, inspection]
+  fallback_text: The shift supervisor's patience ends, and the inspection window closes.
+- fact_id: supervisor_escorting
+  scene_id: 2A
+  source_kind: observation
+  source_entity_id: shift_supervisor
+  must_convey:
+  - [supervisor escorts, supervisor leads them]
+  - [inspection oversight, supervisor's oversight, stays nearby]
+  fallback_text: The shift supervisor escorts the inspection team and remains nearby for inspection oversight.
 - fact_id: janus_evidence
   scene_id: 2B
   source_kind: observation
   source_entity_id: kristin
   must_convey:
-  - [JANUS files, JANUS records, selection algorithm, JANUS archive, JANUS selection records, the selection files]
-  - [ranked every American, classification system, selected people, everyone was ranked, Americans were classified, the ranking system]
+  - [Kristin's own file, Kristin's file, RETAINED]
+  - [JANUS, JANUS build record, Brandon Corfman]
+  - [predicted to lead investigators to Corfman, left behind as bait]
   fallback_text: >-
-    Kristin opens the JANUS files in the records archive. The JANUS selection algorithm ranked every American for
-    detention, leverage, or control.
-  cue_text: Selection files fill the archive terminals. Government and financial records sit open beside them.
+    Kristin pulls her own file first.
+    It says she was retained to lead investigators to Corfman.
+    It says she was predicted to lead investigators to Corfman.
+    The file names JANUS.
+    The build record below names Brandon Corfman.
 - fact_id: brandon_janus_role_known
   scene_id: 2B
   source_kind: message
   source_entity_id: brandon
   must_convey:
-  - [Brandon admits, Brandon's confession, Brandon says, Brandon confessed, Brandon acknowledges it, Brandon's admission]
-  - [helped write JANUS, wrote the JANUS software, helped develop the AI, helped build JANUS, created the JANUS system, wrote part of JANUS]
-  costs:
-  - {op: retract, fact_id: trust_brandon, value: true}
-  - {op: assert, fact_id: evidence_gap_development_record, value: true}
+  - [Brandon admits, Brandon's confession, Brandon says]
+  - [helped write JANUS, helped build JANUS, helped develop the AI]
   fallback_text: >-
-    Brandon admits that he helped write JANUS, the software that selected people for detention. His confession confirms
-    that he helped develop the AI before learning what it would become. Time runs out before Kristin can copy the development record bearing Brandon's name.
-  cue_text: Brandon waits beside the development records, ready to answer a question.
+    Brandon admits that he helped write JANUS.
+    He says he tried to stop it after he learned its purpose.
 - fact_id: brandon_claimed_reform_motive
   scene_id: 2B
   source_kind: message
   source_entity_id: brandon
   must_convey:
-  - [Brandon says, Brandon's explanation, Brandon claims, Brandon's claim, Brandon explains, Brandon's account]
-  - [tried to destroy the project, expose the program, stop JANUS, wanted to bring down JANUS, tried to expose JANUS, break up the project]
+  - [Brandon says, Brandon's explanation, Brandon claims]
+  - [tried to destroy the project, expose the program, stop JANUS]
   fallback_text: >-
-    Brandon says he tried to destroy the project after he learned its purpose. His explanation is that he meant to expose
-    the program and stop JANUS from becoming a tool of political control.
-  cue_text: Brandon's earlier messages about the project remain open on the remote terminal.
-- fact_id: michelle_resistance_known
-  scene_id: 2B
-  source_kind: message
-  source_entity_id: michelle
-  must_convey:
-  - [Michelle's coded messages, Michelle's private notes, Michelle's resistance, Michelle's coded notes, her private messages, the resistance notes]
-  - [altering classifications, delaying transfers, sabotaging the facility, altered records, delayed transfers, resistance link]
-  fallback_text: >-
-    Michelle's coded messages and private notes show active sabotage and a small, hidden resistance link inside the
-    facility. It is altering classifications and delaying transfers.
-  cue_text: The medical terminal shows corrupted prisoner files and a warning message.
+    Brandon says he tried to destroy JANUS after he learned its purpose.
+    He meant to expose the program and stop it from becoming a tool of political control.
 - fact_id: kristin_was_bait
   scene_id: 2B
   source_kind: observation
   source_entity_id: kristin
   must_convey:
-  - [Charles expected Kristin to seek Brandon]
-  - [Michelle's evidence]
-  - [expose Brandon's hidden network]
+  - [Kristin was bait, left Kristin behind, retained]
+  - [lead investigators to Brandon, seek Brandon, lead investigators to Corfman]
   fallback_text: >-
-    Charles expected Kristin to seek Brandon.
-    He left Michelle's evidence where she could find it and expose Brandon's hidden network.
-    Corrupted files flicker on the medical terminal.
-  cue_text: The medical terminal shows files you have not examined.
-  costs: []
+    Kristin was bait.
+    Kristin's file says she was left behind as bait.
+    Charles expected her to lead investigators to Brandon.
+- fact_id: brandon_name_kept
+  scene_id: 2B
+  source_kind: message
+  source_entity_id: brandon
+  must_convey:
+  - [keep Brandon's name, Brandon's name stays, name remains in the record]
+  - [evidence intact, record stays intact, build record remains]
+  fallback_text: >-
+    Brandon's name stays in the record.
+    Kristin keeps Brandon's name in the JANUS build record.
+    Evidence intact.
+    The development evidence remains intact.
+- fact_id: brandon_name_erased
+  scene_id: 2B
+  source_kind: message
+  source_entity_id: brandon
+  must_convey:
+  - [erase Brandon's name, Brandon's name erased, delete Brandon's name]
+  - [development record gap, name is gone from the record, record has a gap]
+  fallback_text: >-
+    Brandon's name erased from the record.
+    Kristin lets Brandon erase his name from the JANUS build record.
+    The record has a gap.
+    The development record now has a gap.
+- fact_id: michelle_resistance_known
+  scene_id: 2B
+  source_kind: message
+  source_entity_id: michelle
+  must_convey:
+  - [Michelle's resistance, resistance inside the facility, Michelle is active]
+  - [coded maintenance messages, hidden resistance, sabotage]
+  fallback_text: >-
+    Michelle's resistance is active inside the facility.
+    Michelle's maintenance reply confirms that her hidden resistance is active inside the facility.
+    Her coded messages have been delaying the program and helping people survive.
+- fact_id: michelle_reply_received
+  scene_id: 2B
+  source_kind: message
+  source_entity_id: michelle
+  must_convey:
+  - [medical terminal, maintenance line, terminal message]
+  - [Shelly, Michelle]
+  - [answers once, replies once, answers Kristin]
+  - [alive, working inside the facility, will send a route]
+  fallback_text: >-
+    Kristin replies to the maintenance line on the medical terminal.
+    Michelle answers once.
+    She is alive and working inside the facility.
+    She will send a route.
+- fact_id: audit_window_missed
+  scene_id: 2B
+  source_kind: observation
+  source_entity_id: shift_supervisor
+  must_convey:
+  - [audit reaches the stacks, audit window closes, audit reaches them]
+  - [archive, footsteps, aisles]
+  fallback_text: The audit reaches the stacks in the archive before Kristin and Brandon finish.
 - fact_id: purge_clock_started
   scene_id: 2C
-  source_kind: broadcast
+  source_kind: message
+  source_entity_id: rebecca
   must_convey:
-  - [Charles's purge order, Charles orders, command orders, Charles's order, the purge command, Charles's command]
-  - [purge begins within hours, purge deadline, captives face killing, killing is due within hours, hours remain before the purge, the purge is imminent]
+  - [Charles's purge order, purge order, command order]
+  - [purge begins within hours, purge deadline, hours remain before the purge]
   fallback_text: >-
-    Charles's purge order moves the transfers and killings onto a deadline. Command orders make clear that the purge
-    begins within hours, before the captives can be safely moved.
-  cue_text: Transfer orders sit open in the command levels. They may be worth checking.
+    Rebecca's tablet shows Charles's purge order.
+    The purge begins within hours.
+- fact_id: purge_window_missed
+  scene_id: 2C
+  source_kind: observation
+  source_entity_id: rebecca
+  must_convey:
+  - [purge alarm, purge window closes, purge forces them out]
+  - [command corridor, corridor, guards]
+  fallback_text: The purge alarm forces Kristin and Brandon out of the command corridor.
 - fact_id: evidence_ready_to_transmit
   scene_id: 2C
   source_kind: observation
   source_entity_id: kristin
   must_convey:
-  - [Kristin and Brandon have evidence, evidence in hand, Kristin's evidence, they have the evidence, proof in hand, the gathered evidence]
-  - [ready to transmit, transmit the evidence, send proof, ready for broadcast, send the evidence, broadcast the proof]
+  - [copied JANUS files, copied files, JANUS evidence]
+  - [evidence in hand, ready to transmit, transmit the evidence]
   fallback_text: >-
-    Kristin and Brandon have enough evidence to expose the conspiracy, leaving the evidence in hand. It is ready to
-    transmit, but sending proof will reveal their position.
-  cue_text: The copied files are close at hand. Kristin can check the copied files. Sending them could expose her and Brandon.
+    Kristin carries the copied JANUS files.
+    The evidence is ready to transmit.
 - fact_id: rebecca_office_required_for_broadcast
   scene_id: 2C
   source_kind: message
   source_entity_id: michelle
   must_convey:
-  - [Michelle's encrypted message, Michelle's coded message, maintenance message, Michelle's note]
-  - [maintenance access route, maintenance path, local access route, route to Michelle]
-  - [Rebecca's secured office, Rebecca's office, secured office, Rebecca's locked office]
-  - [open the detention cells, open the cells, release the prisoners, open detention blocks]
-  - [broadcast the evidence, transmit the evidence, send the evidence, broadcast proof]
+  - [Michelle's route, maintenance route, route to Michelle]
+  - [Rebecca's secured office, Rebecca's office]
+  - [manual broadcast controls, command controls]
   fallback_text: >-
-    Michelle's encrypted maintenance message marks a maintenance access route into her partly unsecured holding block
-    and identifies Rebecca's secured office as the manual point that can broadcast the evidence and open the detention
-    cells in the sealed sectors. Reaching the office before the purge closes the route will be dangerous.
-  cue_text: A maintenance report repeats a route marker that Michelle used in her private notes.
+    Michelle's route leads to Rebecca's secured office.
+    The office contains the manual command controls.
+- fact_id: combined_broadcast_rescue_plan_known
+  scene_id: 2C
+  source_kind: message
+  source_entity_id: michelle
+  must_convey:
+  - [broadcast the evidence, transmit the evidence]
+  - [open the detention cells, rescue the captives]
+  - [Rebecca's office, Rebecca's secured office]
+  fallback_text: >-
+    Michelle says that Rebecca's office can broadcast the evidence.
+    It can also open the detention cells.
+- fact_id: committed_to_transmit
+  scene_id: 2C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [heads to the uplink, goes to the uplink, starts sending]
+  - [copied files, evidence]
+  fallback_text: >-
+    Kristin heads to the uplink and starts sending the copied files.
+- fact_id: detention_sectors_sealed
+  scene_id: 2C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [detention sectors seal, detention sectors sealed, sectors lock]
+  - [transmission starts, transmission begins, sending starts]
+  fallback_text: The detention sectors seal as transmission starts from the uplink.
+- fact_id: committed_to_rescue
+  scene_id: 2C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [heads to the transfer carts, goes to the transfer carts, rescue]
+  - [frees a cart of captives, frees captives, captives get out]
+  fallback_text: Kristin heads to the transfer carts and frees a cart of captives.
+- fact_id: evidence_not_transmitted
+  scene_id: 2C
+  source_kind: observation
+  source_entity_id: kristin
+  must_convey:
+  - [evidence not transmitted, nothing has been sent, no evidence sent]
+  - [evidence in Kristin's hands, copied files remain with Kristin]
+  fallback_text: >-
+    Evidence not transmitted.
+    The evidence in Kristin's hands remains with her.
+    Kristin keeps the copied files with her.
 - fact_id: michelle_reached
   scene_id: 3A
   source_kind: observation
@@ -267,7 +411,7 @@ deliveries:
   fallback_text: >-
     Kristin overloads JANUS with conflicting emergencies until human operators take control. Human security control
     replaces the system's predictions in the corridors.
-  cue_text: The cameras track Kristin move by move. The inspection console in the infrastructure corridors can send false water-pressure alarms into empty service corridors.
+  cue_text: The cameras track Kristin move by move. The inspection console can send false water-pressure alarms into empty service corridors.
 - fact_id: charles_abandoned_rebecca
   scene_id: 3B
   source_kind: message

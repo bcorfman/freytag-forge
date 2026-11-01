@@ -34,14 +34,4 @@ def test_existing_arm_dry_run_remains_byte_stable(tmp_path: Path) -> None:
     checked_in = ROOT / "bench/results/stage7-3c-carried-dry"
     for name in ("source.json", "plan.json"):
         expected = (checked_in / name).read_bytes().replace(b"/home/bcorfman/dev/freytag-forge", str(ROOT).encode())
-        expected = expected.replace(b'"turn_index": 63', b'"turn_index": 61')
-        expected = expected.replace(
-            b'        "k_sl_1b_c_r2",\n        "k_sl_1c_a_r1",',
-            b'        "k_sl_1b_c_r2",\n        "k_sl_1b_d_r1",\n        "k_sl_1c_a_r1",',
-        )
-        expected = expected.replace(b"k_sl_1c_c_r1", b"k_sl_1c_c_copy_numbers")
-        expected = expected.replace(
-            b"4a20f380ffa1994854856bb570ef83111917447b44e5dc52a1c258248028397a",
-            b"e20f47e68ef07123d0535ecd8f5b2160f9ee4e14796cf7fc59116f3c58f0f69e",
-        )
         assert (generated / name).read_bytes() == expected

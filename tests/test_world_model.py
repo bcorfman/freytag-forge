@@ -302,4 +302,6 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "patrol_on_scene",
         "patrol_in_house",
         "patrol_departed",
+        "brandon_name_kept",
+        "brandon_name_erased",
     }

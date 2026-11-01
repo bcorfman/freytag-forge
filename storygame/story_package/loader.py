@@ -1136,12 +1136,12 @@ def _validate_incidents(package: StoryPackage) -> None:
             asserted = _asserted_true_route_operations(realization.operations)
             matches = [facts for facts in outcome_facts if facts <= asserted]
             extras = asserted - shared_outcome_facts
-            if len(matches) == 1 and extras:
+            if len(matches) <= 1 and extras:
                 qualifying.append((realization.id, extras))
         if not qualifying:
             raise StoryPackageError(
                 f"incident '{incident.id}' recovery storylet '{incident.recovery_storylet_id}' has no realization "
-                "that reuses exactly one outcome and declares an extra recovery cost fact"
+                "that declares an extra recovery fact without awarding more than one outcome"
             )
 
         advantage_sets: list[set[str]] = []

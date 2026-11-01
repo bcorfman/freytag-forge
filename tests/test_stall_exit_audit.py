@@ -6,6 +6,7 @@ import pytest
 
 from storygame.personas import _ScriptedProvider
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 
@@ -30,6 +31,35 @@ def test_neutral_staller_leaves_each_scene_by_handoff_plus_three(scene_id: str) 
     bound = window.handoff_after_turns + 3
 
     for _ in range(bound):
+        provider.selected = ()
+        engine.turn("Inspect the nearest concrete feature for a safe route.")
+        if state.current_scene_id != scene_id or state.story_complete:
+            break
+
+    assert state.current_scene_id != scene_id or state.story_complete
+
+
+@pytest.mark.parametrize(
+    ("scene_id", "carried"),
+    [
+        ("2A", "processing_numbers_copied"),
+        ("2A", "service_level_access_known"),
+        ("2B", "processing_numbers_copied"),
+        ("2B", "service_level_access_known"),
+        ("2B", "cover_suspected"),
+    ],
+)
+def test_neutral_staller_still_leaves_when_an_earlier_advantage_is_carried(scene_id: str, carried: str) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.current_scene_id = scene_id
+    state.phase = next(scene.metadata.freytag_phase for scene in PACKAGE.scenes if scene.metadata.scene_id == scene_id)
+    state._assert_scene_entry_fact(scene_id)
+    state.facts.assert_fact(Fact(predicate=carried, subject="story", value="true"))
+    provider = _ScriptedProvider(PACKAGE, state)
+    engine = RuntimeEngine(state, provider)
+    window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == scene_id)
+
+    for _ in range(window.handoff_after_turns + 3):
         provider.selected = ()
         engine.turn("Inspect the nearest concrete feature for a safe route.")
         if state.current_scene_id != scene_id or state.story_complete:

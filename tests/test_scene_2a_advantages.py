@@ -1,16 +1,27 @@
 from pathlib import Path
 
-import pytest
-
+from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
+from storygame.runtime.knowledge import RevealCandidate
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import scene_entry_texts
-from tests.test_game_path_journeys import play
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
-BASE_2A_FACTS = ("false_identities_ready", "facility_perimeter_reached")
+BASE_2A_FACTS: tuple[str, ...] = ()
+SCENE_2A_CANDIDATES = tuple(
+    RevealCandidate(
+        id=item.id,
+        statement=item.statement,
+        earn_when=item.earn_when,
+        must_convey=item.must_convey,
+        action_evidence=item.action_evidence,
+        delivery_text=item.delivery_text,
+    )
+    for item in PACKAGE.knowledge.knowledge
+    if "2A" in item.available_in_scenes and item.action_evidence
+)
 
 
 def _state_2a(*advantage_facts: str) -> RuntimeState:
@@ -25,87 +36,47 @@ def _state_2a(*advantage_facts: str) -> RuntimeState:
 
 
 def _eligible_confrontations(state: RuntimeState, command: str) -> set[str]:
-    projection = RuntimeEngine(state, lambda _command: {}).projector.project(state, "player", command)
-    return {
-        candidate.id for candidate in projection.reveal_universe if candidate.id in {"k_sl_2a_c_r3", "k_sl_2a_c_r4"}
-    }
+    del state
+    handoff = uniquely_matched_authored_handoff(command, SCENE_2A_CANDIDATES)
+    return {handoff.candidate.id} if handoff is not None else set()
 
 
-def test_processing_numbers_variant_requires_the_copied_numbers() -> None:
-    command = "Use the copied prisoner numbers to explain the cooling-water inspection to the supervisor."
+def test_convincing_diagnosis_selects_the_new_inspection_outcome() -> None:
+    command = "Diagnose the real cooling-water pressure fault and explain the ventilation problem to the supervisor."
 
-    assert "k_sl_2a_c_r3" in _eligible_confrontations(_state_2a("processing_numbers_copied"), command)
-    assert "k_sl_2a_c_r3" not in _eligible_confrontations(_state_2a(), command)
-
-
-def test_service_route_variant_requires_known_service_access() -> None:
-    command = "Use the known service route to explain the inspection approach to the supervisor."
-
-    assert "k_sl_2a_c_r4" in _eligible_confrontations(_state_2a("service_level_access_known"), command)
-    assert "k_sl_2a_c_r4" not in _eligible_confrontations(_state_2a(), command)
+    assert _eligible_confrontations(_state_2a(), command) == {"k_sl_2a_c_r5"}
 
 
-def test_both_advantages_make_both_confrontation_variants_available() -> None:
-    state = _state_2a("processing_numbers_copied", "service_level_access_known")
+def test_vague_diagnosis_selects_the_under_watch_inspection_outcome() -> None:
+    command = "Give the supervisor a vague, overlong explanation of the cooling and ventilation fault."
+
+    assert _eligible_confrontations(_state_2a(), command) == {"k_sl_2a_c_r6"}
+
+
+def test_inspection_outcomes_are_distinct() -> None:
+    state = _state_2a()
 
     assert _eligible_confrontations(
-        state, "Use the copied prisoner numbers to explain the cooling-water inspection to the supervisor."
-    ) == {
-        "k_sl_2a_c_r3",
-        "k_sl_2a_c_r4",
-    }
+        state, "Diagnose the real cooling-water pressure fault and explain the ventilation problem to the supervisor."
+    ) == {"k_sl_2a_c_r5"}
     assert _eligible_confrontations(
-        state, "Use the known service route to explain the inspection approach to the supervisor."
-    ) == {
-        "k_sl_2a_c_r3",
-        "k_sl_2a_c_r4",
-    }
+        state, "Give the supervisor a vague, overlong explanation of the cooling and ventilation fault."
+    ) == {"k_sl_2a_c_r6"}
 
 
 def test_2a_completes_without_either_carried_advantage() -> None:
     state = _state_2a()
-    selected = True
+    engine = RuntimeEngine(state, lambda _command: {"segments": [{"kind": "narration", "text": "We wait."}]})
 
-    def provider(_command: str) -> dict[str, object]:
-        nonlocal selected
-        if selected:
-            selected = False
-            knowledge = PACKAGE.knowledge_indexes.by_id["k_sl_2a_c_r1"]
-            return {
-                "segments": [{"kind": "narration", "text": knowledge.delivery_text, "grounding_ids": [knowledge.id]}],
-                "selected_knowledge_ids": [knowledge.id],
-            }
-        return {"segments": [{"kind": "narration", "text": "The inspection continues."}]}
+    for _ in range(5):
+        engine.turn("Wait and watch the shift supervisor.")
 
-    engine = RuntimeEngine(state, provider)
-    engine._activate_pacing()
-    for _ in range(7):
-        engine.turn("Explain the cooling-water inspection to the supervisor.")
-
-    assert state.current_scene_id == "2B"
-
-
-@pytest.mark.nightly
-def test_carried_advantages_persist_into_2b() -> None:
-    numbers_journey = play(("k_sl_1c_c_copy_numbers", "k_sl_2a_c_r3"))
-    route_journey = play(("k_sl_1c_c_secure_route", "k_sl_2a_c_r4"))
-
-    assert numbers_journey.state.current_scene_id == "3C"
-    assert route_journey.state.current_scene_id == "3C"
-    for journey, fact_id in (
-        (numbers_journey, "processing_numbers_copied"),
-        (route_journey, "service_level_access_known"),
-    ):
-        assert "2B" in journey.scenes
-        assert Fact(predicate=fact_id, subject="story", value="true") in journey.state.facts.asserted
-
-
-@pytest.mark.nightly
-def test_2a_entry_variants_follow_each_real_journey_advantage() -> None:
-    numbers = play(("k_sl_1c_c_copy_numbers", "k_sl_2a_c_r3"))
-    route = play(("k_sl_1c_c_secure_route", "k_sl_2a_c_r4"))
-    assert numbers.entry_texts[-1].startswith("Kristin still has the copied prisoner numbers.")
-    assert route.entry_texts[-1].startswith("Kristin and Brandon know the service approach.")
+    assert state.current_scene_id == "2A"
+    assert Fact(predicate="inspection_window_missed", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="restricted_corridor_access", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="cover_suspected", subject="story", value="true") not in state.facts.asserted
+    engine.turn("Continue waiting.")
+    assert Fact(predicate="supervisor_escorting", subject="story", value="true") in state.facts.asserted
 
 
 def test_2a_entry_includes_both_variants_in_declaration_order() -> None:
@@ -113,8 +84,9 @@ def test_2a_entry_includes_both_variants_in_declaration_order() -> None:
     metadata = next(scene.metadata for scene in PACKAGE.scenes if scene.metadata.scene_id == "2A")
     texts = scene_entry_texts(metadata, {fact.predicate for fact in state.facts.asserted})
     assert texts[1:] == (
-        "Kristin still has the copied prisoner numbers. She needs a way into the facility.",
-        "Kristin and Brandon know the service approach. Their proof is weaker, but it may still get them inside.",
+        "Kristin still has the copied prisoner numbers. The codes on the supervisor's work orders look like the same "
+        "system.",
+        "Brandon knows the service approach. If they get past this man, he can take them around the second checkpoint.",
     )
 
 

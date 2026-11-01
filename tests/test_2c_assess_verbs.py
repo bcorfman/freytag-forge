@@ -27,11 +27,10 @@ def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
 def test_2c_assess_and_evaluate_verbs_match_unique_reveals() -> None:
     knowledge = _knowledge()
     cases = {
-        "Ask Brandon why Rebecca turned against Charles.": {"k_sl_2c_a_r2"},
-        "Assess the cost of transmitting our evidence right now to the people still held here.": {"k_sl_2c_c_r2"},
-        "Weigh the private offer.": {"k_sl_2c_a_r1"},
-        "Evaluate the cost of sending our evidence now.": {"k_sl_2c_c_r2"},
-        "Read the private message and discuss the offer.": {"k_sl_2c_a_r1"},
+        "Ask Brandon why Rebecca turned against Charles.": set(),
+        "Head to the broadcast uplink and transmit the copied JANUS files.": {"k_sl_2c_d_r3"},
+        "Reach the transfer carts and rescue the prisoners.": {"k_sl_2c_d_r4"},
+        "Read the private message and discuss the offer.": set(),
         "Assess the weather.": set(),
         "Weigh my laptop.": set(),
         "Evaluate the kitchen.": set(),
@@ -42,12 +41,12 @@ def test_2c_assess_and_evaluate_verbs_match_unique_reveals() -> None:
 
 def test_2c_action_contract_positives_remain_unique() -> None:
     knowledge = _knowledge()
-    for item_id in ("k_sl_2c_a_r1", "k_sl_2c_c_r2"):
+    for item_id in ("k_sl_2c_d_r3", "k_sl_2c_d_r4"):
         for command in knowledge[item_id].get("action_contract", {}).get("positive", []):
             assert _matches(knowledge, command) == {item_id}, (item_id, command)
 
 
 def test_2c_edited_items_keep_two_evidence_groups() -> None:
     knowledge = _knowledge()
-    assert len(knowledge["k_sl_2c_a_r1"]["action_evidence"]) == 2
-    assert len(knowledge["k_sl_2c_c_r2"]["action_evidence"]) == 2
+    assert len(knowledge["k_sl_2c_d_r3"]["action_evidence"]) == 2
+    assert len(knowledge["k_sl_2c_d_r4"]["action_evidence"]) == 2

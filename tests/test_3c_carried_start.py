@@ -63,7 +63,8 @@ def test_carried_run_row_uses_scene_turns_from_one_without_network() -> None:
     )
     assert row["start"] == "carried"
     assert row["turns"][0]["scene_turn"] == 1
-    assert row["prefix_turn_index"] == 61
+    recorded_prefix = json.loads((ROOT / "bench/results/stage7-3c-prefix/prefix.json").read_text(encoding="utf-8"))
+    assert row["prefix_turn_index"] == recorded_prefix["turn_index"]
     assert "k_sl_3c_a_r1" in row["turns"][0]["committed_reveals"]
     assert row["a_commit_scene_turn"] == 1
     assert row["first_attempt_a"] == 1

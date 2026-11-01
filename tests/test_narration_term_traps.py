@@ -50,7 +50,7 @@ def test_loader_runs_narration_term_trap_lint_without_authored_handoff_validator
     contents = plot.read_text(encoding="utf-8")
     contents = contents.replace(
         "entry_text: \"Michelle's text came in",
-        "entry_text: \"A restricted infrastructure corridor appeared. Michelle's text came in",
+        "entry_text: \"A genuine cooling-water pressure fault appeared. Michelle's text came in",
         1,
     )
     plot.write_text(contents, encoding="utf-8")
@@ -58,6 +58,6 @@ def test_loader_runs_narration_term_trap_lint_without_authored_handoff_validator
 
     with pytest.raises(
         StoryPackageError,
-        match="scene 1A.*infrastructure corridor.*k_sl_2a_c_r2",
+        match="scene 1A.*cooling-water pressure fault.*k_sl_2a_c_r5",
     ):
         load_story_package(root)

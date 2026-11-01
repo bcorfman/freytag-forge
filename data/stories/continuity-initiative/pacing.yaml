@@ -124,17 +124,38 @@ events:
   - verbatim: true
     text: >-
       The sweep reaches the loading docks. Brandon pulls Kristin away from the observation shaft. "We are leaving. Now," he says. They slip out the way they came, with no numbers and no route. Brandon says, "We will have to find another way in."
-- id: scrutiny_2a
+- id: inspection_window_2a
   scene_id: 2A
-  at_turn: 3
-  when:
-  - fact_id: facility_perimeter_reached
-    equals: true
+  at_turn: 5
   effects:
-  - fact_id: identity_scrutiny_visible
+  - fact_id: inspection_window_missed
     equals: true
   realizations:
-  - text: Facility staff are visibly scrutinizing Kristin's inspector cover.
+  - text: The shift supervisor's patience ends. He escorts Kristin and Brandon in to watch the inspection.
+- id: inspection_nudge_2a
+  scene_id: 2A
+  at_turn: 6
+  when:
+  - fact_id: inspection_window_missed
+    equals: true
+  - fact_id: restricted_corridor_access
+    equals: false
+  effects:
+  - fact_id: supervisor_escorting
+    equals: true
+  realizations:
+  - text: The shift supervisor stays close. He tells Kristin to prove what is wrong with the cooling water.
+- id: inspection_recovery_2a
+  scene_id: 2A
+  at_turn: 7
+  when:
+  - fact_id: inspection_window_missed
+    equals: true
+  - fact_id: supervisor_escorting
+    equals: true
+  effects:
+  - fact_id: inspection_recovery_ready
+    equals: true
 - id: collapse_3c
   scene_id: 3C
   at_turn: 4
@@ -153,14 +174,74 @@ events:
     text: >-
       Water seeps under the outer doors. Kristin left without a copy of the development record bearing Brandon's name.
   - text: Water seeps under the outer doors. Charles's emergency deluge is becoming real.
-- id: purge_2c
-  scene_id: 2C
-  at_turn: 3
+- id: audit_window_2b
+  scene_id: 2B
+  at_turn: 5
   effects:
-  - fact_id: purge_clock_started
+  - fact_id: audit_window_missed
     equals: true
   realizations:
-  - text: The purge order is moving through the facility, and the clock is running.
+  - text: The audit reaches the archive stacks.
+- id: audit_nudge_2b
+  scene_id: 2B
+  at_turn: 6
+  when:
+  - fact_id: audit_window_missed
+    equals: true
+  - fact_id: brandon_name_kept
+    equals: false
+  - fact_id: brandon_name_erased
+    equals: false
+  effects:
+  - fact_id: audit_reaches_stacks
+    equals: true
+  realizations:
+  - text: The shift supervisor is close to the archive stacks. Kristin must keep her confrontation with Brandon to a whisper.
+- id: audit_recovery_2b
+  scene_id: 2B
+  at_turn: 8
+  when:
+  - fact_id: audit_window_missed
+    equals: true
+  - fact_id: audit_reaches_stacks
+    equals: true
+  effects:
+  - fact_id: audit_recovery_ready
+    equals: true
+- id: purge_window_2c
+  scene_id: 2C
+  at_turn: 5
+  effects:
+  - fact_id: purge_window_missed
+    equals: true
+  realizations:
+  - text: The purge alarm forces Kristin and Brandon out. A maintenance channel opens with a way forward.
+- id: purge_nudge_2c
+  scene_id: 2C
+  at_turn: 6
+  when:
+  - fact_id: purge_window_missed
+    equals: true
+  - fact_id: committed_to_transmit
+    equals: false
+  - fact_id: committed_to_rescue
+    equals: false
+  effects:
+  - fact_id: purge_alarm_active
+    equals: true
+  realizations:
+  - text: The purge alarm is active. A maintenance channel is open. Kristin must follow it without making a commitment here.
+- id: purge_recovery_2c
+  scene_id: 2C
+  at_turn: 6
+  when:
+  - fact_id: purge_window_missed
+    equals: true
+  - fact_id: purge_alarm_active
+    equals: true
+  effects:
+  - fact_id: purge_recovery_ready
+    equals: true
 - id: override_deadline_3a
   scene_id: 3A
   at_turn: 9
@@ -196,33 +277,6 @@ events:
     equals: true
   realizations:
   - text: Emergency teams close the footpaths one by one. The service exits are becoming the only way out of the park.
-- id: cover_review_2a
-  scene_id: 2A
-  at_turn: 7
-  when:
-  - fact_id: facility_perimeter_reached
-    equals: true
-  effects:
-  - fact_id: inspector_cover_under_review
-    equals: true
-  realizations:
-  - text: A second credential check threatens their inspector cover.
-- id: archive_sweep_2b
-  scene_id: 2B
-  at_turn: 8
-  effects:
-  - fact_id: archive_security_sweep
-    equals: true
-  realizations:
-  - text: An archive audit begins at the far terminals. Access lights change from green to amber as security works closer.
-- id: transfers_2c
-  scene_id: 2C
-  at_turn: 8
-  effects:
-  - fact_id: purge_transfers_underway
-    equals: true
-  realizations:
-  - text: Transfer carts begin moving through the lower levels. The purge is no longer an order on a screen.
 - id: detention_lockdown_3a
   scene_id: 3A
   at_turn: 8
@@ -332,7 +386,7 @@ transitions:
   target_scene_id: 2C
   priority: 10
   triggers:
-  - fact_id: archive_crisis_understood
+  - fact_id: michelle_reply_received
     equals: true
   required_dependencies:
   - brandon

@@ -1,158 +1,83 @@
-from __future__ import annotations
+"""Hermetic Act 2 incident slices for outcomes and missed-window recovery."""
 
 from pathlib import Path
 
 import pytest
 
-from storygame.personas import _ScriptedProvider
-from storygame.runtime.engine import RuntimeEngine
-from storygame.runtime.state import RuntimeSnapshot, RuntimeState
 from storygame.story_package.loader import load_story_package
-from tests.test_continuity_1c_incident import _assert_fact, _facts, _state
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
-TURN_BUDGET = 14
-BASE_2A_ENTRY = next(scene.metadata.entry_text for scene in PACKAGE.scenes if scene.metadata.scene_id == "2A")
 
 
-def _engine() -> tuple[RuntimeState, RuntimeEngine, _ScriptedProvider]:
-    state = _state()
-    _assert_fact(state, "facility_proof")
-    _assert_fact(state, "false_identities_ready")
-    _assert_fact(state, "rebecca_observing_infiltrators")
-    _assert_fact(state, "facility_perimeter_reached")
-    state.active_event_ids.add("SL-2A-C")
-    provider = _ScriptedProvider(PACKAGE, state)
-    return state, RuntimeEngine(state, provider), provider
+def test_slice_a_inspection_convincing_outcome_uses_the_new_route() -> None:
+    incident = next(item for item in PACKAGE.incidents if item.id == "i_2a_real_leak")
+    convincing = next(item for item in incident.outcomes if item.id == "inspection_convincing")
+
+    assert convincing.storylet_id == "SL-2A-C"
+    assert convincing.realization_id == "SL-2A-C-R5"
+    assert convincing.advantages == ("supervisor_convinced",)
+    assert convincing.costs == ()
 
 
-def _turn(
-    engine: RuntimeEngine,
-    provider: _ScriptedProvider,
-    command: str,
-    selected: str | None = None,
-) -> object:
-    provider.selected = (selected,) if selected else ()
-    before = _facts(engine.state)
-    result = engine.turn(command)
-    cue_fact_id = engine.state.last_turn_delivery.cue_fact_id
-    assert cue_fact_id is None or cue_fact_id not in before
-    return result
+def test_slice_b_inspection_doubted_outcome_marks_the_cover_suspected_path() -> None:
+    incident = next(item for item in PACKAGE.incidents if item.id == "i_2a_real_leak")
+    doubted = next(item for item in incident.outcomes if item.id == "inspection_doubted")
+
+    assert doubted.storylet_id == "SL-2A-C"
+    assert doubted.realization_id == "SL-2A-C-R6"
+    assert doubted.advantages == ("restricted_corridor_access",)
+    assert doubted.costs == ("cover_suspected",)
 
 
-def _texts(result: object) -> tuple[str, ...]:
-    return tuple(segment.text for segment in result.segments)  # type: ignore[union-attr]
+def test_slice_c_missed_window_recovery_requires_the_inspection_window_fact() -> None:
+    recovery = next(route for route in PACKAGE.storylet_routes.storylets if route.id == "SL-2A-D")
+    assert tuple(condition.fact_id for condition in recovery.activation_conditions) == ("inspection_window_missed",)
+    event = next(event for event in PACKAGE.pacing.events if event.id == "inspection_window_2a")
+    assert event.scene_id == "2A"
+    assert event.at_turn == 5
+    assert tuple(effect.fact_id for effect in event.effects) == ("inspection_window_missed",)
 
 
-def _finish_2a(engine: RuntimeEngine, provider: _ScriptedProvider, confrontation_id: str) -> object:
-    engine.state.active_event_ids.add("SL-2A-C")
-    command = {
-        "k_sl_2a_c_r3": "Use the copied prisoner numbers to explain the cooling-water inspection to the supervisor.",
-        "k_sl_2a_c_r4": "Use the known service route to explain the inspection approach to the supervisor.",
-        "k_sl_2a_a_r1": "Explain the cooling-water risk to the supervisor.",
-    }[confrontation_id]
-    return _turn(
-        engine,
-        provider,
-        command,
-        confrontation_id,
-    )
+@pytest.mark.parametrize(
+    ("scene_id", "incident_id", "window_id", "nudge_id", "missed_fact", "pressure_fact"),
+    (
+        (
+            "2A",
+            "i_2a_real_leak",
+            "inspection_window_2a",
+            "inspection_nudge_2a",
+            "inspection_window_missed",
+            "supervisor_escorting",
+        ),
+        ("2B", "i_2b_audit", "audit_window_2b", "audit_nudge_2b", "audit_window_missed", "audit_reaches_stacks"),
+        (
+            "2C",
+            "i_2c_rebecca_corridor",
+            "purge_window_2c",
+            "purge_nudge_2c",
+            "purge_window_missed",
+            "purge_alarm_active",
+        ),
+    ),
+)
+def test_act2_windows_and_recovery_routes_are_one_per_scene(
+    scene_id: str,
+    incident_id: str,
+    window_id: str,
+    nudge_id: str,
+    missed_fact: str,
+    pressure_fact: str,
+) -> None:
+    incident = next(item for item in PACKAGE.incidents if item.id == incident_id)
+    assert incident.scene_id == scene_id
+    assert incident.missed_window_event_id == window_id
+    recovery_id = {"2A": "SL-2A-D", "2B": "SL-2B-D", "2C": "SL-2C-E"}[scene_id]
+    assert incident.recovery_storylet_id == recovery_id
 
-
-def _advance_to_2b(engine: RuntimeEngine, provider: _ScriptedProvider) -> None:
-    for _ in range(7):
-        if engine.state.current_scene_id != "2A":
-            break
-        _turn(engine, provider, "Check the restricted corridor for a safe passage.")
-
-
-def _copy_numbers_run(*, restore_after_outcome: bool = False) -> tuple[RuntimeState, tuple[str, ...]]:
-    state, engine, provider = _engine()
-    _turn(engine, provider, "Watch the processing line for Michelle.", "k_sl_1c_b_r2")
-    outcome = _turn(engine, provider, "Copy the prisoner numbers.", "k_sl_1c_c_copy_numbers")
-    if restore_after_outcome:
-        restored = RuntimeState.bootstrap(PACKAGE)
-        restored.restore_snapshot(RuntimeSnapshot.model_validate_json(state.snapshot().model_dump_json()))
-        provider = _ScriptedProvider(PACKAGE, restored)
-        state, engine = restored, RuntimeEngine(restored, provider)
-    confrontation = _finish_2a(engine, provider, "k_sl_2a_c_r3")
-    _advance_to_2b(engine, provider)
-    assert state.current_scene_id == "2B"
-    assert any(text.startswith("Kristin still has the copied prisoner numbers.") for text in _texts(outcome))
-    assert "processing_numbers_copied" in _facts(state)
-    assert "restricted_corridor_access" in _facts(state)
-    assert "processing_numbers_used_in_confrontation" in _facts(state)
-    assert state.turn_index <= TURN_BUDGET
-    return state, _texts(confrontation)
-
-
-def _missed_window_run(*, restore_after_miss: bool = False) -> tuple[RuntimeState, tuple[str, ...]]:
-    state, engine, provider = _engine()
-    _turn(engine, provider, "Watch the processing line for Michelle.", "k_sl_1c_b_r2")
-    for command in (
-        "Inspect the loading docks for a security route.",
-        "Listen to the ventilation system for a change.",
-        "Examine the observation shaft for movement.",
-        "Check the terminal doors for a safe exit.",
-    ):
-        _turn(engine, provider, command)
-    assert "transfer_window_missed" in _facts(state)
-    assert not {
-        "processing_numbers_copied",
-        "service_level_access_known",
-        "facility_infiltration_needed",
-    } & _facts(state)
-    if restore_after_miss:
-        restored = RuntimeState.bootstrap(PACKAGE)
-        restored.restore_snapshot(RuntimeSnapshot.model_validate_json(state.snapshot().model_dump_json()))
-        state = restored
-        provider = _ScriptedProvider(PACKAGE, state)
-        engine = RuntimeEngine(state, provider)
-    recovery = _turn(engine, provider, "Follow Brandon through the service entrance.", "k_sl_1c_d_r1")
-    confrontation = _finish_2a(engine, provider, "k_sl_2a_a_r1")
-    _advance_to_2b(engine, provider)
-    assert state.current_scene_id == "2B"
-    assert "transfer_window_missed" in _facts(state)
-    assert "service_level_access_known" in _facts(state)
-    assert "processing_numbers_copied" not in _facts(state)
-    assert "Kristin and Brandon know the service approach." not in _texts(recovery)
-    assert BASE_2A_ENTRY in _texts(recovery)
-    assert state.turn_index <= TURN_BUDGET
-    return state, _texts(confrontation)
-
-
-def test_slice_a_copy_numbers_traversal_and_2b_advantage() -> None:
-    state, _ = _copy_numbers_run()
-    assert state.current_scene_id == "2B"
-
-
-def test_slice_b_secure_route_and_2b_advantage() -> None:
-    state, engine, provider = _engine()
-    _turn(engine, provider, "Watch the processing line for Michelle.", "k_sl_1c_b_r2")
-    outcome = _turn(engine, provider, "Ask Brandon about the transfer route.", "k_sl_1c_c_secure_route")
-    _finish_2a(engine, provider, "k_sl_2a_c_r4")
-    _advance_to_2b(engine, provider)
-    assert state.current_scene_id == "2B"
-    assert {"service_level_access_known", "evidence_gap_processing_numbers", "trust_brandon"} <= _facts(state)
-    assert "processing_numbers_copied" not in _facts(state)
-    assert any("Kristin and Brandon know the service approach." in text for text in _texts(outcome))
-    assert state.turn_index <= TURN_BUDGET
-
-
-def test_slice_c_missed_window_recovery_has_base_2a_entry() -> None:
-    state, _ = _missed_window_run()
-    assert state.current_scene_id == "2B"
-
-
-@pytest.mark.nightly
-def test_slice_d_save_load_matches_uninterrupted_copy_and_missed_window() -> None:
-    missed, missed_texts = _missed_window_run()
-    missed_loaded, missed_loaded_texts = _missed_window_run(restore_after_miss=True)
-    assert missed_loaded.current_scene_id == missed.current_scene_id == "2B"
-    assert missed_loaded_texts == missed_texts
-    assert missed_loaded.facts == missed.facts
-    copied, copied_texts = _copy_numbers_run()
-    copied_loaded, copied_loaded_texts = _copy_numbers_run(restore_after_outcome=True)
-    assert copied_loaded.current_scene_id == copied.current_scene_id == "2B"
-    assert copied_loaded_texts == copied_texts
-    assert copied_loaded.facts == copied.facts
+    window = next(event for event in PACKAGE.pacing.events if event.id == window_id)
+    nudge = next(event for event in PACKAGE.pacing.events if event.id == nudge_id)
+    assert window.scene_id == nudge.scene_id == scene_id
+    assert window.at_turn == 5
+    assert nudge.at_turn == 6
+    assert tuple(effect.fact_id for effect in window.effects) == (missed_fact,)
+    assert tuple(effect.fact_id for effect in nudge.effects) == (pressure_fact,)

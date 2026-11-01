@@ -143,31 +143,6 @@ def test_whole_package_findings_match_recorded_gaps():
     package = load_story_package(CONTINUITY)
     amap = build_affordance_map(package)
     expected = json.loads((Path("bench") / "affordance_known_gaps.json").read_text(encoding="utf-8"))
-    obsolete = {
-        ("2A", "t_2a_2b:restricted_corridor_access", "facility_perimeter"),
-    }
-    expected = [
-        finding for finding in expected if (finding["scene_id"], finding["gate"], finding["subject"]) not in obsolete
-    ]
-    expected.extend(
-        {
-            "check": check,
-            "scene_id": "2C",
-            "gate": "t_2c_3a:combined_broadcast_rescue_plan_known",
-            "subject": "processing_line",
-        }
-        for check in (2, 3)
-    )
-    expected.extend(
-        {
-            "check": check,
-            "scene_id": "2A",
-            "gate": "t_2a_2b:restricted_corridor_access",
-            "subject": subject,
-        }
-        for subject in ("service_entrance", "service_level")
-        for check in (2, 3)
-    )
     actual = [
         {key: finding[key] for key in ("check", "scene_id", "gate", "subject")}
         for finding in check_affordance_map(package, amap)

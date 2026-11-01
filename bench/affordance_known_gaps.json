@@ -24,27 +24,51 @@
     "subject": "copied_janus_files"
   },
   {
-    "check": 3,
-    "scene_id": "2A",
-    "gate": "t_2a_2b:restricted_corridor_access",
-    "subject": "cooling_service_archive_panel"
+    "check": 2,
+    "scene_id": "2B",
+    "gate": "t_2b_2c:michelle_reply_received",
+    "subject": "mcgehee_home"
   },
   {
     "check": 3,
-    "scene_id": "2A",
-    "gate": "t_2a_2b:restricted_corridor_access",
-    "subject": "facility_perimeter"
+    "scene_id": "2B",
+    "gate": "t_2b_2c:michelle_reply_received",
+    "subject": "mcgehee_home"
   },
   {
     "check": 2,
-    "scene_id": "2A",
-    "gate": "t_2a_2b:restricted_corridor_access",
-    "subject": "infrastructure_corridors"
+    "scene_id": "2B",
+    "gate": "t_2b_2c:michelle_reply_received",
+    "subject": "memory_card"
+  },
+  {
+    "check": 3,
+    "scene_id": "2B",
+    "gate": "t_2b_2c:michelle_reply_received",
+    "subject": "memory_card"
   },
   {
     "check": 2,
-    "scene_id": "2C",
-    "gate": "t_2c_3a:combined_broadcast_rescue_plan_known",
-    "subject": "maintenance_network"
+    "scene_id": "2B",
+    "gate": "t_2b_2c:michelle_reply_received",
+    "subject": "michelle_phone"
+  },
+  {
+    "check": 3,
+    "scene_id": "2B",
+    "gate": "t_2b_2c:michelle_reply_received",
+    "subject": "michelle_phone"
+  },
+  {
+    "check": 2,
+    "scene_id": "2B",
+    "gate": "t_2b_2c:michelle_reply_received",
+    "subject": "michelle_photograph"
+  },
+  {
+    "check": 3,
+    "scene_id": "2B",
+    "gate": "t_2b_2c:michelle_reply_received",
+    "subject": "michelle_photograph"
   }
 ]
