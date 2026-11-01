@@ -168,16 +168,20 @@ DRY_NUDGE_TEXT = {
     ),
 }
 DRY_OUTCOME_COMMANDS = {
-    "2A": ("Explain my cooling-water pressure reading to the supervisor.",),
+    "2A": (
+        "Feel the cooling lines and read the gauge at the cooling manifold.",
+        "Explain the cooling-water pressure reading to the supervisor.",
+    ),
     "2B": (
-        "Pull my file and keep Brandon's name in the build record.",
+        "Pull my own file at the archive terminals.",
+        "Keep Brandon's name in the build record.",
         "Type my reply to the maintenance line.",
     ),
     "2C": ("Head to the uplink and start sending my copied files.",),
 }
 DRY_OUTCOME_SELECTIONS = {
-    "2A": ("k_sl_2a_c_r5",),
-    "2B": ("k_sl_2b_b_r4", "k_sl_2b_c_r3"),
+    "2A": ("k_sl_2a_b_r1", "k_sl_2a_c_r5"),
+    "2B": ("k_sl_2b_a_r1", "k_sl_2b_b_r4", "k_sl_2b_c_r3"),
     "2C": ("k_sl_2c_d_r3",),
 }
 NEUTRAL_DRY_COMMAND = {
@@ -220,6 +224,11 @@ ROW_FIELDS = (
 
 def _provider_payload(selected: str | None) -> dict[str, Any]:
     text = {
+        "k_sl_2a_b_r1": (
+            "Kristin feels the cooling lines, reads the gauge and traces the vent. The water pressure is falling on "
+            'the return line, and the ventilation is hiding the drop. The shift supervisor says, "Well? What is '
+            'failing, and what happens if nobody fixes it?"'
+        ),
         "k_sl_2a_c_r5": (
             "Kristin proves that the genuine cooling-water pressure fault is real. She finds a ventilation fault. "
             "The shift supervisor grants access to the restricted infrastructure corridors. "
@@ -231,6 +240,11 @@ def _provider_payload(selected: str | None) -> dict[str, Any]:
             "The shift supervisor logs them for a follow-up audit. He lets them enter the restricted infrastructure "
             "corridors under closer watch. The limited console can report faults and cycle noncritical systems. "
             "It cannot open detention cells or change the main flood controls."
+        ),
+        "k_sl_2b_a_r1": (
+            "Kristin pulls her own file. It says she was retained to lead investigators to Corfman. Kristin was bait. "
+            'The build record for the system names Brandon Corfman as an author. Brandon whispers, "Let me delete '
+            'my name from the record before we copy the files. Or tell me to leave it. Your call."'
         ),
         "k_sl_2b_b_r4": (
             "Kristin pulls her own file first. It says she was retained to lead investigators to Corfman. Kristin was "

@@ -258,6 +258,12 @@ new_fact_ids:
   used_by_storylets:
   - SL-1C-B
   used_by_transitions: []
+- id: manifold_fault_found
+  definition: Kristin has found the cooling-water pressure fault at the manifold.
+  used_by_storylets:
+  - SL-2A-B
+  - SL-2A-C
+  used_by_transitions: []
 - id: national_detention_network_known
   definition: Kristin knows the Los Angeles site is part of a national detention network.
   used_by_storylets: []
@@ -299,6 +305,12 @@ new_fact_ids:
   - SL-2A-D
   used_by_transitions:
   - t_2a_2b
+- id: kristin_file_read
+  definition: Kristin has pulled and read her own file in the archive.
+  used_by_storylets:
+  - SL-2B-A
+  - SL-2B-B
+  used_by_transitions: []
 - id: supervisor_convinced
   definition: The shift supervisor is convinced that Kristin's cooling diagnosis is genuine and grants clean access.
   used_by_storylets: [SL-2A-C]
@@ -1484,12 +1496,48 @@ storylets:
   non_coercion_note: >-
     Brandon may offer these actions in dialogue. Kristin chooses what to attempt.
     Equivalent player actions may earn the same result.
+- id: SL-2A-B
+  scene_id: 2A
+  title: The Manifold Shows the Fault
+  activation:
+    scene_id: 2A
+    conditions:
+    - fact_id: inspection_window_missed
+      equals: false
+    pacing:
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let the supervisor's challenge turn a direct manifold inspection into a diagnosis choice.
+  realization_options:
+  - id: SL-2A-B-R1
+    dramatic_intent: Kristin finds the cooling-water pressure fault at the manifold.
+    source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
+    operations:
+    - op: assert
+      fact_id: manifold_fault_found
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - manifold_fault_found
+    abort_when:
+    - scene_id_not: 2A
+  non_coercion_note: >-
+    The supervisor may offer this inspection in dialogue. Kristin chooses what to attempt.
+    Equivalent player-authored approaches may earn the same result.
 - id: SL-2A-C
   scene_id: 2A
   title: The Supervisor Needs a Reason
   activation:
     scene_id: 2A
-    conditions: []
+    conditions:
+    - fact_id: manifold_fault_found
+      equals: true
     pacing:
       earliest_turn: 0
       target_turn: 3
@@ -1592,12 +1640,48 @@ storylets:
     - scene_id_not: 2A
   non_coercion_note: >-
     Offer as a consequence of the missed window. Equivalent player-authored approaches may validate the same operations.
+- id: SL-2B-A
+  scene_id: 2B
+  title: Her Own File
+  activation:
+    scene_id: 2B
+    conditions:
+    - fact_id: audit_window_missed
+      equals: false
+    pacing:
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 3
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let Kristin's own file expose the bait and Brandon's authorship before he offers the name choice.
+  realization_options:
+  - id: SL-2B-A-R1
+    dramatic_intent: Kristin pulls and reads her own file in the archive.
+    source_beats: [scene-2b1--the-selection-algorithm, scene-2b2--kristin-was-bait]
+    operations:
+    - op: assert
+      fact_id: kristin_file_read
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_phase_two]
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - kristin_file_read
+    abort_when:
+    - scene_id_not: 2B
+  non_coercion_note: >-
+    Brandon may offer this file pull in dialogue. Kristin chooses what to attempt.
+    Equivalent player-authored approaches may earn the same result.
 - id: SL-2B-B
   scene_id: 2B
   title: Brandon’s Name Is in the Build Records
   activation:
     scene_id: 2B
-    conditions: []
+    conditions:
+    - fact_id: kristin_file_read
+      equals: true
     pacing:
       earliest_turn: 0
       target_turn: 5
@@ -2813,6 +2897,7 @@ coverage_matrix:
   outgoing_transition_id: t_2a_2b
   trigger_fact_id: restricted_corridor_access
   storylets_helping_in_source_scene:
+  - SL-2A-B
   - SL-2A-C
   - SL-2A-D
   status: covered_by_gated_canonical_bridge
@@ -2821,6 +2906,7 @@ coverage_matrix:
   outgoing_transition_id: t_2b_2c
   trigger_fact_id: archive_crisis_understood
   storylets_helping_in_source_scene:
+  - SL-2B-A
   - SL-2B-B
   - SL-2B-C
   - SL-2B-D
@@ -2943,6 +3029,7 @@ canonical_bridge_events:
     value: true
   realization_storylets:
   - SL-2A-C
+  - SL-2A-B
   - SL-2A-D
   fallback_realization: The canonical security confrontation may be realized through any convincing free-text technical/social
     approach consistent with the false-inspector cover; it grants restricted corridor access and the limited diagnostic
@@ -2986,6 +3073,7 @@ canonical_bridge_events:
     value: true
   realization_storylets:
   - SL-2B-B
+  - SL-2B-A
   - SL-2B-C
   - SL-2B-D
   fallback_realization: Free-text archive investigation and confrontation may establish the JANUS evidence, Brandon’s role and motive, and Michelle’s resistance without selecting a storylet.

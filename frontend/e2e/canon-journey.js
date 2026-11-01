@@ -37,12 +37,13 @@ export const scenePrompts = {
   "2A": [
     "Drive to the facility perimeter.",
     "Meet the shift supervisor at the facility gate.",
-    "Inspect the cooling manifold and ventilation grille.",
+    "Feel the cooling lines and read the gauge at the cooling manifold.",
     "Diagnose the real cooling-water pressure fault and ventilation problem to the supervisor.",
   ],
   // 2B incident: Kristin's own file and the build record -> the whispered name choice -> Michelle's one reply
   "2B": [
-    "Pull Kristin's own JANUS file first and keep Brandon's name in the build record.",
+    "Pull my own file at the archive terminals.",
+    "Keep Brandon's name in the build record.",
     "Type one reply to Michelle on the medical terminal.",
     "Read the archive situation and wait for Michelle's route.",
     "Study the medical terminal's maintenance line again.",

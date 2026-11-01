@@ -164,9 +164,10 @@ def test_protagonist_effect_knowledge_still_blanks_frame() -> None:
 def test_inspection_2a_knowledge_is_scene_local() -> None:
     state = _scene_state("2A")
     state.active_event_ids.add("SL-2A-C")
+    _assert_story_fact(state, "manifold_fault_found")
 
     projection = KnowledgeProjector().project(
-        state, "player", "Diagnose the real cooling-water pressure fault and ventilation problem to the supervisor."
+        state, "player", "Explain the cooling-water pressure fault and ventilation problem to the supervisor."
     )
 
     assert "k_sl_2a_c_r5" in _ids(projection.candidates)

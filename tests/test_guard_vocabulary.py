@@ -77,7 +77,7 @@ def test_inspection_reveal_requires_diagnosis_evidence() -> None:
     assert matched.id == "k_sl_2a_c_r5"
 
 
-@pytest.mark.parametrize("term", ("JANUS", "Phase Two", "purge clock", "memory card"))
+@pytest.mark.parametrize("term", ("JANUS", "Phase Two", "cooling-water pressure fault", "memory card"))
 def test_existing_protected_secrets_remain_refused_in_scene_1a(term: str) -> None:
     with pytest.raises(ProposalValidationError):
         _probe("1A", term)

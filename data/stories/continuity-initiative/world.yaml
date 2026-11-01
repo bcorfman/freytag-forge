@@ -394,6 +394,7 @@ facts:
 - brandon_retains_system_access
 - service_level_access_known
 - captives_confirmed_alive
+- manifold_fault_found
 - processing_numbers_copied
 - transfer_window_missed
 - brandon_urges_retreat
@@ -402,6 +403,7 @@ facts:
 - architects_strategy_known
 - brandon_prepared_before_event
 - restricted_corridor_access
+- kristin_file_read
 - rebecca_observing_infiltrators
 - processing_numbers_used_in_confrontation
 - service_route_used_in_confrontation

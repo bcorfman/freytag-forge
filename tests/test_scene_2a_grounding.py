@@ -129,27 +129,48 @@ class _Response:
 
 def test_warning_the_supervisor_earns_corridor_access_by_handoff(monkeypatch: pytest.MonkeyPatch) -> None:
     state = _scene_2a_state()
-    narration = {
-        "segments": [
+    narrations = iter(
+        [
             {
-                "kind": "narration",
-                "text": (
-                    "Kristin proves the genuine cooling-water pressure fault and the real ventilation fault "
-                    "to the supervisor."
-                ),
-            }
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": (
+                            "Kristin feels the cooling lines, reads the gauge and traces the vent. The water pressure "
+                            "is falling on the return line, and the ventilation is hiding the drop. The shift "
+                            'supervisor says, "Well? What is failing, and what happens if nobody fixes it?"'
+                        ),
+                        "grounding_ids": ["k_sl_2a_b_r1"],
+                    }
+                ],
+                "selected_knowledge_ids": ["k_sl_2a_b_r1"],
+            },
+            {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": (
+                            "Kristin proves the genuine cooling-water pressure fault and the real ventilation fault "
+                            "to the supervisor."
+                        ),
+                        "grounding_ids": ["k_sl_2a_c_r5"],
+                    }
+                ],
+                "selected_knowledge_ids": ["k_sl_2a_c_r5"],
+            },
         ]
-    }
+    )
     monkeypatch.setattr(
         "storygame.runtime.cloudflare.urlopen",
-        lambda *_args, **_kwargs: _Response({"narration": json.dumps(narration)}),
+        lambda *_args, **_kwargs: _Response({"narration": json.dumps(next(narrations))}),
     )
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    proposal = RuntimeEngine(state, provider).turn(
-        "Diagnose the real cooling-water pressure fault and explain the ventilation problem to the supervisor."
-    )
+    engine = RuntimeEngine(state, provider)
+    observation = engine.turn("Feel the cooling lines and read the gauge at the cooling manifold.")
+    proposal = engine.turn("Explain the cooling-water pressure fault and ventilation problem to the supervisor.")
 
+    assert observation.selected_knowledge_ids == ("k_sl_2a_b_r1",)
     assert proposal.selected_knowledge_ids == ("k_sl_2a_c_r5",)
     assert proposal.segments[0].text == (
         "Kristin proves the genuine cooling-water pressure fault and the real ventilation fault to the supervisor."

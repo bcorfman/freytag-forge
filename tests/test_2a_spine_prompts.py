@@ -44,13 +44,13 @@ def test_2a_spine_prompts_match_their_authored_reveals_in_order() -> None:
     prompts = [
         "Drive to the facility perimeter.",
         "Meet the shift supervisor at the facility gate.",
-        "Inspect the cooling manifold and ventilation grille.",
+        "Feel the cooling lines and read the gauge at the cooling manifold.",
         "Diagnose the real cooling-water pressure fault and ventilation problem to the supervisor.",
     ]
     expected = [
         set(),
         set(),
-        set(),
+        {"k_sl_2a_b_r1"},
         {"k_sl_2a_c_r5"},
     ]
     knowledge = _knowledge()
@@ -58,7 +58,7 @@ def test_2a_spine_prompts_match_their_authored_reveals_in_order() -> None:
     matched = [_matches(knowledge, prompt) for prompt in prompts]
     assert matched == expected
 
-    established = {"facility_infiltration_needed"}
+    established = {"facility_infiltration_needed", "inspection_window_missed"}
     for prompt_number, item_ids in enumerate(matched, start=1):
         required = {
             requirement["fact_id"] for item_id in item_ids for requirement in knowledge[item_id].get("requires", [])

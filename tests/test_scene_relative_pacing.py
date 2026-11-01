@@ -140,8 +140,8 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
         targets = [storylet.target_turn for storylet in storylets]
         expected_targets = {
             "1C": [2, 2, 3, 6],
-            "2A": [3, 6],
-            "2B": [5, 6, 6],
+            "2A": [1, 3, 6],
+            "2B": [1, 5, 6, 6],
             "2C": [6, 13],
         }.get(scene_id)
         if expected_targets is None:

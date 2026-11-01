@@ -19,7 +19,7 @@ def _scene_prompts() -> list[str]:
 
     body = match.group("body")
     strings = list(re.finditer(r'"(?:\\.|[^"\\])*"', body))
-    assert len(strings) == 4, f'Expected exactly four strings in "2B", found {len(strings)}.'
+    assert len(strings) == 5, f'Expected exactly five strings in "2B", found {len(strings)}.'
     remainder = re.sub(r'"(?:\\.|[^"\\])*"', "", body)
     assert not remainder.strip(" \t\r\n,"), 'The "2B" array contains non-string content.'
     return [json.loads(string.group(0)) for string in strings]
@@ -42,15 +42,17 @@ def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
 
 def test_2b_spine_prompts_match_their_authored_reveals_in_order() -> None:
     prompts = [
-        "Pull Kristin's own JANUS file first and keep Brandon's name in the build record.",
-        "Pull Kristin's own JANUS file first and let Brandon erase his name from the build record.",
+        "Pull my own file at the archive terminals.",
+        "Keep Brandon's name in the build record.",
         "Type one reply to Michelle on the medical terminal.",
         "Read the archive situation and wait for Michelle's route.",
+        "Study the medical terminal's maintenance line again.",
     ]
     expected = [
+        {"k_sl_2b_a_r1"},
         {"k_sl_2b_b_r4"},
-        {"k_sl_2b_b_r5"},
         {"k_sl_2b_c_r3"},
+        set(),
         set(),
     ]
     knowledge = _knowledge()
@@ -58,7 +60,7 @@ def test_2b_spine_prompts_match_their_authored_reveals_in_order() -> None:
     matched = [_matches(knowledge, prompt) for prompt in prompts]
     assert matched == expected
 
-    established: set[str] = set()
+    established: set[str] = {"audit_window_missed"}
     for prompt_number, item_ids in enumerate(matched, start=1):
         required = {
             requirement["fact_id"] for item_id in item_ids for requirement in knowledge[item_id].get("requires", [])

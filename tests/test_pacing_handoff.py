@@ -410,7 +410,8 @@ def test_scene_2a_missed_window_waits_for_incident_recovery_without_an_outcome()
 
     projection = KnowledgeProjector().project(state, "player", "Look around.")
     projected_ids = {item.id for item in (*projection.committed_knowledge, *projection.candidates)}
-    assert {"k_sl_2a_c_r5", "k_sl_2a_c_r6"} <= projected_ids
+    assert "k_sl_2a_c_r5" not in projected_ids
+    assert "k_sl_2a_c_r6" not in projected_ids
     assert "rebecca_observing_infiltrators" not in projection.model_dump_json()
 
 

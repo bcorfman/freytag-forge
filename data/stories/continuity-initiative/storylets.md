@@ -728,6 +728,45 @@ Each entry below is authoring data, not a player action menu.
 
 ## Storylets for [Scene 2A — False Identities](plot.md#scene-2a--false-identities)
 
+### SL-2A-B — The Manifold Shows the Fault
+
+**Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility), [2A.4 — The First Complication](plot.md#scene-2a4--the-first-complication)
+
+**Allowed scene:** `2A`
+
+**Available when**
+- `inspection_window_missed` is false.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- The shift supervisor
+- Cooling manifold and pressure gauge
+
+**Protected boundary**
+- The full diagnosis and restricted access remain unresolved until the supervisor hears Kristin's explanation.
+
+**Dramatic purpose**
+- Let Kristin inspect the manifold and find the fault before the supervisor asks for her diagnosis.
+
+**Possible realizations**
+- Kristin feels the cooling lines, reads the gauge, or traces the vent.
+- The supervisor asks what is failing and what happens if nobody fixes it.
+
+**Effects**
+- May set `manifold_fault_found`.
+
+**Completion**
+- Kristin has found the cooling-water pressure fault.
+
+**Abort**
+- The scene is no longer `2A`.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
+
 ### SL-2A-C — The Supervisor Needs a Reason
 
 **Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility), [2A.4 — The First Complication](plot.md#scene-2a4--the-first-complication)
@@ -737,6 +776,7 @@ Each entry below is authoring data, not a player action menu.
 **Available when**
 - Kristin and Brandon are at the facility gate.
 - The shift supervisor is questioning their unscheduled inspection.
+- `manifold_fault_found` is true.
 
 **Participants / items**
 - Kristin Schweitzer
@@ -828,6 +868,46 @@ Each entry below is authoring data, not a player action menu.
 
 ## Storylets for [Scene 2B — Evidence and Betrayal](plot.md#scene-2b--evidence-and-betrayal)
 
+### SL-2B-A — Her Own File
+
+**Source beats:** [2B.1 — The Selection Algorithm](plot.md#scene-2b1--the-selection-algorithm), [2B.2 — Kristin Was Bait](plot.md#scene-2b2--kristin-was-bait)
+
+**Allowed scene:** `2B`
+
+**Available when**
+- `audit_window_missed` is false.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Archive terminals
+- Kristin's personnel file
+
+**Protected boundary**
+- The full JANUS history and the final name choice remain unresolved until the observation is complete.
+
+**Dramatic purpose**
+- Let Kristin pull her own file and learn why she was selected before Brandon offers the name choice.
+
+**Possible realizations**
+- Kristin pulls her own file at the archive terminals.
+- The file says she was retained to lead investigators to Corfman and names Brandon as an author.
+- Brandon whispers the choice about keeping or erasing his name.
+
+**Effects**
+- May set `kristin_file_read`.
+
+**Completion**
+- Kristin has pulled and read her own file.
+
+**Abort**
+- The scene is no longer `2B`.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 3`
+
 ### SL-2B-B — Brandon’s Name Is in the Build Records
 
 **Source beats:** [2B.1 — The Selection Algorithm](plot.md#scene-2b1--the-selection-algorithm), [2B.2 — Kristin Was Bait](plot.md#scene-2b2--kristin-was-bait), [2B.3 — Brandon’s Role](plot.md#scene-2b3--brandons-role)
@@ -837,6 +917,7 @@ Each entry below is authoring data, not a player action menu.
 **Available when**
 - Kristin and Brandon are in the records archive.
 - The audit sweep is moving through the stacks.
+- `kristin_file_read` is true.
 
 **Participants / items**
 - Kristin Schweitzer
@@ -1918,8 +1999,8 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 | [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-D` | Crime-scene inference, Michelle’s evidence, first authority pressure |
 | [1B](plot.md#scene-1b--the-lead-in-the-park) | `SL-1B-A` … `SL-1B-E` | Hidden clue recovery, bench lead, clue interpretation, Brandon trust, pursuit |
 | [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-D` | Facility discovery, living captives, one advantage, costly recovery after a missed window |
-| [2A](plot.md#scene-2a--false-identities) | `SL-2A-C`, `SL-2A-D` | Real fault diagnosis, watched entry, recovery under supervision |
-| [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-B`, `SL-2B-C`, `SL-2B-D` | One-file JANUS discovery, whispered confrontation, Michelle’s reply |
+| [2A](plot.md#scene-2a--false-identities) | `SL-2A-B`, `SL-2A-C`, `SL-2A-D` | Manifold observation, real fault diagnosis, watched entry, recovery under supervision |
+| [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-A`, `SL-2B-B`, `SL-2B-C`, `SL-2B-D` | Own-file observation, one-file JANUS discovery, whispered confrontation, Michelle’s reply |
 | [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-D`, `SL-2C-E` | Rebecca’s offer, physical commitment, Michelle’s route |
 | [3A](plot.md#scene-3a--reaching-michelle) | `SL-3A-A` … `SL-3A-C` | Reunion reversal, experiments, deadline/override |
 | [3B](plot.md#scene-3b--the-battle-for-the-broadcast) | `SL-3B-A` … `SL-3B-C` | Defeat JANUS, confront Rebecca, open relay |
