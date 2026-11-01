@@ -533,11 +533,6 @@ item_placements:
 character_placements:
   rebecca: {parent: purge_chamber, text: standing between her guards in the command corridor}
 entry_text: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. \"Charles means to kill everyone below us, my people too. Help me remove him, Brandon, and I will give you Michelle.\" Kristin still carried the copied JANUS files.\n\n"
-entry_variants:
-- requires: [brandon_name_kept]
-  text: "Brandon did not look at Kristin."
-- requires: [brandon_name_erased]
-  text: "Brandon's eyes found Kristin's and stayed there a moment too long."
 transition_ids: [t_2c_3a]
 bridge_text:
   t_2c_3a: >-

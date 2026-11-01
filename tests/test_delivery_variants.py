@@ -76,6 +76,18 @@ def test_variant_resolution_uses_exactly_the_matching_fact_set(
     assert _copy_candidate(package, state).delivery_text == expected
 
 
+def test_variant_resolution_uses_object_true_but_not_value_false(tmp_path: Path) -> None:
+    _root, package = _package_with_variants(tmp_path)
+
+    object_true_state = _state(package)
+    object_true_state.facts.assert_fact(Fact(predicate="brass_key_found", subject="story", object="true"))
+    assert _copy_candidate(package, object_true_state).delivery_text == "Ada copies the chart carefully."
+
+    value_false_state = _state(package)
+    value_false_state.facts.assert_fact(Fact(predicate="brass_key_found", subject="story", value="false"))
+    assert _copy_candidate(package, value_false_state).delivery_text == "Ada copies the chart."
+
+
 def test_two_matching_variants_omit_the_candidate(tmp_path: Path) -> None:
     variants = (
         "  delivery_variants:\n"

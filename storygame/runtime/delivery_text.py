@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Collection
 
+from storygame.runtime.facts import FactStore
 from storygame.story_package.models import KnowledgeDefinition
 
 
@@ -12,6 +13,14 @@ class _AmbiguousDelivery:
 
 
 AMBIGUOUS = _AmbiguousDelivery()
+
+
+def true_fact_ids(facts: FactStore) -> frozenset[str]:
+    """Return fact IDs whose stored assertion value is exactly ``"true"``."""
+
+    return frozenset(
+        fact.predicate for fact in facts.asserted if (fact.value if fact.value is not None else fact.object) == "true"
+    )
 
 
 def resolve_delivery_text(item: KnowledgeDefinition, true_fact_ids: Collection[str]) -> str | None | _AmbiguousDelivery:

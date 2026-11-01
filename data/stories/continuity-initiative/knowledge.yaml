@@ -1577,6 +1577,23 @@ knowledge:
     stand down, and Rebecca goes to move against Charles. Brandon says, "There is no time to argue. The broadcast
     uplink is at one end of this corridor. We can send the evidence now. The transfer carts are at the other end.
     You can free a cart of captives before the guards react. Pick one, Kristin."
+  delivery_variants:
+  - requires: [brandon_name_kept]
+    text: >-
+      Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly." Her tablet
+      chimes. She reads it, and her face changes. "The purge order. It starts within hours, and my people are on the
+      list." Brandon says, "Yes." He says it coldly and avoids Kristin's eyes. The guards stand down, and Rebecca goes
+      to move against Charles. Brandon says, "There is no time to argue. The broadcast uplink is at one end of this
+      corridor. We can send the evidence now. The transfer carts are at the other end. You can free a cart of captives
+      before the guards react. Pick one, Kristin."
+  - requires: [brandon_name_erased]
+    text: >-
+      Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly." Her tablet
+      chimes. She reads it, and her face changes. "The purge order. It starts within hours, and my people are on the
+      list." Brandon says, "Yes." He glances at Kristin as he says it. The guards stand down, and Rebecca goes to move
+      against Charles. Brandon says, "There is no time to argue. The broadcast uplink is at one end of this corridor.
+      We can send the evidence now. The transfer carts are at the other end. You can free a cart of captives before
+      the guards react. Pick one, Kristin."
 - id: k_sl_2c_d_r3
   statement: 'Kristin starts the uplink as the detention sectors seal and receives Michelle’s route to the combined plan.'
   earn_when: heads to the uplink and starts sending the copied JANUS files

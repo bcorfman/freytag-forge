@@ -7,7 +7,7 @@ from collections.abc import Collection, Iterable
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from storygame.runtime.delivery_text import AMBIGUOUS, resolve_delivery_text
+from storygame.runtime.delivery_text import AMBIGUOUS, resolve_delivery_text, true_fact_ids
 from storygame.runtime.reveal_eligibility import explain_reveal, together_or_unplaced
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
@@ -443,11 +443,7 @@ class KnowledgeProjector:
     def _candidates(
         self, state: RuntimeState, audience_id: str, referenced_ids: tuple[str, ...]
     ) -> tuple[RevealCandidate, ...]:
-        true_fact_ids = {
-            fact.predicate
-            for fact in state.facts.asserted
-            if (fact.value if fact.value is not None else fact.object) == "true"
-        }
+        fact_ids = true_fact_ids(state.facts)
         candidates: list[KnowledgeDefinition] = []
         for knowledge_id in state.package.knowledge_indexes.scene_to_candidates[state.current_scene_id]:
             item = state.package.knowledge_indexes.by_id[knowledge_id]
@@ -462,7 +458,7 @@ class KnowledgeProjector:
                 item.id,
             )
         )
-        projected = (self._candidate(item, true_fact_ids) for item in candidates)
+        projected = (self._candidate(item, fact_ids) for item in candidates)
         return tuple(candidate for candidate in projected if candidate is not None)
 
     @staticmethod
