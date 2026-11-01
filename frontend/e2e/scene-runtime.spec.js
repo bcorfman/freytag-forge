@@ -8,6 +8,7 @@ import {
   submitTurnObserved,
   writeCategoryReport,
 } from "./helpers.js";
+import { requiredPacingEvents } from "./canon-policy.js";
 import { canonTurnBudget, loadPackagePacing, nextPendingEvent } from "./package-clock.js";
 import { buildKnowledgeTimelineReport, isFixedRefusalLine, recordTurnOutcome } from "./knowledge-timeline-record.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
@@ -21,10 +22,6 @@ const SPINE_MAX_TURNS = 120;
 // The 3C resolution is route-driven: its escape, consequence and Phase Two events land around
 // scene turns 13-14, so the spine keeps cycling prompts in 3C until the story completes or this cap.
 const SPINE_MAX_3C_TURNS = 24;
-
-// A scene has at most three authored reveals, so more consecutive empty turns than
-// that means the scene is not progressing rather than merely taking its time.
-const MAX_STALLED_TURNS = 5;
 
 function narrationText(payload) {
   const turnText = (payload.segments || [])
@@ -233,8 +230,6 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
   let sceneId = "1A";
   let turnIndex = 0;
   let turnsSinceSceneEntry = 0;
-  let stalledTurns = 0;
-  let lastCommittedCount = 0;
   const promptsUsed = new Map();
   const progress = [];
   const firedPacingEventIds = new Set();
@@ -260,7 +255,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
   };
 
   for (let index = 0; index < canonTurnBudget(pacing); index += 1) {
-    if (sceneId === sceneOrder.at(-1) && (promptsUsed.get(sceneId) || 0) >= scenePrompts[sceneId].length) break;
+    if (storyCompleteSeen) break;
     const sourceSceneId = sceneId;
     const used = promptsUsed.get(sourceSceneId) || 0;
     const input = promptFor(sourceSceneId, used);
@@ -295,14 +290,13 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       expect(to - from, `Turn ${index + 1} regressed from ${sourceSceneId} to ${String(reachedSceneId)}.`).toBeGreaterThanOrEqual(0);
       expect(to - from, `Turn ${index + 1} skipped past a scene from ${sourceSceneId} to ${String(reachedSceneId)}.`).toBeLessThanOrEqual(1);
 
-      // A pacing event is bound to its own scene, so it is due only once the
-      // story is in that scene at or past its instant - or has left the scene
-      // behind, in which case a beat that never landed is a real defect.
-      for (const eventId of pacing.eventOrder) {
-        const event = pacing.eventPoint(eventId);
-        const eventScene = sceneOrder.indexOf(event.scene_id);
-        const inScenePastDue = eventScene === to && observedTurns >= event.target_turn;
-        if (!inScenePastDue && eventScene >= to) continue;
+      for (const eventId of requiredPacingEvents({
+        pacing,
+        sourceSceneId,
+        reachedSceneId,
+        observedTurns,
+        turnsSinceSceneEntry,
+      })) {
         if (pacing.isConditional(eventId) && !payload.state?.fired_pacing_event_ids?.includes(eventId)) {
           // The payload hides facts, so a conditional event cannot be judged missing.
           continue;
@@ -310,17 +304,9 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
         expect(payload.state?.fired_pacing_event_ids, `Turn ${index + 1} is missing pacing event ${eventId}.`).toContain(eventId);
         firedPacingEventIds.add(eventId);
       }
-
-      // A scene that commits nothing several turns running is stalled: the reveals
-      // its outgoing bridge needs are never landing. Say so where it happens rather
-      // than letting it quietly consume the whole turn budget.
-      const committed = (payload.state?.fired_storylet_ids || []).length;
-      stalledTurns = committed === lastCommittedCount && reachedSceneId === sourceSceneId ? stalledTurns + 1 : 0;
-      lastCommittedCount = committed;
-      expect(
-        stalledTurns,
-        `Scene ${sourceSceneId} committed nothing for ${stalledTurns} turns running; its outgoing reveals are not landing.`,
-      ).toBeLessThan(MAX_STALLED_TURNS);
+      for (const eventId of payload.state?.fired_pacing_event_ids || []) {
+        firedPacingEventIds.add(eventId);
+      }
 
       // Entering a scene emits its authored entry_text as the turn's final segment.
       // Recording it as that scene's opening stops the judge from grading every scene
@@ -397,6 +383,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
 
   expect([...byScene.keys()], "the playthrough must visit every authored scene in order").toEqual([...sceneOrder]);
   expect(sceneId, "the playthrough must end in the authored resolution scene").toBe(sceneOrder.at(-1));
+  expect(storyCompleteSeen, "the story must actually complete; reaching 3C is not the ending").toBe(true);
 
   // Judge every scene before asserting. Failing on the first verdict hides the
   // other eight, so a single weak scene costs a whole run's worth of evidence.

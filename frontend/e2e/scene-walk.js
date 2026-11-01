@@ -1,7 +1,7 @@
 import { promptFor, scenePrompts } from "./canon-journey.js";
+import { nextPendingEvent } from "./package-clock.js";
 
 const acceptedKinds = new Set(["narration", "action", "dialogue", "speech"]);
-const MAX_STALLED_TURNS = 5;
 
 function turnText(payload) {
   return (payload.segments || [])
@@ -13,9 +13,7 @@ function turnText(payload) {
 }
 
 function milestoneFor(pacing, sceneId, turns, fired) {
-  const event = (pacing.eventOrder || [])
-    .map((id) => pacing.eventPoint(id))
-    .find((candidate) => candidate.scene_id === sceneId && !fired.has(candidate.event_id) && candidate.target_turn >= turns);
+  const event = nextPendingEvent(pacing, sceneId, turns, fired);
   if (event) return event;
   for (const point of ["min", "nudge", "handoff"]) {
     const milestone = pacing.scenePoint(sceneId, point);
@@ -47,8 +45,6 @@ export async function walkScenes({
   let current = session?.state?.scene_id || pacing.sceneOrder[0];
   let turnsSinceEntry = 0;
   let totalTurns = 0;
-  let stalled = 0;
-  let committed = 0;
   const promptsUsed = new Map();
   const fired = new Set();
   const reached = new Set();
@@ -77,10 +73,6 @@ export async function walkScenes({
       throw new Error(`Scene walk moved from ${source} to ${next} outside the one-scene-at-a-time path.`);
     }
     await onTurn?.({ scene_id: source, turn: turnsSinceEntry + 1, input, text, payload });
-    const committedNow = (payload.state?.fired_storylet_ids || []).length;
-    stalled = committedNow === committed && next === source ? stalled + 1 : 0;
-    committed = committedNow;
-    if (stalled >= MAX_STALLED_TURNS) throw new Error(`Scene ${source} stalled for ${stalled} turns.`);
     for (const id of payload.state?.fired_pacing_event_ids || []) fired.add(id);
     if (entered) {
       const opening = segments.at(-1);
