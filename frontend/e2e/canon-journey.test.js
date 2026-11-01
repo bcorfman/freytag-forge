@@ -9,7 +9,7 @@ const expectedOneA = [
   "Read the remaining research fragments on Michelle's memory card.",
   "Read the files on Michelle's memory card.",
   "Play the damaged recording on Michelle's memory card.",
-  "Hide what you found from the official asking questions about Michelle's work, then watch what they do at the gate as they leave.",
+  "Watch the officers ask about Michelle's research.",
 ];
 
 test("keeps the canon journey scene prompts available and scene-aware", () => {

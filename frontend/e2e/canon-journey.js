@@ -18,7 +18,7 @@ export const scenePrompts = {
     "Read the remaining research fragments on Michelle's memory card.",
     "Read the files on Michelle's memory card.",
     "Play the damaged recording on Michelle's memory card.",
-    "Hide what you found from the official asking questions about Michelle's work, then watch what they do at the gate as they leave.",
+    "Watch the officers ask about Michelle's research.",
   ],
   // 1B.1 dead drop -> 1B.2 the man following -> 1B.3 his warning -> 1B.4 ambush and escape
   "1B": [
