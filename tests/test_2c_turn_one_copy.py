@@ -23,18 +23,20 @@ def _scene_2c_first_turn() -> tuple[RuntimeState, RuntimeEngine]:
     return state, engine
 
 
-def test_copying_janus_evidence_offers_2c_c_r1_on_turn_one() -> None:
+def test_transmitting_janus_evidence_offers_2c_d_r3_on_turn_one() -> None:
     state, engine = _scene_2c_first_turn()
 
-    candidates = engine.projector.project(state, "player", "Copy the JANUS evidence to my laptop.").candidates
+    candidates = engine.projector.project(
+        state, "player", "Head to the uplink and transmit the copied JANUS files."
+    ).candidates
 
-    assert "k_sl_2c_c_r1" in {candidate.id for candidate in candidates}
+    assert "k_sl_2c_d_r3" in {candidate.id for candidate in candidates}
 
 
-def test_reading_transfer_orders_does_not_offer_2c_c_r1_on_turn_one() -> None:
+def test_reading_transfer_orders_does_not_offer_2c_d_r3_on_turn_one() -> None:
     state, engine = _scene_2c_first_turn()
 
     projection = engine.projector.project(state, "player", "Read the transfer orders.")
     matched = uniquely_matched_authored_handoff("Read the transfer orders.", projection.candidates)
 
-    assert matched is None or matched.candidate.id != "k_sl_2c_c_r1"
+    assert matched is None or matched.candidate.id != "k_sl_2c_d_r3"

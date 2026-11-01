@@ -25,11 +25,14 @@ def test_action_contract_rejects_empty_and_overlapping_examples():
         ActionContract(targets=("files",), act="Check files.", positive=("Check files.",), near_miss=("check FILES.",))
 
 
-def test_old_knowledge_definition_still_has_no_contract():
+def test_2c_commitment_definitions_use_authored_action_evidence():
     package = load_story_package(Path("data/stories/continuity-initiative"))
-    old = package.knowledge_indexes.by_id["k_sl_2c_c_r2"]
-    assert old.action_contract is None
-    assert package.knowledge_indexes.by_id["k_sl_2c_c_r1"].action_contract is not None
+    transmit = package.knowledge_indexes.by_id["k_sl_2c_d_r3"]
+    rescue = package.knowledge_indexes.by_id["k_sl_2c_d_r4"]
+    assert transmit.action_contract is None
+    assert rescue.action_contract is None
+    assert transmit.action_evidence
+    assert rescue.action_evidence
 
 
 def test_contract_question_contains_examples_without_bookkeeping_words():

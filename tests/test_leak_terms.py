@@ -98,9 +98,10 @@ def test_empty_review_does_not_bypass_protected_or_entity_checks() -> None:
 
 def test_loader_and_runtime_use_the_same_reviewed_vocabulary() -> None:
     package = load_story_package(Path("data/stories/continuity-initiative"))
+    reply = package.knowledge_indexes.by_id["k_sl_2b_c_r3"]
 
-    assert "coded message" in package.knowledge_indexes.term_to_knowledge
-    assert "coded message" not in package.knowledge_indexes.leak_term_to_knowledge
+    assert any("maintenance line" in group for group in reply.action_evidence)
+    assert "maintenance line" not in package.knowledge_indexes.leak_term_to_knowledge
 
 
 def _scene_state(scene_id: str) -> RuntimeState:
@@ -119,7 +120,7 @@ def _narrate(scene_id: str, text: str, player_input: str):
     ).turn(player_input)
 
 
-def test_contemplated_transmission_is_not_a_leak_in_2c_before_readiness() -> None:
+def test_neutral_negotiation_is_not_a_leak_in_2c_before_commitment() -> None:
     state = _scene_state("2C")
     assert not state.facts.matching("evidence_ready_to_transmit")
     assert not state.facts.matching("combined_broadcast_rescue_plan_known")
@@ -128,22 +129,22 @@ def test_contemplated_transmission_is_not_a_leak_in_2c_before_readiness() -> Non
     result = RuntimeEngine(
         state,
         lambda _: {
-            "segments": [{"kind": "narration", "text": "Kristin considers whether to transmit the evidence."}],
+            "segments": [{"kind": "narration", "text": "Kristin weighs Rebecca's offer."}],
             "selected_knowledge_ids": [],
         },
-    ).turn("Assess the cost of transmitting our evidence right now to the people still held here.")
+    ).turn("Ask Rebecca what she is offering.")
 
-    assert result.segments[0].text == "Kristin considers whether to transmit the evidence."
+    assert result.segments[0].text == "Kristin weighs Rebecca's offer."
 
 
-def test_contemplated_transmission_is_not_a_leak_outside_2c() -> None:
+def test_neutral_negotiation_is_not_a_leak_outside_2c() -> None:
     result = _narrate(
         "1A",
-        "Kristin considers whether to transmit the evidence.",
-        "Assess the cost of transmitting our evidence right now to the people still held here.",
+        "Kristin weighs the next move.",
+        "Consider the next move.",
     )
 
-    assert result.segments[0].text == "Kristin considers whether to transmit the evidence."
+    assert result.segments[0].text == "Kristin weighs the next move."
 
 
 def test_2c_route_and_office_disclosures_still_reject_before_their_reveals() -> None:
@@ -161,9 +162,9 @@ def test_2c_route_and_office_disclosures_still_reject_before_their_reveals() -> 
         assert caught.value.code == "narration_known_term_leak"
 
 
-def test_c_r2_keeps_its_other_guarded_phrases() -> None:
+def test_2c_commitment_terms_do_not_reintroduce_old_reviewed_owners() -> None:
     index = PACKAGE.knowledge_indexes.leak_term_to_knowledge
 
     for term in ("broadcast proof", "send the evidence", "risk the captives", "evidence ready to transmit"):
-        assert "k_sl_2c_c_r2" in index[term]
-    assert not any(owner.startswith("k_sl_2c_") for owner in index.get("transmit the evidence", ()))
+        assert not any(owner.startswith("k_sl_2c_c_") for owner in index.get(term, ()))
+    assert not any(owner.startswith("k_sl_2c_c_") for owner in index.get("transmit the evidence", ()))

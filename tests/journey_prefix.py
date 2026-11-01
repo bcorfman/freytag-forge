@@ -73,21 +73,19 @@ def _blocked_for(preferred: tuple[str, ...]) -> set[str]:
         for sibling in siblings[PLAYED.knowledge_indexes.by_id[item_id].source.storylet_id]
         if sibling not in preferred
     }
-    recovery_ids = {
-        item.id
-        for item in PLAYED.knowledge.knowledge
-        if item.source.storylet_id
-        in {incident.recovery_storylet_id for incident in PLAYED.incidents if incident.recovery_storylet_id}
-    }
-    if set(preferred) & recovery_ids:
-        for incident in PLAYED.incidents:
-            if incident.scene_id != "1C":
-                continue
-            blocked.update(
-                item.id
-                for item in PLAYED.knowledge.knowledge
-                if item.source.storylet_id in {outcome.storylet_id for outcome in incident.outcomes}
-            )
+    for incident in PLAYED.incidents:
+        if not incident.recovery_storylet_id:
+            continue
+        recovery_ids = {
+            item.id for item in PLAYED.knowledge.knowledge if item.source.storylet_id == incident.recovery_storylet_id
+        }
+        if not set(preferred) & recovery_ids:
+            continue
+        blocked.update(
+            item.id
+            for item in PLAYED.knowledge.knowledge
+            if item.source.storylet_id in {outcome.storylet_id for outcome in incident.outcomes}
+        )
     return blocked
 
 

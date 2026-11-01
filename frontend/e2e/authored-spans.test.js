@@ -38,6 +38,55 @@ test("loads structural package text and scene-pair bridge", () => {
   assert.ok(real.entryTexts.has("3C"));
 });
 
+test("loads entry variants by scene", () => {
+  const real = loadAuthoredText();
+  assert.ok(real.entryVariantTextsBySceneId.get("2A").includes(
+    "Kristin still has the copied prisoner numbers. She needs a way into the facility.",
+  ));
+});
+
+test("attributes the authored ending only on a completed turn", () => {
+  const real = loadAuthoredText();
+  const completed = eligibleAuthoredTexts(bundle({ story_complete: true }), real);
+  const ending = completed.find((item) => item.source.kind === "ending");
+  assert.equal(ending.text, real.endingText);
+  assert.deepEqual(ending.source, { kind: "ending", id: real.endingSceneId });
+  const spans = attributeNarration(real.endingText, completed);
+  assert.deepEqual(spans.find((span) => span.origin === "authored").source, {
+    kind: "ending",
+    id: "3C",
+  });
+  assert.equal(spans.find((span) => span.origin === "authored").text, real.endingText);
+  assert.equal(eligibleAuthoredTexts(bundle(), real).some((item) => item.text === real.endingText), false);
+});
+
+test("attributes only verbatim pacing realizations for fired events", () => {
+  const real = loadAuthoredText();
+  const patrol = real.pacingRealizations.get("patrol_returns_1a")[0];
+  const narration = `${patrol} A detective arrives and tells her to leave.`;
+  const eligible = eligibleAuthoredTexts(bundle({ pacing_event_ids: ["patrol_returns_1a"] }), real);
+  const spans = attributeNarration(narration, eligible);
+  assert.deepEqual(spans.find((span) => span.origin === "authored").source, {
+    kind: "pacing",
+    id: "patrol_returns_1a",
+  });
+  assert.equal(spans.find((span) => span.origin === "authored").text, patrol);
+  assert.equal(spans.find((span) => span.text === " A detective arrives and tells her to leave.").origin, "narrator");
+  assert.equal(attributeNarration(patrol, eligibleAuthoredTexts(bundle(), real))[0].origin, "narrator");
+});
+
+test("completion does not license an uncommitted route fallback", () => {
+  const completed = eligibleAuthoredTexts(bundle({ story_complete: true }), authored);
+  assert.equal(completed.some((item) => item.source.kind === "route_fallback"), false);
+  const committed = eligibleAuthoredTexts(bundle({
+    committed_delta: { fact_predicates: ["done"], scene_from: null, scene_to: null },
+  }), authored);
+  assert.deepEqual(committed.find((item) => item.source.kind === "route_fallback"), {
+    text: authored.routeFallbacks[0].text,
+    source: { kind: "route_fallback", id: authored.routeFallbacks[0].event_id },
+  });
+});
+
 test("eligibility includes only committed, turn-local authored sources", () => {
   const eligible = eligibleAuthoredTexts(bundle({
     selected_reveal: { knowledge_ids: ["k"], delivery_fact_ids: ["handoff"] },

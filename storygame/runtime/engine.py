@@ -370,14 +370,6 @@ class RuntimeEngine(CanonicalEventMixin):
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
-        if entry_segments and self.state.last_turn_delivery.complication_verbatim:
-            proposal = proposal.model_copy(
-                update={
-                    "segments": (
-                        NarrationSegment(kind="narration", text=self.state.last_turn_delivery.complication_text or ""),
-                    )
-                }
-            )
         if self._unresolved_incident():
             resolution_segments, deadline_event_ids = (), ()
         else:
@@ -1199,14 +1191,6 @@ class RuntimeEngine(CanonicalEventMixin):
         self._activate_pacing()
         entry_segments = self._apply_authored_transition()
         self._activate_pacing()
-        if entry_segments and self.state.last_turn_delivery.complication_verbatim:
-            pending = pending.model_copy(
-                update={
-                    "segments": (
-                        NarrationSegment(kind="narration", text=self.state.last_turn_delivery.complication_text or ""),
-                    )
-                }
-            )
         if canonical_segments or entry_segments:
             pending = pending.model_copy(
                 update={"segments": (*pending.segments, *canonical_segments, *(entry_segments or ()))}
@@ -1263,8 +1247,6 @@ class RuntimeEngine(CanonicalEventMixin):
                 self.state.turn_records[-1] = self.state.turn_records[-1].model_copy(
                     update={"transition_id": transition.id}
                 )
-            if self.state.last_turn_delivery.complication_verbatim:
-                return entry
             return (bridge, *entry)
         return None
 

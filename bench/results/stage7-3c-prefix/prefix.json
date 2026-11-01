@@ -2,11 +2,13 @@
   "bridge_text": "Brandon disconnected the relay from JANUS and held it open while Kristin and Michelle began the broadcast. The evidence was moving beyond Charles's control as water rose through the outer access level.",
   "committed_reveal_ids": [
     "k_1b_stranger_evasion",
+    "k_audit_window_missed",
     "k_bridge_1b_departure",
     "k_bridge_1c_infiltration",
     "k_bridge_2b_archive_crisis",
     "k_bridge_3a_command_assault",
-    "k_bridge_3b_broadcast",
+    "k_inspection_recovery_ready",
+    "k_inspection_window_missed",
     "k_scene_1a_entry",
     "k_scene_1b_entry",
     "k_scene_1c_entry",
@@ -29,24 +31,13 @@
     "k_sl_1c_a_r1",
     "k_sl_1c_b_r1",
     "k_sl_1c_c_copy_numbers",
-    "k_sl_2a_b_r1",
-    "k_sl_2a_b_r2",
-    "k_sl_2a_c_r1",
-    "k_sl_2a_c_r1_rebecca_observes",
-    "k_sl_2a_c_r2",
-    "k_sl_2a_c_r2_rebecca_observes",
-    "k_sl_2a_e_r1",
-    "k_sl_2b_a_r1",
-    "k_sl_2b_b_r1",
-    "k_sl_2b_b_r2",
-    "k_sl_2b_c_r1",
-    "k_sl_2b_c_r2",
-    "k_sl_2c_b_r1",
-    "k_sl_2c_b_r2",
-    "k_sl_2c_c_r1",
-    "k_sl_2c_c_r2",
-    "k_sl_2c_d_r1",
-    "k_sl_2c_d_r2",
+    "k_sl_2a_c_r5",
+    "k_sl_2a_c_r6",
+    "k_sl_2a_d_route_effects",
+    "k_sl_2b_b_r4",
+    "k_sl_2b_c_r3",
+    "k_sl_2b_d_route_effects",
+    "k_sl_2c_d_r3",
     "k_sl_3a_a_r1",
     "k_sl_3a_a_r2",
     "k_sl_3a_b_r2",
@@ -58,14 +49,19 @@
     "k_sl_3b_a_r2",
     "k_sl_3b_b_r1",
     "k_sl_3b_b_r2",
-    "k_sl_3b_c_r1",
-    "k_sl_3b_c_r2",
     "k_sl_3b_d_r1",
     "k_sl_3b_d_r2",
-    "k_sl_3b_e_r1"
+    "k_sl_3b_e_r1",
+    "k_supervisor_escorting"
   ],
   "entry_text": "The broadcast chamber lights are steady. Brandon's relay is open. Michelle's evidence package is ready to send. Water is entering the outer access level.\n\n",
   "facts": [
+    {
+      "object": null,
+      "predicate": "antagonist_split_known",
+      "subject": "story",
+      "value": "true"
+    },
     {
       "object": null,
       "predicate": "archive_crisis_understood",
@@ -74,7 +70,7 @@
     },
     {
       "object": null,
-      "predicate": "archive_security_sweep",
+      "predicate": "audit_window_missed",
       "subject": "story",
       "value": "true"
     },
@@ -98,12 +94,6 @@
     },
     {
       "object": null,
-      "predicate": "brandon_confession_available",
-      "subject": "story",
-      "value": "true"
-    },
-    {
-      "object": null,
       "predicate": "brandon_identified",
       "subject": "story",
       "value": "true"
@@ -116,13 +106,13 @@
     },
     {
       "object": null,
-      "predicate": "brandon_retains_system_access",
+      "predicate": "brandon_name_kept",
       "subject": "story",
       "value": "true"
     },
     {
       "object": null,
-      "predicate": "broadcast_started",
+      "predicate": "brandon_retains_system_access",
       "subject": "story",
       "value": "true"
     },
@@ -158,7 +148,19 @@
     },
     {
       "object": null,
+      "predicate": "committed_to_transmit",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
       "predicate": "continuity_initiative_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "cover_suspected",
       "subject": "story",
       "value": "true"
     },
@@ -177,6 +179,12 @@
     {
       "object": null,
       "predicate": "detention_lockdown_spreading",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "detention_sectors_sealed",
       "subject": "story",
       "value": "true"
     },
@@ -206,19 +214,7 @@
     },
     {
       "object": null,
-      "predicate": "facility_perimeter_reached",
-      "subject": "story",
-      "value": "true"
-    },
-    {
-      "object": null,
       "predicate": "facility_proof",
-      "subject": "story",
-      "value": "true"
-    },
-    {
-      "object": null,
-      "predicate": "false_identities_ready",
       "subject": "story",
       "value": "true"
     },
@@ -236,13 +232,19 @@
     },
     {
       "object": null,
-      "predicate": "identity_scrutiny_visible",
+      "predicate": "inspection_console_used",
       "subject": "story",
       "value": "true"
     },
     {
       "object": null,
-      "predicate": "inspector_cover_under_review",
+      "predicate": "inspection_recovery_ready",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "inspection_window_missed",
       "subject": "story",
       "value": "true"
     },
@@ -255,6 +257,12 @@
     {
       "object": null,
       "predicate": "janus_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "kristin_was_bait",
       "subject": "story",
       "value": "true"
     },
@@ -279,6 +287,12 @@
     {
       "object": null,
       "predicate": "michelle_reached",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_reply_received",
       "subject": "story",
       "value": "true"
     },
@@ -368,12 +382,6 @@
     },
     {
       "object": null,
-      "predicate": "prisoner_records_corrupted",
-      "subject": "story",
-      "value": "true"
-    },
-    {
-      "object": null,
       "predicate": "processing_numbers_copied",
       "subject": "story",
       "value": "true"
@@ -381,12 +389,6 @@
     {
       "object": null,
       "predicate": "purge_clock_started",
-      "subject": "story",
-      "value": "true"
-    },
-    {
-      "object": null,
-      "predicate": "purge_transfers_underway",
       "subject": "story",
       "value": "true"
     },
@@ -410,6 +412,12 @@
     },
     {
       "object": null,
+      "predicate": "rebecca_offer_active",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
       "predicate": "rebecca_office_reached",
       "subject": "story",
       "value": "true"
@@ -422,7 +430,7 @@
     },
     {
       "object": null,
-      "predicate": "relay_open",
+      "predicate": "relay_power_failing",
       "subject": "story",
       "value": "true"
     },
@@ -484,7 +492,19 @@
       "object": null,
       "predicate": "story_elapsed_seconds",
       "subject": "story",
-      "value": "3660"
+      "value": "3420"
+    },
+    {
+      "object": null,
+      "predicate": "supervisor_convinced",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "supervisor_escorting",
+      "subject": "story",
+      "value": "true"
     },
     {
       "object": null,
@@ -577,6 +597,12 @@
       "value": "free"
     },
     {
+      "object": "captive",
+      "predicate": "wk_axis",
+      "subject": "shift_supervisor",
+      "value": "free"
+    },
+    {
       "object": "intact",
       "predicate": "wk_axis",
       "subject": "transit_card",
@@ -646,7 +672,7 @@
       "object": null,
       "predicate": "wk_parent",
       "subject": "brandon",
-      "value": "broadcast_relay"
+      "value": "security_corridors"
     },
     {
       "object": null,
@@ -969,6 +995,12 @@
     {
       "object": null,
       "predicate": "wk_parent",
+      "subject": "shift_supervisor",
+      "value": "janus_archive"
+    },
+    {
+      "object": null,
+      "predicate": "wk_parent",
       "subject": "stolen_radio",
       "value": "detention_level"
     },
@@ -1019,6 +1051,12 @@
       "predicate": "wk_place_text",
       "subject": "cooling_service_archive_panel",
       "value": "beside the inspection console in the infrastructure corridors"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "copied_janus_files",
+      "value": "with Kristin"
     },
     {
       "object": null,
@@ -1085,6 +1123,18 @@
       "predicate": "wk_place_text",
       "subject": "prisoner_number_record",
       "value": "with Kristin"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "rebecca",
+      "value": "standing between her guards in the command corridor"
+    },
+    {
+      "object": null,
+      "predicate": "wk_place_text",
+      "subject": "shift_supervisor",
+      "value": "leading the audit sweep between the archive stacks"
     },
     {
       "object": null,
@@ -1437,6 +1487,12 @@
     {
       "object": null,
       "predicate": "wk_relation",
+      "subject": "shift_supervisor",
+      "value": "in"
+    },
+    {
+      "object": null,
+      "predicate": "wk_relation",
       "subject": "stolen_radio",
       "value": "in"
     },
@@ -1495,7 +1551,7 @@
       "value": null
     },
     {
-      "object": "facility_perimeter_reached",
+      "object": "brandon_name_kept",
       "predicate": "world_effects_applied",
       "subject": "story",
       "value": null
@@ -1541,15 +1597,9 @@
       "predicate": "world_effects_applied",
       "subject": "story",
       "value": null
-    },
-    {
-      "object": "relay_open",
-      "predicate": "world_effects_applied",
-      "subject": "story",
-      "value": null
     }
   ],
-  "git_sha": "74b0e58d3eaf2a52a6f38785c04fa1a39ed6443d",
+  "git_sha": "d84a92b5b66764b53fc9424b69846379e5df3e9e",
   "knowledge_status": {
     "janus_selection": {
       "available": false,
@@ -1558,14 +1608,14 @@
     },
     "relay_open": {
       "available": true,
-      "committed": true,
+      "committed": false,
       "matching_entry_ids": [
         "k_sl_3b_c_r1",
         "k_sl_3b_c_r2"
       ]
     }
   },
-  "package_content_hash": "a11139017124557870c19f8f8fbc4ab16080932b6704ccf14225153aaab6b3c7",
+  "package_content_hash": "9b238fcd88e9a10769a82dc6f8b013825f75d857e2053ac978c93daa443ce728",
   "package_id": "continuity_initiative",
   "scene": "3B",
   "transcript_lines": [
@@ -1577,7 +1627,7 @@
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands. The patrol pulls away from the curb.",
     "A concrete authored consequence lands.",
-    "The patrol is coming back to the house. The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.",
+    "A concrete authored consequence lands. The patrol is coming back to the house. Kristin starts the truck and heads for the park, avoiding checkpoints and emergency patrols. The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.",
     "Kristin reaches beneath the park bench. She retrieves a transit token, a handwritten number sequence and Michelle's photograph. She keeps all three with her.",
     "The man says his name is Brandon Corfman. He says the missing people are being moved alive. A tactical team is closing across the park. Brandon says he can open the secured service gate beside the storm drain. He tells Kristin to follow him.",
     "As patrols close in, Brandon opens a secured service gate. He leads Kristin through it.",
@@ -1589,53 +1639,49 @@
     "A concrete authored consequence lands.",
     "Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running. Brandon says, \"Study the people through the observation shaft. We need to know what is happening on the processing line.\"",
     "Kristin studies the sedated prisoners through the observation shaft. They are alive. Brandon says, \"Copy the prisoner numbers if you want stronger proof. Or ask me about the transfer route. I can help with the service entrance. That will cost us the chance to copy the full set of numbers. There is time for one choice before the transfer leaves.\"",
-    "Kristin copies the visible prisoner numbers and matches them to missing-person records. Brandon says, \"That gives us stronger proof. We still need a way inside.\" Kristin and Brandon withdraw from the terminal to prepare a way inside. Brandon's hideout was buried inside a dead communications center: servers, salvaged hardware, and years of leaked Continuity Initiative documents. Somewhere beneath the city the facility waited, and its unstable cooling-water and ventilation readings were exactly the kind of flaw a pair of outside inspectors might be sent to examine.\n\nKristin still has the copied prisoner numbers. She needs a way into the facility.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands.",
-    "Kristin finds a cooling weakness she can use for a real inspection warning. Brandon builds their cover around it. At the facility checkpoint, Kristin must show the inspector credentials.",
-    "Kristin and Brandon are at the facility perimeter. Their false identities pass the first security checks. A supervisor questions why their inspection was not scheduled. Kristin can explain the unscheduled inspection to the supervisor.",
-    "Kristin and Brandon open a restricted infrastructure corridor. They have access to the facility and its limited inspection console. Kristin and Brandon gained access to the infrastructure corridors under their inspection cover. They continued into the records archive. Inside the records archive, the archive terminals are ready to search. They hold the Initiative's selection files, including Michelle's file.",
+    "Kristin copies the visible prisoner numbers and matches them to missing-person records. Brandon says, \"That gives us stronger proof. We still need a way inside.\" Kristin and Brandon withdraw from the terminal to prepare a way inside. One night in Brandon's hideout had turned years of leaked Continuity Initiative documents into two inspector badges and a work order for a cooling-water fault. Now the badges had to work. Kristin and Brandon stood at the facility gate while a shift supervisor walked out to meet them, reading the work order with a frown. \"Nobody scheduled you,\" he said.\n\nKristin still has the copied prisoner numbers. The codes on the supervisor's work orders look like the same system.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
-    "JANUS ranked every American for detention, leverage, or control. Michelle's file holds nothing more. Brandon's name may be in the development records.",
-    "Brandon's name is in the first JANUS records. He admits he helped write the system. A warning message blinks on the medical terminal.",
-    "Michelle is changing classifications. She is hiding vulnerable prisoners. Maintenance reports wait on the next terminal. The JANUS evidence in the archive showed what the system was built to do. Kristin and Brandon understood how much danger that evidence put them in. The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count. Kristin carried the copied JANUS files. She could check them now.",
-    "After Michelle corrupts the records, Charles orders valuable captives transferred. He orders everyone else destroyed within hours. The copied files lie close at hand.",
     "A concrete authored consequence lands.",
-    "Kristin and Brandon have enough evidence to expose the conspiracy. Sending it now would reveal their position and seal the detention sectors. A message from Michelle is waiting.",
-    "Michelle's encrypted message marks a maintenance access route into her holding block. Rebecca's secured office can broadcast the evidence and open the detention cells in the sealed sectors.",
+    "Kristin proves that the genuine cooling-water pressure fault is real. She finds a ventilation fault. The shift supervisor grants access to the restricted infrastructure corridors. The limited console can report faults and cycle noncritical systems. It cannot open detention cells or change the main flood controls. The supervisor left them at the inspection console in the infrastructure corridors. Behind it, the cooling-service panel led into the records archive. Kristin and Brandon came through the cooling-service panel into the records archive just as the lights came up at the far end. An audit sweep had started. Voices and footsteps were working their way down the aisles toward them. They had a few minutes among the archive terminals.\n\nThe supervisor had logged them at the gate, and the audit sweep had started early because of it. The voices were already close, working down the nearest aisle. Kristin and Brandon had barely a minute among the archive terminals.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
-    "A concrete authored consequence lands. The purge clock was running, and the evidence was ready to transmit. Kristin and Brandon committed to one combined mission: broadcast the truth and rescue the captives. A partly unsecured detention sector opened onto rows of captives. Coded announcements crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "Kristin pulls her own file first. It says she was retained to lead investigators to Corfman. Kristin was bait. The file names the system JANUS. The build record names Brandon Corfman as an author. Brandon admits that he helped write JANUS. He says he tried to stop it after he learned its purpose. Kristin keeps his name in the record. The JANUS files are copied. Kristin carries the copied files.",
+    "Kristin types one reply to the maintenance line. Michelle answers once. She is alive. She is working inside the facility. She will send a route. Kristin and Brandon slipped out of the archive with the copied files. In the command corridor beyond, doors were already closing at both ends. Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. Kristin still carried the copied JANUS files.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "Rebecca offers a way to remove Charles. She promises Michelle's release. The purge order starts a clock. Kristin heads to the uplink and starts sending the copied files. The detention sectors seal. Michelle's route leads to Rebecca's secured office. The office can broadcast the evidence and open the detention cells. The purge clock was running. Michelle's route led down into the detention levels, and the plan was now one combined mission: broadcast the truth and free the captives. A partly unsecured detention sector opened onto rows of captives. Coded announcements crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
     "Kristin finds Michelle alive. Michelle is directing the prisoners through stolen radios and coded announcements. Michelle points toward the medical level, where the experiment records wait.",
     "Michelle shows Kristin the medical level. The prisoners were subjected to memory, compliance, and resistance experiments. The senior official waits among the government prisoners.",
     "The senior official Charles framed gives Kristin one-use authority for the emergency surface gates. It expires when Charles activates his new authority. Michelle turns toward the prisoners at the checkpoints.",
     "Michelle triggers the coordinated uprising. The prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands.",
     "A concrete authored consequence lands. Michelle's uprising disabled cameras and seized checkpoints, while Charles sealed the primary exits and sent armed teams downward. Kristin, Michelle, and Brandon fought upward through the security corridors. Alarms layered over alarms as the facility fought to predict its attackers. Water-pressure warnings flashed on the inspection console while doors opened and closed in empty service corridors that JANUS watched move by move.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
+    "A concrete authored consequence lands.",
     "A concrete authored consequence lands.",
     "Kristin feeds JANUS false alarms. Human operators take control. Rebecca's executive office waits beyond the security corridors.",
     "Kristin and Michelle enter the executive office. Brandon stays behind in the corridors and holds off the security forces. Rebecca's experiment approvals lie near the marked site list.",
     "Michelle confronts Rebecca with the experiment approvals. Rebecca offers the detention-site locations as leverage. The executive screen carries a remote channel marked Charles.",
-    "Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level. Brandon waits beside the broadcast controls.",
-    "Brandon disconnects the external relay from JANUS. He sends a confession that authenticates Michelle's evidence.",
-    "A concrete authored consequence lands.",
-    "A concrete authored consequence lands."
+    "Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level."
   ],
-  "turn_index": 61,
+  "turn_index": 57,
   "world_parents": {
     "archive_terminals": "janus_archive",
     "back_door": "kitchen",
-    "brandon": "broadcast_relay",
+    "brandon": "security_corridors",
     "brandon_hideout": null,
     "broadcast_chamber": "executive_office",
     "broadcast_relay": "regional_facility",
@@ -1699,6 +1745,7 @@
     "service_entrance": "freight_terminal",
     "service_gate": "los_angeles_park",
     "service_level": "freight_terminal",
+    "shift_supervisor": "janus_archive",
     "stolen_radio": "detention_level",
     "storm_drain": "los_angeles_park",
     "transit_card": "kristin",

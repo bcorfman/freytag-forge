@@ -18,7 +18,7 @@ export const scenePrompts = {
     "Read the remaining research fragments on Michelle's memory card.",
     "Read the files on Michelle's memory card.",
     "Play the damaged recording on Michelle's memory card.",
-    "Hide what you found from the official asking questions about Michelle's work, then watch what they do at the gate as they leave.",
+    "Watch the officers ask about Michelle's research.",
   ],
   // 1B.1 dead drop -> 1B.2 the man following -> 1B.3 his warning -> 1B.4 ambush and escape
   "1B": [
@@ -33,25 +33,25 @@ export const scenePrompts = {
     "Study the prisoners on the processing line through the observation shaft.",
     "Copy the prisoner numbers from the processing line.",
   ],
-  // 2A.1 hideout -> 2A.2 infiltration plan -> 2A.3 entering under cover
+  // 2A incident: supervisor at the gate -> inspect the real cooling fault -> diagnose it to the supervisor
   "2A": [
-    "Search the servers and leaked documents in Brandon's hideout.",
-    "Build the inspector credentials and complete the inspection forms.",
-    "Drive Brandon to the facility checkpoint and show the guard.",
-    "Tell the supervisor about the cooling-water problem during the unscheduled inspection.",
+    "Drive to the facility perimeter.",
+    "Meet the shift supervisor at the facility gate.",
+    "Inspect the cooling manifold and ventilation grille.",
+    "Diagnose the real cooling-water pressure fault and ventilation problem to the supervisor.",
   ],
-  // 2B.1 selection algorithm -> 2B.2 Kristin was bait -> 2B.3 his role -> 2B.4 Michelle's resistance
+  // 2B incident: Kristin's own file and the build record -> the whispered name choice -> Michelle's one reply
   "2B": [
-    "In the records archive, open the selection files and read how people were sorted, and why Michelle was among them.",
-    "Read my own record in the archive.",
-    "Read the JANUS development records and Brandon's records.",
-    "Inspect the corrupted prisoner files on the medical terminal.",
+    "Pull Kristin's own JANUS file first and keep Brandon's name in the build record.",
+    "Type one reply to Michelle on the medical terminal.",
+    "Read the archive situation and wait for Michelle's route.",
+    "Study the medical terminal's maintenance line again.",
   ],
-  // 2C.1 the offer -> 2C.3 evidence or rescue -> 2C.4 Michelle's combined plan
+  // 2C incident: Rebecca's offer and the purge order -> commit by acting -> Michelle's route widens the options
   "2C": [
-    "Assess the executive channel's private offer and whether the people running this are turning on each other.",
-    "Assess the cost of transmitting our evidence right now to the people still held here.",
-    "Read Michelle's coded message and commit to the plan it describes.",
+    "Ask Brandon why Rebecca turned against Charles.",
+    "Head to the broadcast uplink and transmit the copied JANUS files.",
+    "Reach the transfer carts and rescue the prisoners.",
   ],
   // 3A.1 reach Michelle -> 3A.2 experiments -> 3A.3 override codes -> 3A.4 uprising
   "3A": [
@@ -68,13 +68,15 @@ export const scenePrompts = {
     "Check Charles's remote channel on the executive screen.",
     "Tell Brandon to send his confession through the relay chamber.",
   ],
-  // 3C.1 transmission -> 3C.2 archive and confrontation -> 3C.3 collapse -> 3C.4 resolution
+  // 3C.1 broadcast -> 3C.2 archive -> 3C.3 drainage pumps -> 3C.4 surface gates -> 3C.5 detention-site reports -> 3C.6 families -> 3C.7 recovered document
   "3C": [
-    "Open the broadcast with Michelle and push the evidence out - the captives, the selection records, the locations.",
-    "Stop her leaving with the portable archive and copy it out to independent networks.",
-    "Hold the emergency supports while the prisoners are led up through the maintenance tunnels.",
-    "Assess what this has changed across the country, and what it has not.",
-    "Read the recovered fragment describing what was meant to follow all of this.",
+    "Send the evidence package.",
+    "Copy Rebecca's archive.",
+    "Restore the drainage pumps.",
+    "Open the surface gates.",
+    "Check reports from other detention sites.",
+    "Call the families of the missing.",
+    "Open the recovered document.",
   ],
 };
 

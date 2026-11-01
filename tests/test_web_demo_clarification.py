@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from bench.core import advance_state_to_scene
 from storygame.runtime import reference_resolution
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.story_package.loader import load_story_package
@@ -27,7 +26,13 @@ class _Provider:
 def _seed_scene_2b(db_path: Path, session_id: str) -> None:
     store = RuntimeStateSqliteStore(db_path)
     state = store.load(session_id, PACKAGE)
-    advance_state_to_scene(PACKAGE, state, "2B")
+    # This endpoint test needs a 2B context, not a full persona playthrough.
+    # The consolidated 2A incident is intentionally not solvable by the
+    # generic "thorough" command used by the offline seeder.
+    scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "2B")
+    state.current_scene_id = "2B"
+    state.phase = scene.metadata.freytag_phase
+    state._assert_scene_entry_fact("2B")
     store.save(session_id, state)
 
 

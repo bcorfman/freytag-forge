@@ -18,11 +18,11 @@ from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 LEAK = "Rebecca's secured office can broadcast the evidence."
-CLEAN = "Kristin considers whether to transmit the evidence."
+CLEAN = "Kristin waits for Rebecca's next move."
 COMMAND = "Assess the cost of transmitting our evidence."
-TYPED_TERM = "maintenance access route"
-TYPED_LEAK = "The maintenance access route appears ahead."
-TYPED_COMMAND = "Look for a maintenance access route into the facility."
+TYPED_TERM = "broadcast the evidence"
+TYPED_LEAK = "Rebecca can broadcast the evidence."
+TYPED_COMMAND = "Look for a way to broadcast the evidence."
 
 
 class _Response:
@@ -312,7 +312,7 @@ def test_budget_guard_typed_term_feedback_names_player_phrase(monkeypatch: pytes
 def test_budget_guard_typed_term_feedback_is_case_insensitive(monkeypatch: pytest.MonkeyPatch) -> None:
     engine, _state, prompts = _engine_with_transport(monkeypatch, TYPED_LEAK, CLEAN)
 
-    engine.turn("LOOK FOR A MAINTENANCE ACCESS ROUTE INTO THE FACILITY.")
+    engine.turn("LOOK FOR A WAY TO BROADCAST THE EVIDENCE.")
 
     assert f'The player wrote "{TYPED_TERM}".' in prompts[1]
 
@@ -322,7 +322,7 @@ def test_budget_guard_typed_term_inside_longer_word_stays_sanitized(
 ) -> None:
     engine, _state, prompts = _engine_with_transport(monkeypatch, TYPED_LEAK, CLEAN)
 
-    engine.turn("Look for a maintenance access routekeeper into the facility.")
+    engine.turn("Look for a way to broadcast the evidencekeeper.")
 
     assert TYPED_TERM not in prompts[1]
 

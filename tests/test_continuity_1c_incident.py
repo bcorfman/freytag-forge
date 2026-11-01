@@ -45,8 +45,14 @@ def _provider(knowledge_id: str | None = None, text: str = "Kristin inspects the
 
 
 def test_real_package_declares_incident_outcomes_and_recovery() -> None:
-    assert len(PACKAGE.incidents) == 1
-    incident = PACKAGE.incidents[0]
+    incident_ids = {incident.id for incident in PACKAGE.incidents}
+    assert {
+        "i_1c_freight_transfer",
+        "i_2a_real_leak",
+        "i_2b_audit",
+        "i_2c_rebecca_corridor",
+    } <= incident_ids
+    incident = next(item for item in PACKAGE.incidents if item.id == "i_1c_freight_transfer")
     assert incident.id == "i_1c_freight_transfer"
     assert {outcome.id for outcome in incident.outcomes} == {"copy_numbers", "secure_route"}
     assert incident.recovery_storylet_id == "SL-1C-D"

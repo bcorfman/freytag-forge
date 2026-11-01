@@ -65,15 +65,24 @@ pacing_event_review:
     value: true
   status: approved
   reason: Withdraws the stalling player with an honest loss of proof, copied numbers, route, and trust.
-- event_id: scrutiny_2a
+- event_id: inspection_window_2a
   scene_id: 2A
-  at_turn: 3
+  at_turn: 5
   effect:
     op: assert
-    fact_id: identity_scrutiny_visible
+    fact_id: inspection_window_missed
     value: true
   status: approved
-  reason: Makes visible scrutiny of the inspector identity a timed pressure.
+  reason: Ends the supervisor's patience and moves a stalling inspection into watched entry.
+- event_id: inspection_nudge_2a
+  scene_id: 2A
+  at_turn: 6
+  effect:
+    op: assert
+    fact_id: supervisor_escorting
+    value: true
+  status: approved
+  reason: Keeps a missed inspection moving toward proving the real fault.
 - event_id: collapse_3c
   scene_id: 3C
   at_turn: 4
@@ -95,24 +104,42 @@ pacing_event_review:
   effect: {op: assert, fact_id: park_lockdown_spreading, value: true}
   status: approved
   reason: Turns the park pursuit into a shrinking physical space after the dead-drop and Brandon encounter have had room to play.
-- event_id: cover_review_2a
-  scene_id: 2A
-  at_turn: 7
-  effect: {op: assert, fact_id: inspector_cover_under_review, value: true}
-  status: approved
-  reason: Keeps the infiltration tense by making a credential review concrete after the initial scrutiny.
-- event_id: archive_sweep_2b
+- event_id: audit_window_2b
   scene_id: 2B
-  at_turn: 8
-  effect: {op: assert, fact_id: archive_security_sweep, value: true}
+  at_turn: 5
+  effect:
+    op: assert
+    fact_id: audit_window_missed
+    value: true
   status: approved
-  reason: Gives Kristin time to confront Brandon before a visible archive audit begins to close the window.
-- event_id: transfers_2c
+  reason: Brings the live supervisor-led audit into the archive stacks when the choice is missed.
+- event_id: audit_nudge_2b
+  scene_id: 2B
+  at_turn: 6
+  effect:
+    op: assert
+    fact_id: audit_reaches_stacks
+    value: true
+  status: approved
+  reason: Presses a stalling archive confrontation toward the whispered choice.
+- event_id: purge_window_2c
   scene_id: 2C
-  at_turn: 8
-  effect: {op: assert, fact_id: purge_transfers_underway, value: true}
+  at_turn: 5
+  effect:
+    op: assert
+    fact_id: purge_window_missed
+    value: true
   status: approved
-  reason: Shows the purge becoming real after the player has faced the evidence-versus-rescue conflict.
+  reason: Lets the purge alarm force the group out while Michelle's neutral route arrives.
+- event_id: purge_nudge_2c
+  scene_id: 2C
+  at_turn: 6
+  effect:
+    op: assert
+    fact_id: purge_alarm_active
+    value: true
+  status: approved
+  reason: Keeps a missed purge moving toward Michelle's route without asserting a commitment.
 - event_id: detention_lockdown_3a
   scene_id: 3A
   at_turn: 8
@@ -259,65 +286,76 @@ new_fact_ids:
   used_by_transitions: []
 - id: brandon_prepared_before_event
   definition: Kristin knows Brandon prepared for the disappearance before it occurred.
-  used_by_storylets:
-  - SL-2A-A
+  used_by_storylets: []
   used_by_transitions: []
 - id: facility_perimeter_reached
   definition: Kristin and Brandon have reached the facility perimeter and passed the initial identity checks.
-  used_by_storylets:
-  - SL-2A-E
-  - SL-2A-C
+  used_by_storylets: []
   used_by_transitions: []
 - id: restricted_corridor_access
   definition: Kristin and Brandon have access to restricted infrastructure corridors.
   used_by_storylets:
   - SL-2A-C
+  - SL-2A-D
   used_by_transitions:
   - t_2a_2b
+- id: supervisor_convinced
+  definition: The shift supervisor is convinced that Kristin's cooling diagnosis is genuine and grants clean access.
+  used_by_storylets: [SL-2A-C]
+  used_by_transitions: []
 - id: rebecca_observing_infiltrators
   definition: Rebecca has quietly ordered the infiltrators observed; this fact is not automatically known to Kristin.
   used_by_storylets:
   - SL-2A-C
+  - SL-2A-D
   used_by_transitions: []
 - id: kristin_deliberately_left_behind
   definition: JANUS records show Kristin was deliberately left behind.
   used_by_storylets:
-  - SL-2B-A
+  - SL-2B-B
+  - SL-2B-D
   used_by_transitions: []
 - id: kristin_was_bait
   definition: Charles left Michelle’s evidence accessible so Kristin would expose Brandon’s hidden network.
   used_by_storylets:
   - SL-2B-B
+  - SL-2B-D
   used_by_transitions: []
 - id: brandon_janus_role_known
   definition: Kristin knows Brandon helped develop JANUS.
   used_by_storylets:
   - SL-2B-B
+  - SL-2B-D
   used_by_transitions: []
 - id: brandon_claimed_reform_motive
   definition: Brandon has claimed he broke with Charles after learning JANUS would be used for mass detention/control.
   used_by_storylets:
   - SL-2B-B
+  - SL-2B-D
   used_by_transitions: []
 - id: michelle_resistance_known
   definition: Kristin knows Michelle is actively sabotaging the facility from inside.
   used_by_storylets:
   - SL-2B-C
+  - SL-2B-D
   used_by_transitions: []
 - id: rebecca_offer_active
   definition: Rebecca has offered Brandon safety/Michelle’s release in exchange for helping her displace Charles.
   used_by_storylets:
-  - SL-2C-A
+  - SL-2C-D
+  - SL-2C-E
   used_by_transitions: []
 - id: antagonist_split_known
   definition: Kristin has legitimate evidence that Rebecca and Charles are in conflict.
   used_by_storylets:
-  - SL-2C-A
+  - SL-2C-D
+  - SL-2C-E
   used_by_transitions: []
 - id: rebecca_office_required_for_broadcast
   definition: Rebecca's secured office is the manual activation point for broadcasting the evidence and opening the detention sectors.
   used_by_storylets:
   - SL-2C-D
+  - SL-2C-E
   used_by_transitions:
   - t_2c_3a
 - id: combined_broadcast_rescue_plan_known
@@ -325,6 +363,7 @@ new_fact_ids:
     then combine evidence transmission with opening sealed detention sectors via Rebecca’s office.
   used_by_storylets:
   - SL-2C-D
+  - SL-2C-E
   used_by_transitions:
   - t_2c_3a
 - id: uprising_prepared
@@ -489,6 +528,66 @@ new_fact_ids:
   - SL-1C-C
   used_by_transitions:
   - t_1c_2a
+- id: cover_suspected
+  definition: The doubtful inspection has put Kristin and Brandon under closer watch for the archive audit.
+  used_by_storylets: [SL-2A-C, SL-2A-D]
+  used_by_transitions: []
+- id: inspection_console_used
+  definition: Kristin has used the limited inspection console during the real fault diagnosis.
+  used_by_storylets: [SL-2A-C, SL-2A-D]
+  used_by_transitions: []
+- id: brandon_name_kept
+  definition: Kristin kept Brandon's name in the JANUS build record.
+  used_by_storylets: [SL-2B-B, SL-2B-D]
+  used_by_transitions: []
+- id: brandon_name_erased
+  definition: Kristin allowed Brandon's name to be erased from the JANUS build record.
+  used_by_storylets: [SL-2B-B]
+  used_by_transitions: []
+- id: michelle_reply_received
+  definition: Michelle answered Kristin once through the medical terminal.
+  used_by_storylets: [SL-2B-C, SL-2B-D]
+  used_by_transitions: []
+- id: committed_to_transmit
+  definition: Kristin physically committed to sending the JANUS evidence through the uplink.
+  used_by_storylets: [SL-2C-D]
+  used_by_transitions: []
+- id: committed_to_rescue
+  definition: Kristin physically committed to freeing captives from the transfer carts.
+  used_by_storylets: [SL-2C-D]
+  used_by_transitions: []
+- id: detention_sectors_sealed
+  definition: The detention sectors sealed when Kristin began transmitting the evidence.
+  used_by_storylets: [SL-2C-D]
+  used_by_transitions: []
+- id: evidence_not_transmitted
+  definition: Kristin rescued captives before sending the copied evidence.
+  used_by_storylets: [SL-2C-D]
+  used_by_transitions: []
+- id: inspection_window_missed
+  definition: The supervisor's inspection window closed before Kristin resolved the incident.
+  used_by_storylets: [SL-2A-D]
+  used_by_transitions: []
+- id: audit_window_missed
+  definition: The archive audit reached the stacks before Kristin resolved the incident.
+  used_by_storylets: [SL-2B-D]
+  used_by_transitions: []
+- id: purge_window_missed
+  definition: The purge alarm forced the group out before Kristin made a commitment.
+  used_by_storylets: [SL-2C-E]
+  used_by_transitions: []
+- id: supervisor_escorting
+  definition: The shift supervisor is escorting Kristin and Brandon into the inspection under watch.
+  used_by_storylets: []
+  used_by_transitions: []
+- id: audit_reaches_stacks
+  definition: The live audit has reached Kristin and Brandon in the archive stacks.
+  used_by_storylets: [SL-2B-D]
+  used_by_transitions: []
+- id: purge_alarm_active
+  definition: The purge alarm is active while Michelle's neutral route remains open.
+  used_by_storylets: [SL-2C-E]
+  used_by_transitions: []
 - id: detention_uprising_started
   definition: Michelle’s resistance has openly begun coordinated action and the protagonists are committed to moving
     toward the command/broadcast levels.
@@ -514,9 +613,9 @@ new_fact_ids:
   definition: Kristin has secured JANUS evidence, learned the bait/Brandon revelations, and recognized Michelle’s
     active resistance, completing the archive crisis.
   used_by_storylets:
-  - SL-2B-A
   - SL-2B-B
   - SL-2B-C
+  - SL-2B-D
   used_by_transitions:
   - t_2b_2c
 - id: override_codes_deadline_known
@@ -595,7 +694,7 @@ new_fact_ids:
   used_by_transitions: []
 - id: purge_transfers_underway
   definition: Visible transfers and killing preparations prove the purge is underway.
-  used_by_storylets: [SL-2C-C, SL-2C-D]
+  used_by_storylets: [SL-2C-D, SL-2C-E]
   used_by_transitions: []
 - id: detention_lockdown_spreading
   definition: Armed teams are sealing detention blocks during the uprising.
@@ -1385,194 +1484,27 @@ storylets:
   non_coercion_note: >-
     Brandon may offer these actions in dialogue. Kristin chooses what to attempt.
     Equivalent player actions may earn the same result.
-- id: SL-2A-A
-  scene_id: 2A
-  title: Brandon Prepared for This Years Ago
-  activation:
-    scene_id: 2A
-    conditions: []
-    pacing:
-      earliest_turn: 0
-      target_turn: 2
-      latest_turn: 3
-      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: If planning becomes static, make Brandon’s long preparation useful but suspicious, encouraging
-    questioning while keeping his JANUS role protected.
-  realization_options:
-  - id: SL-2A-A-R1
-    dramatic_intent: Establish that Brandon prepared for the disappearance and claims he was discredited after trying
-      to expose the Initiative.
-    operations:
-    - op: assert
-      fact_id: brandon_prepared_before_event
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - brandon_history
-    - janus_phase_two
-  - id: SL-2A-A-R2
-    dramatic_intent: Notice retained professional resources without resolving whether they indicate foresight, guilt,
-      or both.
-    operations:
-    - op: assert
-      fact_id: brandon_prepared_before_event
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - brandon_history
-    - janus_phase_two
-  completion_or_abort:
-    complete_when:
-    - fact_id: brandon_prepared_before_event
-      equals: true
-    abort_when:
-    - scene_id_not: 2A
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
-- id: SL-2A-B
-  scene_id: 2A
-  title: Build the Cover Around a Real Infrastructure Risk
-  activation:
-    scene_id: 2A
-    conditions:
-    - fact_id: facility_infiltration_needed
-      equals: true
-    pacing:
-      earliest_turn: 0
-      target_turn: 5
-      latest_turn: 6
-      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: Give the player many ways to contribute expertise to infiltration preparation; any plausible cover
-    built around the real defect can converge on readiness.
-  realization_options:
-  - id: SL-2A-B-R1
-    dramatic_intent: Kristin identifies a credible infrastructure/cooling risk and Brandon turns it into inspector
-      credentials.
-    operations:
-    - op: assert
-      fact_id: false_identities_ready
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - brandon_history
-    - janus_selection_system
-    - janus_phase_two
-  - id: SL-2A-B-R2
-    dramatic_intent: 'Use more truth in the cover story: the real cooling-system danger justifies an unscheduled
-      specialist visit.'
-    operations:
-    - op: assert
-      fact_id: false_identities_ready
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - brandon_history
-    - janus_selection_system
-    - janus_phase_two
-  completion_or_abort:
-    complete_when:
-    - fact_id: false_identities_ready
-      equals: true
-    abort_when:
-    - scene_id_not: 2A
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
-- id: SL-2A-E
-  scene_id: 2A
-  title: Reach the Facility
-  activation:
-    scene_id: 2A
-    conditions:
-    - fact_id: false_identities_ready
-      equals: true
-    pacing:
-      earliest_turn: 0
-      target_turn: 7
-      latest_turn: 8
-      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: If the player lingers in the hideout once the cover is ready, take Kristin and Brandon to the facility, where their identities survive the initial checks.
-  realization_options:
-  - id: SL-2A-E-R1
-    dramatic_intent: Kristin and Brandon pass through several layers of security, and their identities survive the initial checks.
-    operations:
-    - op: assert
-      fact_id: facility_perimeter_reached
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - brandon_history
-    - janus_selection_system
-    - janus_phase_two
-  completion_or_abort:
-    complete_when:
-    - fact_id: facility_perimeter_reached
-      equals: true
-    abort_when:
-    - scene_id_not: 2A
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-2A-C
   scene_id: 2A
   title: The Supervisor Needs a Reason
   activation:
     scene_id: 2A
-    conditions:
-    - fact_id: false_identities_ready
-      equals: true
-    - fact_id: facility_perimeter_reached
-      equals: true
+    conditions: []
     pacing:
       earliest_turn: 0
-      target_turn: 9
-      latest_turn: 10
+      target_turn: 3
+      latest_turn: 5
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If the player hesitates at security or challenges the cover, make the supervisor a free-form social/technical
     pressure test rather than a fixed dialogue puzzle.
   realization_options:
-  - id: SL-2A-C-R1
-    dramatic_intent: Kristin convincingly explains the cooling-water risk and gains restricted corridor access, including limited use of the inspection console.
+  - id: SL-2A-C-R5
+    dramatic_intent: Kristin gives a convincing diagnosis of the real cooling fault and earns clean restricted corridor access.
     source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
     operations:
     - op: assert
-      fact_id: restricted_corridor_access
+      fact_id: supervisor_convinced
       value: true
-    - op: assert
-      fact_id: rebecca_observing_infiltrators
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_2a_2b
-    protected_knowledge_boundaries:
-    - janus_selection_system
-    - brandon_history
-    - janus_phase_two
-  - id: SL-2A-C-R2
-    dramatic_intent: An imperfect explanation still gets conditional corridor and inspection-console access while quietly
-      increasing observation pressure.
-    source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
-    operations:
-    - op: assert
-      fact_id: restricted_corridor_access
-      value: true
-    - op: assert
-      fact_id: rebecca_observing_infiltrators
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_2a_2b
-    protected_knowledge_boundaries:
-    - janus_selection_system
-    - brandon_history
-    - janus_phase_two
-  - id: SL-2A-C-R3
-    dramatic_intent: Kristin uses the copied prisoner numbers to support the cooling-water explanation, giving the supervisor proof while still needing corridor access.
-    source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
-    operations:
     - op: assert
       fact_id: restricted_corridor_access
       value: true
@@ -1580,13 +1512,13 @@ storylets:
       fact_id: rebecca_observing_infiltrators
       value: true
     - op: assert
-      fact_id: processing_numbers_used_in_confrontation
+      fact_id: inspection_console_used
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: [t_2a_2b]
     protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
-  - id: SL-2A-C-R4
-    dramatic_intent: Kristin uses the known service approach to make the inspection route credible, reducing the supervisor's scrutiny before gaining corridor access.
+  - id: SL-2A-C-R6
+    dramatic_intent: Kristin gives a vague or overlong diagnosis and reaches the corridors under a follow-up watch.
     source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
     operations:
     - op: assert
@@ -1596,7 +1528,10 @@ storylets:
       fact_id: rebecca_observing_infiltrators
       value: true
     - op: assert
-      fact_id: service_route_used_in_confrontation
+      fact_id: inspection_console_used
+      value: true
+    - op: assert
+      fact_id: cover_suspected
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: [t_2a_2b]
@@ -1609,26 +1544,86 @@ storylets:
     - scene_id_not: 2A
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
-- id: SL-2B-A
+- id: SL-2A-D
+  scene_id: 2A
+  title: The Supervisor Takes Them In
+  activation:
+    scene_id: 2A
+    conditions:
+    - fact_id: inspection_window_missed
+      equals: true
+    pacing:
+      earliest_turn: 5
+      target_turn: 6
+      latest_turn: 10
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let the missed inspection window carry Kristin and Brandon into the corridors under watch.
+  realization_options:
+  - id: SL-2A-D-R1
+    dramatic_intent: The supervisor escorts Kristin and Brandon to the manifold, watches the test, and logs the inspection.
+    source_beats: [scene-2a3--entering-the-facility, scene-2a4--the-first-complication]
+    operations:
+    - op: assert
+      fact_id: restricted_corridor_access
+      value: true
+    - op: assert
+      fact_id: rebecca_observing_infiltrators
+      value: true
+    - op: assert
+      fact_id: inspection_console_used
+      value: true
+    - op: assert
+      fact_id: cover_suspected
+      value: true
+    - op: assert
+      fact_id: supervisor_escorting
+      value: true
+    - op: assert
+      fact_id: inspection_recovery_ready
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: [t_2a_2b]
+    protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
+  completion_or_abort:
+    complete_when:
+    - fact_id: restricted_corridor_access
+      equals: true
+    abort_when:
+    - scene_id_not: 2A
+  non_coercion_note: >-
+    Offer as a consequence of the missed window. Equivalent player-authored approaches may validate the same operations.
+- id: SL-2B-B
   scene_id: 2B
-  title: JANUS Classified Everyone
+  title: Brandon’s Name Is in the Build Records
   activation:
     scene_id: 2B
     conditions: []
     pacing:
       earliest_turn: 0
-      target_turn: 2
-      latest_turn: 3
+      target_turn: 5
+      latest_turn: 7
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: When the player explores the archive, let Michelle’s record, Kristin’s record, or classification
-    categories independently reveal the selection mechanism.
+  pressure_role: Turn accumulated suspicion into a confrontation that can occur immediately or after observation,
+    without forcing forgiveness or hostility.
   realization_options:
-  - id: SL-2B-A-R1
-    dramatic_intent: Discover the JANUS classification system through Michelle’s record and the resistance/influence
-      categories.
+  - id: SL-2B-B-R4
+    dramatic_intent: Kristin keeps Brandon’s name while the single file pull reveals JANUS, her bait status, and his role.
+    source_beats: [scene-2b1--the-selection-algorithm, scene-2b2--kristin-was-bait, scene-2b3--brandons-role]
     operations:
     - op: assert
+      fact_id: brandon_name_kept
+      value: true
+    - op: assert
+      fact_id: brandon_janus_role_known
+      value: true
+    - op: assert
+      fact_id: brandon_claimed_reform_motive
+      value: true
+    - op: assert
       fact_id: janus_known
+      value: true
+    - op: assert
+      fact_id: kristin_was_bait
       value: true
     - op: assert
       fact_id: michelle_selected_for_resistance_influence
@@ -1636,182 +1631,173 @@ storylets:
     - op: assert
       fact_id: janus_evidence
       value: true
+    - op: assert
+      fact_id: archive_crisis_understood
+      value: true
     eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_2b_2c
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  - id: SL-2B-A-R2
-    dramatic_intent: Discover Kristin’s own record and learn that being left behind was deliberate; the record
-      itself is sufficient JANUS evidence.
+    helps_transition_triggers: [t_2b_2c]
+    protected_knowledge_boundaries: [janus_phase_two]
+  - id: SL-2B-B-R5
+    dramatic_intent: Kristin lets Brandon erase his name while the archive preserves the JANUS evidence and the confrontation.
+    source_beats: [scene-2b1--the-selection-algorithm, scene-2b2--kristin-was-bait, scene-2b3--brandons-role]
     operations:
+    - op: assert
+      fact_id: brandon_name_erased
+      value: true
+    - op: assert
+      fact_id: brandon_janus_role_known
+      value: true
+    - op: assert
+      fact_id: brandon_claimed_reform_motive
+      value: true
+    - op: assert
+      fact_id: janus_known
+      value: true
+    - op: assert
+      fact_id: kristin_was_bait
+      value: true
+    - op: assert
+      fact_id: michelle_selected_for_resistance_influence
+      value: true
     - op: assert
       fact_id: janus_evidence
       value: true
     - op: assert
-      fact_id: kristin_deliberately_left_behind
+      fact_id: archive_crisis_understood
+      value: true
+    - op: assert
+      fact_id: evidence_gap_development_record
       value: true
     eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_2b_2c
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  completion_or_abort:
-    complete_when:
-    - fact_id: janus_evidence
-      equals: true
-    abort_when:
-    - scene_id_not: 2B
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
-- id: SL-2B-B
-  scene_id: 2B
-  title: Brandon’s Name Is in the Build Records
-  activation:
-    scene_id: 2B
-    conditions:
-    - fact_id: janus_evidence
-      equals: true
-    pacing:
-      earliest_turn: 0
-      target_turn: 6
-      latest_turn: 7
-      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: Turn accumulated suspicion into a confrontation that can occur immediately or after observation,
-    without forcing forgiveness or hostility.
-  realization_options:
-  - id: SL-2B-B-R1
-    dramatic_intent: Find Brandon’s name in JANUS build records; the records both authenticate JANUS and force the
-      confrontation over his role.
-    source_beats: [scene-2b3--brandons-role]
-    operations:
-    - op: assert
-      fact_id: brandon_janus_role_known
-      value: true
-    - op: assert
-      fact_id: brandon_claimed_reform_motive
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_2b_2c
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  - id: SL-2B-B-R2
-    dramatic_intent: Delay confrontation long enough to corroborate his name, then establish both authorship and
-      his claimed break with Charles.
-    source_beats: [scene-2b3--brandons-role]
-    operations:
-    - op: assert
-      fact_id: brandon_janus_role_known
-      value: true
-    - op: assert
-      fact_id: brandon_claimed_reform_motive
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_2b_2c
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  - id: SL-2B-B-R3
-    dramatic_intent: Reveal that Charles expected Kristin to seek Brandon and left Michelle’s evidence accessible to expose Brandon’s hidden network.
-    source_beats: [scene-2b2--kristin-was-bait]
-    operations:
-    - op: assert
-      fact_id: kristin_was_bait
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_2b_2c
-    protected_knowledge_boundaries:
-    - janus_phase_two
+    helps_transition_triggers: [t_2b_2c]
+    protected_knowledge_boundaries: [janus_phase_two]
   completion_or_abort:
     complete_when:
     - any_fact_true:
-      - brandon_janus_role_known
-      - kristin_was_bait
+      - brandon_name_kept
+      - brandon_name_erased
     abort_when:
     - scene_id_not: 2B
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-2B-C
   scene_id: 2B
-  title: Michelle Is Already Sabotaging the System
+  title: Michelle Answers Once
   activation:
     scene_id: 2B
     conditions:
-    - fact_id: janus_evidence
+    - fact_id: archive_crisis_understood
       equals: true
     pacing:
       earliest_turn: 4
-      target_turn: 7
+      target_turn: 6
       latest_turn: 7
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: After betrayal pressure spikes, give the player a constructive route forward by recognizing Michelle’s
-    agency in corrupted files and maintenance messages.
+  pressure_role: After the whispered confrontation, let a medical-terminal reply show that Michelle is alive and active.
   realization_options:
-  - id: SL-2B-C-R1
-    dramatic_intent: Recognize Michelle’s signature in corrupted JANUS/prisoner records and preserve enough of the
-      records to serve as evidence while revealing her active resistance.
-    operations:
-    - op: assert
-      fact_id: prisoner_records_corrupted
-      value: true
-    - op: assert
-      fact_id: michelle_resistance_known
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_2b_2c
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  - id: SL-2B-C-R2
-    dramatic_intent: Infer organized sabotage from altered classifications and delayed transfers even before its
-      full scale is known.
+  - id: SL-2B-C-R3
+    dramatic_intent: The medical terminal prints Michelle’s maintenance line. Kristin replies once. Michelle answers that she is alive and active.
+    source_beats: [scene-2b4--michelles-hidden-resistance]
     operations:
     - op: assert
       fact_id: michelle_resistance_known
       value: true
+    - op: assert
+      fact_id: michelle_reply_received
+      value: true
+    - op: assert
+      fact_id: archive_crisis_understood
+      value: true
     eligible_storylet_event_id: null
-    helps_transition_triggers:
-    - t_2b_2c
-    protected_knowledge_boundaries:
-    - janus_phase_two
+    helps_transition_triggers: [t_2b_2c]
+    protected_knowledge_boundaries: [janus_phase_two]
   completion_or_abort:
     complete_when:
-    - fact_id: michelle_resistance_known
+    - fact_id: michelle_reply_received
       equals: true
     abort_when:
     - scene_id_not: 2B
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
-- id: SL-2C-A
+- id: SL-2B-D
+  scene_id: 2B
+  title: The Audit Reaches the Stacks
+  activation:
+    scene_id: 2B
+    conditions:
+    - fact_id: audit_window_missed
+      equals: true
+    pacing:
+      earliest_turn: 5
+      target_turn: 6
+      latest_turn: 10
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let the audit close the archive choice while the supervisor allows Kristin and Brandon to leave.
+  realization_options:
+  - id: SL-2B-D-R1
+    dramatic_intent: The audit reaches the stacks. Kristin keeps Brandon’s name, copies the JANUS files, and receives Michelle’s one reply.
+    source_beats: [scene-2b1--the-selection-algorithm, scene-2b2--kristin-was-bait, scene-2b3--brandons-role, scene-2b4--michelles-hidden-resistance]
+    operations:
+    - op: assert
+      fact_id: brandon_name_kept
+      value: true
+    - op: assert
+      fact_id: janus_known
+      value: true
+    - op: assert
+      fact_id: kristin_was_bait
+      value: true
+    - op: assert
+      fact_id: michelle_selected_for_resistance_influence
+      value: true
+    - op: assert
+      fact_id: brandon_janus_role_known
+      value: true
+    - op: assert
+      fact_id: brandon_claimed_reform_motive
+      value: true
+    - op: assert
+      fact_id: janus_evidence
+      value: true
+    - op: assert
+      fact_id: michelle_resistance_known
+      value: true
+    - op: assert
+      fact_id: michelle_reply_received
+      value: true
+    - op: assert
+      fact_id: archive_crisis_understood
+      value: true
+    - op: assert
+      fact_id: audit_recovery_ready
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: [t_2b_2c]
+    protected_knowledge_boundaries: [janus_phase_two]
+  completion_or_abort:
+    complete_when:
+    - fact_id: archive_crisis_understood
+      equals: true
+    abort_when:
+    - scene_id_not: 2B
+  non_coercion_note: >-
+    Offer as a consequence of the missed window. Equivalent player-authored approaches may validate the same operations.
+- id: SL-2C-D
   scene_id: 2C
-  title: Rebecca Offers Brandon a Different Conspiracy
+  title: Michelle Changes the Choice
   activation:
     scene_id: 2C
     conditions: []
     pacing:
       earliest_turn: 0
-      target_turn: 2
-      latest_turn: 3
+      target_turn: 13
+      latest_turn: 14
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: Use antagonist fracture to create pressure and possible executive access without making Rebecca
-    trustworthy or requiring Kristin to accept Brandon’s performance.
+  pressure_role: Let Rebecca’s offer, the purge, the physical commitment, and Michelle’s route unfold as one live crisis.
   realization_options:
-  - id: SL-2C-A-R1
-    dramatic_intent: Brandon strategically entertains Rebecca’s offer to gain leverage/access while treating her
-      claims as unverified.
-    operations:
-    - op: assert
-      fact_id: rebecca_offer_active
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  - id: SL-2C-A-R2
-    dramatic_intent: Kristin becomes legitimately aware of the offer and interprets it as evidence that the antagonist
-      coalition is fracturing.
+  - id: SL-2C-D-R1
+    dramatic_intent: Rebecca offers Brandon Michelle’s release. Her tablet shows the purge. Brandon says yes and Michelle sends her route.
+    source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order, scene-2c3--evidence-or-rescue, scene-2c5--michelle-changes-the-choice]
     operations:
     - op: assert
       fact_id: rebecca_offer_active
@@ -1819,127 +1805,12 @@ storylets:
     - op: assert
       fact_id: antagonist_split_known
       value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  completion_or_abort:
-    complete_when:
-    - fact_id: rebecca_offer_active
-      equals: true
-    abort_when:
-    - scene_id_not: 2C
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
-- id: SL-2C-B
-  scene_id: 2C
-  title: The Purge Clock Starts Moving
-  activation:
-    scene_id: 2C
-    conditions: []
-    pacing:
-      earliest_turn: 0
-      target_turn: 5
-      latest_turn: 6
-      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: 'If the player lingers over strategy, convert delay into an explicit worsening deadline: transfers
-    accelerate and safe options narrow.'
-  realization_options:
-  - id: SL-2C-B-R1
-    dramatic_intent: Read or overhear Charles’s purge/transfer order and make the deadline explicit.
-    operations:
     - op: assert
       fact_id: purge_clock_started
       value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  - id: SL-2C-B-R2
-    dramatic_intent: Infer the same order from coordinated transfer movement and broadcast preparation, then verify
-      enough to treat the purge as active.
-    operations:
-    - op: assert
-      fact_id: purge_clock_started
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  completion_or_abort:
-    complete_when:
-    - fact_id: purge_clock_started
-      equals: true
-    abort_when:
-    - scene_id_not: 2C
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
-- id: SL-2C-C
-  scene_id: 2C
-  title: Evidence or Rescue
-  activation:
-    scene_id: 2C
-    conditions: []
-    pacing:
-      earliest_turn: 0
-      target_turn: 10
-      latest_turn: 11
-      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: Let Kristin and Brandon argue, test alternatives, and make costly preparations while the false binary
-    remains real. Do not solve it for them yet.
-  realization_options:
-  - id: SL-2C-C-R1
-    dramatic_intent: Kristin and Brandon have enough evidence to expose the conspiracy, but learn that sending it now
-      will reveal their position and seal the detention sectors.
-    operations:
     - op: assert
       fact_id: evidence_ready_to_transmit
       value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  - id: SL-2C-C-R2
-    dramatic_intent: 'Kristin and Brandon confront the real cost of either action: proof may save the national story,
-      while a rescue may save the people nearest to them.'
-    operations:
-    - op: assert
-      fact_id: evidence_ready_to_transmit
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: []
-    protected_knowledge_boundaries:
-    - janus_phase_two
-  completion_or_abort:
-    complete_when:
-    - fact_id: evidence_ready_to_transmit
-      equals: true
-    abort_when:
-    - scene_id_not: 2C
-  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
-    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
-- id: SL-2C-D
-  scene_id: 2C
-  title: Michelle Changes the Choice
-  activation:
-    scene_id: 2C
-    conditions:
-    - fact_id: purge_clock_started
-      equals: true
-    - fact_id: evidence_ready_to_transmit
-      equals: true
-    pacing:
-      earliest_turn: 0
-      target_turn: 13
-      latest_turn: 14
-      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: After the player has had room to weigh the false choice, let Michelle’s coded message reveal a dangerous
-    third path. It must make the mission harder, not erase its cost.
-  realization_options:
-  - id: SL-2C-D-R1
-    dramatic_intent: Michelle’s message marks a maintenance route into her partly unsecured holding block and explains
-      that Rebecca’s secured office can manually broadcast the evidence and release the sealed detention sectors.
-    operations:
     - op: assert
       fact_id: rebecca_office_required_for_broadcast
       value: true
@@ -1950,15 +1821,88 @@ storylets:
     helps_transition_triggers: [t_2c_3a]
     protected_knowledge_boundaries: [janus_phase_two]
   - id: SL-2C-D-R2
-    dramatic_intent: Kristin traces Michelle’s maintenance code into her holding block, then to the broadcast controls,
-      and realizes the plan combines exposure and rescue only if the group reaches Rebecca’s office before the purge
-      closes the route.
+    dramatic_intent: The negotiation exposes the split between Rebecca and Charles. Michelle’s route makes the combined mission clear.
+    source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order, scene-2c3--evidence-or-rescue, scene-2c5--michelle-changes-the-choice]
     operations:
+    - op: assert
+      fact_id: rebecca_offer_active
+      value: true
+    - op: assert
+      fact_id: antagonist_split_known
+      value: true
+    - op: assert
+      fact_id: purge_clock_started
+      value: true
+    - op: assert
+      fact_id: evidence_ready_to_transmit
+      value: true
     - op: assert
       fact_id: rebecca_office_required_for_broadcast
       value: true
     - op: assert
       fact_id: combined_broadcast_rescue_plan_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: [t_2c_3a]
+    protected_knowledge_boundaries: [janus_phase_two]
+  - id: SL-2C-D-R3
+    dramatic_intent: Kristin commits to the uplink after Rebecca’s offer and Michelle’s route reveal. The detention sectors seal.
+    source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order, scene-2c3--evidence-or-rescue, scene-2c5--michelle-changes-the-choice]
+    operations:
+    - op: assert
+      fact_id: rebecca_offer_active
+      value: true
+    - op: assert
+      fact_id: antagonist_split_known
+      value: true
+    - op: assert
+      fact_id: committed_to_transmit
+      value: true
+    - op: assert
+      fact_id: detention_sectors_sealed
+      value: true
+    - op: assert
+      fact_id: purge_clock_started
+      value: true
+    - op: assert
+      fact_id: evidence_ready_to_transmit
+      value: true
+    - op: assert
+      fact_id: combined_broadcast_rescue_plan_known
+      value: true
+    - op: assert
+      fact_id: rebecca_office_required_for_broadcast
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: [t_2c_3a]
+    protected_knowledge_boundaries: [janus_phase_two]
+  - id: SL-2C-D-R4
+    dramatic_intent: Kristin commits to the transfer carts after Rebecca’s offer and Michelle’s route reveal. The evidence stays unsent.
+    source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order, scene-2c3--evidence-or-rescue, scene-2c5--michelle-changes-the-choice]
+    operations:
+    - op: assert
+      fact_id: rebecca_offer_active
+      value: true
+    - op: assert
+      fact_id: antagonist_split_known
+      value: true
+    - op: assert
+      fact_id: committed_to_rescue
+      value: true
+    - op: assert
+      fact_id: evidence_not_transmitted
+      value: true
+    - op: assert
+      fact_id: purge_clock_started
+      value: true
+    - op: assert
+      fact_id: evidence_ready_to_transmit
+      value: true
+    - op: assert
+      fact_id: combined_broadcast_rescue_plan_known
+      value: true
+    - op: assert
+      fact_id: rebecca_office_required_for_broadcast
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: [t_2c_3a]
@@ -1971,6 +1915,60 @@ storylets:
     - scene_id_not: 2C
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-2C-E
+  scene_id: 2C
+  title: Michelle’s Route Arrives
+  activation:
+    scene_id: 2C
+    conditions:
+    - fact_id: purge_window_missed
+      equals: true
+    pacing:
+      earliest_turn: 5
+      target_turn: 6
+      latest_turn: 10
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let the missed purge window force the group onto Michelle’s route without deciding Kristin’s commitment.
+  realization_options:
+  - id: SL-2C-E-R1
+    dramatic_intent: The purge alarm forces the group out of the corridor before Kristin commits. Michelle’s route identifies Rebecca’s office and widens the options without crediting a commitment.
+    source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order, scene-2c5--michelle-changes-the-choice]
+    operations:
+    - op: assert
+      fact_id: rebecca_offer_active
+      value: true
+    - op: assert
+      fact_id: antagonist_split_known
+      value: true
+    - op: assert
+      fact_id: purge_clock_started
+      value: true
+    - op: assert
+      fact_id: evidence_ready_to_transmit
+      value: true
+    - op: assert
+      fact_id: rebecca_office_required_for_broadcast
+      value: true
+    - op: assert
+      fact_id: combined_broadcast_rescue_plan_known
+      value: true
+    - op: assert
+      fact_id: purge_alarm_active
+      value: true
+    - op: assert
+      fact_id: purge_recovery_ready
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: [t_2c_3a]
+    protected_knowledge_boundaries: [janus_phase_two]
+  completion_or_abort:
+    complete_when:
+    - fact_id: combined_broadcast_rescue_plan_known
+      equals: true
+    abort_when:
+    - scene_id_not: 2C
+  non_coercion_note: >-
+    Offer as a consequence of the missed window. Do not assert either commitment.
 - id: SL-3A-A
   scene_id: 3A
   title: Michelle Has Turned Sabotage Into an Uprising
@@ -2816,23 +2814,24 @@ coverage_matrix:
   trigger_fact_id: restricted_corridor_access
   storylets_helping_in_source_scene:
   - SL-2A-C
+  - SL-2A-D
   status: covered_by_gated_canonical_bridge
   canonical_fallback_event: bridge_2a_restricted_access
 - scene_id: 2B
   outgoing_transition_id: t_2b_2c
   trigger_fact_id: archive_crisis_understood
   storylets_helping_in_source_scene:
-  - SL-2B-A
   - SL-2B-B
   - SL-2B-C
+  - SL-2B-D
   status: covered_by_gated_canonical_bridge
   canonical_fallback_event: bridge_2b_archive_crisis
 - scene_id: 2C
   outgoing_transition_id: t_2c_3a
   trigger_fact_id: combined_broadcast_rescue_plan_known
   storylets_helping_in_source_scene:
-  - SL-2C-C
   - SL-2C-D
+  - SL-2C-E
   status: covered_by_gated_canonical_bridge
   canonical_fallback_event: bridge_2c_combined_plan
 - scene_id: 3A
@@ -2936,7 +2935,7 @@ canonical_bridge_events:
   scene_id: 2A
   activation:
     all_facts_true:
-    - false_identities_ready
+    - inspection_console_used
     - rebecca_observing_infiltrators
   produces:
   - op: assert
@@ -2944,30 +2943,95 @@ canonical_bridge_events:
     value: true
   realization_storylets:
   - SL-2A-C
+  - SL-2A-D
   fallback_realization: The canonical security confrontation may be realized through any convincing free-text technical/social
     approach consistent with the false-inspector cover; it grants restricted corridor access and the limited diagnostic
     console that accompanies that inspection access.
+- id: bridge_2a_missed_window_recovery
+  scene_id: 2A
+  activation:
+    all_facts_true:
+    - inspection_window_missed
+    - inspection_recovery_ready
+  produces:
+  - op: assert
+    fact_id: inspection_window_missed
+    value: true
+  - op: assert
+    fact_id: restricted_corridor_access
+    value: true
+  - op: assert
+    fact_id: rebecca_observing_infiltrators
+    value: true
+  - op: assert
+    fact_id: inspection_console_used
+    value: true
+  - op: assert
+    fact_id: cover_suspected
+    value: true
+  realization_storylets:
+  - SL-2A-D
+  fallback_realization: The supervisor escorts them through the inspection under closer watch.
 - id: bridge_2b_archive_crisis
   scene_id: 2B
   activation:
     all_facts_true:
     - janus_evidence
-    any_of:
     - brandon_janus_role_known
     - brandon_claimed_reform_motive
     - michelle_resistance_known
-    - kristin_was_bait
-    at_least: 2
   produces:
   - op: assert
     fact_id: archive_crisis_understood
     value: true
   realization_storylets:
-  - SL-2B-A
   - SL-2B-B
   - SL-2B-C
-  fallback_realization: Free-text archive investigation and confrontation may establish JANUS evidence plus any two of
-    Brandon’s JANUS role, his claimed reform motive, and Michelle’s resistance without selecting a storylet.
+  - SL-2B-D
+  fallback_realization: Free-text archive investigation and confrontation may establish the JANUS evidence, Brandon’s role and motive, and Michelle’s resistance without selecting a storylet.
+- id: bridge_2b_missed_window_recovery
+  scene_id: 2B
+  activation:
+    all_facts_true:
+    - audit_window_missed
+    - audit_recovery_ready
+  produces:
+  - op: assert
+    fact_id: audit_window_missed
+    value: true
+  - op: assert
+    fact_id: brandon_name_kept
+    value: true
+  - op: assert
+    fact_id: janus_known
+    value: true
+  - op: assert
+    fact_id: kristin_was_bait
+    value: true
+  - op: assert
+    fact_id: michelle_selected_for_resistance_influence
+    value: true
+  - op: assert
+    fact_id: brandon_janus_role_known
+    value: true
+  - op: assert
+    fact_id: brandon_claimed_reform_motive
+    value: true
+  - op: assert
+    fact_id: janus_evidence
+    value: true
+  - op: assert
+    fact_id: michelle_resistance_known
+    value: true
+  - op: assert
+    fact_id: michelle_reply_received
+    value: true
+  - op: assert
+    fact_id: archive_crisis_understood
+    value: true
+  realization_storylets:
+  - SL-2B-D
+  fallback_realization: The audit reaches the stacks. Brandon leaves his name in the record, and Michelle answers once.
 - id: bridge_2c_combined_plan
   scene_id: 2C
   activation:
@@ -2981,8 +3045,43 @@ canonical_bridge_events:
     value: true
   realization_storylets:
   - SL-2C-D
+  - SL-2C-E
   fallback_realization: After the purge crisis is active, Michelle’s canonical coded message must eventually make the
     combined rescue/broadcast mission known; the player may react freely.
+- id: bridge_2c_missed_window_recovery
+  scene_id: 2C
+  activation:
+    all_facts_true:
+    - purge_window_missed
+    - purge_recovery_ready
+  produces:
+  - op: assert
+    fact_id: purge_window_missed
+    value: true
+  - op: assert
+    fact_id: rebecca_offer_active
+    value: true
+  - op: assert
+    fact_id: antagonist_split_known
+    value: true
+  - op: assert
+    fact_id: purge_clock_started
+    value: true
+  - op: assert
+    fact_id: evidence_ready_to_transmit
+    value: true
+  - op: assert
+    fact_id: rebecca_office_required_for_broadcast
+    value: true
+  - op: assert
+    fact_id: combined_broadcast_rescue_plan_known
+    value: true
+  - op: assert
+    fact_id: purge_alarm_active
+    value: true
+  realization_storylets:
+  - SL-2C-E
+  fallback_realization: The purge forces the group onto a neutral maintenance route toward Rebecca’s office.
 - id: bridge_3a_command_assault
   scene_id: 3A
   activation:

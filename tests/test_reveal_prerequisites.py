@@ -36,14 +36,14 @@ def test_loader_rejects_required_reveal_with_unproducible_scene_prerequisite(tmp
     root = copied_package(tmp_path)
     source = root / "knowledge.yaml"
     catalog = yaml.safe_load(source.read_text(encoding="utf-8"))
-    item = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_2c_c_r1")
-    item["requires"].append({"fact_id": "michelle_resistance_known", "equals": True})
+    item = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_2c_d_r3")
+    item["requires"].append({"fact_id": "evidence_gap_development_record", "equals": True})
     source.write_text(yaml.safe_dump(catalog, sort_keys=False, allow_unicode=True), encoding="utf-8")
 
     with pytest.raises(
         StoryPackageError,
         match=re.escape(
-            "scene 2C reveal 'k_sl_2c_c_r1' requires 'michelle_resistance_known', which scene entry does not "
+            "scene 2C reveal 'k_sl_2c_d_r3' requires 'evidence_gap_development_record', which scene entry does not "
             "guarantee and the scene cannot produce"
         ),
     ):

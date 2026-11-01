@@ -48,6 +48,15 @@ export function loadAuthoredText(root = resolve(import.meta.dirname, "../..")) {
     bridgeTextsByScenePair.set(`${transition.source_scene_id}>${transition.target_scene_id}`, text);
   }
   const entryTexts = new Map([...frames].map(([id, frame]) => [id, frame.entry_text]).filter(([, text]) => text));
+  const entryVariantTextsBySceneId = new Map(
+    [...frames].map(([id, frame]) => [id, (frame.entry_variants || []).map((variant) => variant.text).filter(Boolean)]),
+  );
+  const pacingRealizations = new Map(
+    (pacing.events || []).map((event) => [
+      event.id,
+      (event.realizations || []).filter((realization) => realization.verbatim === true).map((realization) => realization.text).filter(Boolean),
+    ]),
+  );
   const routeFallbackTexts = new Map();
   const routeFallbacks = [];
   for (const section of ["canonical_bridge_events", "canonical_resolution_events"]) {
@@ -72,14 +81,21 @@ export function loadAuthoredText(root = resolve(import.meta.dirname, "../..")) {
     bridgeTextByScenePair: bridgeTextsByScenePair,
     entryTexts,
     entryTextBySceneId: entryTexts,
+    entryVariantTextsBySceneId,
+    endingText: pacing.ending?.text,
+    endingSceneId: pacing.ending?.scene_id,
+    pacingRealizations,
     routeFallbackTexts,
     routeFallbacks,
   };
 }
 
-function add(map, id, kind, result) {
-  const text = map?.get(id);
+function addText(text, kind, id, result) {
   if (text && !result.some((item) => item.text === text)) result.push({ text, source: { kind, id } });
+}
+
+function add(map, id, kind, result) {
+  addText(map?.get(id), kind, id, result);
 }
 
 export function eligibleAuthoredTexts(bundle, authored) {
@@ -99,6 +115,10 @@ export function eligibleAuthoredTexts(bundle, authored) {
   ]);
   for (const id of handoffIds) add(fallbacks, id, "handoff_fallback", result);
   for (const id of new Set(bundle.committed_delta?.fact_predicates || [])) add(fallbacks, id, "handoff_fallback", result);
+  for (const id of bundle.pacing_event_ids || []) {
+    for (const text of authored.pacingRealizations?.get(id) || []) addText(text, "pacing", id, result);
+  }
+  if (bundle.story_complete) addText(authored.endingText, "ending", authored.endingSceneId, result);
   const delta = bundle.committed_delta || {};
   const changed = delta.scene_from && delta.scene_to && delta.scene_from !== delta.scene_to;
   if (changed || bundle.transition_cause !== "none") {
@@ -106,15 +126,10 @@ export function eligibleAuthoredTexts(bundle, authored) {
     add(bridges, pair, "bridge", result);
     if (delta.scene_to) add(entries, delta.scene_to, "entry", result);
   }
-  if (bundle.story_complete || (bundle.committed_delta?.fact_predicates || []).some((id) => authored.routeFallbackTexts.has(id))) {
-    const factPredicates = new Set(bundle.committed_delta?.fact_predicates || []);
-    const seen = new Set();
-    for (const route of authored.routeFallbacks || []) {
-      if (!bundle.story_complete && !route.fact_ids.some((id) => factPredicates.has(id))) continue;
-      if (seen.has(route.text) || result.some((item) => item.text === route.text)) continue;
-      seen.add(route.text);
-      result.push({ text: route.text, source: { kind: "route_fallback", id: route.event_id } });
-    }
+  const factPredicates = new Set(bundle.committed_delta?.fact_predicates || []);
+  for (const route of authored.routeFallbacks || []) {
+    if (!route.fact_ids.some((id) => factPredicates.has(id))) continue;
+    addText(route.text, "route_fallback", route.event_id, result);
   }
   return result;
 }

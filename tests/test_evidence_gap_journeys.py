@@ -52,15 +52,13 @@ DELIVERY_FACTS = (
 )
 WITHHELD_REALIZATIONS = (
     ("k_sl_1c_c_copy_numbers", "k_sl_1c_c_secure_route"),
-    (
-        "k_sl_2b_b_r1",
-        "k_sl_2b_b_r2",
-        "k_sl_2b_b_r3",
-        "k_sl_2b_c_r1",
-        "k_sl_2b_c_r2",
-    ),
+    ("k_sl_2b_b_r4",),
     ("k_sl_3b_b_r1", "k_sl_3b_b_r2"),
 )
+# In 2B the development-record gap is the cost of the earned "erase Brandon's name" outcome, and the neutral
+# recovery carries no cost. A journey with the 2B gap withholds the keep-the-name outcome so the thorough policy
+# takes the erase outcome; a journey without it withholds the erase outcome so the policy keeps the name.
+WITHHELD_WHEN_GAP_NOT_SELECTED = ((), ("k_sl_2b_b_r5",), ())
 
 
 @dataclass
@@ -133,9 +131,10 @@ def _play(withheld: set[str]) -> Journey:
 def _journey_for(combination: tuple[bool, bool, bool]) -> Journey:
     withheld = {
         knowledge_id
-        for chosen, realizations in zip(combination, WITHHELD_REALIZATIONS, strict=True)
-        if chosen
-        for knowledge_id in realizations
+        for chosen, selected_realizations, unselected_realizations in zip(
+            combination, WITHHELD_REALIZATIONS, WITHHELD_WHEN_GAP_NOT_SELECTED, strict=True
+        )
+        for knowledge_id in (selected_realizations if chosen else unselected_realizations)
     }
     return _play(withheld)
 

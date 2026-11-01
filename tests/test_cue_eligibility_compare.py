@@ -108,13 +108,6 @@ def test_real_package_reports_no_real_spent_cases_and_not_stageable_1a_case() ->
 
     output = report(PACKAGE)
 
-    for row in (
-        "2B | SL-2B-B fired through k_sl_2b_b_r3 | brandon_janus_role_known | False | False | "
-        "k_sl_2b_b_r1:storylet_spent,k_sl_2b_b_r2:storylet_spent | AGREE",
-        "2B | SL-2B-B fired through k_sl_2b_b_r3 | brandon_claimed_reform_motive | False | False | "
-        "k_sl_2b_b_r1:storylet_spent,k_sl_2b_b_r2:storylet_spent | AGREE",
-    ):
-        assert row in output
     assert (
         "1A | SL-1A-B fired through k_sl_1a_b_r1 | continuity_initiative_known | False | False | "
         "k_sl_1a_b_r0:already_established,k_sl_1a_b_r0w:prerequisite_missing,"

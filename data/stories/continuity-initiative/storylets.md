@@ -728,142 +728,6 @@ Each entry below is authoring data, not a player action menu.
 
 ## Storylets for [Scene 2A — False Identities](plot.md#scene-2a--false-identities)
 
-### SL-2A-A — Brandon Prepared for This Years Ago
-
-**Source beats:** [2A.1 — Brandon’s Hideout](plot.md#scene-2a1--brandons-hideout)
-
-**Allowed scene:** `2A`
-
-**Available when**
-- Kristin is inside Brandon’s communications-center hideout.
-- Brandon’s history remains only partially trusted.
-
-**Participants / items**
-- Kristin Schweitzer
-- Brandon Corfman, a former software developer now living as an isolated conspiracy researcher estranged from his family
-- Servers and salvaged hardware
-- Emergency supplies
-- Continuity Initiative files
-
-**Dramatic purpose**
-- Deepen the contradiction around Brandon: preparedness can read as foresight, obsession, guilt, or all three.
-- Support free-form questioning without prematurely resolving his history.
-
-**Possible realizations**
-- Kristin examines how long Brandon has tracked the Initiative.
-- Brandon describes being discredited after trying to expose it.
-- Kristin notices leaked code, internal documents, and old software/security contacts that imply retained technical capability.
-- The player may accept the explanation provisionally or become more suspicious.
-
-**Effects**
-- May change `trust_brandon`.
-- May leave Brandon more suspicious.
-- May set `brandon_prepared_before_event`.
-- May provide historical context for the Continuity Initiative.
-
-**Completion**
-- The hideout has yielded enough context to support planning the infiltration.
-
-**Abort**
-- The group leaves for the facility.
-
-**Protected boundary**
-- Brandon’s direct work on JANUS remains protected.
-
-**Pacing window**
-- earliest: `turn 0`
-- target: `turn 2`
-- latest: `turn 3`
-
----
-
-### SL-2A-B — Build the Cover Around a Real Systems Fault
-
-**Source beats:** [2A.2 — The Infiltration Plan](plot.md#scene-2a2--the-infiltration-plan)
-
-**Allowed scene:** `2A`
-
-**Available when**
-- Kristin and Brandon have concluded that deliberate deeper infiltration is necessary.
-- Kristin and Brandon are preparing entry.
-- The cooling-water and ventilation weakness is known or discoverable from authored facility information.
-
-**Participants / items**
-- Kristin Schweitzer
-- Brandon Corfman
-- False credentials
-- Facility cooling-water and ventilation information
-
-**Dramatic purpose**
-- Make the infiltration cover depend on Kristin’s authentic Army infrastructure and operations background rather than pure deception.
-- Give the LLM room to improvise a technically plausible cover story while preserving the authored objective set.
-
-**Possible realizations**
-- Kristin identifies which infrastructure concern would justify an unscheduled inspection.
-- Brandon shapes that into credential/cover material.
-- They discuss how much truth to include in the lie.
-- Preparation can improve confidence without guaranteeing entry.
-
-**Effects**
-- May set `false_identities_ready`.
-- May establish a cooling-water/ventilation inspection cover.
-- May improve infiltration preparedness.
-- May reduce initial entry pressure.
-
-**Completion**
-- A plausible inspection identity and objective are ready.
-
-**Abort**
-- The infiltration has already begun.
-
-**Protected boundary**
-- Does not grant knowledge of later archive discoveries or Rebecca’s surveillance decision.
-
-**Pacing window**
-- earliest: `turn 0`
-- target: `turn 5`
-- latest: `turn 6`
-
----
-
-### SL-2A-E — Reach the Facility
-
-**Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility)
-
-**Allowed scene:** `2A`
-
-**Available when**
-- Kristin and Brandon have their false identities ready.
-
-**Participants / items**
-- Kristin Schweitzer
-- Brandon Corfman
-
-**Dramatic purpose**
-- Take Kristin and Brandon from the hideout to the facility, where their identities survive the initial checks.
-
-**Possible realizations**
-- Kristin and Brandon pass through several layers of security, and their identities survive the initial checks.
-
-**Effects**
-- May set `facility_perimeter_reached`.
-
-**Completion**
-- Kristin and Brandon are at the facility perimeter, past the initial identity checks.
-
-**Abort**
-- The pair leaves the scene before reaching the facility.
-
-**Protected boundary**
-- Reaching the facility does not face the supervisor; that remains `SL-2A-C`.
-
-**Pacing window**
-- earliest: `turn 0`
-- target: `turn 7`
-- latest: `turn 8`
-
----
-
 ### SL-2A-C — The Supervisor Needs a Reason
 
 **Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility), [2A.4 — The First Complication](plot.md#scene-2a4--the-first-complication)
@@ -871,386 +735,368 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `2A`
 
 **Available when**
-- The false inspection identities/cover are ready.
-- Kristin and Brandon are passing facility security.
-- Their credentials have survived initial checks.
-- The unscheduled nature of the inspection is being questioned.
+- Kristin and Brandon are at the facility gate.
+- The shift supervisor is questioning their unscheduled inspection.
 
 **Participants / items**
 - Kristin Schweitzer
 - Brandon Corfman
-- Facility supervisor
+- The shift supervisor
+- Inspection console
 - False credentials
 
 **Dramatic purpose**
-- Give Kristin a social/technical obstacle that can be realized through free-form roleplay.
-- Preserve dramatic irony: entry can succeed even as Rebecca quietly becomes aware of Brandon.
+- Make Kristin’s infrastructure experience the reason the cover works.
+- Let entry succeed while Rebecca quietly watches Brandon.
 
 **Possible realizations**
-- Kristin explains the cooling-water fault in her own words.
-- Brandon stays quiet to avoid drawing recognition.
-- Overexplaining may raise suspicion while still succeeding.
-- The supervisor grants restricted-infrastructure access reluctantly.
-- Their temporary credentials open the corridor diagnostic console, giving Kristin limited access to report faults and cycle noncritical doors or lights.
+- The supervisor takes them to the cooling manifold and says, “Show me.”
+- Kristin feels the pipe, reads the gauge, and traces the vent.
+- She explains the real pressure fault in her own words.
+- A camera turns toward Brandon and stays on him.
+- The inspection console reports faults and cycles noncritical systems.
+- The console cannot open detention cells or change the main flood controls.
 
 **Effects**
 - May set `restricted_corridor_access`.
-- May change how suspicious the facility is of the pair.
-- May set `rebecca_observing_infiltrators` through a pacing/event effect once facial recognition occurs.
-- `restricted_corridor_access` is the outgoing scene bridge once the protagonists have moved beyond the outer security layer.
+- May set `rebecca_observing_infiltrators`.
+- May set `inspection_console_used`.
+- A doubtful explanation may set `cover_suspected`.
 
 **Completion**
-- Kristin and Brandon have moved beyond the main public/security entry layer.
+- Kristin and Brandon have reached the infrastructure corridors.
 
 **Abort**
-- The cover is fully blown and an alternate declared transition supersedes it.
+- The scene is no longer `2A`.
 
 **Protected boundary**
-- Kristin and Brandon do not learn that Rebecca is observing them merely because the state flag exists.
+- Kristin and Brandon do not learn that Rebecca is watching them.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 9`
+- target: `turn 3`
+- latest: `turn 5`
+
+---
+
+### SL-2A-D — The Supervisor Takes Them In
+
+**Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility), [2A.4 — The First Complication](plot.md#scene-2a4--the-first-complication)
+
+**Allowed scene:** `2A`
+
+**Available when**
+- `inspection_window_missed` is true.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- The shift supervisor
+- Inspection console
+
+**Dramatic purpose**
+- Turn a missed inspection window into entry under watch.
+
+**Possible realizations**
+- The supervisor’s patience ends.
+- He escorts Kristin and Brandon to the manifold and watches the test.
+- Kristin proves the fault well enough to reach the infrastructure corridors.
+- The supervisor logs the inspection for follow-up.
+
+**Effects**
+- Sets `restricted_corridor_access`.
+- Sets `rebecca_observing_infiltrators`.
+- Sets `inspection_console_used`.
+- Sets `cover_suspected`.
+- Sets `supervisor_escorting`.
+
+**Completion**
+- Kristin and Brandon have reached the infrastructure corridors under watch.
+
+**Abort**
+- The scene is no longer `2A`.
+
+**Protected boundary**
+- Kristin and Brandon do not learn that Rebecca is watching them.
+
+**Pacing window**
+- earliest: `turn 5`
+- target: `turn 6`
 - latest: `turn 10`
 
 ---
 
 ## Storylets for [Scene 2B — Evidence and Betrayal](plot.md#scene-2b--evidence-and-betrayal)
 
-### SL-2B-A — JANUS Classified Everyone
+### SL-2B-B — Brandon’s Name Is in the Build Records
 
-**Source beats:** [2B.1 — The Selection Algorithm](plot.md#scene-2b1--the-selection-algorithm)
+**Source beats:** [2B.1 — The Selection Algorithm](plot.md#scene-2b1--the-selection-algorithm), [2B.2 — Kristin Was Bait](plot.md#scene-2b2--kristin-was-bait), [2B.3 — Brandon’s Role](plot.md#scene-2b3--brandons-role)
 
 **Allowed scene:** `2B`
 
 **Available when**
-- Kristin can access the records archive.
-- JANUS has not yet been understood.
+- Kristin and Brandon are in the records archive.
+- The audit sweep is moving through the stacks.
 
 **Participants / items**
 - Kristin Schweitzer
 - Brandon Corfman
-- JANUS records
+- The shift supervisor
+- Archive terminals
+- Copied JANUS files
 
 **Dramatic purpose**
-- Reveal the selection system through concrete classifications rather than an exposition dump.
-- Connect national-scale data collection directly to Michelle and Kristin.
+- Make one file pull reveal Kristin’s bait status, JANUS, and Brandon’s role.
+- Turn the audit into a whispered confrontation.
 
 **Possible realizations**
-- Kristin searches Michelle’s record first.
-- She notices the categories used to predict resistance, influence, vulnerability, and leverage.
-- Her own record reveals that being left behind was itself a decision.
-- Brandon’s reaction can become part of the evidence.
+- Kristin pulls her own file first.
+- The record reads, “RETAINED — predicted to lead investigators to CORFMAN.”
+- The build record below it names Brandon as JANUS’s author.
+- Kristin confronts Brandon between the shelves while the audit passes.
+- Brandon admits that he wrote the software and claims he broke with Charles.
+- Brandon asks Kristin to remove his name before they copy the files.
+- Kristin keeps his name or lets him erase it.
 
 **Effects**
 - May set `janus_known`.
+- May set `janus_evidence`.
+- May set `kristin_was_bait`.
 - May set `michelle_selected_for_resistance_influence`.
-- May set `kristin_deliberately_left_behind`.
-- May sharply intensify the betrayal.
-
-**Completion**
-- Kristin understands JANUS as the selection mechanism and recognizes that her own path was modeled.
-
-**Abort**
-- Archive access ends before enough material is recovered; another declared source may serve as fallback if the package defines one.
-
-**Protected boundary**
-- The exact reason Charles expected Kristin to expose Brandon may emerge only as supported by the authored records; no new hidden motives are invented.
-
-**Pacing window**
-- earliest: `turn 0`
-- target: `turn 2`
-- latest: `turn 3`
-
----
-
-### SL-2B-B — Brandon’s Name Is in the Build Records
-
-**Source beats:** [2B.2 — Kristin Was Bait](plot.md#scene-2b2--kristin-was-bait), [2B.3 — Brandon’s Role](plot.md#scene-2b3--brandons-role)
-
-**Allowed scene:** `2B`
-
-**Available when**
-- JANUS has been credibly identified in the archive evidence.
-- JANUS records are accessible.
-- Brandon’s development role has not yet been confronted.
-
-**Participants / items**
-- Kristin Schweitzer
-- Brandon Corfman
-- JANUS development records
-
-**Dramatic purpose**
-- Turn accumulated distrust into a direct character confrontation.
-- Preserve ambiguity between culpability for creating the system and opposition to its later use.
-
-**Possible realizations**
-- Kristin confronts Brandon immediately.
-- She withholds the discovery briefly and observes Brandon first.
-- Brandon admits writing AI software for JANUS to identify threats.
-- Kristin challenges whether Brandon is still manipulating her.
-- Kristin learns Charles left Michelle’s evidence accessible so she would expose Brandon’s hidden network.
-
-**Effects**
 - May set `brandon_janus_role_known`.
 - May set `brandon_claimed_reform_motive`.
-- May set `kristin_was_bait`.
-- May set `janus_evidence` when the development records are preserved/authenticated as evidence.
-- May substantially change `trust_brandon`.
-- May leave Brandon more or less suspicious depending on accepted interaction facts.
+- May set `archive_crisis_understood`.
 
 **Completion**
-- Brandon’s original role and claimed break with Charles are explicit between him and Kristin, or Kristin learns Charles used her to expose Brandon’s hidden network.
+- Kristin has confronted Brandon and resolved whether his name stays in the build record.
 
 **Abort**
-- Brandon is absent/unavailable and the confrontation must be deferred by declared package logic.
+- The scene is no longer `2B`.
 
 **Protected boundary**
-- Brandon’s later sacrifice/confession is not foreshadowed as guaranteed.
+- Michelle’s uprising and the broadcast solution remain undisclosed.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 6`
+- target: `turn 5`
 - latest: `turn 7`
 
 ---
 
-### SL-2B-C — Michelle Is Already Sabotaging the System
+### SL-2B-C — Michelle Answers Once
 
 **Source beats:** [2B.4 — Michelle’s Hidden Resistance](plot.md#scene-2b4--michelles-hidden-resistance)
 
 **Allowed scene:** `2B`
 
 **Available when**
-- JANUS has been credibly identified in the archive evidence.
-- Kristin can inspect corrupted prisoner/maintenance records.
-- Michelle’s active resistance is not yet known.
+- Kristin and Brandon have completed the archive discovery.
+- The medical terminal is available.
 
 **Participants / items**
 - Kristin Schweitzer
 - Brandon Corfman
-- Dr. Michelle McGehee through coded records
-- Corrupted prisoner files / maintenance reports
+- Dr. Michelle McGehee through the medical terminal
+- Medical terminal
 
 **Dramatic purpose**
-- Reverse the rescue framing: Michelle is an active agent affecting the facility from inside.
-- Give Kristin renewed direction after the JANUS/Brandon betrayal.
+- Let Michelle answer after the betrayal.
+- Show that she is alive and active without revealing the uprising plan.
 
 **Possible realizations**
-- Kristin recognizes phrases Michelle used in private notes.
-- A pattern of delayed transfers and altered classifications becomes visible.
-- Brandon sees operational sabotage; Kristin sees Michelle’s signature.
-- The player may infer a small hidden resistance link without knowing its scale or whether it can launch an uprising.
+- The medical terminal prints a maintenance line in Michelle’s private phrasing.
+- The line ends with “Shelly.”
+- Kristin types one reply.
+- Michelle answers once.
+- She says she is alive, active, and will send a route.
 
 **Effects**
-- May set `michelle_resistance_known`.
-- May renew hope.
-- May set `prisoner_records_corrupted`.
-- May preserve enough corrupted JANUS/prisoner material to establish `janus_evidence` while also pointing toward Michelle’s resistance.
+- Sets `michelle_resistance_known`.
+- Sets `michelle_reply_received`.
+- Sets `archive_crisis_understood`.
 
 **Completion**
-- Kristin knows Michelle is alive enough to act or has left recent operational evidence strongly supporting that conclusion.
+- Kristin receives Michelle’s single reply.
 
 **Abort**
-- The records are lost and a declared alternate path must carry the same necessary transition information.
+- The scene is no longer `2B`.
 
 **Protected boundary**
-- The exact uprising plan and broadcast solution remain protected until later scenes.
+- The uprising and broadcast solution remain undisclosed.
 
 **Pacing window**
 - earliest: `turn 4`
-- target: `turn 7`
+- target: `turn 6`
 - latest: `turn 7`
+
+---
+
+### SL-2B-D — The Audit Reaches the Stacks
+
+**Source beats:** [2B.1 — The Selection Algorithm](plot.md#scene-2b1--the-selection-algorithm), [2B.2 — Kristin Was Bait](plot.md#scene-2b2--kristin-was-bait), [2B.3 — Brandon’s Role](plot.md#scene-2b3--brandons-role), [2B.4 — Michelle’s Hidden Resistance](plot.md#scene-2b4--michelles-hidden-resistance)
+
+**Allowed scene:** `2B`
+
+**Available when**
+- `audit_window_missed` is true.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- The shift supervisor
+- Archive terminals
+- Medical terminal
+- Copied JANUS files
+
+**Dramatic purpose**
+- Complete the archive crisis when the audit closes the normal choice.
+
+**Possible realizations**
+- The audit reaches the stacks.
+- The shift supervisor sees Kristin and Brandon but does not raise the alarm.
+- Kristin keeps Brandon’s name in the build record.
+- They leave with the copied JANUS files.
+- Michelle’s maintenance line prints as they leave.
+- Kristin receives Michelle’s one reply.
+
+**Effects**
+- Sets `brandon_name_kept`.
+- Sets `janus_known`.
+- Sets `janus_evidence`.
+- Sets `kristin_was_bait`.
+- Sets `michelle_selected_for_resistance_influence`.
+- Sets `brandon_janus_role_known`.
+- Sets `brandon_claimed_reform_motive`.
+- Sets `michelle_resistance_known`.
+- Sets `michelle_reply_received`.
+- Sets `archive_crisis_understood`.
+
+**Completion**
+- Kristin and Brandon leave the archive with the files and the audit has passed.
+
+**Abort**
+- The scene is no longer `2B`.
+
+**Protected boundary**
+- The uprising and broadcast solution remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 5`
+- target: `turn 6`
+- latest: `turn 10`
 
 ---
 
 ## Storylets for [Scene 2C — The Trap Closes](plot.md#scene-2c--the-trap-closes)
 
-### SL-2C-A — Rebecca Offers Brandon a Different Conspiracy
+### SL-2C-D — Michelle Changes the Choice
 
-**Source beats:** [2C.1 — Rebecca’s Offer](plot.md#scene-2c1--rebeccas-offer)
+**Source beats:** [2C.1 — Rebecca’s Offer](plot.md#scene-2c1--rebeccas-offer), [2C.2 — The Purge Order](plot.md#scene-2c2--the-purge-order), [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue), [2C.4 — Living With the Choice](plot.md#scene-2c4--living-with-the-choice), [2C.5 — Michelle Changes the Choice](plot.md#scene-2c5--michelle-changes-the-choice)
 
 **Allowed scene:** `2C`
 
 **Available when**
-- Rebecca has identified Brandon.
-- Brandon remains capable of private contact.
-- Kristin may know of the contact only if the interaction makes that knowledge available.
+- Kristin and Brandon are in the command corridor.
+- Rebecca has come to meet them.
 
 **Participants / items**
+- Kristin Schweitzer
 - Brandon Corfman
 - Rebecca Jenkins
-- Kristin Schweitzer, only when physically/informationally justified
+- Dr. Michelle McGehee through the maintenance network
+- Copied JANUS files
+- Rebecca’s tablet
+- Rebecca’s secured office
 
 **Dramatic purpose**
-- Show fracture inside the antagonist coalition without turning Rebecca into an ally.
-- Pressure Brandon’s credibility after his JANUS admission.
+- Make Rebecca’s offer, the purge, and the physical commitment one live confrontation.
+- Let Michelle widen the choice without erasing its cost.
 
 **Possible realizations**
-- Rebecca frames Charles as the immediate danger.
-- She offers Michelle’s release in exchange for helping her seize control.
-- Brandon appears to consider the offer to gain executive access.
-- Kristin can misread Brandon’s performance if he lacks context.
+- Rebecca offers Brandon Michelle’s release if he helps remove Charles.
+- Her tablet shows the purge order during the negotiation.
+- The order includes Rebecca’s people.
+- Brandon says yes and the guards stand down.
+- Kristin commits by heading for the uplink or the transfer carts.
+- Michelle sends a route through the maintenance network.
+- The route reaches Michelle’s holding block and Rebecca’s secured office.
+- The office can broadcast the evidence and open the sealed detention sectors.
 
 **Effects**
 - May set `rebecca_offer_active`.
 - May set `antagonist_split_known`.
-- May change `trust_brandon` only if Kristin has legitimate knowledge of the exchange.
-- May open a route toward executive-level access.
-
-**Completion**
-- Brandon has accepted, rejected, or strategically exploited the offer enough for the scene to move on.
-
-**Abort**
-- Rebecca withdraws the offer or direct conflict supersedes it.
-
-**Protected boundary**
-- Rebecca’s later claim that she opposed killing captives is not treated as verified truth.
-
-**Pacing window**
-- earliest: `turn 0`
-- target: `turn 2`
-- latest: `turn 3`
-
----
-
-### SL-2C-B — The Purge Clock Starts Moving
-
-**Source beats:** [2C.2 — The Purge Order](plot.md#scene-2c2--the-purge-order)
-
-**Allowed scene:** `2C`
-
-**Available when**
-- Charles has learned that prisoner records were corrupted.
-- The purge/transfer order has become active.
-
-**Participants / items**
-- Kristin Schweitzer
-- Brandon Corfman
-- Charles Jenkins through orders/broadcast preparation
-- Facility records/alerts where locally available
-
-**Dramatic purpose**
-- Add deterministic time/pressure to a scene that could otherwise become leisurely.
-- Make delay materially dangerous without scripting Kristin’s response.
-
-**Possible realizations**
-- An internal order reveals accelerated transfers.
-- Facility movement patterns suddenly change.
-- Broadcast-preparation traffic exposes the deadline indirectly.
-- Kristin and Brandon disagree about what the remaining time permits.
-
-**Effects**
-- Starts or advances `purge_clock_started`.
-- May establish that Charles's broadcast is imminent.
-- May reduce safe infiltration options as pressure rises.
-- May trigger scene pacing complications at declared thresholds.
-
-**Completion**
-- The pressure event remains in force until the scene transition; this storylet completes once the deadline is understood.
-
-**Abort**
-- None while the authored purge order is active, though the storylet itself does not have to be selected as a discrete encounter.
-
-**Protected boundary**
-- Does not reveal the later exact broadcast-system solution before Michelle provides it.
-
-**Pacing window**
-- earliest: `turn 0`
-- target: `turn 5`
-- latest: `turn 6`
-
----
-
-### SL-2C-C — Evidence or Rescue
-
-**Source beats:** [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue)
-
-**Allowed scene:** `2C`
-
-**Available when**
-- Enough evidence exists to expose the conspiracy.
-- Rescue remains possible but dangerous.
-
-**Participants / items**
-- Kristin Schweitzer
-- Brandon Corfman
-- Copied conspiracy evidence
-
-**Dramatic purpose**
-- Let the player inhabit the central crisis before any solution appears.
-- Make every response cost something: delay helps the purge, transmission risks the captives, and rescue risks the proof.
-
-**Possible realizations**
-- Brandon argues for immediate transmission.
-- Kristin refuses to abandon the captives.
-- Their conflict can become personal because of Brandon’s earlier guilt.
-- Kristin can test a partial transmission, an extraction route, or Rebecca’s offer without making either option safe.
-
-**Effects**
+- May set `purge_clock_started`.
 - May set `evidence_ready_to_transmit`.
-
-**Completion**
-- Kristin and Brandon understand the evidence/rescue impasse and have real proof in hand.
-
-**Abort**
-- The player causes a validated non-canonical branch that makes both available paths impossible and chooses to proceed.
-
-**Protected boundary**
-- Exact events of the uprising, Brandon’s sacrifice, Charles’s deluge, and final broadcast outcome remain protected.
-
-**Pacing window**
-- earliest: `turn 0`
-- target: `turn 10`
-- latest: `turn 11`
-
----
-
-### SL-2C-D — Michelle Changes the Choice
-
-**Source beats:** [2C.5 — Michelle Changes the Choice](plot.md#scene-2c5--michelle-changes-the-choice)
-
-**Allowed scene:** `2C`
-
-**Available when**
-- The purge clock is active.
-- Kristin and Brandon have enough proof to transmit.
-- The evidence-or-rescue conflict has been allowed to become real.
-
-**Participants / items**
-- Kristin Schweitzer
-- Brandon Corfman
-- Dr. Michelle McGehee through a coded maintenance message
-- Copied conspiracy evidence
-- The maintenance network, Michelle’s partly unsecured holding block, and Rebecca’s secured office
-
-**Dramatic purpose**
-- Turn the apparent binary into a third path only after the player has felt both losses.
-- Give the next scene a coherent point of entry: Michelle’s route reaches her holding block, while the office remains the later manual control point.
-- Raise the danger: the combined mission requires reaching Rebecca’s office before the purge closes the route.
-
-**Possible realizations**
-- Michelle’s message identifies a maintenance route into her partly unsecured holding block and the manual controls in Rebecca’s office.
-- Kristin traces Michelle’s code through the maintenance reports from her holding block to the broadcast controls.
-- Brandon recognizes why a normal broadcast route cannot work while Charles controls JANUS.
-
-**Effects**
 - May set `rebecca_office_required_for_broadcast`.
-- Sets `combined_broadcast_rescue_plan_known` once the group understands the combined mission.
+- May set `combined_broadcast_rescue_plan_known`.
 
 **Completion**
-- The group follows Michelle’s route into her holding block, then commits to reaching Rebecca’s office to broadcast the truth and open the sealed detention sectors.
+- Michelle’s route makes the combined broadcast and rescue plan known.
 
 **Abort**
-- A validated non-canonical branch makes the combined mission impossible and the player chooses to proceed.
+- The scene is no longer `2C`.
 
 **Protected boundary**
-- Exact events of the uprising, Brandon’s sacrifice, Charles’s deluge, and final broadcast outcome remain protected.
+- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.
 
 **Pacing window**
 - earliest: `turn 0`
 - target: `turn 13`
 - latest: `turn 14`
+
+---
+
+### SL-2C-E — Michelle’s Route Arrives
+
+**Source beats:** [2C.1 — Rebecca’s Offer](plot.md#scene-2c1--rebeccas-offer), [2C.2 — The Purge Order](plot.md#scene-2c2--the-purge-order), [2C.5 — Michelle Changes the Choice](plot.md#scene-2c5--michelle-changes-the-choice)
+
+**Allowed scene:** `2C`
+
+**Available when**
+- `purge_window_missed` is true.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Rebecca Jenkins
+- Dr. Michelle McGehee through the maintenance network
+- Copied JANUS files
+- Rebecca’s tablet
+
+**Dramatic purpose**
+- Let the purge force the group onto Michelle’s route without deciding Kristin’s commitment.
+
+**Possible realizations**
+- The purge alarm forces Kristin and Brandon out of the command corridor before Kristin has chosen between sending and rescuing.
+- Rebecca’s offer and the purge order remain unresolved behind them.
+- Michelle’s route arrives through the maintenance network.
+- It leads toward her holding block and Rebecca’s secured office.
+- The group learns that the office can broadcast the evidence and open the detention sectors.
+
+**Effects**
+- Sets `rebecca_offer_active`.
+- Sets `antagonist_split_known`.
+- Sets `purge_clock_started`.
+- Sets `evidence_ready_to_transmit`.
+- Sets `rebecca_office_required_for_broadcast`.
+- Sets `combined_broadcast_rescue_plan_known`.
+- Sets `purge_alarm_active`.
+- Does not set `committed_to_transmit`.
+- Does not set `committed_to_rescue`.
+
+**Completion**
+- Michelle’s route is known and neither commitment has been asserted.
+
+**Abort**
+- The scene is no longer `2C`.
+
+**Protected boundary**
+- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 5`
+- target: `turn 6`
+- latest: `turn 10`
 
 ---
 
@@ -2072,9 +1918,9 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 | [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-D` | Crime-scene inference, Michelle’s evidence, first authority pressure |
 | [1B](plot.md#scene-1b--the-lead-in-the-park) | `SL-1B-A` … `SL-1B-E` | Hidden clue recovery, bench lead, clue interpretation, Brandon trust, pursuit |
 | [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-D` | Facility discovery, living captives, one advantage, costly recovery after a missed window |
-| [2A](plot.md#scene-2a--false-identities) | `SL-2A-A` … `SL-2A-C` | Brandon context, infiltration preparation, entry complication |
-| [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-A` … `SL-2B-C` | JANUS, Kristin-as-bait, Brandon’s role, Michelle’s resistance |
-| [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-A` … `SL-2C-D` | Rebecca’s offer, purge pressure, lived crisis, combined mission |
+| [2A](plot.md#scene-2a--false-identities) | `SL-2A-C`, `SL-2A-D` | Real fault diagnosis, watched entry, recovery under supervision |
+| [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-B`, `SL-2B-C`, `SL-2B-D` | One-file JANUS discovery, whispered confrontation, Michelle’s reply |
+| [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-D`, `SL-2C-E` | Rebecca’s offer, physical commitment, Michelle’s route |
 | [3A](plot.md#scene-3a--reaching-michelle) | `SL-3A-A` … `SL-3A-C` | Reunion reversal, experiments, deadline/override |
 | [3B](plot.md#scene-3b--the-battle-for-the-broadcast) | `SL-3B-A` … `SL-3B-C` | Defeat JANUS, confront Rebecca, open relay |
 | [3C](plot.md#scene-3c--exposure-and-escape) | `SL-3C-A` … `SL-3C-E` | Broadcast credibility, archive custody, deluge escape, epilogue |
@@ -2093,7 +1939,7 @@ Current bridge facts are: `michelle_lead_actionable`, `transport_route_departure
 2. **No fixed action vocabulary.** “Possible realizations” are prompt guidance only. The LLM interprets arbitrary player roleplay and proposes semantic effects.
 3. **Scene-local context first.** Only participating/present/relevant entities should enter the default turn context. Off-scene references should add only public/currently-known facts.
    A later scene participant is not automatically present: Brandon cannot speak in 1B until `SL-1B-B` establishes his encounter, Michelle cannot speak directly in 3A until `SL-3A-A`, the imprisoned official cannot speak directly in 3A until `SL-3A-D`, and Rebecca cannot speak directly in 3B until `SL-3B-E` brings the group to her office.
-4. **Pressure carries pacing.** `SL-2C-B`, `SL-3A-C`, and the deluge/broadcast situations are natural places for deterministic pressure. Pressure may force circumstances to worsen or a canonical event to become urgent, but it must not grant Kristin unexplained knowledge.
+4. **Pressure carries pacing.** `SL-2C-D`, `SL-3A-C`, and the deluge/broadcast situations are natural places for deterministic pressure. Pressure may force circumstances to worsen or a canonical event to become urgent, but it must not grant Kristin unexplained knowledge.
 5. **Required dependencies stay explicit elsewhere.** The memory card, Brandon, broadcast access, relay access, archive, or any substitutes/fallbacks should be declared in the package dependency model; this file does not silently make them mandatory.
 6. **Protected revelations are monotonic.** Optional content can foreshadow later facts, but it must not make a protected revelation true/known before the original scene permits it.
 7. **Effects are bounded proposals.** The exact fact paths, numeric pressure ranges, trigger predicates, and transition priorities belong in validated package data rather than being inferred from prose here.

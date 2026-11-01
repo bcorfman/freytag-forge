@@ -79,8 +79,11 @@ def test_loader_applies_entry_text_hygiene_to_variants(tmp_path: Path) -> None:
     source = plot.read_text(encoding="utf-8")
     plot.write_text(
         source.replace(
-            "Kristin and Brandon know the service approach. Their proof is weaker, but it may still get them inside.",
-            "The copied prisoner numbers are here.",
+            (
+                "Brandon knows the service approach. If they get past this man, he can take them around the second "
+                "checkpoint."
+            ),
+            "Rebecca's secured office is ready.",
             1,
         ),
         encoding="utf-8",

@@ -10,6 +10,7 @@ from storygame.runtime.reference_resolution import Clarification, ReferenceResul
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import scene_entry_texts
 from tests.test_continuity_1c_incident import _facts
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -31,6 +32,7 @@ ADVANTAGE_FALLBACKS = (
     "Kristin copies the prisoner numbers and matches them to missing-person records.",
     "Brandon explains the transfer route and opens the service entrance.",
 )
+ACTION = "Kristin checks the loading docks."
 
 
 def _state() -> RuntimeState:
@@ -43,7 +45,7 @@ def _state() -> RuntimeState:
 
 
 def _provider(_command: str) -> dict[str, object]:
-    return {"segments": [{"kind": "narration", "text": "Kristin checks the loading docks."}]}
+    return {"segments": [{"kind": "narration", "text": ACTION}]}
 
 
 def _recovery_provider(_command: str) -> dict[str, object]:
@@ -60,6 +62,17 @@ def _run_to_turn(state: RuntimeState, turn: int, provider=_provider) -> list[str
         result = engine.turn("Inspect the loading docks for a safe route.")
         texts.extend(segment.text for segment in result.segments)
     return texts
+
+
+def _withdrawal_segments(state: RuntimeState) -> tuple[str, ...]:
+    source = next(scene.metadata for scene in PACKAGE.scenes if scene.metadata.scene_id == "1C")
+    target = next(scene.metadata for scene in PACKAGE.scenes if scene.metadata.scene_id == "2A")
+    return (
+        ACTION,
+        WITHDRAWAL,
+        source.bridge_text["t_1c_2a"],
+        *scene_entry_texts(target, RuntimeEngine._true_facts(state.facts)),
+    )
 
 
 def test_staller_gets_miss_nudge_withdrawal_and_clean_no_advantage_handoff() -> None:
@@ -87,7 +100,25 @@ def test_staller_gets_miss_nudge_withdrawal_and_clean_no_advantage_handoff() -> 
     } & _facts(state)
     all_text = " ".join(text for texts in by_turn.values() for text in texts)
     assert not any(fallback in all_text for fallback in ADVANTAGE_FALLBACKS)
-    assert by_turn[8] == (WITHDRAWAL, PACKAGE.scenes[3].metadata.entry_text)
+    assert by_turn[8] == _withdrawal_segments(state)
+    assert by_turn[8].count(WITHDRAWAL) == 1
+
+
+def test_stall_exit_resume_preserves_action_complication_bridge_and_entry(monkeypatch: pytest.MonkeyPatch) -> None:
+    state = _state()
+    engine = RuntimeEngine(state, _provider)
+    for _ in range(7):
+        engine.turn("Inspect the loading docks for a safe route.")
+
+    monkeypatch.setattr(engine.validator, "validate", lambda *_args: ("forced_dependency",))
+    pending = engine.turn("Inspect the loading docks for a safe route.")
+
+    assert pending.game_break is not None
+    resumed = engine.resolve_break("proceed")
+    assert resumed is not None
+    assert tuple(segment.text for segment in resumed.segments) == _withdrawal_segments(state)
+    assert tuple(segment.text for segment in resumed.segments).count(WITHDRAWAL) == 1
+    assert state.current_scene_id == "2A"
 
 
 @pytest.mark.parametrize("recovery_turn", [6, 7, 8])

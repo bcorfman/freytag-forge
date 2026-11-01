@@ -133,6 +133,10 @@ npcs:
   aliases: [Rebecca]
   # This narrator-safe substitution preserves Rebecca's introduction while withholding later revelations.
   narrator_bio: Charles's 56-year-old wife and the chief executive of a biotechnology and defense contractor. She is exacting and technically capable.
+- id: shift_supervisor
+  name: Shift supervisor
+  aliases: [shift supervisor, supervisor]
+  narrator_bio: A facility shift supervisor responsible for cooling and infrastructure operations and staff oversight.
 - id: senior_official
   name: Imprisoned senior official
   aliases:
@@ -291,8 +295,8 @@ items:
   - seam
 - id: copied_janus_files
   name: copied JANUS files
-  owner: kristin
   disclosure: public
+  owner: kristin
   scoped_aliases: [copied files, JANUS files, JANUS evidence]
 - id: archive_terminals
   name: archive terminals
@@ -449,6 +453,31 @@ facts:
 - evidence_gap_development_record
 - evidence_gap_marked_site_list
 - facility_infiltration_needed
+- cover_suspected
+- supervisor_convinced
+- inspection_console_used
+- id: brandon_name_kept
+  on_assert:
+  - {move: copied_janus_files, parent: kristin, text: with Kristin}
+  - {reveal: copied_janus_files}
+- id: brandon_name_erased
+  on_assert:
+  - {move: copied_janus_files, parent: kristin, text: with Kristin}
+  - {reveal: copied_janus_files}
+- michelle_reply_received
+- committed_to_transmit
+- committed_to_rescue
+- detention_sectors_sealed
+- evidence_not_transmitted
+- inspection_window_missed
+- audit_window_missed
+- purge_window_missed
+- supervisor_escorting
+- inspection_recovery_ready
+- audit_recovery_ready
+- purge_recovery_ready
+- audit_reaches_stacks
+- purge_alarm_active
 - detention_uprising_started
 - park_pursuit_resolved
 - transport_route_departure_ready

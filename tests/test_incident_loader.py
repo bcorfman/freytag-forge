@@ -197,6 +197,44 @@ def _recovery_has_no_qualifying_realization(package: Path) -> str:
     routes = _read_yaml(package / "storylet-routes.yaml")
     recovery = next(item for item in routes["storylets"] if item["id"] == "SL-1A-B")
     recovery["realization_options"][0]["operations"] = [
+        {"op": "assert", "fact_id": "chart_copied", "value": True},
+        {"op": "assert", "fact_id": "chart_page_torn", "value": True},
+    ]
+    _write_yaml(package / "storylet-routes.yaml", routes)
+    knowledge = _read_yaml(package / "knowledge.yaml")
+    next(item for item in knowledge["knowledge"] if item["id"] == "k_recover_chart")["establishes"] = [
+        {"op": "assert", "fact_id": "chart_copied", "value": True},
+        {"op": "assert", "fact_id": "chart_page_torn", "value": True},
+    ]
+    _write_yaml(package / "knowledge.yaml", knowledge)
+    return "SL-1A-B"
+
+
+def _recovery_awards_both_outcomes(package: Path) -> str:
+    routes = _read_yaml(package / "storylet-routes.yaml")
+    recovery = next(item for item in routes["storylets"] if item["id"] == "SL-1A-B")
+    recovery["realization_options"][0]["operations"] = [
+        {"op": "assert", "fact_id": "chart_copied", "value": True},
+        {"op": "assert", "fact_id": "chart_page_torn", "value": True},
+        {"op": "assert", "fact_id": "boat_route_known", "value": True},
+        {"op": "assert", "fact_id": "recovery_cost_paid", "value": True},
+    ]
+    _write_yaml(package / "storylet-routes.yaml", routes)
+    knowledge = _read_yaml(package / "knowledge.yaml")
+    next(item for item in knowledge["knowledge"] if item["id"] == "k_recover_chart")["establishes"] = [
+        {"op": "assert", "fact_id": "chart_copied", "value": True},
+        {"op": "assert", "fact_id": "chart_page_torn", "value": True},
+        {"op": "assert", "fact_id": "boat_route_known", "value": True},
+        {"op": "assert", "fact_id": "recovery_cost_paid", "value": True},
+    ]
+    _write_yaml(package / "knowledge.yaml", knowledge)
+    return "SL-1A-B"
+
+
+def _recovery_asserts_only_extra_fact(package: Path) -> str:
+    routes = _read_yaml(package / "storylet-routes.yaml")
+    recovery = next(item for item in routes["storylets"] if item["id"] == "SL-1A-B")
+    recovery["realization_options"][0]["operations"] = [
         {"op": "assert", "fact_id": "recovery_cost_paid", "value": True}
     ]
     _write_yaml(package / "storylet-routes.yaml", routes)
@@ -238,7 +276,8 @@ REJECTIONS = [
     ("unknown recovery storylet", _unknown_recovery_storylet, "SL-1A-C"),
     ("recovery storylet in another scene", _recovery_in_other_scene, "1B"),
     ("recovery reuses outcome storylet", _recovery_reuses_shared_storylet, "SL-1A-A"),
-    ("recovery has no qualifying realization", _recovery_has_no_qualifying_realization, "SL-1A-B"),
+    ("recovery has no extra fact", _recovery_has_no_qualifying_realization, "SL-1A-B"),
+    ("recovery awards both outcomes", _recovery_awards_both_outcomes, "SL-1A-B"),
     ("recovery misses window activation", _recovery_does_not_require_window, "tide_has_turned"),
 ]
 
@@ -249,9 +288,23 @@ def test_incident_fixture_loads_with_two_outcomes() -> None:
     assert [outcome.id for outcome in package.incidents[0].outcomes] == ["copy_chart", "learn_route"]
 
 
+def test_neutral_zero_match_recovery_loads_with_two_outcomes(tmp_path: Path) -> None:
+    package = _copy_fixture(tmp_path)
+    _recovery_asserts_only_extra_fact(package)
+
+    loaded = load_story_package(package)
+
+    assert len(loaded.incidents[0].outcomes) == 2
+
+
 def test_real_package_declares_the_continuity_incident() -> None:
     incidents = load_story_package(ROOT.parent.parent.parent / "data" / "stories" / "continuity-initiative").incidents
-    assert [incident.id for incident in incidents] == ["i_1c_freight_transfer"]
+    assert [incident.id for incident in incidents] == [
+        "i_1c_freight_transfer",
+        "i_2a_real_leak",
+        "i_2b_audit",
+        "i_2c_rebecca_corridor",
+    ]
     assert load_story_package(ROOT / "lighthouse-keeper").incidents == ()
 
 

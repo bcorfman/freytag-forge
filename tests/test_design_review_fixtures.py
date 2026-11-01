@@ -109,14 +109,14 @@ def test_ordinary_name_accepted() -> None:
         ),
         pytest.param(
             "1A",
-            "k_sl_2a_c_r1",
-            "The cooling-water imbalance is dangerous.",
+            "k_sl_2a_c_r5",
+            "The genuine cooling-water pressure fault is dangerous.",
             "narration_known_term_leak",
             id="declared-leak-term",
         ),
         pytest.param(
             "1A",
-            "k_sl_2c_d_r1",
+            "k_sl_2c_d_r3",
             "Rebecca is in the room.",
             "narration_known_term_leak",
             id="unnameable-entity",

@@ -18,6 +18,7 @@ import pytest
 
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
+from storygame.runtime.incidents import resolved_incident_outcome
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.obligations import required_storylet_ids
@@ -186,8 +187,11 @@ def test_authored_exit_waits_for_the_scene_floor(transition, offset) -> None:
 
     result = _engine(state)._apply_authored_transition()
 
-    assert (result is not None) is (offset >= 0)
-    assert (state.current_scene_id == transition.target_scene_id) is (offset >= 0)
+    incident = next((item for item in PACKAGE.incidents if item.scene_id == transition.source_scene_id), None)
+    incident_resolved = incident is not None and resolved_incident_outcome(incident, state.facts) is not None
+    expected_exit = offset >= 0 or incident_resolved
+    assert (result is not None) is expected_exit
+    assert (state.current_scene_id == transition.target_scene_id) is expected_exit
 
 
 @pytest.mark.parametrize("transition", PACKAGE.pacing.transitions, ids=lambda transition: transition.id)

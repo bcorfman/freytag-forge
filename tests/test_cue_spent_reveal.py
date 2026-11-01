@@ -100,34 +100,6 @@ def test_old_and_new_real_cue_predicates_differ_only_for_spent_rows() -> None:
             True,
             False,
         ),
-        (
-            "2B",
-            "SL-2B-B fired through k_sl_2b_b_r3",
-            "brandon_claimed_reform_motive",
-            True,
-            False,
-        ),
-        (
-            "2B",
-            "SL-2B-B fired through k_sl_2b_b_r3",
-            "brandon_janus_role_known",
-            True,
-            False,
-        ),
-        (
-            "2B",
-            "SL-2B-B fired through k_sl_2b_b_r2",
-            "kristin_was_bait",
-            True,
-            False,
-        ),
-        (
-            "2B",
-            "SL-2B-B fired through k_sl_2b_b_r1",
-            "kristin_was_bait",
-            True,
-            False,
-        ),
     }
 
 

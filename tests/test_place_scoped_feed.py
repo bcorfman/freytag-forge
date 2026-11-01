@@ -145,7 +145,7 @@ def test_in_scene_prompts_are_byte_identical_to_baselines(
     assert prompt["user"] == expected["user"]
 
 
-@pytest.mark.parametrize(("label", "scene_id"), (("1b_entry_opening", "1B"), ("2a_entry_opening", "2A")))
+@pytest.mark.parametrize(("label", "scene_id"), (("1b_entry_opening", "1B"),))
 def test_entry_prompts_are_byte_identical_to_baselines(
     monkeypatch: pytest.MonkeyPatch, label: str, scene_id: str
 ) -> None:
@@ -153,6 +153,13 @@ def test_entry_prompts_are_byte_identical_to_baselines(
     expected = GOLDENS[label]["requests"][0]
     assert prompt["system"] == expected["system"]
     assert prompt["user"] == expected["user"]
+
+
+def test_2a_entry_prompt_uses_the_facility_gate_contract(monkeypatch: pytest.MonkeyPatch) -> None:
+    prompt = _opening_prompt(monkeypatch, _state_at(None, scene_id="2A"))
+    assert "The scene takes place at Facility perimeter." in prompt["user"]
+    assert "a shift supervisor walked out to meet them" in prompt["user"]
+    assert "Prove the cooling fault is real to get inside" in prompt["user"]
 
 
 @pytest.mark.parametrize("place", ("outside_house", "truck_driver_seat"))

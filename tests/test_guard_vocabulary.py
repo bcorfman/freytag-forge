@@ -59,19 +59,22 @@ def test_public_park_bench_is_nameable_before_the_card_is_read() -> None:
 
 
 @pytest.mark.parametrize("scene_id", ("2A", "3B"))
-def test_infrastructure_corridor_is_a_public_place_name(scene_id: str) -> None:
+def test_infrastructure_corridor_requires_earned_access(scene_id: str) -> None:
     _probe(scene_id, "infrastructure corridor")
-    _probe(scene_id, "infrastructure corridors")
+    with pytest.raises(ProposalValidationError, match="infrastructure corridors"):
+        _probe(scene_id, "infrastructure corridors")
 
 
-def test_corridor_reveal_still_requires_enter_command_evidence() -> None:
-    item = PACKAGE.knowledge_indexes.by_id["k_sl_2a_c_r2"]
+def test_inspection_reveal_requires_diagnosis_evidence() -> None:
+    item = PACKAGE.knowledge_indexes.by_id["k_sl_2a_c_r5"]
     candidate = ActionEvidenceCandidate(id=item.id, required_groups=item.action_evidence)
 
     assert uniquely_matched_candidate("Look at the infrastructure corridor.", (candidate,)) is None
-    matched = uniquely_matched_candidate("Enter the infrastructure corridor.", (candidate,))
+    matched = uniquely_matched_candidate(
+        "Diagnose the genuine cooling-water pressure fault and ventilation problem to the supervisor.", (candidate,)
+    )
     assert matched is not None
-    assert matched.id == "k_sl_2a_c_r2"
+    assert matched.id == "k_sl_2a_c_r5"
 
 
 @pytest.mark.parametrize("term", ("JANUS", "Phase Two", "purge clock", "memory card"))

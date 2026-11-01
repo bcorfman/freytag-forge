@@ -1,4 +1,4 @@
-"""Stage 5 characterization of the skipped-copy and Michelle-first 2C paths."""
+"""Stage 5 characterization of the consolidated 2C commitment route."""
 
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
-COPY_REVEALS = {"k_sl_2c_c_r1", "k_sl_2c_c_r2"}
-MESSAGE_REVEALS = {"k_sl_2c_d_r1", "k_sl_2c_d_r2"}
+COPY_REVEALS = {"k_sl_2c_d_r3", "k_sl_2c_d_r4"}
+MESSAGE_REVEALS = COPY_REVEALS
 COPY_PATH_FACTS = {"evidence_ready_to_transmit", "rebecca_office_required_for_broadcast"}
 
 
@@ -106,19 +106,31 @@ def _continue_3a(state: RuntimeState, engine: RuntimeEngine) -> tuple[tuple[str,
 def test_2c_static_requires_establishes_and_bridges() -> None:
     knowledge = PACKAGE.knowledge_indexes.by_id
     expected_2c = {
-        "k_sl_2c_a_r1": ((), ("rebecca_offer_active",)),
-        "k_sl_2c_a_r2": ((), ("rebecca_offer_active", "antagonist_split_known")),
-        "k_sl_2c_b_r1": ((), ("purge_clock_started",)),
-        "k_sl_2c_b_r2": ((), ("purge_clock_started",)),
-        "k_sl_2c_c_r1": (("janus_evidence",), ("evidence_ready_to_transmit",)),
-        "k_sl_2c_c_r2": (("janus_evidence",), ("evidence_ready_to_transmit",)),
-        "k_sl_2c_d_r1": (
-            ("purge_clock_started", "evidence_ready_to_transmit"),
-            ("rebecca_office_required_for_broadcast", "combined_broadcast_rescue_plan_known"),
+        "k_sl_2c_d_r3": (
+            (),
+            (
+                "rebecca_offer_active",
+                "antagonist_split_known",
+                "committed_to_transmit",
+                "detention_sectors_sealed",
+                "purge_clock_started",
+                "evidence_ready_to_transmit",
+                "combined_broadcast_rescue_plan_known",
+                "rebecca_office_required_for_broadcast",
+            ),
         ),
-        "k_sl_2c_d_r2": (
-            ("purge_clock_started", "evidence_ready_to_transmit"),
-            ("rebecca_office_required_for_broadcast", "combined_broadcast_rescue_plan_known"),
+        "k_sl_2c_d_r4": (
+            (),
+            (
+                "rebecca_offer_active",
+                "antagonist_split_known",
+                "committed_to_rescue",
+                "evidence_not_transmitted",
+                "purge_clock_started",
+                "evidence_ready_to_transmit",
+                "combined_broadcast_rescue_plan_known",
+                "rebecca_office_required_for_broadcast",
+            ),
         ),
     }
     for reveal_id, (required, established) in expected_2c.items():

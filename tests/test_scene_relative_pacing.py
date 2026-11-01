@@ -104,7 +104,16 @@ def _assert_reaction_window_contract(package) -> frozenset[str]:
 def test_optional_storylets_and_pacing_events_leave_two_turns_to_react() -> None:
     required_storylet_ids = _assert_reaction_window_contract(PACKAGE)
 
-    assert len(required_storylet_ids) == 36
+    incident_storylets = {
+        storylet_id
+        for incident in PACKAGE.incidents
+        for storylet_id in (
+            incident.recovery_storylet_id,
+            *(outcome.storylet_id for outcome in incident.outcomes),
+        )
+        if storylet_id is not None
+    }
+    assert incident_storylets <= required_storylet_ids
 
 
 def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
@@ -131,6 +140,9 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
         targets = [storylet.target_turn for storylet in storylets]
         expected_targets = {
             "1C": [2, 2, 3, 6],
+            "2A": [3, 6],
+            "2B": [5, 6, 6],
+            "2C": [6, 13],
         }.get(scene_id)
         if expected_targets is None:
             assert targets == sorted(targets)

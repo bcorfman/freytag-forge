@@ -5,7 +5,8 @@ import pytest
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
+from storygame.runtime.validation import ProposalValidationError
+from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -31,46 +32,33 @@ def test_inspection_console_is_fixed_in_the_infrastructure_corridors(scene_id: s
     assert not world.move("inspection_console", "kristin").ok
 
 
-def test_scene_2a_accepts_narration_about_following_the_corridors() -> None:
+def test_scene_2a_rejects_narration_about_unearned_corridor_access() -> None:
     state = _scene_2a_state()
     assert apply_scene_placements(PACKAGE, state.facts, "2A") == ()
-    state.facts.assert_fact(Fact(predicate="false_identities_ready", subject="story", value="true"))
-    state.facts.assert_fact(Fact(predicate="facility_perimeter_reached", subject="story", value="true"))
-    assert apply_world_effects(PACKAGE, state.facts) == ()
-
-    proposal = RuntimeEngine(
-        state,
-        lambda _command: {
-            "segments": [
-                {
-                    "kind": "narration",
-                    "text": "Kristin follows the infrastructure corridors to the inspection console.",
-                }
-            ],
-            "selected_knowledge_ids": [],
-        },
-    ).turn("Check the inspection console for water-pressure readings.")
-
-    assert proposal.segments[0].text == "Kristin follows the infrastructure corridors to the inspection console."
-
-
-def test_scene_2a_scrutiny_waits_for_false_identities() -> None:
-    def drive(state: RuntimeState) -> None:
-        engine = RuntimeEngine(
+    with pytest.raises(ProposalValidationError):
+        RuntimeEngine(
             state,
-            lambda _command: {"segments": [{"kind": "narration", "text": "Search the servers."}]},
-        )
-        for _ in range(3):
-            engine.turn("Search the servers for the leaked files.")
+            lambda _command: {
+                "segments": [
+                    {
+                        "kind": "narration",
+                        "text": "Kristin follows the infrastructure corridors to the inspection console.",
+                    }
+                ],
+                "selected_knowledge_ids": [],
+            },
+        ).turn("Check the inspection console for water-pressure readings.")
 
-    without_cover = _scene_2a_state()
-    drive(without_cover)
-    assert (
-        Fact(predicate="identity_scrutiny_visible", subject="story", value="true") not in without_cover.facts.asserted
+
+def test_scene_2a_inspection_window_comes_from_the_supervisor_incident() -> None:
+    state = _scene_2a_state()
+    engine = RuntimeEngine(
+        state,
+        lambda _command: {"segments": [{"kind": "narration", "text": "The inspection continues."}]},
     )
 
-    with_cover = _scene_2a_state()
-    with_cover.facts.assert_fact(Fact(predicate="false_identities_ready", subject="story", value="true"))
-    with_cover.facts.assert_fact(Fact(predicate="facility_perimeter_reached", subject="story", value="true"))
-    drive(with_cover)
-    assert Fact(predicate="identity_scrutiny_visible", subject="story", value="true") in with_cover.facts.asserted
+    for _ in range(5):
+        engine.turn("Explain the cooling-water fault to the supervisor.")
+
+    assert Fact(predicate="inspection_window_missed", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="cover_suspected", subject="story", value="true") not in state.facts.asserted

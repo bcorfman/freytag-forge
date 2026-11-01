@@ -55,8 +55,10 @@ def test_prefix_loaded_state_has_real_3b_reveals_and_facts(prefix_dir: Path) -> 
     state = RuntimeStateSqliteStore(prefix_dir / "checkpoint.sqlite").load(SESSION_ID, package)
     committed = {record_id for record in state.turn_records for record_id in record.reveal_ids}
     assert state.current_scene_id == "3B"
-    assert {"k_sl_3b_a_r1", "k_sl_3b_e_r1", "k_sl_3b_b_r1", "k_sl_3b_d_r1", "k_sl_3b_c_r1"} <= committed
-    assert any(fact.predicate == "relay_open" and fact.value == "true" for fact in state.facts.asserted)
+    assert {"k_sl_3b_a_r1", "k_sl_3b_e_r1", "k_sl_3b_b_r1", "k_sl_3b_d_r1"} <= committed
+    assert "k_sl_3b_c_r1" not in committed
+    assert UNCLOCKED_JOURNEY[_prefix_count(package)] == ("k_sl_3b_c_r1", "3C")
+    assert not any(fact.predicate == "relay_open" and fact.value == "true" for fact in state.facts.asserted)
     assert any(fact.predicate == "scene_3b_entry_known" for fact in state.facts.asserted)
 
 

@@ -8,7 +8,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
-from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
+from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -21,35 +21,28 @@ def _scene_2a_state() -> RuntimeState:
     return state
 
 
-def test_scene_2a_places_the_hideout_and_fixed_servers() -> None:
+def test_scene_2a_places_the_gate_and_supervisor() -> None:
     state = _scene_2a_state()
     world = world_for(PACKAGE, state.facts)
 
-    assert world.parent("kristin") == "brandon_hideout"
-    assert world.parent("brandon") == "brandon_hideout"
+    assert world.parent("kristin") == "facility_perimeter"
+    assert world.parent("brandon") == "facility_perimeter"
+    assert world.parent("shift_supervisor") == "facility_perimeter"
     assert world.parent("hideout_servers") == "brandon_hideout"
     assert "brandon" in world.companions("kristin")
     assert not world.move("hideout_servers", "kristin").ok
 
 
-def test_facility_perimeter_reached_moves_the_group_to_the_facility() -> None:
+def test_scene_2a_does_not_need_a_hideout_travel_fact() -> None:
     state = _scene_2a_state()
-    state.facts.assert_fact(Fact(predicate="false_identities_ready", subject="story", value="true"))
-
-    assert apply_world_effects(PACKAGE, state.facts) == ()
     world = world_for(PACKAGE, state.facts)
-    assert world.parent("kristin") == "brandon_hideout"
-
-    state.facts.assert_fact(Fact(predicate="facility_perimeter_reached", subject="story", value="true"))
-    assert apply_world_effects(PACKAGE, state.facts) == ()
-    world = world_for(PACKAGE, state.facts)
-
     assert world.parent("kristin") == "facility_perimeter"
     assert world.parent("brandon") == "facility_perimeter"
+    assert world.parent("shift_supervisor") == "facility_perimeter"
     assert "regional_facility" in world.chain("kristin")
 
 
-def test_scene_2a_narration_uses_hideout_grounding() -> None:
+def test_scene_2a_narration_uses_gate_grounding() -> None:
     state = _scene_2a_state()
     proposal = RuntimeEngine(
         state,
@@ -57,14 +50,17 @@ def test_scene_2a_narration_uses_hideout_grounding() -> None:
             "segments": [
                 {
                     "kind": "narration",
-                    "text": "Kristin sorts through the servers in Brandon's hideout.",
+                    "text": "Kristin stands at the facility gate while the shift supervisor checks the work order.",
                 }
             ],
             "selected_knowledge_ids": [],
         },
-    ).turn("Search the servers for the leaked files.")
+    ).turn("Explain the cooling-water fault to the supervisor.")
 
-    assert proposal.segments[0].text == "Kristin sorts through the servers in Brandon's hideout."
+    assert (
+        proposal.segments[0].text
+        == "Kristin stands at the facility gate while the shift supervisor checks the work order."
+    )
 
 
 def test_scene_2a_narration_rejects_a_sibling_facility_area() -> None:
@@ -110,7 +106,7 @@ def test_scene_entry_uses_protagonist_placement_parent() -> None:
     state = _scene_2a_state()
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    assert provider._scene_entry()["location"] == "Brandon's hideout"
+    assert provider._scene_entry()["location"] == "Facility perimeter"
 
     state.current_scene_id = "1C"
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
@@ -133,19 +129,30 @@ class _Response:
 
 def test_warning_the_supervisor_earns_corridor_access_by_handoff(monkeypatch: pytest.MonkeyPatch) -> None:
     state = _scene_2a_state()
-    state.facts.assert_fact(Fact(predicate="false_identities_ready", subject="story", value="true"))
-    state.facts.assert_fact(Fact(predicate="facility_perimeter_reached", subject="story", value="true"))
-    apply_world_effects(PACKAGE, state.facts)
-    narration = {"segments": [{"kind": "narration", "text": "Kristin tells the supervisor about the pressure chart."}]}
+    narration = {
+        "segments": [
+            {
+                "kind": "narration",
+                "text": (
+                    "Kristin proves the genuine cooling-water pressure fault and the real ventilation fault "
+                    "to the supervisor."
+                ),
+            }
+        ]
+    }
     monkeypatch.setattr(
         "storygame.runtime.cloudflare.urlopen",
         lambda *_args, **_kwargs: _Response({"narration": json.dumps(narration)}),
     )
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
-    proposal = RuntimeEngine(state, provider).turn("Warn the supervisor about the cooling-water fault.")
+    proposal = RuntimeEngine(state, provider).turn(
+        "Diagnose the real cooling-water pressure fault and explain the ventilation problem to the supervisor."
+    )
 
-    assert proposal.selected_knowledge_ids == ("k_sl_2a_c_r1",)
-    assert proposal.segments[0].text == "Kristin tells the supervisor about the pressure chart."
+    assert proposal.selected_knowledge_ids == ("k_sl_2a_c_r5",)
+    assert proposal.segments[0].text == (
+        "Kristin proves the genuine cooling-water pressure fault and the real ventilation fault to the supervisor."
+    )
     assert state.facts.matching("restricted_corridor_access")
     assert state.facts.matching("rebecca_observing_infiltrators")

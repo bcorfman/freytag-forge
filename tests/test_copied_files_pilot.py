@@ -167,17 +167,17 @@ def test_early_secret_terms_remain_rejected(scene_id: str, text: str, expected: 
 @pytest.mark.parametrize(
     "player_input",
     [
-        "Check my copied JANUS files.",
-        "Open the JANUS files.",
-        "Review the copied files.",
-        "Inspect the JANUS evidence.",
-        "Read my copied JANUS files.",
+        "Head to the uplink and transmit the copied JANUS files.",
+        "Go to the broadcast uplink and send the JANUS evidence.",
+        "Start sending the copied files from the uplink.",
+        "Move to the uplink and upload the JANUS files.",
+        "Transmit the copied JANUS evidence from the broadcast uplink.",
     ],
 )
-def test_2c_copied_file_commands_match_only_the_original_reveal(player_input: str) -> None:
+def test_2c_copied_file_commands_match_only_the_transmit_commitment(player_input: str) -> None:
     candidates = tuple(
         item for item in PACKAGE.knowledge.knowledge if "2C" in item.available_in_scenes and item.action_evidence
     )
     result = uniquely_matched_authored_handoff(player_input, candidates)
     assert result is not None
-    assert result.candidate.id == "k_sl_2c_c_r1"
+    assert result.candidate.id == "k_sl_2c_d_r3"

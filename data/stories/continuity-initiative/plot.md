@@ -55,9 +55,9 @@ The story is built for a maximum of 120 accepted player turns. A scene should no
 | 1A | 13 | Search Michelle's house; form a theory; recover and interpret the card; evade a widening patrol search. |
 | 1B | 13 | Work the dead drop; decide what Brandon is; test the route; escape a closing park. |
 | 1C | Choice closes at 5; recovery open until 8, then withdrawal | Inspect the terminal; observe the captives; choose copying the numbers or asking Brandon about the route; follow Brandon at greater risk if the window closes. |
-| 2A | 11 | Build a cover; rehearse it under scrutiny; exploit facility weaknesses; survive a second credential review. |
-| 2B | 15 | Gather JANUS evidence; confront Brandon; trace Michelle's sabotage; leave as an archive audit closes in. |
-| 2C | 16 | Receive Rebecca's offer; face the purge; live with the evidence-or-rescue conflict; learn Michelle's harder third path. |
+| 2A | 11 | Face the supervisor at the gate; prove the cooling fault is real; get inside cleanly or under watch. |
+| 2B | 15 | Learn she was bait; confront Brandon in whispers as the audit passes; decide whether he may erase his name; hear from Michelle. |
+| 2C | 16 | Face Rebecca in person; watch the purge order land; commit to transmit or rescue by acting; learn Michelle's harder third path. |
 | 3A | 13 | Reach Michelle; document the experiments; prepare prisoners and codes; launch before the lockdown wins. |
 | 3B | 14 | Confuse JANUS; force Rebecca's reckoning; survive Charles's betrayal; hold the relay through failing power. |
 | 3C | 14 | Win the broadcast contest; secure the archive; guide the evacuation; absorb the national consequences and Phase Two. |
@@ -330,8 +330,8 @@ Scenes 1C.3 and 1C.4 await relocation to a later scene. Candidate homes are 2C.1
 scene_id: 2A
 location_id: facility_perimeter
 freytag_phase: rising_action
-objective: Enter the facility under false identities
-participant_ids: [kristin, brandon]
+objective: Get inside by proving the cooling fault is real
+participant_ids: [kristin, brandon, shift_supervisor]
 companions: [brandon]
 item_ids: [transit_card, hideout_servers, inspection_console, facility_gate, cooling_service_archive_panel]
 item_placements:
@@ -350,122 +350,121 @@ setting_facts:
 - The cooling-service archive panel has no screen.
 - Using the cooling-service archive panel requires no further credentials.
 character_placements:
-  kristin: {parent: brandon_hideout}
-  brandon: {parent: brandon_hideout}
-entry_text: "Brandon's hideout was buried inside a dead communications center: servers, salvaged hardware, and years of leaked Continuity Initiative documents. Somewhere beneath the city the facility waited, and its unstable cooling-water and ventilation readings were exactly the kind of flaw a pair of outside inspectors might be sent to examine.\n\n"
+  kristin: {parent: facility_perimeter}
+  brandon: {parent: facility_perimeter}
+  shift_supervisor: {parent: facility_perimeter, text: walking out from the facility gate with a tablet and the work order}
+entry_text: "One night in Brandon's hideout had turned years of leaked Continuity Initiative documents into two inspector badges and a work order for a cooling-water fault. Now the badges had to work. Kristin and Brandon stood at the facility gate while a shift supervisor walked out to meet them, reading the work order with a frown. \"Nobody scheduled you,\" he said.\n\n"
 entry_variants:
 - requires: [processing_numbers_copied]
-  text: "Kristin still has the copied prisoner numbers. She needs a way into the facility."
+  text: "Kristin still has the copied prisoner numbers. The codes on the supervisor's work orders look like the same system."
 - requires: [service_level_access_known]
-  text: "Kristin and Brandon know the service approach. Their proof is weaker, but it may still get them inside."
+  text: "Brandon knows the service approach. If they get past this man, he can take them around the second checkpoint."
 transition_ids: [t_2a_2b]
 bridge_text:
   t_2a_2b: >-
-    Kristin and Brandon gained access to the infrastructure corridors under their inspection cover.
-    They continued into the records archive.
+    The supervisor left them at the inspection console in the infrastructure corridors. Behind it, the cooling-service
+    panel led into the records archive.
 ---
 
-**Setting:** Brandon’s hidden operations base and the secret facility
+**Setting:** The facility gate, its cooling manifold, and the infrastructure corridors beyond
 
 **Characters:**
 
 * Kristin Schweitzer
 * Brandon Corfman
+* The shift supervisor
 
-**Plot:** Brandon uses old contacts from his software and security circles to create identities that will allow him and Kristin to enter the facility as technical inspectors.
+**Plot:** Kristin and Brandon arrive at the facility as outside cooling-water inspectors. A doubtful shift supervisor will not accept their paperwork and makes Kristin prove the fault. The fault is real. Kristin's Army infrastructure experience, not the forged credentials, gets them inside. Unknown to them, a camera has already marked Brandon.
 
 ### Scene 2A.1 — Brandon’s Hideout
 
-**Details:** fortified hideout; abandoned communications center; servers; salvaged hardware; emergency supplies; leaked code
+**Details:** abandoned communications center; leaked documents; inspector badges; forged work order; one night
 
-Brandon takes Kristin to a fortified hideout inside an abandoned communications center. It contains servers, salvaged hardware, emergency supplies, and years of leaked code and internal documents on the Continuity Initiative.
+The scene does not play in the hideout. Brandon's hideout sits inside an abandoned communications center, full of servers, salvaged hardware and years of leaked Continuity Initiative documents. He was preparing for this long before the disappearances, after he tried to expose the program and was dismissed as unstable. In one night there, he and Kristin built two inspector badges and a work order for a cooling-water fault.
 
-Kristin discovers that Brandon has been preparing for the disappearance event for a long time.
-
-Brandon explains that he tried to expose the program but was discredited, dismissed, and labeled unstable.
+The hideout is backstory Kristin can ask Brandon about. It is not a place the player must work through.
 
 ### Scene 2A.2 — The Infiltration Plan
 
-**Details:** cooling-water readings; ventilation monitors; underground installation; false credentials; inspection console; command center records
+**Details:** facility gate; shift supervisor; unscheduled inspection; cooling-water readings; ventilation readings
 
-Kristin identifies unstable cooling-water and ventilation readings in the facility's overextended service systems. The installation needs outside inspectors to distinguish a genuine leak from a sensor fault.
+The scene opens at the facility gate. The facility's cooling-water and ventilation readings have been unstable for weeks, which is why an outside inspection is believable. The plan is simple: get past the gate, reach the infrastructure corridors, and find the records.
 
-Brandon creates false credentials presenting them as specialists sent to investigate a dangerous cooling-water fault.
-
-Their objectives are:
-
-1. Enter without raising an alarm.
-2. Copy the command center’s records.
-3. Locate Michelle and the other captives.
-4. Discover how prisoners are being transported.
-5. Transmit the evidence to independent news and emergency networks.
-6. Escape before Charles orders the facility purged.
+A shift supervisor comes out to meet them. He has no record of the inspection and does not trust paperwork he did not ask for. He is the person in the way.
 
 ### Scene 2A.3 — Entering the Facility
 
-**Details:** security layers; initial identity checks; unscheduled inspection; cooling-water warning; technical explanation; infrastructure corridors
+**Details:** cooling manifold; real fault; Kristin's expertise; supervisor's test; infrastructure corridors; inspection console
 
-Kristin and Brandon pass through several layers of security. Their identities survive the initial checks, but a supervisor questions why their inspection was not scheduled.
+The supervisor will not argue at the gate. He walks them to the cooling manifold and says, "Show me."
 
-Kristin improvises, warning that a cooling-water fault could disable the underground service level. Her technical explanation is convincing enough that the supervisor reluctantly permits them to continue.
+The fault is real. A pressure problem in the cooling water is getting worse, and the ventilation is masking it. Kristin finds it the way she would have in the Army, by feel, by gauge and by tracing the lines, and she explains in her own words what will fail if nobody fixes it. The supervisor has been blamed for alarms he could not explain. Hearing the real cause changes his manner.
 
-This gives Kristin access to restricted infrastructure corridors that bypass the main security checkpoints.
+If Kristin has the copied prisoner numbers, she recognizes the processing-line codes on his work orders. If she knows the service approach, Brandon steers them around the second checkpoint, and the supervisor notices the shortcut.
 
-The corridor inspection console accepts the temporary credentials long enough to display water-pressure, ventilation, door, and lighting diagnostics. Kristin notes its limits before they move on: it can report faults and cycle noncritical systems, but it cannot open detention cells or alter the main flood controls.
+A convincing explanation earns them restricted access to the infrastructure corridors. A vague or overlong one still gets them in, but the supervisor logs them for a follow-up audit and keeps an eye on them. If Kristin stalls, his patience runs out and he escorts them in himself, to watch. Every path reaches the corridors.
+
+The corridor inspection console accepts their temporary credentials long enough to show water-pressure, ventilation, door and lighting diagnostics. Kristin notes its limits before they move on: it can report faults and cycle noncritical systems, but it cannot open detention cells or change the main flood controls.
 
 ### Scene 2A.4 — The First Complication
 
-**Details:** facial-recognition system; former developer; Continuity Initiative contractor; quiet security alert; Rebecca Jenkins; compromised infiltration
+**Details:** security camera; facial recognition; former developer; quiet alert; Rebecca Jenkins
 
-A facial-recognition system identifies Brandon as a former Continuity Initiative developer and contractor. Instead of triggering a general alarm, the system quietly alerts Rebecca Jenkins.
+While Kristin works the manifold, a security camera turns toward Brandon and stays on him. The narration may show the camera. Neither Kristin nor Brandon remarks on it.
 
-Rebecca orders security to observe Brandon rather than arrest him. She wants to know why he has returned and whom he has brought with him.
+Facial recognition has identified Brandon as a former Continuity Initiative developer and contractor. Instead of raising a general alarm, the system quietly alerts Rebecca Jenkins. Rebecca orders security to watch Brandon rather than arrest him. She wants to know why he has returned and whom he has brought.
 
-Kristin and Brandon remain unaware that their infiltration has already been compromised.
+Kristin and Brandon do not know their infiltration has been compromised.
 
 ## Scene 2B — Evidence and Betrayal
 ---
 scene_id: 2B
 location_id: janus_archive
 freytag_phase: rising_action
-objective: Find evidence in the records archive
-participant_ids: [kristin, brandon, michelle]
+objective: Find the truth in the archive before the audit finds them
+participant_ids: [kristin, brandon, michelle, shift_supervisor]
 companions: [brandon]
 item_ids: [archive_terminals, medical_terminal, cooling_service_archive_panel]
 item_placements:
   archive_terminals: {parent: janus_archive}
   medical_terminal: {parent: janus_archive}
   cooling_service_archive_panel: {parent: infrastructure_corridors}
+character_placements:
+  shift_supervisor: {parent: janus_archive, text: leading the audit sweep between the archive stacks}
 setting_facts:
 - The cooling-service archive panel connects the infrastructure corridors to the records archive.
 - The cooling-service archive panel opens with a push.
 - Kristin has already reached the records archive.
 - The archive terminals are available for investigation.
-entry_text: "Inside the records archive, the archive terminals are ready to search. They hold the Initiative's selection files, including Michelle's file.\n\n"
+entry_text: "Kristin and Brandon came through the cooling-service panel into the records archive just as the lights came up at the far end. An audit sweep had started. Voices and footsteps were working their way down the aisles toward them. They had a few minutes among the archive terminals.\n\n"
+entry_variants:
+- requires: [cover_suspected]
+  text: "The supervisor had logged them at the gate, and the audit sweep had started early because of it. The voices were already close, working down the nearest aisle. Kristin and Brandon had barely a minute among the archive terminals."
 transition_ids: [t_2b_2c]
 bridge_text:
   t_2b_2c: >-
-    The JANUS evidence in the archive showed what the system was built to do. Kristin and Brandon understood how much
-    danger that evidence put them in.
+    Kristin and Brandon slipped out of the archive with the copied files. In the command corridor beyond, doors were
+    already closing at both ends.
 ---
 
-**Setting:** The facility’s records archive, medical levels, and Brandon’s hideout through a remote connection
+**Setting:** The facility’s records archive, its stacks and terminals, during an audit sweep
 
 **Characters:**
 
 * Kristin Schweitzer
 * Brandon Corfman
-* Charles Jenkins
-* Rebecca Jenkins
-* Dr. Michelle McGehee
+* The shift supervisor, leading the audit
+* Dr. Michelle McGehee, through the medical terminal
 
-**Plot:** Kristin and Brandon uncover the true purpose of the experiments. Kristin also learns that Brandon helped design the system used to select the missing.
+**Plot:** Kristin and Brandon reach the archive as an audit sweep begins. One file tells Kristin that she was left behind as bait and that Brandon built the system that chose the missing. She confronts him in whispers while the audit passes. Then Michelle answers her.
 
 ### Scene 2B.1 — The Selection Algorithm
 
-**Details:** restricted records archive; Michelle’s research; the Initiative’s selection files
+**Details:** audit sweep; records archive; archive terminals; Kristin's own file
 
-Inside the records archive, Kristin discovers files describing an artificial-intelligence system called **JANUS**.
+The audit sweep is the pressure. The shift supervisor and his staff are working down the aisles. If he logged Kristin and Brandon for a follow-up audit in 2A, the sweep starts closer and moves faster.
+
+Kristin does not have to search file after file. The first thing she pulls is her own record. It names the system that made it: an artificial-intelligence system called **JANUS**.
 
 JANUS analyzed government, financial, medical, employment, education, and communications data to classify every American according to:
 
@@ -476,143 +475,130 @@ JANUS analyzed government, financial, medical, employment, education, and commun
 * Family and social connections
 * Potential value as leverage over others
 
-Michelle was not taken merely because she discovered the conspiracy. JANUS predicted that her research and public credibility could unite opposition groups after the disappearance.
-
-Kristin was deliberately left behind because the system predicted she would lead investigators to Brandon.
-
-Michelle's file gives no further lead. The development records and the medical terminal hold the next evidence.
+Michelle was taken because JANUS predicted that her research and public credibility could unite opposition after the disappearance.
 
 ### Scene 2B.2 — Kristin Was Bait
 
-**Details:** facility discovery; Michelle’s evidence; Brandon’s hidden network; anticipated journey; accessible evidence; security access
+**Details:** Kristin's classification; RETAINED; predicted to lead investigators to Corfman; anticipated journey; accessible evidence
 
-The revelation transforms Kristin’s understanding of her journey. Her discovery of the facility was not entirely accidental.
+Kristin's record is short. It reads: **RETAINED — predicted to lead investigators to CORFMAN.**
 
-Charles expected Kristin to seek Brandon. Security allowed portions of Michelle’s evidence to remain accessible so Kristin would expose Brandon’s hidden network.
+She was left behind on purpose. Charles expected her to look for Michelle, find Brandon and lead security to his hidden network. Security left parts of Michelle's evidence where Kristin could find them.
 
-Kristin realizes that every step she has taken may have been anticipated.
+Kristin realizes that every step she has taken may have been anticipated. Directly below her record is the JANUS build record. Its author is Brandon Corfman.
 
 ### Scene 2B.3 — Brandon’s Role
 
-**Details:** JANUS development records; AI software; national emergencies; mass detention; political control; Michelle’s access
+**Details:** JANUS build record; whispered confrontation; the stacks; Brandon's request; his name
 
-Kristin finds Brandon’s name in the original JANUS development records. Brandon admits that he helped write the AI software used to identify people at risk during national emergencies.
+The audit is coming down the aisle. Kristin confronts Brandon crouched between the shelves, in whispers, while footsteps pass on the other side. A raised voice or a sudden move could give them away.
 
-When he discovered that Charles intended to use it for mass detention and political control, he attempted to destroy the project. He failed and fled.
+Brandon admits that he helped write the AI software used to identify people at risk during national emergencies. When he learned that Charles meant to use it for mass detention and political control, he tried to destroy the project. He failed and fled. Michelle knew about his involvement and believed his access was the only way to expose the program.
 
-Michelle knew about Brandon’s involvement but believed his access was the only way to expose the program.
+Kristin feels betrayed. She suspects he may still be manipulating her to erase evidence of his own guilt.
 
-Kristin feels betrayed. She suspects Brandon may still be manipulating her to erase evidence of his own guilt.
+Then Brandon asks for exactly that. Before they copy the files, he wants to delete his name from the build record. "Let me fix this one thing."
+
+* If Kristin refuses, Brandon complies, stung. The evidence stays intact, and trust between them is colder.
+* If Kristin lets him, trust warms, but his name is gone from the record. Only his own word can prove his role later.
+
+Either way, Kristin copies the JANUS files and keeps them with her. If the audit reaches them before she decides, Brandon's name stays.
 
 ### Scene 2B.4 — Michelle’s Hidden Resistance
 
-**Details:** equipment failures; corrupted prisoner files; medical terminal; altered classifications; delayed transfers; maintenance reports
+**Details:** medical terminal; maintenance line; Shelly; one reply; Michelle alive; the shift supervisor
 
-The records reveal unusual equipment failures and corrupted prisoner files throughout the facility. Kristin recognizes phrases in the corrupted data that Michelle used in her private notes.
+As they move to leave, the medical terminal in the archive prints a maintenance line. It is in Michelle's private phrasing, and it ends with "Shelly," the name only Kristin uses for her. Michelle has been using her access to the medical terminal to alter prisoner classifications, delay transfers and send coded messages through maintenance reports.
 
-Michelle has built a small covert network among prisoners and sympathetic workers. Using her access to a medical terminal, she has been:
+Kristin can type one reply. Michelle answers once. She is alive. She is working against the facility from inside. She will send a route when she can. She says nothing about an uprising or the broadcast system.
 
-* Altering prisoner classifications
-* Delaying transfers
-* Hiding vulnerable captives from experimental programs
-* Sending coded messages through maintenance reports
-* Preparing prisoners for an organized uprising
+Michelle is not waiting to be rescued. That changes how Kristin leaves the archive.
 
-The records prove that Michelle is active inside, but they cannot yet show how far her hidden network reaches.
-
-A decoded message reads: “The prisoners are ready to rise up.”
-
-Michelle is not passively waiting to be rescued. She has already begun dismantling the facility from within.
+If the audit reaches them first, the shift supervisor sees them and does not raise the alarm. He lets them go. He is one of the workers Michelle has quietly recruited, though Kristin does not learn that here.
 
 ## Scene 2C — The Trap Closes
 ---
 scene_id: 2C
 location_id: purge_chamber
 freytag_phase: crisis
-objective: Choose the next move under growing pressure
+objective: Get free of Rebecca and commit to a move before the purge
 participant_ids: [kristin, brandon, michelle, rebecca]
 companions: [brandon]
 item_ids: [copied_janus_files]
 item_placements:
   copied_janus_files: {parent: kristin}
-entry_text: "The command levels tightened around them. Somewhere above, orders were already moving - transfers, schedules, contingency plans measured in hours instead of days. Whatever Kristin and Brandon did next had to count. Kristin carried the copied JANUS files. She could check them now.\n\n"
+character_placements:
+  rebecca: {parent: purge_chamber, text: standing between her guards in the command corridor}
+entry_text: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. Kristin still carried the copied JANUS files.\n\n"
 transition_ids: [t_2c_3a]
 bridge_text:
   t_2c_3a: >-
-    The purge clock was running, and the evidence was ready to transmit. Kristin and Brandon committed to one combined
-    mission: broadcast the truth and rescue the captives.
+    The purge clock was running. Michelle's route led down into the detention levels, and the plan was now one combined
+    mission: broadcast the truth and free the captives.
 ---
 
-**Setting:** The facility’s command levels and detention sectors
+**Setting:** A command corridor on the facility’s command levels, above the detention sectors
 
 **Characters:**
 
 * Kristin Schweitzer
 * Brandon Corfman
-* Dr. Michelle McGehee
-* Charles Jenkins
 * Rebecca Jenkins
+* Dr. Michelle McGehee, through the maintenance network
+* Charles Jenkins, through his orders
 
-**Plot:** Rebecca exposes the infiltrators, Charles accelerates his plans, and Kristin must choose between escaping with evidence or remaining to rescue the captives.
+**Plot:** Rebecca corners Kristin and Brandon in person and makes her offer face to face. Charles's purge order arrives in the middle of it. Brandon's apparent acceptance gets them free. Kristin commits to sending the evidence or rescuing captives by acting on it, and Michelle then shows her a way to do both.
 
 ### Scene 2C.1 — Rebecca’s Offer
 
-**Details:** private executive channels; upper command corridors; live transfer traffic; an invitation addressed to Brandon
+**Details:** command corridor; Rebecca in person; guards at both ends; offer to Brandon; Michelle's release
 
-Rebecca contacts Brandon privately and offers him safe passage. She claims Charles has become unstable and intends to eliminate both prisoners and lower-level conspirators once the new government is established.
+Rebecca has watched them since the camera turned toward Brandon in 2A. She comes herself. Guards hold both ends of the corridor.
 
-She asks Brandon to help her remove Charles and take control of the Continuity Initiative.
+She makes her offer to Brandon in front of Kristin. Charles has become unstable, she says. He means to kill the prisoners and the lower-level conspirators once the new government is in place. If Brandon helps her remove Charles and take control of the Continuity Initiative, she will release Michelle.
 
-In exchange, she promises to release Michelle.
-
-Brandon pretends to consider the offer so he can gain access to the executive level.
+Kristin can speak, bluff, threaten or stay silent. Rebecca answers her, but she is negotiating with Brandon.
 
 ### Scene 2C.2 — The Purge Order
 
-**Details:** corrupted JANUS records; valuable captives; full transfer; destruction order; national broadcast; selected survivors
+**Details:** Rebecca's tablet; purge order; corrupted JANUS records; her own people; Charles's broadcast; Brandon's yes
 
-Charles discovers that Michelle’s resistance network has corrupted JANUS records. Fearing that evidence will escape, he orders a full transfer of the most valuable captives and the destruction of everyone else.
+Mid-conversation, Rebecca's tablet chimes. Charles has learned that Michelle's network corrupted the JANUS records. He has ordered a full transfer of the most valuable captives and the destruction of everyone else. The purge begins within hours. The order includes Rebecca's own staff. Her face changes.
 
-The purge will begin within hours.
+At the same time, Charles is preparing a national broadcast claiming he has found survivors of the catastrophe. He will release a few selected captives to give his new emergency government legitimacy.
 
-The transfer orders lie open in the command levels.
-
-At the same time, Charles prepares a national broadcast in which he will claim to have located survivors of the catastrophe. He plans to release a small number of carefully selected captives and use their return to legitimize his new emergency government.
+Brandon says yes to Rebecca. The guards stand down, and Rebecca leaves for her office to move against Charles. Kristin cannot tell whether Brandon means it. If she refused to let him erase his name in 2B, he says yes coldly and avoids her eyes. If she let him, he glances at her as he says it.
 
 ### Scene 2C.3 — Evidence or Rescue
 
-**Details:** conspiracy evidence; exposed position; sealed detention sectors; transmitting evidence; thousands of captives; crisis choice
+**Details:** copied evidence; uplink; transfer carts; detention sectors; Kristin's commitment
 
-Kristin and Brandon have enough evidence to expose the conspiracy, but transmitting it will reveal their position and seal the detention sectors.
+Free in the corridor, with the purge running, Kristin has to act. There is no time to argue it out. Brandon says they must send the evidence now, even if that makes a rescue impossible. Kristin will not abandon Michelle and thousands of captives.
 
-Brandon argues that they must send the evidence immediately, even if doing so makes a rescue impossible. Without proof, freeing one group of prisoners will not stop the national operation.
+Kristin commits by doing one of these:
 
-Kristin refuses to abandon Michelle and thousands of other captives.
+* **Transmit.** She heads for the uplink and starts sending the evidence. The outside world gets proof. The facility detects the transmission and seals the detention sectors.
+* **Rescue.** She heads for the transfer carts and frees one cart of captives before the guards react. Those prisoners are free, but nothing has been sent; the outside world still knows nothing.
 
-Their disagreement creates the story’s central **crisis choice**:
-
-* Escape with the evidence and expose the conspiracy
-* Attempt a rescue and risk losing both the evidence and their lives
+If she does neither before the purge alarm sounds, the alarm drives them from the corridor and nothing is gained or lost.
 
 ### Scene 2C.4 — Living With the Choice
 
-**Details:** copied evidence; sealed detention sectors; transfer carts; Brandon's guilt; Rebecca's offer; maintenance network
+**Details:** sealed detention sectors; freed captives; Brandon's guilt; Rebecca's offer; distrust
 
-The apparent choice cannot be solved by a quick argument. Kristin and Brandon have time to test what each path would cost, but not enough time to pretend the costs are theoretical.
+Whatever Kristin chose stays chosen. If she transmitted, the sectors are sealed and the evidence is out. If she rescued, the freed captives are with them and the evidence is still only in Kristin's hands.
 
-Sending the evidence would make the national case harder for Charles to bury, yet it would expose their position while transfer carts begin moving below. A direct rescue might save Michelle and the nearby captives, yet it could leave Charles free to repeat the operation elsewhere.
-
-Rebecca's offer makes the distrust worse. Brandon can use the contact to seek a route upward, but Kristin cannot know whether he is buying time for the captives or protecting himself.
+Brandon's yes to Rebecca still hangs between them. He may be buying time for the captives, or protecting himself. Kristin cannot know yet.
 
 ### Scene 2C.5 — Michelle Changes the Choice
 
-**Details:** coded message; maintenance network; emergency broadcast system; detention sectors; Rebecca’s secured office; combined mission
+**Details:** coded message; maintenance network; holding block route; emergency broadcast system; Rebecca’s secured office; combined mission
 
-Michelle sends a coded message through the maintenance network. It marks a route into her partly unsecured holding block and explains that the facility’s emergency broadcast system can transmit the evidence while opening the sealed detention sectors.
+Michelle's second message arrives through the maintenance network, as she promised in the archive. It marks a route into her partly unsecured holding block. It explains that the facility's emergency broadcast system can transmit the evidence and open the sealed detention sectors at the same time.
 
-However, the broadcast system can only be activated manually from Rebecca’s secured office.
+The broadcast system can only be activated by hand from Rebecca's secured office.
 
-The apparent choice between exposure and rescue becomes a far more dangerous combined mission.
+Michelle does not undo Kristin's choice. Its cost and its gain carry forward. She widens the options into one far more dangerous combined mission.
 
 # Scene 3 — The Captives
 
@@ -648,6 +634,9 @@ character_placements:
   senior_official: {parent: captives}
   michelle: {parent: detention_level}
 entry_text: "A partly unsecured detention sector opened onto rows of captives. Coded announcements crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.\n\n"
+entry_variants:
+- requires: [committed_to_rescue]
+  text: "The captives Kristin had freed from the transfer carts were already on this level. They stood among the organized rows as if they had always belonged there."
 transition_ids: [t_3a_3b]
 bridge_text:
   t_3a_3b: >-
@@ -674,7 +663,9 @@ Kristin follows Michelle's maintenance route into one partly unsecured detention
 
 Michelle is beside the captives.
 
-The reunion between Kristin and Michelle is brief because the purge countdown has begun.
+The reunion gets one unhurried moment before the purge countdown takes over again. Kristin and Michelle can speak to each other before anyone asks either of them for anything.
+
+Kristin's choice in 2C shows here. If she freed a cart of captives, they came down with her, and they join Michelle's people. If she transmitted the evidence, the outside world already has it, the sectors are sealed, and Michelle's route was the only way in.
 
 Michelle explains that the facility contains only a fraction of the missing millions. Freeing them will matter only if the broadcast reveals the locations of the remaining sites. Michelle points toward the medical level, where the experiment records wait.
 
@@ -708,7 +699,7 @@ The rescue now has a strict deadline tied to Charles’s broadcast. Michelle tur
 
 **Details:** coordinated disturbances; disabled cameras; isolated guards; internal checkpoints; sealed primary exits; armed response teams
 
-Michelle triggers coordinated disturbances across the detention sectors. Prisoners disable cameras, overwhelm isolated guards, and seize control of several internal checkpoints.
+Michelle hands Kristin the stolen radio. Kristin gives the signal. Coordinated disturbances break out across the detention sectors. Prisoners disable cameras, overwhelm isolated guards, and seize control of several internal checkpoints.
 
 The uprising succeeds initially, but Charles seals the primary exits and redirects armed response teams toward the detention levels.
 
@@ -732,6 +723,9 @@ character_placements:
   kristin: {parent: security_corridors}
   rebecca: {parent: executive_office}
 entry_text: "Alarms layered over alarms as the facility fought to predict its attackers. Water-pressure warnings flashed on the inspection console while doors opened and closed in empty service corridors that JANUS watched move by move.\n\n"
+entry_variants:
+- requires: [brandon_name_erased]
+  text: "Brandon had deleted his name from the build record in the archive. Now only his own word could show what he had built, and he knew it."
 transition_ids: [t_3b_3c]
 bridge_text:
   t_3b_3c: >-
@@ -794,6 +788,8 @@ The broadcast system cannot operate while Charles controls the external communic
 Doing so leaves him isolated in a relay chamber that security can lock down and flood once Charles understands what he has done.
 
 Before completing the override, Brandon transmits a confession describing his role in creating JANUS. His statement authenticates Michelle’s evidence and prevents Charles from dismissing it as fabricated.
+
+Kristin's choice in 2B shapes this moment. If she refused to let him erase his name, the build record already proves his role, and his confession confirms it; he tells her she was right not to let him hide. If she let him erase it, his confession is the only proof of his role, and he tells her he is giving back what she let him take.
 
 Brandon remains behind to keep the relay open while Kristin and Michelle begin the broadcast. Brandon waits beside the broadcast controls.
 

@@ -16,6 +16,7 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.reference_resolution import resolve_references
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.validation import ProposalValidationError
 from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
 
@@ -242,7 +243,18 @@ def test_late_scene_place_and_scoped_alias_declarations_are_characterized() -> N
 def test_declared_place_forms_are_nameable_in_their_scene(scene_id: str) -> None:
     state = _scene_state(scene_id)
     validator = NarrationSafetyValidator()
+    guarded_before_access = {
+        "infrastructure corridors",
+        "restricted infrastructure corridors",
+        "infrastructure corridor",
+        "maintenance route",
+        "maintenance routes",
+        "maintenance tunnel",
+        "maintenance tunnels",
+    }
     for form in EXPECTED_PLACE_FORMS_BY_SCENE[scene_id]:
+        if form in guarded_before_access:
+            continue
         validator.validate(
             state,
             state,
@@ -265,7 +277,6 @@ def test_3c_captives_are_out_of_scope_where_the_story_places_them() -> None:
     [
         ("2B", "A terminal hums beside the archive."),
         ("3A", "The gate opens beyond the corridor."),
-        ("3B", "The archive evidence moves through the corridor."),
     ],
 )
 def test_ordinary_scene_words_are_not_rejected_as_place_leaks(
@@ -284,22 +295,30 @@ def test_future_facility_place_is_nameable_in_2C_by_design(monkeypatch: pytest.M
 
 
 @pytest.mark.parametrize("scene_id", ("2A", "3B"))
-def test_corridor_place_names_are_accepted_before_the_access_reveal(scene_id: str) -> None:
-    """The corridor is public vocabulary; naming it does not satisfy the access action evidence."""
+def test_corridor_place_names_remain_guarded_before_access(scene_id: str) -> None:
+    """Declared corridor vocabulary does not grant unearned access by itself."""
 
     state = _scene_state(scene_id)
 
-    def validate(text: str) -> None:
+    with pytest.raises(ProposalValidationError):
         NarrationSafetyValidator().validate(
             state,
             state,
-            ResolvedTurnProposal(segments=(NarrationSegment(kind="narration", text=text),)),
+            ResolvedTurnProposal(
+                segments=(NarrationSegment(kind="narration", text="The infrastructure corridors are quiet."),)
+            ),
             KnowledgeProjector(),
             "Look around.",
         )
-
-    validate("The infrastructure corridors are quiet.")
-    validate("The infrastructure corridor is quiet.")
+    NarrationSafetyValidator().validate(
+        state,
+        state,
+        ResolvedTurnProposal(
+            segments=(NarrationSegment(kind="narration", text="The infrastructure corridor is quiet."),)
+        ),
+        KnowledgeProjector(),
+        "Look around.",
+    )
 
 
 def test_3a_medical_record_reveal_places_the_entity_and_accepts_its_name(
@@ -391,6 +410,11 @@ EXPECTED_HANDOFF_PLACEMENTS = {
 }
 
 
+# Filler never earns an outcome. Act 2 incidents end it through their neutral recovery bridge, which is an
+# earned (non-timeout) exit; the later scenes still time out.
+EXPECTED_FILLER_TRANSITION_CAUSES = {"2B": "earned", "2C": "earned", "3A": "earned", "3B": "forced", "3C": "forced"}
+
+
 @pytest.mark.nightly
 def test_nonmatching_filler_preserves_authored_custody_across_2a_to_3c(
     monkeypatch: pytest.MonkeyPatch,
@@ -417,7 +441,7 @@ def test_nonmatching_filler_preserves_authored_custody_across_2a_to_3c(
             engine.turn("Look around.")
         assert state.current_scene_id == target_scene
         assert engine.last_attempt is not None
-        assert engine.last_attempt.transition_cause == "forced"
+        assert engine.last_attempt.transition_cause == EXPECTED_FILLER_TRANSITION_CAUSES[target_scene]
         world = world_for(PACKAGE, state.facts)
         assert {entity_id: (world.parent(entity_id), world.relation(entity_id)) for entity_id in expected} == expected
 
