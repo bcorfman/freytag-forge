@@ -357,6 +357,12 @@ new_fact_ids:
   - SL-2C-D
   - SL-2C-E
   used_by_transitions: []
+- id: rebecca_offer_heard
+  definition: Kristin has answered Rebecca's offer and learned the purge order and Brandon's answer.
+  used_by_storylets:
+  - SL-2C-C
+  - SL-2C-D
+  used_by_transitions: []
 - id: antagonist_split_known
   definition: Kristin has legitimate evidence that Rebecca and Charles are in conflict.
   used_by_storylets:
@@ -1866,12 +1872,47 @@ storylets:
     - scene_id_not: 2B
   non_coercion_note: >-
     Offer as a consequence of the missed window. Equivalent player-authored approaches may validate the same operations.
+- id: SL-2C-C
+  scene_id: 2C
+  title: Rebecca Hears Her Answer
+  activation:
+    scene_id: 2C
+    conditions:
+    - fact_id: purge_window_missed
+      equals: false
+    pacing:
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let Rebecca's offer become a live negotiation after Kristin answers in her own way.
+  realization_options:
+  - id: SL-2C-C-R1
+    dramatic_intent: Rebecca reveals the purge order and Brandon says yes after Kristin answers her offer.
+    source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order]
+    operations:
+    - op: assert
+      fact_id: rebecca_offer_heard
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_phase_two]
+  completion_or_abort:
+    complete_when:
+    - any_fact_true:
+      - rebecca_offer_heard
+    abort_when:
+    - scene_id_not: 2C
+  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
+    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-2C-D
   scene_id: 2C
   title: Michelle Changes the Choice
   activation:
     scene_id: 2C
-    conditions: []
+    conditions:
+    - fact_id: rebecca_offer_heard
+      equals: true
     pacing:
       earliest_turn: 0
       target_turn: 13

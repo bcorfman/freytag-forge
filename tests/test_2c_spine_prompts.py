@@ -42,12 +42,12 @@ def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
 
 def test_2c_spine_prompts_match_their_authored_reveals() -> None:
     prompts = [
-        "Ask Brandon why Rebecca turned against Charles.",
+        "Tell Rebecca my answer to her offer.",
         "Head to the broadcast uplink and transmit the copied JANUS files.",
         "Reach the transfer carts and rescue the prisoners.",
     ]
     expected = [
-        set(),
+        {"k_sl_2c_c_r1", "k_sl_2c_c_r2"},
         {"k_sl_2c_d_r3"},
         {"k_sl_2c_d_r4"},
     ]

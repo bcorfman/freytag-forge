@@ -95,6 +95,8 @@ facts:
 - id: rebecca_offer_active
   purpose: Rebecca has offered Brandon safety/Michelle’s release in exchange for helping
     her displace Charles.
+- id: rebecca_offer_heard
+  purpose: Kristin has answered Rebecca's offer and learned the purge order and Brandon's answer.
 - id: antagonist_split_known
   purpose: Kristin has legitimate evidence that Rebecca and Charles are in conflict.
 - id: combined_broadcast_rescue_plan_known
@@ -1545,6 +1547,36 @@ knowledge:
     She is alive.
     She is working inside the facility.
     She will send a route.
+- id: k_sl_2c_c_r1
+  statement: Rebecca reveals the purge order, Brandon says yes, and the corridor opens onto two urgent moves.
+  earn_when: answers Rebecca's offer by speaking, bluffing, threatening, refusing, or staying silent
+  action_evidence:
+  - [say, tell, ask, answer, reply, respond, speak, talk, bluff, threaten, refuse, demand, argue, warn, accuse, negotiate, stay silent, say nothing, wait, stand, watch]
+  - [Rebecca, Rebecca Jenkins, her, the guards, her offer, the offer]
+  entity_ids: [kristin, brandon, rebecca, purge_chamber, broadcast_uplink, transfer_carts]
+  aliases: [Rebecca's offer heard, purge order, Brandon says yes]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C]
+  requires:
+  - fact_id: purge_window_missed
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: rebecca_offer_heard
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2C-C, realization_id: SL-2C-C-R1}
+  relevance: {entity_ids: [kristin, brandon, rebecca, purge_chamber], priority: 10}
+  must_convey:
+  - [purge order, purge begins within hours]
+  - [Brandon says yes, Brandon's yes, says, 'Yes.']
+  - [broadcast uplink, uplink]
+  delivery_text: >-
+    Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly."
+    Her tablet chimes. She reads it, and her face changes. "The purge order. It starts within hours, and my people
+    are on the list." Brandon looks at Kristin, then says, "Yes." The guards
+    stand down, and Rebecca goes to move against Charles. Brandon says, "There is no time to argue. The broadcast
+    uplink is at one end of this corridor. We can send the evidence now. The transfer carts are at the other end.
+    You can free a cart of captives before the guards react. Pick one, Kristin."
 - id: k_sl_2c_d_r3
   statement: 'Kristin starts the uplink as the detention sectors seal and receives Michelle’s route to the combined plan.'
   earn_when: heads to the uplink and starts sending the copied JANUS files
@@ -1555,7 +1587,9 @@ knowledge:
   aliases: [committed to transmit, detention sectors sealed, combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2C]
-  requires: []
+  requires:
+  - fact_id: rebecca_offer_heard
+    equals: true
   establishes:
   - op: assert
     fact_id: rebecca_offer_active
@@ -1604,7 +1638,9 @@ knowledge:
   aliases: [committed to rescue, evidence not transmitted, combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2C]
-  requires: []
+  requires:
+  - fact_id: rebecca_offer_heard
+    equals: true
   establishes:
   - op: assert
     fact_id: rebecca_offer_active

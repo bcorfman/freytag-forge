@@ -43,14 +43,14 @@ def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
 def test_2b_spine_prompts_match_their_authored_reveals_in_order() -> None:
     prompts = [
         "Pull my own file at the archive terminals.",
-        "Keep Brandon's name in the build record.",
+        "Tell Brandon to erase Brandon's name from the build record.",
         "Type one reply to Michelle on the medical terminal.",
         "Read the archive situation and wait for Michelle's route.",
         "Study the medical terminal's maintenance line again.",
     ]
     expected = [
         {"k_sl_2b_a_r1"},
-        {"k_sl_2b_b_r4"},
+        {"k_sl_2b_b_r5"},
         {"k_sl_2b_c_r3"},
         set(),
         set(),

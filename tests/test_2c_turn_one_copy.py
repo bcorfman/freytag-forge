@@ -23,14 +23,26 @@ def _scene_2c_first_turn() -> tuple[RuntimeState, RuntimeEngine]:
     return state, engine
 
 
-def test_transmitting_janus_evidence_offers_2c_d_r3_on_turn_one() -> None:
+def test_transmitting_janus_evidence_does_not_offer_2c_d_r3_before_rebecca_hears_an_answer() -> None:
     state, engine = _scene_2c_first_turn()
 
     candidates = engine.projector.project(
         state, "player", "Head to the uplink and transmit the copied JANUS files."
     ).candidates
 
-    assert "k_sl_2c_d_r3" in {candidate.id for candidate in candidates}
+    assert "k_sl_2c_d_r3" not in {candidate.id for candidate in candidates}
+
+
+def test_erased_brandon_name_selects_the_warm_rebecca_observation() -> None:
+    state, engine = _scene_2c_first_turn()
+    state.facts.assert_fact(Fact(predicate="brandon_name_erased", subject="story", value="true"))
+
+    command = "Tell Rebecca my answer to her offer."
+    projection = engine.projector.project(state, "player", command)
+    matched = uniquely_matched_authored_handoff(command, projection.candidates)
+
+    assert matched is not None
+    assert matched.candidate.id == "k_sl_2c_c_r2"
 
 
 def test_reading_transfer_orders_does_not_offer_2c_d_r3_on_turn_one() -> None:

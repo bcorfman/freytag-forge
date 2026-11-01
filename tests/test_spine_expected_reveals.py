@@ -33,6 +33,8 @@ def test_expected_reveal_ids_are_current_and_scene_specific() -> None:
         "k_sl_2a_c_r6",
         "k_sl_2a_b_r1",
     }
+    assert "k_sl_2c_c_r2" in expected["2C"]
+    assert "k_sl_2c_a_r1" not in expected["2C"]
     assert {
         item_id
         for item_id, item in knowledge.items()
@@ -47,6 +49,8 @@ def test_expected_reveal_ids_are_current_and_scene_specific() -> None:
         and item.get("available_in_scenes") == ["2C"]
         and item.get("audience", {}).get("player_visible", True)
     } == {
+        "k_sl_2c_c_r1",
+        "k_sl_2c_c_r2",
         "k_sl_2c_d_r3",
         "k_sl_2c_d_r4",
     }

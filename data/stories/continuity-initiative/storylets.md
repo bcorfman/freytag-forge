@@ -1070,6 +1070,49 @@ Each entry below is authoring data, not a player action menu.
 
 ## Storylets for [Scene 2C — The Trap Closes](plot.md#scene-2c--the-trap-closes)
 
+### SL-2C-C — Rebecca Hears Her Answer
+
+**Source beats:** [2C.1 — Rebecca’s Offer](plot.md#scene-2c1--rebeccas-offer), [2C.2 — The Purge Order](plot.md#scene-2c2--the-purge-order), [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue)
+
+**Allowed scene:** `2C`
+
+**Available when**
+- `purge_window_missed` is false.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Rebecca Jenkins
+- Rebecca’s tablet
+- Broadcast uplink
+- Transfer carts
+
+**Protected boundary**
+- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.
+
+**Dramatic purpose**
+- Let Kristin answer Rebecca’s offer before the purge order and Brandon’s yes become known.
+
+**Possible realizations**
+- Kristin answers Rebecca by speaking, bluffing, threatening, refusing, or staying silent.
+- Rebecca’s tablet reveals the purge order and that her people are on the list.
+- Brandon says yes.
+- The guards stand down and Brandon identifies the broadcast uplink and transfer carts.
+
+**Effects**
+- Sets `rebecca_offer_heard`.
+
+**Completion**
+- Kristin has answered Rebecca and learned the purge order and Brandon’s answer.
+
+**Abort**
+- The scene is no longer `2C`.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 1`
+- latest: `turn 2`
+
 ### SL-2C-D — Michelle Changes the Choice
 
 **Source beats:** [2C.1 — Rebecca’s Offer](plot.md#scene-2c1--rebeccas-offer), [2C.2 — The Purge Order](plot.md#scene-2c2--the-purge-order), [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue), [2C.4 — Living With the Choice](plot.md#scene-2c4--living-with-the-choice), [2C.5 — Michelle Changes the Choice](plot.md#scene-2c5--michelle-changes-the-choice)
@@ -1079,6 +1122,7 @@ Each entry below is authoring data, not a player action menu.
 **Available when**
 - Kristin and Brandon are in the command corridor.
 - Rebecca has come to meet them.
+- `rebecca_offer_heard` is true.
 
 **Participants / items**
 - Kristin Schweitzer
@@ -2001,7 +2045,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 | [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-D` | Facility discovery, living captives, one advantage, costly recovery after a missed window |
 | [2A](plot.md#scene-2a--false-identities) | `SL-2A-B`, `SL-2A-C`, `SL-2A-D` | Manifold observation, real fault diagnosis, watched entry, recovery under supervision |
 | [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-A`, `SL-2B-B`, `SL-2B-C`, `SL-2B-D` | Own-file observation, one-file JANUS discovery, whispered confrontation, Michelle’s reply |
-| [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-D`, `SL-2C-E` | Rebecca’s offer, physical commitment, Michelle’s route |
+| [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-C`, `SL-2C-D`, `SL-2C-E` | Rebecca’s answered offer, physical commitment, Michelle’s route |
 | [3A](plot.md#scene-3a--reaching-michelle) | `SL-3A-A` … `SL-3A-C` | Reunion reversal, experiments, deadline/override |
 | [3B](plot.md#scene-3b--the-battle-for-the-broadcast) | `SL-3B-A` … `SL-3B-C` | Defeat JANUS, confront Rebecca, open relay |
 | [3C](plot.md#scene-3c--exposure-and-escape) | `SL-3C-A` … `SL-3C-E` | Broadcast credibility, archive custody, deluge escape, epilogue |

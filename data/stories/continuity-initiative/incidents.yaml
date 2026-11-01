@@ -69,5 +69,5 @@ incidents:
   recovery_storylet_id: SL-2C-E
   missed_window_event_id: purge_window_2c
   successor_transition_id: t_2c_3a
-  observation_knowledge_ids: [k_sl_2c_d_r3, k_sl_2c_d_r4]
+  observation_knowledge_ids: [k_sl_2c_c_r1, k_sl_2c_d_r3, k_sl_2c_d_r4]
   completes_scene: true

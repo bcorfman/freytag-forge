@@ -177,12 +177,15 @@ DRY_OUTCOME_COMMANDS = {
         "Keep Brandon's name in the build record.",
         "Type my reply to the maintenance line.",
     ),
-    "2C": ("Head to the uplink and start sending my copied files.",),
+    "2C": (
+        "Tell Rebecca my answer to her offer.",
+        "Head to the uplink and start sending my copied files.",
+    ),
 }
 DRY_OUTCOME_SELECTIONS = {
     "2A": ("k_sl_2a_b_r1", "k_sl_2a_c_r5"),
     "2B": ("k_sl_2b_a_r1", "k_sl_2b_b_r4", "k_sl_2b_c_r3"),
-    "2C": ("k_sl_2c_d_r3",),
+    "2C": ("k_sl_2c_c_r1", "k_sl_2c_d_r3"),
 }
 NEUTRAL_DRY_COMMAND = {
     "2A": "Inspect the cooling manifold for a safe footing.",
@@ -265,6 +268,12 @@ def _provider_payload(selected: str | None) -> dict[str, Any]:
             "Kristin types one reply to the maintenance line. Michelle answers once. She is alive. "
             "She is working inside "
             "the facility. She will send a route."
+        ),
+        "k_sl_2c_c_r1": (
+            "Rebecca answers Kristin without taking her eyes off Brandon. Trust is a luxury. Decide quickly. "
+            "Her tablet chimes. She reads it, and her face changes. The purge order starts within hours, and her "
+            "people are on the list. Brandon looks at Kristin, then says, Yes. He says it coldly and avoids her eyes. "
+            "The guards stand down. Brandon identifies the broadcast uplink and the transfer carts."
         ),
         "k_sl_2c_d_r3": (
             "Rebecca offers a way to remove Charles. She promises Michelle's release. The purge order starts a clock. "

@@ -95,7 +95,7 @@ def simulate_expected_reveals() -> dict[str, list[str]]:
 
 def main() -> None:
     expected = simulate_expected_reveals()
-    assert {"k_sl_2c_d_r3", "k_sl_2c_d_r4"} & set(expected["2C"])
+    assert "k_sl_2c_c_r2" in expected["2C"]
     (FRONTEND_ROOT / "spine-expected-reveals.json").write_text(json.dumps(expected, indent=2) + "\n")
 
 

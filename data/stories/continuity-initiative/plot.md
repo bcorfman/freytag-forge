@@ -532,7 +532,12 @@ item_placements:
   transfer_carts: {parent: purge_chamber, text: at the other end of the command corridor}
 character_placements:
   rebecca: {parent: purge_chamber, text: standing between her guards in the command corridor}
-entry_text: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. \"Charles means to kill everyone below us, my people too. Help me remove him, and I will give you Michelle.\" Her tablet chimed. She read it and her face changed. \"The purge order. It starts within hours.\" Brandon looked at Kristin, then said, \"Yes.\" The guards stood down, and Rebecca left to move against Charles. Kristin still carried the copied JANUS files. Brandon said, \"There is no time to argue. The broadcast uplink is at one end of this corridor, and we can send the evidence now. The transfer carts are at the other end, and you can free a cart of captives before the guards react. Pick one, Kristin.\"\n\n"
+entry_text: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. \"Charles means to kill everyone below us, my people too. Help me remove him, Brandon, and I will give you Michelle.\" Kristin still carried the copied JANUS files.\n\n"
+entry_variants:
+- requires: [brandon_name_kept]
+  text: "Brandon did not look at Kristin."
+- requires: [brandon_name_erased]
+  text: "Brandon's eyes found Kristin's and stayed there a moment too long."
 transition_ids: [t_2c_3a]
 bridge_text:
   t_2c_3a: >-

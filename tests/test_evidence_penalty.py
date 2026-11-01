@@ -204,6 +204,7 @@ def test_earned_delivery_leaves_its_evidence_gap_unset(
     if scene_id == "3B":
         state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
     if knowledge_id == "k_sl_2c_d_r3":
+        state.facts.assert_fact(Fact(predicate="rebecca_offer_heard", subject="story", value="true"))
         for effect in PACKAGE.knowledge_indexes.by_id["k_sl_2b_b_r4"].establishes:
             state.facts.assert_fact(Fact(predicate=effect.fact_id, subject="story", value=str(effect.value).lower()))
     if knowledge_id == "k_sl_2b_b_r4":
