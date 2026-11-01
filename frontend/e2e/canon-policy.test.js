@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { join } from "node:path";
 import test from "node:test";
 
-import { requiredPacingEvents } from "./canon-policy.js";
+import { answerClarifications, requiredPacingEvents } from "./canon-policy.js";
 import { loadPackagePacing } from "./package-clock.js";
 
 const repoRoot = join(import.meta.dirname, "../..");
@@ -137,4 +137,129 @@ test("does not require transfer_window_1c after the real 1C early exit", () => {
 
   assert.equal(required.includes("transfer_window_1c"), false);
   assert.deepEqual(required, []);
+});
+
+test("returns a non-clarification payload without submitting an answer", async () => {
+  const payload = { state: { turn_index: 4 } };
+  let submitCalls = 0;
+
+  const result = await answerClarifications({
+    payload,
+    submit: async () => {
+      submitCalls += 1;
+      return { state: { turn_index: 5 } };
+    },
+  });
+
+  assert.equal(result.payload, payload);
+  assert.deepEqual(result.answers, []);
+  assert.equal(submitCalls, 0);
+});
+
+test("answers one clarification with its first option name", async () => {
+  const finalPayload = { state: { turn_index: 5 } };
+  const submitted = [];
+
+  const result = await answerClarifications({
+    payload: {
+      clarification: {
+        original_command: "Meet the official.",
+        noun: "gate",
+        options: [{ id: "facility", name: "facility gate" }],
+      },
+    },
+    submit: async (input) => {
+      submitted.push(input);
+      return finalPayload;
+    },
+  });
+
+  assert.equal(result.payload, finalPayload);
+  assert.deepEqual(result.answers, ["facility gate"]);
+  assert.deepEqual(submitted, ["facility gate"]);
+});
+
+test("answers chained clarifications in order", async () => {
+  const submitted = [];
+  const secondClarification = {
+    clarification: {
+      original_command: "Open the gate.",
+      noun: "authorization",
+      options: [{ id: "emergency", name: "emergency authorization" }],
+    },
+  };
+  const finalPayload = { state: { turn_index: 8 } };
+
+  const result = await answerClarifications({
+    payload: {
+      clarification: {
+        original_command: "Open the gate.",
+        noun: "gate",
+        options: [{ id: "surface", name: "surface gate" }],
+      },
+    },
+    submit: async (input) => {
+      submitted.push(input);
+      return submitted.length === 1 ? secondClarification : finalPayload;
+    },
+  });
+
+  assert.equal(result.payload, finalPayload);
+  assert.deepEqual(result.answers, ["surface gate", "emergency authorization"]);
+  assert.deepEqual(submitted, ["surface gate", "emergency authorization"]);
+});
+
+test("throws with the original command and noun when clarification exceeds maxRounds", async () => {
+  await assert.rejects(
+    answerClarifications({
+      payload: {
+        clarification: {
+          original_command: "Meet the imprisoned official.",
+          noun: "gate",
+          options: [{ id: "facility", name: "facility gate" }],
+        },
+      },
+      submit: async () => ({
+        clarification: {
+          original_command: "Meet the imprisoned official.",
+          noun: "gate",
+          options: [{ id: "surface", name: "surface gate" }],
+        },
+      }),
+      maxRounds: 1,
+    }),
+    /Meet the imprisoned official[\s\S]*gate/,
+  );
+});
+
+test("throws when clarification options are empty", async () => {
+  await assert.rejects(
+    answerClarifications({
+      payload: {
+        clarification: {
+          original_command: "Open the gate.",
+          noun: "gate",
+          options: [],
+        },
+      },
+      submit: async () => ({ state: {} }),
+    }),
+    /options are empty/,
+  );
+});
+
+test("throws when the first clarification option has no name", async () => {
+  await assert.rejects(
+    answerClarifications({
+      payload: {
+        clarification: {
+          original_command: "Open the gate.",
+          noun: "gate",
+          options: [{ id: "facility" }],
+        },
+      },
+      submit: async () => ({ state: {} }),
+    }),
+    /first option name must be a non-empty string/,
+  );
 });

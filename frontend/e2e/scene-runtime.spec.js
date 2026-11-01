@@ -8,7 +8,7 @@ import {
   submitTurnObserved,
   writeCategoryReport,
 } from "./helpers.js";
-import { requiredPacingEvents } from "./canon-policy.js";
+import { answerClarifications, requiredPacingEvents } from "./canon-policy.js";
 import { canonTurnBudget, loadPackagePacing, nextPendingEvent } from "./package-clock.js";
 import { buildKnowledgeTimelineReport, isFixedRefusalLine, recordTurnOutcome } from "./knowledge-timeline-record.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
@@ -263,8 +263,18 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
     await test.step(`turn ${index + 1}: scene ${sourceSceneId} at turn ${turnsSinceSceneEntry}`, async () => {
       if (milestone) controller.arm(milestone);
       const turnsUntilMilestone = milestone ? controller.turnsUntilMilestone() : null;
-      const payload = await submitTurn(page, input);
+      let payload = await submitTurn(page, input);
       await resolveWarningIfPresent(page);
+      const { payload: resolvedPayload, answers: clarificationAnswers } = await answerClarifications({
+        payload,
+        submit: async (answer) => {
+          if (milestone) controller.arm(milestone);
+          const answerPayload = await submitTurn(page, answer);
+          await resolveWarningIfPresent(page);
+          return answerPayload;
+        },
+      });
+      payload = resolvedPayload;
       const bundle = payload.attempt_bundle;
       if (bundle) bundlesSeen += 1;
       if (payload.state?.story_complete === true || bundle?.story_complete === true) storyCompleteSeen = true;
@@ -367,6 +377,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
         requested_milestone: milestone,
         observed_timing: timing,
         state: payload.state,
+        ...(clarificationAnswers.length ? { clarification_answers: clarificationAnswers } : {}),
       });
       await writeCategoryReport("llm-canon-progress", {
         completed_turn: index + 1,
