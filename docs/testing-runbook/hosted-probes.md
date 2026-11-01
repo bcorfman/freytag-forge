@@ -21,12 +21,14 @@ source .env && cd frontend && E2E_PACKAGE_CLOCK=1 E2E_TURN_TIMEOUT_MS=90000 npm 
    That is not a failure signal.
 2. Delete all four artifacts before every attempt. An aborted run leaves the
    previous run's files in place, and they look like a fresh result.
-3. A run counts only if `e2e-llm-canon-progress.json` holds nine scenes and 30
-   or more turns. The loop bound is derived from the package pacing. Anything
-   less is aborted: discard it and retry, never record it.
-4. About one run in three dies on infrastructure, most often
-   `Scene 2A exceeded its handoff turn 4`. Retry; it is not a configuration
-   difference.
+3. Nine scenes and at least 30 turns are necessary for a comparable canon
+   sample, but also require `story_complete_seen: true` and a fresh final
+   `e2e-llm-canon.json` containing all nine scene judgments. Keep incomplete
+   runs as diagnostic evidence; do not include them in canon scores.
+4. Preserve the exact failure and the last saved turn before any retry.
+   A harness assertion is not automatically an infrastructure failure.
+   Diagnose it against the deployed package and free replay checks. Run
+   another billed attempt only within an explicitly authorized attempt limit.
 
 **Scoring:** `artifacts/e2e-llm-canon.json` has one verdict per scene with seven
 booleans (`protected_safe`, `exit_motivated`, `rewards_investigation`,
