@@ -61,7 +61,7 @@ class _ScriptedProvider(CloudflareTurnProvider):
         if handoff is not None:
             item = self.state.package.knowledge_indexes.by_id[handoff.candidate.id]
             assert explain_reveal(self.state, "player", item).eligible
-            text = item.delivery_text or item.statement
+            text = handoff.delivery_text or item.statement
         else:
             text = "A concrete authored consequence lands."
         return {
