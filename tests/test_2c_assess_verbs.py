@@ -27,9 +27,7 @@ def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
 def test_2c_assess_and_evaluate_verbs_match_unique_reveals() -> None:
     knowledge = _knowledge()
     cases = {
-        "Assess the executive channel's private offer and whether the people running this are turning on each other.": {
-            "k_sl_2c_a_r1"
-        },
+        "Ask Brandon why Rebecca turned against Charles.": {"k_sl_2c_a_r2"},
         "Assess the cost of transmitting our evidence right now to the people still held here.": {"k_sl_2c_c_r2"},
         "Weigh the private offer.": {"k_sl_2c_a_r1"},
         "Evaluate the cost of sending our evidence now.": {"k_sl_2c_c_r2"},

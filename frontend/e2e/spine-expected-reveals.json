@@ -23,10 +23,11 @@
   ],
   "2B": [
     "k_sl_2b_a_r1",
-    "k_sl_2b_b_r1",
+    "k_sl_2b_b_r3",
     "k_sl_2b_c_r1"
   ],
   "2C": [
+    "k_sl_2c_a_r2",
     "k_sl_2c_c_r2",
     "k_sl_2c_d_r1"
   ],
@@ -46,6 +47,7 @@
   "3C": [
     "k_sl_3c_a_r1",
     "k_sl_3c_b_r2",
-    "k_sl_3c_c_r1"
+    "k_sl_3c_c_r1",
+    "k_sl_3c_c_r2"
   ]
 }

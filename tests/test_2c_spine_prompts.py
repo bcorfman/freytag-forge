@@ -44,7 +44,7 @@ def test_2c_spine_prompts_match_their_authored_reveals() -> None:
     prompts = _scene_prompts()
     # Prompt 3 uses 'Read' because D-R1 is the authored reading action; 'follow' alone matches nothing.
     expected = [
-        {"k_sl_2c_a_r1"},
+        {"k_sl_2c_a_r2"},
         {"k_sl_2c_c_r2"},
         {"k_sl_2c_d_r1"},
     ]

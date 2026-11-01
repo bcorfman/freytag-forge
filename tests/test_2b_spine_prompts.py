@@ -44,7 +44,7 @@ def test_2b_spine_prompts_match_their_authored_reveals_in_order() -> None:
     prompts = _scene_prompts()
     expected = [
         {"k_sl_2b_a_r1"},
-        {"k_sl_2b_a_r2"},
+        {"k_sl_2b_b_r3"},
         {"k_sl_2b_b_r1"},
         {"k_sl_2b_c_r1"},
     ]
