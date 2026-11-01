@@ -11,6 +11,7 @@ import {
 import { answerClarifications, requiredPacingEvents } from "./canon-policy.js";
 import { canonTurnBudget, loadPackagePacing, nextPendingEvent } from "./package-clock.js";
 import { buildKnowledgeTimelineReport, isFixedRefusalLine, recordTurnOutcome } from "./knowledge-timeline-record.js";
+import { buildKnowledgeTimeline, knowledgeEvidenceForScene, loadCanonSources } from "./knowledge-available.js";
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts } from "./canon-journey.js";
 import { attributeNarration, eligibleAuthoredTexts, loadAuthoredText } from "./authored-spans.js";
@@ -39,7 +40,7 @@ function recordRevealedKnowledge(scene, segments, bundle) {
   scene.revealedKnowledgeIds = [...new Set([...scene.revealedKnowledgeIds, ...ids])];
 }
 
-function bundleSummary(bundle) {
+function bundleSummary(bundle, pacingEventIds = []) {
   return {
     outcome: bundle.outcome,
     transition_cause: bundle.transition_cause,
@@ -47,6 +48,7 @@ function bundleSummary(bundle) {
     selected_reveal: bundle.selected_reveal,
     cue_stage: bundle.cue_stage,
     committed_delta: bundle.committed_delta,
+    pacing_event_ids: pacingEventIds,
   };
 }
 
@@ -222,7 +224,13 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
   const controller = await installPackageClock(page);
   const sessionPayload = await startSceneSession(page);
   const opening = (await page.locator(".entry-output").first().textContent())?.trim() || "";
-  const initialScene = { opening, turns: [], revealedKnowledgeIds: [], ...(sessionPayload?.prompt ? { opening_prompt: sessionPayload.prompt } : {}) };
+  const initialScene = {
+    opening,
+    turns: [],
+    revealedKnowledgeIds: [],
+    opening_knowledge_ids: (sessionPayload?.opening?.segments || []).flatMap((segment) => segment.grounding_ids || []),
+    ...(sessionPayload?.prompt ? { opening_prompt: sessionPayload.prompt } : {}),
+  };
   recordRevealedKnowledge(initialScene, sessionPayload?.opening?.segments || []);
   const byScene = new Map([
     ["1A", initialScene],
@@ -239,7 +247,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
   let revealEvidenceFallbackTurns = 0;
   let storyCompleteSeen = false;
   const authored = loadAuthoredText();
-  const knowledgeAvailableByScene = new Map();
+  const { knowledgePackage, routePackage } = loadCanonSources();
 
   const turnMilestoneFor = (currentSceneId, currentTurns) => {
     const pendingEvent = nextPendingEvent(pacing, currentSceneId, currentTurns, firedPacingEventIds);
@@ -262,6 +270,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
     const input = promptFor(sourceSceneId, used);
     const milestone = turnMilestoneFor(sourceSceneId, turnsSinceSceneEntry);
     await test.step(`turn ${index + 1}: scene ${sourceSceneId} at turn ${turnsSinceSceneEntry}`, async () => {
+      const previousFiredPacingEventIds = new Set(firedPacingEventIds);
       if (milestone) controller.arm(milestone);
       const turnsUntilMilestone = milestone ? controller.turnsUntilMilestone() : null;
       let payload = await submitTurn(page, input);
@@ -318,6 +327,9 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       for (const eventId of payload.state?.fired_pacing_event_ids || []) {
         firedPacingEventIds.add(eventId);
       }
+      const pacingEventIds = (payload.state?.fired_pacing_event_ids || [])
+        .filter((eventId) => !previousFiredPacingEventIds.has(eventId))
+        .sort();
 
       // Entering a scene emits its authored bridge followed by all satisfied entry
       // segments. The departure includes the bridge; the arrival is all entry segments.
@@ -337,11 +349,6 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       const { departure, arrival } = partition;
       const sceneNarration = departure.map((segment) => segment.text).join(" ").trim();
       recordRevealedKnowledge(byScene.get(sourceSceneId), departure, bundle);
-      const available = knowledgeAvailableByScene.get(sourceSceneId) || new Set();
-      if (bundle?.outcome === "committed") {
-        for (const id of bundle.selected_reveal?.knowledge_ids || []) available.add(id);
-      }
-      knowledgeAvailableByScene.set(sourceSceneId, available);
       if (sceneNarration) {
         const eligible = eligibleAuthoredTexts(bundle, authored);
         const authoredSpans = attributeNarration(sceneNarration, eligible)
@@ -355,11 +362,13 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
           beats_projected: payload.delivery?.beats_projected || [],
           ...(payload.prompt ? { prompt: payload.prompt } : {}),
           segments: departure.map((segment) => ({ kind: segment.kind, text: segment.text, grounding_ids: segment.grounding_ids || [] })),
-          ...(bundle ? { bundle: bundleSummary(bundle) } : {}),
+          ...(bundle ? { bundle: bundleSummary(bundle, pacingEventIds) } : {}),
           ...(authoredSpans.length ? { authored_spans: authoredSpans } : {}),
-          knowledge_available: [...available].sort(),
         };
         byScene.get(sourceSceneId).turns.push(turn);
+        const timeline = buildKnowledgeTimeline({ scenes: byScene, knowledgePackage, routePackage });
+        const sceneEvidence = knowledgeEvidenceForScene(timeline, sourceSceneId);
+        Object.assign(turn, sceneEvidence?.turns.at(-1) || {});
         if (!bundle) revealEvidenceFallbackTurns += 1;
       }
       if (entered && !byScene.has(reachedSceneId)) {
@@ -367,6 +376,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
           opening: arrival.map((segment) => segment.text).join("\n\n").trim(),
           turns: [],
           revealedKnowledgeIds: [],
+          opening_knowledge_ids: arrival.flatMap((segment) => segment.grounding_ids || []),
           ...(payload.prompt ? { opening_prompt: payload.prompt } : {}),
         };
         recordRevealedKnowledge(nextScene, arrival);

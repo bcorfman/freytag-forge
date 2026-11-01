@@ -111,7 +111,6 @@ test("scene canon judge omits artifact evidence without mutating turns", async (
 
   const sentTurn = JSON.parse(request.input[1].content).turns[0];
   assert.deepEqual(sentTurn, {
-    prompt: "Search the desk.",
     player_input: "Search the desk.",
     narration: "You find a note.",
     left_scene: false,
@@ -144,12 +143,15 @@ test("scene canon judge distinguishes protected facts from ordinary invented det
     },
   );
   const systemMessage = request.input[0].content;
-  assert.match(systemMessage, /revealed_knowledge is the set of authored facts the player has earned by committed reveal/);
-  assert.match(systemMessage, /authored protected fact that is NOT in revealed_knowledge/);
+  assert.match(systemMessage, /Require characters, items, plot events, dialogue, and setting to remain consistent with the supplied canon and the committed timeline\. Judge runtime-authored text for quality, but do not attribute it to the narrator\./);
+  assert.match(systemMessage, /knowledge_available_before_turn lists public knowledge already disclosed to the player\. runtime_deliveries lists the authored text delivered on this turn and its committed facts\. Earlier disclosures remain known in later scenes\. A later disclosure cannot excuse an earlier leak\./);
+  assert.match(systemMessage, /Fail protected_safe only when narrator text discloses a protected fact from the supplied protected-fact inventory before it is available\. Identify the fact, turn and exact narrator text\. Runtime deliveries are exempt from narrator-disclosure penalties\./);
+  assert.doesNotMatch(systemMessage, /revealed_knowledge is the set of authored facts the player has earned by committed reveal/);
+  assert.doesNotMatch(systemMessage, /not in revealed_knowledge/);
   assert.match(systemMessage, /ordinary invented detail.*color, a minor object, or a bit of atmosphere/);
-  assert.match(systemMessage, /Turns may carry authored_spans and knowledge_available\. The supplied authored_spans identify text inserted by the runtime\. Exempt only those spans from narrator-disclosure penalties\. Judge all other text normally\. Use knowledge available on that turn\. Read the full turn when judging exit motivation and other quality checks\./);
+  assert.match(systemMessage, /Turns may carry authored_spans, knowledge_available_before_turn, runtime_deliveries, and protected_facts\. The supplied runtime_deliveries identify text inserted by the runtime\. Exempt only those spans from narrator-disclosure penalties\. Judge all other text normally\. Use knowledge available before the turn\. Read the full turn when judging exit motivation and other quality checks\./);
   assert.doesNotMatch(systemMessage, /authored_delivery/);
-  assert.match(systemMessage, /Text the narrator wrote itself that states an authored protected fact not in revealed_knowledge is still premature disclosure/);
+  assert.match(systemMessage, /Text the narrator wrote itself that states a protected fact from the supplied protected-fact inventory before it is available is still premature disclosure/);
   assert.match(systemMessage, /Contradiction of established canon still fails canon_consistent/);
   assert.deepEqual(request.text.format.schema, {
     type: "object",
@@ -188,5 +190,13 @@ test("sceneCanon returns only revealed knowledge for the current scene", () => {
 
   assert.deepEqual(canon.revealed_knowledge, expectedKnowledge);
   assert.deepEqual(canon.revealed_knowledge.map((entry) => entry.id), ["k_sl_1a_a_r1", "k_sl_1a_b_r1"]);
-  assert.deepEqual(Object.keys(canon).sort(), ["pressure", "revealed_knowledge", "scene_id", "situation"]);
+  assert.deepEqual(Object.keys(canon).sort(), [
+    "knowledge_available_before_turn",
+    "pressure",
+    "protected_facts",
+    "revealed_knowledge",
+    "runtime_deliveries",
+    "scene_id",
+    "situation",
+  ]);
 });
