@@ -48,6 +48,9 @@ export function loadAuthoredText(root = resolve(import.meta.dirname, "../..")) {
     bridgeTextsByScenePair.set(`${transition.source_scene_id}>${transition.target_scene_id}`, text);
   }
   const entryTexts = new Map([...frames].map(([id, frame]) => [id, frame.entry_text]).filter(([, text]) => text));
+  const entryVariantTextsBySceneId = new Map(
+    [...frames].map(([id, frame]) => [id, (frame.entry_variants || []).map((variant) => variant.text).filter(Boolean)]),
+  );
   const routeFallbackTexts = new Map();
   const routeFallbacks = [];
   for (const section of ["canonical_bridge_events", "canonical_resolution_events"]) {
@@ -72,6 +75,7 @@ export function loadAuthoredText(root = resolve(import.meta.dirname, "../..")) {
     bridgeTextByScenePair: bridgeTextsByScenePair,
     entryTexts,
     entryTextBySceneId: entryTexts,
+    entryVariantTextsBySceneId,
     routeFallbackTexts,
     routeFallbacks,
   };

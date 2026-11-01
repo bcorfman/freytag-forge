@@ -14,6 +14,7 @@ import { buildKnowledgeTimelineReport, isFixedRefusalLine, recordTurnOutcome } f
 import { judgeRoleplayTurn, judgeSceneNarration } from "./roleplay-judge.js";
 import { promptFor, scenePrompts } from "./canon-journey.js";
 import { attributeNarration, eligibleAuthoredTexts, loadAuthoredText } from "./authored-spans.js";
+import { partitionTransitionSegments } from "./scene-partition.js";
 import { classifyFailure, evaluateSpine, loadExpectedReveals } from "./spine-record.js";
 import { summarizeAliasSmoke } from "./alias-smoke-record.js";
 
@@ -237,7 +238,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
   let bundlesSeen = 0;
   let revealEvidenceFallbackTurns = 0;
   let storyCompleteSeen = false;
-  let authored;
+  const authored = loadAuthoredText();
   const knowledgeAvailableByScene = new Map();
 
   const turnMilestoneFor = (currentSceneId, currentTurns) => {
@@ -318,9 +319,8 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
         firedPacingEventIds.add(eventId);
       }
 
-      // Entering a scene emits its authored entry_text as the turn's final segment.
-      // Recording it as that scene's opening stops the judge from grading every scene
-      // after 1A as though it had established itself from nothing.
+      // Entering a scene emits its authored bridge followed by all satisfied entry
+      // segments. The departure includes the bridge; the arrival is all entry segments.
       const entered = reachedSceneId !== sourceSceneId;
       const segments = (payload.segments || []).filter((segment) =>
         ["narration", "action", "dialogue"].includes(segment.kind),
@@ -329,7 +329,12 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       // Filing a departure turn under the destination hid it from the scene that had to
       // earn it: a turn that revealed nothing could carry the player out of the house,
       // and the judge only ever read it as the park's odd first line.
-      const departure = entered ? segments.slice(0, -1) : segments;
+      const partition = partitionTransitionSegments(segments, {
+        sourceSceneId,
+        targetSceneId: reachedSceneId,
+        authored,
+      });
+      const { departure, arrival } = partition;
       const sceneNarration = departure.map((segment) => segment.text).join(" ").trim();
       recordRevealedKnowledge(byScene.get(sourceSceneId), departure, bundle);
       const available = knowledgeAvailableByScene.get(sourceSceneId) || new Set();
@@ -338,7 +343,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       }
       knowledgeAvailableByScene.set(sourceSceneId, available);
       if (sceneNarration) {
-        const eligible = bundle && !authored ? (authored = loadAuthoredText(), eligibleAuthoredTexts(bundle, authored)) : eligibleAuthoredTexts(bundle, authored);
+        const eligible = eligibleAuthoredTexts(bundle, authored);
         const authoredSpans = attributeNarration(sceneNarration, eligible)
           .filter((span) => span.origin === "authored")
           .map((span) => ({ text: span.text, source_kind: span.source.kind, source_id: span.source.id }));
@@ -358,14 +363,13 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
         if (!bundle) revealEvidenceFallbackTurns += 1;
       }
       if (entered && !byScene.has(reachedSceneId)) {
-        const openingSegment = segments.at(-1);
         const nextScene = {
-          opening: segments.at(-1).text.trim(),
+          opening: arrival.map((segment) => segment.text).join("\n\n").trim(),
           turns: [],
           revealedKnowledgeIds: [],
           ...(payload.prompt ? { opening_prompt: payload.prompt } : {}),
         };
-        recordRevealedKnowledge(nextScene, [openingSegment]);
+        recordRevealedKnowledge(nextScene, arrival);
         byScene.set(reachedSceneId, nextScene);
       }
       sceneId = reachedSceneId;

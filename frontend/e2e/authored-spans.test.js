@@ -38,6 +38,13 @@ test("loads structural package text and scene-pair bridge", () => {
   assert.ok(real.entryTexts.has("3C"));
 });
 
+test("loads entry variants by scene", () => {
+  const real = loadAuthoredText();
+  assert.ok(real.entryVariantTextsBySceneId.get("2A").includes(
+    "Kristin still has the copied prisoner numbers. She needs a way into the facility.",
+  ));
+});
+
 test("eligibility includes only committed, turn-local authored sources", () => {
   const eligible = eligibleAuthoredTexts(bundle({
     selected_reveal: { knowledge_ids: ["k"], delivery_fact_ids: ["handoff"] },
