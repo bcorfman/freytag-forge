@@ -78,7 +78,9 @@ function canonicalKnowledgeForFacts({ knowledgePackage, routePackage, sceneId, f
 }
 
 function entryView(entry) {
-  return { id: entry.id, statement: entry.statement };
+  const view = { id: entry.id, statement: entry.statement };
+  if (entry?.audience?.kind === "world_only") view.world_only = true;
+  return view;
 }
 
 function publicEntries(knowledgePackage) {
@@ -107,7 +109,7 @@ function uniqueEntries(entries) {
   });
 }
 
-function protectedFactsForScene({ entries, sceneId, availableIds }) {
+export function protectedFactsForScene({ entries, sceneId, availableIds }) {
   return entries
     .filter((entry) => isAvailableInScene(entry, sceneId) && !availableIds.has(entry.id))
     .map(entryView);
@@ -124,8 +126,8 @@ export function loadCanonSources(root = DEFAULT_ROOT) {
 }
 
 export function buildKnowledgeTimeline({ scenes, knowledgePackage, routePackage }) {
-  const entries = publicEntries(knowledgePackage);
-  const entriesById = new Map(entries.map((entry) => [entry.id, entry]));
+  const entries = asArray(knowledgePackage?.knowledge);
+  const entriesById = new Map(publicEntries(knowledgePackage).map((entry) => [entry.id, entry]));
   const known = new Map();
   const unmapped = new Set();
   const byScene = new Map();

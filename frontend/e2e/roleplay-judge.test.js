@@ -146,6 +146,7 @@ test("scene canon judge distinguishes protected facts from ordinary invented det
   assert.match(systemMessage, /Require characters, items, plot events, dialogue, and setting to remain consistent with the supplied canon and the committed timeline\. Judge runtime-authored text for quality, but do not attribute it to the narrator\./);
   assert.match(systemMessage, /knowledge_available_before_turn lists public knowledge already disclosed to the player\. runtime_deliveries lists the authored text delivered on this turn and its committed facts\. Earlier disclosures remain known in later scenes\. A later disclosure cannot excuse an earlier leak\./);
   assert.match(systemMessage, /Fail protected_safe only when narrator text discloses a protected fact from the supplied protected-fact inventory before it is available\. Identify the fact, turn and exact narrator text\. Runtime deliveries are exempt from narrator-disclosure penalties\./);
+  assert.match(systemMessage, /Inventory items marked world_only are facts the player can never be told directly; narrator text that states one as established fact fails protected_safe\./);
   assert.doesNotMatch(systemMessage, /revealed_knowledge is the set of authored facts the player has earned by committed reveal/);
   assert.doesNotMatch(systemMessage, /not in revealed_knowledge/);
   assert.match(systemMessage, /ordinary invented detail.*color, a minor object, or a bit of atmosphere/);

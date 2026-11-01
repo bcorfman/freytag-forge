@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 
-import { loadCanonSources } from "./knowledge-available.js";
+import { loadCanonSources, protectedFactsForScene } from "./knowledge-available.js";
 
 const JUDGE_SCHEMA = {
   type: "object",
@@ -115,18 +115,18 @@ export function sceneCanon(
   const sceneFrame = knowledgePackage.scene_frames.find((frame) => frame.scene_id === sceneId);
   const revealedIds = new Set(revealedKnowledgeIds);
   const firstTurnKnowledge = knowledgeAvailableBeforeTurn[0] || [];
+  const publicKnowledgeIds = new Set(knowledgePackage.knowledge
+    .filter((entry) => entry?.audience?.player_visible === true && entry.audience.kind !== "world_only")
+    .map((entry) => entry.id));
   const knownBeforeScene = new Set([
     ...revealedIds,
     ...firstTurnKnowledge.map((entry) => typeof entry === "string" ? entry : entry?.id),
-  ]);
-  const isPublic = (entry) => entry?.audience?.player_visible === true && entry.audience.kind !== "world_only";
-  const protectedFacts = knowledgePackage.knowledge
-    .filter((entry) =>
-      isPublic(entry) &&
-      entry.available_in_scenes.includes(sceneId) &&
-      !knownBeforeScene.has(entry.id),
-    )
-    .map(({ id, statement }) => ({ id, statement }));
+  ].filter((id) => publicKnowledgeIds.has(id)));
+  const protectedFacts = protectedFactsForScene({
+    entries: knowledgePackage.knowledge,
+    sceneId,
+    availableIds: knownBeforeScene,
+  });
   return {
     scene_id: sceneId,
     situation: sceneFrame.situation,
@@ -198,6 +198,7 @@ export async function judgeSceneNarration(
             "and progressive revelation rather than dumping future beats or racing a transition. Protected knowledge must " +
             "never be revealed early. knowledge_available_before_turn lists public knowledge already disclosed to the player. runtime_deliveries lists the authored text delivered on this turn and its committed facts. Earlier disclosures remain known in later scenes. A later disclosure cannot excuse an earlier leak. " +
             "Fail protected_safe only when narrator text discloses a protected fact from the supplied protected-fact inventory before it is available. Identify the fact, turn and exact narrator text. Runtime deliveries are exempt from narrator-disclosure penalties. " +
+            "Inventory items marked world_only are facts the player can never be told directly; narrator text that states one as established fact fails protected_safe. " +
             "An ordinary invented detail that is not an authored protected fact, such as a color, a minor object, or a bit of atmosphere, is not premature disclosure and must not fail protected_safe. " +
             "Turns may carry authored_spans, knowledge_available_before_turn, runtime_deliveries, and protected_facts. The supplied runtime_deliveries identify text inserted by the runtime. Exempt only those spans from narrator-disclosure penalties. Judge all other text normally. Use knowledge available before the turn. Read the full turn when judging exit motivation and other quality checks. " +
             "Text the narrator wrote itself that states a protected fact from the supplied protected-fact inventory before it is available is still premature disclosure. " +

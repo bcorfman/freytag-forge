@@ -68,9 +68,11 @@ test("builds chronological public knowledge and keeps same-turn deliveries out o
   const scene3C = timeline.byScene.get("3C");
   const privateOffer = entry("k_sl_2c_a_r1");
   const phaseTwo = entry("k_sl_3c_e_r1");
+  const privateOfferProtected = scene2C.turns[0].protected_facts.find(({ id }) => id === privateOffer.id);
 
   assert.equal(scene2C.turns[0].knowledge_available_before_turn.some(({ id }) => id === privateOffer.id), false);
   assert.equal(scene2C.turns[0].knowledge_available.some((id) => id === privateOffer.id), false);
+  assert.deepEqual(privateOfferProtected, { id: privateOffer.id, statement: privateOffer.statement, world_only: true });
   assert.equal(scene3B.turns[0].knowledge_available_before_turn.some(({ id }) => id === "k_sl_3b_d_r1"), false);
   assert.equal(scene3B.turns[0].knowledge_available.includes("k_sl_3b_d_r1"), true);
   assert.equal(scene3C.turns[0].knowledge_available_before_turn.some(({ id }) => id === "k_sl_3b_d_r1"), true);
@@ -79,6 +81,14 @@ test("builds chronological public knowledge and keeps same-turn deliveries out o
   assert.equal(scene3C.turns[0].knowledge_available_before_turn.some(({ id }) => id === phaseTwo.id), false);
   assert.equal(scene3C.turns[1].knowledge_available_before_turn.some(({ id }) => id === phaseTwo.id), false);
   assert.deepEqual(scene3B.turns[0].runtime_deliveries.authored_spans, [delugeText()]);
+
+  const canon = sceneCanon("2C", [privateOffer.id], undefined, {
+    knowledgeAvailableBeforeTurn: [scene2C.turns[0].knowledge_available_before_turn],
+  });
+  assert.deepEqual(
+    canon.protected_facts.find(({ id }) => id === privateOffer.id),
+    { id: privateOffer.id, statement: privateOffer.statement, world_only: true },
+  );
 });
 
 function delugeText() {
