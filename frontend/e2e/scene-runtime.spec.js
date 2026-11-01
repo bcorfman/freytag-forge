@@ -347,6 +347,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
         authored,
       });
       const { departure, arrival } = partition;
+      const arrivalNarration = arrival.map((segment) => segment.text).join("\n\n").trim();
       const sceneNarration = departure.map((segment) => segment.text).join(" ").trim();
       recordRevealedKnowledge(byScene.get(sourceSceneId), departure, bundle);
       if (sceneNarration) {
@@ -359,6 +360,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
           player_input: input,
           narration: sceneNarration,
           left_scene: entered,
+          ...(entered ? { arrival_narration: arrivalNarration } : {}),
           beats_projected: payload.delivery?.beats_projected || [],
           ...(payload.prompt ? { prompt: payload.prompt } : {}),
           segments: departure.map((segment) => ({ kind: segment.kind, text: segment.text, grounding_ids: segment.grounding_ids || [] })),
@@ -373,7 +375,7 @@ test("judges every reached scene against its committed knowledge canon @llm-cano
       }
       if (entered && !byScene.has(reachedSceneId)) {
         const nextScene = {
-          opening: arrival.map((segment) => segment.text).join("\n\n").trim(),
+          opening: arrivalNarration,
           turns: [],
           revealedKnowledgeIds: [],
           opening_knowledge_ids: arrival.flatMap((segment) => segment.grounding_ids || []),

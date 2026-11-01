@@ -77,7 +77,8 @@ test("scene canon judge omits artifact evidence without mutating turns", async (
     prompt: "Search the desk.",
     player_input: "Search the desk.",
     narration: "You find a note.",
-    left_scene: false,
+    left_scene: true,
+    arrival_narration: "The park opens beyond the house.",
     beats_projected: ["beat-1"],
     authored_spans: [{ text: "You find a note." }],
     knowledge_available: ["k-1"],
@@ -113,7 +114,8 @@ test("scene canon judge omits artifact evidence without mutating turns", async (
   assert.deepEqual(sentTurn, {
     player_input: "Search the desk.",
     narration: "You find a note.",
-    left_scene: false,
+    left_scene: true,
+    arrival_narration: "The park opens beyond the house.",
     beats_projected: ["beat-1"],
     authored_spans: [{ text: "You find a note." }],
     knowledge_available: ["k-1"],
@@ -143,6 +145,8 @@ test("scene canon judge distinguishes protected facts from ordinary invented det
     },
   );
   const systemMessage = request.input[0].content;
+  assert.match(systemMessage, /For a turn marked left_scene, read the departure and its arrival together with earlier discoveries in this scene\. Require a player-visible reason to leave and a clear destination or route\. Earned access, immediate danger, or a discovery can supply the reason\. Do not require the same discovery to be repeated on the departure turn\. Cite the exact player-visible text that supplies the reason and the destination; fail when no such text exists anywhere in the departure, the arrival or the earlier turns\./);
+  assert.doesNotMatch(systemMessage, /A turn marked left_scene is the one the story departed on: fail unless the narration the player actually read gives them a reason to go, naming in prose what was found and where it points\./);
   assert.match(systemMessage, /Require characters, items, plot events, dialogue, and setting to remain consistent with the supplied canon and the committed timeline\. Judge runtime-authored text for quality, but do not attribute it to the narrator\./);
   assert.match(systemMessage, /knowledge_available_before_turn lists public knowledge already disclosed to the player\. runtime_deliveries lists the authored text delivered on this turn and its committed facts\. Earlier disclosures remain known in later scenes\. A later disclosure cannot excuse an earlier leak\./);
   assert.match(systemMessage, /Fail protected_safe only when narrator text discloses a protected fact from the supplied protected-fact inventory before it is available\. Identify the fact, turn and exact narrator text\. Runtime deliveries are exempt from narrator-disclosure penalties\./);
@@ -150,7 +154,7 @@ test("scene canon judge distinguishes protected facts from ordinary invented det
   assert.doesNotMatch(systemMessage, /revealed_knowledge is the set of authored facts the player has earned by committed reveal/);
   assert.doesNotMatch(systemMessage, /not in revealed_knowledge/);
   assert.match(systemMessage, /ordinary invented detail.*color, a minor object, or a bit of atmosphere/);
-  assert.match(systemMessage, /Turns may carry authored_spans, knowledge_available_before_turn, runtime_deliveries, and protected_facts\. The supplied runtime_deliveries identify text inserted by the runtime\. Exempt only those spans from narrator-disclosure penalties\. Judge all other text normally\. Use knowledge available before the turn\. Read the full turn when judging exit motivation and other quality checks\./);
+  assert.match(systemMessage, /Turns may carry authored_spans, knowledge_available_before_turn, runtime_deliveries, protected_facts, and arrival_narration, which is the opening of the scene the player entered\. The supplied runtime_deliveries identify text inserted by the runtime\. Exempt only those spans from narrator-disclosure penalties\. Judge all other text normally\. Use knowledge available before the turn\. Read the full turn when judging exit motivation and other quality checks\./);
   assert.doesNotMatch(systemMessage, /authored_delivery/);
   assert.match(systemMessage, /Text the narrator wrote itself that states a protected fact from the supplied protected-fact inventory before it is available is still premature disclosure/);
   assert.match(systemMessage, /Contradiction of established canon still fails canon_consistent/);

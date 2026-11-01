@@ -200,14 +200,15 @@ export async function judgeSceneNarration(
             "Fail protected_safe only when narrator text discloses a protected fact from the supplied protected-fact inventory before it is available. Identify the fact, turn and exact narrator text. Runtime deliveries are exempt from narrator-disclosure penalties. " +
             "Inventory items marked world_only are facts the player can never be told directly; narrator text that states one as established fact fails protected_safe. " +
             "An ordinary invented detail that is not an authored protected fact, such as a color, a minor object, or a bit of atmosphere, is not premature disclosure and must not fail protected_safe. " +
-            "Turns may carry authored_spans, knowledge_available_before_turn, runtime_deliveries, and protected_facts. The supplied runtime_deliveries identify text inserted by the runtime. Exempt only those spans from narrator-disclosure penalties. Judge all other text normally. Use knowledge available before the turn. Read the full turn when judging exit motivation and other quality checks. " +
+            "Turns may carry authored_spans, knowledge_available_before_turn, runtime_deliveries, protected_facts, and arrival_narration, which is the opening of the scene the player entered. The supplied runtime_deliveries identify text inserted by the runtime. Exempt only those spans from narrator-disclosure penalties. Judge all other text normally. Use knowledge available before the turn. Read the full turn when judging exit motivation and other quality checks. " +
             "Text the narrator wrote itself that states a protected fact from the supplied protected-fact inventory before it is available is still premature disclosure. " +
             "Contradiction of established canon still fails canon_consistent. Do not require every optional storylet or every beat in a single turn. " +
             "Judge each TURN against the beat it was actually given. A turn that dramatises its assigned beat poorly still fails; being given a beat is not credit for using it. " +
             "Judge the SCENE on whether its authored beats were covered in order across its turns. A scene that skips beats entirely still fails. " +
-            "A turn marked left_scene is the one the story departed on: fail unless the narration the player actually " +
-            "read gives them a reason to go, naming in prose what was found and where it points. A discovery the " +
-            "player is never told has not happened, however plainly the canon implies it. Fail too when repeated apt " +
+            "For a turn marked left_scene, read the departure and its arrival together with earlier discoveries in this scene. " +
+            "Require a player-visible reason to leave and a clear destination or route. Earned access, immediate danger, or a discovery can supply the reason. " +
+            "Do not require the same discovery to be repeated on the departure turn. Cite the exact player-visible text that supplies the reason and the destination; fail when no such text exists anywhere in the departure, the arrival or the earlier turns. " +
+            "A discovery the player is never told has not happened, however plainly the canon implies it. Fail too when repeated apt " +
             "searching of what this scene's canon says is here keeps returning nothing the player can act on.",
         },
         { role: "user", content: JSON.stringify({ canon, opening, turns: turnsWithBeatContext }) },
