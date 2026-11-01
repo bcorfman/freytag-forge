@@ -2557,7 +2557,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level. Brandon waits beside the broadcast controls."
+  delivery_text: "Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level."
 - id: k_sl_3b_d_r2
   statement: 'A remote order shows Charles has chosen to flood the outer access level rather than lose control of the evidence, trapping Rebecca with the people she endangered.'
   earn_when: "finds Charles's flood order"

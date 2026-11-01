@@ -230,7 +230,7 @@ events:
   - fact_id: detention_lockdown_spreading
     equals: true
   realizations:
-  - text: Armored teams seal one holding block after another. The uprising is losing routes while it waits.
+  - text: Armored teams seal one holding block after another.
 - id: relay_power_3b
   scene_id: 3B
   at_turn: 9
