@@ -1522,16 +1522,12 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R3}
   relevance: {entity_ids: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files], priority: 10}
   must_convey:
-  - [Rebecca offers, help remove Charles, Michelle goes free]
-  - [purge order, purge clock, purge begins within hours]
   - [starts sending the evidence, transmit the evidence, uplink]
   - [detention sectors seal, detention sectors sealed]
   - [Michelle's route, maintenance route, route to Michelle]
   - [Rebecca's secured office, Rebecca's office]
   - [broadcast the evidence, open the detention cells, combined plan]
   delivery_text: >-
-    Rebecca offers a way to remove Charles. She promises Michelle's release.
-    The purge order starts a clock.
     Kristin heads to the uplink and starts sending the copied files.
     The detention sectors seal.
     Michelle's route leads to Rebecca's secured office.
@@ -1575,16 +1571,12 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R4}
   relevance: {entity_ids: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files], priority: 10}
   must_convey:
-  - [Rebecca offers, help remove Charles, Michelle goes free]
-  - [purge order, purge clock, purge begins within hours]
   - [rescue cart, frees a cart of captives, rescue]
   - [evidence is not transmitted, evidence remains in Kristin's hands]
   - [Michelle's route, maintenance route, route to Michelle]
   - [Rebecca's secured office, Rebecca's office]
   - [broadcast the evidence, open the detention cells, combined plan]
   delivery_text: >-
-    Rebecca offers a way to remove Charles. She promises Michelle's release.
-    The purge order starts a clock.
     Kristin heads to the transfer carts and frees a cart of captives.
     The evidence is not transmitted.
     Michelle's route leads to Rebecca's secured office.

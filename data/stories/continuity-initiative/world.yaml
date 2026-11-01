@@ -278,6 +278,18 @@ items:
   name: inspection console
   aliases: [corridor inspection console, diagnostic console]
   fixed: true
+- id: cooling_manifold
+  name: cooling manifold
+  scoped_aliases: [manifold]
+  fixed: true
+- id: broadcast_uplink
+  name: broadcast uplink
+  scoped_aliases: [uplink]
+  fixed: true
+- id: transfer_carts
+  name: transfer carts
+  aliases: [transfer cart]
+  fixed: true
 - id: cooling_service_archive_panel
   name: cooling-service archive panel
   kind: thing

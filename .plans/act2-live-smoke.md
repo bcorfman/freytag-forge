@@ -106,3 +106,25 @@ leak, but the classifier should learn it.
   redesign's own moments are not yet visible to a stranger. 1C solved this by having Brandon offer
   the moves in the narration (`1c-brandon-offers-moves.md`); Act 2 has no equivalent yet.
 - One row per cell, scripted prefixes, one blind player: nothing here is a rate.
+
+## Round 2: do the offers make the moves visible? (preregistered 2026-11-01, before any billed call)
+
+Change under test (branch `act2-visible-moves`): each Act 2 `entry_text` now has a character
+state the moves, the 1C technique. 2A: the supervisor says "show me" at the cooling manifold and
+Brandon says "be precise". 2B: Brandon points at the archive terminals, the JANUS records and
+Kristin's own file, and asks to delete his name or be told to leave it. 2C: Rebecca's offer, the
+purge order and Brandon's yes are told in the entry, then Brandon offers the uplink or the
+transfer carts. New fixed things `cooling_manifold`, `broadcast_uplink`, `transfer_carts`. The 2C
+outcome entries lost the offer and purge-order sentences (the entry owns them now).
+
+Question: does a raw blind player now reach a real outcome (not a recovery bridge) in each scene?
+Rows: the three blind-only cells, prefix `none`, one row each, no retries, same caps and keep
+rule as above. Order 2A, 2B, 2C; read each before the next. Outcome sought: exit cause is one of
+the declared outcomes. One row each is a smoke, not a rate; a miss is diagnosed from the
+transcript before any rewording.
+
+Round 2 log. Row 23 (2A none, offers): left by missed window plus recovery at turn 7; the player went
+to the manifold and inspected it, never explained a diagnosis, because the narration gives
+nothing to diagnose. Row 24 (2B none): run-failure, `narration mentions protected knowledge
+'janus'`: Brandon's line said "JANUS records". Reworded without the term; row 24 stays recorded,
+row 26 is the rerun.
