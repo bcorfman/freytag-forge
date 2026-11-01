@@ -27,7 +27,7 @@ def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
 def test_2c_assess_and_evaluate_verbs_match_unique_reveals() -> None:
     knowledge = _knowledge()
     cases = {
-        "Tell Rebecca my answer to her offer.": {"k_sl_2c_c_r1", "k_sl_2c_c_r2"},
+        "Tell Rebecca my answer to her offer.": {"k_sl_2c_c_r1"},
         "Head to the broadcast uplink and transmit the copied JANUS files.": {"k_sl_2c_d_r3"},
         "Reach the transfer carts and rescue the prisoners.": {"k_sl_2c_d_r4"},
         "Read the private message and discuss the offer.": set(),
@@ -51,4 +51,3 @@ def test_2c_edited_items_keep_two_evidence_groups() -> None:
     assert len(knowledge["k_sl_2c_d_r3"]["action_evidence"]) == 2
     assert len(knowledge["k_sl_2c_d_r4"]["action_evidence"]) == 2
     assert len(knowledge["k_sl_2c_c_r1"]["action_evidence"]) == 2
-    assert len(knowledge["k_sl_2c_c_r2"]["action_evidence"]) == 2

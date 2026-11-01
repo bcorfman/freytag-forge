@@ -47,7 +47,7 @@ def test_2c_spine_prompts_match_their_authored_reveals() -> None:
         "Reach the transfer carts and rescue the prisoners.",
     ]
     expected = [
-        {"k_sl_2c_c_r1", "k_sl_2c_c_r2"},
+        {"k_sl_2c_c_r1"},
         {"k_sl_2c_d_r3"},
         {"k_sl_2c_d_r4"},
     ]

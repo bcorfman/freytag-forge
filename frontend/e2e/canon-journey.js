@@ -50,7 +50,7 @@ export const scenePrompts = {
   ],
   // 2C incident: Rebecca's offer and the purge order -> commit by acting -> Michelle's route widens the options
   "2C": [
-    "Ask Brandon why Rebecca turned against Charles.",
+    "Tell Rebecca my answer to her offer.",
     "Head to the broadcast uplink and transmit the copied JANUS files.",
     "Reach the transfer carts and rescue the prisoners.",
   ],

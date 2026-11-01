@@ -686,7 +686,6 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_2c_d_r3",
         "k_sl_2c_d_r4",
         "k_sl_2c_c_r1",
-        "k_sl_2c_c_r2",
     }
     actual = {item.id for item in package.knowledge.knowledge if item.delivery_text}
 

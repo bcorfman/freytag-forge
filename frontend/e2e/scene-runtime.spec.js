@@ -213,7 +213,7 @@ test("drives the main spine and reports reachability and pressure @spine", async
   expect(sceneOrder.at(-1)).toBe("3C");
   expect(chains.story_complete, "the story must actually complete; reaching 3C is not the ending").toBe(true);
   expect(Object.keys(chains.chain_misses), `missing expected reveal chains: ${JSON.stringify(chains.chain_misses)}`).toHaveLength(0);
-  expect(chains.c_r2_committed, "2C must commit k_sl_2c_c_r2").toBe(true);
+  expect(chains.observation_committed, "2C must commit k_sl_2c_c_r1").toBe(true);
 });
 
 test("judges every reached scene against its committed knowledge canon @llm-canon", async ({ page }) => {

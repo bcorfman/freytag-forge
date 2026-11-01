@@ -28,7 +28,7 @@ test("classifies gameplay assertions and conflict rejections", () => {
 
 const expected = {
   "1A": ["a1", "a2"],
-  "2C": ["k_sl_2c_c_r2"],
+  "2C": ["k_sl_2c_c_r1"],
   "3C": ["c1"],
 };
 
@@ -42,15 +42,15 @@ test("evaluates a fully committed reveal chain and latency statistics", () => {
     expected,
     perTurn: [
       turn("1A", "1A", { outcome: "committed", transition_cause: null, story_complete: false, selected_reveal: { knowledge_ids: ["a2", "a1"] } }, 10),
-      turn("2C", "2C", { outcome: "committed", transition_cause: "earned", story_complete: false, selected_reveal: { knowledge_ids: ["k_sl_2c_c_r2"] } }, 20),
+      turn("2C", "2C", { outcome: "committed", transition_cause: "earned", story_complete: false, selected_reveal: { knowledge_ids: ["k_sl_2c_c_r1"] } }, 20),
       turn("3C", "3C", { outcome: "committed", transition_cause: "timer", story_complete: true, selected_reveal: { knowledge_ids: ["c1"] } }, 30),
     ],
   });
-  assert.deepEqual(result.committed_by_scene, { "1A": ["a1", "a2"], "2C": ["k_sl_2c_c_r2"], "3C": ["c1"] });
+  assert.deepEqual(result.committed_by_scene, { "1A": ["a1", "a2"], "2C": ["k_sl_2c_c_r1"], "3C": ["c1"] });
   assert.deepEqual(result.chain_misses, {});
   assert.deepEqual(result.exits, { none: 1, earned: 1, timer: 1 });
   assert.equal(result.story_complete, true);
-  assert.equal(result.c_r2_committed, true);
+  assert.equal(result.observation_committed, true);
   assert.deepEqual(result.latency, { min: 10, median: 20, max: 30, total: 60 });
 });
 
@@ -64,8 +64,8 @@ test("reports a missing 2C c_r2 and ignores rejected bundle reveals", () => {
     ],
   });
   assert.deepEqual(result.committed_by_scene, { "1A": [], "2C": [] });
-  assert.deepEqual(result.chain_misses, { "1A": ["a1", "a2"], "2C": ["k_sl_2c_c_r2"] });
-  assert.equal(result.c_r2_committed, false);
+  assert.deepEqual(result.chain_misses, { "1A": ["a1", "a2"], "2C": ["k_sl_2c_c_r1"] });
+  assert.equal(result.observation_committed, false);
 });
 
 test("counts no-bundle turns, null exits, completion sources, and unreached scenes", () => {
@@ -93,5 +93,5 @@ test("counts no-bundle turns, null exits, completion sources, and unreached scen
 
 test("loads the generated expected reveal mapping", async () => {
   const loaded = await loadExpectedReveals();
-  assert.equal(loaded["2C"].includes("k_sl_2c_c_r2"), true);
+  assert.equal(loaded["2C"].includes("k_sl_2c_c_r1"), true);
 });

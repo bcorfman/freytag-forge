@@ -102,7 +102,7 @@ export function evaluateSpine({ sceneOrder = [], perTurn = [], expected = {} } =
     chain_misses,
     exits,
     story_complete: perTurn.some((turn) => turn?.state_story_complete === true || turn?.bundle?.story_complete === true),
-    c_r2_committed: (committedByScene.get("2C") || new Set()).has("k_sl_2c_c_r2"),
+    observation_committed: (committedByScene.get("2C") || new Set()).has("k_sl_2c_c_r1"),
     turns: perTurn.length,
     latency: latencySummary(perTurn),
     delivery,

@@ -106,8 +106,7 @@ def _continue_3a(state: RuntimeState, engine: RuntimeEngine) -> tuple[tuple[str,
 def test_2c_static_requires_establishes_and_bridges() -> None:
     knowledge = PACKAGE.knowledge_indexes.by_id
     expected_2c = {
-        "k_sl_2c_c_r1": (("purge_window_missed", "brandon_name_erased"), ("rebecca_offer_heard",)),
-        "k_sl_2c_c_r2": (("purge_window_missed", "brandon_name_erased"), ("rebecca_offer_heard",)),
+        "k_sl_2c_c_r1": (("purge_window_missed",), ("rebecca_offer_heard",)),
         "k_sl_2c_d_r3": (
             ("rebecca_offer_heard",),
             (
