@@ -1386,10 +1386,10 @@ knowledge:
     from the record before we copy the files. Or tell me to leave it. Your call."
 - id: k_sl_2b_b_r4
   statement: 'Kristin pulls her own JANUS file first, learns she was bait, and keeps Brandon’s name in the build record.'
-  earn_when: pulls Kristin's file first and refuses to erase Brandon's name from the JANUS build record
+  earn_when: tells Brandon to leave his name in the build record after reading Kristin's own file
   action_evidence:
   - [keep, leave, refuse, refuse to erase, preserve]
-  - [Brandon's name, Brandon Corfman, author's name, name in the build record]
+  - [Brandon's name, Brandon Corfman, author's name, name in the build record, his name, name in the record, the record]
   entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files]
   aliases: [Brandon's name kept, Kristin was bait, JANUS evidence]
   audience: {kind: public, player_visible: true}
@@ -1441,12 +1441,15 @@ knowledge:
     Kristin keeps his name in the record.
     The JANUS files are copied.
     Kristin carries the copied files.
+    The medical terminal prints a maintenance line that ends with the name Shelly.
+    Only Kristin uses that name.
+    Before the audit reaches the aisle, Kristin has time to type one reply on the medical terminal.
 - id: k_sl_2b_b_r5
   statement: 'Kristin pulls her own JANUS file first, learns she was bait, and lets Brandon erase his name from the build record.'
-  earn_when: pulls Kristin's file first and lets Brandon erase his name from the JANUS build record
+  earn_when: lets Brandon erase his name from the build record after reading Kristin's own file
   action_evidence:
   - [let, allow, permit, agree, erase, delete]
-  - [Brandon's name, Brandon Corfman, author's name, name in the build record, his name]
+  - [Brandon's name, Brandon Corfman, author's name, name in the build record, his name, name in the record, the record]
   entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files]
   aliases: [Brandon's name erased, Kristin was bait, JANUS evidence]
   audience: {kind: public, player_visible: true}
@@ -1503,6 +1506,9 @@ knowledge:
     The development record now has a gap.
     The JANUS files are copied.
     Kristin carries the copied files.
+    The medical terminal prints a maintenance line that ends with the name Shelly.
+    Only Kristin uses that name.
+    Before the audit reaches the aisle, Kristin has time to type one reply on the medical terminal.
 - id: k_sl_2b_c_r3
   statement: 'Michelle answers Kristin once through the medical terminal and confirms that she is alive and active inside the facility.'
   earn_when: types one reply to the maintenance line on the medical terminal
