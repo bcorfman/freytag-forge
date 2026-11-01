@@ -68,14 +68,15 @@ export const scenePrompts = {
     "Check Charles's remote channel on the executive screen.",
     "Tell Brandon to send his confession through the relay chamber.",
   ],
-  // 3C.1 transmission -> 3C.2 archive and confrontation -> 3C.3 collapse -> 3C.4 surface-gate escape -> 3C.5 resolution
+  // 3C.1 broadcast -> 3C.2 archive -> 3C.3 drainage pumps -> 3C.4 surface gates -> 3C.5 detention-site reports -> 3C.6 families -> 3C.7 recovered document
   "3C": [
-    "Open the broadcast with Michelle and push the evidence out - the captives, the selection records, the locations.",
-    "Stop her leaving with the portable archive and copy it out to independent networks.",
-    "Hold the emergency supports while the prisoners are led up through the maintenance tunnels.",
-    "Ask Michelle to use the emergency gate authorization to release the surface gates.",
-    "Assess what this has changed across the country, and what it has not.",
-    "Read the recovered fragment describing what was meant to follow all of this.",
+    "Send the evidence package.",
+    "Copy Rebecca's archive.",
+    "Restore the drainage pumps.",
+    "Open the surface gates.",
+    "Check reports from other detention sites.",
+    "Call the families of the missing.",
+    "Open the recovered document.",
   ],
 };
 
