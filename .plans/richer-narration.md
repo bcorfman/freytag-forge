@@ -73,6 +73,13 @@ all nine scenes; shared runtime must remain story-agnostic.
 - **Owed next (Ringer):** rename the kitchen "snapshot" to "photograph" (Brandon's choice; name "lake photograph",
   scoped_aliases photograph and photo so 1B's michelle_photograph still resolves in its own scene) and drop the
   possessive in "On Kristin's truck radio ..." (the scene-aware lint no longer needs it).
+- **1A opening probe, 2026-11-02:** preregistered in `.plans/richer-1a-probe-prereg.md` (with Amendment 1 and a
+  disclosure of two unplanned partial live runs, about 20 to 30 requests). Bench bug fixed (`e982d51a`: a walk between
+  places in runtime mode). Smoke row (one candidate replicate, pre-fix) read by hand; it found the photograph invented
+  as a landscape, the kitchen reveal delivered as one block, and Walt unreachable once the patrol entered; all fixed in
+  `1bb68d81`. Full run (4 replicates per arm, 7 commands, baseline `richer-1a-baseline` vs `richer-1a-candidate`) is
+  awaiting Brandon: Claude cannot launch an unsandboxed Ringer worker, so he runs the two bench commands himself with
+  `!`; then Claude reads every turn and writes the result into the prereg.
 - Decisions taken 2026-11-02: 1A, 2A (refuse unknown ordinary things, measure slips first, only when
   the package declares a policy), 3A.
 - Ringer notes: the first run failed twice on my spec (a `notes.md` the check
