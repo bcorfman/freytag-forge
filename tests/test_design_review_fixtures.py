@@ -215,7 +215,7 @@ def test_more_than_four_eligible() -> None:
         for item in PACKAGE.knowledge.knowledge
         if "1A" in item.available_in_scenes and explain_reveal(state, "player", item).eligible
     )
-    assert len(eligible) == 7
+    assert len(eligible) == 9
     all_candidates = tuple(KnowledgeProjector._candidate(item) for item in eligible)
     handoff = uniquely_matched_authored_handoff("Inspect the reflective tape.", all_candidates)
     assert handoff is not None
@@ -224,5 +224,5 @@ def test_more_than_four_eligible() -> None:
     projection = KnowledgeProjector().project(state, "player", "Inspect the reflective tape.")
     assert len(projection.candidates) == 4
     assert "k_sl_1a_c_r2" not in {candidate.id for candidate in projection.candidates}
-    assert len(projection.reveal_universe) == 7
-    assert projection.reveal_universe[-1].id == "k_sl_1a_h_r1"
+    assert len(projection.reveal_universe) == 9
+    assert projection.reveal_universe[-1].id == "k_sl_1a_g_r1"

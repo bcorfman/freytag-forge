@@ -825,7 +825,20 @@ storylets:
   pressure_role: Let the kitchen read as a person's last hour so Michelle's disappearance feels like a loss.
   realization_options:
   - id: SL-1A-G-R1
-    dramatic_intent: Kristin reads the kitchen as Michelle's last hour through the warm tea, glasses, marked pages, calendar, and lake photograph.
+    dramatic_intent: Kristin reads the workstation as Michelle's last hour through the warm tea, glasses, and marked pages.
+    source_beats: [scene-1a1--michelle-is-gone]
+    operations:
+    - op: assert
+      fact_id: kitchen_last_hour_read
+      value: true
+    - op: assert
+      fact_id: michelle_abduction_suspicion
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
+  - id: SL-1A-G-R2
+    dramatic_intent: Kristin reads the kitchen walls as a life interrupted through the calendar and lake photograph.
     source_beats: [scene-1a1--michelle-is-gone]
     operations:
     - op: assert
@@ -881,9 +894,7 @@ storylets:
   title: The Neighbor at the Fence
   activation:
     scene_id: 1A
-    conditions:
-    - fact_id: patrol_in_house
-      equals: false
+    conditions: []
     pacing:
       earliest_turn: 4
       target_turn: 5

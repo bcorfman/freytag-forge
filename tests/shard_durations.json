@@ -265,6 +265,7 @@
     "tests/test_refused_move_clause.py": 0.91,
     "tests/test_regen_shard_durations.py": 0.0,
     "tests/test_repeatable_knowledge.py": 0.04,
+    "tests/test_richer_1a_fixes.py": 0.10,
     "tests/test_request_timeout.py": 0.92,
     "tests/test_required_storylet_closure.py": 0.0,
     "tests/test_resolution_cascade.py": 2.48,

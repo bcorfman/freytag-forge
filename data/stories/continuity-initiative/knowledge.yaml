@@ -397,8 +397,13 @@ knowledge:
   - [outward, from inside]
   delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over. The back door looks forced, but the splinters around the frame point outward, away from the house, so it was broken from inside. Nothing else was taken. This was not looting. Someone came for Michelle."
 - id: k_sl_1a_g_r1
-  statement: "Kristin reads the kitchen as Michelle's last hour."
-  entity_ids: [kristin, michelle_workstation, kitchen_calendar, lake_photograph]
+  statement: "Kristin reads the workstation as Michelle's last hour: a faintly warm mug of tea and her reading glasses folded on red-penned manuscript pages."
+  reach_entity_ids: [michelle_workstation]
+  earn_when: looks closely at the workstation, the mug, the reading glasses or the manuscript pages
+  action_evidence:
+  - [look, examine, inspect, search, study]
+  - [workstation, mug, tea, glasses, manuscript, pages]
+  entity_ids: [kristin, michelle_workstation]
   aliases: [kitchen last hour read]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [1A]
@@ -416,16 +421,41 @@ knowledge:
     kind: storylet_realization
     storylet_id: SL-1A-G
     realization_id: SL-1A-G-R1
-  relevance: {entity_ids: [michelle_workstation, kitchen_calendar, lake_photograph], priority: 0}
+  relevance: {entity_ids: [michelle_workstation], priority: -1}
   must_convey:
   - [tea, mug]
   - [glasses]
+  delivery_text: "A mug of tea sits on Michelle's workstation, the bag still in it, faintly warm. Her reading glasses lie folded on her manuscript pages, which are marked in red pen. She never goes anywhere without them. Michelle did not plan to be gone."
+- id: k_sl_1a_g_r2
+  statement: "Kristin reads the kitchen walls as a life interrupted: the calendar with Saturday circled and the photograph of the two of them at a lake."
+  reach_entity_ids: [kitchen_calendar, lake_photograph]
+  earn_when: looks closely at the wall calendar, the photograph or the refrigerator
+  action_evidence:
+  - [look, examine, inspect, study]
+  - [calendar, photograph, photo, refrigerator]
+  entity_ids: [kristin, michelle_workstation, kitchen_calendar, lake_photograph]
+  aliases: [kitchen last hour read]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  requires:
+  - fact_id: patrol_in_house
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: kitchen_last_hour_read
+    value: true
+  - op: assert
+    fact_id: michelle_abduction_suspicion
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-G
+    realization_id: SL-1A-G-R2
+  relevance: {entity_ids: [michelle_workstation, kitchen_calendar, lake_photograph], priority: 0}
+  must_convey:
   - [calendar, lemon cake]
   - [photograph, photo, picture]
-  action_evidence:
-  - [look, examine, inspect, search, study]
-  - [workstation, mug, tea, glasses, manuscript, calendar, photograph, photo, picture]
-  delivery_text: "A mug of tea sits on Michelle's workstation, the bag still in it, faintly warm. Her reading glasses lie folded on her manuscript pages, which are marked in red pen. She never goes anywhere without them. On the wall calendar Saturday is circled in her handwriting: K, lemon cake. It is Kristin's birthday. On the refrigerator, a photograph shows the two of them at a lake. Michelle did not plan to be gone."
+  delivery_text: "On the wall calendar Saturday is circled in her handwriting: K, lemon cake. It is Kristin's birthday. On the refrigerator, held by a pear-shaped magnet, a photograph shows the two of them at a lake."
 - id: k_sl_1a_h_r1
   statement: "On the truck radio the emergency broadcast repeats the same ninety seconds word for word; timed twice, it is a loop, not a live voice."
   entity_ids: [kristin, truck_radio]
@@ -459,11 +489,6 @@ knowledge:
   aliases: [neighbor account heard]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [1A]
-  requires:
-  - fact_id: michelle_abduction_suspicion
-    equals: true
-  - fact_id: patrol_in_house
-    equals: false
   establishes:
   - op: assert
     fact_id: neighbor_account_heard

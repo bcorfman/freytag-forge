@@ -96,7 +96,8 @@ Each entry below is authoring data, not a player action menu.
 - Let the kitchen read as a person's last hour so Michelle's disappearance feels like a loss.
 
 **Possible realizations**
-- Kristin reads the kitchen as Michelle's last hour: a faintly warm mug of tea, her reading glasses folded on red-penned manuscript pages, and the calendar with Saturday circled.
+- Kristin reads the workstation as Michelle's last hour: a faintly warm mug of tea and her reading glasses folded on red-penned manuscript pages.
+- Kristin reads the kitchen walls as a life interrupted: the calendar with Saturday circled and the photograph of the two of them at a lake.
 
 **Effects**
 - Sets `kitchen_last_hour_read` and preserves the existing abduction suspicion.
@@ -164,7 +165,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Available when**
 - Kristin is outside the house.
-- The patrol is not on scene or at the gate.
+- Kristin has not yet heard the neighbor.
 
 **Participants / items**
 - Kristin Schweitzer

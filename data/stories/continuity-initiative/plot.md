@@ -101,7 +101,7 @@ item_placements:
   michelle_reading_glasses: {parent: michelle_workstation, text: folded on her manuscript pages}
   manuscript_pages: {parent: michelle_workstation, text: marked in red pen}
   kitchen_calendar: {parent: kitchen, text: on the wall by the refrigerator}
-  lake_photograph: {parent: kitchen, text: held to the refrigerator by a pear-shaped magnet}
+  lake_photograph: {parent: kitchen, text: "held to the refrigerator by a pear-shaped magnet, showing Kristin and Michelle at a lake"}
   back_door_splinters: {parent: kitchen, text: around the back door frame}
   back_door_deadbolt: {parent: kitchen, text: on the back door}
   truck_radio: {parent: kristin_truck}

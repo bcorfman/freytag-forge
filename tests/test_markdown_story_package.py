@@ -293,7 +293,10 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "michelle_reading_glasses": ItemPlacement(parent="michelle_workstation", text="folded on her manuscript pages"),
         "manuscript_pages": ItemPlacement(parent="michelle_workstation", text="marked in red pen"),
         "kitchen_calendar": ItemPlacement(parent="kitchen", text="on the wall by the refrigerator"),
-        "lake_photograph": ItemPlacement(parent="kitchen", text="held to the refrigerator by a pear-shaped magnet"),
+        "lake_photograph": ItemPlacement(
+            parent="kitchen",
+            text="held to the refrigerator by a pear-shaped magnet, showing Kristin and Michelle at a lake",
+        ),
         "back_door_splinters": ItemPlacement(parent="kitchen", text="around the back door frame"),
         "back_door_deadbolt": ItemPlacement(parent="kitchen", text="on the back door"),
         "truck_radio": ItemPlacement(parent="kristin_truck"),
@@ -644,6 +647,7 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
     expected = {
         "k_sl_1a_a_r1",
         "k_sl_1a_g_r1",
+        "k_sl_1a_g_r2",
         "k_sl_1a_h_r1",
         "k_sl_1a_i_r1",
         "k_sl_1a_b_r0",
