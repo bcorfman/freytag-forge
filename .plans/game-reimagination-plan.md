@@ -104,11 +104,13 @@ already had the unhurried reunion (3A.1) and Kristin giving the signal on Michel
 (wording only, 23 lines; `michelle_reached` and `detention_uprising_started` deliveries; `k_sl_3a_c_r1` matches
 "the radio"/"the signal"). 210 tests in 15 package and guard suites pass in the worktree and on the branch
 `3a-reunion-radio-propagation` (uncommitted). Ringer showed FAIL only because the manifest's patch-export line
-tried to `git add` the ignored `.venv`; the line is fixed in the manifest. Not done: no live narration smoke of
-3A (the reunion line, the radio signal, and `k_sl_3a_c_r2`'s "warns Michelle" path), no full suite run.
+tried to `git add` the ignored `.venv`; the line is fixed in the manifest. Live smoke done (Round 8 in [act2-live-smoke.md](act2-live-smoke.md)): one blind row each for the transmit and rescue
+ledgers reached 3B by an earned transition with the unhurried reunion and the radio signal delivered, no rejection or
+stale cue; row 52 has one narration-retry recovery (a miss against the preregistered "0") and in row 51 the signal
+landed on a command that did not order it. Not shown: the `SL-3A-C-R2` "warns Michelle" path, an own-order signal row,
+the 3A staller exit.
 
-Next: (1) live-smoke 3A on the new text (one blind row, one `committed_to_rescue` row), then run the full suite
-once and commit; a free look at the 3C "exposure and escape" overlap; a pure 2A missed-window row; a rescue-commitment
+Next: (1) a free look at the 3C "exposure and escape" overlap; a pure 2A missed-window row; a rescue-commitment
 slice and the 2A doubted / 2B erase outcomes remain untested; (2) Phase 2 (finite 3B to 3C evacuation and aftermath,
 lighthouse-fixture portability, the 3C neutral staller); (3) the human gates. Detail in
 [game-reimagination/](game-reimagination/whole-story-pacing.md).
