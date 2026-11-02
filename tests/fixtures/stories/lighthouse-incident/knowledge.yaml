@@ -20,6 +20,16 @@ facts:
   purpose: The recovery damaged the keeper's remaining chart.
 - id: route_traversed
   purpose: Ada has used the service connection.
+- id: lamp_tended
+  purpose: Ada tended the lamp.
+- id: lamp_signal_seen
+  purpose: Ada signaled from the lamp room.
+- id: lighthouse_complete
+  purpose: The lighthouse watch is complete.
+- id: lamp_recovery_complete
+  purpose: Ada restored the missed lamp watch.
+- id: lamp_window_missed
+  purpose: The lamp watch window closed.
 scene_frames:
 - {scene_id: 1A, situation: The cottage is quiet., pressure: The lamp hour approaches.}
 - {scene_id: 1B, situation: The lamp room is dark., pressure: The light must be tended.}
@@ -65,3 +75,37 @@ knowledge:
   available_in_scenes: [1B]
   establishes: [{op: assert, fact_id: scene_1b_entry_known, value: true}]
   source: {kind: scene_entry}
+- id: k_tend_lamp
+  statement: Ada tends the lamp.
+  entity_ids: [ada_lantern]
+  aliases: [tend lamp]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1B]
+  establishes: [{op: assert, fact_id: lamp_tended, value: true}, {op: assert, fact_id: lighthouse_complete, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-1B-C, realization_id: r0}
+  action_evidence: [[tend, lamp]]
+  must_convey: [[tend, lamp]]
+  delivery_text: Ada tends the lamp.
+- id: k_signal_lamp
+  statement: Ada signals from the lamp room.
+  entity_ids: [ada_lantern]
+  aliases: [signal lamp]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1B]
+  establishes: [{op: assert, fact_id: lamp_signal_seen, value: true}, {op: assert, fact_id: lighthouse_complete, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-1B-C, realization_id: r1}
+  action_evidence: [[signal, lamp]]
+  must_convey: [[signal, lamp]]
+  delivery_text: Ada signals from the lamp room.
+- id: k_recover_lamp
+  statement: Ada restores the lamp watch.
+  entity_ids: [ada_lantern]
+  aliases: [restore lamp watch]
+  requires: [{fact_id: lamp_window_missed, equals: true}]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1B]
+  establishes: [{op: assert, fact_id: lighthouse_complete, value: true}, {op: assert, fact_id: lamp_recovery_complete, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-1B-D, realization_id: r0}
+  action_evidence: [[restore, lamp]]
+  must_convey: [[restore, lamp]]
+  delivery_text: Ada restores the lamp watch.

@@ -1,0 +1,33 @@
+{
+ "run_name": "phase2-ending-variants",
+ "workdir": "/home/bcorfman/dev/ringer-work/phase2-ending-variants",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "ending-variants",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 3000,
+   "check_timeout_s": 900,
+   "ownership": [
+    "storygame/story_package/models.py",
+    "storygame/story_package/loader.py",
+    "storygame/runtime/engine.py",
+    "tests/test_story_ending.py",
+    "tests/test_lighthouse_ending.py",
+    "tests/fixtures/stories/lighthouse-incident/pacing.yaml"
+   ],
+   "spec": "Work in /home/bcorfman/dev/freytag-forge directly (no worktree). Never git commit, never run `uv`, never call a billed model or the network. Run tests as `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider <tests>`. ROLE: engine engineer. You may edit ONLY: storygame/story_package/models.py, storygame/story_package/loader.py, storygame/runtime/engine.py, tests/test_story_ending.py, tests/test_lighthouse_ending.py, tests/fixtures/stories/lighthouse-incident/pacing.yaml. BACKGROUND: a story package's final scene ends the game through `pacing.yaml` `ending` (StoryEnding in models.py: scene_id, when, text, marker; evaluated in RuntimeEngine._finish_ending, engine.py ~742-756, which appends ONE static narration segment). Phase 2 needs the aftermath to vary with what the player did, using only facts, like scene `entry_variants` (EntryTextVariant: `requires` tuple of fact ids that must all be true, plus `text`; see models.py ~525 and how its requires are evaluated where scene entry text is built, models.py ~562). DO (generic, no story ids): add `EndingVariant` (requires: tuple[str,...] min length 1; text: non-blank, stripped) and `StoryEnding.variants: tuple[EndingVariant, ...] = ()`. In `_validate_ending` (loader.py ~683) reject a variant whose requires names an unknown fact id, with a clear message naming the fact. In `_finish_ending` append, after the base text segment, ONE additional narration segment per variant whose requires facts are ALL currently true, in declared order (so independent facts compose). Evaluate 'true' exactly as the engine does for other fact requires (use the existing predicate helper, `_predicate_matches` with FactPredicate(fact_id=..., equals=True), or the same mechanism entry variants use). With no variants, behaviour must be byte-identical to today. Check engine.py ~454 and web_demo.py (do not edit web_demo) for other uses of ending.text so a save/load or replay of a finished story still shows the same ending text; if a replay path rebuilds the ending text elsewhere, make it include the variants identically and say so. TESTS (smallest complete set; the suite is already too big): in tests/test_story_ending.py: variants append in declared order only when all their facts hold, and none when absent; an unknown variant fact is rejected by the loader. In tests/test_lighthouse_ending.py and the lighthouse fixture pacing.yaml: give the lighthouse ending one variant and assert it shows on one of the two journeys and not on the other (the earned outcome path versus the zero-match recovery path). Keep ruff formatting. Do not touch data/stories/continuity-initiative.",
+   "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=$PWD TMPDIR=/tmp\nPY=.venv/bin/python\nfor f in storygame/story_package/models.py storygame/runtime/engine.py tests/test_story_ending.py tests/test_lighthouse_ending.py; do git status --porcelain -- $f | grep -q . || { echo \"WHY: $f not modified\"; exit 1; }; done\ngrep -n \"class EndingVariant\" storygame/story_package/models.py || { echo \"WHY: EndingVariant missing\"; exit 1; }\ngrep -rniE \"lighthouse|continuity|kristin\" storygame/story_package/models.py storygame/story_package/loader.py storygame/runtime/engine.py && { echo \"WHY: story-specific id in engine\"; exit 1; }\nCH=$(git status --porcelain | awk '{print $NF}')\nfor f in $CH; do case \"$f\" in storygame/story_package/models.py|storygame/story_package/loader.py|storygame/runtime/engine.py|tests/test_story_ending.py|tests/test_lighthouse_ending.py|tests/fixtures/stories/lighthouse-incident/pacing.yaml) ;; .plans/*|scripts/ringer/*|tests/test_act2_probe.py|storygame/audit.py|storygame/runtime/cloudflare.py|tests/test_incident_loader.py|tests/fixtures/stories/lighthouse-incident/*|data/stories/continuity-initiative/plot.md) ;; *) echo \"WHY: unexpected changed file: $f\"; exit 1;; esac; done\ngit diff --quiet -- data/stories/continuity-initiative/pacing.yaml || { echo \"WHY: continuity pacing.yaml was edited\"; exit 1; }\n$PY -m ruff format --check storygame tests || { echo \"WHY: not ruff-formatted\"; exit 1; }\n$PY -m ruff check storygame tests/test_story_ending.py tests/test_lighthouse_ending.py || { echo \"WHY: ruff check failed\"; exit 1; }\n$PY -m pytest -q -p no:cacheprovider tests/test_story_ending.py tests/test_lighthouse_ending.py tests/test_incident_loader.py tests/test_incident_engine.py tests/test_world_second_package.py tests/test_3c_cue_chain.py tests/test_markdown_story_package.py || { echo \"WHY: suites failed\"; exit 1; }\necho ok\n",
+   "verified": "EndingVariant added and validated, variants append in order, lighthouse shows it on one journey only, suites pass"
+  }
+ ]
+}

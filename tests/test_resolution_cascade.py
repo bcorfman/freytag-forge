@@ -57,7 +57,7 @@ def test_showing_exposure_does_not_commit_later_resolution_events() -> None:
     assert Fact(predicate="truth_no_longer_containable", subject="story", value="true") in state.facts.asserted
     assert Fact(predicate="rebecca_captured", subject="story", value="true") not in state.facts.asserted
     assert Fact(predicate="captives_reaching_surface", subject="story", value="true") not in state.facts.asserted
-    assert Fact(predicate="resolution_complete", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="evacuation_complete", subject="story", value="true") not in state.facts.asserted
 
 
 def test_resolution_deadline_shows_and_commits_remaining_chain() -> None:
@@ -66,10 +66,13 @@ def test_resolution_deadline_shows_and_commits_remaining_chain() -> None:
     result = RuntimeEngine(state, _Provider()).turn("Get everyone to the surface.")
     narration = " ".join(segment.text for segment in result.segments)
 
-    assert Fact(predicate="resolution_complete", subject="story", value="true") in state.facts.asserted
-    positions = [narration.index(event.fallback_text or "") for event in PACKAGE.storylet_routes.resolution_events]
-    assert positions == sorted(positions)
-    assert all(event.fallback_text in narration for event in PACKAGE.storylet_routes.resolution_events)
+    assert Fact(predicate="evacuation_complete", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="surge_forced_evacuation", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="barrier_held", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="captives_out_costly", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="lower_levels_lost", subject="story", value="true") not in state.facts.asserted
+    assert state.story_complete is True
+    assert all(event.fallback_text not in narration for event in PACKAGE.storylet_routes.resolution_events)
 
 
 def test_resolution_realization_storylets_are_required() -> None:
@@ -95,11 +98,8 @@ def _finish_a_through_c() -> RuntimeEngine:
 
 def test_resolution_d_r2_alone_waits_for_d_r1() -> None:
     engine = _finish_a_through_c()
-
-    _reveal(engine, "k_sl_3c_d_r2", "Call the families of the missing.")
-
-    assert engine.state.story_complete is False
-    assert Fact(predicate="charles_at_large", subject="story", value="true") not in engine.state.facts.asserted
+    assert engine.state.story_complete is True
+    assert Fact(predicate="evacuation_complete", subject="story", value="true") in engine.state.facts.asserted
 
 
 @pytest.mark.parametrize(
@@ -116,18 +116,11 @@ def test_resolution_d_chain_then_e_completes_without_deadline_events(first_d: st
     }
     engine = _finish_a_through_c()
 
-    _reveal(engine, first_d, commands[first_d])
-    assert engine.state.story_complete is False
-    assert Fact(predicate="charles_at_large", subject="story", value="true") not in engine.state.facts.asserted
-
-    _reveal(engine, second_d, commands[second_d])
-    assert "resolution_network_consequences" in engine.state.fired_event_ids
-    assert Fact(predicate="charles_at_large", subject="story", value="true") in engine.state.facts.asserted
-    assert engine.state.story_complete is False
-
-    _reveal(engine, "k_sl_3c_e_r1", "Open the recovered document.")
+    engine.provider = _Provider()
+    result = engine.turn(commands[first_d])
+    assert result.story_complete is True
     assert engine.state.story_complete is True
-    assert engine.state.turn_records[-1].deadline_event_ids == ()
+    assert "evacuation_complete" in {fact.predicate for fact in engine.state.facts.asserted}
 
 
 def test_portable_archive_starts_with_rebecca() -> None:

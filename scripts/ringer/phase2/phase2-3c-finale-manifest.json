@@ -1,0 +1,35 @@
+{
+ "run_name": "phase2-3c-finale",
+ "workdir": "/home/bcorfman/dev/ringer-work/phase2-3c-finale",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "3c-finale-propagate",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 5400,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "data/stories/continuity-initiative/incidents.yaml",
+    "data/stories/continuity-initiative/pacing.yaml",
+    "data/stories/continuity-initiative/world.yaml",
+    "data/stories/continuity-initiative/storylet-routes.yaml",
+    "data/stories/continuity-initiative/storylets.md",
+    "data/stories/continuity-initiative/knowledge.yaml",
+    "data/stories/continuity-initiative/handoffs.yaml",
+    "tests/"
+   ],
+   "spec": "Work in /home/bcorfman/dev/freytag-forge directly (no worktree). Never git commit, never run `uv`, never call a billed model or the network. Run tests as `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider <tests>`. ROLE: story-package editor and test updater. FIRST read /home/bcorfman/dev/freytag-forge/.plans/game-reimagination/phase2-3c-contract.md completely: it is your contract. Also read data/stories/continuity-initiative/plot.md Scene 3C.3 and 3C.4 (already edited; do NOT edit plot.md) and, as shape exemplars, the 2C incident `i_2c_rebecca_corridor` in incidents.yaml, recovery storylet SL-2C-E and its knowledge entry, events `purge_window_2c`/`purge_nudge_2c` in pacing.yaml, and the knowledge entries k_sl_2c_d_r3/r4. You may edit ONLY: data/stories/continuity-initiative/{incidents.yaml,pacing.yaml,world.yaml,storylet-routes.yaml,storylets.md,knowledge.yaml,handoffs.yaml}, and test files under tests/ (and tests/fixtures/ copies that pin the old 3C ending latch). Do NOT touch storygame/, packages/, plot.md or the lighthouse fixture (tests/fixtures/stories/lighthouse-incident) or tests/test_lighthouse_ending.py. Write story text in plain words at a 12th-grade level, one idea per sentence, in the voice of the neighbouring 3C entries; do not invent items, places or characters that are not already declared (read docs/world-model-grounding.md before naming any place or thing). Player-input lines in tests follow docs/player-input-guide.md (imperative commands, first-person possessives). DO the whole contract: incident i_3c_evacuation; the new facts everywhere facts are declared; SL-3C-C-R1 changes, new SL-3C-C-R2, new recovery storylet SL-3C-H with realization SL-3C-H-R1; the two events; matching knowledge entries (with action_evidence as the contract says, earn_when, aliases, audience, requires, establishes, source) and handoff entries for any new fact that the loader requires; the pacing ending (when, text, variants, keep marker); SL-3C-E optional as specified; remove or re-activate resolution_complete and k_resolution_complete as the contract says. Mind the loader's rules: outcome advantages disjoint and asserted by their realization; recovery storylet id pattern SL-<digit><letter>-<letter>; the narration term-trap and leak-term rules (auto-guarded multi-word aliases: do not reuse an outcome phrase in a scene entry statement or pressure line, see tests/test_leak_terms.py). Then run the loader on the real package and fix every error, then update the tests the redesign breaks in the smallest way (start with tests/test_3c_cue_chain.py and tests/test_story_ending.py). Do not add tests unless one is both complete and useful: add exactly one journey test, in tests/test_3c_finale_journey.py, that drives the real runtime engine from a 3C start through (a) the clean outcome, (b) the costly outcome and (c) the missed window plus neutral recovery, and asserts the story is complete, the matching variant paragraph is in the final segments, and no outcome fact is set on (c); copy the harness style of tests/test_story_ending.py and tests/test_incident_engine.py. Leave changes uncommitted.",
+   "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=$PWD TMPDIR=/tmp\nPY=.venv/bin/python\nD=data/stories/continuity-initiative\nCH=$(git status --porcelain | awk '{print $NF}')\nfor f in $CH; do case \"$f\" in storygame/*|packages/*|tests/fixtures/stories/lighthouse-incident/*|tests/test_lighthouse_ending.py) ;; esac; done\ngit diff --quiet -- $D/plot.md HEAD 2>/dev/null; true\nfor f in $D/incidents.yaml $D/pacing.yaml $D/storylet-routes.yaml $D/knowledge.yaml; do git status --porcelain -- $f | grep -q . || { echo \"WHY: $f not modified\"; exit 1; }; done\ngrep -q \"i_3c_evacuation\" $D/incidents.yaml || { echo \"WHY: incident missing\"; exit 1; }\ngrep -q \"evacuation_complete\" $D/pacing.yaml || { echo \"WHY: ending latch not changed\"; exit 1; }\ngrep -q \"SL-3C-H\" $D/storylet-routes.yaml || { echo \"WHY: recovery storylet missing\"; exit 1; }\ngrep -q \"variants\" $D/pacing.yaml || { echo \"WHY: ending variants missing\"; exit 1; }\n$PY -c \"from pathlib import Path; from storygame.story_package.loader import load_story_package as l; p=l(Path('$D')); e=p.pacing.ending; print(e.when, len(e.variants))\" || { echo \"WHY: package does not load\"; exit 1; }\n[ -f tests/test_3c_finale_journey.py ] || { echo \"WHY: journey test missing\"; exit 1; }\n$PY -m ruff format --check storygame tests || { echo \"WHY: not ruff-formatted\"; exit 1; }\nSUITES=\"\"; for t in test_3c_finale_journey test_story_ending test_3c_cue_chain test_incident_loader test_incident_engine test_incident_recovery test_incident_handoff_guard test_leak_terms test_markdown_story_package test_package_audit test_scene_roleplay_contract test_3a_records_followup test_disclosure_guards test_scene_relative_pacing test_spine_expected_reveals test_late_scene_repro test_knowledge_leakage_matrix test_narration_place_names test_speaker_presence test_surface_gates_scope test_medical_records_alias test_3ab_spine_prompts test_2c_paths_repro test_knowledge_projection test_loader_pacing_producers test_entry_variants; do [ -f tests/$t.py ] && SUITES=\"$SUITES tests/$t.py\"; done\n$PY -m pytest -q -p no:cacheprovider -x $SUITES || { echo \"WHY: suites failed\"; exit 1; }\necho ok\n",
+   "verified": "3C incident, recovery, ending variants and optional Phase Two propagated; package loads; journey test and package suites pass"
+  }
+ ]
+}

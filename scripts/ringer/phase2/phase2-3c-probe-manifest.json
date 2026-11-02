@@ -1,0 +1,30 @@
+{
+ "run_name": "phase2-3c-probe",
+ "workdir": "/home/bcorfman/dev/ringer-work/phase2-3c-probe",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "act3c-probe",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/phase2/act3c_probe.py",
+    "scripts/ringer/phase2/check_act3c_probe.py",
+    "tests/test_act3c_probe.py"
+   ],
+   "spec": "Work in /home/bcorfman/dev/freytag-forge directly (no worktree). Never git commit, never run `uv`, never call a billed model or the network. Run tests as `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider <tests>`. ROLE: tooling author. You may create ONLY: scripts/ringer/phase2/act3c_probe.py, scripts/ringer/phase2/check_act3c_probe.py, tests/test_act3c_probe.py. Do NOT edit any existing file. BACKGROUND: scripts/ringer/phase1/act3a_probe.py (401 lines) starts a synthetic live-smoke row in scene 3A from a ledger and runs a raw blind player; check_act3a_probe.py checks its artifacts; tests/test_act3a_probe.py tests it. Copy their structure and import their helpers (they import from scripts/ringer/phase1/act2_probe.py and scripts/ringer/stage7; mirror their sys.path and import fallbacks). The continuity package's final scene 3C was just rebuilt (read data/stories/continuity-initiative/incidents.yaml `i_3c_evacuation`, pacing.yaml events `evacuation_window_3c` (turn 9) and `evacuation_nudge_3c` (turn 10) and the ending with `variants`, and knowledge entries k_sl_3c_c_r1, k_sl_3c_c_r2, k_sl_3c_h_r1). BUILD act3c_probe.py with `--prefix {none,clean,costly,stall}`, `--n 1`, `--out`, `--dry-run`, `--confirm`, same caps as act3a (80 Cloudflare, 40 player, at most 30 commands). The synthetic arrival is scene 3C with the facts a real player carries out of 3B (find them from the 3B to 3C transition trigger `broadcast_started`, the 3B bridge, and tests that start a state in 3C, e.g. tests/test_3c_cue_chain.py and the carried 3C prefix; also the episode facts truth_no_longer_containable and rebecca_captured must be reachable by the blind player or pre-set: pre-set NOTHING that the broadcast (SL-3C-A) and archive (SL-3C-B) episodes assert unless the contract says the incident needs them; the incident's outcomes require truth_no_longer_containable and rebecca_captured, so the arrival must leave the player able to earn those two episodes by normal commands. Report in a comment how you chose). Prefixes are scripted and spend no player request: `none` = no commands; `clean` = the shortest command list that earns the broadcast episode, the archive episode and then SL-3C-C-R1 (verbs restore/hold/brace; nouns pumps, drainage pump controls, watertight barrier); `costly` = the same but SL-3C-C-R2 (verbs give up/abandon/sacrifice/flood; nouns lower levels, detention levels); `stall` = eight neutral commands that match no knowledge evidence so the window closes at turn 9 and the recovery SL-3C-H ends the story. Derive commands from the knowledge entries' action_evidence and verify EVERY scripted command with the runtime's own matcher storygame.runtime.candidate_matcher._matches_all (a command must match exactly its intended entry and none other in 3C); write player commands as imperatives with first-person possessives (docs/player-input-guide.md); no scripted command may contain a guarded outcome phrase (an alias or multi-word must_convey phrase of an unearned 3C knowledge entry). Record per row, in the act3a row style plus: commands; turns in 3C; which of evacuation_clean, evacuation_costly or the neutral recovery ended the story (`exit_cause`: evacuation_clean | evacuation_costly | neutral_recovery | none); `story_complete`; the full final ending segments text and which variant paragraphs showed; first-turn rejection and clarification counts; stale cues; `repeated_response_streak_max`; request counts; the turn the window event and the nudge fired. Dry mode must use a scripted provider that selects the right realizations so each prefix reaches its ending offline. The checker accepts dry and artifacts modes like check_act3a_probe.py and rejects a row that has story_complete false without a run-failure.txt. TESTS: tests/test_act3c_probe.py, smallest complete set: each prefix runs dry to story_complete with the expected exit_cause and the expected ending variant (barrier_held for clean, lower_levels_lost for costly, surge_forced_evacuation for stall); each scripted command matches only its intended entry via _matches_all. ruff-format everything.",
+   "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=$PWD TMPDIR=/tmp\nPY=.venv/bin/python\nfor f in scripts/ringer/phase2/act3c_probe.py scripts/ringer/phase2/check_act3c_probe.py tests/test_act3c_probe.py; do [ -s $f ] || { echo \"WHY: $f missing\"; exit 1; }; done\n$PY -m ruff format --check scripts/ringer/phase2 tests/test_act3c_probe.py || { echo \"WHY: not ruff-formatted\"; exit 1; }\n$PY -m ruff check scripts/ringer/phase2 tests/test_act3c_probe.py || { echo \"WHY: ruff check failed\"; exit 1; }\nfor p in none clean costly stall; do O=$(mktemp -d); $PY scripts/ringer/phase2/act3c_probe.py --prefix $p --n 1 --out $O --dry-run || { echo \"WHY: dry run failed for $p\"; exit 1; }; $PY scripts/ringer/phase2/check_act3c_probe.py $O 1 --mode dry || { echo \"WHY: artifact check failed for $p\"; exit 1; }; done\n$PY -m pytest -q -p no:cacheprovider tests/test_act3c_probe.py || { echo \"WHY: probe tests failed\"; exit 1; }\necho ok\n",
+   "verified": "four prefixes run dry to the ending with the expected exit cause and variant; commands verified against the real matcher"
+  }
+ ]
+}

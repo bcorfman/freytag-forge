@@ -25,7 +25,6 @@ def _item_facts_engine(fake_ask, monkeypatch):
     variation = load_variation(ITEM_FACTS_VARIATION)
     package, state = package_and_state(variation, "3C")
     probe.assert_3c_entry_facts(state)
-    probe.apply_postc_prefix(package, state, "facility_escape")
     provider = ItemFactsProvider(
         worker_url="https://worker.example/turn",
         token="",
@@ -51,7 +50,7 @@ def _item_facts_engine(fake_ask, monkeypatch):
 def test_item_facts_engine_applies_narrator_place_with_world_capture(monkeypatch):
     engine, capture, state, _budget = _item_facts_engine(lambda _state, _questions: None, monkeypatch)
 
-    engine.turn("Follow Michelle and the captives through the surface gates.")
+    engine.turn("Wait quietly.")
 
     assert capture is not None
     assert world_for(state.package, state.facts).parent("kristin") == world_for(state.package, state.facts).resolve(

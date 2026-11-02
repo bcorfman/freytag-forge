@@ -1,7 +1,7 @@
 budget_seconds: 600
 scenes:
 - {scene_id: 1A, min_turns: 2, nudge_after_turns: 2, handoff_after_turns: 3}
-- {scene_id: 1B, min_turns: 0, nudge_after_turns: 1, handoff_after_turns: 2}
+- {scene_id: 1B, min_turns: 1, nudge_after_turns: 1, handoff_after_turns: 2}
 transitions:
 - id: t_1a_1b
   source_scene_id: 1A
@@ -13,3 +13,15 @@ events:
   scene_id: 1A
   at_turn: 2
   effects: [{fact_id: tide_has_turned, equals: true}]
+- id: lamp_window_closes
+  scene_id: 1B
+  at_turn: 1
+  effects: [{fact_id: lamp_window_missed, equals: true}]
+ending:
+  scene_id: 1B
+  when: [{fact_id: lighthouse_complete, equals: true}]
+  text: The lighthouse burns steadily through the night.
+  marker: Lighthouse watch complete.
+  variants:
+  - requires: [lamp_tended]
+    text: Ada's care keeps the beacon ready for dawn.

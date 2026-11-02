@@ -1,0 +1,30 @@
+{
+ "run_name": "act3c-finale",
+ "workdir": "/home/bcorfman/dev/ringer-work/act3c-finale",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "act3c-row59",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=low"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 10800,
+   "check_timeout_s": 300,
+   "ownership": [
+    "bench/results/act3c-smoke-59-3C-costly/"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7:/home/bcorfman/dev/freytag-forge/scripts/ringer/phase1 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase2/act3c_probe.py --prefix costly --n 1 --confirm --out bench/results/act3c-smoke-59-3C-costly",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7:/home/bcorfman/dev/freytag-forge/scripts/ringer/phase1 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase2/check_act3c_probe.py bench/results/act3c-smoke-59-3C-costly 1 --mode artifacts",
+   "spec": "Run ONE billed Act 3C live smoke (prefix costly) per .plans/act2-live-smoke.md Round 10, row 59: 1 row, raw blind player after the scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act3c-smoke-59-3C-costly/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7:/home/bcorfman/dev/freytag-forge/scripts/ringer/phase1 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase2/act3c_probe.py --prefix costly --n 1 --confirm --out bench/results/act3c-smoke-59-3C-costly",
+   "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+  }
+ ]
+}

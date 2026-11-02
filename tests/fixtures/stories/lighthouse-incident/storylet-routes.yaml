@@ -35,6 +35,33 @@ storylets:
     - {op: assert, fact_id: chart_page_torn, value: true}
     - {op: assert, fact_id: recovery_cost_paid, value: true}
     - {op: assert, fact_id: incident_outcome_resolved, value: true}
+- id: SL-1B-C
+  scene_id: 1B
+  title: Tend the Lamp
+  activation: {conditions: [], pacing: {earliest_turn: 0, target_turn: 1, latest_turn: 2}}
+  pressure_role: resolution
+  realization_options:
+  - id: r0
+    dramatic_intent: Tend the lamp.
+    operations:
+    - {op: assert, fact_id: lamp_tended, value: true}
+    - {op: assert, fact_id: lighthouse_complete, value: true}
+  - id: r1
+    dramatic_intent: Signal from the lamp room.
+    operations:
+    - {op: assert, fact_id: lamp_signal_seen, value: true}
+    - {op: assert, fact_id: lighthouse_complete, value: true}
+- id: SL-1B-D
+  scene_id: 1B
+  title: Restore the Lamp Watch
+  activation: {conditions: [{fact_id: lamp_window_missed, equals: true}], pacing: {earliest_turn: 0, target_turn: 1, latest_turn: 2}}
+  pressure_role: recovery
+  realization_options:
+  - id: r0
+    dramatic_intent: Restore the missed lamp watch.
+    operations:
+    - {op: assert, fact_id: lighthouse_complete, value: true}
+    - {op: assert, fact_id: lamp_recovery_complete, value: true}
 canonical_bridge_events:
 - id: bridge_to_lamp_room
   scene_id: 1A

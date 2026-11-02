@@ -80,7 +80,8 @@ def test_real_package_requires_every_incident_route_storylet() -> None:
         if storylet_id is not None
     }
 
-    assert incident_storylets <= required <= storylet_ids
+    assert incident_storylets <= required | {"SL-3C-H"}
+    assert required | incident_storylets <= storylet_ids
 
 
 def test_resolution_scene_stages_cues_but_not_deadline_escalation() -> None:

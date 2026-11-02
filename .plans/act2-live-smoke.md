@@ -470,3 +470,191 @@ Ringer (`act3a_probe.py`, `check_act3a_probe.py`, `tests/test_act3a_probe.py`); 
   which this wording change did not touch.
 - Not shown: a row that earns the signal by Kristin's own order (the canon prompt "Signal the prisoners ..."), the
   `SL-3A-C-R2` "warns Michelle about the codes" path, and the neutral/staller exit from 3A.
+
+## Round 9: the four untested Act 2 slices (preregistered 2026-11-02, before any billed call)
+
+Authorized by Brandon on 2026-11-02 ("Yes, one preregistered round"). No story or engine change. The only change is
+the probe: Ringer run `phase2-prep` adds four scripted prefixes to `act2_probe.py` (`pure_missed_window`, `doubted`,
+`erased`, `rescue`), each the shortest command list that earns its target, checked offline against the real action
+evidence. Each prefix is scripted, so it spends no player request; the blind player takes over after it. Cloudflare
+Workers AI only. Row numbers continue from Round 8.
+
+The free 3C look (2026-11-02) is recorded here, not tested: the 3C pressure line is "Expose the network and escape",
+which does not contain the guarded phrase "exposure and escape" (`k_resolution_complete` alias). Only the 3C entry
+statement does, and the guard exempts a term that a grounded statement covers. 3C is probably exempt, unlike 2A, but a
+live 3C row waits for Round 10, after the Phase 2 rebuild changes 3C anyway
+([phase2-finale.md](game-reimagination/phase2-finale.md)).
+
+Rows (one each, no retries, no replaced rows, one Ringer task per row, run name `act2-round9-slices`):
+
+| Row | Scene, prefix | Question |
+| --- | --- | --- |
+| 53 | 2A `pure_missed_window` | With no manifold observation, does the window close on turn 5 and SL-2A-D carry the staller to 2B? |
+| 54 | 2A `doubted` | Does the doubted outcome show, with `cover_suspected`, and does the matching 2B entry variant show? |
+| 55 | 2B `erased` | Does the erase outcome show, with the development-record gap as its cost, and the matching 2C entry? |
+| 56 | 2C `rescue` (ledger kept) | Does the rescue commitment show with `evidence_not_transmitted`, and the freed-captives 3A entry? |
+
+Row 53 runs alone first; rows 54 to 56 run after its transcript is read. Caps per row: 30 commands, 80 Cloudflare and
+40 player requests.
+
+Pass per row: no `run-failure.txt`; no stale cue; no rejection; no stuck loop (`repeated_response_streak_max` under 3);
+the scene is left for its successor within the cap; `exit_cause` equals the row's target (53:
+`missed_window_plus_recovery`; 54: `inspection_doubted`; 55: `brandon_name_erased`; 56: `committed_to_rescue`).
+Fact checks at exit: 53 neither `supervisor_convinced` nor `manifold_fault_found` before the recovery; 54
+`cover_suspected` true and `supervisor_convinced` false; 55 `evidence_gap_development_record` true and
+`brandon_name_kept` false; 56 `committed_to_rescue` and `evidence_not_transmitted` true, `committed_to_transmit` and
+`detention_sectors_sealed` false. Recorded, not scored: the turn each outcome landed, the successor entry variant,
+commands used, recovery count (1 is expected for row 53 only). Known classifier gap: `unearned_facts` lists facts a
+recovery bridge asserts by design.
+
+Reading rule: read the transcript of all four rows, passes included, before reporting. A miss is diagnosed from the
+transcript and the recorded prompt before any rewording, and a reword is a new preregistered round. Four rows are a
+smoke, not a rate.
+
+Round 9 result (2026-11-02, Ringer runs `act2-round9-slices`, one row each, no retries; artifacts
+`bench/results/act2-smoke-53-2A-pure-missed-window`, `-54-2A-doubted`, `-55-2B-erased`, `-56-2C-rescue`, gitignored).
+One row met the preregistered pass rule. The other three missed, and each miss traces to the new scripted prefix, not
+to the story. Probe build (Ringer `phase2-prep`) and its dry runs passed; the dry scripted provider cannot show that a
+command matches real evidence, which is exactly what these rows found.
+
+| Row | Result | Why |
+| --- | --- | --- |
+| 53 2A `pure_missed_window` | **Run-failure** on turn 5, `narration mentions unavailable knowledge 'cooling-water pressure fault'` | Prefix not pure: command 3, "Trace the ventilation duct above the gate.", matches `k_sl_2a_b_r1` (verb "trace", noun "ventilation"), so `manifold_fault_found` was earned on turn 3 and the recovery bridge was never tested. Turn 5 ("Examine the gate tablet ...") then rejected: the narrator named the fault the player had just found, and that phrase is also an auto-guarded leak term of the unearned outcomes `k_sl_2a_c_r5`/`r6`. |
+| 54 2A `doubted` | **Run-failure** on turn 2, same term | Scripted command 2 itself contains the guarded phrase ("Explain my vague cooling-water pressure fault ..."), taken from the knowledge entry rather than from narration. The narrator echoed it and the guard rejected it, with no recovery before the player. |
+| 55 2B `erased` | **Pass** | Outcome `brandon_name_erased` on turn 2, 3 commands, `ended_by` `scene_2c`, `evidence_gap_development_record` true, `brandon_name_kept` false, no rejection, stale cue or loop, recovery 0, 3 requests. 2C entry text was the standard corridor entry. |
+| 56 2C `rescue` | **Miss**: `exit_cause` `committed_to_transmit` | Prefix too short: its first command did not earn the Rebecca observation (she asked a question instead), so the rescue commitment was never reached and the blind player later transmitted. The 3A entry showed the transmit variant. No rejection, stale cue or loop. |
+
+Reading all four: row 55's turn 2 repeats the file facts from turn 1 inside the outcome delivery (by design of the
+outcome realization). Rows 53 and 54 show an engine friction already seen in Round 6 and row 17: a final guard rejection
+goes to the player with no recovery attempt. It now has a third trigger, a narrator that names a fact the player has
+already earned when a guarded outcome phrase is the same words.
+
+Not shown: the 2A recovery bridge on a pure missed window, `inspection_doubted`, `committed_to_rescue`. Fix needed
+before any new row, all in the probe (no story edit): 53 replace the ventilation command with one that matches no 2A
+observation evidence; 54 write the vague-diagnosis command from words the narration has shown, not from guarded phrases;
+56 add the commands that earn the Rebecca observation before the commitment. Replacement rows break the "no replaced
+rows" rule, so they need Brandon's go-ahead as in Round 5.
+
+### Round 9b: replacement rows for 53, 54 and 56 (preregistered 2026-11-02, before any billed call)
+
+Authorized by Brandon on 2026-11-02 ("Yes, replace the three rows"). A deliberate deviation from Round 9's "no replaced
+rows". No story or engine change; the probe prefixes only, fixed by Ringer task `fix-round9b-prefixes` and checked free
+against the runtime's own matcher (`candidate_matcher._matches_all`) before any billed call:
+- `pure_missed_window` (2A): command 3 becomes "Trace the cable run along the gate wall." The old one matched
+  `k_sl_2a_b_r1`. All five commands now match no 2A knowledge entry.
+- `doubted` (2A): command 2 becomes "Give my supervisor a long, vague explanation of the failing water pressure." It
+  matches only `k_sl_2a_c_r6`, and neither command contains a guarded outcome phrase.
+- `rescue` (2C): the list becomes "Ask Rebecca what she offers for Michelle." then "Free the captives on the transfer
+  carts." They match `k_sl_2c_c_r1` and `k_sl_2c_d_r4` in the order the rescue commitment needs.
+
+Rows 53b, 54b and 56b: one each, no retries, no further replacements, same pass rule, caps and reading rule as Round 9.
+Row 53b runs first alone; 54b and 56b after its transcript is read. Row 55 stands. A final guard rejection, if it
+recurs, is a recorded miss and a finding, not a retry.
+
+Round 9b result (2026-11-02, Ringer runs `act2-round9-slices`, one replacement row each, no retries; artifacts
+`bench/results/act2-smoke-53b-2A-pure-missed-window`, `-54b-2A-doubted`, `-56b-2C-rescue`, gitignored). All three met the
+Round 9 pass rule. No run-failure, rejection, clarification, stale cue or stuck loop in any row.
+
+| Row | Result |
+| --- | --- |
+| 53b 2A `pure_missed_window` | Window missed on turn 5, `supervisor_escorting` showed, the recovery bridge carried them to 2B on turn 7 (`missed_window_plus_recovery`). `cover_suspected` and `restricted_corridor_access` true from the recovery by design; `manifold_fault_found` and `supervisor_convinced` false at the window. After the window the blind player inspected the manifold and explained it; no outcome landed, as designed. 7 requests. First live observation of the 2A recovery bridge on the rewritten text. |
+| 54b 2A `doubted` | `inspection_doubted` on turn 2, `cover_suspected` and `restricted_corridor_access` true, `supervisor_convinced` false, 2 requests. The 2B "supervisor had logged them at the gate" entry variant showed. No guarded-phrase rejection: the command no longer carried the outcome words. |
+| 56b 2C `rescue` | `committed_to_rescue` on turn 2 with `evidence_not_transmitted` true and `committed_to_transmit`, `detention_sectors_sealed` false, 2 requests. The 3A freed-captives entry variant showed ("The captives Kristin had freed from the transfer carts ..."). First live rescue commitment. |
+
+With row 55, every Act 2 outcome and every Act 2 recovery bridge has now been seen live at least once: 2A convincing
+(row 50), doubted (54b), missed window (53b); 2B kept, erased (55) and stall (45); 2C transmit, rescue (56b), missed
+window and stall (46). Still true: one row per cell is a smoke, not a rate. Still open from this round: the narrator
+can name an already-earned fact whose words are a guarded outcome phrase (row 53's turn 5), and a final guard rejection
+reaches the player with no recovery. Both are engine friction already recorded (row 17, Round 6), not new story
+defects, and neither recurred in rows 53b, 54b or 56b.
+
+## Round 10: the finite 3C finale (preregistered 2026-11-02, before any billed call; NOT YET AUTHORIZED)
+
+Change under test: the Phase 2 rebuild of 3C ([phase2-finale.md](game-reimagination/phase2-finale.md),
+[phase2-3c-contract.md](game-reimagination/phase2-3c-contract.md)): incident `i_3c_evacuation` (outcomes
+`evacuation_clean` via `SL-3C-C-R1`, `evacuation_costly` via `SL-3C-C-R2`, neutral recovery `SL-3C-H`), window event
+`evacuation_window_3c` at turn 9 and nudge at turn 10 (both **assumed**, unmeasured), and the ending latched by
+`evacuation_complete` with seven aftermath variants. Probe: `scripts/ringer/phase2/act3c_probe.py` (Ringer
+`phase2-3c-probe`), synthetic 3C arrival from the 3B bridge facts only, so the blind player must still earn the
+broadcast and archive episodes. Cloudflare Workers AI only. Caps per row: 30 commands, 80 Cloudflare and 40 player
+requests. Run name `act3c-finale`. One row each, no retries, no replaced rows.
+
+Question: with a raw blind player after the scripted prefix, does 3C end by its ending (not a timeout), with the right
+aftermath variant, no rejected narration, no stale cue and no stuck loop? The 3C overlap from the free look is
+now moot: the propagation removed the canonical event `resolution_complete` and `k_resolution_complete`, so the guarded
+phrase "exposure and escape" no longer exists in the package.
+
+| Row | Prefix | Expected `exit_cause` | Expected variant paragraph |
+| --- | --- | --- | --- |
+| 57 | `none` (blind from the first turn) | any of the three, recorded | whichever matches |
+| 58 | `clean` | `evacuation_clean` | `barrier_held` |
+| 59 | `costly` | `evacuation_costly` | `lower_levels_lost` |
+| 60 | `stall` | `neutral_recovery` | `surge_forced_evacuation` |
+
+Row 57 runs alone first; rows 58 to 60 after its transcript is read.
+
+Pass per row: no `run-failure.txt`; no first-turn or later rejection; no stale cue; `repeated_response_streak_max`
+under 3; `story_complete` true within the cap; `exit_cause` and variant as in the table (row 57: story ends by a
+declared outcome or the recovery, never by hitting the cap). Rows 58 to 60 must also leave the other outcome's fact
+false, and row 60 must set no outcome fact. Recorded, not scored: the turn each episode and the window/nudge fired, the
+full ending text, which variants showed, commands used. Reading rule: read all four transcripts, passes included; a
+miss is diagnosed from the transcript and recorded prompt before any rewording, and a reword is a new preregistered
+round. Four rows are a smoke, not a rate. The turn-9 and turn-10 timing is an assumption copied from the 5/6 pattern;
+Round 10 only checks that the events fire and the staller ends, not that the pacing is right.
+
+Round 10 result, row 57 (2026-11-02, Ringer run `act3c-finale`, `bench/results/act3c-smoke-57-3C-blind`, gitignored):
+**run-failure after 18 turns**, `ProposalValidationError: narration mentions guarded term 'card'` (the 1A memory-card
+term, a leak term in a late scene; the known "final rejection reaches the player" friction, third observation). Rows 58
+to 60 were not run. Diagnosed from the transcript and the package, no reword:
+- **The neutral recovery could not fire.** `SL-3C-H` (and its entry `k_sl_3c_h_r1`) required `truth_no_longer_containable`
+  and `rebecca_captured`, which the contract said it must not, and it was written as an action-earned entry ("let the
+  surge carry the captives") instead of the event-driven Act 2 recovery shape. A player who has not finished the broadcast
+  and archive episodes therefore never reaches the recovery: the Phase 1 gap "a neutral staller stays in 3C" was not closed.
+  The dry stall path hid it because the probe scripted both episodes and the recovery command itself.
+- **A blind player did not find the next move.** After the broadcast beat landed on turn 1 ("Rebecca is leaving the
+  executive office with the Portable data case."), the player re-sent the evidence package about ten times and never
+  countered Charles's claim (`SL-3C-A-R2`, which sets `truth_no_longer_containable`) or went after Rebecca. The 3C
+  episodes do not offer their next move the way 1C's Brandon does. Recorded, not fixed here.
+- Fix in progress (Ringer `phase2-3c-finale`, task `fix-3c-recovery-shape`): recovery gated by the window alone, Act 2
+  shape, honest dry stall. Rows 57 to 60 then need a fresh go-ahead, because row 57 is replaced.
+
+### Round 10b: replacement row 57b, then rows 58 to 60 (preregistered 2026-11-02, before any billed call)
+
+Authorized by Brandon on 2026-11-02 ("Yes, replace 57 and run 58 to 60"). A deliberate deviation from Round 10's "no
+replaced rows". Change under test: commit `afbd76d0`: `SL-3C-H` gated by `evacuation_window_missed` alone, in the
+Act 2 recovery shape (world-only `k_evacuation_recovery_ready` and `k_sl_3c_h_route_effects`, event
+`evacuation_recovery_3c` at turn 10), and an honest `stall` prefix (eight neutral commands, no scripted episodes).
+Free evidence already in hand: the 3C stall-exit audit passes without its xfail, and the dry stall row reaches
+`neutral_recovery`. Same table, pass rule, caps, run name and reading rule as Round 10. Row 57b (blind) runs alone first,
+output `bench/results/act3c-smoke-57b-3C-blind`; rows 58, 59, 60 follow after its transcript is read. One row each, no
+retries, no further replacements. A final guard rejection is a recorded miss and a finding.
+
+Expected limits, stated now so they are not read as surprises: a blind player may again fail to find the next 3C move
+(counter Charles, go after Rebecca). Row 57b passes if the story ends by an outcome or by the neutral recovery within
+the cap and the other pass-rule items hold; if the blind player stalls, the recovery at turn 9 to 10 is what ends it.
+
+Round 10b result (2026-11-02, Ringer run `act3c-finale`, one row each, no retries; artifacts
+`bench/results/act3c-smoke-57b-3C-blind`, `-58-3C-clean`, `-59-3C-costly`, `-60-3C-stall`, gitignored). All four rows met the
+preregistered pass rule: no run-failure, rejection, clarification or stuck loop; `story_complete` true by an earned
+ending, never by the cap; the expected `exit_cause` and variant paragraph showed; the other outcome's fact stayed false.
+
+| Row | Result |
+| --- | --- |
+| 57b blind | The blind player re-sent the evidence package and never countered Charles or chased Rebecca. The neutral recovery ended the story on player turn 8 (`neutral_recovery`), with the base ending and the `surge_forced_evacuation` paragraph. Only `truth_no_longer_containable`, `evacuation_*` facts set; no outcome fact. 8 requests. **The fix works from a cold stall: row 57 failed here before it.** |
+| 58 clean | Broadcast, archive, then `evacuation_clean` on turn 3. Variants `barrier_held` and `archive_copies_distributed`. 3 requests. |
+| 59 costly | Same, then `evacuation_costly` on turn 3. Variants `lower_levels_lost` and `archive_copies_distributed`; the delivery folds in the gate release. 3 requests. |
+| 60 stall | `neutral_recovery` on turn 8 with `surge_forced_evacuation` and `archive_copies_distributed`. No outcome fact. 8 requests. |
+
+Two probe defects, found when reading row 60, found after the rows ran (fixed by Ringer `fix-act3c-probe-stall-and-turns`):
+- Row 60's live prefix still scripted the broadcast and archive episodes before the neutral commands, so it is "both
+  episodes done, then stall", not a pure stall. Row 57b is the pure stall.
+- The probe set the arrival `turn_index` to 2, which moved every 3C window event two player turns early: the window fired
+  on player turn 7 and the nudge on 8, not 9 and 10. All four rows share this offset, so the Round 10b timing numbers
+  are not the real pacing. Outcomes, variants and the recovery are unaffected.
+
+Findings for Brandon: (1) the ending is reachable from nothing (57b), which is the Phase 1 gap closed; (2) a blind player
+does not find 3C's next move on their own (the episodes do not offer it the way 1C's Brandon does), so the neutral ending
+is what an unguided player gets; (3) the window is a hard timer: a player who needs more than about 9 turns for
+broadcast, archive and barrier is carried out neutrally; the 9 and 10 are still an unmeasured assumption; (4) the
+"final guard rejection with no recovery" friction showed in row 57 ('card') and is still open; (5) the ending
+paragraphs are short and plain, written to the contract; they want your pass.

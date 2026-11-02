@@ -29,4 +29,4 @@ def test_score_uses_real_post_c_selector(tmp_path: Path) -> None:
     )
     assert probe.main(["--score", "--out", str(tmp_path)]) == 0
     score = json.loads((tmp_path / "score.json").read_text())
-    assert [item["reveal_id"] for item in score] == ["k_sl_3c_d_r2", None]
+    assert [item["reveal_id"] for item in score] == [None, None]

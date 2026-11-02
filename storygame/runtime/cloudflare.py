@@ -869,7 +869,8 @@ class CloudflareTurnProvider:
         if not self.absent_thing_rule:
             return ()
         return (
-            "If the player asks for something the SCENE does not give, Kristin looks around and finds nothing like it.",
+            f"If the player asks for something the SCENE does not give, {self._protagonist_name()} looks around and "
+            "finds nothing like it.",
             "Do not use the player's name for that thing in your reply.",
         )
 

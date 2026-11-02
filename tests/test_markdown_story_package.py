@@ -274,7 +274,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 42
+    assert len(package.storylets) == 43
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
@@ -313,6 +313,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "processing_numbers_used_in_confrontation",
         "purge_transfers_underway",
         "service_route_used_in_confrontation",
+        "los_angeles_facility_lost",
     }
     assert mapped_facts <= set(package.world.facts)
     assert set(package.world.facts) - pacing_facts - pacing_only_facts <= mapped_facts
@@ -323,6 +324,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "storylet:SL-2C-D:SL-2C-D-R1",
         "storylet:SL-2C-D:SL-2C-D-R2",
         "storylet:SL-2C-E:SL-2C-E-R1",
+        "storylet:SL-3C-F:SL-3C-F-R1",
     }
     for route in package.storylet_routes.storylets:
         for realization in route.realizations:

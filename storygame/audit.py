@@ -20,7 +20,6 @@ from typing import Any
 
 import yaml
 
-SCENES = ("1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C")
 _WORD = re.compile(r"[A-Za-z][A-Za-z'-]{2,}")
 _STOPWORDS = set(  # noqa: SIM905
     """  # noqa: SIM905
@@ -195,12 +194,17 @@ def audit_package(root: Path) -> dict[str, Any]:
     root = Path(root)
     plot = (root / "plot.md").read_text(encoding="utf-8")
     scenes = _plot_scenes(plot)
-    scene_ids = tuple(scene_id for scene_id in SCENES if scene_id in scenes) or tuple(scenes)
     knowledge = _read_yaml(root / "knowledge.yaml")
     world = _read_yaml(root / "world.yaml")
     pacing = _read_yaml(root / "pacing.yaml")
     routes = _read_yaml(root / "storylet-routes.yaml")
     findings: list[dict[str, str]] = []
+    pacing_scene_ids = tuple(
+        str(item.get("scene_id"))
+        for item in pacing.get("scenes", [])
+        if isinstance(item, dict) and item.get("scene_id")
+    )
+    scene_ids = pacing_scene_ids or tuple(scenes)
 
     # This is deliberately lexical: it catches bare owned things, but cannot
     # resolve pronouns, aliases, or ownership expressed outside the same unit.

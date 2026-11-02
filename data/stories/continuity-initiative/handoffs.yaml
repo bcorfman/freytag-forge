@@ -473,15 +473,6 @@ deliveries:
   - [drainage pump controls, pump controls]
   fallback_text: Water rises around the drainage pump controls.
   cue_text: Water rises around the drainage pump controls.
-- fact_id: los_angeles_facility_lost
-  scene_id: 3C
-  source_kind: observation
-  source_entity_id: kristin
-  must_convey:
-  - [surface gates, emergency surface gates]
-  - [senior official's authorization, gate authorization]
-  fallback_text: The surface gates remain shut as the senior official's authorization nears expiry.
-  cue_text: The surface gates are shut above the waiting captives. The gate authorization is close to expiry.
 - fact_id: national_network_fragmenting
   scene_id: 3C
   source_kind: observation

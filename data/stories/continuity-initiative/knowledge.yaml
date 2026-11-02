@@ -136,6 +136,20 @@ facts:
   purpose: Copies of the archive have been distributed to independent networks.
 - id: evacuation_route_open
   purpose: A viable evacuation path from the collapsing facility is open.
+- id: evacuation_complete
+  purpose: The last captive has passed through the surface gates.
+- id: barrier_held
+  purpose: Kristin held the watertight barrier until the last captive passed.
+- id: captives_out_costly
+  purpose: The captives passed through after Kristin gave up the lower levels.
+- id: lower_levels_lost
+  purpose: The lower levels were lost so the captives could pass.
+- id: surge_forced_evacuation
+  purpose: The surge carried the captives out without Kristin directing the barrier.
+- id: evacuation_window_missed
+  purpose: The final evacuation window closed before Kristin resolved the incident.
+- id: evacuation_surge_building
+  purpose: The surge is building around the barrier and drainage pumps.
 - id: captives_reaching_surface
   purpose: Surviving captives are reaching the surface.
 - id: los_angeles_facility_lost
@@ -218,6 +232,8 @@ facts:
   purpose: The archive audit has lasted long enough for the missed-window recovery to close the archive crisis.
 - id: purge_recovery_ready
   purpose: The purge alarm has lasted long enough for the neutral route recovery to move the group onward.
+- id: evacuation_recovery_ready
+  purpose: The missed evacuation window has lasted long enough for the neutral route recovery to carry the captives out.
 - id: audit_reaches_stacks
   purpose: The live audit has reached Kristin and Brandon in the archive stacks.
 - id: purge_alarm_active
@@ -247,10 +263,6 @@ facts:
 - id: rebecca_captured
   purpose: Rebecca has been captured and no longer controls the portable archive or
     the local operation.
-- id: resolution_complete
-  purpose: 'The canonical 3C resolution has landed: exposure is durable, captives
-    are escaping, the network is fragmenting, Charles remains at large, and Phase
-    Two has been revealed.'
 - id: michelle_publishing_archive
   purpose: Michelle has begun distributing/publishing the Continuity Initiative archive
     after the exposure.
@@ -2430,14 +2442,16 @@ knowledge:
     priority: 0
   delivery_text: "The prisoners capture Rebecca after the archive is copied beyond her reach. Charles escapes his remote command site."
 - id: k_sl_3c_c_r1
-  statement: 'Kristin restores power to drainage pumps and holds one watertight barrier while Michelle leads captives through the maintenance tunnel.'
-  earn_when: restores power to the drainage pumps
+  statement: 'Kristin restores the pumps and holds the watertight barrier until the last captive passes.'
+  earn_when: restores the pumps and braces the watertight barrier
   action_evidence:
-  - [ask, talk to, restore, turn on, switch on, power up, start, activate, repair, fix, run, operate, use, route, reroute, boot, hold, shut, close, seal, lead, guide, brace, keep]
-  - [drainage pumps, drainage pump, pump controls, pump control, drainage controls, drainage control, pump power, drainage power, pump switch, pump switches, pump panel, pump panels, drainage panel, drainage panels, watertight barrier, watertight barriers, barrier door, barrier doors, flood barrier, flood barriers, sealed barrier, sealed barriers, maintenance tunnel, maintenance tunnels, maintenance route, maintenance routes, escape tunnel, escape tunnels, tunnel route, tunnel routes, the pumps, the pump]
+  - [restore, hold, brace, close, repair, fix, start, activate, use, operate]
+  - [pumps, drainage pumps, drainage pump controls, pump controls, watertight barrier, barrier]
   entity_ids: []
   aliases:
   - evacuation route open
+  - evacuation complete
+  - barrier held
   audience:
     kind: public
     player_visible: true
@@ -2452,6 +2466,12 @@ knowledge:
   - op: assert
     fact_id: evacuation_route_open
     value: true
+  - op: assert
+    fact_id: evacuation_complete
+    value: true
+  - op: assert
+    fact_id: barrier_held
+    value: true
   source:
     kind: storylet_realization
     storylet_id: SL-3C-C
@@ -2459,16 +2479,19 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin restores power to the drainage pumps and holds a watertight barrier. Michelle leads the captives through the maintenance tunnel."
+  delivery_text: "Kristin restores the pumps and holds the barrier until the last captive is through. The lower levels still stand."
 - id: k_sl_3c_c_r2
-  statement: 'Michelle uses the senior official’s authorization to release the surface gates while Brandon keeps the relay open and water closes the facility around them.'
-  earn_when: releases the emergency surface gates
+  statement: 'Kristin gives the lower levels to the water so the captives can pass.'
+  earn_when: gives up the lower levels so the captives can pass
   action_evidence:
-  - [ask, talk to, release, open, unlock, raise, activate, start, switch on, power up, use, enter, type, input, authorize, approve, send, have, tell, order, give, hand, trigger, extend, guide, lead]
-  - [emergency surface gates, emergency surface gate, surface gates, surface gate, emergency gates, emergency gate, gate authorization, gate authorizations, one-time authorization, one-time authorizations, senior official's authorization, official authorization, official's authorization, override codes, override code, emergency override codes, Michelle's authorization, her authorization, gate code, gate codes, surface release, surface releases, gate release, gate releases, gate signal, gate signals, escape signal, escape signals, surface alarm, surface alarms, gates to the surface, surface exits, surface exit]
+  - [give up, abandon, sacrifice, flood, seal, let go, give, release, accept]
+  - [lower levels, lower level, detention levels, detention level]
   entity_ids: []
   aliases:
-  - los angeles facility lost
+  - evacuation route open
+  - evacuation complete
+  - captives out costly
+  - lower levels lost
   audience:
     kind: public
     player_visible: true
@@ -2481,16 +2504,57 @@ knowledge:
     equals: true
   establishes:
   - op: assert
-    fact_id: los_angeles_facility_lost
+    fact_id: evacuation_route_open
+    value: true
+  - op: assert
+    fact_id: evacuation_complete
+    value: true
+  - op: assert
+    fact_id: captives_out_costly
+    value: true
+  - op: assert
+    fact_id: lower_levels_lost
     value: true
   source:
     kind: storylet_realization
-    storylet_id: SL-3C-F
-    realization_id: SL-3C-F-R1
+    storylet_id: SL-3C-C
+    realization_id: SL-3C-C-R2
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle uses the senior official's authorization to release the surface gates. Brandon keeps the relay open while water closes the facility around them."
+  delivery_text: >-
+    Kristin gives the lower levels to the water so the captives can pass.
+    Michelle uses the authorization to release the surface gates.
+    Brandon remains at the relay.
+- id: k_evacuation_recovery_ready
+  statement: The missed evacuation window is ready for the neutral route recovery.
+  aliases: [evacuation recovery ready]
+  leak_terms: []
+  audience: {kind: world_only, player_visible: false}
+  available_in_scenes: [3C]
+  establishes: [{op: assert, fact_id: evacuation_recovery_ready, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-3C-H, realization_id: SL-3C-H-R1}
+- id: k_sl_3c_h_route_effects
+  statement: The missed-window evacuation recovery carries its route effects.
+  aliases: [evacuation recovery route effects]
+  audience: {kind: characters, character_ids: [charles], player_visible: false}
+  available_in_scenes: [3C]
+  entity_ids: []
+  requires:
+  - fact_id: evacuation_window_missed
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: evacuation_complete
+    value: true
+  - op: assert
+    fact_id: surge_forced_evacuation
+    value: true
+  must_convey: [[evacuation recovery, route effects]]
+  source:
+    kind: storylet_realization
+    storylet_id: SL-3C-H
+    realization_id: SL-3C-H-R1
 - id: k_sl_3c_d_r1
   statement: 'Across the country, detention sites begin to surrender or release prisoners as the national network fractures.'
   earn_when: checks reports from detention sites
@@ -2674,14 +2738,6 @@ knowledge:
   available_in_scenes: [3B]
   establishes: [{op: assert, fact_id: broadcast_started, value: true}]
   source: {kind: canonical_route_event, canonical_event_id: bridge_3b_broadcast}
-- id: k_resolution_complete
-  statement: The exposure and escape resolution has landed, though the wider damage remains.
-  entity_ids: [kristin, michelle, facility_escape]
-  aliases: [resolution, exposure and escape]
-  audience: {kind: public, player_visible: true}
-  available_in_scenes: [3C]
-  establishes: [{op: assert, fact_id: resolution_complete, value: true}]
-  source: {kind: canonical_route_event, canonical_event_id: resolution_complete}
 - id: k_resolution_escape
   statement: Surviving captives reach the surface after the evacuation route opens.
   entity_ids: [facility_escape]

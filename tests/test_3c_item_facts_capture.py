@@ -38,7 +38,7 @@ def _run_with_provider(provider, tmp_path: Path) -> dict[str, object]:
         SpendBudget(20, cloudflare_limit=20, player_limit=20),
         ask=lambda _screen, _budget: "Wait quietly.",
         provider_factory=lambda _state, _variation: provider,
-        start="postc",
+        start="entry",
         first_command="Wait quietly.",
         capture_item_facts=True,
     )

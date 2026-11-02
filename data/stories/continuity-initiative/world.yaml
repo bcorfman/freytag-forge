@@ -440,6 +440,14 @@ facts:
 - archive_contains_prisoner_locations
 - archive_copies_distributed
 - evacuation_route_open
+- evacuation_complete
+- barrier_held
+- captives_out_costly
+- lower_levels_lost
+- surge_forced_evacuation
+- evacuation_recovery_ready
+- evacuation_window_missed
+- evacuation_surge_building
 - captives_reaching_surface
 - los_angeles_facility_lost
 - national_network_fragmenting
@@ -501,7 +509,6 @@ facts:
 - command_levels_assault_underway
 - detention_locations_secured
 - rebecca_captured
-- resolution_complete
 - michelle_publishing_archive
 - kristin_joined_rescue_efforts
 - janus_known

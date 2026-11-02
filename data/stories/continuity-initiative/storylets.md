@@ -1831,21 +1831,23 @@ Each entry below is authoring data, not a player action menu.
 - Move the climax into falling action without removing danger too early.
 
 **Possible realizations**
-- Kristin restores power to drainage pumps and holds one barrier long enough for captives to pass.
+- Kristin restores the pumps and holds the watertight barrier until the last captive passes.
+- Kristin gives the lower levels to the water so the captives can pass.
 - Michelle organizes movement through maintenance tunnels.
 - The group must accept that not every section can be saved.
 - Michelle uses the senior official’s authorization to release the surface gates once.
 
 **Effects**
 - May intensify the deluge as Charles seals more access routes.
-- May set `evacuation_route_open`.
-- May transition into resolution once escape and broadcast consequences are established.
+- Sets `evacuation_route_open` and `evacuation_complete`.
+- The clean realization sets `barrier_held`.
+- The costly realization sets `captives_out_costly` and `lower_levels_lost`.
 
 **Completion**
-- The evacuation route is open and the captives are moving through the maintenance tunnel.
+- The last captive has passed through the surface gates.
 
 **Abort**
-- Ends on transition to the resolution state.
+- None in the canonical incident.
 
 **Protected boundary**
 - The final Phase Two revelation is delivered only by the authored recovered-JANUS resolution event, not by this escape storylet.
@@ -1854,6 +1856,47 @@ Each entry below is authoring data, not a player action menu.
 - earliest: `turn 0`
 - target: `turn 11`
 - latest: `turn 12`
+
+---
+
+### SL-3C-H — The Surge Takes the Choice
+
+**Source beats:** [3C.3 — The Deluge](plot.md#scene-3c3--the-deluge)
+
+**Allowed scene:** `3C`
+
+**Available when**
+- The final evacuation window has been missed.
+
+**Participants / items**
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+- Escaping prisoners
+- The drainage pumps and watertight barrier
+
+**Dramatic purpose**
+- Resolve a stalled evacuation without crediting Kristin with an outcome or a cost.
+
+**Possible realizations**
+- The surge carries the captives through the gates without Kristin's hand on the barrier.
+
+**Effects**
+- Sets `evacuation_complete`.
+- Sets `surge_forced_evacuation`.
+
+**Completion**
+- The surge has carried the captives out.
+
+**Abort**
+- None in the canonical incident.
+
+**Protected boundary**
+- The final Phase Two revelation remains optional.
+
+**Pacing window**
+- earliest: `turn 9`
+- target: `turn 10`
+- latest: `turn 13`
 
 ---
 
@@ -1999,8 +2042,8 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 **Allowed scene:** `3C` (final resolution only)
 
 **Available when**
-- The canonical resolution has been reached.
-- A partially recovered JANUS file is available through the authored resolution event.
+- Copies of the portable archive have been distributed.
+- A partially recovered JANUS file is available.
 
 **Participants / items**
 - Kristin Schweitzer
@@ -2008,7 +2051,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 - Partially recovered JANUS file
 
 **Dramatic purpose**
-- Deliver the final sequel-scale reversal only after the main personal and national victory has landed.
+- Offer the final sequel-scale reversal without deciding whether the evacuation is complete.
 
 **Possible realizations**
 - Michelle or Kristin notices the operation label “Phase One.”
@@ -2048,7 +2091,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 | [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-C`, `SL-2C-D`, `SL-2C-E` | Rebecca’s answered offer, physical commitment, Michelle’s route |
 | [3A](plot.md#scene-3a--reaching-michelle) | `SL-3A-A` … `SL-3A-C` | Reunion reversal, experiments, deadline/override |
 | [3B](plot.md#scene-3b--the-battle-for-the-broadcast) | `SL-3B-A` … `SL-3B-C` | Defeat JANUS, confront Rebecca, open relay |
-| [3C](plot.md#scene-3c--exposure-and-escape) | `SL-3C-A` … `SL-3C-E` | Broadcast credibility, archive custody, deluge escape, epilogue |
+| [3C](plot.md#scene-3c--exposure-and-escape) | `SL-3C-A` … `SL-3C-H` | Broadcast credibility, archive custody, deluge escape, epilogue |
 
 ## Canonical scene beats vs. optional storylets
 

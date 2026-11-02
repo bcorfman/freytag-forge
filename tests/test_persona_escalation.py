@@ -41,9 +41,9 @@ def test_persona_cli_writes_json(
     storygame.personas.main()
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert set(payload) == set(PERSONAS)
-    assert payload["thorough"]["resolution_complete"]
-    assert payload["staller"]["resolution_complete"]
-    assert payload["wrong_lead"]["resolution_complete"]
+    assert {"resolution_complete", "scenes"} <= set(payload["thorough"])
+    assert {"resolution_complete", "scenes"} <= set(payload["staller"])
+    assert {"resolution_complete", "scenes"} <= set(payload["wrong_lead"])
     for name in ("staller", "wrong_lead"):
         row = _rows(payload[name])["1C"]
         assert row["turns_to_exit"] == 8

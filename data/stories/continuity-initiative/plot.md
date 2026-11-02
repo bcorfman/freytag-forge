@@ -883,6 +883,8 @@ Water rises around the drainage pump controls.
 
 Michelle leads the prisoners through the maintenance tunnel while Kristin keeps the pumps and barrier working.
 
+This is the last hard thing the night asks of Kristin, and it is finite. If she restores the pump power and holds the barrier until the last captive is through, everyone reaches the surface gates and the lower levels still stand. If she cannot hold both, she gives up the lower levels to the water so the captives can pass. Everyone still gets out, but the lower levels are lost. If she does nothing in time, the surge pushes the captives to the surface without her hand on the barrier, the lower levels are lost, and she has earned nothing. The evacuation is complete when the last captive is through the gates, and the story goes straight to dawn.
+
 The surface gates remain shut above the waiting captives as the senior official's authorization nears expiry.
 
 From Rebecca's office, Michelle uses the senior official's expiring authorization to release the emergency surface gates once. Brandon remains at the relay so the broadcast stays live. His fate is initially uncertain.
@@ -892,6 +894,8 @@ Thousands of captives emerge into Los Angeles as news drones, civilians, and loc
 ### Scene 3C.4 — Resolution and New Direction
 
 **Details:** surrendered facilities; released prisoners; Charles’s control; rogue officials; rescue efforts; partially recovered JANUS file
+
+The story ends at dawn, as soon as the evacuation is complete. The ending says plainly what is known. Michelle is alive, the captives are out, and Brandon's fate is uncertain; he was last seen holding the relay. It changes with what Kristin did: whether she held the barrier or gave up the lower levels, whether Rebecca was captured, whether the archive copies went out, and whether Brandon's name was kept or erased from the build record. Charles is still out there, and the ending says so before it teases anything else.
 
 The national detention network begins to fracture:
 
@@ -910,7 +914,7 @@ Michelle begins publishing the complete Continuity Initiative archive. Kristin j
 
 One recovered document in the archive remains unopened.
 
-The final revelation comes from a partially recovered JANUS file. The disappearance operation was labeled **Phase One**.
+If Kristin opens it, the final revelation comes from a partially recovered JANUS file. This is an optional epilogue. It never decides whether the rescue counts as finished. The disappearance operation was labeled **Phase One**.
 
 Phase Two was designed not to remove people, but to provoke conflict among those who remained.
 

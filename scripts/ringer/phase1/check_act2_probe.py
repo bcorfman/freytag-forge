@@ -170,7 +170,8 @@ def check(out: Path, n: int, mode: str) -> list[str]:
         if row.get("prefix") == "none" and scripted_turns:
             errors.append(f"WHY {row_id}: prefix none cannot have scripted turns")
         if row.get("prefix") in PREFIXES and row.get("prefix") != "none" and scene in SCENES:
-            expected = min(len(SCRIPTED_PREFIXES[row["prefix"]][scene]), row["turns_in_scene"])
+            prefix_commands = SCRIPTED_PREFIXES[row["prefix"]].get(scene, ())
+            expected = min(len(prefix_commands), row["turns_in_scene"])
             if scripted_turns != expected:
                 errors.append(f"WHY {row_id}: prefix {row['prefix']} must have {expected} scripted turns")
         if scene == "2C" and row.get("prefix") in {"missed_window", "stall"}:

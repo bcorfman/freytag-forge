@@ -121,8 +121,37 @@ SCRIPTED_PREFIXES = {
             "Examine the nearest maintenance grille.",
         ),
     },
+    "pure_missed_window": {
+        "2A": (
+            "Inspect my work order beside the facility gate.",
+            "Check the facility gate for a maintenance access panel.",
+            "Trace the cable run along the gate wall.",
+            "Read my inspector badge under the gate light.",
+            "Examine the gate tablet for its latest reading.",
+        ),
+    },
+    "doubted": {
+        "2A": (
+            "Feel the cooling lines and read my gauge at the cooling manifold.",
+            "Give my supervisor a long, vague explanation of the failing water pressure.",
+        ),
+    },
+    "erased": {
+        "2B": (
+            "Pull my own file at the archive terminals.",
+            "Let Brandon erase his name from my build record.",
+        ),
+    },
+    "rescue": {
+        "2C": (
+            "Ask Rebecca what she offers for Michelle.",
+            "Free the captives on the transfer carts.",
+        ),
+    },
 }
-PREFIXES = {prefix: values if prefix == "none" else values["2A"] for prefix, values in SCRIPTED_PREFIXES.items()}
+PREFIXES = {
+    prefix: values if prefix == "none" else next(iter(values.values())) for prefix, values in SCRIPTED_PREFIXES.items()
+}
 
 CARRIED_FACTS_2C = (
     "brandon_name_kept",
@@ -574,6 +603,22 @@ def _run_row(
 def _commands_for(scene_id: str, prefix: str) -> tuple[list[str], list[str | None]]:
     if prefix == "none":
         return list(DRY_OUTCOME_COMMANDS[scene_id]), list(DRY_OUTCOME_SELECTIONS[scene_id])
+    if prefix in {"doubted", "erased", "rescue"}:
+        selection = {
+            "doubted": "k_sl_2a_c_r6",
+            "erased": "k_sl_2b_b_r5",
+            "rescue": "k_sl_2c_d_r4",
+        }[prefix]
+        prerequisite = {
+            "doubted": "k_sl_2a_b_r1",
+            "erased": "k_sl_2b_a_r1",
+            "rescue": "k_sl_2c_c_r1",
+        }[prefix]
+        selections = [prerequisite, selection]
+        if prefix == "erased":
+            selections.append("k_sl_2b_c_r3")
+            return [DRY_OUTCOME_COMMANDS[scene_id][-1]], selections
+        return [], selections
     neutral = NEUTRAL_DRY_COMMAND[scene_id]
     return [neutral] * (MAX_COMMANDS - len(SCRIPTED_PREFIXES[prefix][scene_id])), [None] * (
         MAX_COMMANDS - len(SCRIPTED_PREFIXES[prefix][scene_id])
@@ -600,6 +645,9 @@ def run(
         raise ValueError(f"unknown scene: {scene}")
     if prefix not in PREFIXES:
         raise ValueError(f"unknown prefix: {prefix}")
+    if prefix != "none" and scene not in SCRIPTED_PREFIXES[prefix]:
+        scenes = ", ".join(sorted(SCRIPTED_PREFIXES[prefix]))
+        raise ValueError(f"prefix {prefix} applies only to scene {scenes}")
     if ledger not in {"kept", "erased"}:
         raise ValueError(f"unknown ledger: {ledger}")
     if ledger == "erased" and scene != "2C":

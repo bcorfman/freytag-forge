@@ -13,13 +13,7 @@ from storygame.story_package.loader import load_story_package
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
 
-@pytest.mark.parametrize(
-    "scene_id",
-    [
-        *[scene.metadata.scene_id for scene in PACKAGE.scenes if scene.metadata.scene_id != "3C"],
-        pytest.param("3C", marks=pytest.mark.xfail(strict=True, reason="neutral stalling has no bounded exit in 3C")),
-    ],
-)
+@pytest.mark.parametrize("scene_id", [scene.metadata.scene_id for scene in PACKAGE.scenes])
 def test_neutral_staller_leaves_each_scene_by_handoff_plus_three(scene_id: str) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.current_scene_id = scene_id

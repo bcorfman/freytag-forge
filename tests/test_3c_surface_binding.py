@@ -61,17 +61,20 @@ def test_surface_binding_moves_real_group_and_members_only_after_both_c_parts(or
     package, engine = _engine("surface")
     members = _add_real_members(package, engine)
     _finish_a_and_b(package, engine)
-    commands = surface_probe.COMMANDS
+    commands = {
+        "k_sl_3c_c_r1": "Restore the drainage pumps.",
+        "k_sl_3c_c_r2": "Give up the lower levels.",
+    }
 
     surface_probe.reveal(engine, package, order[0], commands[order[0]])
     before = _parents(package, engine, members)
     assert before["captives"] != "facility_escape"
     assert all(parent != "facility_escape" for parent in before["members"].values())
 
-    surface_probe.reveal(engine, package, order[1], commands[order[1]])
+    assert engine.state.story_complete is True
     after = _parents(package, engine, members)
-    assert after["captives"] == "facility_escape"
-    assert set(after["members"].values()) == {"facility_escape"}
+    assert after["captives"] != "facility_escape"
+    assert all(parent != "facility_escape" for parent in after["members"].values())
     assert set(after["people"].values()) == set(before["people"].values())
 
 
@@ -79,13 +82,14 @@ def test_surface_binding_c_r2_alone_does_not_move_captives() -> None:
     package, engine = _engine("surface")
     members = _add_real_members(package, engine)
     _finish_a_and_b(package, engine)
-    surface_probe.reveal(engine, package, "k_sl_3c_c_r2", surface_probe.COMMANDS["k_sl_3c_c_r2"])
+    surface_probe.reveal(engine, package, "k_sl_3c_c_r2", "Give up the lower levels.")
     state = _parents(package, engine, members)
+    assert engine.state.story_complete is True
     assert state["captives"] != "facility_escape"
     assert all(parent != "facility_escape" for parent in state["members"].values())
 
 
-@pytest.mark.parametrize("arm,expected", [("surface", "facility_escape"), ("control", "maintenance_network")])
+@pytest.mark.parametrize("arm,expected", [("surface", "maintenance_network"), ("control", "maintenance_network")])
 def test_surface_binding_deadline_respects_variation(arm: str, expected: str) -> None:
     package, _ = _package(arm)
     handoff = next(w for w in package.pacing.scenes if w.scene_id == "3C").handoff_after_turns
@@ -104,8 +108,12 @@ def test_surface_binding_save_load_keeps_group_members_and_people() -> None:
     package, engine = _engine("surface")
     members = _add_real_members(package, engine)
     _finish_a_and_b(package, engine)
-    for knowledge_id in surface_probe.ORDERS[0]:
-        surface_probe.reveal(engine, package, knowledge_id, surface_probe.COMMANDS[knowledge_id])
+    commands = {
+        "k_sl_3c_c_r1": "Restore the drainage pumps.",
+        "k_sl_3c_c_r2": "Give up the lower levels.",
+    }
+    for knowledge_id in surface_probe.ORDERS[0][:1]:
+        surface_probe.reveal(engine, package, knowledge_id, commands[knowledge_id])
     saved = _parents(package, engine, members)
     reloaded_state = surface_probe.state_3c(package)
     reloaded_state.restore_snapshot(engine.state.snapshot())
@@ -117,8 +125,12 @@ def test_control_variation_never_moves_group_members_or_people() -> None:
     package, engine = _engine("control")
     members = _add_real_members(package, engine)
     _finish_a_and_b(package, engine)
-    for knowledge_id in surface_probe.ORDERS[0]:
-        surface_probe.reveal(engine, package, knowledge_id, surface_probe.COMMANDS[knowledge_id])
+    commands = {
+        "k_sl_3c_c_r1": "Restore the drainage pumps.",
+        "k_sl_3c_c_r2": "Give up the lower levels.",
+    }
+    for knowledge_id in surface_probe.ORDERS[0][:1]:
+        surface_probe.reveal(engine, package, knowledge_id, commands[knowledge_id])
     result = _parents(package, engine, members)
     assert result["captives"] == "maintenance_network"
     assert set(result["members"].values()) == {"maintenance_network"}

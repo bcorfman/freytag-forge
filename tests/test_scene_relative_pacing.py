@@ -113,7 +113,7 @@ def test_optional_storylets_and_pacing_events_leave_two_turns_to_react() -> None
         )
         if storylet_id is not None
     }
-    assert incident_storylets <= required_storylet_ids
+    assert incident_storylets <= required_storylet_ids | {"SL-3C-H"}
 
 
 def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
@@ -143,6 +143,7 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
             "2A": [1, 3, 6],
             "2B": [1, 5, 6, 6],
             "2C": [1, 6, 13],
+            "3C": [3, 7, 8, 10, 11, 11, 13, 13],
         }.get(scene_id)
         if expected_targets is None:
             assert targets == sorted(targets)

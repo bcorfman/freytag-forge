@@ -2587,8 +2587,8 @@ knowledge:
   statement: 'Michelle uses the senior official’s authorization to release the surface gates while Brandon keeps the relay open and water closes the facility around them.'
   earn_when: releases the emergency surface gates
   action_evidence:
-  - [ask, talk to, release, open, unlock, raise, activate, start, switch on, power up, use, enter, type, input, authorize, approve, send, have, tell, order, give, hand, trigger, extend, guide, lead]
-  - [emergency surface gates, emergency surface gate, surface gates, surface gate, emergency gates, emergency gate, gate authorization, gate authorizations, one-time authorization, one-time authorizations, senior official's authorization, official authorization, official's authorization, override codes, override code, emergency override codes, Michelle's authorization, her authorization, gate code, gate codes, surface release, surface releases, gate release, gate releases, gate signal, gate signals, escape signal, escape signals, surface alarm, surface alarms, gates to the surface, surface exits, surface exit]
+  - [give up, abandon, sacrifice, flood, seal, let go, give, release, accept]
+  - [lower levels, lower level, detention levels, detention level]
   entity_ids: []
   aliases:
   - los angeles facility lost

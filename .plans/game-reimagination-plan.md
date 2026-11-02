@@ -110,9 +110,23 @@ stale cue; row 52 has one narration-retry recovery (a miss against the preregist
 landed on a command that did not order it. Not shown: the `SL-3A-C-R2` "warns Michelle" path, an own-order signal row,
 the 3A staller exit.
 
-Next: (1) a free look at the 3C "exposure and escape" overlap; a pure 2A missed-window row; a rescue-commitment
-slice and the 2A doubted / 2B erase outcomes remain untested; (2) Phase 2 (finite 3B to 3C evacuation and aftermath,
-lighthouse-fixture portability, the 3C neutral staller); (3) the human gates. Detail in
+Round 9 and 9b (2026-11-02): the four open Act 2 slices are now seen live (2A pure missed window, 2A doubted, 2B
+erased, 2C rescue); three first attempts missed on probe prefixes, not the story. The free 3C "exposure and escape" look
+found it probably exempt (untested; a live 3C row is in Round 10). Details in [act2-live-smoke.md](act2-live-smoke.md).
+
+Phase 2 built (2026-11-02, uncommitted; [phase2-finale.md](game-reimagination/phase2-finale.md)): optional incident
+successor, lighthouse fixture reaches an ending by outcome and by zero-match recovery, `ending.variants`, and a finite 3C
+(`i_3c_evacuation`, neutral recovery `SL-3C-H`, ending latched by `evacuation_complete`, Phase Two optional). Full suite
+3,809 passed, 92.72%.
+
+Round 10b (2026-11-02): the four live 3C rows pass (blind, clean, costly, stall); row 57's first attempt found and fixed a
+neutral recovery that could not fire. Two probe defects (a two-turn timing offset and a stall prefix that still scripted the
+episodes) were found after the rows and fixed; the rows' timing numbers carry that offset. Details and findings for Brandon
+in [act2-live-smoke.md](act2-live-smoke.md).
+
+Next: (1) Brandon's read of the 3C ending paragraphs and the findings list; a measured window/nudge timing (still an
+assumption); an offer for the blind player's next 3C move; the "final guard rejection with no recovery" friction;
+(2) the human gates; (3) the Phase 3 content migration. Detail in
 [game-reimagination/](game-reimagination/whole-story-pacing.md).
 
 Environment narration follow-up (2026-10-25): the

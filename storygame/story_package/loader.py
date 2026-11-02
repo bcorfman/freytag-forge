@@ -689,6 +689,10 @@ def _validate_ending(package: StoryPackage) -> None:
         raise StoryPackageError(f"ending references an unknown scene '{ending.scene_id}'")
     if {predicate.fact_id for predicate in ending.when} - package.fact_ids:
         raise StoryPackageError("ending has an unknown predicate fact")
+    for index, variant in enumerate(ending.variants):
+        for fact_id in variant.requires:
+            if fact_id not in package.fact_ids:
+                raise StoryPackageError(f"ending variant {index} references unknown fact '{fact_id}'")
     if any(transition.source_scene_id == ending.scene_id for transition in package.pacing.transitions):
         raise StoryPackageError(f"ending scene '{ending.scene_id}' cannot have an outgoing transition")
 
@@ -1067,20 +1071,27 @@ def _validate_incidents(package: StoryPackage) -> None:
                 f"incident '{incident.id}' event '{event.id}' belongs to scene '{event.scene_id}', "
                 f"not '{incident.scene_id}'"
             )
-        transition = transitions.get(incident.successor_transition_id)
-        if transition is None:
-            raise StoryPackageError(
-                f"incident '{incident.id}' references unknown transition '{incident.successor_transition_id}'"
-            )
-        if transition.source_scene_id != incident.scene_id:
-            raise StoryPackageError(
-                f"incident '{incident.id}' transition '{transition.id}' starts in '{transition.source_scene_id}', "
-                f"not '{incident.scene_id}'"
-            )
-        if event.transition_id == transition.id:
-            raise StoryPackageError(
-                f"incident '{incident.id}' event '{event.id}' cannot use successor transition '{transition.id}'"
-            )
+        if incident.successor_transition_id is None:
+            ending = package.pacing.ending
+            if ending is None or ending.scene_id != incident.scene_id:
+                raise StoryPackageError(
+                    f"incident '{incident.id}' without successor_transition_id must belong to the ending scene"
+                )
+        else:
+            transition = transitions.get(incident.successor_transition_id)
+            if transition is None:
+                raise StoryPackageError(
+                    f"incident '{incident.id}' references unknown transition '{incident.successor_transition_id}'"
+                )
+            if transition.source_scene_id != incident.scene_id:
+                raise StoryPackageError(
+                    f"incident '{incident.id}' transition '{transition.id}' starts in '{transition.source_scene_id}', "
+                    f"not '{incident.scene_id}'"
+                )
+            if event.transition_id == transition.id:
+                raise StoryPackageError(
+                    f"incident '{incident.id}' event '{event.id}' cannot use successor transition '{transition.id}'"
+                )
 
         outcome_ids = [outcome.id for outcome in incident.outcomes]
         if len(outcome_ids) != len(set(outcome_ids)):

@@ -56,6 +56,11 @@ facts:
 - tide_has_turned
 - incident_outcome_resolved
 - route_traversed
+- lamp_tended
+- lamp_signal_seen
+- lighthouse_complete
+- lamp_recovery_complete
+- lamp_window_missed
 - id: brass_key_found
   on_assert:
   - {move: brass_key, parent: ada, text: in Ada's coat pocket}

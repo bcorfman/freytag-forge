@@ -7,6 +7,7 @@ import three_c_probe as probe
 from bench.core import load_variation, package_and_state
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.world_model import world_for
+from storygame.story_package.loader import load_story_package
 
 ROOT = Path(__file__).resolve().parents[1]
 ARM_FILES = {
@@ -17,7 +18,7 @@ COMMANDS = {
     "k_sl_3c_a_r1": "Send the evidence package.",
     "k_sl_3c_b_r1": "Take the Portable data case from Rebecca.",
     "k_sl_3c_c_r1": "Restore the drainage pumps.",
-    "k_sl_3c_c_r2": "Open the surface gates.",
+    "k_sl_3c_c_r2": "Give up the lower levels.",
 }
 C_ORDERS = (
     ("k_sl_3c_c_r1", "k_sl_3c_c_r2"),
@@ -59,9 +60,7 @@ def _eligibility(engine: RuntimeEngine) -> list[str]:
     return sorted(candidate.id for candidate in projection.reveal_universe)
 
 
-def test_escape_source_proof_records_one_statement_replacement() -> None:
-    proof = probe.source_proof(("control", "escape"))
-    replacement = proof["knowledge_yaml"]["escape_replacement"]
-    assert replacement["matches"] == 1
-    assert replacement["old"].startswith("statement: 'Kristin restores power")
-    assert replacement["new"] == "statement: 'The drainage pumps have power. The evacuation route is open.'"
+def test_clean_evacuation_statement_uses_the_redesigned_outcome() -> None:
+    package = load_story_package(ROOT / "data/stories/continuity-initiative")
+    statement = package.knowledge_indexes.by_id["k_sl_3c_c_r1"].statement
+    assert statement == "Kristin restores the pumps and holds the watertight barrier until the last captive passes."
