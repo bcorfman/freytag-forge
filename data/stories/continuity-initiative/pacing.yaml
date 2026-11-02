@@ -205,6 +205,10 @@ events:
     equals: true
   - fact_id: audit_reaches_stacks
     equals: true
+  - fact_id: brandon_name_kept
+    equals: false
+  - fact_id: brandon_name_erased
+    equals: false
   effects:
   - fact_id: audit_recovery_ready
     equals: true
