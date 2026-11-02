@@ -2106,7 +2106,7 @@ storylets:
       latest_turn: 3
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If Kristin focuses narrowly on extracting Michelle, her visible leadership reframes the objective
-    and turns reunion into immediate coordinated action.
+    and, after one unhurried moment, turns the reunion into coordinated action.
   realization_options:
   - id: SL-3A-A-R1
     dramatic_intent: Kristin reaches Michelle and recognizes her as the uprising organizer.
@@ -2122,8 +2122,8 @@ storylets:
     protected_knowledge_boundaries:
     - janus_phase_two
   - id: SL-3A-A-R2
-    dramatic_intent: The reunion is interrupted as Michelle reveals that her small sabotage network has become coordinated
-      resistance, establishing contact and a prepared uprising without requiring an extended reunion scene.
+    dramatic_intent: Kristin and Michelle share an unhurried moment, then Michelle reveals that her small sabotage
+      network has become coordinated resistance.
     operations:
     - op: assert
       fact_id: michelle_reached
@@ -2314,8 +2314,8 @@ storylets:
     new authority, Michelle’s prepared disturbances become the only viable route upward.'
   realization_options:
   - id: SL-3A-C-R1
-    dramatic_intent: Michelle triggers the coordinated disturbances across the detention sectors and the group turns
-      the freed checkpoints into a route toward the command levels.
+    dramatic_intent: Michelle hands Kristin the stolen radio, and Kristin gives the signal. The prisoners seize
+      checkpoints and open a fighting route toward the command and broadcast levels.
     operations:
     - op: assert
       fact_id: detention_uprising_started
@@ -2326,8 +2326,8 @@ storylets:
     protected_knowledge_boundaries:
     - janus_phase_two
   - id: SL-3A-C-R2
-    dramatic_intent: The expiring gate authorization makes further delay untenable; Michelle launches the coordinated
-      disturbances while the authorization is still useful.
+    dramatic_intent: Michelle hands Kristin the stolen radio, and Kristin gives the signal because the gate
+      authorization is about to expire.
     operations:
     - op: assert
       fact_id: detention_uprising_started

@@ -1697,7 +1697,7 @@ knowledge:
     Michelle's route leads to Rebecca's secured office.
     The office can broadcast the evidence and open the detention cells.
 - id: k_sl_3a_a_r1
-  statement: 'Kristin reaches Michelle alive, only to find her directing prisoners through stolen radios and coded announcements.'
+  statement: 'Kristin reaches Michelle alive, and the two share one unhurried moment before Michelle returns to directing prisoners through stolen radios and coded announcements.'
   earn_when: "finds Michelle in detention, frees the captives, or helps Michelle"
   action_evidence:
   - [look, search, check, examine, inspect, read, study, find, trace, follow, enter, listen, free, help, use, organize, coordinate, rescue]
@@ -1726,9 +1726,9 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin finds Michelle alive. Michelle is directing the prisoners through stolen radios and coded announcements. Michelle points toward the medical level, where the experiment records wait."
+  delivery_text: "Kristin finds Michelle alive, speaking into a stolen radio beside the captives. For one unhurried moment the two of them talk to each other and nobody asks anything of either. Then Michelle turns back to her coded announcements and points toward the medical level, where the experiment records wait."
 - id: k_sl_3a_a_r2
-  statement: 'Michelle reunites with Kristin briefly, then explains that freeing this block means little without exposing the other sites.'
+  statement: 'Michelle shares one unhurried moment with Kristin, then explains that freeing this block means little without exposing the other sites.'
   earn_when: "asks Michelle about other sites"
   action_evidence:
   - [ask, question, talk, speak, tell, press, discuss, inquire, probe, consult, listen, hear]
@@ -1757,7 +1757,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle reunites with Kristin briefly. She explains that freeing this block means little without exposing the other sites. Michelle points toward the medical level, where the experiment records wait."
+  delivery_text: "Michelle shares one unhurried moment with Kristin. She explains that freeing this block means little without exposing the other sites. Michelle points toward the medical level, where the experiment records wait."
 - id: k_sl_3a_b_r1
   statement: 'Michelle shows Kristin experiment records proving planned "survivors" were conditioned to support Charles''s story.'
   earn_when: "reads the experiment records"
@@ -1927,11 +1927,11 @@ knowledge:
     priority: 0
   delivery_text: "The framed official proves the emergency gate authorization is real. The brief panel response shows the one-use code is about to expire. Michelle turns toward the prisoners at the checkpoints."
 - id: k_sl_3a_c_r1
-  statement: 'Michelle triggers the coordinated uprising; prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.'
+  statement: 'Michelle hands Kristin the stolen radio and Kristin gives the signal; prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.'
   earn_when: "Players may lead the prisoners to the checkpoints or surface gates."
   action_evidence:
   - [tell, signal, order, ask, direct, instruct, command, urge, call, rally, begin, start, lead, guide, escort, advance, follow, join, march]
-  - [uprising, the uprising, start uprising, prison uprising, coordinated uprising, checkpoint, checkpoints, revolt, the revolt, rebellion, the rebellion, riot, the riot, breakout, detention uprising, detention revolt, checkpoint uprising, prisoners, the prisoners, surface gates, the surface gates, emergency surface gates]
+  - [uprising, the uprising, start uprising, prison uprising, coordinated uprising, checkpoint, checkpoints, revolt, the revolt, rebellion, the rebellion, riot, the riot, breakout, detention uprising, detention revolt, checkpoint uprising, prisoners, the prisoners, surface gates, the surface gates, emergency surface gates, stolen radio, the stolen radio, the radio, radio signal, the signal, signal]
   entity_ids: []
   aliases:
   - detention uprising started
@@ -1958,9 +1958,9 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle triggers the coordinated uprising. The prisoners seize checkpoints and open a fighting route toward the command and broadcast levels."
+  delivery_text: "Michelle hands Kristin the stolen radio and Kristin gives the signal. Prisoners seize checkpoints and open a fighting route toward the command and broadcast levels."
 - id: k_sl_3a_c_r2
-  statement: 'With the emergency-gate authorization about to expire under Charles''s new authority, Michelle launches the prepared uprising rather than wait.'
+  statement: 'With the emergency-gate authorization about to expire under Charles''s new authority, Michelle hands Kristin the stolen radio and Kristin gives the signal rather than wait.'
   earn_when: "warns Michelle about expiring codes"
   action_evidence:
   - [warn, tell, alert, notify, advise, remind, caution, press, inform, report, check, watch]
@@ -1994,7 +1994,7 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin warns Michelle that the emergency-gate authorization is about to expire. Michelle launches the prepared uprising rather than wait."
+  delivery_text: "Kristin warns Michelle that the emergency-gate authorization is about to expire. Michelle hands Kristin the stolen radio, and Kristin gives the signal because the authorization is about to expire."
 - id: k_sl_3b_a_r1
   statement: 'Kristin feeds JANUS false water-pressure and ventilation alarms in empty service corridors until human operators must take control.'
   earn_when: "feeds JANUS false alarms, uses the inspection console, or traces, follows, or inspects water-pressure warnings"

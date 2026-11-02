@@ -417,3 +417,56 @@ it. The full suite has not been run.
 
 Conclusion: the 2A first-turn rejection is gone in this sample set (0 of 12 versus 7 of 12 before) and the 2A earned path
 still works. A pure missed-window 2A row on the new text, with a prefix that does not reach the manifold, was not run.
+
+## Round 8: 3A reunion and radio signal live smoke (preregistered 2026-11-02, before any billed call)
+
+Authorized by Brandon on 2026-11-02 ("yes to live-smoke 3A with one blind row and one committed_to_rescue row").
+Change under test: branch `3a-reunion-radio-propagation` on `main` at `7cd1b35e`: the 3A reunion is one unhurried
+moment (`k_sl_3a_a_r1`/`r2`) and Kristin gives the uprising signal on Michelle's stolen radio (`k_sl_3a_c_r1`/`r2`).
+`act2_probe.py` cannot start in 3A (it is incident-based), so a small `act3a_probe.py` reuses its player, provider
+and spend helpers. Arrivals are synthetic, built from the 2C exit facts of `SL-2C-D-R3` (transmit) or `SL-2C-D-R4`
+(rescue) plus the `CARRIED_FACTS_2C` set; never pooled with whole-game results.
+
+Question: with a raw blind player, does 3A show the unhurried reunion and the radio signal, leave by the earned
+transition to 3B, and show the matching entry line, without rejected narration, stale cues or a stuck loop?
+
+Rows (one each, no retries, no replaced rows, one Ringer task per row, run name `act3a-reunion-radio`):
+
+| Row | Ledger | Question |
+| --- | --- | --- |
+| 51 | `committed_to_transmit` (the blind default) | Reunion and signal beats show; exit to 3B is earned |
+| 52 | `committed_to_rescue` | Same, and the freed-captives entry variant shows |
+
+Row 51 runs alone first; row 52 runs after its transcript is read. Caps per row: at most 30 commands, 80
+Cloudflare / 40 player requests. Cloudflare Workers AI only.
+
+Pass per row: no `run-failure.txt`; no stale cue; no rejection; no stuck loop (`repeated_response_streak_max` under 3);
+`ended_by` is `scene_3b` within the cap, with `transition_cause` earned; recovery count 0; `michelle_reached`,
+`uprising_prepared` and `detention_uprising_started` true at exit. Recorded, not scored: whether the delivered
+reunion text contains "unhurried"; whether the signal delivery says Kristin gives the signal; whether the entry
+variant (row 52 only) showed; the turn each beat appeared; commands used. Reading rule: read the transcript of both
+rows, passes included, before reporting; a miss is diagnosed from the transcript and recorded prompt before any
+rewording, and a reword is a new preregistered round. Two rows are a smoke, not a rate.
+
+Round 8 result (2026-11-02, Ringer run `act3a-reunion-radio`, one blind row per ledger, no retries, no rate):
+both rows met the preregistered pass rule except one line on row 52 (below). Artifacts:
+`bench/results/act3a-smoke-51-3A-transmit`, `bench/results/act3a-smoke-52-3A-rescue` (gitignored; local). Probe built by
+Ringer (`act3a_probe.py`, `check_act3a_probe.py`, `tests/test_act3a_probe.py`); dry runs reach 3B for both ledgers.
+
+- Row 51 (transmit): 10 commands, `ended_by` `scene_3b`, exit cause `earned_transition`, 10 requests, no run-failure,
+  rejection, clarification, recovery, stale cue or stuck loop. `michelle_reached`, `uprising_prepared` and
+  `detention_uprising_started` true at exit. Reunion text ("For one unhurried moment ...") delivered on turn 2; signal text
+  ("Michelle hands Kristin the stolen radio and Kristin gives the signal.") on turn 10.
+- Row 52 (rescue): 9 commands, `scene_3b`, earned transition, 9 requests, no run-failure, rejection, stale cue or stuck
+  loop; the freed-captives entry variant showed on the entry screen. Reunion on turn 3, signal on turn 7.
+  **Strict miss:** `recovery_count` is 1, where the preregistration said 0. It is a semantic-refusal retry on turn 2
+  ("Listen to Michelle's transmission."): no reveal was selected and `transition_cause` was none; it is not a recovery
+  bridge. The reply to that turn invented a radio voice for Michelle ("I'm in a holding block"), which the next turn's
+  reunion then contradicts only mildly.
+- Observation, not a failure: in row 51 the signal landed on "ask Michelle where the emergency surface gates are", so
+  Kristin gives the signal without the player ordering it. In row 52 it landed on "Follow Michelle toward the
+  checkpoints", which fits. One of two rows shows it, so no fix is chosen; the command matches the existing
+  `k_sl_3a_c_r1` action evidence (verb "ask", noun "emergency surface gates"; read from `knowledge.yaml`, not yet probed),
+  which this wording change did not touch.
+- Not shown: a row that earns the signal by Kristin's own order (the canon prompt "Signal the prisoners ..."), the
+  `SL-3A-C-R2` "warns Michelle about the codes" path, and the neutral/staller exit from 3A.
