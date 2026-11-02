@@ -232,6 +232,7 @@
     "tests/test_raw_language_corpus.py": 0.06,
     "tests/test_recent_cue_reference.py": 5.84,
     "tests/test_recent_cue_unit.py": 3.21,
+    "tests/test_recovery_after_choice.py": 53.0,
     "tests/test_recovery_budget.py": 3.25,
     "tests/test_reference_clarification.py": 2.43,
     "tests/test_reference_evidence_append.py": 2.28,
