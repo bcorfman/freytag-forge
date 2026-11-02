@@ -43,7 +43,8 @@ automatically earning a reveal or advancing a scene.
 unless they affect the main storyline. In probe criteria, "nothing invented"
 fails an arm only for a contradiction of canon or state, a pre-empted or revealed
 beat (patrol arrival, hidden card), or a collision with story names (a neighbor
-called Jenkins). Atmosphere such as a passing police car is recorded for
+called Jenkins) or an open laptop at the workstation while it is in the truck;
+Brandon confirmed both examples on 2026-11-02. Atmosphere such as a passing police car is recorded for
 information and does not fail an arm. Probes 1 to 3 were scored under the
 stricter rule; re-scoring under this policy changes no adoption decision (the
 failing arms also fail the laptop or surroundings criteria).
