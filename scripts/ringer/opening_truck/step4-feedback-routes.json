@@ -1,0 +1,30 @@
+{
+ "run_name": "1a-opening-and-truck-feedback",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-opening-and-truck-feedback",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "feedback-routes",
+   "task_type": "code-feature",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 3600,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "scripts/ringer/transcript_1a/live_baseline.py",
+    "tests/test_live_baseline_feedback_routes.py"
+   ],
+   "spec": "You are a Python 3.12 engineer adding three route definitions to an existing live-probe harness in freytag-forge, approved by Brandon (plan: .plans/1a-opening-and-truck-feedback-plan.md step 4; preregistration: .plans/1a-opening-and-truck-feedback/replicates-prereg.md, read it). Working directory: /home/bcorfman/dev/freytag-forge (branch 1a-opening-and-truck-feedback). No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit.\n\nYOU MAY EDIT: scripts/ringer/transcript_1a/live_baseline.py (the ROUTES dict only, plus anything the three routes strictly need), and a NEW tests/test_live_baseline_feedback_routes.py. Never edit check_live_baseline.py unless a route genuinely cannot validate (then say why), and never edit storygame/, data/, docs/, bench/, .plans/, or any other file.\n\nADD EXACTLY THESE ROUTES to ROUTES (tuples of input strings, in order, byte for byte):\n\"feedback_raw\": (\"open the drawer\", \"feel in the gap\", \"head out to the truck\", \"look for the laptop\", \"get in the truck\", \"plug the memory card into the laptop\")\n\"feedback_canonical\": (\"Pull out the drawer.\", \"Feel in the gap beneath the drawer.\", \"Go out to the truck.\", \"Look for my laptop.\", \"Get in the truck.\", \"Plug the memory card into my laptop.\")\n\"feedback_counter\": (\"Pull out the drawer.\", \"Feel in the gap beneath the drawer.\", \"Go out to the truck.\", \"Take my laptop.\", \"Get out of the truck.\", \"Examine the truck.\", \"Get in the truck.\", \"Plug the memory card into my laptop.\", \"Drive to the park.\")\nThe first route is the user's raw transcript, kept as a raw-language regression; the others follow docs/player-input-guide.md (imperative, direct object, first-person possessives for the player's things).\n\nTESTS FIRST in tests/test_live_baseline_feedback_routes.py (hermetic, no network; model the dry-run pattern on tests/test_live_baseline_default_output.py or tests/test_live_baseline_scene_start.py): (a) the three routes exist with exactly these inputs; (b) `live_baseline.main(['--route', R, '--replicates', '1', '--dry-run', '--out', tmpdir])` runs for each route and writes rows.json and summary.json, and scripts/ringer/transcript_1a/check_live_baseline.py accepts each output (call it the way tests/ or the harness's own tests do; use the same `--mode` argument the dry-run needs); (c) no route is added to NEW_ROUTES or ROUTE_START_SCENES (they start at the normal 1A start); (d) the existing routes are unchanged.\n\nDONE WHEN the check passes. Report what you changed.",
+   "check": "cd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example\nset -eo pipefail\ntest -f tests/test_live_baseline_feedback_routes.py\nif git diff --name-only | grep -vE '^(scripts/ringer/transcript_1a/(live_baseline|check_live_baseline)\\.py)$'; then echo \"EDIT OUTSIDE OWNERSHIP\"; exit 1; fi\nif git ls-files --others --exclude-standard | grep -vE '^tests/test_live_baseline_feedback_routes\\.py$'; then echo \"UNTRACKED OUTSIDE TESTS\"; exit 1; fi\n.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 tests/test_live_baseline_*.py 2>&1 | tail -6\n.venv/bin/python -m ruff check scripts/ringer/transcript_1a tests/test_live_baseline_feedback_routes.py\n.venv/bin/python -m ruff format --check scripts/ringer/transcript_1a tests/test_live_baseline_feedback_routes.py",
+   "verified": "three routes added exactly; dry runs validate; existing live_baseline tests pass; no other file changed"
+  }
+ ]
+}
