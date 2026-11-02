@@ -24,6 +24,7 @@ from storygame.runtime.world_model import (
     _true,
     apply_scene_placements,
     apply_world_effects,
+    incidental_policy_for,
 )
 from storygame.story_package.models import ItemPlacement, item_placement_is_visible, placement_text
 from storygame.story_package.world_schema import world_source_schema_data
@@ -1367,8 +1368,6 @@ class ItemFactsProvider(CloudflareTurnProvider):
             condition_poles = [self._axis_match_id(world, entity_id, item) for item in conditions]
             free.extend(item.strip()[:40] for item, pole in zip(conditions, condition_poles, strict=True) if not pole)
         if free:
-            from storygame.runtime.world_model import incidental_policy_for
-
             policy = incidental_policy_for(self.state.package)
             if policy is None:
                 world.set_conditions(entity_id, free[:2])
@@ -1381,7 +1380,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                         issues.append(
                             f"item_facts for {name!r} dropped {phrase!r}: incidental props only accept facets"
                         )
-                else:
+                elif routed.leftover or routed.refused:
                     world.set_conditions(entity_id, routed.leftover[:2])
         reply_poles = {pole for pole in (place_pole, state_pole, *condition_poles) if pole is not None}
         changed_pole = None

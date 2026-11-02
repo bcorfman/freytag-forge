@@ -184,7 +184,7 @@ class IncidentalWorldMixin:
                 leftover.append(phrase)
                 continue
             facet, value = matches[0]
-            ok, reason, _added = self._apply_routed_facet(policy, entity_id, facet, value, scene_id)
+            ok, reason, _changed = self._apply_facet(policy, entity_id, facet, value, scene_id)
             if ok:
                 facets.append((facet, value))
             else:
@@ -273,34 +273,20 @@ class IncidentalWorldMixin:
             target = self.resolve(proposal.target)
             if not target:
                 return False, "unknown trait target", added
-            authored = policy.authored.get(target, {}).get(proposal.facet)
-            if authored is not None:
-                if authored != proposal.value:
-                    return False, "facet already has another value", added
-                continue
-            palette = self._trait_palette(policy, target, by_id, scene_id)
-            allowed = palette.get(proposal.facet)
-            if not allowed or proposal.value not in allowed:
-                return False, "trait is not in the palette", added
-            stored = self.facets(target).get(proposal.facet)
-            current = authored if authored is not None else stored
-            if current is not None:
-                if current != proposal.value:
-                    return False, "facet already has another value", added
-                continue
-            if len(set(policy.authored.get(target, {})) | set(self.facets(target))) >= policy.max_facets:
-                return False, "facet limit exceeded", added
-            self._add("wk_facet", target, proposal.facet, proposal.value)
-            added.append((proposal.target, proposal.facet, proposal.value))
+            ok, reason, changed = self._apply_facet(policy, target, proposal.facet, proposal.value, scene_id, by_id)
+            if not ok:
+                return False, reason, added
+            if changed:
+                added.append((proposal.target, proposal.facet, proposal.value))
         return True, "", added
 
-    def _apply_routed_facet(self, policy, target, facet, value, scene_id):
+    def _apply_facet(self, policy, target, facet, value, scene_id, created=None):
         authored = policy.authored.get(target, {}).get(facet)
         if authored is not None:
             if authored != value:
                 return False, "facet already has another value", False
             return True, "", False
-        palette = self._trait_palette(policy, target, {}, scene_id)
+        palette = self._trait_palette(policy, target, created or {}, scene_id)
         allowed = palette.get(facet)
         if not allowed or value not in allowed:
             return False, "trait is not in the palette", False

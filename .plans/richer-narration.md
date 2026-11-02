@@ -49,11 +49,11 @@ all nine scenes; shared runtime must remain story-agnostic.
   cannot refuse them; only `preview_commit` runs capture before commit, and only with an enforcing verifier.
   Options: (b) refuse inside the preview path (needs enforcement on), (c) post-commit rollback that fails
   the turn. Decide after a bench round on the step 3 prompts shows the real slip rate.
-- **Cleanup owed (Ringer, one small task):** `route_condition_phrases` duplicates the facet rules of
-  `_set_incidental_facet`/`_apply_traits` (`_apply_routed_facet`); `_apply_state` imports
-  `incidental_policy_for` inside the function; and when every phrase is routed to a facet,
-  `set_conditions(entity_id, ())` clears the thing's existing conditions (skip the call when nothing is
-  left).
+- **Routing cleanup done:** one shared `_apply_facet` for traits and phrase routing, the import moved to
+  module level, and a facet-only reply keeps existing conditions. Known edge left: `_apply_state` still
+  calls `set_conditions` when a phrase was only refused (`elif routed.leftover or routed.refused`), which
+  clears existing conditions; the intended rule is to skip the call whenever nothing is left over. Add a
+  test and fix it in the next code task.
 - Decisions taken 2026-11-02: 1A, 2A (refuse unknown ordinary things, measure slips first, only when
   the package declares a policy), 3A.
 - Ringer notes: the first run failed twice on my spec (a `notes.md` the check
