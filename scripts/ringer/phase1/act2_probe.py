@@ -136,6 +136,9 @@ CARRIED_FACTS_2C = (
     "michelle_reply_received",
     "archive_crisis_understood",
 )
+CARRIED_FACTS_2C_ERASED = tuple(
+    "brandon_name_erased" if fact_id == "brandon_name_kept" else fact_id for fact_id in CARRIED_FACTS_2C
+) + ("evidence_gap_development_record",)
 RECOVERY_READY_FACTS = {
     "2A": "inspection_recovery_ready",
     "2B": "audit_recovery_ready",
@@ -218,6 +221,7 @@ ROW_FIELDS = (
     "nudge_seen_turn",
     "withdrawal_seen_turn",
     "scene",
+    "ledger",
     "turns_in_scene",
     "successor_entry_variants_seen",
     "exit_seen_turn",
@@ -272,7 +276,7 @@ def _provider_payload(selected: str | None) -> dict[str, Any]:
         "k_sl_2c_c_r1": (
             "Rebecca answers Kristin without taking her eyes off Brandon. Trust is a luxury. Decide quickly. "
             "Her tablet chimes. She reads it, and her face changes. The purge order starts within hours, and her "
-            "people are on the list. Brandon looks at Kristin, then says, Yes. He says it coldly and avoids her eyes. "
+            "people are on the list. Brandon looks at Kristin, then says, Yes. "
             "The guards stand down. Brandon identifies the broadcast uplink and the transfer carts."
         ),
         "k_sl_2c_d_r3": (
@@ -302,6 +306,13 @@ class _Act2ScriptedProvider(_ScriptedProvider):
         self.calls += 1
         self.request_count += 1
         payload = _provider_payload(selected)
+        if selected == "k_sl_2c_c_r1":
+            sentence = (
+                "He glances at Kristin as he says it."
+                if "brandon_name_erased" in _true_fact_ids(self.state)
+                else "He says it coldly and avoids Kristin's eyes."
+            )
+            payload["segments"][0]["text"] += f" {sentence}"
         if selected is None:
             scene_id = self.state.current_scene_id
             turn_number = self.calls
@@ -310,15 +321,19 @@ class _Act2ScriptedProvider(_ScriptedProvider):
         return payload
 
 
-def _state(package: Any, scene_id: str) -> RuntimeState:
+def _state(package: Any, scene_id: str, ledger: str = "kept") -> RuntimeState:
     """Build one synthetic Act 2 scene arrival with only declared carry facts."""
+    if ledger not in {"kept", "erased"}:
+        raise ValueError(f"unknown ledger: {ledger}")
+    if ledger == "erased" and scene_id != "2C":
+        raise ValueError("ledger erased applies only to scene 2C")
     state = RuntimeState.bootstrap(package)
     state.current_scene_id = scene_id
     state.phase = next(scene.metadata.freytag_phase for scene in package.scenes if scene.metadata.scene_id == scene_id)
     state._assert_scene_entry_fact(scene_id)
     carried = {
         "2B": ("restricted_corridor_access", "supervisor_convinced"),
-        "2C": CARRIED_FACTS_2C,
+        "2C": CARRIED_FACTS_2C if ledger == "kept" else CARRIED_FACTS_2C_ERASED,
     }.get(scene_id, ())
     for fact_id in carried:
         state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
@@ -417,6 +432,7 @@ def _run_row(
     scene_id: str,
     trace: list[dict[str, str]] | None = None,
     prefix: str = "none",
+    ledger: str = "kept",
 ) -> dict[str, Any]:
     incident = next(item for item in package.incidents if item.scene_id == scene_id)
     screen = _entry_screen(package, state)
@@ -547,6 +563,7 @@ def _run_row(
         "nudge_seen_turn": nudge_seen,
         "withdrawal_seen_turn": None,
         "scene": scene_id,
+        "ledger": ledger,
         "turns_in_scene": turns_in_scene,
         "successor_entry_variants_seen": seen,
         "exit_seen_turn": exit_seen,
@@ -568,13 +585,25 @@ def _write(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def run(out: Path, scene: str, n: int, dry: bool, confirm: bool, prefix: str = "none") -> int:
+def run(
+    out: Path,
+    scene: str,
+    n: int,
+    dry: bool,
+    confirm: bool,
+    prefix: str = "none",
+    ledger: str = "kept",
+) -> int:
     if not dry and not confirm:
         raise SystemExit("live mode requires --confirm")
     if scene not in SCENES:
         raise ValueError(f"unknown scene: {scene}")
     if prefix not in PREFIXES:
         raise ValueError(f"unknown prefix: {prefix}")
+    if ledger not in {"kept", "erased"}:
+        raise ValueError(f"unknown ledger: {ledger}")
+    if ledger == "erased" and scene != "2C":
+        raise ValueError("ledger erased applies only to scene 2C")
     variation = load_variation(ROOT / "bench/variations/phase1-slice-current.json")
     package = load_story_package(Path(variation["_package_path"]))
     rows: list[dict[str, Any]] = []
@@ -582,7 +611,7 @@ def run(out: Path, scene: str, n: int, dry: bool, confirm: bool, prefix: str = "
     budget = SpendBudget(80, cloudflare_limit=80, player_limit=40)
     try:
         for rep in range(1, n + 1):
-            state = _state(package, scene)
+            state = _state(package, scene, ledger)
             if dry:
                 commands, selections = _commands_for(scene, prefix)
                 provider = _Act2ScriptedProvider(state, selections)
@@ -605,6 +634,7 @@ def run(out: Path, scene: str, n: int, dry: bool, confirm: bool, prefix: str = "
                     scene,
                     trace,
                     prefix,
+                    ledger,
                 )
             else:
                 with provider_context:
@@ -618,6 +648,7 @@ def run(out: Path, scene: str, n: int, dry: bool, confirm: bool, prefix: str = "
                         scene,
                         trace,
                         prefix,
+                        ledger,
                     )
             rows.append(row)
             _write(out / "results.json", {"mode": "dry" if dry else "live", "rows": rows, "caps": CAPS, "n": n})
@@ -644,12 +675,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scene", choices=SCENES, required=True)
     parser.add_argument("--prefix", choices=tuple(PREFIXES), required=True)
+    parser.add_argument("--ledger", choices=("kept", "erased"), default="kept")
     parser.add_argument("--n", type=int, required=True, choices=(1,))
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--confirm", action="store_true")
     args = parser.parse_args(argv)
-    return run(args.out, args.scene, args.n, args.dry_run, args.confirm, args.prefix)
+    return run(args.out, args.scene, args.n, args.dry_run, args.confirm, args.prefix, args.ledger)
 
 
 if __name__ == "__main__":

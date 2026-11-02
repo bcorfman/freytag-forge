@@ -1,0 +1,261 @@
+{
+  "run_name": "act2-visible-moves",
+  "workdir": "/home/bcorfman/dev/ringer-work/act2-visible-moves",
+  "max_parallel": 3,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "act2-r4-row35",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-35-2C-kept-r1/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger kept --confirm --out bench/results/act2-smoke-35-2C-kept-r1",
+      "spec": "Run ONE billed Act 2 live smoke (row 35: scene 2C, prefix none, ledger kept) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-35-2C-kept-r1/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger kept --confirm --out bench/results/act2-smoke-35-2C-kept-r1",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-35-2C-kept-r1 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row36",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-36-2C-kept-r2/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger kept --confirm --out bench/results/act2-smoke-36-2C-kept-r2",
+      "spec": "Run ONE billed Act 2 live smoke (row 36: scene 2C, prefix none, ledger kept) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-36-2C-kept-r2/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger kept --confirm --out bench/results/act2-smoke-36-2C-kept-r2",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-36-2C-kept-r2 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row37",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-37-2C-kept-r3/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger kept --confirm --out bench/results/act2-smoke-37-2C-kept-r3",
+      "spec": "Run ONE billed Act 2 live smoke (row 37: scene 2C, prefix none, ledger kept) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-37-2C-kept-r3/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger kept --confirm --out bench/results/act2-smoke-37-2C-kept-r3",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-37-2C-kept-r3 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row38",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-38-2C-erased-r1/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger erased --confirm --out bench/results/act2-smoke-38-2C-erased-r1",
+      "spec": "Run ONE billed Act 2 live smoke (row 38: scene 2C, prefix none, ledger erased) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-38-2C-erased-r1/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger erased --confirm --out bench/results/act2-smoke-38-2C-erased-r1",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-38-2C-erased-r1 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row39",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-39-2C-erased-r2/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger erased --confirm --out bench/results/act2-smoke-39-2C-erased-r2",
+      "spec": "Run ONE billed Act 2 live smoke (row 39: scene 2C, prefix none, ledger erased) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-39-2C-erased-r2/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger erased --confirm --out bench/results/act2-smoke-39-2C-erased-r2",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-39-2C-erased-r2 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row40",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-40-2C-erased-r3/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger erased --confirm --out bench/results/act2-smoke-40-2C-erased-r3",
+      "spec": "Run ONE billed Act 2 live smoke (row 40: scene 2C, prefix none, ledger erased) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-40-2C-erased-r3/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix none --n 1 --ledger erased --confirm --out bench/results/act2-smoke-40-2C-erased-r3",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-40-2C-erased-r3 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row41",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-41-2A-missed-window/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2A --prefix missed_window --n 1 --confirm --out bench/results/act2-smoke-41-2A-missed-window",
+      "spec": "Run ONE billed Act 2 live smoke (row 41: scene 2A, prefix missed_window, ledger n/a) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-41-2A-missed-window/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2A --prefix missed_window --n 1 --confirm --out bench/results/act2-smoke-41-2A-missed-window",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-41-2A-missed-window 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row42",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-42-2B-missed-window/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2B --prefix missed_window --n 1 --confirm --out bench/results/act2-smoke-42-2B-missed-window",
+      "spec": "Run ONE billed Act 2 live smoke (row 42: scene 2B, prefix missed_window, ledger n/a) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-42-2B-missed-window/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2B --prefix missed_window --n 1 --confirm --out bench/results/act2-smoke-42-2B-missed-window",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-42-2B-missed-window 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row43",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-43-2C-missed-window/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix missed_window --n 1 --ledger kept --confirm --out bench/results/act2-smoke-43-2C-missed-window",
+      "spec": "Run ONE billed Act 2 live smoke (row 43: scene 2C, prefix missed_window, ledger kept) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-43-2C-missed-window/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix missed_window --n 1 --ledger kept --confirm --out bench/results/act2-smoke-43-2C-missed-window",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-43-2C-missed-window 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row44",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-44-2A-stall/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2A --prefix stall --n 1 --confirm --out bench/results/act2-smoke-44-2A-stall",
+      "spec": "Run ONE billed Act 2 live smoke (row 44: scene 2A, prefix stall, ledger n/a) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-44-2A-stall/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2A --prefix stall --n 1 --confirm --out bench/results/act2-smoke-44-2A-stall",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-44-2A-stall 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row45",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-45-2B-stall/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2B --prefix stall --n 1 --confirm --out bench/results/act2-smoke-45-2B-stall",
+      "spec": "Run ONE billed Act 2 live smoke (row 45: scene 2B, prefix stall, ledger n/a) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-45-2B-stall/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2B --prefix stall --n 1 --confirm --out bench/results/act2-smoke-45-2B-stall",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-45-2B-stall 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r4-row46",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-46-2C-stall/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix stall --n 1 --ledger kept --confirm --out bench/results/act2-smoke-46-2C-stall",
+      "spec": "Run ONE billed Act 2 live smoke (row 46: scene 2C, prefix stall, ledger kept) per .plans/act2-live-smoke.md Round 4: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-46-2C-stall/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2C --prefix stall --n 1 --ledger kept --confirm --out bench/results/act2-smoke-46-2C-stall",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-46-2C-stall 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    }
+  ]
+}

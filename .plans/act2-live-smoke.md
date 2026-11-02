@@ -151,3 +151,269 @@ entry text states the moves; 2A and 2B add an observation step the choice requir
 `cover_suspected`/doubted and erase outcomes, missed windows and stalls with the new steps, or any rate.
 Open: 2C resolves on turn 1, so its pacing and the negotiation set piece are thin; the canonical scripted
 journey still waits six filler turns in 2A.
+
+## Round 3: do the earned observations hold up live after PR #742? (preregistered 2026-11-01, before any billed call)
+
+Change under test (`main` at `3f73ea9c`): earned observation before the choice in 2A, 2B and 2C; 2C's
+Brandon "Yes." now follows the 2B choice inside the earned observation (`delivery_variants`); the recovery
+events no longer fire after the player has chosen. Round 2 rows 25, 27 and 31 predate all of this.
+
+Question: does a raw blind player (prefix `none`) still reach a real outcome, with no recovery bridge and no
+rejected narration, through the new observations? Rows 32 (2A), 33 (2B), 34 (2C): one row each, no retries,
+same caps as Round 2 (at most 30 commands, 80 Cloudflare / 40 player requests). Order 2A, 2B, 2C; read each
+transcript and the composed delivery text before starting the next. 2B and 2C start from the probe's
+synthetic clean-exit arrivals (kept name), so these rows say nothing about the erased slice.
+Pass for a row: exit cause is a declared outcome, no `run-failure.txt`, no stale cue. Fail is diagnosed from
+the transcript before any rewording. One row per scene is a smoke, not a rate.
+Not in this round (needs its own preregistration): the kept/erased 2C slices with the three replicates,
+missed-window and stall rows with the new steps.
+
+Round 3 result (2026-11-01, Ringer run `act2-visible-moves`, one blind row per scene, prefix `none`, no rate):
+all three rows met the preregistered pass rule: declared outcome as exit cause, no `run-failure.txt`, no stale cue,
+no rejection, no recovery bridge, no unearned fact. Artifacts: `bench/results/act2-smoke-32-2A-none-r3`, `-33-2B-none-r3`,
+`-34-2C-none-r3`.
+
+- Row 32 (2A): observe at the manifold (turn 1, `k_sl_2a_b_r1`), then explain it to the supervisor (turn 2): exit cause
+  `inspection_convincing`, `supervisor_convinced`, no `cover_suspected`. The row's `recovery_count` 1 is a narration-retry
+  request on the exit turn, not a recovery bridge (`transition_cause` is `earned`).
+- Row 33 (2B): pull Kristin's file (turn 1), keep Brandon's name (turn 2), reply on the medical terminal (turn 3): exit cause
+  `brandon_name_kept`, Rebecca's corridor entry delivered.
+- Row 34 (2C): the first reply to Rebecca earns the observation (turn 1: purge order, Brandon's "Yes.", both moves),
+  the uplink command earns `committed_to_transmit` (turn 2), exit to 3A with the detention-sector entry.
+- Still not shown: the kept/erased 2C slices with three replicates (2B starts here were synthetic, kept name), the
+  doubted/`cover_suspected` and erase outcomes, missed windows and stalls with the new steps, and the 1C recovery audit.
+  2C still resolves in two turns, so its negotiation set piece stays short.
+
+## Round 4: kept/erased 2C slices, missed windows and stalls (preregistered 2026-11-01, before any billed call)
+
+Authorized by Brandon on 2026-11-01 ("do the billed Cloudflare runs next"). Build under test: `main` at `3f73ea9c`
+plus one probe change (a `--ledger kept|erased` option on `act2_probe.py`, free, built by Ringer, dry-run
+verified before any billed row; correction 2026-11-01: the first draft assumed 2C entry-line variants that were
+removed in `f917b4b0`, so the ledger now shows only in the observation delivery). No story or engine change in this round. Cloudflare Workers AI only; per-row
+caps unchanged (at most 30 commands, 80 Cloudflare / 40 player requests). One Ringer task per row, run name
+`act2-visible-moves`, no retries, no replaced rows; a run-failure is recorded as a row and reported verbatim.
+
+Rows (blind player after any scripted prefix; synthetic arrivals as in Round 3):
+
+| Rows | Cell | Question |
+| --- | --- | --- |
+| 35 to 37 | 2C, ledger kept, prefix none, 3 replicates | Does a blind player earn a transmit or rescue outcome, with the kept-name observation sentence and no recovery bridge? |
+| 38 to 40 | 2C, ledger erased, prefix none, 3 replicates | Same, with the erased-name observation sentence ("He glances at Kristin as he says it.") and the erased ledger facts? |
+| 41 to 43 | 2A, 2B, 2C, prefix missed_window | Does a missed window leave by the recovery bridge with no unearned outcome, and is 2C neutral (no commitment, no cost)? |
+| 44 to 46 | 2A, 2B, 2C, prefix stall | Does a staller leave the scene (nudge at turn 6, withdrawal by the recovery) without a stuck loop? |
+
+Pass per row: no `run-failure.txt`, no stale cue, no rejection, exit within the 30-command cap, and
+- slice rows: exit cause is `committed_to_transmit` or `committed_to_rescue`; the earned observation (`k_sl_2c_c_r1`) delivers the
+  matching ledger sentence (kept: "He says it coldly and avoids Kristin's eyes."; erased: "He glances at Kristin as he says it."),
+  or the row records that the observation was not earned; no unearned fact; recovery count 0.
+- missed-window rows: exit cause `missed_window_plus_recovery` or `neutral_recovery`; 2A shows no
+  `supervisor_convinced` and no `cover_suspected` it did not earn; 2C asserts no commitment fact and no outcome cost.
+- stall rows: scene exit observed, `stuck_loop` false, nudge seen at turn 6.
+Reading rule: read the transcript and composed delivery text of every row (passes too) before reporting. A miss is
+diagnosed from the transcript and the recorded prompt before any rewording; a reword is a new preregistered round.
+Three replicates per slice are a smoke on variance, not a rate. Not in this round: 2A doubted and 2B erase outcomes
+(a blind player is unlikely to reach them; a scripted-prefix design would need its own preregistration), 1C recovery.
+
+Round 4 result (2026-11-01, Ringer run `act2-visible-moves`, 12 rows run once each, no retries; artifacts under
+`bench/results/act2-smoke-35-*` to `-46-*`). 10 rows completed and met the preregistered pass rule; 2 rows ended
+in a recorded run-failure. I read the transcripts of the 10 completed rows and the traces of the 2 failures.
+Not a rate.
+
+| Rows | Cell | Result |
+| --- | --- | --- |
+| 35, 37 | 2C kept, none | `committed_to_transmit` on turn 2 each; kept sentence ("He says it coldly and avoids Kristin's eyes.") delivered on turn 1; recovery 0, rejections 0 |
+| 36 | 2C kept, none | **Run failure, no result:** Cloudflare `fetch failed` (`HeadersTimeoutError`, 300 s) while narrating turn 2, after turn 1 had delivered the kept sentence. Infrastructure, not story. Not replaced, per the preregistration |
+| 38, 39, 40 | 2C erased, none | `committed_to_transmit` on turn 2 each; erased sentence ("He glances at Kristin as he says it.") delivered on turn 1, never the kept one |
+| 41 | 2A missed window | **Run failure, no result:** `ProposalValidationError: narration mentions unavailable knowledge 'cooling fault'` on the first scripted command ("Inspect my work order beside the facility gate."), after retries. The same command passed in row 44, so this is intermittent. Same family as row 17: the narrator echoes a guarded earnable term. The recorded prompt is not in the artifacts, so the cause (what the narrator was shown) is not yet diagnosed. No reword made |
+| 42 | 2B missed window | Window fact at turn 5, nudge effect (`audit_reaches_stacks`) at turn 6, exit by recovery on turn 8 to 2C. `brandon_name_kept` is asserted by the recovery by design |
+| 43 | 2C missed window | Window turn 5, `purge_alarm_active` and `purge_recovery_ready` turn 6, exit turn 8 with a neutral recovery: no commitment fact, no outcome cost |
+| 44 | 2A stall | Window turn 5, `supervisor_escorting` turn 6, exit turn 7 with `cover_suspected` and `restricted_corridor_access` from the recovery bridge (design). The scripted prefix had observed the manifold on turn 3 and never explained it |
+| 45 | 2B stall | Window turn 5, nudge turn 6, a clarification on turn 8 ("archive terminals or the medical terminal?", intended behaviour, does not burn the window), exit turn 9 |
+| 46 | 2C stall | Window turn 5, alarm and recovery turn 6, exit turn 8 with a neutral recovery |
+
+What this shows:
+- The ledger split in the 2C observation works live: 5 of 5 completed slice rows delivered the sentence for their
+  ledger and never the other. All five committed to transmit; no rescue commitment was sampled. 2C still resolves
+  in two turns.
+- Missed windows and stallers leave 2A, 2B and 2C through the recovery bridge at turn 7 to 9, with no stuck loop,
+  no stale cue and no rejection in the 5 prefix rows that completed (42 to 46). The 2C recovery is neutral.
+- Timing assumption (window turn 5, nudge turn 6) holds on all six prefix rows that completed in the sense
+  that the engine events fired on those turns.
+
+Probe caveats, not story defects:
+- `nudge_seen_turn` is `None` in every prefix row: the probe looks for the nudge's text verbatim, but the nudge is a
+  non-verbatim realization whose effect fact is what fires. The preregistered "nudge seen at turn 6" is therefore
+  met through the effect fact, not the probe field.
+- `unearned_facts` lists `brandon_name_kept` (rows 42, 45) and `cover_suspected`/`restricted_corridor_access`
+  (row 44). Those are what the recovery bridges assert by design; the classifier cannot tell a bridge from an
+  earned outcome.
+
+Open: rows 36 and 41 are unresolved (an infrastructure timeout and one intermittent guard rejection). A replacement
+for row 36 or a probe of row 41's recorded prompt needs its own preregistration. Still not run: 2A doubted and 2B
+erase outcomes, rescue commitment in 2C, 1C recovery audit.
+
+## Round 5: replacements for rows 36 and 41 (preregistered 2026-11-01, before any billed call)
+
+Authorized by Brandon on 2026-11-01 ("yes to 36 and 41"). Build under test is Round 4's, unchanged: `main` at
+`3f73ea9c` plus the free `--ledger` probe change. No story or engine change.
+
+Row 41 recorded-prompt diagnosis (free, offline: `assemble_turn_prompt` path with the transport mocked, 2A arrival,
+the row's first command "Inspect my work order beside the facility gate."). The row's own artifact held no prompt
+(the run failed on turn 1, `partial-trace.json` was empty). Findings from the reconstructed prompt:
+- The SCENE section tells the narrator the phrase three times: the frame ("...and the fault is real"), the pressure
+  line ("Prove the cooling fault is real to get inside") and the entry statement ("...must prove the cooling fault is
+  real to get inside"). The CONSTRAINTS say "Use only what the SCENE section tells you."
+- The guard (`narration_safety.py`, "unavailable knowledge") rejects any unearned leak term not covered by a cited
+  grounding statement or the handoff text. "cooling fault" is an auto-derived leak term: it is a multi-word
+  `must_convey` phrasing of `k_sl_2a_c_r5` and `k_sl_2a_c_r6`, which set no `leak_terms` override.
+- This turn offered no candidates and no known ids to cite, so a narrator that echoes the phrase cannot ground it.
+  The same command passed in row 44 because that narration avoided the phrase.
+Hypothesis (not yet tested): the rejection is a sampling-dependent collision between scene-frame wording the model is
+told to use and a guarded earnable phrase, not a defect specific to the missed-window prefix. Candidate fixes are not
+chosen here; per the scene-fixing guide step 2 they need a probe with one arm per cause and 10 to 15 samples per arm,
+under its own preregistration. Nothing is reworded in this round.
+
+Rows (one each, no retries, same caps as Rounds 2 to 4, run name `act2-visible-moves`):
+- Row 47: replacement for row 36, 2C, ledger kept, prefix none. Pass rule as Round 4's slice rows.
+- Row 48: replacement for row 41, 2A, prefix missed_window. Pass rule as Round 4's missed-window rows. A second
+  rejection of the same kind counts as a recorded miss and as weak evidence for the hypothesis; it is not retried.
+
+Round 5 result (2026-11-01, Ringer run `act2-visible-moves`, one row each, no retries):
+- Row 47 (2C kept, none; replaces 36): met the pass rule. First reply to Rebecca earned the observation with the kept
+  sentence ("He says it coldly and avoids Kristin's eyes."), the uplink command earned `committed_to_transmit` on
+  turn 2, exit to 3A, recovery 0, rejections 0, no unearned fact. The kept slice now has three completed rows
+  (35, 37, 47) and the erased slice three (38 to 40); all six committed to transmit.
+- Row 48 (2A missed window; replaces 41): **run-failure, no result**, `ProposalValidationError: narration mentions
+  unavailable knowledge 'cooling fault'`, again on the first scripted command, `partial-trace.json` empty. This is the
+  second miss of the same kind on the same command. The same command, same arrival, passed once (row 44, stall prefix).
+  So "Inspect my work order beside the facility gate." was rejected on turn 1 in 2 of 3 live attempts. The Round 5
+  hypothesis (scene-frame wording told to the narrator collides with an auto-guarded earnable phrase) is consistent with
+  both misses but is still untested; a sampling probe is the next step and needs its own preregistration. The 2A
+  missed-window path itself has not yet been observed live, only the 2A stall path (row 44).
+
+## Round 6: sampling probe for the 2A "cooling fault" rejection (preregistered 2026-11-01, before any billed call)
+
+Authorized by Brandon on 2026-11-01 ("yes"). Follows the scene-fixing guide step 2: one arm per likely cause, replay
+the same recorded turn live, read every narration. Cloudflare Workers AI only. No change to `data/` or `storygame/`:
+each arm runs from a scratch copy of the story package, so the repository package is untouched.
+
+Fixed turn: 2A arrival (the probe's synthetic `_state`), first command "Inspect my work order beside the facility
+gate.", one narration turn per sample, a fresh state per sample, no player model. 12 samples per arm, 36 in all, all
+three arms started together so time of day is shared. Per-arm Cloudflare cap 60 requests (5 per sample), hard stop at
+the cap, no retries of a failed sample beyond the engine's own single recovery.
+
+Arms:
+- `control`: the current package. Expectation from rows 41, 44 and 48: final rejection on a large share of samples.
+- `wording`: the scene text the narrator is shown no longer says "cooling fault". Three exact replacements in the
+  scratch copy: `knowledge.yaml` scene pressure line "Prove the cooling fault is real to get inside" becomes
+  "Prove the cooling system is failing to get inside"; the `k_scene_2a_entry` statement ("...must prove the cooling
+  fault is real to get inside.") likewise; the 2A `objective` in `plot.md` ("Get inside by proving the cooling fault is
+  real") becomes "Get inside by proving the cooling system is failing". Guard data unchanged.
+- `leakterms`: the scene text is unchanged, but `k_sl_2a_c_r5` and `k_sl_2a_c_r6` get an explicit `leak_terms` list
+  (a precedent exists: `k_supervisor_escorting` sets `leak_terms: []`) that keeps their outcome-specific phrasings and
+  drops the bare "cooling fault", "pressure problem", "ventilation fault" and "ventilation problem". r5 list: genuine
+  cooling-water pressure fault, genuine pressure problem, genuine cooling fault, real ventilation fault, restricted
+  infrastructure corridors, infrastructure corridors, restricted corridor access, console used. r6 list: restricted
+  infrastructure corridors, infrastructure corridors, restricted corridor access, console used.
+
+Recorded per sample: final result (ok, or the exception class and message with the offending term), whether the
+engine's own single recovery fired, request counts, the full narration. Free dry mode builds each arm's package
+offline and asserts the arm differences (the prompt and the leak-term map) before any billed call.
+
+Scoring and decision rule, fixed now:
+- Primary: final-rejection count per arm out of 12. Secondary: samples where a first attempt was rejected and recovered.
+- Control must show at least 3 of 12 final rejections, or the probe cannot discriminate causes and I report that and
+  stop (no fix chosen).
+- An arm "wins" if it has at most 1 of 12 final rejections AND control has at least 4 more than it. If `wording` wins,
+  the cause is the scene wording and that is the preferred fix, because it changes source material and keeps the guard
+  intact. If only `leakterms` wins, the cause is the guard collision. If both win, prefer `wording`. If neither wins,
+  neither cause is confirmed and the next arm needs its own preregistration.
+- Every narration in a winning arm is read. `wording` must still tell the player the aim is to prove the cooling
+  trouble is real; `leakterms` must not name an earnable outcome early. A win with a degraded narration is not a win.
+- Rejections naming a different term are reported by term, not folded into "cooling fault".
+Not in this round: any change to the repository story data. A fix is a separate step, decided by Brandon after reading
+this round, then verified by the 2A rows 32, 41/48-style missed-window and stall paths.
+
+Round 6 result (2026-11-01, Ringer runs `act2-r6-smoke-control` then `act2-r6-arms`; artifacts
+`bench/results/act2-guard-smoke-control` and `bench/results/act2-guard-{control,wording,leakterms}`): 12 samples per
+arm, same fixed turn, all started together, every sample completed (no transport errors, no cap hit, no raw player
+events; 12 to 22 Cloudflare requests per arm).
+
+| Arm | Final rejections | Term | Notes |
+| --- | --- | --- | --- |
+| control | 7 of 12 | all 7 "cooling fault" | the engine's recovery never fired (recovery count 0 on every sample), so a rejected turn goes straight to the player |
+| wording | 0 of 12 | none | |
+| leakterms | 0 of 12 | none | |
+
+Preregistered rule applied: control had at least 3 rejections (7), and both arms had at most 1 with control at least 4
+above them, so both arms win. Tie-break fixed in advance: prefer `wording`. The narration read (all 24) agrees:
+- `wording`: stays on the cooling system (water flow, efficiency, manifold) with no parroting of the scene phrase. It
+  invents specifics in 5 of 12 ("a 30% reduction in efficiency due to a faulty valve", "a fault in the manifold"),
+  which brush against the diagnosis the player makes at the manifold. The control's accepted samples are the same kind
+  of text, so this is not new.
+- `leakterms`: in 9 of 12 samples Kristin mutters the scene's own phrase ("Cooling fault, priority one, scheduled for
+  inspection tonight"), which is the narrator copying the SCENE section, and sample 7 has the supervisor say the manifold
+  is "functioning within normal parameters", which contradicts the real fault. Sample 9 says "inspection tomorrow".
+  It stops the rejection by loosening the guard and makes the prose worse.
+
+Conclusion (one scene, one turn, one command, 12 samples per arm, not a rate): the 2A first-turn rejection is caused
+by the scene wording the narrator is told, colliding with the auto-guarded phrase from `k_sl_2a_c_r6`. Rewording the
+three 2A lines fixes it in this sample set and keeps the guard intact. It also explains rows 41 and 48 (hypothesis
+confirmed for that turn). The collision is in the scene pressure line, so it can recur on any 2A turn, not only the
+first.
+
+Free audit across all scenes (text match of scene-entry statements and objectives against the leak-term map): the
+only entry statement that collides with an earnable outcome entry is 2A (`cooling fault`, owner `k_sl_2a_c_r6`). Two
+other matches are worth a look but are untested and may be exempt: `k_scene_3c_entry` contains "exposure and escape",
+a leak term of `k_resolution_complete`, and several objectives contain `michelle`, `archive`, `evidence` or `purge`,
+which are leak terms of other scenes' entry statements.
+
+Not done: no story edit. The fix (the three `wording` replacements in `knowledge.yaml` and `plot.md`) needs Brandon's
+go-ahead, then the usual propagation tests and a live 2A recheck of the 2A paths that rejected (rows 41 and 48).
+
+## Round 7: live recheck of the 2A rewording (preregistered 2026-11-01, before any billed call)
+
+Authorized by Brandon on 2026-11-01 ("yes apply the 2A rewording"). Change under test: the three-line 2A rewording
+from Round 6 applied to the repository package: `knowledge.yaml` pressure line and `k_scene_2a_entry` statement become
+"...prove the cooling system is failing to get inside", and the 2A `objective` in `plot.md` becomes "Get inside by
+proving the cooling system is failing". Left unchanged on purpose: the `plot.md` summary-table row 58 and the
+`knowledge.yaml:190` `purpose` line, neither of which reaches the narrator in the reconstructed prompt.
+
+Free first (Ringer, no billing): the edit, the one test that asserted the old line, the Round 6 probe's arms (its
+`wording` arm becomes a `legacy` arm that restores the old text, so the probe can still reproduce the old behaviour),
+and the focused propagation suites.
+
+Then billed, Cloudflare only, same caps and conventions as before, no retries:
+- Probe, `control` arm on the now-fixed package, 12 samples of the same fixed turn. Pass: at most 1 of 12 final
+  rejections (Round 6 control had 7 of 12), and every narration read for a regression (parroting of the scene text,
+  contradictions of the real fault).
+- Row 49: 2A, prefix missed_window (the cell rows 41 and 48 could not complete). Pass rule as Round 4's missed-window
+  rows.
+- Row 50: 2A, prefix none, blind player. Pass: declared outcome, no recovery bridge, no rejection (row 32 passed before
+  the change).
+A failure is diagnosed from the transcript before anything is reworded. One row each is a smoke, not a rate.
+
+Round 7 result (2026-11-01, Ringer runs `act2-visible-moves`; artifacts `bench/results/act2-guard-postfix-control`,
+`act2-smoke-49-2A-missed-window-postfix`, `act2-smoke-50-2A-none-postfix`). The rewording was applied by a Ringer task
+whose own check had three bugs of mine (a `grep -c` under `pipefail`, no `node_modules` link, an unstaged-only
+`git diff`); I fixed the check and ran it by hand against the finished worktree, where it passed: 371 Python tests,
+178 node tests, ruff, dry probes of all three arms, data diff exactly 3 lines. I exported the patch by hand and applied
+it. The full suite has not been run.
+- Post-fix control, 12 samples of the fixed turn: **0 of 12 rejections** (Round 6 control: 7 of 12), 12 Cloudflare
+  requests, no cap hit. All 12 narrations read: none says "cooling fault"; none contradicts the real fault. Residual
+  quality notes, none new: Kristin mutters "Cooling system failure, priority one..." in 2 of 12 (the `leakterms` arm did
+  it 9 of 12), 2 of 12 invent "a 30% reduction in efficiency due to a faulty valve", and samples 9 and 11 have Brandon
+  say "we already know the cooling system is failing" and a supervisor who stonewalls ("not for you to know").
+- Row 50 (2A none, blind): earned `inspection_convincing` on turn 2 (observe the manifold, then explain it), no
+  recovery bridge, no rejection. Same result as pre-change row 32.
+- Row 49 (2A missed-window prefix): first command passed (the command that failed rows 41 and 48). It did **not**
+  exercise the recovery bridge: the prefix's third command ("Examine the cooling manifold...") earned
+  `manifold_fault_found`, the window was missed on turn 5, and the blind player then explained the fault on turn 6 and
+  earned `inspection_convincing` after the window. So the preregistered pass rule for missed-window rows (exit cause is a
+  recovery) is not met, and the row shows a different sound path instead: an outcome earned after the window still
+  lands, with no `cover_suspected`, because the recovery no longer fires after the choice. `unearned_facts` listing
+  `restricted_corridor_access` is the known classifier gap (the realization asserts it). The 2A recovery bridge itself
+  was last seen live in row 44 (stall, before the rewording).
+
+Conclusion: the 2A first-turn rejection is gone in this sample set (0 of 12 versus 7 of 12 before) and the 2A earned path
+still works. A pure missed-window 2A row on the new text, with a prefix that does not reach the manifold, was not run.

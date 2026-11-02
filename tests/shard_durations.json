@@ -46,6 +46,7 @@
     "tests/test_3c_surface_binding.py": 3.52,
     "tests/test_3c_world_capture_wiring.py": 0.74,
     "tests/test_absent_thing_rule.py": 0.17,
+    "tests/test_act2_guard_probe.py": 6.75,
     "tests/test_act2_knowledge_sources.py": 0.05,
     "tests/test_act2_probe.py": 3.81,
     "tests/test_action_contract.py": 0.22,

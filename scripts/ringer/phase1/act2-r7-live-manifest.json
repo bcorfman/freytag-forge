@@ -1,0 +1,72 @@
+{
+  "run_name": "act2-visible-moves",
+  "workdir": "/home/bcorfman/dev/ringer-work/act2-visible-moves",
+  "max_parallel": 3,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "act2-r7-postfix-control",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-guard-postfix-control/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_guard_probe.py --arm control --n 12 --confirm --out bench/results/act2-guard-postfix-control",
+      "spec": "Run ONE billed Round 7 live sampling probe per .plans/act2-live-smoke.md: arm control, 12 sample(s) of the fixed 2A turn. Own only bench/results/act2-guard-postfix-control/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; if the harness stops nonzero it leaves run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_guard_probe.py --arm control --n 12 --confirm --out bench/results/act2-guard-postfix-control",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/act2_guard_probe.py --check bench/results/act2-guard-postfix-control 12",
+      "verified": "samples recorded, caps respected, no raw player events"
+    },
+    {
+      "key": "act2-r7-row49",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-49-2A-missed-window-postfix/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2A --prefix missed_window --n 1 --confirm --out bench/results/act2-smoke-49-2A-missed-window-postfix",
+      "spec": "Run ONE billed Act 2 live smoke (row 49: scene 2A, prefix missed_window, ledger n/a) per .plans/act2-live-smoke.md Round 7: 1 row, raw blind player after any scripted prefix, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-49-2A-missed-window-postfix/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2A --prefix missed_window --n 1 --confirm --out bench/results/act2-smoke-49-2A-missed-window-postfix",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-49-2A-missed-window-postfix 1 --mode artifacts",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    },
+    {
+      "key": "act2-r7-row50",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-smoke-50-2A-none-postfix/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2A --prefix none --n 1 --confirm --out bench/results/act2-smoke-50-2A-none-postfix",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/check_act2_probe.py bench/results/act2-smoke-50-2A-none-postfix 1 --mode artifacts",
+      "spec": "Run ONE billed Act 2 live smoke (scene 2A, prefix none) per .plans/act2-live-smoke.md Round 7: 1 row, raw blind player, at most 30 commands, harness caps 80 Cloudflare / 40 player. Own only bench/results/act2-smoke-50-2A-none-postfix/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace rows; on quota, outage, malformed output or cap error the harness stops nonzero with run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_probe.py --scene 2A --prefix none --n 1 --confirm --out bench/results/act2-smoke-50-2A-none-postfix",
+      "verified": "1 row reconciles with spend events and caps; artifacts check passes"
+    }
+  ]
+}

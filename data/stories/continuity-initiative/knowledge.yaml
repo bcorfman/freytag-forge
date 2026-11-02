@@ -327,7 +327,7 @@ scene_frames:
   pressure: Observe the transfer and choose what to secure
 - scene_id: 2A
   situation: The facility gate at night. A shift supervisor has come out to meet two unscheduled inspectors. The facility's strained cooling-water and ventilation systems are the only pretext for the visit, and the fault is real.
-  pressure: Prove the cooling fault is real to get inside
+  pressure: Prove the cooling system is failing to get inside
 - scene_id: 2B
   situation: The facility's restricted records archive, with rows of terminals and a medical terminal tied to the detention levels. An audit sweep is working down the aisles toward Kristin and Brandon.
   pressure: Find the truth in the archive before the audit reaches them
@@ -2749,7 +2749,7 @@ knowledge:
   establishes: [{op: assert, fact_id: scene_1c_entry_known, value: true}]
   source: {kind: scene_entry}
 - id: k_scene_2a_entry
-  statement: Kristin and Brandon are at the facility gate and must prove the cooling fault is real to get inside.
+  statement: Kristin and Brandon are at the facility gate and must prove the cooling system is failing to get inside.
   entity_ids: [kristin, regional_facility]
   aliases: [facility entrance, facility gate]
   audience: {kind: public, player_visible: true}
