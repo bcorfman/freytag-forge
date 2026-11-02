@@ -151,12 +151,26 @@ def _source_links(storylets: str) -> dict[str, list[tuple[str, int]]]:
 
 def _owned_items(world: dict[str, Any]) -> list[tuple[str, str]]:
     """Return owner/thing pairs; this heuristic only considers named items."""
-    owned: list[tuple[str, str]] = []
+    return [(owner, thing) for _, owner, thing in _owned_items_with_ids(world)]
+
+
+def _owned_items_with_ids(world: dict[str, Any]) -> list[tuple[str, str, str]]:
+    """Return item-id/owner/thing triples for named owned items."""
+    owned: list[tuple[str, str, str]] = []
     for item in world.get("items", []):
         match = _OWNED_ITEM_NAME.fullmatch(str(item.get("name", "")))
         if match:
-            owned.append((match.group(1), match.group(2)))
+            owned.append((str(item.get("id", "")), match.group(1), match.group(2)))
     return owned
+
+
+def _scene_item_ids(body: str) -> set[str]:
+    """Return item IDs listed in a scene's front matter."""
+    front_matter = re.search(r"^---\s*$\n(.*?)^---\s*$", body, re.MULTILINE | re.DOTALL)
+    if not front_matter:
+        return set()
+    item_ids = re.search(r"^item_ids:\s*\[([^]]*)\]", front_matter.group(1), re.MULTILINE)
+    return {item_id.strip() for item_id in item_ids.group(1).split(",")} if item_ids else set()
 
 
 def _ambiguous_owned_item_findings(
@@ -164,19 +178,30 @@ def _ambiguous_owned_item_findings(
 ) -> list[dict[str, str]]:
     """Find units naming an owned thing without its owner in the same unit."""
     findings = []
+    by_thing: dict[str, list[tuple[str, str]]] = {}
     for owner, thing in owned_items:
+        by_thing.setdefault(thing.casefold(), []).append((owner, thing))
+    for items in by_thing.values():
+        owners: list[str] = []
+        for owner, _ in items:
+            if owner.casefold() not in {existing.casefold() for existing in owners}:
+                owners.append(owner)
+        if len(owners) < 2:
+            continue
+        thing = items[0][1]
         if not re.search(rf"\b{re.escape(thing)}\b", text, re.I):
             continue
-        if re.search(rf"\b{re.escape(owner)}\b", text, re.I):
+        if any(re.search(rf"\b{re.escape(owner)}\b", text, re.I) for owner in owners):
             continue
         excerpt = text.strip()
         if len(excerpt) > 120:
             excerpt = f"{excerpt[:117].rstrip()}..."
+        owner_text = " or ".join(owners)
         findings.append(
             _finding(
                 "ambiguous_owned_item",
                 scene_id,
-                f"{label} '{excerpt}' names the {thing} without naming {owner}, "
+                f"{label} '{excerpt}' names the {thing} without naming {owner_text}, "
                 f"so the narrator cannot tell it from another {thing}.",
             )
         )
@@ -208,19 +233,33 @@ def audit_package(root: Path) -> dict[str, Any]:
 
     # This is deliberately lexical: it catches bare owned things, but cannot
     # resolve pronouns, aliases, or ownership expressed outside the same unit.
-    owned_items = _owned_items(world)
+    owned_items = _owned_items_with_ids(world)
     for scene_id, body in scenes.items():
+        item_ids = _scene_item_ids(body)
+        scene_owned_items = [(owner, thing) for item_id, owner, thing in owned_items if item_id in item_ids]
         for match in re.finditer(r"^\*\*Details:\*\*\s*(.*?)\s*$", body, re.MULTILINE):
             for detail in match.group(1).split(";"):
-                findings.extend(_ambiguous_owned_item_findings(detail, scene_id, "Beat detail", owned_items))
+                findings.extend(_ambiguous_owned_item_findings(detail, scene_id, "Beat detail", scene_owned_items))
     for item in knowledge.get("knowledge", []):
         scene_id = (item.get("available_in_scenes") or [scene_ids[0]])[0]
+        scene_owned_items = [
+            (owner, thing)
+            for item_id, owner, thing in owned_items
+            if item_id in _scene_item_ids(scenes.get(scene_id, ""))
+        ]
         for sentence in _SENTENCE_SPLIT.split(str(item.get("statement", ""))):
-            findings.extend(_ambiguous_owned_item_findings(sentence, scene_id, "Knowledge statement", owned_items))
+            findings.extend(
+                _ambiguous_owned_item_findings(sentence, scene_id, "Knowledge statement", scene_owned_items)
+            )
     for frame in knowledge.get("scene_frames", []):
         scene_id = str(frame.get("scene_id"))
+        scene_owned_items = [
+            (owner, thing)
+            for item_id, owner, thing in owned_items
+            if item_id in _scene_item_ids(scenes.get(scene_id, ""))
+        ]
         for sentence in _SENTENCE_SPLIT.split(str(frame.get("situation", ""))):
-            findings.extend(_ambiguous_owned_item_findings(sentence, scene_id, "Scene frame", owned_items))
+            findings.extend(_ambiguous_owned_item_findings(sentence, scene_id, "Scene frame", scene_owned_items))
 
     plot_words = _words(plot)
     for item in knowledge.get("knowledge", []):
