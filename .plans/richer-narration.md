@@ -64,6 +64,15 @@ all nine scenes; shared runtime must remain story-agnostic.
   `michelle_photograph`). Count an owned item only for scenes where it is listed or placed. Brandon's rule:
   the engine scopes similar items by scene and asks to clarify; authors must not contort nouns. Then the 1A kitchen
   "snapshot" may be renamed "photograph" if he prefers it.
+- **Richer 1A propagated, commit below the lint commit `945a7912`:** world.yaml, knowledge.yaml, storylets.md,
+  storylet-routes.yaml, scene 1A front matter, and 24 files of pins; whole suite passes (3940). Audit deltas to
+  tune: two new `beat_overprojection` findings (1A.3 projects at turn 2, reveal earnable at turn 3; 1A.4 projects at
+  turn 2, reveal earnable at turn 4: align storylet windows or conditions), and 1A's estimated turn payload grew
+  22,539 to 27,854 characters (the audit's budget is 12,000 and was already exceeded): check how the payload is
+  bounded per turn before adding more per-scene material.
+- **Owed next (Ringer):** rename the kitchen "snapshot" to "photograph" (Brandon's choice; name "lake photograph",
+  scoped_aliases photograph and photo so 1B's michelle_photograph still resolves in its own scene) and drop the
+  possessive in "On Kristin's truck radio ..." (the scene-aware lint no longer needs it).
 - Decisions taken 2026-11-02: 1A, 2A (refuse unknown ordinary things, measure slips first, only when
   the package declares a policy), 3A.
 - Ringer notes: the first run failed twice on my spec (a `notes.md` the check
