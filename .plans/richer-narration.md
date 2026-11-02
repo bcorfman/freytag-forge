@@ -1,6 +1,10 @@
 # Richer narration with bounded invention
 
 Status: in progress, 2026-11-02. Branch `richer-narration-1`.
+**Direction change (2026-11-02, Brandon):** richness comes from the plot itself, not runtime embellishment.
+The current story is treated as an outline and drafted richer, scene by scene, in `plot.md` first.
+First slice: `.plans/richer-plot-1a-slice.md` (draft awaiting his reaction). Step 3 below (prompt work)
+and step 4 (prop pools) are deferred; steps 1 and 2 stay built and unused until then.
 Steps 1, 2a, 2b, 2c and the condition routing of 2d are done (see Progress). Resume here:
 the small cleanup listed under Progress, then step 3 (shared prompt helper for all six narration
 paths, prose validation and judge coverage). Refusing unknown ordinary things waits for bench data.
