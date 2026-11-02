@@ -7,6 +7,7 @@ from urllib.error import HTTPError
 import pytest
 
 import scripts.ringer.opening_truck.probe2 as probe2
+from tests.fixtures.opening_truck_probe import recorded_control_request
 
 
 @pytest.fixture(autouse=True)
@@ -17,6 +18,15 @@ def no_real_network(monkeypatch: pytest.MonkeyPatch) -> None:
         raise AssertionError("a test attempted a real network call")
 
     monkeypatch.setattr(cloudflare, "urlopen", fail_urlopen)
+
+
+@pytest.fixture(autouse=True)
+def recorded_boarding_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        probe2,
+        "_control_request",
+        lambda command: recorded_control_request(probe2, command),
+    )
 
 
 def test_build_document_has_exact_command_arms_and_opening_diff() -> None:

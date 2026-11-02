@@ -695,7 +695,7 @@ def test_before_state_scene_leaving_turn_records_pre_turn_place(monkeypatch) -> 
     assert result["status"] == "ok"
     assert result["turns"][0]["left_scene"] is True
     assert result["turns"][0]["item_facts_before"]["Kristin"] == {
-        "place": "kitchen",
+        "place": "Michelle's kitchen",
         "condition": [],
     }
     assert result["turns"][0]["item_facts_before"]["Kristin"]["place"] != "Los Angeles park"

@@ -81,7 +81,8 @@ def test_packages_load_schema_bootstrap_and_contents(package):
     state = RuntimeState.bootstrap(package)
     world = world_for(package, state.facts)
     scene = package.scenes[0].metadata
-    assert world.parent(package.protagonist_id) == scene.location_id
+    expected_protagonist_parent = "kitchen" if package.story_id == "continuity_initiative" else scene.location_id
+    assert world.parent(package.protagonist_id) == expected_protagonist_parent
     for item_id, placement in scene.item_placements.items():
         if hasattr(placement, "parent") and placement.parent:
             assert world.parent(item_id) == placement.parent

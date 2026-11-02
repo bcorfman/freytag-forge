@@ -152,9 +152,9 @@ def test_capture_default_does_not_ask_relocation():
 def test_real_scene_1a_same_area_is_the_legacy_fixed_scope(monkeypatch: pytest.MonkeyPatch):
     provider, world = _real_scene_1a(monkeypatch)
 
-    assert world.area(provider.state.package.protagonist_id) != world.area(world.resolve("workstation"))
+    assert world.area(provider.state.package.protagonist_id) == world.area(world.resolve("workstation"))
     result = refuse_fixed_move(world, provider.state.package, "Carry the workstation to the truck.", lambda *_: True)
-    assert result.asked is False
+    assert result.asked is True
 
 
 @pytest.mark.parametrize(

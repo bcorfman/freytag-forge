@@ -5,9 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ringer.opening_truck import probe3
+from scripts.ringer.opening_truck import probe2, probe3
 from scripts.ringer.transcript_1a.boarding_probe import QuotaExceeded
 from storygame.runtime import cloudflare
+from tests.fixtures.opening_truck_probe import recorded_control_request
 
 
 @pytest.fixture(autouse=True)
@@ -18,6 +19,15 @@ def hermetic_network(monkeypatch: pytest.MonkeyPatch) -> None:
         raise AssertionError("real urlopen reached during probe 3 test")
 
     monkeypatch.setattr(cloudflare, "urlopen", fail_urlopen)
+
+
+@pytest.fixture(autouse=True)
+def recorded_boarding_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        probe3,
+        "_control_request",
+        lambda command: recorded_control_request(probe2, command),
+    )
 
 
 def test_document_arms_and_plan_are_preregistered() -> None:

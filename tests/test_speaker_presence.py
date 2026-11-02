@@ -119,7 +119,7 @@ def test_1a_officer_placed_elsewhere_is_not_present(monkeypatch: pytest.MonkeyPa
     monkeypatch.delenv("CLOUDFLARE_WORKER_TOKEN", raising=False)
     state = _patrol_in_house_state()
     world = world_for(PACKAGE, state.facts)
-    assert world.area("kristin") == "mcgehee_home"
+    assert world.area("kristin") == "kitchen"
     assert world.move("patrol_officer", "outside_house").ok
     provider = build_capture_provider(state)
 

@@ -10,6 +10,7 @@ import pytest
 import storygame.runtime.cloudflare as cloudflare
 from scripts.ringer.opening_truck import probe
 from storygame.runtime.jev import JevClient
+from tests.fixtures.opening_truck_probe import recorded_control_request
 
 
 class _Response:
@@ -30,6 +31,15 @@ class _Response:
 
 def _narrator_response(text: str = "A reply.") -> _Response:
     return _Response({"narration": json.dumps({"segments": [{"kind": "narration", "text": text}]})})
+
+
+@pytest.fixture(autouse=True)
+def recorded_boarding_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        probe,
+        "_control_request",
+        lambda: recorded_control_request(probe, "head out to the truck"),
+    )
 
 
 def test_import_has_no_network_side_effect(monkeypatch: pytest.MonkeyPatch) -> None:

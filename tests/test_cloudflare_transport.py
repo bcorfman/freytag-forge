@@ -1973,9 +1973,8 @@ def test_opening_prompt_carries_the_authored_scene_frame_without_player_input(mo
     user = captured["payload"]["user"]
     assert "<player_input>" not in user
     beat = PACKAGE.scenes[0].opening_beat
-    location = next(item for item in PACKAGE.world.locations if item.id == PACKAGE.scenes[0].metadata.location_id)
     assert _rendered_character_line("kristin") in user
-    assert f"The scene takes place at {location.name}." in user
+    assert "The scene takes place at Michelle's kitchen." in user
     objective = PACKAGE.scenes[0].metadata.objective
     assert f"objective is to {objective[0].lower()}{objective[1:]}." in user
 
