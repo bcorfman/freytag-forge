@@ -6,15 +6,13 @@ from copy import deepcopy
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
-from worldkeeper import PropProposal, TraitProposal
+from worldkeeper import EmbellishResult, PropProposal, TraitProposal
 
 from storygame.runtime.facts import FactStore
 from storygame.runtime.validation import ProposalValidationError
 from storygame.runtime.world_model import apply_scene_placements, incidental_policy_for, world_for
 
-
-def _name_field() -> object:
-    return Annotated[StrictStr, Field(min_length=1, max_length=120)]
+Name = Annotated[StrictStr, Field(min_length=1, max_length=120)]
 
 
 class _Entry(BaseModel):
@@ -32,14 +30,14 @@ class _Entry(BaseModel):
 
 
 class PropEntry(_Entry):
-    template: _name_field()
-    parent: _name_field()
+    template: Name
+    parent: Name
 
 
 class TraitEntry(_Entry):
-    target: _name_field()
-    facet: _name_field()
-    value: _name_field()
+    target: Name
+    facet: Name
+    value: Name
 
 
 class Embellishments(BaseModel):
@@ -91,7 +89,10 @@ def check_for_state(
 
 
 def commit_for_state(package, facts: FactStore, scene_id: str, value: Embellishments):
-    policy, props, traits = _checked(package, facts, scene_id, value)
+    policy = incidental_policy_for(package)
+    props, traits = value.proposals()
+    if policy is None:
+        return EmbellishResult(False, "The package does not allow these world details.")
     return world_for(package, facts).apply_embellishments(policy, scene_id, props, traits)
 
 

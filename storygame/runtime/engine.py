@@ -481,6 +481,7 @@ class RuntimeEngine(CanonicalEventMixin):
         pre_turn_context = None
         pre_turn_provider_fields = None
         previewed_narration = None
+        checked = None
         try:
             self.state.last_turn_delivery = TurnDelivery()
             self.state.turn_index += 1
@@ -559,7 +560,7 @@ class RuntimeEngine(CanonicalEventMixin):
                     previewed_narration = self._preview_observation(command_text, proposal, candidate_state, before)
                     pending = getattr(self.provider, "pending_embellishments", lambda: None)()
                     if pending is not None:
-                        check_for_state(
+                        checked = check_for_state(
                             self.state.package,
                             candidate_state.facts,
                             candidate_state.current_scene_id,
@@ -744,8 +745,7 @@ class RuntimeEngine(CanonicalEventMixin):
                 )
                 return proposal.model_copy(update={"game_break": warning})
         pending = getattr(self.provider, "pending_embellishments", lambda: None)()
-        if pending is not None:
-            checked = check_for_state(self.state.package, self.state.facts, self.state.current_scene_id, pending)
+        if pending is not None and checked is not None:
             result = (
                 commit_for_state(self.state.package, self.state.facts, self.state.current_scene_id, checked)
                 if checked.props or checked.traits
