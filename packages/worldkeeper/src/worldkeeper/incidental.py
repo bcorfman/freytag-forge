@@ -164,7 +164,8 @@ class IncidentalWorldMixin:
         checked = self.check_embellishments(policy, scene_id, props, traits)
         if not checked.ok:
             return checked
-        return self._run_embellishments(policy, scene_id, props, traits)
+        applied = type(self)(self.schema, self.backend, make_fact=self.make_fact, resolver=None)
+        return applied._run_embellishments(policy, scene_id, props, traits)
 
     def _run_embellishments(self, policy, scene_id, props, traits):
         if len(props) > policy.per_turn:
@@ -187,19 +188,16 @@ class IncidentalWorldMixin:
             if self._name_collision(template.name):
                 return EmbellishResult(False, "template name already exists")
             templates.append(template)
-            self.backend.assert_fact(self._fact("wk_incidental", "__pending__", scene_id, template.name))
-        for fact in self._facts("wk_incidental", "__pending__"):
-            self.backend.retract_fact(fact)
         if len({template.name for template in templates}) != len(templates):
             return EmbellishResult(False, "template already used in batch")
         created = []
         for proposal, template in zip(props, templates):
-            parent_id = self._resolve_without_resolver(proposal.parent)
+            parent_id = self.resolve(proposal.parent)
             if not parent_id or parent_id in created or parent_id not in template.parents:
                 return EmbellishResult(False, "invalid parent")
             if not self._available_parent(parent_id):
                 return EmbellishResult(False, "invalid parent")
-            made = self._create_without_resolver(template.name, parent_id)
+            made = self.create(template.name, parent=parent_id)
             if not made.ok:
                 return EmbellishResult(False, made.reason)
             created.append(made.id)
@@ -217,18 +215,6 @@ class IncidentalWorldMixin:
             self._normalize(candidate) == normalized for entity_id in self._ids() for candidate in self.names(entity_id)
         )
 
-    def _resolve_without_resolver(self, name):
-        view = self.__class__(self.schema, self.backend.clone(), make_fact=self.make_fact, resolver=None)
-        return view.resolve(name)
-
-    def _create_without_resolver(self, name, parent_id):
-        resolver = self.resolver
-        self.resolver = None
-        try:
-            return self.create(name, parent=parent_id)
-        finally:
-            self.resolver = resolver
-
     def _available_parent(self, parent_id):
         return (
             self.exists(parent_id)
@@ -244,7 +230,7 @@ class IncidentalWorldMixin:
         for proposal in traits:
             if not isinstance(proposal, TraitProposal):
                 return False, "invalid trait", added
-            target = self._resolve_without_resolver(proposal.target)
+            target = self.resolve(proposal.target)
             if not target:
                 return False, "unknown trait target", added
             authored = policy.authored.get(target, {}).get(proposal.facet)

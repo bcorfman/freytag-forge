@@ -152,6 +152,7 @@
     "tests/test_incident_loader.py": 0.33,
     "tests/test_incident_pressure.py": 0.17,
     "tests/test_incident_recovery.py": 0.14,
+    "tests/test_incidental_package.py": 0.84,
     "tests/test_invitation_report.py": 1.69,
     "tests/test_item_facts_null_place.py": 0.16,
     "tests/test_j1_scope_probe.py": 0.09,

@@ -14,3 +14,4 @@ The loader rejects unknown references, malformed Markdown/YAML, invalid timing, 
 - [Pacing and incidents](markdown-story-authoring/pacing-and-incidents.md): read this when authoring pacing windows, pressure realizations, or optional incident decision windows.
 - [Route guarantees and resolutions](markdown-story-authoring/route-guarantees-and-resolutions.md): read this when validating required reveals, bridge guarantees, resolution events, or fallback text.
 - [Loading and scene movement](markdown-story-authoring/loading-and-scene-movement.md): read this when checking package loading behavior or protagonist placement and carried items across scene changes.
+- [Incidental props and facets](markdown-story-authoring/incidental-props-and-facets.md): read this when declaring harmless incidental props or cosmetic facets.
