@@ -118,7 +118,7 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; Michelle's wall calendar and lake photograph; KMS initials carved in drawer
+**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake snapshot; KMS initials carved in drawer
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but the house does not read as a burglary. It reads as a person's last hour:
 
@@ -127,7 +127,7 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
 * A mug of tea sits on the workstation with the bag still in it, faintly warm. Michelle made it near the end.
 * Her reading glasses lie folded on a stack of manuscript pages marked in red pen. She never goes anywhere without them.
 * The wall calendar has Saturday circled in her handwriting: *K — lemon cake.* It is Kristin's birthday.
-* On the refrigerator, held by a pear-shaped magnet, a photograph of the two of them at a lake.
+* On the refrigerator, held by a pear-shaped magnet, a snapshot of the two of them at a lake.
 * The back door shows signs of forced entry, but the splinters around the frame point outward, and the deadbolt is thrown. Nobody forced it from outside. The house is otherwise undisturbed, not burglarized.
 
 Kristin knows Michelle would not leave her kitchen like this.
@@ -152,7 +152,7 @@ Michelle’s notes contain one alarming sentence:
 
 ### Scene 1A.3 — The Interrupted Message
 
-**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe; Kristin's truck radio and looping emergency broadcast
+**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe; radio and looping emergency broadcast
 
 On the card, Kristin finds a damaged voice recording Michelle attempted to send shortly before she disappeared. In it, Michelle says government officials have been tracking her and that a planned “activation event” is imminent.
 
@@ -170,7 +170,7 @@ Kristin can test the warning with her own skills. The truck radio carries the sa
 
 Walt Pruitt, a retired bus driver in his seventies, stands at the fence between the yards. His wife is one of the missing. He saw county vans near 3:40 with no markings Kristin can read, and two men with a clipboard checking the addresses on the street. They skipped the house next door. He is not sure what he saw, and he says so. He will not repeat it to the patrol.
 
-An emergency patrol arrives at Michelle's home unusually quickly. Officer Reyes, young and polite, works from a printed list. He conducts a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. He studies the lake photograph on the refrigerator a beat too long. He does not open the drawer. If Kristin has not taken the card, or takes it out of his sight, he finds nothing. If she takes it while he is watching, he challenges her, and the patrol's suspicion follows her out of the house.
+An emergency patrol arrives at Michelle's home unusually quickly. Officer Reyes, young and polite, works from a printed list. He conducts a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. He studies the lake snapshot on the refrigerator a beat too long. He does not open the drawer. If Kristin has not taken the card, or takes it out of his sight, he finds nothing. If she takes it while he is watching, he challenges her, and the patrol's suspicion follows her out of the house.
 
 After the patrol leaves, Kristin notices that one officer has quietly marked the front gate with a strip of reflective tape.
 
