@@ -1,8 +1,12 @@
 # Scene 1A: opening prose, emotional grounding, and truck continuity
 
-Status: in progress, 2026-11-02. Step 1 done. One runtime change (boarding-turn
-prompt, `e41878c3`) is implemented and live-checked. The opening (step 2), the
-rest of step 3 and all of step 4 are open. No story file has been changed.
+Status: in progress, 2026-11-02. Step 1 done. Step 2 edits are applied (plot.md,
+knowledge.yaml, world.yaml, `7794e4b9`) but only partly effective: the kitchen is
+named in 9 of 9 openings; layout, KMS as new and strange, and a specific reaction
+are not shown, and emotional responsiveness on later turns is not started. Step 3
+has one runtime change (`e41878c3`): seated and parked on the boarding turn, with a
+side effect noted in the Completion record; surroundings, repeated boarding and
+custody are open. Step 4 replicates ran once (`9abc76fb`) and failed four rows.
 Source baseline: `8da801206ca5e1708b0bce72e2c63e449cd3aae4`.
 
 ## Resume here
@@ -47,11 +51,11 @@ automatically earning a reveal or advancing a scene.
 unless they affect the main storyline. In probe criteria, "nothing invented"
 fails an arm only for a contradiction of canon or state, a pre-empted or revealed
 beat (patrol arrival, hidden card), or a collision with story names (a neighbor
-called Jenkins), or an open laptop at the workstation while it is in the truck
-(Brandon confirmed both examples on 2026-11-02). Atmosphere such as a passing
-police car is recorded for information and does not fail an arm. Probes 1 to 3 were scored under the
-stricter rule; re-scoring under this policy changes no adoption decision (the
-failing arms also fail the laptop or surroundings criteria).
+called Jenkins). An open laptop at the workstation while it is in the truck also
+fails (Brandon confirmed both examples on 2026-11-02). Atmosphere such as a
+passing police car is recorded for information and does not fail an arm. Probes 1
+to 3 were scored under the stricter rule; re-scoring under this policy changes no
+adoption decision.
 
 **Permission checkpoint:** if the smallest viable fix requires an engine
 redesign or changes to plot connections with cascading consequences, stop
@@ -107,26 +111,26 @@ not a reproduced diagnosis.
 
 ### 2. Repair the opening and its emotional meaning at the source
 
-- [ ] Start story edits in `data/stories/continuity-initiative/plot.md`, then
+- [x] (kitchen start applied via `character_placements`; effect verified live) Start story edits in `data/stories/continuity-initiative/plot.md`, then
   synchronize only affected world, scene-frame, storylet and knowledge material.
   Give Kristin an explicit kitchen starting placement if the capture confirms
   the current house-level default. Verify scope/reach changes this causes.
-- [ ] Supply a compact, grounded view: name the kitchen, establish where the
+- [~] (kitchen named 9 of 9; layout text supplied but shown 0 of 9) Supply a compact, grounded view: name the kitchen, establish where the
   existing workstation/chair and damaged back door are relative to her, and
   show enough layout to orient the player. Use existing objects; any added
   actionable physical detail must be declared and placed. Avoid a decorative
   inventory that creates unnecessary dependencies.
-- [ ] Supply the personal significance of the scene: this is her best friend's
+- [~] (sentence supplied; a specific reaction shown 0 of 9) Supply the personal significance of the scene: this is her best friend's
   familiar home, now disturbingly quiet and disrupted. The opening should show
   a concrete reaction to Michelle's absence and the damage, rather than a
   generic “eyes scanning” summary. Do not invent shared-history episodes,
   assert Michelle's fate, or make choices for Kristin.
-- [ ] Keep KMS newly carved. Make recognition and abnormality legible: these
+- [~] ("Kristin did not carve them" supplied; new or strange shown 0 of 9) Keep KMS newly carved. Make recognition and abnormality legible: these
   are Kristin's initials on Michelle's furniture, a fresh deliberate mark
   that draws her attention. Treat its intended recipient as a reasonable
   suspicion, not proof of who carved it or what lies underneath. Preserve the
   search/recovery gate and avoid revealing the hidden card in the opening.
-- [ ] Preserve the first paragraph's established events. Improve the generated
+- [x] (only the phrase "into the kitchen" was added) Preserve the first paragraph's established events. Improve the generated
   second paragraph through appropriate opening material, not by padding the
   fixed preamble or making every turn repeat the opening description.
 - [ ] Carry emotional responsiveness into consequential turns, especially
@@ -270,6 +274,20 @@ recorded-prompt fixture (display name, text, schema hash). The 1A stubbed payloa
 diff has 12 changed lines, all on the approved wording. Not yet done: the live
 replicates that show whether the prose now meets the opening acceptance row; full
 suite not yet run.
+
+### Scoring correction after the replicates (2026-11-02)
+
+The plan's row "Look for laptop; repeat boarding" requires "no automatic pickup".
+In all 9 replicates the narrator, on the boarding turn, wrote "reaches for the
+laptop ... pulls it out and opens it", and the engine committed the laptop as held
+by Kristin from that turn on. I scored the later "look for the laptop" turn as a
+pass because the laptop was "seen"; under the plan it is a fail for pickup. Probes
+2 and 4 counted "laptop shown on the passenger seat" and so also rewarded this
+unrequested pickup. The committed boarding-turn change (`e41878c3`) therefore buys
+"seated and parked" partly by leaving the narrator one action, handling the
+laptop, which is acting for the player. Probe 4 arm B ("takes in what she can see
+and reach") showed the laptop and the outside without a pickup in its good replies
+(6 of 10), which fits the plan's Head-out row better.
 
 Open: the remaining step 3 items (surroundings on the boarding turn, the unboarded
 "gets in" prose mismatch) and step 4. Record each
