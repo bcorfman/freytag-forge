@@ -1866,8 +1866,6 @@ Each entry below is authoring data, not a player action menu.
 **Allowed scene:** `3C`
 
 **Available when**
-- The broadcast has made the truth impossible to contain.
-- Rebecca has been captured.
 - The final evacuation window has been missed.
 
 **Participants / items**
@@ -1880,7 +1878,7 @@ Each entry below is authoring data, not a player action menu.
 - Resolve a stalled evacuation without crediting Kristin with an outcome or a cost.
 
 **Possible realizations**
-- The surge pushes the captives through the gates without Kristin's hand on the barrier.
+- The surge carries the captives through the gates without Kristin's hand on the barrier.
 
 **Effects**
 - Sets `evacuation_complete`.

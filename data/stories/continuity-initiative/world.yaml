@@ -445,6 +445,7 @@ facts:
 - captives_out_costly
 - lower_levels_lost
 - surge_forced_evacuation
+- evacuation_recovery_ready
 - evacuation_window_missed
 - evacuation_surge_building
 - captives_reaching_surface

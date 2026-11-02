@@ -1,0 +1,29 @@
+{
+ "run_name": "phase2-3c-finale",
+ "workdir": "/home/bcorfman/dev/ringer-work/phase2-3c-finale",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "fix-3c-recovery-stale-tests",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "tests/test_markdown_story_package.py",
+    "tests/test_resolution_cascade.py"
+   ],
+   "spec": "Work in /home/bcorfman/dev/freytag-forge directly (no worktree). Never git commit, never run `uv`, never call a billed model or the network. Run tests as `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider <tests>`. ROLE: test updater. You may edit ONLY tests/test_markdown_story_package.py and tests/test_resolution_cascade.py. The 3C neutral recovery was just rebuilt in the Act 2 shape (see git diff on data/stories/continuity-initiative: entry k_sl_3c_h_r1 was replaced by world-only k_evacuation_recovery_ready and k_sl_3c_h_route_effects; a pacing event `evacuation_recovery_3c` at turn 10 asserts `evacuation_complete` and `surge_forced_evacuation` when the window was missed). Two tests now fail for stale reasons; fix each in the smallest way that keeps its intent. (1) tests/test_markdown_story_package.py::test_authored_handoff_candidates_are_exactly_the_reviewed_set (line ~684) lists 'k_sl_3c_h_r1', which no longer exists as an authored handoff candidate: update the reviewed set to what the package really has now (run the test, read the diff of the sets; add or remove only ids that differ because of the SL-3C-H rebuild, and say which in your final message). (2) tests/test_resolution_cascade.py::test_resolution_deadline_shows_and_commits_remaining_chain asserts evacuation_complete is NOT set at the 3C handoff deadline and the story is not complete. By design the neutral recovery now completes the evacuation when the deadline passes with the window missed: change the test to assert, at that deadline, evacuation_complete AND surge_forced_evacuation are asserted, neither barrier_held nor captives_out_costly nor lower_levels_lost is, and state.story_complete is True; keep its last assertion about resolution fallback text. If the test's synthetic state (_state_3c(turn_index=handoff - 1)) does not have the window facts and so does not trigger the recovery, first read how pacing events fire (storygame/runtime/engine.py _activate_pacing and the evacuation_* events in pacing.yaml) and set up the state in the test the way a real stalling player would reach it (turns passing, no outcome), without editing storygame/. Also check the other tests in that file still describe true behaviour. Keep ruff formatting.",
+   "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=$PWD:$PWD/scripts/ringer/stage7:$PWD/scripts/ringer/phase1 TMPDIR=/tmp\nPY=.venv/bin/python\nD=data/stories/continuity-initiative\ngit diff --quiet -- storygame $D/plot.md || { echo \"WHY: storygame or plot.md edited\"; exit 1; }\nawk '/^- id: SL-3C-H$/,/pressure_role/' $D/storylet-routes.yaml > /tmp/h.txt\ngrep -q \"evacuation_window_missed\" /tmp/h.txt || { echo \"WHY: SL-3C-H lost its window condition\"; exit 1; }\ngrep -q \"truth_no_longer_containable\\|rebecca_captured\" /tmp/h.txt && { echo \"WHY: SL-3C-H still requires the episode facts\"; exit 1; }\ngrep -q \"evacuation_recovery_ready\" $D/knowledge.yaml $D/world.yaml $D/storylet-routes.yaml || { echo \"WHY: recovery_ready fact not wired\"; exit 1; }\ngrep -q \"id: k_sl_3c_h_r1\" $D/knowledge.yaml && { echo \"WHY: action-earned recovery entry still present\"; exit 1; }\n$PY -c \"from pathlib import Path; from storygame.story_package.loader import load_story_package as l; l(Path('$D'))\" || { echo \"WHY: package does not load\"; exit 1; }\ngrep -n \"RECOVERY_COMMAND\" scripts/ringer/phase2/act3c_probe.py && { echo \"WHY: stall still scripts a recovery command\"; exit 1; }\n$PY -m ruff format --check scripts/ringer/phase2 tests || { echo \"WHY: not ruff-formatted\"; exit 1; }\n$PY -m ruff check scripts/ringer/phase2 tests/test_3c_finale_journey.py tests/test_act3c_probe.py || { echo \"WHY: ruff check failed\"; exit 1; }\nfor p in none clean costly stall; do O=$(mktemp -d); $PY scripts/ringer/phase2/act3c_probe.py --prefix $p --n 1 --out $O --dry-run || { echo \"WHY: dry run failed for $p\"; exit 1; }; $PY scripts/ringer/phase2/check_act3c_probe.py $O 1 --mode dry || { echo \"WHY: probe check failed for $p\"; exit 1; }; done\nSUITES=\"\"; for t in test_3c_finale_journey test_act3c_probe test_story_ending test_3c_cue_chain test_incident_loader test_incident_engine test_incident_recovery test_incident_handoff_guard test_leak_terms test_markdown_story_package test_package_audit test_scene_roleplay_contract test_disclosure_guards test_scene_relative_pacing test_spine_expected_reveals test_knowledge_leakage_matrix test_knowledge_projection test_loader_pacing_producers test_entry_variants test_3c_escape_result test_3c_surface_binding test_resolution_cascade test_canon_journey; do [ -f tests/$t.py ] && SUITES=\"$SUITES tests/$t.py\"; done\n$PY -m pytest -q -p no:cacheprovider $SUITES || { echo \"WHY: suites failed\"; exit 1; }\necho ok\n",
+   "verified": "SL-3C-H fires on the window alone in the Act 2 recovery shape, a fresh-arrival staller reaches the ending, stall probe is honest, suites pass"
+  }
+ ]
+}

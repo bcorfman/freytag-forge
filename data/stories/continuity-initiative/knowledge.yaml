@@ -232,6 +232,8 @@ facts:
   purpose: The archive audit has lasted long enough for the missed-window recovery to close the archive crisis.
 - id: purge_recovery_ready
   purpose: The purge alarm has lasted long enough for the neutral route recovery to move the group onward.
+- id: evacuation_recovery_ready
+  purpose: The missed evacuation window has lasted long enough for the neutral route recovery to carry the captives out.
 - id: audit_reaches_stacks
   purpose: The live audit has reached Kristin and Brandon in the archive stacks.
 - id: purge_alarm_active
@@ -2524,23 +2526,21 @@ knowledge:
     Kristin gives the lower levels to the water so the captives can pass.
     Michelle uses the authorization to release the surface gates.
     Brandon remains at the relay.
-- id: k_sl_3c_h_r1
-  statement: "The surge pushes the captives out without Kristin's hand on the barrier."
-  earn_when: lets the surge carry the captives through the gates
-  action_evidence:
-  - [let, allow, accept, watch, release, leave, yield]
-  - [surge, water, captives, prisoners, barrier, gates, surface gates]
-  entity_ids: []
-  aliases:
-  - evacuation complete
-  - surge forced evacuation
-  audience: {kind: public, player_visible: true}
+- id: k_evacuation_recovery_ready
+  statement: The missed evacuation window is ready for the neutral route recovery.
+  aliases: [evacuation recovery ready]
+  leak_terms: []
+  audience: {kind: world_only, player_visible: false}
   available_in_scenes: [3C]
+  establishes: [{op: assert, fact_id: evacuation_recovery_ready, value: true}]
+  source: {kind: storylet_realization, storylet_id: SL-3C-H, realization_id: SL-3C-H-R1}
+- id: k_sl_3c_h_route_effects
+  statement: The missed-window evacuation recovery carries its route effects.
+  aliases: [evacuation recovery route effects]
+  audience: {kind: characters, character_ids: [charles], player_visible: false}
+  available_in_scenes: [3C]
+  entity_ids: []
   requires:
-  - fact_id: truth_no_longer_containable
-    equals: true
-  - fact_id: rebecca_captured
-    equals: true
   - fact_id: evacuation_window_missed
     equals: true
   establishes:
@@ -2550,14 +2550,11 @@ knowledge:
   - op: assert
     fact_id: surge_forced_evacuation
     value: true
+  must_convey: [[evacuation recovery, route effects]]
   source:
     kind: storylet_realization
     storylet_id: SL-3C-H
     realization_id: SL-3C-H-R1
-  relevance:
-    entity_ids: []
-    priority: 0
-  delivery_text: "The surge pushes the captives out without Kristin's hand on the barrier."
 - id: k_sl_3c_d_r1
   statement: 'Across the country, detention sites begin to surrender or release prisoners as the national network fractures.'
   earn_when: checks reports from detention sites

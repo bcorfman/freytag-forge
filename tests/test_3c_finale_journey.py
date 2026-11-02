@@ -16,11 +16,12 @@ ENTRY_FACTS = (
 OUTCOME_FACTS = {"barrier_held", "captives_out_costly", "lower_levels_lost"}
 
 
-def _state() -> RuntimeState:
+def _state(*, include_entry_facts: bool = True) -> RuntimeState:
     state = RuntimeState(package=PACKAGE, current_scene_id="3C", phase="resolution")
     state._assert_scene_entry_fact("3C")
-    for fact_id in ENTRY_FACTS:
-        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+    if include_entry_facts:
+        for fact_id in ENTRY_FACTS:
+            state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
     return state
 
 
@@ -77,20 +78,23 @@ def test_3c_finale_journey_completes_clean_costly_and_missed_recovery() -> None:
         assert variant in _texts(result)
         assert "evacuation_complete" in facts
 
-    state = _state()
-    engine = _start_at_evacuation(state)
-    engine.provider = _provider()
-    while state.turn_index < 10:
-        engine.turn("Inspect the drainage pump controls.")
+    state = _state(include_entry_facts=False)
+    engine = RuntimeEngine(state, _provider())
+    engine._activate_pacing()  # noqa: SLF001 - stage the neutral recovery window.
+    result = None
+    while not state.story_complete:
+        result = engine.turn("Inspect the drainage pump controls.")
     facts = {fact.predicate for fact in state.facts.asserted if fact.value == "true"}
     assert "evacuation_window_missed" in facts
     assert "evacuation_surge_building" in facts
 
-    engine.provider = _provider("k_sl_3c_h_r1")
-    result = engine.turn("Let the surge carry the captives through the gates.")
-    facts = {fact.predicate for fact in state.facts.asserted if fact.value == "true"}
     assert state.story_complete is True
-    assert "The surge, not a plan, carried the captives out. No one yet knows how many." in _texts(result)
     assert "evacuation_complete" in facts
     assert "surge_forced_evacuation" in facts
     assert not OUTCOME_FACTS & facts
+    assert result is not None
+    assert any(
+        "Dawn finds Michelle alive and Kristin reunited with her. The captives are out." in text
+        for text in _texts(result)
+    )
+    assert "The surge, not a plan, carried the captives out. No one yet knows how many." in _texts(result)

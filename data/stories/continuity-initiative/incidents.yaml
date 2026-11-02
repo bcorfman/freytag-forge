@@ -86,5 +86,5 @@ incidents:
     costs: [lower_levels_lost]
   recovery_storylet_id: SL-3C-H
   missed_window_event_id: evacuation_window_3c
-  observation_knowledge_ids: [k_sl_3c_c_r1, k_sl_3c_c_r2, k_sl_3c_h_r1]
+  observation_knowledge_ids: [k_sl_3c_c_r1, k_sl_3c_c_r2, k_evacuation_recovery_ready, k_sl_3c_h_route_effects]
   completes_scene: true

@@ -681,7 +681,6 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_3c_b_r2",
         "k_sl_3c_c_r1",
         "k_sl_3c_c_r2",
-        "k_sl_3c_h_r1",
         "k_sl_3c_d_r1",
         "k_sl_3c_d_r2",
         "k_sl_3c_e_r1",

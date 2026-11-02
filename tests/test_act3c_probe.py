@@ -42,3 +42,9 @@ def test_every_scripted_command_matches_only_its_intended_3c_entry() -> None:
         for command, expected_id in expectations:
             matches = [candidate.id for candidate in candidates if _matches_all(candidate.required_groups, command)]
             assert matches == ([] if expected_id is None else [expected_id]), (prefix, command, matches)
+
+
+def test_stall_dry_route_is_neutral_only_and_selects_no_knowledge() -> None:
+    commands, selections = act3c_probe._scripted_route("stall")
+    assert commands == list(act3c_probe.NEUTRAL_COMMANDS)
+    assert selections == [None] * len(act3c_probe.NEUTRAL_COMMANDS)

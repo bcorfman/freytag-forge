@@ -1,0 +1,34 @@
+{
+ "run_name": "phase2-3c-finale",
+ "workdir": "/home/bcorfman/dev/ringer-work/phase2-3c-finale",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "fix-3c-recovery-shape",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 4200,
+   "check_timeout_s": 1800,
+   "ownership": [
+    "data/stories/continuity-initiative/",
+    "tests/test_3c_finale_journey.py",
+    "tests/test_3c_cue_chain.py",
+    "tests/test_story_ending.py",
+    "scripts/ringer/phase2/act3c_probe.py",
+    "scripts/ringer/phase2/check_act3c_probe.py",
+    "tests/test_act3c_probe.py"
+   ],
+   "spec": "Work in /home/bcorfman/dev/freytag-forge directly (no worktree). Never git commit, never run `uv`, never call a billed model or the network. Run tests as `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider <tests>`. ROLE: story-package fixer. You may edit ONLY: data/stories/continuity-initiative/{pacing.yaml,storylet-routes.yaml,knowledge.yaml,handoffs.yaml,world.yaml,incidents.yaml,storylets.md}, tests/test_3c_finale_journey.py, tests/test_3c_cue_chain.py, tests/test_story_ending.py, scripts/ringer/phase2/act3c_probe.py, scripts/ringer/phase2/check_act3c_probe.py and tests/test_act3c_probe.py. Do NOT edit storygame/ or plot.md. DEFECT FOUND LIVE (Round 10 row 57): the 3C neutral recovery never fires for a player who has not finished the broadcast and archive episodes, and as written it needs the player to TYPE a command. Read these exemplars first and copy their SHAPE exactly: recovery storylet SL-2C-E in storylet-routes.yaml (activation conditions are ONLY `purge_window_missed`), the knowledge entries k_purge_recovery_ready (audience world_only, establishes purge_recovery_ready) and k_sl_2c_e_route_effects (carries the route effects, must_convey) in knowledge.yaml, and the pacing events purge_window_2c and purge_nudge_2c in pacing.yaml (find which event or effect asserts `purge_recovery_ready`; copy that wiring), plus how incidents.yaml wires recovery_storylet_id for i_2c_rebecca_corridor. Also compare 2A (SL-2A-D) and 2B (SL-2B-D). FIX: (1) SL-3C-H activation conditions become ONLY `evacuation_window_missed: true` (remove `truth_no_longer_containable` and `rebecca_captured`). The outcome storylet SL-3C-C keeps requiring both episodes. (2) Replace the action-earned knowledge entry k_sl_3c_h_r1 (it has action_evidence 'let/allow ... surge/water/gates', which makes a recovery depend on a typed command) with the Act 2 pair: a world_only `k_evacuation_recovery_ready` that establishes a NEW fact `evacuation_recovery_ready`, and a `k_sl_3c_h_route_effects` entry that asserts `evacuation_complete` and `surge_forced_evacuation` and NOTHING else (no outcome, no cost), with a short must_convey phrase that is NOT an outcome phrase. Declare `evacuation_recovery_ready` everywhere facts are declared, set it from the same kind of event effect the 2C chain uses (the nudge or the window event, whichever 2C uses), and update incidents.yaml `observation_knowledge_ids` for i_3c_evacuation accordingly. Keep the delivered text short and in the existing voice. (3) The ending must still fire on the turn the recovery completes, and the base ending plus the `surge_forced_evacuation` variant must show. TESTS AND PROBE: in tests/test_3c_finale_journey.py the missed-window path (c) must start from a fresh 3C arrival with NO broadcast or archive facts set and reach the ending by the neutral recovery with no player command that mentions the surge; assert no outcome fact is set. In scripts/ringer/phase2/act3c_probe.py make the `stall` prefix honest: its dry path must be the eight NEUTRAL_COMMANDS only, with no BROADCAST_COMMAND, ARCHIVE_COMMAND or RECOVERY_COMMAND, and the scripted dry provider must NOT select any knowledge for it (the real engine recovery must end the story); delete RECOVERY_COMMAND if nothing else uses it. Update check_act3c_probe.py and tests/test_act3c_probe.py to match. Run the package loader on the real package, then the 3C and package suites listed in the check, and fix failures. Leave changes uncommitted.",
+   "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=$PWD:$PWD/scripts/ringer/stage7:$PWD/scripts/ringer/phase1 TMPDIR=/tmp\nPY=.venv/bin/python\nD=data/stories/continuity-initiative\ngit diff --quiet -- storygame $D/plot.md || { echo \"WHY: storygame or plot.md edited\"; exit 1; }\nawk '/^- id: SL-3C-H$/,/pressure_role/' $D/storylet-routes.yaml > /tmp/h.txt\ngrep -q \"evacuation_window_missed\" /tmp/h.txt || { echo \"WHY: SL-3C-H lost its window condition\"; exit 1; }\ngrep -q \"truth_no_longer_containable\\|rebecca_captured\" /tmp/h.txt && { echo \"WHY: SL-3C-H still requires the episode facts\"; exit 1; }\ngrep -q \"evacuation_recovery_ready\" $D/knowledge.yaml $D/world.yaml $D/storylet-routes.yaml || { echo \"WHY: recovery_ready fact not wired\"; exit 1; }\ngrep -q \"id: k_sl_3c_h_r1\" $D/knowledge.yaml && { echo \"WHY: action-earned recovery entry still present\"; exit 1; }\n$PY -c \"from pathlib import Path; from storygame.story_package.loader import load_story_package as l; l(Path('$D'))\" || { echo \"WHY: package does not load\"; exit 1; }\ngrep -n \"RECOVERY_COMMAND\" scripts/ringer/phase2/act3c_probe.py && { echo \"WHY: stall still scripts a recovery command\"; exit 1; }\n$PY -m ruff format --check scripts/ringer/phase2 tests || { echo \"WHY: not ruff-formatted\"; exit 1; }\n$PY -m ruff check scripts/ringer/phase2 tests/test_3c_finale_journey.py tests/test_act3c_probe.py || { echo \"WHY: ruff check failed\"; exit 1; }\nfor p in none clean costly stall; do O=$(mktemp -d); $PY scripts/ringer/phase2/act3c_probe.py --prefix $p --n 1 --out $O --dry-run || { echo \"WHY: dry run failed for $p\"; exit 1; }; $PY scripts/ringer/phase2/check_act3c_probe.py $O 1 --mode dry || { echo \"WHY: probe check failed for $p\"; exit 1; }; done\nSUITES=\"\"; for t in test_3c_finale_journey test_act3c_probe test_story_ending test_3c_cue_chain test_incident_loader test_incident_engine test_incident_recovery test_incident_handoff_guard test_leak_terms test_markdown_story_package test_package_audit test_scene_roleplay_contract test_disclosure_guards test_scene_relative_pacing test_spine_expected_reveals test_knowledge_leakage_matrix test_knowledge_projection test_loader_pacing_producers test_entry_variants test_3c_escape_result test_3c_surface_binding test_resolution_cascade test_canon_journey; do [ -f tests/$t.py ] && SUITES=\"$SUITES tests/$t.py\"; done\n$PY -m pytest -q -p no:cacheprovider $SUITES || { echo \"WHY: suites failed\"; exit 1; }\necho ok\n",
+   "verified": "SL-3C-H fires on the window alone in the Act 2 recovery shape, a fresh-arrival staller reaches the ending, stall probe is honest, suites pass"
+  }
+ ]
+}

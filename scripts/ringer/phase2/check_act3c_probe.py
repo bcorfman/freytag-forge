@@ -7,9 +7,9 @@ import json
 from pathlib import Path
 
 try:
-    from .act3c_probe import CAPS, MAX_COMMANDS, PREFIXES, ROW_FIELDS
+    from .act3c_probe import CAPS, MAX_COMMANDS, NEUTRAL_COMMANDS, PREFIXES, ROW_FIELDS
 except ImportError:
-    from act3c_probe import CAPS, MAX_COMMANDS, PREFIXES, ROW_FIELDS
+    from act3c_probe import CAPS, MAX_COMMANDS, NEUTRAL_COMMANDS, PREFIXES, ROW_FIELDS
 
 
 EXPECTED = {
@@ -68,6 +68,8 @@ def check(out: Path, n: int, mode: str) -> list[str]:
                 errors.append(f"WHY {row_id}: expected exit cause {expected_exit!r}")
             if expected_variant not in row.get("ending_variants_seen", []):
                 errors.append(f"WHY {row_id}: expected ending variant {expected_variant!r}")
+            if prefix == "stall" and commands != list(NEUTRAL_COMMANDS):
+                errors.append("WHY stall dry run must contain exactly the eight neutral commands")
     return errors
 
 

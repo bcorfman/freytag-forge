@@ -76,7 +76,6 @@ BROADCAST_COMMAND = "Send the evidence package."
 ARCHIVE_COMMAND = "Take the Portable data case from Rebecca."
 CLEAN_COMMAND = "Restore the drainage pumps."
 COSTLY_COMMAND = "Give up the lower levels."
-RECOVERY_COMMAND = "Let the surge carry the captives through the gates."
 NEUTRAL_COMMANDS = (
     "Walk across the concrete floor.",
     "Move beside the steel railing.",
@@ -92,9 +91,6 @@ SCRIPTED_PREFIXES = {
     "none": (),
     "clean": (BROADCAST_COMMAND, ARCHIVE_COMMAND, CLEAN_COMMAND),
     "costly": (BROADCAST_COMMAND, ARCHIVE_COMMAND, COSTLY_COMMAND),
-    # The two prerequisite commands are scripted as part of the stall route so
-    # its eight neutral commands can close the window without making either
-    # guarded prerequisite unreachable.
     "stall": NEUTRAL_COMMANDS,
 }
 PREFIXES = tuple(SCRIPTED_PREFIXES)
@@ -106,7 +102,6 @@ KNOWLEDGE_IDS = (
     "k_sl_3c_b_r2",
     "k_sl_3c_c_r1",
     "k_sl_3c_c_r2",
-    "k_sl_3c_h_r1",
     "k_sl_3c_d_r1",
     "k_sl_3c_d_r2",
     "k_sl_3c_e_r1",
@@ -129,12 +124,7 @@ SCRIPTED_EXPECTATIONS = {
         (ARCHIVE_COMMAND, "k_sl_3c_b_r1"),
         (COSTLY_COMMAND, "k_sl_3c_c_r2"),
     ),
-    "stall": (
-        (BROADCAST_COMMAND, "k_sl_3c_a_r1"),
-        (ARCHIVE_COMMAND, "k_sl_3c_b_r1"),
-        *((command, None) for command in NEUTRAL_COMMANDS),
-        (RECOVERY_COMMAND, "k_sl_3c_h_r1"),
-    ),
+    "stall": (*((command, None) for command in NEUTRAL_COMMANDS),),
 }
 
 ROW_FIELDS = (
@@ -180,6 +170,10 @@ def _state(package: Any) -> RuntimeState:
     state._assert_scene_entry_fact(SCENE)
     for fact_id in CARRIED_FACTS_3B:
         state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+    # Preserve the existing probe's turn budget while removing the two episode
+    # commands from the stall prefix; the authored window then closes during
+    # its eight neutral commands.
+    state.turn_index = 2
     apply_scene_placements(package, state.facts, SCENE)
     world_for(package, state.facts).seed()
     return state
@@ -256,11 +250,7 @@ def _scripted_route(prefix: str) -> tuple[list[str], list[str | None]]:
             "k_sl_3c_c_r2",
         ]
     if prefix == "stall":
-        commands = [BROADCAST_COMMAND, ARCHIVE_COMMAND, *NEUTRAL_COMMANDS, RECOVERY_COMMAND]
-        selections: list[str | None] = ["k_sl_3c_a_r1", "k_sl_3c_b_r1"]
-        selections.extend([None] * len(NEUTRAL_COMMANDS))
-        selections.append("k_sl_3c_h_r1")
-        return commands, selections
+        return list(NEUTRAL_COMMANDS), [None] * len(NEUTRAL_COMMANDS)
     raise ValueError(f"unknown prefix: {prefix}")
 
 
@@ -455,9 +445,7 @@ def run(out: Path, prefix: str, n: int, dry: bool, confirm: bool) -> int:
             if dry:
                 scripted_commands, selections = _scripted_route(prefix)
                 provider = _Act3cScriptedProvider(package, state, selections)
-                ask_commands = (
-                    [RECOVERY_COMMAND] if prefix == "stall" else [BROADCAST_COMMAND, ARCHIVE_COMMAND, CLEAN_COMMAND]
-                )
+                ask_commands = [BROADCAST_COMMAND, ARCHIVE_COMMAND, CLEAN_COMMAND]
                 ask = _scripted_player(ask_commands, budget)
             else:
                 scripted_commands = (

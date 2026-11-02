@@ -66,8 +66,12 @@ def test_resolution_deadline_shows_and_commits_remaining_chain() -> None:
     result = RuntimeEngine(state, _Provider()).turn("Get everyone to the surface.")
     narration = " ".join(segment.text for segment in result.segments)
 
-    assert Fact(predicate="evacuation_complete", subject="story", value="true") not in state.facts.asserted
-    assert state.story_complete is False
+    assert Fact(predicate="evacuation_complete", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="surge_forced_evacuation", subject="story", value="true") in state.facts.asserted
+    assert Fact(predicate="barrier_held", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="captives_out_costly", subject="story", value="true") not in state.facts.asserted
+    assert Fact(predicate="lower_levels_lost", subject="story", value="true") not in state.facts.asserted
+    assert state.story_complete is True
     assert all(event.fallback_text not in narration for event in PACKAGE.storylet_routes.resolution_events)
 
 

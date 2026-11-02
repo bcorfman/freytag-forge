@@ -601,3 +601,19 @@ full ending text, which variants showed, commands used. Reading rule: read all f
 miss is diagnosed from the transcript and recorded prompt before any rewording, and a reword is a new preregistered
 round. Four rows are a smoke, not a rate. The turn-9 and turn-10 timing is an assumption copied from the 5/6 pattern;
 Round 10 only checks that the events fire and the staller ends, not that the pacing is right.
+
+Round 10 result, row 57 (2026-11-02, Ringer run `act3c-finale`, `bench/results/act3c-smoke-57-3C-blind`, gitignored):
+**run-failure after 18 turns**, `ProposalValidationError: narration mentions guarded term 'card'` (the 1A memory-card
+term, a leak term in a late scene; the known "final rejection reaches the player" friction, third observation). Rows 58
+to 60 were not run. Diagnosed from the transcript and the package, no reword:
+- **The neutral recovery could not fire.** `SL-3C-H` (and its entry `k_sl_3c_h_r1`) required `truth_no_longer_containable`
+  and `rebecca_captured`, which the contract said it must not, and it was written as an action-earned entry ("let the
+  surge carry the captives") instead of the event-driven Act 2 recovery shape. A player who has not finished the broadcast
+  and archive episodes therefore never reaches the recovery: the Phase 1 gap "a neutral staller stays in 3C" was not closed.
+  The dry stall path hid it because the probe scripted both episodes and the recovery command itself.
+- **A blind player did not find the next move.** After the broadcast beat landed on turn 1 ("Rebecca is leaving the
+  executive office with the Portable data case."), the player re-sent the evidence package about ten times and never
+  countered Charles's claim (`SL-3C-A-R2`, which sets `truth_no_longer_containable`) or went after Rebecca. The 3C
+  episodes do not offer their next move the way 1C's Brandon does. Recorded, not fixed here.
+- Fix in progress (Ringer `phase2-3c-finale`, task `fix-3c-recovery-shape`): recovery gated by the window alone, Act 2
+  shape, honest dry stall. Rows 57 to 60 then need a fresh go-ahead, because row 57 is replaced.

@@ -489,6 +489,11 @@ new_fact_ids:
   used_by_storylets:
   - SL-3C-H
   used_by_transitions: []
+- id: evacuation_recovery_ready
+  definition: The missed evacuation window is ready to carry the captives out by the neutral route.
+  used_by_storylets:
+  - SL-3C-H
+  used_by_transitions: []
 - id: evacuation_window_missed
   definition: The final evacuation window closed before Kristin resolved the incident.
   used_by_storylets:
@@ -2799,10 +2804,6 @@ storylets:
   activation:
     scene_id: 3C
     conditions:
-    - fact_id: truth_no_longer_containable
-      equals: true
-    - fact_id: rebecca_captured
-      equals: true
     - fact_id: evacuation_window_missed
       equals: true
     pacing:
@@ -2816,6 +2817,9 @@ storylets:
     dramatic_intent: Let the surge push the captives through the gates without awarding Kristin an outcome or a cost.
     source_beats: [scene-3c3--the-deluge]
     operations:
+    - op: assert
+      fact_id: evacuation_recovery_ready
+      value: true
     - op: assert
       fact_id: evacuation_complete
       value: true

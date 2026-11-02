@@ -184,6 +184,18 @@ events:
     equals: true
   realizations:
   - text: The surge is on them.
+- id: evacuation_recovery_3c
+  scene_id: 3C
+  at_turn: 10
+  when:
+  - {fact_id: evacuation_window_missed, equals: true}
+  - {fact_id: evacuation_surge_building, equals: true}
+  - {fact_id: evacuation_recovery_ready, equals: true}
+  effects:
+  - fact_id: evacuation_complete
+    equals: true
+  - fact_id: surge_forced_evacuation
+    equals: true
 - id: evacuation_nudge_3c
   scene_id: 3C
   at_turn: 10
@@ -193,6 +205,8 @@ events:
   - {fact_id: captives_out_costly, equals: false}
   effects:
   - fact_id: evacuation_surge_building
+    equals: true
+  - fact_id: evacuation_recovery_ready
     equals: true
   realizations:
   - text: The surge is building at the barrier and the pumps.
