@@ -225,9 +225,11 @@ bridge_text:
 
 **Hidden canon:** Michelle left a transit token, a handwritten number sequence and her photograph under the park bench. All three stay hidden until Kristin searches beneath the bench. She retrieves them together and keeps them with her. Finding them does not identify the transport route or the man in the photograph.
 
+**Established timeline:** For months Michelle used this bench to meet her confidential source, Brandon. She left the cache the night before she was taken, and she put Brandon's photograph in it so that Kristin would know him on sight and not mistake him for the enemy. The loudspeaker on the pole by the service path has repeated one ninety-second emergency statement since the morning of the disappearances. The people who sat on the picnic blanket drank emergency water from a county distribution point, and only one of them was taken.
+
 ### Scene 1B.1 — Michelle’s Dead Drop
 
-**Details:** ordinary park bench; damaged grounds; service path; checkpoints; emergency patrols
+**Details:** ordinary park bench; damaged grounds; service path; checkpoints; emergency patrols; abandoned picnic and bicycle; loudspeaker on its pole
 
 Michelle’s files reference an ordinary park bench where she exchanged information with a confidential source. Kristin travels there while avoiding checkpoints and emergency patrols. The bench could be nothing, or it could hold the only lead Michelle prepared for her. Looking the bench over shows the shadowed space beneath it, deep enough for Kristin to reach under.
 
@@ -235,11 +237,15 @@ Kristin searches beneath the park bench and retrieves Michelle's transit token, 
 
 The records suggest that the mass disappearance was preceded by years of secret tests.
 
+The park reads as a moment cut short. A bicycle stands on its kickstand where no one will ride it. A dog leash is still tied to the fence, its loop empty. On a picnic blanket two cups sit beside a thermos: one cup is tipped over, and the other is still half full. A loudspeaker on a pole near the service path repeats the same emergency statement, and at the park entrance a checkpoint barrier stands with no one at it. Nothing here is a clue yet. It shows how many people were taken from ordinary afternoons, and that someone was left sitting beside each of them.
+
 ### Scene 1B.2 — The Man Following Her
 
-**Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; Continuity Initiative
+**Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; Continuity Initiative; the stranger mouthing the broadcast
 
 Kristin notices a man watching her from across the park. Believing the man works for the government, Kristin attempts to escape through abandoned service tunnels beneath the park. If Kristin speaks to him before he is identified, the man refuses to give his name and tells her to keep her voice down because patrols are nearby.
+
+When the loudspeaker starts its statement again, the man mouths the words a half-beat ahead of it. He stops when he sees Kristin watching. If she asks, he says that anyone made to repeat something long enough learns it.
 
 The man watching Kristin waits near the service path. Once Kristin has recovered Michelle's photograph, she can show it to him. She can also question him about Michelle.
 
@@ -249,7 +255,7 @@ Brandon says Michelle contacted him because he had once worked on the Continuity
 
 ### Scene 1B.3 — Brandon’s Warning
 
-**Details:** contaminated emergency water; disguised response teams; evacuation tunnels; missing registrations; communications outages; falsified casualty data
+**Details:** contaminated emergency water; disguised response teams; evacuation tunnels; missing registrations; communications outages; falsified casualty data; the thermos on the picnic blanket
 
 Brandon explains that the disappearances were not instantaneous. During the hours before the public became aware of the event, selected people were:
 
@@ -262,11 +268,15 @@ The scale was hidden by communications outages, manufactured panic, and falsifie
 
 Brandon claims the missing are still alive, but he refuses to explain how he knows.
 
+The thermos on the picnic blanket carries a county emergency-water label, and a lot number is stamped on its cap. Its twin cup sits beside it, still half full. Someone sat here, drank, and was taken, and the person beside them was not.
+
 ### Scene 1B.4 — The Park Ambush
 
-**Details:** tactical team; storm-drain system; specialized codes; secured service gate; government systems; Brandon’s hidden involvement
+**Details:** tactical team; storm-drain system; specialized codes; secured service gate; government systems; Brandon’s hidden involvement; gate keypad
 
 A tactical team arrives, proving Kristin was tracked from Michelle's house. Kristin and Brandon escape through a storm-drain system, but Brandon is forced to use specialized codes to unlock a secured service gate.
+
+At the secured service gate Brandon does not look at the keypad. His fingers know it. The storm-drain grate lifts without a sound, its latch freshly oiled, as if someone prepared this way out ahead of time.
 
 Kristin realizes Brandon retains access to government systems and may be more deeply involved than he admits.
 
