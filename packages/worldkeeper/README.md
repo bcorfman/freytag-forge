@@ -57,3 +57,5 @@ allowed holders, and all props and traits in a batch must pass before any real
 facts are changed. Facets must come from the applicable palette and cannot be
 changed after being set; authored values take precedence and count toward the
 facet limit.
+
+Condition phrases that exactly match one approved palette value can be routed to that cosmetic facet; ambiguous or unapproved phrases remain free conditions, and refused facet changes are reported without consuming incidental allowances.

@@ -132,6 +132,15 @@ class EmbellishResult:
     traits: tuple[tuple[str, str, str], ...] = ()
 
 
+@dataclass(frozen=True)
+class PhraseRouting:
+    """Report how condition phrases were routed to approved facets."""
+
+    facets: tuple[tuple[str, str], ...] = ()
+    leftover: tuple[str, ...] = ()
+    refused: tuple[tuple[str, str], ...] = ()
+
+
 class IncidentalWorldMixin:
     """World operations for constrained incidental content."""
 
@@ -152,6 +161,37 @@ class IncidentalWorldMixin:
         """Return lifetime incidental counts for a scene and the whole game."""
         facts = self._facts("wk_incidental")
         return sum(fact.object == scene_id for fact in facts), len(facts)
+
+    def route_condition_phrases(self, policy, scene_id, entity_id, phrases) -> PhraseRouting:
+        """Route approved cosmetic values without resolving or changing conditions."""
+        if not self.exists(entity_id):
+            return PhraseRouting(leftover=tuple(phrases))
+        palette = self._trait_palette(policy, entity_id, {}, scene_id)
+        if not palette:
+            return PhraseRouting(leftover=tuple(phrases))
+        facets = []
+        leftover = []
+        refused = []
+        for phrase in phrases:
+            normalized = phrase.strip().casefold()
+            matches = [
+                (facet, value)
+                for facet, values in palette.items()
+                for value in values
+                if value.casefold() == normalized
+            ]
+            if len({facet for facet, _value in matches}) != 1:
+                leftover.append(phrase)
+                continue
+            facet, value = matches[0]
+            ok, reason, _added = self._apply_routed_facet(policy, entity_id, facet, value, scene_id)
+            if ok:
+                facets.append((facet, value))
+            else:
+                if policy.authored.get(entity_id, {}).get(facet) is not None:
+                    reason = "facet already has another authored value"
+                refused.append((phrase, reason))
+        return PhraseRouting(tuple(facets), tuple(leftover), tuple(refused))
 
     def check_embellishments(self, policy, scene_id, props, traits) -> EmbellishResult:
         """Validate a complete batch without changing this world's backend."""
@@ -253,6 +293,26 @@ class IncidentalWorldMixin:
             self._add("wk_facet", target, proposal.facet, proposal.value)
             added.append((proposal.target, proposal.facet, proposal.value))
         return True, "", added
+
+    def _apply_routed_facet(self, policy, target, facet, value, scene_id):
+        authored = policy.authored.get(target, {}).get(facet)
+        if authored is not None:
+            if authored != value:
+                return False, "facet already has another value", False
+            return True, "", False
+        palette = self._trait_palette(policy, target, {}, scene_id)
+        allowed = palette.get(facet)
+        if not allowed or value not in allowed:
+            return False, "trait is not in the palette", False
+        stored = self.facets(target).get(facet)
+        if stored is not None:
+            if stored != value:
+                return False, "facet already has another value", False
+            return True, "", False
+        if len(set(policy.authored.get(target, {})) | set(self.facets(target))) >= policy.max_facets:
+            return False, "facet limit exceeded", False
+        self._add("wk_facet", target, facet, value)
+        return True, "", True
 
     def _trait_palette(self, policy, target, created, scene_id):
         template = created.get(target)

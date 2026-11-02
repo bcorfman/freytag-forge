@@ -80,6 +80,7 @@
     "tests/test_command_split_negation.py": 0.36,
     "tests/test_complication_text_safety.py": 1.04,
     "tests/test_concealment_repro.py": 0.84,
+    "tests/test_condition_facets.py": 0.45,
     "tests/test_continuity_1c_incident.py": 1.15,
     "tests/test_contract_probe.py": 0.0,
     "tests/test_copied_files_pilot.py": 0.24,

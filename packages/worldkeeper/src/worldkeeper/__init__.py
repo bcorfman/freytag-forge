@@ -1,6 +1,6 @@
 """A fact-backed world model for narrated games."""
 
-from .incidental import EmbellishResult, IncidentalPolicy, PropProposal, PropTemplate, TraitProposal
+from .incidental import EmbellishResult, IncidentalPolicy, PhraseRouting, PropProposal, PropTemplate, TraitProposal
 from .model import BASE_KINDS, Fact, FactBackend, MemoryBackend, OpResult, SchemaError, World, WorldSchema
 
 __all__ = [
@@ -11,6 +11,7 @@ __all__ = [
     "IncidentalPolicy",
     "MemoryBackend",
     "OpResult",
+    "PhraseRouting",
     "PropProposal",
     "PropTemplate",
     "SchemaError",

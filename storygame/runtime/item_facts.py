@@ -1367,7 +1367,22 @@ class ItemFactsProvider(CloudflareTurnProvider):
             condition_poles = [self._axis_match_id(world, entity_id, item) for item in conditions]
             free.extend(item.strip()[:40] for item, pole in zip(conditions, condition_poles, strict=True) if not pole)
         if free:
-            world.set_conditions(entity_id, free[:2])
+            from storygame.runtime.world_model import incidental_policy_for
+
+            policy = incidental_policy_for(self.state.package)
+            if policy is None:
+                world.set_conditions(entity_id, free[:2])
+            else:
+                routed = world.route_condition_phrases(policy, self.state.current_scene_id, entity_id, free)
+                for phrase, reason in routed.refused:
+                    issues.append(f"item_facts for {name!r} dropped {phrase!r}: {reason}")
+                if world.is_incidental(entity_id):
+                    for phrase in routed.leftover:
+                        issues.append(
+                            f"item_facts for {name!r} dropped {phrase!r}: incidental props only accept facets"
+                        )
+                else:
+                    world.set_conditions(entity_id, routed.leftover[:2])
         reply_poles = {pole for pole in (place_pole, state_pole, *condition_poles) if pole is not None}
         changed_pole = None
         if reply_poles and current_poles:
