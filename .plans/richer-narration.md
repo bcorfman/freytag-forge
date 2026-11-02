@@ -58,6 +58,12 @@ all nine scenes; shared runtime must remain story-agnostic.
   calls `set_conditions` when a phrase was only refused (`elif routed.leftover or routed.refused`), which
   clears existing conditions; the intended rule is to skip the call whenever nothing is left over. Add a
   test and fix it in the next code task.
+- **Queued after the 1A propagation lands (Ringer, engine, tests first):** make
+  `storygame/audit.py::_ambiguous_owned_item_findings` scene-aware. It currently flags a bare noun in any scene
+  when an owned item of that name exists anywhere in the package (scene 1A was flagged for 1B's
+  `michelle_photograph`). Count an owned item only for scenes where it is listed or placed. Brandon's rule:
+  the engine scopes similar items by scene and asks to clarify; authors must not contort nouns. Then the 1A kitchen
+  "snapshot" may be renamed "photograph" if he prefers it.
 - Decisions taken 2026-11-02: 1A, 2A (refuse unknown ordinary things, measure slips first, only when
   the package declares a policy), 3A.
 - Ringer notes: the first run failed twice on my spec (a `notes.md` the check
