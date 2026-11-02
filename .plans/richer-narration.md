@@ -1,9 +1,10 @@
 # Richer narration with bounded invention
 
 Status: in progress, 2026-11-02. Branch `richer-narration-1`.
-Steps 1, 2a, 2b and 2c are done (see Progress). Resume here: step 2d (condition routing,
-slip measurement, and how unknown ordinary things are refused; see the finding in Progress),
-then step 3. This change spans all narration paths and
+Steps 1, 2a, 2b, 2c and the condition routing of 2d are done (see Progress). Resume here:
+the small cleanup listed under Progress, then step 3 (shared prompt helper for all six narration
+paths, prose validation and judge coverage). Refusing unknown ordinary things waits for bench data.
+The full suite with coverage has not been run yet; run it once at the very end. This change spans all narration paths and
 all nine scenes; shared runtime must remain story-agnostic.
 
 ## Progress
@@ -34,14 +35,25 @@ all nine scenes; shared runtime must remain story-agnostic.
   they dropped authored reveals; the test that seemed to need them used a narration that skipped a
   scheduled handoff turn. A package with no policy rejects any embellishments. Prompts are untouched,
   so live behavior is unchanged until step 3.
-- **Step 2d not started; blocked on a finding.** Unknown ordinary things are created inside
-  `apply_item_facts`, which runs in `capture.after_commit` (after the turn is applied), so a
-  refusal there cannot use the retry loop; only `preview_commit` runs capture before commit, and only
-  when an enforcing verifier is configured. Options: (a) measure first by recording per turn the
-  plain things the matcher created as new (no behavior change), (b) make the refusal part of the
-  preview path (needs enforcement on), (c) roll back and fail the turn post-commit. Condition routing
-  (3A) is independent of this and can go ahead: facet-matching phrases become facets, other
-  phrases stay conditions on existing things, new props take facets only.
+- **Step 2d, condition routing done, `5a926922`:** `World.route_condition_phrases` (worldkeeper) and
+  `_apply_state` (storygame). Under a package policy, a phrase equal to exactly one approved facet value
+  becomes that facet; the rest stay conditions on existing things; incidental props take facets only;
+  every dropped phrase is an issue. Tests: `tests/test_condition_facets.py`,
+  `packages/worldkeeper/tests/test_incidental_phrases.py`. No policy: behavior unchanged.
+- **Slip measurement done (decision 2A, option a), 2026-11-02, offline from recorded bench rows:** of 2,202
+  recorded turns, 75 (3.4%) resolved at least one name as new; 70 were plain things (many look like authored
+  things the matcher missed, such as key, lantern, Michelle's laptop, Janus file). Upper bound only: older
+  prompts and configs. Script: scratchpad `slips.py` (reads `match_info.resolutions` in `bench/results`).
+- **Refusing unknown ordinary things is NOT built (blocked finding):** they are created in
+  `apply_item_facts`, which runs in `capture.after_commit`, after the turn is applied, so the retry loop
+  cannot refuse them; only `preview_commit` runs capture before commit, and only with an enforcing verifier.
+  Options: (b) refuse inside the preview path (needs enforcement on), (c) post-commit rollback that fails
+  the turn. Decide after a bench round on the step 3 prompts shows the real slip rate.
+- **Cleanup owed (Ringer, one small task):** `route_condition_phrases` duplicates the facet rules of
+  `_set_incidental_facet`/`_apply_traits` (`_apply_routed_facet`); `_apply_state` imports
+  `incidental_policy_for` inside the function; and when every phrase is routed to a facet,
+  `set_conditions(entity_id, ())` clears the thing's existing conditions (skip the call when nothing is
+  left).
 - Decisions taken 2026-11-02: 1A, 2A (refuse unknown ordinary things, measure slips first, only when
   the package declares a policy), 3A.
 - Ringer notes: the first run failed twice on my spec (a `notes.md` the check
