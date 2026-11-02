@@ -6,14 +6,15 @@ Source baseline: `8da801206ca5e1708b0bce72e2c63e449cd3aae4`.
 
 ## Resume here
 
-Step 1 is done (free capture and live probe 1; results in
-`.plans/1a-opening-and-truck-feedback/probe1-prereg.md`). Next: preregister
-probe 2 for the boarding turn and the classifier question, then probe the
-opening material (kitchen start, layout, personal significance). Fixes stay
-generic: no command lists, no story names in the runtime. This is the active
-plan for the five issues in the user's latest transcript. Reuse the existing
-continuity and environment-narration implementation; do not restart their
-historical experiment queues.
+Steps 1 and the probes are done (`probe1-prereg.md`, `probe2-prereg.md` with
+Results). Winning so far: remove the raw movement phrase from a committed
+boarding turn and add a generic reach fact for the seat's vehicle (20 of 20 seated,
+parked, laptop shown). Still open: surroundings are not described on the boarding
+turn; the boarding question trades "out to" for "approach"; the opening needs
+concrete, observable material for layout, reaction and the initials. Next:
+preregister probe 3 on those three, then implement the winners as tested changes
+(reach fact as a `World` method in `packages/worldkeeper`, prompt projection in
+`storygame`). Fixes stay generic: no command lists, no story names in the runtime.
 
 The user's current instruction supersedes the older continuity plan's
 approach-only expectation: **“head out to the truck” should seat Kristin in

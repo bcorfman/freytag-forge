@@ -37,3 +37,38 @@ A winning candidate then becomes a tested change (a generic `World` projection f
 
 ## Not covered
 Later turns after boarding, the card and laptop interpretation turn, other models, hosted staging, and whether a sentence-level instruction beats these (rules lose first, per the scene-fixing guide).
+
+## Result (2026-11-02; 94 calls, 94 usable, no quota stop; plus a 5-call smoke)
+
+Rows: `bench/results/1a-opening-and-truck/probe2.json` (smoke: `probe2-smoke.json`). Harness `scripts/ringer/opening_truck/probe2.py`. Every narrator row was read by hand.
+
+**Q1, boarding question (S shipped, R revised; scores).** R fixes the "out to" phrasings and breaks "approach".
+
+| Phrasing (truck / van) | S | R |
+| --- | --- | --- |
+| head out to | 0.59 / 0.65 yes | 0.89 / 0.89 yes |
+| go out to | **0.47 NO** / 0.62 yes | 0.82 / 0.84 yes |
+| go to | 0.62 / 0.69 yes | 0.77 / 0.85 yes |
+| walk out to | **0.26 / 0.28 NO** | 0.74 / 0.70 yes |
+| get in, climb into | 0.96 yes | 0.97 yes |
+| walk up to | 0.16 / 0.19 no | 0.41 / 0.36 no (near edge) |
+| **approach** | 0.23 / 0.21 no | **0.68 / 0.66 YES (wrong)** |
+| look at, get out of | no | no |
+
+Scored cells correct: S 17 of 20, R 18 of 20; R has no knife-edge expected-yes cell (S has 1). Rule needs R at 19 or more and 3 above S: **not met.** The reworded question trades two gaps for one new one. It cannot tell "head out to" from "approach" (both are movement toward the vehicle).
+
+**Q2, reach line (arm 2 = no raw command + "Kristin can reach anything inside Kristin's truck from where she sits.").**
+
+| Command / arm | n | (a) seated, parked | (b) laptop shown | (c) surroundings beyond the laptop | (d) nothing new |
+| --- | --- | --- | --- | --- | --- |
+| head out to the truck / arm 1 (probe 1) | 12 | 7 | 12 | 0 | 7 |
+| head out to the truck / **arm 2** | 12 | **12** | **12** | 0 | 10 (2 add "fading light") |
+| go to the truck / control | 8 | 2 | 1 | 5 (only when she is out of the truck) | 8 |
+| go to the truck / arm 1 | 8 | 1 | 8 | 0 | 8 (1 adds a thought) |
+| go to the truck / **arm 2** | 8 | **8** | **8** | 0 | 6 (2 add "fading light") |
+
+The control for "go to the truck" reproduces the report: **3 of 8 start the engine and drive up to the gate**, 3 of 8 turn off the engine and step out, 1 looks at the laptop, 1 is the "already in the driver's seat" line. Rule met: arm 2 passes (a) and (b) 12 of 12 and 8 of 8 (bars 10 and 6), and beats arm 1 on (a) by 12 of 20. All 20 arm 2 replies reach for the laptop, pull it out and open the screen: the narrator does the one action left in the prompt and describes no surroundings. Requirement (c) is not met by arm 2.
+
+**Q3, opening arm O1 (10 replies).** Kitchen named 8 of 10 (was 0). Layout (two or more of back door, workstation, chair): 4 of 10 (rest name only the back door). KMS drawn as strange: 2 of 10 ("What's going on, Shelly?" at the initials; neither says fresh). Specific reaction: 2 of 10. Card revealed: 0 of 10. Invented objects: 3 of 10 (a ticking clock twice; papers and an open laptop once, which contradicts the laptop being in the truck). Two replies right the overturned chair for the player. All 10 move Kristin. Rule (7 of 10 each) is **not met** on layout, KMS and reaction. The kitchen line works; the abstract significance lines ("knows this house", "cannot explain them") were mostly ignored.
+
+**Conclusions.** (1) Removing the raw command plus the reach line fixes the seated/parked and laptop requirements generally (20 of 20), but leaves the surroundings unmet; a probe 3 arm gives the boarding turn an action to narrate. (2) The classifier reword is not adopted; it moves the failure. Boarding must be made harmless either way (committed or not): when the question says no, the narrator still needs the truck's location. (3) Opening needs concrete, observable material for layout, reaction and the initials; abstract lines lose.
