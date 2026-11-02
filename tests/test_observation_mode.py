@@ -44,6 +44,7 @@ def _run(
     observe_automatically: bool = True,
     already_aboard: bool = False,
     hand_set_request: ObservationRequest | None = None,
+    engine_refusal: bool = False,
 ):
     answers = answers or {}
     monkeypatch.setattr(
@@ -68,10 +69,11 @@ def _run(
             key: {"noul": 1.0 if answers.get(key, False) else 0.0} for key in questions if answers.get(key) is not None
         }
 
-    record = WorldCapture(provider, ask).before_turn(command)
-    provider(command)
-    assert "user" in captured
-    return record, captured["user"], provider
+    record = WorldCapture(provider, ask, engine_refusal=engine_refusal).before_turn(command)
+    if not record["engine_refusal"]:
+        provider(command)
+        assert "user" in captured
+    return record, captured.get("user", ""), provider
 
 
 def test_boarding_turn_sets_enter_request_and_calls_narrator(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -89,20 +91,19 @@ def test_boarding_turn_sets_enter_request_and_calls_narrator(monkeypatch: pytest
     assert "Kristin's laptop sat on the passenger seat." not in user.split("Already done:", 1)[1]
 
 
-def test_already_aboard_turn_is_narrated_without_engine_step(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_already_aboard_turn_is_engine_refused_without_observation(monkeypatch: pytest.MonkeyPatch) -> None:
     record, user, provider = _run(
         monkeypatch,
         "Get in the truck.",
         answers={"boards_vehicle": True, "only_boards_vehicle": True},
         already_aboard=True,
+        engine_refusal=True,
     )
 
+    assert record["engine_refusal"] == "You're already in Kristin's truck."
     assert record["boarding_command_consumed"] is False
-    assert provider.observation_request == ObservationRequest("Get in the truck.", "enter", "kristin_truck")
-    assert provider.last_turn_engine_text is False
-    assert "is already in the" not in user
-    assert "Just before this:" not in user
-    assert "Already done:" not in user
+    assert provider.observation_request is None
+    assert user == ""
 
 
 @pytest.mark.parametrize(

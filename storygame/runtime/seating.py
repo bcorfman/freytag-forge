@@ -118,6 +118,8 @@ def board_vehicle(
     player_input: str,
     boards_vehicle: Callable[[str, str], bool | None],
     only_boards_vehicle: Callable[[str, str], bool | None] | None = None,
+    *,
+    already_aboard_only: bool = False,
 ) -> SeatingResult:
     protagonist = package.protagonist_id
     items = {item.id: item for item in package.world.items}
@@ -138,6 +140,10 @@ def board_vehicle(
     names_vehicle = any(
         _command_names_thing(player_input, world.names(vehicle_id)) for vehicle_id, _ in visible_vehicles
     )
+    if already_aboard_only and not (
+        seated_vehicle and any(vehicle_id == seated_vehicle for vehicle_id, _ in visible_vehicles)
+    ):
+        return SeatingResult(player_input, (), False, ())
     if seated_vehicle and any(vehicle_id == seated_vehicle for vehicle_id, _ in visible_vehicles):
         names_seated_vehicle = _command_names_thing(player_input, world.names(seated_vehicle))
         if names_seated_vehicle or not names_vehicle:
@@ -163,6 +169,9 @@ def board_vehicle(
                         already_aboard=True,
                     )
             return SeatingResult(player_input, (), asked, tuple(issues))
+
+    if already_aboard_only:
+        return SeatingResult(player_input, (), asked, tuple(issues))
 
     named_candidates = [
         candidate for candidate in sorted(candidates) if _command_names_thing(player_input, world.names(candidate[0]))
