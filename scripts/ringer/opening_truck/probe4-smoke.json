@@ -1,0 +1,30 @@
+{
+ "run_name": "1a-opening-and-truck-feedback",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-opening-and-truck-feedback",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "probe4-smoke",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 1800,
+   "check_timeout_s": 120,
+   "ownership": [
+    "bench/results/1a-opening-and-truck/"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/opening_truck/probe4.py --smoke --confirm --max-calls 2 --out bench/results/1a-opening-and-truck/probe4-smoke.json",
+   "spec": "You run ONE billed smoke test for the freytag-forge 1A probe 4 (preregistration .plans/1a-opening-and-truck-feedback/probe4-prereg.md, approved by Brandon on 2026-11-02): exactly 2 Cloudflare calls, hard cap 2. Own only bench/results/1a-opening-and-truck/. Source .env silently and never print credentials. No uv, no git mutation, no code edits. Never retry or replace samples; on quota, outage or error leave the partial output file in place and report verbatim. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/opening_truck/probe4.py --smoke --confirm --max-calls 2 --out bench/results/1a-opening-and-truck/probe4-smoke.json",
+   "check": "cd /home/bcorfman/dev/freytag-forge && set -o pipefail && .venv/bin/python - <<'EOF'\nimport json\nd=json.load(open('bench/results/1a-opening-and-truck/probe4-smoke.json'))\nrows=d['rows']\nprint('mode',d['mode'],'calls',d['calls_made'],'stop',d['stop_reason'],'rows',len(rows))\nassert d['calls_made']<=2, 'cap breached'\nassert len(rows)==2 or d['stop_reason'], 'expected 2 rows or a recorded stop reason'\nEOF",
+   "verified": "2 rows within the 2-call cap, or a recorded stop reason"
+  }
+ ]
+}
