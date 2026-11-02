@@ -293,7 +293,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "michelle_reading_glasses": ItemPlacement(parent="michelle_workstation", text="folded on her manuscript pages"),
         "manuscript_pages": ItemPlacement(parent="michelle_workstation", text="marked in red pen"),
         "kitchen_calendar": ItemPlacement(parent="kitchen", text="on the wall by the refrigerator"),
-        "lake_snapshot": ItemPlacement(parent="kitchen", text="held to the refrigerator by a pear-shaped magnet"),
+        "lake_photograph": ItemPlacement(parent="kitchen", text="held to the refrigerator by a pear-shaped magnet"),
         "back_door_splinters": ItemPlacement(parent="kitchen", text="around the back door frame"),
         "back_door_deadbolt": ItemPlacement(parent="kitchen", text="on the back door"),
         "truck_radio": ItemPlacement(parent="kristin_truck"),
@@ -441,12 +441,12 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
         "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
         "michelle_workstation, back_door, house_gate, michelle_tea_mug, michelle_reading_glasses, "
-        "manuscript_pages, kitchen_calendar, lake_snapshot, back_door_splinters, "
+        "manuscript_pages, kitchen_calendar, lake_photograph, back_door_splinters, "
         "back_door_deadbolt, truck_radio]\n",
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
         "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
         "michelle_workstation, back_door, house_gate, michelle_tea_mug, michelle_reading_glasses, "
-        "manuscript_pages, kitchen_calendar, lake_snapshot, back_door_splinters, "
+        "manuscript_pages, kitchen_calendar, lake_photograph, back_door_splinters, "
         "back_door_deadbolt, truck_radio, test_item]\n",
         1,
     )
@@ -589,7 +589,7 @@ def test_loader_rejects_a_beat_without_details(tmp_path: Path) -> None:
     contents = plot.read_text(encoding="utf-8")
     details = (
         "**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; "
-        "lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake snapshot; "
+        "lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake photograph; "
         "KMS initials carved in drawer\n"
     )
     plot.write_text(contents.replace(details, "", 1), encoding="utf-8")

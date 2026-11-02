@@ -81,7 +81,7 @@ location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle, patrol_officer, walt_pruitt]
-item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door, house_gate, michelle_tea_mug, michelle_reading_glasses, manuscript_pages, kitchen_calendar, lake_snapshot, back_door_splinters, back_door_deadbolt, truck_radio]
+item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door, house_gate, michelle_tea_mug, michelle_reading_glasses, manuscript_pages, kitchen_calendar, lake_photograph, back_door_splinters, back_door_deadbolt, truck_radio]
 character_placements:
   kristin: {parent: kitchen}
   walt_pruitt: {parent: outside_house, text: at the fence between the yards}
@@ -101,7 +101,7 @@ item_placements:
   michelle_reading_glasses: {parent: michelle_workstation, text: folded on her manuscript pages}
   manuscript_pages: {parent: michelle_workstation, text: marked in red pen}
   kitchen_calendar: {parent: kitchen, text: on the wall by the refrigerator}
-  lake_snapshot: {parent: kitchen, text: held to the refrigerator by a pear-shaped magnet}
+  lake_photograph: {parent: kitchen, text: held to the refrigerator by a pear-shaped magnet}
   back_door_splinters: {parent: kitchen, text: around the back door frame}
   back_door_deadbolt: {parent: kitchen, text: on the back door}
   truck_radio: {parent: kristin_truck}
@@ -130,7 +130,7 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake snapshot; KMS initials carved in drawer
+**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake photograph; KMS initials carved in drawer
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but the house does not read as a burglary. It reads as a person's last hour:
 
@@ -139,7 +139,7 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
 * A mug of tea sits on the workstation with the bag still in it, faintly warm. Michelle made it near the end.
 * Her reading glasses lie folded on a stack of manuscript pages marked in red pen. She never goes anywhere without them.
 * The wall calendar has Saturday circled in her handwriting: *K — lemon cake.* It is Kristin's birthday.
-* On the refrigerator, held by a pear-shaped magnet, a snapshot of the two of them at a lake.
+* On the refrigerator, held by a pear-shaped magnet, a photograph of the two of them at a lake.
 * The back door shows signs of forced entry, but the splinters around the frame point outward, and the deadbolt is thrown. Nobody forced it from outside. The house is otherwise undisturbed, not burglarized.
 
 Kristin knows Michelle would not leave her kitchen like this.
@@ -182,7 +182,7 @@ Kristin can test the warning with her own skills. The truck radio carries the sa
 
 Walt Pruitt, a retired bus driver in his seventies, stands at the fence between the yards. His wife is one of the missing. He saw county vans near 3:40 with no markings Kristin can read, and two men with a clipboard checking the addresses on the street. They skipped the house next door. He is not sure what he saw, and he says so. He will not repeat it to the patrol.
 
-An emergency patrol arrives at Michelle's home unusually quickly. Officer Reyes, young and polite, works from a printed list. He conducts a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. He studies the lake snapshot on the refrigerator a beat too long. He does not open the drawer. If Kristin has not taken the card, or takes it out of his sight, he finds nothing. If she takes it while he is watching, he challenges her, and the patrol's suspicion follows her out of the house.
+An emergency patrol arrives at Michelle's home unusually quickly. Officer Reyes, young and polite, works from a printed list. He conducts a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. He studies the lake photograph on the refrigerator a beat too long. He does not open the drawer. If Kristin has not taken the card, or takes it out of his sight, he finds nothing. If she takes it while he is watching, he challenges her, and the patrol's suspicion follows her out of the house.
 
 After the patrol leaves, Kristin notices that one officer has quietly marked the front gate with a strip of reflective tape.
 

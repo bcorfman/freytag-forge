@@ -825,7 +825,7 @@ storylets:
   pressure_role: Let the kitchen read as a person's last hour so Michelle's disappearance feels like a loss.
   realization_options:
   - id: SL-1A-G-R1
-    dramatic_intent: Kristin reads the kitchen as Michelle's last hour through the warm tea, glasses, marked pages, calendar, and snapshot.
+    dramatic_intent: Kristin reads the kitchen as Michelle's last hour through the warm tea, glasses, marked pages, calendar, and lake photograph.
     source_beats: [scene-1a1--michelle-is-gone]
     operations:
     - op: assert

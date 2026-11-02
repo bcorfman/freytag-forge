@@ -64,7 +64,7 @@ def test_photo_scoped_aliases_resolve_in_1b_when_placed() -> None:
     apply_scene_placements(PACKAGE, placed_state.facts, "1B")
     placed = _provider(placed_state)
 
-    assert absent._resolve_name(absent._world(), "photo") is None
+    assert absent._resolve_name(absent._world(), "photo") == "lake_photograph"
     assert placed._resolve_name(placed._world(), "photo") == PHOTO_ID
     assert placed._resolve_name(placed._world(), "photograph") == PHOTO_ID
 

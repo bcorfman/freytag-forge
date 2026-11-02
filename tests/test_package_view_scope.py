@@ -17,7 +17,7 @@ from storygame.story_package.world_schema import world_source_schema_data
 ROOT = Path(__file__).parents[1]
 PACKAGE_ROOT = ROOT / "data/stories/continuity-initiative"
 PACKAGE = load_story_package(PACKAGE_ROOT)
-EXPECTED_SCHEMA_HASH = "5eabe899f831777dbcc6b1ffd702c1b09a441b3a25924d7ab3d09351f3793895"
+EXPECTED_SCHEMA_HASH = "fdd22a3e4aec1cd0af5ca14a06c7abe4a6d9b8b1037f68e16619dfa45f3ebc16"
 
 
 def _schema_hash(package, schema_data=None) -> str:

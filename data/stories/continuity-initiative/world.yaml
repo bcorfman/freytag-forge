@@ -227,9 +227,9 @@ items:
   name: wall calendar
   aliases: [calendar]
   fixed: true
-- id: lake_snapshot
-  name: lake snapshot
-  aliases: [snapshot, the snapshot]
+- id: lake_photograph
+  name: lake photograph
+  scoped_aliases: [photograph, photo]
 - id: back_door_splinters
   name: splinters around the back door frame
   aliases: [door splinters, splinters]

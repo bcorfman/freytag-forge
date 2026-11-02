@@ -102,6 +102,8 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
         "lock": "back_door_deadbolt",
         "door lock": "back_door_deadbolt",
         "radio": "truck_radio",
+        "photograph": "lake_photograph",
+        "photo": "lake_photograph",
     },
     "1B": {
         "bench": "park_bench",

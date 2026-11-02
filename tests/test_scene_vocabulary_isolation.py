@@ -104,7 +104,7 @@ def test_guarded_items_have_no_bare_common_word_aliases() -> None:
         "back_door_deadbolt: deadbolt",
         "back_door_splinters: splinters",
         "kitchen_calendar: calendar",
-        "lake_snapshot: snapshot",
+        "lake_photograph: photograph",
         "manuscript_pages: manuscript",
     }
     assert not set(offenders) - allowed_new_1a_aliases, "non-public items have bare common-word aliases: " + ", ".join(

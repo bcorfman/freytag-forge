@@ -27,7 +27,8 @@ def test_the_kitchen_picture_is_a_plain_lake_photograph():
         (ROOT / name).read_text(encoding="utf-8")
         for name in ("plot.md", "world.yaml", "knowledge.yaml", "storylets.md", "storylet-routes.yaml")
     )
-    assert "snapshot" not in story_text.casefold()
+    # `canonical_transition_snapshot` is an unrelated structural key in storylet-routes.yaml.
+    assert "snapshot" not in story_text.replace("canonical_transition_snapshot", "").casefold()
 
 
 def test_no_possessive_owner_was_added_to_quiet_the_audit():

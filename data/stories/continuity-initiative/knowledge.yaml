@@ -398,7 +398,7 @@ knowledge:
   delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over. The back door looks forced, but the splinters around the frame point outward and the deadbolt is thrown, so it was broken from inside. Nothing else was taken. This was not looting. Someone came for Michelle."
 - id: k_sl_1a_g_r1
   statement: "Kristin reads the kitchen as Michelle's last hour."
-  entity_ids: [kristin, michelle_workstation, kitchen_calendar, lake_snapshot]
+  entity_ids: [kristin, michelle_workstation, kitchen_calendar, lake_photograph]
   aliases: [kitchen last hour read]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [1A]
@@ -416,18 +416,18 @@ knowledge:
     kind: storylet_realization
     storylet_id: SL-1A-G
     realization_id: SL-1A-G-R1
-  relevance: {entity_ids: [michelle_workstation, kitchen_calendar, lake_snapshot], priority: 0}
+  relevance: {entity_ids: [michelle_workstation, kitchen_calendar, lake_photograph], priority: 0}
   must_convey:
   - [tea, mug]
   - [glasses]
   - [calendar, lemon cake]
-  - [snapshot, picture]
+  - [photograph, photo, picture]
   action_evidence:
   - [look, examine, inspect, search, study]
-  - [workstation, mug, tea, glasses, manuscript, calendar, snapshot, picture]
-  delivery_text: "A mug of tea sits on Michelle's workstation, the bag still in it, faintly warm. Her reading glasses lie folded on her manuscript pages, which are marked in red pen. She never goes anywhere without them. On the wall calendar Saturday is circled in her handwriting: K, lemon cake. It is Kristin's birthday. On the refrigerator, a snapshot shows the two of them at a lake. Michelle did not plan to be gone."
+  - [workstation, mug, tea, glasses, manuscript, calendar, photograph, photo, picture]
+  delivery_text: "A mug of tea sits on Michelle's workstation, the bag still in it, faintly warm. Her reading glasses lie folded on her manuscript pages, which are marked in red pen. She never goes anywhere without them. On the wall calendar Saturday is circled in her handwriting: K, lemon cake. It is Kristin's birthday. On the refrigerator, a photograph shows the two of them at a lake. Michelle did not plan to be gone."
 - id: k_sl_1a_h_r1
-  statement: "On Kristin's truck radio the emergency broadcast repeats the same ninety seconds word for word; timed twice, it is a loop, not a live voice."
+  statement: "On the truck radio the emergency broadcast repeats the same ninety seconds word for word; timed twice, it is a loop, not a live voice."
   entity_ids: [kristin, truck_radio]
   aliases: [broadcast loop confirmed]
   audience: {kind: public, player_visible: true}
@@ -819,7 +819,7 @@ knowledge:
   - [officers, patrol, patrol's]
   - [research]
   - [Michelle, Michelle's, Dr. McGehee]
-  delivery_text: "The officers ask about Michelle's research and what she found. Officer Reyes studies the lake snapshot on the refrigerator a moment too long before he asks about her research. This is not a normal welfare check."
+  delivery_text: "The officers ask about Michelle's research and what she found. Officer Reyes studies the lake photograph on the refrigerator a moment too long before he asks about her research. This is not a normal welfare check."
 - id: k_sl_1a_c_r2
   statement: 'After the patrol leaves, Kristin finds reflective tape on the gate, a warning that the house will be watched.'
   entity_ids: []

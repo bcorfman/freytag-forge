@@ -90,7 +90,7 @@ Each entry below is authoring data, not a player action menu.
 **Participants / items**
 - Kristin Schweitzer
 - Michelle's workstation
-- Mug of tea, reading glasses, manuscript pages, wall calendar, and lake snapshot
+- Mug of tea, reading glasses, manuscript pages, wall calendar, and lake photograph
 
 **Dramatic purpose**
 - Let the kitchen read as a person's last hour so Michelle's disappearance feels like a loss.
