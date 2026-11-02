@@ -83,6 +83,18 @@ all nine scenes; shared runtime must remain story-agnostic.
   things is closed without breaking authored-name matching; the compatibility policy
   for existing free `condition` strings.
 
+## Richness rules for every scene (standing; saved 2026-11-02)
+
+Same list as the `richer-scene-checklist` memory. Apply to 1B through 3C.
+
+1. Plot first, inside the scene; everything new is an optional storylet; Details lines hold 3 to 7 items; keep the 120-turn ceiling.
+2. Plain names; no possessives or `owner:` fields to quiet the audit; the engine scopes by scene and clarifies; bare common words go in `scoped_aliases`.
+3. Declare what the narrator invents anyway (recorded slips: paper, lock, splinters, lantern, key).
+4. Storylets sharing a source beat share `earliest_turn`; `audit_package` `beat_overprojection` must not rise (1A's two older findings remain).
+5. Prompt budgets are a test (`tests/test_prompt_budget.py`): narrator <= 5000 characters (worst case 6500), item-matching <= 3500, <= 30 listed things. Baseline: narrator 4.0 to 4.4k in all nine scenes, matcher 1.9 to 2.1k except 1A at 2.85k. The narrator sees only things the matcher resolved; the matcher lists every scene thing, so richer scenes grow it. If near the cap, compact the matching block and verify on the bench.
+6. Check the physical logic of every clue and that scene frames agree with the plot.
+7. Tests first, Ringer for code and tests, whole suite as the check, review each patch for possessives and over-broad renames.
+
 ## Step 3 proposal (needs Brandon's approval before any prompt edit)
 
 Design rule from his memories: the narrator is a small non-reasoning model, rules often lose, and
