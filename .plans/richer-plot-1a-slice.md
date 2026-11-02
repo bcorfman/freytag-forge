@@ -39,7 +39,7 @@ The kitchen is a person's last hour, not a crime-scene checklist.
 * A mug of tea on the workstation, the bag still in it, faintly warm. Michelle made it near the end.
 * Her reading glasses lie folded on a stack of red-penned manuscript pages. She never goes anywhere without them.
 * The wall calendar has Saturday circled in her handwriting: *K — lemon cake*. Kristin's birthday.
-* On the refrigerator, a photograph of the two of them at a lake, held by a magnet shaped like a pear.
+* On the refrigerator, a snapshot of the two of them at a lake, held by a magnet shaped like a pear.
 * The back door's frame is splintered outward, and the deadbolt is thrown. Nobody forced it from outside.
 
 Kristin has stood in this kitchen a hundred times. What is wrong is quiet: the tea, the glasses, the calendar.
@@ -70,7 +70,7 @@ costs two turns, and gives the player a way to confirm Michelle's warning with K
 
 ## What gets declared (world.yaml), placed in 1A
 
-Things: mug of tea, reading glasses, manuscript pages, wall calendar, fridge photograph, back door
+Things: mug of tea, reading glasses, manuscript pages, wall calendar, lake snapshot, back door
 frame (splinters), back door deadbolt, truck radio, reflective tape (on the gate once placed).
 People: Walt Pruitt (outside, at the fence), Officer Reyes (replaces the unnamed patrol officer's
 label once named). Each needs aliases, scene placement text, leak-term review, and no clash with
@@ -92,7 +92,7 @@ current 1A window already leaves unused for most players.
 | Looping broadcast | 3B and 3C, the broadcast contest and its false voice |
 | Lemon cake on the calendar | 3A or 3C: Michelle's private proof it is really her |
 | Outward splinters | 2B: Michelle was staged as bait; the "burglary" was written for Kristin to find |
-| Reyes studying the photograph | a possible later glimpse of him at a checkpoint, choosing not to look |
+| Reyes studying the snapshot | a possible later glimpse of him at a checkpoint, choosing not to look |
 | Walt is written down | an optional consequence if Kristin passes the house again in 1B |
 
 ## Propagation after approval
