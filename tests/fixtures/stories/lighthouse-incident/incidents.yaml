@@ -14,3 +14,16 @@ incidents:
   recovery_storylet_id: SL-1A-B
   missed_window_event_id: tide_turns
   successor_transition_id: t_1a_1b
+- id: lamp_watch
+  scene_id: 1B
+  outcomes:
+  - id: tend_lamp
+    storylet_id: SL-1B-C
+    realization_id: r0
+    advantages: [lamp_tended]
+  - id: signal_lamp
+    storylet_id: SL-1B-C
+    realization_id: r1
+    advantages: [lamp_signal_seen]
+  recovery_storylet_id: SL-1B-D
+  missed_window_event_id: lamp_window_closes

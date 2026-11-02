@@ -284,7 +284,7 @@ REJECTIONS = [
 
 def test_incident_fixture_loads_with_two_outcomes() -> None:
     package = load_story_package(FIXTURE)
-    assert len(package.incidents) == 1
+    assert len(package.incidents) == 2
     assert [outcome.id for outcome in package.incidents[0].outcomes] == ["copy_chart", "learn_route"]
 
 
@@ -304,6 +304,7 @@ def test_real_package_declares_the_continuity_incident() -> None:
         "i_2a_real_leak",
         "i_2b_audit",
         "i_2c_rebecca_corridor",
+        "i_3c_evacuation",
     ]
     assert load_story_package(ROOT / "lighthouse-keeper").incidents == ()
 
@@ -338,4 +339,23 @@ def test_delivery_cost_without_incident_cost_overlap_is_valid(tmp_path: Path) ->
     handoffs = _read_yaml(package / "handoffs.yaml")
     handoffs["deliveries"][0]["costs"] = [{"op": "assert", "fact_id": "tide_has_turned", "value": True}]
     _write_yaml(package / "handoffs.yaml", handoffs)
-    assert len(load_story_package(package).incidents) == 1
+    assert len(load_story_package(package).incidents) == 2
+
+
+def test_final_incident_skips_event_transition_comparison(tmp_path: Path) -> None:
+    package = _copy_fixture(tmp_path)
+    pacing = _read_yaml(package / "pacing.yaml")
+    pacing["events"].append(
+        {
+            "id": "lamp_watch_closes",
+            "scene_id": "1B",
+            "at_turn": 0,
+            "effects": [{"fact_id": "lamp_window_missed", "equals": True}],
+            "transition_id": "t_1a_1b",
+        }
+    )
+    _write_yaml(package / "pacing.yaml", pacing)
+
+    loaded = load_story_package(package)
+
+    assert loaded.incidents[1].successor_transition_id is None

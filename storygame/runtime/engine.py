@@ -59,7 +59,7 @@ from storygame.runtime.validation import (
     unconveyed_terms,
 )
 from storygame.runtime.world_model import apply_world_effects, world_for
-from storygame.story_package.models import FactDelivery, scene_entry_texts
+from storygame.story_package.models import FactDelivery, FactPredicate, scene_entry_texts
 from storygame.story_package.obligations import required_storylet_ids
 
 SCENE_ENTRY_REQUEST = "Narrate the opening of this scene."
@@ -748,9 +748,20 @@ class RuntimeEngine(CanonicalEventMixin):
             and all(self._predicate_matches(predicate) for predicate in ending.when)
         ):
             self.state.story_complete = True
+            ending_segments = (
+                NarrationSegment(kind="narration", text=ending.text),
+                *(
+                    NarrationSegment(kind="narration", text=variant.text)
+                    for variant in ending.variants
+                    if all(
+                        self._predicate_matches(FactPredicate(fact_id=fact_id, equals=True))
+                        for fact_id in variant.requires
+                    )
+                ),
+            )
             return proposal.model_copy(
                 update={
-                    "segments": (*proposal.segments, NarrationSegment(kind="narration", text=ending.text)),
+                    "segments": (*proposal.segments, *ending_segments),
                 }
             )
         return proposal

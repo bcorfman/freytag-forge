@@ -527,6 +527,19 @@ class EntryTextVariant(_Model):
     text: str = Field(min_length=1)
 
 
+class EndingVariant(_Model):
+    requires: tuple[str, ...] = Field(min_length=1)
+    text: str = Field(min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def non_blank_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("ending variant text must not be empty")
+        return value
+
+
 class SceneMetadata(_Model):
     scene_id: str = Field(pattern=_SCENE_ID)
     location_id: str = Field(pattern=_ID)
@@ -594,6 +607,7 @@ class StoryEnding(_Model):
     when: tuple[FactPredicate, ...] = Field(min_length=1)
     text: str = Field(min_length=1)
     marker: str = Field(min_length=1)
+    variants: tuple[EndingVariant, ...] = ()
 
     @field_validator("text", "marker")
     @classmethod
@@ -766,7 +780,7 @@ class Incident(_Model):
     outcomes: tuple[IncidentOutcome, ...] = Field(min_length=2)
     recovery_storylet_id: str = Field(pattern=r"^SL-[1-9][A-Z]-[A-Z]$")
     missed_window_event_id: str = Field(pattern=_ID)
-    successor_transition_id: str = Field(pattern=_ID)
+    successor_transition_id: str | None = Field(default=None, pattern=_ID)
     observation_knowledge_ids: tuple[str, ...] = ()
     completes_scene: StrictBool = True
 
