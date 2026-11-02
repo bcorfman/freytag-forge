@@ -58,7 +58,7 @@ def make_world(resolver=None):
                 {"id": "cupboard", "name": "cupboard", "kind": "container", "fixed": True, "openable": True},
                 {"id": "safe", "name": "safe", "kind": "container", "fixed": True, "contents_complete": True},
                 {"id": "cup", "name": "cup", "kind": "thing"},
-                {"id": "pipe", "name": "pipe", "kind": "thing", "aliases": ["tin whistle"]},
+                {"id": "pipe", "name": "pipe", "kind": "thing", "aliases": ["penny whistle"]},
                 {"id": "locket", "name": "locket", "kind": "thing", "hidden": True},
                 {"id": "hidden_box", "name": "hidden box", "kind": "container", "hidden": True},
                 {"id": "chair", "name": "chair", "kind": "furniture"},
@@ -213,16 +213,17 @@ def test_a_template_name_that_collides_with_an_entity_or_alias_is_refused_withou
         templates={
             "kitchen": (
                 PropTemplate("cup", ("table",)),
-                PropTemplate("tin whistle", ("table",)),
+                PropTemplate("penny whistle", ("table",)),
                 PropTemplate("spoon", ("table",)),
             )
         }
     )
     before = snapshot(world)
     assert not world.apply_embellishments(policy, "kitchen", one_prop("cup", "table"), ()).ok
-    assert not world.apply_embellishments(policy, "kitchen", one_prop("tin whistle", "table"), ()).ok
+    assert not world.apply_embellishments(policy, "kitchen", one_prop("penny whistle", "table"), ()).ok
     assert snapshot(world) == before
     assert world.incidental_counts("kitchen") == (0, 0)
+    assert world.schema.entities["pipe"].aliases == ("penny whistle",)
 
 
 def test_props_are_ordinary_things_and_fixed_templates_stay_put():
@@ -388,3 +389,11 @@ def test_policy_declarations_are_validated():
         make_policy(per_turn=-1)
     with pytest.raises(ValueError):
         make_policy(palettes={"cup": {"color": ("red", "red")}})
+
+
+def test_embellishing_never_edits_the_schema_or_changes_name_resolution():
+    world, policy = make_world(), make_policy()
+    entities_before = dict(world.schema.entities)
+    assert world.apply_embellishments(policy, "kitchen", one_prop("tin whistle", "table"), ()).ok
+    assert world.schema.entities == entities_before
+    assert world.resolve("penny whistle") == "pipe" and world.resolve("pipe") == "pipe"
