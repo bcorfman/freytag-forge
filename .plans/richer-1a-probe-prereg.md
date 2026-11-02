@@ -23,11 +23,11 @@ capture asks. It is unrecorded and is not counted below. Cause: bench bug fixed 
 ## Design (shipped transports, runtime-wired capture, no retries, no replacement samples, partial rows kept)
 Arms: `richer-1a-baseline` (frozen story from `6eebe4e8`, in `bench/frozen/continuity-pre-richer-1a/`) and
 `richer-1a-candidate` (current `data/stories/continuity-initiative`). Identical settings. Script `richer-1a-kitchen`,
-six canonical imperative commands in order: `Examine the back door.` `Look at the wall calendar.`
-`Look at the photograph.` `Search the drawer.` `Go outside.` `Talk to the neighbor.` Each replicate also makes one
+seven canonical imperative commands in order: `Examine the back door.` `Look at the wall calendar.`
+`Look at the photograph.` `Search the drawer.` `Search beneath the drawer.` `Go outside.` `Talk to the neighbor.` Each replicate also makes one
 opening request. Judges on: continuity and fact-tracking (7-criterion and invented-change are recorded, never pooled).
 
-**Smoke first:** 1 replicate, candidate arm only (about 11 narrator and matcher requests plus judges). Read it fully;
+**Smoke first:** 1 replicate, candidate arm only (about 12 narrator and matcher requests plus judges). Read it fully;
 stop if the run fails, a reply is unusable, or any quota error appears. **Full run:** 4 replicates per arm, one Ringer
 task per arm, run in sequence. Request cap: 150 narrator and matcher requests in total, judge calls separate and
 reported separately. Stop on HTTP 429 `AI_QUOTA_EXCEEDED` or `AI_DAILY_BUDGET_EXCEEDED` until 00:00 UTC.
@@ -38,7 +38,7 @@ reported separately. Stop on HTTP 429 `AI_QUOTA_EXCEEDED` or `AI_DAILY_BUDGET_EX
   affect the main storyline"); list any that touch the storyline.
 - **Q2 (candidate):** per command, whether the authored detail appears: back door (splinters point outward, from
   inside), calendar (lemon cake, Saturday), photograph (lake), neighbor (vans, clipboard, skipped the house).
-- **Q3:** card recovered after `Search the drawer.` in at least 3 of 4 replicates per arm; zero protected terms
+- **Q3:** card recovered after `Search beneath the drawer.` in at least 3 of 4 replicates per arm; zero protected terms
   (JANUS, selection system, Brandon's history, detention network); zero clarification questions; the walk records
   cleanly; 7-criterion scores recorded as given.
 - **Q4:** each opening yes/no: names the kitchen; uses only declared things for layout; reacts to Michelle's absence;
@@ -54,3 +54,14 @@ reported separately. Stop on HTTP 429 `AI_QUOTA_EXCEEDED` or `AI_DAILY_BUDGET_EX
 
 ## Not covered
 Later turns after the patrol, other scenes, the hosted staging path, other models, and tuning wording.
+
+## Amendment 1 (2026-11-02, after the smoke run, before any full run)
+Smoke result: one candidate replicate, 6 turns judged, no failures (7-criterion 4 of 7; fact tracking clean; spend 77
+projected neurons, 22 estimated from requests, 2 OpenAI and 10 Jev judge requests). Reading every turn found
+four defects in the story and one error in this preregistration:
+1. `Search the drawer.` earns the gap pointer, not the card (existing two-step design). The card criterion now
+   follows `Search beneath the drawer.`, a seventh command inserted after it; `fixed_turns` is 7.
+2. The photograph was narrated as a landscape: the lake photograph's text never said what it shows.
+3. The kitchen storylet delivered all five details on a calendar command: split into a workstation reveal and a walls reveal.
+4. Walt's account was unreachable once the patrol entered (`patrol_in_house` stays true): the patrol gate is dropped.
+The full run uses the story after these fixes. The smoke row is kept and reported as pre-fix, not pooled.
