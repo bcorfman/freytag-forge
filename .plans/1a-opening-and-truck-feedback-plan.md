@@ -1,6 +1,6 @@
 # Scene 1A: opening prose, emotional grounding, and truck continuity
 
-Status (corrected): in progress, 2026-11-02; plan revised for Brandon's five rulings.
+Status: paused 2026-11-02 at Brandon's request (see Resume here); plan revised for Brandon's five rulings.
 Step 1 baseline capture is done; targeted diagnosis continues below. Step 2 edits are applied (plot.md,
 knowledge.yaml, world.yaml, `7794e4b9`) but only partly effective: the kitchen is
 named in 9 of 9 openings; layout, KMS as new and strange, and a specific reaction
@@ -13,27 +13,37 @@ the plan only; implementation, new billed calls and deployment have not run.
 
 ## Resume here
 
-**Corrected:** Step 4's first live replicates are done (`replicates-prereg.md`, Result; commit `9abc76fb`):
-the truck turn is right in 9 of 9, the drawer and gap in 9 of 9, the park transition
-in 3 of 3, and the opening names the kitchen in 9 of 9. Still failing the acceptance
-table: (1) repeated "get in the truck" while seated writes an exit in 6 of 6 and
-committed it in 2; (2) invented glove-compartment handling contradicts where the
-card and laptop are on the plug, take and re-board turns (Brandon: picking the laptop
-up when she gets in is fine; falsely sourcing either item from the glove compartment
-is a custody/parent contradiction and fails); (3) the opening omits the layout
-and does not convey the two new situation sentences (layout 0 of 9, KMS new or strange
-0 of 9, specific reaction 0 of 9); (4) no reaction to Michelle's warning; (5)
-surroundings on the boarding turn (known gap). Next, per the scene-fixing guide
-(step 1 first, no new arm sweep): finish tracing the recorded failure through the
-current implementation, then prepare the smallest repair for each boundary below.
-The representative raw-route opening, boarding, repeat-boarding and plug prompts
-have now been read beside the plot: opening layout is absent from the narrator
-payload, exterior material is present but omitted in prose, and the plug prompt
-requests only a lead-up to the warning. Do not treat those as the same cause.
-Already-aboard feedback is now engine-owned (2026-11-02, uncommitted, see Completion record); next address the visible parent-area projection, custody, opening
-layout and correctly ordered emotional response. Full suite, save/load
-persistence and staging are still to do. Fixes stay generic: no command lists, no
-story names in the runtime.
+**Paused 2026-11-02 at Brandon's request; nothing is running and no billed call has
+been spent since the replicates.** Branch `1a-opening-and-truck-feedback`, clean
+except the unrelated untracked `.plans/richer-narration.md`. Full suite last run:
+3,880 passed, 22 skipped; Ruff clean.
+
+**Done and committed this session** (details in the Completion record):
+- `6f431b3f` repeat boarding is an engine-owned reply, clock untouched (Brandon's choice).
+- `398b88c4` 34 stale kitchen-start test pins updated.
+- `2f6f5954` the opening THINGS lists the start area's visible things (layout).
+
+**Not yet measured live:** the opening layout fix, and the earlier Step 2 sentences
+(novelty and a specific reaction were 0 of 9). Repeat-boarding is untested live.
+
+**Next, in this order unless Brandon says otherwise:**
+1. Free repairs first (Ringer tasks, Luna high effort, tests first): (a) exterior view
+   through the truck windows on the boarding turn (parent area visible, not reachable;
+   boarding-turn surroundings were 0 of 9); (b) card/laptop provenance, i.e. the
+   glove-compartment contradiction on the plug, take and re-board turns (diagnose
+   proposal validation and prose separately; raw plug THINGS already says both are held);
+   (c) the reaction after Michelle's warning, using the existing handoff, no second
+   narration call. Also still open: explicit-exit landing at the vehicle's real parent and
+   outside observation (2 of 3 passed).
+2. Then write the preregistrations (rubric, exact payloads, cost) for approval:
+   opening 12 + 12, earned warning 12 + 12, exterior view 12 + 12, custody 12 + 12.
+   No billed call before Brandon approves each one.
+3. Then three live replicates of the three routes (expected 316 calls, cap 425), staged
+   exact-SHA verification, save/load persistence and the synthetic second-vehicle check.
+
+**Working notes:** Ringer manifests are in `scripts/ringer/opening_truck/`; a Ringer
+check must not fail on unrelated untracked files (use a path allowlist that includes
+`.plans/`); never pin a test to a file in `/tmp`.
 
 The user's current instruction supersedes the older continuity plan's
 approach-only expectation: **“head out to the truck” should seat Kristin in
