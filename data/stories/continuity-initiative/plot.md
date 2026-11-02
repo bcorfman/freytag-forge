@@ -118,7 +118,7 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake photograph; KMS initials carved in drawer
+**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; Michelle's wall calendar and lake photograph; KMS initials carved in drawer
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but the house does not read as a burglary. It reads as a person's last hour:
 
@@ -152,7 +152,7 @@ Michelle’s notes contain one alarming sentence:
 
 ### Scene 1A.3 — The Interrupted Message
 
-**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe; truck radio and looping emergency broadcast
+**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe; Kristin's truck radio and looping emergency broadcast
 
 On the card, Kristin finds a damaged voice recording Michelle attempted to send shortly before she disappeared. In it, Michelle says government officials have been tracking her and that a planned “activation event” is imminent.
 
