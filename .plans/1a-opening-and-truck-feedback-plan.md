@@ -6,7 +6,7 @@ named in 9 of 9 openings; layout, KMS as new and strange, and a specific reactio
 are not shown, and emotional responsiveness on later turns is not started. Step 3
 has one runtime change (`e41878c3`): seated and parked on the boarding turn, with a
 side effect noted in the Completion record; surroundings, repeated boarding and
-custody are open. Step 4 replicates ran once (`9abc76fb`) and failed four rows.
+custody are open. Step 4 replicates ran once (`9abc76fb`) and failed several rows.
 Source baseline: `8da801206ca5e1708b0bce72e2c63e449cd3aae4`.
 
 ## Resume here
@@ -15,8 +15,9 @@ Step 4 live replicates are done (`replicates-prereg.md`, Result; commit `9abc76f
 the truck turn is right in 9 of 9, the drawer and gap in 9 of 9, the park transition
 in 3 of 3, and the opening names the kitchen in 9 of 9. Still failing the acceptance
 table: (1) repeated "get in the truck" while seated writes an exit in 6 of 6 and
-committed it in 2; (2) invented glove-compartment handling contradicts card and
-laptop custody on the plug, take and re-board turns; (3) the opening ignores the
+committed it in 2; (2) invented glove-compartment handling contradicts where the
+card and laptop are on the plug, take and re-board turns (Brandon: picking the laptop
+up when she gets in is fine, so only the glove compartment is the oddity); (3) the opening ignores the
 layout text and both new situation sentences (layout 0 of 9, KMS new or strange
 0 of 9, specific reaction 0 of 9); (4) no reaction to Michelle's warning; (5)
 surroundings on the boarding turn (known gap). Next, per the scene-fixing guide
@@ -192,7 +193,7 @@ not a reproduced diagnosis.
 | Opening | Names the kitchen; makes its immediate layout understandable; shows familiarity and a specific reaction to Michelle's absence; identifies KMS as new and strange; no hidden-card leak or unasked search. |
 | Drawer then gap | Existing opening/search/recovery order still works; card recovered once, with the correct witnessed or unwitnessed consequence. |
 | Head out to truck | Ends in driver's seat; truck remains parked outside; useful surroundings and laptop placement are narrated; no engine start, driving, gate crossing or return to house. |
-| Look for laptop; repeat boarding | Laptop is seen at its current place; Kristin stays seated; no automatic pickup or exit/re-entry. |
+| Look for laptop; repeat boarding | Laptop is seen at its current place; Kristin stays seated; no exit/re-entry. Picking the laptop up when she gets into the truck is fine (Brandon, 2026-11-02: she already knows it is in the truck, and plugging the card in is the natural next step). |
 | Plug card into laptop | Reaches across and uses it from driver's seat; preserves custody and existing earned delivery; reacts plausibly to Michelle's warning. |
 | Explicit departure after the lead | Existing park transition remains playable and places the truck correctly in 1B; boarding alone never substitutes for this action. |
 | Countercases | Laptop carried/left elsewhere, explicit exit, explicit drive, and observation outside all follow actual state; no global forced seating or remote reach. |
@@ -275,19 +276,18 @@ diff has 12 changed lines, all on the approved wording. Not yet done: the live
 replicates that show whether the prose now meets the opening acceptance row; full
 suite not yet run.
 
-### Scoring correction after the replicates (2026-11-02)
+### Scoring correction withdrawn (2026-11-02)
 
-The plan's row "Look for laptop; repeat boarding" requires "no automatic pickup".
-In all 9 replicates the narrator, on the boarding turn, wrote "reaches for the
-laptop ... pulls it out and opens it", and the engine committed the laptop as held
-by Kristin from that turn on. I scored the later "look for the laptop" turn as a
-pass because the laptop was "seen"; under the plan it is a fail for pickup. Probes
-2 and 4 counted "laptop shown on the passenger seat" and so also rewarded this
-unrequested pickup. The committed boarding-turn change (`e41878c3`) therefore buys
-"seated and parked" partly by leaving the narrator one action, handling the
-laptop, which is acting for the player. Probe 4 arm B ("takes in what she can see
-and reach") showed the laptop and the outside without a pickup in its good replies
-(6 of 10), which fits the plan's Head-out row better.
+An earlier note here scored the narrator's "reaches for the laptop, pulls it out
+and opens it" on the turn where Kristin gets into the truck as an automatic
+pickup that fails the plan. Brandon ruled that this is fine: when she found the
+card the narration already said her laptop was in the truck, so picking it up when
+she gets in and plugging the card in is natural progression. The note is withdrawn,
+the acceptance row above now says so, and the committed prompt change (`e41878c3`)
+stands as a good result for the seated, parked and laptop criteria. Still open on
+that turn: surroundings (0 of 9). A small remaining oddity, recorded and not
+scored as a failure on its own: the narrator sometimes writes the laptop coming
+out of an invented glove compartment although it was on the seat or in her hands.
 
 Open: the remaining step 3 items (surroundings on the boarding turn, the unboarded
 "gets in" prose mismatch) and step 4. Record each
