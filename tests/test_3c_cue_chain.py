@@ -21,7 +21,6 @@ CUE_FACTS = (
     "truth_no_longer_containable",
     "rebecca_captured",
     "evacuation_route_open",
-    "los_angeles_facility_lost",
     "national_network_fragmenting",
     "community_rescue_efforts_begun",
     "phase_two_conflict_plan_known",
@@ -33,6 +32,7 @@ REVEAL_IDS = (
     "k_sl_3c_b_r2",
     "k_sl_3c_c_r1",
     "k_sl_3c_c_r2",
+    "k_sl_3c_h_r1",
     "k_sl_3c_d_r1",
     "k_sl_3c_d_r2",
     "k_sl_3c_e_r1",
@@ -50,11 +50,12 @@ COMMAND_EXPECTATIONS = (
     ("Inspect the executive office.", None),
     ("Open the drainage pump controls.", None),
     ("Restore the drainage pumps.", "k_sl_3c_c_r1"),
-    ("Lead Michelle through the maintenance routes.", "k_sl_3c_c_r1"),
+    ("Brace the watertight barrier.", "k_sl_3c_c_r1"),
     ("Inspect the drainage pump controls.", None),
-    ("Open the surface gates.", "k_sl_3c_c_r2"),
-    ("Release the surface gates.", "k_sl_3c_c_r2"),
-    ("Use the senior official's authorization.", "k_sl_3c_c_r2"),
+    ("Give up the lower levels.", "k_sl_3c_c_r2"),
+    ("Open the surface gates.", None),
+    ("Release the surface gates.", "k_sl_3c_h_r1"),
+    ("Use the authorization.", None),
     ("Inspect the surface gates.", None),
     ("Check reports from other detention sites.", "k_sl_3c_d_r1"),
     ("Read the detention site reports.", "k_sl_3c_d_r1"),
@@ -71,11 +72,11 @@ COMMAND_EXPECTATIONS = (
     ("Follow Rebecca with Michelle.", "k_sl_3c_b_r1"),
     ("Follow Rebecca's escape route.", "k_sl_3c_b_r1"),
     ("Take Rebecca's escape route.", "k_sl_3c_b_r1"),
-    ("Extend the emergency gate authorization.", "k_sl_3c_c_r2"),
-    ("Guide the captives through the emergency gate.", "k_sl_3c_c_r2"),
+    ("Extend the emergency gate authorization.", None),
+    ("Guide the captives through the emergency gate.", None),
     ("Lead the captives to safety.", None),
     ("Lead the captives to the safe surface.", None),
-    ("Open the surface exit.", "k_sl_3c_c_r2"),
+    ("Open the surface exit.", None),
     ("Broadcast updates to the families.", "k_sl_3c_d_r2"),
     ("Broadcast the reports from other detention sites.", "k_sl_3c_d_r1"),
     ("Broadcast reports from other detention sites.", "k_sl_3c_d_r1"),
@@ -108,9 +109,9 @@ COMMAND_EXPECTATIONS = (
     ("Reassure the captives.", None),
     ("Answer the reports from other detention sites.", None),
     ("Read Charles's signal.", None),
-    ("Extend the gate authorization.", "k_sl_3c_c_r2"),
-    ("Guide the captives to the surface gates.", "k_sl_3c_c_r2"),
-    ("Lead the captives to the surface gates.", "k_sl_3c_c_r2"),
+    ("Extend the gate authorization.", None),
+    ("Guide the captives to the surface gates.", None),
+    ("Lead the captives to the surface gates.", None),
     ("Broadcast updates to the detention sites.", None),
     ("Answer the families with the reports.", "k_sl_3c_d_r2"),
     ("Decode the recovered document.", "k_sl_3c_e_r1"),
@@ -124,7 +125,7 @@ COMMAND_EXPECTATIONS = (
     ("Respond to the families about Charles's terrorist claim.", None),
     ("Tell the families that the missing are alive.", "k_sl_3c_d_r2"),
     ("Contact the families.", "k_sl_3c_d_r2"),
-    ("Enter the gate code.", "k_sl_3c_c_r2"),
+    ("Enter the gate code.", None),
     ("Enter the authority code.", None),
     ("Enter the gate-status panel.", None),
     ("Inspect the gate-status panel.", None),
@@ -195,7 +196,7 @@ def _finish_a_and_b() -> RuntimeEngine:
 def _finish_a_through_c() -> RuntimeEngine:
     engine = _finish_a_and_b()
     _reveal(engine, "k_sl_3c_c_r1", "Restore the drainage pumps.")
-    _reveal(engine, "k_sl_3c_c_r2", "Open the surface gates.")
+    _reveal(engine, "k_sl_3c_c_r2", "Give up the lower levels.")
     return engine
 
 
@@ -207,65 +208,28 @@ def test_3c_cue_chain_stages_each_next_fact() -> None:
     _reveal(engine, "k_sl_3c_a_r1", "Send the evidence package.")
     assert engine.state.staged_cue_fact_id == "rebecca_captured"
     _reveal(engine, "k_sl_3c_b_r1", "Take the Portable data case from Rebecca.")
-    assert engine.state.staged_cue_fact_id in {"evacuation_route_open", "los_angeles_facility_lost"}
-
-    first_c = engine.state.staged_cue_fact_id
-    c_reveal = "k_sl_3c_c_r1" if first_c == "evacuation_route_open" else "k_sl_3c_c_r2"
-    c_command = "Restore the drainage pumps." if c_reveal.endswith("c_r1") else "Open the surface gates."
-    _reveal(engine, c_reveal, c_command)
-    missing_c = "los_angeles_facility_lost" if first_c == "evacuation_route_open" else "evacuation_route_open"
-    assert engine.state.staged_cue_fact_id == missing_c
-    _reveal(
-        engine,
-        "k_sl_3c_c_r2" if c_reveal.endswith("c_r1") else "k_sl_3c_c_r1",
-        "Open the surface gates." if c_reveal.endswith("c_r1") else "Restore the drainage pumps.",
-    )
-    assert engine.state.staged_cue_fact_id in {"national_network_fragmenting", "community_rescue_efforts_begun"}
-
-    first_d = engine.state.staged_cue_fact_id
-    d_reveal = "k_sl_3c_d_r1" if first_d == "national_network_fragmenting" else "k_sl_3c_d_r2"
-    d_command = (
-        "Check reports from other detention sites."
-        if d_reveal.endswith("d_r1")
-        else "Call the families of the missing."
-    )
-    _reveal(engine, d_reveal, d_command)
-    assert engine.state.staged_cue_fact_id == (
-        "community_rescue_efforts_begun"
-        if first_d == "national_network_fragmenting"
-        else "national_network_fragmenting"
-    )
-    _reveal(
-        engine,
-        "k_sl_3c_d_r2" if d_reveal.endswith("d_r1") else "k_sl_3c_d_r1",
-        (
-            "Call the families of the missing."
-            if d_reveal.endswith("d_r1")
-            else "Check reports from other detention sites."
-        ),
-    )
-    assert engine.state.staged_cue_fact_id == "phase_two_conflict_plan_known"
+    assert engine.state.staged_cue_fact_id == "evacuation_route_open"
+    _reveal(engine, "k_sl_3c_c_r1", "Restore the drainage pumps.")
+    assert engine.state.story_complete is True
+    assert engine.state.staged_cue_fact_id is None
+    assert {"evacuation_complete", "barrier_held"} <= {fact.predicate for fact in engine.state.facts.asserted}
 
 
-@pytest.mark.parametrize("order", [("k_sl_3c_c_r1", "k_sl_3c_c_r2"), ("k_sl_3c_c_r2", "k_sl_3c_c_r1")])
-def test_both_c_parts_are_earnable_in_either_order(order: tuple[str, str]) -> None:
+@pytest.mark.parametrize(
+    "knowledge_id, command",
+    [("k_sl_3c_c_r1", "Restore the drainage pumps."), ("k_sl_3c_c_r2", "Give up the lower levels.")],
+)
+def test_each_evacuation_outcome_completes_the_story(knowledge_id: str, command: str) -> None:
     engine = _finish_a_and_b()
-    commands = {
-        "k_sl_3c_c_r1": "Restore the drainage pumps.",
-        "k_sl_3c_c_r2": "Open the surface gates.",
-    }
-    _reveal(engine, order[0], commands[order[0]])
-    assert not any(fact.predicate == "captives_reaching_surface" for fact in engine.state.facts.asserted)
-    _reveal(engine, order[1], commands[order[1]])
-    assert any(fact.predicate == "captives_reaching_surface" for fact in engine.state.facts.asserted)
-
-
-def test_after_d_r1_only_d_r2_remains_in_the_reveal_universe() -> None:
-    engine = _finish_a_through_c()
-    _reveal(engine, "k_sl_3c_d_r1", "Check reports from other detention sites.")
-
-    projection = engine.projector.project(engine.state, "player", "Call the families of the missing.")
-    assert [candidate.id for candidate in projection.reveal_universe] == ["k_sl_3c_d_r2"]
+    _reveal(engine, knowledge_id, command)
+    assert engine.state.story_complete is True
+    facts = {fact.predicate for fact in engine.state.facts.asserted}
+    assert "evacuation_complete" in facts
+    if knowledge_id.endswith("c_r1"):
+        assert "barrier_held" in facts
+        assert "lower_levels_lost" not in facts
+    else:
+        assert {"captives_out_costly", "lower_levels_lost"} <= facts
 
 
 def test_resolution_scene_stages_cues_without_staging_deadline_handoff() -> None:

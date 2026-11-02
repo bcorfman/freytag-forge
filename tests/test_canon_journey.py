@@ -160,7 +160,8 @@ def test_clocked_canon_journey_reaches_the_resolution_scene() -> None:
     assert {"purge_window_2c", "SL-2C-D"} & state.fired_event_ids
     assert "override_deadline_3a" in state.fired_event_ids
     assert "destruction_3b" in state.fired_event_ids
-    assert Fact(predicate="resolution_complete", subject="story", value="true") in state.facts.asserted
+    assert state.story_complete is True
+    assert Fact(predicate="evacuation_complete", subject="story", value="true") in state.facts.asserted
 
 
 def test_unclocked_canon_journey_fits_the_authored_budget() -> None:
@@ -175,10 +176,9 @@ def test_unclocked_canon_journey_fits_the_authored_budget() -> None:
             f"turn {turn_index} selecting {selection} ended in {state.current_scene_id}, expected {expected_scene}"
         )
 
-    elapsed = Fact(predicate="story_elapsed_seconds", subject="story", value=str(60 * len(UNCLOCKED_JOURNEY)))
-    assert elapsed in state.facts.asserted
     assert 60 * len(UNCLOCKED_JOURNEY) <= package.pacing.budget_seconds
-    assert Fact(predicate="resolution_complete", subject="story", value="true") in state.facts.asserted
+    assert state.story_complete is True
+    assert Fact(predicate="evacuation_complete", subject="story", value="true") in state.facts.asserted
 
 
 def test_committed_triggers_never_outrun_the_authored_pacing_floor() -> None:

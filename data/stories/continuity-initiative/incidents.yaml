@@ -71,3 +71,20 @@ incidents:
   successor_transition_id: t_2c_3a
   observation_knowledge_ids: [k_sl_2c_c_r1, k_sl_2c_d_r3, k_sl_2c_d_r4]
   completes_scene: true
+- id: i_3c_evacuation
+  scene_id: 3C
+  outcomes:
+  - id: evacuation_clean
+    storylet_id: SL-3C-C
+    realization_id: SL-3C-C-R1
+    advantages: [barrier_held]
+    costs: []
+  - id: evacuation_costly
+    storylet_id: SL-3C-C
+    realization_id: SL-3C-C-R2
+    advantages: [captives_out_costly]
+    costs: [lower_levels_lost]
+  recovery_storylet_id: SL-3C-H
+  missed_window_event_id: evacuation_window_3c
+  observation_knowledge_ids: [k_sl_3c_c_r1, k_sl_3c_c_r2, k_sl_3c_h_r1]
+  completes_scene: true

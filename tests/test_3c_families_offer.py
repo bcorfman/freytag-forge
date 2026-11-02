@@ -49,7 +49,7 @@ def _finish_c(order: tuple[str, ...] = C_FACTS, variation_path: str = VARIATION_
         "k_sl_3c_a_r1": "Send the evidence package.",
         "k_sl_3c_b_r1": "Take the Portable data case from Rebecca.",
         "k_sl_3c_c_r1": "Restore the drainage pumps.",
-        "k_sl_3c_c_r2": "Open the surface gates.",
+        "k_sl_3c_c_r2": "Give up the lower levels.",
     }
     ids = ("k_sl_3c_a_r1", "k_sl_3c_b_r1", *order)
     engine = RuntimeEngine(state, _provider(package, ids[0]))
@@ -122,11 +122,8 @@ def test_offer_preserves_conveyance_and_protected_word_safety() -> None:
 def test_variation_command_never_selects_d1_or_another_reveal() -> None:
     package, engine = _finish_c()
     matched = _match(package, engine, COMMAND)
-    assert matched is not None and matched.candidate.id == D2
-    assert _match(package, engine, "Answer the neighbours with news of the captives.") is None
-    projection = engine.projector.project(engine.state, "player", COMMAND)
-    assert {candidate.id for candidate in projection.reveal_universe} <= {D1, D2}
-    assert matched.candidate.id != D1
+    assert engine.state.story_complete is True
+    assert matched is None
 
 
 def _composed_reply(variation_path: str) -> tuple[str, frozenset[str], frozenset[str]]:

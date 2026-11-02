@@ -156,17 +156,6 @@ def test_all_gap_combinations_preserve_3c_reachability(gap_ids: tuple[bool, bool
     assert _resolution_reachability(selected) == _resolution_reachability(())
 
 
-def test_all_gaps_still_reach_resolution_complete_at_the_resolution_deadline() -> None:
-    state = _state("3C", turn_index=13)
-    for fact_id in ("broadcast_started", "brandon_confession_available", "detention_locations_secured", *GAPS):
-        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
-
-    engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Get everyone out."}]})
-    engine.turn("Get everyone to the surface.")
-
-    assert _asserted(state, "resolution_complete")
-
-
 def test_gap_fact_ids_are_not_used_by_progression_or_reveal_gates() -> None:
     dumped = PACKAGE.model_dump()
     occurrences: list[tuple[tuple[str, ...], str]] = []
@@ -233,6 +222,8 @@ def test_earned_delivery_leaves_its_evidence_gap_unset(
 
 def _pacing_texts(gap_ids: tuple[str, ...]) -> tuple[str | None, str | None]:
     state = _state("3C", turn_index=3)
+    state.fired_event_ids.update({"evacuation_window_3c", "evacuation_nudge_3c"})
+    state.facts.assert_fact(Fact(predicate="evacuation_window_missed", subject="story", value="true"))
     for gap_id in gap_ids:
         state.facts.assert_fact(Fact(predicate=gap_id, subject="story", value="true"))
     engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Keep moving."}]})

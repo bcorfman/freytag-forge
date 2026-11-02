@@ -176,6 +176,26 @@ events:
     text: >-
       Water seeps under the outer doors. Kristin left without a copy of the development record bearing Brandon's name.
   - text: Water seeps under the outer doors. Charles's emergency deluge is becoming real.
+- id: evacuation_window_3c
+  scene_id: 3C
+  at_turn: 9
+  effects:
+  - fact_id: evacuation_window_missed
+    equals: true
+  realizations:
+  - text: The surge is on them.
+- id: evacuation_nudge_3c
+  scene_id: 3C
+  at_turn: 10
+  when:
+  - {fact_id: evacuation_window_missed, equals: true}
+  - {fact_id: barrier_held, equals: false}
+  - {fact_id: captives_out_costly, equals: false}
+  effects:
+  - fact_id: evacuation_surge_building
+    equals: true
+  realizations:
+  - text: The surge is building at the barrier and the pumps.
 - id: audit_window_2b
   scene_id: 2B
   at_turn: 5
@@ -423,18 +443,24 @@ transitions:
 ending:
   scene_id: 3C
   when:
-    - {fact_id: phase_two_conflict_plan_known, equals: true}
+    - {fact_id: evacuation_complete, equals: true}
   text: >-
-    Kristin and Michelle were safe, but their old lives
-    were beyond recovery. The broadcast had exposed the detention
-    network. Some facilities released their prisoners; others
-    remained under Charles's control. Michelle began publishing the
-    full archive, including the plan to provoke conflict among
-    the survivors. Kristin joined the teams opening the remaining
-    facilities. Together, they brought freed prisoners and resistance
-    groups into contact so they could coordinate rescues and warn
-    one another of Charles's plans. He was still out there,
-    counting on fear to drive people back under his control.
-    Kristin and Michelle had begun organizing the people he meant
-    to divide. Stopping Phase Two would be their next fight, and they would do it together.
+    Dawn finds Michelle alive and Kristin reunited with her. The captives are out.
+    Brandon was last seen holding the relay, and no one knows what happened to him.
+    Charles is still out there. Their old lives are gone.
+  variants:
+  - requires: [barrier_held]
+    text: The lower levels stand, and every cart came through.
+  - requires: [lower_levels_lost]
+    text: The lower levels went under. Everyone who reached the surface lived.
+  - requires: [surge_forced_evacuation]
+    text: The surge, not a plan, carried the captives out. No one yet knows how many.
+  - requires: [archive_copies_distributed, rebecca_captured]
+    text: Copies are with independent networks. The prisoners hold Rebecca.
+  - requires: [brandon_name_kept]
+    text: Brandon's confession stood beside the record.
+  - requires: [brandon_name_erased]
+    text: Brandon's confession was the only proof.
+  - requires: [phase_two_conflict_plan_known]
+    text: The recovered file labels the operation Phase One and shows Phase Two.
   marker: "The story ends here."

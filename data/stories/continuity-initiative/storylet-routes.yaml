@@ -463,6 +463,41 @@ new_fact_ids:
   used_by_storylets:
   - SL-3C-C
   used_by_transitions: []
+- id: evacuation_complete
+  definition: The last captive has passed through the surface gates.
+  used_by_storylets:
+  - SL-3C-C
+  - SL-3C-H
+  used_by_transitions: []
+- id: barrier_held
+  definition: Kristin held the watertight barrier until the last captive passed.
+  used_by_storylets:
+  - SL-3C-C
+  used_by_transitions: []
+- id: captives_out_costly
+  definition: The captives passed through, but Kristin had to give up the lower levels.
+  used_by_storylets:
+  - SL-3C-C
+  used_by_transitions: []
+- id: lower_levels_lost
+  definition: The lower levels were lost so the captives could pass.
+  used_by_storylets:
+  - SL-3C-C
+  used_by_transitions: []
+- id: surge_forced_evacuation
+  definition: The surge carried the captives out without Kristin directing the barrier.
+  used_by_storylets:
+  - SL-3C-H
+  used_by_transitions: []
+- id: evacuation_window_missed
+  definition: The final evacuation window closed before Kristin resolved the incident.
+  used_by_storylets:
+  - SL-3C-H
+  used_by_transitions: []
+- id: evacuation_surge_building
+  definition: The surge is building around the barrier and drainage pumps.
+  used_by_storylets: []
+  used_by_transitions: []
 - id: captives_reaching_surface
   definition: Surviving captives are reaching the surface.
   used_by_storylets:
@@ -665,18 +700,6 @@ new_fact_ids:
   definition: Rebecca has been captured and no longer controls the portable archive or the local operation.
   used_by_storylets:
   - SL-3C-B
-  used_by_transitions: []
-- id: resolution_complete
-  definition: 'The canonical 3C resolution has landed: exposure is durable, captives are escaping, the network is
-    fragmenting, Charles remains at large, and Phase Two has been revealed.'
-  used_by_storylets:
-  - SL-3C-A
-  - SL-3C-B
-  - SL-3C-C
-  - SL-3C-F
-  - SL-3C-D
-  - SL-3C-G
-  - SL-3C-E
   used_by_transitions: []
 - id: michelle_publishing_archive
   definition: Michelle has begun distributing/publishing the Continuity Initiative archive after the exposure.
@@ -2726,12 +2749,37 @@ storylets:
     people, but no single maneuver guarantees every section survives.'
   realization_options:
   - id: SL-3C-C-R1
-    dramatic_intent: Redirect power/supports enough to open an evacuation route and move surviving captives toward
-      the surface.
+    dramatic_intent: Restore pump power and hold the watertight barrier until the last captive passes.
     source_beats: [scene-3c3--the-deluge]
     operations:
     - op: assert
       fact_id: evacuation_route_open
+      value: true
+    - op: assert
+      fact_id: evacuation_complete
+      value: true
+    - op: assert
+      fact_id: barrier_held
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - janus_phase_two
+  - id: SL-3C-C-R2
+    dramatic_intent: Give up the lower levels so the captives can pass, then release the surface gates.
+    source_beats: [scene-3c3--the-deluge]
+    operations:
+    - op: assert
+      fact_id: evacuation_route_open
+      value: true
+    - op: assert
+      fact_id: evacuation_complete
+      value: true
+    - op: assert
+      fact_id: captives_out_costly
+      value: true
+    - op: assert
+      fact_id: lower_levels_lost
       value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
@@ -2739,12 +2787,52 @@ storylets:
     - janus_phase_two
   completion_or_abort:
     complete_when:
-    - fact_id: evacuation_route_open
+    - fact_id: evacuation_complete
       equals: true
     abort_when:
-    - resolution_complete: true
+    - never_in_canonical_resolution: true
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3C-H
+  scene_id: 3C
+  title: The Surge Takes the Choice
+  activation:
+    scene_id: 3C
+    conditions:
+    - fact_id: truth_no_longer_containable
+      equals: true
+    - fact_id: rebecca_captured
+      equals: true
+    - fact_id: evacuation_window_missed
+      equals: true
+    pacing:
+      earliest_turn: 9
+      target_turn: 10
+      latest_turn: 13
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let the surge carry the captives out after Kristin misses the final intervention window.
+  realization_options:
+  - id: SL-3C-H-R1
+    dramatic_intent: Let the surge push the captives through the gates without awarding Kristin an outcome or a cost.
+    source_beats: [scene-3c3--the-deluge]
+    operations:
+    - op: assert
+      fact_id: evacuation_complete
+      value: true
+    - op: assert
+      fact_id: surge_forced_evacuation
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - janus_phase_two
+  completion_or_abort:
+    complete_when:
+    - fact_id: evacuation_complete
+      equals: true
+    abort_when:
+    - never_in_canonical_resolution: true
+  non_coercion_note: Offer as a consequence of the missed window. Do not assert either outcome or any cost.
 - id: SL-3C-F
   scene_id: 3C
   title: Open the Surface Gates
@@ -2780,7 +2868,7 @@ storylets:
     - fact_id: los_angeles_facility_lost
       equals: true
     abort_when:
-    - resolution_complete: true
+    - never_in_canonical_resolution: true
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
 - id: SL-3C-D
@@ -2862,17 +2950,14 @@ storylets:
   activation:
     scene_id: 3C
     conditions:
-    - fact_id: truth_no_longer_containable
-      equals: true
-    - fact_id: captives_reaching_surface
+    - fact_id: archive_copies_distributed
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 14
-      latest_turn: 14
+      target_turn: 8
+      latest_turn: 13
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
-  pressure_role: Only after the sole ending is secure, deliver the final unresolved-threat reversal; this is sequel-scale
-    context, not an alternate ending.
+  pressure_role: Offer the recovered JANUS file as an optional clue after the archive copies spread.
   realization_options:
   - id: SL-3C-E-R1
     dramatic_intent: Recover the “Phase One” label and the authored statement that Phase Two was designed to provoke
@@ -3353,32 +3438,6 @@ canonical_resolution_events:
   fallback_text: A recovered JANUS file labels the operation Phase One and reveals that Phase Two was meant to provoke conflict among survivors.
   fallback_realization: The partially recovered JANUS file canonically reveals the Phase One label and the authored
     Phase Two conflict objective.
-- id: resolution_complete
-  scene_id: 3C
-  activation:
-    all_facts_true:
-    - truth_no_longer_containable
-    - captives_reaching_surface
-    - archive_copies_distributed
-    - rebecca_captured
-    - national_network_fragmenting
-    - charles_at_large
-    - phase_two_conflict_plan_known
-  produces:
-  - op: assert
-    fact_id: resolution_complete
-    value: true
-  realization_storylets:
-  - SL-3C-A
-  - SL-3C-B
-  - SL-3C-C
-  - SL-3C-F
-  - SL-3C-D
-  - SL-3C-G
-  - SL-3C-E
-  fallback_text: The truth is public, the captives are out, and the network is breaking apart. Rebecca is captured, but Charles remains free. The Phase Two plan is known. Kristin and Michelle turn toward the work ahead.
-  fallback_realization: The sole authored ending at 3C is complete once exposure, escape, antagonist outcomes, national
-    consequences, and the Phase Two reveal have all landed.
 audit_notes:
 - Bridge facts that summarize scene completion are produced only by gated canonical events, preventing one early
   optional storylet from skipping later core beats.

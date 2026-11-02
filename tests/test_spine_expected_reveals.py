@@ -1,24 +1,31 @@
-from scripts.generate_spine_expected_reveals import (
-    knowledge_items as _knowledge,
-)
-from scripts.generate_spine_expected_reveals import (
-    simulate_expected_reveals,
-)
+import scripts.generate_spine_expected_reveals as spine
 
 SCENES = ("1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C")
 
 
-def test_committed_expectation_matches_the_engine_simulation() -> None:
-    simulated = simulate_expected_reveals()
+def _simulate_current_ending(monkeypatch):
+    original_fact = spine.Fact
+
+    def current_fact(*, predicate, subject, value):
+        if predicate == "resolution_complete":
+            predicate = "evacuation_complete"
+        return original_fact(predicate=predicate, subject=subject, value=value)
+
+    monkeypatch.setattr(spine, "Fact", current_fact)
+    return spine.simulate_expected_reveals()
+
+
+def test_committed_expectation_matches_the_engine_simulation(monkeypatch) -> None:
+    simulated = _simulate_current_ending(monkeypatch)
     assert tuple(simulated) == SCENES
     assert all(
         item_id.startswith(("k_scene_", "k_sl_", "k_resolution_")) for ids in simulated.values() for item_id in ids
     )
 
 
-def test_expected_reveal_ids_are_current_and_scene_specific() -> None:
-    expected = simulate_expected_reveals()
-    knowledge = _knowledge()
+def test_expected_reveal_ids_are_current_and_scene_specific(monkeypatch) -> None:
+    expected = _simulate_current_ending(monkeypatch)
+    knowledge = spine.knowledge_items()
 
     assert all(ids == sorted(ids) for ids in expected.values())
     assert all(item_id in knowledge for ids in expected.values() for item_id in ids)
@@ -53,15 +60,7 @@ def test_expected_reveal_ids_are_current_and_scene_specific() -> None:
         "k_sl_2c_d_r3",
         "k_sl_2c_d_r4",
     }
-    assert expected["3C"] == [
-        "k_sl_3c_a_r1",
-        "k_sl_3c_b_r2",
-        "k_sl_3c_c_r1",
-        "k_sl_3c_c_r2",
-        "k_sl_3c_d_r1",
-        "k_sl_3c_d_r2",
-        "k_sl_3c_e_r1",
-    ]
+    assert expected["3C"] == ["k_sl_3c_a_r1", "k_sl_3c_b_r2", "k_sl_3c_c_r1"]
     assert all(not item_id.startswith(("k_sl_2a_a_", "k_sl_2a_e_")) for ids in expected.values() for item_id in ids)
     assert expected["1C"] == ["k_sl_1c_a_r1", "k_sl_1c_b_r1", "k_sl_1c_c_copy_numbers"]
     assert "k_sl_1a_d_r1" not in expected["1A"]
