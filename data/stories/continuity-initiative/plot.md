@@ -118,7 +118,7 @@ bridge_text:
 
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** missing tablet and work bag; splintered back door frame; deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar; lake photograph on the refrigerator; KMS initials carved in drawer
+**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake photograph; KMS initials carved in drawer
 
 Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but the house does not read as a burglary. It reads as a person's last hour:
 
@@ -152,7 +152,7 @@ Michelle’s notes contain one alarming sentence:
 
 ### Scene 1A.3 — The Interrupted Message
 
-**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe; truck radio; looping emergency broadcast
+**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe; truck radio and looping emergency broadcast
 
 On the card, Kristin finds a damaged voice recording Michelle attempted to send shortly before she disappeared. In it, Michelle says government officials have been tracking her and that a planned “activation event” is imminent.
 
@@ -166,7 +166,7 @@ Kristin can test the warning with her own skills. The truck radio carries the sa
 
 ### Scene 1A.4 — The First Threat
 
-**Details:** federal emergency patrol; Officer Reyes; welfare-check officers; Michelle’s office search; Michelle's memory card; Walt Pruitt at the fence; marked front gate; reflective tape
+**Details:** federal emergency patrol led by Officer Reyes; Michelle’s office search; Michelle's memory card; Walt Pruitt at the fence; marked front gate; reflective tape
 
 Walt Pruitt, a retired bus driver in his seventies, stands at the fence between the yards. His wife is one of the missing. He saw county vans near 3:40 with no markings Kristin can read, and two men with a clipboard checking the addresses on the street. They skipped the house next door. He is not sure what he saw, and he says so. He will not repeat it to the patrol.
 
