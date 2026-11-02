@@ -42,26 +42,78 @@ def test_unattested_detail_fixture(tmp_path: Path) -> None:
     assert "ziggurat" in str(report["findings"])
 
 
-def test_ambiguous_owned_item_fixture(tmp_path: Path) -> None:
+def _phones(*owners: str) -> dict:
+    return {"items": [{"id": f"phone_{owner.lower()}", "name": f"{owner}'s phone"} for owner in owners]}
+
+
+def _scene_plot(item_ids: list[str], details: str) -> str:
+    return f"scene_id: 1A\nitem_ids: [{', '.join(item_ids)}]\n---\n### Scene 1A.1 — Arrival\n**Details:** {details}\n"
+
+
+def _owned_findings(root: Path) -> list[dict]:
+    return [item for item in audit_package(root)["findings"] if item["check"] == "ambiguous_owned_item"]
+
+
+def test_two_owned_things_of_one_kind_in_a_scene_are_ambiguous_when_the_owner_is_unnamed(tmp_path: Path) -> None:
     root = _package(
         tmp_path,
-        plot="### Scene 1A.1 — Arrival\n**Details:** kitchen floor phone; open drawer; back door\n",
-        **{"world.yaml": {"items": [{"id": "phone", "name": "Michelle's phone"}]}},
+        plot=_scene_plot(["phone_michelle", "phone_kristin"], "kitchen floor phone; open drawer; back door"),
+        **{"world.yaml": _phones("Michelle", "Kristin")},
     )
-    findings = audit_package(root)["findings"]
-    matching = [item for item in findings if item["check"] == "ambiguous_owned_item"]
-    assert matching
+    matching = _owned_findings(root)
+    assert matching and matching[0]["scene_id"] == "1A"
     assert "phone" in matching[0]["detail"]
-    assert "Michelle" in matching[0]["detail"]
 
 
-def test_owned_item_detail_is_unambiguous(tmp_path: Path) -> None:
+def test_a_lone_owned_thing_in_a_scene_needs_no_owner_named(tmp_path: Path) -> None:
     root = _package(
         tmp_path,
-        plot="### Scene 1A.1 — Arrival\n**Details:** Michelle's phone on the kitchen floor; open drawer; back door\n",
-        **{"world.yaml": {"items": [{"id": "phone", "name": "Michelle's phone"}]}},
+        plot=_scene_plot(["phone_michelle"], "kitchen floor phone; open drawer; back door"),
+        **{"world.yaml": _phones("Michelle", "Kristin")},
     )
-    assert "ambiguous_owned_item" not in _checks(audit_package(root))
+    assert _owned_findings(root) == []
+
+
+def test_an_owned_thing_in_another_scene_does_not_make_this_scene_ambiguous(tmp_path: Path) -> None:
+    plot = (
+        _scene_plot(["phone_michelle"], "kitchen floor phone; open drawer; back door")
+        + "## Scene 1B — Park\n---\nscene_id: 1B\nitem_ids: [phone_kristin]\n---\n### Scene 1B.1 — Bench\n"
+        "**Details:** park bench; a phone; open lawn\n"
+    )
+    root = _package(tmp_path, plot=plot, **{"world.yaml": _phones("Michelle", "Kristin")})
+    assert _owned_findings(root) == []
+
+
+def test_naming_one_owner_in_the_same_unit_settles_it(tmp_path: Path) -> None:
+    root = _package(
+        tmp_path,
+        plot=_scene_plot(
+            ["phone_michelle", "phone_kristin"], "Michelle's phone on the kitchen floor; open drawer; back door"
+        ),
+        **{"world.yaml": _phones("Michelle", "Kristin")},
+    )
+    assert _owned_findings(root) == []
+
+
+def test_knowledge_statements_use_the_same_scene_rule(tmp_path: Path) -> None:
+    knowledge = {
+        "knowledge": [{"id": "k", "statement": "The phone rings.", "available_in_scenes": ["1A"]}],
+        "scene_frames": [],
+    }
+    (tmp_path / "both").mkdir()
+    (tmp_path / "one").mkdir()
+    both = _package(
+        tmp_path / "both",
+        plot=_scene_plot(["phone_michelle", "phone_kristin"], "back door; open drawer; kitchen floor"),
+        **{"world.yaml": _phones("Michelle", "Kristin"), "knowledge.yaml": knowledge},
+    )
+    one = _package(
+        tmp_path / "one",
+        plot=_scene_plot(["phone_michelle"], "back door; open drawer; kitchen floor"),
+        **{"world.yaml": _phones("Michelle", "Kristin"), "knowledge.yaml": knowledge},
+    )
+    assert any(item["detail"].startswith("Knowledge statement") for item in _owned_findings(both))
+    assert _owned_findings(one) == []
 
 
 def test_real_package_has_no_ambiguous_owned_item() -> None:
