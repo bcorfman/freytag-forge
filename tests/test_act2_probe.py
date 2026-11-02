@@ -6,12 +6,58 @@ from pathlib import Path
 import pytest
 
 from scripts.ringer.phase1 import act2_probe, check_act2_probe
+from storygame.runtime.candidate_matcher import _matches_all
 from storygame.runtime.delivery_text import resolve_delivery_text
 from storygame.story_package.loader import load_story_package
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = load_story_package(ROOT / "data/stories/continuity-initiative")
 INCIDENTS = {incident.scene_id: incident for incident in PACKAGE.incidents if incident.scene_id in act2_probe.SCENES}
+
+
+@pytest.mark.parametrize(
+    ("scene", "prefix", "successor", "exit_cause"),
+    [
+        ("2A", "pure_missed_window", "2B", "missed_window_plus_recovery"),
+        ("2A", "doubted", "2B", "inspection_doubted"),
+        ("2B", "erased", "2C", "brandon_name_erased"),
+        ("2C", "rescue", "3A", "committed_to_rescue"),
+    ],
+)
+def test_new_prefixes_reach_expected_successor_and_exit(
+    tmp_path: Path, scene: str, prefix: str, successor: str, exit_cause: str
+) -> None:
+    assert act2_probe.run(tmp_path, scene, 1, True, False, prefix) == 0
+    assert check_act2_probe.check(tmp_path, 1, "dry") == []
+    row = json.loads((tmp_path / "results.json").read_text())["rows"][0]
+    assert row["final_scene"] == successor
+    assert row["exit_cause"] == exit_cause
+
+
+def test_pure_missed_window_prefix_commands_match_no_2a_knowledge() -> None:
+    commands = act2_probe.SCRIPTED_PREFIXES["pure_missed_window"]["2A"]
+    scene_knowledge = tuple(item for item in PACKAGE.knowledge.knowledge if "2A" in item.available_in_scenes)
+    assert all(
+        not item.action_evidence or not _matches_all(item.action_evidence, command)
+        for command in commands
+        for item in scene_knowledge
+    )
+
+
+def test_doubted_prefix_commands_match_expected_action_evidence() -> None:
+    commands = act2_probe.SCRIPTED_PREFIXES["doubted"]["2A"]
+    entries = {item.id: item for item in PACKAGE.knowledge.knowledge}
+    assert _matches_all(entries["k_sl_2a_b_r1"].action_evidence, commands[0])
+    assert _matches_all(entries["k_sl_2a_c_r6"].action_evidence, commands[1])
+    forbidden = ("cooling-water pressure fault", "ventilation fault", "cooling fault", "pressure problem")
+    assert all(phrase not in command for command in commands for phrase in forbidden)
+
+
+def test_rescue_prefix_commands_match_expected_action_evidence() -> None:
+    commands = act2_probe.SCRIPTED_PREFIXES["rescue"]["2C"]
+    entries = {item.id: item for item in PACKAGE.knowledge.knowledge}
+    assert _matches_all(entries["k_sl_2c_c_r1"].action_evidence, commands[0])
+    assert _matches_all(entries["k_sl_2c_d_r4"].action_evidence, commands[1])
 
 
 @pytest.mark.parametrize(
