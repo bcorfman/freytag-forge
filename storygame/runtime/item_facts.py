@@ -630,8 +630,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if self.recent_cue_referent_owner and lines and not self.command_consumed:
                 lines[-1] = f"{lines[-1]} (meaning the {self.recent_cue_referent_owner})"
         else:
-            lines = [self.observation_request.action]
             completed_actions = self._observation_completed_actions()
+            lines = (
+                []
+                if self.observation_request.kind == "enter" and completed_actions
+                else [self.observation_request.action]
+            )
             if completed_actions:
                 lines.append(f"Already done: {' '.join(completed_actions)}")
         if not lines or "scene_setting" not in user:

@@ -228,7 +228,24 @@ A first replay without `WorldCapture` never exercised boarding and is discarded.
 Done after the free half: live probe 1 (74 calls) answered the boarding question and the opening/boarding prose; see the preregistration Result. Still not read: narrator prompts for turns 4 to 6. No story or runtime
 file has been changed.
 
-Planning complete. Implementation and verification are not started. Record each
+### Step 3 code change 1 (2026-11-02): boarding-turn prompt
+
+Ringer task `boarding-turn-prompt` (Luna, high effort, PASS on attempt 1).
+`storygame/runtime/item_facts.py` `_player_lines`: a committed boarding turn
+(`kind == "enter"` with a completed boarding step) no longer carries the raw
+movement phrase. `storygame/runtime/cloudflare.py` `_where_line`: a seated
+protagonist whose vehicle holds something else gets a second SCENE bullet
+"<name> can reach anything inside <vehicle> from the <seat>." (pronoun-free;
+probe 2 used "where she sits"). Tests: `tests/test_boarding_turn_prompt.py` (new,
+includes a synthetic second vehicle); two existing pins updated
+(`tests/test_boarding.py`, `tests/test_observation_prompt.py`). Stubbed non-boarding
+payloads are byte-identical to the baseline `payload-base.json`. Known looseness:
+something the protagonist merely holds also counts as "inside the vehicle", so
+the bullet can appear when nothing else is on the seats. Not yet live-checked in
+the product-wired path (the pronoun wording differs from probe 2); full suite
+not yet run.
+
+Planning complete. Remaining implementation and verification are not started. Record each
 step's commit, changed paths, deterministic checks, live artifacts, individual
 acceptance results, unresolved limits and next action here; refresh Resume here
 before proceeding to the next step. Do not declare the five issues fixed until

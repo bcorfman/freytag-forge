@@ -88,7 +88,7 @@ def test_observation_request_projects_entering_context_and_calls_narrator() -> N
 
     assert provider.last_turn_engine_text is False
     assert "- Kristin's laptop. Place: passenger seat." in user
-    assert "- Enter the truck." in user
+    assert "- Enter the truck." not in user
     assert user.count("- Already done:") == 1
     assert "Already done: Kristin sat down in the driver's seat." in user
     assert "- Show these in your reply: Kristin's laptop." in user
