@@ -1,22 +1,35 @@
 # Scene 1A: opening prose, emotional grounding, and truck continuity
 
-Status: planned, 2026-11-02. Planning only; no story/runtime changes, model
-calls, tests, deployment, or gameplay fixes are claimed.
+Status: in progress, 2026-11-02. Step 1 done. One runtime change (boarding-turn
+prompt, `e41878c3`) is implemented and live-checked. The opening (step 2), the
+rest of step 3 and all of step 4 are open. No story file has been changed.
 Source baseline: `8da801206ca5e1708b0bce72e2c63e449cd3aae4`.
 
 ## Resume here
 
-Probes 1 to 3 are done (`probe1-prereg.md`, `probe2-prereg.md`, `probe3-prereg.md`,
-each with Results). Adopt: on a committed boarding turn, drop the raw movement
-phrase and add the generic reach fact for the seat's vehicle (20 of 20 seated,
-parked, laptop shown). Not adopted: the reworded boarding question (moves the
-failure to "approach"), the neutral "look around" action (invents police cars and
-neighbors), the truck place line on an unboarded turn, and interactable objects
-in the opening lines. Still open: surroundings on the boarding turn (try
-subtractive scene-text changes, not rules), opening layout/reaction/KMS, and the
-prose-state mismatch when boarding does not fire. Next: implement the adopted
-change as a tested change through Ringer, then preregister probe 4. Fixes stay
-generic: no command lists, no story names in the runtime.
+Audit on 2026-11-02 (Brandon asked whether the plan was being followed): the work
+drifted from it in these ways. (1) Four probe rounds (about 280 billed calls)
+instead of the plan's "one small preregistration ... one arm per supported causal
+hypothesis"; arms for a reworded boarding question, a neutral action line and a
+truck place line were not hypotheses the plan named. (2) The scene-fixing guide's
+first rule (check the grounding guide, W1 to W14 and earlier scene fixes, and name
+what was checked before recommending a technique) was not done first. (3) Opening
+arms put the protagonist's start and the layout in SCENE bullets; the grounding
+guide says a scene text never says where a character is (use the start
+placement and `entry_text`) and that layout comes from placement `text`. So the
+opening probes tested an unsupported technique and their negative results do not
+speak to the supported one. (4) Step 3 was started before step 2, and this
+document was not kept current.
+
+Done: step 1; the boarding-turn prompt change (`e41878c3`, live-checked: seated,
+parked, laptop shown in 20 of 20). Next, in plan order and with no new billed
+probe until Brandon approves a plan-scoped preregistration: step 2 using the
+supported techniques (an explicit kitchen start for the protagonist, placement
+`text` for layout, `entry_text` for the start, edits in `plot.md` first and
+approved by Brandon), then the open step 3 items (surroundings on the boarding
+turn via the existing observation mechanism; the unboarded prose mismatch), then
+step 4 (byte-identical payload diff, three live replicates, countercases, full
+suite). Fixes stay generic: no command lists, no story names in the runtime.
 
 The user's current instruction supersedes the older continuity plan's
 approach-only expectation: **“head out to the truck” should seat Kristin in
@@ -43,9 +56,9 @@ automatically earning a reveal or advancing a scene.
 unless they affect the main storyline. In probe criteria, "nothing invented"
 fails an arm only for a contradiction of canon or state, a pre-empted or revealed
 beat (patrol arrival, hidden card), or a collision with story names (a neighbor
-called Jenkins) or an open laptop at the workstation while it is in the truck;
-Brandon confirmed both examples on 2026-11-02. Atmosphere such as a passing police car is recorded for
-information and does not fail an arm. Probes 1 to 3 were scored under the
+called Jenkins), or an open laptop at the workstation while it is in the truck
+(Brandon confirmed both examples on 2026-11-02). Atmosphere such as a passing
+police car is recorded for information and does not fail an arm. Probes 1 to 3 were scored under the
 stricter rule; re-scoring under this policy changes no adoption decision (the
 failing arms also fail the laptop or surroundings criteria).
 
@@ -83,23 +96,23 @@ not a reproduced diagnosis.
 
 ### 1. Reproduce and separate prose failures from state failures
 
-- [ ] Preserve the supplied opening and responses as the reported evidence,
+- [~] Preserve the supplied opening and responses (the raw inputs were replayed; the pasted responses were not available to this session) as the reported evidence,
   with the exact raw inputs: `open the drawer`, `feel in the gap`,
   `head out to the truck`, `look for the laptop`, `get in the truck`,
   `plug the memory card into the laptop`. Label this a raw-language regression;
   new probes use canonical imperative inputs and `my laptop` where appropriate.
-- [ ] Reuse the current 1A harness and prompt-capture support. Capture the
+- [x] Reuse the current 1A harness and prompt-capture support. Capture the
   opening and each turn's full system/user prompts, original versus effective
   action, boarding/standing answers, observations, selected reveal, appended
   delivery, fired events, and pre/post facts. Include protagonist/vehicle/item
   parents, custody, hidden state, scene, and package/code/configuration identity.
   Stubbed output diagnoses wiring, not live writing quality.
-- [ ] Read each prompt beside plot.md. Distinguish missing room/relationship
+- [x] Read each prompt beside plot.md. Distinguish missing room/relationship
   material, material present but ignored, wrong movement proposals, and correct
   state contradicted by prose. Trace the opening path separately from turns.
   Inspect saved live evidence first; do not launch a broad benchmark to rediscover
   a failure already captured.
-- [ ] Record a short causal table and proposed changed lines before editing.
+- [x] Record a short causal table and proposed changed lines before editing (table below; changed lines for the boarding fix were in the Ringer spec).
 
 ### 2. Repair the opening and its emotional meaning at the source
 
@@ -132,7 +145,7 @@ not a reproduced diagnosis.
 
 ### 3. Separate boarding from driving and preserve seated interaction
 
-- [ ] Trace `storygame/runtime/seating.py`, the model questions it uses,
+- [x] Trace `storygame/runtime/seating.py`, the model questions it uses,
   `CloudflareTurnProvider` prompt construction, observation projection, and
   proposal/commit handling for the exact route. Retain the player's intent
   when preparatory steps are supplied; do not let a consumed boarding command
@@ -247,7 +260,7 @@ product-wired path by probe 4 arm A: seated, parked, laptop shown, no story-affe
 invention in 20 of 20 (commands 'head out to the truck' and 'go to the truck');
 full suite not yet run. Surroundings on that turn remain open (probe 4 arm B: 6 of 10).
 
-Planning complete. Remaining implementation and verification are not started. Record each
+Open: step 2, the remaining step 3 items and step 4. Record each
 step's commit, changed paths, deterministic checks, live artifacts, individual
 acceptance results, unresolved limits and next action here; refresh Resume here
 before proceeding to the next step. Do not declare the five issues fixed until
