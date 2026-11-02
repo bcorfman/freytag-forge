@@ -99,6 +99,6 @@ def test_assemble_turn_prompt_includes_fixed_marker_without_prepare_turn(mark_fi
     prompt = provider.assemble_turn_prompt("Carry the workstation to the truck.")
     user_text = provider._section_user_prompt(prompt["context"])
     if expected:
-        assert "- workstation. Place: kitchen." + MARKER in user_text
+        assert "- workstation. Place: across the kitchen from the back door." + MARKER in user_text
     else:
         assert MARKER not in user_text

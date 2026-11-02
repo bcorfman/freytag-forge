@@ -91,4 +91,4 @@ def test_scene_entry_bootstraps_kristin_in_the_house_and_connections_load() -> N
     state = RuntimeState.bootstrap(PACKAGE)
 
     assert PACKAGE.connections is not None
-    assert world_for(PACKAGE, state.facts).parent("kristin") == "mcgehee_home"
+    assert world_for(PACKAGE, state.facts).parent("kristin") == "kitchen"

@@ -82,6 +82,8 @@ freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle, patrol_officer]
 item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door, house_gate]
+character_placements:
+  kristin: {parent: kitchen}
 item_placements:
   memory_card: {parent: michelle_drawer, under: true}
   michelle_phone: {parent: kitchen, text: on the kitchen floor}
@@ -89,12 +91,12 @@ item_placements:
   truck_driver_seat: {parent: kristin_truck}
   truck_passenger_seat: {parent: kristin_truck}
   kristin_truck: {parent: outside_house}
-  michelle_workstation: {parent: kitchen}
+  michelle_workstation: {parent: kitchen, text: across the kitchen from the back door}
   back_door: {parent: kitchen}
   house_gate: {parent: outside_house, text: at the front of the house}
   michelle_drawer: {parent: michelle_workstation, part_of: true, text: in Michelle's workstation}
   workstation_chair: {parent: kitchen, text: at Michelle's workstation}
-entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal. She found the back door forced and let herself in.\n\n"
+entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal. She found the back door forced and let herself into the kitchen.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:
   t_1a_1b: >-
@@ -122,7 +124,9 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
 * The chair at Shelly's workstation has been overturned.
 * The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.
 
-Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely.
+Kristin knows Michelle would not leave her kitchen like this.
+
+Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely. Kristin did not carve them.
 
 The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.
 

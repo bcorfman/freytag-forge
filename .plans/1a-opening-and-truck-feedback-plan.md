@@ -22,11 +22,11 @@ speak to the supported one. (4) Step 3 was started before step 2, and this
 document was not kept current.
 
 Done: step 1; the boarding-turn prompt change (`e41878c3`, live-checked: seated,
-parked, laptop shown in 20 of 20). Next, in plan order and with no new billed
-probe until Brandon approves a plan-scoped preregistration: step 2 using the
-supported techniques (an explicit kitchen start for the protagonist, placement
-`text` for layout, `entry_text` for the start, edits in `plot.md` first and
-approved by Brandon), then the open step 3 items (surroundings on the boarding
+parked, laptop shown in 20 of 20); step 2 edits (committed in the step 2 record
+below, approved by Brandon, not yet live-checked). Next, with no new billed probe
+until Brandon approves a plan-scoped preregistration: the step 4 live replicates
+of the full transcript route (they also test the opening), then the open step 3
+items (surroundings on the boarding
 turn via the existing observation mechanism; the unboarded prose mismatch), then
 step 4 (byte-identical payload diff, three live replicates, countercases, full
 suite). Fixes stay generic: no command lists, no story names in the runtime.
@@ -260,7 +260,28 @@ product-wired path by probe 4 arm A: seated, parked, laptop shown, no story-affe
 invention in 20 of 20 (commands 'head out to the truck' and 'go to the truck');
 full suite not yet run. Surroundings on that turn remain open (probe 4 arm B: 6 of 10).
 
-Open: step 2, the remaining step 3 items and step 4. Record each
+### Step 2 (2026-11-02): kitchen start, layout text and opening situation
+
+Approved line by line by Brandon, applied through three Ringer tasks
+(`opening-kitchen-start`, `opening-kitchen-start-pins`, `opening-kitchen-name`;
+Luna, high effort; the first two reported FAIL on attempt 2 for stale pins and a
+check flaw, the third PASS, 620 focused tests). Changes: `plot.md` (a
+`character_placements` kitchen start for the protagonist, workstation placement
+text "across the kitchen from the back door", entry text ends "let herself into the
+kitchen.", scene 1A.1 gains "Kristin knows Michelle would not leave her kitchen like
+this." and "Kristin did not carve them."), `knowledge.yaml` (1A situation with the
+same two sentences), `world.yaml` (the kitchen's display name is now "Michelle's
+kitchen" with aliases "kitchen" and "the kitchen"; a mechanical correction found
+by the payload check, because the opening line is built from the start place's name
+and read "The scene takes place at kitchen."). Tests: new
+`tests/test_1a_kitchen_start.py`; pins updated in eight existing tests and one
+recorded-prompt fixture (display name, text, schema hash). The 1A stubbed payload
+diff has 12 changed lines, all on the approved wording. Not yet done: the live
+replicates that show whether the prose now meets the opening acceptance row; full
+suite not yet run.
+
+Open: the remaining step 3 items (surroundings on the boarding turn, the unboarded
+"gets in" prose mismatch) and step 4. Record each
 step's commit, changed paths, deterministic checks, live artifacts, individual
 acceptance results, unresolved limits and next action here; refresh Resume here
 before proceeding to the next step. Do not declare the five issues fixed until

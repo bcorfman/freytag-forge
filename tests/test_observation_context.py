@@ -117,7 +117,7 @@ def test_worldkeeper_visibility_is_not_observer_relative():
     ids = _real_ids(world)
 
     outside_visibility = world.is_visible(ids["laptop"])
-    assert world.parent(ids["observer"]) == "mcgehee_home"
+    assert world.parent(ids["observer"]) == "kitchen"
     assert world.move(ids["observer"], ids["driver_seat"]).ok
     seated_visibility = world.is_visible(ids["laptop"])
 

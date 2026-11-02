@@ -54,7 +54,7 @@ def test_flag_on_marks_openings_but_not_drawer_or_plain_thing() -> None:
     house = _provider("1A", opening_things_fact=True)
     house_things = _narrator_things(house, ["back door", "drawer"])
 
-    assert "- back door. Place: kitchen. " + OPENING_FACT in house_things
+    assert "- back door. Place: Michelle's kitchen. " + OPENING_FACT in house_things
     assert "- drawer. Place: in Michelle's workstation. " + OPENING_FACT not in house_things
 
 

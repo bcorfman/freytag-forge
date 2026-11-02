@@ -12,7 +12,8 @@ locations:
   name: Michelle's house
   aliases: [Michelle's home, the house, inside, indoors, the living room, the front room, the hallway]
 - id: kitchen
-  name: kitchen
+  name: Michelle's kitchen
+  aliases: [kitchen, the kitchen]
   parent: mcgehee_home
 - id: outside_house
   name: outside the house

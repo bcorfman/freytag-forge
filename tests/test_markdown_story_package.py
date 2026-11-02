@@ -284,7 +284,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "truck_driver_seat": ItemPlacement(parent="kristin_truck"),
         "truck_passenger_seat": ItemPlacement(parent="kristin_truck"),
         "kristin_truck": ItemPlacement(parent="outside_house"),
-        "michelle_workstation": ItemPlacement(parent="kitchen"),
+        "michelle_workstation": ItemPlacement(parent="kitchen", text="across the kitchen from the back door"),
         "michelle_drawer": ItemPlacement(parent="michelle_workstation", part_of=True, text="in Michelle's workstation"),
         "workstation_chair": ItemPlacement(parent="kitchen", text="at Michelle's workstation"),
         "back_door": ItemPlacement(parent="kitchen"),

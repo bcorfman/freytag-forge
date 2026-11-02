@@ -102,7 +102,7 @@ def test_bootstrap_applies_structural_scene_placements(tmp_path):
     world = world_for(package, state.facts)
 
     assert world.parent("michelle_phone") == "kitchen"
-    assert world.place_label("michelle_phone") == "kitchen"
+    assert world.place_label("michelle_phone") == "Michelle's kitchen"
     assert world.parent("memory_card") == "michelle_drawer"
     assert world.relation("memory_card") == "under"
     assert world.parent("michelle_drawer") == "michelle_workstation"
