@@ -265,7 +265,7 @@ _SECOND_CALL_SYSTEM = 'You keep track of things in a story. Read THINGS, PLAYER 
 
 
 class ItemFactsProvider(CloudflareTurnProvider):
-    allowed_reply_keys = CloudflareTurnProvider.allowed_reply_keys | {"item_facts"}
+    allowed_reply_keys = CloudflareTurnProvider.allowed_reply_keys | {"item_facts", "embellishments"}
     opening_things_fact: bool = False
 
     def __init__(
@@ -295,6 +295,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.opening_things_fact = opening_things_fact
         self._pending_item_facts = None
         self._pending_item_facts_present = False
+        self._pending_embellishments = None
+        self._pending_embellishments_present = False
         self._held_item_facts = {}
         self._item_facts_issues = []
         self._changed_last_turn = set()
@@ -785,6 +787,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._rejection_note = None
         self.last_prompt = None
         self.discard_pending_item_facts()
+        self.discard_pending_embellishments()
         self._held_item_facts = {}
         self._item_facts_issues = []
         self._changed_last_turn = set()
@@ -851,6 +854,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return f"{system}\n{'\n'.join(rules)}"
 
     def _request(self, payload):
+        self.discard_pending_embellishments()
         response = super()._request(payload)
         if isinstance(response, dict):
             if "segments" in response:
@@ -871,6 +875,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                         del response[name]
             self._pending_item_facts_present = "item_facts" in response
             self._pending_item_facts = copy.deepcopy(response.get("item_facts"))
+            self._pending_embellishments_present = "embellishments" in response
+            self._pending_embellishments = copy.deepcopy(response.get("embellishments"))
             for entry in (response.get("item_facts") or {}).values():
                 if isinstance(entry, dict):
                     for key in self.item_facts_reply_keys:
@@ -878,6 +884,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                             self.item_facts_reply_keys[key] += 1
             cleaned = dict(response)
             cleaned.pop("item_facts", None)
+            cleaned.pop("embellishments", None)
             return cleaned
         self._pending_item_facts_present = False
         self._pending_item_facts = copy.deepcopy(response)
@@ -889,6 +896,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def discard_pending_item_facts(self):
         self._pending_item_facts = None
         self._pending_item_facts_present = False
+
+    def pending_embellishments(self):
+        return copy.deepcopy(self._pending_embellishments) if self._pending_embellishments_present else None
+
+    def discard_pending_embellishments(self):
+        self._pending_embellishments = None
+        self._pending_embellishments_present = False
 
     def last_item_facts_match(self):
         return copy.deepcopy(self._last_item_facts_match)

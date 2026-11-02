@@ -126,6 +126,8 @@ def _prefetch_targets(world, package, command: str, *, fixed_refusal: bool) -> t
 _PREVIEW_PROVIDER_FIELDS = (
     "_pending_item_facts",
     "_pending_item_facts_present",
+    "_pending_embellishments",
+    "_pending_embellishments_present",
     "_held_item_facts",
     "_item_facts_issues",
     "_changed_last_turn",

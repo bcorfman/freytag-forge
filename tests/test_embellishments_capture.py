@@ -136,7 +136,11 @@ def test_a_package_without_a_policy_rejects_any_embellishment(rig):
 def test_allowances_accumulate_across_turns_and_a_refusal_spends_nothing(rig):
     napkin = {"props": [{"template": "tea cup", "parent": "bench"}]}
     again = {"props": [{"template": "tea cup", "parent": "parlour"}]}
-    state, engine, _ = rig(turn(napkin), *[turn(again)] * TURN_NARRATION_ATTEMPTS)
+    refused = [
+        turn(again, text=f"Ada finds the brass key under the bench, try {number}.")
+        for number in range(TURN_NARRATION_ATTEMPTS)
+    ]
+    state, engine, _ = rig(turn(napkin), *refused)
     engine.turn("Look at the bench.")
     assert counts(state) == (1, 1)
     before = facts_of(state)
@@ -183,6 +187,37 @@ def test_a_refused_opening_on_every_attempt_fails_closed_and_commits_nothing(rig
     bad = turn({"props": [{"template": "gold crown", "parent": "bench"}]}, text="A gold crown gleams.")
     state, engine, _ = rig(*[bad] * OPENING_ATTEMPTS)
     before = facts_of(state)
+    with pytest.raises(ProposalValidationError):
+        engine.opening()
+    assert facts_of(state) == before
+
+
+def test_a_refusal_when_the_commit_rechecks_rolls_back_like_a_drift(rig, monkeypatch):
+    state, engine, _ = rig(turn(CUP))
+    before, turn_index = facts_of(state), state.turn_index
+    real_check, seen = World.check_embellishments, []
+
+    def flaky(self, *args, **kwargs):
+        seen.append(1)
+        return real_check(self, *args, **kwargs) if len(seen) == 1 else EmbellishResult(False, "changed")
+
+    monkeypatch.setattr(World, "check_embellishments", flaky)
+    with pytest.raises(ProposalValidationError) as caught:
+        engine.turn("Look at the bench.")
+    assert caught.value.code == "embellishment_diverged"
+    assert facts_of(state) == before and state.turn_index == turn_index
+
+
+def test_a_refusal_when_the_opening_commit_rechecks_leaves_the_state_untouched(rig, monkeypatch):
+    state, engine, _ = rig(*[turn(CUP, text=f"Morning light {number} fills the parlour.") for number in range(3)])
+    before = facts_of(state)
+    real_check, seen = World.check_embellishments, []
+
+    def flaky(self, *args, **kwargs):
+        seen.append(1)
+        return real_check(self, *args, **kwargs) if len(seen) % 2 == 1 else EmbellishResult(False, "changed")
+
+    monkeypatch.setattr(World, "check_embellishments", flaky)
     with pytest.raises(ProposalValidationError):
         engine.opening()
     assert facts_of(state) == before

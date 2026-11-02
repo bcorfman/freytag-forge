@@ -86,6 +86,13 @@ _REJECTION_FEEDBACK = {
     "narration_known_term_leak": _KNOWLEDGE_REJECTION,
     "uncited_knowledge": _KNOWLEDGE_REJECTION,
     "protected_narration_leak": _KNOWLEDGE_REJECTION,
+    "embellishment_rejected": (
+        "Your last reply named an object or detail the story does not allow. "
+        "Describe the scene using only what is already there."
+    ),
+    "embellishment_malformed": (
+        "Your last reply gave a world detail in the wrong form. Describe the scene using only what is already there."
+    ),
 }
 
 
