@@ -1,0 +1,47 @@
+{
+  "run_name": "act2-2c-brandons-yes",
+  "workdir": "/home/bcorfman/dev/ringer-work/act2-2c-yes",
+  "max_parallel": 2,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "r8a-closure-test-sl-2c-c",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1500,
+      "check_timeout_s": 600,
+      "ownership": [
+        "tests/test_required_storylet_closure.py"
+      ],
+      "spec": "Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, never call a billed model, MCP indexing or the network (do not call any codebase-memory MCP tool). FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv ; tests: `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m pytest -q -n0 -p no:cacheprovider <tests>`; ruff: `.venv/bin/python -m ruff format <files>` / `-m ruff check`. Leave changes uncommitted. Never edit storygame/, packages/, data/, bench/*.py, or anything outside your OWN list.\n\nROLE: test maintainer. tests/test_required_storylet_closure.py::test_real_package_closes_over_the_three_act_2_incidents fails because it lists `SL-2C-C` among storylets that must NOT exist. `SL-2C-C` was deliberately brought back as the EARNED OBSERVATION storylet of scene 2C (commit 5a2a47d1; knowledge entry k_sl_2c_c_r1, effect rebecca_offer_heard, which the 2C outcomes SL-2C-D require). The Act 2 redesign (.plans/game-reimagination/act2-redesign.md line ~138) only cut its OLD open-ended argument version; the id was reused.\n\nDO, in that one test only: (1) remove \"SL-2C-C\" from the set in `assert not {...} & route_ids` (keep SL-2A-A, SL-2A-E, SL-2C-A, SL-2C-B in it); (2) add \"SL-2C-C\" to the first `{...} <= route_ids` set; (3) add \"SL-2C-C\" to the `{\"SL-2A-D\", \"SL-2B-D\", \"SL-2C-E\"} <= required` set (verify with a quick python snippet that it really is required: required_storylet_ids closes over the local producer of rebecca_offer_heard for SL-2C-D); (4) add one comment line above the assertions: `# SL-2C-C is the earned 2C observation (rebecca_offer_heard); only its old argument version was cut.` Change nothing else in the file.\n\nOWN ONLY: tests/test_required_storylet_closure.py. RUN: tests/test_required_storylet_closure.py (all must pass) and ruff format + check on it.",
+      "check": "set -e\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\nexport PYTHONPATH=$PWD TMPDIR=/tmp\nPY=.venv/bin/python\nfor f in $(git status --porcelain | grep -v '\\.venv' | sed 's/^...//'); do\n  [ \"$f\" = \"tests/test_required_storylet_closure.py\" ] || { echo \"WHY: edited file outside ownership: $f\"; exit 1; }\ndone\ngit diff HEAD --numstat -- tests/test_required_storylet_closure.py | awk '{ if ($1+$2 > 8) { print \"WHY: diff larger than the requested edit: \" $1+$2 \" lines\"; exit 1 } }'\ngit diff HEAD -- tests/test_required_storylet_closure.py | grep \"^-\" | grep -v \"^---\" | grep -v -E \"SL-2C-C|SL-2A-D|SL-2C-E\" && { echo \"WHY: removed lines other than the three sets\"; exit 1; } || true\ngrep -q '\"SL-2A-A\", \"SL-2A-E\", \"SL-2C-A\", \"SL-2C-B\"' tests/test_required_storylet_closure.py || grep -q '\"SL-2C-B\"' tests/test_required_storylet_closure.py || { echo \"WHY: cut set lost its other members\"; exit 1; }\n$PY -m pytest -q -n0 -p no:cacheprovider tests/test_required_storylet_closure.py > /tmp/r8a.log 2>&1 || { tail -25 /tmp/r8a.log; echo \"WHY: test file fails\"; exit 1; }\ntail -2 /tmp/r8a.log\n$PY -m ruff format --check tests/test_required_storylet_closure.py && $PY -m ruff check tests/test_required_storylet_closure.py || { echo \"WHY: ruff\"; exit 1; }\nOUT=/home/bcorfman/dev/ringer-work/act2-2c-yes\nmkdir -p $OUT && git add -A >/dev/null 2>&1 && git diff --cached > $OUT/r8a.patch && wc -l $OUT/r8a.patch && git diff --cached --stat | tail -3\n",
+      "verified": "closure test treats SL-2C-C as the present, required 2C observation storylet"
+    },
+    {
+      "key": "r8b-affordance-known-gaps",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1500,
+      "check_timeout_s": 900,
+      "ownership": [
+        "bench/affordance_known_gaps.json"
+      ],
+      "spec": "Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, never call a billed model, MCP indexing or the network (do not call any codebase-memory MCP tool). FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv ; tests: `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m pytest -q -n0 -p no:cacheprovider <tests>`; ruff: `.venv/bin/python -m ruff format <files>` / `-m ruff check`. Leave changes uncommitted. Never edit storygame/, packages/, data/, bench/*.py, or anything outside your OWN list.\n\nROLE: bench-data maintainer. tests/test_affordance_map.py::test_whole_package_findings_match_recorded_gaps compares the live affordance findings (non-1C scenes) with the recorded list bench/affordance_known_gaps.json (JSON list of {check, scene_id, gate, subject}). It now fails because the live list has TWO MORE findings than the file, both for scene 2C:\n  {\"check\": 2, \"scene_id\": \"2C\", \"gate\": \"t_2c_3a:combined_broadcast_rescue_plan_known\", \"subject\": \"rebecca_desk\"}\n  {\"check\": 3, \"scene_id\": \"2C\", \"gate\": \"t_2c_3a:combined_broadcast_rescue_plan_known\", \"subject\": \"rebecca_desk\"}\nRoot cause (verified; do not change it): bench/affordance_map.py resolves each non-first action_evidence group of the 2C observation entry `k_sl_2c_c_r1` ([Rebecca, Rebecca Jenkins, her, the guards, her offer, the offer]) to entities by substring; the term \"Rebecca\" substring-matches the world item `rebecca_desk` (alias \"Rebecca's executive desk\"), which belongs to scene 3B and is never named in 2C text, so the map reports it as a player-earned affordance that is neither visible nor revealed. It is a heuristic false positive, and the project's accepted treatment for this finding type is the recorded known-gaps file (it already holds similar 2B entries). Do NOT edit bench/affordance_map.py, the test, data/, or the evidence terms.\n\nDO: compute the live list exactly as the test does (see the test's `actual` construction: build_affordance_map + check_affordance_map from bench.affordance_map, scene_id != \"1C\", keys check/scene_id/gate/subject) and update bench/affordance_known_gaps.json so it equals that live list EXACTLY, in the same order and with the same JSON formatting/indentation style as the existing file. The only differences from the current file must be the two added entries above (verify with a diff: nothing else may change, not even whitespace elsewhere or ordering of existing entries).\n\nOWN ONLY: bench/affordance_known_gaps.json. RUN: tests/test_affordance_map.py (all must pass).",
+      "check": "set -e\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\nexport PYTHONPATH=$PWD TMPDIR=/tmp\nPY=.venv/bin/python\nfor f in $(git status --porcelain | grep -v '\\.venv' | sed 's/^...//'); do\n  [ \"$f\" = \"bench/affordance_known_gaps.json\" ] || { echo \"WHY: edited file outside ownership: $f\"; exit 1; }\ndone\n$PY - <<'EOF'\nimport json, subprocess\nold = json.loads(subprocess.run([\"git\",\"show\",\"HEAD:bench/affordance_known_gaps.json\"],capture_output=True,text=True,check=True).stdout)\nnew = json.load(open(\"bench/affordance_known_gaps.json\"))\nadded = [x for x in new if x not in old]\nassert len(new) == len(old) + 2, f\"WHY: expected exactly 2 added entries, got {len(new) - len(old)}\"\nwant = [{\"check\": 2, \"scene_id\": \"2C\", \"gate\": \"t_2c_3a:combined_broadcast_rescue_plan_known\", \"subject\": \"rebecca_desk\"},\n        {\"check\": 3, \"scene_id\": \"2C\", \"gate\": \"t_2c_3a:combined_broadcast_rescue_plan_known\", \"subject\": \"rebecca_desk\"}]\nassert sorted(map(str, added)) == sorted(map(str, want)), f\"WHY: wrong added entries {added}\"\nassert [x for x in new if x not in want] == old, \"WHY: existing entries changed or reordered\"\nprint(\"json ok\")\nEOF\ngit diff HEAD --numstat -- bench/affordance_known_gaps.json | awk '{ if ($2 != 0) { print \"WHY: lines were removed/rewritten: \" $2; exit 1 } }'\n$PY -m pytest -q -n0 -p no:cacheprovider tests/test_affordance_map.py > /tmp/r8b.log 2>&1 || { tail -25 /tmp/r8b.log; echo \"WHY: affordance tests fail\"; exit 1; }\ntail -2 /tmp/r8b.log\nOUT=/home/bcorfman/dev/ringer-work/act2-2c-yes\nmkdir -p $OUT && git add -A >/dev/null 2>&1 && git diff --cached > $OUT/r8b.patch && wc -l $OUT/r8b.patch && git diff --cached --stat | tail -3\n",
+      "verified": "known-gaps list gains exactly the two 2C rebecca_desk findings; affordance tests pass"
+    }
+  ]
+}

@@ -74,17 +74,19 @@ def test_real_package_closes_over_the_three_act_2_incidents() -> None:
     required = required_storylet_ids(PACKAGE)
     route_ids = {storylet.id for storylet in PACKAGE.storylet_routes.storylets}
 
+    # SL-2C-C is the earned 2C observation (rebecca_offer_heard); only its old argument version was cut.
     assert {
         "SL-2A-C",
         "SL-2A-D",
         "SL-2B-B",
         "SL-2B-C",
         "SL-2B-D",
+        "SL-2C-C",
         "SL-2C-D",
         "SL-2C-E",
     } <= route_ids
-    assert {"SL-2A-D", "SL-2B-D", "SL-2C-E"} <= required
-    assert not {"SL-2A-A", "SL-2A-E", "SL-2C-A", "SL-2C-B", "SL-2C-C"} & route_ids
+    assert {"SL-2A-D", "SL-2B-D", "SL-2C-C", "SL-2C-D", "SL-2C-E"} <= required
+    assert not {"SL-2A-A", "SL-2A-E", "SL-2C-A", "SL-2C-B"} & route_ids
 
 
 def test_optional_same_scene_producer_is_pulled_into_closure() -> None:

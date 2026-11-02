@@ -70,5 +70,17 @@
     "scene_id": "2B",
     "gate": "t_2b_2c:michelle_reply_received",
     "subject": "michelle_photograph"
+  },
+  {
+    "check": 2,
+    "scene_id": "2C",
+    "gate": "t_2c_3a:combined_broadcast_rescue_plan_known",
+    "subject": "rebecca_desk"
+  },
+  {
+    "check": 3,
+    "scene_id": "2C",
+    "gate": "t_2c_3a:combined_broadcast_rescue_plan_known",
+    "subject": "rebecca_desk"
   }
 ]
