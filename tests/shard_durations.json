@@ -63,6 +63,7 @@
     "tests/test_bench_item_facts.py": 17.81,
     "tests/test_bench_runtime_mode.py": 3.65,
     "tests/test_bench_seeding.py": 0.05,
+    "tests/test_bench_traversal.py": 3.68,
     "tests/test_boarding.py": 0.49,
     "tests/test_boarding_already_seated.py": 0.58,
     "tests/test_boarding_engine_text.py": 2.8,

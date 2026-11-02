@@ -40,7 +40,8 @@ def stubbed_network(monkeypatch):
 
 def _record(inputs: list[str]) -> dict:
     variation = core.resolve_variation(core.load_variation(VARIATION), VARIATION)
-    return core.run_scene(variation, "1A", {"name": "t", "inputs": inputs}, max_turns=len(inputs))
+    variation["_fixed_turns"] = len(inputs)
+    return core.run_scene(variation, "1A", {"name": "t", "inputs": inputs})
 
 
 def test_a_walk_between_places_is_recorded_with_empty_capture_fields(stubbed_network):
