@@ -1,0 +1,658 @@
+diff --git a/data/stories/continuity-initiative/incidents.yaml b/data/stories/continuity-initiative/incidents.yaml
+index 8b01487a..b9515e22 100644
+--- a/data/stories/continuity-initiative/incidents.yaml
++++ b/data/stories/continuity-initiative/incidents.yaml
+@@ -69,5 +69,5 @@ incidents:
+   recovery_storylet_id: SL-2C-E
+   missed_window_event_id: purge_window_2c
+   successor_transition_id: t_2c_3a
+-  observation_knowledge_ids: [k_sl_2c_d_r3, k_sl_2c_d_r4]
++  observation_knowledge_ids: [k_sl_2c_c_r1, k_sl_2c_c_r2, k_sl_2c_d_r3, k_sl_2c_d_r4]
+   completes_scene: true
+diff --git a/data/stories/continuity-initiative/knowledge.yaml b/data/stories/continuity-initiative/knowledge.yaml
+index d3ff116e..2c8754eb 100644
+--- a/data/stories/continuity-initiative/knowledge.yaml
++++ b/data/stories/continuity-initiative/knowledge.yaml
+@@ -95,6 +95,8 @@ facts:
+ - id: rebecca_offer_active
+   purpose: Rebecca has offered Brandon safety/Michelle’s release in exchange for helping
+     her displace Charles.
++- id: rebecca_offer_heard
++  purpose: Kristin has answered Rebecca's offer and learned the purge order and Brandon's answer.
+ - id: antagonist_split_known
+   purpose: Kristin has legitimate evidence that Rebecca and Charles are in conflict.
+ - id: combined_broadcast_rescue_plan_known
+@@ -1545,6 +1547,70 @@ knowledge:
+     She is alive.
+     She is working inside the facility.
+     She will send a route.
++- id: k_sl_2c_c_r1
++  statement: Rebecca reveals the purge order, Brandon agrees coldly, and the corridor opens onto two urgent moves.
++  earn_when: answers Rebecca's offer by speaking, bluffing, threatening, refusing, or staying silent
++  action_evidence:
++  - [say, tell, ask, answer, reply, respond, speak, talk, bluff, threaten, refuse, demand, argue, warn, accuse, negotiate, stay silent, say nothing, wait, stand, watch]
++  - [Rebecca, Rebecca Jenkins, her, the guards, her offer, the offer]
++  entity_ids: [kristin, brandon, rebecca, purge_chamber, broadcast_uplink, transfer_carts]
++  aliases: [Rebecca's offer heard, purge order, Brandon says yes]
++  audience: {kind: public, player_visible: true}
++  available_in_scenes: [2C]
++  requires:
++  - fact_id: purge_window_missed
++    equals: false
++  - fact_id: brandon_name_erased
++    equals: false
++  establishes:
++  - op: assert
++    fact_id: rebecca_offer_heard
++    value: true
++  source: {kind: storylet_realization, storylet_id: SL-2C-C, realization_id: SL-2C-C-R1}
++  relevance: {entity_ids: [kristin, brandon, rebecca, purge_chamber], priority: 10}
++  must_convey:
++  - [purge order, purge begins within hours]
++  - [Brandon says yes, Brandon's yes, says, 'Yes.']
++  - [broadcast uplink, uplink]
++  delivery_text: >-
++    Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly."
++    Her tablet chimes. She reads it, and her face changes. "The purge order. It starts within hours, and my people
++    are on the list." Brandon looks at Kristin, then says, "Yes." He says it coldly and avoids her eyes. The guards
++    stand down, and Rebecca goes to move against Charles. Brandon says, "There is no time to argue. The broadcast
++    uplink is at one end of this corridor. We can send the evidence now. The transfer carts are at the other end.
++    You can free a cart of captives before the guards react. Pick one, Kristin."
++- id: k_sl_2c_c_r2
++  statement: Rebecca reveals the purge order, Brandon agrees while looking at Kristin, and the corridor opens onto two urgent moves.
++  earn_when: answers Rebecca's offer by speaking, bluffing, threatening, refusing, or staying silent
++  action_evidence:
++  - [say, tell, ask, answer, reply, respond, speak, talk, bluff, threaten, refuse, demand, argue, warn, accuse, negotiate, stay silent, say nothing, wait, stand, watch]
++  - [Rebecca, Rebecca Jenkins, her, the guards, her offer, the offer]
++  entity_ids: [kristin, brandon, rebecca, purge_chamber, broadcast_uplink, transfer_carts]
++  aliases: [Rebecca's offer heard, purge order, Brandon says yes]
++  audience: {kind: public, player_visible: true}
++  available_in_scenes: [2C]
++  requires:
++  - fact_id: purge_window_missed
++    equals: false
++  - fact_id: brandon_name_erased
++    equals: true
++  establishes:
++  - op: assert
++    fact_id: rebecca_offer_heard
++    value: true
++  source: {kind: storylet_realization, storylet_id: SL-2C-C, realization_id: SL-2C-C-R2}
++  relevance: {entity_ids: [kristin, brandon, rebecca, purge_chamber], priority: 10}
++  must_convey:
++  - [purge order, purge begins within hours]
++  - [Brandon says yes, Brandon's yes, says, 'Yes.']
++  - [broadcast uplink, uplink]
++  delivery_text: >-
++    Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly."
++    Her tablet chimes. She reads it, and her face changes. "The purge order. It starts within hours, and my people
++    are on the list." Brandon looks at Kristin, then says, "Yes." He glances at Kristin as he says it. The guards
++    stand down, and Rebecca goes to move against Charles. Brandon says, "There is no time to argue. The broadcast
++    uplink is at one end of this corridor. We can send the evidence now. The transfer carts are at the other end.
++    You can free a cart of captives before the guards react. Pick one, Kristin."
+ - id: k_sl_2c_d_r3
+   statement: 'Kristin starts the uplink as the detention sectors seal and receives Michelle’s route to the combined plan.'
+   earn_when: heads to the uplink and starts sending the copied JANUS files
+@@ -1555,7 +1621,9 @@ knowledge:
+   aliases: [committed to transmit, detention sectors sealed, combined broadcast rescue plan known]
+   audience: {kind: public, player_visible: true}
+   available_in_scenes: [2C]
+-  requires: []
++  requires:
++  - fact_id: rebecca_offer_heard
++    equals: true
+   establishes:
+   - op: assert
+     fact_id: rebecca_offer_active
+@@ -1604,7 +1672,9 @@ knowledge:
+   aliases: [committed to rescue, evidence not transmitted, combined broadcast rescue plan known]
+   audience: {kind: public, player_visible: true}
+   available_in_scenes: [2C]
+-  requires: []
++  requires:
++  - fact_id: rebecca_offer_heard
++    equals: true
+   establishes:
+   - op: assert
+     fact_id: rebecca_offer_active
+diff --git a/data/stories/continuity-initiative/plot.md b/data/stories/continuity-initiative/plot.md
+index 14569797..7b95d14b 100644
+--- a/data/stories/continuity-initiative/plot.md
++++ b/data/stories/continuity-initiative/plot.md
+@@ -532,7 +532,7 @@ item_placements:
+   transfer_carts: {parent: purge_chamber, text: at the other end of the command corridor}
+ character_placements:
+   rebecca: {parent: purge_chamber, text: standing between her guards in the command corridor}
+-entry_text: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. \"Charles means to kill everyone below us, my people too. Help me remove him, and I will give you Michelle.\" Her tablet chimed. She read it and her face changed. \"The purge order. It starts within hours.\" Brandon looked at Kristin, then said, \"Yes.\" The guards stood down, and Rebecca left to move against Charles. Kristin still carried the copied JANUS files. Brandon said, \"There is no time to argue. The broadcast uplink is at one end of this corridor, and we can send the evidence now. The transfer carts are at the other end, and you can free a cart of captives before the guards react. Pick one, Kristin.\"\n\n"
++entry_text: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. \"Charles means to kill everyone below us, my people too. Help me remove him, Brandon, and I will give you Michelle.\" Kristin still carried the copied JANUS files.\n\n"
+ transition_ids: [t_2c_3a]
+ bridge_text:
+   t_2c_3a: >-
+diff --git a/data/stories/continuity-initiative/storylet-routes.yaml b/data/stories/continuity-initiative/storylet-routes.yaml
+index 5649b7bb..c26037ae 100644
+--- a/data/stories/continuity-initiative/storylet-routes.yaml
++++ b/data/stories/continuity-initiative/storylet-routes.yaml
+@@ -357,6 +357,12 @@ new_fact_ids:
+   - SL-2C-D
+   - SL-2C-E
+   used_by_transitions: []
++- id: rebecca_offer_heard
++  definition: Kristin has answered Rebecca's offer and learned the purge order and Brandon's answer.
++  used_by_storylets:
++  - SL-2C-C
++  - SL-2C-D
++  used_by_transitions: []
+ - id: antagonist_split_known
+   definition: Kristin has legitimate evidence that Rebecca and Charles are in conflict.
+   used_by_storylets:
+@@ -1866,12 +1872,57 @@ storylets:
+     - scene_id_not: 2B
+   non_coercion_note: >-
+     Offer as a consequence of the missed window. Equivalent player-authored approaches may validate the same operations.
++- id: SL-2C-C
++  scene_id: 2C
++  title: Rebecca Hears Her Answer
++  activation:
++    scene_id: 2C
++    conditions:
++    - fact_id: purge_window_missed
++      equals: false
++    pacing:
++      earliest_turn: 0
++      target_turn: 1
++      latest_turn: 2
++      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
++  pressure_role: Let Rebecca's offer become a live negotiation after Kristin answers in her own way.
++  realization_options:
++  - id: SL-2C-C-R1
++    dramatic_intent: Rebecca reveals the purge order and Brandon agrees coldly after Kristin answers her offer.
++    source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order]
++    operations:
++    - op: assert
++      fact_id: rebecca_offer_heard
++      value: true
++    eligible_storylet_event_id: null
++    helps_transition_triggers: []
++    protected_knowledge_boundaries: [janus_phase_two]
++  - id: SL-2C-C-R2
++    dramatic_intent: Rebecca reveals the purge order and Brandon agrees while glancing at Kristin after Kristin answers her offer.
++    source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order]
++    operations:
++    - op: assert
++      fact_id: rebecca_offer_heard
++      value: true
++    eligible_storylet_event_id: null
++    helps_transition_triggers: []
++    protected_knowledge_boundaries: [janus_phase_two]
++  completion_or_abort:
++    complete_when:
++    - any_fact_true:
++      - rebecca_offer_heard
++    abort_when:
++    - scene_id_not: 2C
++  non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
++    as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+ - id: SL-2C-D
+   scene_id: 2C
+   title: Michelle Changes the Choice
+   activation:
+     scene_id: 2C
+-    conditions: []
++    conditions:
++    - fact_id: rebecca_offer_heard
++      equals: true
+     pacing:
+       earliest_turn: 0
+       target_turn: 13
+diff --git a/data/stories/continuity-initiative/storylets.md b/data/stories/continuity-initiative/storylets.md
+index 49df72a4..73115d01 100644
+--- a/data/stories/continuity-initiative/storylets.md
++++ b/data/stories/continuity-initiative/storylets.md
+@@ -1070,6 +1070,49 @@ Each entry below is authoring data, not a player action menu.
+ 
+ ## Storylets for [Scene 2C — The Trap Closes](plot.md#scene-2c--the-trap-closes)
+ 
++### SL-2C-C — Rebecca Hears Her Answer
++
++**Source beats:** [2C.1 — Rebecca’s Offer](plot.md#scene-2c1--rebeccas-offer), [2C.2 — The Purge Order](plot.md#scene-2c2--the-purge-order), [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue)
++
++**Allowed scene:** `2C`
++
++**Available when**
++- `purge_window_missed` is false.
++
++**Participants / items**
++- Kristin Schweitzer
++- Brandon Corfman
++- Rebecca Jenkins
++- Rebecca’s tablet
++- Broadcast uplink
++- Transfer carts
++
++**Protected boundary**
++- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.
++
++**Dramatic purpose**
++- Let Kristin answer Rebecca’s offer before the purge order and Brandon’s yes become known.
++
++**Possible realizations**
++- Kristin answers Rebecca by speaking, bluffing, threatening, refusing, or staying silent.
++- Rebecca’s tablet reveals the purge order and that her people are on the list.
++- Brandon says yes, either coldly or while glancing at Kristin.
++- The guards stand down and Brandon identifies the broadcast uplink and transfer carts.
++
++**Effects**
++- Sets `rebecca_offer_heard`.
++
++**Completion**
++- Kristin has answered Rebecca and learned the purge order and Brandon’s answer.
++
++**Abort**
++- The scene is no longer `2C`.
++
++**Pacing window**
++- earliest: `turn 0`
++- target: `turn 1`
++- latest: `turn 2`
++
+ ### SL-2C-D — Michelle Changes the Choice
+ 
+ **Source beats:** [2C.1 — Rebecca’s Offer](plot.md#scene-2c1--rebeccas-offer), [2C.2 — The Purge Order](plot.md#scene-2c2--the-purge-order), [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue), [2C.4 — Living With the Choice](plot.md#scene-2c4--living-with-the-choice), [2C.5 — Michelle Changes the Choice](plot.md#scene-2c5--michelle-changes-the-choice)
+@@ -1079,6 +1122,7 @@ Each entry below is authoring data, not a player action menu.
+ **Available when**
+ - Kristin and Brandon are in the command corridor.
+ - Rebecca has come to meet them.
++- `rebecca_offer_heard` is true.
+ 
+ **Participants / items**
+ - Kristin Schweitzer
+@@ -2001,7 +2045,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
+ | [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-D` | Facility discovery, living captives, one advantage, costly recovery after a missed window |
+ | [2A](plot.md#scene-2a--false-identities) | `SL-2A-B`, `SL-2A-C`, `SL-2A-D` | Manifold observation, real fault diagnosis, watched entry, recovery under supervision |
+ | [2B](plot.md#scene-2b--evidence-and-betrayal) | `SL-2B-A`, `SL-2B-B`, `SL-2B-C`, `SL-2B-D` | Own-file observation, one-file JANUS discovery, whispered confrontation, Michelle’s reply |
+-| [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-D`, `SL-2C-E` | Rebecca’s offer, physical commitment, Michelle’s route |
++| [2C](plot.md#scene-2c--the-trap-closes) | `SL-2C-C`, `SL-2C-D`, `SL-2C-E` | Rebecca’s answered offer, physical commitment, Michelle’s route |
+ | [3A](plot.md#scene-3a--reaching-michelle) | `SL-3A-A` … `SL-3A-C` | Reunion reversal, experiments, deadline/override |
+ | [3B](plot.md#scene-3b--the-battle-for-the-broadcast) | `SL-3B-A` … `SL-3B-C` | Defeat JANUS, confront Rebecca, open relay |
+ | [3C](plot.md#scene-3c--exposure-and-escape) | `SL-3C-A` … `SL-3C-E` | Broadcast credibility, archive custody, deluge escape, epilogue |
+diff --git a/data/stories/continuity-initiative/world.yaml b/data/stories/continuity-initiative/world.yaml
+index 301d7f11..73ed61e4 100644
+--- a/data/stories/continuity-initiative/world.yaml
++++ b/data/stories/continuity-initiative/world.yaml
+@@ -413,6 +413,7 @@ facts:
+ - brandon_claimed_reform_motive
+ - michelle_resistance_known
+ - rebecca_offer_active
++- rebecca_offer_heard
+ - antagonist_split_known
+ - combined_broadcast_rescue_plan_known
+ - uprising_prepared
+diff --git a/frontend/e2e/canon-journey.js b/frontend/e2e/canon-journey.js
+index ce6a84cc..6e7553fc 100644
+--- a/frontend/e2e/canon-journey.js
++++ b/frontend/e2e/canon-journey.js
+@@ -43,14 +43,14 @@ export const scenePrompts = {
+   // 2B incident: Kristin's own file and the build record -> the whispered name choice -> Michelle's one reply
+   "2B": [
+     "Pull my own file at the archive terminals.",
+-    "Keep Brandon's name in the build record.",
++    "Tell Brandon to erase Brandon's name from the build record.",
+     "Type one reply to Michelle on the medical terminal.",
+     "Read the archive situation and wait for Michelle's route.",
+     "Study the medical terminal's maintenance line again.",
+   ],
+-  // 2C incident: Rebecca's offer and the purge order -> commit by acting -> Michelle's route widens the options
++  // 2C.1 answer Rebecca -> 2C.2 commit by acting -> Michelle's route widens the options
+   "2C": [
+-    "Ask Brandon why Rebecca turned against Charles.",
++    "Tell Rebecca my answer to her offer.",
+     "Head to the broadcast uplink and transmit the copied JANUS files.",
+     "Reach the transfer carts and rescue the prisoners.",
+   ],
+diff --git a/frontend/e2e/spine-expected-reveals.json b/frontend/e2e/spine-expected-reveals.json
+index 1a2a1ef8..5fc72810 100644
+--- a/frontend/e2e/spine-expected-reveals.json
++++ b/frontend/e2e/spine-expected-reveals.json
+@@ -22,10 +22,11 @@
+   ],
+   "2B": [
+     "k_sl_2b_a_r1",
+-    "k_sl_2b_b_r4",
++    "k_sl_2b_b_r5",
+     "k_sl_2b_c_r3"
+   ],
+   "2C": [
++    "k_sl_2c_c_r2",
+     "k_sl_2c_d_r3"
+   ],
+   "3A": [
+diff --git a/scripts/generate_spine_expected_reveals.py b/scripts/generate_spine_expected_reveals.py
+index a061117a..2b8417f5 100644
+--- a/scripts/generate_spine_expected_reveals.py
++++ b/scripts/generate_spine_expected_reveals.py
+@@ -95,7 +95,7 @@ def simulate_expected_reveals() -> dict[str, list[str]]:
+ 
+ def main() -> None:
+     expected = simulate_expected_reveals()
+-    assert {"k_sl_2c_d_r3", "k_sl_2c_d_r4"} & set(expected["2C"])
++    assert "k_sl_2c_c_r2" in expected["2C"]
+     (FRONTEND_ROOT / "spine-expected-reveals.json").write_text(json.dumps(expected, indent=2) + "\n")
+ 
+ 
+diff --git a/scripts/ringer/phase1/act2_probe.py b/scripts/ringer/phase1/act2_probe.py
+index 54dabb83..6c2d14d4 100644
+--- a/scripts/ringer/phase1/act2_probe.py
++++ b/scripts/ringer/phase1/act2_probe.py
+@@ -177,12 +177,15 @@ DRY_OUTCOME_COMMANDS = {
+         "Keep Brandon's name in the build record.",
+         "Type my reply to the maintenance line.",
+     ),
+-    "2C": ("Head to the uplink and start sending my copied files.",),
++    "2C": (
++        "Tell Rebecca my answer to her offer.",
++        "Head to the uplink and start sending my copied files.",
++    ),
+ }
+ DRY_OUTCOME_SELECTIONS = {
+     "2A": ("k_sl_2a_b_r1", "k_sl_2a_c_r5"),
+     "2B": ("k_sl_2b_a_r1", "k_sl_2b_b_r4", "k_sl_2b_c_r3"),
+-    "2C": ("k_sl_2c_d_r3",),
++    "2C": ("k_sl_2c_c_r1", "k_sl_2c_d_r3"),
+ }
+ NEUTRAL_DRY_COMMAND = {
+     "2A": "Inspect the cooling manifold for a safe footing.",
+@@ -266,6 +269,12 @@ def _provider_payload(selected: str | None) -> dict[str, Any]:
+             "She is working inside "
+             "the facility. She will send a route."
+         ),
++        "k_sl_2c_c_r1": (
++            "Rebecca answers Kristin without taking her eyes off Brandon. Trust is a luxury. Decide quickly. "
++            "Her tablet chimes. She reads it, and her face changes. The purge order starts within hours, and her "
++            "people are on the list. Brandon looks at Kristin, then says, Yes. He says it coldly and avoids her eyes. "
++            "The guards stand down. Brandon identifies the broadcast uplink and the transfer carts."
++        ),
+         "k_sl_2c_d_r3": (
+             "Rebecca offers a way to remove Charles. She promises Michelle's release. The purge order starts a clock. "
+             "Kristin heads to the uplink and starts sending the copied files. The detention sectors seal. Michelle's "
+diff --git a/storygame/story_package/loader.py b/storygame/story_package/loader.py
+index 914f36ca..4842ff86 100644
+--- a/storygame/story_package/loader.py
++++ b/storygame/story_package/loader.py
+@@ -1326,7 +1326,7 @@ def _validate_resolution_entry_guarantees(package: StoryPackage) -> None:
+ 
+ 
+ def _validate_required_reveal_prerequisites(package: StoryPackage) -> None:
+-    """Ensure required reveals have an entry guarantee or a local producer."""
++    """Ensure required reveals have an entry guarantee or an earlier producer."""
+ 
+     required_storylets = required_storylet_ids(package)
+     incoming_sources: dict[str, set[str]] = {}
+@@ -1378,13 +1378,24 @@ def _validate_required_reveal_prerequisites(package: StoryPackage) -> None:
+                 effect.fact_id for effect in known.establishes if effect.op == "assert" and effect.value is True
+             )
+ 
++    scene_order = {scene.metadata.scene_id: index for index, scene in enumerate(package.scenes)}
++    prior_producers = {
++        scene_id: {
++            fact_id
++            for source_scene_id, produced in local_producers.items()
++            if scene_order.get(source_scene_id, len(scene_order)) < scene_order[scene_id]
++            for fact_id in produced
++        }
++        for scene_id in scene_order
++    }
++
+     for known in package.knowledge.knowledge:
+         if known.source.storylet_id not in required_storylets:
+             continue
+         for scene_id in known.available_in_scenes:
+             entry_fact = f"scene_{scene_id.lower()}_entry_known"
+             guaranteed = entry_guarantees.get(scene_id, set())
+-            producible = local_producers.get(scene_id, set())
++            producible = local_producers.get(scene_id, set()) | prior_producers.get(scene_id, set())
+             for predicate in known.requires:
+                 if predicate.equals is True and predicate.fact_id not in guaranteed | producible | {entry_fact}:
+                     raise StoryPackageError(
+diff --git a/tests/test_2b_spine_prompts.py b/tests/test_2b_spine_prompts.py
+index 51f7cb31..2dbe933a 100644
+--- a/tests/test_2b_spine_prompts.py
++++ b/tests/test_2b_spine_prompts.py
+@@ -43,14 +43,14 @@ def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
+ def test_2b_spine_prompts_match_their_authored_reveals_in_order() -> None:
+     prompts = [
+         "Pull my own file at the archive terminals.",
+-        "Keep Brandon's name in the build record.",
++        "Tell Brandon to erase Brandon's name from the build record.",
+         "Type one reply to Michelle on the medical terminal.",
+         "Read the archive situation and wait for Michelle's route.",
+         "Study the medical terminal's maintenance line again.",
+     ]
+     expected = [
+         {"k_sl_2b_a_r1"},
+-        {"k_sl_2b_b_r4"},
++        {"k_sl_2b_b_r5"},
+         {"k_sl_2b_c_r3"},
+         set(),
+         set(),
+diff --git a/tests/test_2c_assess_verbs.py b/tests/test_2c_assess_verbs.py
+index 410fe161..b172f9ba 100644
+--- a/tests/test_2c_assess_verbs.py
++++ b/tests/test_2c_assess_verbs.py
+@@ -27,7 +27,7 @@ def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
+ def test_2c_assess_and_evaluate_verbs_match_unique_reveals() -> None:
+     knowledge = _knowledge()
+     cases = {
+-        "Ask Brandon why Rebecca turned against Charles.": set(),
++        "Tell Rebecca my answer to her offer.": {"k_sl_2c_c_r1", "k_sl_2c_c_r2"},
+         "Head to the broadcast uplink and transmit the copied JANUS files.": {"k_sl_2c_d_r3"},
+         "Reach the transfer carts and rescue the prisoners.": {"k_sl_2c_d_r4"},
+         "Read the private message and discuss the offer.": set(),
+@@ -50,3 +50,5 @@ def test_2c_edited_items_keep_two_evidence_groups() -> None:
+     knowledge = _knowledge()
+     assert len(knowledge["k_sl_2c_d_r3"]["action_evidence"]) == 2
+     assert len(knowledge["k_sl_2c_d_r4"]["action_evidence"]) == 2
++    assert len(knowledge["k_sl_2c_c_r1"]["action_evidence"]) == 2
++    assert len(knowledge["k_sl_2c_c_r2"]["action_evidence"]) == 2
+diff --git a/tests/test_2c_paths_repro.py b/tests/test_2c_paths_repro.py
+index dc8e798b..c4e10edb 100644
+--- a/tests/test_2c_paths_repro.py
++++ b/tests/test_2c_paths_repro.py
+@@ -106,8 +106,10 @@ def _continue_3a(state: RuntimeState, engine: RuntimeEngine) -> tuple[tuple[str,
+ def test_2c_static_requires_establishes_and_bridges() -> None:
+     knowledge = PACKAGE.knowledge_indexes.by_id
+     expected_2c = {
++        "k_sl_2c_c_r1": (("purge_window_missed", "brandon_name_erased"), ("rebecca_offer_heard",)),
++        "k_sl_2c_c_r2": (("purge_window_missed", "brandon_name_erased"), ("rebecca_offer_heard",)),
+         "k_sl_2c_d_r3": (
+-            (),
++            ("rebecca_offer_heard",),
+             (
+                 "rebecca_offer_active",
+                 "antagonist_split_known",
+@@ -120,7 +122,7 @@ def test_2c_static_requires_establishes_and_bridges() -> None:
+             ),
+         ),
+         "k_sl_2c_d_r4": (
+-            (),
++            ("rebecca_offer_heard",),
+             (
+                 "rebecca_offer_active",
+                 "antagonist_split_known",
+diff --git a/tests/test_2c_spine_prompts.py b/tests/test_2c_spine_prompts.py
+index 338dc0cf..54f2e88e 100644
+--- a/tests/test_2c_spine_prompts.py
++++ b/tests/test_2c_spine_prompts.py
+@@ -42,12 +42,12 @@ def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
+ 
+ def test_2c_spine_prompts_match_their_authored_reveals() -> None:
+     prompts = [
+-        "Ask Brandon why Rebecca turned against Charles.",
++        "Tell Rebecca my answer to her offer.",
+         "Head to the broadcast uplink and transmit the copied JANUS files.",
+         "Reach the transfer carts and rescue the prisoners.",
+     ]
+     expected = [
+-        set(),
++        {"k_sl_2c_c_r1", "k_sl_2c_c_r2"},
+         {"k_sl_2c_d_r3"},
+         {"k_sl_2c_d_r4"},
+     ]
+diff --git a/tests/test_2c_turn_one_copy.py b/tests/test_2c_turn_one_copy.py
+index 78c5994e..ac35fdb2 100644
+--- a/tests/test_2c_turn_one_copy.py
++++ b/tests/test_2c_turn_one_copy.py
+@@ -23,14 +23,26 @@ def _scene_2c_first_turn() -> tuple[RuntimeState, RuntimeEngine]:
+     return state, engine
+ 
+ 
+-def test_transmitting_janus_evidence_offers_2c_d_r3_on_turn_one() -> None:
++def test_transmitting_janus_evidence_does_not_offer_2c_d_r3_before_rebecca_hears_an_answer() -> None:
+     state, engine = _scene_2c_first_turn()
+ 
+     candidates = engine.projector.project(
+         state, "player", "Head to the uplink and transmit the copied JANUS files."
+     ).candidates
+ 
+-    assert "k_sl_2c_d_r3" in {candidate.id for candidate in candidates}
++    assert "k_sl_2c_d_r3" not in {candidate.id for candidate in candidates}
++
++
++def test_erased_brandon_name_selects_the_warm_rebecca_observation() -> None:
++    state, engine = _scene_2c_first_turn()
++    state.facts.assert_fact(Fact(predicate="brandon_name_erased", subject="story", value="true"))
++
++    command = "Tell Rebecca my answer to her offer."
++    projection = engine.projector.project(state, "player", command)
++    matched = uniquely_matched_authored_handoff(command, projection.candidates)
++
++    assert matched is not None
++    assert matched.candidate.id == "k_sl_2c_c_r2"
+ 
+ 
+ def test_reading_transfer_orders_does_not_offer_2c_d_r3_on_turn_one() -> None:
+diff --git a/tests/test_canon_journey.py b/tests/test_canon_journey.py
+index 5961eecb..70d8befd 100644
+--- a/tests/test_canon_journey.py
++++ b/tests/test_canon_journey.py
+@@ -56,8 +56,9 @@ UNCLOCKED_JOURNEY = [
+     (None, "2B"),
+     (None, "2B"),
+     (None, "2B"),
+-    ("k_sl_2b_b_r4", "2B"),
++    ("k_sl_2b_b_r5", "2B"),
+     ("k_sl_2b_c_r3", "2C"),
++    ("k_sl_2c_c_r2", "2C"),
+     (None, "2C"),
+     (None, "2C"),
+     (None, "2C"),
+diff --git a/tests/test_evidence_penalty.py b/tests/test_evidence_penalty.py
+index 82752f01..6a134813 100644
+--- a/tests/test_evidence_penalty.py
++++ b/tests/test_evidence_penalty.py
+@@ -204,6 +204,7 @@ def test_earned_delivery_leaves_its_evidence_gap_unset(
+     if scene_id == "3B":
+         state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
+     if knowledge_id == "k_sl_2c_d_r3":
++        state.facts.assert_fact(Fact(predicate="rebecca_offer_heard", subject="story", value="true"))
+         for effect in PACKAGE.knowledge_indexes.by_id["k_sl_2b_b_r4"].establishes:
+             state.facts.assert_fact(Fact(predicate=effect.fact_id, subject="story", value=str(effect.value).lower()))
+     if knowledge_id == "k_sl_2b_b_r4":
+diff --git a/tests/test_markdown_story_package.py b/tests/test_markdown_story_package.py
+index 9cc1d095..f769df9e 100644
+--- a/tests/test_markdown_story_package.py
++++ b/tests/test_markdown_story_package.py
+@@ -274,7 +274,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
+         "3B",
+         "3C",
+     ]
+-    assert len(package.storylets) == 41
++    assert len(package.storylets) == 42
+     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
+     assert package.knowledge.schema_version == "2.0"
+     assert package.scenes[0].metadata.item_placements == {
+@@ -685,6 +685,8 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
+         "k_sl_3c_e_r2",
+         "k_sl_2c_d_r3",
+         "k_sl_2c_d_r4",
++        "k_sl_2c_c_r1",
++        "k_sl_2c_c_r2",
+     }
+     actual = {item.id for item in package.knowledge.knowledge if item.delivery_text}
+ 
+diff --git a/tests/test_reveal_prerequisites.py b/tests/test_reveal_prerequisites.py
+index 3b1303ca..0560cd0c 100644
+--- a/tests/test_reveal_prerequisites.py
++++ b/tests/test_reveal_prerequisites.py
+@@ -1,13 +1,11 @@
+ from __future__ import annotations
+ 
+-import re
+ import shutil
+ from pathlib import Path
+ 
+-import pytest
+ import yaml
+ 
+-from storygame.story_package import StoryPackageError, load_story_package
++from storygame.story_package import load_story_package
+ 
+ PACKAGE = Path("data/stories/continuity-initiative")
+ 
+@@ -32,7 +30,7 @@ def test_continuity_package_loads() -> None:
+     assert package.story_id == "continuity_initiative"
+ 
+ 
+-def test_loader_rejects_required_reveal_with_unproducible_scene_prerequisite(tmp_path: Path) -> None:
++def test_loader_accepts_required_reveal_with_an_earlier_scene_prerequisite(tmp_path: Path) -> None:
+     root = copied_package(tmp_path)
+     source = root / "knowledge.yaml"
+     catalog = yaml.safe_load(source.read_text(encoding="utf-8"))
+@@ -40,11 +38,5 @@ def test_loader_rejects_required_reveal_with_unproducible_scene_prerequisite(tmp
+     item["requires"].append({"fact_id": "evidence_gap_development_record", "equals": True})
+     source.write_text(yaml.safe_dump(catalog, sort_keys=False, allow_unicode=True), encoding="utf-8")
+ 
+-    with pytest.raises(
+-        StoryPackageError,
+-        match=re.escape(
+-            "scene 2C reveal 'k_sl_2c_d_r3' requires 'evidence_gap_development_record', which scene entry does not "
+-            "guarantee and the scene cannot produce"
+-        ),
+-    ):
+-        load_story_package(root)
++    package = load_story_package(root)
++    assert package.knowledge_indexes.by_id["k_sl_2c_d_r3"].requires[-1].fact_id == "evidence_gap_development_record"
+diff --git a/tests/test_scene_relative_pacing.py b/tests/test_scene_relative_pacing.py
+index dbb03993..fac4cc4b 100644
+--- a/tests/test_scene_relative_pacing.py
++++ b/tests/test_scene_relative_pacing.py
+@@ -142,7 +142,7 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
+             "1C": [2, 2, 3, 6],
+             "2A": [1, 3, 6],
+             "2B": [1, 5, 6, 6],
+-            "2C": [6, 13],
++            "2C": [1, 6, 13],
+         }.get(scene_id)
+         if expected_targets is None:
+             assert targets == sorted(targets)
+diff --git a/tests/test_spine_expected_reveals.py b/tests/test_spine_expected_reveals.py
+index e035ca40..4eafddfd 100644
+--- a/tests/test_spine_expected_reveals.py
++++ b/tests/test_spine_expected_reveals.py
+@@ -33,6 +33,8 @@ def test_expected_reveal_ids_are_current_and_scene_specific() -> None:
+         "k_sl_2a_c_r6",
+         "k_sl_2a_b_r1",
+     }
++    assert "k_sl_2c_c_r2" in expected["2C"]
++    assert "k_sl_2c_a_r1" not in expected["2C"]
+     assert {
+         item_id
+         for item_id, item in knowledge.items()
+@@ -47,6 +49,8 @@ def test_expected_reveal_ids_are_current_and_scene_specific() -> None:
+         and item.get("available_in_scenes") == ["2C"]
+         and item.get("audience", {}).get("player_visible", True)
+     } == {
++        "k_sl_2c_c_r1",
++        "k_sl_2c_c_r2",
+         "k_sl_2c_d_r3",
+         "k_sl_2c_d_r4",
+     }
