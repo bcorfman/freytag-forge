@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from storygame.runtime.delivery_text import AMBIGUOUS, resolve_delivery_text, true_fact_ids
 from storygame.runtime.reveal_eligibility import explain_reveal, together_or_unplaced
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
@@ -442,6 +443,7 @@ class KnowledgeProjector:
     def _candidates(
         self, state: RuntimeState, audience_id: str, referenced_ids: tuple[str, ...]
     ) -> tuple[RevealCandidate, ...]:
+        fact_ids = true_fact_ids(state.facts)
         candidates: list[KnowledgeDefinition] = []
         for knowledge_id in state.package.knowledge_indexes.scene_to_candidates[state.current_scene_id]:
             item = state.package.knowledge_indexes.by_id[knowledge_id]
@@ -456,19 +458,23 @@ class KnowledgeProjector:
                 item.id,
             )
         )
-        return tuple(self._candidate(item) for item in candidates)
+        projected = (self._candidate(item, fact_ids) for item in candidates)
+        return tuple(candidate for candidate in projected if candidate is not None)
 
     @staticmethod
-    def _candidate(item: KnowledgeDefinition) -> RevealCandidate:
+    def _candidate(item: KnowledgeDefinition, true_fact_ids: Collection[str] = ()) -> RevealCandidate | None:
         """Expose only the player-safe selection affordance to the provider."""
 
+        delivery_text = resolve_delivery_text(item, true_fact_ids)
+        if delivery_text is AMBIGUOUS:
+            return None
         return RevealCandidate(
             id=item.id,
             statement=item.statement,
             earn_when=item.earn_when,
             must_convey=item.must_convey,
             action_evidence=item.action_evidence,
-            delivery_text=item.delivery_text,
+            delivery_text=delivery_text,
             repeatable=item.repeatable,
             action_contract=item.action_contract,
         )

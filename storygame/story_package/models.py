@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Collection, Mapping
 from typing import Literal
 
@@ -138,6 +139,28 @@ class ActionContract(_Model):
         return self
 
 
+class DeliveryVariant(_Model):
+    """One fact-qualified replacement for a knowledge delivery sentence."""
+
+    requires: tuple[str, ...] = Field(min_length=1)
+    text: str
+
+    @field_validator("requires")
+    @classmethod
+    def valid_fact_ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        invalid = next((fact_id for fact_id in value if re.fullmatch(_ID, fact_id) is None), None)
+        if invalid is not None:
+            raise ValueError(f"delivery variant requires invalid fact id '{invalid}'")
+        return value
+
+    @field_validator("text")
+    @classmethod
+    def non_blank_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("delivery variant text must not be blank")
+        return value
+
+
 class KnowledgeDefinition(_Model):
     """A player-safe claim whose truth is derived only from its fact effects."""
 
@@ -157,6 +180,7 @@ class KnowledgeDefinition(_Model):
     must_convey: tuple[tuple[str, ...], ...] = ()
     leak_terms: tuple[str, ...] | None = None
     delivery_text: str | None = None
+    delivery_variants: tuple[DeliveryVariant, ...] = Field(default=(), exclude_if=lambda value: not value)
     action_contract: ActionContract | None = None
     voiceable: StrictBool = Field(default=True, exclude_if=lambda value: value is True)
     repeatable: StrictBool = Field(default=False, exclude_if=lambda value: value is False)

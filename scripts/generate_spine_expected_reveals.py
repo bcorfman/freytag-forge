@@ -61,7 +61,7 @@ class _ScriptedProvider(CloudflareTurnProvider):
         if handoff is not None:
             item = self.state.package.knowledge_indexes.by_id[handoff.candidate.id]
             assert explain_reveal(self.state, "player", item).eligible
-            text = item.delivery_text or item.statement
+            text = handoff.delivery_text or item.statement
         else:
             text = "A concrete authored consequence lands."
         return {
@@ -95,7 +95,7 @@ def simulate_expected_reveals() -> dict[str, list[str]]:
 
 def main() -> None:
     expected = simulate_expected_reveals()
-    assert {"k_sl_2c_d_r3", "k_sl_2c_d_r4"} & set(expected["2C"])
+    assert "k_sl_2c_c_r1" in expected["2C"]
     (FRONTEND_ROOT / "spine-expected-reveals.json").write_text(json.dumps(expected, indent=2) + "\n")
 
 

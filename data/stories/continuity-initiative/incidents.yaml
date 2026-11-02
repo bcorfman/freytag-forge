@@ -33,7 +33,7 @@ incidents:
   recovery_storylet_id: SL-2A-D
   missed_window_event_id: inspection_window_2a
   successor_transition_id: t_2a_2b
-  observation_knowledge_ids: [k_sl_2a_c_r5, k_sl_2a_c_r6]
+  observation_knowledge_ids: [k_sl_2a_b_r1, k_sl_2a_c_r5, k_sl_2a_c_r6]
   completes_scene: true
 - id: i_2b_audit
   scene_id: 2B
@@ -51,7 +51,7 @@ incidents:
   recovery_storylet_id: SL-2B-D
   missed_window_event_id: audit_window_2b
   successor_transition_id: t_2b_2c
-  observation_knowledge_ids: [k_sl_2b_b_r4, k_sl_2b_b_r5, k_sl_2b_c_r3]
+  observation_knowledge_ids: [k_sl_2b_a_r1, k_sl_2b_b_r4, k_sl_2b_b_r5, k_sl_2b_c_r3]
   completes_scene: true
 - id: i_2c_rebecca_corridor
   scene_id: 2C
@@ -69,5 +69,5 @@ incidents:
   recovery_storylet_id: SL-2C-E
   missed_window_event_id: purge_window_2c
   successor_transition_id: t_2c_3a
-  observation_knowledge_ids: [k_sl_2c_d_r3, k_sl_2c_d_r4]
+  observation_knowledge_ids: [k_sl_2c_c_r1, k_sl_2c_d_r3, k_sl_2c_d_r4]
   completes_scene: true

@@ -53,6 +53,8 @@ facts:
     facility.
 - id: captives_confirmed_alive
   purpose: Kristin has directly confirmed living captives inside the regional facility.
+- id: manifold_fault_found
+  purpose: Kristin has found the cooling-water pressure fault at the manifold.
 - id: national_detention_network_known
   purpose: Kristin knows the Los Angeles site is part of a national detention network.
 - id: architects_strategy_known
@@ -74,6 +76,8 @@ facts:
   purpose: Kristin knows Brandon prepared for the disappearance before it occurred.
 - id: restricted_corridor_access
   purpose: Kristin and Brandon have access to restricted infrastructure corridors and the limited diagnostic console assigned to the inspection cover.
+- id: kristin_file_read
+  purpose: Kristin has pulled and read her own file in the archive.
 - id: rebecca_observing_infiltrators
   purpose: Rebecca has quietly ordered the infiltrators observed; this fact is not
     automatically known to Kristin.
@@ -91,6 +95,8 @@ facts:
 - id: rebecca_offer_active
   purpose: Rebecca has offered Brandon safety/Michelle’s release in exchange for helping
     her displace Charles.
+- id: rebecca_offer_heard
+  purpose: Kristin has answered Rebecca's offer and learned the purge order and Brandon's answer.
 - id: antagonist_split_known
   purpose: Kristin has legitimate evidence that Rebecca and Charles are in conflict.
 - id: combined_broadcast_rescue_plan_known
@@ -1251,18 +1257,42 @@ knowledge:
     Brandon leads Kristin through the service entrance. He shows her the service approach.
     The full set of prisoner numbers is lost. The sweep closes in.
     Brandon says, "We have to pull back. We can prepare now that we know the approach."
+- id: k_sl_2a_b_r1
+  statement: Kristin finds the cooling-water pressure fault at the manifold.
+  earn_when: feels the cooling lines, reads the gauge or traces the vent at the cooling manifold
+  action_evidence:
+  - [feel, touch, read, trace, inspect, check, test, examine, study]
+  - [cooling manifold, manifold, cooling lines, cooling water, pressure gauge, gauge, vent, ventilation]
+  entity_ids: [kristin, shift_supervisor, regional_facility, infrastructure_corridors]
+  aliases: [cooling manifold fault, manifold fault found]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  requires:
+  - fact_id: inspection_window_missed
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: manifold_fault_found
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-B, realization_id: SL-2A-B-R1}
+  relevance: {entity_ids: [shift_supervisor, regional_facility], priority: 10}
+  delivery_text: >-
+    Kristin feels the cooling lines, reads the gauge and traces the vent. The water pressure is falling on the return line,
+    and the ventilation is hiding the drop. The shift supervisor says, "Well? What is failing, and what happens if nobody fixes it?"
 - id: k_sl_2a_c_r5
   statement: 'Kristin proves that the cooling fault is real and gains access to the restricted infrastructure corridors.'
   earn_when: diagnoses the cooling fault at the manifold and explains the pressure and ventilation problem to the shift supervisor
   action_evidence:
-  - [feel, read, trace, inspect, check, test, diagnose, explain, show]
+  - [feel, read, trace, inspect, check, test, diagnose, explain, tell, show, say]
   - [cooling manifold, cooling water, water pressure, pressure gauge, pipe, ventilation, vent, cooling fault, pressure problem]
-  - [real, genuine, convincing, precise]
+  - [real, genuine, convincing, precise, pressure, falling, return line, masking, hiding, fail, failing, will fail]
   entity_ids: [kristin, brandon, shift_supervisor, regional_facility, infrastructure_corridors, inspection_console]
   aliases: [restricted corridor access, console used]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2A]
-  requires: []
+  requires:
+  - fact_id: manifold_fault_found
+    equals: true
   establishes:
   - op: assert
     fact_id: supervisor_convinced
@@ -1299,7 +1329,9 @@ knowledge:
   aliases: [restricted corridor access, cover suspected, console used]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2A]
-  requires: []
+  requires:
+  - fact_id: manifold_fault_found
+    equals: true
   establishes:
   - op: assert
     fact_id: restricted_corridor_access
@@ -1328,19 +1360,45 @@ knowledge:
     He lets them enter the restricted infrastructure corridors under closer watch.
     The limited console can report faults and cycle noncritical systems.
     It cannot open detention cells or change the main flood controls.
+- id: k_sl_2b_a_r1
+  statement: Kristin pulls and reads her own file in the archive.
+  earn_when: pulls Kristin's own file at the archive terminals
+  action_evidence:
+  - [pull, pull up, open, read, retrieve, check, examine, inspect, search, find, look up]
+  - [Kristin's file, my file, own file, personnel file, her file, own record, my record]
+  entity_ids: [kristin, brandon, janus_archive, archive_terminals]
+  aliases: [Kristin's file read, own file read]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2B]
+  requires:
+  - fact_id: audit_window_missed
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: kristin_file_read
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2B-A, realization_id: SL-2B-A-R1}
+  relevance: {entity_ids: [kristin, brandon, janus_archive, archive_terminals], priority: 10}
+  must_convey:
+  - [was bait, Kristin was bait]
+  - [Brandon Corfman, author]
+  delivery_text: >-
+    Kristin pulls her own file. It says she was retained to lead investigators to Corfman. Kristin was bait.
+    The build record for the system names Brandon Corfman as an author. Brandon whispers, "Let me delete my name
+    from the record before we copy the files. Or tell me to leave it. Your call."
 - id: k_sl_2b_b_r4
   statement: 'Kristin pulls her own JANUS file first, learns she was bait, and keeps Brandon’s name in the build record.'
-  earn_when: pulls Kristin's file first and refuses to erase Brandon's name from the JANUS build record
+  earn_when: tells Brandon to leave his name in the build record after reading Kristin's own file
   action_evidence:
-  - [pull, open, read, retrieve, check, examine, inspect]
-  - [Kristin's file, Kristin's own file, my file, own record, RETAINED, JANUS file, build record]
   - [keep, leave, refuse, refuse to erase, preserve]
-  - [Brandon's name, Brandon Corfman, author's name, name in the build record]
+  - [Brandon's name, Brandon Corfman, author's name, name in the build record, his name, name in the record, the record]
   entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files]
   aliases: [Brandon's name kept, Kristin was bait, JANUS evidence]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2B]
-  requires: []
+  requires:
+  - fact_id: kristin_file_read
+    equals: true
   establishes:
   - op: assert
     fact_id: janus_known
@@ -1385,19 +1443,22 @@ knowledge:
     Kristin keeps his name in the record.
     The JANUS files are copied.
     Kristin carries the copied files.
+    The medical terminal prints a maintenance line that ends with the name Shelly.
+    Only Kristin uses that name.
+    Before the audit reaches the aisle, Kristin has time to type one reply on the medical terminal.
 - id: k_sl_2b_b_r5
   statement: 'Kristin pulls her own JANUS file first, learns she was bait, and lets Brandon erase his name from the build record.'
-  earn_when: pulls Kristin's file first and lets Brandon erase his name from the JANUS build record
+  earn_when: lets Brandon erase his name from the build record after reading Kristin's own file
   action_evidence:
-  - [pull, open, read, retrieve, check, examine, inspect]
-  - [Kristin's file, Kristin's own file, my file, own record, RETAINED, JANUS file, build record]
   - [let, allow, permit, agree, erase, delete]
-  - [Brandon's name, Brandon Corfman, author's name, name in the build record, his name]
+  - [Brandon's name, Brandon Corfman, author's name, name in the build record, his name, name in the record, the record]
   entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files]
   aliases: [Brandon's name erased, Kristin was bait, JANUS evidence]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2B]
-  requires: []
+  requires:
+  - fact_id: kristin_file_read
+    equals: true
   establishes:
   - op: assert
     fact_id: janus_known
@@ -1447,6 +1508,9 @@ knowledge:
     The development record now has a gap.
     The JANUS files are copied.
     Kristin carries the copied files.
+    The medical terminal prints a maintenance line that ends with the name Shelly.
+    Only Kristin uses that name.
+    Before the audit reaches the aisle, Kristin has time to type one reply on the medical terminal.
 - id: k_sl_2b_c_r3
   statement: 'Michelle answers Kristin once through the medical terminal and confirms that she is alive and active inside the facility.'
   earn_when: types one reply to the maintenance line on the medical terminal
@@ -1483,6 +1547,53 @@ knowledge:
     She is alive.
     She is working inside the facility.
     She will send a route.
+- id: k_sl_2c_c_r1
+  statement: Rebecca reveals the purge order, Brandon says yes, and the corridor opens onto two urgent moves.
+  earn_when: answers Rebecca's offer by speaking, bluffing, threatening, refusing, or staying silent
+  action_evidence:
+  - [say, tell, ask, answer, reply, respond, speak, talk, bluff, threaten, refuse, demand, argue, warn, accuse, negotiate, stay silent, say nothing, wait, stand, watch]
+  - [Rebecca, Rebecca Jenkins, her, the guards, her offer, the offer]
+  entity_ids: [kristin, brandon, rebecca, purge_chamber, broadcast_uplink, transfer_carts]
+  aliases: [Rebecca's offer heard, purge order, Brandon says yes]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C]
+  requires:
+  - fact_id: purge_window_missed
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: rebecca_offer_heard
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2C-C, realization_id: SL-2C-C-R1}
+  relevance: {entity_ids: [kristin, brandon, rebecca, purge_chamber], priority: 10}
+  must_convey:
+  - [purge order, purge begins within hours]
+  - [Brandon says yes, Brandon's yes, says, 'Yes.']
+  - [broadcast uplink, uplink]
+  delivery_text: >-
+    Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly."
+    Her tablet chimes. She reads it, and her face changes. "The purge order. It starts within hours, and my people
+    are on the list." Brandon looks at Kristin, then says, "Yes." The guards
+    stand down, and Rebecca goes to move against Charles. Brandon says, "There is no time to argue. The broadcast
+    uplink is at one end of this corridor. We can send the evidence now. The transfer carts are at the other end.
+    You can free a cart of captives before the guards react. Pick one, Kristin."
+  delivery_variants:
+  - requires: [brandon_name_kept]
+    text: >-
+      Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly." Her tablet
+      chimes. She reads it, and her face changes. "The purge order. It starts within hours, and my people are on the
+      list." Brandon says, "Yes." He says it coldly and avoids Kristin's eyes. The guards stand down, and Rebecca goes
+      to move against Charles. Brandon says, "There is no time to argue. The broadcast uplink is at one end of this
+      corridor. We can send the evidence now. The transfer carts are at the other end. You can free a cart of captives
+      before the guards react. Pick one, Kristin."
+  - requires: [brandon_name_erased]
+    text: >-
+      Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly." Her tablet
+      chimes. She reads it, and her face changes. "The purge order. It starts within hours, and my people are on the
+      list." Brandon says, "Yes." He glances at Kristin as he says it. The guards stand down, and Rebecca goes to move
+      against Charles. Brandon says, "There is no time to argue. The broadcast uplink is at one end of this corridor.
+      We can send the evidence now. The transfer carts are at the other end. You can free a cart of captives before
+      the guards react. Pick one, Kristin."
 - id: k_sl_2c_d_r3
   statement: 'Kristin starts the uplink as the detention sectors seal and receives Michelle’s route to the combined plan.'
   earn_when: heads to the uplink and starts sending the copied JANUS files
@@ -1493,7 +1604,9 @@ knowledge:
   aliases: [committed to transmit, detention sectors sealed, combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2C]
-  requires: []
+  requires:
+  - fact_id: rebecca_offer_heard
+    equals: true
   establishes:
   - op: assert
     fact_id: rebecca_offer_active
@@ -1522,16 +1635,12 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R3}
   relevance: {entity_ids: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files], priority: 10}
   must_convey:
-  - [Rebecca offers, help remove Charles, Michelle goes free]
-  - [purge order, purge clock, purge begins within hours]
   - [starts sending the evidence, transmit the evidence, uplink]
   - [detention sectors seal, detention sectors sealed]
   - [Michelle's route, maintenance route, route to Michelle]
   - [Rebecca's secured office, Rebecca's office]
   - [broadcast the evidence, open the detention cells, combined plan]
   delivery_text: >-
-    Rebecca offers a way to remove Charles. She promises Michelle's release.
-    The purge order starts a clock.
     Kristin heads to the uplink and starts sending the copied files.
     The detention sectors seal.
     Michelle's route leads to Rebecca's secured office.
@@ -1546,7 +1655,9 @@ knowledge:
   aliases: [committed to rescue, evidence not transmitted, combined broadcast rescue plan known]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2C]
-  requires: []
+  requires:
+  - fact_id: rebecca_offer_heard
+    equals: true
   establishes:
   - op: assert
     fact_id: rebecca_offer_active
@@ -1575,16 +1686,12 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2C-D, realization_id: SL-2C-D-R4}
   relevance: {entity_ids: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files], priority: 10}
   must_convey:
-  - [Rebecca offers, help remove Charles, Michelle goes free]
-  - [purge order, purge clock, purge begins within hours]
   - [rescue cart, frees a cart of captives, rescue]
   - [evidence is not transmitted, evidence remains in Kristin's hands]
   - [Michelle's route, maintenance route, route to Michelle]
   - [Rebecca's secured office, Rebecca's office]
   - [broadcast the evidence, open the detention cells, combined plan]
   delivery_text: >-
-    Rebecca offers a way to remove Charles. She promises Michelle's release.
-    The purge order starts a clock.
     Kristin heads to the transfer carts and frees a cart of captives.
     The evidence is not transmitted.
     Michelle's route leads to Rebecca's secured office.

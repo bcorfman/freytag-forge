@@ -41,7 +41,10 @@ test("loads structural package text and scene-pair bridge", () => {
 test("loads entry variants by scene", () => {
   const real = loadAuthoredText();
   assert.ok(real.entryVariantTextsBySceneId.get("2A").includes(
-    "Kristin still has the copied prisoner numbers. She needs a way into the facility.",
+    "Kristin still has the copied prisoner numbers. The codes on the supervisor's work orders look like the same system.",
+  ));
+  assert.ok(real.entryVariantTextsBySceneId.get("2A").includes(
+    "Brandon knows the service approach. If they get past this man, he can take them around the second checkpoint.",
   ));
 });
 

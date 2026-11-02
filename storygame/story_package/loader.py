@@ -21,7 +21,6 @@ from storygame.story_package.models import (
     Incident,
     ItemPlacement,
     KnowledgeCatalog,
-    KnowledgeDefinition,
     KnowledgeIndexes,
     PacingSource,
     RouteOperation,
@@ -515,6 +514,15 @@ def _validate_knowledge(package: StoryPackage) -> None:
         established_facts = {effect.fact_id for effect in item.establishes}
         if required_facts - facts or established_facts - facts:
             raise StoryPackageError(f"knowledge '{item.id}' references an unknown fact")
+        variant_requires = [set(variant.requires) for variant in item.delivery_variants]
+        for index, required in enumerate(variant_requires):
+            unknown = required - facts
+            if unknown:
+                raise StoryPackageError(
+                    f"knowledge '{item.id}' delivery variant {index} names unknown fact IDs {sorted(unknown)}"
+                )
+        if len(variant_requires) != len({frozenset(required) for required in variant_requires}):
+            raise StoryPackageError(f"knowledge '{item.id}' has duplicate delivery variant requires sets")
         if (
             item.source.kind == "storylet_realization"
             and any(
@@ -616,7 +624,7 @@ _HANDOFF_BOOKKEEPING_LABELS = (
 )
 
 
-def _delivery_internal_token(package: StoryPackage, item: KnowledgeDefinition) -> str | None:
+def _delivery_internal_token(package: StoryPackage, text: str) -> str | None:
     """Return an implementation token that must not appear in authored prose."""
 
     ids = {
@@ -627,7 +635,6 @@ def _delivery_internal_token(package: StoryPackage, item: KnowledgeDefinition) -
         *(realization.id for route in package.storylet_routes.storylets for realization in route.realizations),
         *(event.id for event in (*package.storylet_routes.bridge_events, *package.storylet_routes.resolution_events)),
     }
-    text = item.delivery_text or ""
     folded = text.casefold()
     for token in (*ids, *_HANDOFF_BOOKKEEPING_LABELS):
         if token and re.search(rf"(?<![\w-]){re.escape(token.casefold())}(?![\w-])", folded):
@@ -642,6 +649,10 @@ def _validate_authored_handoffs(package: StoryPackage) -> None:
     from storygame.runtime.validation import unconveyed_terms
 
     for item in package.knowledge.knowledge:
+        if item.delivery_variants and (item.delivery_text is None or not item.delivery_text.strip()):
+            raise StoryPackageError(
+                f"authored handoff knowledge '{item.id}' with delivery variants requires non-blank delivery_text"
+            )
         if item.action_contract is not None and (not item.action_evidence or item.delivery_text is None):
             raise StoryPackageError(f"action contract knowledge '{item.id}' requires action_evidence and delivery_text")
         if item.delivery_text is None:
@@ -651,16 +662,22 @@ def _validate_authored_handoffs(package: StoryPackage) -> None:
         if not item.delivery_text.strip():
             raise StoryPackageError(f"authored handoff knowledge '{item.id}' has blank delivery_text")
         groups = tuple(group for group in item.must_convey if group)
-        missing = unconveyed_terms(groups, item.delivery_text)
-        if missing:
-            raise StoryPackageError(
-                f"authored handoff knowledge '{item.id}' delivery_text misses must_convey: {', '.join(missing)}"
-            )
-        token = _delivery_internal_token(package, item)
-        if token:
-            raise StoryPackageError(
-                f"authored handoff knowledge '{item.id}' delivery_text contains implementation-only token '{token}'"
-            )
+        texts = (("delivery_text", item.delivery_text),) + tuple(
+            (f"delivery variant {index}", variant.text) for index, variant in enumerate(item.delivery_variants)
+        )
+        for label, text in texts:
+            if not text.strip():
+                raise StoryPackageError(f"authored handoff knowledge '{item.id}' {label} has blank text")
+            missing = unconveyed_terms(groups, text)
+            if missing:
+                raise StoryPackageError(
+                    f"authored handoff knowledge '{item.id}' {label} misses must_convey: {', '.join(missing)}"
+                )
+            token = _delivery_internal_token(package, text)
+            if token:
+                raise StoryPackageError(
+                    f"authored handoff knowledge '{item.id}' {label} contains implementation-only token '{token}'"
+                )
 
 
 def _validate_ending(package: StoryPackage) -> None:

@@ -96,6 +96,7 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
     "1C": {"captives": "captives", "captive": "captives", "prisoner": "captives", "prisoners": "captives"},
     "2A": {
         "servers": "hideout_servers",
+        "manifold": "cooling_manifold",
         "gate": "facility_gate",
         "front gate": "facility_gate",
         "access panel": "cooling_service_archive_panel",
@@ -119,6 +120,7 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
         "copied files": "copied_janus_files",
         "JANUS files": "copied_janus_files",
         "JANUS evidence": "copied_janus_files",
+        "uplink": "broadcast_uplink",
     },
     "3A": {
         "copied files": "copied_janus_files",

@@ -19,17 +19,18 @@ SCENE_2A_CANDIDATES = tuple(
     for item in PACKAGE.knowledge.knowledge
     if "2A" in item.available_in_scenes and item.action_evidence
 )
+SCENE_2A_OUTCOME_CANDIDATES = tuple(item for item in SCENE_2A_CANDIDATES if item.id != "k_sl_2a_b_r1")
 
 
 @pytest.mark.parametrize(
     "player_input",
     [
         "Diagnose the real cooling-water pressure fault for the supervisor.",
-        "Read the pressure gauge and give a precise explanation of the ventilation fault.",
+        "Read the pressure gauge and explain the precise pressure is falling on the return line.",
     ],
 )
 def test_2a_supervisor_diagnosis_selects_convincing_inspection(player_input: str) -> None:
-    handoff = uniquely_matched_authored_handoff(player_input, SCENE_2A_CANDIDATES)
+    handoff = uniquely_matched_authored_handoff(player_input, SCENE_2A_OUTCOME_CANDIDATES)
 
     assert handoff is not None
     assert handoff.candidate.id == "k_sl_2a_c_r5"

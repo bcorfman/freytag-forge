@@ -6,6 +6,7 @@ import re
 from collections.abc import Iterable
 
 from storygame.runtime.candidate_matcher import _SYNONYM_CLASSES, _words
+from storygame.runtime.delivery_text import resolve_delivery_text, true_fact_ids
 from storygame.runtime.knowledge import _entity_surface_forms
 from storygame.runtime.reveal_eligibility import explain_reveal
 
@@ -146,10 +147,15 @@ def recent_cue_referent_text(state, player_input: str) -> str:
     if record is None:
         return ""
 
-    evidence = [
-        (state.package.knowledge_indexes.by_id[reveal_id], entry.delivery_text)
-        for reveal_id in record.reveal_ids
-        if (entry := state.package.knowledge_indexes.by_id.get(reveal_id)) is not None
-    ]
+    facts = getattr(state, "facts", None)
+    fact_ids = true_fact_ids(facts) if facts is not None else frozenset()
+    evidence = []
+    for reveal_id in record.reveal_ids:
+        entry = state.package.knowledge_indexes.by_id.get(reveal_id)
+        if entry is None:
+            continue
+        text = resolve_delivery_text(entry, fact_ids)
+        if isinstance(text, str) and text.strip():
+            evidence.append((entry, text))
     evidence.extend(_staged_cue_evidence(state))
     return _referent_from_evidence(state, player_input, evidence)

@@ -106,3 +106,48 @@ leak, but the classifier should learn it.
   redesign's own moments are not yet visible to a stranger. 1C solved this by having Brandon offer
   the moves in the narration (`1c-brandon-offers-moves.md`); Act 2 has no equivalent yet.
 - One row per cell, scripted prefixes, one blind player: nothing here is a rate.
+
+## Round 2: do the offers make the moves visible? (preregistered 2026-11-01, before any billed call)
+
+Change under test (branch `act2-visible-moves`): each Act 2 `entry_text` now has a character
+state the moves, the 1C technique. 2A: the supervisor says "show me" at the cooling manifold and
+Brandon says "be precise". 2B: Brandon points at the archive terminals, the JANUS records and
+Kristin's own file, and asks to delete his name or be told to leave it. 2C: Rebecca's offer, the
+purge order and Brandon's yes are told in the entry, then Brandon offers the uplink or the
+transfer carts. New fixed things `cooling_manifold`, `broadcast_uplink`, `transfer_carts`. The 2C
+outcome entries lost the offer and purge-order sentences (the entry owns them now).
+
+Question: does a raw blind player now reach a real outcome (not a recovery bridge) in each scene?
+Rows: the three blind-only cells, prefix `none`, one row each, no retries, same caps and keep
+rule as above. Order 2A, 2B, 2C; read each before the next. Outcome sought: exit cause is one of
+the declared outcomes. One row each is a smoke, not a rate; a miss is diagnosed from the
+transcript before any rewording.
+
+Round 2 log. Row 23 (2A none, offers): left by missed window plus recovery at turn 7; the player went
+to the manifold and inspected it, never explained a diagnosis, because the narration gives
+nothing to diagnose. Row 24 (2B none): run-failure, `narration mentions protected knowledge
+'janus'`: Brandon's line said "JANUS records". Reworded without the term; row 24 stays recorded,
+row 26 is the rerun.
+Round 2b: observation steps added for 2A (SL-2A-B, `manifold_fault_found`) and 2B (SL-2B-A,
+`kristin_file_read`), built by Ringer run act2-visible-moves. Row 25 (2C none): earned
+`committed_to_transmit` on turn 1, no recovery. Row 27 (2A none): earned `inspection_convincing` at
+turn 4 (observe at the manifold, then explain it). Row 28 (2B none): file pulled on turn 1, but "Tell
+Brandon to leave his name in the record" matched neither outcome (the name group wanted "Brandon's
+name" or "name in the build record"), so the scene left by recovery at turn 8. Widened both
+outcomes' name group to "his name", "name in the record", "the record"; row 29 is the rerun.
+`unearned_facts` listing `restricted_corridor_access` on an earned 2A exit is the same classifier
+gap as before: the realization asserts it.
+Round 2c: row 29 and 30 (2B) earned `k_sl_2b_b_r4` (turn 2 and turn 3) but stalled afterward; the
+player never used the medical terminal, so the scene left by recovery at turn 15. Nothing told the
+player the maintenance line exists. The keep and erase deliveries now end with the terminal printing
+the "Shelly" line and "Kristin has time to type one reply on the medical terminal." Row 31 (2B none):
+pulled the file (T1), kept Brandon's name (T2), replied on the medical terminal (T3), left for 2C at
+turn 3 with exit cause `brandon_name_kept`, no recovery, no unearned fact.
+
+Result of round 2 (one blind row per scene, prefix none, no rate): every Act 2 scene now earns a real
+outcome without a recovery bridge: 2A `inspection_convincing` at turn 4 (row 27), 2B `brandon_name_kept`
+plus the reply at turn 3 (row 31), 2C `committed_to_transmit` at turn 1 (row 25). Technique: 1C's. The
+entry text states the moves; 2A and 2B add an observation step the choice requires. Not shown: the
+`cover_suspected`/doubted and erase outcomes, missed windows and stalls with the new steps, or any rate.
+Open: 2C resolves on turn 1, so its pacing and the negotiation set piece are thin; the canonical scripted
+journey still waits six filler turns in 2A.

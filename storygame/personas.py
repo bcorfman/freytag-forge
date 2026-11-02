@@ -10,6 +10,7 @@ from typing import Any
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.contracts import RuntimeContractError
+from storygame.runtime.delivery_text import resolve_delivery_text, true_fact_ids
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
@@ -44,7 +45,8 @@ class _ScriptedProvider:
         text = "A concrete authored consequence lands."
         if self.selected:
             knowledge = self.package.knowledge_indexes.by_id[self.selected[0]]
-            text = knowledge.delivery_text or knowledge.statement
+            resolved = resolve_delivery_text(knowledge, true_fact_ids(self.state.facts))
+            text = resolved if isinstance(resolved, str) else knowledge.statement
         return {
             "segments": [{"kind": "narration", "text": text, "grounding_ids": list(self.selected)}],
             "selected_knowledge_ids": list(self.selected),

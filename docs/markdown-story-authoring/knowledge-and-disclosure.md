@@ -33,6 +33,24 @@ is never sent to the narrator or exposed in the narrator's serialized context.
 Keep aliases narrow and author-reviewed. A candidate without `delivery_text`
 keeps the legacy narrator-proposal path.
 
+### `delivery_variants`
+
+Use `delivery_variants` for complete replacement sentences selected by facts
+that are already true when the reveal is projected. Each variant needs one or
+more fact IDs and non-blank text. The base `delivery_text` is required. No
+matching variant uses the base text; exactly one match replaces it. Multiple
+matches fail closed and omit the candidate. Variants change wording only. They
+do not change eligibility, effects, source, action matching, or completion.
+
+```yaml
+delivery_text: "The keeper confirms the route."
+delivery_variants:
+  - requires: [route_verified]
+    text: "The keeper confirms the verified route."
+  - requires: [keeper_alerted]
+    text: "The keeper confirms the route under warning."
+```
+
 An optional `reach_entity_ids` list makes a reveal require the protagonist to
 be together with each named world item, character, or group. Use it when the
 reveal is about something the protagonist must be physically near; omit it

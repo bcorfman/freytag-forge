@@ -73,18 +73,18 @@ test("loads the real package and resolves turn milestones", () => {
     point: "handoff",
     target_turn: 13,
   });
-  assert.deepEqual(projection.eventPoint("purge_2c"), {
+  assert.deepEqual(projection.eventPoint("purge_window_2c"), {
     kind: "pacing_event",
     scene_id: "2C",
-    event_id: "purge_2c",
-    target_turn: 3,
+    event_id: "purge_window_2c",
+    target_turn: 5,
   });
   assert.equal(Object.hasOwn(projection.scenePoint("1B", "min"), "target_seconds"), false);
-  assert.equal(Object.hasOwn(projection.eventPoint("purge_2c"), "target_seconds"), false);
+  assert.equal(Object.hasOwn(projection.eventPoint("purge_window_2c"), "target_seconds"), false);
   assert.equal(Object.isFrozen(projection), true);
   assert.equal(Object.isFrozen(projection.sceneOrder), true);
   assert.equal(Object.isFrozen(projection.scenePoint("1B", "handoff")), true);
-  assert.equal(Object.isFrozen(projection.eventPoint("purge_2c")), true);
+  assert.equal(Object.isFrozen(projection.eventPoint("purge_window_2c")), true);
   assert.deepEqual(Object.keys(projection), [
     "storyId",
     "sceneOrder",
@@ -106,16 +106,20 @@ test("loads the real package and resolves turn milestones", () => {
       "transfer_window_1c",
       "transfer_nudge_1c",
       "transfer_withdrawal_1c",
-      "scrutiny_2a",
+      "inspection_window_2a",
+      "inspection_nudge_2a",
+      "inspection_recovery_2a",
       "collapse_3c",
-      "purge_2c",
+      "audit_window_2b",
+      "audit_nudge_2b",
+      "audit_recovery_2b",
+      "purge_window_2c",
+      "purge_nudge_2c",
+      "purge_recovery_2c",
       "override_deadline_3a",
       "destruction_3b",
       "home_search_narrows_1a",
       "park_lockdown_1b",
-      "cover_review_2a",
-      "archive_sweep_2b",
-      "transfers_2c",
       "detention_lockdown_3a",
       "relay_power_3b",
       "routes_collapse_3c",
@@ -129,7 +133,7 @@ test("reports conditional events in the real package pacing", () => {
   assert.equal(projection.isConditional("officer_presses_1a"), true);
   assert.equal(projection.isConditional("transfer_nudge_1c"), true);
   assert.equal(projection.isConditional("patrol_arrives_1a"), false);
-  assert.equal(projection.isConditional("purge_2c"), false);
+  assert.equal(projection.isConditional("purge_window_2c"), false);
 });
 
 test("selects pending real-package events by conditionality and turn", () => {

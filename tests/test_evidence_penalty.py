@@ -204,8 +204,11 @@ def test_earned_delivery_leaves_its_evidence_gap_unset(
     if scene_id == "3B":
         state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
     if knowledge_id == "k_sl_2c_d_r3":
+        state.facts.assert_fact(Fact(predicate="rebecca_offer_heard", subject="story", value="true"))
         for effect in PACKAGE.knowledge_indexes.by_id["k_sl_2b_b_r4"].establishes:
             state.facts.assert_fact(Fact(predicate=effect.fact_id, subject="story", value=str(effect.value).lower()))
+    if knowledge_id == "k_sl_2b_b_r4":
+        state.facts.assert_fact(Fact(predicate="kristin_file_read", subject="story", value="true"))
     item = PACKAGE.knowledge_indexes.by_id[knowledge_id]
     delivery_text = item.delivery_text
     engine = RuntimeEngine(
@@ -222,7 +225,7 @@ def test_earned_delivery_leaves_its_evidence_gap_unset(
         },
     )
 
-    engine.turn("Search the room.")
+    engine.turn("Search my room.")
 
     assert _asserted(state, delivery_id)
     assert not any(_asserted(state, gap_id) for gap_id in GAPS)

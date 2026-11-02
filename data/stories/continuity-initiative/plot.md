@@ -333,11 +333,12 @@ freytag_phase: rising_action
 objective: Get inside by proving the cooling fault is real
 participant_ids: [kristin, brandon, shift_supervisor]
 companions: [brandon]
-item_ids: [transit_card, hideout_servers, inspection_console, facility_gate, cooling_service_archive_panel]
+item_ids: [transit_card, hideout_servers, inspection_console, facility_gate, cooling_manifold, cooling_service_archive_panel]
 item_placements:
   hideout_servers: {parent: brandon_hideout}
   inspection_console: {parent: infrastructure_corridors}
   facility_gate: {parent: facility_perimeter, text: at the facility perimeter}
+  cooling_manifold: {parent: facility_perimeter, text: just inside the facility gate}
   cooling_service_archive_panel:
     parent: infrastructure_corridors
     text: beside the inspection console in the infrastructure corridors
@@ -353,7 +354,7 @@ character_placements:
   kristin: {parent: facility_perimeter}
   brandon: {parent: facility_perimeter}
   shift_supervisor: {parent: facility_perimeter, text: walking out from the facility gate with a tablet and the work order}
-entry_text: "One night in Brandon's hideout had turned years of leaked Continuity Initiative documents into two inspector badges and a work order for a cooling-water fault. Now the badges had to work. Kristin and Brandon stood at the facility gate while a shift supervisor walked out to meet them, reading the work order with a frown. \"Nobody scheduled you,\" he said.\n\n"
+entry_text: "One night in Brandon's hideout had turned years of leaked Continuity Initiative documents into two inspector badges and a work order for a cooling-water fault. Now the badges had to work. Kristin and Brandon stood at the facility gate while a shift supervisor walked out to meet them, reading the work order with a frown. \"Nobody scheduled you,\" he said. \"If there is a fault, show me. The cooling manifold is just inside the gate. Put your hands on the lines, read the gauge, trace the vent, and tell me exactly what is failing.\" Brandon murmured, \"This is your field, Kristin. Be precise.\"\n\n"
 entry_variants:
 - requires: [processing_numbers_copied]
   text: "Kristin still has the copied prisoner numbers. The codes on the supervisor's work orders look like the same system."
@@ -436,7 +437,7 @@ setting_facts:
 - The cooling-service archive panel opens with a push.
 - Kristin has already reached the records archive.
 - The archive terminals are available for investigation.
-entry_text: "Kristin and Brandon came through the cooling-service panel into the records archive just as the lights came up at the far end. An audit sweep had started. Voices and footsteps were working their way down the aisles toward them. They had a few minutes among the archive terminals.\n\n"
+entry_text: "Kristin and Brandon came through the cooling-service panel into the records archive just as the lights came up at the far end. An audit sweep had started. Voices and footsteps were working their way down the aisles toward them. They had a few minutes among the archive terminals. Brandon whispered, \"Use the archive terminals. Pull your own file first. My name may be on whatever you find. If it is, let me delete it before we copy the files, or tell me to leave it. Your call.\"\n\n"
 entry_variants:
 - requires: [cover_suspected]
   text: "The supervisor had logged them at the gate, and the audit sweep had started early because of it. The voices were already close, working down the nearest aisle. Kristin and Brandon had barely a minute among the archive terminals."
@@ -524,12 +525,14 @@ freytag_phase: crisis
 objective: Get free of Rebecca and commit to a move before the purge
 participant_ids: [kristin, brandon, michelle, rebecca]
 companions: [brandon]
-item_ids: [copied_janus_files]
+item_ids: [copied_janus_files, broadcast_uplink, transfer_carts]
 item_placements:
   copied_janus_files: {parent: kristin}
+  broadcast_uplink: {parent: purge_chamber, text: at the end of the command corridor}
+  transfer_carts: {parent: purge_chamber, text: at the other end of the command corridor}
 character_placements:
   rebecca: {parent: purge_chamber, text: standing between her guards in the command corridor}
-entry_text: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. Kristin still carried the copied JANUS files.\n\n"
+entry_text: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. \"Charles means to kill everyone below us, my people too. Help me remove him, Brandon, and I will give you Michelle.\" Kristin still carried the copied JANUS files.\n\n"
 transition_ids: [t_2c_3a]
 bridge_text:
   t_2c_3a: >-

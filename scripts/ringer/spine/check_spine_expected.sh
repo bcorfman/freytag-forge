@@ -32,7 +32,7 @@ scenes = ("1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C")
 assert tuple(sim) == scenes, f"scene keys/order {list(sim)}"
 assert all(sim[s] for s in scenes), f"a scene expects nothing: {sim}"
 assert sim["1C"] == ["k_sl_1c_a_r1", "k_sl_1c_b_r1", "k_sl_1c_c_copy_numbers"], f"1C expected {sim['1C']}"
-assert "k_sl_2c_c_r2" in sim["2C"], "2C must expect k_sl_2c_c_r2"
+assert "k_sl_2c_c_r1" in sim["2C"], "2C must expect k_sl_2c_c_r1"
 assert "k_sl_1a_d_r1" not in sim["1A"], "k_sl_1a_d_r1 is not eligible on the scripted 1A walk"
 assert "k_sl_1b_a_r1" not in sim["1B"], "k_sl_1b_a_r1 cannot commit after its sibling k_sl_1b_a_r2"
 live = json.loads(Path("scripts/ringer/spine/live-spine-committed-d65fb99d.json").read_text())["committed_by_scene"]

@@ -31,14 +31,17 @@ def test_expected_reveal_ids_are_current_and_scene_specific() -> None:
     } == {
         "k_sl_2a_c_r5",
         "k_sl_2a_c_r6",
+        "k_sl_2a_b_r1",
     }
+    assert "k_sl_2c_c_r1" in expected["2C"]
+    assert "k_sl_2c_a_r1" not in expected["2C"]
     assert {
         item_id
         for item_id, item in knowledge.items()
         if item_id.startswith("k_sl_2b")
         and item.get("available_in_scenes") == ["2B"]
         and item.get("audience", {}).get("player_visible", True)
-    } == {"k_sl_2b_b_r4", "k_sl_2b_b_r5", "k_sl_2b_c_r3"}
+    } == {"k_sl_2b_a_r1", "k_sl_2b_b_r4", "k_sl_2b_b_r5", "k_sl_2b_c_r3"}
     assert {
         item_id
         for item_id, item in knowledge.items()
@@ -46,6 +49,7 @@ def test_expected_reveal_ids_are_current_and_scene_specific() -> None:
         and item.get("available_in_scenes") == ["2C"]
         and item.get("audience", {}).get("player_visible", True)
     } == {
+        "k_sl_2c_c_r1",
         "k_sl_2c_d_r3",
         "k_sl_2c_d_r4",
     }
@@ -58,11 +62,7 @@ def test_expected_reveal_ids_are_current_and_scene_specific() -> None:
         "k_sl_3c_d_r2",
         "k_sl_3c_e_r1",
     ]
-    assert all(
-        not item_id.startswith(("k_sl_2a_a_", "k_sl_2a_b_", "k_sl_2a_e_"))
-        for ids in expected.values()
-        for item_id in ids
-    )
+    assert all(not item_id.startswith(("k_sl_2a_a_", "k_sl_2a_e_")) for ids in expected.values() for item_id in ids)
     assert expected["1C"] == ["k_sl_1c_a_r1", "k_sl_1c_b_r1", "k_sl_1c_c_copy_numbers"]
     assert "k_sl_1a_d_r1" not in expected["1A"]
     assert "k_sl_1b_a_r1" not in expected["1B"]

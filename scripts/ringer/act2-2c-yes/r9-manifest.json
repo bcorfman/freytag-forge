@@ -1,0 +1,28 @@
+{
+  "run_name": "act2-2c-brandons-yes",
+  "workdir": "/home/bcorfman/dev/ringer-work/act2-2c-yes",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "r9-closure-asserts-sl-2c-c",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1200,
+      "check_timeout_s": 600,
+      "ownership": [
+        "tests/test_required_storylet_closure.py"
+      ],
+      "spec": "Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, never call a billed model, MCP indexing or the network. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv ; tests: `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m pytest -q -n0 -p no:cacheprovider tests/test_required_storylet_closure.py`; ruff: `.venv/bin/python -m ruff format <file>` / `-m ruff check <file>`. Leave changes uncommitted. Edit ONLY tests/test_required_storylet_closure.py.\n\nSTART: `git apply /home/bcorfman/dev/ringer-work/act2-2c-yes/r8a.patch` (a previous worker's edit of test_real_package_closes_over_the_three_act_2_incidents: it added \"SL-2C-C\" to the `<= route_ids` set, removed it from the `not ... & route_ids` cut set, added a comment, and changed the required assertion to `{\"SL-2A-D\", \"SL-2B-D\", \"SL-2C-D\", \"SL-2C-E\"} <= required`).\n\nONE CORRECTION: the required assertion must also contain \"SL-2C-C\" (the earned 2C observation storylet; required_storylet_ids pulls it in as the local producer of rebecca_offer_heard for SL-2C-D). Make it `assert {\"SL-2A-D\", \"SL-2B-D\", \"SL-2C-C\", \"SL-2C-D\", \"SL-2C-E\"} <= required`. Change nothing else. Run the test file (all pass) and ruff format + check on it.",
+      "check": "set -e\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\nexport PYTHONPATH=$PWD TMPDIR=/tmp\nPY=.venv/bin/python\nfor f in $(git status --porcelain | grep -v '\\.venv' | sed 's/^...//'); do\n  [ \"$f\" = \"tests/test_required_storylet_closure.py\" ] || { echo \"WHY: edited file outside ownership: $f\"; exit 1; }\ndone\ngrep -q '\"SL-2A-D\", \"SL-2B-D\", \"SL-2C-C\", \"SL-2C-D\", \"SL-2C-E\"} <= required' tests/test_required_storylet_closure.py || { echo \"WHY: required assertion must name SL-2A-D, SL-2B-D, SL-2C-C, SL-2C-D, SL-2C-E\"; exit 1; }\ngrep -q '\"SL-2C-C\",' tests/test_required_storylet_closure.py || { echo \"WHY: SL-2C-C missing from the present-storylets set\"; exit 1; }\ngrep -n 'SL-2C-C' tests/test_required_storylet_closure.py | grep \"not {\" && { echo \"WHY: SL-2C-C still in the cut set\"; exit 1; } || true\ngit diff HEAD --numstat -- tests/test_required_storylet_closure.py | awk '{ if ($1+$2 > 8) { print \"WHY: diff larger than expected: \" $1+$2; exit 1 } }'\n$PY -m pytest -q -n0 -p no:cacheprovider tests/test_required_storylet_closure.py > /tmp/r9.log 2>&1 || { tail -25 /tmp/r9.log; echo \"WHY: test file fails\"; exit 1; }\ntail -2 /tmp/r9.log\n$PY -m ruff format --check tests/test_required_storylet_closure.py && $PY -m ruff check tests/test_required_storylet_closure.py || { echo \"WHY: ruff\"; exit 1; }\nOUT=/home/bcorfman/dev/ringer-work/act2-2c-yes\nmkdir -p $OUT && git add -A >/dev/null 2>&1 && git diff --cached > $OUT/r9.patch && wc -l $OUT/r9.patch && git diff --cached --stat | tail -3\n",
+      "verified": "closure test asserts SL-2C-C is present and required"
+    }
+  ]
+}

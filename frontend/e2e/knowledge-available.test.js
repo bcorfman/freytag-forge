@@ -26,7 +26,7 @@ function miniPlaythrough() {
         prompt: "Search the private message.",
         player_input: "Search the private message.",
         narration: "The message is not for Kristin.",
-        bundle: committedBundle(["k_sl_2c_a_r1"], ["rebecca_offer_active"]),
+        bundle: committedBundle(["k_purge_recovery_ready"], ["rebecca_offer_active"]),
         segments: [],
       }],
     }],
@@ -66,7 +66,7 @@ test("builds chronological public knowledge and keeps same-turn deliveries out o
   const scene2C = timeline.byScene.get("2C");
   const scene3B = timeline.byScene.get("3B");
   const scene3C = timeline.byScene.get("3C");
-  const privateOffer = entry("k_sl_2c_a_r1");
+  const privateOffer = entry("k_purge_recovery_ready");
   const phaseTwo = entry("k_sl_3c_e_r1");
   const privateOfferProtected = scene2C.turns[0].protected_facts.find(({ id }) => id === privateOffer.id);
 
