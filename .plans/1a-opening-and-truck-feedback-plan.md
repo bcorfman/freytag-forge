@@ -242,9 +242,10 @@ includes a synthetic second vehicle); two existing pins updated
 (`tests/test_boarding.py`, `tests/test_observation_prompt.py`). Stubbed non-boarding
 payloads are byte-identical to the baseline `payload-base.json`. Known looseness:
 something the protagonist merely holds also counts as "inside the vehicle", so
-the bullet can appear when nothing else is on the seats. Not yet live-checked in
-the product-wired path (the pronoun wording differs from probe 2); full suite
-not yet run.
+the bullet can appear when nothing else is on the seats. Live-checked in the
+product-wired path by probe 4 arm A: seated, parked, laptop shown, no story-affecting
+invention in 20 of 20 (commands 'head out to the truck' and 'go to the truck');
+full suite not yet run. Surroundings on that turn remain open (probe 4 arm B: 6 of 10).
 
 Planning complete. Remaining implementation and verification are not started. Record each
 step's commit, changed paths, deterministic checks, live artifacts, individual
