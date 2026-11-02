@@ -5,6 +5,8 @@ from collections.abc import Callable, Collection, Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from .incidental import IncidentalWorldMixin
+
 BASE_KINDS = {
     "entity": (),
     "area": ("entity",),
@@ -42,6 +44,7 @@ class FactBackend(Protocol):
     def matching(self, predicate: str, subject: str | None = None) -> tuple[FactLike, ...]: ...
     def assert_fact(self, fact) -> None: ...
     def retract_fact(self, fact) -> None: ...
+    def clone(self): ...
 
 
 class MemoryBackend:
@@ -59,6 +62,12 @@ class MemoryBackend:
     def matching_all(self):
         """Return all stored facts."""
         return tuple(self._facts)
+
+    def clone(self):
+        """Return an independent copy of this fact store."""
+        copy = type(self)()
+        copy._facts = set(self._facts)
+        return copy
 
     def assert_fact(self, fact):
         """Store a fact."""
@@ -337,7 +346,7 @@ class WorldSchema:
         return cls(kinds, entities, kind_enterable)
 
 
-class World:
+class World(IncidentalWorldMixin):
     """Read and mutate a world whose only mutable state is in its backend."""
 
     def __init__(self, schema, backend, *, make_fact=Fact, resolver: Callable | None = None):
@@ -383,6 +392,7 @@ class World:
                 self._value("wk_kind", entity_id) or "thing",
                 owner=self._value("wk_owner", entity_id),
                 parent=self._value("wk_parent", entity_id),
+                fixed=bool(self._facts("wk_fixed", entity_id)),
             )
         return None
 
