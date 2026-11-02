@@ -65,3 +65,45 @@ four defects in the story and one error in this preregistration:
 3. The kitchen storylet delivered all five details on a calendar command: split into a workstation reveal and a walls reveal.
 4. Walt's account was unreachable once the patrol entered (`patrol_in_house` stays true): the patrol gate is dropped.
 The full run uses the story after these fixes. The smoke row is kept and reported as pre-fix, not pooled.
+
+## Result (2026-11-02; code `1bb68d81`; 4 replicates per arm, 7 commands, every turn read by hand)
+Run by Brandon with the two bench commands. Rows: `bench/results/richer-1a-probe/{baseline,candidate}/` (gitignored). Both arms
+completed 4 of 4 replicates, 28 turns judged each, no failures, no quota stop. Spend per arm: 352 neurons projected, 88
+estimated from requests, 8 OpenAI judge calls, 49 (baseline) and 51 (candidate) Jev judge requests. The earlier smoke row is
+pre-fix and not pooled.
+
+**Q1 invented material (baseline versus candidate).**
+- Calendar: baseline invented appointments in 4 of 4 (specific notes in 3 of 4: "Meet J at 2pm on the 10th" twice, a
+  meeting with "Dr. Patel"); the matcher resolved "calendar" as a new thing in 4 of 4. Candidate: 0 of 4 new. It still
+  misdescribed the object in 3 of 4 ("a simple white board with scribbled notes and photographs") and once "old, with a worn cover".
+- Photograph: baseline invented its content in 4 of 4 (beach 2019; mountain landscape; "Michelle and I at the lab, 2018" twice);
+  matcher new 4 of 4. Candidate: 4 of 4 correct (Kristin and Michelle at the lake); harmless extras ("holding up a fish").
+- Neighbor: both arms invented one in 4 of 4. Baseline: "Mrs. Jenkins" once (collides with the villains' surname), otherwise
+  an unnamed man or woman. Candidate: "a man in his mid-40s with a scruffy beard" in 4 of 4, not Walt.
+
+**Q2 authored details delivered when earned (candidate).** Back door, outward splinters: 4 of 4. Calendar and photograph
+(lemon cake, lake): 4 of 4. **Neighbor, Walt's account: 0 of 4.** Cause, read from the records and confirmed offline: the
+worker had added a third `action_evidence` group to `k_sl_1a_i_r1` ([saw, before dawn, 3:40, vans, clipboard], copied from the
+phrase "asks the neighbor what he saw" in `earn_when`), so "Talk to the neighbor." matched two of three groups; and the
+narrator's THINGS line said only "Walt", so it did not know the neighbor was Walt. Both fixed after this run (see the plan).
+
+**Q3 regression.** Card recovered after `Search beneath the drawer.`: 4 of 4 in both arms. Protected terms: 0 and 0. Clarification
+questions: 0 and 0. The walk outside recorded cleanly in 8 of 8. Old behavior seen in both arms, not caused by this work:
+the patrol-arrival cue repeats on turns 4 to 7, and the narrator copies beat sentences ("The drawer rides high in its frame").
+
+**Q4 opening.** Candidate openings named the splintered frame or thrown deadbolt in 3 of 4 (baseline 0 of 4); none mentioned
+the card; none mentioned KMS (the KMS line arrives on a later turn in both arms).
+
+**Judges (recorded, never pooled).** 7-criterion: baseline [5, 5, 4, 4], mean 4.5, sd 0.58; candidate [4, 4, 4, 4], mean 4.0;
+minimum detectable effect 3.87 for baseline: a 0.5 gap is not a real difference. Continuity "contradicts stated fact": 0 of 28
+versus 4 of 28, all four on turn 7 (the invented neighbor). "Acts beyond command": 5 versus 4, all on turn 5 (old behavior).
+Fact judge `invented_change`: 0 versus 2 of 28 (turn 3, replicates 2 and 3: the narrator "moved" the lake photograph), harmless
+under Brandon's rule; `facts_after_correct` 28 versus 26.
+
+**Prompt size.** Narrator prompts that had a prompt: baseline 4,053 to 5,239 characters, candidate 4,087 to 6,063. The new
+maximum is under the 6,500 worst-case ceiling in `tests/test_prompt_budget.py` with about 7 percent headroom: mid-scene prompts
+grow as more things are resolved, so the turn-start budget (5,000) understates them.
+
+**Decision rule.** Richness is supported on commands 2 and 3 (fewer plain things resolved as new, correct content) and on the back
+door. It is not yet supported on command 7: after the neighbor fix, rerun the candidate arm only (4 replicates) and report that
+row as a second candidate run, never pooled with this one.
