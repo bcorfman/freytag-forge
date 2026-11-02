@@ -87,3 +87,21 @@ def test_the_neighbor_is_offered_after_the_patrol_is_in_the_house():
     state, engine = _walk_to_the_neighbor()
     assert any(f.predicate == "patrol_in_house" and str(f.value).lower() == "true" for f in state.facts.asserted)
     assert "k_sl_1a_i_r1" in _candidate_ids(state, engine, "Talk to the neighbor.")
+
+
+def test_talking_to_the_neighbor_earns_his_account_exactly():
+    from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
+
+    state, engine = _walk_to_the_neighbor()
+    engine._activate_pacing()
+    candidates = engine.projector.project(state, "player", "Talk to the neighbor.").candidates
+    for command in ("Talk to the neighbor.", "Talk to Walt.", "Ask the neighbor what he saw."):
+        handoff = uniquely_matched_authored_handoff(command, candidates)
+        assert handoff is not None and handoff.candidate.id == "k_sl_1a_i_r1", command
+
+
+def test_the_narrator_is_told_who_the_neighbor_and_the_calendar_are():
+    scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == "1A")
+    walt = scene.metadata.character_placements["walt_pruitt"].text
+    assert "neighbor" in walt and "fence" in walt
+    assert "paper calendar" in scene.metadata.item_placements["kitchen_calendar"].text
