@@ -81,3 +81,11 @@ def test_other_phrases_on_authored_things_are_kept_as_conditions(tmp_path, phras
     provider = provider_for(tmp_path)
     provider.apply_item_facts({"Tom's logbook": {"condition": [phrase]}})
     assert world(provider).conditions("logbook") == (phrase,)
+
+
+def test_a_reply_that_only_routes_facets_keeps_the_existing_conditions(tmp_path):
+    provider = provider_for(tmp_path)
+    provider.apply_item_facts({"Tom's logbook": {"condition": ["dusty"]}})
+    provider.apply_item_facts({"Tom's logbook": {"condition": ["brown"]}})
+    assert world(provider).facets("logbook") == {"color": "brown"}
+    assert world(provider).conditions("logbook") == ("dusty",)
