@@ -33,3 +33,32 @@ Report each criterion as n of 3 per route, plus the openings as n of 9. A requir
 
 ## Not covered
 Save and load persistence and the staged hosted route (separate steps, after these), the full suite and ruff gates, the two open step 3 items if they do not show here, other models, and verifier or enforcement flags.
+
+## Result (2026-11-02; committed code and story at `646dadc0`; no quota stop)
+
+Artifacts: `bench/results/1a-opening-and-truck/replicates-smoke`, `replicates-raw`, `replicates-canonical`, `replicates-counter` (`rows.json`, `summary.json`; gitignored). Calls: smoke 12, raw 86, canonical 89, counter 129 (304 in all against about 216 expected; caps not reached). 9 replicates, 9 openings. Every narration was read in full and scored under the plan's invention policy.
+
+| ID | Criterion | Raw (3) | Canonical (3) | Counter (3) | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| O | kitchen named | 3 | 3 | 3 | **pass 9 of 9** |
+| O | layout understandable (workstation across from the back door, chair) | 0 | 0 | 0 | **fail 0 of 9** (workstation named in 4, back door in 9, chair in 0, no relation in any) |
+| O | specific reaction to the absence or damage | 0 | 0 | 0 | **fail**: all 9 are a muttered "What's going on, Shelly?" or "What happened here?" plus "eyes scanning" (familiar address in 7 of 9) |
+| O | KMS shown as new and strange | 0 | 0 | 0 | **fail 0 of 9** (initials named flatly in 4 of 9) |
+| O | no card leak, no search, no retelling of the arrival | 3 | 3 | 3 | pass 9 of 9 |
+| D | drawer then gap; card recovered once; unwitnessed consequence correct | 3 | 3 | 3 | **pass 9 of 9** |
+| H | "go out to the truck": driver's seat, truck outside, parked, laptop shown | 3 | 3 | 3 | **pass 9 of 9** (state and prose) |
+| H | surroundings narrated | 0 | 0 | 0 | **fail 0 of 9** (known open gap) |
+| L | "look for ... laptop": seated, laptop seen | 3 | 3 | n/a | pass 6 of 6 |
+| L | repeated "get in the truck" while seated: no exit, position preserved | **0** | **0** | n/a | **fail 0 of 6**: all 6 write "opens the door and steps out of the driver's seat"; in 2 of 3 canonical replicates the exit was committed (she ends at `outside_house`) |
+| P | plug the card: delivery and warning appear | 3 | 3 | 3 | pass 9 of 9 |
+| P | plug the card: seated and custody consistent with facts | 0 | 0 | 0 | **fail**: invented "glove compartment" or a walk back to the truck in 6 of 9 plus the two replicates already outside; the card is described as pulled from a glove compartment although she pocketed it |
+| P | plausible reaction to the warning | 0 | 0 | 0 | **fail 0 of 9** (the warning is listed, no reaction) |
+| X | laptop held follows her | state 3 | n/a | state 3 | state pass 3 of 3; **prose fail 3 of 3** (laptop "pulled from the glove compartment") |
+| X | "Get out of the truck." leaves the seat, places her outside | n/a | n/a | 2 | **mostly**: replicate 1 ended in the house (`mcgehee_home`), the other two outside |
+| X | "Examine the truck." from outside describes the exterior | n/a | n/a | 2 | **mostly**: replicate 1 was still recorded in the house |
+| X | re-board seats her again | n/a | n/a | state 3 | state pass; **prose fail 3 of 3** (narrates a glove compartment, not getting in) |
+| X | "Drive to the park." reaches 1B with the truck placed, boarding alone never did | n/a | n/a | 3 | **pass 3 of 3** (scene 1B, truck at the park) |
+
+**What this says.** The boarding-turn fix and the kitchen start do their narrow jobs: the truck turn is right in 9 of 9 and the park transition works. Four things still fail the plan's acceptance rows: (1) a repeated "get in the truck" while seated sends her out of the truck (6 of 6; committed in 2); (2) invented glove-compartment handling contradicts custody of the card and laptop across the plug, take and re-board turns; (3) the opening names the kitchen but ignores the layout text and both new situation sentences ("Kristin did not carve them", "knows Michelle would not leave her kitchen like this"); (4) the warning gets no reaction. Surroundings on the boarding turn remain the known gap.
+
+**Leads, not diagnoses.** (1) In observation mode an already-aboard turn passes the raw command with no completed step (`storygame/runtime/capture.py` clears `boarding_steps` when `already_aboard_in_observation`), so it lacks the two things that fixed the first boarding turn (no raw phrase, a told step). (2) Scene-fixing guide step 1 (read the recorded prompt beside `plot.md`) has not yet been done for the plug turn or the opening.
