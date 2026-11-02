@@ -1,8 +1,35 @@
 # Richer narration with bounded invention
 
-Status: proposed, 2026-11-02. Implementation handoff for Claude Sonnet.
-Resume here: implement step 1, then proceed in order. This change spans all
-narration paths and all nine scenes; shared runtime must remain story-agnostic.
+Status: in progress, 2026-11-02. Branch `richer-narration-1`.
+Step 1 worldkeeper layer is done (see Progress). Resume here: step 2 (package
+policy, `embellishments` reply field, atomic capture, and closing the legacy
+`item_facts`/`_apply_state` bypasses); first send the small worldkeeper cleanup
+listed under Progress through Ringer. This change spans all narration paths and
+all nine scenes; shared runtime must remain story-agnostic.
+
+## Progress
+
+- **Step 1, worldkeeper layer: done, `c4f80d8f`.** New `worldkeeper/incidental.py`
+  (policy, templates, per-turn/scene/game allowances, immutable facets,
+  all-or-nothing batch on a cloned backend, resolver never called), a `clone()` on
+  `FactBackend`/`MemoryBackend`, and `wk_incidental`/`wk_facet`/`wk_fixed` facts.
+  Tests: `packages/worldkeeper/tests/test_incidental.py` (fixed acceptance file,
+  tests-first commit `69b75213`, fixture fix after). Verified: 112 worldkeeper tests,
+  Ruff, and five storygame world suites; Ringer check also ran the quick tier.
+  Not yet done: the storygame adapter (`world_model.py`) that builds a policy from
+  the package, and routing any narrator creation through `apply_embellishments`.
+  Full suite and coverage not run (run once at the end).
+- **Cleanup owed (Ringer, worldkeeper only):** `_run_embellishments` asserts then
+  retracts placeholder `wk_incidental` facts on subject `__pending__` (dead code
+  that touches the real backend on apply); `_resolve_without_resolver` clones the
+  backend per name. Remove the first, build one scratch World per batch.
+- Ringer notes: the first run failed twice on my spec (a `notes.md` the check
+  forbade; a test fixture whose alias contradicted a template name, which the worker
+  worked around by editing the schema). Fixed in the fixture and spec; patch rejected.
+- Open questions for step 2: where the narrator-facing allowance counts reset
+  for the opening (counted as a turn); how legacy `item_facts` creation of unknown
+  things is closed without breaking authored-name matching; the compatibility policy
+  for existing free `condition` strings.
 
 ## Recommendation and evidence
 
