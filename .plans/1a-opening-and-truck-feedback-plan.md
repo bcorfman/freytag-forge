@@ -7,29 +7,20 @@ Source baseline: `8da801206ca5e1708b0bce72e2c63e449cd3aae4`.
 
 ## Resume here
 
-Audit on 2026-11-02 (Brandon asked whether the plan was being followed): the work
-drifted from it in these ways. (1) Four probe rounds (about 280 billed calls)
-instead of the plan's "one small preregistration ... one arm per supported causal
-hypothesis"; arms for a reworded boarding question, a neutral action line and a
-truck place line were not hypotheses the plan named. (2) The scene-fixing guide's
-first rule (check the grounding guide, W1 to W14 and earlier scene fixes, and name
-what was checked before recommending a technique) was not done first. (3) Opening
-arms put the protagonist's start and the layout in SCENE bullets; the grounding
-guide says a scene text never says where a character is (use the start
-placement and `entry_text`) and that layout comes from placement `text`. So the
-opening probes tested an unsupported technique and their negative results do not
-speak to the supported one. (4) Step 3 was started before step 2, and this
-document was not kept current.
-
-Done: step 1; the boarding-turn prompt change (`e41878c3`, live-checked: seated,
-parked, laptop shown in 20 of 20); step 2 edits (committed in the step 2 record
-below, approved by Brandon, not yet live-checked). Next, with no new billed probe
-until Brandon approves a plan-scoped preregistration: the step 4 live replicates
-of the full transcript route (they also test the opening), then the open step 3
-items (surroundings on the boarding
-turn via the existing observation mechanism; the unboarded prose mismatch), then
-step 4 (byte-identical payload diff, three live replicates, countercases, full
-suite). Fixes stay generic: no command lists, no story names in the runtime.
+Step 4 live replicates are done (`replicates-prereg.md`, Result; commit `9abc76fb`):
+the truck turn is right in 9 of 9, the drawer and gap in 9 of 9, the park transition
+in 3 of 3, and the opening names the kitchen in 9 of 9. Still failing the acceptance
+table: (1) repeated "get in the truck" while seated writes an exit in 6 of 6 and
+committed it in 2; (2) invented glove-compartment handling contradicts card and
+laptop custody on the plug, take and re-board turns; (3) the opening ignores the
+layout text and both new situation sentences (layout 0 of 9, KMS new or strange
+0 of 9, specific reaction 0 of 9); (4) no reaction to Michelle's warning; (5)
+surroundings on the boarding turn (known gap). Next, per the scene-fixing guide
+(step 1 first, no new arm sweep): read the recorded prompts for the repeated-boarding
+turn, the plug turn and the opening beside `plot.md`, name what was checked, then
+propose one fix at a time with Brandon's approval. Full suite, save/load
+persistence and staging are still to do. Fixes stay generic: no command lists, no
+story names in the runtime.
 
 The user's current instruction supersedes the older continuity plan's
 approach-only expectation: **“head out to the truck” should seat Kristin in
