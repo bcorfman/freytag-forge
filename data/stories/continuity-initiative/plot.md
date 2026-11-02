@@ -52,7 +52,7 @@ The story is built for a maximum of 120 accepted player turns. A scene should no
 
 | Scene | Turn ceiling | Player-facing dramatic rhythm |
 |---|---:|---|
-| 1A | 13 | Search Michelle's house; form a theory; recover and interpret the card; evade a widening patrol search. |
+| 1A | 13 | Search Michelle's house and read what the kitchen shows; form a theory; recover and interpret the card; optionally test the broadcast and hear the neighbor; evade a widening patrol search. |
 | 1B | 13 | Work the dead drop; decide what Brandon is; test the route; escape a closing park. |
 | 1C | Choice closes at 5; recovery open until 8, then withdrawal | Inspect the terminal; observe the captives; choose copying the numbers or asking Brandon about the route; follow Brandon at greater risk if the window closes. |
 | 2A | 11 | Face the supervisor at the gate; prove the cooling fault is real; get inside cleanly or under watch. |
@@ -114,19 +114,25 @@ bridge_text:
 
 **Hidden canon:** Michelle hid a memory card for Kristin, taped beneath the drawer in Michelle's workstation. It stays hidden until Kristin finds it.
 
+**Established timeline:** Around midnight, once she knew she was being watched, Michelle carved Kristin's initials into the drawer with her letter opener and taped the card beneath it. At 4:07am she texted Kristin ("Come to the house. Don't call.") and began a recording. The recording ends when intruders enter. They take her tablet and work bag and miss the card. The break-in was staged from inside. The patrol that arrives later is a second pass for one item their inventory lists as "removable media, not recovered."
+
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** missing tablet and work bag; forced back door; KMS initials carved in drawer
+**Details:** missing tablet and work bag; splintered back door frame; deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar; lake photograph on the refrigerator; KMS initials carved in drawer
 
-Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
+Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but the house does not read as a burglary. It reads as a person's last hour:
 
 * Michelle's tablet and work bag are missing and not in their normal spots.
 * The chair at Shelly's workstation has been overturned.
-* The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.
+* A mug of tea sits on the workstation with the bag still in it, faintly warm. Michelle made it near the end.
+* Her reading glasses lie folded on a stack of manuscript pages marked in red pen. She never goes anywhere without them.
+* The wall calendar has Saturday circled in her handwriting: *K — lemon cake.* It is Kristin's birthday.
+* On the refrigerator, held by a pear-shaped magnet, a photograph of the two of them at a lake.
+* The back door shows signs of forced entry, but the splinters around the frame point outward, and the deadbolt is thrown. Nobody forced it from outside. The house is otherwise undisturbed, not burglarized.
 
 Kristin knows Michelle would not leave her kitchen like this.
 
-Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely. Kristin did not carve them.
+Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely. Kristin did not carve them. In college they hid notes beneath desk drawers, and Michelle has always known where Kristin would look.
 
 The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.
 
@@ -136,7 +142,7 @@ The drawer rides high in its frame. A thin gap beneath its lower edge is wide en
 
 Kristin finds Michelle's memory card taped beneath the drawer. She takes the card out to her truck and opens it on her laptop.
 
-The card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.
+The card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**. Michelle titled the folders after their old dorm, so only Kristin would read them as a message.
 
 The files show that private contractors constructed dozens of enormous “population stabilization centers” before the disappearances. Officially, the centers were designed as shelters for natural disasters and biological attacks.
 
@@ -146,7 +152,7 @@ Michelle’s notes contain one alarming sentence:
 
 ### Scene 1A.3 — The Interrupted Message
 
-**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe
+**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe; truck radio; looping emergency broadcast
 
 On the card, Kristin finds a damaged voice recording Michelle attempted to send shortly before she disappeared. In it, Michelle says government officials have been tracking her and that a planned “activation event” is imminent.
 
@@ -156,11 +162,15 @@ Before naming her source, Michelle hears someone enter the house. The recording 
 
 This becomes the story’s **inciting incident**. Kristin realizes Michelle’s disappearance may be connected to the national catastrophe.
 
+Kristin can test the warning with her own skills. The truck radio carries the same emergency statement every few minutes. If she listens and times two passes, it is the same ninety seconds, word for word. It is a loop, not a live voice. This is optional and costs two turns.
+
 ### Scene 1A.4 — The First Threat
 
-**Details:** federal emergency patrol; welfare-check officers; Michelle’s office search; Michelle's memory card; marked front gate; reflective tape
+**Details:** federal emergency patrol; Officer Reyes; welfare-check officers; Michelle’s office search; Michelle's memory card; Walt Pruitt at the fence; marked front gate; reflective tape
 
-An emergency patrol arrives at Michelle's home unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open the drawer. If Kristin has not taken the card, or takes it out of their sight, they find nothing. If she takes it while an officer is watching, the officer challenges her, and the patrol's suspicion follows her out of the house.
+Walt Pruitt, a retired bus driver in his seventies, stands at the fence between the yards. His wife is one of the missing. He saw county vans near 3:40 with no markings Kristin can read, and two men with a clipboard checking the addresses on the street. They skipped the house next door. He is not sure what he saw, and he says so. He will not repeat it to the patrol.
+
+An emergency patrol arrives at Michelle's home unusually quickly. Officer Reyes, young and polite, works from a printed list. He conducts a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. He studies the lake photograph on the refrigerator a beat too long. He does not open the drawer. If Kristin has not taken the card, or takes it out of his sight, he finds nothing. If she takes it while he is watching, he challenges her, and the patrol's suspicion follows her out of the house.
 
 After the patrol leaves, Kristin notices that one officer has quietly marked the front gate with a strip of reflective tape.
 
