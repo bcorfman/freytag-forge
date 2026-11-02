@@ -109,6 +109,7 @@
     "tests/test_drawer_avoidance_repro.py": 0.0,
     "tests/test_drawer_gap_nudge.py": 0.5,
     "tests/test_early_1a_photo_sentences.py": 0.26,
+    "tests/test_embellishments_capture.py": 2.22,
     "tests/test_enforce_drain_report.py": 0.06,
     "tests/test_enforce_report.py": 0.04,
     "tests/test_enforce_report_scope.py": 0.04,

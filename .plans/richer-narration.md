@@ -1,9 +1,9 @@
 # Richer narration with bounded invention
 
 Status: in progress, 2026-11-02. Branch `richer-narration-1`.
-Steps 1, 2a and 2b are done (see Progress). Resume here: step 2c (the
-`embellishments` reply field, typed boundary, pre-commit check, post-capture commit,
-opening) then 2d (refuse unknown ordinary things, route facet-matching conditions). This change spans all narration paths and
+Steps 1, 2a, 2b and 2c are done (see Progress). Resume here: step 2d (condition routing,
+slip measurement, and how unknown ordinary things are refused; see the finding in Progress),
+then step 3. This change spans all narration paths and
 all nine scenes; shared runtime must remain story-agnostic.
 
 ## Progress
@@ -25,16 +25,25 @@ all nine scenes; shared runtime must remain story-agnostic.
   Tests: `tests/test_incidental_package.py` (fixed acceptance file) plus the quick tier
   (3625 passed). New test files must be registered with
   `scripts/regen_shard_durations.py --missing-only` (it refuses while a test cannot import).
-- **Step 2c/2d not started.** Verified facts that shape them: the engine retries a rejected
-  narration inside `_turn_active`'s attempt loop (before commit), so embellishments are
-  checked there with `check_embellishments` on the candidate state, raising a
-  `ProposalValidationError` (retry, then fail closed); they are committed right after
-  `capture.after_commit` (after item facts and scene placements), rolling the turn back like
-  `observation_diverged` if they drift. `engine.opening()` runs once per session and
-  `web_demo` saves the state right after, so the opening applies its embellishments to that
-  state (decision 1A). Decisions taken 2026-11-02: 1A, 2A (refuse unknown ordinary things,
-  measure slips first, only when the package declares a policy), 3A (facet-matching phrases
-  become facets; existing conditions unchanged; new props take facets only).
+- **Step 2c done, `0c5a3a46` (after `9679062a`):** `embellishments` reply field accepted by
+  `ItemFactsProvider`, typed in `storygame/runtime/embellishments.py`, checked before commit inside
+  the narration retry loop (`embellishment_rejected`/`embellishment_malformed` retry, then fail
+  closed), committed after capture with a whole-turn rollback (`embellishment_diverged`), and applied
+  by `opening()`. Tests: `tests/test_embellishments_capture.py` (23, fixed acceptance file).
+  The worker's lines that cleared staged handoffs on any reply with embellishments were removed:
+  they dropped authored reveals; the test that seemed to need them used a narration that skipped a
+  scheduled handoff turn. A package with no policy rejects any embellishments. Prompts are untouched,
+  so live behavior is unchanged until step 3.
+- **Step 2d not started; blocked on a finding.** Unknown ordinary things are created inside
+  `apply_item_facts`, which runs in `capture.after_commit` (after the turn is applied), so a
+  refusal there cannot use the retry loop; only `preview_commit` runs capture before commit, and only
+  when an enforcing verifier is configured. Options: (a) measure first by recording per turn the
+  plain things the matcher created as new (no behavior change), (b) make the refusal part of the
+  preview path (needs enforcement on), (c) roll back and fail the turn post-commit. Condition routing
+  (3A) is independent of this and can go ahead: facet-matching phrases become facets, other
+  phrases stay conditions on existing things, new props take facets only.
+- Decisions taken 2026-11-02: 1A, 2A (refuse unknown ordinary things, measure slips first, only when
+  the package declares a policy), 3A.
 - Ringer notes: the first run failed twice on my spec (a `notes.md` the check
   forbade; a test fixture whose alias contradicted a template name, which the worker
   worked around by editing the schema). Fixed in the fixture and spec; patch rejected.
