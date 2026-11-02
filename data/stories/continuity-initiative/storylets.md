@@ -150,7 +150,7 @@ Each entry below is authoring data, not a player action menu.
 - Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
 
 **Pacing window**
-- earliest: `turn 3`
+- earliest: `turn 2`
 - target: `turn 6`
 - latest: `turn 11`
 
@@ -189,7 +189,7 @@ Each entry below is authoring data, not a player action menu.
 - Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
 
 **Pacing window**
-- earliest: `turn 2`
+- earliest: `turn 4`
 - target: `turn 5`
 - latest: `turn 10`
 

@@ -853,7 +853,7 @@ storylets:
     - fact_id: michelle_warning_known
       equals: true
     pacing:
-      earliest_turn: 3
+      earliest_turn: 2
       target_turn: 6
       latest_turn: 11
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
@@ -885,7 +885,7 @@ storylets:
     - fact_id: patrol_in_house
       equals: false
     pacing:
-      earliest_turn: 2
+      earliest_turn: 4
       target_turn: 5
       latest_turn: 10
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
