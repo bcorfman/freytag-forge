@@ -39,6 +39,15 @@ deadlines, and later plot connections intact unless a demonstrated defect
 requires a small mechanical correction. Do not solve prose misses by
 automatically earning a reveal or advancing a scene.
 
+**Scoring policy (Brandon, 2026-11-02):** invented details are acceptable
+unless they affect the main storyline. In probe criteria, "nothing invented"
+fails an arm only for a contradiction of canon or state, a pre-empted or revealed
+beat (patrol arrival, hidden card), or a collision with story names (a neighbor
+called Jenkins). Atmosphere such as a passing police car is recorded for
+information and does not fail an arm. Probes 1 to 3 were scored under the
+stricter rule; re-scoring under this policy changes no adoption decision (the
+failing arms also fail the laptop or surroundings criteria).
+
 **Permission checkpoint:** if the smallest viable fix requires an engine
 redesign or changes to plot connections with cascading consequences, stop
 before implementing that change. Present the concrete proposed diff/design,
