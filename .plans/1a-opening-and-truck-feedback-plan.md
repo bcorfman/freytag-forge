@@ -6,15 +6,17 @@ Source baseline: `8da801206ca5e1708b0bce72e2c63e449cd3aae4`.
 
 ## Resume here
 
-Steps 1 and the probes are done (`probe1-prereg.md`, `probe2-prereg.md` with
-Results). Winning so far: remove the raw movement phrase from a committed
-boarding turn and add a generic reach fact for the seat's vehicle (20 of 20 seated,
-parked, laptop shown). Still open: surroundings are not described on the boarding
-turn; the boarding question trades "out to" for "approach"; the opening needs
-concrete, observable material for layout, reaction and the initials. Next:
-preregister probe 3 on those three, then implement the winners as tested changes
-(reach fact as a `World` method in `packages/worldkeeper`, prompt projection in
-`storygame`). Fixes stay generic: no command lists, no story names in the runtime.
+Probes 1 to 3 are done (`probe1-prereg.md`, `probe2-prereg.md`, `probe3-prereg.md`,
+each with Results). Adopt: on a committed boarding turn, drop the raw movement
+phrase and add the generic reach fact for the seat's vehicle (20 of 20 seated,
+parked, laptop shown). Not adopted: the reworded boarding question (moves the
+failure to "approach"), the neutral "look around" action (invents police cars and
+neighbors), the truck place line on an unboarded turn, and interactable objects
+in the opening lines. Still open: surroundings on the boarding turn (try
+subtractive scene-text changes, not rules), opening layout/reaction/KMS, and the
+prose-state mismatch when boarding does not fire. Next: implement the adopted
+change as a tested change through Ringer, then preregister probe 4. Fixes stay
+generic: no command lists, no story names in the runtime.
 
 The user's current instruction supersedes the older continuity plan's
 approach-only expectation: **“head out to the truck” should seat Kristin in

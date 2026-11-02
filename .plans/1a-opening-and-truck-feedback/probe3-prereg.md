@@ -35,3 +35,24 @@ A winner becomes a tested change (a generic projection in `storygame` using the 
 
 ## Not covered
 Later turns, the interpretation turn, other models, hosted staging, and the classifier wording (probe 2 showed it only moves the failure).
+
+## Result (2026-11-02; 70 calls, 70 usable, no quota stop; plus a 5-call smoke)
+
+Rows: `bench/results/1a-opening-and-truck/probe3.json` (smoke: `probe3-smoke.json`). Harness `scripts/ringer/opening_truck/probe3.py`. Every reply was read by hand.
+
+**Q1, neutral action on the committed boarding turn (10 per cell).**
+
+| Command / arm | (a) seated, parked | (b) laptop shown | (c) surroundings named | (d) nothing invented | all four |
+| --- | --- | --- | --- | --- | --- |
+| head out / arm 3 ("looks around from the driver's seat") | 10 | 0 | 10 | 0 | **0** |
+| head out / arm 4 ("takes in what she can see and reach") | 10 | 7 | 7 | 3 would pass (3 reply with police car or lights) | **4** |
+| go to / arm 3 | 10 | 0 | 10 | 0 | **0** |
+| go to / arm 4 | 10 | 4 | 9 | 3 would pass | **3** |
+
+Arm 3 puts a police car in all 20 replies, an invented neighbor ("Mrs. Jenkins") in 11 of 20 and a piece of paper in 5 of 20. Arm 4 gets the laptop in more replies but invents a police car or flashing lights in 9 of 20, and once a wallet, phone and papers in the cab. Rule (8 of 10 on each command): **not met** by either arm. The cause is the same one found in earlier work: a "look around" action with sirens in the scene text invites invented police cars and neighbors. Seated and parked held in 40 of 40.
+
+**Q2, truck place line on an unboarded "go out to the truck" (10 per arm).** Control: engine start 1 of 10, "gets in" with no committed move 9 of 10. T1: engine start 3 of 10 (one also pulls out of the driveway), 7 of 10 are the one line "She walks out to the truck." Control did not reach the bar (3 of 10), and T1 was worse. **Not met; do not adopt.** The unboarded turn drives far less often than the boarded control did in probe 2 (3 of 8). The driving report is chiefly the boarded prompt; the unboarded risk is the prose saying she gets in while the state says she did not (9 of 10 control).
+
+**Q3, concrete opening O2 (10 replies).** Kitchen named 10 of 10 but layout 0, specific reaction 0, KMS fresh or strange 0. All 10 are the same turn: she looks at the phone, picks it up, finds it locked and tries guessing the password (10 of 10 act for her, 10 of 10 invent a lock). Putting a pickable object in the opening script hijacks it. **Not met; do not adopt O2.**
+
+**Conclusions.** (1) The boarding-turn fix to adopt is probe 2's arm 2 (raw command removed, reach fact added): 20 of 20 seated, parked, laptop shown. (2) Surroundings on that turn are not solved by an action line. The invented police cars and neighbors point at the scene text ("sirens carry from the next street") and the action, so the next lever is subtractive: what the location description gives the narrator. (3) An unboarded "get in" with no move is a prose-state mismatch that only a correct boarding decision removes. (4) For the opening, avoid interactable objects in the scene lines; kitchen and position lines helped (probe 2 O1: kitchen 8 of 10).
