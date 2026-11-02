@@ -1,0 +1,287 @@
+{
+ "opening": {
+  "narration": "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal. She found the back door forced and let herself in.\n\n[narration]",
+  "places": {
+   "kristin": "mcgehee_home",
+   "kristin_laptop": "truck_passenger_seat",
+   "kristin_truck": "outside_house",
+   "memory_card": "michelle_drawer",
+   "truck_driver_seat": "kristin_truck"
+  },
+  "prompts": [
+   {
+    "system": "You are the narrator of an interactive Adventure / Conspiracy Thriller roleplay. Follow the CHARACTERS, SCENE and CONSTRAINTS sections in the message that follows.\nMake the roleplay realistic, with realistic character behaviors, personalities and motivations.\nThe player is Kristin.\nThe player already read the entry text. Write only what comes next. Keep the same voice and tense.\nShow only the opening beat and what the SCENE section tells you.\nDo not repeat or reword the entry text.\nDo not make up clues, characters, or events.\nDo not solve the goal for the player.\nDo not act for the player. Do not offer choices.\nKeep selected_knowledge_ids empty.\nDo not say anything that goes against the entry text or the beat details.\nDo not make up new objects, clues, or things inside containers.\nNever write IDs or story bookkeeping into the prose.\nEach thing starts at the place THINGS gives it.\nDescribe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.\nWrite each paragraph as one segment and return only JSON in this form:\n{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"Kristin\",\"condition\":[\"lit\"]},\"Kristin\":{\"place\":\"porch\"}}}\nEvery time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts. Use where it is when the story ends.\nWhen Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is when the story ends.\nGive only what changed. For \"place\", give the name of the thing or place where it is now. If a person holds it, give \"held_by\" with that person's name. Use \"condition\" for up to two short phrases.\nExample: if Kristin picks up a lantern and lights it, the lantern is {\"held_by\": \"Kristin\", \"condition\": [\"lit\"]}.\nIf a thing is under something, add \"under\": true, like {\"place\": \"table\", \"under\": true}.",
+    "user": "CHARACTERS:\n- Kristin Schweitzer is a 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.\n- Dr. Michelle McGehee is a 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her \"Shelly\", while everyone else addresses her as Dr. McGehee.\n\nSCENE:\n- The scene takes place at Michelle's house.\n- Kristin Schweitzer's objective is to find evidence of Michelle's disappearance.\n- Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal. She found the back door forced and let herself in.\n- missing tablet and work bag\n- forced back door\n- KMS initials carved in drawer\n- Michelle's home is otherwise untouched, but the back door has been forced. The lock is splintered out of the wood. Michelle is missing, and her tablet and work bag are gone. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it.\n- What presses on Kristin now: Find evidence of Michelle's disappearance\n- Michelle is missing.\n\nTHINGS:\n- Kristin. Place: Michelle's house.\n\nCONSTRAINTS:\n- Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop.\n- Michelle's phone stores only Michelle's things. Kristin's laptop stores only Kristin's things."
+   }
+  ]
+ },
+ "turns": [
+  {
+   "after": {
+    "kristin": "mcgehee_home",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "michelle_drawer",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "asked": [
+    {
+     "answers": {
+      "relocates_thing": 0.0
+     },
+     "command": "open the drawer"
+    }
+   ],
+   "before": {
+    "kristin": "mcgehee_home",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "michelle_drawer",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "input": "open the drawer",
+   "narration": "[narration] The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers.",
+   "prompts": [
+    {
+     "system": "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {\"refers\": [\"name\"], \"same_as\": {\"new name\": \"name\"}, \"kind\": {\"new name\": \"thing\"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like \"the old lamp\" for \"Grandma's lamp\". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For \"Ask the cook who took the key.\" list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or \"new\" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like \"the corner of the kitchen\" for kitchen, give that place. A plain word like \"corridor\", \"hall\" or \"room\" is a spot in the place where PLAYER CHARACTER is now, so give that place. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give \"new\". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is \"new\". Copy names from THINGS exactly. In kind, give one word for each name you called \"new\". Say \"place\" for a room, hall or other spot a person can walk into. Say \"person\" for one person. Say \"group\" for a group of people, like \"prisoners\". Say \"thing\" for anything else, like a box or a console.",
+     "user": "COMMAND:\n- open the drawer\n\nPLAYER CHARACTER:\n- Kristin\n\nTHINGS:\n- back door. Place: kitchen.\n- house gate. Place: at the front of the house.\n- Kristin. Place: Michelle's house.\n- Kristin's laptop. Place: on the passenger seat of Kristin's truck.\n- Kristin's truck. Place: outside the house.\n- drawer. Place: in Michelle's workstation.\n- binder clips. Place: drawer.\n- pens. Place: drawer.\n- spare batteries. Place: drawer.\n- stapler. Place: drawer.\n- Michelle's phone. Place: on the kitchen floor.\n- workstation. Place: kitchen.\n- driver's seat. Place: Kristin's truck.\n- passenger seat. Place: Kristin's truck.\n- workstation chair. Place: at Michelle's workstation.\n\nNEW NAMES:\n"
+    },
+    {
+     "system": "You are the narrator of an interactive Adventure / Conspiracy Thriller roleplay. Follow the CHARACTERS, SCENE and CONSTRAINTS sections in the message that follows.\nMake the roleplay realistic, with realistic character behaviors, personalities and motivations.\nThe player is Kristin.\nShow what happens right after the player acts.\nUse only what the SCENE section tells you.\nUse the places and details the story gives you.\nEach thing starts at the place THINGS gives it.\nFinish each action the player gives.\nA thing the player holds is in their hand until the story puts it away.\nWhen the player gives a thing to someone, that person takes it.\nWhen the player talks to someone, that person answers.\nOnly show Kristin doing what the player said.\nDo not make up new objects, clues, or things inside containers.\nEverything in the SCENE section is true, but the player finds a clue only when their action reaches it.\nA character may only say what you were told that character can say.\nNever write IDs or story bookkeeping into the prose.\nDo not copy sentences from the SCENE section.\nDo not say anything that goes against the SCENE section.\nDo not repeat the request's labels back.\nDescribe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.\nWrite each paragraph as one segment and return only JSON in this form:\n{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"Kristin\",\"condition\":[\"lit\"]},\"Kristin\":{\"place\":\"porch\"}}}\nEvery time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts. Use where it is when the story ends.\nWhen Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is when the story ends.\nKristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.\nGive only what changed. For \"place\", give the name of the thing or place where it is now. If a person holds it, give \"held_by\" with that person's name. Use \"condition\" for up to two short phrases.\nExample: if Kristin picks up a lantern and lights it, the lantern is {\"held_by\": \"Kristin\", \"condition\": [\"lit\"]}.\nIf a thing is under something, add \"under\": true, like {\"place\": \"table\", \"under\": true}.",
+     "user": "CHARACTERS:\n- Kristin Schweitzer is a 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.\n- Dr. Michelle McGehee is a 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her \"Shelly\", while everyone else addresses her as Dr. McGehee.\n\nSCENE:\n- Michelle's home is otherwise untouched, but the back door has been forced. The lock is splintered out of the wood. Michelle is missing, and her tablet and work bag are gone. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it.\n- What presses on Kristin now: Find evidence of Michelle's disappearance\n- missing tablet and work bag\n- forced back door\n- KMS initials carved in drawer\n- Michelle is missing.\n\nTHINGS:\n- Kristin. Place: Michelle's house.\n\nCONSTRAINTS:\n- Right after your story, the game will add this: The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers.\n- Write only what leads up to it. Do not have Kristin find anything else.\n- Say who owns a thing the first time you name it: Michelle's phone, Kristin's laptop.\n- Michelle's phone stores only Michelle's things. Kristin's laptop stores only Kristin's things.\n\nPLAYER:\n- Kristin. Place: Michelle's house.\n- open the drawer"
+    }
+   ],
+   "scene": "1A"
+  },
+  {
+   "after": {
+    "kristin": "mcgehee_home",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "kristin",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "asked": [],
+   "before": {
+    "kristin": "mcgehee_home",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "michelle_drawer",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "input": "feel in the gap",
+   "narration": "[narration] Kristin's fingers find something taped beneath the drawer. She peels it loose. It is Michelle's memory card, and she pockets it. Her laptop is still out in her truck.",
+   "prompts": [
+    {
+     "system": "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {\"refers\": [\"name\"], \"same_as\": {\"new name\": \"name\"}, \"kind\": {\"new name\": \"thing\"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like \"the old lamp\" for \"Grandma's lamp\". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For \"Ask the cook who took the key.\" list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or \"new\" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like \"the corner of the kitchen\" for kitchen, give that place. A plain word like \"corridor\", \"hall\" or \"room\" is a spot in the place where PLAYER CHARACTER is now, so give that place. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give \"new\". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is \"new\". Copy names from THINGS exactly. In kind, give one word for each name you called \"new\". Say \"place\" for a room, hall or other spot a person can walk into. Say \"person\" for one person. Say \"group\" for a group of people, like \"prisoners\". Say \"thing\" for anything else, like a box or a console.",
+     "user": "COMMAND:\n- feel in the gap\n\nPLAYER CHARACTER:\n- Kristin\n\nTHINGS:\n- back door. Place: kitchen.\n- house gate. Place: at the front of the house.\n- Kristin. Place: Michelle's house.\n- Kristin's laptop. Place: on the passenger seat of Kristin's truck.\n- Kristin's truck. Place: outside the house.\n- drawer. Place: in Michelle's workstation.\n- binder clips. Place: drawer.\n- pens. Place: drawer.\n- spare batteries. Place: drawer.\n- stapler. Place: drawer.\n- Michelle's phone. Place: on the kitchen floor.\n- workstation. Place: kitchen.\n- driver's seat. Place: Kristin's truck.\n- passenger seat. Place: Kristin's truck.\n- workstation chair. Place: at Michelle's workstation.\n\nNEW NAMES:\n"
+    },
+    {
+     "system": "You are the narrator of an interactive Adventure / Conspiracy Thriller roleplay. Follow the CHARACTERS, SCENE and CONSTRAINTS sections in the message that follows.\nMake the roleplay realistic, with realistic character behaviors, personalities and motivations.\nThe player is Kristin.\nShow what happens right after the player acts.\nUse only what the SCENE section tells you.\nUse the places and details the story gives you.\nEach thing starts at the place THINGS gives it.\nFinish each action the player gives.\nA thing the player holds is in their hand until the story puts it away.\nWhen the player gives a thing to someone, that person takes it.\nWhen the player talks to someone, that person answers.\nOnly show Kristin doing what the player said.\nDo not make up new objects, clues, or things inside containers.\nEverything in the SCENE section is true, but the player finds a clue only when their action reaches it.\nA character may only say what you were told that character can say.\nNever write IDs or story bookkeeping into the prose.\nDo not copy sentences from the SCENE section.\nDo not say anything that goes against the SCENE section.\nDo not repeat the request's labels back.\nDescribe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.\nWrite each paragraph as one segment and return only JSON in this form:\n{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"Kristin\",\"condition\":[\"lit\"]},\"Kristin\":{\"place\":\"porch\"}}}\nEvery time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts. Use where it is when the story ends.\nWhen Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is when the story ends.\nKristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.\nGive only what changed. For \"place\", give the name of the thing or place where it is now. If a person holds it, give \"held_by\" with that person's name. Use \"condition\" for up to two short phrases.\nExample: if Kristin picks up a lantern and lights it, the lantern is {\"held_by\": \"Kristin\", \"condition\": [\"lit\"]}.\nIf a thing is under something, add \"under\": true, like {\"place\": \"table\", \"under\": true}.",
+     "user": "CHARACTERS:\n- Kristin Schweitzer is a 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.\n- Dr. Michelle McGehee is a 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her \"Shelly\", while everyone else addresses her as Dr. McGehee.\n\nSCENE:\n- Michelle's home is otherwise untouched, but the back door has been forced. The lock is splintered out of the wood. Michelle is missing, and her tablet and work bag are gone. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it.\n- What presses on Kristin now: Find evidence of Michelle's disappearance\n- missing tablet and work bag\n- forced back door\n- KMS initials carved in drawer\n- Kristin opens the drawer and is pointed toward the thin gap beneath its lower edge.\n- Kristin looks over the drawer and is pointed toward the thin gap beneath its lower edge.\n- Michelle is missing.\n\nTHINGS:\n- Kristin. Place: Michelle's house.\n\nCONSTRAINTS:\n- Right after your story, the game will add this: Kristin's fingers find something taped beneath the drawer. She peels it loose. It is Michelle's memory card, and she pockets it. Her laptop is still out in her truck.\n- Write only what leads up to it. Do not have Kristin find anything else.\n- Say who owns a thing the first time you name it: Michelle's memory card, Michelle's phone, Kristin's laptop.\n- Michelle's memory card stores only Michelle's things. Michelle's phone stores only Michelle's things. Kristin's laptop stores only Kristin's things.\n\nPLAYER:\n- Kristin. Place: Michelle's house.\n- feel in the gap (meaning the drawer)"
+    }
+   ],
+   "scene": "1A"
+  },
+  {
+   "after": {
+    "kristin": "truck_driver_seat",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "kristin",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "asked": [
+    {
+     "answers": {
+      "boards_vehicle": 1.0,
+      "searches_underneath": 0.0
+     },
+     "command": "head out to the truck"
+    },
+    {
+     "answers": {
+      "only_boards_vehicle": 1.0
+     },
+     "command": "head out to the truck"
+    }
+   ],
+   "before": {
+    "kristin": "mcgehee_home",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "kristin",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "input": "head out to the truck",
+   "narration": "[narration]",
+   "prompts": [
+    {
+     "system": "You are the narrator of an interactive Adventure / Conspiracy Thriller roleplay. Follow the CHARACTERS, SCENE and CONSTRAINTS sections in the message that follows.\nMake the roleplay realistic, with realistic character behaviors, personalities and motivations.\nThe player is Kristin.\nShow what happens right after the player acts.\nUse only what the SCENE section tells you.\nUse the places and details the story gives you.\nEach thing starts at the place THINGS gives it.\nFinish each action the player gives.\nA thing the player holds is in their hand until the story puts it away.\nWhen the player gives a thing to someone, that person takes it.\nWhen the player talks to someone, that person answers.\nOnly show Kristin doing what the player said.\nDo not make up new objects, clues, or things inside containers.\nEverything in the SCENE section is true, but the player finds a clue only when their action reaches it.\nA character may only say what you were told that character can say.\nNever write IDs or story bookkeeping into the prose.\nDo not copy sentences from the SCENE section.\nDo not say anything that goes against the SCENE section.\nDo not repeat the request's labels back.\nDescribe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.\nWrite each paragraph as one segment and return only JSON in this form:\n{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"Kristin\",\"condition\":[\"lit\"]},\"Kristin\":{\"place\":\"porch\"}}}\nEvery time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts. Use where it is when the story ends.\nWhen Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is when the story ends.\nKristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.\nKristin stays sitting in the driver's seat.\nGive only what changed. For \"place\", give the name of the thing or place where it is now. If a person holds it, give \"held_by\" with that person's name. Use \"condition\" for up to two short phrases.\nExample: if Kristin picks up a lantern and lights it, the lantern is {\"held_by\": \"Kristin\", \"condition\": [\"lit\"]}.\nIf a thing is under something, add \"under\": true, like {\"place\": \"table\", \"under\": true}.",
+     "user": "CHARACTERS:\n- Kristin Schweitzer is a 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.\n- Dr. Michelle McGehee is a 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her \"Shelly\", while everyone else addresses her as Dr. McGehee.\n\nSCENE:\n- Kristin is in the driver's seat of Kristin's truck, outside the house.\n- Michelle's house stands behind a low gate. Kristin's truck is parked at the curb, and sirens carry from the next street.\n- What presses on Kristin now: Find evidence of Michelle's disappearance\n- Michelle is missing.\n\nTHINGS:\n- Kristin. Place: driver's seat.\n- Kristin's laptop. Place: passenger seat.\n- Michelle's memory card. Held by: Kristin.\n\nCONSTRAINTS:\n- Show these in your reply: Kristin's laptop, Michelle's memory card.\n- In grounding_ids, use only an ID you were given as known, or the one candidate you picked.\n- Do not put a candidate's ID in grounding_ids unless you picked it.\n- When one or more offered candidates match the player's action, randomly pick one candidate from that list and put its ID in selected_knowledge_ids.\n- This turn has no candidates. Leave selected_knowledge_ids empty.\n\nPLAYER:\n- Kristin. Place: driver's seat.\n- head out to the truck\n- Already done: Kristin sat down in the driver's seat."
+    }
+   ],
+   "scene": "1A"
+  },
+  {
+   "after": {
+    "kristin": "truck_driver_seat",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "kristin",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "asked": [
+    {
+     "answers": {
+      "needs_to_stand": 0.0
+     },
+     "command": "look for the laptop"
+    },
+    {
+     "answers": {
+      "moves_thing": 0.0
+     },
+     "command": "look for the laptop"
+    },
+    {
+     "answers": {
+      "boards_vehicle": 0.0
+     },
+     "command": "look for the laptop"
+    },
+    {
+     "answers": {
+      "uses_thing": 0.0
+     },
+     "command": "look for the laptop"
+    }
+   ],
+   "before": {
+    "kristin": "truck_driver_seat",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "kristin",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "input": "look for the laptop",
+   "narration": "[narration] A federal emergency patrol pulls up outside Michelle's house. Two officers get out. One walks to the front door. The other looks over the street.",
+   "prompts": [
+    {
+     "system": "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {\"refers\": [\"name\"], \"same_as\": {\"new name\": \"name\"}, \"kind\": {\"new name\": \"thing\"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like \"the old lamp\" for \"Grandma's lamp\". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For \"Ask the cook who took the key.\" list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or \"new\" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like \"the corner of the kitchen\" for kitchen, give that place. A plain word like \"corridor\", \"hall\" or \"room\" is a spot in the place where PLAYER CHARACTER is now, so give that place. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give \"new\". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is \"new\". Copy names from THINGS exactly. In kind, give one word for each name you called \"new\". Say \"place\" for a room, hall or other spot a person can walk into. Say \"person\" for one person. Say \"group\" for a group of people, like \"prisoners\". Say \"thing\" for anything else, like a box or a console.",
+     "user": "COMMAND:\n- look for the laptop\n\nPLAYER CHARACTER:\n- Kristin\n\nTHINGS:\n- back door. Place: kitchen.\n- house gate. Place: at the front of the house.\n- Kristin. Place: driver's seat.\n- Kristin's laptop. Place: on the passenger seat of Kristin's truck.\n- Kristin's truck. Place: outside the house.\n- Michelle's memory card. Place: Kristin.\n- drawer. Place: in Michelle's workstation.\n- binder clips. Place: drawer.\n- pens. Place: drawer.\n- spare batteries. Place: drawer.\n- stapler. Place: drawer.\n- Michelle's phone. Place: on the kitchen floor.\n- workstation. Place: kitchen.\n- driver's seat. Place: Kristin's truck.\n- passenger seat. Place: Kristin's truck.\n- workstation chair. Place: at Michelle's workstation.\n\nNEW NAMES:\n"
+    },
+    {
+     "system": "You are the narrator of an interactive Adventure / Conspiracy Thriller roleplay. Follow the CHARACTERS, SCENE and CONSTRAINTS sections in the message that follows.\nMake the roleplay realistic, with realistic character behaviors, personalities and motivations.\nThe player is Kristin.\nShow what happens right after the player acts.\nUse only what the SCENE section tells you.\nUse the places and details the story gives you.\nEach thing starts at the place THINGS gives it.\nFinish each action the player gives.\nA thing the player holds is in their hand until the story puts it away.\nWhen the player gives a thing to someone, that person takes it.\nWhen the player talks to someone, that person answers.\nOnly show Kristin doing what the player said.\nDo not make up new objects, clues, or things inside containers.\nEverything in the SCENE section is true, but the player finds a clue only when their action reaches it.\nA character may only say what you were told that character can say.\nNever write IDs or story bookkeeping into the prose.\nDo not copy sentences from the SCENE section.\nDo not say anything that goes against the SCENE section.\nDo not repeat the request's labels back.\nDescribe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.\nWrite each paragraph as one segment and return only JSON in this form:\n{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"Kristin\",\"condition\":[\"lit\"]},\"Kristin\":{\"place\":\"porch\"}}}\nEvery time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts. Use where it is when the story ends.\nWhen Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is when the story ends.\nKristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.\nKristin stays sitting in the driver's seat.\nGive only what changed. For \"place\", give the name of the thing or place where it is now. If a person holds it, give \"held_by\" with that person's name. Use \"condition\" for up to two short phrases.\nExample: if Kristin picks up a lantern and lights it, the lantern is {\"held_by\": \"Kristin\", \"condition\": [\"lit\"]}.\nIf a thing is under something, add \"under\": true, like {\"place\": \"table\", \"under\": true}.",
+     "user": "CHARACTERS:\n- Kristin Schweitzer is a 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.\n- Dr. Michelle McGehee is a 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her \"Shelly\", while everyone else addresses her as Dr. McGehee.\n\nSCENE:\n- Kristin is in the driver's seat of Kristin's truck, outside the house.\n- Michelle's house stands behind a low gate. Kristin's truck is parked at the curb, and sirens carry from the next street.\n- What presses on Kristin now: Find evidence of Michelle's disappearance\n- Michelle is missing.\n\nTHINGS:\n- Kristin. Place: driver's seat.\n- Michelle's memory card. Held by: Kristin.\n\nCONSTRAINTS:\n- In grounding_ids, use only an ID you were given as known, or the one candidate you picked.\n- Do not put a candidate's ID in grounding_ids unless you picked it.\n- When one or more offered candidates match the player's action, randomly pick one candidate from that list and put its ID in selected_knowledge_ids.\n- This turn has no candidates. Leave selected_knowledge_ids empty.\n\nPLAYER:\n- Kristin. Place: driver's seat.\n- Michelle's memory card. Held by: Kristin.\n- look for the laptop"
+    }
+   ],
+   "scene": "1A"
+  },
+  {
+   "after": {
+    "kristin": "truck_driver_seat",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "kristin",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "asked": [
+    {
+     "answers": {
+      "boards_vehicle": 1.0,
+      "searches_underneath": 0.0
+     },
+     "command": "get in the truck"
+    },
+    {
+     "answers": {
+      "needs_to_stand": 0.0
+     },
+     "command": "get in the truck"
+    },
+    {
+     "answers": {
+      "only_boards_vehicle": 1.0
+     },
+     "command": "get in the truck"
+    }
+   ],
+   "before": {
+    "kristin": "truck_driver_seat",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "kristin",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "input": "get in the truck",
+   "narration": "[narration] The front door opens. An officer walks in and heads straight for Michelle's workstation.",
+   "prompts": [
+    {
+     "system": "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {\"refers\": [\"name\"], \"same_as\": {\"new name\": \"name\"}, \"kind\": {\"new name\": \"thing\"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like \"the old lamp\" for \"Grandma's lamp\". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For \"Ask the cook who took the key.\" list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or \"new\" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like \"the corner of the kitchen\" for kitchen, give that place. A plain word like \"corridor\", \"hall\" or \"room\" is a spot in the place where PLAYER CHARACTER is now, so give that place. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give \"new\". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is \"new\". Copy names from THINGS exactly. In kind, give one word for each name you called \"new\". Say \"place\" for a room, hall or other spot a person can walk into. Say \"person\" for one person. Say \"group\" for a group of people, like \"prisoners\". Say \"thing\" for anything else, like a box or a console.",
+     "user": "COMMAND:\n- get in the truck\n\nPLAYER CHARACTER:\n- Kristin\n\nTHINGS:\n- back door. Place: kitchen.\n- house gate. Place: at the front of the house.\n- Kristin. Place: driver's seat.\n- Kristin's laptop. Place: on the passenger seat of Kristin's truck.\n- Kristin's truck. Place: outside the house.\n- Michelle's memory card. Place: Kristin.\n- drawer. Place: in Michelle's workstation.\n- binder clips. Place: drawer.\n- pens. Place: drawer.\n- spare batteries. Place: drawer.\n- stapler. Place: drawer.\n- Michelle's phone. Place: on the kitchen floor.\n- workstation. Place: kitchen.\n- driver's seat. Place: Kristin's truck.\n- passenger seat. Place: Kristin's truck.\n- workstation chair. Place: at Michelle's workstation.\n\nNEW NAMES:\n"
+    },
+    {
+     "system": "You are the narrator of an interactive Adventure / Conspiracy Thriller roleplay. Follow the CHARACTERS, SCENE and CONSTRAINTS sections in the message that follows.\nMake the roleplay realistic, with realistic character behaviors, personalities and motivations.\nThe player is Kristin.\nShow what happens right after the player acts.\nUse only what the SCENE section tells you.\nUse the places and details the story gives you.\nEach thing starts at the place THINGS gives it.\nFinish each action the player gives.\nA thing the player holds is in their hand until the story puts it away.\nWhen the player gives a thing to someone, that person takes it.\nWhen the player talks to someone, that person answers.\nOnly show Kristin doing what the player said.\nDo not make up new objects, clues, or things inside containers.\nEverything in the SCENE section is true, but the player finds a clue only when their action reaches it.\nA character may only say what you were told that character can say.\nNever write IDs or story bookkeeping into the prose.\nDo not copy sentences from the SCENE section.\nDo not say anything that goes against the SCENE section.\nDo not repeat the request's labels back.\nDescribe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.\nWrite each paragraph as one segment and return only JSON in this form:\n{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"Kristin\",\"condition\":[\"lit\"]},\"Kristin\":{\"place\":\"porch\"}}}\nEvery time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts. Use where it is when the story ends.\nWhen Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is when the story ends.\nKristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.\nKristin stays sitting in the driver's seat.\nGive only what changed. For \"place\", give the name of the thing or place where it is now. If a person holds it, give \"held_by\" with that person's name. Use \"condition\" for up to two short phrases.\nExample: if Kristin picks up a lantern and lights it, the lantern is {\"held_by\": \"Kristin\", \"condition\": [\"lit\"]}.\nIf a thing is under something, add \"under\": true, like {\"place\": \"table\", \"under\": true}.",
+     "user": "CHARACTERS:\n- Kristin Schweitzer is a 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.\n- Dr. Michelle McGehee is a 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her \"Shelly\", while everyone else addresses her as Dr. McGehee.\n\nSCENE:\n- Kristin is in the driver's seat of Kristin's truck, outside the house.\n- Michelle's house stands behind a low gate. Kristin's truck is parked at the curb, and sirens carry from the next street.\n- What presses on Kristin now: Find evidence of Michelle's disappearance\n- Michelle is missing.\n\nTHINGS:\n- Kristin. Place: driver's seat.\n- Michelle's memory card. Held by: Kristin.\n- Kristin's laptop. Place: passenger seat.\n\nCONSTRAINTS:\n- Show these in your reply: Kristin's laptop, Michelle's memory card.\n- In grounding_ids, use only an ID you were given as known, or the one candidate you picked.\n- Do not put a candidate's ID in grounding_ids unless you picked it.\n- When one or more offered candidates match the player's action, randomly pick one candidate from that list and put its ID in selected_knowledge_ids.\n- This turn has no candidates. Leave selected_knowledge_ids empty.\n\nPLAYER:\n- Kristin. Place: driver's seat.\n- Michelle's memory card. Held by: Kristin.\n- get in the truck"
+    }
+   ],
+   "scene": "1A"
+  },
+  {
+   "after": {
+    "kristin": "truck_driver_seat",
+    "kristin_laptop": "kristin",
+    "kristin_truck": "outside_house",
+    "memory_card": "kristin",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "asked": [
+    {
+     "answers": {
+      "needs_to_stand": 0.0
+     },
+     "command": "plug the memory card into the laptop"
+    },
+    {
+     "answers": {
+      "moves_thing": 0.0
+     },
+     "command": "plug the memory card into the laptop"
+    },
+    {
+     "answers": {
+      "boards_vehicle": 0.0
+     },
+     "command": "plug the memory card into the laptop"
+    },
+    {
+     "answers": {
+      "uses_thing": 1.0
+     },
+     "command": "plug the memory card into the laptop"
+    }
+   ],
+   "before": {
+    "kristin": "truck_driver_seat",
+    "kristin_laptop": "truck_passenger_seat",
+    "kristin_truck": "outside_house",
+    "memory_card": "kristin",
+    "truck_driver_seat": "kristin_truck"
+   },
+   "input": "plug the memory card into the laptop",
+   "narration": "[narration] The card holds Michelle's saved files and a damaged recording. The recording warns, \"Do not trust the emergency broadcasts.\" The files name the Continuity Initiative and point to a dead drop at a bench in the park.",
+   "prompts": [
+    {
+     "system": "You match names in a story game. COMMAND is what the player typed. PLAYER CHARACTER is who the player plays. THINGS lists the names the game keeps track of, some with the place they are now. NEW NAMES lists names the storyteller used. Return only JSON like {\"refers\": [\"name\"], \"same_as\": {\"new name\": \"name\"}, \"kind\": {\"new name\": \"thing\"}}. In refers, list each name from THINGS that the command talks about, even when the command uses other words, like \"the old lamp\" for \"Grandma's lamp\". List only the things the command itself names or points to. Do not list a thing because it is nearby. Do not list a thing because someone holds it. For \"Ask the cook who took the key.\" list only the cook and the key. In same_as, give each name in NEW NAMES the name from THINGS that is the very same object, or \"new\" if it is a different object. A thing that is in, on or under another thing is a different object, like a key in a box. If a new name is a spot in a place from THINGS, like \"the corner of the kitchen\" for kitchen, give that place. A plain word like \"corridor\", \"hall\" or \"room\" is a spot in the place where PLAYER CHARACTER is now, so give that place. If a new name is a place that is not in THINGS and is not a spot in a place from THINGS, give \"new\". Give a person the name of someone in THINGS only when it is that same person. A guard or a prisoner who is not in THINGS is \"new\". Copy names from THINGS exactly. In kind, give one word for each name you called \"new\". Say \"place\" for a room, hall or other spot a person can walk into. Say \"person\" for one person. Say \"group\" for a group of people, like \"prisoners\". Say \"thing\" for anything else, like a box or a console.",
+     "user": "COMMAND:\n- plug the memory card into the laptop\n\nPLAYER CHARACTER:\n- Kristin\n\nTHINGS:\n- back door. Place: kitchen.\n- house gate. Place: at the front of the house.\n- Kristin. Place: driver's seat.\n- Kristin's laptop. Place: Kristin.\n- Kristin's truck. Place: outside the house.\n- Michelle's memory card. Place: Kristin.\n- drawer. Place: in Michelle's workstation.\n- binder clips. Place: drawer.\n- pens. Place: drawer.\n- spare batteries. Place: drawer.\n- stapler. Place: drawer.\n- Michelle's phone. Place: on the kitchen floor.\n- workstation. Place: kitchen.\n- driver's seat. Place: Kristin's truck.\n- passenger seat. Place: Kristin's truck.\n- workstation chair. Place: at Michelle's workstation.\n\nNEW NAMES:\n"
+    },
+    {
+     "system": "You are the narrator of an interactive Adventure / Conspiracy Thriller roleplay. Follow the CHARACTERS, SCENE and CONSTRAINTS sections in the message that follows.\nMake the roleplay realistic, with realistic character behaviors, personalities and motivations.\nThe player is Kristin.\nShow what happens right after the player acts.\nUse only what the SCENE section tells you.\nUse the places and details the story gives you.\nEach thing starts at the place THINGS gives it.\nFinish each action the player gives.\nA thing the player holds is in their hand until the story puts it away.\nWhen the player gives a thing to someone, that person takes it.\nWhen the player talks to someone, that person answers.\nOnly show Kristin doing what the player said.\nDo not make up new objects, clues, or things inside containers.\nEverything in the SCENE section is true, but the player finds a clue only when their action reaches it.\nA character may only say what you were told that character can say.\nNever write IDs or story bookkeeping into the prose.\nDo not copy sentences from the SCENE section.\nDo not say anything that goes against the SCENE section.\nDo not repeat the request's labels back.\nDescribe each scene in 2-3 paragraphs of 2-3 short sentences, then stop immediately.\nEvery paragraph uses the kind narration. Put spoken words inside the paragraph, in quotation marks. Do not use any other kind.\nWrite each paragraph as one segment and return only JSON in this form:\n{\"segments\":[{\"kind\":\"narration\",\"text\":\"She picks up the lantern. She carries it out to the porch.\"},{\"kind\":\"narration\",\"text\":\"She lights it with a match, and it glows with a warm light.\"}],\"selected_knowledge_ids\":[],\"item_facts\":{\"lantern\":{\"held_by\":\"Kristin\",\"condition\":[\"lit\"]},\"Kristin\":{\"place\":\"porch\"}}}\nEvery time your story moves or changes a thing, or puts a new thing in a place, add that thing to item_facts. Use where it is when the story ends.\nWhen Kristin goes to a new place, add Kristin to item_facts with the place where Kristin is when the story ends.\nKristin starts this turn at the place PLAYER gives. Do not have Kristin walk there again.\nKristin stays sitting in the driver's seat.\nGive only what changed. For \"place\", give the name of the thing or place where it is now. If a person holds it, give \"held_by\" with that person's name. Use \"condition\" for up to two short phrases.\nExample: if Kristin picks up a lantern and lights it, the lantern is {\"held_by\": \"Kristin\", \"condition\": [\"lit\"]}.\nIf a thing is under something, add \"under\": true, like {\"place\": \"table\", \"under\": true}.",
+     "user": "CHARACTERS:\n- Kristin Schweitzer is a 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.\n- Dr. Michelle McGehee is a 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her \"Shelly\", while everyone else addresses her as Dr. McGehee.\n\nSCENE:\n- Kristin is in the driver's seat of Kristin's truck, outside the house.\n- Michelle's house stands behind a low gate. Kristin's truck is parked at the curb, and sirens carry from the next street.\n- What presses on Kristin now: Find evidence of Michelle's disappearance\n- Michelle's memory card\n- Kristin's laptop in her truck\n- Continuity Initiative files\n- population stabilization centers\n- Michelle\u2019s research notes\n- voice recording\n- government tracking\n- imminent activation event\n- someone entering house\n- Michelle whispers\n- national catastrophe\n- Michelle is missing.\n\nTHINGS:\n- Kristin. Place: driver's seat.\n- Michelle's memory card. Held by: Kristin.\n\nCONSTRAINTS:\n- Right after your story, the game will add this: The card holds Michelle's saved files and a damaged recording. The recording warns, \"Do not trust the emergency broadcasts.\" The files name the Continuity Initiative and point to a dead drop at a bench in the park.\n- Write only what leads up to it. Do not have Kristin find anything else.\n\nPLAYER:\n- Kristin. Place: driver's seat.\n- Michelle's memory card. Held by: Kristin.\n- Just before this: Kristin picked up her laptop.\n- plug the memory card into the laptop"
+    }
+   ],
+   "scene": "1A"
+  }
+ ]
+}
