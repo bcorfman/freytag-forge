@@ -506,7 +506,7 @@ knowledge:
   action_evidence:
   - [talk, ask, speak, tell]
   - [Walt, neighbor, Pruitt]
-  - [saw, before dawn, "3:40", vans, clipboard]
+  earn_when: talks to Walt Pruitt or asks the neighbor
   delivery_text: "Walt Pruitt stands at the fence with his hands in his jacket. His wife is one of the missing, and he has not slept. Near 3:40 he saw two vans with no markings he could read, and two men with a clipboard checking the addresses up and down the street. They skipped the house next door. He says he is not sure what he saw, and he asks Kristin not to tell the patrol he talked."
 - id: k_sl_1a_b_r0
   statement: "Kristin finds Michelle's memory card taped beneath the drawer and pockets it."

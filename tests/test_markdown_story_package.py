@@ -292,7 +292,9 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "michelle_tea_mug": ItemPlacement(parent="michelle_workstation", text="on Michelle's workstation"),
         "michelle_reading_glasses": ItemPlacement(parent="michelle_workstation", text="folded on her manuscript pages"),
         "manuscript_pages": ItemPlacement(parent="michelle_workstation", text="marked in red pen"),
-        "kitchen_calendar": ItemPlacement(parent="kitchen", text="on the wall by the refrigerator"),
+        "kitchen_calendar": ItemPlacement(
+            parent="kitchen", text="a paper calendar hanging on the wall by the refrigerator"
+        ),
         "lake_photograph": ItemPlacement(
             parent="kitchen",
             text="held to the refrigerator by a pear-shaped magnet, showing Kristin and Michelle at a lake",

@@ -903,7 +903,7 @@ storylets:
   pressure_role: Give the player a human witness who is unsure and frightened, and plant the sense that something went door to door.
   realization_options:
   - id: SL-1A-I-R1
-    dramatic_intent: Walt Pruitt recounts what he saw before dawn without claiming certainty.
+    dramatic_intent: Walt Pruitt recounts what he saw when Kristin talks to Walt Pruitt or asks the neighbor, without claiming certainty.
     source_beats: [scene-1a4--the-first-threat]
     operations:
     - op: assert

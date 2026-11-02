@@ -2272,7 +2272,7 @@ def test_package_seed_scene_1a_matches_authored_things():
         "mug of tea": {"place": "on Michelle's workstation", "condition": []},
         "reading glasses": {"place": "folded on her manuscript pages", "condition": []},
         "manuscript pages": {"place": "marked in red pen", "condition": []},
-        "wall calendar": {"place": "on the wall by the refrigerator", "condition": []},
+        "wall calendar": {"place": "a paper calendar hanging on the wall by the refrigerator", "condition": []},
         "lake photograph": {
             "place": "held to the refrigerator by a pear-shaped magnet, showing Kristin and Michelle at a lake",
             "condition": [],

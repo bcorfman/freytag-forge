@@ -175,7 +175,7 @@ Each entry below is authoring data, not a player action menu.
 - Give the player a human witness who is unsure and frightened, and plant the sense that something went door to door.
 
 **Possible realizations**
-- Walt Pruitt recounts seeing unmarked vans and men with a clipboard, while admitting he is not sure what he saw.
+- Walt Pruitt recounts what he saw when Kristin talks to Walt Pruitt or asks the neighbor, while admitting he is not sure what he saw.
 
 **Effects**
 - Sets `neighbor_account_heard`.
