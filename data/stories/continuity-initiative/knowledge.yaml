@@ -395,7 +395,7 @@ knowledge:
   - [chair]
   - [door, forced entry]
   - [outward, from inside]
-  delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over. The back door looks forced, but the splinters around the frame point outward and the deadbolt is thrown, so it was broken from inside. Nothing else was taken. This was not looting. Someone came for Michelle."
+  delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over. The back door looks forced, but the splinters around the frame point outward, away from the house, so it was broken from inside. Nothing else was taken. This was not looting. Someone came for Michelle."
 - id: k_sl_1a_g_r1
   statement: "Kristin reads the kitchen as Michelle's last hour."
   entity_ids: [kristin, michelle_workstation, kitchen_calendar, lake_photograph]

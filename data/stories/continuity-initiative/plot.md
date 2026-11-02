@@ -140,7 +140,7 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
 * Her reading glasses lie folded on a stack of manuscript pages marked in red pen. She never goes anywhere without them.
 * The wall calendar has Saturday circled in her handwriting: *K — lemon cake.* It is Kristin's birthday.
 * On the refrigerator, held by a pear-shaped magnet, a photograph of the two of them at a lake.
-* The back door shows signs of forced entry, but the splinters around the frame point outward, and the deadbolt is thrown. Nobody forced it from outside. The house is otherwise undisturbed, not burglarized.
+* The back door shows signs of forced entry, but the splinters around the frame point outward, away from the house. It was broken from inside. The deadbolt is still thrown. The house is otherwise undisturbed, not burglarized.
 
 Kristin knows Michelle would not leave her kitchen like this.
 
