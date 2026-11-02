@@ -98,11 +98,19 @@ blind 2A row (row 50) still earns `inspection_convincing`; the 2A missed-window 
 turn 1 but reached the outcome late rather than the recovery bridge. Focused suites and node tests pass; the full suite
 has not been run. Round 6's probe now has a `legacy` arm instead of `wording`.
 
-Next: (1) run the full suite once, then commit the Round 3 to 7 work (probe changes, rewording, plan and smoke notes,
-manifests) if Brandon wants it on a branch/PR; a free look at the 3C "exposure and escape" overlap; a pure 2A
-missed-window row on the new text; a rescue-commitment slice and the 2A doubted / 2B erase outcomes remain untested; (2) the 3A reunion turn and radio signal beat, which is not confirmed in `plot.md` yet;
-(3) Phase 2 (finite 3B to 3C evacuation and aftermath, lighthouse-fixture portability, the 3C
-neutral staller); (4) the human gates. Detail in
+Rounds 3 to 7 are committed and merged (PR #743, `7cd1b35e`). 3A reunion and radio beats (2026-11-02): `plot.md`
+already had the unhurried reunion (3A.1) and Kristin giving the signal on Michelle's radio (3A.4). Ringer run
+`3a-reunion-radio` carried them into `storylets.md`, `storylet-routes.yaml`, `handoffs.yaml` and `knowledge.yaml`
+(wording only, 23 lines; `michelle_reached` and `detention_uprising_started` deliveries; `k_sl_3a_c_r1` matches
+"the radio"/"the signal"). 210 tests in 15 package and guard suites pass in the worktree and on the branch
+`3a-reunion-radio-propagation` (uncommitted). Ringer showed FAIL only because the manifest's patch-export line
+tried to `git add` the ignored `.venv`; the line is fixed in the manifest. Not done: no live narration smoke of
+3A (the reunion line, the radio signal, and `k_sl_3a_c_r2`'s "warns Michelle" path), no full suite run.
+
+Next: (1) live-smoke 3A on the new text (one blind row, one `committed_to_rescue` row), then run the full suite
+once and commit; a free look at the 3C "exposure and escape" overlap; a pure 2A missed-window row; a rescue-commitment
+slice and the 2A doubted / 2B erase outcomes remain untested; (2) Phase 2 (finite 3B to 3C evacuation and aftermath,
+lighthouse-fixture portability, the 3C neutral staller); (3) the human gates. Detail in
 [game-reimagination/](game-reimagination/whole-story-pacing.md).
 
 Environment narration follow-up (2026-10-25): the

@@ -363,8 +363,8 @@ deliveries:
   - [Kristin reaches Michelle, reunion with Michelle, Michelle is reached, Kristin finds Michelle, they are reunited, Kristin reaches her]
   - [detention sector, holding blocks, Michelle's cell, prisoner block, detention holding block, the cell block]
   fallback_text: >-
-    Kristin reaches Michelle among the holding blocks in the detention sector. Their reunion is brief, but Michelle is
-    alive and ready to direct the rescue.
+    Kristin reaches Michelle among the holding blocks in the detention sector. They share one unhurried moment before
+    Michelle turns back to the radio and the rescue.
   cue_text: Michelle speaks into a stolen radio beside the captives.
 - fact_id: military_override_codes_available
   scene_id: 3A
@@ -384,11 +384,11 @@ deliveries:
   source_kind: message
   source_entity_id: michelle
   must_convey:
-  - [Michelle triggers, Michelle organizes prisoners, coded announcements, Michelle sets it off, Michelle starts the disturbances, her coded announcements]
+  - [Michelle triggers, Michelle organizes prisoners, coded announcements, Michelle sets it off, Michelle starts the disturbances, her coded announcements, Kristin gives the signal, Kristin signals the prisoners, Michelle hands Kristin the stolen radio, Kristin radios the prisoners]
   - [uprising begins, prisoners rise, detention uprising, the prisoners revolt, the uprising is underway, prisoners seize checkpoints]
   fallback_text: >-
-    Michelle triggers coordinated disturbances through coded announcements while she organizes prisoners across the
-    detention sectors. The uprising begins as prisoners rise, disable cameras, and seize internal checkpoints.
+    Michelle hands Kristin the stolen radio and Kristin gives the signal. The uprising begins as prisoners rise,
+    disable cameras, and seize internal checkpoints.
   cue_text: Michelle turns toward prisoners gathering at the checkpoints. Several cameras show no picture.
 - fact_id: relay_open
   scene_id: 3B

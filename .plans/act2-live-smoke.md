@@ -417,3 +417,33 @@ it. The full suite has not been run.
 
 Conclusion: the 2A first-turn rejection is gone in this sample set (0 of 12 versus 7 of 12 before) and the 2A earned path
 still works. A pure missed-window 2A row on the new text, with a prefix that does not reach the manifold, was not run.
+
+## Round 8: 3A reunion and radio signal live smoke (preregistered 2026-11-02, before any billed call)
+
+Authorized by Brandon on 2026-11-02 ("yes to live-smoke 3A with one blind row and one committed_to_rescue row").
+Change under test: branch `3a-reunion-radio-propagation` on `main` at `7cd1b35e`: the 3A reunion is one unhurried
+moment (`k_sl_3a_a_r1`/`r2`) and Kristin gives the uprising signal on Michelle's stolen radio (`k_sl_3a_c_r1`/`r2`).
+`act2_probe.py` cannot start in 3A (it is incident-based), so a small `act3a_probe.py` reuses its player, provider
+and spend helpers. Arrivals are synthetic, built from the 2C exit facts of `SL-2C-D-R3` (transmit) or `SL-2C-D-R4`
+(rescue) plus the `CARRIED_FACTS_2C` set; never pooled with whole-game results.
+
+Question: with a raw blind player, does 3A show the unhurried reunion and the radio signal, leave by the earned
+transition to 3B, and show the matching entry line, without rejected narration, stale cues or a stuck loop?
+
+Rows (one each, no retries, no replaced rows, one Ringer task per row, run name `act3a-reunion-radio`):
+
+| Row | Ledger | Question |
+| --- | --- | --- |
+| 51 | `committed_to_transmit` (the blind default) | Reunion and signal beats show; exit to 3B is earned |
+| 52 | `committed_to_rescue` | Same, and the freed-captives entry variant shows |
+
+Row 51 runs alone first; row 52 runs after its transcript is read. Caps per row: at most 30 commands, 80
+Cloudflare / 40 player requests. Cloudflare Workers AI only.
+
+Pass per row: no `run-failure.txt`; no stale cue; no rejection; no stuck loop (`repeated_response_streak_max` under 3);
+`ended_by` is `scene_3b` within the cap, with `transition_cause` earned; recovery count 0; `michelle_reached`,
+`uprising_prepared` and `detention_uprising_started` true at exit. Recorded, not scored: whether the delivered
+reunion text contains "unhurried"; whether the signal delivery says Kristin gives the signal; whether the entry
+variant (row 52 only) showed; the turn each beat appeared; commands used. Reading rule: read the transcript of both
+rows, passes included, before reporting; a miss is diagnosed from the transcript and recorded prompt before any
+rewording, and a reword is a new preregistered round. Two rows are a smoke, not a rate.

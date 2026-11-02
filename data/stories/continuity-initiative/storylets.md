@@ -1253,7 +1253,7 @@ Each entry below is authoring data, not a player action menu.
 - Reframe the immediate goal from “get Michelle out” to “help the organized captives expose the whole network.”
 
 **Possible realizations**
-- The reunion is interrupted by Michelle directing others.
+- Kristin and Michelle share one unhurried moment before Michelle turns back to directing others.
 - Kristin tries to prioritize Michelle; she redirects her to the national stakes.
 - Prisoners treat Michelle as an organizer rather than a victim.
 - Before this storylet, Michelle is reachable only through the coded route and must not be a direct dialogue speaker.
@@ -1444,7 +1444,7 @@ Each entry below is authoring data, not a player action menu.
 - Commit the resistance to the coordinated assault that carries the story into Scene 3B.
 
 **Possible realizations**
-- Michelle triggers coordinated disturbances and the freed checkpoints become a route upward.
+- Michelle hands Kristin the stolen radio, Kristin gives the signal, and the freed checkpoints become a route upward.
 - The expiring authorization window itself forces the resistance to launch while the codes retain value.
 
 **Effects**
