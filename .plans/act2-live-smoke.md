@@ -617,3 +617,44 @@ to 60 were not run. Diagnosed from the transcript and the package, no reword:
   episodes do not offer their next move the way 1C's Brandon does. Recorded, not fixed here.
 - Fix in progress (Ringer `phase2-3c-finale`, task `fix-3c-recovery-shape`): recovery gated by the window alone, Act 2
   shape, honest dry stall. Rows 57 to 60 then need a fresh go-ahead, because row 57 is replaced.
+
+### Round 10b: replacement row 57b, then rows 58 to 60 (preregistered 2026-11-02, before any billed call)
+
+Authorized by Brandon on 2026-11-02 ("Yes, replace 57 and run 58 to 60"). A deliberate deviation from Round 10's "no
+replaced rows". Change under test: commit `afbd76d0`: `SL-3C-H` gated by `evacuation_window_missed` alone, in the
+Act 2 recovery shape (world-only `k_evacuation_recovery_ready` and `k_sl_3c_h_route_effects`, event
+`evacuation_recovery_3c` at turn 10), and an honest `stall` prefix (eight neutral commands, no scripted episodes).
+Free evidence already in hand: the 3C stall-exit audit passes without its xfail, and the dry stall row reaches
+`neutral_recovery`. Same table, pass rule, caps, run name and reading rule as Round 10. Row 57b (blind) runs alone first,
+output `bench/results/act3c-smoke-57b-3C-blind`; rows 58, 59, 60 follow after its transcript is read. One row each, no
+retries, no further replacements. A final guard rejection is a recorded miss and a finding.
+
+Expected limits, stated now so they are not read as surprises: a blind player may again fail to find the next 3C move
+(counter Charles, go after Rebecca). Row 57b passes if the story ends by an outcome or by the neutral recovery within
+the cap and the other pass-rule items hold; if the blind player stalls, the recovery at turn 9 to 10 is what ends it.
+
+Round 10b result (2026-11-02, Ringer run `act3c-finale`, one row each, no retries; artifacts
+`bench/results/act3c-smoke-57b-3C-blind`, `-58-3C-clean`, `-59-3C-costly`, `-60-3C-stall`, gitignored). All four rows met the
+preregistered pass rule: no run-failure, rejection, clarification or stuck loop; `story_complete` true by an earned
+ending, never by the cap; the expected `exit_cause` and variant paragraph showed; the other outcome's fact stayed false.
+
+| Row | Result |
+| --- | --- |
+| 57b blind | The blind player re-sent the evidence package and never countered Charles or chased Rebecca. The neutral recovery ended the story on player turn 8 (`neutral_recovery`), with the base ending and the `surge_forced_evacuation` paragraph. Only `truth_no_longer_containable`, `evacuation_*` facts set; no outcome fact. 8 requests. **The fix works from a cold stall: row 57 failed here before it.** |
+| 58 clean | Broadcast, archive, then `evacuation_clean` on turn 3. Variants `barrier_held` and `archive_copies_distributed`. 3 requests. |
+| 59 costly | Same, then `evacuation_costly` on turn 3. Variants `lower_levels_lost` and `archive_copies_distributed`; the delivery folds in the gate release. 3 requests. |
+| 60 stall | `neutral_recovery` on turn 8 with `surge_forced_evacuation` and `archive_copies_distributed`. No outcome fact. 8 requests. |
+
+Two probe defects, found when reading row 60, found after the rows ran (fixed by Ringer `fix-act3c-probe-stall-and-turns`):
+- Row 60's live prefix still scripted the broadcast and archive episodes before the neutral commands, so it is "both
+  episodes done, then stall", not a pure stall. Row 57b is the pure stall.
+- The probe set the arrival `turn_index` to 2, which moved every 3C window event two player turns early: the window fired
+  on player turn 7 and the nudge on 8, not 9 and 10. All four rows share this offset, so the Round 10b timing numbers
+  are not the real pacing. Outcomes, variants and the recovery are unaffected.
+
+Findings for Brandon: (1) the ending is reachable from nothing (57b), which is the Phase 1 gap closed; (2) a blind player
+does not find 3C's next move on their own (the episodes do not offer it the way 1C's Brandon does), so the neutral ending
+is what an unguided player gets; (3) the window is a hard timer: a player who needs more than about 9 turns for
+broadcast, archive and barrier is carried out neutrally; the 9 and 10 are still an unmeasured assumption; (4) the
+"final guard rejection with no recovery" friction showed in row 57 ('card') and is still open; (5) the ending
+paragraphs are short and plain, written to the contract; they want your pass.

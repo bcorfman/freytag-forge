@@ -3,7 +3,7 @@
 Part of the [game reimagination plan](../game-reimagination-plan.md), section 8, Phase 2. Read this when you
 build or test anything in 3B to 3C, the ending, or the lighthouse fixture.
 
-Status: built, not yet played live (2026-11-02). Brandon asked for all three parts. Scout done; C1 to C3 (optional
+Status: built and played live once (Round 10b, 2026-11-02). Brandon asked for all three parts. Scout done; C1 to C3 (optional
 successor, lighthouse ending journeys, story-specific engine branches removed), generic `ending.variants`, and the 3C
 finale propagation (contract: [phase2-3c-contract.md](phase2-3c-contract.md)) are applied and uncommitted on branch
 `3a-open-items-phase2`. Full suite with the coverage gate: 3,809 passed, 92.72%; ruff clean. Left: Round 10 live rows

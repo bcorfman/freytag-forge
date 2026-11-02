@@ -47,4 +47,13 @@ def test_every_scripted_command_matches_only_its_intended_3c_entry() -> None:
 def test_stall_dry_route_is_neutral_only_and_selects_no_knowledge() -> None:
     commands, selections = act3c_probe._scripted_route("stall")
     assert commands == list(act3c_probe.NEUTRAL_COMMANDS)
+    assert len(commands) == 10
+    assert commands == list(act3c_probe.SCRIPTED_PREFIXES["stall"])
     assert selections == [None] * len(act3c_probe.NEUTRAL_COMMANDS)
+
+
+def test_stall_dry_route_fires_window_and_nudge_at_authored_turns(tmp_path: Path) -> None:
+    assert act3c_probe.run(tmp_path, "stall", 1, True, False) == 0
+    row = __import__("json").loads((tmp_path / "results.json").read_text(encoding="utf-8"))["rows"][0]
+    assert row["window_event_fired_turn"] == 9
+    assert row["nudge_event_fired_turn"] == 10

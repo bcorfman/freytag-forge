@@ -85,6 +85,8 @@ NEUTRAL_COMMANDS = (
     "Turn toward the north passage.",
     "Circle the support columns.",
     "Pause beside the concrete pillar.",
+    "Lean against my console.",
+    "Wait beside my console.",
 )
 
 SCRIPTED_PREFIXES = {
@@ -170,10 +172,6 @@ def _state(package: Any) -> RuntimeState:
     state._assert_scene_entry_fact(SCENE)
     for fact_id in CARRIED_FACTS_3B:
         state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
-    # Preserve the existing probe's turn budget while removing the two episode
-    # commands from the stall prefix; the authored window then closes during
-    # its eight neutral commands.
-    state.turn_index = 2
     apply_scene_placements(package, state.facts, SCENE)
     world_for(package, state.facts).seed()
     return state
@@ -448,11 +446,7 @@ def run(out: Path, prefix: str, n: int, dry: bool, confirm: bool) -> int:
                 ask_commands = [BROADCAST_COMMAND, ARCHIVE_COMMAND, CLEAN_COMMAND]
                 ask = _scripted_player(ask_commands, budget)
             else:
-                scripted_commands = (
-                    [BROADCAST_COMMAND, ARCHIVE_COMMAND, *NEUTRAL_COMMANDS]
-                    if prefix == "stall"
-                    else list(SCRIPTED_PREFIXES[prefix])
-                )
+                scripted_commands = list(SCRIPTED_PREFIXES[prefix])
                 provider = provider_for(state, variation)
                 ask = _ask_player
             context = counted_provider(provider, budget) if not dry else None

@@ -1,0 +1,30 @@
+{
+ "run_name": "phase2-3c-probe",
+ "workdir": "/home/bcorfman/dev/ringer-work/phase2-3c-probe",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "fix-act3c-probe-stall-and-turns",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 2400,
+   "check_timeout_s": 900,
+   "ownership": [
+    "scripts/ringer/phase2/act3c_probe.py",
+    "scripts/ringer/phase2/check_act3c_probe.py",
+    "tests/test_act3c_probe.py"
+   ],
+   "spec": "Work in /home/bcorfman/dev/freytag-forge directly (no worktree). Never git commit, never run `uv`, never call a billed model or the network. Run tests as `PYTHONPATH=$PWD:$PWD/scripts/ringer/stage7:$PWD/scripts/ringer/phase1 TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider <tests>`. ROLE: tooling fixer. You may edit ONLY scripts/ringer/phase2/act3c_probe.py, scripts/ringer/phase2/check_act3c_probe.py and tests/test_act3c_probe.py. TWO DEFECTS found in live Round 10b: (1) `run()` in act3c_probe.py builds the LIVE scripted prefix for `stall` as [BROADCAST_COMMAND, ARCHIVE_COMMAND, *NEUTRAL_COMMANDS], so the live stall row first finishes both episodes; the dry route was fixed earlier but this live branch was missed. (2) `_state()` sets `state.turn_index = 2` (comment 'Preserve the existing probe's turn budget') which makes every window event fire two player turns early (the 3C events are at_turn 9 and 10 in data/stories/continuity-initiative/pacing.yaml; the live row saw them at player turns 7 and 8). FIX: remove the `state.turn_index = 2` line and its comment. Make the `stall` prefix exactly ten NEUTRAL commands (extend NEUTRAL_COMMANDS by two more, each a plain movement or waiting imperative with a first-person possessive where natural, e.g. 'Lean against my console.', each verified with storygame.runtime.candidate_matcher._matches_all to match NO 3C knowledge entry's action_evidence), used identically by the dry route and the live route (no BROADCAST/ARCHIVE/CLEAN commands in the stall route; `clean` and `costly` keep their three-command lists). The dry stall route must still end by the neutral recovery on the real engine without any scripted knowledge selection. Update check_act3c_probe.py and tests/test_act3c_probe.py so the stall expectation is ten neutral commands, the window event is seen at player turn 9 and the nudge at 10 in dry mode (assert it), and the live and dry stall prefixes are the same list. Keep ruff formatting. Do not touch anything else.",
+   "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=$PWD:$PWD/scripts/ringer/stage7:$PWD/scripts/ringer/phase1 TMPDIR=/tmp\nPY=.venv/bin/python\ngrep -n \"turn_index = 2\" scripts/ringer/phase2/act3c_probe.py && { echo \"WHY: turn_index hack remains\"; exit 1; }\nsed -n '/^def run(/,/^def main/p' scripts/ringer/phase2/act3c_probe.py | grep -n \"BROADCAST_COMMAND, ARCHIVE_COMMAND, \\*NEUTRAL\" && { echo \"WHY: live stall still scripts the episodes\"; exit 1; }\n$PY -m ruff format --check scripts/ringer/phase2 tests/test_act3c_probe.py || { echo \"WHY: not ruff-formatted\"; exit 1; }\n$PY -m ruff check scripts/ringer/phase2 tests/test_act3c_probe.py || { echo \"WHY: ruff check failed\"; exit 1; }\nfor p in none clean costly stall; do O=$(mktemp -d); $PY scripts/ringer/phase2/act3c_probe.py --prefix $p --n 1 --out $O --dry-run || { echo \"WHY: dry run failed for $p\"; exit 1; }; $PY scripts/ringer/phase2/check_act3c_probe.py $O 1 --mode dry || { echo \"WHY: probe check failed for $p\"; exit 1; }; done\nO=$(mktemp -d); $PY scripts/ringer/phase2/act3c_probe.py --prefix stall --n 1 --out $O --dry-run; $PY - $O <<'EOF2'\nimport json,sys\nr=json.load(open(sys.argv[1]+'/results.json'))['rows'][0]\nassert r['exit_cause']=='neutral_recovery' and r['story_complete'], r\nassert r['window_event_fired_turn']==9 and r['nudge_event_fired_turn']==10, (r['window_event_fired_turn'], r['nudge_event_fired_turn'])\nassert 'archive_copies_distributed' not in r['final_true_facts'], 'stall must not finish the archive episode'\nprint('stall dry ok', r['window_event_fired_turn'], r['nudge_event_fired_turn'])\nEOF2\n[ $? -eq 0 ] || { echo \"WHY: honest dry stall assertions failed\"; exit 1; }\n$PY -m pytest -q -p no:cacheprovider tests/test_act3c_probe.py || { echo \"WHY: probe tests failed\"; exit 1; }\necho ok\n",
+   "verified": "no turn offset, stall is ten neutral commands in dry and live, window at 9 and nudge at 10, probe tests pass"
+  }
+ ]
+}

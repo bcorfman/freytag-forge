@@ -119,7 +119,14 @@ successor, lighthouse fixture reaches an ending by outcome and by zero-match rec
 (`i_3c_evacuation`, neutral recovery `SL-3C-H`, ending latched by `evacuation_complete`, Phase Two optional). Full suite
 3,809 passed, 92.72%.
 
-Next: (1) Round 10, four live 3C rows (preregistered in act2-live-smoke.md, needs Brandon's go-ahead); (2) the human gates. Detail in
+Round 10b (2026-11-02): the four live 3C rows pass (blind, clean, costly, stall); row 57's first attempt found and fixed a
+neutral recovery that could not fire. Two probe defects (a two-turn timing offset and a stall prefix that still scripted the
+episodes) were found after the rows and fixed; the rows' timing numbers carry that offset. Details and findings for Brandon
+in [act2-live-smoke.md](act2-live-smoke.md).
+
+Next: (1) Brandon's read of the 3C ending paragraphs and the findings list; a measured window/nudge timing (still an
+assumption); an offer for the blind player's next 3C move; the "final guard rejection with no recovery" friction;
+(2) the human gates; (3) the Phase 3 content migration. Detail in
 [game-reimagination/](game-reimagination/whole-story-pacing.md).
 
 Environment narration follow-up (2026-10-25): the

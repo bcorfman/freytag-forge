@@ -69,7 +69,7 @@ def check(out: Path, n: int, mode: str) -> list[str]:
             if expected_variant not in row.get("ending_variants_seen", []):
                 errors.append(f"WHY {row_id}: expected ending variant {expected_variant!r}")
             if prefix == "stall" and commands != list(NEUTRAL_COMMANDS):
-                errors.append("WHY stall dry run must contain exactly the eight neutral commands")
+                errors.append("WHY stall dry run must contain exactly the ten neutral commands")
     return errors
 
 
