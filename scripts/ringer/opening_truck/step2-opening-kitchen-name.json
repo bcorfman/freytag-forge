@@ -1,0 +1,30 @@
+{
+ "run_name": "1a-opening-and-truck-feedback",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-opening-and-truck-feedback",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "opening-kitchen-name",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 2,
+   "timeout_s": 5400,
+   "check_timeout_s": 2400,
+   "ownership": [
+    "data/stories/continuity-initiative/world.yaml",
+    "tests/"
+   ],
+   "spec": "You are a Python 3.12 engineer making one small mechanical story-data correction in freytag-forge (plan: .plans/1a-opening-and-truck-feedback-plan.md step 2). Working directory: /home/bcorfman/dev/freytag-forge (branch 1a-opening-and-truck-feedback). No network, no billed call, no uv: `export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example`, run `.venv/bin/python`. Do not git commit. Read docs/world-model-grounding.md and docs/world-model-grounding/characters-and-names.md first.\n\nCONTEXT: the working tree holds approved, UNCOMMITTED story edits that start scene 1A with the protagonist in the kitchen (`character_placements: {kristin: {parent: kitchen}}` in plot.md, plus text edits in plot.md and knowledge.yaml and updated test pins). Do not revert or alter them. With the kitchen start, storygame/runtime/cloudflare.py `_scene_entry` builds the opening line `The scene takes place at <location name>.` from the placement parent's name, so the opening now reads `The scene takes place at kitchen.` (a bare common word, no owner). Other scenes with a placement read well because their locations have proper names.\n\nTHE EDIT: in data/stories/continuity-initiative/world.yaml change the `kitchen` location (id: kitchen, name: kitchen, parent: mcgehee_home) to `name: Michelle's kitchen` and add `aliases: [kitchen, the kitchen]` so replies that say `kitchen` or `the kitchen` still resolve to the same place. Do NOT change its id or parent, and edit nothing else in world.yaml. Then run the check and fix, with the smallest assertion change, any existing test that pins the old display name `kitchen` for that location (list each). If an audit or leak-scan test rejects the alias (the grounding guide's rule about bare common words), do NOT weaken the audit: report it and stop. If a failure looks like a real regression, stop and report it.\n\nExpected prompt result: the 1A opening SCENE line becomes `The scene takes place at Michelle's kitchen.`, the protagonist THINGS place reads `Michelle's kitchen`, the prompt text never says `at kitchen`. DONE WHEN the check passes. Report every test changed.",
+   "check": "cd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp CLOUDFLARE_WORKER_URL=https://w.example\nset -eo pipefail\ntest -f tests/test_1a_kitchen_start.py\nif git diff --name-only | grep -vE '^(data/stories/continuity-initiative/(plot\\.md|knowledge\\.yaml|world\\.yaml)|tests/)'; then echo \"EDIT OUTSIDE OWNERSHIP\"; exit 1; fi\nif git diff --name-only | grep -E '^tests/fixtures/continuity_initiative_pre_3c_adoption/'; then echo \"FROZEN FIXTURE EDITED\"; exit 1; fi\nif git ls-files --others --exclude-standard | grep -vE '^tests/'; then echo \"UNTRACKED OUTSIDE TESTS\"; exit 1; fi\ngrep -q 'let herself into the kitchen' data/stories/continuity-initiative/plot.md\ngrep -q 'kristin: {parent: kitchen}' data/stories/continuity-initiative/plot.md\ngrep -q 'across the kitchen from the back door' data/stories/continuity-initiative/plot.md\ngrep -q 'Kristin did not carve them' data/stories/continuity-initiative/knowledge.yaml\ngrep -q \"name: Michelle's kitchen\" data/stories/continuity-initiative/world.yaml\n.venv/bin/python -m pytest -q -p no:cacheprovider --no-cov -n 4 $(ls -d tests/test_1a*.py tests/test_late_scene_repro.py tests/test_game_path_journeys.py tests/test_markdown_story_package.py tests/test_package_audit.py tests/test_package_view_scope.py tests/test_scene_*grounding.py tests/test_canon_journey.py tests/test_journey_prefix_equivalence.py tests/test_live_baseline_scene_*.py tests/test_evidence_gap_journeys.py tests/test_scene_progression_phase4.py tests/test_place_feed*.py tests/test_boarding*.py tests/test_observation*.py tests/test_seating.py tests/test_early_1a_photo_sentences.py tests/test_discovery_continuity.py tests/test_loader_pacing_producers.py 2>/dev/null | tr '\\n' ' ') 2>&1 | tail -12\n.venv/bin/python .plans/world-model-s1/prompt_capture.py /tmp/payload-kitchen.json\n.venv/bin/python - <<'EOF'\nimport json, re, difflib\na=json.load(open('.plans/1a-opening-and-truck-feedback/payload-base.json'))\nb=json.load(open('/tmp/payload-kitchen.json'))\nok=re.compile(r\"let herself into the kitchen|would not leave her kitchen|did not carve|across the kitchen from the back door|Place: Michelle's kitchen|takes place at Michelle's kitchen\")\nbad=0; changed=0\nfor label in a:\n    assert len(a[label])==len(b[label])\n    for i,(x,y) in enumerate(zip(a[label],b[label])):\n        for k in ('system','user'):\n            xs=(x[k] or '').splitlines(); ys=(y[k] or '').splitlines()\n            for line in difflib.unified_diff(xs,ys,lineterm='',n=0):\n                if line.startswith(('+++','---','@@')): continue\n                if line.startswith('-'): continue\n                changed+=1\n                if not ok.search(line):\n                    bad+=1; print('UNEXPECTED CHANGE', label,i,k,line[:220])\nassert 'takes place at kitchen' not in json.dumps(b), 'bare kitchen name in the opening'\nassert \"takes place at Michelle's kitchen\" in json.dumps(b), 'kitchen name missing from the opening'\nprint('changed lines',changed,'unexpected',bad)\nassert changed>0 and bad==0\nEOF\n.venv/bin/python -m ruff check tests\n.venv/bin/python -m ruff format --check tests",
+   "verified": "1A story text applied exactly as approved; kitchen start; focused suites pass; 1A payload changes limited to the approved lines"
+  }
+ ]
+}
