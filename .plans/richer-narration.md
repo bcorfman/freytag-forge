@@ -64,6 +64,36 @@ all nine scenes; shared runtime must remain story-agnostic.
   things is closed without breaking authored-name matching; the compatibility policy
   for existing free `condition` strings.
 
+## Step 3 proposal (needs Brandon's approval before any prompt edit)
+
+Design rule from his memories: the narrator is a small non-reasoning model, rules often lose, and
+handing it concrete material wins. So give it a short list and one example, not new prohibitions.
+
+- **Where choices appear:** as dash-led lines in the varying CONSTRAINTS section (the same place that
+  already says "Show these in your reply"), only when the package has a policy and allowance is left:
+  `- You may add one small thing if it fits: tea cup (on the bench or in the parlour).`
+  `- The tea cup can be white or blue.` One line per eligible template, at most three templates per
+  turn, picked by what the scene and the player's action touch (same relevance bound as THINGS).
+- **Established traits:** shown with the thing where the THINGS block already shows its condition,
+  as `Looks: brown, worn` (stored facets plus authored values), so the narrator repeats them. Only for
+  visible things; no transcript-derived truth.
+- **Reply shape:** when choices are offered, the output example gains
+  `"embellishments":{"props":[{"template":"tea cup","parent":"bench"}],"traits":[...]}`; without
+  choices the example is unchanged and the narrator is not told the field exists.
+- **One rule edit, built in one helper used by all six paths** (`_turn_rules`, `opening()`,
+  `_system_prompt`, `_section_user_prompt`, `_scene_setting`, `_recover_malformed_response`): the
+  existing line "Do not make up new objects, clues, or things inside containers." gets one added
+  sentence only when choices are offered: "The only new thing you may add is one from the list." No
+  other ban is relaxed (clues, containers, topology, protected reveals stay as they are).
+- **Richness:** a separate, second arm, not part of the first candidate: "Add one or two small
+  details of sight, sound or touch that fit what the player did." Reason: his memories show added
+  rules can lower quality, so measure it alone against the props-and-traits arm.
+- **Checks:** judge coverage for uncaptured props, invented functional properties and
+  prose/proposal disagreement, using the existing capture judges (no regex over prose).
+- **Evaluation (billed, needs his go-ahead):** frozen rubric and cost estimate first; arms are
+  baseline, props-and-traits, and props-and-traits plus the richness line; paired samples across all
+  nine scenes; gates as listed under Acceptance. Also read the real slip rate here (decision 2A).
+
 ## Recommendation and evidence
 
 Allow the narrator to introduce a few persistent, harmless props and enrich
