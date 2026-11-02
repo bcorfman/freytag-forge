@@ -1,10 +1,9 @@
 # Richer narration with bounded invention
 
 Status: in progress, 2026-11-02. Branch `richer-narration-1`.
-Step 1 worldkeeper layer is done (see Progress). Resume here: step 2 (package
-policy, `embellishments` reply field, atomic capture, and closing the legacy
-`item_facts`/`_apply_state` bypasses); first send the small worldkeeper cleanup
-listed under Progress through Ringer. This change spans all narration paths and
+Steps 1, 2a and 2b are done (see Progress). Resume here: step 2c (the
+`embellishments` reply field, typed boundary, pre-commit check, post-capture commit,
+opening) then 2d (refuse unknown ordinary things, route facet-matching conditions). This change spans all narration paths and
 all nine scenes; shared runtime must remain story-agnostic.
 
 ## Progress
@@ -19,10 +18,23 @@ all nine scenes; shared runtime must remain story-agnostic.
   Not yet done: the storygame adapter (`world_model.py`) that builds a policy from
   the package, and routing any narrator creation through `apply_embellishments`.
   Full suite and coverage not run (run once at the end).
-- **Cleanup owed (Ringer, worldkeeper only):** `_run_embellishments` asserts then
-  retracts placeholder `wk_incidental` facts on subject `__pending__` (dead code
-  that touches the real backend on apply); `_resolve_without_resolver` clones the
-  backend per name. Remove the first, build one scratch World per batch.
+- **Step 2a/2b done, `e16335d7`:** worldkeeper cleanup (no placeholder facts, one clone
+  per batch) and the package side: `props:` in world.yaml, per-item `facets` and
+  `authored_facets`, scene `prop_pool`, loader checks, `incidental_policy_for(package)`
+  in `storygame/runtime/world_model.py`, and `docs/markdown-story-authoring/incidental-props-and-facets.md`.
+  Tests: `tests/test_incidental_package.py` (fixed acceptance file) plus the quick tier
+  (3625 passed). New test files must be registered with
+  `scripts/regen_shard_durations.py --missing-only` (it refuses while a test cannot import).
+- **Step 2c/2d not started.** Verified facts that shape them: the engine retries a rejected
+  narration inside `_turn_active`'s attempt loop (before commit), so embellishments are
+  checked there with `check_embellishments` on the candidate state, raising a
+  `ProposalValidationError` (retry, then fail closed); they are committed right after
+  `capture.after_commit` (after item facts and scene placements), rolling the turn back like
+  `observation_diverged` if they drift. `engine.opening()` runs once per session and
+  `web_demo` saves the state right after, so the opening applies its embellishments to that
+  state (decision 1A). Decisions taken 2026-11-02: 1A, 2A (refuse unknown ordinary things,
+  measure slips first, only when the package declares a policy), 3A (facet-matching phrases
+  become facets; existing conditions unchanged; new props take facets only).
 - Ringer notes: the first run failed twice on my spec (a `notes.md` the check
   forbade; a test fixture whose alias contradicted a template name, which the worker
   worked around by editing the schema). Fixed in the fixture and spec; patch rejected.
