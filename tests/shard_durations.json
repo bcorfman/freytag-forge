@@ -220,6 +220,7 @@
     "tests/test_opening_condition_v3.py": 0.02,
     "tests/test_opening_retry.py": 0.11,
     "tests/test_opening_retry_fact.py": 0.78,
+    "tests/test_opening_scene_things.py": 0.42,
     "tests/test_opening_things_fact.py": 0.93,
     "tests/test_opening_truck_probe.py": 4.42,
     "tests/test_opening_truck_probe2.py": 8.01,

@@ -580,6 +580,15 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seat_id = world.parent(protagonist_id)
         seated = bool(seat_id and world.schema.entities.get(seat_id) and world.schema.entities[seat_id].seat_for)
         if not getattr(self, "_example_player_input", ""):
+            if self._selected_names is None:
+                protagonist_area = world.area(protagonist_id)
+                if protagonist_area is not None:
+                    for entity_id in world.visible_area_contents(protagonist_area):
+                        if entity_id == protagonist_id:
+                            continue
+                        name = self._entity_label(world, entity_id)
+                        if name in self.item_facts and name not in names:
+                            names.append(name)
             return names
         command = self._example_player_input
         literal_names = {

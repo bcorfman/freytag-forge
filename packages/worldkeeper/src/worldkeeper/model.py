@@ -736,6 +736,14 @@ class World:
         """Return direct child IDs in sorted order."""
         return tuple(sorted(candidate for candidate in self._ids() if self.parent(candidate) == entity_id))
 
+    def visible_area_contents(self, area_id):
+        """Return visible, non-area direct child IDs in sorted order."""
+        return tuple(
+            candidate
+            for candidate in self.contents(area_id)
+            if not self.is_a(candidate, "area") and self.is_visible(candidate)
+        )
+
     def contents_complete(self, entity_id):
         """Return whether an entity's declared direct contents are complete."""
         entity = self._entity(entity_id)

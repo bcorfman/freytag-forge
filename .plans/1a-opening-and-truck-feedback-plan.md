@@ -155,7 +155,7 @@ not a reproduced diagnosis.
 
 ### 2. Repair the opening and its emotional meaning at the source
 
-- [ ] **New:** Compare the historical opening sources with the actual opening
+- [x] (2026-11-02, deterministic only; live effect not yet measured) **New:** Compare the historical opening sources with the actual opening
   payload. The saved raw opening THINGS contains only Kristin; neither the
   workstation's “across the kitchen” placement nor the chair is supplied there.
   Repair opening projection/scope before asking the narrator to obey missing
@@ -334,6 +334,24 @@ not a reproduced diagnosis.
   is authorized by this planning revision.
 
 ## Completion record
+
+### Step 2 code change (2026-11-02): opening shows the start area's visible things
+
+Cause: `ItemFactsProvider._thing_names` returned only transition dependencies plus the
+protagonist at the opening, so the workstation text "across the kitchen from the back
+door" never reached the narrator. Ringer task `opening-area-things` (Luna, high
+effort). New generic `World.visible_area_contents` (packages/worldkeeper, 75 tests
+there pass) and an opening-only addition in `_thing_names`; turn prompts unchanged
+(existing `place_feed/baseline_prompts.json` pin updated only for the 1B opening).
+The opening THINGS now reads: Kristin; back door; Michelle's phone (on the kitchen
+floor); workstation (across the kitchen from the back door); workstation chair
+(overturned). The hidden card and the drawer's contents stay out. My spec wrongly
+required the phone to be excluded; it is an authored visible kitchen item, so it
+is included. Ringer marked the task FAIL only because my check tripped on an
+unrelated untracked `.plans/richer-narration.md`. I removed one non-hermetic test
+(it read `/tmp`). Full suite 3,880 passed, 22 skipped; Ruff clean. Live effect
+(layout, novelty, specific reaction) not measured: needs the 12 + 12 call
+preregistration and Brandon's approval.
 
 ### Step 3 code change 2 (2026-11-02): engine-owned already-aboard reply
 
