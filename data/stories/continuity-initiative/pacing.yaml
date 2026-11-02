@@ -153,6 +153,8 @@ events:
     equals: true
   - fact_id: supervisor_escorting
     equals: true
+  - fact_id: restricted_corridor_access
+    equals: false
   effects:
   - fact_id: inspection_recovery_ready
     equals: true
