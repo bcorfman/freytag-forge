@@ -80,6 +80,16 @@ all nine scenes; shared runtime must remain story-agnostic.
   `1bb68d81`. Full run (4 replicates per arm, 7 commands, baseline `richer-1a-baseline` vs `richer-1a-candidate`) is
   awaiting Brandon: Claude cannot launch an unsandboxed Ringer worker, so he runs the two bench commands himself with
   `!`; then Claude reads every turn and writes the result into the prereg.
+- **1A neighbor fix applied, `b13ba90c`:** Walt's reveal now needs only two evidence groups, his placement text says he
+  is the elderly neighbor, and the calendar is a paper calendar. The candidate arm is to be rerun (4 replicates, output
+  `bench/results/richer-1a-probe/candidate-run2`) by Brandon, reported as a second run and not pooled.
+- **1B in progress (2026-11-02):** plot prose committed (`128ff1f2`): an abandoned park (bicycle, empty dog leash, a picnic
+  with one cup tipped and one half full), the looping loudspeaker with Brandon mouthing the words a half-beat ahead (plants
+  his hidden role and the 3B/3C broadcast fight), an emergency-water thermos that corroborates his warning, and the keypad he
+  never looks at plus a freshly oiled drain latch. Acceptance tests `tests/test_richer_1b.py` committed failing
+  (`c3bad43d`); the propagation task carries the 1A lessons (plain names, scoped aliases, exact evidence groups, aligned
+  windows). Check the 1B photograph depiction in the next probe: a held item shows only "Held by", so what it shows must
+  live in its name or reveal text.
 - Decisions taken 2026-11-02: 1A, 2A (refuse unknown ordinary things, measure slips first, only when
   the package declares a policy), 3A.
 - Ringer notes: the first run failed twice on my spec (a `notes.md` the check
