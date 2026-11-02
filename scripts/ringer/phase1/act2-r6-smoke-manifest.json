@@ -1,0 +1,30 @@
+{
+  "run_name": "act2-visible-moves",
+  "workdir": "/home/bcorfman/dev/ringer-work/act2-visible-moves",
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "act2-r6-smoke-control",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "full_access": true,
+      "max_attempts": 1,
+      "timeout_s": 10800,
+      "check_timeout_s": 300,
+      "ownership": [
+        "bench/results/act2-guard-smoke-control/"
+      ],
+      "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_guard_probe.py --arm control --n 1 --confirm --out bench/results/act2-guard-smoke-control",
+      "spec": "Run ONE billed Round 6 live sampling probe per .plans/act2-live-smoke.md: arm control, 1 sample(s) of the fixed 2A turn. Own only bench/results/act2-guard-smoke-control/. Source .env silently, never print credentials, no uv, no git mutation, no code edits. Never retry or replace samples; if the harness stops nonzero it leaves run-failure.txt, which you must leave in place and report verbatim. Run exactly this single shell command and report its exit status and any run-failure.txt:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp; .venv/bin/python scripts/ringer/phase1/act2_guard_probe.py --arm control --n 1 --confirm --out bench/results/act2-guard-smoke-control",
+      "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/scripts/ringer/stage7 TMPDIR=/tmp && .venv/bin/python scripts/ringer/phase1/act2_guard_probe.py --check bench/results/act2-guard-smoke-control 1",
+      "verified": "samples recorded, caps respected, no raw player events"
+    }
+  ]
+}

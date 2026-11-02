@@ -330,7 +330,7 @@ Scenes 1C.3 and 1C.4 await relocation to a later scene. Candidate homes are 2C.1
 scene_id: 2A
 location_id: facility_perimeter
 freytag_phase: rising_action
-objective: Get inside by proving the cooling fault is real
+objective: Get inside by proving the cooling system is failing
 participant_ids: [kristin, brandon, shift_supervisor]
 companions: [brandon]
 item_ids: [transit_card, hideout_servers, inspection_console, facility_gate, cooling_manifold, cooling_service_archive_panel]

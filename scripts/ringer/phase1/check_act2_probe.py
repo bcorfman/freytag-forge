@@ -48,10 +48,15 @@ def check(out: Path, n: int, mode: str) -> list[str]:
         errors.append("WHY cap fields must be exactly Cloudflare 80 and player 40")
     for row in rows:
         row_id = row.get("row_id", "<row>")
-        missing = [field for field in ROW_FIELDS if field not in row]
+        missing = [field for field in ROW_FIELDS if field != "ledger" and field not in row]
         if missing:
             errors.append(f"WHY {row_id} is missing fields: {', '.join(missing)}")
         scene = row.get("scene")
+        ledger = row.get("ledger", "kept")
+        if ledger not in {"kept", "erased"}:
+            errors.append(f"WHY {row_id}: ledger must be 'kept' or 'erased'")
+        if ledger == "erased" and scene != "2C":
+            errors.append(f"WHY {row_id}: ledger erased applies only to scene 2C")
         if scene not in SCENES:
             errors.append(f"WHY {row_id}: scene must be one of {SCENES}")
         if row.get("arm") != "current":
@@ -126,6 +131,29 @@ def check(out: Path, n: int, mode: str) -> list[str]:
                     errors.append(f"WHY {row_id}: turn {turn.get('turn')} {field} must be boolean")
             if not isinstance(turn["reveal_selection"], dict):
                 errors.append(f"WHY {row_id}: turn {turn.get('turn')} reveal_selection must be an object")
+        if scene == "2C" and ledger in {"kept", "erased"}:
+            expected = (
+                "He says it coldly and avoids Kristin's eyes."
+                if ledger == "kept"
+                else "He glances at Kristin as he says it."
+            )
+            other = (
+                "He glances at Kristin as he says it."
+                if ledger == "kept"
+                else "He says it coldly and avoids Kristin's eyes."
+            )
+            committed = False
+            for index, turn in enumerate(turns):
+                if "k_sl_2c_c_r1" not in turn.get("committed_reveals", []):
+                    continue
+                committed = True
+                response = responses[index] if index < len(responses) else ""
+                if expected not in response or other in response:
+                    errors.append(
+                        f"WHY {row_id}: turn {turn.get('turn')} k_sl_2c_c_r1 response has the wrong ledger sentence"
+                    )
+            if not committed and any(sentence in response for response in responses for sentence in (expected, other)):
+                errors.append(f"WHY {row_id}: k_sl_2c_c_r1 was not committed but a ledger sentence was delivered")
         if type(row.get("repeated_response_streak_max")) is not int or row["repeated_response_streak_max"] < 1:
             errors.append(f"WHY {row_id}: repeated_response_streak_max must be a positive integer")
         if not isinstance(row.get("final_true_facts"), list) or row["final_true_facts"] != sorted(

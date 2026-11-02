@@ -57,7 +57,50 @@ Decisions made while propagating (2026-11-01):
   nightly tests pass. Open: the canonical scripted journey waits six filler turns in 2A, so it passes the
   turn-5 window and ends with `supervisor_convinced` and `cover_suspected` both true.
 
-Next: (1) make the Act 2 moves visible to a stranger (the 1C offers technique), then re-smoke; (2) the 3A reunion turn and radio signal beat, which is not confirmed in `plot.md` yet;
+- **Visible moves built (2026-11-01, PR #742, merged as `3f73ea9c`):** each Act 2 scene now opens with a character
+  stating the moves in its entry text and has an earned observation step before the choice (2A, 2B, 2C). 2C's
+  Brandon "Yes." now follows the 2B choice inside the earned observation, through the new story-agnostic
+  `delivery_variants` (fact-selected delivery text; the reveal-prerequisite guard is unchanged). The recovery events
+  `audit_recovery_2b` and `inspection_recovery_2a` no longer fire after the player has chosen: that left both 2B ledger
+  facts true (hiding the Rebecca observation) and put `cover_suspected` on a convinced 2A player. The earlier open
+  item (canon walk ending with `supervisor_convinced` and `cover_suspected` both true) is fixed by the 2A guard. The
+  stale node e2e unit tests and two stale pytest checks were brought up to date; CI was green on the merged head.
+  Not done: no live narration smoke of the new observations, no staging or hosted run, 1C recovery not audited.
+  One behaviour recorded for Brandon: 2C keeps the scene open until turn 8 after its neutral recovery at turn 6, so a
+  commitment at turn 7 is honoured. Detail and decisions: [act2-2c-brandons-yes-plan.md](act2-2c-brandons-yes-plan.md).
+
+Live re-smoke done (2026-11-01, Round 3 in [act2-live-smoke.md](act2-live-smoke.md)): one blind row per scene on `main` at
+`3f73ea9c` earned a real outcome with no recovery bridge (2A `inspection_convincing`, 2B `brandon_name_kept`, 2C
+`committed_to_transmit`). One row each, not a rate. Not yet run: the preregistered kept/erased 2C slices with three
+replicates, the doubted and erase outcomes, missed-window and stall rows with the new steps.
+
+Round 4 live rows done (2026-11-01, [act2-live-smoke.md](act2-live-smoke.md)): 12 rows, 10 completed. 2C kept/erased
+slices deliver the right ledger sentence (5 of 5 completed rows, all committed to transmit). Missed-window and stall
+rows in 2B and 2C, and the 2A stall, left by recovery at turns 7 to 9 with no stuck loop and a neutral 2C recovery.
+Two rows ended in run-failures, not replaced: row 36 (Cloudflare 300 s timeout) and row 41 (2A missed window: guard
+rejected narration saying 'cooling fault' on turn 1; intermittent, prompt not yet inspected). One row each, not a rate.
+
+Round 5 (2026-11-01): row 36's replacement (row 47) passed, so the kept and erased 2C slices each have three completed
+rows, all committing to transmit. Row 41's replacement (row 48) failed the same way: the guard rejects the narrator's
+"cooling fault" on turn 1 of 2A (2 of 3 live attempts of the command "Inspect my work order beside the facility
+gate."). Offline prompt reconstruction shows the SCENE section tells the narrator that phrase three times while the
+guard treats it as unearned (auto-derived leak term of `k_sl_2a_c_r5`/`r6`, no cited id possible on that turn).
+Untested hypothesis; fix not chosen.
+
+Round 6 (2026-11-01): the 2A sampling probe confirmed the cause. On the fixed first turn, control was rejected on 7 of
+12 samples (all "cooling fault"; the engine's recovery never fired), the scene-wording arm on 0 of 12, the
+`leak_terms` arm on 0 of 12. Preregistered tie-break and narration read both favor the wording arm (the `leak_terms` arm
+makes Kristin parrot the scene phrase and sometimes contradicts the real fault). One scene, one command, not a rate.
+Round 7 (2026-11-01): Brandon approved and the three-line 2A rewording is applied (uncommitted): the pressure line and
+`k_scene_2a_entry` statement in `knowledge.yaml` and the 2A objective in `plot.md` now say "the cooling system is
+failing" instead of "the cooling fault is real". Live recheck: the fixed turn was rejected 0 of 12 (was 7 of 12); the
+blind 2A row (row 50) still earns `inspection_convincing`; the 2A missed-window prefix row (row 49) no longer rejects
+turn 1 but reached the outcome late rather than the recovery bridge. Focused suites and node tests pass; the full suite
+has not been run. Round 6's probe now has a `legacy` arm instead of `wording`.
+
+Next: (1) run the full suite once, then commit the Round 3 to 7 work (probe changes, rewording, plan and smoke notes,
+manifests) if Brandon wants it on a branch/PR; a free look at the 3C "exposure and escape" overlap; a pure 2A
+missed-window row on the new text; a rescue-commitment slice and the 2A doubted / 2B erase outcomes remain untested; (2) the 3A reunion turn and radio signal beat, which is not confirmed in `plot.md` yet;
 (3) Phase 2 (finite 3B to 3C evacuation and aftermath, lighthouse-fixture portability, the 3C
 neutral staller); (4) the human gates. Detail in
 [game-reimagination/](game-reimagination/whole-story-pacing.md).

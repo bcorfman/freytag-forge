@@ -159,7 +159,7 @@ def test_2a_entry_prompt_uses_the_facility_gate_contract(monkeypatch: pytest.Mon
     prompt = _opening_prompt(monkeypatch, _state_at(None, scene_id="2A"))
     assert "The scene takes place at Facility perimeter." in prompt["user"]
     assert "a shift supervisor walked out to meet them" in prompt["user"]
-    assert "Prove the cooling fault is real to get inside" in prompt["user"]
+    assert "Prove the cooling system is failing to get inside" in prompt["user"]
 
 
 @pytest.mark.parametrize("place", ("outside_house", "truck_driver_seat"))
