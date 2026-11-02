@@ -146,10 +146,17 @@ npcs:
   - government prisoner
   narrator_bio: A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
 - id: patrol_officer
-  name: federal patrol officer
+  name: Officer Reyes
   aliases:
+  - federal patrol officer
   - patrol officer
   - the officer
+  - Reyes
+  narrator_bio: A young, polite federal patrol officer who works from a printed list and does not like what the list asks of him.
+- id: walt_pruitt
+  name: Walt Pruitt
+  aliases: [Walt, Mr. Pruitt, the neighbor]
+  narrator_bio: A retired bus driver in his seventies whose wife is one of the missing. He is tired, careful with his words, and unsure what he saw.
 groups:
 - id: captives
   name: detention captives
@@ -205,6 +212,39 @@ items:
   right_text: Kristin set the workstation chair upright.
   enter_text: Kristin sat down in the workstation chair.
   leave_text: Kristin stood up from the workstation chair.
+- id: michelle_tea_mug
+  name: mug of tea
+  aliases: [tea mug]
+  scoped_aliases: [mug, tea]
+- id: michelle_reading_glasses
+  name: reading glasses
+  scoped_aliases: [glasses]
+- id: manuscript_pages
+  name: manuscript pages
+  aliases: [manuscript, red-penned pages]
+  scoped_aliases: [pages, paper, papers]
+- id: kitchen_calendar
+  name: wall calendar
+  aliases: [calendar]
+  fixed: true
+- id: lake_snapshot
+  name: lake snapshot
+  aliases: [snapshot, the snapshot]
+- id: back_door_splinters
+  name: splinters around the back door frame
+  aliases: [door splinters, splinters]
+  scoped_aliases: [frame, door frame]
+  fixed: true
+- id: back_door_deadbolt
+  name: back door deadbolt
+  aliases: [deadbolt]
+  scoped_aliases: [lock, door lock]
+  fixed: true
+- id: truck_radio
+  name: truck radio
+  aliases: [truck radio]
+  scoped_aliases: [radio]
+  fixed: true
 - id: park_bench
   name: park bench
   scoped_aliases: [bench]
@@ -352,6 +392,9 @@ facts:
 - scene_3b_entry_known
 - scene_3c_entry_known
 - michelle_abduction_suspicion
+- kitchen_last_hour_read
+- broadcast_loop_confirmed
+- neighbor_account_heard
 - facility_proof
 - false_identities_ready
 - id: facility_perimeter_reached

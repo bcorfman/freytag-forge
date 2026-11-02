@@ -177,7 +177,7 @@ def test_enter_truck_projects_laptop_and_separates_completed_step():
     assert len(laptop) == 1
     assert laptop[0].place == "passenger seat"
     assert laptop[0].holder is None
-    assert context.required == ("Kristin's laptop",)
+    assert context.required == ("Kristin's laptop", "truck radio")
     assert context.action == "Enter the truck."
     assert context.completed_actions == ("Kristin sat down in the driver's seat.",)
     assert context.action not in context.completed_actions

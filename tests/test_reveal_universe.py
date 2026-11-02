@@ -66,7 +66,8 @@ def test_exact_tie_telemetry():
     state = _state()
     provider = _provider(state)
     original = provider.projector.project(state, "player", "Inspect the reflective tape.")
-    tied = original.reveal_universe + (original.reveal_universe[-1].model_copy(update={"id": "tied"}),)
+    matched = next(candidate for candidate in original.reveal_universe if candidate.id == "k_sl_1a_c_r2")
+    tied = original.reveal_universe + (matched.model_copy(update={"id": "tied"}),)
     provider.projector = SimpleNamespace(
         project=lambda *_args: original.model_copy(update={"reveal_universe": tied, "candidates": tied[:4]})
     )

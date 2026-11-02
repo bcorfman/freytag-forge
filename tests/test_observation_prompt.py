@@ -91,7 +91,7 @@ def test_observation_request_projects_entering_context_and_calls_narrator() -> N
     assert "- Enter the truck." not in user
     assert user.count("- Already done:") == 1
     assert "Already done: Kristin sat down in the driver's seat." in user
-    assert "- Show these in your reply: Kristin's laptop." in user
+    assert "- Show these in your reply: Kristin's laptop, truck radio." in user
 
 
 def test_observation_request_uses_current_holder_not_stale_place() -> None:

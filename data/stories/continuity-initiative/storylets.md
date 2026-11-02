@@ -77,6 +77,124 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-1A-G — What the Kitchen Kept
+
+**Source beats:** [1A.1 — Michelle Is Gone](plot.md#scene-1a1--michelle-is-gone)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- Kristin is at the house.
+- The patrol is not in the house.
+
+**Participants / items**
+- Kristin Schweitzer
+- Michelle's workstation
+- Mug of tea, reading glasses, manuscript pages, wall calendar, and lake snapshot
+
+**Dramatic purpose**
+- Let the kitchen read as a person's last hour so Michelle's disappearance feels like a loss.
+
+**Possible realizations**
+- Kristin reads the kitchen as Michelle's last hour: a faintly warm mug of tea, her reading glasses folded on red-penned manuscript pages, and the calendar with Saturday circled.
+
+**Effects**
+- Sets `kitchen_last_hour_read` and preserves the existing abduction suspicion.
+
+**Completion**
+- Kristin has read the kitchen as Michelle's last hour.
+
+**Abort**
+- Kristin leaves scene 1A.
+
+**Protected boundary**
+- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 4`
+- latest: `turn 11`
+
+---
+
+### SL-1A-H — The Same Ninety Seconds
+
+**Source beats:** [1A.3 — The Interrupted Message](plot.md#scene-1a3--the-interrupted-message)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- `michelle_warning_known` is true.
+- Kristin is at or near her truck.
+
+**Participants / items**
+- Kristin Schweitzer
+- Truck radio
+
+**Dramatic purpose**
+- Let Kristin test Michelle's warning with her own skills.
+
+**Possible realizations**
+- Kristin turns up the truck radio, times two passes, and confirms the same ninety seconds repeat word for word.
+
+**Effects**
+- Sets `broadcast_loop_confirmed`.
+
+**Completion**
+- Kristin has timed the repeating broadcast.
+
+**Abort**
+- Kristin leaves scene 1A.
+
+**Protected boundary**
+- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
+
+**Pacing window**
+- earliest: `turn 3`
+- target: `turn 6`
+- latest: `turn 11`
+
+---
+
+### SL-1A-I — The Neighbor at the Fence
+
+**Source beats:** [1A.4 — The First Threat](plot.md#scene-1a4--the-first-threat)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- Kristin is outside the house.
+- The patrol is not on scene or at the gate.
+
+**Participants / items**
+- Kristin Schweitzer
+- Walt Pruitt
+
+**Dramatic purpose**
+- Give the player a human witness who is unsure and frightened, and plant the sense that something went door to door.
+
+**Possible realizations**
+- Walt Pruitt recounts seeing unmarked vans and men with a clipboard, while admitting he is not sure what he saw.
+
+**Effects**
+- Sets `neighbor_account_heard`.
+
+**Completion**
+- Kristin has heard Walt Pruitt's account.
+
+**Abort**
+- Kristin leaves scene 1A.
+
+**Protected boundary**
+- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
+
+**Pacing window**
+- earliest: `turn 2`
+- target: `turn 5`
+- latest: `turn 10`
+
+---
+
 ### SL-1A-E — The KMS Mark
 
 **Source beats:** [1A.1 — Michelle Is Gone](plot.md#scene-1a1--michelle-is-gone)
@@ -2083,7 +2201,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 
 | Playable scene | Storylets | Primary function |
 |---|---|---|
-| [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-D` | Crime-scene inference, Michelle’s evidence, first authority pressure |
+| [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-I` | Crime-scene inference, kitchen details, Michelle’s evidence, witness, first authority pressure |
 | [1B](plot.md#scene-1b--the-lead-in-the-park) | `SL-1B-A` … `SL-1B-E` | Hidden clue recovery, bench lead, clue interpretation, Brandon trust, pursuit |
 | [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-D` | Facility discovery, living captives, one advantage, costly recovery after a missed window |
 | [2A](plot.md#scene-2a--false-identities) | `SL-2A-B`, `SL-2A-C`, `SL-2A-D` | Manifold observation, real fault diagnosis, watched entry, recovery under supervision |

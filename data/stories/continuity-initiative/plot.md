@@ -80,10 +80,11 @@ scene_id: 1A
 location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
-participant_ids: [kristin, michelle, patrol_officer]
-item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door, house_gate]
+participant_ids: [kristin, michelle, patrol_officer, walt_pruitt]
+item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door, house_gate, michelle_tea_mug, michelle_reading_glasses, manuscript_pages, kitchen_calendar, lake_snapshot, back_door_splinters, back_door_deadbolt, truck_radio]
 character_placements:
   kristin: {parent: kitchen}
+  walt_pruitt: {parent: outside_house, text: at the fence between the yards}
 item_placements:
   memory_card: {parent: michelle_drawer, under: true}
   michelle_phone: {parent: kitchen, text: on the kitchen floor}
@@ -96,6 +97,17 @@ item_placements:
   house_gate: {parent: outside_house, text: at the front of the house}
   michelle_drawer: {parent: michelle_workstation, part_of: true, text: in Michelle's workstation}
   workstation_chair: {parent: kitchen, text: at Michelle's workstation}
+  michelle_tea_mug: {parent: michelle_workstation, text: on Michelle's workstation}
+  michelle_reading_glasses: {parent: michelle_workstation, text: folded on her manuscript pages}
+  manuscript_pages: {parent: michelle_workstation, text: marked in red pen}
+  kitchen_calendar: {parent: kitchen, text: on the wall by the refrigerator}
+  lake_snapshot: {parent: kitchen, text: held to the refrigerator by a pear-shaped magnet}
+  back_door_splinters: {parent: kitchen, text: around the back door frame}
+  back_door_deadbolt: {parent: kitchen, text: on the back door}
+  truck_radio: {parent: kristin_truck}
+setting_facts:
+- Sirens carry from the next street.
+- A dog barks behind the empty house next door.
 entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal. She found the back door forced and let herself into the kitchen.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:

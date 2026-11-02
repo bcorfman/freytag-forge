@@ -2269,6 +2269,14 @@ def test_package_seed_scene_1a_matches_authored_things():
         "workstation": {"place": "across the kitchen from the back door", "condition": []},
         "back door": {"place": "Michelle's kitchen", "condition": []},
         "house gate": {"place": "at the front of the house", "condition": []},
+        "mug of tea": {"place": "on Michelle's workstation", "condition": []},
+        "reading glasses": {"place": "folded on her manuscript pages", "condition": []},
+        "manuscript pages": {"place": "marked in red pen", "condition": []},
+        "wall calendar": {"place": "on the wall by the refrigerator", "condition": []},
+        "lake snapshot": {"place": "held to the refrigerator by a pear-shaped magnet", "condition": []},
+        "splinters around the back door frame": {"place": "around the back door frame", "condition": []},
+        "back door deadbolt": {"place": "on the back door", "condition": []},
+        "truck radio": {"place": "Kristin's truck", "condition": []},
     }
     assert issues == []
 
@@ -3132,12 +3140,15 @@ def test_omitted_same_as_adds_condition_only_thing_without_place(monkeypatch):
     provider = _provider()
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": [], "same_as": {}})
     provider.apply_item_facts(
-        {"back door frame": {"condition": ["damaged"]}},
-        player_input="Inspect the back door frame.",
+        {"splinters around the back door frame": {"condition": ["damaged"]}},
+        player_input="Inspect the splinters around the back door frame.",
     )
-    assert "back door frame" not in provider.item_facts
+    assert provider.item_facts["splinters around the back door frame"] == {
+        "place": "around the back door frame",
+        "condition": ["damaged"],
+    }
     world = provider._world()
-    entity_id = world.resolve("back door frame")
+    entity_id = world.resolve("splinters around the back door frame")
     assert entity_id is not None
     assert list(world.conditions(entity_id)) == ["damaged"]
 

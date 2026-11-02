@@ -322,7 +322,13 @@ def test_seated_kristin_stands_before_leaving():
     assert result.asked is True
     assert result.issues == ()
     assert world.parent("kristin") == "kitchen"
-    assert asked == [("Go out to the truck.", "workstation chair", tuple(sorted(asked[0][2])))]
+    assert asked == [
+        (
+            "Go out to the truck.",
+            "workstation chair",
+            ("manuscript pages", "drawer", "reading glasses", "mug of tea", "workstation", "workstation chair"),
+        )
+    ]
 
 
 def test_seated_kristin_stays_on_a_no():

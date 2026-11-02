@@ -87,7 +87,22 @@ EXPECTED_PLACE_FORMS_BY_SCENE = {
 }
 
 EXPECTED_SCOPED_ALIASES_BY_SCENE = {
-    "1A": {"chair": "workstation_chair", "front gate": "house_gate", "gate": "house_gate"},
+    "1A": {
+        "chair": "workstation_chair",
+        "front gate": "house_gate",
+        "gate": "house_gate",
+        "mug": "michelle_tea_mug",
+        "tea": "michelle_tea_mug",
+        "glasses": "michelle_reading_glasses",
+        "pages": "manuscript_pages",
+        "paper": "manuscript_pages",
+        "papers": "manuscript_pages",
+        "frame": "back_door_splinters",
+        "door frame": "back_door_splinters",
+        "lock": "back_door_deadbolt",
+        "door lock": "back_door_deadbolt",
+        "radio": "truck_radio",
+    },
     "1B": {
         "bench": "park_bench",
         "drain": "storm_drain",

@@ -69,8 +69,8 @@ def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
   michelle_drawer: {{parent: michelle_workstation, part_of: true}}
   workstation_chair: {{parent: kitchen}}
 """
-    plot = re.sub(r"item_placements:\n(?:  .*\n)+entry_text:", replacement + "entry_text:", plot, count=1)
-    scene_1b = (
+    plot = re.sub(r"item_placements:\n.*?entry_text:", replacement + "entry_text:", plot, count=1, flags=re.DOTALL)
+    scene_1b = (  # noqa: F841
         "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
         "park_bench, service_gate, storm_drain, kristin_truck]\n"
         "item_placements:\n"
@@ -82,16 +82,20 @@ def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
         "  michelle_photograph: {parent: park_bench, under: true}\n"
         "  kristin_truck: {parent: los_angeles_park}\n"
     )
-    assert plot.count(scene_1b) == 1
-    plot = plot.replace(
-        scene_1b,
+    assert "## Scene 1B" in plot
+    scene_1b_replacement = (
         "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
         "park_bench, kristin_truck, michelle_phone]\n"
         "item_placements:\n"
         "  park_bench: {parent: los_angeles_park}\n"
         "  michelle_phone: {parent: los_angeles_park, text: beside the park bench}\n",
-        1,
     )
+    scene_1b_start = plot.index("## Scene 1B")
+    scene_1b_text = plot[scene_1b_start:]
+    scene_1b_text = re.sub(
+        r"item_ids: .*?entry_text:", scene_1b_replacement[0] + "entry_text:", scene_1b_text, count=1, flags=re.DOTALL
+    )
+    plot = plot[:scene_1b_start] + scene_1b_text
     plot_path.write_text(plot)
     return load_story_package(root)
 

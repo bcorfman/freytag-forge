@@ -23,6 +23,12 @@ facts:
     secret contracts tied to the Continuity Initiative.
 - id: michelle_warning_known
   purpose: Kristin has recovered Michelle’s warning not to trust emergency broadcasts.
+- id: kitchen_last_hour_read
+  purpose: Kristin has read the kitchen as Michelle's last hour.
+- id: broadcast_loop_confirmed
+  purpose: Kristin has timed the emergency broadcast and knows it repeats word for word.
+- id: neighbor_account_heard
+  purpose: Kristin has heard what Walt Pruitt saw before dawn.
 - id: memory_card_recovered
   purpose: Kristin has recovered Michelle’s memory card.
 - id: drawer_gap_pointed_out
@@ -356,7 +362,7 @@ scene_frames:
   pressure: Expose the network and escape
 knowledge:
 - id: k_sl_1a_a_r1
-  statement: 'Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle’s undamaged phone to a removal too deliberate to be looting.'
+  statement: 'Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle’s undamaged phone to a removal too deliberate to be looting. The splinters point outward.'
   reach_entity_ids: [back_door]
   earn_when: searches the kitchen or back door for signs of what happened
   action_evidence:
@@ -388,7 +394,95 @@ knowledge:
   - [tablet]
   - [chair]
   - [door, forced entry]
-  delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over and the back door was forced, but nothing else was taken. This was not looting. Someone came for Michelle."
+  - [outward, from inside]
+  delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over. The back door looks forced, but the splinters around the frame point outward and the deadbolt is thrown, so it was broken from inside. Nothing else was taken. This was not looting. Someone came for Michelle."
+- id: k_sl_1a_g_r1
+  statement: "Kristin reads the kitchen as Michelle's last hour."
+  entity_ids: [kristin, michelle_workstation, kitchen_calendar, lake_snapshot]
+  aliases: [kitchen last hour read]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  requires:
+  - fact_id: patrol_in_house
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: kitchen_last_hour_read
+    value: true
+  - op: assert
+    fact_id: michelle_abduction_suspicion
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-G
+    realization_id: SL-1A-G-R1
+  relevance: {entity_ids: [michelle_workstation, kitchen_calendar, lake_snapshot], priority: 0}
+  must_convey:
+  - [tea, mug]
+  - [glasses]
+  - [calendar, lemon cake]
+  - [snapshot, picture]
+  action_evidence:
+  - [look, examine, inspect, search, study]
+  - [workstation, mug, tea, glasses, manuscript, calendar, snapshot, picture]
+  delivery_text: "A mug of tea sits on Michelle's workstation, the bag still in it, faintly warm. Her reading glasses lie folded on her manuscript pages, which are marked in red pen. She never goes anywhere without them. On the wall calendar Saturday is circled in her handwriting: K, lemon cake. It is Kristin's birthday. On the refrigerator, a snapshot shows the two of them at a lake. Michelle did not plan to be gone."
+- id: k_sl_1a_h_r1
+  statement: "On Kristin's truck radio the emergency broadcast repeats the same ninety seconds word for word; timed twice, it is a loop, not a live voice."
+  entity_ids: [kristin, truck_radio]
+  aliases: [broadcast loop confirmed]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  requires:
+  - fact_id: michelle_warning_known
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: broadcast_loop_confirmed
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-H
+    realization_id: SL-1A-H-R1
+  relevance: {entity_ids: [truck_radio], priority: 0}
+  must_convey:
+  - [radio, broadcast]
+  - [ninety seconds, same, word for word]
+  - [loop, recording, repeats]
+  action_evidence:
+  - [listen, hear, turn up]
+  - [radio, broadcast]
+  - [time, timed, watch, repeat, second pass, two passes]
+  delivery_text: "Kristin turns up the truck radio. The emergency statement ends, and a few minutes later it begins again. She times two passes on her watch. It is the same ninety seconds, word for word, down to the same breath before the last line. This is a recording on a loop, not a live voice. Michelle was right not to trust it."
+- id: k_sl_1a_i_r1
+  statement: "Walt Pruitt saw unmarked vans near 3:40 and two men with a clipboard checking the addresses on the street; they skipped the house next door, and he is not sure what he saw."
+  entity_ids: [kristin, walt_pruitt]
+  aliases: [neighbor account heard]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  requires:
+  - fact_id: michelle_abduction_suspicion
+    equals: true
+  - fact_id: patrol_in_house
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: neighbor_account_heard
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-I
+    realization_id: SL-1A-I-R1
+  relevance: {entity_ids: [walt_pruitt], priority: 0}
+  must_convey:
+  - [Walt, neighbor, Pruitt]
+  - [vans, van]
+  - [clipboard]
+  - [skipped, did not stop, passed]
+  action_evidence:
+  - [talk, ask, speak, tell]
+  - [Walt, neighbor, Pruitt]
+  - [saw, before dawn, "3:40", vans, clipboard]
+  delivery_text: "Walt Pruitt stands at the fence with his hands in his jacket. His wife is one of the missing, and he has not slept. Near 3:40 he saw two vans with no markings he could read, and two men with a clipboard checking the addresses up and down the street. They skipped the house next door. He says he is not sure what he saw, and he asks Kristin not to tell the patrol he talked."
 - id: k_sl_1a_b_r0
   statement: "Kristin finds Michelle's memory card taped beneath the drawer and pockets it."
   voiceable: false
@@ -725,7 +819,7 @@ knowledge:
   - [officers, patrol, patrol's]
   - [research]
   - [Michelle, Michelle's, Dr. McGehee]
-  delivery_text: "The officers ask about Michelle's research and what she found. This is not a normal welfare check."
+  delivery_text: "The officers ask about Michelle's research and what she found. Officer Reyes studies the lake snapshot on the refrigerator a moment too long before he asks about her research. This is not a normal welfare check."
 - id: k_sl_1a_c_r2
   statement: 'After the patrol leaves, Kristin finds reflective tape on the gate, a warning that the house will be watched.'
   entity_ids: []
