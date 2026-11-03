@@ -95,6 +95,7 @@
     "tests/test_deadline_protected_license.py": 0.02,
     "tests/test_deadline_world_only_exit.py": 0.04,
     "tests/test_defect_probe.py": 0.2,
+    "tests/test_delivery_restatement.py": 2.99,
     "tests/test_delivery_variants.py": 0.25,
     "tests/test_design_review_fixtures.py": 1.06,
     "tests/test_disclosure_guards.py": 1.22,

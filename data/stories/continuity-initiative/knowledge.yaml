@@ -467,7 +467,7 @@ knowledge:
   must_convey:
   - [calendar, lemon cake]
   - [photograph, photo, picture]
-  delivery_text: "On the wall calendar Saturday is circled in her handwriting: K, lemon cake. It is Kristin's birthday. On the refrigerator, held by a pear-shaped magnet, a photograph shows the two of them at a lake."
+  delivery_text: "On the wall calendar Saturday is circled in her handwriting: K, lemon cake. It is Kristin's birthday. The photograph beside it shows the two of them laughing at a lake."
 - id: k_sl_1a_h_r1
   statement: "On the truck radio the emergency broadcast repeats the same ninety seconds word for word; timed twice, it is a loop, not a live voice."
   entity_ids: [kristin, truck_radio]
@@ -1214,7 +1214,7 @@ knowledge:
   - [picnic, blanket, cups]
   - [bicycle, bike]
   - [leash]
-  delivery_text: "A bicycle stands on its kickstand where no one will ride it. A dog leash is still tied to the fence, its loop empty. On a picnic blanket two cups sit beside a thermos: one is tipped over, and the other is still half full."
+  delivery_text: "A bicycle stands on its kickstand where no one will ride it. Whoever held the dog leash let go in a hurry. On a picnic blanket two cups sit beside a thermos: one is tipped over, and the other is still half full."
 - id: k_sl_1b_g_r1
   statement: "The stranger mouths the loudspeaker's emergency statement along with it."
   voiceable: false
@@ -1516,7 +1516,7 @@ knowledge:
   - [pallets, bottles]
   - [lot number]
   - [thermos]
-  delivery_text: "Pallets of bottled emergency water stand shrink-wrapped by the loading doors. The county label is on every bottle, and the lot number matches the one on the thermos in the park."
+  delivery_text: "The pallets carry the county label on every bottle, and the lot number matches the one on the thermos in the park."
 - id: k_sl_1c_f_r1
   statement: "Brandon keeps his back to the processing line and watches the door."
   voiceable: false

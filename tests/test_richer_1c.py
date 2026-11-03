@@ -137,7 +137,7 @@ def test_the_new_reveals_are_quiet_short_and_exact():
     }
     assert all(
         phrase in entries["k_sl_1c_e_r1"].delivery_text.casefold()
-        for phrase in ("emergency water", "lot number", "thermos")
+        for phrase in ("county label", "lot number", "thermos")
     )
     assert all(
         phrase in entries["k_sl_1c_f_r1"].delivery_text.casefold()
