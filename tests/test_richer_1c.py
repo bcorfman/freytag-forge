@@ -88,7 +88,7 @@ def test_three_new_optional_storylets_share_their_beats_windows_and_conditions()
         assert route["scene_id"] == "1C"
         assert len(route["realization_options"]) == 1
         pacing = route["activation"]["pacing"]
-        assert (pacing["earliest_turn"], pacing["target_turn"], pacing["latest_turn"]) == (0, 2, 3)
+        assert (pacing["earliest_turn"], pacing["target_turn"], pacing["latest_turn"]) == (0, 2, 4)
         actual = {(item["fact_id"], item.get("equals")) for item in route["activation"].get("conditions", [])}
         assert actual == conditions
 

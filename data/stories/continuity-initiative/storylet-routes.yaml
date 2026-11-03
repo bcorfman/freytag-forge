@@ -1759,7 +1759,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 2
-      latest_turn: 3
+      latest_turn: 4
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Tie the park's emergency water to the active terminal.
   realization_options:
@@ -1786,7 +1786,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 2
-      latest_turn: 3
+      latest_turn: 4
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Show Brandon keeping watch while Kristin studies the processing line.
   realization_options:
@@ -1811,7 +1811,7 @@ storylets:
     pacing:
       earliest_turn: 0
       target_turn: 2
-      latest_turn: 3
+      latest_turn: 4
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Connect the terminal's broadcast to the park's emergency statement.
   realization_options:

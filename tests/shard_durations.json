@@ -12,6 +12,7 @@
     "tests/test_1a_spine_prompts.py": 0.01,
     "tests/test_1a_witnessed_recovery.py": 0.94,
     "tests/test_1b_spine_prompts.py": 0.59,
+    "tests/test_1c_closeout.py": 0.29,
     "tests/test_1c_offers.py": 0.26,
     "tests/test_1c_reading_pointer.py": 0.73,
     "tests/test_1c_stall_exit.py": 2.17,

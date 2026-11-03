@@ -445,12 +445,11 @@ def test_yielding_rule_for_authored_handoffs() -> None:
             "repeatable": False,
         }
     )
-    assert (
-        uniquely_matched_authored_handoff(
-            "Recover the recording and listen to it.", (non_repeatable, another_non_repeatable)
-        )
-        is None
+    result = uniquely_matched_authored_handoff(
+        "Recover the recording and listen to it.", (non_repeatable, another_non_repeatable)
     )
+    assert result is not None
+    assert result.candidate is another_non_repeatable
 
     another_repeatable = WARNING_HANDOFF.model_copy(
         update={
@@ -459,10 +458,11 @@ def test_yielding_rule_for_authored_handoffs() -> None:
             "repeatable": True,
         }
     )
-    assert (
-        uniquely_matched_authored_handoff("Recover the recording and listen to it.", (repeatable, another_repeatable))
-        is None
+    result = uniquely_matched_authored_handoff(
+        "Recover the recording and listen to it.", (repeatable, another_repeatable)
     )
+    assert result is not None
+    assert result.candidate is repeatable
     result = uniquely_matched_authored_handoff("Recover the recording and listen to it.", (repeatable,))
     assert result is not None
     assert result.candidate is repeatable

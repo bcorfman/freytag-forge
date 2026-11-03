@@ -995,7 +995,7 @@ Each entry below is authoring data, not a player action menu.
 **Pacing window**
 - earliest: `turn 0`
 - target: `turn 2`
-- latest: `turn 3`
+- latest: `turn 4`
 
 ### SL-1C-F — He Watches the Door
 
@@ -1032,7 +1032,7 @@ Each entry below is authoring data, not a player action menu.
 **Pacing window**
 - earliest: `turn 0`
 - target: `turn 2`
-- latest: `turn 3`
+- latest: `turn 4`
 
 ### SL-1C-G — The Same Statement
 
@@ -1069,7 +1069,7 @@ Each entry below is authoring data, not a player action menu.
 **Pacing window**
 - earliest: `turn 0`
 - target: `turn 2`
-- latest: `turn 3`
+- latest: `turn 4`
 
 # Scene 2 — The Infiltration
 
