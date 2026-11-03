@@ -1577,7 +1577,7 @@ knowledge:
   relevance: {entity_ids: [overhead_speaker, air_vents], priority: -1}
   must_convey:
   - [speaker]
-  - [emergency statement, broadcast]
+  - [statement, broadcast]
   - [word for word]
   delivery_text: "Under the hum of the vents, a speaker below plays the emergency statement from the park, word for word. Nobody on the line looks up at it."
 - id: k_sl_2a_b_r1

@@ -324,6 +324,7 @@
     "tests/test_t9e_run_manifests.py": 0.03,
     "tests/test_t9h_run_manifests.py": 0.16,
     "tests/test_taking.py": 0.01,
+    "tests/test_term_ownership.py": 5.15,
     "tests/test_three_c_prefix.py": 11.79,
     "tests/test_traversal.py": 0.18,
     "tests/test_under_question_probe.py": 0.11,
