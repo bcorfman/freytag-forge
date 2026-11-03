@@ -11,6 +11,11 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
 
 ## Resume here (in order)
 
+00. **Scene 2A built and probed (2026-11-03), branch `richer-narration-2a` (main merged in, quick suite 4044 passed).** Result in
+   `.plans/richer-2a-probe-prereg.md` "Result": all four additions (alarm log, badges, return line, camera) delivered 4/4, no regression, clean entry kept 4/4,
+   0 new plain things. One defect: in 2 of 4 replicates the narrator says the return line flows back to the manifold, contradicting the delivery. Next: read the
+   recorded command-4 prompt and fix at the source, then open the 2A PR, then 2B.
+
 0. **Term-ownership fix landed and verified live (2026-11-03), branch `fix-term-ownership` (`da51be00` tests, `d1aafb32` fix, not yet merged).**
    Cause of the 1B run-2 rejections: "emergency statement" was a leak term owned only by the 1C entry `k_sl_1c_g_r1`, so 1A/1B narration echoing it was
    rejected in real play. Fix: reworded that entry's `must_convey` to `[statement, broadcast]`, plus a story-agnostic audit finding

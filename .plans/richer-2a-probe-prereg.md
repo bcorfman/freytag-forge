@@ -71,3 +71,39 @@ other models, wording tuning, the whole-game remedy for delivery text repeating 
 2B: let the supervisor's alarm log and Michelle's maintenance line rhyme (maintenance reports are the channel); Brandon's easy
 knowledge of the badge readers surfaces in 2B.3. 2C.1: the camera turning toward Brandon. 3B.1/3C.3: the console alarms and the pumps
 and heavy door from the return line.
+
+## Result (run 2026-11-03, branch `richer-narration-2a` after merging `main` with the term-ownership fix)
+Outputs `bench/results/richer-2a-probe/{baseline,candidate,candidate-b}`, 4 replicates each, none failed, 0 rejected turns in any arm, 704 projected
+neurons. Every turn read. Replicates are reported separately; the judge scores below are not real signal (MDE 3.87).
+
+**Headline: richness is supported on the 2A path, with one defect to fix.** Every authored detail landed on the command that asks for it, 4 of 4
+replicates each, and the existing path did not regress.
+
+- **Q1 Invented material.** Plain things resolved new: 0 in 20 turns baseline, 0 in 20 candidate, 0 in 12 candidate-b. Specifics invented:
+  baseline command 2 makes up badge lore in all four replicates ("biometric", "a different chip", "the usual clearance levels") and command 1 hands
+  the player nothing; candidate invents only "Supervisor Jenkins" (candidate-b rep 2) and, on command 5 of candidate rep 4, a walk to the heavy door and
+  a "clogged" return line.
+- **Q2 Authored details delivered when earned.** Alarm log on command 1: 4/4. Badge readers on command 2: 4/4. Return line on command 4: 4/4.
+  Camera on command 2 of script B: 4/4. The reveals landed with the facts they need; none was voiced as dialogue by the narrator beyond the authored line.
+- **Q3 No regression, cost of curiosity.** Script A (five commands): `k_sl_2a_c_r5` (clean entry) landed on command 5 in 4/4, so the five-command detour
+  does not cost the clean entry; the window default stays at turn 5. All eight runs of scripts A left the scene on command 5. Script B left on command 3, 4/4.
+  Baseline commands 3 and 5 reach the same reveals as before.
+- **Q4 Value.**
+  - Alarm log: plants the supervisor as the worker with a reason to be angry (2B.4). Does a job. Narrator adds the supervisor speaking first and
+    twice leaves a stray open quote ("...systems, she says firmly."), an old narrator fault, not new.
+  - Badges: the strongest addition. Brandon's easy line plants 2B.3. The narrator frames it without repeating it.
+  - Return line: delivers the pumps and heavy door that pay off in 3C.3. **Defect:** in candidate reps 1 and 4 the narrator first has Brandon say the
+    line carries cooling water *back to* the manifold, which contradicts the delivered "away from the manifold" (the judge flagged it). Rep 2 and 3 are fine.
+    The cause is the narrator explaining a thing it was told only by name; read the recorded prompt before fixing (source, not a new rule).
+  - Camera: delivered 4/4 ("The camera holds Brandon in its view. Brandon does not look up."), but three replicates have the narrator call it a
+    "standard issue camera" pointed at "the facility's infrastructure" first, and rep 2 says it "stares back at her", which softens the plant.
+    The plant works; the lead-in sentence is weak.
+  - Narration is busier than baseline but each addition has a job; it is not extra props.
+- **Judges.** Candidate 4, 4, 4, 4 vs baseline 4, 4, 4, 4 (candidate-b 4, 4, 6, 5, not poolable). Both script-A arms fail `canon_consistent`, `progressive`
+  and `rich` 0/4, partly because the judge expects 7 turns of pacing in a five-command probe. No gap is reported.
+- **Prompt budget.** Narrator prompt median 4,618 (baseline 4,435), max 5,380 (baseline 5,353). The only turns over 5,000 are command 5 (the explanation) in
+  both arms, 4 of 20 each, so this is not new; candidate-b max 4,880.
+- **Fact tracking.** invented_change 0 in all arms; missed_change 4/20 candidate vs 3/20 baseline (noise).
+
+**Follow-ups (none done):** (1) fix the return-line direction at the source after reading the recorded command-4 prompt; (2) tighten the camera lead-in
+the same way; (3) the owed payoffs below stay owed to 2B, 2C and 3C.
