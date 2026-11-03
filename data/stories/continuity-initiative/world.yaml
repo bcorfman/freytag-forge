@@ -433,6 +433,16 @@ items:
   name: archive terminals
   aliases: [archive terminal]
   fixed: true
+- id: build_record
+  name: build record
+  scoped_aliases: [access section, build files]
+  kind: thing
+  fixed: true
+- id: transfer_queue
+  name: transfer queue
+  scoped_aliases: [queue, transfers, held transfers]
+  kind: thing
+  fixed: true
 - id: medical_terminal
   name: medical terminal
   fixed: true
@@ -518,6 +528,9 @@ facts:
 - captives_confirmed_alive
 - manifold_fault_found
 - id: badge_craft_noted
+- id: badge_checks_read
+- id: held_transfers_seen
+- id: ticket_header_matched
 - id: alarm_log_read
 - id: return_line_traced
 - id: camera_on_brandon_seen

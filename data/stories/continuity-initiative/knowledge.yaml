@@ -75,6 +75,12 @@ facts:
   purpose: Kristin has found the cooling-water pressure fault at the manifold.
 - id: badge_craft_noted
   purpose: Kristin has noticed how easily Brandon knows what the badge readers check.
+- id: badge_checks_read
+  purpose: Kristin has read the three checks listed in the build record's access section.
+- id: held_transfers_seen
+  purpose: Kristin has seen the prisoner transfers held under repeated sensor fault tickets.
+- id: ticket_header_matched
+  purpose: Kristin has matched the maintenance line's ticket header to the held transfers.
 - id: alarm_log_read
   purpose: Kristin has read the cooling alarm log on the supervisor's tablet.
 - id: return_line_traced
@@ -1983,6 +1989,97 @@ knowledge:
     She is alive.
     She is working inside the facility.
     She will send a route.
+- id: k_sl_2b_e_r1
+  statement: The badge readers check exactly the three things Brandon said he knew.
+  voiceable: false
+  reach_entity_ids: [build_record]
+  earn_when: reads the access section of the build record, or checks what the badge readers check
+  action_evidence:
+  - [read, look at, check, examine, inspect, study, open, pull up]
+  - [build record, access section, badge readers, readers, badge checks]
+  entity_ids: [kristin, brandon, build_record, archive_terminals]
+  aliases: [badge checks read]
+  leak_terms: []
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2B]
+  requires:
+  - fact_id: audit_window_missed
+    equals: false
+  - fact_id: kristin_file_read
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: badge_checks_read
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2B-E, realization_id: SL-2B-E-R1}
+  relevance: {entity_ids: [build_record, brandon], priority: -1}
+  must_convey:
+  - [badge readers]
+  - [three]
+  - [Brandon]
+  delivery_text: >-
+    In the build record, the access section lists what the badge readers check.
+    There are three checks, the same three Brandon said he knew at the gate.
+    Brandon watches her read and says nothing.
+- id: k_sl_2b_f_r1
+  statement: Dozens of prisoner transfers are held under sensor fault tickets.
+  voiceable: false
+  reach_entity_ids: [transfer_queue]
+  earn_when: opens or reads the transfer queue on the archive terminals
+  action_evidence:
+  - [read, open, check, look at, examine, inspect, study, pull up]
+  - [transfer queue, queue, transfers, held transfers, transfer listing]
+  entity_ids: [kristin, transfer_queue, archive_terminals]
+  aliases: [held transfers seen]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2B]
+  requires:
+  - fact_id: audit_window_missed
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: held_transfers_seen
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2B-F, realization_id: SL-2B-F-R1}
+  relevance: {entity_ids: [transfer_queue], priority: -1}
+  must_convey:
+  - [held]
+  - [sensor fault]
+  - [week]
+  delivery_text: >-
+    Dozens of prisoner transfers sit held in the transfer queue, each pushed back a week under a maintenance ticket.
+    Every ticket is closed with the same code, sensor fault.
+    It is the excuse the building uses for anything it does not want to look at, and someone is using it on purpose.
+- id: k_sl_2b_g_r1
+  statement: The maintenance line has the same ticket header as the held transfers.
+  voiceable: false
+  reach_entity_ids: [medical_terminal]
+  earn_when: reads or compares the maintenance line on the medical terminal with the held transfers
+  action_evidence:
+  - [read, look at, check, compare, examine, inspect, study, match]
+  - [maintenance line, ticket header, header, printout]
+  entity_ids: [kristin, medical_terminal, transfer_queue]
+  aliases: [ticket header matched]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2B]
+  requires:
+  - fact_id: archive_crisis_understood
+    equals: true
+  - fact_id: held_transfers_seen
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: ticket_header_matched
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2B-G, realization_id: SL-2B-G-R1}
+  relevance: {entity_ids: [medical_terminal], priority: -1}
+  must_convey:
+  - [ticket header]
+  - [sensor fault]
+  - [held transfers, held]
+  delivery_text: >-
+    The maintenance line carries the same ticket header and the same closing code, sensor fault, as the held transfers.
+    Whoever held them wrote this.
 - id: k_sl_2c_c_r1
   statement: Rebecca reveals the purge order, Brandon says yes, and the corridor opens onto two urgent moves.
   earn_when: answers Rebecca's offer by speaking, bluffing, threatening, refusing, or staying silent

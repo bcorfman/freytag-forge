@@ -274,7 +274,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 56
+    assert len(package.storylets) == 59
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
@@ -703,6 +703,9 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_2b_b_r5",
         "k_sl_2b_a_r1",
         "k_sl_2b_c_r3",
+        "k_sl_2b_e_r1",
+        "k_sl_2b_f_r1",
+        "k_sl_2b_g_r1",
         "k_sl_3a_a_r1",
         "k_sl_3a_a_r2",
         "k_sl_3a_b_r1",
