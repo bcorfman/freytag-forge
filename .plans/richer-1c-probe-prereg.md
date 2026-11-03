@@ -114,3 +114,11 @@ duplication caveat. No failure of the existing path. So **richness is supported 
    targeted check, or leave at 5 to match 2A, 2B and 2C.
 4. Rerun the candidate only with `Watch Brandon.` as command 2 to test the door reveal (about 154 neurons, a second run, not pooled).
 5. Find the 6,169-character narrator turn.
+
+## Amendment 1 (2026-11-02, before the second run, Brandon approved it)
+Second run, candidate only, never pooled with the first: variation `richer-1c-candidate-b`, script `richer-1c-terminal-b`, five commands:
+`Inspect the loading docks.` `Watch Brandon.` `Study the prisoners.` `Inspect the water pallets.` `Ask Brandon about the transfer route.`
+Purpose: (a) test the door reveal (needs `facility_proof`, so it follows the first command, and the window is still open); (b) test
+whether the choice is still available when it is the 5th command, the turn on which the window message fired in the first run.
+Scoring: Q2 for the door reveal; Q3 for whether `k_sl_1c_c_secure_route` is delivered on command 5, and whether the window message fires
+before or after it; Q4 as before. Output `bench/results/richer-1c-probe/candidate-run2`. About 154 neurons.
