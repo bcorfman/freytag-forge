@@ -122,3 +122,22 @@ Purpose: (a) test the door reveal (needs `facility_proof`, so it follows the fir
 whether the choice is still available when it is the 5th command, the turn on which the window message fired in the first run.
 Scoring: Q2 for the door reveal; Q3 for whether `k_sl_1c_c_secure_route` is delivered on command 5, and whether the window message fires
 before or after it; Q4 as before. Output `bench/results/richer-1c-probe/candidate-run2`. About 154 neurons.
+
+## Result of the second run (Amendment 1; candidate only, 4 replicates, 5 commands, 2026-11-02; not pooled with the first run)
+Output `bench/results/richer-1c-probe/candidate-run2`. Every turn read.
+
+- **Door reveal (`k_sl_1c_f_r1`), Watch Brandon at command 2: 4 of 4 delivered.** It does its job (a quiet plant for his role).
+- **Window question answered:** the choice as the 5th command (`Ask Brandon about the transfer route.`) delivered `k_sl_1c_c_secure_route`
+  in 4 of 4, and the window message ("The view down the observation shaft goes dark...") is appended AFTER it in the same turn. So the
+  5th command still gets the choice; the window at turn 5 does not take it away. **Leave `transfer_window_1c` at 5** (matches 2A, 2B, 2C).
+- **New finding: the optional reveals have their own windows.** The pallets reveal (E) was not delivered at command 4 in any replicate
+  (`Inspect the water pallets.` as the 4th command): from scene turn 4 the candidate list holds only the two choice reveals, because a
+  storylet is dropped once the scene turn passes its `latest_turn`, and E, F and G were authored with window 0/2/3 (copied from the older
+  beats). The pallets were still in the scene and gave nothing; the narrator invented "she carefully unwraps the plastic to inspect the
+  contents". The three optional reveals could safely last until the transfer window closes (turn 4). Proposed: `latest_turn` 3 to 4 for
+  E, F and G (tests-first, a small data change). Not done; ask Brandon.
+- **Repetition, worse than the pallets case:** in 4 of 4 replicates the narrator writes Brandon at the top of the stairs with his back
+  to the line and the quoted line "Somebody has to watch the door", and then the engine appends the same sentences and the same quote
+  again. The narrator is shown the text the game will add ("Right after your story, the game will add this: ..."), and it copies it.
+  This is not the placement-restatement the audit check (see `.plans/delivery-restatement-scope.md`) can catch.
+- Noise: the item-facts capture complains that fixed things "cannot move" (`water pallets`, `identification numbers`); harmless.

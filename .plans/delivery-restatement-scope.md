@@ -21,6 +21,15 @@ fix his memories say loses on a small model, so this scope does not propose one.
   `k_sl_1a_g_r2` (the refrigerator photograph, 0.78), `k_sl_1b_f_r1` (the dog leash, 0.86), `k_sl_1c_e_r1` (the pallets, 0.67).
   Those are the repeats seen in the probes. 1A and 1B/1C authoring created them; the older scenes are not affected.
 
+## Addendum (same day, after the second 1C run): a second kind of repeat
+In `candidate-run2` the door reveal (`k_sl_1c_f_r1`) was written twice in 4 of 4 replicates: the narrator wrote the whole beat, including
+the quoted line, and the engine appended the same text again. Its sentences are new information (no placement text restates them), so the
+audit check below cannot see it. The narrator copies the text because the prompt shows it: "Right after your story, the game will add this:
+<text>." The restatement audit fixes kind (a), the scene restating placement; kind (b), the narrator echoing the text it is shown, needs an
+engine-level remedy that is not yet proven. Candidate experiment (billed, needs Brandon's go): a prompt variant that tells the narrator only
+the TOPIC of what the game will add (for example "a short description of the label") or not at all, run through the existing `prompt_variant`
+mechanism in `bench`, 1C candidate-b script, 4 replicates, compared on repetition and on contradictions with the appended text.
+
 ## Options (recommend only what the repo has proven)
 1. **Authoring rule plus a deterministic audit check (recommended).** Source-level, subtractive, and it generalizes across stories
    (audits must). Rule for `docs/markdown-story-authoring/knowledge-and-disclosure.md`: a delivery sentence must add what the placement
