@@ -76,11 +76,23 @@ def test_the_picnic_does_not_explain_itself_before_the_thermos():
     assert "what brandon said" not in water
 
 
-def test_the_held_photograph_shows_a_man_not_michelle():
+def test_the_held_photograph_has_an_unknown_person_name():
     state, _engine_instance = _engine()
     photograph = next(item for item in PACKAGE.world.items if item.id == "michelle_photograph")
-    assert photograph.name == "photograph of a man"
+    assert photograph.name == "photograph of an unknown person"
     assert photograph.hidden
+
+    evidence_words = {
+        word.casefold()
+        for entry in _entries().values()
+        if "1B" in entry.available_in_scenes
+        for group in entry.action_evidence
+        for evidence in group
+        for word in evidence.split()
+    }
+    display_name_words = set(photograph.name.casefold().split()) - {"of", "an", "a", "photograph"}
+    assert display_name_words.isdisjoint(evidence_words)
+    assert {"man", "stranger"} <= evidence_words
 
     provider = ItemFactsProvider(
         worker_url="https://worker.example/turn",
