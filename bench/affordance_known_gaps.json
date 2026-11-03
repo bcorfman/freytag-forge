@@ -63,13 +63,13 @@
     "check": 2,
     "scene_id": "2B",
     "gate": "t_2b_2c:michelle_reply_received",
-    "subject": "michelle_photograph"
+    "subject": "kitchen"
   },
   {
     "check": 3,
     "scene_id": "2B",
     "gate": "t_2b_2c:michelle_reply_received",
-    "subject": "michelle_photograph"
+    "subject": "kitchen"
   },
   {
     "check": 2,
