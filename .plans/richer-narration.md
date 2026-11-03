@@ -46,6 +46,16 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    (the second 1C run showed the choice still works as the 5th command). Known and accepted: the narrator echoes the door beat
    (text it is shown); no experiment run. Still open: prompt size on the 1C "Study the prisoners" turn is 6,373 characters (the 6,500 worst-case
    cap is close); `bench/affordance_known_gaps.json` is stale.
+4b. **1B candidate-run2 found a regression from my 1C change (2026-11-03, `bench/results/richer-1b-probe/candidate-run2`, 352 projected
+   neurons).** `Ask the man about Michelle.` was rejected in 3 of 4 replicates (`narration_known_term_leak`, term "emergency statement",
+   guard retry used and still failed), so Brandon was never identified and the thermos and gate beats were lost. Cause (verified free):
+   `k_sl_1c_g_r1` `must_convey` has the multiword phrase "emergency statement", so the loader indexes it as a leak term owned ONLY by that
+   1C entry; the pre-1C frozen story has no such entry. The 1A radio delivery and the 1B mouthing statement and delivery use the same
+   phrase, so any echo in 1A or 1B is rejected in real play too. A whole-game sweep (earlier-scene entry text that contains a term owned
+   only by later-scene entries) finds 4 rows: 3 are this term, 1 is `brandon corfman` in 1B `k_sl_1b_b_r1` (probably benign, an entity name;
+   unverified). Fix scoped, not built: reword the 1C `must_convey` group at the source (the Round 6 wording arm in
+   `.plans/game-reimagination-plan.md` beat guard loosening via `leak_terms`), add a story-agnostic audit check for the class, then
+   rerun the 1B candidate arm (352 neurons), which is the pending 1B rerun anyway.
 5. **Next, in order:** (a) DONE: the third 1C run (closeout changes all work; recorded in `.plans/richer-1c-probe-prereg.md`);
    (b) the 2A probe (billed, needs Brandon's go; `.plans/richer-2a-probe-prereg.md`); (c) 1B candidate rerun (`candidate-run2`, ask);
    (d) scenes 2B..3C.
