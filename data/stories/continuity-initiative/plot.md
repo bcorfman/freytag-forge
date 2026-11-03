@@ -342,7 +342,7 @@ Brandon points Kristin toward the observation shaft. He asks her to study the pe
 
 **Details:** observation shaft; sedated prisoners; processing line; identification numbers; woman resembling Michelle; service entrance; Brandon watching the door
 
-Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she glimpses a woman who could be her. Twice the woman presses two fingers to her wrist, as if counting her own pulse. Her face slips from sight before Kristin can be certain. The transfer is still moving.
+Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she glimpses a woman who could be her. Her face slips from sight before Kristin can be certain. The transfer is still moving.
 
 While Kristin studies the line, Brandon stays at the top of the stairs with his back to it. He watches the door. If she looks at him, he says only, "Somebody has to watch the door." He does not say what he knows about the line.
 
@@ -716,6 +716,8 @@ bridge_text:
 Kristin follows Michelle's maintenance route into one partly unsecured detention sector, not a mass release. She expects rows of helpless captives. Instead, Michelle speaks into a stolen radio, coordinating prisoners through coded announcements and sympathetic facility workers.
 
 Michelle is beside the captives.
+
+They are awake. The dose they were given is for the trip, and it wears off in the detention block. Michelle says waking them was the easy part. Getting them to trust the announcements took longer.
 
 The reunion gets one unhurried moment before the purge countdown takes over again. Kristin and Michelle can speak to each other before anyone asks either of them for anything.
 
