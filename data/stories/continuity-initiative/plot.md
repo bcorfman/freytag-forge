@@ -493,10 +493,12 @@ freytag_phase: rising_action
 objective: Find the truth in the archive before the audit finds them
 participant_ids: [kristin, brandon, michelle, shift_supervisor]
 companions: [brandon]
-item_ids: [archive_terminals, medical_terminal, cooling_service_archive_panel]
+item_ids: [archive_terminals, medical_terminal, cooling_service_archive_panel, build_record, transfer_queue]
 item_placements:
   archive_terminals: {parent: janus_archive}
   medical_terminal: {parent: janus_archive}
+  build_record: {parent: janus_archive, text: below the personnel records on the archive terminals}
+  transfer_queue: {parent: janus_archive, text: in the transfer listing on the archive terminals}
   cooling_service_archive_panel: {parent: infrastructure_corridors}
 character_placements:
   shift_supervisor: {parent: janus_archive, text: leading the audit sweep between the archive stacks}
@@ -548,23 +550,27 @@ Michelle was taken because JANUS predicted that her research and public credibil
 
 ### Scene 2B.2 — Kristin Was Bait
 
-**Details:** Kristin's classification; RETAINED; predicted to lead investigators to Corfman; anticipated journey; accessible evidence
+**Details:** Kristin's classification; RETAINED; predicted to lead investigators to Corfman; anticipated journey; accessible evidence; held transfers
 
 Kristin's record is short. It reads: **RETAINED — predicted to lead investigators to CORFMAN.**
 
 She was left behind on purpose. Charles expected her to look for Michelle, find Brandon and lead security to his hidden network. Security left parts of Michelle's evidence where Kristin could find them.
 
+The terminals also list the transfer queue. If Kristin opens it, dozens of prisoner transfers are being held, each pushed back a week under a maintenance ticket, and every ticket is closed with the same code: sensor fault. It is the excuse the building uses for anything it does not want to look at, the same one that closed the supervisor's forty alarms. Someone is using it on purpose. Kristin does not know who yet.
+
 Kristin realizes that every step she has taken may have been anticipated. Directly below her record is the JANUS build record. Its author is Brandon Corfman.
 
 ### Scene 2B.3 — Brandon’s Role
 
-**Details:** JANUS build record; whispered confrontation; the stacks; Brandon's request; his name
+**Details:** JANUS build record; whispered confrontation; the stacks; Brandon's request; his name; the badge readers' three checks
 
 The audit is coming down the aisle. Kristin confronts Brandon crouched between the shelves, in whispers, while footsteps pass on the other side. A raised voice or a sudden move could give them away.
 
 Brandon admits that he helped write the AI software used to identify people at risk during national emergencies. When he learned that Charles meant to use it for mass detention and political control, he tried to destroy the project. He failed and fled. Michelle knew about his involvement and believed his access was the only way to expose the program.
 
 Kristin feels betrayed. She suspects he may still be manipulating her to erase evidence of his own guilt.
+
+If she reads the access section of the build record, it lists the three things the badge readers check. They are the three Brandon said he knew at the gate. That is how two badges were forged in one night, and it is the sharpest thing she has to say to him. Brandon watches her read and says nothing.
 
 Then Brandon asks for exactly that. Before they copy the files, he wants to delete his name from the build record. "Let me fix this one thing."
 
@@ -575,13 +581,15 @@ Either way, Kristin copies the JANUS files and keeps them with her. If the audit
 
 ### Scene 2B.4 — Michelle’s Hidden Resistance
 
-**Details:** medical terminal; maintenance line; Shelly; one reply; Michelle alive; the shift supervisor
+**Details:** medical terminal; maintenance line; Shelly; one reply; Michelle alive; the shift supervisor; the ticket header
 
 As they move to leave, the medical terminal in the archive prints a maintenance line. It is in Michelle's private phrasing, and it ends with "Shelly," the name only Kristin uses for her. Michelle has been using her access to the medical terminal to alter prisoner classifications, delay transfers and send coded messages through maintenance reports.
 
 Kristin can type one reply. Michelle answers once. She is alive. She is working against the facility from inside. She will send a route when she can. She says nothing about an uprising or the broadcast system.
 
 Michelle is not waiting to be rescued. That changes how Kristin leaves the archive.
+
+Kristin has reason to doubt a message that finds her. She was left behind as bait. If she has seen the held transfers, she can check the maintenance line against them: it carries the same ticket header and the same closing code, sensor fault. Whoever held the transfers wrote it. This is also how Michelle's later messages travel, hidden among the maintenance reports nobody reads.
 
 If the audit reaches them first, the shift supervisor sees them and does not raise the alarm. He lets them go. He is one of the workers Michelle has quietly recruited, though Kristin does not learn that here.
 
