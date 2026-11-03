@@ -150,3 +150,29 @@ the 4th command, now lands (optional `latest_turn` 4); (c) the door reveal still
 (e) Brandon no longer recites the older observational statements (voiceable false); (f) the pallets delivery no longer repeats the
 placement sentence (restatement fix). Score Q2, Q3 and Q4 per replicate as before; output `bench/results/richer-1c-probe/candidate-run3`.
 About 154 neurons.
+
+## Result of the third run (Amendment 2; candidate only, 4 replicates, 5 commands, 2026-11-02; not pooled; every turn read)
+Output `bench/results/richer-1c-probe/candidate-run3`. No rejected turn, no plain thing resolved new in 20 turns, narrator prompt
+median 4,816 and max 4,968 characters (inside the 5,000 guide on this script).
+
+- **(a) Michelle command reaches the glimpse:** `Watch the processing line for Michelle.` delivered `k_sl_1c_b_r2` in 4 of 4. (Before the
+  engine tie-break it delivered nothing.) The glimpse text is unchanged: "could be Michelle", "face slips from sight".
+- **(b) Pallets as the 4th command:** `k_sl_1c_e_r1` delivered in 4 of 4 (0 of 4 in run 2). The `latest_turn` 4 change works.
+- **(c) Door reveal:** `k_sl_1c_f_r1` delivered in 4 of 4 at command 2.
+- **(d) Choice as the 5th command:** `k_sl_1c_c_secure_route` in 4 of 4, window message after it, same as run 2.
+- **(e) Brandon reciting:** no replicate has Brandon quoting an older observational statement (run 1 had 2 of 4, run 2 none on this
+  point). In 3 of 4 replicates the narrator has Kristin say the command aloud on command 1 ("Inspect the loading docks," she says), a minor
+  older narrator habit, not new.
+- **(f) Pallets repetition:** gone. The narrator writes the pallets from the placement text and the engine then adds only "The pallets
+  carry the county label on every bottle, and the lot number matches the one on the thermos in the park." Reads as one beat.
+- **Still open, known and accepted by Brandon:** the door beat is written twice in 4 of 4 (the narrator quotes "Somebody has to watch the
+  door", then the engine appends the same sentences). Brandon carries the plant forward by himself later ("who's watching the door"
+  at command 5 in 3 of 4), which is a good effect.
+- **Judges (not real at 4 replicates):** score mean 3.5 (3, 4, 3, 4); `protected_safe` 3 of 4. The one failure is the judge objecting to the
+  next scene's entry text appended to the choice turn ("inspector badges ... cooling-water fault"), the scene ending at turn 5 against
+  the minimum of 8, and one narrator line placing Brandon beside Kristin in the shaft. I found no protected term in any turn. These
+  are existing design points (the choice turn carries the bridge into 2A), not regressions from the 1C changes.
+
+**Verdict for scene 1C:** every change did what it was built to do; no new defect found. The remaining open items are the door-beat
+echo (accepted), the 3A propagation (done as data), and the prompt-size headroom (worst case now 4,968 on this script, 6,373 on the
+studying-prisoners turn of the earlier script).
