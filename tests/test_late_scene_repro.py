@@ -136,6 +136,11 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
         "grille": "cooling_service_archive_panel",
         "ventilation grille": "cooling_service_archive_panel",
         "seam": "cooling_service_archive_panel",
+        "badges": "inspector_badges",
+        "badge": "inspector_badges",
+        "log": "alarm_log",
+        "tablet": "alarm_log",
+        "camera": "security_camera",
     },
     "2B": {
         "access panel": "cooling_service_archive_panel",

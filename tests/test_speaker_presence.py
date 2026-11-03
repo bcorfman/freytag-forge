@@ -53,7 +53,7 @@ EXPECTED_PRESENCE = {
     "1A": {"kristin": True, "michelle": False, "patrol_officer": False, "walt_pruitt": False},
     "1B": {"kristin": True, "brandon": True, "michelle": False},
     "1C": {"kristin": True, "brandon": True, "michelle": False},
-    "2A": {"kristin": True, "brandon": False, "shift_supervisor": True},
+    "2A": {"kristin": True, "brandon": True, "shift_supervisor": True},
     "2B": {"kristin": True, "brandon": True, "michelle": False, "shift_supervisor": False},
     "2C": {"kristin": True, "brandon": True, "michelle": True, "rebecca": False},
     "3A": {

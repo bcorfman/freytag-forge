@@ -1,0 +1,27 @@
+{
+  "name": "richer-2a-baseline",
+  "story_package": "bench/frozen/continuity-pre-richer-2a",
+  "fixed_turns": 5,
+  "runtime": true,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "2A": [
+      {
+        "name": "richer-2a-gate",
+        "inputs": [
+          "Read the alarm log.",
+          "Ask Brandon about the badges.",
+          "Feel the cooling lines at the manifold.",
+          "Trace the return line.",
+          "Explain the pressure fault and the ventilation problem to the supervisor."
+        ]
+      }
+    ]
+  },
+  "entry_state": "thorough"
+}

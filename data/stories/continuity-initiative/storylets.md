@@ -1166,6 +1166,155 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-2A-E — The Badge Readers
+
+**Source beats:** [2A.2 — The Infiltration Plan](plot.md#scene-2a2--the-infiltration-plan)
+
+**Allowed scene:** `2A`
+
+**Available when**
+- `inspection_window_missed` is false.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Inspector badges
+
+**Dramatic purpose**
+- Let Kristin notice how easily Brandon understands the forged badges.
+
+**Possible realizations**
+- Kristin asks Brandon about the badges or checks them.
+
+**Effects**
+- Sets `badge_craft_noted`.
+
+**Completion**
+- Kristin has noticed Brandon's precise knowledge of the badge readers.
+
+**Abort**
+- The scene is no longer `2A`.
+
+**Protected boundary**
+- The protected system, Brandon's past, and Rebecca's interest remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 4`
+
+### SL-2A-F — The Alarm Log
+
+**Source beats:** [2A.2 — The Infiltration Plan](plot.md#scene-2a2--the-infiltration-plan)
+
+**Allowed scene:** `2A`
+
+**Available when**
+- `inspection_window_missed` is false.
+
+**Participants / items**
+- Kristin Schweitzer
+- The shift supervisor
+- Alarm log
+
+**Dramatic purpose**
+- Let Kristin read the history behind the supervisor's anger.
+
+**Possible realizations**
+- Kristin reads or checks the alarm log on the supervisor's tablet.
+
+**Effects**
+- Sets `alarm_log_read`.
+
+**Completion**
+- Kristin has read the cooling alarm history.
+
+**Abort**
+- The scene is no longer `2A`.
+
+**Protected boundary**
+- The protected system, Brandon's past, and Rebecca's interest remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 4`
+
+### SL-2A-G — The Return Line
+
+**Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility)
+
+**Allowed scene:** `2A`
+
+**Available when**
+- `inspection_window_missed` is false.
+- `manifold_fault_found` is true.
+
+**Participants / items**
+- Kristin Schweitzer
+- Return line
+
+**Dramatic purpose**
+- Let Kristin trace the building consequence of the manifold fault.
+
+**Possible realizations**
+- Kristin traces or follows the return line from the manifold.
+
+**Effects**
+- Sets `return_line_traced`.
+
+**Completion**
+- Kristin has traced the return line to the pumps and the heavy door.
+
+**Abort**
+- The scene is no longer `2A`.
+
+**Protected boundary**
+- The protected system, Brandon's past, and Rebecca's interest remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 4`
+
+### SL-2A-H — The Camera
+
+**Source beats:** [2A.4 — The First Complication](plot.md#scene-2a4--the-first-complication)
+
+**Allowed scene:** `2A`
+
+**Available when**
+- `inspection_window_missed` is false.
+- `manifold_fault_found` is true.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Security camera
+
+**Dramatic purpose**
+- Let Kristin observe the camera's attention without explaining it.
+
+**Possible realizations**
+- Kristin looks at or watches the security camera.
+
+**Effects**
+- Sets `camera_on_brandon_seen`.
+
+**Completion**
+- Kristin has seen the camera turn toward Brandon.
+
+**Abort**
+- The scene is no longer `2A`.
+
+**Protected boundary**
+- The reason for the camera's attention remains undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 4`
+
 ### SL-2A-D — The Supervisor Takes Them In
 
 **Source beats:** [2A.3 — Entering the Facility](plot.md#scene-2a3--entering-the-facility), [2A.4 — The First Complication](plot.md#scene-2a4--the-first-complication)

@@ -142,23 +142,9 @@ def test_each_check_reports_a_deliberately_broken_map(lighthouse, check, broken)
 def test_whole_package_findings_match_recorded_gaps():
     package = load_story_package(CONTINUITY)
     amap = build_affordance_map(package)
-    expected = [
-        item
-        for item in json.loads((Path("bench") / "affordance_known_gaps.json").read_text(encoding="utf-8"))
-        if not (
-            item["scene_id"] == "2B"
-            and item["gate"] == "t_2b_2c:michelle_reply_received"
-            and item["subject"] == "michelle_photograph"
-        )
-    ]
-    expected.extend(
-        {
-            "check": check,
-            "scene_id": "2B",
-            "gate": "t_2b_2c:michelle_reply_received",
-            "subject": "kitchen",
-        }
-        for check in (2, 3)
+    expected = json.loads((Path("bench") / "affordance_known_gaps.json").read_text(encoding="utf-8"))
+    expected.append(
+        {"check": 3, "scene_id": "2A", "gate": "t_2a_2b:restricted_corridor_access", "subject": "return_line"}
     )
     actual = [
         {key: finding[key] for key in ("check", "scene_id", "gate", "subject")}
