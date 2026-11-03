@@ -92,7 +92,7 @@ def test_bench_put_uses_recovered_photograph_without_retaking(monkeypatch):
     assert turn["taking_steps"] == []
     assert turn["taking_asked"] is False
     assert not any("picked up Michelle's photograph from the park bench" in request["user"] for request in requests)
-    assert turn["item_facts_before"]["Michelle's photograph"]["place"] == "Kristin"
+    assert turn["item_facts_before"]["photograph of an unknown person"]["place"] == "Kristin"
     assert providers[0].prior_steps == ()
 
 

@@ -1147,7 +1147,10 @@ def test_prepare_turn_gives_visible_contents_under_referred_park_bench(monkeypat
     assert all(world.is_hidden(clue_id) for clue_id in clue_ids)
     assert all(world.parent(clue_id) == "park_bench" for clue_id in clue_ids)
     names = provider._thing_names()
-    assert all(name not in names for name in ("handwritten number sequence", "Michelle's photograph", "Transit token"))
+    assert all(
+        name not in names
+        for name in ("handwritten number sequence", "photograph of an unknown person", "Transit token")
+    )
     assert "handwritten number sequence" not in provider._things_block()
 
     provider.state.facts.assert_fact(Fact(predicate="bench_clues_recovered", subject="story", value="true"))
@@ -1168,7 +1171,7 @@ def test_prepare_turn_without_referred_park_bench_omits_its_contents(monkeypatch
 
     names = provider._thing_names()
     assert "handwritten number sequence" not in names
-    assert "Michelle's photograph" not in names
+    assert "photograph of an unknown person" not in names
 
 
 def test_match_payload_only_lists_things_in_play_for_each_scene():

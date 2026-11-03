@@ -1,7 +1,7 @@
 # Richer narration with bounded invention
 
 Status: in progress. Last updated 2026-11-02 (end of the session). Branch `richer-narration-1` (HEAD `05f1f0b2` plus this note).
-Whole suite at `05f1f0b2`: 3984 passed, 26 skipped, Ruff clean. The full suite with coverage has NOT been run; run it once at the very end.
+Whole quick suite after the 1B value fixes: 3989 passed, 26 skipped, Ruff clean. The full suite with coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
 Claude drafts it richer scene by scene, `plot.md` first, settling story problems itself and reporting afterwards. Steps 1 and 2 of
@@ -15,22 +15,33 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    "dead drop" (leak term of the 1A card reveal, unearned under the default `bare` bench entry; real-play effect is an unchecked hypothesis).
    The narrator also recites reveal statements as Brandon's dialogue, repeats the picnic image 3 times, and the engine delivery text
    repeats what the narrator just wrote. Brandon's rule (2026-11-02, `richer-means-added-value-not-more-stuff`): richer means details with a job.
-2. **Next, in order:** (a) rerun only the candidate with `entry_state: thorough` as a second run (billed, about 350 neurons; ask Brandon);
-   (b) read the recorded prompt and remove the doubled statement (SCENE fact plus "may say aloud"), so the narrator stops reciting it; tests
-   first, through Ringer; (c) held items keep a one-line depiction (the narrator describes Michelle's face, contradicting the reveal);
-   (d) give the picnic image a payoff or cut it; (e) rerun the candidate and rescore Q2, Q3, Q5. Not before 1C.
-3. **Small owed follow-ups** (each a tests-first Ringer task): mark the 1A `lake_photograph` `fixed: true` (the narrator "moves" it
+2. **1B probe fixes landed (2026-11-02, commits `1f199adf` tests-first, the corrected test, and the data commit).** Free check (read
+   `narration_safety.py` and `KnowledgeGuards.unearned`): the "dead drop" rejections are a bench artifact, because the leak guard
+   skips a term once any knowledge carrying it is earned, and the default `bare` entry earns none; so "dead drop" stays in the
+   photograph statement and the thorough-entry rerun was dropped. Data fix, no engine change: `voiceable: false` on `k_sl_1b_a_r2`,
+   `f_r1`, `g_r1`, `h_r1` (Brandon is no longer offered them as speech); the picnic, mouthing and thermos statements are short while
+   the vivid images live only in the delivery text; "Whoever sat here was taken" moved from the picnic (plant) to the thermos
+   (payoff: "Someone sat here, drank, and was taken. The person beside them was not."); the held photograph is named "photograph of
+   an unknown person" with scoped aliases for the old words. Lesson: a display name must not contain a word that is an action-evidence
+   word of another reveal ("man" made commands about the photograph ambiguous; the engine rewrites aliases to the display name).
+   Acceptance tests: `tests/test_richer_1b_value.py`. Whole quick suite 3989 passed. A side effect to know: one known affordance gap
+   (2B `michelle_photograph`) disappeared and `tests/test_affordance_map.py` filters it; `bench/affordance_known_gaps.json` is stale.
+3. **Next, in order:** (a) ONE candidate rerun, `richer-1b-candidate`, same script, output `bench/results/richer-1b-probe/candidate-run2`
+   (billed, about 350 neurons; ask Brandon first). The baseline stays the bare-entry run; say so when comparing. Rescore Q2, Q3 (gate
+   escape 0/4 before), Q5 (repetition, recitation, photograph depiction). (b) Remaining Q5 weakness not yet addressed: the engine appends
+   the delivery text after the narrator's own version of the same image (visible in picnic turns); decide after the rerun. (c) 1C.
+4. **Small owed follow-ups** (each a tests-first Ringer task): mark the 1A `lake_photograph` `fixed: true` (the narrator "moves" it
    in 3 of 4 replicates; harmless but recurring); replace the private `_matches_all` import in `storygame/runtime/knowledge.py` with a
    public helper from `candidate_matcher.py`; 1A keeps two older `beat_overprojection` findings (SL-1A-E earliest turn 1 against
    0 for its siblings); if the 1B probe shows invented photograph content, make held items keep a one-line depiction.
-4. **Scenes 1C, 2A, 2B, 2C, 3A, 3B, 3C** (seven left). For each: read the scene in `plot.md`, write the richer beats (plot first,
+5. **Scenes 1C, 2A, 2B, 2C, 3A, 3B, 3C** (seven left). For each: read the scene in `plot.md`, write the richer beats (plot first,
    plain names, plant a payoff for each plant, Details lines of 3 to 7 items, keep the turn ceiling), write acceptance tests first,
    then one Ringer propagation task whose spec states every priority (-1 for ambient reveals), the exact evidence groups, and the
    lessons below; review the patch for possessives and over-broad renames; run the whole suite; then preregister and run a probe.
    Planted payoffs so far: the looping broadcast (1A radio, 1B loudspeaker) pays off in 3B/3C; Brandon mouthing the words and
    the keypad he never looks at pay off when his role surfaces (2B); the clipboard and skipped houses pay off in 2B's selection
    list; the lemon-cake calendar is a candidate private proof in 3A or 3C; Officer Reyes could glimpse Kristin again at a checkpoint.
-5. **Still deferred:** refusing unknown ordinary things (blocked because item-facts capture runs after the turn is applied; the
+6. **Still deferred:** refusing unknown ordinary things (blocked because item-facts capture runs after the turn is applied; the
    measured upper bound is 3.4 percent of turns and falling as scenes are authored); compacting the item-matching prompt if a scene
    nears its budget; embellishment prompt work (step 3) and prop pools (step 4).
 

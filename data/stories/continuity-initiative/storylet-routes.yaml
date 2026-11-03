@@ -1455,7 +1455,7 @@ storylets:
   pressure_role: Let Kristin read the abandoned park as a moment cut short.
   realization_options:
   - id: SL-1B-F-R1
-    dramatic_intent: 'Kristin reads the park as a moment cut short: a bicycle on its kickstand, an empty dog leash on the fence, and a picnic with one cup tipped and one half full.'
+    dramatic_intent: 'The park is abandoned: a bicycle and a picnic were left behind.'
     source_beats: [scene-1b1--michelles-dead-drop]
     operations:
     - op: assert
@@ -1486,7 +1486,7 @@ storylets:
   pressure_role: Let Kristin notice that the stranger knows the looping emergency statement.
   realization_options:
   - id: SL-1B-G-R1
-    dramatic_intent: The loudspeaker repeats one emergency statement, and the stranger mouths the words a half-beat ahead of it.
+    dramatic_intent: The stranger mouths the loudspeaker's emergency statement along with it.
     source_beats: [scene-1b2--the-man-following-her]
     operations:
     - op: assert
@@ -1517,7 +1517,7 @@ storylets:
   pressure_role: Let Kristin connect the picnic's emergency water to Brandon's warning.
   realization_options:
   - id: SL-1B-H-R1
-    dramatic_intent: The thermos on the picnic blanket carries a county emergency-water label with a lot number on its cap.
+    dramatic_intent: 'The thermos carries a county emergency-water label.'
     source_beats: [scene-1b3--brandons-warning]
     operations:
     - op: assert

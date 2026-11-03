@@ -997,6 +997,7 @@ knowledge:
     Kristin matches the transit token and handwritten number sequence to a freight route out of the city.
 - id: k_sl_1b_a_r2
   statement: 'The photograph recovered from Michelle’s dead drop gives Kristin the face of the man who has been following her.'
+  voiceable: false
   earn_when: examines Michelle's recovered photograph
   action_evidence:
   - [look at, inspect, examine, study, check]
@@ -1182,7 +1183,8 @@ knowledge:
   delivery_text: >-
     Brandon enters a code no civilian should know, his fingers moving without a glance at the keypad. It gets them clear toward the freight route. Kristin trusts him less.
 - id: k_sl_1b_f_r1
-  statement: "Kristin reads the park as a moment cut short: a bicycle on its kickstand, an empty dog leash on the fence, and a picnic with one cup tipped and one half full."
+  statement: "The park is abandoned: a bicycle and a picnic were left behind."
+  voiceable: false
   reach_entity_ids: [picnic_blanket, park_bicycle, dog_leash]
   earn_when: looks closely at the picnic blanket, the cups, the bicycle or the dog leash
   action_evidence:
@@ -1206,9 +1208,10 @@ knowledge:
   - [picnic, blanket, cups]
   - [bicycle, bike]
   - [leash]
-  delivery_text: "A bicycle stands on its kickstand where no one will ride it. A dog leash is still tied to the fence, its loop empty. On a picnic blanket two cups sit beside a thermos: one is tipped over, and the other is still half full. Whoever sat here was taken. The person beside them was not."
+  delivery_text: "A bicycle stands on its kickstand where no one will ride it. A dog leash is still tied to the fence, its loop empty. On a picnic blanket two cups sit beside a thermos: one is tipped over, and the other is still half full."
 - id: k_sl_1b_g_r1
-  statement: "The loudspeaker repeats one emergency statement, and the stranger mouths the words a half-beat ahead of it."
+  statement: "The stranger mouths the loudspeaker's emergency statement along with it."
+  voiceable: false
   reach_entity_ids: [park_loudspeaker, brandon]
   earn_when: listens to the loudspeaker or watches the stranger while the broadcast plays
   action_evidence:
@@ -1236,7 +1239,8 @@ knowledge:
   - [stops, sees, watching]
   delivery_text: "The loudspeaker on its pole starts the emergency statement again. The man by the service path mouths the words a half-beat ahead of it. When he sees Kristin watching, he stops."
 - id: k_sl_1b_h_r1
-  statement: "The thermos on the picnic blanket carries a county emergency-water label with a lot number on its cap."
+  statement: "The thermos carries a county emergency-water label."
+  voiceable: false
   reach_entity_ids: [picnic_thermos]
   earn_when: examines the thermos, its label or its cap
   action_evidence:
@@ -1261,7 +1265,7 @@ knowledge:
   must_convey:
   - [emergency-water label, emergency water, label]
   - [lot number]
-  delivery_text: "The thermos carries a county emergency-water label, and a lot number is stamped on its cap. Its twin cup sits beside it, still half full. It fits what Brandon said about the water."
+  delivery_text: "The thermos carries a county emergency-water label, and a lot number is stamped on its cap. Its twin cup sits beside it, still half full. Someone sat here, drank, and was taken. The person beside them was not."
 - id: k_sl_1c_a_r1
   statement: 'Kristin finds electrical load, fresh ventilation, and recent work that prove the abandoned terminal is still operating.'
   earn_when: inspects signs of activity at the loading docks

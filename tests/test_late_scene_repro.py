@@ -111,6 +111,8 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
         "tunnel": "storm_drain",
         "photograph": "michelle_photograph",
         "photo": "michelle_photograph",
+        "Michelle's photograph": "michelle_photograph",
+        "Michelle's photo": "michelle_photograph",
     },
     "1C": {"captives": "captives", "captive": "captives", "prisoner": "captives", "prisoners": "captives"},
     "2A": {

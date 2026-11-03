@@ -276,6 +276,7 @@
     "tests/test_revealed_knowledge_ids.py": 0.0,
     "tests/test_richer_1a_fixes.py": 0.1,
     "tests/test_richer_1b.py": 0.27,
+    "tests/test_richer_1b_value.py": 0.24,
     "tests/test_runtime_capture.py": 4.26,
     "tests/test_runtime_jev.py": 0.01,
     "tests/test_runtime_state_copy.py": 0.01,

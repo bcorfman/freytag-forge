@@ -322,9 +322,9 @@ items:
   - {intact: [], destroyed: [broken, snapped, crushed]}
   unavailable: destroyed
 - id: michelle_photograph
-  name: Michelle's photograph
+  name: photograph of an unknown person
   hidden: true
-  scoped_aliases: [photograph, photo]
+  scoped_aliases: [photograph, photo, "Michelle's photograph", "Michelle's photo"]
 - id: number_sequence
   name: handwritten number sequence
   hidden: true

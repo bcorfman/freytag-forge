@@ -582,7 +582,7 @@ Each entry below is authoring data, not a player action menu.
 - Let Kristin read the abandoned park as a moment cut short.
 
 **Possible realizations**
-- Kristin reads the park as a moment cut short: a bicycle on its kickstand, an empty dog leash on the fence, and a picnic with one cup tipped and one half full.
+- The park is abandoned: a bicycle and a picnic were left behind.
 
 **Effects**
 - Sets `park_left_behind_read`.
@@ -621,7 +621,7 @@ Each entry below is authoring data, not a player action menu.
 - Let Kristin notice that the stranger knows the looping emergency statement.
 
 **Possible realizations**
-- The loudspeaker repeats one emergency statement, and the stranger mouths the words a half-beat ahead of it.
+- The stranger mouths the loudspeaker's emergency statement along with it.
 
 **Effects**
 - Sets `stranger_knows_script`.
@@ -659,7 +659,7 @@ Each entry below is authoring data, not a player action menu.
 - Let Kristin connect the picnic's emergency water to Brandon's warning.
 
 **Possible realizations**
-- The thermos on the picnic blanket carries a county emergency-water label with a lot number on its cap.
+- The thermos carries a county emergency-water label.
 
 **Effects**
 - Sets `emergency_water_label_read`.
