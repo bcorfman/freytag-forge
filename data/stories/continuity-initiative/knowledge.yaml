@@ -1766,7 +1766,7 @@ knowledge:
   - [pumps]
   - [heavy door]
   delivery_text: >-
-    Kristin follows the return line away from the manifold. It shares its feed with the pumps that keep the lower levels dry, and a heavy door across the corridor beyond holds water back.
+    Kristin follows the return line upstream, away from the manifold. It shares its feed with the pumps that keep the lower levels dry, and a heavy door across the corridor beyond holds water back.
     If the pressure fails, the pumps lose power first. She touches neither.
 - id: k_sl_2a_h_r1
   statement: "The security camera has turned toward Brandon."

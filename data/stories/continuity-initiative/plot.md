@@ -397,8 +397,8 @@ item_placements:
   cooling_manifold: {parent: facility_perimeter, text: just inside the facility gate}
   inspector_badges: {parent: kristin, text: clipped to the front of each jacket}
   alarm_log: {parent: facility_perimeter, text: on the tablet the supervisor carries}
-  return_line: {parent: facility_perimeter, text: running from the cooling manifold toward the corridors}
-  security_camera: {parent: facility_perimeter, text: on a pole above the cooling manifold}
+  return_line: {parent: facility_perimeter, text: carrying water back from the corridors into the cooling manifold}
+  security_camera: {parent: facility_perimeter, text: on a pole above the cooling manifold with its lens turned toward the gate}
   cooling_service_archive_panel:
     parent: infrastructure_corridors
     text: beside the inspection console in the infrastructure corridors
@@ -465,7 +465,7 @@ The supervisor will not argue at the gate. He walks them to the cooling manifold
 
 The fault is real. A pressure problem in the cooling water is getting worse, and the ventilation is masking it. Kristin finds it the way she would have in the Army, by feel, by gauge and by tracing the lines, and she explains in her own words what will fail if nobody fixes it. The supervisor has been blamed for alarms he could not explain. Hearing the real cause changes his manner.
 
-Tracing the return line shows where it goes. It shares its feed with the pumps that keep the lower levels dry, and a heavy door across the corridor beyond holds water back. If the pressure fails, the pumps lose power first. This is a fact about the building and not a plan. Nothing here lets her touch either one.
+The return line carries water back from the corridors into the manifold. Tracing it upstream shows where it comes from. It shares its feed with the pumps that keep the lower levels dry, and a heavy door across the corridor beyond holds water back. If the pressure fails, the pumps lose power first. This is a fact about the building and not a plan. Nothing here lets her touch either one.
 
 If Kristin has the copied prisoner numbers, she recognizes the processing-line codes on his work orders. If she knows the service approach, Brandon steers them around the second checkpoint, and the supervisor notices the shortcut.
 

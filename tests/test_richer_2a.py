@@ -198,3 +198,12 @@ def test_the_richer_scene_adds_no_beat_overprojection():
     assert any(finding.get("scene_id") == "1A" for finding in findings if finding["check"] == "beat_overprojection")
     # Measured before the richer 2A data change: there were two such findings.
     assert len(overprojection) <= 2
+
+
+def test_the_return_line_carries_water_into_the_manifold_and_the_camera_faces_the_gate():
+    placements = _scene().item_placements
+    line_text = placements["return_line"].text.casefold()
+    assert "into the cooling manifold" in line_text and "from the cooling manifold" not in line_text, line_text
+    assert "lens turned toward the gate" in placements["security_camera"].text.casefold()
+    delivery = _entries()["k_sl_2a_g_r1"].delivery_text.casefold()
+    assert "upstream, away from the manifold" in delivery
