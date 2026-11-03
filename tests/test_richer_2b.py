@@ -94,13 +94,13 @@ def test_three_new_optional_storylets_share_their_beats_windows_and_conditions()
     routes = _routes()
     expected = {
         "SL-2B-E": (
-            (0, 2, 4),
+            (0, 6, 6),
             {("audit_window_missed", False), ("kristin_file_read", True)},
             "scene-2b3--brandons-role",
         ),
-        "SL-2B-F": ((0, 2, 4), {("audit_window_missed", False)}, "scene-2b2--kristin-was-bait"),
+        "SL-2B-F": ((0, 6, 6), {("audit_window_missed", False)}, "scene-2b2--kristin-was-bait"),
         "SL-2B-G": (
-            (4, 5, 7),
+            (4, 6, 7),
             {("archive_crisis_understood", True), ("held_transfers_seen", True)},
             "scene-2b4--michelles-hidden-resistance",
         ),

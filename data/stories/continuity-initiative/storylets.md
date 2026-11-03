@@ -1600,8 +1600,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 2`
-- latest: `turn 4`
+- target: `turn 6`
+- latest: `turn 6`
 
 ---
 
@@ -1639,8 +1639,8 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 0`
-- target: `turn 2`
-- latest: `turn 4`
+- target: `turn 6`
+- latest: `turn 6`
 
 ---
 
@@ -1679,7 +1679,7 @@ Each entry below is authoring data, not a player action menu.
 
 **Pacing window**
 - earliest: `turn 4`
-- target: `turn 5`
+- target: `turn 6`
 - latest: `turn 7`
 
 ---

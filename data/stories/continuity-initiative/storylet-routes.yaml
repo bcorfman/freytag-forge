@@ -2335,8 +2335,8 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 0
-      target_turn: 2
-      latest_turn: 4
+      target_turn: 6
+      latest_turn: 6
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Let Kristin confirm the three checks Brandon knew at the gate.
   realization_options:
@@ -2366,8 +2366,8 @@ storylets:
       equals: false
     pacing:
       earliest_turn: 0
-      target_turn: 2
-      latest_turn: 4
+      target_turn: 6
+      latest_turn: 6
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Let Kristin see the held transfers and the repeated maintenance excuse.
   realization_options:
@@ -2399,7 +2399,7 @@ storylets:
       equals: true
     pacing:
       earliest_turn: 4
-      target_turn: 5
+      target_turn: 6
       latest_turn: 7
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Let Kristin match the maintenance line to the held transfers.

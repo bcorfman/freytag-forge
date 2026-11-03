@@ -143,7 +143,7 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
             "1B": [2, 2, 3, 3, 4, 6, 6, 10],
             "1C": [2, 2, 2, 2, 2, 3, 6],
             "2A": [1, 2, 2, 2, 2, 3, 6],
-            "2B": [1, 5, 6, 6],
+            "2B": [1, 5, 6, 6, 6, 6, 6],
             "2C": [1, 6, 13],
             "3C": [3, 7, 8, 10, 11, 11, 13, 13],
         }.get(scene_id)
