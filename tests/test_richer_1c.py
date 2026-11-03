@@ -135,17 +135,26 @@ def test_the_new_reveals_are_quiet_short_and_exact():
     assert {(operation.fact_id, operation.value) for operation in entries["k_sl_1c_g_r1"].establishes} == {
         ("line_broadcast_heard", True)
     }
-    assert {"emergency water", "lot number", "thermos"} <= entries["k_sl_1c_e_r1"].delivery_text.casefold()
-    assert {"door", "somebody has to watch the door"} <= entries["k_sl_1c_f_r1"].delivery_text.casefold()
-    assert {"speaker", "emergency statement", "word for word"} <= entries["k_sl_1c_g_r1"].delivery_text.casefold()
+    assert all(
+        phrase in entries["k_sl_1c_e_r1"].delivery_text.casefold()
+        for phrase in ("emergency water", "lot number", "thermos")
+    )
+    assert all(
+        phrase in entries["k_sl_1c_f_r1"].delivery_text.casefold()
+        for phrase in ("door", "somebody has to watch the door")
+    )
+    assert all(
+        phrase in entries["k_sl_1c_g_r1"].delivery_text.casefold()
+        for phrase in ("speaker", "emergency statement", "word for word")
+    )
 
 
 def test_the_water_pallets_are_earned_only_after_the_thermos_label():
     state, engine = _engine(true_facts=("emergency_water_label_read",))
     handoff = _handoff(engine, state, "Inspect the water pallets.")
     assert handoff is not None and handoff.candidate.id == "k_sl_1c_e_r1"
-    for facts in ((), ("transfer_window_missed",)):
-        state, engine = _engine(true_facts=("emergency_water_label_read", *facts))
+    for facts in ((), ("emergency_water_label_read", "transfer_window_missed")):
+        state, engine = _engine(true_facts=facts)
         handoff = _handoff(engine, state, "Inspect the water pallets.")
         assert handoff is None or handoff.candidate.id != "k_sl_1c_e_r1"
 
@@ -182,7 +191,9 @@ def test_existing_1c_commands_still_reach_their_reveals():
 def test_the_richer_scene_adds_no_beat_overprojection():
     findings = audit_package(ROOT)["findings"]
     overprojection = [
-        finding for finding in findings if finding["check"] == "beat_overprojection" and "SL-1C-" in str(finding)
+        finding for finding in findings if finding["check"] == "beat_overprojection" and finding.get("scene_id") == "1C"
     ]
+    # The 1A findings are known and older; use them to prove this filter is non-vacuous.
+    assert any(finding.get("scene_id") == "1A" for finding in findings if finding["check"] == "beat_overprojection")
     # Measured before the richer 1C data change: there were zero such findings.
     assert len(overprojection) <= 0
