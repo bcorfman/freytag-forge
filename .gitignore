@@ -139,3 +139,6 @@ frontend/test-results/
 # be included in source archives uploaded to Railway.
 node_modules/
 *.egg-info/
+
+# Claude Code local settings and lock files stay on this machine.
+.claude/
