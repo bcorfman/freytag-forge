@@ -48,8 +48,10 @@ lines at the manifold.` `Trace the return line.` `Explain the pressure fault and
 4 replicates per arm. Then, candidate only, never pooled: `richer-2a-candidate-b`, script `richer-2a-gate-b` (three commands):
 `Feel the cooling lines at the manifold.` `Look at the camera.` `Explain the pressure fault and the ventilation problem to the
 supervisor.` (The camera needs the fault found, and with script A's four detours the window closes before it can land.)
-Both judges on, shipped transports, no retries, partial rows kept, one opening request each. Estimated cost: about 130 projected
-neurons per arm for script A and about 80 for script B, so about 340 in all. Request cap 150 narrator and matcher requests per
+Both judges on, shipped transports, no retries, partial rows kept, one opening request each. Projected cost (the bench charges 11 neurons per
+turn, opening included; measured on the 1B candidate run, where 4 replicates of 8 turns projected 352): script A is 6 turns x 4
+replicates = 264 per arm, so 528 for both arms; script B is 4 x 4 = 176; about 704 in all. (An earlier draft said about 340; it was
+scaled from a wrong 1C figure.) Request cap 150 narrator and matcher requests per
 run; judge calls separate. Stop on HTTP 429 `AI_QUOTA_EXCEEDED` or `AI_DAILY_BUDGET_EXCEEDED` until 00:00 UTC.
 Baseline note: commands 1, 2 and 4 reach no authored reveal in the baseline; that is the Q1 comparison.
 
