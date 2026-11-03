@@ -1,15 +1,49 @@
 # Richer narration with bounded invention
 
-Status: in progress, 2026-11-02. Branch `richer-narration-1`.
-**Direction change (2026-11-02, Brandon):** richness comes from the plot itself, not runtime embellishment.
-The current story is treated as an outline and drafted richer, scene by scene, in `plot.md` first.
-First slice: `.plans/richer-plot-1a-slice.md` (draft awaiting his reaction). Step 3 below (prompt work)
-and step 4 (prop pools) are deferred; steps 1 and 2 stay built and unused until then.
-Steps 1, 2a, 2b, 2c and the condition routing of 2d are done (see Progress). Resume here:
-the small cleanup listed under Progress, then step 3 (shared prompt helper for all six narration
-paths, prose validation and judge coverage). Refusing unknown ordinary things waits for bench data.
-The full suite with coverage has not been run yet; run it once at the very end. This change spans all narration paths and
-all nine scenes; shared runtime must remain story-agnostic.
+Status: in progress. Last updated 2026-11-02 (end of the session). Branch `richer-narration-1` (HEAD `05f1f0b2` plus this note).
+Whole suite at `05f1f0b2`: 3984 passed, 26 skipped, Ruff clean. The full suite with coverage has NOT been run; run it once at the very end.
+
+**Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
+Claude drafts it richer scene by scene, `plot.md` first, settling story problems itself and reporting afterwards. Steps 1 and 2 of
+the original embellishment design are built but unused; step 3 (prompt work) and step 4 (prop pools) are deferred. The standing
+rules for every scene are in "Richness rules" below and in the `richer-scene-checklist` memory.
+
+## Resume here (in order)
+
+1. **Finish the 1B probe.** Preregistration: `.plans/richer-1b-probe-prereg.md`. A baseline run was started in the background:
+   `bench/results/richer-1b-probe/baseline`. Look for `summary.json` and `all-turn-records.json` in it; if absent, run:
+   `cd /home/bcorfman/dev/freytag-forge && PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/richer-1b-baseline.json --scene 1B --replicates 4 --script richer-1b-park --out bench/results/richer-1b-probe/baseline --confirm`
+   then the candidate arm (same command with `richer-1b-candidate.json` and `--out bench/results/richer-1b-probe/candidate`).
+   The offline replay (network blocked) of both arms is clean. Brandon authorized running the full probe (2026-11-02); billed
+   runs are run by him with `!` or by Claude when he says so. Each arm is about 350 neurons and 10 to 25 minutes.
+2. **Read every turn** with `python .plans/richer-probe-report.py <results dir>`, score against the preregistration (Q1 to Q4 and the
+   decision rule), and append a Result section to `.plans/richer-1b-probe-prereg.md` the way `.plans/richer-1a-probe-prereg.md`
+   does. Report replicates separately, never pooled; a 1 or 2 point judge gap is not real with four replicates. Watch for: what the
+   narrator says the recovered photograph shows (held items show only "Held by"), whether Brandon mouths the words
+   (stranger storylet), the thermos label after his explanation, the keypad and oiled latch at the gate, and any Q3 regression.
+   Fix defects with tests first, through Ringer, then rerun only the arm that changed as a second run.
+3. **Small owed follow-ups** (each a tests-first Ringer task): mark the 1A `lake_photograph` `fixed: true` (the narrator "moves" it
+   in 3 of 4 replicates; harmless but recurring); replace the private `_matches_all` import in `storygame/runtime/knowledge.py` with a
+   public helper from `candidate_matcher.py`; 1A keeps two older `beat_overprojection` findings (SL-1A-E earliest turn 1 against
+   0 for its siblings); if the 1B probe shows invented photograph content, make held items keep a one-line depiction.
+4. **Scenes 1C, 2A, 2B, 2C, 3A, 3B, 3C** (seven left). For each: read the scene in `plot.md`, write the richer beats (plot first,
+   plain names, plant a payoff for each plant, Details lines of 3 to 7 items, keep the turn ceiling), write acceptance tests first,
+   then one Ringer propagation task whose spec states every priority (-1 for ambient reveals), the exact evidence groups, and the
+   lessons below; review the patch for possessives and over-broad renames; run the whole suite; then preregister and run a probe.
+   Planted payoffs so far: the looping broadcast (1A radio, 1B loudspeaker) pays off in 3B/3C; Brandon mouthing the words and
+   the keypad he never looks at pay off when his role surfaces (2B); the clipboard and skipped houses pay off in 2B's selection
+   list; the lemon-cake calendar is a candidate private proof in 3A or 3C; Officer Reyes could glimpse Kristin again at a checkpoint.
+5. **Still deferred:** refusing unknown ordinary things (blocked because item-facts capture runs after the turn is applied; the
+   measured upper bound is 3.4 percent of turns and falling as scenes are authored); compacting the item-matching prompt if a scene
+   nears its budget; embellishment prompt work (step 3) and prop pools (step 4).
+
+**Where the tooling lives (outside the repo).** `~/dev/ringer-work/richer-narration-2/` holds every Ringer manifest
+(`manifest_*.json`), check script (`check_*.sh`), `common.sh` helpers and run output. To start a new task, copy the closest manifest
+(`manifest_rank.json` for an engine change, `manifest_1b.json` for scene data), copy its `check_*.sh`, update the fixed-test hash with
+`sha256sum`, lint with `~/dev/ringer/ringer.py lint`, and run with `ringer.py run <manifest> --identity claude-orchestrator`
+(background). A worker's own run cannot be trusted: always re-run the whole suite on the branch before committing. Ringer cannot
+launch unsandboxed (billed) workers from Claude; bench runs are plain commands. Disclosure: two unplanned partial live bench runs
+(about 20 to 30 requests) happened on 2026-11-02, recorded in `.plans/richer-1a-probe-prereg.md`.
 
 ## Progress
 
@@ -58,7 +92,7 @@ all nine scenes; shared runtime must remain story-agnostic.
   calls `set_conditions` when a phrase was only refused (`elif routed.leftover or routed.refused`), which
   clears existing conditions; the intended rule is to skip the call whenever nothing is left over. Add a
   test and fix it in the next code task.
-- **Queued after the 1A propagation lands (Ringer, engine, tests first):** make
+- **Done, `945a7912` (was queued):** make
   `storygame/audit.py::_ambiguous_owned_item_findings` scene-aware. It currently flags a bare noun in any scene
   when an owned item of that name exists anywhere in the package (scene 1A was flagged for 1B's
   `michelle_photograph`). Count an owned item only for scenes where it is listed or placed. Brandon's rule:
@@ -70,7 +104,7 @@ all nine scenes; shared runtime must remain story-agnostic.
   turn 2, reveal earnable at turn 4: align storylet windows or conditions), and 1A's estimated turn payload grew
   22,539 to 27,854 characters (the audit's budget is 12,000 and was already exceeded): check how the payload is
   bounded per turn before adding more per-scene material.
-- **Owed next (Ringer):** rename the kitchen "snapshot" to "photograph" (Brandon's choice; name "lake photograph",
+- **Done, `519a6c60` (was owed):** rename the kitchen "snapshot" to "photograph" (Brandon's choice; name "lake photograph",
   scoped_aliases photograph and photo so 1B's michelle_photograph still resolves in its own scene) and drop the
   possessive in "On Kristin's truck radio ..." (the scene-aware lint no longer needs it).
 - **1A opening probe, 2026-11-02:** preregistered in `.plans/richer-1a-probe-prereg.md` (with Amendment 1 and a
