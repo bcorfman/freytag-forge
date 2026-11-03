@@ -64,3 +64,54 @@ hosted staging, other models, wording tuning.
 ## Owed to other scenes (so the plants pay off)
 2C.5: Michelle's second message arrives as a maintenance ticket with the same header and closing code. 3A: the held transfers explain why
 the captives are still alive and waiting. 3B/3C: the badge checks (Brandon's access knowledge) can surface when he opens doors for them.
+
+## Result (run 2026-11-03, branch `richer-narration-2b`, commit `2d768426`)
+Outputs `bench/results/richer-2b-probe/{baseline,candidate}` (gitignored), 4 replicates each, none failed, 0 rejected turns and 0 guard
+rejections in either arm, 616 projected neurons. Every turn of both arms read by hand. Replicates reported separately; the judge scores
+are not real signal (4 replicates). One baseline narration reply had a malformed segment that the transport dropped and logged.
+
+**Headline: richness is supported on the 2B path. All three details landed on the command that asks for them in 4 of 4 replicates, the
+existing path did not regress, and one older defect (b_r4 re-delivering the file pull) is more visible with the detours.**
+
+- **Q1 Invented material.** Plain things resolved new: baseline 2 in 24 turns (`Kristin's file` on command 4, replicates 1 and 4), candidate 0
+  in 24. Specifics the baseline narrator makes up where the candidate has authored text: command 1 sends Kristin to "the medical terminal
+  tied to the detention levels" and never finds a queue (4/4); command 3 invents "a list of authorized personnel and their clearance
+  levels" for the access section (4/4); command 5 invents a countdown timer at "2 minutes and 14 seconds" (3/4, the same number each time)
+  and, once, a "malfunctioning airlock on the detention level". Candidate invents nothing concrete; commands 5 in replicates 2 and 4 add
+  generic "technical jargon / cryptic error messages" before the delivery. The three badge checks were never named by the narrator.
+- **Q2 Authored details delivered when earned.** Held transfers on command 1: 4/4. Badge checks on command 3: 4/4. Ticket header on command 5:
+  4/4 (it needs scene turn 4 or later; it landed at the first chance). The other reveals also landed 4/4: file pull on command 2, keep
+  choice (`k_sl_2b_b_r4`) on command 4, Michelle's reply (`k_sl_2b_c_r3`) on command 6. Baseline: file pull, keep and reply 4/4; commands 1, 3
+  and 5 reach nothing authored, as expected.
+- **Q3 No regression and the cost of curiosity.** The detours cost nothing: in 4/4 replicates the choice landed on command 4 (before the
+  audit window closes at turn 5), Michelle's reply landed on command 6, and the scene was left by the same earned transition to 2C after
+  turn 6 as in the baseline (4/4 both arms, `advanced_offline` false). The windows fix (targets 6) held on the fast path in the offline test; this
+  run did not exercise the three-command fast path live.
+- **Q4 Value.**
+  - Held transfers: does a job. It replaces an invented dead end with the first concrete sign that someone inside is fighting, in the
+    building's own excuse, and sets up the header rhyme. The delivery's last clause ("someone is using it on purpose") carries the point.
+  - Badge checks: does a job. It turns the baseline's invented personnel list into a payoff for the 2A remark. Weakness: the narrator
+    writes "Brandon watches her, eyes fixed on the screen" and the delivery then says "Brandon watches her read and says nothing"
+    (4/4), the known echo of delivery text. The closing sentence adds only the silence.
+  - Ticket header: does a job. "Whoever held them wrote this" lands cleanly 4/4 and makes the message trustworthy before the reply. In
+    replicates 1 and 3 the narrator adds that the line "might hold the key to finding Michelle", which is her own goal, not a leak.
+  - Narration is busier than baseline, but each addition is a clue or payoff, not a prop.
+- **Judges.** Candidate 6, 6, 5, 5 against baseline 5, 4, 5, 4 (means 5.5 and 4.5). With four replicates this is not reported as a real gap.
+  Continuity: contradicts_stated_fact 0/24 both arms; `protagonist_acts_beyond_command` 4/24 candidate (all on command 4) against 3/24
+  baseline (command 4 twice, command 6 once). Fact tracking: missed_change 0, invented_change 0 in both arms; changes attributed to the
+  narrator 0 candidate against 2 baseline (the `Kristin's file` creations).
+- **Prompt budget.** Narrator prompt (system plus user) median 5,480 candidate against 5,226 baseline, max 5,860 against 5,639. Baseline 2B was
+  already over 5,000 on 20 of 24 turns, so this is not new, and no turn nears the 6,500 worst-case cap. Command 2 jumps to 5,791 and 5,860 in
+  replicates 2 and 4 (baseline 5,117), when the matcher resolved the build record: about 700 characters of added THINGS lines.
+  `tests/test_prompt_budget.py` passes.
+- **Item-facts noise (harmless).** Replicates 2 and 3, command 4: the capture tried to place the build record on the archive terminals
+  and was refused ("fixed things cannot move"); replicate 2 also logged "archive terminals has no valid place or condition". Nothing changed in state.
+
+**Defects and follow-ups (none done):**
+1. **Older, now more visible:** the `k_sl_2b_b_r4`/`r5` deliveries open by re-delivering the file pull ("Kristin pulls her own file first. It says she
+   was retained ... Kristin was bait."). Both entries require `kristin_file_read`, so that content was always delivered a turn or more earlier
+   by `k_sl_2b_a_r1`. The continuity judge flags command 4 as acting beyond the command in 4/4 candidate and 2/4 baseline replicates. A
+   subtractive fix at the source (drop the restated sentences from both deliveries; keep JANUS, Brandon's admission, the choice, the copied
+   files and the printed line) needs a decision because it edits existing protected entries and the act2 probe's scripted copy of them.
+2. The badge-checks delivery's last sentence duplicates what the narrator writes. Drop it if the next pass wants a shorter beat.
+3. The three-command fast path (pull, keep, reply) is covered by `tests/test_act2_probe.py` offline, not by a live run.

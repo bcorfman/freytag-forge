@@ -1,7 +1,7 @@
 # Richer narration with bounded invention
 
 Status: in progress. Last updated 2026-11-03. 1A, 1B, 1C and 2A are merged to main (2A as PR #748, with the return-line direction and camera lens
-fixes). Scene 2B is built on branch `richer-narration-2b` (plot, tests, data and prereg committed); its probe awaits Brandon's go. The full suite with coverage has NOT been run; run it once at the very end.
+fixes). Scene 2B is built on branch `richer-narration-2b` (plot, tests, data and prereg committed); its probe is read (richness supported). The full suite with coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
 Claude drafts it richer scene by scene, `plot.md` first, settling story problems itself and reporting afterwards. Steps 1 and 2 of
@@ -10,7 +10,7 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
 
 ## Resume here (in order)
 
-000. **Scene 2B built, smoke done, probe awaits Brandon's go (2026-11-03), branch `richer-narration-2b`.** Three optional quiet reveals, each with a job:
+000. **Scene 2B built and probed (2026-11-03), branch `richer-narration-2b`; result in `.plans/richer-2b-probe-prereg.md` "Result": richness supported, all three details 4/4, no regression, no new plain things; one older defect more visible (b_r4/r5 deliveries re-deliver the file pull), decision pending; open the 2B PR next.** Three optional quiet reveals, each with a job:
    the held transfers (`k_sl_2b_f_r1`, 2B.2: dozens of transfers pushed back a week under tickets closed "sensor fault", the same excuse that closed
    the 2A alarms; shows Michelle's quiet resistance before she speaks, plants the maintenance channel for 2C.5 and the delayed transfers for 3A),
    the badge-reader checks (`k_sl_2b_e_r1`, 2B.3: the build record's access section lists the three checks Brandon said he knew; pays off the 2A badge
