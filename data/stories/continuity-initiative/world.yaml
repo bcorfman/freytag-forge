@@ -251,6 +251,42 @@ items:
   disclosure: public
   kind: seat
   fixed: true
+- id: park_bicycle
+  name: bicycle
+  scoped_aliases: [bike]
+  fixed: true
+- id: picnic_blanket
+  name: picnic blanket
+  kind: supporter
+  fixed: true
+- id: picnic_thermos
+  name: thermos
+  fixed: false
+- id: picnic_cups
+  name: two cups
+  aliases: [cups]
+  fixed: false
+- id: park_fence
+  name: park fence
+  scoped_aliases: [fence]
+  kind: supporter
+  fixed: true
+- id: dog_leash
+  name: dog leash
+  aliases: [leash]
+  fixed: false
+- id: park_loudspeaker
+  name: loudspeaker
+  scoped_aliases: [speaker]
+  fixed: true
+- id: checkpoint_barrier
+  name: checkpoint barrier
+  scoped_aliases: [barrier]
+  fixed: true
+- id: gate_keypad
+  name: gate keypad
+  aliases: [keypad]
+  fixed: true
 - id: facility_gate
   name: facility gate
   kind: opening
@@ -547,6 +583,9 @@ facts:
 - purge_alarm_active
 - detention_uprising_started
 - park_pursuit_resolved
+- park_left_behind_read
+- stranger_knows_script
+- emergency_water_label_read
 - transport_route_departure_ready
 - archive_crisis_understood
 - override_codes_deadline_known

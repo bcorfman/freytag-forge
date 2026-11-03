@@ -274,6 +274,9 @@ def test_scene_1b_storylet_routes_keep_the_authored_order() -> None:
         "SL-1B-E",
         "SL-1B-B",
         "SL-1B-C",
+        "SL-1B-F",
+        "SL-1B-G",
+        "SL-1B-H",
     ]
 
 

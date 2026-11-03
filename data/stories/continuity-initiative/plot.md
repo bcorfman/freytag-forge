@@ -197,15 +197,26 @@ objective: Follow Michelles lead and survive the park
 participant_ids: [kristin, brandon, michelle]
 character_placements:
   brandon: {parent: los_angeles_park, text: watching Kristin in the park}
-item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, service_gate, storm_drain, kristin_truck]
+item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, service_gate, storm_drain, kristin_truck, park_bicycle, picnic_blanket, picnic_thermos, picnic_cups, park_fence, dog_leash, park_loudspeaker, checkpoint_barrier, gate_keypad]
 item_placements:
   park_bench: {parent: los_angeles_park}
+  park_bicycle: {parent: los_angeles_park, text: on its kickstand beside the path}
+  picnic_blanket: {parent: los_angeles_park, text: spread on the grass}
+  picnic_thermos: {parent: picnic_blanket, text: beside the cups}
+  picnic_cups: {parent: picnic_blanket, text: one tipped over and one still half full}
+  park_fence: {parent: los_angeles_park, text: along the edge of the grass}
+  dog_leash: {parent: park_fence, text: tied to the fence with its loop empty}
+  park_loudspeaker: {parent: los_angeles_park, text: on a pole near the service path}
+  checkpoint_barrier: {parent: los_angeles_park, text: at the park entrance}
+  gate_keypad: {parent: los_angeles_park, text: beside the service gate}
   service_gate: {parent: los_angeles_park}
   storm_drain: {parent: los_angeles_park}
   transit_card: {parent: park_bench, under: true}
   number_sequence: {parent: park_bench, under: true}
   michelle_photograph: {parent: park_bench, under: true}
   kristin_truck: {parent: los_angeles_park}
+setting_facts:
+- Dry leaves skitter across the empty paths.
 entry_text: "The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.\n\n"
 transition_ids: [t_1b_1c]
 bridge_text:

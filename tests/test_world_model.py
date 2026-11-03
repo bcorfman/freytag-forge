@@ -78,6 +78,7 @@ def test_world_schema_data_is_plain_and_covers_authored_entities() -> None:
         "seat",
         "opening",
         "group",
+        "supporter",
     }
     for entity in PACKAGE.world.locations:
         assert entities[entity.id]["kind"] == "area"

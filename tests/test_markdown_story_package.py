@@ -274,7 +274,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 46
+    assert len(package.storylets) == 49
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
@@ -413,11 +413,22 @@ def test_scene_without_item_placements_loads_with_an_empty_mapping(tmp_path: Pat
     contents = plot.read_text(encoding="utf-8")
     item_ids = (
         "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
-        "park_bench, service_gate, storm_drain, kristin_truck]\n"
+        "park_bench, service_gate, storm_drain, kristin_truck, park_bicycle, picnic_blanket, "
+        "picnic_thermos, picnic_cups, park_fence, dog_leash, park_loudspeaker, "
+        "checkpoint_barrier, gate_keypad]\n"
     )
     placement_block = (
         "item_placements:\n"
         "  park_bench: {parent: los_angeles_park}\n"
+        "  park_bicycle: {parent: los_angeles_park, text: on its kickstand beside the path}\n"
+        "  picnic_blanket: {parent: los_angeles_park, text: spread on the grass}\n"
+        "  picnic_thermos: {parent: picnic_blanket, text: beside the cups}\n"
+        "  picnic_cups: {parent: picnic_blanket, text: one tipped over and one still half full}\n"
+        "  park_fence: {parent: los_angeles_park, text: along the edge of the grass}\n"
+        "  dog_leash: {parent: park_fence, text: tied to the fence with its loop empty}\n"
+        "  park_loudspeaker: {parent: los_angeles_park, text: on a pole near the service path}\n"
+        "  checkpoint_barrier: {parent: los_angeles_park, text: at the park entrance}\n"
+        "  gate_keypad: {parent: los_angeles_park, text: beside the service gate}\n"
         "  service_gate: {parent: los_angeles_park}\n"
         "  storm_drain: {parent: los_angeles_park}\n"
         "  transit_card: {parent: park_bench, under: true}\n"
@@ -667,6 +678,9 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_1b_b_r2",
         "k_sl_1b_d_r1",
         "k_sl_1b_e_r1",
+        "k_sl_1b_f_r1",
+        "k_sl_1b_g_r1",
+        "k_sl_1b_h_r1",
         "k_sl_1b_c_r1",
         "k_sl_1b_c_r2",
         "k_sl_1c_a_r1",

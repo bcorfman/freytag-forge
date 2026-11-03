@@ -563,6 +563,123 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-1B-F — Left Behind
+
+**Source beats:** [1B.1 — Michelle’s Dead Drop](plot.md#scene-1b1--michelles-dead-drop)
+
+**Allowed scene:** `1B`
+
+**Available when**
+- No conditions.
+
+**Participants / items**
+- Kristin Schweitzer
+- Picnic blanket
+- Bicycle
+- Dog leash
+
+**Dramatic purpose**
+- Let Kristin read the abandoned park as a moment cut short.
+
+**Possible realizations**
+- Kristin reads the park as a moment cut short: a bicycle on its kickstand, an empty dog leash on the fence, and a picnic with one cup tipped and one half full.
+
+**Effects**
+- Sets `park_left_behind_read`.
+
+**Completion**
+- Kristin has read the abandoned park as a moment cut short.
+
+**Abort**
+- Kristin leaves scene 1B.
+
+**Protected boundary**
+- Does not reveal JANUS, Brandon's history, or JANUS Phase Two.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 3`
+- latest: `turn 12`
+
+---
+
+### SL-1B-G — The Stranger Knows the Words
+
+**Source beats:** [1B.2 — The Man Following Her](plot.md#scene-1b2--the-man-following-her)
+
+**Allowed scene:** `1B`
+
+**Available when**
+- Brandon has not yet been identified.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Park loudspeaker
+
+**Dramatic purpose**
+- Let Kristin notice that the stranger knows the looping emergency statement.
+
+**Possible realizations**
+- The loudspeaker repeats one emergency statement, and the stranger mouths the words a half-beat ahead of it.
+
+**Effects**
+- Sets `stranger_knows_script`.
+
+**Completion**
+- Kristin has seen the stranger mouth the emergency statement ahead of the loudspeaker.
+
+**Abort**
+- Kristin leaves scene 1B.
+
+**Protected boundary**
+- Does not reveal JANUS, Brandon's history, or JANUS Phase Two.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 4`
+- latest: `turn 8`
+
+---
+
+### SL-1B-H — The Emergency Water
+
+**Source beats:** [1B.3 — Brandon’s Warning](plot.md#scene-1b3--brandons-warning)
+
+**Allowed scene:** `1B`
+
+**Available when**
+- Kristin has credible reason to believe at least some missing people are alive.
+
+**Participants / items**
+- Kristin Schweitzer
+- Picnic thermos
+
+**Dramatic purpose**
+- Let Kristin connect the picnic's emergency water to Brandon's warning.
+
+**Possible realizations**
+- The thermos on the picnic blanket carries a county emergency-water label with a lot number on its cap.
+
+**Effects**
+- Sets `emergency_water_label_read`.
+
+**Completion**
+- Kristin has read the emergency-water label on the picnic thermos.
+
+**Abort**
+- Kristin leaves scene 1B.
+
+**Protected boundary**
+- Does not reveal JANUS, Brandon's history, or JANUS Phase Two.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 6`
+- latest: `turn 12`
+
+---
+
 ### SL-1B-B — Is Brandon Hunter or Rescuer?
 
 **Source beats:** [1B.2 — The Man Following Her](plot.md#scene-1b2--the-man-following-her), [1B.3 — Brandon’s Warning](plot.md#scene-1b3--brandons-warning)
@@ -634,7 +751,7 @@ Each entry below is authoring data, not a player action menu.
 - Let Brandon solve an immediate problem in a way that creates a larger trust problem.
 
 **Possible realizations**
-- Brandon uses specialized codes only after ordinary access fails.
+- Brandon opens a secured service gate without looking at its keypad.
 - Kristin notices how practiced Brandon is with the system.
 - Brandon minimizes the significance of his access.
 - The escape succeeds but the player can press him afterward.

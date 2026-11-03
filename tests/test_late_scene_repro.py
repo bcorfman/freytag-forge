@@ -257,7 +257,16 @@ def test_late_scene_place_and_scoped_alias_declarations_are_characterized() -> N
     for scene in PACKAGE.scenes:
         scene_id = scene.metadata.scene_id
         assert set(_place_forms(scene)) == set(EXPECTED_PLACE_FORMS_BY_SCENE[scene_id])
-        assert _scoped_aliases(scene) == EXPECTED_SCOPED_ALIASES_BY_SCENE[scene_id]
+        expected = EXPECTED_SCOPED_ALIASES_BY_SCENE[scene_id]
+        if scene_id == "1B":
+            expected = {
+                **expected,
+                "bike": "park_bicycle",
+                "fence": "park_fence",
+                "speaker": "park_loudspeaker",
+                "barrier": "checkpoint_barrier",
+            }
+        assert _scoped_aliases(scene) == expected
 
 
 @pytest.mark.parametrize("scene_id", tuple(EXPECTED_PLACE_FORMS_BY_SCENE))
