@@ -1836,6 +1836,25 @@ knowledge:
   - [Brandon's name, Brandon Corfman, author's name, name in the build record, his name, name in the record, the record]
   entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files]
   aliases: [Brandon's name kept, Kristin was bait, JANUS evidence]
+  leak_terms:
+  - Brandon's name kept
+  - Kristin was bait
+  - JANUS evidence
+  - Kristin's own file
+  - Kristin's file
+  - predicted to lead investigators to CORFMAN
+  - JANUS build record
+  - Brandon Corfman
+  - built JANUS
+  - helped write JANUS
+  - was bait
+  - left behind as bait
+  - expected to lead investigators
+  - keeps his name
+  - name stays
+  - keep Brandon's name
+  - JANUS files copied
+  - copied files
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2B]
   requires:
@@ -1869,17 +1888,11 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2B-B, realization_id: SL-2B-B-R4}
   relevance: {entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files], priority: 10}
   must_convey:
-  - [Kristin's own file, Kristin's file, RETAINED, predicted to lead investigators to CORFMAN]
   - [JANUS, JANUS build record, Brandon Corfman, built JANUS, helped write JANUS]
-  - [was bait, left behind as bait, expected to lead investigators]
   - [keeps his name, name stays, keep Brandon's name]
   - [JANUS files copied, copied files, JANUS evidence]
   delivery_text: >-
-    Kristin pulls her own file first.
-    It says she was retained to lead investigators to Corfman.
-    Kristin was bait.
     The file names the system JANUS.
-    The build record names Brandon Corfman as an author.
     Brandon admits that he helped write JANUS.
     He says he tried to stop it after he learned its purpose.
     Kristin keeps his name in the record.
@@ -1896,6 +1909,28 @@ knowledge:
   - [Brandon's name, Brandon Corfman, author's name, name in the build record, his name, name in the record, the record]
   entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files]
   aliases: [Brandon's name erased, Kristin was bait, JANUS evidence]
+  leak_terms:
+  - Brandon's name erased
+  - Kristin was bait
+  - JANUS evidence
+  - Kristin's own file
+  - Kristin's file
+  - predicted to lead investigators to CORFMAN
+  - JANUS build record
+  - Brandon Corfman
+  - built JANUS
+  - helped write JANUS
+  - was bait
+  - left behind as bait
+  - expected to lead investigators
+  - erase his name
+  - name is gone
+  - delete his name
+  - JANUS files copied
+  - copied files
+  - record now has a gap
+  - development record gap
+  - missing name from the development record
   audience: {kind: public, player_visible: true}
   available_in_scenes: [2B]
   requires:
@@ -1932,18 +1967,12 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2B-B, realization_id: SL-2B-B-R5}
   relevance: {entity_ids: [kristin, brandon, janus_archive, archive_terminals, copied_janus_files], priority: 10}
   must_convey:
-  - [Kristin's own file, Kristin's file, RETAINED, predicted to lead investigators to CORFMAN]
   - [JANUS, JANUS build record, Brandon Corfman, built JANUS, helped write JANUS]
-  - [was bait, left behind as bait, expected to lead investigators]
   - [erase his name, name is gone, delete his name]
   - [JANUS files copied, copied files, JANUS evidence]
   - [record now has a gap, development record gap, missing name from the development record]
   delivery_text: >-
-    Kristin pulls her own file first.
-    It says she was retained to lead investigators to Corfman.
-    Kristin was bait.
     The file names the system JANUS.
-    The build record names Brandon Corfman as an author.
     Brandon admits that he helped write JANUS.
     He says he tried to stop it after he learned its purpose.
     Kristin lets him erase his name from the record.

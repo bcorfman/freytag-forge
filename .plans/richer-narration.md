@@ -2,7 +2,7 @@
 
 Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C and 2A are merged to main (2A as PR #748). Scene 2B is built and
 probed on branch `richer-narration-2b` (last commit `323dc607`, nothing uncommitted); the PR is NOT open yet. Whole quick suite on that branch:
-4064 passed, 30 skipped. The full suite with coverage has NOT been run; run it once at the very end.
+4070 passed, 30 skipped. The full suite with coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
 Claude drafts it richer scene by scene, `plot.md` first, settling story problems itself and reporting afterwards. Steps 1 and 2 of
@@ -21,11 +21,13 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    blocked the fast path to Michelle's reply (forward activation waits on every earlier-target storylet); memory
    `optional-storylet-targets-must-not-precede-later-gated-ones`. Probe run by Brandon with `bench run` for each arm (`richer-2b-baseline`,
    `richer-2b-candidate`, script `richer-2b-archive`, outputs gitignored under `bench/results/richer-2b-probe/`).
-   **Open decision for Brandon:** `k_sl_2b_b_r4`/`r5` deliveries re-deliver the file pull that `k_sl_2b_a_r1` always delivers first (both require
-   `kristin_file_read`); the continuity judge flags command 4 in 4/4 candidate and 2/4 baseline replicates. Proposed subtractive fix: drop the
-   restated sentences from both deliveries and from the act2 probe's scripted copy (`scripts/ringer/phase1/act2_probe.py`); it edits protected
-   existing entries, so it waits for his answer. Smaller: the badge-checks delivery's last sentence duplicates the narrator's beat.
-   **Next:** answer on the delivery repeat, then open the 2B PR (merge commit, only on his per-PR instruction), then merge `main` and start 2C.
+   **Delivery repeat: fixed (2026-11-03, Brandon approved).** `k_sl_2b_b_r4`/`r5` no longer restate the file pull or the build-record line that
+   `k_sl_2b_a_r1` always delivers first (the repo's "send the narrator each fact once" rule). Their `must_convey` lost the two restating groups; an
+   explicit `leak_terms` list keeps every vocabulary term they guarded (such as "left behind as bait") guarded in earlier scenes; the `act2_probe.py`
+   scripted copies match. Tests `tests/test_2b_delivery_repeat.py` (tests-first commit `24463175`). Quick suite 4070 passed, 30 skipped. NOT re-probed
+   live (the fix is subtractive; a re-probe would cost about 350 neurons per arm). Left alone: the badge-checks delivery's last sentence still
+   duplicates the narrator's beat (known and accepted, as in 1C).
+   **Next:** open the 2B PR (merge commit, only on his per-PR instruction), then merge `main` and start 2C.
    Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header and closing code; 3A uses the
    held transfers (captives still alive because transfers were delayed); 3B/3C can surface Brandon's badge-reader knowledge when he opens doors.
 

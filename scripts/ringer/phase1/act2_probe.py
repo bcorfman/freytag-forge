@@ -283,15 +283,13 @@ def _provider_payload(selected: str | None) -> dict[str, Any]:
             'my name from the record before we copy the files. Or tell me to leave it. Your call."'
         ),
         "k_sl_2b_b_r4": (
-            "Kristin pulls her own file first. It says she was retained to lead investigators to Corfman. Kristin was "
-            "bait. The file names the system JANUS. The build record names Brandon Corfman as an author. "
+            "The file names the system JANUS. "
             "Brandon admits that he helped write JANUS. He says he tried to stop it after he learned its purpose. "
             "Kristin keeps his name "
             "in the record. The JANUS files are copied. Kristin carries the copied files."
         ),
         "k_sl_2b_b_r5": (
-            "Kristin pulls her own file first. It says she was retained to lead investigators to Corfman. Kristin was "
-            "bait. The file names the system JANUS. The build record names Brandon Corfman as an author. "
+            "The file names the system JANUS. "
             "Brandon admits that he helped write JANUS. He says he tried to stop it after he learned its purpose. "
             "Kristin lets him erase his name from the record. The development record now has a gap. "
             "The JANUS files are copied. Kristin carries "
