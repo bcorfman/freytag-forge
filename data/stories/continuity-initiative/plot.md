@@ -443,19 +443,25 @@ The hideout is backstory Kristin can ask Brandon about. It is not a place the pl
 
 ### Scene 2A.2 — The Infiltration Plan
 
-**Details:** facility gate; shift supervisor; unscheduled inspection; cooling-water readings; ventilation readings
+**Details:** facility gate; shift supervisor; unscheduled inspection; cooling-water readings; ventilation readings; inspector badges; alarm log
 
 The scene opens at the facility gate. The facility's cooling-water and ventilation readings have been unstable for weeks, which is why an outside inspection is believable. The plan is simple: get past the gate, reach the infrastructure corridors, and find the records.
 
 A shift supervisor comes out to meet them. He has no record of the inspection and does not trust paperwork he did not ask for. He is the person in the way.
 
+The badges are good work. If Kristin asks how they got them right in one night, Brandon says, "The readers only check three things. I know which three." He says it too easily, and he does not say how he knows.
+
+The supervisor carries a tablet with the alarm log. If Kristin reads it, the cooling alarm has fired forty times in three weeks, and every one was closed from upstairs as a sensor fault. None carries his name. He reset the gauge himself each time, and each time the pressure came back down. That is why he is angry, and why he wants proof and not paperwork.
+
 ### Scene 2A.3 — Entering the Facility
 
-**Details:** cooling manifold; real fault; Kristin's expertise; supervisor's test; infrastructure corridors; inspection console
+**Details:** cooling manifold; real fault; Kristin's expertise; supervisor's test; pumps and the heavy door; infrastructure corridors; inspection console
 
 The supervisor will not argue at the gate. He walks them to the cooling manifold and says, "Show me."
 
 The fault is real. A pressure problem in the cooling water is getting worse, and the ventilation is masking it. Kristin finds it the way she would have in the Army, by feel, by gauge and by tracing the lines, and she explains in her own words what will fail if nobody fixes it. The supervisor has been blamed for alarms he could not explain. Hearing the real cause changes his manner.
+
+Tracing the return line shows where it goes. It shares its feed with the pumps that keep the lower levels dry, and a heavy door across the corridor beyond holds water back. If the pressure fails, the pumps lose power first. This is a fact about the building and not a plan. Nothing here lets her touch either one.
 
 If Kristin has the copied prisoner numbers, she recognizes the processing-line codes on his work orders. If she knows the service approach, Brandon steers them around the second checkpoint, and the supervisor notices the shortcut.
 
@@ -468,6 +474,8 @@ The corridor inspection console accepts their temporary credentials long enough 
 **Details:** security camera; facial recognition; former developer; quiet alert; Rebecca Jenkins
 
 While Kristin works the manifold, a security camera turns toward Brandon and stays on him. The narration may show the camera. Neither Kristin nor Brandon remarks on it.
+
+If Kristin looks at the camera, she sees only that it has turned and stays on Brandon. Brandon does not look up. She learns nothing she can use from it.
 
 Facial recognition has identified Brandon as a former Continuity Initiative developer and contractor. Instead of raising a general alarm, the system quietly alerts Rebecca Jenkins. Rebecca orders security to watch Brandon rather than arrest him. She wants to know why he has returned and whom he has brought.
 
