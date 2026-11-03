@@ -1,0 +1,25 @@
+{
+  "name": "richer-2a-candidate-b",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 3,
+  "runtime": true,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "2A": [
+      {
+        "name": "richer-2a-gate-b",
+        "inputs": [
+          "Feel the cooling lines at the manifold.",
+          "Look at the camera.",
+          "Explain the pressure fault and the ventilation problem to the supervisor."
+        ]
+      }
+    ]
+  },
+  "entry_state": "thorough"
+}

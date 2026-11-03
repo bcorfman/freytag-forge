@@ -1,7 +1,8 @@
 # Richer narration with bounded invention
 
-Status: in progress. Last updated 2026-11-02 (end of the session). Branch `richer-narration-1` (HEAD `05f1f0b2` plus this note).
-Whole quick suite after the 1B value fixes: 3989 passed, 26 skipped, Ruff clean. The full suite with coverage has NOT been run; run it once at the very end.
+Status: in progress. Last updated 2026-11-02 (end of the session). 1A, 1B and 1C are merged to main. Scene 2A is built on branch
+`richer-narration-2a` (commits `e74b14fe` plot, `3e493b6b` tests, `08cc261d` data), cut from `affordance-gaps-refresh`; its probe awaits Brandon's go.
+Whole quick suite after 2A: 4040 passed, 29 skipped. The full suite with coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
 Claude drafts it richer scene by scene, `plot.md` first, settling story problems itself and reporting afterwards. Steps 1 and 2 of
@@ -45,20 +46,31 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    (the second 1C run showed the choice still works as the 5th command). Known and accepted: the narrator echoes the door beat
    (text it is shown); no experiment run. Still open: prompt size on the 1C "Study the prisoners" turn is 6,373 characters (the 6,500 worst-case
    cap is close); `bench/affordance_known_gaps.json` is stale.
-5. **Next, in order:** (a) the 1C rerun on the finished code (billed, authorized): variation `richer-1c-candidate-b`, output
-   `bench/results/richer-1c-probe/candidate-run3`; (b) 1B candidate rerun (`candidate-run2`, ask); (c) scenes 2A..3C.
+5. **Next, in order:** (a) DONE: the third 1C run (closeout changes all work; recorded in `.plans/richer-1c-probe-prereg.md`);
+   (b) the 2A probe (billed, needs Brandon's go; `.plans/richer-2a-probe-prereg.md`); (c) 1B candidate rerun (`candidate-run2`, ask);
+   (d) scenes 2B..3C.
 6. **Small owed follow-ups** (each a tests-first Ringer task): mark the 1A `lake_photograph` `fixed: true` (the narrator "moves" it
    in 3 of 4 replicates; harmless but recurring); replace the private `_matches_all` import in `storygame/runtime/knowledge.py` with a
    public helper from `candidate_matcher.py`; 1A keeps two older `beat_overprojection` findings (SL-1A-E earliest turn 1 against
    0 for its siblings); if the 1B probe shows invented photograph content, make held items keep a one-line depiction.
-7. **Scenes 2A, 2B, 2C, 3A, 3B, 3C** (six left). For each: read the scene in `plot.md`, write the richer beats (plot first,
+7. **Scene 2A richer, built (2026-11-02, branch `richer-narration-2a`).** Four optional quiet reveals, each with a job: Brandon's easy
+   knowledge of the badge readers (plants 2B.3), the supervisor's alarm log of forty closed alarms (plants him as Michelle's recruit,
+   2B.4), the return line feeding the pumps and the heavy door (plants 3C.3 and the 3B.1 console alarms), the camera staying on
+   Brandon (plants 2C.1). Windows 0/2/4 (the inspection window closes at turn 5). Lesson: a spec must not list a protected id the new
+   reveal does not touch (the worker added `rebecca_observing_infiltrators` to `protected_knowledge` because my spec named it as a
+   boundary; reverted). New facts are declared as `- id:` entries in world.yaml (a test pins that form). Probe preregistered in
+   `.plans/richer-2a-probe-prereg.md` (script A both arms, script B candidate only); the billed run (about 340 neurons) awaits
+   Brandon's go. Owed to later scenes: see the prereg's last section. Known and accepted: `tests/test_affordance_map.py` carries
+   a new known gap (`return_line`) in the test, not in `bench/affordance_known_gaps.json`; the speaker-presence pin for Brandon
+   in 2A flipped to True because the new 2A prose gives him speech.
+8. **Scenes 2B, 2C, 3A, 3B, 3C** (five left). For each: read the scene in `plot.md`, write the richer beats (plot first,
    plain names, plant a payoff for each plant, Details lines of 3 to 7 items, keep the turn ceiling), write acceptance tests first,
    then one Ringer propagation task whose spec states every priority (-1 for ambient reveals), the exact evidence groups, and the
    lessons below; review the patch for possessives and over-broad renames; run the whole suite; then preregister and run a probe.
    Planted payoffs so far: the looping broadcast (1A radio, 1B loudspeaker) pays off in 3B/3C; Brandon mouthing the words and
    the keypad he never looks at pay off when his role surfaces (2B); the clipboard and skipped houses pay off in 2B's selection
    list; the lemon-cake calendar is a candidate private proof in 3A or 3C; Officer Reyes could glimpse Kristin again at a checkpoint.
-8. **Still deferred:** refusing unknown ordinary things (blocked because item-facts capture runs after the turn is applied; the
+9. **Still deferred:** refusing unknown ordinary things (blocked because item-facts capture runs after the turn is applied; the
    measured upper bound is 3.4 percent of turns and falling as scenes are authored); compacting the item-matching prompt if a scene
    nears its budget; embellishment prompt work (step 3) and prop pools (step 4).
 
