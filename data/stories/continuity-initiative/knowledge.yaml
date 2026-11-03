@@ -1274,6 +1274,7 @@ knowledge:
   delivery_text: "The thermos carries a county emergency-water label, and a lot number is stamped on its cap. Its twin cup sits beside it, still half full. Someone sat here, drank, and was taken. The person beside them was not."
 - id: k_sl_1c_a_r1
   statement: 'Kristin finds electrical load, fresh ventilation, and recent work that prove the abandoned terminal is still operating.'
+  voiceable: false
   earn_when: inspects signs of activity at the loading docks
   action_evidence:
   - [inspect, examine, check, search, study, look at]
@@ -1306,6 +1307,7 @@ knowledge:
     the observation shaft. We need to know what is happening on the processing line."
 - id: k_sl_1c_b_r1
   statement: 'From the processing area, Kristin matches sedated prisoners to missing-person records and knows they are alive.'
+  voiceable: false
   earn_when: studies the prisoners and watches the shaft view
   action_evidence:
   - [study, watch, observe, look at, inspect, examine]
@@ -1342,6 +1344,7 @@ knowledge:
     There is time for one choice before the transfer leaves."
 - id: k_sl_1c_b_r2
   statement: Kristin sees living captives in the processing line. She glimpses a woman who could be Michelle before the woman's face slips from sight.
+  voiceable: false
   earn_when: watches the processing line for Michelle
   action_evidence:
   - [watch, observe, look at, study, inspect, examine]
@@ -1384,6 +1387,7 @@ knowledge:
     the full set of numbers. There is time for one choice before the transfer leaves."
 - id: k_sl_1c_c_copy_numbers
   statement: Kristin copies the visible prisoner numbers and matches them to missing-person records.
+  voiceable: false
   earn_when: copies the prisoner numbers
   action_evidence:
   - [copy, write down, record, photograph]
