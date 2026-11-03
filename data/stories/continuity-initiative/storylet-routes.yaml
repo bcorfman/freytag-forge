@@ -1746,6 +1746,85 @@ storylets:
   non_coercion_note: >-
     Brandon may offer these actions in dialogue. Kristin chooses what to attempt.
     Equivalent player actions may earn the same result.
+- id: SL-1C-E
+  scene_id: 1C
+  title: Water at the Dock
+  activation:
+    scene_id: 1C
+    conditions:
+    - fact_id: transfer_window_missed
+      equals: false
+    - fact_id: emergency_water_label_read
+      equals: true
+    pacing:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 3
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Tie the park's emergency water to the active terminal.
+  realization_options:
+  - id: SL-1C-E-R1
+    dramatic_intent: Match the dock's water pallets to the lot number on the thermos from the park.
+    source_beats: [scene-1c1--following-the-transport-route]
+    operations:
+    - op: assert
+      fact_id: dock_water_matched
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
+- id: SL-1C-F
+  scene_id: 1C
+  title: He Watches the Door
+  activation:
+    scene_id: 1C
+    conditions:
+    - fact_id: facility_proof
+      equals: true
+    - fact_id: transfer_window_missed
+      equals: false
+    pacing:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 3
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Show Brandon keeping watch while Kristin studies the processing line.
+  realization_options:
+  - id: SL-1C-F-R1
+    dramatic_intent: Notice Brandon watching the door instead of the processing line.
+    source_beats: [scene-1c2--proof-of-the-captives]
+    operations:
+    - op: assert
+      fact_id: brandon_watches_door
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
+- id: SL-1C-G
+  scene_id: 1C
+  title: The Same Statement
+  activation:
+    scene_id: 1C
+    conditions:
+    - fact_id: transfer_window_missed
+      equals: false
+    pacing:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 3
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Connect the terminal's broadcast to the park's emergency statement.
+  realization_options:
+  - id: SL-1C-G-R1
+    dramatic_intent: Hear the park's emergency statement played over the processing line.
+    source_beats: [scene-1c1--following-the-transport-route]
+    operations:
+    - op: assert
+      fact_id: line_broadcast_heard
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
 - id: SL-2A-B
   scene_id: 2A
   title: The Manifold Shows the Fault

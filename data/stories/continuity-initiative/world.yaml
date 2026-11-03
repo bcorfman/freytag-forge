@@ -347,6 +347,29 @@ items:
 - id: service_entrance
   name: service entrance
   fixed: true
+- id: tire_tracks
+  name: tire tracks
+  kind: thing
+  fixed: true
+- id: air_vents
+  name: air vents
+  scoped_aliases: [vents]
+  kind: thing
+  fixed: true
+- id: water_pallets
+  name: water pallets
+  scoped_aliases: [pallets, pallet]
+  kind: thing
+  fixed: true
+- id: identification_numbers
+  name: identification numbers
+  kind: thing
+  fixed: true
+- id: overhead_speaker
+  name: overhead speaker
+  scoped_aliases: [speaker]
+  kind: thing
+  fixed: true
 - id: hideout_servers
   name: hideout servers
   scoped_aliases: [servers]
@@ -586,6 +609,9 @@ facts:
 - park_left_behind_read
 - stranger_knows_script
 - emergency_water_label_read
+- id: dock_water_matched
+- id: brandon_watches_door
+- id: line_broadcast_heard
 - transport_route_departure_ready
 - archive_crisis_understood
 - override_codes_deadline_known

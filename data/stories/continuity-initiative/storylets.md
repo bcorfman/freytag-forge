@@ -960,6 +960,117 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-1C-E — Water at the Dock
+
+**Source beats:** [1C.1 — Following the Transport Route](plot.md#scene-1c1--following-the-transport-route)
+
+**Allowed scene:** `1C`
+
+**Available when**
+- The transfer window remains open.
+- Kristin has read the emergency-water label.
+
+**Participants / items**
+- Kristin Schweitzer
+- Water pallets
+
+**Dramatic purpose**
+- Tie the park's emergency water to the active terminal.
+
+**Possible realizations**
+- Kristin inspects the water pallets, their bottles, or their label.
+
+**Effects**
+- Sets `dock_water_matched`.
+
+**Completion**
+- Kristin has matched the dock's water pallets to the thermos lot number.
+
+**Abort**
+- Kristin leaves scene 1C.
+
+**Protected boundary**
+- Does not reveal the protected system, Brandon's history, or the later phase.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 3`
+
+### SL-1C-F — He Watches the Door
+
+**Source beats:** [1C.2 — Proof of the Captives](plot.md#scene-1c2--proof-of-the-captives)
+
+**Allowed scene:** `1C`
+
+**Available when**
+- The facility has been credibly confirmed.
+- The transfer window remains open.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+
+**Dramatic purpose**
+- Show Brandon keeping watch while Kristin studies the processing line.
+
+**Possible realizations**
+- Kristin watches Brandon while the shaft view is open.
+
+**Effects**
+- Sets `brandon_watches_door`.
+
+**Completion**
+- Kristin has noticed Brandon watching the door.
+
+**Abort**
+- Kristin leaves scene 1C.
+
+**Protected boundary**
+- Does not reveal the protected system, Brandon's history, or the later phase.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 3`
+
+### SL-1C-G — The Same Statement
+
+**Source beats:** [1C.1 — Following the Transport Route](plot.md#scene-1c1--following-the-transport-route)
+
+**Allowed scene:** `1C`
+
+**Available when**
+- The transfer window remains open.
+
+**Participants / items**
+- Kristin Schweitzer
+- Overhead speaker
+- Air vents
+
+**Dramatic purpose**
+- Connect the terminal's broadcast to the park's emergency statement.
+
+**Possible realizations**
+- Kristin listens to the air vents, the speaker, or the sound from below.
+
+**Effects**
+- Sets `line_broadcast_heard`.
+
+**Completion**
+- Kristin has heard the park's emergency statement over the processing line.
+
+**Abort**
+- Kristin leaves scene 1C.
+
+**Protected boundary**
+- Does not reveal the protected system, Brandon's history, or the later phase.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 3`
+
 # Scene 2 — The Infiltration
 
 ## Storylets for [Scene 2A — False Identities](plot.md#scene-2a--false-identities)

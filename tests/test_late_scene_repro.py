@@ -45,7 +45,7 @@ EXPECTED_PLACE_FORMS_BY_SCENE = {
         "the hallway",
     ),
     "1B": ("Los Angeles park",),
-    "1C": ("freight terminal", "abandoned freight terminal", "processing line"),
+    "1C": ("freight terminal", "abandoned freight terminal", "loading docks", "processing line"),
     "2A": (
         "Facility perimeter",
         "Brandon's hideout",
@@ -114,7 +114,16 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
         "Michelle's photograph": "michelle_photograph",
         "Michelle's photo": "michelle_photograph",
     },
-    "1C": {"captives": "captives", "captive": "captives", "prisoner": "captives", "prisoners": "captives"},
+    "1C": {
+        "captives": "captives",
+        "captive": "captives",
+        "prisoner": "captives",
+        "prisoners": "captives",
+        "vents": "air_vents",
+        "pallets": "water_pallets",
+        "pallet": "water_pallets",
+        "speaker": "overhead_speaker",
+    },
     "2A": {
         "servers": "hideout_servers",
         "manifold": "cooling_manifold",

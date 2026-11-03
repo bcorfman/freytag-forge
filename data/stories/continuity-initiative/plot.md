@@ -299,13 +299,18 @@ freytag_phase: rising_action
 objective: Observe the transfer and choose what to secure
 participant_ids: [kristin, brandon, michelle]
 companions: [brandon]
-item_ids: [transit_card, kristin_truck, service_entrance, prisoner_number_record]
+item_ids: [transit_card, kristin_truck, service_entrance, prisoner_number_record, tire_tracks, air_vents, water_pallets, identification_numbers, overhead_speaker]
 character_placements:
   captives: {parent: processing_line, text: moving through the processing line below}
 item_placements:
   kristin_truck: {parent: freight_terminal}
   service_entrance: {parent: freight_terminal}
   prisoner_number_record: {parent: processing_line}
+  tire_tracks: {parent: loading_docks, text: crossing the loading docks}
+  air_vents: {parent: loading_docks, text: humming along the dock wall}
+  water_pallets: {parent: loading_docks, text: shrink-wrapped by the loading doors}
+  identification_numbers: {parent: processing_line, text: inked on each forearm}
+  overhead_speaker: {parent: processing_line, text: on a bracket above the line}
 entry_text: >-
   Michelle's lead brought Kristin and Brandon to the freight terminal.
   It was supposed to be abandoned. Fresh tire tracks crossed the loading docks.

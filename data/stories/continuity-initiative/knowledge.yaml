@@ -41,6 +41,12 @@ facts:
   purpose: Kristin has seen the stranger mouth the emergency statement ahead of the loudspeaker.
 - id: emergency_water_label_read
   purpose: Kristin has read the emergency-water label on the picnic thermos.
+- id: dock_water_matched
+  purpose: Kristin has matched the dock's water pallets to the lot number on the thermos from the park.
+- id: brandon_watches_door
+  purpose: Kristin has noticed Brandon watching the door and not the processing line.
+- id: line_broadcast_heard
+  purpose: Kristin has heard the park's emergency statement played over the processing line.
 - id: official_interest_in_michelle_known
   purpose: Kristin knows the welfare patrol was specifically interested in Michelle’s
     research and findings.
@@ -1479,6 +1485,89 @@ knowledge:
     Brandon leads Kristin through the service entrance. He shows her the service approach.
     The full set of prisoner numbers is lost. The sweep closes in.
     Brandon says, "We have to pull back. We can prepare now that we know the approach."
+- id: k_sl_1c_e_r1
+  statement: "Pallets of county emergency water stand by the loading doors."
+  voiceable: false
+  reach_entity_ids: [water_pallets]
+  earn_when: inspects the water pallets, their bottles or their label
+  action_evidence:
+  - [look, examine, inspect, read, check, search]
+  - [pallets, pallet, bottles, water, label]
+  entity_ids: [kristin, water_pallets]
+  aliases: [dock water matched]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1C]
+  requires:
+  - fact_id: transfer_window_missed
+    equals: false
+  - fact_id: emergency_water_label_read
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: dock_water_matched
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-1C-E, realization_id: SL-1C-E-R1}
+  relevance: {entity_ids: [water_pallets], priority: -1}
+  must_convey:
+  - [pallets, bottles]
+  - [lot number]
+  - [thermos]
+  delivery_text: "Pallets of bottled emergency water stand shrink-wrapped by the loading doors. The county label is on every bottle, and the lot number matches the one on the thermos in the park."
+- id: k_sl_1c_f_r1
+  statement: "Brandon keeps his back to the processing line and watches the door."
+  voiceable: false
+  reach_entity_ids: [brandon]
+  earn_when: watches Brandon while the shaft view is open
+  action_evidence:
+  - [watch, study, look at, glance at, notice]
+  - [Brandon]
+  entity_ids: [kristin, brandon]
+  aliases: [Brandon watches door]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1C]
+  requires:
+  - fact_id: facility_proof
+    equals: true
+  - fact_id: transfer_window_missed
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: brandon_watches_door
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-1C-F, realization_id: SL-1C-F-R1}
+  relevance: {entity_ids: [brandon], priority: -1}
+  must_convey:
+  - [Brandon]
+  - [door]
+  delivery_text: >-
+    Brandon stands at the top of the stairs with his back to the processing line. He watches the door.
+    When Kristin looks at him, he says, "Somebody has to watch the door."
+- id: k_sl_1c_g_r1
+  statement: "A speaker below plays the park's emergency statement."
+  voiceable: false
+  reach_entity_ids: [overhead_speaker, air_vents]
+  earn_when: listens to the air vents, the speaker or the sound from below
+  action_evidence:
+  - [listen, hear]
+  - [vents, speaker, sound, statement, announcement, broadcast, hum]
+  entity_ids: [kristin, overhead_speaker, air_vents]
+  aliases: [line broadcast heard]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1C]
+  requires:
+  - fact_id: transfer_window_missed
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: line_broadcast_heard
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-1C-G, realization_id: SL-1C-G-R1}
+  relevance: {entity_ids: [overhead_speaker, air_vents], priority: -1}
+  must_convey:
+  - [speaker]
+  - [emergency statement, broadcast]
+  - [word for word]
+  delivery_text: "Under the hum of the vents, a speaker below plays the emergency statement from the park, word for word. Nobody on the line looks up at it."
 - id: k_sl_2a_b_r1
   statement: Kristin finds the cooling-water pressure fault at the manifold.
   earn_when: feels the cooling lines, reads the gauge or traces the vent at the cooling manifold

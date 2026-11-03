@@ -305,4 +305,7 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "patrol_departed",
         "brandon_name_kept",
         "brandon_name_erased",
+        "dock_water_matched",
+        "brandon_watches_door",
+        "line_broadcast_heard",
     }
