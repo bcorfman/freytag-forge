@@ -1,0 +1,28 @@
+{
+  "name": "richer-1c-candidate",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 6,
+  "runtime": true,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "1C": [
+      {
+        "name": "richer-1c-terminal",
+        "inputs": [
+          "Inspect the loading docks.",
+          "Inspect the water pallets.",
+          "Listen to the air vents.",
+          "Study the prisoners.",
+          "Watch Brandon.",
+          "Ask Brandon about the transfer route."
+        ]
+      }
+    ]
+  },
+  "entry_state": "thorough"
+}
