@@ -26,22 +26,30 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    word of another reveal ("man" made commands about the photograph ambiguous; the engine rewrites aliases to the display name).
    Acceptance tests: `tests/test_richer_1b_value.py`. Whole quick suite 3989 passed. A side effect to know: one known affordance gap
    (2B `michelle_photograph`) disappeared and `tests/test_affordance_map.py` filters it; `bench/affordance_known_gaps.json` is stale.
-3. **Next, in order:** (a) ONE candidate rerun, `richer-1b-candidate`, same script, output `bench/results/richer-1b-probe/candidate-run2`
-   (billed, about 350 neurons; ask Brandon first). The baseline stays the bare-entry run; say so when comparing. Rescore Q2, Q3 (gate
-   escape 0/4 before), Q5 (repetition, recitation, photograph depiction). (b) Remaining Q5 weakness not yet addressed: the engine appends
-   the delivery text after the narrator's own version of the same image (visible in picnic turns); decide after the rerun. (c) 1C.
-4. **Small owed follow-ups** (each a tests-first Ringer task): mark the 1A `lake_photograph` `fixed: true` (the narrator "moves" it
+3. **Scene 1C richer, built (2026-11-02, branch `richer-narration-1c`, commits `b95ea988` plot, `b1fb18ee` tests, `544e53b7` data,
+   `5f7d35a3` prereg).** Added three optional quiet reveals, each with a job: water pallets whose lot number matches the park
+   thermos (pays off 1B), the park's emergency statement heard below (plants 3B/3C), Brandon watching the door not the line
+   (plants his role for 2B). The woman-in-the-line pulse tell was proposed and cut (no payoff). 3A.1 plot prose now says the
+   transfer dose wears off in the detention block (answers "how are sedated captives free?"); OWED: propagate that sentence into
+   3A's knowledge/storylets when 3A is enriched. Whole quick suite 4007 passed. Probe preregistered in `.plans/richer-1c-probe-prereg.md`
+   (both arms `entry_state: thorough`; the script spends 6 turns on purpose because `transfer_window_1c` closes at turn 5, so the
+   probe also measures the cost of curiosity); the billed run (about 350 neurons per arm) awaits Brandon's go. Open question for
+   him after the run: move `transfer_window_1c` from turn 5 to 7 if exploring costs the choice. Known older quirk: `Watch the
+   processing line for Michelle.` has no unique handoff (both captive reveals match it).
+4. **Next, in order:** (a) 1B candidate rerun (`candidate-run2`, billed, ask) and the 1C probe (billed, ask); (b) 1B leftover: the engine
+   appends delivery text after the narrator's own version of the same image; decide after the reruns. (c) Scenes 2A..3C.
+5. **Small owed follow-ups** (each a tests-first Ringer task): mark the 1A `lake_photograph` `fixed: true` (the narrator "moves" it
    in 3 of 4 replicates; harmless but recurring); replace the private `_matches_all` import in `storygame/runtime/knowledge.py` with a
    public helper from `candidate_matcher.py`; 1A keeps two older `beat_overprojection` findings (SL-1A-E earliest turn 1 against
    0 for its siblings); if the 1B probe shows invented photograph content, make held items keep a one-line depiction.
-5. **Scenes 1C, 2A, 2B, 2C, 3A, 3B, 3C** (seven left). For each: read the scene in `plot.md`, write the richer beats (plot first,
+6. **Scenes 2A, 2B, 2C, 3A, 3B, 3C** (six left). For each: read the scene in `plot.md`, write the richer beats (plot first,
    plain names, plant a payoff for each plant, Details lines of 3 to 7 items, keep the turn ceiling), write acceptance tests first,
    then one Ringer propagation task whose spec states every priority (-1 for ambient reveals), the exact evidence groups, and the
    lessons below; review the patch for possessives and over-broad renames; run the whole suite; then preregister and run a probe.
    Planted payoffs so far: the looping broadcast (1A radio, 1B loudspeaker) pays off in 3B/3C; Brandon mouthing the words and
    the keypad he never looks at pay off when his role surfaces (2B); the clipboard and skipped houses pay off in 2B's selection
    list; the lemon-cake calendar is a candidate private proof in 3A or 3C; Officer Reyes could glimpse Kristin again at a checkpoint.
-6. **Still deferred:** refusing unknown ordinary things (blocked because item-facts capture runs after the turn is applied; the
+7. **Still deferred:** refusing unknown ordinary things (blocked because item-facts capture runs after the turn is applied; the
    measured upper bound is 3.4 percent of turns and falling as scenes are authored); compacting the item-matching prompt if a scene
    nears its budget; embellishment prompt work (step 3) and prop pools (step 4).
 
