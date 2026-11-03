@@ -73,6 +73,14 @@ facts:
   purpose: Kristin has directly confirmed living captives inside the regional facility.
 - id: manifold_fault_found
   purpose: Kristin has found the cooling-water pressure fault at the manifold.
+- id: badge_craft_noted
+  purpose: Kristin has noticed how easily Brandon knows what the badge readers check.
+- id: alarm_log_read
+  purpose: Kristin has read the cooling alarm log on the supervisor's tablet.
+- id: return_line_traced
+  purpose: Kristin has traced the return line to the pumps and the heavy door.
+- id: camera_on_brandon_seen
+  purpose: Kristin has seen the security camera turn and stay on Brandon.
 - id: national_detention_network_known
   purpose: Kristin knows the Los Angeles site is part of a national detention network.
 - id: architects_strategy_known
@@ -1675,6 +1683,119 @@ knowledge:
     He lets them enter the restricted infrastructure corridors under closer watch.
     The limited console can report faults and cycle noncritical systems.
     It cannot open detention cells or change the main flood controls.
+- id: k_sl_2a_e_r1
+  statement: "Brandon knows exactly what the badge readers check."
+  voiceable: false
+  reach_entity_ids: [inspector_badges, brandon]
+  earn_when: asks Brandon how the badges were made or checks the badges
+  action_evidence:
+  - [ask, check, look at, examine, inspect, study]
+  - [badges, badge, readers]
+  entity_ids: [kristin, brandon, inspector_badges]
+  aliases: [badge craft noted]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  requires:
+  - fact_id: inspection_window_missed
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: badge_craft_noted
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-E, realization_id: SL-2A-E-R1}
+  relevance: {entity_ids: [inspector_badges, brandon], priority: -1}
+  must_convey:
+  - [badges]
+  - [three things]
+  - [Brandon]
+  delivery_text: >-
+    The badges are good work. Brandon says, "The readers only check three things. I know which three."
+    He says it easily, and he does not say how he knows.
+- id: k_sl_2a_f_r1
+  statement: "The cooling alarm has fired forty times in three weeks."
+  voiceable: false
+  reach_entity_ids: [alarm_log, shift_supervisor]
+  earn_when: reads or checks the alarm log on the supervisor's tablet
+  action_evidence:
+  - [read, look at, check, examine, inspect, study]
+  - [alarm log, log, tablet, alarms, alarm]
+  entity_ids: [kristin, shift_supervisor, alarm_log]
+  aliases: [alarm log read]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  requires:
+  - fact_id: inspection_window_missed
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: alarm_log_read
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-F, realization_id: SL-2A-F-R1}
+  relevance: {entity_ids: [alarm_log, shift_supervisor], priority: -1}
+  must_convey:
+  - [forty, three weeks]
+  - [sensor fault]
+  - [upstairs]
+  delivery_text: >-
+    On the tablet, the alarm log shows the cooling alarm firing forty times in three weeks. Every one was closed from upstairs as a sensor fault.
+    None carries the supervisor's name, and he holds the tablet a little tighter while she reads.
+- id: k_sl_2a_g_r1
+  statement: "The return line feeds the pumps that keep the lower levels dry."
+  voiceable: false
+  reach_entity_ids: [return_line]
+  earn_when: traces or follows the return line from the manifold
+  action_evidence:
+  - [trace, follow, check, inspect, examine, study]
+  - [return line, line]
+  entity_ids: [kristin, return_line]
+  aliases: [return line traced]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  requires:
+  - fact_id: inspection_window_missed
+    equals: false
+  - fact_id: manifold_fault_found
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: return_line_traced
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-G, realization_id: SL-2A-G-R1}
+  relevance: {entity_ids: [return_line], priority: -1}
+  must_convey:
+  - [pumps]
+  - [heavy door]
+  delivery_text: >-
+    Kristin follows the return line away from the manifold. It shares its feed with the pumps that keep the lower levels dry, and a heavy door across the corridor beyond holds water back.
+    If the pressure fails, the pumps lose power first. She touches neither.
+- id: k_sl_2a_h_r1
+  statement: "The security camera has turned toward Brandon."
+  voiceable: false
+  reach_entity_ids: [security_camera, brandon]
+  earn_when: looks at or watches the security camera
+  action_evidence:
+  - [look at, watch, study, check, examine, notice]
+  - [camera, security camera]
+  entity_ids: [kristin, brandon, security_camera]
+  aliases: [camera on Brandon seen]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2A]
+  requires:
+  - fact_id: inspection_window_missed
+    equals: false
+  - fact_id: manifold_fault_found
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: camera_on_brandon_seen
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2A-H, realization_id: SL-2A-H-R1}
+  relevance: {entity_ids: [security_camera, brandon], priority: -1}
+  must_convey:
+  - [camera]
+  - [Brandon]
+  delivery_text: >-
+    The camera holds Brandon in its view. Brandon does not look up.
 - id: k_sl_2b_a_r1
   statement: Kristin pulls and reads her own file in the archive.
   earn_when: pulls Kristin's own file at the archive terminals

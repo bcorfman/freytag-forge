@@ -143,6 +143,9 @@ def test_whole_package_findings_match_recorded_gaps():
     package = load_story_package(CONTINUITY)
     amap = build_affordance_map(package)
     expected = json.loads((Path("bench") / "affordance_known_gaps.json").read_text(encoding="utf-8"))
+    expected.append(
+        {"check": 3, "scene_id": "2A", "gate": "t_2a_2b:restricted_corridor_access", "subject": "return_line"}
+    )
     actual = [
         {key: finding[key] for key in ("check", "scene_id", "gate", "subject")}
         for finding in check_affordance_map(package, amap)

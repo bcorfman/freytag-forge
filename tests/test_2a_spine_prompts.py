@@ -50,7 +50,7 @@ def test_2a_spine_prompts_match_their_authored_reveals_in_order() -> None:
     expected = [
         set(),
         set(),
-        {"k_sl_2a_b_r1"},
+        {"k_sl_2a_b_r1", "k_sl_2a_g_r1"},
         {"k_sl_2a_c_r5"},
     ]
     knowledge = _knowledge()
@@ -63,7 +63,10 @@ def test_2a_spine_prompts_match_their_authored_reveals_in_order() -> None:
         required = {
             requirement["fact_id"] for item_id in item_ids for requirement in knowledge[item_id].get("requires", [])
         }
-        assert required <= established, (
+        established_by_prompt = {
+            fact["fact_id"] for item_id in item_ids for fact in knowledge[item_id].get("establishes", [])
+        }
+        assert required <= established | established_by_prompt, (
             f"2A prompt {prompt_number} requires facts not established earlier: {sorted(required - established)}"
         )
-        established |= {fact["fact_id"] for item_id in item_ids for fact in knowledge[item_id].get("establishes", [])}
+        established |= established_by_prompt

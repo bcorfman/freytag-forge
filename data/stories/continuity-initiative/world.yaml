@@ -382,6 +382,25 @@ items:
   name: cooling manifold
   scoped_aliases: [manifold]
   fixed: true
+- id: inspector_badges
+  name: inspector badges
+  scoped_aliases: [badges, badge]
+  kind: thing
+  fixed: true
+- id: alarm_log
+  name: alarm log
+  scoped_aliases: [log, tablet]
+  kind: thing
+  fixed: true
+- id: return_line
+  name: return line
+  kind: thing
+  fixed: true
+- id: security_camera
+  name: security camera
+  scoped_aliases: [camera]
+  kind: thing
+  fixed: true
 - id: broadcast_uplink
   name: broadcast uplink
   scoped_aliases: [uplink]
@@ -498,6 +517,10 @@ facts:
 - service_level_access_known
 - captives_confirmed_alive
 - manifold_fault_found
+- id: badge_craft_noted
+- id: alarm_log_read
+- id: return_line_traced
+- id: camera_on_brandon_seen
 - processing_numbers_copied
 - transfer_window_missed
 - brandon_urges_retreat

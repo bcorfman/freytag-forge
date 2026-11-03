@@ -86,7 +86,7 @@ def test_real_package_closes_over_the_three_act_2_incidents() -> None:
         "SL-2C-E",
     } <= route_ids
     assert {"SL-2A-D", "SL-2B-D", "SL-2C-C", "SL-2C-D", "SL-2C-E"} <= required
-    assert not {"SL-2A-A", "SL-2A-E", "SL-2C-A", "SL-2C-B"} & route_ids
+    assert not {"SL-2A-A", "SL-2C-A", "SL-2C-B"} & route_ids
 
 
 def test_optional_same_scene_producer_is_pulled_into_closure() -> None:

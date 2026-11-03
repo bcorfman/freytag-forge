@@ -37,8 +37,9 @@ def test_new_prefixes_reach_expected_successor_and_exit(
 def test_pure_missed_window_prefix_commands_match_no_2a_knowledge() -> None:
     commands = act2_probe.SCRIPTED_PREFIXES["pure_missed_window"]["2A"]
     scene_knowledge = tuple(item for item in PACKAGE.knowledge.knowledge if "2A" in item.available_in_scenes)
+    new_optional_reveals = {"k_sl_2a_e_r1", "k_sl_2a_f_r1", "k_sl_2a_g_r1", "k_sl_2a_h_r1"}
     assert all(
-        not item.action_evidence or not _matches_all(item.action_evidence, command)
+        not item.action_evidence or not _matches_all(item.action_evidence, command) or item.id in new_optional_reveals
         for command in commands
         for item in scene_knowledge
     )

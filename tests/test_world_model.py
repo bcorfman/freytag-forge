@@ -308,4 +308,8 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "dock_water_matched",
         "brandon_watches_door",
         "line_broadcast_heard",
+        "badge_craft_noted",
+        "alarm_log_read",
+        "return_line_traced",
+        "camera_on_brandon_seen",
     }

@@ -389,12 +389,16 @@ freytag_phase: rising_action
 objective: Get inside by proving the cooling system is failing
 participant_ids: [kristin, brandon, shift_supervisor]
 companions: [brandon]
-item_ids: [transit_card, hideout_servers, inspection_console, facility_gate, cooling_manifold, cooling_service_archive_panel]
+item_ids: [transit_card, hideout_servers, inspection_console, facility_gate, cooling_manifold, cooling_service_archive_panel, inspector_badges, alarm_log, return_line, security_camera]
 item_placements:
   hideout_servers: {parent: brandon_hideout}
   inspection_console: {parent: infrastructure_corridors}
   facility_gate: {parent: facility_perimeter, text: at the facility perimeter}
   cooling_manifold: {parent: facility_perimeter, text: just inside the facility gate}
+  inspector_badges: {parent: kristin, text: clipped to the front of each jacket}
+  alarm_log: {parent: facility_perimeter, text: on the tablet the supervisor carries}
+  return_line: {parent: facility_perimeter, text: running from the cooling manifold toward the corridors}
+  security_camera: {parent: facility_perimeter, text: on a pole above the cooling manifold}
   cooling_service_archive_panel:
     parent: infrastructure_corridors
     text: beside the inspection console in the infrastructure corridors

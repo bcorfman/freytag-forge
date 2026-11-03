@@ -39,6 +39,10 @@ def test_expected_reveal_ids_are_current_and_scene_specific(monkeypatch) -> None
         "k_sl_2a_c_r5",
         "k_sl_2a_c_r6",
         "k_sl_2a_b_r1",
+        "k_sl_2a_e_r1",
+        "k_sl_2a_f_r1",
+        "k_sl_2a_g_r1",
+        "k_sl_2a_h_r1",
     }
     assert "k_sl_2c_c_r1" in expected["2C"]
     assert "k_sl_2c_a_r1" not in expected["2C"]
