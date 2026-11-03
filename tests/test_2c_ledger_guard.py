@@ -33,7 +33,12 @@ class _ScriptedProvider:
 
 def _drive(engine: RuntimeEngine, provider: _ScriptedProvider, selection: str | None) -> None:
     provider.selected = [selection] if selection else []
-    engine.turn("Act on the strongest available lead.")
+    command = {
+        "k_sl_1b_d_r1": "Look under the park bench.",
+        "k_sl_1b_b_r2": "Ask the man about Michelle.",
+        "k_sl_1b_c_r1": "Open the service gate.",
+    }.get(selection, "Act on the strongest available lead.")
+    engine.turn(command)
 
 
 def _true_facts(state: RuntimeState) -> set[str]:
@@ -64,7 +69,7 @@ def test_2b_outcome_blocks_late_audit_recovery(selection: str, expected_fact: st
         None,
         None,
         "k_sl_1b_d_r1",
-        "k_sl_1b_b_r1",
+        "k_sl_1b_b_r2",
         "k_sl_1b_c_r1",
         None,
         None,

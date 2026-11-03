@@ -367,7 +367,7 @@ def test_product_provider_omits_only_consumed_boarding_command_from_prompt(
         before = "Already done: Kristin sat down in the driver's seat."
 
         assert before in user
-        assert "- Go out to the truck." in user
+        assert "- Go out to the truck." not in user
         assert provider.last_turn_engine_text is False
 
 

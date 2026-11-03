@@ -12,7 +12,8 @@ locations:
   name: Michelle's house
   aliases: [Michelle's home, the house, inside, indoors, the living room, the front room, the hallway]
 - id: kitchen
-  name: kitchen
+  name: Michelle's kitchen
+  aliases: [kitchen, the kitchen]
   parent: mcgehee_home
 - id: outside_house
   name: outside the house
@@ -145,10 +146,17 @@ npcs:
   - government prisoner
   narrator_bio: A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
 - id: patrol_officer
-  name: federal patrol officer
+  name: Officer Reyes
   aliases:
+  - federal patrol officer
   - patrol officer
   - the officer
+  - Reyes
+  narrator_bio: A young, polite federal patrol officer who works from a printed list and does not like what the list asks of him.
+- id: walt_pruitt
+  name: Walt Pruitt
+  aliases: [Walt, Mr. Pruitt, the neighbor]
+  narrator_bio: A retired bus driver in his seventies whose wife is one of the missing. He is tired, careful with his words, and unsure what he saw.
 groups:
 - id: captives
   name: detention captives
@@ -204,11 +212,80 @@ items:
   right_text: Kristin set the workstation chair upright.
   enter_text: Kristin sat down in the workstation chair.
   leave_text: Kristin stood up from the workstation chair.
+- id: michelle_tea_mug
+  name: mug of tea
+  aliases: [tea mug]
+  scoped_aliases: [mug, tea]
+- id: michelle_reading_glasses
+  name: reading glasses
+  scoped_aliases: [glasses]
+- id: manuscript_pages
+  name: manuscript pages
+  aliases: [manuscript, red-penned pages]
+  scoped_aliases: [pages, paper, papers]
+- id: kitchen_calendar
+  name: wall calendar
+  aliases: [calendar]
+  fixed: true
+- id: lake_photograph
+  name: lake photograph
+  scoped_aliases: [photograph, photo]
+- id: back_door_splinters
+  name: splinters around the back door frame
+  aliases: [door splinters, splinters]
+  scoped_aliases: [frame, door frame]
+  fixed: true
+- id: back_door_deadbolt
+  name: back door deadbolt
+  aliases: [deadbolt]
+  scoped_aliases: [lock, door lock]
+  fixed: true
+- id: truck_radio
+  name: truck radio
+  aliases: [truck radio]
+  scoped_aliases: [radio]
+  fixed: true
 - id: park_bench
   name: park bench
   scoped_aliases: [bench]
   disclosure: public
   kind: seat
+  fixed: true
+- id: park_bicycle
+  name: bicycle
+  scoped_aliases: [bike]
+  fixed: true
+- id: picnic_blanket
+  name: picnic blanket
+  kind: supporter
+  fixed: true
+- id: picnic_thermos
+  name: thermos
+  fixed: false
+- id: picnic_cups
+  name: two cups
+  aliases: [cups]
+  fixed: false
+- id: park_fence
+  name: park fence
+  scoped_aliases: [fence]
+  kind: supporter
+  fixed: true
+- id: dog_leash
+  name: dog leash
+  aliases: [leash]
+  fixed: false
+- id: park_loudspeaker
+  name: loudspeaker
+  scoped_aliases: [speaker]
+  fixed: true
+- id: checkpoint_barrier
+  name: checkpoint barrier
+  scoped_aliases: [barrier]
+  fixed: true
+- id: gate_keypad
+  name: gate keypad
+  aliases: [keypad]
   fixed: true
 - id: facility_gate
   name: facility gate
@@ -245,9 +322,9 @@ items:
   - {intact: [], destroyed: [broken, snapped, crushed]}
   unavailable: destroyed
 - id: michelle_photograph
-  name: Michelle's photograph
+  name: photograph of an unknown person
   hidden: true
-  scoped_aliases: [photograph, photo]
+  scoped_aliases: [photograph, photo, "Michelle's photograph", "Michelle's photo"]
 - id: number_sequence
   name: handwritten number sequence
   hidden: true
@@ -269,6 +346,29 @@ items:
   hidden: true
 - id: service_entrance
   name: service entrance
+  fixed: true
+- id: tire_tracks
+  name: tire tracks
+  kind: thing
+  fixed: true
+- id: air_vents
+  name: air vents
+  scoped_aliases: [vents]
+  kind: thing
+  fixed: true
+- id: water_pallets
+  name: water pallets
+  scoped_aliases: [pallets, pallet]
+  kind: thing
+  fixed: true
+- id: identification_numbers
+  name: identification numbers
+  kind: thing
+  fixed: true
+- id: overhead_speaker
+  name: overhead speaker
+  scoped_aliases: [speaker]
+  kind: thing
   fixed: true
 - id: hideout_servers
   name: hideout servers
@@ -351,6 +451,9 @@ facts:
 - scene_3b_entry_known
 - scene_3c_entry_known
 - michelle_abduction_suspicion
+- kitchen_last_hour_read
+- broadcast_loop_confirmed
+- neighbor_account_heard
 - facility_proof
 - false_identities_ready
 - id: facility_perimeter_reached
@@ -503,6 +606,12 @@ facts:
 - purge_alarm_active
 - detention_uprising_started
 - park_pursuit_resolved
+- park_left_behind_read
+- stranger_knows_script
+- emergency_water_label_read
+- id: dock_water_matched
+- id: brandon_watches_door
+- id: line_broadcast_heard
 - transport_route_departure_ready
 - archive_crisis_understood
 - override_codes_deadline_known

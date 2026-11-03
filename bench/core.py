@@ -747,6 +747,18 @@ def scripts_for(variation: dict[str, Any], scene_id: str) -> list[dict[str, Any]
     return output
 
 
+def _empty_match_info() -> dict[str, Any]:
+    return {
+        "match_call": False,
+        "match_raw": None,
+        "match_issues": [],
+        "resolutions": {},
+        "place_resolutions": {},
+        "engine_resolutions": {},
+        "mapping_checks": [],
+    }
+
+
 def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], max_turns: int = 12) -> dict[str, Any]:
     package, state = seeded_state_for_scene(variation, scene_id)
     runtime = variation.get("_runtime", variation.get("runtime", False))
@@ -821,13 +833,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             fixed_refusal_asked = False
             fixed_refusal_issues: tuple[str, ...] = ()
             prior_scene = state.current_scene_id
-            match_info = {
-                "match_call": False,
-                "match_raw": None,
-                "match_issues": [],
-                "resolutions": {},
-                "mapping_checks": [],
-            }
+            match_info = _empty_match_info()
             if not runtime and isinstance(provider, ItemFactsProvider):
                 standing = stand_before_leave(provider._world(), package, typed_input, ask_needs_to_stand)
                 player_input = standing.command
@@ -871,6 +877,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 things_given = list(provider._selected_names) if provider._selected_names is not None else []
                 facts_before = provider.facts_for_names(things_given, structural=True)
             runtime_context: dict[str, Any] = {}
+            if runtime:
+                capture.last_after = None
 
             def runtime_engine_factory(current_state=state, context=runtime_context) -> RuntimeEngine:
                 runtime_store.save(runtime_session, current_state)
@@ -1085,25 +1093,13 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 player_input = " ".join(
                     (*fixed_refusal_steps, *standing_steps, *taking_steps, *seating_steps, typed_input)
                 )
-                raw_item_facts = after_record.get("raw", {})
+                raw_item_facts = after_record.get("raw") or {}
                 fact_issues = (
                     list(before_record.get("fixed_refusal_issues", ()))
                     if engine_refusal_text
                     else after_record.get("issues", [])
                 )
-                match_info = (
-                    {
-                        "match_call": False,
-                        "match_raw": None,
-                        "match_issues": [],
-                        "resolutions": {},
-                        "place_resolutions": {},
-                        "mapping_checks": [],
-                        "engine_resolutions": {},
-                    }
-                    if engine_refusal_text
-                    else after_record.get("match_info", match_info)
-                )
+                match_info = _empty_match_info() if engine_refusal_text else after_record.get("match_info", match_info)
                 after_names = set(things_given) | set(provider._changed_last_turn)
                 facts_after = (
                     facts_before

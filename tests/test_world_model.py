@@ -78,6 +78,7 @@ def test_world_schema_data_is_plain_and_covers_authored_entities() -> None:
         "seat",
         "opening",
         "group",
+        "supporter",
     }
     for entity in PACKAGE.world.locations:
         assert entities[entity.id]["kind"] == "area"
@@ -304,4 +305,7 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "patrol_departed",
         "brandon_name_kept",
         "brandon_name_erased",
+        "dock_water_matched",
+        "brandon_watches_door",
+        "line_broadcast_heard",
     }

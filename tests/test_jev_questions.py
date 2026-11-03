@@ -43,7 +43,7 @@ def test_runtime_questions_post_same_input_through_jev_client() -> None:
         (
             ask_moves_thing,
             moves_thing,
-            ("Put Michelle's photograph in my pocket.", "Michelle's photograph"),
+            ("Put Michelle's photograph in my pocket.", "photograph of an unknown person"),
             "moves_thing",
         ),
         (

@@ -274,7 +274,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 43
+    assert len(package.storylets) == 52
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
@@ -284,13 +284,29 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "truck_driver_seat": ItemPlacement(parent="kristin_truck"),
         "truck_passenger_seat": ItemPlacement(parent="kristin_truck"),
         "kristin_truck": ItemPlacement(parent="outside_house"),
-        "michelle_workstation": ItemPlacement(parent="kitchen"),
+        "michelle_workstation": ItemPlacement(parent="kitchen", text="across the kitchen from the back door"),
         "michelle_drawer": ItemPlacement(parent="michelle_workstation", part_of=True, text="in Michelle's workstation"),
         "workstation_chair": ItemPlacement(parent="kitchen", text="at Michelle's workstation"),
         "back_door": ItemPlacement(parent="kitchen"),
         "house_gate": ItemPlacement(parent="outside_house", text="at the front of the house"),
+        "michelle_tea_mug": ItemPlacement(parent="michelle_workstation", text="on Michelle's workstation"),
+        "michelle_reading_glasses": ItemPlacement(parent="michelle_workstation", text="folded on her manuscript pages"),
+        "manuscript_pages": ItemPlacement(parent="michelle_workstation", text="marked in red pen"),
+        "kitchen_calendar": ItemPlacement(
+            parent="kitchen", text="a paper calendar hanging on the wall by the refrigerator"
+        ),
+        "lake_photograph": ItemPlacement(
+            parent="kitchen",
+            text="held to the refrigerator by a pear-shaped magnet, showing Kristin and Michelle at a lake",
+        ),
+        "back_door_splinters": ItemPlacement(parent="kitchen", text="around the back door frame"),
+        "back_door_deadbolt": ItemPlacement(parent="kitchen", text="on the back door"),
+        "truck_radio": ItemPlacement(parent="kristin_truck"),
     }
-    assert package.scenes[0].metadata.setting_facts == ()
+    assert package.scenes[0].metadata.setting_facts == (
+        "Sirens carry from the next street.",
+        "A dog barks behind the empty house next door.",
+    )
     pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
     mapped_facts = set(package.knowledge_indexes.facts_to_knowledge)
     pacing_only_facts = {
@@ -397,11 +413,22 @@ def test_scene_without_item_placements_loads_with_an_empty_mapping(tmp_path: Pat
     contents = plot.read_text(encoding="utf-8")
     item_ids = (
         "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
-        "park_bench, service_gate, storm_drain, kristin_truck]\n"
+        "park_bench, service_gate, storm_drain, kristin_truck, park_bicycle, picnic_blanket, "
+        "picnic_thermos, picnic_cups, park_fence, dog_leash, park_loudspeaker, "
+        "checkpoint_barrier, gate_keypad]\n"
     )
     placement_block = (
         "item_placements:\n"
         "  park_bench: {parent: los_angeles_park}\n"
+        "  park_bicycle: {parent: los_angeles_park, text: on its kickstand beside the path}\n"
+        "  picnic_blanket: {parent: los_angeles_park, text: spread on the grass}\n"
+        "  picnic_thermos: {parent: picnic_blanket, text: beside the cups}\n"
+        "  picnic_cups: {parent: picnic_blanket, text: one tipped over and one still half full}\n"
+        "  park_fence: {parent: los_angeles_park, text: along the edge of the grass}\n"
+        "  dog_leash: {parent: park_fence, text: tied to the fence with its loop empty}\n"
+        "  park_loudspeaker: {parent: los_angeles_park, text: on a pole near the service path}\n"
+        "  checkpoint_barrier: {parent: los_angeles_park, text: at the park entrance}\n"
+        "  gate_keypad: {parent: los_angeles_park, text: beside the service gate}\n"
         "  service_gate: {parent: los_angeles_park}\n"
         "  storm_drain: {parent: los_angeles_park}\n"
         "  transit_card: {parent: park_bench, under: true}\n"
@@ -429,10 +456,14 @@ def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -
     contents = contents.replace(
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
         "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
-        "michelle_workstation, back_door, house_gate]\n",
+        "michelle_workstation, back_door, house_gate, michelle_tea_mug, michelle_reading_glasses, "
+        "manuscript_pages, kitchen_calendar, lake_photograph, back_door_splinters, "
+        "back_door_deadbolt, truck_radio]\n",
         "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
         "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
-        "michelle_workstation, back_door, house_gate, test_item]\n",
+        "michelle_workstation, back_door, house_gate, michelle_tea_mug, michelle_reading_glasses, "
+        "manuscript_pages, kitchen_calendar, lake_photograph, back_door_splinters, "
+        "back_door_deadbolt, truck_radio, test_item]\n",
         1,
     )
     contents = contents.replace(
@@ -523,10 +554,7 @@ def test_loader_uses_empty_setting_facts_when_unset(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8").replace(
-        'setting_facts: ["The drawer is shut.", "The drawer holds pens, binder clips, a stapler, and '
-        'spare batteries.", '
-        '"Kristin\'s laptop is closed.", '
-        '"Michelle\'s phone is not damaged."]\n',
+        "setting_facts:\n- Sirens carry from the next street.\n- A dog barks behind the empty house next door.\n",
         "",
         1,
     )
@@ -575,7 +603,11 @@ def test_loader_rejects_a_beat_without_details(tmp_path: Path) -> None:
     package = copied_package(tmp_path)
     plot = package / "plot.md"
     contents = plot.read_text(encoding="utf-8")
-    details = "**Details:** missing tablet and work bag; forced back door; KMS initials carved in drawer\n"
+    details = (
+        "**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; "
+        "lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake photograph; "
+        "KMS initials carved in drawer\n"
+    )
     plot.write_text(contents.replace(details, "", 1), encoding="utf-8")
 
     with pytest.raises(StoryPackageError, match="scene 1A beat 1A.1 lacks a Details line"):
@@ -627,6 +659,10 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
     package = load_story_package(PACKAGE)
     expected = {
         "k_sl_1a_a_r1",
+        "k_sl_1a_g_r1",
+        "k_sl_1a_g_r2",
+        "k_sl_1a_h_r1",
+        "k_sl_1a_i_r1",
         "k_sl_1a_b_r0",
         "k_sl_1a_b_r0w",
         "k_sl_1a_f_r1",
@@ -642,6 +678,9 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_1b_b_r2",
         "k_sl_1b_d_r1",
         "k_sl_1b_e_r1",
+        "k_sl_1b_f_r1",
+        "k_sl_1b_g_r1",
+        "k_sl_1b_h_r1",
         "k_sl_1b_c_r1",
         "k_sl_1b_c_r2",
         "k_sl_1c_a_r1",
@@ -650,6 +689,9 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
         "k_sl_1c_c_copy_numbers",
         "k_sl_1c_c_secure_route",
         "k_sl_1c_d_r1",
+        "k_sl_1c_e_r1",
+        "k_sl_1c_f_r1",
+        "k_sl_1c_g_r1",
         "k_sl_2a_c_r5",
         "k_sl_2a_c_r6",
         "k_sl_2a_b_r1",

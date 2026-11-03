@@ -37,6 +37,7 @@ from storygame.runtime.cue_lifecycle import (
     staged_cue_is_eligible,
     staged_cue_reveal_is_reachable,
 )
+from storygame.runtime.embellishments import check_for_state, commit_for_state
 from storygame.runtime.facts import Fact
 from storygame.runtime.incidents import resolved_incident_outcome
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
@@ -253,6 +254,20 @@ class RuntimeEngine(CanonicalEventMixin):
             opening_proposal = ResolvedTurnProposal(segments=proposal.segments)
             try:
                 self.narration_validator.validate(self.state, self.state, opening_proposal, self.projector, "")
+                pending = getattr(self.provider, "pending_embellishments", lambda: None)()
+                if pending is not None:
+                    checked = check_for_state(
+                        self.state.package, self.state.facts, self.state.current_scene_id, pending
+                    )
+                    if checked.props or checked.traits:
+                        result = commit_for_state(
+                            self.state.package, self.state.facts, self.state.current_scene_id, checked
+                        )
+                        if not result.ok:
+                            raise ProposalValidationError(result.reason, code="embellishment_diverged")
+                    discard = getattr(self.provider, "discard_pending_embellishments", None)
+                    if callable(discard):
+                        discard()
             except ProposalValidationError:
                 if attempt == OPENING_ATTEMPTS - 1:
                     raise
@@ -466,6 +481,7 @@ class RuntimeEngine(CanonicalEventMixin):
         pre_turn_context = None
         pre_turn_provider_fields = None
         previewed_narration = None
+        checked = None
         try:
             self.state.last_turn_delivery = TurnDelivery()
             self.state.turn_index += 1
@@ -542,6 +558,15 @@ class RuntimeEngine(CanonicalEventMixin):
                         self.state, candidate_state, proposal, self.projector, command_text
                     )
                     previewed_narration = self._preview_observation(command_text, proposal, candidate_state, before)
+                    pending = getattr(self.provider, "pending_embellishments", lambda: None)()
+                    if pending is not None:
+                        checked = check_for_state(
+                            self.state.package,
+                            candidate_state.facts,
+                            candidate_state.current_scene_id,
+                            pending,
+                            entered_scene=candidate_state.current_scene_id != before.current_scene_id,
+                        )
                 except ProposalValidationError as error:
                     if attempt == TURN_NARRATION_ATTEMPTS - 1:
                         raise
@@ -719,6 +744,35 @@ class RuntimeEngine(CanonicalEventMixin):
                     capture=context,
                 )
                 return proposal.model_copy(update={"game_break": warning})
+        pending = getattr(self.provider, "pending_embellishments", lambda: None)()
+        if pending is not None and checked is not None:
+            result = (
+                commit_for_state(self.state.package, self.state.facts, self.state.current_scene_id, checked)
+                if checked.props or checked.traits
+                else None
+            )
+            if result is not None and not result.ok:
+                message = result.reason or "The committed world details differ from the checked details."
+                if self.capture:
+                    self.capture.discard()
+                self.state.restore_snapshot(before)
+                if self.capture and pre_turn_context is not None:
+                    self.capture.resume(pre_turn_context)
+                    self._restore_capture_provider_fields(pre_turn_provider_fields)
+                self._clear_provider_handoff()
+                self._record_attempt(
+                    player_input,
+                    command_text,
+                    before,
+                    provider_reply=provider_reply,
+                    provider_proposal=provider_proposal,
+                    outcome="rejected",
+                    rejection=AttemptError(code="embellishment_diverged", message=message),
+                )
+                raise ProposalValidationError(message, code="embellishment_diverged")
+            discard = getattr(self.provider, "discard_pending_embellishments", None)
+            if callable(discard):
+                discard()
         result = self._complete_accepted_turn(
             proposal,
             before=before,

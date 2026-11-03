@@ -28,7 +28,9 @@ EXPECTED_PLACE_FORMS_BY_SCENE = {
         "Michelle's house",
         "Michelle's home",
         "the house",
+        "Michelle's kitchen",
         "kitchen",
+        "the kitchen",
         "outside the house",
         "outside",
         "the yard",
@@ -43,7 +45,7 @@ EXPECTED_PLACE_FORMS_BY_SCENE = {
         "the hallway",
     ),
     "1B": ("Los Angeles park",),
-    "1C": ("freight terminal", "abandoned freight terminal", "processing line"),
+    "1C": ("freight terminal", "abandoned freight terminal", "loading docks", "processing line"),
     "2A": (
         "Facility perimeter",
         "Brandon's hideout",
@@ -85,15 +87,43 @@ EXPECTED_PLACE_FORMS_BY_SCENE = {
 }
 
 EXPECTED_SCOPED_ALIASES_BY_SCENE = {
-    "1A": {"chair": "workstation_chair", "front gate": "house_gate", "gate": "house_gate"},
+    "1A": {
+        "chair": "workstation_chair",
+        "front gate": "house_gate",
+        "gate": "house_gate",
+        "mug": "michelle_tea_mug",
+        "tea": "michelle_tea_mug",
+        "glasses": "michelle_reading_glasses",
+        "pages": "manuscript_pages",
+        "paper": "manuscript_pages",
+        "papers": "manuscript_pages",
+        "frame": "back_door_splinters",
+        "door frame": "back_door_splinters",
+        "lock": "back_door_deadbolt",
+        "door lock": "back_door_deadbolt",
+        "radio": "truck_radio",
+        "photograph": "lake_photograph",
+        "photo": "lake_photograph",
+    },
     "1B": {
         "bench": "park_bench",
         "drain": "storm_drain",
         "tunnel": "storm_drain",
         "photograph": "michelle_photograph",
         "photo": "michelle_photograph",
+        "Michelle's photograph": "michelle_photograph",
+        "Michelle's photo": "michelle_photograph",
     },
-    "1C": {"captives": "captives", "captive": "captives", "prisoner": "captives", "prisoners": "captives"},
+    "1C": {
+        "captives": "captives",
+        "captive": "captives",
+        "prisoner": "captives",
+        "prisoners": "captives",
+        "vents": "air_vents",
+        "pallets": "water_pallets",
+        "pallet": "water_pallets",
+        "speaker": "overhead_speaker",
+    },
     "2A": {
         "servers": "hideout_servers",
         "manifold": "cooling_manifold",
@@ -238,7 +268,16 @@ def test_late_scene_place_and_scoped_alias_declarations_are_characterized() -> N
     for scene in PACKAGE.scenes:
         scene_id = scene.metadata.scene_id
         assert set(_place_forms(scene)) == set(EXPECTED_PLACE_FORMS_BY_SCENE[scene_id])
-        assert _scoped_aliases(scene) == EXPECTED_SCOPED_ALIASES_BY_SCENE[scene_id]
+        expected = EXPECTED_SCOPED_ALIASES_BY_SCENE[scene_id]
+        if scene_id == "1B":
+            expected = {
+                **expected,
+                "bike": "park_bicycle",
+                "fence": "park_fence",
+                "speaker": "park_loudspeaker",
+                "barrier": "checkpoint_barrier",
+            }
+        assert _scoped_aliases(scene) == expected
 
 
 @pytest.mark.parametrize("scene_id", tuple(EXPECTED_PLACE_FORMS_BY_SCENE))

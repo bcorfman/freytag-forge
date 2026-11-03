@@ -1,0 +1,28 @@
+{
+  "name": "richer-1b-baseline",
+  "story_package": "bench/frozen/continuity-pre-richer-1b",
+  "fixed_turns": 7,
+  "runtime": true,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "1B": [
+      {
+        "name": "richer-1b-park",
+        "inputs": [
+          "Look at the picnic blanket.",
+          "Search beneath the park bench.",
+          "Look at the photograph.",
+          "Watch the stranger.",
+          "Ask the man about Michelle.",
+          "Examine the thermos.",
+          "Follow Brandon through the service gate."
+        ]
+      }
+    ]
+  }
+}

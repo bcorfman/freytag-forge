@@ -92,6 +92,57 @@ _ABSTRACT_DETAIL_WORDS = {
 }
 _OWNED_ITEM_NAME = re.compile(r"^([A-Za-z]+)['’]s\s+(.+?)\s*$")
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+_DELIVERY_TOKEN = re.compile(r"[A-Za-z0-9]+")
+_DELIVERY_STOPWORDS = {
+    "a",
+    "an",
+    "the",
+    "and",
+    "or",
+    "of",
+    "to",
+    "in",
+    "on",
+    "at",
+    "by",
+    "with",
+    "for",
+    "from",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "it",
+    "its",
+    "his",
+    "her",
+    "their",
+    "she",
+    "he",
+    "they",
+    "them",
+    "this",
+    "that",
+    "these",
+    "those",
+    "as",
+    "but",
+    "not",
+    "no",
+    "so",
+    "if",
+    "then",
+    "than",
+    "there",
+    "here",
+    "who",
+    "which",
+    "what",
+    "when",
+    "while",
+}
 
 
 def _read_yaml(path: Path) -> dict[str, Any]:
@@ -151,12 +202,44 @@ def _source_links(storylets: str) -> dict[str, list[tuple[str, int]]]:
 
 def _owned_items(world: dict[str, Any]) -> list[tuple[str, str]]:
     """Return owner/thing pairs; this heuristic only considers named items."""
-    owned: list[tuple[str, str]] = []
+    return [(owner, thing) for _, owner, thing in _owned_items_with_ids(world)]
+
+
+def _owned_items_with_ids(world: dict[str, Any]) -> list[tuple[str, str, str]]:
+    """Return item-id/owner/thing triples for named owned items."""
+    owned: list[tuple[str, str, str]] = []
     for item in world.get("items", []):
         match = _OWNED_ITEM_NAME.fullmatch(str(item.get("name", "")))
         if match:
-            owned.append((match.group(1), match.group(2)))
+            owned.append((str(item.get("id", "")), match.group(1), match.group(2)))
     return owned
+
+
+def _scene_item_ids(body: str) -> set[str]:
+    """Return item IDs listed in a scene's front matter."""
+    front_matter = re.search(r"^---\s*$\n(.*?)^---\s*$", body, re.MULTILINE | re.DOTALL)
+    if not front_matter:
+        return set()
+    item_ids = re.search(r"^item_ids:\s*\[([^]]*)\]", front_matter.group(1), re.MULTILINE)
+    return {item_id.strip() for item_id in item_ids.group(1).split(",")} if item_ids else set()
+
+
+def _scene_item_placements(body: str) -> dict[str, Any]:
+    front_matter = re.search(r"^---\s*$\n(.*?)^---\s*$", body, re.MULTILINE | re.DOTALL)
+    if not front_matter:
+        return {}
+    metadata = yaml.safe_load(front_matter.group(1))
+    placements = metadata.get("item_placements", {}) if isinstance(metadata, dict) else {}
+    return placements if isinstance(placements, dict) else {}
+
+
+def _delivery_words(text: str) -> list[str]:
+    words = []
+    for token in _DELIVERY_TOKEN.findall(text.casefold()):
+        if len(token) < 3 or token in _DELIVERY_STOPWORDS:
+            continue
+        words.append(token[:-1] if token.endswith("s") else token)
+    return words
 
 
 def _ambiguous_owned_item_findings(
@@ -164,19 +247,30 @@ def _ambiguous_owned_item_findings(
 ) -> list[dict[str, str]]:
     """Find units naming an owned thing without its owner in the same unit."""
     findings = []
+    by_thing: dict[str, list[tuple[str, str]]] = {}
     for owner, thing in owned_items:
+        by_thing.setdefault(thing.casefold(), []).append((owner, thing))
+    for items in by_thing.values():
+        owners: list[str] = []
+        for owner, _ in items:
+            if owner.casefold() not in {existing.casefold() for existing in owners}:
+                owners.append(owner)
+        if len(owners) < 2:
+            continue
+        thing = items[0][1]
         if not re.search(rf"\b{re.escape(thing)}\b", text, re.I):
             continue
-        if re.search(rf"\b{re.escape(owner)}\b", text, re.I):
+        if any(re.search(rf"\b{re.escape(owner)}\b", text, re.I) for owner in owners):
             continue
         excerpt = text.strip()
         if len(excerpt) > 120:
             excerpt = f"{excerpt[:117].rstrip()}..."
+        owner_text = " or ".join(owners)
         findings.append(
             _finding(
                 "ambiguous_owned_item",
                 scene_id,
-                f"{label} '{excerpt}' names the {thing} without naming {owner}, "
+                f"{label} '{excerpt}' names the {thing} without naming {owner_text}, "
                 f"so the narrator cannot tell it from another {thing}.",
             )
         )
@@ -208,19 +302,33 @@ def audit_package(root: Path) -> dict[str, Any]:
 
     # This is deliberately lexical: it catches bare owned things, but cannot
     # resolve pronouns, aliases, or ownership expressed outside the same unit.
-    owned_items = _owned_items(world)
+    owned_items = _owned_items_with_ids(world)
     for scene_id, body in scenes.items():
+        item_ids = _scene_item_ids(body)
+        scene_owned_items = [(owner, thing) for item_id, owner, thing in owned_items if item_id in item_ids]
         for match in re.finditer(r"^\*\*Details:\*\*\s*(.*?)\s*$", body, re.MULTILINE):
             for detail in match.group(1).split(";"):
-                findings.extend(_ambiguous_owned_item_findings(detail, scene_id, "Beat detail", owned_items))
+                findings.extend(_ambiguous_owned_item_findings(detail, scene_id, "Beat detail", scene_owned_items))
     for item in knowledge.get("knowledge", []):
         scene_id = (item.get("available_in_scenes") or [scene_ids[0]])[0]
+        scene_owned_items = [
+            (owner, thing)
+            for item_id, owner, thing in owned_items
+            if item_id in _scene_item_ids(scenes.get(scene_id, ""))
+        ]
         for sentence in _SENTENCE_SPLIT.split(str(item.get("statement", ""))):
-            findings.extend(_ambiguous_owned_item_findings(sentence, scene_id, "Knowledge statement", owned_items))
+            findings.extend(
+                _ambiguous_owned_item_findings(sentence, scene_id, "Knowledge statement", scene_owned_items)
+            )
     for frame in knowledge.get("scene_frames", []):
         scene_id = str(frame.get("scene_id"))
+        scene_owned_items = [
+            (owner, thing)
+            for item_id, owner, thing in owned_items
+            if item_id in _scene_item_ids(scenes.get(scene_id, ""))
+        ]
         for sentence in _SENTENCE_SPLIT.split(str(frame.get("situation", ""))):
-            findings.extend(_ambiguous_owned_item_findings(sentence, scene_id, "Scene frame", owned_items))
+            findings.extend(_ambiguous_owned_item_findings(sentence, scene_id, "Scene frame", scene_owned_items))
 
     plot_words = _words(plot)
     for item in knowledge.get("knowledge", []):
@@ -245,6 +353,42 @@ def audit_package(root: Path) -> dict[str, Any]:
                     f"Scene frame adds '{unknown[0]}', absent from plot.md.",
                 )
             )
+
+    world_entities = {
+        str(entity.get("id")): entity
+        for entity in [*world.get("items", []), *world.get("npcs", [])]
+        if isinstance(entity, dict) and entity.get("id")
+    }
+    for item in knowledge.get("knowledge", []):
+        delivery_text = str(item.get("delivery_text", "")).strip()
+        reach_entity_ids = item.get("reach_entity_ids") or []
+        available_in_scenes = item.get("available_in_scenes") or []
+        if not delivery_text or not reach_entity_ids or not available_in_scenes:
+            continue
+        scene_id = str(available_in_scenes[0])
+        placements = _scene_item_placements(scenes.get(scene_id, ""))
+        given: set[str] = set()
+        for entity_id in reach_entity_ids:
+            entity = world_entities.get(str(entity_id))
+            if not entity:
+                continue
+            given.update(_delivery_words(str(entity.get("name", ""))))
+            placement = placements.get(str(entity_id))
+            if isinstance(placement, dict) and placement.get("text"):
+                given.update(_delivery_words(str(placement["text"])))
+        if not given:
+            continue
+        for sentence in _SENTENCE_SPLIT.split(delivery_text):
+            sentence = sentence.strip()
+            words = _delivery_words(sentence)
+            if len(words) >= 4 and sum(word in given for word in words) / len(words) >= 0.6:
+                findings.append(
+                    _finding(
+                        "delivery_restates_scene",
+                        scene_id,
+                        f"Delivery of '{item.get('id')}' restates the scene: '{sentence}'",
+                    )
+                )
 
     for frame in knowledge.get("scene_frames", []):
         scene_id = str(frame.get("scene_id"))

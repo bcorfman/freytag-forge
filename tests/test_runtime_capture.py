@@ -102,7 +102,7 @@ def test_after_commit_records_facts_after(monkeypatch: pytest.MonkeyPatch) -> No
 
     RuntimeEngine(state, provider, capture=capture).turn("Inspect Michelle's phone.")
 
-    assert capture.last_after["facts_after"]["Michelle's phone"]["place"] == "kitchen"
+    assert capture.last_after["facts_after"]["Michelle's phone"]["place"] == "Michelle's kitchen"
 
 
 def test_rejected_turn_changes_nothing(monkeypatch: pytest.MonkeyPatch) -> None:

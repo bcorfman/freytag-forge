@@ -24,6 +24,7 @@ from storygame.runtime.world_model import (
     _true,
     apply_scene_placements,
     apply_world_effects,
+    incidental_policy_for,
 )
 from storygame.story_package.models import ItemPlacement, item_placement_is_visible, placement_text
 from storygame.story_package.world_schema import world_source_schema_data
@@ -265,7 +266,7 @@ _SECOND_CALL_SYSTEM = 'You keep track of things in a story. Read THINGS, PLAYER 
 
 
 class ItemFactsProvider(CloudflareTurnProvider):
-    allowed_reply_keys = CloudflareTurnProvider.allowed_reply_keys | {"item_facts"}
+    allowed_reply_keys = CloudflareTurnProvider.allowed_reply_keys | {"item_facts", "embellishments"}
     opening_things_fact: bool = False
 
     def __init__(
@@ -295,6 +296,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self.opening_things_fact = opening_things_fact
         self._pending_item_facts = None
         self._pending_item_facts_present = False
+        self._pending_embellishments = None
+        self._pending_embellishments_present = False
         self._held_item_facts = {}
         self._item_facts_issues = []
         self._changed_last_turn = set()
@@ -580,6 +583,15 @@ class ItemFactsProvider(CloudflareTurnProvider):
         seat_id = world.parent(protagonist_id)
         seated = bool(seat_id and world.schema.entities.get(seat_id) and world.schema.entities[seat_id].seat_for)
         if not getattr(self, "_example_player_input", ""):
+            if self._selected_names is None:
+                protagonist_area = world.area(protagonist_id)
+                if protagonist_area is not None:
+                    for entity_id in world.visible_area_contents(protagonist_area):
+                        if entity_id == protagonist_id:
+                            continue
+                        name = self._entity_label(world, entity_id)
+                        if name in self.item_facts and name not in names:
+                            names.append(name)
             return names
         command = self._example_player_input
         literal_names = {
@@ -630,8 +642,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if self.recent_cue_referent_owner and lines and not self.command_consumed:
                 lines[-1] = f"{lines[-1]} (meaning the {self.recent_cue_referent_owner})"
         else:
-            lines = [self.observation_request.action]
             completed_actions = self._observation_completed_actions()
+            lines = (
+                []
+                if self.observation_request.kind == "enter" and completed_actions
+                else [self.observation_request.action]
+            )
             if completed_actions:
                 lines.append(f"Already done: {' '.join(completed_actions)}")
         if not lines or "scene_setting" not in user:
@@ -772,6 +788,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._rejection_note = None
         self.last_prompt = None
         self.discard_pending_item_facts()
+        self.discard_pending_embellishments()
         self._held_item_facts = {}
         self._item_facts_issues = []
         self._changed_last_turn = set()
@@ -838,6 +855,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         return f"{system}\n{'\n'.join(rules)}"
 
     def _request(self, payload):
+        self.discard_pending_embellishments()
         response = super()._request(payload)
         if isinstance(response, dict):
             if "segments" in response:
@@ -858,6 +876,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                         del response[name]
             self._pending_item_facts_present = "item_facts" in response
             self._pending_item_facts = copy.deepcopy(response.get("item_facts"))
+            self._pending_embellishments_present = "embellishments" in response
+            self._pending_embellishments = copy.deepcopy(response.get("embellishments"))
             for entry in (response.get("item_facts") or {}).values():
                 if isinstance(entry, dict):
                     for key in self.item_facts_reply_keys:
@@ -865,6 +885,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                             self.item_facts_reply_keys[key] += 1
             cleaned = dict(response)
             cleaned.pop("item_facts", None)
+            cleaned.pop("embellishments", None)
             return cleaned
         self._pending_item_facts_present = False
         self._pending_item_facts = copy.deepcopy(response)
@@ -876,6 +897,13 @@ class ItemFactsProvider(CloudflareTurnProvider):
     def discard_pending_item_facts(self):
         self._pending_item_facts = None
         self._pending_item_facts_present = False
+
+    def pending_embellishments(self):
+        return copy.deepcopy(self._pending_embellishments) if self._pending_embellishments_present else None
+
+    def discard_pending_embellishments(self):
+        self._pending_embellishments = None
+        self._pending_embellishments_present = False
 
     def last_item_facts_match(self):
         return copy.deepcopy(self._last_item_facts_match)
@@ -1340,7 +1368,20 @@ class ItemFactsProvider(CloudflareTurnProvider):
             condition_poles = [self._axis_match_id(world, entity_id, item) for item in conditions]
             free.extend(item.strip()[:40] for item, pole in zip(conditions, condition_poles, strict=True) if not pole)
         if free:
-            world.set_conditions(entity_id, free[:2])
+            policy = incidental_policy_for(self.state.package)
+            if policy is None:
+                world.set_conditions(entity_id, free[:2])
+            else:
+                routed = world.route_condition_phrases(policy, self.state.current_scene_id, entity_id, free)
+                for phrase, reason in routed.refused:
+                    issues.append(f"item_facts for {name!r} dropped {phrase!r}: {reason}")
+                if world.is_incidental(entity_id):
+                    for phrase in routed.leftover:
+                        issues.append(
+                            f"item_facts for {name!r} dropped {phrase!r}: incidental props only accept facets"
+                        )
+                elif routed.leftover or routed.refused:
+                    world.set_conditions(entity_id, routed.leftover[:2])
         reply_poles = {pole for pole in (place_pole, state_pole, *condition_poles) if pole is not None}
         changed_pole = None
         if reply_poles and current_poles:

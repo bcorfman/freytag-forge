@@ -92,7 +92,7 @@ def test_bench_put_uses_recovered_photograph_without_retaking(monkeypatch):
     assert turn["taking_steps"] == []
     assert turn["taking_asked"] is False
     assert not any("picked up Michelle's photograph from the park bench" in request["user"] for request in requests)
-    assert turn["item_facts_before"]["Michelle's photograph"]["place"] == "Kristin"
+    assert turn["item_facts_before"]["photograph of an unknown person"]["place"] == "Kristin"
     assert providers[0].prior_steps == ()
 
 
@@ -695,7 +695,7 @@ def test_before_state_scene_leaving_turn_records_pre_turn_place(monkeypatch) -> 
     assert result["status"] == "ok"
     assert result["turns"][0]["left_scene"] is True
     assert result["turns"][0]["item_facts_before"]["Kristin"] == {
-        "place": "kitchen",
+        "place": "Michelle's kitchen",
         "condition": [],
     }
     assert result["turns"][0]["item_facts_before"]["Kristin"]["place"] != "Los Angeles park"
@@ -1657,14 +1657,14 @@ def test_one_storylet_can_be_read_in_isolation(monkeypatch) -> None:
 
     from bench.core import default_variation, prompt_for
 
-    _use_legacy_candidates(monkeypatch, {"k_sl_1a_d_r1"})
+    _use_legacy_candidates(monkeypatch, {"k_sl_1a_d_r1", "k_sl_1a_b_r1"})
     _seed_bench_custody(monkeypatch)
     narrow = prompt_for(default_variation(), "1A", "Feel under the drawer.", None, "SL-1A-D")
     wide = prompt_for(default_variation(), "1A", "Feel under the drawer.", "1A.2")
 
     assert "k_sl_1a_d_r1" in narrow["user"]
-    assert "KMS initials carved in drawer" not in narrow["user"], "a neighbouring storylet's beat must not bleed in"
-    assert "KMS initials carved in drawer" in wide["user"], "the beat view keeps every storylet that presents it"
+    assert "k_sl_1a_b_r1" not in narrow["user"], "a neighbouring storylet's beat must not bleed in"
+    assert "k_sl_1a_b_r1" in wide["user"], "the beat view keeps every storylet that presents it"
 
 
 def test_a_beat_and_a_storylet_cannot_be_named_together() -> None:

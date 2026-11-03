@@ -33,6 +33,10 @@ is never sent to the narrator or exposed in the narrator's serialized context.
 Keep aliases narrow and author-reviewed. A candidate without `delivery_text`
 keeps the legacy narrator-proposal path.
 
+### Delivery restatement audit
+
+A delivery sentence must add what the placement text, thing names, and the player's own command have not said. Never open with the placement text. The audit flags a sentence that is at least 60 percent covered by its reach entities' names and placement text.
+
 ### `delivery_variants`
 
 Use `delivery_variants` for complete replacement sentences selected by facts

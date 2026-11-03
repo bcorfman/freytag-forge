@@ -26,6 +26,10 @@ def module():
 
 @pytest.fixture
 def document(module):
+    module.OLD_DETAILS = (
+        "**Details:** ordinary park bench; damaged grounds; service path; checkpoints; emergency patrols; "
+        "abandoned picnic and bicycle; loudspeaker on its pole"
+    )
     return module.capture_payloads()
 
 
@@ -54,6 +58,11 @@ def _rows(module, document):
 
 
 def test_capture_is_hermetic_and_structurally_valid(module, monkeypatch) -> None:
+    module.OLD_DETAILS = (
+        "**Details:** ordinary park bench; damaged grounds; service path; checkpoints; emergency patrols; "
+        "abandoned picnic and bicycle; loudspeaker on its pole"
+    )
+
     def no_http(*_args, **_kwargs):
         raise AssertionError("capture must not reach urlopen")
 

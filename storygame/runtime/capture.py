@@ -6,7 +6,7 @@ import copy
 from collections.abc import Callable
 from typing import Any
 
-from storygame.runtime.fixed_refusal import fixed_refusal_text, refuse_fixed_move
+from storygame.runtime.fixed_refusal import _fixed_article_name, fixed_refusal_text, refuse_fixed_move
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev_prefetch import ConcurrentCall, JevPrefetch, batching_enabled, question_specs
 from storygame.runtime.jev_questions import (
@@ -126,6 +126,8 @@ def _prefetch_targets(world, package, command: str, *, fixed_refusal: bool) -> t
 _PREVIEW_PROVIDER_FIELDS = (
     "_pending_item_facts",
     "_pending_item_facts_present",
+    "_pending_embellishments",
+    "_pending_embellishments_present",
     "_held_item_facts",
     "_item_facts_issues",
     "_changed_last_turn",
@@ -232,6 +234,62 @@ class WorldCapture:
             if self.engine_refusal and fixed and fixed.refused
             else ""
         )
+        pre_boarding = None
+        pre_boarding_facts = None
+        if self.engine_refusal and not engine_refusal:
+            pre_boarding = board_vehicle(
+                world,
+                package,
+                command,
+                lambda c, v: boards_vehicle(adapter, c, v),
+                lambda c, v: only_boards_vehicle(adapter, c, v),
+                already_aboard_only=True,
+            )
+            pre_boarding_facts = set(self.provider.state.facts.asserted)
+            if pre_boarding.already_aboard:
+                vehicle_name = _fixed_article_name(world.name(pre_boarding.vehicle_id))
+                record = {
+                    "command": command,
+                    "steps": [],
+                    "fixed_refusal_steps": list(fixed.steps if fixed else ()),
+                    "fixed_refusal_asked": fixed.asked if fixed else False,
+                    "fixed_refusal_issues": refusal_issues,
+                    "engine_refusal": f"You're already in {vehicle_name}.",
+                    "standing_steps": [],
+                    "boarding_steps": [],
+                    "boarding_command_consumed": False,
+                    "taking_steps": [],
+                    "seating_steps": [],
+                    "standing_asked": False,
+                    "boarding_asked": pre_boarding.asked,
+                    "taking_asked": False,
+                    "seating_asked": False,
+                    "standing_issues": [],
+                    "boarding_issues": list(pre_boarding.issues),
+                    "taking_issues": [],
+                    "seating_issues": [],
+                    "asked": {
+                        "standing": False,
+                        "boarding": pre_boarding.asked,
+                        "taking": False,
+                        "seating": False,
+                        "fixed_refusal": fixed.asked if fixed else False,
+                    },
+                    "issues": [*refusal_issues, *pre_boarding.issues],
+                    "match_info": {},
+                    "engine_opened": False,
+                    "focus_open_state_after": None,
+                }
+                self.provider.prior_steps = ()
+                self.provider.prior_notice_steps = ()
+                self.provider.command_consumed = False
+                self.provider.observation_request = None
+                things_given = list(self.provider._selected_names) if self.provider._selected_names is not None else []
+                record["things_given"] = things_given
+                record["item_facts_before"] = _json_value(self.provider.facts_for_names(things_given, structural=True))
+                prefetch.join(raise_error=False)
+                self.last_before = record
+                return record
         if fixed and fixed.refused:
             standing = SeatingResult(command, (), False, ())
             taking = TakingResult(command, (), False, ())
@@ -240,12 +298,21 @@ class WorldCapture:
         else:
             standing = stand_before_leave(world, package, command, lambda c, s, r: needs_to_stand(adapter, c, s, r))
             taking = take_before_put(world, package, command, lambda c, t: moves_thing(adapter, c, t))
-            boarding = board_vehicle(
-                world,
-                package,
-                command,
-                lambda c, v: boards_vehicle(adapter, c, v),
-                lambda c, v: only_boards_vehicle(adapter, c, v),
+            reuse_pre_boarding = (
+                pre_boarding is not None
+                and pre_boarding.asked
+                and pre_boarding_facts == self.provider.state.facts.asserted
+            )
+            boarding = (
+                pre_boarding
+                if reuse_pre_boarding
+                else board_vehicle(
+                    world,
+                    package,
+                    command,
+                    lambda c, v: boards_vehicle(adapter, c, v),
+                    lambda c, v: only_boards_vehicle(adapter, c, v),
+                )
             )
             seating = (
                 seat_before_use(world, package, command, lambda c, t: uses_thing(adapter, c, t))

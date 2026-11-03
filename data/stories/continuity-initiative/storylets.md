@@ -77,6 +77,125 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-1A-G — What the Kitchen Kept
+
+**Source beats:** [1A.1 — Michelle Is Gone](plot.md#scene-1a1--michelle-is-gone)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- Kristin is at the house.
+- The patrol is not in the house.
+
+**Participants / items**
+- Kristin Schweitzer
+- Michelle's workstation
+- Mug of tea, reading glasses, manuscript pages, wall calendar, and lake photograph
+
+**Dramatic purpose**
+- Let the kitchen read as a person's last hour so Michelle's disappearance feels like a loss.
+
+**Possible realizations**
+- Kristin reads the workstation as Michelle's last hour: a faintly warm mug of tea and her reading glasses folded on red-penned manuscript pages.
+- Kristin reads the kitchen walls as a life interrupted: the calendar with Saturday circled and the photograph of the two of them at a lake.
+
+**Effects**
+- Sets `kitchen_last_hour_read` and preserves the existing abduction suspicion.
+
+**Completion**
+- Kristin has read the kitchen as Michelle's last hour.
+
+**Abort**
+- Kristin leaves scene 1A.
+
+**Protected boundary**
+- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 4`
+- latest: `turn 11`
+
+---
+
+### SL-1A-H — The Same Ninety Seconds
+
+**Source beats:** [1A.3 — The Interrupted Message](plot.md#scene-1a3--the-interrupted-message)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- `michelle_warning_known` is true.
+- Kristin is at or near her truck.
+
+**Participants / items**
+- Kristin Schweitzer
+- Truck radio
+
+**Dramatic purpose**
+- Let Kristin test Michelle's warning with her own skills.
+
+**Possible realizations**
+- Kristin turns up the truck radio, times two passes, and confirms the same ninety seconds repeat word for word.
+
+**Effects**
+- Sets `broadcast_loop_confirmed`.
+
+**Completion**
+- Kristin has timed the repeating broadcast.
+
+**Abort**
+- Kristin leaves scene 1A.
+
+**Protected boundary**
+- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
+
+**Pacing window**
+- earliest: `turn 2`
+- target: `turn 6`
+- latest: `turn 11`
+
+---
+
+### SL-1A-I — The Neighbor at the Fence
+
+**Source beats:** [1A.4 — The First Threat](plot.md#scene-1a4--the-first-threat)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- Kristin is outside the house.
+- Kristin has not yet heard the neighbor.
+
+**Participants / items**
+- Kristin Schweitzer
+- Walt Pruitt
+
+**Dramatic purpose**
+- Give the player a human witness who is unsure and frightened, and plant the sense that something went door to door.
+
+**Possible realizations**
+- Walt Pruitt recounts what he saw when Kristin talks to Walt Pruitt or asks the neighbor, while admitting he is not sure what he saw.
+
+**Effects**
+- Sets `neighbor_account_heard`.
+
+**Completion**
+- Kristin has heard Walt Pruitt's account.
+
+**Abort**
+- Kristin leaves scene 1A.
+
+**Protected boundary**
+- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
+
+**Pacing window**
+- earliest: `turn 4`
+- target: `turn 5`
+- latest: `turn 10`
+
+---
+
 ### SL-1A-E — The KMS Mark
 
 **Source beats:** [1A.1 — Michelle Is Gone](plot.md#scene-1a1--michelle-is-gone)
@@ -444,6 +563,123 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-1B-F — Left Behind
+
+**Source beats:** [1B.1 — Michelle’s Dead Drop](plot.md#scene-1b1--michelles-dead-drop)
+
+**Allowed scene:** `1B`
+
+**Available when**
+- No conditions.
+
+**Participants / items**
+- Kristin Schweitzer
+- Picnic blanket
+- Bicycle
+- Dog leash
+
+**Dramatic purpose**
+- Let Kristin read the abandoned park as a moment cut short.
+
+**Possible realizations**
+- The park is abandoned: a bicycle and a picnic were left behind.
+
+**Effects**
+- Sets `park_left_behind_read`.
+
+**Completion**
+- Kristin has read the abandoned park as a moment cut short.
+
+**Abort**
+- Kristin leaves scene 1B.
+
+**Protected boundary**
+- Does not reveal JANUS, Brandon's history, or JANUS Phase Two.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 3`
+- latest: `turn 12`
+
+---
+
+### SL-1B-G — The Stranger Knows the Words
+
+**Source beats:** [1B.2 — The Man Following Her](plot.md#scene-1b2--the-man-following-her)
+
+**Allowed scene:** `1B`
+
+**Available when**
+- Brandon has not yet been identified.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Park loudspeaker
+
+**Dramatic purpose**
+- Let Kristin notice that the stranger knows the looping emergency statement.
+
+**Possible realizations**
+- The stranger mouths the loudspeaker's emergency statement along with it.
+
+**Effects**
+- Sets `stranger_knows_script`.
+
+**Completion**
+- Kristin has seen the stranger mouth the emergency statement ahead of the loudspeaker.
+
+**Abort**
+- Kristin leaves scene 1B.
+
+**Protected boundary**
+- Does not reveal JANUS, Brandon's history, or JANUS Phase Two.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 4`
+- latest: `turn 8`
+
+---
+
+### SL-1B-H — The Emergency Water
+
+**Source beats:** [1B.3 — Brandon’s Warning](plot.md#scene-1b3--brandons-warning)
+
+**Allowed scene:** `1B`
+
+**Available when**
+- Kristin has credible reason to believe at least some missing people are alive.
+
+**Participants / items**
+- Kristin Schweitzer
+- Picnic thermos
+
+**Dramatic purpose**
+- Let Kristin connect the picnic's emergency water to Brandon's warning.
+
+**Possible realizations**
+- The thermos carries a county emergency-water label.
+
+**Effects**
+- Sets `emergency_water_label_read`.
+
+**Completion**
+- Kristin has read the emergency-water label on the picnic thermos.
+
+**Abort**
+- Kristin leaves scene 1B.
+
+**Protected boundary**
+- Does not reveal JANUS, Brandon's history, or JANUS Phase Two.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 6`
+- latest: `turn 12`
+
+---
+
 ### SL-1B-B — Is Brandon Hunter or Rescuer?
 
 **Source beats:** [1B.2 — The Man Following Her](plot.md#scene-1b2--the-man-following-her), [1B.3 — Brandon’s Warning](plot.md#scene-1b3--brandons-warning)
@@ -515,7 +751,7 @@ Each entry below is authoring data, not a player action menu.
 - Let Brandon solve an immediate problem in a way that creates a larger trust problem.
 
 **Possible realizations**
-- Brandon uses specialized codes only after ordinary access fails.
+- Brandon opens a secured service gate without looking at its keypad.
 - Kristin notices how practiced Brandon is with the system.
 - Brandon minimizes the significance of his access.
 - The escape succeeds but the player can press him afterward.
@@ -723,6 +959,117 @@ Each entry below is authoring data, not a player action menu.
 - latest: `turn 10`
 
 ---
+
+### SL-1C-E — Water at the Dock
+
+**Source beats:** [1C.1 — Following the Transport Route](plot.md#scene-1c1--following-the-transport-route)
+
+**Allowed scene:** `1C`
+
+**Available when**
+- The transfer window remains open.
+- Kristin has read the emergency-water label.
+
+**Participants / items**
+- Kristin Schweitzer
+- Water pallets
+
+**Dramatic purpose**
+- Tie the park's emergency water to the active terminal.
+
+**Possible realizations**
+- Kristin inspects the water pallets, their bottles, or their label.
+
+**Effects**
+- Sets `dock_water_matched`.
+
+**Completion**
+- Kristin has matched the dock's water pallets to the thermos lot number.
+
+**Abort**
+- Kristin leaves scene 1C.
+
+**Protected boundary**
+- Does not reveal the protected system, Brandon's history, or the later phase.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 4`
+
+### SL-1C-F — He Watches the Door
+
+**Source beats:** [1C.2 — Proof of the Captives](plot.md#scene-1c2--proof-of-the-captives)
+
+**Allowed scene:** `1C`
+
+**Available when**
+- The facility has been credibly confirmed.
+- The transfer window remains open.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+
+**Dramatic purpose**
+- Show Brandon keeping watch while Kristin studies the processing line.
+
+**Possible realizations**
+- Kristin watches Brandon while the shaft view is open.
+
+**Effects**
+- Sets `brandon_watches_door`.
+
+**Completion**
+- Kristin has noticed Brandon watching the door.
+
+**Abort**
+- Kristin leaves scene 1C.
+
+**Protected boundary**
+- Does not reveal the protected system, Brandon's history, or the later phase.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 4`
+
+### SL-1C-G — The Same Statement
+
+**Source beats:** [1C.1 — Following the Transport Route](plot.md#scene-1c1--following-the-transport-route)
+
+**Allowed scene:** `1C`
+
+**Available when**
+- The transfer window remains open.
+
+**Participants / items**
+- Kristin Schweitzer
+- Overhead speaker
+- Air vents
+
+**Dramatic purpose**
+- Connect the terminal's broadcast to the park's emergency statement.
+
+**Possible realizations**
+- Kristin listens to the air vents, the speaker, or the sound from below.
+
+**Effects**
+- Sets `line_broadcast_heard`.
+
+**Completion**
+- Kristin has heard the park's emergency statement over the processing line.
+
+**Abort**
+- Kristin leaves scene 1C.
+
+**Protected boundary**
+- Does not reveal the protected system, Brandon's history, or the later phase.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 2`
+- latest: `turn 4`
 
 # Scene 2 — The Infiltration
 
@@ -2083,7 +2430,7 @@ These do **not** create a new playable scene after `3C`. The storylets themselve
 
 | Playable scene | Storylets | Primary function |
 |---|---|---|
-| [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-D` | Crime-scene inference, Michelle’s evidence, first authority pressure |
+| [1A](plot.md#scene-1a--michelles-disappearance) | `SL-1A-A` … `SL-1A-I` | Crime-scene inference, kitchen details, Michelle’s evidence, witness, first authority pressure |
 | [1B](plot.md#scene-1b--the-lead-in-the-park) | `SL-1B-A` … `SL-1B-E` | Hidden clue recovery, bench lead, clue interpretation, Brandon trust, pursuit |
 | [1C](plot.md#scene-1c--discovery-of-the-facility) | `SL-1C-A` … `SL-1C-D` | Facility discovery, living captives, one advantage, costly recovery after a missed window |
 | [2A](plot.md#scene-2a--false-identities) | `SL-2A-B`, `SL-2A-C`, `SL-2A-D` | Manifold observation, real fault diagnosis, watched entry, recovery under supervision |

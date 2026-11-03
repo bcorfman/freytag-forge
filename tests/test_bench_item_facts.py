@@ -561,7 +561,7 @@ def test_owner_possessive_name_resolves(monkeypatch):
     facts, issues = provider.apply_item_facts({"Kristin": {"place": "Michelle's workstation"}})
 
     assert issues == []
-    assert facts["Kristin"]["place"] == "kitchen"
+    assert facts["Kristin"]["place"] == "Michelle's kitchen"
     assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "kitchen"
     assert provider.item_facts_match_calls == 0
 
@@ -682,8 +682,8 @@ def test_protagonist_is_always_selected_and_given(monkeypatch):
     provider.prepare_turn("Search the drawer.")
 
     assert provider._selected_names == ["Kristin"]
-    assert "- Kristin. Place: Michelle's house." in provider._things_block()
-    assert "Kristin. Place: Michelle's house." in provider._player_lines(
+    assert "- Kristin. Place: Michelle's kitchen." in provider._things_block()
+    assert "Kristin. Place: Michelle's kitchen." in provider._player_lines(
         {"scene_setting": "The house is quiet.", "player_input": "Search the drawer."}
     )
 
@@ -1147,7 +1147,10 @@ def test_prepare_turn_gives_visible_contents_under_referred_park_bench(monkeypat
     assert all(world.is_hidden(clue_id) for clue_id in clue_ids)
     assert all(world.parent(clue_id) == "park_bench" for clue_id in clue_ids)
     names = provider._thing_names()
-    assert all(name not in names for name in ("handwritten number sequence", "Michelle's photograph", "Transit token"))
+    assert all(
+        name not in names
+        for name in ("handwritten number sequence", "photograph of an unknown person", "Transit token")
+    )
     assert "handwritten number sequence" not in provider._things_block()
 
     provider.state.facts.assert_fact(Fact(predicate="bench_clues_recovered", subject="story", value="true"))
@@ -1168,7 +1171,7 @@ def test_prepare_turn_without_referred_park_bench_omits_its_contents(monkeypatch
 
     names = provider._thing_names()
     assert "handwritten number sequence" not in names
-    assert "Michelle's photograph" not in names
+    assert "photograph of an unknown person" not in names
 
 
 def test_match_payload_only_lists_things_in_play_for_each_scene():
@@ -1400,7 +1403,7 @@ def test_protagonist_at_furniture_lands_in_its_area():
     )
     assert not any("refused" in issue for issue in issues)
     assert world_for(PACKAGE, provider.state.facts).parent("kristin") == "kitchen"
-    assert facts["Kristin"]["place"] == "kitchen"
+    assert facts["Kristin"]["place"] == "Michelle's kitchen"
 
 
 def test_unresolved_place_joins_the_single_match_call(monkeypatch):
@@ -2248,7 +2251,7 @@ def test_package_seed_scene_1a_matches_authored_things():
     state._assert_scene_entry_fact("1A")
     things, issues = package_seed(PACKAGE, state, "1A")
     assert things == {
-        "Kristin": {"place": "Michelle's house", "condition": []},
+        "Kristin": {"place": "Michelle's kitchen", "condition": []},
         "Michelle's phone": {"place": "on the kitchen floor", "condition": []},
         "Kristin's laptop": {"place": "on the passenger seat of Kristin's truck", "condition": ["closed"]},
         "drawer": {
@@ -2266,9 +2269,20 @@ def test_package_seed_scene_1a_matches_authored_things():
         "driver's seat": {"place": "Kristin's truck", "condition": []},
         "passenger seat": {"place": "Kristin's truck", "condition": []},
         "Kristin's truck": {"place": "outside the house", "condition": []},
-        "workstation": {"place": "kitchen", "condition": []},
-        "back door": {"place": "kitchen", "condition": []},
+        "workstation": {"place": "across the kitchen from the back door", "condition": []},
+        "back door": {"place": "Michelle's kitchen", "condition": []},
         "house gate": {"place": "at the front of the house", "condition": []},
+        "mug of tea": {"place": "on Michelle's workstation", "condition": []},
+        "reading glasses": {"place": "folded on her manuscript pages", "condition": []},
+        "manuscript pages": {"place": "marked in red pen", "condition": []},
+        "wall calendar": {"place": "a paper calendar hanging on the wall by the refrigerator", "condition": []},
+        "lake photograph": {
+            "place": "held to the refrigerator by a pear-shaped magnet, showing Kristin and Michelle at a lake",
+            "condition": [],
+        },
+        "splinters around the back door frame": {"place": "around the back door frame", "condition": []},
+        "back door deadbolt": {"place": "on the back door", "condition": []},
+        "truck radio": {"place": "Kristin's truck", "condition": []},
     }
     assert issues == []
 
@@ -2279,7 +2293,7 @@ def test_package_seed_tracks_protagonist_at_each_scene_location():
     things_1a, _ = package_seed(PACKAGE, state, "1A")
     things_1b, _ = package_seed(PACKAGE, state, "1B")
 
-    assert things_1a["Kristin"] == {"place": "Michelle's house", "condition": []}
+    assert things_1a["Kristin"] == {"place": "Michelle's kitchen", "condition": []}
     assert things_1b["Kristin"] == {"place": "Los Angeles park", "condition": []}
 
 
@@ -2304,7 +2318,7 @@ def test_live_run_state_is_seeded_and_placed():
     _, state = core.package_and_state(variation, "1A")
     world = world_for(state.package, state.facts)
 
-    assert world.parent("kristin") == "mcgehee_home"
+    assert world.parent("kristin") == "kitchen"
     assert world.parent("michelle_workstation") == "kitchen"
     things, _ = package_seed(state.package, state, "1A")
     assert things["workstation chair"]["condition"] == ["overturned"]
@@ -2314,7 +2328,7 @@ def test_prompt_preview_places_the_protagonist():
     variation = load_variation(WORLD_TWO_SCENE)
     prompt = core.prompt_for(variation, "1A", "Look around the kitchen.")
 
-    assert "- Kristin. Place: Michelle's house." in prompt["user"]
+    assert "- Kristin. Place: Michelle's kitchen." in prompt["user"]
 
 
 def test_sitting_in_the_chair_rights_it():
@@ -3132,12 +3146,15 @@ def test_omitted_same_as_adds_condition_only_thing_without_place(monkeypatch):
     provider = _provider()
     monkeypatch.setattr(CloudflareTurnProvider, "_request", lambda *_args: {"refers": [], "same_as": {}})
     provider.apply_item_facts(
-        {"back door frame": {"condition": ["damaged"]}},
-        player_input="Inspect the back door frame.",
+        {"splinters around the back door frame": {"condition": ["damaged"]}},
+        player_input="Inspect the splinters around the back door frame.",
     )
-    assert "back door frame" not in provider.item_facts
+    assert provider.item_facts["splinters around the back door frame"] == {
+        "place": "around the back door frame",
+        "condition": ["damaged"],
+    }
     world = provider._world()
-    entity_id = world.resolve("back door frame")
+    entity_id = world.resolve("splinters around the back door frame")
     assert entity_id is not None
     assert list(world.conditions(entity_id)) == ["damaged"]
 
@@ -3229,8 +3246,8 @@ def test_apply_skips_match_when_all_reply_names_are_tracked(monkeypatch):
         ("thing_other", 'Are "Artifact" and "back door" the same thing?'),
         (
             "place_area",
-            'Kristin Schweitzer is in "Michelle\'s house". Is the place called "checkpoint" really '
-            '"Brandon\'s hideout", rather than a spot in "Michelle\'s house"?',
+            'Kristin Schweitzer is in "Michelle\'s kitchen". Is the place called "checkpoint" really '
+            '"Brandon\'s hideout", rather than a spot in "Michelle\'s kitchen"?',
         ),
         ("place_character", 'Is the place called "checkpoint" on "Brandon Corfman"?'),
         ("place_other", 'Is the place called "in front of metal door" at "back door"?'),
@@ -3372,7 +3389,7 @@ def test_mapping_check_related_areas_keep_old_question():
 
     child_area = next(area_id for area_id in world.entity_ids() if world.parent(area_id) == player_area)
     question, _statement = provider._mapping_prompt(world, "checkpoint", child_area, is_place=True)
-    assert question == expected.format(world.name(child_area))
+    assert question == f'Is the place called "checkpoint" at "{world.name(child_area)}"?'
 
 
 def test_mapping_check_accepted_place_keeps_mapping(monkeypatch):

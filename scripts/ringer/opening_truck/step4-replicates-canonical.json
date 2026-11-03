@@ -1,0 +1,30 @@
+{
+ "run_name": "1a-opening-and-truck-feedback",
+ "workdir": "/home/bcorfman/dev/ringer-work/1a-opening-and-truck-feedback",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "replicates-canonical",
+   "task_type": "probe",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=high"
+   ],
+   "full_access": true,
+   "max_attempts": 1,
+   "timeout_s": 5400,
+   "check_timeout_s": 120,
+   "ownership": [
+    "bench/results/1a-opening-and-truck/replicates-canonical/"
+   ],
+   "command": "cd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route feedback_canonical --replicates 3 --max-calls 120 --confirm --out bench/results/1a-opening-and-truck/replicates-canonical",
+   "spec": "Run ONE billed Scene 1A live run for the 1A opening and truck feedback plan (preregistration .plans/1a-opening-and-truck-feedback/replicates-prereg.md, approved by Brandon): route feedback_canonical, 3 replicate(s), hard cap 120 Cloudflare calls. Own only bench/results/1a-opening-and-truck/replicates-canonical/. Source .env silently, never print credentials, no uv, no git mutation, no code edits, and never delete or move any file you did not create. Never retry or replace samples; on quota, outage or error leave the partial rows.json and summary.json in place and report verbatim. Run exactly this single shell command and report its exit status and output:\ncd /home/bcorfman/dev/freytag-forge && set -a; source .env; set +a; export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp; .venv/bin/python scripts/ringer/transcript_1a/live_baseline.py --route feedback_canonical --replicates 3 --max-calls 120 --confirm --out bench/results/1a-opening-and-truck/replicates-canonical",
+   "check": "cd /home/bcorfman/dev/freytag-forge && export PYTHONPATH=/home/bcorfman/dev/freytag-forge TMPDIR=/tmp && set -o pipefail && .venv/bin/python scripts/ringer/transcript_1a/check_live_baseline.py bench/results/1a-opening-and-truck/replicates-canonical 3 --mode live",
+   "verified": "rows.json and summary.json recorded within the call cap"
+  }
+ ]
+}

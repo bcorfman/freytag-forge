@@ -138,6 +138,33 @@ ROUTES = {
         "check the executive desk",
         "look under the executive desk",
     ),
+    "feedback_raw": (
+        "open the drawer",
+        "feel in the gap",
+        "head out to the truck",
+        "look for the laptop",
+        "get in the truck",
+        "plug the memory card into the laptop",
+    ),
+    "feedback_canonical": (
+        "Pull out the drawer.",
+        "Feel in the gap beneath the drawer.",
+        "Go out to the truck.",
+        "Look for my laptop.",
+        "Get in the truck.",
+        "Plug the memory card into my laptop.",
+    ),
+    "feedback_counter": (
+        "Pull out the drawer.",
+        "Feel in the gap beneath the drawer.",
+        "Go out to the truck.",
+        "Take my laptop.",
+        "Get out of the truck.",
+        "Examine the truck.",
+        "Get in the truck.",
+        "Plug the memory card into my laptop.",
+        "Drive to the park.",
+    ),
 }
 NEW_ROUTES = frozenset(
     {

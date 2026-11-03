@@ -52,7 +52,7 @@ The story is built for a maximum of 120 accepted player turns. A scene should no
 
 | Scene | Turn ceiling | Player-facing dramatic rhythm |
 |---|---:|---|
-| 1A | 13 | Search Michelle's house; form a theory; recover and interpret the card; evade a widening patrol search. |
+| 1A | 13 | Search Michelle's house and read what the kitchen shows; form a theory; recover and interpret the card; optionally test the broadcast and hear the neighbor; evade a widening patrol search. |
 | 1B | 13 | Work the dead drop; decide what Brandon is; test the route; escape a closing park. |
 | 1C | Choice closes at 5; recovery open until 8, then withdrawal | Inspect the terminal; observe the captives; choose copying the numbers or asking Brandon about the route; follow Brandon at greater risk if the window closes. |
 | 2A | 11 | Face the supervisor at the gate; prove the cooling fault is real; get inside cleanly or under watch. |
@@ -80,8 +80,11 @@ scene_id: 1A
 location_id: mcgehee_home
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
-participant_ids: [kristin, michelle, patrol_officer]
-item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door, house_gate]
+participant_ids: [kristin, michelle, patrol_officer, walt_pruitt]
+item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, michelle_workstation, back_door, house_gate, michelle_tea_mug, michelle_reading_glasses, manuscript_pages, kitchen_calendar, lake_photograph, back_door_splinters, back_door_deadbolt, truck_radio]
+character_placements:
+  kristin: {parent: kitchen}
+  walt_pruitt: {parent: outside_house, text: "the elderly neighbor from next door, at the fence between the yards"}
 item_placements:
   memory_card: {parent: michelle_drawer, under: true}
   michelle_phone: {parent: kitchen, text: on the kitchen floor}
@@ -89,12 +92,23 @@ item_placements:
   truck_driver_seat: {parent: kristin_truck}
   truck_passenger_seat: {parent: kristin_truck}
   kristin_truck: {parent: outside_house}
-  michelle_workstation: {parent: kitchen}
+  michelle_workstation: {parent: kitchen, text: across the kitchen from the back door}
   back_door: {parent: kitchen}
   house_gate: {parent: outside_house, text: at the front of the house}
   michelle_drawer: {parent: michelle_workstation, part_of: true, text: in Michelle's workstation}
   workstation_chair: {parent: kitchen, text: at Michelle's workstation}
-entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal. She found the back door forced and let herself in.\n\n"
+  michelle_tea_mug: {parent: michelle_workstation, text: on Michelle's workstation}
+  michelle_reading_glasses: {parent: michelle_workstation, text: folded on her manuscript pages}
+  manuscript_pages: {parent: michelle_workstation, text: marked in red pen}
+  kitchen_calendar: {parent: kitchen, text: a paper calendar hanging on the wall by the refrigerator}
+  lake_photograph: {parent: kitchen, text: "held to the refrigerator by a pear-shaped magnet, showing Kristin and Michelle at a lake"}
+  back_door_splinters: {parent: kitchen, text: around the back door frame}
+  back_door_deadbolt: {parent: kitchen, text: on the back door}
+  truck_radio: {parent: kristin_truck}
+setting_facts:
+- Sirens carry from the next street.
+- A dog barks behind the empty house next door.
+entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal. She found the back door forced and let herself into the kitchen.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:
   t_1a_1b: >-
@@ -112,17 +126,25 @@ bridge_text:
 
 **Hidden canon:** Michelle hid a memory card for Kristin, taped beneath the drawer in Michelle's workstation. It stays hidden until Kristin finds it.
 
+**Established timeline:** Around midnight, once she knew she was being watched, Michelle carved Kristin's initials into the drawer with her letter opener and taped the card beneath it. At 4:07am she texted Kristin ("Come to the house. Don't call.") and began a recording. The recording ends when intruders enter. They take her tablet and work bag and miss the card. The break-in was staged from inside. The patrol that arrives later is a second pass for one item their inventory lists as "removable media, not recovered."
+
 ### Scene 1A.1 — Michelle Is Gone
 
-**Details:** missing tablet and work bag; forced back door; KMS initials carved in drawer
+**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake photograph; KMS initials carved in drawer
 
-Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but several details seem somewhat staged:
+Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but the house does not read as a burglary. It reads as a person's last hour:
 
 * Michelle's tablet and work bag are missing and not in their normal spots.
 * The chair at Shelly's workstation has been overturned.
-* The back door shows signs of forced entry, but otherwise the house seems to be fine, not burglarized.
+* A mug of tea sits on the workstation with the bag still in it, faintly warm. Michelle made it near the end.
+* Her reading glasses lie folded on a stack of manuscript pages marked in red pen. She never goes anywhere without them.
+* The wall calendar has Saturday circled in her handwriting: *K — lemon cake.* It is Kristin's birthday.
+* On the refrigerator, held by a pear-shaped magnet, a photograph of the two of them at a lake.
+* The back door shows signs of forced entry, but the splinters around the frame point outward, away from the house. It was broken from inside. The deadbolt is still thrown. The house is otherwise undisturbed, not burglarized.
 
-Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely.
+Kristin knows Michelle would not leave her kitchen like this.
+
+Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely. Kristin did not carve them. In college they hid notes beneath desk drawers, and Michelle has always known where Kristin would look.
 
 The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.
 
@@ -132,7 +154,7 @@ The drawer rides high in its frame. A thin gap beneath its lower edge is wide en
 
 Kristin finds Michelle's memory card taped beneath the drawer. She takes the card out to her truck and opens it on her laptop.
 
-The card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**.
+The card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**. Michelle titled the folders after their old dorm, so only Kristin would read them as a message.
 
 The files show that private contractors constructed dozens of enormous “population stabilization centers” before the disappearances. Officially, the centers were designed as shelters for natural disasters and biological attacks.
 
@@ -142,7 +164,7 @@ Michelle’s notes contain one alarming sentence:
 
 ### Scene 1A.3 — The Interrupted Message
 
-**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe
+**Details:** voice recording; government tracking; imminent activation event; someone entering house; Michelle whispers; national catastrophe; radio and looping emergency broadcast
 
 On the card, Kristin finds a damaged voice recording Michelle attempted to send shortly before she disappeared. In it, Michelle says government officials have been tracking her and that a planned “activation event” is imminent.
 
@@ -152,11 +174,15 @@ Before naming her source, Michelle hears someone enter the house. The recording 
 
 This becomes the story’s **inciting incident**. Kristin realizes Michelle’s disappearance may be connected to the national catastrophe.
 
+Kristin can test the warning with her own skills. The truck radio carries the same emergency statement every few minutes. If she listens and times two passes, it is the same ninety seconds, word for word. It is a loop, not a live voice. This is optional and costs two turns.
+
 ### Scene 1A.4 — The First Threat
 
-**Details:** federal emergency patrol; welfare-check officers; Michelle’s office search; Michelle's memory card; marked front gate; reflective tape
+**Details:** federal emergency patrol led by Officer Reyes; Michelle’s office search; Michelle's memory card; Walt Pruitt at the fence; marked front gate; reflective tape
 
-An emergency patrol arrives at Michelle's home unusually quickly. The officers conduct a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. They do not open the drawer. If Kristin has not taken the card, or takes it out of their sight, they find nothing. If she takes it while an officer is watching, the officer challenges her, and the patrol's suspicion follows her out of the house.
+Walt Pruitt, a retired bus driver in his seventies, stands at the fence between the yards. His wife is one of the missing. He saw county vans near 3:40 with no markings Kristin can read, and two men with a clipboard checking the addresses on the street. They skipped the house next door. He is not sure what he saw, and he says so. He will not repeat it to the patrol.
+
+An emergency patrol arrives at Michelle's home unusually quickly. Officer Reyes, young and polite, works from a printed list. He conducts a quick welfare check and a targeted look at Michelle's work area, asking specifically about her research and findings. He studies the lake photograph on the refrigerator a beat too long. He does not open the drawer. If Kristin has not taken the card, or takes it out of his sight, he finds nothing. If she takes it while he is watching, he challenges her, and the patrol's suspicion follows her out of the house.
 
 After the patrol leaves, Kristin notices that one officer has quietly marked the front gate with a strip of reflective tape.
 
@@ -171,15 +197,26 @@ objective: Follow Michelles lead and survive the park
 participant_ids: [kristin, brandon, michelle]
 character_placements:
   brandon: {parent: los_angeles_park, text: watching Kristin in the park}
-item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, service_gate, storm_drain, kristin_truck]
+item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, park_bench, service_gate, storm_drain, kristin_truck, park_bicycle, picnic_blanket, picnic_thermos, picnic_cups, park_fence, dog_leash, park_loudspeaker, checkpoint_barrier, gate_keypad]
 item_placements:
   park_bench: {parent: los_angeles_park}
+  park_bicycle: {parent: los_angeles_park, text: on its kickstand beside the path}
+  picnic_blanket: {parent: los_angeles_park, text: spread on the grass}
+  picnic_thermos: {parent: picnic_blanket, text: beside the cups}
+  picnic_cups: {parent: picnic_blanket, text: one tipped over and one still half full}
+  park_fence: {parent: los_angeles_park, text: along the edge of the grass}
+  dog_leash: {parent: park_fence, text: tied to the fence with its loop empty}
+  park_loudspeaker: {parent: los_angeles_park, text: on a pole near the service path}
+  checkpoint_barrier: {parent: los_angeles_park, text: at the park entrance}
+  gate_keypad: {parent: los_angeles_park, text: beside the service gate}
   service_gate: {parent: los_angeles_park}
   storm_drain: {parent: los_angeles_park}
   transit_card: {parent: park_bench, under: true}
   number_sequence: {parent: park_bench, under: true}
   michelle_photograph: {parent: park_bench, under: true}
   kristin_truck: {parent: los_angeles_park}
+setting_facts:
+- Dry leaves skitter across the empty paths.
 entry_text: "The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.\n\n"
 transition_ids: [t_1b_1c]
 bridge_text:
@@ -199,9 +236,11 @@ bridge_text:
 
 **Hidden canon:** Michelle left a transit token, a handwritten number sequence and her photograph under the park bench. All three stay hidden until Kristin searches beneath the bench. She retrieves them together and keeps them with her. Finding them does not identify the transport route or the man in the photograph.
 
+**Established timeline:** For months Michelle used this bench to meet her confidential source, Brandon. She left the cache the night before she was taken, and she put Brandon's photograph in it so that Kristin would know him on sight and not mistake him for the enemy. The loudspeaker on the pole by the service path has repeated one ninety-second emergency statement since the morning of the disappearances. The people who sat on the picnic blanket drank emergency water from a county distribution point, and only one of them was taken.
+
 ### Scene 1B.1 — Michelle’s Dead Drop
 
-**Details:** ordinary park bench; damaged grounds; service path; checkpoints; emergency patrols
+**Details:** ordinary park bench; damaged grounds; service path; checkpoints; emergency patrols; abandoned picnic and bicycle; loudspeaker on its pole
 
 Michelle’s files reference an ordinary park bench where she exchanged information with a confidential source. Kristin travels there while avoiding checkpoints and emergency patrols. The bench could be nothing, or it could hold the only lead Michelle prepared for her. Looking the bench over shows the shadowed space beneath it, deep enough for Kristin to reach under.
 
@@ -209,11 +248,15 @@ Kristin searches beneath the park bench and retrieves Michelle's transit token, 
 
 The records suggest that the mass disappearance was preceded by years of secret tests.
 
+The park reads as a moment cut short. A bicycle stands on its kickstand where no one will ride it. A dog leash is still tied to the fence, its loop empty. On a picnic blanket two cups sit beside a thermos: one cup is tipped over, and the other is still half full. A loudspeaker on a pole near the service path repeats the same emergency statement, and at the park entrance a checkpoint barrier stands with no one at it. Nothing here is a clue yet. It shows how many people were taken from ordinary afternoons, and that someone was left sitting beside each of them.
+
 ### Scene 1B.2 — The Man Following Her
 
-**Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; Continuity Initiative
+**Details:** stranger in the park; abandoned service tunnels; emergency patrol; Brandon Corfman; Continuity Initiative; the stranger mouthing the broadcast
 
 Kristin notices a man watching her from across the park. Believing the man works for the government, Kristin attempts to escape through abandoned service tunnels beneath the park. If Kristin speaks to him before he is identified, the man refuses to give his name and tells her to keep her voice down because patrols are nearby.
+
+When the loudspeaker starts its statement again, the man mouths the words a half-beat ahead of it. He stops when he sees Kristin watching. If she asks, he says that anyone made to repeat something long enough learns it.
 
 The man watching Kristin waits near the service path. Once Kristin has recovered Michelle's photograph, she can show it to him. She can also question him about Michelle.
 
@@ -223,7 +266,7 @@ Brandon says Michelle contacted him because he had once worked on the Continuity
 
 ### Scene 1B.3 — Brandon’s Warning
 
-**Details:** contaminated emergency water; disguised response teams; evacuation tunnels; missing registrations; communications outages; falsified casualty data
+**Details:** contaminated emergency water; disguised response teams; evacuation tunnels; missing registrations; communications outages; falsified casualty data; the thermos on the picnic blanket
 
 Brandon explains that the disappearances were not instantaneous. During the hours before the public became aware of the event, selected people were:
 
@@ -236,11 +279,15 @@ The scale was hidden by communications outages, manufactured panic, and falsifie
 
 Brandon claims the missing are still alive, but he refuses to explain how he knows.
 
+The thermos on the picnic blanket carries a county emergency-water label, and a lot number is stamped on its cap. Its twin cup sits beside it, still half full. Someone sat here, drank, and was taken, and the person beside them was not.
+
 ### Scene 1B.4 — The Park Ambush
 
-**Details:** tactical team; storm-drain system; specialized codes; secured service gate; government systems; Brandon’s hidden involvement
+**Details:** tactical team; storm-drain system; specialized codes; secured service gate; government systems; Brandon’s hidden involvement; gate keypad
 
 A tactical team arrives, proving Kristin was tracked from Michelle's house. Kristin and Brandon escape through a storm-drain system, but Brandon is forced to use specialized codes to unlock a secured service gate.
+
+At the secured service gate Brandon does not look at the keypad. His fingers know it. The storm-drain grate lifts without a sound, its latch freshly oiled, as if someone prepared this way out ahead of time.
 
 Kristin realizes Brandon retains access to government systems and may be more deeply involved than he admits.
 
@@ -252,13 +299,18 @@ freytag_phase: rising_action
 objective: Observe the transfer and choose what to secure
 participant_ids: [kristin, brandon, michelle]
 companions: [brandon]
-item_ids: [transit_card, kristin_truck, service_entrance, prisoner_number_record]
+item_ids: [transit_card, kristin_truck, service_entrance, prisoner_number_record, tire_tracks, air_vents, water_pallets, identification_numbers, overhead_speaker]
 character_placements:
   captives: {parent: processing_line, text: moving through the processing line below}
 item_placements:
   kristin_truck: {parent: freight_terminal}
   service_entrance: {parent: freight_terminal}
   prisoner_number_record: {parent: processing_line}
+  tire_tracks: {parent: loading_docks, text: crossing the loading docks}
+  air_vents: {parent: loading_docks, text: humming along the dock wall}
+  water_pallets: {parent: loading_docks, text: shrink-wrapped by the loading doors}
+  identification_numbers: {parent: processing_line, text: inked on each forearm}
+  overhead_speaker: {parent: processing_line, text: on a bracket above the line}
 entry_text: >-
   Michelle's lead brought Kristin and Brandon to the freight terminal.
   It was supposed to be abandoned. Fresh tire tracks crossed the loading docks.
@@ -281,19 +333,23 @@ bridge_text:
 
 ### Scene 1C.1 — Following the Transport Route
 
-**Details:** abandoned freight terminal; structural modifications; fresh tire tracks; humming air vents; heavy electrical service
+**Details:** abandoned freight terminal; structural modifications; fresh tire tracks; humming air vents; heavy electrical service; water pallets by the loading doors; the park's emergency statement from below
 
 Michelle’s lead brings Kristin and Brandon to a supposedly abandoned freight terminal. Kristin recognizes that recent structural modifications conceal something larger below.
 
 Fresh tire tracks, air vents, and unusually heavy electrical service confirm that the site remains active.
 
+Pallets of bottled emergency water stand shrink-wrapped by the loading doors. If Kristin read the thermos in the park, the lot numbers match: the water in the park came from here. Under the hum of the vents a speaker below plays the same emergency statement as the park loudspeaker, word for word. Nothing here is proof yet. It ties the park to the terminal.
+
 Brandon points Kristin toward the observation shaft. He asks her to study the people on the processing line before they try to enter.
 
 ### Scene 1C.2 — Proof of the Captives
 
-**Details:** observation shaft; sedated prisoners; processing line; identification numbers; woman resembling Michelle; service entrance
+**Details:** observation shaft; sedated prisoners; processing line; identification numbers; woman resembling Michelle; service entrance; Brandon watching the door
 
-Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she glimpses a woman who could be her. The woman's face slips from sight before Kristin can be certain. The transfer is still moving.
+Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she glimpses a woman who could be her. Her face slips from sight before Kristin can be certain. The transfer is still moving.
+
+While Kristin studies the line, Brandon stays at the top of the stairs with his back to it. He watches the door. If she looks at him, he says only, "Somebody has to watch the door." He does not say what he knows about the line.
 
 Brandon offers two ways to use the remaining time. Kristin can copy the prisoner numbers for stronger proof. She can instead ask him about the transfer route. His help gives them a service approach, but costs Kristin the chance to copy the full number set. There is time for one choice.
 
@@ -665,6 +721,8 @@ bridge_text:
 Kristin follows Michelle's maintenance route into one partly unsecured detention sector, not a mass release. She expects rows of helpless captives. Instead, Michelle speaks into a stolen radio, coordinating prisoners through coded announcements and sympathetic facility workers.
 
 Michelle is beside the captives.
+
+They are awake. The dose they were given is for the trip, and it wears off in the detention block. Michelle says waking them was the easy part. Getting them to trust the announcements took longer.
 
 The reunion gets one unhurried moment before the purge countdown takes over again. Kristin and Michelle can speak to each other before anyone asks either of them for anything.
 

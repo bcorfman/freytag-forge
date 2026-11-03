@@ -117,7 +117,7 @@ def test_worldkeeper_visibility_is_not_observer_relative():
     ids = _real_ids(world)
 
     outside_visibility = world.is_visible(ids["laptop"])
-    assert world.parent(ids["observer"]) == "mcgehee_home"
+    assert world.parent(ids["observer"]) == "kitchen"
     assert world.move(ids["observer"], ids["driver_seat"]).ok
     seated_visibility = world.is_visible(ids["laptop"])
 
@@ -177,7 +177,7 @@ def test_enter_truck_projects_laptop_and_separates_completed_step():
     assert len(laptop) == 1
     assert laptop[0].place == "passenger seat"
     assert laptop[0].holder is None
-    assert context.required == ("Kristin's laptop",)
+    assert context.required == ("Kristin's laptop", "truck radio")
     assert context.action == "Enter the truck."
     assert context.completed_actions == ("Kristin sat down in the driver's seat.",)
     assert context.action not in context.completed_actions

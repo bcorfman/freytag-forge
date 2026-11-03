@@ -50,7 +50,7 @@ def test_inherited_skip_is_not_transitive() -> None:
 
 
 EXPECTED_PRESENCE = {
-    "1A": {"kristin": True, "michelle": False, "patrol_officer": False},
+    "1A": {"kristin": True, "michelle": False, "patrol_officer": False, "walt_pruitt": False},
     "1B": {"kristin": True, "brandon": True, "michelle": False},
     "1C": {"kristin": True, "brandon": True, "michelle": False},
     "2A": {"kristin": True, "brandon": False, "shift_supervisor": True},
@@ -119,7 +119,7 @@ def test_1a_officer_placed_elsewhere_is_not_present(monkeypatch: pytest.MonkeyPa
     monkeypatch.delenv("CLOUDFLARE_WORKER_TOKEN", raising=False)
     state = _patrol_in_house_state()
     world = world_for(PACKAGE, state.facts)
-    assert world.area("kristin") == "mcgehee_home"
+    assert world.area("kristin") == "kitchen"
     assert world.move("patrol_officer", "outside_house").ok
     provider = build_capture_provider(state)
 

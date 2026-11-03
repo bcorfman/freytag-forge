@@ -7,6 +7,7 @@ from collections.abc import Collection, Iterable
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from storygame.runtime.candidate_matcher import _matches_all
 from storygame.runtime.delivery_text import AMBIGUOUS, resolve_delivery_text, true_fact_ids
 from storygame.runtime.reveal_eligibility import explain_reveal, together_or_unplaced
 from storygame.runtime.state import RuntimeState
@@ -261,7 +262,7 @@ class KnowledgeProjector:
         sayable = self._established_for(state, audience_id, self.max_sayable_knowledge)
         established_ids = tuple(sorted({entity_id for item in committed for entity_id in item.entity_ids}))
         referenced_ids = self._referenced_established_ids(state, player_input, established_ids)
-        reveal_universe = self._candidates(state, audience_id, referenced_ids)
+        reveal_universe = self._candidates(state, audience_id, referenced_ids, player_input)
         return TurnKnowledgeContext(
             scene_id=state.current_scene_id,
             phase=state.phase,
@@ -441,7 +442,11 @@ class KnowledgeProjector:
         return tuple(sorted(entity_id for entity_id in established_ids if entity_id in referenced))
 
     def _candidates(
-        self, state: RuntimeState, audience_id: str, referenced_ids: tuple[str, ...]
+        self,
+        state: RuntimeState,
+        audience_id: str,
+        referenced_ids: tuple[str, ...],
+        player_input: str = "",
     ) -> tuple[RevealCandidate, ...]:
         fact_ids = true_fact_ids(state.facts)
         candidates: list[KnowledgeDefinition] = []
@@ -453,6 +458,7 @@ class KnowledgeProjector:
         referenced = set(referenced_ids)
         candidates.sort(
             key=lambda item: (
+                not _matches_all(item.action_evidence, player_input),
                 not bool(referenced & set((*item.entity_ids, *item.relevance.entity_ids))),
                 -item.relevance.priority,
                 item.id,

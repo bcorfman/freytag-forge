@@ -64,7 +64,7 @@ def test_jev_moves_thing_request_and_answers():
     assert (
         ask_moves_thing(
             "Put Michelle's photograph in my pocket.",
-            "Michelle's photograph",
+            "photograph of an unknown person",
             environment={"CLOUDFLARE_ACCOUNT_ID": "account", "CLOUDFLARE_AI_TOKEN": "token"},
             opener=opener,
         )

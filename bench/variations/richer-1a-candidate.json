@@ -1,0 +1,28 @@
+{
+  "name": "richer-1a-candidate",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 7,
+  "runtime": true,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "1A": [
+      {
+        "name": "richer-1a-kitchen",
+        "inputs": [
+          "Examine the back door.",
+          "Look at the wall calendar.",
+          "Look at the photograph.",
+          "Search the drawer.",
+          "Search beneath the drawer.",
+          "Go outside.",
+          "Talk to the neighbor."
+        ]
+      }
+    ]
+  }
+}

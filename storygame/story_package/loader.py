@@ -174,6 +174,44 @@ def _validate_scene_placements(world_source: WorldSource, scenes: tuple[Scene, .
                 )
 
 
+def _validate_incidental_declarations(world_source: WorldSource, scenes: tuple[Scene, ...]) -> None:
+    props = world_source.props
+    prop_ids = [prop.id for prop in props]
+    if len(prop_ids) != len(set(prop_ids)):
+        duplicate = next(prop_id for prop_id in prop_ids if prop_ids.count(prop_id) > 1)
+        raise StoryPackageError(f"duplicate prop '{duplicate}'")
+    locations = {location.id for location in world_source.locations}
+    entity_ids = {entity.id for group in (world_source.locations, world_source.items) for entity in group}
+    authored_forms = {
+        form
+        for entity in (*world_source.locations, *world_source.npcs, *world_source.groups, *world_source.items)
+        for value in (entity.name, *entity.aliases)
+        for form in term_lookup_forms(value)
+    }
+    for prop in props:
+        unknown_parents = set(prop.parents) - entity_ids
+        if unknown_parents:
+            raise StoryPackageError(f"prop '{prop.id}' has unknown parent '{next(iter(unknown_parents))}'")
+        if set(term_lookup_forms(prop.name)) & authored_forms:
+            raise StoryPackageError(f"prop name '{prop.name}' clashes with an authored name")
+    location_by_id = {location.id: location for location in world_source.locations}
+    descendants = {location_id: {location_id} for location_id in locations}
+    for location in world_source.locations:
+        current = location.parent
+        while current is not None:
+            descendants.setdefault(current, set()).add(location.id)
+            current = location_by_id[current].parent if current in location_by_id else None
+    prop_by_id = {prop.id: prop for prop in props}
+    for scene in scenes:
+        unknown = set(scene.metadata.prop_pool) - prop_by_id.keys()
+        if unknown:
+            raise StoryPackageError(f"scene {scene.metadata.scene_id} has unknown prop '{next(iter(unknown))}'")
+        available_parents = set(scene.metadata.item_ids) | descendants.get(scene.metadata.location_id, set())
+        for prop_id in scene.metadata.prop_pool:
+            if not set(prop_by_id[prop_id].parents) & available_parents:
+                raise StoryPackageError(f"prop '{prop_id}' is not available in scene {scene.metadata.scene_id}")
+
+
 def _parse_scenes(text: str) -> tuple[Scene, ...]:
     matches = list(_SCENE.finditer(text))
     if not matches:
@@ -1545,6 +1583,7 @@ def _load_story_package_uncached(root: Path) -> StoryPackage:
             ):
                 raise StoryPackageError(f"item '{item.id}' enterable requires a container or supporter kind")
         _validate_scene_placements(world, scenes, schema)
+        _validate_incidental_declarations(world, scenes)
         pacing = PacingSource.model_validate(_yaml(root / "pacing.yaml"))
         routes_raw = _yaml(root / "storylet-routes.yaml")
         knowledge = KnowledgeCatalog.model_validate(_yaml(root / "knowledge.yaml"))

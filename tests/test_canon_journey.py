@@ -32,7 +32,7 @@ UNCLOCKED_JOURNEY = [
     (None, "1A"),
     (None, "1B"),
     ("k_sl_1b_d_r1", "1B"),
-    ("k_sl_1b_b_r1", "1B"),
+    ("k_sl_1b_b_r2", "1B"),
     ("k_sl_1b_c_r1", "1B"),
     (None, "1B"),
     (None, "1B"),
@@ -132,7 +132,12 @@ class _ScriptedProvider:
 
 def _drive(engine: RuntimeEngine, provider: _ScriptedProvider, selection: str | None, **kwargs) -> None:
     provider.selected = [selection] if selection else []
-    engine.turn("Act on the strongest available lead.", **kwargs)
+    command = {
+        "k_sl_1b_d_r1": "Look under the park bench.",
+        "k_sl_1b_b_r2": "Ask the man about Michelle.",
+        "k_sl_1b_c_r1": "Open the service gate.",
+    }.get(selection, "Act on the strongest available lead.")
+    engine.turn(command, **kwargs)
 
 
 def test_clocked_canon_journey_reaches_the_resolution_scene() -> None:

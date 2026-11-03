@@ -3,7 +3,7 @@
 import logging
 from dataclasses import dataclass
 
-from worldkeeper import World, WorldSchema
+from worldkeeper import IncidentalPolicy, PropTemplate, World, WorldSchema
 
 from storygame.runtime.facts import Fact, FactStore
 from storygame.story_package.models import ItemPlacement, StoryPackage, WorldEffect
@@ -29,6 +29,33 @@ class ScenePlacementRefusal:
 
 def world_schema_data(package: StoryPackage) -> dict:
     return world_source_schema_data(package.world)
+
+
+def incidental_policy_for(package: StoryPackage) -> IncidentalPolicy | None:
+    """Adapt package-owned incidental declarations to worldkeeper policy data."""
+    props = {prop.id: prop for prop in package.world.props}
+    templates = {
+        scene.metadata.scene_id: tuple(
+            PropTemplate(
+                props[prop_id].name,
+                tuple(props[prop_id].parents),
+                props[prop_id].fixed,
+                {facet: tuple(values) for facet, values in props[prop_id].facets.items()},
+            )
+            for prop_id in scene.metadata.prop_pool
+        )
+        for scene in package.scenes
+        if scene.metadata.prop_pool
+    }
+    palettes = {
+        item.id: {facet: tuple(values) for facet, values in item.facets.items()}
+        for item in package.world.items
+        if item.facets
+    }
+    authored = {item.id: dict(item.authored_facets) for item in package.world.items if item.authored_facets}
+    if not package.world.props and not palettes and not authored:
+        return None
+    return IncidentalPolicy(templates=templates, palettes=palettes, authored=authored)
 
 
 def world_for(package: StoryPackage, facts: FactStore) -> World:

@@ -86,6 +86,13 @@ _REJECTION_FEEDBACK = {
     "narration_known_term_leak": _KNOWLEDGE_REJECTION,
     "uncited_knowledge": _KNOWLEDGE_REJECTION,
     "protected_narration_leak": _KNOWLEDGE_REJECTION,
+    "embellishment_rejected": (
+        "Your last reply named an object or detail the story does not allow. "
+        "Describe the scene using only what is already there."
+    ),
+    "embellishment_malformed": (
+        "Your last reply gave a world detail in the wrong form. Describe the scene using only what is already there."
+    ),
 }
 
 
@@ -1260,7 +1267,18 @@ class CloudflareTurnProvider:
         if seated:
             vehicle_id = world.parent(seat_id)
             vehicle = world.name(vehicle_id) if vehicle_id else "a vehicle"
-            return f"{protagonist} is in the {world.name(seat_id)} of {vehicle}, {area}."
+            seat = world.name(seat_id)
+            where = f"{protagonist} is in the {seat} of {vehicle}, {area}."
+            seat_entities = {entity_id for entity_id, entity in world.schema.entities.items() if entity.seat_for}
+            has_reachable_vehicle_entity = any(
+                entity_id not in seat_entities | {vehicle_id, protagonist_id}
+                and world.is_visible(entity_id)
+                and vehicle_id in world.chain(entity_id)
+                for entity_id in world.reachable_from_seat(seat_id, protagonist_id)
+            )
+            if has_reachable_vehicle_entity:
+                return f"{where}\n{protagonist} can reach anything inside {vehicle} from the {seat}."
+            return where
         return f"{protagonist} is {area}."
 
     def _candidate_beats(self) -> tuple[SceneBeat, ...]:
@@ -1631,7 +1649,7 @@ class CloudflareTurnProvider:
         if isinstance(player, dict) and player:
             where = player.get("where")
             if isinstance(where, str) and where:
-                scene.append(where)
+                scene.extend(where.splitlines())
             scene.extend(paragraphs(player["scene_frame"]))
             scene.append(f"What presses on {self._protagonist_name()} now: {player['pressure']}")
             scene_setting = user.get("scene_setting")

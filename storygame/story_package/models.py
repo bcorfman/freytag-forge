@@ -331,11 +331,52 @@ class Item(Entity):
     take_text: str | None = Field(default=None, min_length=1)
     notice_text: str | None = Field(default=None, min_length=1)
     axes: list[dict[str, list[str]]] = Field(default_factory=list)
+    facets: Mapping[str, tuple[str, ...]] = Field(default_factory=dict)
+    authored_facets: Mapping[str, str] = Field(default_factory=dict)
 
     @field_validator("axes", mode="before")
     @classmethod
     def validate_axes(cls, value):
         return _validate_axes(value)
+
+    @model_validator(mode="after")
+    def validate_facets(self) -> Item:
+        _validate_facet_values(self.facets)
+        _validate_authored_facets(self.authored_facets)
+        if len(set(self.facets) | set(self.authored_facets)) > 3:
+            raise ValueError("too many facets")
+        return self
+
+
+def _validate_facet_values(values: Mapping[str, tuple[str, ...]]) -> None:
+    for name, palette in values.items():
+        if not isinstance(name, str) or not name.strip() or not palette:
+            raise ValueError("facet names and value lists must not be empty")
+        if any(not isinstance(value, str) or not value.strip() for value in palette):
+            raise ValueError("facet values must not be blank")
+        if len(palette) != len(set(palette)):
+            raise ValueError("facet values must not contain duplicates")
+
+
+def _validate_authored_facets(values: Mapping[str, str]) -> None:
+    for name, value in values.items():
+        if not isinstance(name, str) or not name.strip() or not isinstance(value, str) or not value.strip():
+            raise ValueError("facet names and values must not be blank")
+
+
+class PropDeclaration(_Model):
+    id: str = Field(pattern=_ID)
+    name: str = Field(min_length=1, max_length=80)
+    parents: tuple[str, ...] = Field(min_length=1)
+    fixed: StrictBool = False
+    facets: Mapping[str, tuple[str, ...]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_facets(self) -> PropDeclaration:
+        _validate_facet_values(self.facets)
+        if len(self.facets) > 3:
+            raise ValueError("too many facets")
+        return self
 
 
 class Npc(Entity):
@@ -489,6 +530,7 @@ class WorldSource(_Model):
     fact_effects: Mapping[str, tuple[WorldEffect, ...]] = {}
     protected_knowledge: tuple[str, ...] = ()
     disclosure_guards: tuple[DisclosureGuard, ...] = ()
+    props: tuple[PropDeclaration, ...] = ()
 
     @model_validator(mode="after")
     def validate_character_name_facts(self):
@@ -557,6 +599,7 @@ class SceneMetadata(_Model):
     companions: tuple[str, ...] = ()
     character_placements: Mapping[str, CharacterPlacement] = {}
     setting_facts: tuple[str, ...] = ()
+    prop_pool: tuple[str, ...] = ()
 
     @field_validator("setting_facts")
     @classmethod

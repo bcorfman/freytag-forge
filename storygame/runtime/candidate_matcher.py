@@ -184,7 +184,8 @@ def uniquely_matched_authored_handoff(
     action evidence and non-blank authored text. The candidate list is already
     projected, so package knowledge that is protected or not currently offered
     cannot participate in the decision. Among complete matches, repeatable
-    candidates yield to any non-repeatable candidate.
+    candidates yield to any non-repeatable candidate, then matches with the
+    most evidence groups are preferred.
     """
 
     matches = []
@@ -198,6 +199,9 @@ def uniquely_matched_authored_handoff(
         return None
     if any(not candidate.repeatable for candidate, _ in matches):
         matches = [match for match in matches if not match[0].repeatable]
+    if len(matches) > 1:
+        greatest_group_count = max(len(candidate.action_evidence) for candidate, _ in matches)
+        matches = [match for match in matches if len(match[0].action_evidence) == greatest_group_count]
     if len(matches) != 1:
         return None
     candidate, delivery_text = matches[0]

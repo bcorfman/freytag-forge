@@ -5,6 +5,8 @@ from collections.abc import Callable, Collection, Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from .incidental import IncidentalWorldMixin
+
 BASE_KINDS = {
     "entity": (),
     "area": ("entity",),
@@ -42,6 +44,7 @@ class FactBackend(Protocol):
     def matching(self, predicate: str, subject: str | None = None) -> tuple[FactLike, ...]: ...
     def assert_fact(self, fact) -> None: ...
     def retract_fact(self, fact) -> None: ...
+    def clone(self): ...
 
 
 class MemoryBackend:
@@ -59,6 +62,12 @@ class MemoryBackend:
     def matching_all(self):
         """Return all stored facts."""
         return tuple(self._facts)
+
+    def clone(self):
+        """Return an independent copy of this fact store."""
+        copy = type(self)()
+        copy._facts = set(self._facts)
+        return copy
 
     def assert_fact(self, fact):
         """Store a fact."""
@@ -337,7 +346,7 @@ class WorldSchema:
         return cls(kinds, entities, kind_enterable)
 
 
-class World:
+class World(IncidentalWorldMixin):
     """Read and mutate a world whose only mutable state is in its backend."""
 
     def __init__(self, schema, backend, *, make_fact=Fact, resolver: Callable | None = None):
@@ -383,6 +392,7 @@ class World:
                 self._value("wk_kind", entity_id) or "thing",
                 owner=self._value("wk_owner", entity_id),
                 parent=self._value("wk_parent", entity_id),
+                fixed=bool(self._facts("wk_fixed", entity_id)),
             )
         return None
 
@@ -735,6 +745,14 @@ class World:
     def contents(self, entity_id):
         """Return direct child IDs in sorted order."""
         return tuple(sorted(candidate for candidate in self._ids() if self.parent(candidate) == entity_id))
+
+    def visible_area_contents(self, area_id):
+        """Return visible, non-area direct child IDs in sorted order."""
+        return tuple(
+            candidate
+            for candidate in self.contents(area_id)
+            if not self.is_a(candidate, "area") and self.is_visible(candidate)
+        )
 
     def contents_complete(self, entity_id):
         """Return whether an entity's declared direct contents are complete."""

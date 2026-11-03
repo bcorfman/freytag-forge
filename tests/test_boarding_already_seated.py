@@ -206,7 +206,7 @@ def test_boarding_sequence_uses_engine_text_for_both_turns(monkeypatch: pytest.M
     assert first.narration.startswith(
         "Kristin sat down in the driver's seat. Kristin's laptop sat on the passenger seat."
     )
-    assert second.narration == "Kristin is already in the driver's seat."
+    assert second.narration == "You're already in Kristin's truck."
     assert world.parent("kristin") == "truck_driver_seat"
     assert world.parent("kristin_laptop") == "truck_passenger_seat"
     assert calls == []
