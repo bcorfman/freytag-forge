@@ -1,7 +1,8 @@
 # Richer narration with bounded invention
 
-Status: in progress. Last updated 2026-11-03. 1A, 1B, 1C and 2A are merged to main (2A as PR #748, with the return-line direction and camera lens
-fixes). Scene 2B is built on branch `richer-narration-2b` (plot, tests, data and prereg committed); its probe is read (richness supported). The full suite with coverage has NOT been run; run it once at the very end.
+Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C and 2A are merged to main (2A as PR #748). Scene 2B is built and
+probed on branch `richer-narration-2b` (last commit `323dc607`, nothing uncommitted); the PR is NOT open yet. Whole quick suite on that branch:
+4064 passed, 30 skipped. The full suite with coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
 Claude drafts it richer scene by scene, `plot.md` first, settling story problems itself and reporting afterwards. Steps 1 and 2 of
@@ -10,31 +11,31 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
 
 ## Resume here (in order)
 
-000. **Scene 2B built and probed (2026-11-03), branch `richer-narration-2b`; result in `.plans/richer-2b-probe-prereg.md` "Result": richness supported, all three details 4/4, no regression, no new plain things; one older defect more visible (b_r4/r5 deliveries re-deliver the file pull), decision pending; open the 2B PR next.** Three optional quiet reveals, each with a job:
-   the held transfers (`k_sl_2b_f_r1`, 2B.2: dozens of transfers pushed back a week under tickets closed "sensor fault", the same excuse that closed
-   the 2A alarms; shows Michelle's quiet resistance before she speaks, plants the maintenance channel for 2C.5 and the delayed transfers for 3A),
-   the badge-reader checks (`k_sl_2b_e_r1`, 2B.3: the build record's access section lists the three checks Brandon said he knew; pays off the 2A badge
-   remark) and the ticket header (`k_sl_2b_g_r1`, 2B.4: the maintenance line carries the same header and closing code as the held transfers, so Kristin
-   can trust it is not a trap). Two new plain things (`build_record`, `transfer_queue`), three facts, priority -1, not voiceable. Windows E and F 0/6/6,
-   G 4/6/7. **Lesson:** the first windows (targets 2 and 5) blocked the fast path to Michelle's reply because forward activation waits on every
-   storylet with an earlier target; `tests/test_act2_probe.py` [2B-2C] caught it, targets moved to 6 (memory `optional-storylet-targets-must-not-precede-later-gated-ones`).
-   Whole quick suite on the branch: 4064 passed, 30 skipped; repo-wide ruff clean; the tests file has no loader scaffolding left. Prereg
-   `.plans/richer-2b-probe-prereg.md` (arms `richer-2b-baseline`/`richer-2b-candidate`, six commands, 4 replicates, about 616 neurons) with the
-   frozen pre-2B story in `bench/frozen/continuity-pre-richer-2b/`; offline walk gives F, A, E, B-R4, G, C-R3. Next: Brandon's go for the billed run,
-   read every turn, write the result into the prereg, open the 2B PR, then 2C. Owed to later scenes: 2C.5 Michelle's second message travels as a
-   maintenance ticket with the same header; 3A uses the held transfers (captives still alive because transfers were delayed).
+000. **Scene 2B built and probed (2026-11-03), branch `richer-narration-2b`; PR not open.** Result in `.plans/richer-2b-probe-prereg.md` "Result":
+   richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on
+   command 6 in every replicate, the scene was left by the same earned transition as the baseline, 0 plain things resolved new (baseline 2).
+   What was built: held transfers (`k_sl_2b_f_r1`, 2B.2: transfers pushed back a week under tickets closed "sensor fault", the 2A alarms' excuse),
+   badge checks (`k_sl_2b_e_r1`, 2B.3: the build record's access section lists the three checks Brandon said he knew), ticket header
+   (`k_sl_2b_g_r1`, 2B.4: the maintenance line has the same header and closing code, so Kristin can trust it). Two plain things
+   (`build_record`, `transfer_queue`), three facts, priority -1, not voiceable; windows E and F 0/6/6, G 4/6/7. **Lesson:** targets 2 and 5 first
+   blocked the fast path to Michelle's reply (forward activation waits on every earlier-target storylet); memory
+   `optional-storylet-targets-must-not-precede-later-gated-ones`. Probe run by Brandon with `bench run` for each arm (`richer-2b-baseline`,
+   `richer-2b-candidate`, script `richer-2b-archive`, outputs gitignored under `bench/results/richer-2b-probe/`).
+   **Open decision for Brandon:** `k_sl_2b_b_r4`/`r5` deliveries re-deliver the file pull that `k_sl_2b_a_r1` always delivers first (both require
+   `kristin_file_read`); the continuity judge flags command 4 in 4/4 candidate and 2/4 baseline replicates. Proposed subtractive fix: drop the
+   restated sentences from both deliveries and from the act2 probe's scripted copy (`scripts/ringer/phase1/act2_probe.py`); it edits protected
+   existing entries, so it waits for his answer. Smaller: the badge-checks delivery's last sentence duplicates the narrator's beat.
+   **Next:** answer on the delivery repeat, then open the 2B PR (merge commit, only on his per-PR instruction), then merge `main` and start 2C.
+   Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header and closing code; 3A uses the
+   held transfers (captives still alive because transfers were delayed); 3B/3C can surface Brandon's badge-reader knowledge when he opens doors.
 
-00. **Scene 2A built and probed (2026-11-03), branch `richer-narration-2a` (main merged in, quick suite 4044 passed).** Result in
-   `.plans/richer-2a-probe-prereg.md` "Result": all four additions (alarm log, badges, return line, camera) delivered 4/4, no regression, clean entry kept 4/4,
-   0 new plain things. One defect: in 2 of 4 replicates the narrator says the return line flows back to the manifold, contradicting the delivery. Next: read the
-   recorded command-4 prompt and fix at the source, then open the 2A PR, then 2B.
+00. **Scene 2A: merged (PR #748).** The probe's one defect (return line direction) and the camera lead-in were fixed at the source (`61ae6bd2`).
+   Result in `.plans/richer-2a-probe-prereg.md`.
 
-0. **Term-ownership fix landed and verified live (2026-11-03), branch `fix-term-ownership` (`da51be00` tests, `d1aafb32` fix, not yet merged).**
-   Cause of the 1B run-2 rejections: "emergency statement" was a leak term owned only by the 1C entry `k_sl_1c_g_r1`, so 1A/1B narration echoing it was
-   rejected in real play. Fix: reworded that entry's `must_convey` to `[statement, broadcast]`, plus a story-agnostic audit finding
-   `earlier_scene_uses_later_owned_term`. Quick suite 4023 passed. Live check `bench/results/richer-1b-probe/candidate-run3`: 28/28 turns delivered, 0 rejected,
-   gate escape 4/4 (see the prereg's "Run 3"). Still open there: picnic/thermos repeated by delivery text, narrator recites reveals as Brandon's dialogue,
-   invented name "Shelly". After merge, merge `main` into `richer-narration-2a` (it has the 2A work and item 4b of this plan).
+0. **Term-ownership fix: merged (PR #747).** Cause of the 1B run-2 rejections was "emergency statement" being a leak term owned only by the 1C
+   entry `k_sl_1c_g_r1`; fixed by rewording that entry's `must_convey`, plus the story-agnostic audit finding
+   `earlier_scene_uses_later_owned_term`. Still open from the 1B reruns: picnic/thermos repeated by delivery text, narrator recites reveals as
+   Brandon's dialogue, invented name "Shelly".
 
 1. **1B probe is run and read (2026-11-02); result is in `.plans/richer-1b-probe-prereg.md`.** Outcome: richness NOT supported yet and a
    defect found. The candidate never delivered the gate escape (0/4; baseline 3/4): every loss is `narration_known_term_leak` on
@@ -81,9 +82,8 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    unverified). Fix scoped, not built: reword the 1C `must_convey` group at the source (the Round 6 wording arm in
    `.plans/game-reimagination-plan.md` beat guard loosening via `leak_terms`), add a story-agnostic audit check for the class, then
    rerun the 1B candidate arm (352 neurons), which is the pending 1B rerun anyway.
-5. **Next, in order:** (a) DONE: the third 1C run (closeout changes all work; recorded in `.plans/richer-1c-probe-prereg.md`);
-   (b) the 2A probe (billed, needs Brandon's go; `.plans/richer-2a-probe-prereg.md`); (c) 1B candidate rerun (`candidate-run2`, ask);
-   (d) scenes 2B..3C.
+5. **Next, in order:** (a) DONE: the third 1C run; (b) DONE: the 2A probe; (c) DONE: the 2B probe; (d) Brandon's decision on the b_r4/r5
+   delivery repeat, then the 2B PR; (e) 1B candidate rerun (`candidate-run2`, ask); (f) scenes 2C, 3A, 3B, 3C.
 6. **Small owed follow-ups** (each a tests-first Ringer task): mark the 1A `lake_photograph` `fixed: true` (the narrator "moves" it
    in 3 of 4 replicates; harmless but recurring); replace the private `_matches_all` import in `storygame/runtime/knowledge.py` with a
    public helper from `candidate_matcher.py`; 1A keeps two older `beat_overprojection` findings (SL-1A-E earliest turn 1 against
@@ -98,7 +98,7 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    Brandon's go. Owed to later scenes: see the prereg's last section. Known and accepted: `tests/test_affordance_map.py` carries
    a new known gap (`return_line`) in the test, not in `bench/affordance_known_gaps.json`; the speaker-presence pin for Brandon
    in 2A flipped to True because the new 2A prose gives him speech.
-8. **Scenes 2B, 2C, 3A, 3B, 3C** (five left). For each: read the scene in `plot.md`, write the richer beats (plot first,
+8. **Scenes 2C, 3A, 3B, 3C** (four left; 2B is built and probed). For each: read the scene in `plot.md`, write the richer beats (plot first,
    plain names, plant a payoff for each plant, Details lines of 3 to 7 items, keep the turn ceiling), write acceptance tests first,
    then one Ringer propagation task whose spec states every priority (-1 for ambient reveals), the exact evidence groups, and the
    lessons below; review the patch for possessives and over-broad renames; run the whole suite; then preregister and run a probe.
