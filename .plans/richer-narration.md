@@ -1,8 +1,7 @@
 # Richer narration with bounded invention
 
 Status: in progress. Last updated 2026-11-03. 1A, 1B, 1C and 2A are merged to main (2A as PR #748, with the return-line direction and camera lens
-fixes). Scene 2B is in progress on branch `richer-narration-2b`: plot beats committed (`d54c4f3c`), failing acceptance tests committed
-(`tests/test_richer_2b.py`), data propagation not yet run. The full suite with coverage has NOT been run; run it once at the very end.
+fixes). Scene 2B is built on branch `richer-narration-2b` (plot, tests, data and prereg committed); its probe awaits Brandon's go. The full suite with coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
 Claude drafts it richer scene by scene, `plot.md` first, settling story problems itself and reporting afterwards. Steps 1 and 2 of
@@ -11,17 +10,19 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
 
 ## Resume here (in order)
 
-000. **Scene 2B in progress (2026-11-03), branch `richer-narration-2b`.** Three optional quiet reveals, each with a job: the held transfers
-   (`k_sl_2b_f_r1`, 2B.2: dozens of transfers pushed back a week under tickets closed "sensor fault", the same excuse that closed the 2A alarms;
-   shows Michelle's quiet resistance before she speaks and plants the maintenance channel for 2C.5), the badge-reader checks (`k_sl_2b_e_r1`, 2B.3:
-   the build record's access section lists the three checks Brandon said he knew; pays off the 2A badge remark), and the ticket header
-   (`k_sl_2b_g_r1`, 2B.4: the maintenance line carries the same header and closing code as the held transfers, so Kristin can trust it is not a trap).
-   Two new plain things (`build_record`, `transfer_queue`), three facts, windows E and F 0/2/4, G 4/5/7 (shares 2B.4 with SL-2B-C), all priority -1,
-   not voiceable. Tests-first file `tests/test_richer_2b.py` (loader fallback at the top is test-only scaffolding; remove it once the data lands).
-   Next: Ringer data task (`~/dev/ringer-work/richer-narration-2/manifest_2br_data.json`, set the test-file hash in `check_2br_data.sh` first),
-   whole quick suite, preregister the 2B probe (script like 2A: file pull, two detours, the choice; the audit window closes at turn 5), then Brandon's go.
-   Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header; 3A uses the held transfers (captives
-   still alive because transfers were delayed).
+000. **Scene 2B built, smoke done, probe awaits Brandon's go (2026-11-03), branch `richer-narration-2b`.** Three optional quiet reveals, each with a job:
+   the held transfers (`k_sl_2b_f_r1`, 2B.2: dozens of transfers pushed back a week under tickets closed "sensor fault", the same excuse that closed
+   the 2A alarms; shows Michelle's quiet resistance before she speaks, plants the maintenance channel for 2C.5 and the delayed transfers for 3A),
+   the badge-reader checks (`k_sl_2b_e_r1`, 2B.3: the build record's access section lists the three checks Brandon said he knew; pays off the 2A badge
+   remark) and the ticket header (`k_sl_2b_g_r1`, 2B.4: the maintenance line carries the same header and closing code as the held transfers, so Kristin
+   can trust it is not a trap). Two new plain things (`build_record`, `transfer_queue`), three facts, priority -1, not voiceable. Windows E and F 0/6/6,
+   G 4/6/7. **Lesson:** the first windows (targets 2 and 5) blocked the fast path to Michelle's reply because forward activation waits on every
+   storylet with an earlier target; `tests/test_act2_probe.py` [2B-2C] caught it, targets moved to 6 (memory `optional-storylet-targets-must-not-precede-later-gated-ones`).
+   Whole quick suite on the branch: 4064 passed, 30 skipped; repo-wide ruff clean; the tests file has no loader scaffolding left. Prereg
+   `.plans/richer-2b-probe-prereg.md` (arms `richer-2b-baseline`/`richer-2b-candidate`, six commands, 4 replicates, about 616 neurons) with the
+   frozen pre-2B story in `bench/frozen/continuity-pre-richer-2b/`; offline walk gives F, A, E, B-R4, G, C-R3. Next: Brandon's go for the billed run,
+   read every turn, write the result into the prereg, open the 2B PR, then 2C. Owed to later scenes: 2C.5 Michelle's second message travels as a
+   maintenance ticket with the same header; 3A uses the held transfers (captives still alive because transfers were delayed).
 
 00. **Scene 2A built and probed (2026-11-03), branch `richer-narration-2a` (main merged in, quick suite 4044 passed).** Result in
    `.plans/richer-2a-probe-prereg.md` "Result": all four additions (alarm log, badges, return line, camera) delivered 4/4, no regression, clean entry kept 4/4,

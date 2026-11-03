@@ -4,36 +4,18 @@ from pathlib import Path
 
 import yaml
 
-import storygame.story_package.loader as package_loader
 from storygame.audit import audit_package
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements
-from storygame.story_package.loader import StoryPackageError, load_story_package
+from storygame.story_package.loader import load_story_package
 
 ROOT = Path("data/stories/continuity-initiative")
 
 
-def _load_package_for_current_data():
-    try:
-        return load_story_package(ROOT)
-    except StoryPackageError as error:
-        if "placement references unknown item" not in str(error):
-            raise
-        original_validator = package_loader._validate_scene_placements
-        original_package_validator = package_loader._validate
-        package_loader._validate_scene_placements = lambda *_args: None
-        package_loader._validate = lambda *_args: None
-        try:
-            return load_story_package(ROOT)
-        finally:
-            package_loader._validate_scene_placements = original_validator
-            package_loader._validate = original_package_validator
-
-
-PACKAGE = _load_package_for_current_data()
+PACKAGE = load_story_package(ROOT)
 NEW_THINGS = {
     "build_record": "build record",
     "transfer_queue": "transfer queue",
