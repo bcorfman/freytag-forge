@@ -10,18 +10,15 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
 
 ## Resume here (in order)
 
-1. **Finish the 1B probe.** Preregistration: `.plans/richer-1b-probe-prereg.md`. A baseline run was started in the background:
-   `bench/results/richer-1b-probe/baseline`. Look for `summary.json` and `all-turn-records.json` in it; if absent, run:
-   `cd /home/bcorfman/dev/freytag-forge && PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m bench run --variation bench/variations/richer-1b-baseline.json --scene 1B --replicates 4 --script richer-1b-park --out bench/results/richer-1b-probe/baseline --confirm`
-   then the candidate arm (same command with `richer-1b-candidate.json` and `--out bench/results/richer-1b-probe/candidate`).
-   The offline replay (network blocked) of both arms is clean. Brandon authorized running the full probe (2026-11-02); billed
-   runs are run by him with `!` or by Claude when he says so. Each arm is about 350 neurons and 10 to 25 minutes.
-2. **Read every turn** with `python .plans/richer-probe-report.py <results dir>`, score against the preregistration (Q1 to Q4 and the
-   decision rule), and append a Result section to `.plans/richer-1b-probe-prereg.md` the way `.plans/richer-1a-probe-prereg.md`
-   does. Report replicates separately, never pooled; a 1 or 2 point judge gap is not real with four replicates. Watch for: what the
-   narrator says the recovered photograph shows (held items show only "Held by"), whether Brandon mouths the words
-   (stranger storylet), the thermos label after his explanation, the keypad and oiled latch at the gate, and any Q3 regression.
-   Fix defects with tests first, through Ringer, then rerun only the arm that changed as a second run.
+1. **1B probe is run and read (2026-11-02); result is in `.plans/richer-1b-probe-prereg.md`.** Outcome: richness NOT supported yet and a
+   defect found. The candidate never delivered the gate escape (0/4; baseline 3/4): every loss is `narration_known_term_leak` on
+   "dead drop" (leak term of the 1A card reveal, unearned under the default `bare` bench entry; real-play effect is an unchecked hypothesis).
+   The narrator also recites reveal statements as Brandon's dialogue, repeats the picnic image 3 times, and the engine delivery text
+   repeats what the narrator just wrote. Brandon's rule (2026-11-02, `richer-means-added-value-not-more-stuff`): richer means details with a job.
+2. **Next, in order:** (a) rerun only the candidate with `entry_state: thorough` as a second run (billed, about 350 neurons; ask Brandon);
+   (b) read the recorded prompt and remove the doubled statement (SCENE fact plus "may say aloud"), so the narrator stops reciting it; tests
+   first, through Ringer; (c) held items keep a one-line depiction (the narrator describes Michelle's face, contradicting the reveal);
+   (d) give the picnic image a payoff or cut it; (e) rerun the candidate and rescore Q2, Q3, Q5. Not before 1C.
 3. **Small owed follow-ups** (each a tests-first Ringer task): mark the 1A `lake_photograph` `fixed: true` (the narrator "moves" it
    in 3 of 4 replicates; harmless but recurring); replace the private `_matches_all` import in `storygame/runtime/knowledge.py` with a
    public helper from `candidate_matcher.py`; 1A keeps two older `beat_overprojection` findings (SL-1A-E earliest turn 1 against
