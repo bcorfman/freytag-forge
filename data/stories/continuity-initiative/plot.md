@@ -328,19 +328,23 @@ bridge_text:
 
 ### Scene 1C.1 — Following the Transport Route
 
-**Details:** abandoned freight terminal; structural modifications; fresh tire tracks; humming air vents; heavy electrical service
+**Details:** abandoned freight terminal; structural modifications; fresh tire tracks; humming air vents; heavy electrical service; water pallets by the loading doors; the park's emergency statement from below
 
 Michelle’s lead brings Kristin and Brandon to a supposedly abandoned freight terminal. Kristin recognizes that recent structural modifications conceal something larger below.
 
 Fresh tire tracks, air vents, and unusually heavy electrical service confirm that the site remains active.
 
+Pallets of bottled emergency water stand shrink-wrapped by the loading doors. If Kristin read the thermos in the park, the lot numbers match: the water in the park came from here. Under the hum of the vents a speaker below plays the same emergency statement as the park loudspeaker, word for word. Nothing here is proof yet. It ties the park to the terminal.
+
 Brandon points Kristin toward the observation shaft. He asks her to study the people on the processing line before they try to enter.
 
 ### Scene 1C.2 — Proof of the Captives
 
-**Details:** observation shaft; sedated prisoners; processing line; identification numbers; woman resembling Michelle; service entrance
+**Details:** observation shaft; sedated prisoners; processing line; identification numbers; woman resembling Michelle; service entrance; Brandon watching the door
 
-Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she glimpses a woman who could be her. The woman's face slips from sight before Kristin can be certain. The transfer is still moving.
+Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she glimpses a woman who could be her. Twice the woman presses two fingers to her wrist, as if counting her own pulse. Her face slips from sight before Kristin can be certain. The transfer is still moving.
+
+While Kristin studies the line, Brandon stays at the top of the stairs with his back to it. He watches the door. If she looks at him, he says only, "Somebody has to watch the door." He does not say what he knows about the line.
 
 Brandon offers two ways to use the remaining time. Kristin can copy the prisoner numbers for stronger proof. She can instead ask him about the transfer route. His help gives them a service approach, but costs Kristin the chance to copy the full number set. There is time for one choice.
 
