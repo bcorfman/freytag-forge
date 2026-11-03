@@ -1,0 +1,28 @@
+{
+  "name": "richer-2b-candidate",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 6,
+  "runtime": true,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "2B": [
+      {
+        "name": "richer-2b-archive",
+        "inputs": [
+          "Read the transfer queue.",
+          "Pull up my file.",
+          "Read the access section of the build record.",
+          "Keep Brandon's name in the build record.",
+          "Read the maintenance line.",
+          "Type one reply to the maintenance line on the medical terminal."
+        ]
+      }
+    ]
+  },
+  "entry_state": "thorough"
+}
