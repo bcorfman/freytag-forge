@@ -141,3 +141,12 @@ Output `bench/results/richer-1c-probe/candidate-run2`. Every turn read.
   again. The narrator is shown the text the game will add ("Right after your story, the game will add this: ..."), and it copies it.
   This is not the placement-restatement the audit check (see `.plans/delivery-restatement-scope.md`) can catch.
 - Noise: the item-facts capture complains that fixed things "cannot move" (`water pallets`, `identification numbers`); harmless.
+
+## Amendment 2 (2026-11-02, before the third run; Brandon asked for it after the closeout)
+Third run, candidate only, never pooled with runs 1 and 2: variation `richer-1c-candidate-c`, script `richer-1c-terminal-c`, five commands:
+`Inspect the loading docks.` `Watch Brandon.` `Watch the processing line for Michelle.` `Inspect the water pallets.` `Ask Brandon about the transfer route.`
+Purpose: confirm the finished 1C: (a) the Michelle command now reaches `k_sl_1c_b_r2` (engine tie-break); (b) the pallets reveal, as
+the 4th command, now lands (optional `latest_turn` 4); (c) the door reveal still lands; (d) the choice as the 5th command still works;
+(e) Brandon no longer recites the older observational statements (voiceable false); (f) the pallets delivery no longer repeats the
+placement sentence (restatement fix). Score Q2, Q3 and Q4 per replicate as before; output `bench/results/richer-1c-probe/candidate-run3`.
+About 154 neurons.
