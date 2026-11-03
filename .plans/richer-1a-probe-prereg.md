@@ -107,3 +107,27 @@ grow as more things are resolved, so the turn-start budget (5,000) understates t
 **Decision rule.** Richness is supported on commands 2 and 3 (fewer plain things resolved as new, correct content) and on the back
 door. It is not yet supported on command 7: after the neighbor fix, rerun the candidate arm only (4 replicates) and report that
 row as a second candidate run, never pooled with this one.
+
+## Result, second candidate run (2026-11-02; code `b13ba90c`; 4 replicates, 7 commands, every turn read; not pooled with the first run)
+Run by Brandon: `bench/results/richer-1a-probe/candidate-run2/`. 4 of 4 replicates completed, 28 turns judged, no failures. Same
+story as the first candidate run except the neighbor and calendar fixes.
+
+- **Q2 delivered when earned: all four details, 4 of 4 each.** Back door (outward splinters), calendar and photograph (lemon cake,
+  lake), **Walt's account (vans, clipboard, skipped the house) 4 of 4** (it was 0 of 4 before the fix), and the card after `Search
+  beneath the drawer.` 4 of 4. Two of four openings named the splintered frame or thrown deadbolt (three of four in run 1; one run
+  of four replicates does not separate them).
+- **Q1:** zero plain things resolved as new in any of 28 turns (baseline: calendar and photograph in 4 of 4 each). The calendar is
+  now a "paper calendar" in 4 of 4 (run 1: a whiteboard with photographs in 3 of 4). The photograph is the two friends at the lake in
+  4 of 4. Walt stands at the fence in his jacket as written; the narrator no longer invents a different neighbor.
+- **Q3:** protected terms 0; clarification questions 0; the walk recorded cleanly in 4 of 4. Old behavior unchanged: the patrol cue
+  repeats and beat sentences are copied. One harmless capture issue: the narrator tried to put the fixed wall calendar at
+  "refrigerator" in one turn and the engine refused ("fixed things cannot move").
+- **Judges (recorded, never pooled):** 7-criterion [7, 6, 5, 6], mean 6.0 (baseline [5, 5, 4, 4], mean 4.5; run 1 [4, 4, 4, 4]); with
+  four replicates and a minimum detectable effect near 3.9 these gaps are not reported as real. Continuity "contradicts stated fact"
+  0 of 28 (run 1: 4, all the invented neighbor); "acts beyond command" 4 (turn 5, as in the baseline). Fact judge `invented_change` 3
+  of 28, all on turn 3 in three replicates: the narrator "moved" the lake photograph when asked to look at it. Harmless by Brandon's
+  rule, but a recurring drift; owed: mark the kitchen photograph `fixed: true` (it hangs by a magnet).
+- **Prompt size:** narrator prompts 4,371 to 6,063 characters, the same maximum as run 1, about 7 percent under the 6,500 ceiling.
+
+**Conclusion for scene 1A.** After the neighbor fix the richer 1A meets the decision rule: fewer invented things on commands 2, 3 and 7,
+every authored detail delivered in 4 of 4 replicates, and no Q3 regression. The earlier defect (Walt) is closed.
