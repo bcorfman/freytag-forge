@@ -134,6 +134,7 @@ def test_the_new_reveals_are_quiet_short_and_exact():
                 ["build record", "access section", "badge readers", "readers", "badge checks"],
             ),
             ["build_record"],
+            ("kristin", "brandon", "build_record", "archive_terminals"),
             ("badge readers", "three", "brandon"),
         ),
         "k_sl_2b_f_r1": (
@@ -145,6 +146,7 @@ def test_the_new_reveals_are_quiet_short_and_exact():
                 ["transfer queue", "queue", "transfers", "held transfers", "transfer listing"],
             ),
             ["transfer_queue"],
+            ("kristin", "transfer_queue", "archive_terminals"),
             ("held", "sensor fault", "week"),
         ),
         "k_sl_2b_g_r1": (
@@ -156,18 +158,20 @@ def test_the_new_reveals_are_quiet_short_and_exact():
                 ["maintenance line", "ticket header", "header", "printout"],
             ),
             ["medical_terminal"],
+            ("kristin", "medical_terminal", "transfer_queue"),
             ("ticket header", "sensor fault"),
         ),
     }
     forbidden = ("rebecca", "michelle", "uprising", "broadcast", "phase two", "route")
-    for entry_id, (storylet_id, fact_id, required, evidence, entities, phrases) in expected.items():
+    for entry_id, (storylet_id, fact_id, required, evidence, reach_entity_ids, entity_ids, phrases) in expected.items():
         entry = entries[entry_id]
         assert entry.audience.kind == "public" and entry.audience.player_visible is True
         assert entry.available_in_scenes == ("2B",)
         assert entry.voiceable is False and entry.relevance.priority == -1
         assert {(item.fact_id, item.equals) for item in entry.requires} == required
         assert [list(group) for group in entry.action_evidence] == [*evidence]
-        assert entry.entity_ids == entities
+        assert entry.reach_entity_ids == tuple(reach_entity_ids)
+        assert entry.entity_ids == entity_ids
         assert entry.must_convey and len(entry.statement) <= 90
         assert not any(word in entry.delivery_text.casefold() for word in forbidden)
         assert all(phrase in entry.delivery_text.casefold() for phrase in phrases)
