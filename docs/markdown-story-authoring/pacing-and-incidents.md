@@ -19,3 +19,7 @@ Advantages must be disjoint, and an outcome cannot list the same fact as both an
 The missed-window event cannot grant an outcome fact or force the successor transition.
 Fact delivery costs in the incident scene cannot duplicate outcome costs.
 Phase 1 step 2 adds declarations and validation only; the engine does not act on incidents yet.
+
+## Optional ambient reveals
+
+Story-critical reveals use priority 0 or higher. Optional ambient reveals use -1 so they never push a story-critical reveal out of the four offered candidates. A reveal whose action evidence matches the player's command is offered first, so an ambient reveal still surfaces when the player asks for it. Give a reveal exactly the evidence groups its plain command needs.

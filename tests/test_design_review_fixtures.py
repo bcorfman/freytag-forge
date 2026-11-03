@@ -223,6 +223,6 @@ def test_more_than_four_eligible() -> None:
 
     projection = KnowledgeProjector().project(state, "player", "Inspect the reflective tape.")
     assert len(projection.candidates) == 4
-    assert "k_sl_1a_c_r2" not in {candidate.id for candidate in projection.candidates}
+    assert "k_sl_1a_c_r2" in {candidate.id for candidate in projection.candidates}
     assert len(projection.reveal_universe) == 9
     assert projection.reveal_universe[-1].id == "k_sl_1a_g_r1"

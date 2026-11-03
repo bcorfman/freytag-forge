@@ -61,7 +61,7 @@ def test_shortlists_use_projection_and_head_package_has_no_new_candidates() -> N
     provider.last_projection = provider.projector.project(p1_state, "player", "Look under the park bench.")
     shortlist = probe._shortlist(provider)
     assert probe.DISCOVERY in shortlist
-    assert probe.POINTER not in shortlist
+    assert probe.POINTER in shortlist
     assert not {"k_sl_1b_a_r1", "k_sl_1b_a_r2", "k_sl_1b_b_r1"}.intersection(shortlist)
 
     p0_state = probe._package_state(packages["P0"])
