@@ -390,6 +390,48 @@ def audit_package(root: Path) -> dict[str, Any]:
                     )
                 )
 
+    try:
+        from storygame.story_package.loader import StoryPackageError, load_story_package
+
+        package = load_story_package(root)
+    except StoryPackageError:
+        package = None
+    if package is not None:
+        scene_order = {scene.metadata.scene_id: index for index, scene in enumerate(package.scenes)}
+        entity_terms = {
+            re.sub(r"\s+", " ", term.casefold()).strip()
+            for entity in [*package.world.npcs, *package.world.locations, *package.world.items]
+            for term in (entity.name, *entity.aliases, *entity.scoped_aliases)
+        }
+        for term, owner_ids in package.knowledge_indexes.leak_term_to_knowledge.items():
+            normalized_term = re.sub(r"\s+", " ", term.casefold()).strip()
+            if len(normalized_term.split()) <= 1 or normalized_term in entity_terms:
+                continue
+            owners = [package.knowledge_indexes.by_id[owner_id] for owner_id in owner_ids]
+            owner_first_scenes = [
+                min(scene_order[scene_id] for scene_id in owner.available_in_scenes) for owner in owners
+            ]
+            earliest_owner_scene = min(owner_first_scenes)
+            term_pattern = re.compile(rf"\b{re.escape(normalized_term)}\b")
+            for entry in package.knowledge.knowledge:
+                if not entry.audience.player_visible or entry.id in owner_ids:
+                    continue
+                entry_first_scene = min(scene_order[scene_id] for scene_id in entry.available_in_scenes)
+                if entry_first_scene >= earliest_owner_scene:
+                    continue
+                if any(
+                    term_pattern.search(re.sub(r"\s+", " ", text.casefold()).strip())
+                    for text in (entry.statement, entry.delivery_text or "")
+                ):
+                    findings.append(
+                        _finding(
+                            "earlier_scene_uses_later_owned_term",
+                            min(entry.available_in_scenes, key=scene_order.__getitem__),
+                            f"Term '{term}' appears in earlier entry '{entry.id}' and is owned by "
+                            f"{', '.join(owner_ids)}.",
+                        )
+                    )
+
     for frame in knowledge.get("scene_frames", []):
         scene_id = str(frame.get("scene_id"))
         situation = str(frame.get("situation", ""))
