@@ -36,20 +36,29 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    probe also measures the cost of curiosity); the billed run (about 350 neurons per arm) awaits Brandon's go. Open question for
    him after the run: move `transfer_window_1c` from turn 5 to 7 if exploring costs the choice. Known older quirk: `Watch the
    processing line for Michelle.` has no unique handoff (both captive reveals match it).
-4. **Next, in order:** (a) 1B candidate rerun (`candidate-run2`, billed, ask) and the 1C probe (billed, ask); (b) 1B leftover: the engine
-   appends delivery text after the narrator's own version of the same image; decide after the reruns. (c) Scenes 2A..3C.
-5. **Small owed follow-ups** (each a tests-first Ringer task): mark the 1A `lake_photograph` `fixed: true` (the narrator "moves" it
+4. **1C closeout landed (2026-11-02, branch `richer-narration-1c`).** Commits: `d5857830` (older 1C observations not voiceable),
+   the restatement commit (new audit check `delivery_restates_scene`, three delivery sentences rewritten, doc note), and the closeout
+   commit (optional reveals E, F, G `latest_turn` 3 to 4; engine tie-break in `uniquely_matched_authored_handoff`: among complete
+   matches the one with the most evidence groups wins, equal ones still deliver none; 3A reunion delivery now says the captives are
+   awake and the dose wears off). Measured blast radius of the tie-break over the whole story: two ambiguous pairs change (1C Michelle
+   glimpse, 2A `k_sl_2a_c_r5` over `k_sl_2a_b_r1`), six stay ties. Quick suite 4019 passed. The transfer window stays at turn 5
+   (the second 1C run showed the choice still works as the 5th command). Known and accepted: the narrator echoes the door beat
+   (text it is shown); no experiment run. Still open: prompt size on the 1C "Study the prisoners" turn is 6,373 characters (the 6,500 worst-case
+   cap is close); `bench/affordance_known_gaps.json` is stale.
+5. **Next, in order:** (a) the 1C rerun on the finished code (billed, authorized): variation `richer-1c-candidate-b`, output
+   `bench/results/richer-1c-probe/candidate-run3`; (b) 1B candidate rerun (`candidate-run2`, ask); (c) scenes 2A..3C.
+6. **Small owed follow-ups** (each a tests-first Ringer task): mark the 1A `lake_photograph` `fixed: true` (the narrator "moves" it
    in 3 of 4 replicates; harmless but recurring); replace the private `_matches_all` import in `storygame/runtime/knowledge.py` with a
    public helper from `candidate_matcher.py`; 1A keeps two older `beat_overprojection` findings (SL-1A-E earliest turn 1 against
    0 for its siblings); if the 1B probe shows invented photograph content, make held items keep a one-line depiction.
-6. **Scenes 2A, 2B, 2C, 3A, 3B, 3C** (six left). For each: read the scene in `plot.md`, write the richer beats (plot first,
+7. **Scenes 2A, 2B, 2C, 3A, 3B, 3C** (six left). For each: read the scene in `plot.md`, write the richer beats (plot first,
    plain names, plant a payoff for each plant, Details lines of 3 to 7 items, keep the turn ceiling), write acceptance tests first,
    then one Ringer propagation task whose spec states every priority (-1 for ambient reveals), the exact evidence groups, and the
    lessons below; review the patch for possessives and over-broad renames; run the whole suite; then preregister and run a probe.
    Planted payoffs so far: the looping broadcast (1A radio, 1B loudspeaker) pays off in 3B/3C; Brandon mouthing the words and
    the keypad he never looks at pay off when his role surfaces (2B); the clipboard and skipped houses pay off in 2B's selection
    list; the lemon-cake calendar is a candidate private proof in 3A or 3C; Officer Reyes could glimpse Kristin again at a checkpoint.
-7. **Still deferred:** refusing unknown ordinary things (blocked because item-facts capture runs after the turn is applied; the
+8. **Still deferred:** refusing unknown ordinary things (blocked because item-facts capture runs after the turn is applied; the
    measured upper bound is 3.4 percent of turns and falling as scenes are authored); compacting the item-matching prompt if a scene
    nears its budget; embellishment prompt work (step 3) and prop pools (step 4).
 
