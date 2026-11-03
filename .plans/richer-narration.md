@@ -10,6 +10,13 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
 
 ## Resume here (in order)
 
+0. **Term-ownership fix landed and verified live (2026-11-03), branch `fix-term-ownership` (`da51be00` tests, `d1aafb32` fix, not yet merged).**
+   Cause of the 1B run-2 rejections: "emergency statement" was a leak term owned only by the 1C entry `k_sl_1c_g_r1`, so 1A/1B narration echoing it was
+   rejected in real play. Fix: reworded that entry's `must_convey` to `[statement, broadcast]`, plus a story-agnostic audit finding
+   `earlier_scene_uses_later_owned_term`. Quick suite 4023 passed. Live check `bench/results/richer-1b-probe/candidate-run3`: 28/28 turns delivered, 0 rejected,
+   gate escape 4/4 (see the prereg's "Run 3"). Still open there: picnic/thermos repeated by delivery text, narrator recites reveals as Brandon's dialogue,
+   invented name "Shelly". After merge, merge `main` into `richer-narration-2a` (it has the 2A work and item 4b of this plan).
+
 1. **1B probe is run and read (2026-11-02); result is in `.plans/richer-1b-probe-prereg.md`.** Outcome: richness NOT supported yet and a
    defect found. The candidate never delivered the gate escape (0/4; baseline 3/4): every loss is `narration_known_term_leak` on
    "dead drop" (leak term of the 1A card reveal, unearned under the default `bare` bench entry; real-play effect is an unchecked hypothesis).

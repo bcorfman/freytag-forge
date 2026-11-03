@@ -125,3 +125,23 @@ max 5,173. Check these against how `tests/test_prompt_budget.py` measures the 5,
    the same thing twice.
 3. Keep a one-line depiction on held items (photograph) so the narrator stops describing Michelle's face.
 4. Make the candidate details earn more: give the picnic image a payoff (who sat there, what the cups connect to) or cut it to one line.
+
+## Run 3: candidate after the term-ownership fix (`fix-term-ownership`, `d1aafb32`)
+Output `bench/results/richer-1b-probe/candidate-run3`, 4 replicates, same script, entry state `bare`, 352 projected neurons, none failed.
+Every turn read. Not pooled with runs 1 or 2.
+
+**Headline: the rejection defect is gone.** 28 of 28 turns were delivered, 0 rejected, 0 guard retries (run 2 lost turns in 3 of 4 replicates).
+All four replicates delivered the gate escape (command 7: keypad ignored, latch freshly oiled), so Q3 now passes 4/4 (run 1 had 0/4).
+- Cache after command 2 (`k_sl_1b_d_r1`) 4/4; Brandon identified after command 5 (`k_sl_1b_b_r2`) 4/4; gate departure (`k_sl_1b_c_r1`) 4/4.
+- The phrase "emergency statement" now reaches the player in narrator prose without a rejection (rep 1 command 5, "the loudspeaker's emergency statement"),
+  and in all four delivery texts on command 4. This is the live confirmation of the fix.
+- Plain things resolved new: 1 in 28 turns (rep 4 command 5, "stranger"). Judges (not real signal, MDE 3.87): mean 6.0 (6, 5, 6, 7);
+  `rich` 1/4, `progressive` 3/4, the rest 4/4. Fact tracking: invented_change 0/28, missed_change 2, contradicts 1.
+
+**Defects still open (all narrator or delivery repetition, none a guard problem):**
+- The picnic image is delivered twice on command 1 in all four replicates (narrator version, then the authored line), and the thermos twin cup repeats on command 6.
+- Command 7: the narrator seats Kristin on the bench and has Brandon recite the reveal lines as dialogue in all four replicates, then the delivery text
+  follows; "Follow Brandon through the gate" reads as a bench conversation first.
+- Invented name "Shelly" for Michelle in reps 1, 2 and 4 (commands 2); rep 4 invents loudspeaker broadcast text on commands 2 and 5.
+- Rep 3 command 3 says the photographed man's face "is not familiar" and then the delivery says it is the face of the man following her.
+These are the follow-ups 2 to 4 above; none is a regression from the fix.
