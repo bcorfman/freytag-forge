@@ -90,6 +90,10 @@ all nine scenes; shared runtime must remain story-agnostic.
   (`c3bad43d`); the propagation task carries the 1A lessons (plain names, scoped aliases, exact evidence groups, aligned
   windows). Check the 1B photograph depiction in the next probe: a held item shows only "Held by", so what it shows must
   live in its name or reveal text.
+- **1B propagation partially landed, `e97be597`:** world, knowledge, routes, front matter and pins; the worker's priorities
+  (1, 30, 30) were wrong and are now -1. Remaining: `tests/test_richer_1b.py` thermos and stranger tests and
+  `test_hidden_bench_matcher_probe` wait on the evidence-ranking engine task (`tests/test_candidate_ranking.py`, committed
+  failing). After it lands: offline replay, then the 1B probe (`.plans/richer-1b-probe-prereg.md`).
 - Decisions taken 2026-11-02: 1A, 2A (refuse unknown ordinary things, measure slips first, only when
   the package declares a policy), 3A.
 - Ringer notes: the first run failed twice on my spec (a `notes.md` the check
@@ -111,6 +115,9 @@ Same list as the `richer-scene-checklist` memory. Apply to 1B through 3C.
 5. Prompt budgets are a test (`tests/test_prompt_budget.py`): narrator <= 5000 characters (worst case 6500), item-matching <= 3500, <= 30 listed things. Baseline: narrator 4.0 to 4.4k in all nine scenes, matcher 1.9 to 2.1k except 1A at 2.85k. The narrator sees only things the matcher resolved; the matcher lists every scene thing, so richer scenes grow it. If near the cap, compact the matching block and verify on the bench.
 6. Check the physical logic of every clue and that scene frames agree with the plot.
 7. Tests first, Ringer for code and tests, whole suite as the check, review each patch for possessives and over-broad renames.
+8. Optional ambient reveals use `relevance.priority: -1` and the spec says so; the projector offers four candidates ranked by established-and-mentioned, priority, id (and, once the ranking task lands, evidence match first). A worker's priorities of 1, 30 and 30 once crowded out story-critical reveals.
+9. A held item shows only "Held by" to the narrator: put what it shows in its name or reveal text.
+10. Probe each scene (preregistered baseline versus candidate, offline replay as smoke, every turn read).
 
 ## Step 3 proposal (needs Brandon's approval before any prompt edit)
 
