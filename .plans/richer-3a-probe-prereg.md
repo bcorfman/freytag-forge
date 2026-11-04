@@ -70,3 +70,65 @@ detail beyond the proof, later scenes (the loop plants pay off in 3B and 3C), ho
 know"), and every outbound channel is watched (2C monitor light), so the broadcast must be forced from Rebecca's office. 3B can use
 Brandon's ease at readers when he opens doors on the climb. The supervisor on Rebecca's purge list (a payoff for the 2A alarm log) is
 still not covered.
+
+## Result (run 2026-11-03/04, branch `richer-narration-3a`, commit `0606fa9c`)
+Outputs `bench/results/richer-3a-probe/{baseline,candidate}` (gitignored), 4 replicates each, none failed, 880 projected neurons. Every
+turn of both arms read by hand (scratchpad reports, not in the repo). Replicates reported separately; the judge scores are not real signal
+at 4 replicates (candidate 4.75 against baseline 3.0 of 7, `rewards_investigation` 4/4 against 0/4, but the gap is inside the interval). The
+candidate had one malformed narration segment that the transport dropped and logged, and one rejected turn (below).
+
+**Headline: richness is supported on the 3A path. 15 of 16 detail commands delivered on the command that asks for them, the baseline's
+invented material around those four things is gone, and the existing path did not regress. Four defects are open: the keypad
+contradiction in the reader reveal, echoes, one rejected proof turn, and a required-path flake that predates this change.**
+
+- **Q1 Invented material.** Plain things resolved new: baseline 10 in 36 turns (wrist tags 2, checkpoint reader 4, prisoners 2, armored
+  teams 2), candidate 5 in 35 (prisoners 2, armored teams 2, uprising 1), all of the candidate's on the uprising turn, none from the four
+  details. What the narrator made up where nothing was authored (baseline): tags "encrypted" or "a mix of names, numbers, and codes" (3/4);
+  the stolen radio speaking as "Phoenix-1" or "Dr. McGehee" with a location (4/4); a made-up shared memory of baking a lemon cake, which
+  Michelle then dismisses with "no time" (4/4, so the baseline wrongly answers the question the proof exists for); the reader as "a metal
+  box with a glowing screen" and, once, a keypad (4/4). Candidate: radio invention once (replicate 3: "Echo-1, Sierra-7, Bravo-3"), none
+  for tags or the proof, and the reader problem below. The opening still invents an unnamed woman in the rows in both arms (baseline "a scar
+  above her left eyebrow" 4/4; candidate "mouths 'not yet'" 3/4); same fault, older than this change.
+- **Q2 Delivered when earned.** Wrist tags (command 2) 4/4; loop in the radios (command 3) 4/4; Michelle's proof (command 5) 3/4, the
+  fourth turn REJECTED (`missing_knowledge_content`, "does not convey: Saturday": the narrator's own text omitted Saturday, so the player's
+  command got no answer); checkpoint reader (command 7) 4/4. All three variants fired every time they were due (sensor fault 4/4, ninety
+  seconds 4/4, "the same ease he showed at the gate" 4/4). No reveal went to a different entry.
+- **Q3 No regression.** Reunion (`k_sl_3a_a_r1`) 4/4 and the medical level (`k_sl_3a_b_r2`) 4/4 in both arms. The framed official
+  (`k_sl_3a_d_r1`, command 6) landed in 1 of 4 replicates in the baseline AND 1 of 4 in the candidate; the uprising (`k_sl_3a_c_r1`) 1 of 4
+  in both arms. Both reveals were offered every time (D was in the offer in all eight rows); the engine found no unique authored handoff
+  and the narrator did not pick them. The scene was left by an earned transition in 1 of 4 baseline replicates and 0 of 4 candidate ones,
+  but both are the same flake (the one baseline exit is the one replicate where D and C both landed; the candidate's one replicate with
+  both ran 8 commands because of the rejected turn). **This flake predates 3A and is not caused by it, but it means this script cannot
+  measure the 80 percent exit bar.**
+- **Q4 Value.** Wrist tags: strongest. It answers 2B's "who held the transfers" and "why are these people alive", pays off the 2C cart tags,
+  and the baseline's fake "encrypted" text is replaced. Loop in the radios: pays off the loops of 1A to 1C, replaces invented radio
+  voices, and plants "when it stops, everyone will know"; the narrator never contradicted it. Michelle's proof: does its job (the
+  baseline invented the wrong memory); when it lands, Kristin's doubt is answered and the player is told why. Reader: pays off the
+  badge checks, but see defect 1. Candidate narration is longer than baseline on those turns because the delivery text is appended.
+  Narrator quirks seen: Michelle's reply "comes through the radio" in 3 of 3 proof turns although she stands beside the captives
+  (minor); Brandon "standing in front of the reader" is fine.
+
+### Open defects (cures known or proposed; nothing is changed yet)
+1. **Keypad contradiction, reader reveal, 3/4.** The narrator's lead-up writes Brandon "with his eyes fixed on the keypad", then the
+   delivery says "Brandon never looks at the keypad". Cause: the statement and delivery name the keypad, and the narrator also invents
+   one on its own (baseline once). Proposed cure, subtractive: take "keypad" out of the statement, `must_convey` and the delivery
+   ("The checkpoint door opens on the first pass. Michelle's people watch Brandon instead of the door."), keeping the 1B payoff only in a
+   variant for a player who saw Brandon ignore the keypad if such a fact exists.
+2. **Echo.** The narrator writes the revealed content, then the engine's delivery repeats it: wrist tags 2/4 (the date and the code),
+   radios 1/4 (ninety seconds), proof 1/4 (the answer written out twice). Brandon asked for no echo in 1C and 2B. The cure used there
+   was to move the repeated content into the thing's placement text or Details line and keep only what is new in the delivery; here
+   that means the tags' placement carrying the shared date, with the delivery giving Michelle's line and the code. Needs a re-probe
+   because the 1C data showed the cure leaves about 2 in 8.
+3. **Rejected proof turn, 1/4.** `must_convey` for the proof is three groups ([lemon cake], [Saturday], [birthday]) and the narrator
+   must say all of them. Proposed: two groups, [lemon cake] and [Saturday, birthday].
+4. **Required-path flake (older than 3A).** The framed official and the uprising reveals hand off in 1 of 4 replicates in BOTH arms
+   although they are offered. Worth its own diagnosis (run the exact turns offline and compare the candidate list with the matcher's
+   result); it hides the exit bar and the earned-transition rate for the whole scene.
+
+### Prompt lengths
+Narrator prompt (system 2,527 plus user), longest per command: candidate 4,867 / 5,726 / 5,716 / 5,551 / 5,859 / 5,867 / 7,842 / 7,634 /
+10,026 characters; baseline 4,825 / 6,057 / 5,557 / 5,524 / 5,805 / 5,867 / 6,545 / 6,714 / 8,473. 31 of 35 candidate turns and 32 of 36
+baseline turns are over 5,000, so the line does not discriminate for a nine-command script: the user section carries the recent
+narration, and the candidate's longer replies (delivery text appended) grow it by up to 1,500 characters by command 7. The static
+budget test (`tests/test_prompt_budget.py`) passes. If that growth matters, compact what the narrator is shown of earlier turns; this
+is not a 3A-specific change.

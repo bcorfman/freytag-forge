@@ -28,6 +28,11 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    `richer-3a-baseline` (`bench/frozen/continuity-pre-richer-3a/`, from `e28473a1`) and `richer-3a-candidate`, script `richer-3a-detention`
    (nine commands), about 440 neurons per arm. **Next:** Brandon runs the two `bench run` commands (billed), I read every turn, then the 3A PR
    (merge only on his word); then 3B, 3C.
+   **Probe run and read (2026-11-04): richness supported** (result in the prereg). Details delivered 15/16 on their commands, invented
+   material around the four things gone (plain things new 10 -> 5, none from the details), no regression attributable. Open: reader
+   keypad contradiction 3/4, echoes (tags 2/4, radios 1/4, proof 1/4), proof turn rejected 1/4 (`must_convey` Saturday), and an OLDER
+   flake: the framed-official and uprising reveals hand off in only 1 of 4 replicates in BOTH arms, which hides the exit bar. **Next:**
+   Brandon's decision on the fixes and on diagnosing the flake; then the 3A PR; then 3B, 3C.
 
 000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on
