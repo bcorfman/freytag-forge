@@ -40,6 +40,10 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    synthetic commands change, all from no handoff to one reveal). Tests `tests/test_handoff_typed_tiebreak.py`, `tests/test_richer_3a.py`.
    Quick suite 4133 passed, 31 skipped. Details in the prereg's Amendment 1. **Next:** Brandon's go on the candidate-only re-probe
    (about 440 neurons), then the 3A PR; then 3B, 3C.
+   **Re-probe run and read (2026-11-04, `candidate-run2`):** flake fixed (official and uprising 4/4, scene left by the earned transition
+   4/4), no rejected turns, keypad contradiction gone, echo gone on tags, radios and reader; ONE residual: the proof echoes in 2/4
+   (the narrator writes the two closing sentences, then the delivery repeats them). Cure options in the prereg. **Next:** Brandon's call on
+   the proof echo, then the 3A PR (merge only on his word); then 3B, 3C.
 
 000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on

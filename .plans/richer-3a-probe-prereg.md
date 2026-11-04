@@ -162,3 +162,30 @@ Each fix was compared with the plan and the earlier scene fixes before it was bu
 Re-probe not yet run. Proposed (needs Brandon's go, about 440 neurons): the candidate arm only, same script, as `candidate-run2`, not
 pooled. Questions: echo on the tags, radios and proof; the reader contradiction; the proof turn rejected; the official on command 6 and the
 uprising on command 8, and the scene exit on command 9 in at least 3 of 4 replicates; narrator prompt length against the first run.
+
+### Amendment 1 result (candidate-run2, 2026-11-04, `bench/results/richer-3a-probe/candidate-run2`, 440 neurons, commit `69f229ff`)
+4 replicates, none failed, 0 rejected turns, every turn read. Not pooled with the first run; the baseline is unchanged and not rerun.
+
+- **Flake: fixed, 4/4.** The framed official (command 6) and the uprising (command 8) handed off in all four replicates (first run 1/4 in both
+  arms), and all four replicates left the scene by the earned transition on command 9 (first run 0/4, baseline 1/4). The 80 percent exit
+  bar is met for this script.
+- **Rejected proof turn: gone.** 0 rejected turns; the proof landed on command 5 in 4/4 (first run 3/4).
+- **Keypad contradiction: gone, 0/4.** The narrator describes the reader as "a small device beside the door at the top of the block"; the
+  delivery adds only that it clears on the first pass and that Michelle's people watch Brandon. No lead-up contradicts it.
+- **Echo: fixed for the tags, radios and reader; residual on the proof, 2/4.** Tags: the narrator writes the shared date from the
+  placement text and the delivery adds the code and Michelle's line, nothing twice (first run 2/4 echoed). Radios: the narrator writes
+  "the facility's own message on repeat" from the placement text and the delivery adds the ninety seconds and the coded words (first run
+  1/4). Reader: no echo. Proof: replicates 2 and 3 write Michelle's answer ("I'm sorry I missed your birthday. The facility never saw
+  that wall.") and then the delivery repeats those two sentences word for word (first run 1/3). Replicates 1 and 4 are clean.
+- **Invented material.** Plain things new: 1 in 36 turns (`prisoners`, command 9, replicate 4; first run 5, baseline 10). The radio's
+  broadcast content is still invented but now matches what the reveal says (a monotone voice reading orders); once an invented
+  "Brandon whispers: we need to find Michelle" lead-up (harmless).
+- **Prompt length.** Longest narrator prompt per command, in characters: 4,825 / 6,137 / 6,120 / 5,923 / 6,434 / 6,484 / 7,772 / 7,916 /
+  10,248 (first run 4,867 / 5,726 / 5,716 / 5,551 / 5,859 / 5,867 / 7,842 / 7,634 / 10,026). Removing the Details additions did not shrink
+  it: the growth is the conversation history that carries the longer replies, and the placement text adds a few hundred characters to
+  the turns that name those things. The static budget test passes. Unchanged conclusion: this is not 3A-specific.
+
+Remaining, open: the proof echo (2/4). Cure options, none applied: (a) drop "She says she is sorry she missed the birthday. The facility
+never saw that wall." from the delivery and keep only "gets every detail right: the day, the circle, the lemon cake", leaving the
+sentiment to the narrator (the narrator writes it anyway when it speaks for Michelle); (b) the engine change that keeps quiet reveals'
+delivery text away from the narrator (needs Brandon's go and its own probe).
