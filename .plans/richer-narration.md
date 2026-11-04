@@ -53,6 +53,14 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    candidates, placement lines that repeat the name dropped, each speaker set named once. Entry prompts 7 to 21% smaller (3B 2,674 to 2,118),
    deep 3A 5,320 to 4,430. Quick suite 4147 passed. **Next:** Brandon's go on `candidate-run3` (3A, about 440 neurons) and a one-replicate
    1A smoke, now also reading the turns where a participant dropped out (1C, 2B, 3A start); then the 3A PR; then 3B, 3C.
+   **Re-spotting diagnosed (2026-11-04, prereg Amendment 4, `bench/results/richer-3a-probe/{diag-*,fmt-*}`):** run3's "She spots Michelle" on
+   the proof turn was caused by my nested speaker header, not by the trimmed delivery (old format 16/16 call out; nested 0/6; one line
+   per statement 4/6; Michelle's lines only 0/6). Tried to keep the size: speakers limited to the one the command names (failed, 0/6),
+   limited to present or named (kept, 6/6, but saves nothing in 3A, the official is present), SCENE dedup (command 5 kept, but command 4 re-spotted
+   Brandon 5/6; dropped). **Built (`c339081a`, tests first `68972abb`): the old one line per speaker per statement, speakers listed only
+   when present or named by the command (Brandon: keep the limit even though it saves nothing in 3A); the nested header is gone.** Quick suite
+   4145 passed, 32 skipped. Other cuts kept (pick rules, placement repeats, characters by presence). **Next:** a 3A re-probe (about 440
+   neurons, Brandon's go) to recheck commands 4, 8, 9 and the "looks around" openers; defect 2 (opening look-alike) is still open.
 
 000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on

@@ -400,3 +400,10 @@ old format without the dedup** (Fisher p about 0.08). Removing the scene stateme
 Brandon on command 4; the narrator seems to take SCENE statements as what has already happened. Not adopted.
 Decision (Brandon, same day): build the old per-speaker format with speaker lines limited to speakers who are present or named by the
 command, "even if it doesn't help in this case". Measured safe on command 5: 16 of 16 across the three old-format arms.
+
+### Amendment 4, part 10: what was built (2026-11-04)
+Commits `68972abb` (failing tests, `tests/test_speaker_lines.py`, replacing the nested-header tests) and `c339081a` (Ringer, one attempt,
+44,033 tokens): `_speaker_constraint_lines(speakers, player_input)` writes one line per speaker per statement, "<name> may say this aloud:
+<statement>", for speakers who are present or named by the command; the nested header and the grouping are gone. Quick suite 4145 passed,
+32 skipped, ruff clean. The size saving of the nested header is given up (about 1,100 characters on command 5, speaker-heavy turns); the
+other Amendment 3 cuts stay. Not yet re-probed: a full 3A run (about 440 neurons) to check commands 4, 8 and 9 and the openers.
