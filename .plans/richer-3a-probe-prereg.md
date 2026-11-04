@@ -255,3 +255,29 @@ The Amendment 2 "not changed" note is superseded: a statement that names an abse
 Still open: relevance-to-the-command trimming of earned statements was NOT built (every earned statement in 3A concerns people in the
 scene, so an entity rule would remove almost none; it would need command or recency relevance and could cost narration quality).
 The re-probe below now also checks the narrator on turns where a participant dropped out (1C, 2B, 3A start).
+
+### Amendment 3 result (candidate-run3 and the 1A smoke, 2026-11-04, commit `ad5c9785`)
+`bench/results/richer-3a-probe/candidate-run3` (440 neurons, 4 replicates, none failed, 0 rejected turns, every turn read; not pooled) and
+`bench/results/richer-1a-probe/smoke-trim` (88 neurons, 1 replicate, 7 turns, 0 rejected, every turn read).
+
+- **Prompt size, measured on the recorded prompts:** the largest user prompt per replicate fell from 7,721 / 7,498 / 5,946 / 5,946
+  (run2) to 3,992 / 4,015 / 4,212 / 4,015 (run3), about 45% smaller at the tail. Entry turn 2,298 to 2,144.
+- **Exit and handoffs:** scene left by the earned transition on command 9 in 4/4; the same eight reveals landed by handoff in every
+  replicate as in run2. All eight deliveries were present and unrepeated in 4/4.
+- **Proof echo cured: 0/4** (was 2/4 in run2). Every replicate says "Michelle answers without a pause and gets every detail right:
+  Saturday, the circle, the lemon cake." once, with a lead-in that only has Kristin ask.
+- **Participants that dropped out (Rebecca, Charles in 3A):** no turn missed them. Charles reaches the narrator only through
+  delivery text (commands 6 and 9) and nothing misnamed him. Michelle is present in 3A, so the 1A risk was checked on the smoke instead.
+- **1A smoke:** Michelle is introduced by the objective; the narrator never lost who she is (phone, tablet and bag, birthday calendar,
+  memory card all landed, the neighbor beat delivered). Judge: 1 contradiction, 1 acts-beyond-command of 7 turns (not traced).
+- **Open, found in this run (none caused by a known change; read before the PR):**
+  1. *Re-spotting.* "She spots Michelle/Brandon" (as though newly seen) in 7 of 36 turns (baseline 0, first candidate 3, run2 2) and
+     "looks around / stands in" openers in 15 of 36 (7, 7, 10). The continuity judge flagged scene restarts 3/36 (run2 0/36), each
+     the narrator re-spotting a character already in the scene (replicate 1 command 9; replicate 4 commands 5 and 8). Could be this
+     run's prompt cuts or noise at n=36; the cuts changed only the rules block, the speaker lines and Characters, so a one-change A/B is
+     the way to tell.
+  2. *Opening look-alike.* The opening narration invents "a woman with a scar above her left eyebrow" in all arms; in the candidate arms
+     it then says "it's not Michelle" (run1 3/4, run2 2/4, run3 2/4; baseline 0/4) and the authored line "Michelle speaks into a stolen
+     radio" follows. Present before today's cuts, so not from them.
+  3. *Reader keypad.* The narrator invented "a keypad" on the checkpoint reader in 1/4 (run1 4/4, run2 0/4); minor invention.
+  4. *Invented line.* Replicate 3 command 8: the official says "We need to wait for the signal from Dr. McGehee" before the authored line.
