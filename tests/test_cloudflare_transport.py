@@ -1728,7 +1728,9 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     assert provider.last_projection is not None and provider.last_projection.candidates == ()
     quiet_prompt = payloads[-1]["user"]
     assert "This turn has no candidates." in quiet_prompt
-    assert "When one or more offered candidates match the player's action, randomly pick one candidate" in quiet_prompt
+    assert (
+        "When one or more offered candidates match the player's action, randomly pick one candidate" not in quiet_prompt
+    )
     assert '"grounding_ids":[' not in payloads[-1]["system"]
     assert '"selected_knowledge_ids":[]' in payloads[-1]["system"]
 

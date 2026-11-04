@@ -957,13 +957,15 @@ class CloudflareTurnProvider:
         )
         if handoff_turn:
             selection_rules: list[str] = []
-        else:
+        elif candidates:
             selection_rules = [
                 (
                     "When one or more offered candidates match the player's action, randomly pick one candidate "
                     "from that list and put its ID in selected_knowledge_ids."
                 ),
             ]
+        else:
+            selection_rules = []
         no_candidate_rule = "This turn has no candidates. Leave selected_knowledge_ids empty."
         if not handoff_turn and not candidates:
             selection_rules.append(no_candidate_rule)
@@ -987,12 +989,10 @@ class CloudflareTurnProvider:
             *self._turn_rules_before_grounding(),
             *(self._authored_handoff_rules() if handoff_turn else ()),
             *(
-                (
-                    "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
-                    "Do not put a candidate's ID in grounding_ids unless you picked it.",
-                )
+                ["In grounding_ids, use only an ID you were given as known, or the one candidate you picked."]
+                + (["Do not put a candidate's ID in grounding_ids unless you picked it."] if candidates else [])
                 if model_grounding
-                else ()
+                else []
             ),
             self._turn_grounding_rule(),
             *selection_rules,
@@ -1087,7 +1087,7 @@ class CloudflareTurnProvider:
         rules = []
         for item_id, (item, placement) in self._visible_placed_items(world).items():
             text = self._placement_text(item_id, placement, world)
-            if text is not None:
+            if text is not None and not item.name.casefold().endswith(text.casefold()):
                 rules.append(f"{item.name} is {text}.")
         return rules
 
