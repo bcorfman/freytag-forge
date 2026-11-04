@@ -1,7 +1,7 @@
 # Richer narration with bounded invention
 
-Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C, 2A, 2B and 2C are merged to main (2C as PR #750, merge commit
-`7186e9aa`). Next is scene 3A on branch `richer-narration-3a`. Whole quick suite at the 2C merge: 4100 passed, 31 skipped. The full suite with
+Status: in progress. Last updated 2026-11-03. 1A, 1B, 1C, 2A, 2B and 2C are merged to main (2C as PR #750, merge commit
+`7186e9aa`). Scene 3A is built and preregistered on branch `richer-narration-3a` (probe awaits Brandon). Whole quick suite at the 2C merge: 4100 passed, 31 skipped. The full suite with
 coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
@@ -20,7 +20,14 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    `lemon_cake_calendar_read` to `k_sl_1a_g_r2`, the only existing entry touched), Brandon at the checkpoint reader (opens it first pass
    without looking at the keypad; pays off 1B keypad and the 2A/2B badge checks). Windows 0/8/9, priority -1, not voiceable. Ringer task
    `3a-richer-scene` (`manifest_3a_data.json`, check `check_3a_data.sh`, run name `richer-narration-3a`). Not covered: the supervisor on the
-   purge list. **Next:** review the patch, apply, run the suite, preregister and probe 3A; then 3B, 3C.
+   purge list.
+   **Propagated and preregistered (2026-11-03):** patch applied and committed (Ringer task passed on attempt 2); I tidied two padded
+   deliveries (a filler sentence, "repeating message on repeat") and reverted the worker's hack in `tests/test_hidden_bench_prose_probe.py`.
+   Quick suite on the branch: 4127 passed, 31 skipped; ruff clean. The G entry carries an empty `leak_terms` list (the worker's choice so
+   "stolen radio" stays safe before the reveal is earned). Probe preregistered in `.plans/richer-3a-probe-prereg.md`; arms
+   `richer-3a-baseline` (`bench/frozen/continuity-pre-richer-3a/`, from `e28473a1`) and `richer-3a-candidate`, script `richer-3a-detention`
+   (nine commands), about 440 neurons per arm. **Next:** Brandon runs the two `bench run` commands (billed), I read every turn, then the 3A PR
+   (merge only on his word); then 3B, 3C.
 
 000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on
