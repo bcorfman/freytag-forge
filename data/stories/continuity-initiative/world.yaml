@@ -161,6 +161,9 @@ groups:
 - id: captives
   name: detention captives
   scoped_aliases: [prisoners, prisoner, captives, captive]
+- id: corridor_guards
+  name: corridor guards
+  scoped_aliases: [guards, guard]
 items:
 - id: memory_card
   name: Michelle's memory card

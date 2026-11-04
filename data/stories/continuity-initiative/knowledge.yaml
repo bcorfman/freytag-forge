@@ -2217,7 +2217,7 @@ knowledge:
     text: >-
       Kristin heads to the uplink and starts sending the copied files.
       The detention sectors seal.
-      A maintenance ticket scrolls up the uplink's status panel. It has the ticket header Kristin matched in the archive, and the same closing code, sensor fault.
+      A maintenance ticket scrolls up the uplink's status panel with the archive header and the code sensor fault.
       Michelle's route leads to Rebecca's secured office.
       The office can broadcast the evidence and open the detention cells.
 - id: k_sl_2c_d_r4
@@ -2277,7 +2277,7 @@ knowledge:
     text: >-
       Kristin heads to the transfer carts and frees a cart of captives.
       The evidence is not transmitted.
-      A maintenance ticket scrolls across the cart's latch display. It has the ticket header Kristin matched in the archive, and the same closing code, sensor fault.
+      A maintenance ticket scrolls across the cart's latch display with the archive header and the code sensor fault.
       Michelle's route leads to Rebecca's secured office.
       The office can broadcast the evidence and open the detention cells.
 - id: k_sl_2c_f_r1
@@ -2360,11 +2360,8 @@ knowledge:
   source: {kind: storylet_realization, storylet_id: SL-2C-H, realization_id: SL-2C-H-R1}
   relevance: {entity_ids: [monitor_light], priority: -1}
   must_convey:
-  - [monitor light, status light]
-  - [one outbound channel]
   - [seen]
-  delivery_text: >-
-    The monitor light beside the uplink burns steady amber over its one outbound channel: the facility's eye on its own traffic. Whatever goes out will be seen.
+  delivery_text: Whatever goes out will be seen.
 - id: k_sl_3a_a_r1
   statement: 'Kristin reaches Michelle alive, and the two share one unhurried moment before Michelle returns to directing prisoners through stolen radios and coded announcements.'
   earn_when: "finds Michelle in detention, frees the captives, or helps Michelle"

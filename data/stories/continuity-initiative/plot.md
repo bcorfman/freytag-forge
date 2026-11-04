@@ -606,7 +606,7 @@ item_placements:
   copied_janus_files: {parent: kristin}
   broadcast_uplink: {parent: purge_chamber, text: at the end of the command corridor}
   transfer_carts: {parent: purge_chamber, text: at the other end of the command corridor}
-  corridor_camera: {parent: purge_chamber, text: over the guards at the near end of the command corridor, its lens held on Brandon}
+  corridor_camera: {parent: purge_chamber, text: "over the guards at the near end of the command corridor, its lens held on Brandon"}
   monitor_light: {parent: purge_chamber, text: burning steady amber beside the one outbound channel on the broadcast uplink}
   cart_tags: {parent: purge_chamber, text: on the rails of the transfer carts}
 character_placements:
