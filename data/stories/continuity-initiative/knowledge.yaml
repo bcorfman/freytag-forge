@@ -2736,7 +2736,7 @@ knowledge:
     text: >-
       It is the same ninety seconds Kristin timed on the truck radio. Michelle's coded words ride inside it and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
 - id: k_sl_3a_h_r1
-  statement: "Michelle answers a private question about the kitchen calendar without a pause."
+  statement: "Michelle answers a question about the kitchen calendar that the facility never saw."
   aliases: [Michelle private proof]
   voiceable: false
   earn_when: asks Michelle about the lemon cake or the calendar
@@ -2763,7 +2763,7 @@ knowledge:
   - [lemon cake]
   - [Saturday, birthday]
   delivery_text: >-
-    Michelle answers without a pause and gets every detail right: the day, the circle, the lemon cake. She says she is sorry she missed the birthday. The facility never saw that wall.
+    Michelle answers without a pause and gets every detail right: Saturday, the circle, the lemon cake.
 - id: k_sl_3a_i_r1
   statement: "Brandon opens the checkpoint reader on the first pass."
   aliases: [checkpoint opened]

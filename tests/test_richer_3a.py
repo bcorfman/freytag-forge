@@ -169,7 +169,7 @@ def test_the_new_reveals_are_quiet_short_and_exact():
             ),
             [],
             ("kristin", "michelle"),
-            ("lemon cake", "birthday"),
+            ("lemon cake", "saturday"),
         ),
         "k_sl_3a_i_r1": (
             "checkpoint_opened",
@@ -218,6 +218,10 @@ def test_the_probe_defects_are_cured_at_the_source():
     assert all("coded words" in variant.text.casefold() for variant in loop.delivery_variants)
     proof = entries["k_sl_3a_h_r1"]
     assert "Saturday, circled, K, lemon cake" not in proof.delivery_text
+    # Echo: the narrator writes Michelle's feeling itself (2 of 4 replicates), so the delivery says only that the details are right.
+    proof_text = proof.delivery_text.casefold()
+    assert not any(word in proof_text for word in ("sorry", "wall", "missed", "facility"))
+    assert "never saw" in proof.statement and "kitchen calendar" in proof.statement
     # Rejected turn: the narrator must carry the cake and one of the day or the birthday, not all three words.
     assert [list(group) for group in proof.must_convey] == [["lemon cake"], ["Saturday", "birthday"]]
     # Contradiction: the narrator invents a keypad stare, so the reveal must not name the keypad at all.
