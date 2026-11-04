@@ -1558,8 +1558,7 @@ knowledge:
   - [Brandon]
   - [door]
   delivery_text: >-
-    Brandon stands at the top of the stairs with his back to the processing line. He watches the door.
-    When Kristin looks at him, he says, "Somebody has to watch the door."
+    Brandon says only, "Somebody has to watch the door."
 - id: k_sl_1c_g_r1
   statement: "A speaker below plays the park's emergency statement."
   voiceable: false
@@ -2049,7 +2048,6 @@ knowledge:
   delivery_text: >-
     In the build record, the access section lists what the badge readers check.
     There are three checks, the same three Brandon said he knew at the gate.
-    Brandon watches her read and says nothing.
 - id: k_sl_2b_f_r1
   statement: Dozens of prisoner transfers are held under sensor fault tickets.
   voiceable: false

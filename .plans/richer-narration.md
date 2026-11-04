@@ -2,7 +2,7 @@
 
 Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C and 2A are merged to main (2A as PR #748). Scene 2B is built and
 probed on branch `richer-narration-2b` (last commit `323dc607`, nothing uncommitted); the PR is NOT open yet. Whole quick suite on that branch:
-4070 passed, 30 skipped. The full suite with coverage has NOT been run; run it once at the very end.
+4074 passed, 30 skipped. The full suite with coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
 Claude drafts it richer scene by scene, `plot.md` first, settling story problems itself and reporting afterwards. Steps 1 and 2 of
@@ -24,9 +24,8 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    **Delivery repeat: fixed (2026-11-03, Brandon approved).** `k_sl_2b_b_r4`/`r5` no longer restate the file pull or the build-record line that
    `k_sl_2b_a_r1` always delivers first (the repo's "send the narrator each fact once" rule). Their `must_convey` lost the two restating groups; an
    explicit `leak_terms` list keeps every vocabulary term they guarded (such as "left behind as bait") guarded in earlier scenes; the `act2_probe.py`
-   scripted copies match. Tests `tests/test_2b_delivery_repeat.py` (tests-first commit `24463175`). Quick suite 4070 passed, 30 skipped. NOT re-probed
-   live (the fix is subtractive; a re-probe would cost about 350 neurons per arm). Left alone: the badge-checks delivery's last sentence still
-   duplicates the narrator's beat (known and accepted, as in 1C).
+   scripted copies match. Tests `tests/test_2b_delivery_repeat.py` (tests-first commit `24463175`). Quick suite 4074 passed, 30 skipped. NOT re-probed
+   live (the fix is subtractive; a re-probe would cost about 350 neurons per arm). **Echo fixes (2026-11-03, Brandon: "I don't want any echo on either scene"; tests-first `b0d4ae11`).** The narrator is shown the delivery text on a reveal turn and copies it, so the engine then repeats it. Probe, 8 replicates per arm, every narration read (scratchpad only, not in the repo): 2B badge checks, closing sentence "Brandon watches her read and says nothing" doubled 8/8 -> dropped it, 0/8. 1C door (`k_sl_1c_f_r1`): original doubled stance and quote 8/8; quote-only delivery left the lead-up ignoring Brandon in 7/8 ("him" with no referent); stance-only delivery doubled the stance 8/8; indirect speech and "turns his head" wording made the narrator ignore Brandon 7/8 and 8/8. **Chosen:** the delivery is only `Brandon says only, "Somebody has to watch the door."` and the stance moved into the 1C.2 Details line ("Brandon at the top of the stairs with his back to the processing line, watching the door"), the same technique as the pallets fix. Probe: stance never doubled, quote doubled 2/8; live confirmation on the real package 0/4 doubled, narrator follows "Watch Brandon" 4/4. **Residual 1C echo is possible (about 2 in 8)**; zero needs an engine change (not showing quiet reveals' delivery text to the narrator), which would touch 14 of 79 deliveries (1A 1, 1B 3, 1C 3, 2A 4, 2B 3; none in 2C, 3A to 3C) and narrows the "narrator sees its own delivery" exception, so it needs Brandon's go and its own probe first. Open: in one live 2B replicate the narrator missed "held, week" for `k_sl_2b_f_r1` (rejected turn; unrelated to this change; it delivered 4/4 in the original probe).
    **Next:** open the 2B PR (merge commit, only on his per-PR instruction), then merge `main` and start 2C.
    Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header and closing code; 3A uses the
    held transfers (captives still alive because transfers were delayed); 3B/3C can surface Brandon's badge-reader knowledge when he opens doors.

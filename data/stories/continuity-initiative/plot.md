@@ -345,7 +345,7 @@ Brandon points Kristin toward the observation shaft. He asks her to study the pe
 
 ### Scene 1C.2 — Proof of the Captives
 
-**Details:** observation shaft; sedated prisoners; processing line; identification numbers; woman resembling Michelle; service entrance; Brandon watching the door
+**Details:** observation shaft; sedated prisoners; processing line; identification numbers; woman resembling Michelle; service entrance; Brandon at the top of the stairs with his back to the processing line, watching the door
 
 Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she glimpses a woman who could be her. Her face slips from sight before Kristin can be certain. The transfer is still moving.
 
