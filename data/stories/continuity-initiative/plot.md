@@ -711,10 +711,10 @@ item_ids: [copied_janus_files, override_codes, stolen_radio, gate_status_panel, 
 item_placements:
   copied_janus_files: {parent: kristin}
   override_codes: {parent: senior_official}
-  stolen_radio: {parent: detention_level}
+  stolen_radio: {parent: detention_level, text: "tuned to the facility's own message, played on repeat"}
   gate_status_panel: {parent: detention_level}
   emergency_surface_gates: {parent: facility_escape}
-  wrist_tags: {parent: detention_level, text: on the wrists of the captives}
+  wrist_tags: {parent: detention_level, text: "on the wrists of the captives, each stamped with the same transfer date, a week old"}
   checkpoint_reader: {parent: detention_level, text: beside the checkpoint door at the top of the block}
 character_placements:
   captives: {parent: detention_level}
@@ -798,7 +798,7 @@ Michelle hands Kristin the stolen radio. Kristin gives the signal. Coordinated d
 
 The uprising succeeds initially, but Charles seals the primary exits and redirects armed response teams toward the detention levels.
 
-At the first checkpoint the door still answers to a guard's badge. Brandon does not wait for one. He runs a card through the reader, never glances at the keypad, and the door opens on the first pass. Michelle's people watch him instead of the door. It is the same ease he showed at the facility gate, when he said the readers check only three things.
+At the first checkpoint the door still answers to a guard's badge. Brandon does not wait for one. He runs a card through the reader, and the door opens on the first pass. Michelle's people watch him instead of the door. It is the same ease he showed at the facility gate, when he said the readers check only three things.
 
 Kristin, Michelle, and Brandon must fight upward toward Rebecca’s office while the prisoners hold the lower levels.
 

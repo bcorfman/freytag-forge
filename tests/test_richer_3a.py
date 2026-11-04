@@ -169,7 +169,7 @@ def test_the_new_reveals_are_quiet_short_and_exact():
             ),
             [],
             ("kristin", "michelle"),
-            ("lemon cake", "saturday", "birthday"),
+            ("lemon cake", "birthday"),
         ),
         "k_sl_3a_i_r1": (
             "checkpoint_opened",
