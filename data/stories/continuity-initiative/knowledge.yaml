@@ -79,6 +79,16 @@ facts:
   purpose: Kristin has read the three checks listed in the build record's access section.
 - id: held_transfers_seen
   purpose: Kristin has seen the prisoner transfers held under repeated sensor fault tickets.
+- id: wrist_tags_read
+  purpose: Kristin has read the wrist tags showing the captives were due out a week ago.
+- id: radio_loop_known
+  purpose: Kristin knows Michelle's coded words ride inside the facility's repeating message.
+- id: michelle_private_proof
+  purpose: Michelle has answered Kristin's private question about the kitchen calendar.
+- id: checkpoint_opened
+  purpose: Kristin has watched Brandon open the checkpoint reader on the first pass.
+- id: lemon_cake_calendar_read
+  purpose: Kristin has read the lemon cake note on the kitchen calendar.
 - id: corridor_watch_lifted
   purpose: The corridor camera has returned from watching Brandon to its normal sweep.
 - id: uplink_eye_seen
@@ -478,6 +488,9 @@ knowledge:
     value: true
   - op: assert
     fact_id: michelle_abduction_suspicion
+    value: true
+  - op: assert
+    fact_id: lemon_cake_calendar_read
     value: true
   source:
     kind: storylet_realization
@@ -2661,6 +2674,130 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: "Kristin warns Michelle that the emergency-gate authorization is about to expire. Michelle hands Kristin the stolen radio, and Kristin gives the signal because the authorization is about to expire."
+- id: k_sl_3a_f_r1
+  statement: "The wrist tags show every captive was due out a week ago."
+  aliases: [wrist tags read]
+  voiceable: false
+  reach_entity_ids: [wrist_tags]
+  earn_when: reads the wrist tags
+  action_evidence:
+  - [read, look at, check, examine, inspect, study]
+  - [wrist tags, wrist tag, tags, tag]
+  entity_ids: [kristin, wrist_tags, captives, michelle]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3A]
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: wrist_tags_read
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-3A-F, realization_id: SL-3A-F-R1}
+  relevance: {entity_ids: [wrist_tags], priority: -1}
+  must_convey:
+  - [tag, wrist tag]
+  - [week]
+  - [held]
+  delivery_text: >-
+    Every tag on a wrist carries the same transfer date, a week old. Michelle says she held them all, one ticket at a time, from a terminal in the archive, because it was all she could reach.
+  delivery_variants:
+  - requires: [held_transfers_seen]
+    text: >-
+      Every tag on a wrist carries the same transfer date, a week old, and the closing code, sensor fault. These are the transfers Kristin saw held. Michelle says she held them all, one ticket at a time, from a terminal in the archive, because it was all she could reach.
+- id: k_sl_3a_g_r1
+  statement: "Michelle's coded words ride inside the facility's own repeating message."
+  aliases: [radio loop known]
+  voiceable: false
+  reach_entity_ids: [stolen_radio]
+  earn_when: listens to the stolen radio
+  action_evidence:
+  - [listen to, listen, hear, tune, study, check, examine, trace]
+  - [stolen radio, the stolen radio, radio, radios, announcement, announcements, coded announcement, coded announcements, loop]
+  entity_ids: [kristin, stolen_radio, michelle]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3A]
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: radio_loop_known
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-3A-G, realization_id: SL-3A-G-R1}
+  relevance: {entity_ids: [stolen_radio], priority: -1}
+  leak_terms: []
+  must_convey:
+  - [radio, stolen radio]
+  - [repeating, repeats, on repeat]
+  - [one word]
+  delivery_text: >-
+    The stolen radios carry the facility's own message on repeat. Michelle's coded words ride inside it and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
+  delivery_variants:
+  - requires: [broadcast_loop_confirmed]
+    text: >-
+      The stolen radios carry the same ninety seconds Kristin timed on the truck radio, on repeat. Michelle's coded words ride inside it and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
+- id: k_sl_3a_h_r1
+  statement: "Michelle answers a private question about the kitchen calendar without a pause."
+  aliases: [Michelle private proof]
+  voiceable: false
+  earn_when: asks Michelle about the lemon cake or the calendar
+  action_evidence:
+  - [ask, test, question, quiz, press, probe]
+  - [lemon cake, the lemon cake, calendar, the calendar, kitchen calendar, birthday]
+  entity_ids: [kristin, michelle]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3A]
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  - fact_id: behavioral_experiments_known
+    equals: true
+  - fact_id: lemon_cake_calendar_read
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: michelle_private_proof
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-3A-H, realization_id: SL-3A-H-R1}
+  relevance: {entity_ids: [michelle], priority: -1}
+  must_convey:
+  - [lemon cake]
+  - [Saturday]
+  - [birthday]
+  delivery_text: >-
+    Michelle answers without a pause: Saturday, circled, K, lemon cake. She says she is sorry she missed the birthday. The facility never saw that wall.
+- id: k_sl_3a_i_r1
+  statement: "Brandon opens the checkpoint reader on the first pass without looking at the keypad."
+  aliases: [checkpoint opened]
+  voiceable: false
+  reach_entity_ids: [checkpoint_reader]
+  earn_when: watches the checkpoint reader
+  action_evidence:
+  - [watch, check, examine, study, look at, inspect]
+  - [checkpoint reader, the checkpoint reader, reader, card reader, checkpoint door]
+  entity_ids: [kristin, brandon, checkpoint_reader]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3A]
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: checkpoint_opened
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-3A-I, realization_id: SL-3A-I-R1}
+  relevance: {entity_ids: [checkpoint_reader, brandon], priority: -1}
+  must_convey:
+  - [checkpoint reader, reader]
+  - [first pass]
+  - [keypad]
+  delivery_text: >-
+    The checkpoint reader opens the checkpoint door on the first pass. Brandon never looks at the keypad. Michelle's people watch Brandon instead of the door.
+  delivery_variants:
+  - requires: [badge_craft_noted]
+    text: >-
+      The checkpoint reader opens the checkpoint door on the first pass. Brandon never looks at the keypad. Michelle's people watch Brandon instead of the door. It is the same ease he showed at the gate.
 - id: k_sl_3b_a_r1
   statement: 'Kristin feeds JANUS false water-pressure and ventilation alarms in empty service corridors until human operators must take control.'
   earn_when: "feeds JANUS false alarms, uses the inspection console, or traces, follows, or inspects water-pressure warnings"

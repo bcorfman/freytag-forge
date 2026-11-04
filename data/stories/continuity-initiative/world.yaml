@@ -427,6 +427,16 @@ items:
   scoped_aliases: [tags, tag, cart tag]
   fixed: true
   kind: thing
+- id: wrist_tags
+  name: wrist tags
+  scoped_aliases: [tags, tag, wrist tag]
+  fixed: true
+  kind: thing
+- id: checkpoint_reader
+  name: checkpoint reader
+  scoped_aliases: [reader, card reader]
+  fixed: true
+  kind: thing
 - id: cooling_service_archive_panel
   name: cooling-service archive panel
   kind: thing
@@ -548,6 +558,11 @@ facts:
 - id: badge_craft_noted
 - id: badge_checks_read
 - id: held_transfers_seen
+- id: wrist_tags_read
+- id: radio_loop_known
+- id: michelle_private_proof
+- id: checkpoint_opened
+- id: lemon_cake_calendar_read
 - id: corridor_watch_lifted
 - id: uplink_eye_seen
 - id: held_carts_known

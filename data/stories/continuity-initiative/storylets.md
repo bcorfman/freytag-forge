@@ -2197,6 +2197,153 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-3A-F — The Wrist Tags
+
+**Source beats:** [3A.1 — The Detention Block](plot.md#scene-3a1--the-detention-block)
+
+**Allowed scene:** `3A`
+
+**Available when**
+- Michelle has been reached.
+
+**Participants / items**
+- Kristin Schweitzer
+- Wrist tags
+- Detention captives
+
+**Dramatic purpose**
+- Let Kristin read the wrist tags and learn what happened to the captives.
+
+**Possible realizations**
+- Kristin reads the wrist tags.
+
+**Effects**
+- Sets `wrist_tags_read`.
+
+**Completion**
+- Kristin knows the wrist tags' transfer date.
+
+**Abort**
+- The scene is no longer `3A`.
+
+**Protected boundary**
+- JANUS's later phase remains undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 8`
+- latest: `turn 9`
+
+### SL-3A-G — The Loop in the Radios
+
+**Source beats:** [3A.1 — The Detention Block](plot.md#scene-3a1--the-detention-block)
+
+**Allowed scene:** `3A`
+
+**Available when**
+- Michelle has been reached.
+
+**Participants / items**
+- Kristin Schweitzer
+- Stolen radio
+- Dr. Michelle McGehee
+
+**Dramatic purpose**
+- Let Kristin listen to the stolen radio and learn what the captives hear.
+
+**Possible realizations**
+- Kristin listens to the stolen radio.
+
+**Effects**
+- Sets `radio_loop_known`.
+
+**Completion**
+- Kristin knows what the captives hear on repeat.
+
+**Abort**
+- The scene is no longer `3A`.
+
+**Protected boundary**
+- JANUS's later phase remains undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 8`
+- latest: `turn 9`
+
+### SL-3A-H — Michelle's Proof
+
+**Source beats:** [3A.2 — The Experiments](plot.md#scene-3a2--the-experiments)
+
+**Allowed scene:** `3A`
+
+**Available when**
+- Michelle has been reached, the experiment program is known, and the kitchen calendar has been read.
+
+**Participants / items**
+- Kristin Schweitzer
+- Dr. Michelle McGehee
+
+**Dramatic purpose**
+- Let Kristin ask Michelle about the lemon cake or the calendar.
+
+**Possible realizations**
+- Kristin asks Michelle about the lemon cake or the calendar.
+
+**Effects**
+- Sets `michelle_private_proof`.
+
+**Completion**
+- Kristin has Michelle's private answer.
+
+**Abort**
+- The scene is no longer `3A`.
+
+**Protected boundary**
+- JANUS's later phase remains undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 8`
+- latest: `turn 9`
+
+### SL-3A-I — The Reader Opens
+
+**Source beats:** [3A.4 — The Uprising Begins](plot.md#scene-3a4--the-uprising-begins)
+
+**Allowed scene:** `3A`
+
+**Available when**
+- Michelle has been reached.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Checkpoint reader
+
+**Dramatic purpose**
+- Let Kristin watch the checkpoint reader and Brandon's first pass.
+
+**Possible realizations**
+- Kristin watches the checkpoint reader.
+
+**Effects**
+- Sets `checkpoint_opened`.
+
+**Completion**
+- Kristin knows the checkpoint reader opened on the first pass.
+
+**Abort**
+- The scene is no longer `3A`.
+
+**Protected boundary**
+- JANUS's later phase remains undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 8`
+- latest: `turn 9`
+
 ## Storylets for [Scene 3B — The Battle for the Broadcast](plot.md#scene-3b--the-battle-for-the-broadcast)
 
 ### SL-3B-A — Give JANUS Too Many Emergencies
