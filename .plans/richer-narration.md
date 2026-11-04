@@ -44,6 +44,11 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    4/4), no rejected turns, keypad contradiction gone, echo gone on tags, radios and reader; ONE residual: the proof echoes in 2/4
    (the narrator writes the two closing sentences, then the delivery repeats them). Cure options in the prereg. **Next:** Brandon's call on
    the proof echo, then the 3A PR (merge only on his word); then 3B, 3C.
+   **Prompt-size work (2026-11-04, Brandon: "aggressively manage context"; "only items/characters in the scene or that the player
+   refers to"):** proof delivery trimmed; speaker lines grouped (full 3A state 7,668 -> 5,253 characters); characters introduced only when
+   present or named (entry prompts down 150 to 340 characters in seven scenes). Quick suite 4138 passed. My earlier "conversation
+   history" explanation was wrong; the prompt has no history. Prereg Amendment 2. **Next:** Brandon's go on `candidate-run3` (3A, about
+   440 neurons) and a one-replicate 1A smoke (Michelle is absent there and no longer introduced unless named), then the 3A PR; then 3B, 3C.
 
 000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on

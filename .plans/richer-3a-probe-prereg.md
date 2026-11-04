@@ -189,3 +189,36 @@ Remaining, open: the proof echo (2/4). Cure options, none applied: (a) drop "She
 never saw that wall." from the delivery and keep only "gets every detail right: the day, the circle, the lemon cake", leaving the
 sentiment to the narrator (the narrator writes it anyway when it speaks for Michelle); (b) the engine change that keeps quiet reveals'
 delivery text away from the narrator (needs Brandon's go and its own probe).
+
+## Amendment 2: managing the narrator prompt, and the proof delivery trim (2026-11-04, Brandon's directions)
+Brandon, on the prompt growth: "You are supposed to aggressively manage the context length"; "you only need to keep context about the
+items/characters that are in the scene currently ... or those that the player refers to. The world state should be kept by worldkeeper,
+but only needs to be accessed within the prompt for the characters/items that apply or are mentioned by the player or another NPC."
+My earlier note that the growth was "conversation history" was WRONG: the prompt carries no history. The growth was the CONSTRAINTS block,
+which wrote every sayable statement once per speaker present (3A, command 9: 3 speakers x 8 statements, 5,004 of 7,721 characters).
+
+- **Proof delivery trimmed** (the echo cure Brandon chose): "Michelle answers without a pause and gets every detail right: Saturday,
+  the circle, the lemon cake." The sorry and the wall inference moved to the statement ("...a question about the kitchen calendar that
+  the facility never saw"). Tests in `tests/test_richer_3a.py`.
+- **Speaker lines grouped** (`67dc6bb3`, `tests/test_speaker_lines_grouped.py`): each sayable statement is written once, naming every
+  NPC who may say it ("A, B and C may say this aloud: ..."); no speaker is offered a statement they were not given. Same code comment
+  and reasoning as the earlier protagonist skip. Full 3A state, eight reveals earned, same command: user prompt 7,668 to 5,253
+  characters (-31%), CONSTRAINTS 5,682 to 3,267.
+- **Characters by presence** (`94e37d2f`, `tests/test_prompt_presence.py`): CHARACTERS introduces the protagonist, and a scene
+  participant only when it is placed in the scene (the check the speaker lines use) or the player's command names it (the existing name
+  matching, now public as `named_entity_ids`). A character who is not a scene participant is still never introduced. Whole-story entry
+  prompts (old to now): 1A 3,333 to 3,074; 1B 3,009 to 2,750; 1C 2,732 to 2,473; 2A and
+  2C unchanged; 2B 2,925 to 2,666; 3A 2,890 to 2,736; 3B 2,674 to 2,337; 3C 2,547 to 2,254. Full 3A state now 5,099 characters
+  (from 7,668). EARLIER IN THE STORY was already reference-keyed (it holds only earlier knowledge the command recalled; commit `522c00cd`).
+- **Quality risk to check:** Michelle is a participant but not present in 1A, 1B, 1C, 2B, 3B and 3C, so her biography now reaches the
+  narrator only when the command names her ("Search Michelle's drawer" does; "Search the kitchen" does not). The place-feed fixture and
+  one transport test changed for this reason. The 3A candidate script names Michelle on commands 5 only. Quick suite 4138 passed,
+  31 skipped; ruff clean.
+- **Not changed, as designed:** a sayable statement that names an absent character does not pull that character's biography in (the
+  statement already carries the name). The compaction of older in-scene statements was NOT built: Brandon's rule is about who is
+  in the prompt, and the measured saving above came from removing duplicates, not from dropping knowledge.
+
+Re-probe proposed (needs Brandon's go, about 440 neurons for 3A): candidate-only, same script, as `candidate-run3`, not pooled. Questions: the
+proof echo; any change in the other deliveries (echo, rejected turns); Michelle introduced or not on the turns that do not name her
+(any lead-in that does not know who she is); the exit rate; narrator prompt lengths against run2 (max 10,248). A one-replicate 1A smoke
+is also worth running because Michelle is the story's driver there.
