@@ -281,3 +281,63 @@ The re-probe below now also checks the narrator on turns where a participant dro
      radio" follows. Present before today's cuts, so not from them.
   3. *Reader keypad.* The narrator invented "a keypad" on the checkpoint reader in 1/4 (run1 4/4, run2 0/4); minor invention.
   4. *Invented line.* Replicate 3 command 8: the official says "We need to wait for the signal from Dr. McGehee" before the authored line.
+
+## Amendment 4 (2026-11-04): diagnose defect 1, re-spotting, before the PR
+Brandon: "diagnose defect 1 first". Reading the recorded prompts first (free) changed the diagnosis. Amendment 3's line "none caused by a
+known change" was wrong: between run2 and run3 **two** things changed, not one. (a) The proof delivery was trimmed (commit `089b1bc7`:
+"…the day, the circle, the lemon cake. She says she is sorry she missed the birthday. The facility never saw that wall." became
+"…Saturday, the circle, the lemon cake."), and (b) the prompt cuts of Amendment 3. Four of the seven "spots Michelle/Brandon" turns are
+command 5 ("Ask Michelle about the lemon cake.") in run3, the proof turn, where run2 and the baseline wrote "Kristin calls out to Michelle…".
+Run3's command-5 prompt is 2,488 characters against run2's 3,907; its lead-in is "Write only what leads up to it", and the narrator
+wrote a stock look-around and "She spots Michelle" instead of the question. Michelle is already speaking into the radio in the opening.
+Remaining three spots: command 4 once (baseline also opens "She spots a group of captives" here), commands 8 and 9 once each.
+
+**Question.** Which change moved command 5's lead-in: the trimmed delivery (a) or the prompt cuts (b)?
+**Arms, both 3A, first five commands of the probe script, 4 replicates, judges off, shipped transports, no retries, one opening each:**
+- `diag-3a-pretrim`: today's code, story with the old proof delivery restored (`599288d8`'s `knowledge.yaml`). Isolates (a).
+- `diag-3a-trim-oldcode`: code of `599288d8` (run2's), today's story (trimmed delivery). Isolates (b).
+- Reference arms already run, not rerun: run2 (old code, old delivery) and run3 (today's code, trimmed delivery).
+**Cost.** 6 requests x 4 replicates x 11 neurons = about 264 per arm, about 530 in all.
+**Read.** Every command-5 narration and the openers of commands 1-5, by hand. Count command 5 leads that (i) have Kristin ask or speak to
+Michelle, (ii) "spot" Michelle as if newly seen, (iii) a bare look-around. Decision rule, triage only: if `pretrim` returns to (i) in at
+least 3 of 4 and `trim-oldcode` stays at (ii)/(iii), the trimmed delivery caused it, and the fix is at the source (give the proof turn a
+lead-in worth writing without restoring the echo), not in the prompt rules. If the reverse, the cuts caused it and I find which.
+If neither returns to (i), it is noise or both combined, and the one-change A/B continues on the cut that touches Characters or speakers.
+Echo (the narrator's question repeating the delivery) is checked on the same turns.
+
+### Amendment 4, part 2: result of the two isolating arms and the format test (2026-11-04)
+`diag-pretrim` and `diag-trim-oldcode` (4 replicates each, 88 neurons each, nothing failed), command 5 read in every replicate:
+- `diag-trim-oldcode` (run2's code, trimmed delivery): command 5 leads with Kristin calling out to Michelle in 4/4 ("Michelle, is that
+  you?"), and the delivery lands once. So the trimmed delivery is **not** the cause.
+- `diag-pretrim` (today's code, old delivery): 3/4 open with the stock look-around and "She spots Michelle across the way", 1/4 calls out.
+  So the cause is today's code. The command-5 prompts differ only in Rebecca (dropped) and the speaker lines: one header with nested
+  statements ("Dr. Michelle McGehee, Brandon Corfman and Imprisoned senior official may say these aloud:") against the old one line per
+  speaker per statement. The grouping is the suspect; Rebecca is not in play on this turn.
+Format test, 8 replicates per arm, today's code and story, a two-command script (`Enter the medical level.` `Ask Michelle about the
+lemon cake.`), judges off, in a scratch worktree where only the speaker-line format is switched by an environment variable (not committed):
+`nested` (today), `per_statement` (each statement once, all names before "may say this aloud", the format of `67dc6bb3`), and `per_name`
+(the old one line per speaker per statement). Cost about 3.7 neurons a request, under 100 per arm. Read command 5 in each: calls out to
+Michelle (i), "spots Michelle" (ii), bare look-around (iii). Decision rule: if `per_name` keeps (i) in at least 6 of 8 and `nested` does
+not, grouping moves the lead-in. Then take the smallest format that keeps (i): `per_statement` first, since it saves most of the size.
+The first format test was invalid and is discarded (kept under `invalid-fmt2cmd/`, about 570 neurons): the two-command script skipped the
+earlier turns, so the prompt carried no "may say" lines and the three arms were the same prompt (identical lengths). Rerun with the first
+five commands of the probe script and 6 replicates per arm; the speaker lines are checked in the prompts before anything is read.
+
+### Amendment 4, part 3: result of the format test and the diagnosis of defect 1 (2026-11-04)
+`bench/results/richer-3a-probe/fmt-{nested,per_statement,per_name}`, 6 replicates each, first five commands, 132 neurons each, none
+failed, prompts checked (speaker lines present in all; format switch confirmed in the recorded prompts). Command 5, read in every replicate:
+
+| format | command-5 prompt | calls out to Michelle | "spots Michelle" | bare look-around |
+|---|---|---|---|---|
+| nested header (today, `d823a662`) | 2,511-2,539 | 0/6 | 6/6 | 0 |
+| one line per statement, all names before it (`67dc6bb3`) | 2,601-2,708 | 4/6 | 1/6 | 1/6 |
+| one line per speaker per statement (run2's) | 3,102-3,673 | 6/6 | 0/6 | 0 |
+
+Together with the isolating arms (`diag-trim-oldcode` 4/4 calls out, `diag-pretrim` 1/4), the old format gives 10/10 and the nested header
+0/6 + 1/4 on the same turn. **Defect 1 is caused by my speaker-header change (`d823a662`), at least on command 5 (4 of the 7 spots);
+the delivery trim and the removal of Rebecca are cleared.** Cause of the mechanism is not established; a plausible reading is that one
+header with a list of nested statements reads as scene facts rather than as what Michelle may say, so the narrator stops letting her
+speak first. The nested header saves about 100-170 characters over one-line-per-statement and 600-1,100 over the old format on this turn.
+Not explained: the spots at commands 4 (1), 8 (1) and 9 (1) and the rise in "looks around" openers; these turns are checked again after
+the fix. Not significant on its own: one-line-per-statement 4/6 against the old format's 10/10 (Fisher p about 0.14).
+Mistake recorded: my first format test used a two-command script and was invalid (see above), costing about 570 neurons.
