@@ -1619,37 +1619,24 @@ class CloudflareTurnProvider:
         player_input = str(user.get("player_input", "")).strip()
         return [player_input] if player_input else []
 
-    def _speaker_constraint_lines(self, speakers: object) -> list[str]:
-        """Render each statement once, grouping statements with the same speakers."""
+    def _speaker_constraint_lines(self, speakers: object, player_input: str = "") -> list[str]:
+        """List one line per speaker per statement when present or named.
+
+        Grouping moved the narrator's lead-in, so each speaker and statement
+        gets its own line.
+        """
 
         if not isinstance(speakers, dict):
             return []
-        names_by_statement: dict[str, list[str]] = {}
+        named_ids = named_entity_ids(self.state, player_input)
+        lines = []
         for speaker_id, speaker in speakers.items():
-            # The protagonist's sayable knowledge mirrors what SCENE already states, so listing it
-            # repeated every established statement. What genuinely constrains a turn is which NPC may
-            # say what aloud, and each statement is written once with all of those NPCs named.
             if speaker_id == self.state.package.protagonist_id or not isinstance(speaker, dict):
                 continue
-            name = self._display_name(speaker_id)
+            if not self._is_present(speaker_id) and speaker_id not in named_ids:
+                continue
             for item in speaker.get("sayable_knowledge", []):
-                statement = item["statement"]
-                names = names_by_statement.setdefault(statement, [])
-                if name not in names:
-                    names.append(name)
-
-        groups: dict[str, list[str]] = {}
-        for statement, names in names_by_statement.items():
-            joined_names = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
-            groups.setdefault(joined_names, []).append(statement)
-
-        lines = []
-        for joined_names, statements in groups.items():
-            if len(statements) == 1:
-                lines.append(f"{joined_names} may say this aloud: {statements[0]}")
-            else:
-                nested = "\n".join(f"  - {statement}" for statement in statements)
-                lines.append(f"{joined_names} may say these aloud:\n{nested}")
+                lines.append(f"{self._display_name(speaker_id)} may say this aloud: {item['statement']}")
         return lines
 
     def _section_user_prompt(self, user: dict[str, object]) -> str:
@@ -1734,7 +1721,7 @@ class CloudflareTurnProvider:
                             constraints.append(f"If you reveal {candidate['id']}, you must say this: {group[0]}")
         if isinstance(context, dict):
             speakers = context.get("speakers", {})
-            constraints.extend(self._speaker_constraint_lines(speakers))
+            constraints.extend(self._speaker_constraint_lines(speakers, str(user.get("player_input", ""))))
             if isinstance(speakers, dict):
                 for speaker in speakers.values():
                     if not isinstance(speaker, dict):
