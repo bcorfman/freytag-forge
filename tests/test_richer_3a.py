@@ -133,7 +133,7 @@ def test_the_new_reveals_are_quiet_short_and_exact():
             ),
             ["wrist_tags"],
             ("kristin", "wrist_tags", "captives", "michelle"),
-            ("week", "michelle", "held"),
+            ("michelle", "held", "tag"),
         ),
         "k_sl_3a_g_r1": (
             "radio_loop_known",
@@ -198,6 +198,35 @@ def test_the_new_reveals_are_quiet_short_and_exact():
         assert not any(word in text for word in forbidden), entry_id
         assert all(phrase in text for phrase in phrases), entry_id
         assert {(operation.fact_id, operation.value) for operation in entry.establishes} == {(fact_id, True)}
+
+
+def test_the_probe_defects_are_cured_at_the_source():
+    entries = _entries()
+    placements = _scene().item_placements
+    # Echo: what the narrator would write before the delivery lives in the thing's placement text, so the
+    # delivery says only what is new (the 1C door and 2B badge technique).
+    assert "same transfer date" in placements["wrist_tags"].text and "week" in placements["wrist_tags"].text
+    assert "repeat" in placements["stolen_radio"].text
+    tags = entries["k_sl_3a_f_r1"]
+    assert "week" not in tags.delivery_text.casefold()
+    assert all("week" not in variant.text.casefold() for variant in tags.delivery_variants)
+    assert [list(group) for group in tags.must_convey] == [["tag", "wrist tag"], ["held"]]
+    loop = entries["k_sl_3a_g_r1"]
+    assert "on repeat" not in loop.delivery_text.casefold()
+    assert [list(group) for group in loop.must_convey] == [["coded words", "coded announcements"], ["one word"]]
+    assert "coded words" in loop.delivery_text.casefold()
+    assert all("coded words" in variant.text.casefold() for variant in loop.delivery_variants)
+    proof = entries["k_sl_3a_h_r1"]
+    assert "Saturday, circled, K, lemon cake" not in proof.delivery_text
+    # Rejected turn: the narrator must carry the cake and one of the day or the birthday, not all three words.
+    assert [list(group) for group in proof.must_convey] == [["lemon cake"], ["Saturday", "birthday"]]
+    # Contradiction: the narrator invents a keypad stare, so the reveal must not name the keypad at all.
+    reader = entries["k_sl_3a_i_r1"]
+    texts = [reader.statement, reader.delivery_text, *(variant.text for variant in reader.delivery_variants)]
+    assert not any("keypad" in text.casefold() for text in texts)
+    assert not any("keypad" in term.casefold() for group in reader.must_convey for term in group)
+    assert [list(group) for group in reader.must_convey] == [["checkpoint reader", "reader"], ["first pass"]]
+    assert "reader" in reader.delivery_text.casefold()
 
 
 def test_guarded_terms_are_said_only_by_the_variants_that_require_their_facts():
