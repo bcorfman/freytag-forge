@@ -33,6 +33,13 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    keypad contradiction 3/4, echoes (tags 2/4, radios 1/4, proof 1/4), proof turn rejected 1/4 (`must_convey` Saturday), and an OLDER
    flake: the framed-official and uprising reveals hand off in only 1 of 4 replicates in BOTH arms, which hides the exit bar. **Next:**
    Brandon's decision on the fixes and on diagnosing the flake; then the 3A PR; then 3B, 3C.
+   **Probe fixes built (2026-11-04, Brandon: "fix all the open defects first"; compared with the plan and earlier fixes at his request):**
+   keypad out of the reader reveal; echo cured by placement text (tags, radio) and a summarizing proof delivery, 3A Details additions
+   removed (the 2C technique); proof `must_convey` loosened; flake diagnosed and fixed in the engine (resolved names appended to the typed
+   command tied the two official reveals; new `typed_input` tie-break in `uniquely_matched_authored_handoff`, whole-story sweep: 34 of 1,657
+   synthetic commands change, all from no handoff to one reveal). Tests `tests/test_handoff_typed_tiebreak.py`, `tests/test_richer_3a.py`.
+   Quick suite 4133 passed, 31 skipped. Details in the prereg's Amendment 1. **Next:** Brandon's go on the candidate-only re-probe
+   (about 440 neurons), then the 3A PR; then 3B, 3C.
 
 000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on

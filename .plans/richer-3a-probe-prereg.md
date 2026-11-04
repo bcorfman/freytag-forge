@@ -132,3 +132,33 @@ baseline turns are over 5,000, so the line does not discriminate for a nine-comm
 narration, and the candidate's longer replies (delivery text appended) grow it by up to 1,500 characters by command 7. The static
 budget test (`tests/test_prompt_budget.py`) passes. If that growth matters, compact what the narrator is shown of earlier turns; this
 is not a 3A-specific change.
+
+## Amendment 1: the probe fixes (2026-11-04, Brandon: "fix all the open defects first")
+Each fix was compared with the plan and the earlier scene fixes before it was built. Tests first (`tests/test_richer_3a.py`
+`test_the_probe_defects_are_cured_at_the_source`, `tests/test_handoff_typed_tiebreak.py`); quick suite 4133 passed, 31 skipped; ruff clean.
+
+1. **Keypad contradiction.** The reader reveal no longer names the keypad (statement, `must_convey`, delivery, variant, plot prose). The
+   narrator invented the stare from the statement. Precedent: the subtractive fixes of 1B and 2B (take the cause out, add no rule).
+2. **Echo.** Same technique as the 1C door, the 1C pallets and the 2C monitor light (Amendment 1 of the 2C prereg, echo gone 4/4): the
+   imagery moves into the thing's placement text and the delivery adds only what is new. The wrist tags' placement carries the shared date
+   and "a week old"; the stolen radio's placement carries "tuned to the facility's own message, played on repeat"; the tags and radio
+   deliveries give Michelle's line, the code and the coded words; the proof delivery summarizes ("gets every detail right: the day, the
+   circle, the lemon cake") instead of quoting the answer. Also as in 2C, the three Details additions I had made to 3A.1, 3A.2 and 3A.4
+   were removed (the probe's narrator prompt grew up to 1,500 characters over baseline; the imagery now costs prompt space only when the
+   player asks). Expect a residual of about 2 in 8, as with the earlier echo fixes; zero needs the engine change the plan already
+   records as needing Brandon's go (not showing quiet reveals' delivery text to the narrator).
+3. **Rejected proof turn.** `must_convey` is [lemon cake] and [Saturday, birthday] (the 2B rule: ask the narrator for less, not more).
+4. **Official and uprising flake (older than 3A).** Diagnosed offline: `assemble_turn_prompt` appends the display names the player's nouns
+   resolved to ("gate codes" becomes "emergency override codes"); "override" then satisfied the verb group of the second official reveal
+   (`k_sl_3a_d_r2`), two reveals tied on group count and no handoff was staged. The uprising reveal only failed because it needs the
+   official's reveal first. Reproduced deterministically in `test_the_framed_official_hands_off_with_the_names_the_engine_appends`.
+   Fix: `uniquely_matched_authored_handoff` takes `typed_input` and, only when a tie remains after the existing rules, prefers the
+   matches that also fit the words the player typed (the same function and the same kind of change as the 1C closeout tie-break). Blast
+   radius, measured over the whole story as 1C was (1,657 synthetic commands built from each reveal's own evidence, with the resolved
+   names appended): 34 commands change, every one from no handoff to the one reveal the player's own words fit (1A "Search the overturned
+   chair", 2B "Pull up the file", 3A "Warn the code", 3A "Listen to the radio"); none switches a handoff that already worked. Rejected
+   alternative: delete "override" from the second reveal's verbs (one word, but it leaves the class open).
+
+Re-probe not yet run. Proposed (needs Brandon's go, about 440 neurons): the candidate arm only, same script, as `candidate-run2`, not
+pooled. Questions: echo on the tags, radios and proof; the reader contradiction; the proof turn rejected; the official on command 6 and the
+uprising on command 8, and the scene exit on command 9 in at least 3 of 4 replicates; narrator prompt length against the first run.

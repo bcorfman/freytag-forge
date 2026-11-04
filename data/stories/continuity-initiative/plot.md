@@ -744,7 +744,7 @@ bridge_text:
 
 ### Scene 3A.1 — The Detention Block
 
-**Details:** detention sector; rows of captives; scattered radios; coded announcements; tightening security; the wrist tags; the loop in the radios
+**Details:** detention sector; rows of captives; scattered radios; coded announcements; tightening security
 
 Kristin follows Michelle's maintenance route into one partly unsecured detention sector, not a mass release. She expects rows of helpless captives. Instead, Michelle speaks into a stolen radio, coordinating prisoners through coded announcements and sympathetic facility workers.
 
@@ -764,7 +764,7 @@ Michelle explains that the facility contains only a fraction of the missing mill
 
 ### Scene 3A.2 — The Experiments
 
-**Details:** medical level; neurological experiments; behavioral experiments; short-term memory; targeted stimulation; false recollections; Michelle's private proof
+**Details:** medical level; neurological experiments; behavioral experiments; short-term memory; targeted stimulation; false recollections
 
 Michelle leads Kristin through a medical level where prisoners have been subjected to neurological and behavioral experiments.
 
@@ -792,7 +792,7 @@ The rescue now has a strict deadline tied to Charles’s broadcast. Michelle tur
 
 ### Scene 3A.4 — The Uprising Begins
 
-**Details:** coordinated disturbances; disabled cameras; isolated guards; internal checkpoints; sealed primary exits; armed response teams; Brandon at the checkpoint reader
+**Details:** coordinated disturbances; disabled cameras; isolated guards; internal checkpoints; sealed primary exits; armed response teams
 
 Michelle hands Kristin the stolen radio. Kristin gives the signal. Coordinated disturbances break out across the detention sectors. Prisoners disable cameras, overwhelm isolated guards, and seize control of several internal checkpoints.
 
