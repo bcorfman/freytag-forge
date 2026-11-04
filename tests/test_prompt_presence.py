@@ -27,3 +27,11 @@ def test_a_participant_standing_in_the_scene_is_still_introduced():
     assert "Rebecca Jenkins" in characters
     assert "Kristin Schweitzer" in characters
     assert "Brandon Corfman" in characters
+
+
+def test_an_absent_character_the_player_names_is_introduced_for_that_turn():
+    state, _engine = test_richer_3a._engine()
+    named = _characters(state, "Ask Michelle about Rebecca.")
+    assert "Rebecca Jenkins" in named
+    unnamed = _characters(state, "Ask Michelle about the radio.")
+    assert "Rebecca Jenkins" not in unnamed
