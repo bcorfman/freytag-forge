@@ -41,8 +41,11 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    branch: 4094 passed, 31 skipped; ruff clean. Probe: `.plans/richer-2c-probe-prereg.md`; arms `richer-2c-baseline`
    (`bench/frozen/continuity-pre-richer-2c/`, from `159695e4`) and `richer-2c-candidate` (adds `entry_facts` held_transfers_seen and
    ticket_header_matched, because the thorough entry state does not earn the optional 2B reveals), script `richer-2c-corridor`,
-   about 264 neurons per arm. **Next:** Brandon runs `bench run` for each arm; I read every turn and write the result into the prereg;
-   then the 2C PR. Then 3A, 3B, 3C.
+   about 264 neurons per arm. **Probe run and read (2026-11-03): richness supported** (result in the prereg): details 4/4 on their commands,
+   baseline's invented material gone (including "Dr. Michelle McGehee" on the cart tags 2/4 and a camera turned toward the gate 4/4 that the
+   continuity judge flags), required path unchanged. Open defects: monitor light echo 4/4 (cure known, needs a re-probe), commitment-turn
+   narrator prompt 6,630 characters (130 over the worst-case cap), `guards` made a new group 2/20. **Next:** Brandon's decision on those
+   three and the 2C PR (merge only on his word). Then 3A, 3B, 3C.
    Not covered by 2C: the supervisor on Rebecca's purge list (a payoff for the 2A alarm log was considered; the tablet leaves with
    Rebecca, so it would have to go in the required delivery; left for 3A or a later pass).
    Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header and closing code; 3A uses the

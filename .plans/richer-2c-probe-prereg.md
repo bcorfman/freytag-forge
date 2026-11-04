@@ -67,3 +67,56 @@ and 3C), hosted staging, other models, wording tuning. Offline tests cover both 
 facility's eye on its own traffic (the monitor light) can surface when Kristin sends the final broadcast: every outbound channel is
 watched, so the broadcast must be forced from the office. The supervisor on the purge list (a payoff for the 2A alarm log) was left
 out because Rebecca's tablet leaves with her.
+
+## Result (run 2026-11-03, branch `richer-narration-2c`, commit `1899f1dc`)
+Outputs `bench/results/richer-2c-probe/{baseline,candidate}` (gitignored), 4 replicates each, none failed, 0 rejected turns and 0 guard
+rejections in either arm, 528 projected neurons. Every turn of both arms read by hand (scratchpad reports, not in the repo). Replicates
+reported separately; the judge scores are not real signal (4 replicates). Each arm had one malformed narration segment that the transport
+dropped and logged.
+
+**Headline: richness is supported on the 2C path. All three details, and the ticket form, landed on the command that asks for them in 4 of 4
+replicates, the existing path did not regress, and the baseline's invented material (including a story-breaking name) is gone. Two
+defects: the monitor light echo (4/4) and the narrator prompt at the commitment turn (6,630 characters).**
+
+- **Q1 Invented material.** Plain things resolved new: baseline 0 in 20 turns, candidate 2 in 20 (`guards`, command 2, replicates 2 and 3;
+  the entry text names them and no 2C thing is declared for them, so the matcher made a group; harmless but it breaks the "no more than
+  baseline" rule on its face). What the baseline narrator made up where the candidate has authored text:
+  command 1 (monitor light): "flashing rapidly" and a panicked "What's going on?" with Brandon answering "it's not good" (4/4, no information);
+  command 3 (camera): "the camera's lens is turned toward the gate" (3/4; the matcher resolved the 2A security camera, and the continuity
+  judge flagged `contradicts_stated_fact` on command 3 in 4/4 baseline replicates against 0/4 candidate);
+  command 4 (cart tags): "the names of several people, including Dr. Michelle McGehee" (2/4, a story-breaking invention), "encrypted" (1/4),
+  "numbers and codes, but no names" (1/4). The candidate invents nothing concrete on those commands.
+- **Q2 Authored details delivered when earned.** Monitor light on command 1: 4/4. Camera after Brandon's yes, command 3: 4/4. Cart tags,
+  command 4: 4/4 (with `held_transfers_seen` seeded). Answer to Rebecca (`k_sl_2c_c_r1`) on command 2 and the rescue commitment
+  (`k_sl_2c_d_r4`) on command 5: 4/4 in both arms. The matched-header ticket variant appeared on command 5 in 4/4 candidate replicates; the
+  baseline has no ticket. Not exercised live: the camera before Brandon's yes (refused offline), the transmit branch, the missed-window path.
+- **Q3 No regression.** The required answer landed on command 2 (turn 1, inside its window) and the commitment on command 5 in every
+  replicate of both arms. Both arms left the scene on command 5 (`left_scene` true in 4/4, same as baseline). The curiosity commands cost
+  nothing here because the purge window (turn 5) is not reached by five commands.
+- **Q4 Value.**
+  - Monitor light: does a job (a fair-play clue about the cost of transmitting) and replaces an invented, empty alarm. Weakness: **echo, 4/4**.
+    The narrator writes "It's steady amber, indicating the facility's eye is on its own traffic" and the delivery then says it again in
+    nearly the same words. Same known fault and same cure as the 1C door and 2B badge deliveries (put the image in the thing's placement
+    text and shorten the delivery to what is new); not applied, because it needs a billed re-probe (the 1C fix backfired twice before it
+    was probed).
+  - Camera: does a job (pays off 2A; "Brandon does not look up"). Its only blemish is harmless narrator filler ("tries to read the
+    expression of the guard below it", 3/4) and, once, an invented line for Kristin ("We're being watched", replicate 4).
+  - Cart tags: does a job (pays off the 2B held transfers; "These are the transfers that were held" lands cleanly). No echo.
+  - Ticket form: appears once on the commitment turn; it does not name Michelle's authorship beyond the existing "Michelle's route"
+    sentence. The wording "the ticket header Kristin matched in the archive" is stilted but accurate.
+  - Narration is busier than baseline, but each addition is a clue or payoff; the baseline's busyness was invented filler.
+- **Judges.** Candidate 2, 3, 4, 3 against baseline 3, 3, 2, 2 (means 3.0 and 2.5). With four replicates this is not reported as a real gap.
+  Continuity: only the baseline camera flag above. Fact tracking: `missed_change` 0 and `invented_change` 0 in both arms; the
+  `narration_contradicts_given_facts` flag on command 5 (`detention captives:start_conflict`) appears in 3/4 baseline and 4/4 candidate
+  replicates and is older than 2C (it concerns the existing "partly unsecured detention sector" sentence).
+- **Prompt budget.** Narrator prompt (system plus user): median 5,251 candidate against 5,309 baseline, max 6,630 against 6,326; over 5,000
+  on 16 of 20 turns in both arms. **The candidate's command 5 is 6,630 in every replicate (baseline 6,310 to 6,326) and its command 2 is
+  6,208 in two replicates (baseline 5,309), both above the 6,500 worst-case cap's neighbourhood: command 5 is 130 over it.**
+  `tests/test_prompt_budget.py` passes (it measures at scene start, not on these turns). The extra on command 5 is the ticket sentence and
+  the resolved tags and light lines (about 300 characters). Follow-up: compact the 2C item lines or the commitment delivery's variants.
+
+**Defects and follow-ups (none done):**
+1. Monitor light echo (4/4): apply the placement-text technique and re-probe (about 6 narrator calls per replicate to compare).
+2. Commitment-turn narrator prompt 6,630 characters, 130 over the worst-case cap in live play (the baseline was already 6,326).
+3. `guards` is made a new group in 2 of 20 candidate turns; declaring them in 2C would remove the one regression in Q1.
+4. Not covered live: the transmit branch, the missed-window ticket text, the unmatched-header ticket text (offline tests cover them).
