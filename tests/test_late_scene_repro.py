@@ -150,6 +150,11 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
         "grille": "cooling_service_archive_panel",
         "ventilation grille": "cooling_service_archive_panel",
         "seam": "cooling_service_archive_panel",
+        "access section": "build_record",
+        "build files": "build_record",
+        "queue": "transfer_queue",
+        "transfers": "transfer_queue",
+        "held transfers": "transfer_queue",
     },
     "2C": {
         "copied files": "copied_janus_files",

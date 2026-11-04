@@ -1564,6 +1564,126 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-2B-E — The Badge Checks
+
+**Source beats:** [2B.3 — Brandon’s Role](plot.md#scene-2b3--brandons-role)
+
+**Allowed scene:** `2B`
+
+**Available when**
+- `audit_window_missed` is false.
+- `kristin_file_read` is true.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Build record
+- Archive terminals
+
+**Dramatic purpose**
+- Let Kristin confirm the three checks Brandon knew at the gate.
+
+**Possible realizations**
+- Kristin reads the access section of the build record or checks what the badge readers check.
+
+**Effects**
+- Sets `badge_checks_read`.
+
+**Completion**
+- Kristin has read the access section of the build record.
+
+**Abort**
+- The scene is no longer `2B`.
+
+**Protected boundary**
+- The protected system, Brandon’s past, and Rebecca’s interest remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 6`
+- latest: `turn 6`
+
+---
+
+### SL-2B-F — The Held Transfers
+
+**Source beats:** [2B.2 — Kristin Was Bait](plot.md#scene-2b2--kristin-was-bait)
+
+**Allowed scene:** `2B`
+
+**Available when**
+- `audit_window_missed` is false.
+
+**Participants / items**
+- Kristin Schweitzer
+- Transfer queue
+- Archive terminals
+
+**Dramatic purpose**
+- Let Kristin see the held transfers and the repeated maintenance excuse.
+
+**Possible realizations**
+- Kristin opens or reads the transfer queue on the archive terminals.
+
+**Effects**
+- Sets `held_transfers_seen`.
+
+**Completion**
+- Kristin has read the transfer queue.
+
+**Abort**
+- The scene is no longer `2B`.
+
+**Protected boundary**
+- The protected system, Brandon’s past, and Rebecca’s interest remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 6`
+- latest: `turn 6`
+
+---
+
+### SL-2B-G — The Ticket Header
+
+**Source beats:** [2B.4 — Michelle’s Hidden Resistance](plot.md#scene-2b4--michelles-hidden-resistance)
+
+**Allowed scene:** `2B`
+
+**Available when**
+- `archive_crisis_understood` is true.
+- `held_transfers_seen` is true.
+
+**Participants / items**
+- Kristin Schweitzer
+- Medical terminal
+- Transfer queue
+
+**Dramatic purpose**
+- Let Kristin match the maintenance line to the held transfers.
+
+**Possible realizations**
+- Kristin reads or compares the maintenance line on the medical terminal with the held transfers.
+
+**Effects**
+- Sets `ticket_header_matched`.
+
+**Completion**
+- Kristin has matched the maintenance line to the held transfers.
+
+**Abort**
+- The scene is no longer `2B`.
+
+**Protected boundary**
+- The protected system, Brandon’s past, and Rebecca’s interest remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 4`
+- target: `turn 6`
+- latest: `turn 7`
+
+---
+
 ## Storylets for [Scene 2C — The Trap Closes](plot.md#scene-2c--the-trap-closes)
 
 ### SL-2C-C — Rebecca Hears Her Answer

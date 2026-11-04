@@ -52,7 +52,15 @@ def test_expected_reveal_ids_are_current_and_scene_specific(monkeypatch) -> None
         if item_id.startswith("k_sl_2b")
         and item.get("available_in_scenes") == ["2B"]
         and item.get("audience", {}).get("player_visible", True)
-    } == {"k_sl_2b_a_r1", "k_sl_2b_b_r4", "k_sl_2b_b_r5", "k_sl_2b_c_r3"}
+    } == {
+        "k_sl_2b_a_r1",
+        "k_sl_2b_b_r4",
+        "k_sl_2b_b_r5",
+        "k_sl_2b_c_r3",
+        "k_sl_2b_e_r1",
+        "k_sl_2b_f_r1",
+        "k_sl_2b_g_r1",
+    }
     assert {
         item_id
         for item_id, item in knowledge.items()

@@ -30,12 +30,13 @@ def _knowledge() -> dict[str, dict]:
     return {item["id"]: item for item in raw["knowledge"]}
 
 
-def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
+def _matches(knowledge: dict[str, dict], command: str, established: set[str]) -> set[str]:
     return {
         item_id
         for item_id, item in knowledge.items()
         if item_id.startswith("k_sl_2b")
         and item.get("action_evidence")
+        and all(requirement["fact_id"] in established for requirement in item.get("requires", []))
         and _matches_all(tuple(tuple(group) for group in item["action_evidence"]), command)
     }
 
@@ -57,10 +58,16 @@ def test_2b_spine_prompts_match_their_authored_reveals_in_order() -> None:
     ]
     knowledge = _knowledge()
 
-    matched = [_matches(knowledge, prompt) for prompt in prompts]
+    established: set[str] = {"audit_window_missed"}
+    matched = []
+    for prompt in prompts:
+        item_ids = _matches(knowledge, prompt, established)
+        matched.append(item_ids)
+        established |= {fact["fact_id"] for item_id in item_ids for fact in knowledge[item_id].get("establishes", [])}
+
     assert matched == expected
 
-    established: set[str] = {"audit_window_missed"}
+    established = {"audit_window_missed"}
     for prompt_number, item_ids in enumerate(matched, start=1):
         required = {
             requirement["fact_id"] for item_id in item_ids for requirement in knowledge[item_id].get("requires", [])
