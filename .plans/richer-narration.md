@@ -1,7 +1,7 @@
 # Richer narration with bounded invention
 
-Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C and 2A are merged to main (2A as PR #748). Scene 2B is built and
-probed on branch `richer-narration-2b` (last commit `323dc607`, nothing uncommitted); the PR is NOT open yet. Whole quick suite on that branch:
+Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C, 2A and 2B are merged to main (2A as PR #748, 2B as PR #749,
+merge commit `123499dd`). Next is scene 2C on branch `richer-narration-2c`. Whole quick suite on that branch:
 4074 passed, 30 skipped. The full suite with coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
@@ -11,7 +11,7 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
 
 ## Resume here (in order)
 
-000. **Scene 2B built and probed (2026-11-03), branch `richer-narration-2b`; PR not open.** Result in `.plans/richer-2b-probe-prereg.md` "Result":
+000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on
    command 6 in every replicate, the scene was left by the same earned transition as the baseline, 0 plain things resolved new (baseline 2).
    What was built: held transfers (`k_sl_2b_f_r1`, 2B.2: transfers pushed back a week under tickets closed "sensor fault", the 2A alarms' excuse),
@@ -26,7 +26,7 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    explicit `leak_terms` list keeps every vocabulary term they guarded (such as "left behind as bait") guarded in earlier scenes; the `act2_probe.py`
    scripted copies match. Tests `tests/test_2b_delivery_repeat.py` (tests-first commit `24463175`). Quick suite 4074 passed, 30 skipped. NOT re-probed
    live (the fix is subtractive; a re-probe would cost about 350 neurons per arm). **Echo fixes (2026-11-03, Brandon: "I don't want any echo on either scene"; tests-first `b0d4ae11`).** The narrator is shown the delivery text on a reveal turn and copies it, so the engine then repeats it. Probe, 8 replicates per arm, every narration read (scratchpad only, not in the repo): 2B badge checks, closing sentence "Brandon watches her read and says nothing" doubled 8/8 -> dropped it, 0/8. 1C door (`k_sl_1c_f_r1`): original doubled stance and quote 8/8; quote-only delivery left the lead-up ignoring Brandon in 7/8 ("him" with no referent); stance-only delivery doubled the stance 8/8; indirect speech and "turns his head" wording made the narrator ignore Brandon 7/8 and 8/8. **Chosen:** the delivery is only `Brandon says only, "Somebody has to watch the door."` and the stance moved into the 1C.2 Details line ("Brandon at the top of the stairs with his back to the processing line, watching the door"), the same technique as the pallets fix. Probe: stance never doubled, quote doubled 2/8; live confirmation on the real package 0/4 doubled, narrator follows "Watch Brandon" 4/4. **Residual 1C echo is possible (about 2 in 8)**; zero needs an engine change (not showing quiet reveals' delivery text to the narrator), which would touch 14 of 79 deliveries (1A 1, 1B 3, 1C 3, 2A 4, 2B 3; none in 2C, 3A to 3C) and narrows the "narrator sees its own delivery" exception, so it needs Brandon's go and its own probe first. Open: in one live 2B replicate the narrator missed "held, week" for `k_sl_2b_f_r1` (rejected turn; unrelated to this change; it delivered 4/4 in the original probe).
-   **Next:** open the 2B PR (merge commit, only on his per-PR instruction), then merge `main` and start 2C.
+   **Next:** start 2C (branch `richer-narration-2c`).
    Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header and closing code; 3A uses the
    held transfers (captives still alive because transfers were delayed); 3B/3C can surface Brandon's badge-reader knowledge when he opens doors.
 
