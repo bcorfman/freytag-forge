@@ -315,4 +315,7 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "alarm_log_read",
         "return_line_traced",
         "camera_on_brandon_seen",
+        "corridor_watch_lifted",
+        "held_carts_known",
+        "uplink_eye_seen",
     }

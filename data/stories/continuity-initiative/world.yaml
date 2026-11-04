@@ -161,6 +161,9 @@ groups:
 - id: captives
   name: detention captives
   scoped_aliases: [prisoners, prisoner, captives, captive]
+- id: corridor_guards
+  name: corridor guards
+  scoped_aliases: [guards, guard]
 items:
 - id: memory_card
   name: Michelle's memory card
@@ -409,6 +412,21 @@ items:
   name: transfer carts
   aliases: [transfer cart]
   fixed: true
+- id: corridor_camera
+  name: corridor camera
+  scoped_aliases: [camera]
+  fixed: true
+  kind: thing
+- id: monitor_light
+  name: monitor light
+  scoped_aliases: [status light, amber light, light]
+  fixed: true
+  kind: thing
+- id: cart_tags
+  name: cart tags
+  scoped_aliases: [tags, tag, cart tag]
+  fixed: true
+  kind: thing
 - id: cooling_service_archive_panel
   name: cooling-service archive panel
   kind: thing
@@ -530,6 +548,9 @@ facts:
 - id: badge_craft_noted
 - id: badge_checks_read
 - id: held_transfers_seen
+- id: corridor_watch_lifted
+- id: uplink_eye_seen
+- id: held_carts_known
 - id: ticket_header_matched
 - id: alarm_log_read
 - id: return_line_traced

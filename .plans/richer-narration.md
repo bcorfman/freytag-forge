@@ -1,7 +1,7 @@
 # Richer narration with bounded invention
 
-Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C and 2A are merged to main (2A as PR #748). Scene 2B is built and
-probed on branch `richer-narration-2b` (last commit `323dc607`, nothing uncommitted); the PR is NOT open yet. Whole quick suite on that branch:
+Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C, 2A and 2B are merged to main (2A as PR #748, 2B as PR #749,
+merge commit `123499dd`). Next is scene 2C on branch `richer-narration-2c`. Whole quick suite on that branch:
 4074 passed, 30 skipped. The full suite with coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
@@ -11,7 +11,7 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
 
 ## Resume here (in order)
 
-000. **Scene 2B built and probed (2026-11-03), branch `richer-narration-2b`; PR not open.** Result in `.plans/richer-2b-probe-prereg.md` "Result":
+000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on
    command 6 in every replicate, the scene was left by the same earned transition as the baseline, 0 plain things resolved new (baseline 2).
    What was built: held transfers (`k_sl_2b_f_r1`, 2B.2: transfers pushed back a week under tickets closed "sensor fault", the 2A alarms' excuse),
@@ -26,7 +26,33 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    explicit `leak_terms` list keeps every vocabulary term they guarded (such as "left behind as bait") guarded in earlier scenes; the `act2_probe.py`
    scripted copies match. Tests `tests/test_2b_delivery_repeat.py` (tests-first commit `24463175`). Quick suite 4074 passed, 30 skipped. NOT re-probed
    live (the fix is subtractive; a re-probe would cost about 350 neurons per arm). **Echo fixes (2026-11-03, Brandon: "I don't want any echo on either scene"; tests-first `b0d4ae11`).** The narrator is shown the delivery text on a reveal turn and copies it, so the engine then repeats it. Probe, 8 replicates per arm, every narration read (scratchpad only, not in the repo): 2B badge checks, closing sentence "Brandon watches her read and says nothing" doubled 8/8 -> dropped it, 0/8. 1C door (`k_sl_1c_f_r1`): original doubled stance and quote 8/8; quote-only delivery left the lead-up ignoring Brandon in 7/8 ("him" with no referent); stance-only delivery doubled the stance 8/8; indirect speech and "turns his head" wording made the narrator ignore Brandon 7/8 and 8/8. **Chosen:** the delivery is only `Brandon says only, "Somebody has to watch the door."` and the stance moved into the 1C.2 Details line ("Brandon at the top of the stairs with his back to the processing line, watching the door"), the same technique as the pallets fix. Probe: stance never doubled, quote doubled 2/8; live confirmation on the real package 0/4 doubled, narrator follows "Watch Brandon" 4/4. **Residual 1C echo is possible (about 2 in 8)**; zero needs an engine change (not showing quiet reveals' delivery text to the narrator), which would touch 14 of 79 deliveries (1A 1, 1B 3, 1C 3, 2A 4, 2B 3; none in 2C, 3A to 3C) and narrows the "narrator sees its own delivery" exception, so it needs Brandon's go and its own probe first. Open: in one live 2B replicate the narrator missed "held, week" for `k_sl_2b_f_r1` (rejected turn; unrelated to this change; it delivered 4/4 in the original probe).
-   **Next:** open the 2B PR (merge commit, only on his per-PR instruction), then merge `main` and start 2C.
+   **Scene 2C: built, probe preregistered, billed run awaits Brandon (2026-11-03, branch `richer-narration-2c`).** Three optional quiet
+   reveals, each with a job: the corridor camera (held on Brandon during the offer; lets go when he says yes; pays off the 2A camera),
+   the cart tags (week-old date and "sensor fault"; pays off the 2B held transfers; needs `held_transfers_seen`), and the uplink monitor
+   light (one outbound channel, amber, "whatever goes out will be seen": a clue to the cost of transmitting). Michelle's second message
+   arrives as a maintenance ticket (uplink panel, cart latch display, or wall panel on the missed-window path); only the variant for
+   `ticket_header_matched` says "ticket ... same closing code, sensor fault". Windows 0/6/6. Existing entries changed: only
+   `k_sl_2c_d_r3`/`r4` (delivery text plus one variant each) and the first `purge_window_2c` text. **Lesson (found by the whole suite,
+   not by my acceptance tests):** "sensor fault" and "ticket header" are guarded terms first earned in 2A/2B, so a 2C delivery that
+   says them to a player who skipped those reveals is rejected as "narration mentions unavailable knowledge". My first spec put
+   "sensor fault" in the base texts; fixed subtractively and the acceptance file was corrected (hash `77a309e6...`). A new delivery
+   that reuses an earlier scene's multiword term must either require the fact that earns it or leave it out. Ringer: two tasks
+   (`manifest_2cr_data.json` partial, `manifest_2crf.json` fix and pins; scripts `mk_2cr_data.py`, `mk_2crf.py`). Quick suite on the
+   branch: 4094 passed, 31 skipped; ruff clean. Probe: `.plans/richer-2c-probe-prereg.md`; arms `richer-2c-baseline`
+   (`bench/frozen/continuity-pre-richer-2c/`, from `159695e4`) and `richer-2c-candidate` (adds `entry_facts` held_transfers_seen and
+   ticket_header_matched, because the thorough entry state does not earn the optional 2B reveals), script `richer-2c-corridor`,
+   about 264 neurons per arm. **Probe run and read (2026-11-03): richness supported** (result in the prereg): details 4/4 on their commands,
+   baseline's invented material gone (including "Dr. Michelle McGehee" on the cart tags 2/4 and a camera turned toward the gate 4/4 that the
+   continuity judge flags), required path unchanged. Open defects: monitor light echo 4/4 (cure known, needs a re-probe), commitment-turn
+   narrator prompt 6,630 characters (130 over the worst-case cap), `guards` made a new group 2/20. **Next:** Brandon's decision on those
+   three and the 2C PR (merge only on his word). Then 3A, 3B, 3C.
+   **Probe fixes built (2026-11-03, Brandon: "yes to the fixes first"):** echo, prompt size and guards, all tests first
+   (`tests/test_2c_probe_fixes.py`); quick suite 4100 passed, 31 skipped. The first fix task failed on two errors in my own work (an unquoted
+   comma in the plot's flow mapping; a spec that said "single group" without the list shape). **Second candidate run read: all four fixes
+   hold** (echo gone 4/4; commitment-turn prompt max 6,474, 26 under the cap; no new groups 0/20; details unchanged 4/4; result in the
+   prereg's Amendment 1). **Next:** the 2C PR (his word to open and to merge), then 3A, 3B, 3C.
+   Not covered by 2C: the supervisor on Rebecca's purge list (a payoff for the 2A alarm log was considered; the tablet leaves with
+   Rebecca, so it would have to go in the required delivery; left for 3A or a later pass).
    Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header and closing code; 3A uses the
    held transfers (captives still alive because transfers were delayed); 3B/3C can surface Brandon's badge-reader knowledge when he opens doors.
 

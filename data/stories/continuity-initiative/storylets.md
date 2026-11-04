@@ -194,6 +194,119 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 5`
 - latest: `turn 10`
 
+### SL-2C-F — The Camera Lets Go
+
+**Source beats:** [2C.2 — The Purge Order](plot.md#scene-2c2--the-purge-order)
+
+**Allowed scene:** `2C`
+
+**Available when**
+- `purge_window_missed` is false.
+- `rebecca_offer_heard` is true.
+
+**Participants / items**
+- Kristin Schweitzer
+- Brandon Corfman
+- Corridor camera
+
+**Dramatic purpose**
+- Let Kristin notice when the corridor camera stops watching Brandon.
+
+**Possible realizations**
+- Kristin looks up at or watches the corridor camera.
+
+**Effects**
+- Sets `corridor_watch_lifted`.
+
+**Completion**
+- The corridor camera has returned to its sweep.
+
+**Abort**
+- The scene is no longer `2C`.
+
+**Protected boundary**
+- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 6`
+- latest: `turn 6`
+
+### SL-2C-G — The Cart Tags
+
+**Source beats:** [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue)
+
+**Allowed scene:** `2C`
+
+**Available when**
+- `purge_window_missed` is false.
+- `held_transfers_seen` is true.
+
+**Participants / items**
+- Kristin Schweitzer
+- Cart tags
+- Transfer carts
+
+**Dramatic purpose**
+- Let Kristin connect the held transfer records to the carts in the chamber.
+
+**Possible realizations**
+- Kristin reads the tags on the transfer carts.
+
+**Effects**
+- Sets `held_carts_known`.
+
+**Completion**
+- Kristin knows the carts carry held transfers.
+
+**Abort**
+- The scene is no longer `2C`.
+
+**Protected boundary**
+- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 6`
+- latest: `turn 6`
+
+### SL-2C-H — The Monitor Light
+
+**Source beats:** [2C.3 — Evidence or Rescue](plot.md#scene-2c3--evidence-or-rescue)
+
+**Allowed scene:** `2C`
+
+**Available when**
+- `purge_window_missed` is false.
+
+**Participants / items**
+- Kristin Schweitzer
+- Monitor light
+- Broadcast uplink
+
+**Dramatic purpose**
+- Let Kristin read the uplink’s visible warning about its outbound channel.
+
+**Possible realizations**
+- Kristin checks the monitor light on the uplink.
+
+**Effects**
+- Sets `uplink_eye_seen`.
+
+**Completion**
+- Kristin has seen the uplink’s monitor light.
+
+**Abort**
+- The scene is no longer `2C`.
+
+**Protected boundary**
+- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 6`
+- latest: `turn 6`
+
 ---
 
 ### SL-1A-E — The KMS Mark

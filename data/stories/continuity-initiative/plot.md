@@ -601,13 +601,17 @@ freytag_phase: crisis
 objective: Get free of Rebecca and commit to a move before the purge
 participant_ids: [kristin, brandon, michelle, rebecca]
 companions: [brandon]
-item_ids: [copied_janus_files, broadcast_uplink, transfer_carts]
+item_ids: [copied_janus_files, broadcast_uplink, transfer_carts, corridor_camera, monitor_light, cart_tags]
 item_placements:
   copied_janus_files: {parent: kristin}
   broadcast_uplink: {parent: purge_chamber, text: at the end of the command corridor}
   transfer_carts: {parent: purge_chamber, text: at the other end of the command corridor}
+  corridor_camera: {parent: purge_chamber, text: "over the guards at the near end of the command corridor, its lens held on Brandon"}
+  monitor_light: {parent: purge_chamber, text: burning steady amber beside the one outbound channel on the broadcast uplink}
+  cart_tags: {parent: purge_chamber, text: on the rails of the transfer carts}
 character_placements:
   rebecca: {parent: purge_chamber, text: standing between her guards in the command corridor}
+  corridor_guards: {parent: purge_chamber, text: holding both ends of the command corridor}
 entry_text: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. \"Charles means to kill everyone below us, my people too. Help me remove him, Brandon, and I will give you Michelle.\" Kristin still carried the copied JANUS files.\n\n"
 transition_ids: [t_2c_3a]
 bridge_text:
@@ -632,7 +636,7 @@ bridge_text:
 
 **Details:** command corridor; Rebecca in person; guards at both ends; offer to Brandon; Michelle's release
 
-Rebecca has watched them since the camera turned toward Brandon in 2A. She comes herself. Guards hold both ends of the corridor.
+Rebecca has watched them since the camera turned toward Brandon in 2A. She comes herself. Guards hold both ends of the corridor. A camera over the guards has the same slow turn as the one at the manifold, and it stays on Brandon the whole time she talks.
 
 She makes her offer to Brandon in front of Kristin. Charles has become unstable, she says. He means to kill the prisoners and the lower-level conspirators once the new government is in place. If Brandon helps her remove Charles and take control of the Continuity Initiative, she will release Michelle.
 
@@ -646,13 +650,15 @@ Mid-conversation, Rebecca's tablet chimes. Charles has learned that Michelle's n
 
 At the same time, Charles is preparing a national broadcast claiming he has found survivors of the catastrophe. He will release a few selected captives to give his new emergency government legitimacy.
 
-Brandon says yes to Rebecca. The guards stand down, and Rebecca leaves for her office to move against Charles. Kristin cannot tell whether Brandon means it. If she refused to let him erase his name in 2B, he says yes coldly and avoids her eyes. If she let him, he glances at her as he says it.
+Brandon says yes to Rebecca. The guards stand down, and the corridor camera, which has held on him through the whole offer, swings back to its slow sweep. Rebecca has called off the watch. If Kristin looks up, she sees it let go; Brandon does not. Rebecca leaves for her office to move against Charles. Kristin cannot tell whether Brandon means it. If she refused to let him erase his name in 2B, he says yes coldly and avoids her eyes. If she let him, he glances at her as he says it.
 
 ### Scene 2C.3 — Evidence or Rescue
 
 **Details:** copied evidence; uplink; transfer carts; detention sectors; Kristin's commitment
 
-Free in the corridor, with the purge running, Kristin has to act. There is no time to argue it out. Brandon says they must send the evidence now, even if that makes a rescue impossible. Kristin will not abandon Michelle and thousands of captives.
+Free in the corridor, with the purge running, Kristin has to act. There is no time to argue it out.
+
+A player who looks first learns what each choice will cost. The uplink has one outbound channel, and a monitor light beside it burns steady amber: the facility's eye on its own traffic. Whatever goes out will be seen. Along the other wall the carts stand loaded and strapped, each with a tag on the rail. The tags carry a transfer date a week old and the closing code, sensor fault. If Kristin has seen the held transfers, she knows the code: these are the transfers that were held, and Charles's order moves them first. If she also matched the ticket header in the archive, she knows who held them. Brandon says they must send the evidence now, even if that makes a rescue impossible. Kristin will not abandon Michelle and thousands of captives.
 
 Kristin commits by doing one of these:
 
@@ -673,7 +679,7 @@ Brandon's yes to Rebecca still hangs between them. He may be buying time for the
 
 **Details:** coded message; maintenance network; holding block route; emergency broadcast system; Rebecca’s secured office; combined mission
 
-Michelle's second message arrives through the maintenance network, as she promised in the archive. It marks a route into her partly unsecured holding block. It explains that the facility's emergency broadcast system can transmit the evidence and open the sealed detention sectors at the same time.
+Michelle's second message arrives through the maintenance network, as she promised in the archive. It comes as a maintenance ticket on the nearest panel: the uplink's status panel if Kristin went to the uplink, the cart's latch display if she went to the carts, a wall panel if the alarm drove them out first. It carries the same ticket header and the same closing code, sensor fault, as the held transfers. Kristin, if she matched the header in the archive, knows whose it is. It marks a route into her partly unsecured holding block. It explains that the facility's emergency broadcast system can transmit the evidence and open the sealed detention sectors at the same time.
 
 The broadcast system can only be activated by hand from Rebecca's secured office.
 
