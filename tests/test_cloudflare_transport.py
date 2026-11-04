@@ -2905,7 +2905,7 @@ def test_sections_prompt_introduces_only_the_characters_this_scene_involves() ->
     characters = user.split("SCENE:")[0]
 
     assert _rendered_character_line("kristin") in characters
-    assert _rendered_character_line("michelle") in characters
+    assert _rendered_character_line("michelle") not in characters
     for absent in ("Charles Jenkins", "Rebecca Jenkins", "Brandon Corfman"):
         assert absent not in characters, f"{absent} does not appear in Scene 1A"
 

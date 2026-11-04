@@ -39,7 +39,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.hedged_request import HedgedResult, configured_hedge_delay, hedged_call
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
 from storygame.runtime.narration_json import escape_stray_quotes, extract_json_object
-from storygame.runtime.recent_cue import recent_cue_referent_text
+from storygame.runtime.recent_cue import named_entity_ids, recent_cue_referent_text
 from storygame.runtime.reference_resolution import resolved_reference_names
 from storygame.runtime.reveal_eligibility import together_or_unplaced
 from storygame.runtime.state import RuntimeState
@@ -1583,7 +1583,7 @@ class CloudflareTurnProvider:
         delivery = NarrationSegment(kind="narration", text=text)
         return proposal.model_copy(update={"segments": (*proposal.segments, delivery)})
 
-    def _character_lines(self) -> list[str]:
+    def _character_lines(self, player_input: str = "") -> list[str]:
         """Introduce only the characters this scene actually involves.
 
         A package's cast is written for a reader who finishes the story, so
@@ -1593,10 +1593,13 @@ class CloudflareTurnProvider:
 
         package = self.state.package
         scene = self._current_scene()
-        involved = {package.protagonist_id, *scene.participant_ids}
+        named_ids = named_entity_ids(self.state, player_input)
         lines = []
         for character in package.characters:
-            if character.id not in involved:
+            if character.id != package.protagonist_id and (
+                character.id not in scene.participant_ids
+                or (not self._is_present(character.id) and character.id not in named_ids)
+            ):
                 continue
             bio = character.bio
             article = next((item for item in ("A ", "An ") if bio.startswith(item)), None)
@@ -1726,7 +1729,7 @@ class CloudflareTurnProvider:
 
         blocks = []
         for heading, items in (
-            ("CHARACTERS", self._character_lines()),
+            ("CHARACTERS", self._character_lines(str(user.get("player_input", "")))),
             ("SCENE", scene),
             ("EARLIER IN THE STORY", earlier_in_story),
             ("CONSTRAINTS", constraints),

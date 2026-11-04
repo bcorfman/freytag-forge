@@ -255,6 +255,7 @@
     "tests/test_pipeline_eval_cases.py": 0.01,
     "tests/test_place_scoped_feed.py": 4.08,
     "tests/test_prompt_budget.py": 2.6,
+    "tests/test_prompt_presence.py": 0.38,
     "tests/test_quick_suite.py": 0.24,
     "tests/test_raw_language_corpus.py": 0.06,
     "tests/test_recent_cue_reference.py": 5.84,
