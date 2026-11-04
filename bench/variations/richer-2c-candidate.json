@@ -1,0 +1,31 @@
+{
+  "name": "richer-2c-candidate",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 5,
+  "runtime": true,
+  "continuity_judge": true,
+  "fact_tracking_judge": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "2C": [
+      {
+        "name": "richer-2c-corridor",
+        "inputs": [
+          "Check the monitor light.",
+          "Tell Rebecca nothing.",
+          "Look at the camera.",
+          "Read the cart tags.",
+          "Head to the transfer carts and free a cart of captives."
+        ]
+      }
+    ]
+  },
+  "entry_state": "thorough",
+  "entry_facts": [
+    "held_transfers_seen",
+    "ticket_header_matched"
+  ]
+}

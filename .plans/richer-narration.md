@@ -26,17 +26,23 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    explicit `leak_terms` list keeps every vocabulary term they guarded (such as "left behind as bait") guarded in earlier scenes; the `act2_probe.py`
    scripted copies match. Tests `tests/test_2b_delivery_repeat.py` (tests-first commit `24463175`). Quick suite 4074 passed, 30 skipped. NOT re-probed
    live (the fix is subtractive; a re-probe would cost about 350 neurons per arm). **Echo fixes (2026-11-03, Brandon: "I don't want any echo on either scene"; tests-first `b0d4ae11`).** The narrator is shown the delivery text on a reveal turn and copies it, so the engine then repeats it. Probe, 8 replicates per arm, every narration read (scratchpad only, not in the repo): 2B badge checks, closing sentence "Brandon watches her read and says nothing" doubled 8/8 -> dropped it, 0/8. 1C door (`k_sl_1c_f_r1`): original doubled stance and quote 8/8; quote-only delivery left the lead-up ignoring Brandon in 7/8 ("him" with no referent); stance-only delivery doubled the stance 8/8; indirect speech and "turns his head" wording made the narrator ignore Brandon 7/8 and 8/8. **Chosen:** the delivery is only `Brandon says only, "Somebody has to watch the door."` and the stance moved into the 1C.2 Details line ("Brandon at the top of the stairs with his back to the processing line, watching the door"), the same technique as the pallets fix. Probe: stance never doubled, quote doubled 2/8; live confirmation on the real package 0/4 doubled, narrator follows "Watch Brandon" 4/4. **Residual 1C echo is possible (about 2 in 8)**; zero needs an engine change (not showing quiet reveals' delivery text to the narrator), which would touch 14 of 79 deliveries (1A 1, 1B 3, 1C 3, 2A 4, 2B 3; none in 2C, 3A to 3C) and narrows the "narrator sees its own delivery" exception, so it needs Brandon's go and its own probe first. Open: in one live 2B replicate the narrator missed "held, week" for `k_sl_2b_f_r1` (rejected turn; unrelated to this change; it delivered 4/4 in the original probe).
-   **Scene 2C: plot and tests committed (2026-11-03, branch `richer-narration-2c`).** Three optional quiet reveals, each with a job:
-   the corridor camera (held on Brandon during the offer; lets go when he says yes; pays off the 2A camera), the cart tags (carry
-   the week-old date and "sensor fault"; pays off the 2B held transfers; needs `held_transfers_seen`), and the uplink monitor light
-   (one outbound channel, amber, "whatever goes out will be seen": a clue to the cost of transmitting). Michelle's second message now
-   arrives as a maintenance ticket (uplink panel, cart latch display, or wall panel on the missed-window path) with the same closing
-   code, with a variant for `ticket_header_matched` (edits `k_sl_2c_d_r3`/`r4` and the `purge_window_2c` text; the only existing
-   entries changed). Windows 0/6/6 (the purge window closes at turn 5; targets stay >= 6 per the 2B lesson). Commits: plot, front
-   matter, tests `tests/test_richer_2c.py` (hash `b3b7613f...`). Existing 2C baseline: 4 `beat_overprojection` findings. Ringer
-   propagation task: `~/dev/ringer-work/richer-narration-2/manifest_2cr_data.json` (generator `mk_2cr_data.py`, check
-   `check_2cr_data.sh`), running. **Next:** review the patch (possessives, over-broad renames), apply, run the whole quick suite,
-   preregister the 2C probe (`.plans/richer-2c-probe-prereg.md`, model on the 2B one), Brandon runs the billed arms.
+   **Scene 2C: built, probe preregistered, billed run awaits Brandon (2026-11-03, branch `richer-narration-2c`).** Three optional quiet
+   reveals, each with a job: the corridor camera (held on Brandon during the offer; lets go when he says yes; pays off the 2A camera),
+   the cart tags (week-old date and "sensor fault"; pays off the 2B held transfers; needs `held_transfers_seen`), and the uplink monitor
+   light (one outbound channel, amber, "whatever goes out will be seen": a clue to the cost of transmitting). Michelle's second message
+   arrives as a maintenance ticket (uplink panel, cart latch display, or wall panel on the missed-window path); only the variant for
+   `ticket_header_matched` says "ticket ... same closing code, sensor fault". Windows 0/6/6. Existing entries changed: only
+   `k_sl_2c_d_r3`/`r4` (delivery text plus one variant each) and the first `purge_window_2c` text. **Lesson (found by the whole suite,
+   not by my acceptance tests):** "sensor fault" and "ticket header" are guarded terms first earned in 2A/2B, so a 2C delivery that
+   says them to a player who skipped those reveals is rejected as "narration mentions unavailable knowledge". My first spec put
+   "sensor fault" in the base texts; fixed subtractively and the acceptance file was corrected (hash `77a309e6...`). A new delivery
+   that reuses an earlier scene's multiword term must either require the fact that earns it or leave it out. Ringer: two tasks
+   (`manifest_2cr_data.json` partial, `manifest_2crf.json` fix and pins; scripts `mk_2cr_data.py`, `mk_2crf.py`). Quick suite on the
+   branch: 4094 passed, 31 skipped; ruff clean. Probe: `.plans/richer-2c-probe-prereg.md`; arms `richer-2c-baseline`
+   (`bench/frozen/continuity-pre-richer-2c/`, from `159695e4`) and `richer-2c-candidate` (adds `entry_facts` held_transfers_seen and
+   ticket_header_matched, because the thorough entry state does not earn the optional 2B reveals), script `richer-2c-corridor`,
+   about 264 neurons per arm. **Next:** Brandon runs `bench run` for each arm; I read every turn and write the result into the prereg;
+   then the 2C PR. Then 3A, 3B, 3C.
    Not covered by 2C: the supervisor on Rebecca's purge list (a payoff for the 2A alarm log was considered; the tablet leaves with
    Rebecca, so it would have to go in the required delivery; left for 3A or a later pass).
    Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header and closing code; 3A uses the
