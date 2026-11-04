@@ -381,3 +381,22 @@ Commander" appeared. Conclusion: limiting by presence cannot trim the 3A speaker
 The statements are the same three for every speaker, so size can only come from not repeating them or from fewer lines; the first
 changes behavior in the tests so far. Untested: dropping from SCENE the beat statements that the speaker lines already carry verbatim
 (about 300 characters on command 5).
+
+### Amendment 4, part 8: SCENE-dedup prototype (2026-11-04, preregistered)
+Brandon: "Scene-dedup test." Prototype (scratch worktree, not committed): the old one-line-per-speaker-per-statement format for every
+listed speaker (the behavior-safe format), and any SCENE line that is word for word one of those speakers' sayable statements is
+dropped from SCENE, since the speaker lines already carry it. Arm `fmt-scenededup`: first six commands, 6 replicates, judges off,
+about 132 neurons. **Read:** command 5 leads (calls out / spots / look-around), the size of the command 5 prompt against the old format's
+3,102-3,673 (expected about 300 less), whether anything the narrator needs is now missing (the scene frame or the objective reading
+thin, the narrator treating the lines as optional), commands 4 and 6 for invention. Decision rule (triage): command 5 calls out in at least
+5 of 6 and the prompt is about 300 characters smaller; then build through Ringer. Otherwise the old format stands as it is.
+
+### Amendment 4, part 9: result of the SCENE-dedup prototype (2026-11-04) — not adopted
+`bench/results/richer-3a-probe/fmt-scenededup`, 6 replicates, 6 commands, 132 neurons, none failed, 0 rejected. Command 5: calls out to
+Michelle 5/6, the sixth a look-around that still speaks to her, no "spots Michelle" (the decision rule passed). Size as expected: 2,797
+(six lines) and 3,368 (nine lines) against 3,102 and 3,673 in the old format, about 305 less. **But command 4 regressed: "She spots
+Brandon standing nearby" in 5 of 6 replicates (the sixth "looks at Brandon"), against 1 of 6 in `fmt-presentonly`, which has the same
+old format without the dedup** (Fisher p about 0.08). Removing the scene statements moved the re-spotting from Michelle on command 5 to
+Brandon on command 4; the narrator seems to take SCENE statements as what has already happened. Not adopted.
+Decision (Brandon, same day): build the old per-speaker format with speaker lines limited to speakers who are present or named by the
+command, "even if it doesn't help in this case". Measured safe on command 5: 16 of 16 across the three old-format arms.
