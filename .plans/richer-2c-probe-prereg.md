@@ -111,7 +111,7 @@ defects: the monitor light echo (4/4) and the narrator prompt at the commitment 
   replicates and is older than 2C (it concerns the existing "partly unsecured detention sector" sentence).
 - **Prompt budget.** Narrator prompt (system plus user): median 5,251 candidate against 5,309 baseline, max 6,630 against 6,326; over 5,000
   on 16 of 20 turns in both arms. **The candidate's command 5 is 6,630 in every replicate (baseline 6,310 to 6,326) and its command 2 is
-  6,208 in two replicates (baseline 5,309), both above the 6,500 worst-case cap's neighbourhood: command 5 is 130 over it.**
+  6,208 in two replicates (baseline 5,309), so command 5 is 130 over the 6,500 worst-case cap and command 2 is under it.**
   `tests/test_prompt_budget.py` passes (it measures at scene start, not on these turns). The extra on command 5 is the ticket sentence and
   the resolved tags and light lines (about 300 characters). Follow-up: compact the 2C item lines or the commitment delivery's variants.
 
