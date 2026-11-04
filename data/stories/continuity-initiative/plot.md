@@ -601,11 +601,14 @@ freytag_phase: crisis
 objective: Get free of Rebecca and commit to a move before the purge
 participant_ids: [kristin, brandon, michelle, rebecca]
 companions: [brandon]
-item_ids: [copied_janus_files, broadcast_uplink, transfer_carts]
+item_ids: [copied_janus_files, broadcast_uplink, transfer_carts, corridor_camera, monitor_light, cart_tags]
 item_placements:
   copied_janus_files: {parent: kristin}
   broadcast_uplink: {parent: purge_chamber, text: at the end of the command corridor}
   transfer_carts: {parent: purge_chamber, text: at the other end of the command corridor}
+  corridor_camera: {parent: purge_chamber, text: over the guards at the near end of the command corridor}
+  monitor_light: {parent: purge_chamber, text: beside the outbound channel on the broadcast uplink}
+  cart_tags: {parent: purge_chamber, text: on the rails of the transfer carts}
 character_placements:
   rebecca: {parent: purge_chamber, text: standing between her guards in the command corridor}
 entry_text: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. \"Charles means to kill everyone below us, my people too. Help me remove him, Brandon, and I will give you Michelle.\" Kristin still carried the copied JANUS files.\n\n"
