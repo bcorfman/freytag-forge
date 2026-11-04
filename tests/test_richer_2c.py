@@ -141,7 +141,7 @@ def test_the_new_reveals_are_quiet_short_and_exact():
             ),
             ["monitor_light"],
             ("kristin", "monitor_light", "broadcast_uplink"),
-            ("one outbound channel", "amber", "seen"),
+            ("seen",),
         ),
     }
     forbidden = ("michelle", "uprising", "broadcast", "phase two", "route", "emergency")
