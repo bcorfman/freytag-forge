@@ -1617,6 +1617,31 @@ class CloudflareTurnProvider:
         player_input = str(user.get("player_input", "")).strip()
         return [player_input] if player_input else []
 
+    def _speaker_constraint_lines(self, speakers: object) -> list[str]:
+        """Render each sayable statement once with every eligible speaker named."""
+
+        if not isinstance(speakers, dict):
+            return []
+        names_by_statement: dict[str, list[str]] = {}
+        for speaker_id, speaker in speakers.items():
+            # The protagonist's sayable knowledge mirrors what SCENE already states, so listing it
+            # repeated every established statement. What genuinely constrains a turn is which NPC may
+            # say what aloud, and each statement is written once with all of those NPCs named.
+            if speaker_id == self.state.package.protagonist_id or not isinstance(speaker, dict):
+                continue
+            name = self._display_name(speaker_id)
+            for item in speaker.get("sayable_knowledge", []):
+                statement = item["statement"]
+                names = names_by_statement.setdefault(statement, [])
+                if name not in names:
+                    names.append(name)
+
+        lines = []
+        for statement, names in names_by_statement.items():
+            joined_names = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
+            lines.append(f"{joined_names} may say this aloud: {statement}")
+        return lines
+
     def _section_user_prompt(self, user: dict[str, object]) -> str:
         """Render turn context as the authored roleplay sections.
 
@@ -1694,18 +1719,7 @@ class CloudflareTurnProvider:
                         if group:
                             constraints.append(f"If you reveal {candidate['id']}, you must say this: {group[0]}")
         if isinstance(context, dict):
-            speakers = context.get("speakers", {})
-            if isinstance(speakers, dict):
-                for speaker_id, speaker in speakers.items():
-                    # The protagonist's sayable knowledge mirrors what SCENE already
-                    # states, so listing it repeated every established statement
-                    # verbatim and grew with every beat. The narrator writes the
-                    # player character from the same SCENE material either way; what
-                    # genuinely constrains a turn is which NPC may say what aloud.
-                    if speaker_id == self.state.package.protagonist_id:
-                        continue
-                    for item in speaker.get("sayable_knowledge", []):
-                        constraints.append(f"{self._display_name(speaker_id)} may say this aloud: {item['statement']}")
+            constraints.extend(self._speaker_constraint_lines(context.get("speakers", {})))
         rules = user.get("_rules", [])
         constraints.extend(rule for rule in rules if isinstance(rule, str))
         player_lines = self._player_lines(user)
