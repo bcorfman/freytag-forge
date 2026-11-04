@@ -47,8 +47,12 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    **Prompt-size work (2026-11-04, Brandon: "aggressively manage context"; "only items/characters in the scene or that the player
    refers to"):** proof delivery trimmed; speaker lines grouped (full 3A state 7,668 -> 5,253 characters); characters introduced only when
    present or named (entry prompts down 150 to 340 characters in seven scenes). Quick suite 4138 passed. My earlier "conversation
-   history" explanation was wrong; the prompt has no history. Prereg Amendment 2. **Next:** Brandon's go on `candidate-run3` (3A, about
-   440 neurons) and a one-replicate 1A smoke (Michelle is absent there and no longer introduced unless named), then the 3A PR; then 3B, 3C.
+   history" explanation was wrong; the prompt has no history. Prereg Amendment 2. **Prompt size again (2026-11-04, prereg Amendment 3):** the
+   presence rule was reverted at Brandon's word (keep behavior, cut size another way), then rebuilt as "present, named by the command, or
+   brought up by the objective, an earned statement or an NPC's sayable statement"; also built: the pick rules dropped on a turn with no
+   candidates, placement lines that repeat the name dropped, each speaker set named once. Entry prompts 7 to 21% smaller (3B 2,674 to 2,118),
+   deep 3A 5,320 to 4,430. Quick suite 4147 passed. **Next:** Brandon's go on `candidate-run3` (3A, about 440 neurons) and a one-replicate
+   1A smoke, now also reading the turns where a participant dropped out (1C, 2B, 3A start); then the 3A PR; then 3B, 3C.
 
 000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on

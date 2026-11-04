@@ -222,3 +222,36 @@ Re-probe proposed (needs Brandon's go, about 440 neurons for 3A): candidate-only
 proof echo; any change in the other deliveries (echo, rejected turns); Michelle introduced or not on the turns that do not name her
 (any lead-in that does not know who she is); the exit rate; narrator prompt lengths against run2 (max 10,248). A one-replicate 1A smoke
 is also worth running because Michelle is the story's driver there.
+
+## Amendment 3: prompt size again, with no change to who the narrator knows about (2026-11-04, Brandon's directions)
+Brandon, on the presence rule: "remember the goal of changing the prompt was to reduce the amount of characters used; if you can keep the
+prior behavior and reduce the prompt size in a better way, then do that instead", then "my rules were about aggressively and dynamically
+trimming the prompt down to items/NPCs/memories that are actually within the context window". The presence rule of Amendment 2 was
+reverted (`cb44dc4c`), the safe cuts were built, and the rule came back in an amended form once Michelle's case was covered.
+
+Measured first (3A deep state, 5,320 characters): fixed rules and speaker permissions were 3,217 (60%), the speaker lines alone 1,651 (31%),
+Characters 986, scene text 1,080. THINGS placement lines were already scoped to the scene and hidden items (all nine entry prompts total
+2,647 characters, only 202 of them for things apart from Kristin), so the item rule had little left to take.
+
+- **Pick rules dropped on a turn with no candidates, placement lines that repeat the name dropped** (`99a48189`,
+  `tests/test_prompt_inert_lines.py`): "When one or more offered candidates match ... randomly pick" and "Do not put a candidate's ID in
+  grounding_ids" were followed by "This turn has no candidates", which cancels them (217 characters on every such turn). A turn that offers
+  candidates reads exactly as before. One placement line read "splinters around the back door frame is around the back door frame."
+  The moved pin: the quiet-turn assertion in `test_turn_prompt_matches_what_the_turn_actually_offers`, whose own docstring says a
+  quiet turn must not invite a selection.
+- **Each set of speakers named once** (`d823a662`, `tests/test_speaker_header_once.py`): a set with two or more statements gets one
+  header "A, B and C may say these aloud:" and nested lines; a set with one statement keeps the one-line form. Two 1B/1C pins that looked
+  for the one-line form now use `speaker_may_say`, which accepts both and still fails if an observation is offered to Brandon.
+- **Characters: present, named, or brought up** (`3729577a`, `tests/test_prompt_presence.py`): a scene participant is introduced when
+  present, when the command names them, or when the scene objective, a statement the player has earned, or a statement an NPC may say
+  names them. Beat prose, the scene frame and the entry text do not count (they would bring back every participant a scene merely
+  mentions). A character who is not a scene participant is still never introduced. Michelle is introduced in 1A by the objective; she
+  drops out of 1C, 2B and 3A-start (no one names her) and comes back as soon as a command or statement does.
+
+Entry prompts (old to now): 1A 3,333 to 3,044; 1B 3,009 to 2,790; 1C 2,732 to 2,254; 2A 3,260 to 3,041; 2B 2,925 to 2,447; 2C 3,071 to 2,852;
+3A 2,890 to 2,517; 3B 2,674 to 2,118; 3C 2,547 to 2,035. Deep 3A state 5,320 to 4,430 (7,668 before Amendment 2). Quick suite 4147 passed, 31 skipped.
+
+The Amendment 2 "not changed" note is superseded: a statement that names an absent participant now brings that character's biography in.
+Still open: relevance-to-the-command trimming of earned statements was NOT built (every earned statement in 3A concerns people in the
+scene, so an entity rule would remove almost none; it would need command or recency relevance and could cost narration quality).
+The re-probe below now also checks the narrator on turns where a participant dropped out (1C, 2B, 3A start).
