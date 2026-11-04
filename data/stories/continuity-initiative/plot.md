@@ -707,13 +707,15 @@ freytag_phase: crisis
 objective: Reach Michelle
 participant_ids: [kristin, michelle, brandon, senior_official, rebecca]
 companions: [brandon]
-item_ids: [copied_janus_files, override_codes, stolen_radio, gate_status_panel, emergency_surface_gates]
+item_ids: [copied_janus_files, override_codes, stolen_radio, gate_status_panel, emergency_surface_gates, wrist_tags, checkpoint_reader]
 item_placements:
   copied_janus_files: {parent: kristin}
   override_codes: {parent: senior_official}
   stolen_radio: {parent: detention_level}
   gate_status_panel: {parent: detention_level}
   emergency_surface_gates: {parent: facility_escape}
+  wrist_tags: {parent: detention_level, text: on the wrists of the captives}
+  checkpoint_reader: {parent: detention_level, text: beside the checkpoint door at the top of the block}
 character_placements:
   captives: {parent: detention_level}
   senior_official: {parent: captives}
@@ -742,13 +744,17 @@ bridge_text:
 
 ### Scene 3A.1 — The Detention Block
 
-**Details:** detention sector; rows of captives; scattered radios; coded announcements; tightening security
+**Details:** detention sector; rows of captives; scattered radios; coded announcements; tightening security; the wrist tags; the loop in the radios
 
 Kristin follows Michelle's maintenance route into one partly unsecured detention sector, not a mass release. She expects rows of helpless captives. Instead, Michelle speaks into a stolen radio, coordinating prisoners through coded announcements and sympathetic facility workers.
 
 Michelle is beside the captives.
 
 They are awake. The dose they were given is for the trip, and it wears off in the detention block. Michelle says waking them was the easy part. Getting them to trust the announcements took longer.
+
+Each captive wears a plastic tag on the wrist, and every tag carries the same transfer date, a week old. They were all due out a week ago. They are alive because Michelle held them, one ticket at a time, from the medical terminal in the archive; she could reach nothing else. If Kristin has seen the held transfers, she knows the closing code on the tags, and she knows who wrote the tickets she could not place in 2B. If she freed a cart in 2C, the tags on the cart's captives are the same.
+
+The stolen radios are tuned to the facility's own loop, the same ninety seconds that played in the park and at the freight terminal. Michelle's coded announcements ride inside it and change one word. The captives know the loop by heart, and the guards have stopped hearing it, so it is the one voice upstairs does not listen to. That is how she taught them to trust a voice they could not see. When the loop stops, Michelle says, everyone will know.
 
 The reunion gets one unhurried moment before the purge countdown takes over again. Kristin and Michelle can speak to each other before anyone asks either of them for anything.
 
@@ -758,7 +764,7 @@ Michelle explains that the facility contains only a fraction of the missing mill
 
 ### Scene 3A.2 — The Experiments
 
-**Details:** medical level; neurological experiments; behavioral experiments; short-term memory; targeted stimulation; false recollections
+**Details:** medical level; neurological experiments; behavioral experiments; short-term memory; targeted stimulation; false recollections; Michelle's private proof
 
 Michelle leads Kristin through a medical level where prisoners have been subjected to neurological and behavioral experiments.
 
@@ -772,6 +778,8 @@ Rebecca’s company has been testing methods for:
 
 The people Charles intends to “rescue” during his broadcast have already been conditioned to endorse his version of events. The senior official waits among the government prisoners.
 
+Kristin has just seen what the program can do to a memory, and she cannot be sure what was done to Michelle. If she read the calendar in Michelle's kitchen, she can ask for something no record holds. Michelle answers without a pause: Saturday, circled, K, lemon cake. Then she says she is sorry she missed the birthday. The facility never saw that wall. Kristin stops watching her for a flaw.
+
 ### Scene 3A.3 — The Unexpected Prisoner
 
 **Details:** senior official; government prisoners; fabricated evidence; authorization codes; emergency surface gates; Charles’s broadcast
@@ -784,11 +792,13 @@ The rescue now has a strict deadline tied to Charles’s broadcast. Michelle tur
 
 ### Scene 3A.4 — The Uprising Begins
 
-**Details:** coordinated disturbances; disabled cameras; isolated guards; internal checkpoints; sealed primary exits; armed response teams
+**Details:** coordinated disturbances; disabled cameras; isolated guards; internal checkpoints; sealed primary exits; armed response teams; Brandon at the checkpoint reader
 
 Michelle hands Kristin the stolen radio. Kristin gives the signal. Coordinated disturbances break out across the detention sectors. Prisoners disable cameras, overwhelm isolated guards, and seize control of several internal checkpoints.
 
 The uprising succeeds initially, but Charles seals the primary exits and redirects armed response teams toward the detention levels.
+
+At the first checkpoint the door still answers to a guard's badge. Brandon does not wait for one. He runs a card through the reader, never glances at the keypad, and the door opens on the first pass. Michelle's people watch him instead of the door. It is the same ease he showed at the facility gate, when he said the readers check only three things.
 
 Kristin, Michelle, and Brandon must fight upward toward Rebecca’s office while the prisoners hold the lower levels.
 
