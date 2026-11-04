@@ -11,6 +11,17 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
 
 ## Resume here (in order)
 
+0000. **Scene 3A: plot drafted, tests committed, propagation running (2026-11-03, branch `richer-narration-3a`).** Plot `4090cc65`, failing
+   acceptance tests `be6a4d3c` (`tests/test_richer_3a.py`, hash `312644bb...`). Four optional quiet reveals, each with a job: wrist tags
+   (every captive's transfer date is a week old; Michelle held them from the archive terminal, which answers 2B's "who held them"; with
+   `held_transfers_seen` the tags carry the closing code), the loop in the stolen radios (coded announcements ride inside the facility's
+   repeating message and change one word; pays off 1A/1B/1C, plants 3B/3C: "when it stops, everyone will know"), Michelle's private proof
+   (needs the medical level and the 1A calendar: "Saturday, K, lemon cake"; answers the false-recollection fear; adds the fact
+   `lemon_cake_calendar_read` to `k_sl_1a_g_r2`, the only existing entry touched), Brandon at the checkpoint reader (opens it first pass
+   without looking at the keypad; pays off 1B keypad and the 2A/2B badge checks). Windows 0/8/9, priority -1, not voiceable. Ringer task
+   `3a-richer-scene` (`manifest_3a_data.json`, check `check_3a_data.sh`, run name `richer-narration-3a`). Not covered: the supervisor on the
+   purge list. **Next:** review the patch, apply, run the suite, preregister and probe 3A; then 3B, 3C.
+
 000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on
    command 6 in every replicate, the scene was left by the same earned transition as the baseline, 0 plain things resolved new (baseline 2).
