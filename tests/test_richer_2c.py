@@ -199,7 +199,10 @@ def test_michelles_second_message_travels_as_a_maintenance_ticket():
     for entry_id, place in (("k_sl_2c_d_r3", "uplink"), ("k_sl_2c_d_r4", "cart")):
         entry = entries[entry_id]
         text = entry.delivery_text.casefold()
-        assert "maintenance ticket" in text and "sensor fault" in text and place in text, entry_id
+        # "sensor fault" and "ticket header" are guarded terms first earned in 2A and 2B: only the variant for a
+        # player who matched the header may say them, or narration is rejected as unavailable knowledge.
+        assert "maintenance ticket" in text and place in text, entry_id
+        assert "sensor fault" not in text and "ticket header" not in text, entry_id
         variants = [variant for variant in entry.delivery_variants if "ticket_header_matched" in variant.requires]
         assert len(variants) == 1, entry_id
         variant = variants[0].text.casefold()
@@ -211,7 +214,7 @@ def test_michelles_second_message_travels_as_a_maintenance_ticket():
         ]
     pacing = {event.id: event for event in PACKAGE.pacing.events}
     first = pacing["purge_window_2c"].realizations[0].text.casefold()
-    assert "maintenance ticket" in first and "sensor fault" in first
+    assert "maintenance ticket" in first and "sensor fault" not in first
 
 
 def test_existing_2c_commands_still_reach_their_reveals():

@@ -79,6 +79,12 @@ facts:
   purpose: Kristin has read the three checks listed in the build record's access section.
 - id: held_transfers_seen
   purpose: Kristin has seen the prisoner transfers held under repeated sensor fault tickets.
+- id: corridor_watch_lifted
+  purpose: The corridor camera has returned from watching Brandon to its normal sweep.
+- id: uplink_eye_seen
+  purpose: Kristin has seen the uplink's monitor light over its one outbound channel.
+- id: held_carts_known
+  purpose: Kristin knows the transfer carts carry the held transfers.
 - id: ticket_header_matched
   purpose: Kristin has matched the maintenance line's ticket header to the held transfers.
 - id: alarm_log_read
@@ -2203,8 +2209,17 @@ knowledge:
   delivery_text: >-
     Kristin heads to the uplink and starts sending the copied files.
     The detention sectors seal.
+    A maintenance ticket scrolls up the uplink's status panel, closed with the code sensor fault.
     Michelle's route leads to Rebecca's secured office.
     The office can broadcast the evidence and open the detention cells.
+  delivery_variants:
+  - requires: [ticket_header_matched]
+    text: >-
+      Kristin heads to the uplink and starts sending the copied files.
+      The detention sectors seal.
+      A maintenance ticket scrolls up the uplink's status panel. It has the ticket header Kristin matched in the archive, and the same closing code, sensor fault.
+      Michelle's route leads to Rebecca's secured office.
+      The office can broadcast the evidence and open the detention cells.
 - id: k_sl_2c_d_r4
   statement: 'Kristin commits to rescue, accepts that the evidence is not transmitted, and receives Michelle’s route to the combined plan.'
   earn_when: heads to the transfer carts and frees a cart of captives
@@ -2254,8 +2269,102 @@ knowledge:
   delivery_text: >-
     Kristin heads to the transfer carts and frees a cart of captives.
     The evidence is not transmitted.
+    A maintenance ticket scrolls across the cart's latch display, closed with the code sensor fault.
     Michelle's route leads to Rebecca's secured office.
     The office can broadcast the evidence and open the detention cells.
+  delivery_variants:
+  - requires: [ticket_header_matched]
+    text: >-
+      Kristin heads to the transfer carts and frees a cart of captives.
+      The evidence is not transmitted.
+      A maintenance ticket scrolls across the cart's latch display. It has the ticket header Kristin matched in the archive, and the same closing code, sensor fault.
+      Michelle's route leads to Rebecca's secured office.
+      The office can broadcast the evidence and open the detention cells.
+- id: k_sl_2c_f_r1
+  statement: "The corridor camera lets go of Brandon and returns to its sweep."
+  voiceable: false
+  reach_entity_ids: [corridor_camera]
+  earn_when: looks up at or watches the corridor camera
+  action_evidence:
+  - [look at, watch, check, examine, study, look up at, glance at]
+  - [corridor camera, camera, lens]
+  entity_ids: [kristin, brandon, corridor_camera]
+  aliases: [corridor watch lifted]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C]
+  requires:
+  - fact_id: purge_window_missed
+    equals: false
+  - fact_id: rebecca_offer_heard
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: corridor_watch_lifted
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2C-F, realization_id: SL-2C-F-R1}
+  relevance: {entity_ids: [corridor_camera, brandon], priority: -1}
+  must_convey:
+  - [camera, corridor camera]
+  - [Brandon]
+  - [sweep]
+  delivery_text: >-
+    The corridor camera over the guards swings off Brandon and goes back to its slow sweep. Brandon does not look up.
+- id: k_sl_2c_g_r1
+  statement: "The cart tags carry a week-old date and the code sensor fault."
+  voiceable: false
+  reach_entity_ids: [cart_tags]
+  earn_when: reads the tags on the transfer carts
+  action_evidence:
+  - [read, look at, check, examine, inspect, study]
+  - [cart tags, tags, tag, cart tag]
+  entity_ids: [kristin, cart_tags, transfer_carts]
+  aliases: [held carts known]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C]
+  requires:
+  - fact_id: purge_window_missed
+    equals: false
+  - fact_id: held_transfers_seen
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: held_carts_known
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2C-G, realization_id: SL-2C-G-R1}
+  relevance: {entity_ids: [cart_tags], priority: -1}
+  must_convey:
+  - [tags, cart tags]
+  - [week]
+  - [sensor fault]
+  delivery_text: >-
+    The tags on the carts carry a transfer date a week old and the closing code, sensor fault. These are the transfers that were held.
+- id: k_sl_2c_h_r1
+  statement: "The uplink's monitor light burns amber over its one outbound channel."
+  voiceable: false
+  reach_entity_ids: [monitor_light]
+  earn_when: checks the monitor light on the uplink
+  action_evidence:
+  - [read, look at, check, examine, inspect, study, watch]
+  - [monitor light, status light, amber light, light, indicator]
+  entity_ids: [kristin, monitor_light, broadcast_uplink]
+  aliases: [uplink eye seen]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [2C]
+  requires:
+  - fact_id: purge_window_missed
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: uplink_eye_seen
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-2C-H, realization_id: SL-2C-H-R1}
+  relevance: {entity_ids: [monitor_light], priority: -1}
+  must_convey:
+  - [monitor light, status light]
+  - [one outbound channel]
+  - [seen]
+  delivery_text: >-
+    The monitor light beside the uplink burns steady amber over its one outbound channel: the facility's eye on its own traffic. Whatever goes out will be seen.
 - id: k_sl_3a_a_r1
   statement: 'Kristin reaches Michelle alive, and the two share one unhurried moment before Michelle returns to directing prisoners through stolen radios and coded announcements.'
   earn_when: "finds Michelle in detention, frees the captives, or helps Michelle"
