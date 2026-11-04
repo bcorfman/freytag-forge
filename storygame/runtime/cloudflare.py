@@ -39,7 +39,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.hedged_request import HedgedResult, configured_hedge_delay, hedged_call
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
 from storygame.runtime.narration_json import escape_stray_quotes, extract_json_object
-from storygame.runtime.recent_cue import recent_cue_referent_text
+from storygame.runtime.recent_cue import named_entity_ids, recent_cue_referent_text
 from storygame.runtime.reference_resolution import resolved_reference_names
 from storygame.runtime.reveal_eligibility import together_or_unplaced
 from storygame.runtime.state import RuntimeState
@@ -1583,20 +1583,22 @@ class CloudflareTurnProvider:
         delivery = NarrationSegment(kind="narration", text=text)
         return proposal.model_copy(update={"segments": (*proposal.segments, delivery)})
 
-    def _character_lines(self) -> list[str]:
-        """Introduce only the characters this scene actually involves.
-
-        A package's cast is written for a reader who finishes the story, so
-        sending all of it would hand the narrator later characters and their
-        motives before the player has met them.
-        """
+    def _character_lines(self, player_input: str = "", brought_up: tuple[str, ...] = ()) -> list[str]:
+        """Introduce present, referred-to, or story-brought-up scene participants."""
 
         package = self.state.package
         scene = self._current_scene()
         involved = {package.protagonist_id, *scene.participant_ids}
+        named_ids = named_entity_ids(self.state, " ".join((player_input, *brought_up)))
         lines = []
         for character in package.characters:
             if character.id not in involved:
+                continue
+            if (
+                character.id != package.protagonist_id
+                and not self._is_present(character.id)
+                and character.id not in named_ids
+            ):
                 continue
             bio = character.bio
             article = next((item for item in ("A ", "An ") if bio.startswith(item)), None)
@@ -1660,6 +1662,7 @@ class CloudflareTurnProvider:
         scene: list[str] = []
         earlier_in_story: list[str] = []
         constraints: list[str] = []
+        brought_up: list[str] = []
         handoff_turn = self._is_authored_handoff_turn()
 
         def paragraphs(text: str) -> list[str]:
@@ -1671,6 +1674,7 @@ class CloudflareTurnProvider:
         if isinstance(scene_entry, dict):
             scene.append(f"The scene takes place at {scene_entry['location']}.")
             objective = str(scene_entry["objective"])
+            brought_up.append(objective)
             scene.append(f"{scene_entry['protagonist']}'s objective is to {objective[0].lower()}{objective[1:]}.")
             scene.extend(paragraphs(scene_entry["entry_text"]))
             for detail in scene_entry["opening_beat"].get("details", []):
@@ -1685,6 +1689,7 @@ class CloudflareTurnProvider:
                 scene.extend(where.splitlines())
             scene.extend(paragraphs(player["scene_frame"]))
             scene.append(f"What presses on {self._protagonist_name()} now: {player['pressure']}")
+            brought_up.append(str(player["pressure"]))
             scene_setting = user.get("scene_setting")
             if isinstance(scene_setting, dict):
                 for beat in scene_setting.get("beats", []):
@@ -1698,6 +1703,7 @@ class CloudflareTurnProvider:
             for item in player.get("committed_knowledge", []):
                 if item.get("id") in player.get("scene_hidden_ids", []):
                     continue
+                brought_up.append(item["statement"])
                 definition = self.state.package.knowledge_indexes.by_id.get(item.get("id"))
                 if definition is not None and self.state.current_scene_id not in definition.available_in_scenes:
                     earlier_in_story.append(item["statement"])
@@ -1727,14 +1733,26 @@ class CloudflareTurnProvider:
                         if group:
                             constraints.append(f"If you reveal {candidate['id']}, you must say this: {group[0]}")
         if isinstance(context, dict):
-            constraints.extend(self._speaker_constraint_lines(context.get("speakers", {})))
+            speakers = context.get("speakers", {})
+            constraints.extend(self._speaker_constraint_lines(speakers))
+            if isinstance(speakers, dict):
+                for speaker in speakers.values():
+                    if not isinstance(speaker, dict):
+                        continue
+                    brought_up.extend(item["statement"] for item in speaker.get("sayable_knowledge", []))
         rules = user.get("_rules", [])
         constraints.extend(rule for rule in rules if isinstance(rule, str))
         player_lines = self._player_lines(user)
 
         blocks = []
         for heading, items in (
-            ("CHARACTERS", self._character_lines()),
+            (
+                "CHARACTERS",
+                self._character_lines(
+                    player_input=str(user.get("player_input", "")),
+                    brought_up=tuple(brought_up),
+                ),
+            ),
             ("SCENE", scene),
             ("EARLIER IN THE STORY", earlier_in_story),
             ("CONSTRAINTS", constraints),
