@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider
+from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import apply_scene_placements
 from tests import test_richer_2c, test_richer_3a
+from tests.test_speaker_lines_grouped import _commit
 
 
 def _characters(state, command: str) -> str:
@@ -35,3 +38,31 @@ def test_an_absent_character_the_player_names_is_introduced_for_that_turn():
     assert "Rebecca Jenkins" in named
     unnamed = _characters(state, "Ask Michelle about the radio.")
     assert "Rebecca Jenkins" not in unnamed
+
+
+def test_a_character_the_scene_objective_names_is_introduced_even_when_absent():
+    # 1A is about finding Michelle, who is not in the room: the objective brings her up.
+    package = test_richer_3a.PACKAGE
+    state = RuntimeState.bootstrap(package)
+    for command in ("Search the kitchen.", "Look around."):
+        assert "Dr. Michelle McGehee" in _characters(state, command)
+
+
+def test_a_character_an_earned_statement_names_is_introduced_even_when_absent():
+    # k_sl_3b_d_r1 names Rebecca. In 3B she is not placed, but once the player has earned it the story has brought
+    # her up and she is introduced, whatever the command says.
+    package = test_richer_3a.PACKAGE
+    state = RuntimeState.bootstrap(package)
+    state.current_scene_id = "3B"
+    state.phase = next(s for s in package.scenes if s.metadata.scene_id == "3B").metadata.freytag_phase
+    state._assert_scene_entry_fact("3B")
+    apply_scene_placements(package, state.facts, "3B")
+    assert "Rebecca Jenkins" not in _characters(state, "Look around.")
+    _commit(state, ("k_sl_3b_d_r1",))
+    assert "Rebecca Jenkins" in _characters(state, "Look around.")
+
+
+def test_a_character_no_one_has_brought_up_stays_out():
+    # Charles is a later character: nothing the objective, the command or any earned statement says names him in 3A.
+    state, _engine = test_richer_3a._engine()
+    assert "Charles" not in _characters(state, "Look at the captives.")
