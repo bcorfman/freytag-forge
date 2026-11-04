@@ -2209,7 +2209,7 @@ knowledge:
   delivery_text: >-
     Kristin heads to the uplink and starts sending the copied files.
     The detention sectors seal.
-    A maintenance ticket scrolls up the uplink's status panel, closed with the code sensor fault.
+    A maintenance ticket scrolls up the uplink's status panel.
     Michelle's route leads to Rebecca's secured office.
     The office can broadcast the evidence and open the detention cells.
   delivery_variants:
@@ -2269,7 +2269,7 @@ knowledge:
   delivery_text: >-
     Kristin heads to the transfer carts and frees a cart of captives.
     The evidence is not transmitted.
-    A maintenance ticket scrolls across the cart's latch display, closed with the code sensor fault.
+    A maintenance ticket scrolls across the cart's latch display.
     Michelle's route leads to Rebecca's secured office.
     The office can broadcast the evidence and open the detention cells.
   delivery_variants:

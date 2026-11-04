@@ -71,6 +71,9 @@ def test_expected_reveal_ids_are_current_and_scene_specific(monkeypatch) -> None
         "k_sl_2c_c_r1",
         "k_sl_2c_d_r3",
         "k_sl_2c_d_r4",
+        "k_sl_2c_f_r1",
+        "k_sl_2c_g_r1",
+        "k_sl_2c_h_r1",
     }
     assert expected["3C"] == ["k_sl_3c_a_r1", "k_sl_3c_b_r2", "k_sl_3c_c_r1"]
     assert all(not item_id.startswith(("k_sl_2a_a_", "k_sl_2a_e_")) for ids in expected.values() for item_id in ids)

@@ -255,7 +255,7 @@ events:
   - fact_id: purge_window_missed
     equals: true
   realizations:
-  - text: The purge alarm forces Kristin and Brandon out. A maintenance ticket scrolls across the nearest wall panel, closed with the code sensor fault, and opens a way forward.
+  - text: The purge alarm forces Kristin and Brandon out. A maintenance ticket scrolls across the nearest wall panel and opens a way forward.
 - id: purge_nudge_2c
   scene_id: 2C
   at_turn: 6
