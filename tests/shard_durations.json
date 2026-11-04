@@ -145,6 +145,7 @@
     "tests/test_guard_retry_flag.py": 0.1,
     "tests/test_guard_retry_telemetry.py": 0.13,
     "tests/test_guard_vocabulary.py": 0.1,
+    "tests/test_handoff_typed_tiebreak.py": 1.04,
     "tests/test_hedged_request.py": 0.23,
     "tests/test_held_by_echo.py": 0.02,
     "tests/test_hidden_bench_1b2_capture.py": 0.01,

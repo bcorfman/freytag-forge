@@ -508,7 +508,7 @@ class CloudflareTurnProvider:
         universe = self._reveal_universe()
         self.last_reveal_selection["universe_size"] = len(universe)
         evidence_input = self._evidence_input(player_input)
-        self.authored_handoff = uniquely_matched_authored_handoff(evidence_input, universe)
+        self.authored_handoff = uniquely_matched_authored_handoff(evidence_input, universe, typed_input=player_input)
         if self.authored_handoff is not None:
             self.last_reveal_selection.update(outcome="exact_match", matched=self.authored_handoff.candidate.id)
         elif self._exact_match_count(evidence_input, universe) > 1:

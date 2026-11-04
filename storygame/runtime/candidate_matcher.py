@@ -176,7 +176,10 @@ def uniquely_matched_candidate(
 
 
 def uniquely_matched_authored_handoff(
-    player_input: str, candidates: tuple[RevealCandidate, ...]
+    player_input: str,
+    candidates: tuple[RevealCandidate, ...],
+    *,
+    typed_input: str | None = None,
 ) -> AuthoredHandoff | None:
     """Return one handoff only when exactly one projected candidate opts in.
 
@@ -185,7 +188,9 @@ def uniquely_matched_authored_handoff(
     projected, so package knowledge that is protected or not currently offered
     cannot participate in the decision. Among complete matches, repeatable
     candidates yield to any non-repeatable candidate, then matches with the
-    most evidence groups are preferred.
+    most evidence groups are preferred. If that still leaves a tie and
+    ``typed_input`` is provided, candidates whose complete action evidence
+    also matches the typed input are preferred when any exist.
     """
 
     matches = []
@@ -202,6 +207,10 @@ def uniquely_matched_authored_handoff(
     if len(matches) > 1:
         greatest_group_count = max(len(candidate.action_evidence) for candidate, _ in matches)
         matches = [match for match in matches if len(match[0].action_evidence) == greatest_group_count]
+    if len(matches) > 1 and typed_input is not None:
+        typed_matches = [match for match in matches if _matches_all(match[0].action_evidence, typed_input)]
+        if typed_matches:
+            matches = typed_matches
     if len(matches) != 1:
         return None
     candidate, delivery_text = matches[0]
