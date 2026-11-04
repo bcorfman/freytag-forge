@@ -341,3 +341,24 @@ speak first. The nested header saves about 100-170 characters over one-line-per-
 Not explained: the spots at commands 4 (1), 8 (1) and 9 (1) and the rise in "looks around" openers; these turns are checked again after
 the fix. Not significant on its own: one-line-per-statement 4/6 against the old format's 10/10 (Fisher p about 0.14).
 Mistake recorded: my first format test used a two-command script and was invalid (see above), costing about 570 neurons.
+
+### Amendment 4, part 4: prototype of speaker trimming by who the command names (2026-11-04, preregistered before the run)
+Brandon asked for another way to save characters, since the old format is large and the nested header causes the re-spotting. The old
+format repeats the same three statements for Michelle, Brandon and the senior official (1,644 characters; the name prefixes are only about
+400 of them; two of the three statements are also stated word for word in SCENE). **Prototype (scratch worktree, not committed):** if the
+command names one or more speakers, list only their lines, in the old one-line-per-speaker form; if it names none, list every speaker's
+statements once each with all names before it (the 4/6 format). **Arm** `fmt-targeted`: first six commands of the probe script, 6
+replicates, judges off, about 160 neurons. Command 5 names Michelle; command 6 names the senior official.
+**Read:** command 5 leads (calls out / spots / look-around), the speaker lines in the command 5 and 6 prompts (only the named speaker
+listed), and command 6 for a speaker saying something unauthorized. **Decision rule (triage):** if command 5 calls out to Michelle in at
+least 5 of 6 and command 5's prompt is within about 100 characters of nested's, build it through Ringer; if 4/6 or fewer, the old
+per-speaker lines for Michelle are not what carries the behavior, and I report back.
+
+### Amendment 4, part 5: result of the targeted-speaker prototype (2026-11-04) — failed the decision rule
+`bench/results/richer-3a-probe/fmt-targeted`, 6 replicates, 6 commands, 132 neurons, none failed, 0 rejected. Command 5 (prompt 2,541-2,564,
+only Michelle's three lines listed): calls out to Michelle 0/6, "spots Michelle" 4/6, bare look-around 2/6 (the decision rule needed 5/6).
+**Michelle's own lines under her name are not what carries the old behavior.** The old format's 6/6 had six or nine lines (Michelle and
+Brandon, sometimes the official too); one-line-per-statement had three lines and got 4/6; nested and this prototype had three lines and got
+0/6. The behavior seems to track how many "may say aloud" lines the prompt carries, not whose they are. Also seen: on command 6 the
+named-entity match listed Michelle and Brandon's lines instead of the official's in 3 of 6 replicates (the match missed "senior official"),
+and in 1 of 6 the narrator invented a "Sector Commander". The prototype is dropped. Prototype code is not committed.
