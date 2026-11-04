@@ -157,6 +157,8 @@ EXPECTED_SCOPED_ALIASES_BY_SCENE = {
         "held transfers": "transfer_queue",
     },
     "2C": {
+        "guards": "corridor_guards",
+        "guard": "corridor_guards",
         "copied files": "copied_janus_files",
         "JANUS files": "copied_janus_files",
         "JANUS evidence": "copied_janus_files",

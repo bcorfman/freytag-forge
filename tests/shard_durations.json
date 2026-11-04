@@ -23,6 +23,7 @@
     "tests/test_2c_assess_verbs.py": 0.62,
     "tests/test_2c_ledger_guard.py": 6.21,
     "tests/test_2c_paths_repro.py": 0.0,
+    "tests/test_2c_probe_fixes.py": 0.28,
     "tests/test_2c_spine_prompts.py": 0.17,
     "tests/test_2c_turn_one_copy.py": 0.01,
     "tests/test_3a_records_followup.py": 0.63,

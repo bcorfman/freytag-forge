@@ -120,3 +120,18 @@ defects: the monitor light echo (4/4) and the narrator prompt at the commitment 
 2. Commitment-turn narrator prompt 6,630 characters, 130 over the worst-case cap in live play (the baseline was already 6,326).
 3. `guards` is made a new group in 2 of 20 candidate turns; declaring them in 2C would remove the one regression in Q1.
 4. Not covered live: the transmit branch, the missed-window ticket text, the unmatched-header ticket text (offline tests cover them).
+
+## Amendment 1: the probe fixes and the second candidate run (2026-11-03)
+Fixes for the three defects above, tests first (`tests/test_2c_probe_fixes.py`): (1) the monitor light delivery is only "Whatever goes out
+will be seen." and the amber and the outbound channel moved into the light's placement text; (2) the five Details additions I had made to
+the 2C beats were removed (the camera, light and tags carry their imagery in placement text, so they cost prompt space only when the player
+asks about them; the camera's text says its lens is held on Brandon) and the matched-header ticket sentences are shorter ("with the archive
+header and the code sensor fault"); (3) a declared group `corridor_guards` (name "corridor guards", aliases guards, guard) placed in 2C.
+Quick suite 4100 passed, 31 skipped; ruff clean.
+
+**Second candidate run, not pooled with the first.** Same variation `richer-2c-candidate`, same script, 4 replicates, output
+`bench/results/richer-2c-probe/candidate-run2`, 264 projected neurons. The baseline is unchanged and is not rerun. Questions: (a) is the
+monitor light echo gone (compare the narrator's command 1 sentence with the delivery)? Residual 2 in 8 was seen on earlier echo fixes; (b) is
+the commitment-turn narrator prompt under 6,500 (first run 6,630) and command 2 under 6,000 (first run 6,208 in two replicates); (c) is
+`guards` still made a new group; (d) did removing the Details change the opening or the other details (the camera, tags, ticket form still
+4/4; any lead-in that ignores Brandon)?
