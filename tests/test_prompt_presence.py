@@ -4,7 +4,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements
 from tests import test_richer_2c, test_richer_3a
-from tests.test_speaker_lines_grouped import _commit
+from tests.test_speaker_lines import _commit
 
 
 def _characters(state, command: str) -> str:

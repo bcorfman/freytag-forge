@@ -4,7 +4,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.facts import Fact
 from storygame.runtime.item_facts import ItemFactsProvider
 from tests.test_richer_1b import PACKAGE, _engine, _entries
-from tests.test_speaker_lines_grouped import speaker_may_say
+from tests.test_speaker_lines import speaker_may_say
 
 OBSERVATION_IDS = (
     "k_sl_1b_a_r2",

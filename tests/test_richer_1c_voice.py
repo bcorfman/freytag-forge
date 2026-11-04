@@ -3,7 +3,7 @@ from __future__ import annotations
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.facts import Fact
 from tests.test_richer_1c import _engine, _entries
-from tests.test_speaker_lines_grouped import speaker_may_say
+from tests.test_speaker_lines import speaker_may_say
 
 OBSERVATION_IDS = (
     "k_sl_1c_a_r1",
