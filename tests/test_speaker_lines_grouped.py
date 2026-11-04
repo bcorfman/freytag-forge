@@ -6,7 +6,6 @@ from tests.test_richer_3a import _engine, _entries
 
 COMMITTED = ("k_sl_3a_a_r1", "k_sl_3a_b_r2", "k_sl_3a_d_r1", "k_sl_3a_c_r1")
 SPEAKERS = "Dr. Michelle McGehee, Brandon Corfman and Imprisoned senior official"
-MARK = " may say this aloud: "
 
 
 def _commit(state, entry_ids: tuple[str, ...]) -> None:
@@ -29,7 +28,7 @@ def _constraint_lines() -> list[str]:
     prompt = provider.assemble_turn_prompt("Look at the captives.")["context"]
     text = provider._section_user_prompt(prompt)
     constraints = text[text.index("CONSTRAINTS:") :].split("\n\n")[0]
-    return [line for line in constraints.splitlines() if MARK in line]
+    return constraints.splitlines()
 
 
 def test_a_statement_every_present_speaker_may_say_is_listed_once_with_all_their_names():
@@ -37,13 +36,32 @@ def test_a_statement_every_present_speaker_may_say_is_listed_once_with_all_their
     entries = _entries()
     for entry_id in COMMITTED:
         statement = entries[entry_id].statement
-        matching = [line for line in lines if line.endswith(f"{MARK}{statement}")]
-        assert matching == [f"- {SPEAKERS}{MARK}{statement}"], entry_id
+        assert lines.count(f"  - {statement}") == 1, entry_id
+    assert lines.count(f"- {SPEAKERS} may say these aloud:") == 1
 
 
 def test_the_speaker_lines_no_longer_repeat_each_statement_per_speaker():
     lines = _constraint_lines()
-    statements = [line.split(MARK, 1)[1] for line in lines]
+    statements = [line[4:] for line in lines if line.startswith("  - ")]
     assert len(statements) == len(set(statements))
-    assert not any(line.startswith("- Dr. Michelle McGehee may say") for line in lines)
-    assert not any(line.startswith("- Brandon Corfman may say") for line in lines)
+    assert not any("Dr. Michelle McGehee may say this aloud" in line for line in lines)
+    assert not any("Brandon Corfman may say this aloud" in line for line in lines)
+
+
+def speaker_may_say(prompt: str, name: str, statement: str) -> bool:
+    """True when the prompt lets `name` say `statement` aloud, in either the one-line or the grouped form."""
+
+    header = None
+    for line in prompt.splitlines():
+        if line.endswith(f" may say this aloud: {statement}"):
+            names = line.removeprefix("- ").split(" may say this aloud: ")[0]
+            if name in names.replace(" and ", ", ").split(", "):
+                return True
+        elif line.endswith(" may say these aloud:"):
+            header = line.removeprefix("- ").removesuffix(" may say these aloud:")
+        elif line == f"  - {statement}" and header is not None:
+            if name in header.replace(" and ", ", ").split(", "):
+                return True
+        elif not line.startswith("  - "):
+            header = None
+    return False

@@ -3,6 +3,7 @@ from __future__ import annotations
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.facts import Fact
 from tests.test_richer_1c import _engine, _entries
+from tests.test_speaker_lines_grouped import speaker_may_say
 
 OBSERVATION_IDS = (
     "k_sl_1c_a_r1",
@@ -64,7 +65,7 @@ def test_the_narrator_prompt_does_not_script_brandon_with_1c_observations():
     entries = _entries()
     for entry_id in OBSERVATION_IDS:
         statement = entries[entry_id].statement
-        assert f"Brandon Corfman may say this aloud: {statement}" not in constraints
+        assert not speaker_may_say(constraints, "Brandon Corfman", statement)
 
     statement = entries["k_sl_1c_c_secure_route"].statement
-    assert f"Brandon Corfman may say this aloud: {statement}" in constraints
+    assert speaker_may_say(constraints, "Brandon Corfman", statement)

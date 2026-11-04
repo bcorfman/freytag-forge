@@ -4,6 +4,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.facts import Fact
 from storygame.runtime.item_facts import ItemFactsProvider
 from tests.test_richer_1b import PACKAGE, _engine, _entries
+from tests.test_speaker_lines_grouped import speaker_may_say
 
 OBSERVATION_IDS = (
     "k_sl_1b_a_r2",
@@ -46,10 +47,10 @@ def test_brandon_is_not_offered_the_observations_as_speech():
     constraints = provider._section_user_prompt(prompt)
     for entry_id in OBSERVATION_IDS:
         statement = _entries()[entry_id].statement
-        assert f"Brandon Corfman may say this aloud: {statement}" not in constraints
+        assert not speaker_may_say(constraints, "Brandon Corfman", statement)
 
     statement = _entries()["k_sl_1b_b_r2"].statement
-    assert f"Brandon Corfman may say this aloud: {statement}" in constraints
+    assert speaker_may_say(constraints, "Brandon Corfman", statement)
 
 
 def test_scene_images_live_in_the_delivery_text_not_the_statement():

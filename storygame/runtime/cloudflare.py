@@ -1618,7 +1618,7 @@ class CloudflareTurnProvider:
         return [player_input] if player_input else []
 
     def _speaker_constraint_lines(self, speakers: object) -> list[str]:
-        """Render each sayable statement once with every eligible speaker named."""
+        """Render each statement once, grouping statements with the same speakers."""
 
         if not isinstance(speakers, dict):
             return []
@@ -1636,10 +1636,18 @@ class CloudflareTurnProvider:
                 if name not in names:
                     names.append(name)
 
-        lines = []
+        groups: dict[str, list[str]] = {}
         for statement, names in names_by_statement.items():
             joined_names = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
-            lines.append(f"{joined_names} may say this aloud: {statement}")
+            groups.setdefault(joined_names, []).append(statement)
+
+        lines = []
+        for joined_names, statements in groups.items():
+            if len(statements) == 1:
+                lines.append(f"{joined_names} may say this aloud: {statements[0]}")
+            else:
+                nested = "\n".join(f"  - {statement}" for statement in statements)
+                lines.append(f"{joined_names} may say these aloud:\n{nested}")
         return lines
 
     def _section_user_prompt(self, user: dict[str, object]) -> str:
