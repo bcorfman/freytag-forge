@@ -1,8 +1,8 @@
 # Richer narration with bounded invention
 
-Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C, 2A and 2B are merged to main (2A as PR #748, 2B as PR #749,
-merge commit `123499dd`). Next is scene 2C on branch `richer-narration-2c`. Whole quick suite on that branch:
-4074 passed, 30 skipped. The full suite with coverage has NOT been run; run it once at the very end.
+Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C, 2A, 2B and 2C are merged to main (2C as PR #750, merge commit
+`7186e9aa`). Next is scene 3A on branch `richer-narration-3a`. Whole quick suite at the 2C merge: 4100 passed, 31 skipped. The full suite with
+coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
 Claude drafts it richer scene by scene, `plot.md` first, settling story problems itself and reporting afterwards. Steps 1 and 2 of
@@ -26,7 +26,8 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    explicit `leak_terms` list keeps every vocabulary term they guarded (such as "left behind as bait") guarded in earlier scenes; the `act2_probe.py`
    scripted copies match. Tests `tests/test_2b_delivery_repeat.py` (tests-first commit `24463175`). Quick suite 4074 passed, 30 skipped. NOT re-probed
    live (the fix is subtractive; a re-probe would cost about 350 neurons per arm). **Echo fixes (2026-11-03, Brandon: "I don't want any echo on either scene"; tests-first `b0d4ae11`).** The narrator is shown the delivery text on a reveal turn and copies it, so the engine then repeats it. Probe, 8 replicates per arm, every narration read (scratchpad only, not in the repo): 2B badge checks, closing sentence "Brandon watches her read and says nothing" doubled 8/8 -> dropped it, 0/8. 1C door (`k_sl_1c_f_r1`): original doubled stance and quote 8/8; quote-only delivery left the lead-up ignoring Brandon in 7/8 ("him" with no referent); stance-only delivery doubled the stance 8/8; indirect speech and "turns his head" wording made the narrator ignore Brandon 7/8 and 8/8. **Chosen:** the delivery is only `Brandon says only, "Somebody has to watch the door."` and the stance moved into the 1C.2 Details line ("Brandon at the top of the stairs with his back to the processing line, watching the door"), the same technique as the pallets fix. Probe: stance never doubled, quote doubled 2/8; live confirmation on the real package 0/4 doubled, narrator follows "Watch Brandon" 4/4. **Residual 1C echo is possible (about 2 in 8)**; zero needs an engine change (not showing quiet reveals' delivery text to the narrator), which would touch 14 of 79 deliveries (1A 1, 1B 3, 1C 3, 2A 4, 2B 3; none in 2C, 3A to 3C) and narrows the "narrator sees its own delivery" exception, so it needs Brandon's go and its own probe first. Open: in one live 2B replicate the narrator missed "held, week" for `k_sl_2b_f_r1` (rejected turn; unrelated to this change; it delivered 4/4 in the original probe).
-   **Scene 2C: built, probe preregistered, billed run awaits Brandon (2026-11-03, branch `richer-narration-2c`).** Three optional quiet
+   **Scene 2C: MERGED (PR #750, 2026-11-03).** Details below.
+   Scene 2C: built, probe preregistered, billed run awaits Brandon (2026-11-03, branch `richer-narration-2c`).** Three optional quiet
    reveals, each with a job: the corridor camera (held on Brandon during the offer; lets go when he says yes; pays off the 2A camera),
    the cart tags (week-old date and "sensor fault"; pays off the 2B held transfers; needs `held_transfers_seen`), and the uplink monitor
    light (one outbound channel, amber, "whatever goes out will be seen": a clue to the cost of transmitting). Michelle's second message
@@ -50,7 +51,9 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    (`tests/test_2c_probe_fixes.py`); quick suite 4100 passed, 31 skipped. The first fix task failed on two errors in my own work (an unquoted
    comma in the plot's flow mapping; a spec that said "single group" without the list shape). **Second candidate run read: all four fixes
    hold** (echo gone 4/4; commitment-turn prompt max 6,474, 26 under the cap; no new groups 0/20; details unchanged 4/4; result in the
-   prereg's Amendment 1). **Next:** the 2C PR (his word to open and to merge), then 3A, 3B, 3C.
+   prereg's Amendment 1). **Next:** 3A (branch `richer-narration-3a`), then 3B, 3C. 3A owes: the captives
+   are alive because the transfers were held (the 2C cart tags say so); the transfer dose wears off in the detention block (see 1C); 3B and 3C owe
+   the monitor light's "whatever goes out will be seen": every outbound channel is watched, so the final broadcast must be forced from Rebecca's office.
    Not covered by 2C: the supervisor on Rebecca's purge list (a payoff for the 2A alarm log was considered; the tablet leaves with
    Rebecca, so it would have to go in the required delivery; left for 3A or a later pass).
    Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header and closing code; 3A uses the
