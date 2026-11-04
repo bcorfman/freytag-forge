@@ -362,3 +362,22 @@ Brandon, sometimes the official too); one-line-per-statement had three lines and
 0/6. The behavior seems to track how many "may say aloud" lines the prompt carries, not whose they are. Also seen: on command 6 the
 named-entity match listed Michelle and Brandon's lines instead of the official's in 3 of 6 replicates (the match missed "senior official"),
 and in 1 of 6 the narrator invented a "Sector Commander". The prototype is dropped. Prototype code is not committed.
+
+### Amendment 4, part 6: prototype of the old per-speaker format limited to present or named speakers (2026-11-04, preregistered)
+Brandon: "Try the old format in 3 limiting the speaker lines." Prototype (scratch worktree, not committed): the old one line per speaker per
+statement, but a speaker (never the protagonist) gets lines only if `_is_present` or the command names them, the same test the CHARACTERS
+section already uses. Arm `fmt-presentonly`: first six commands, 6 replicates, judges off, about 132 neurons. **Read:** command 5 leads
+(calls out / spots / look-around), the speakers listed in the command 5 and 6 prompts and their sizes (against the old format's
+3,102-3,673 and nested's 2,539 on command 5), whether the official's lines appear when he is not present, and command 6 for invention.
+Decision rule (triage): command 5 calls out in at least 5 of 6 and the command 5 prompt noticeably under the old format's; if so build
+through Ringer.
+
+### Amendment 4, part 7: result of the present-only prototype (2026-11-04)
+`bench/results/richer-3a-probe/fmt-presentonly`, 6 replicates, 6 commands, 132 neurons, none failed, 0 rejected. **Behavior kept: command 5
+calls out to Michelle 6/6.** **No size saved: the filter removed nothing.** The imprisoned senior official counts as present
+(`_is_present` finds him in the scene's beat prose) in 5 of 6 replicates, so command 5's prompt is 3,673 characters, the same as the old
+format; only replicate 2, where he was absent, was 3,102. Command 6 named the official correctly each time and no invented "Sector
+Commander" appeared. Conclusion: limiting by presence cannot trim the 3A speaker lines, because everyone listed is in the scene.
+The statements are the same three for every speaker, so size can only come from not repeating them or from fewer lines; the first
+changes behavior in the tests so far. Untested: dropping from SCENE the beat statements that the speaker lines already carry verbatim
+(about 300 characters on command 5).
