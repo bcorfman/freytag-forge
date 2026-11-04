@@ -53,7 +53,7 @@ def _entities(state):
     return (*world.locations, *world.npcs, *world.groups, *world.items)
 
 
-def named_entity_ids(state, player_input: str) -> frozenset[str]:
+def _named_entity_ids(state, player_input: str) -> frozenset[str]:
     folded_input = player_input.casefold()
     return frozenset(
         entity.id
@@ -83,7 +83,7 @@ def _referent_from_evidence(state, player_input: str, evidence: Iterable[tuple[o
         return ""
 
     protagonist_id = state.package.world.protagonist_id
-    named_ids = named_entity_ids(state, player_input)
+    named_ids = _named_entity_ids(state, player_input)
     owner_ids = {
         entity_id
         for entry, _text in evidence
