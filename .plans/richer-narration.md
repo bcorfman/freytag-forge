@@ -48,8 +48,9 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    three and the 2C PR (merge only on his word). Then 3A, 3B, 3C.
    **Probe fixes built (2026-11-03, Brandon: "yes to the fixes first"):** echo, prompt size and guards, all tests first
    (`tests/test_2c_probe_fixes.py`); quick suite 4100 passed, 31 skipped. The first fix task failed on two errors in my own work (an unquoted
-   comma in the plot's flow mapping; a spec that said "single group" without the list shape). **Next:** Brandon runs the second candidate run
-   `candidate-run2` (Amendment 1 in the prereg, about 264 neurons; baseline not rerun), I read it, then the 2C PR (his word to merge).
+   comma in the plot's flow mapping; a spec that said "single group" without the list shape). **Second candidate run read: all four fixes
+   hold** (echo gone 4/4; commitment-turn prompt max 6,474, 26 under the cap; no new groups 0/20; details unchanged 4/4; result in the
+   prereg's Amendment 1). **Next:** the 2C PR (his word to open and to merge), then 3A, 3B, 3C.
    Not covered by 2C: the supervisor on Rebecca's purge list (a payoff for the 2A alarm log was considered; the tablet leaves with
    Rebecca, so it would have to go in the required delivery; left for 3A or a later pass).
    Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header and closing code; 3A uses the

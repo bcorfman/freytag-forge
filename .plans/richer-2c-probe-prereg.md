@@ -135,3 +135,25 @@ monitor light echo gone (compare the narrator's command 1 sentence with the deli
 the commitment-turn narrator prompt under 6,500 (first run 6,630) and command 2 under 6,000 (first run 6,208 in two replicates); (c) is
 `guards` still made a new group; (d) did removing the Details change the opening or the other details (the camera, tags, ticket form still
 4/4; any lead-in that ignores Brandon)?
+
+### Amendment 1 result (second candidate run, 2026-11-03, `bench/results/richer-2c-probe/candidate-run2`, 264 neurons)
+4 replicates, none failed, 0 rejected turns, 0 guard rejections, every turn read. One narration reply had a malformed segment that the
+transport dropped and logged. Not pooled with the first run.
+
+- **(a) Echo: gone, 4/4.** Command 1 now reads "Kristin looks at the monitor light, which is burning steady amber beside the one outbound
+  channel on the broadcast uplink. Whatever goes out will be seen." The image comes from the placement text and the delivery adds only the
+  consequence; nothing is written twice (replicate 4 adds a filler sentence, "She frowns, trying to understand the meaning of the light").
+  The other deliveries (camera, tags, ticket form) did not echo in either run.
+- **(b) Prompt size: under the cap.** Narrator prompt (system plus user) max 6,474 on command 5 (first run 6,630, baseline 6,326), 26 under
+  the 6,500 worst-case cap, so the margin is thin; command 2 max 5,624 (first run 6,208). Over 5,000 on 16 of 20 turns, same as before.
+- **(c) Guards: no new groups, 0 in 20 turns** (first run 2 in 20). The doubled "Held by" list on command 2 is gone with it.
+- **(d) Nothing else moved.** Monitor light on command 1, camera on 3, tags on 4 and the rescue commitment with the matched-header ticket
+  on 5: 4/4 each; the answer to Rebecca on command 2 4/4; all four replicates left the scene on command 5. The camera narration is now a
+  small beat: the narrator writes the lens "fixed on Brandon" (from the placement text), then the delivery says it swings off him. The
+  narrator adds invented but harmless specifics on the tags in 3 of 4 replicates ("small metal plates with a series of numbers and codes
+  etched into them"), which the baseline also did; no name appears. Continuity judge: one `protagonist_acts_beyond_command` on command 5
+  (replicate 1; the narrator wrote a line of dialogue for Kristin), none elsewhere. Opening, replicate 3: the narrator repeats Rebecca's
+  entry speech word for word (an older opening quirk).
+
+Remaining, accepted: the commitment turn is 26 characters under the cap, so a future addition to 2C or a longer prior history there would
+cross it; the transmit branch and the missed-window ticket are covered only by offline tests.
