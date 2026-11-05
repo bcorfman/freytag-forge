@@ -1,0 +1,27 @@
+{
+  "name": "richer-3a-c",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 1,
+  "runtime": true,
+  "continuity_judge": false,
+  "fact_tracking_judge": false,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "3A": [
+      {
+        "name": "richer-3a-c-reunion",
+        "inputs": [
+          "Free the captives."
+        ]
+      }
+    ]
+  },
+  "entry_state": "thorough",
+  "entry_facts": [
+    "held_transfers_seen",
+    "badge_craft_noted"
+  ]
+}
