@@ -530,3 +530,27 @@ Plan: `.plans/richer-3a-open-issues-plan.md` step C. Code at `f9b1b86a`.
   loss under item 5. Miss: any of these. If the opening still performs the entire reunion, the arm fails: investigate cue and display-time
   lifecycle under section 6 rather than deleting the identity fix (plan step C).
 - Twelve zero-failure samples bound a failure rate only to about 22% (one-sided 95%); a win is compatibility evidence, not proof of O1 closed.
+
+### Amendment 7, result (2026-11-04; candidate run by Brandon from the prompt, `bench/results/richer-3a-probe/c-candidate/`; control `c-control-unplanned/`)
+Both arms: 12/12 replicates `ok`, 24 narration requests each, 0 rejected turns, no recovery calls, c1 handoff `k_sl_3a_a_r1` 12/12. The candidate
+run's budget shows 12 OpenAI judge calls (the runner's reply judge; unscored here). Every opening and c1 read; items counted by the rubric above.
+| Rubric item | Control (R, "finds Michelle alive") | Candidate ("joins Michelle") |
+| --- | ---: | ---: |
+| 1 c1 presents discovering/finding Michelle as new, or a second full reunion | **12/12** (the authored sentence) | **0/12** |
+| 2 opening already performs the conversation or embrace | 0/12 (eye contact and a half-smile only) | 0/12 |
+| 3 c1 has the one quiet moment and the medical-level lead exactly once | 12/12 | 12/12 |
+| 4 echo (lead-up repeats the delivery) or rejection | 0/12 | 0/12 |
+| 5 Michelle visible in the opening, radio cue kept, no weapon, no "not Michelle" | 12/12, none | 12/12, none |
+- **Win rule met.** The result is mostly mechanical: the discovery lives in the authored sentence, and the model's lead-ups never rediscover
+  Michelle in either arm. What the probe adds is that nothing in the narrator restores a rediscovery or an echo. The control's
+  "Kristin finds Michelle alive, speaking into a stolen radio beside the captives" directly after an opening that already shows Michelle beside
+  the captives is the O1 defect, 12/12; the candidate's "Kristin joins Michelle beside the captives" gives opening = presence and eye contact,
+  c1 = the earned conversation, two distinct jobs.
+- **Same R-state opening in both arms** (identical prompts), so the 24 openings are one population: Michelle visible 24/24, cue kept 24/24,
+  Michelle speaks 0/24, look-alike or "not Michelle" or weapon 0/24, **Brandon's invented whisper 13/24** (control arm 7/12, candidate arm 6/12;
+  step B saw 5/12) and an invented gate-panel readout 3/24 (one says "countdown to lockdown"). Unchanged watch item for step G.
+- **New small thing:** in 3/12 candidate c1 lead-ups Kristin's eyes lock "on the senior official among the captives" and the authored sentence then
+  joins Michelle. The official is a real 3A character on the captives, but it is a mild mismatch of attention; also appears nowhere in control.
+- **Not shown:** that the lead-up does not rediscover Michelle in other states (c4 onward), O2, or that the quiet moment is not doubled when
+  A-r2 is earned first (offline test covers one composed turn only). Twelve zero-failure samples bound a failure rate only to about 22%.
+- **Decision:** adopt the C sentence on the branch (committed `f9b1b86a`). Step D takes C as its control.

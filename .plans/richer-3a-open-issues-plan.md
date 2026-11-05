@@ -545,3 +545,9 @@ arms, Michelle and the radio cue kept 12/12 (control lost the cue in 2/12). Cost
 Security's tightening." in 5/12 R openings (control 0/12) and #4 invents what the gate panel shows; both are noted as watch items for step G.
 The billed run was started by Brandon from the prompt (Ringer's `full_access` launch was denied by the permission classifier). R remains the
 step C control. Details: Amendment 6 in `.plans/richer-3a-probe-prereg.md`. Next: step C (48 requests, 177.6 neurons) needs a prereg first.
+
+**2026-11-04, step C: WIN.** Edit committed `f9b1b86a`, preregistered as Amendment 7 (`aacad859`). Control = the unplanned run described in the
+Amendment (my mistake: `bench run` is billed even without `--confirm`; saved as a memory), adopted at Brandon's "go ahead". Candidate
+run by Brandon. Rediscovery on c1: control 12/12, candidate 0/12; earned moment and medical lead 12/12 in both; no echo, no rejection; Michelle
+and the cue 24/24 in openings. Open watch items: Brandon's invented opening whisper (13/24 openings) and a small senior-official gaze mismatch (3/12).
+Next: step D1 (reunion summary arm, frozen c4 and c5 prompts, 48 requests, 177.6 neurons) after a preregistration.
