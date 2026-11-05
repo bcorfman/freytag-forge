@@ -534,3 +534,8 @@ its payoff. None justifies adding more 3A prompt material now.
   no global placement reset that breaks custody on revisits.
 * No treating a fresh-entry budget check, aggregate judge count, or zero in
   four/twelve samples as proof of complete continuity or general reliability.
+
+**2026-11-04, step B edit done (uncommitted until the probe is prereg-committed):** the three R lines applied via Ringer run
+`3a-open-issues-stepB` (PASS, one attempt); five tests added in `tests/test_richer_3a.py` pin the new fields and the unchanged cue,
+`must_convey`, reveal ids and requirements. The only recorded-prompt change is the three R lines. Quick gate 3802 passed, ruff clean.
+Preregistration is Amendment 6 of `.plans/richer-3a-probe-prereg.md`. Billed probe next (24 requests).

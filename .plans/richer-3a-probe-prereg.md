@@ -453,3 +453,22 @@ Arms: C control; R pressure "Join the uprising", entry statement "Supporting the
 - Brandon's standing ruling applies to commands 4, 8 and 9: Kristin stepping up to a character she is already near is ordinary staging, not a
   restart ([[approaching-a-nearby-character-is-not-a-restart]]); the run4 `restarts_scene` flags on those commands are that pattern.
 Not adopted yet: R (needs Brandon's go). Not fixed: the opening-plus-command-1 double meeting (authored cue and delivery both place Michelle).
+
+## Amendment 6: step B of the open-issues plan, confirm R on the opening (2026-11-04, written BEFORE the billed run)
+Plan: `.plans/richer-3a-open-issues-plan.md` step B. Code at the commit that adds this text (step A is `7f2b6ff1`).
+- **Question:** does R (pressure "Join the uprising", entry statement "Supporting the uprising is the immediate priority.", plot objective
+  "Join the uprising") keep the opening free of the invented Michelle line, without losing the identity fix, in a fresh confirmation?
+- **Arms (one candidate cause):** control = the story at `7f2b6ff1`, frozen in `bench/frozen/continuity-pre-3a-r/` (variation
+  `richer-3a-b-control`, package/variation hash 53b5191274f3 0761a1cf8590); R = the current story with only the three R lines changed (variation
+  `richer-3a-b-r`, hash 1cab61efc1b7 0761a1cf8590). Same code, same model/settings, same `thorough` entry state with `held_transfers_seen`, `badge_craft_noted`.
+  The opening prompts differ only in the three R lines: `bench prompt` shows the pressure and entry-statement lines; the objective line ("Kristin Schweitzer's objective is to join the uprising.") appears in the provider-path prompt dump of the step B test (before/after dumps diffed offline); the CHARACTERS name set is the same. The probe records the exact prompt of every sample, and the orchestrator diffs them before reading any narration.
+- **Probe:** opening only, 12 requests per arm, 24 narration requests (~88.8 neurons at 3.7/request; no matcher or judge calls), no retries,
+  failures kept, no replacement samples, run once as a Ringer task (`scripts/ringer/3a-open-issues/stepB-probe-manifest.json`) writing
+  `bench/results/richer-3a-probe/b-control.json` and `b-r.json` with the exact prompt of every sample. Request cap: 24.
+- **Rubric (human, every narration read, control and R scored by the same rules):** (1) Michelle visible and identified, (2) look-alike or
+  invented woman, (3) "not Michelle", (4) invented weapon, (5) Michelle speaks a reunion line (a harmless captive greeting is not this),
+  (6) radio cue lost or doubled word for word. Eye contact is allowed. Record other invented details but they do not decide.
+- **Win:** in R, 0/12 of (2)-(5) and no loss of (1) or of the radio cue. Miss: any of them. If it misses, keep the current wording and
+  report the replication failure; do not adopt X. A win does NOT claim O1 or O2 solved (the c1 double reunion and the c4 re-spotting are
+  separate steps C and D); 12 zero-failure samples bound a failure rate only to about 22% (one-sided 95%).
+- Control rates are recorded for comparison but are not a pass criterion.

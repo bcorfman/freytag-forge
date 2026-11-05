@@ -704,7 +704,7 @@ Michelle does not undo Kristin's choice. Its cost and its gain carry forward. Sh
 scene_id: 3A
 location_id: detention_level
 freytag_phase: crisis
-objective: Reach Michelle
+objective: Join the uprising
 participant_ids: [kristin, michelle, brandon, senior_official, rebecca]
 companions: [brandon]
 item_ids: [copied_janus_files, override_codes, stolen_radio, gate_status_panel, emergency_surface_gates, wrist_tags, checkpoint_reader]

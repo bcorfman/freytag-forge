@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import yaml
 
 from storygame.audit import audit_package
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
+from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
@@ -60,6 +62,129 @@ def _handoff(engine: RuntimeEngine, state: RuntimeState, command: str):
     engine._activate_pacing()
     candidates = engine.projector.project(state, "player", command).candidates
     return uniquely_matched_authored_handoff(command, candidates)
+
+
+def _opening_prompt(monkeypatch):
+    captured: list[dict[str, object]] = []
+
+    class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def read(self):
+            return json.dumps(
+                {"narration": json.dumps({"segments": [{"kind": "narration", "text": "Fixture."}]})}
+            ).encode()
+
+    def open_request(request, **_kwargs):
+        captured.append(json.loads(request.data))
+        return _Response()
+
+    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
+    state, _engine_instance = _engine()
+    CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state).opening()
+    return captured[0]["user"]
+
+
+def _requirement_pairs(requirements):
+    return tuple((requirement.fact_id, requirement.equals) for requirement in requirements)
+
+
+def _establish_pairs(operations):
+    return tuple((operation.fact_id, operation.value) for operation in operations)
+
+
+def test_3a_wording_and_runtime_contracts_are_unchanged_except_for_the_requested_objective() -> None:
+    frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "3A")
+    assert frame.pressure == "Join the uprising"
+    assert frame.situation.endswith("Michelle is beside the captives.")
+    assert _entries()["k_scene_3a_entry"].statement == "Supporting the uprising is the immediate priority."
+    assert _scene().objective == "Join the uprising"
+
+
+def test_3a_michelle_handoff_delivery_is_unchanged() -> None:
+    delivery = next(item for item in PACKAGE.deliveries if item.fact_id == "michelle_reached")
+    assert delivery.cue_text == "Michelle speaks into a stolen radio beside the captives."
+    assert delivery.fallback_text == (
+        "Kristin reaches Michelle among the holding blocks in the detention sector. They share one unhurried moment "
+        "before Michelle turns back to the radio and the rescue."
+    )
+    assert delivery.must_convey == (
+        (
+            "Kristin reaches Michelle",
+            "reunion with Michelle",
+            "Michelle is reached",
+            "Kristin finds Michelle",
+            "they are reunited",
+            "Kristin reaches her",
+        ),
+        (
+            "detention sector",
+            "holding blocks",
+            "Michelle's cell",
+            "prisoner block",
+            "detention holding block",
+            "the cell block",
+        ),
+    )
+
+
+def test_3a_reveal_ids_and_dependencies_are_unchanged() -> None:
+    entries = _entries()
+    assert {entry_id for entry_id in entries if entry_id.startswith("k_sl_3a_")} == {
+        "k_sl_3a_a_r1",
+        "k_sl_3a_a_r2",
+        "k_sl_3a_b_r1",
+        "k_sl_3a_b_r2",
+        "k_sl_3a_c_r1",
+        "k_sl_3a_c_r2",
+        "k_sl_3a_d_r1",
+        "k_sl_3a_d_r2",
+        "k_sl_3a_e_r1",
+        "k_sl_3a_f_r1",
+        "k_sl_3a_g_r1",
+        "k_sl_3a_h_r1",
+        "k_sl_3a_i_r1",
+    }
+    expected = {
+        "k_sl_3a_a_r1": ((), (("michelle_reached", True), ("uprising_prepared", True))),
+        "k_sl_3a_a_r2": ((), (("michelle_reached", True), ("uprising_prepared", True))),
+        "k_sl_3a_c_r1": (
+            (("michelle_reached", True), ("uprising_prepared", True), ("military_override_codes_available", True)),
+            (("detention_uprising_started", True),),
+        ),
+        "k_sl_3a_c_r2": (
+            (
+                ("michelle_reached", True),
+                ("uprising_prepared", True),
+                ("military_override_codes_available", True),
+                ("override_codes_deadline_known", True),
+            ),
+            (("detention_uprising_started", True),),
+        ),
+    }
+    for entry_id, (requires, establishes) in expected.items():
+        entry = entries[entry_id]
+        assert _requirement_pairs(entry.requires) == requires
+        assert _establish_pairs(entry.establishes) == establishes
+
+
+def test_3a_scene_entry_does_not_auto_complete_reveals() -> None:
+    state, _engine_instance = _engine()
+    assert not any(
+        state.facts.matching(fact_id, "story")
+        for fact_id in ("michelle_reached", "uprising_prepared", "detention_uprising_started")
+    )
+
+
+def test_3a_opening_keeps_the_recorded_character_names(monkeypatch) -> None:
+    prompt = _opening_prompt(monkeypatch)
+    characters = prompt.split("CHARACTERS:\n", 1)[1].split("\n\n", 1)[0]
+    names = {line[2:].split(" is ", 1)[0] for line in characters.splitlines()}
+    assert names == {"Kristin Schweitzer", "Dr. Michelle McGehee", "Brandon Corfman"}
 
 
 def test_the_wrist_tags_and_the_checkpoint_reader_are_declared_plainly_and_placed_in_3a():

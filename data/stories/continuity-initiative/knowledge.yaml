@@ -396,7 +396,7 @@ scene_frames:
   pressure: Decide what to do before the purge begins
 - scene_id: 3A
   situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels. Michelle is beside the captives."
-  pressure: Reach Michelle and join the uprising
+  pressure: Join the uprising
 - scene_id: 3B
   situation: "JANUS is tracking Kristin's moves."
   pressure: Reach the broadcast controls
@@ -3616,7 +3616,7 @@ knowledge:
   establishes: [{op: assert, fact_id: scene_2c_entry_known, value: true}]
   source: {kind: scene_entry}
 - id: k_scene_3a_entry
-  statement: Reaching Michelle and supporting the uprising are immediate priorities.
+  statement: Supporting the uprising is the immediate priority.
   entity_ids: [kristin, michelle, detention_level]
   aliases: [Michelle, uprising]
   audience: {kind: public, player_visible: true}
