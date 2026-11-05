@@ -30,6 +30,21 @@ NEW_FACTS = {
     "lemon_cake_calendar_read",
 }
 ARRIVED = ("michelle_reached", "uprising_prepared")
+OLD_A_R1_STATEMENT = (
+    "Kristin reaches Michelle alive, and the two share one unhurried moment before Michelle returns to directing "
+    "prisoners through stolen radios and coded announcements."
+)
+OLD_A_R2_STATEMENT = (
+    "Michelle shares one unhurried moment with Kristin, then explains that freeing this block means little without "
+    "exposing the other sites."
+)
+OLD_A_R1_LENGTH = 169
+OLD_A_R2_LENGTH = 135
+NEW_A_R1_STATEMENT = (
+    "Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and coded "
+    "announcements."
+)
+NEW_A_R2_STATEMENT = "Michelle has explained that freeing this block means little without exposing the other sites."
 A_R1_DELIVERY = (
     "Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it "
     "wears off in the detention block. For one unhurried moment the two of them talk to each other and nobody asks "
@@ -146,6 +161,104 @@ def test_3a_a_variants_keep_their_literal_dependencies_and_a_r2_delivery() -> No
         ("uprising_prepared", True),
     )
     assert entries["k_sl_3a_a_r2"].delivery_text == A_R2_DELIVERY
+
+
+def test_3a_a_statements_change_together_without_changing_their_contracts() -> None:
+    entries = _entries()
+    expected_contracts = {
+        "k_sl_3a_a_r1": {
+            "delivery_text": A_R1_DELIVERY,
+            "must_convey": (),
+            "requires": (),
+            "establishes": (("michelle_reached", True), ("uprising_prepared", True)),
+            "action_evidence": (
+                (
+                    "look",
+                    "search",
+                    "check",
+                    "examine",
+                    "inspect",
+                    "read",
+                    "study",
+                    "find",
+                    "trace",
+                    "follow",
+                    "enter",
+                    "listen",
+                    "free",
+                    "help",
+                    "use",
+                    "organize",
+                    "coordinate",
+                    "rescue",
+                ),
+                (
+                    "Michelle",
+                    "Michelle's voice",
+                    "radio voice",
+                    "the radio voice",
+                    "stolen radio",
+                    "stolen radios",
+                    "coded announcement",
+                    "coded announcements",
+                    "holding block",
+                    "holding blocks",
+                    "captives",
+                    "the captives",
+                    "prisoners",
+                    "the prisoners",
+                    "prisoner escape",
+                    "the prisoner escape",
+                    "detention block",
+                ),
+            ),
+            "earn_when": "finds Michelle in detention, frees the captives, or helps Michelle",
+        },
+        "k_sl_3a_a_r2": {
+            "delivery_text": A_R2_DELIVERY,
+            "must_convey": (),
+            "requires": (),
+            "establishes": (("michelle_reached", True), ("uprising_prepared", True)),
+            "action_evidence": (
+                (
+                    "ask",
+                    "question",
+                    "talk",
+                    "speak",
+                    "tell",
+                    "press",
+                    "discuss",
+                    "inquire",
+                    "probe",
+                    "consult",
+                    "listen",
+                    "hear",
+                ),
+                (
+                    "Michelle",
+                    "other site",
+                    "other sites",
+                    "the other sites",
+                    "more sites",
+                    "other facility",
+                    "hidden sites",
+                    "the sites",
+                ),
+            ),
+            "earn_when": "asks Michelle about other sites",
+        },
+    }
+    for entry_id, expected in expected_contracts.items():
+        entry = entries[entry_id]
+        assert entry.statement == {"k_sl_3a_a_r1": NEW_A_R1_STATEMENT, "k_sl_3a_a_r2": NEW_A_R2_STATEMENT}[entry_id]
+        assert len(entry.statement) < {"k_sl_3a_a_r1": OLD_A_R1_LENGTH, "k_sl_3a_a_r2": OLD_A_R2_LENGTH}[entry_id]
+        assert not any(term in entry.statement for term in ("unhurried", "share", "shares", "reaches Michelle alive"))
+        assert entry.delivery_text == expected["delivery_text"]
+        assert entry.must_convey == expected["must_convey"]
+        assert _requirement_pairs(entry.requires) == expected["requires"]
+        assert _establish_pairs(entry.establishes) == expected["establishes"]
+        assert entry.action_evidence == expected["action_evidence"]
+        assert entry.earn_when == expected["earn_when"]
 
 
 def test_3a_opening_does_not_earn_arrival_but_freeing_captives_does() -> None:

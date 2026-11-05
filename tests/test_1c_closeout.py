@@ -114,6 +114,6 @@ def test_3a_reunion_says_the_captives_are_awake():
     )
     assert re.sub(r"\s+", " ", entry.delivery_text).strip() == planned_text
     assert entry.statement == (
-        "Kristin reaches Michelle alive, and the two share one unhurried moment before Michelle returns to directing "
-        "prisoners through stolen radios and coded announcements."
+        "Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and coded "
+        "announcements."
     )

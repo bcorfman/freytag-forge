@@ -140,6 +140,7 @@
     "tests/test_failure_report.py": 0.01,
     "tests/test_fixed_refusal.py": 1.61,
     "tests/test_fixed_thing_marker.py": 0.54,
+    "tests/test_frozen_prompts.py": 35.26,
     "tests/test_game_path_completion.py": 1.46,
     "tests/test_game_path_journeys.py": 183.65,
     "tests/test_guard_retry_flag.py": 0.1,

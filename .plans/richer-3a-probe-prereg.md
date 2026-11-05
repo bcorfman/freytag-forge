@@ -554,3 +554,37 @@ run's budget shows 12 OpenAI judge calls (the runner's reply judge; unscored her
 - **Not shown:** that the lead-up does not rediscover Michelle in other states (c4 onward), O2, or that the quiet moment is not doubled when
   A-r2 is earned first (offline test covers one composed turn only). Twelve zero-failure samples bound a failure rate only to about 22%.
 - **Decision:** adopt the C sentence on the branch (committed `f9b1b86a`). Step D takes C as its control.
+
+## Amendment 8: step D1 of the open-issues plan, short established summaries for the reunion (2026-11-05, written BEFORE any D1 request)
+Plan: `.plans/richer-3a-open-issues-plan.md` step D1. Code: the commit that adds this text.
+- **Question:** does stating the completed reunion as two short established summaries, instead of the two long replayable quiet-moment statements,
+  stop the narrator from redoing the reunion on later turns (O2), without regressing the medical lead (c4) or reintroducing Michelle as unknown (c5)?
+  The two statements are the only change; every delivery, must_convey, requires, establishes and action_evidence is untouched (offline tests pin that).
+  - A-r1: `Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and coded announcements.` (was 164 characters)
+  - A-r2: `Michelle has explained that freeing this block means little without exposing the other sites.` (was 135)
+- **Arms:** control = the story at the step C commit (`41a63079`) frozen in `bench/frozen/continuity-pre-3a-d1/` (variation `richer-3a-d-control`,
+  package hash 855cae740555); D1 = the current story (variation `richer-3a-d1`, package hash 9a0f691afe9d). Same code, model, settings, `thorough` entry state with
+  `held_transfers_seen` and `badge_craft_noted`.
+- **Frozen prompts (method):** `bench/frozen_prompts.py` builds each endpoint's prompt OFFLINE by scripting commands 1..N-1 of the nine-command
+  script through the real engine with each command's authored delivery, then captures the exact narrator wire payload for command N
+  (`python -m bench.frozen_prompts capture`, deterministic, checked). Limits: this is a scripted prefix, not a live one, so the item-facts block and the
+  matcher results are the engine's, not those of live narrations (the matcher reply is canned); both arms share the identical prefix, so only the
+  intended lines differ. Check against the recorded run4 prompts: c4 user text 3235 characters at control versus 3275 recorded; c5 3666 versus 3706
+  (the 40-character gap is the R wording). Control and D1 payloads differ only in the two statements, once in SCENE and once in each speaker line
+  (c4: Michelle, Brandon, the senior official; c5: the same three), a saving of 356 characters at each endpoint (c4 3235 to 2879, c5 3666 to 3310);
+  system prompts are identical. One frozen state per endpoint, replayed 12 times per arm (not three repeats of four live replicates, because
+  those live prefixes no longer match the current wording).
+- **Replay:** `python -m bench.frozen_prompts replay FROZEN --samples 12 --out OUT`: one narration request per sample, no retries, errors kept,
+  no replacement samples; 2 endpoints x 12 x 2 arms = **48 requests** (~177.6 neurons at 3.7 per request; no matcher or judge calls).
+  Outputs: `bench/results/richer-3a-probe/d1/{control,d1}-rows.json`.
+- **Rubric (human, every generated narration read; the model's own writing is what is scored, not the engine's appended delivery):**
+  1. *Repeated emotional reunion*: Kristin reaches/finds Michelle as if new, or relief/embrace/tears/"unhurried moment"/an eye-lock reunion.
+  2. *Bare spotting or approach* (recorded separately; not a failure under Brandon's ruling).
+  3. *c4 leads into the medical level*: the narration has Kristin heading into or entering the medical level.
+  4. *c5 reintroduces Michelle as unknown* or says "not Michelle".
+  5. *c5 question fidelity* (recorded for step E, not a D1 gate): does the narration ask or mention the lemon cake/calendar.
+  6. Other invented Michelle dialogue or invented facts (recorded; does not decide).
+- **Win:** D1 has 0/12 on item 1 at each endpoint, item 3 in at least as many samples as control at c4, 0/12 on item 4 at c5, and the payloads are
+  shorter (they are: 356 characters each, deterministic). Miss: any of these. Control rates are recorded but are not a pass criterion.
+  If D1 does not remove repeated reunions, the next candidate is not a rule: record it and consider the plan's remaining routes (it names none for O2).
+- Twelve zero-failure samples bound a failure rate only to about 22% (one-sided 95%), and all 12 samples of an endpoint share one prompt.

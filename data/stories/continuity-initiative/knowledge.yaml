@@ -2376,7 +2376,7 @@ knowledge:
   - [seen]
   delivery_text: Whatever goes out will be seen.
 - id: k_sl_3a_a_r1
-  statement: 'Kristin reaches Michelle alive, and the two share one unhurried moment before Michelle returns to directing prisoners through stolen radios and coded announcements.'
+  statement: 'Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and coded announcements.'
   earn_when: "finds Michelle in detention, frees the captives, or helps Michelle"
   action_evidence:
   - [look, search, check, examine, inspect, read, study, find, trace, follow, enter, listen, free, help, use, organize, coordinate, rescue]
@@ -2407,7 +2407,7 @@ knowledge:
     priority: 0
   delivery_text: "Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it wears off in the detention block. For one unhurried moment the two of them talk to each other and nobody asks anything of either. Then Michelle turns back to her coded announcements and points toward the medical level, where the experiment records wait."
 - id: k_sl_3a_a_r2
-  statement: 'Michelle shares one unhurried moment with Kristin, then explains that freeing this block means little without exposing the other sites.'
+  statement: 'Michelle has explained that freeing this block means little without exposing the other sites.'
   earn_when: "asks Michelle about other sites"
   action_evidence:
   - [ask, question, talk, speak, tell, press, discuss, inquire, probe, consult, listen, hear]
