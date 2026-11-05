@@ -107,7 +107,7 @@ def test_no_other_unique_1c_handoff_changes():
 def test_3a_reunion_says_the_captives_are_awake():
     entry = _entries()["k_sl_3a_a_r1"]
     planned_text = (
-        "Kristin finds Michelle alive, speaking into a stolen radio beside the captives. They are awake: the dose "
+        "Kristin joins Michelle beside the captives. They are awake: the dose "
         "they were given is for the trip, and it wears off in the detention block. For one unhurried moment the two "
         "of them talk to each other and nobody asks anything of either. Then Michelle turns back to her coded "
         "announcements and points toward the medical level, where the experiment records wait."

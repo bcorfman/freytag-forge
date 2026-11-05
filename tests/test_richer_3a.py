@@ -10,7 +10,7 @@ from storygame.runtime.candidate_matcher import uniquely_matched_authored_handof
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
-from storygame.runtime.state import RuntimeState
+from storygame.runtime.state import RuntimeSnapshot, RuntimeState
 from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
 
@@ -30,6 +30,16 @@ NEW_FACTS = {
     "lemon_cake_calendar_read",
 }
 ARRIVED = ("michelle_reached", "uprising_prepared")
+A_R1_DELIVERY = (
+    "Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it "
+    "wears off in the detention block. For one unhurried moment the two of them talk to each other and nobody asks "
+    "anything of either. Then Michelle turns back to her coded announcements and points toward the medical level, "
+    "where the experiment records wait."
+)
+A_R2_DELIVERY = (
+    "Michelle shares one unhurried moment with Kristin. She explains that freeing this block means little without "
+    "exposing the other sites. Michelle points toward the medical level, where the experiment records wait."
+)
 
 
 def _scene():
@@ -95,6 +105,91 @@ def _requirement_pairs(requirements):
 
 def _establish_pairs(operations):
     return tuple((operation.fact_id, operation.value) for operation in operations)
+
+
+def _authored_provider(*knowledge_ids: str):
+    queue = list(knowledge_ids)
+
+    def provider(_command: str):
+        knowledge_id = queue.pop(0)
+        entry = PACKAGE.knowledge_indexes.by_id[knowledge_id]
+        return {
+            "segments": [{"kind": "narration", "text": entry.delivery_text, "grounding_ids": [knowledge_id]}],
+            "selected_knowledge_ids": [knowledge_id],
+        }
+
+    return provider
+
+
+def _turn_text(result) -> str:
+    return " ".join(segment.text for segment in result.segments)
+
+
+def test_3a_a_r1_delivery_uses_the_join_wording_exactly() -> None:
+    delivery = _entries()["k_sl_3a_a_r1"].delivery_text
+    assert delivery == A_R1_DELIVERY
+    assert "finds Michelle alive" not in delivery
+    assert "the dose they were given is for the trip" in delivery
+    assert "points toward the medical level" in delivery
+
+
+def test_3a_a_variants_keep_their_literal_dependencies_and_a_r2_delivery() -> None:
+    entries = _entries()
+    assert _requirement_pairs(entries["k_sl_3a_a_r1"].requires) == ()
+    assert _establish_pairs(entries["k_sl_3a_a_r1"].establishes) == (
+        ("michelle_reached", True),
+        ("uprising_prepared", True),
+    )
+    assert _requirement_pairs(entries["k_sl_3a_a_r2"].requires) == ()
+    assert _establish_pairs(entries["k_sl_3a_a_r2"].establishes) == (
+        ("michelle_reached", True),
+        ("uprising_prepared", True),
+    )
+    assert entries["k_sl_3a_a_r2"].delivery_text == A_R2_DELIVERY
+
+
+def test_3a_opening_does_not_earn_arrival_but_freeing_captives_does() -> None:
+    state, engine = _engine()
+    assert not any(state.facts.matching(fact_id, "story") for fact_id in ARRIVED)
+
+    engine.provider = _authored_provider("k_sl_3a_a_r1")
+    engine.turn("Free the captives.")
+    assert all(state.facts.matching(fact_id, "story") for fact_id in ARRIVED)
+
+
+def test_3a_authored_a_turn_does_not_repeat_the_quiet_moment() -> None:
+    for command, entry_id in (
+        ("Free the captives.", "k_sl_3a_a_r1"),
+        ("Ask Michelle about other sites.", "k_sl_3a_a_r2"),
+    ):
+        state, engine = _engine()
+        engine.provider = _authored_provider(entry_id)
+        text = _turn_text(engine.turn(command)).casefold()
+        assert text.count("unhurried moment") <= 1
+
+    state, engine = _engine(turn_index=12)
+    text = _turn_text(engine.turn("Wait and watch the block.")).casefold()
+    assert "kristin reaches michelle among the holding blocks" in text
+    assert text.count("unhurried moment") <= 1
+
+
+def test_3a_michelle_cue_is_not_reoffered_after_save_load_and_revisit() -> None:
+    state, engine = _engine()
+    engine.provider = _authored_provider("k_sl_3a_a_r1")
+    engine.turn("Free the captives.")
+
+    restored = RuntimeState.bootstrap(PACKAGE)
+    restored.restore_snapshot(RuntimeSnapshot.model_validate_json(state.snapshot().model_dump_json()))
+    restored.current_scene_id = "3A"
+    restored_engine = RuntimeEngine(
+        restored,
+        lambda _command: {"segments": [{"kind": "narration", "text": "The block is quiet."}]},
+    )
+    restored_engine._activate_pacing()
+    assert restored.staged_cue_fact_id != "michelle_reached"
+    assert "Michelle speaks into a stolen radio beside the captives." not in {
+        segment.text for segment in restored_engine.turn("Look around.").segments
+    }
 
 
 def test_3a_wording_and_runtime_contracts_are_unchanged_except_for_the_requested_objective() -> None:
