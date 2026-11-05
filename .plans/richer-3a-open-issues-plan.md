@@ -551,3 +551,9 @@ Amendment (my mistake: `bench run` is billed even without `--confirm`; saved as 
 run by Brandon. Rediscovery on c1: control 12/12, candidate 0/12; earned moment and medical lead 12/12 in both; no echo, no rejection; Michelle
 and the cue 24/24 in openings. Open watch items: Brandon's invented opening whisper (13/24 openings) and a small senior-official gaze mismatch (3/12).
 Next: step D1 (reunion summary arm, frozen c4 and c5 prompts, 48 requests, 177.6 neurons) after a preregistration.
+
+**2026-11-05, step D1: gate met, adoption blocked by a side effect.** Edit and harness committed `4fb5c2d0` (preregistered as Amendment 8, run by Brandon).
+Repeated reunion at c4: control 11/12 ("Shelly, I'm so glad I found you"), D1 0/12; c5 invented plan answer before the proof: control 12/12, D1 0/12; medical lead
+3/12 versus 0/12; payloads 356 characters shorter at both endpoints. Cost: the new short statements are recited as dialogue (c4 8/12, was 1/12; c5 2/12, was 0/12;
+the recited A-r2 sentence is an unearned reveal) and 3/12 c4 replies degenerate in `item_facts`. The D1 statements stay on the branch, flagged NOT ADOPTED, awaiting
+Brandon's choice (voiceable:false on A-r1 only, per plan; or on both, which departs from the plan's A-r2 carve-out; or revert D1).

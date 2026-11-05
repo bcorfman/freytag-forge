@@ -588,3 +588,31 @@ Plan: `.plans/richer-3a-open-issues-plan.md` step D1. Code: the commit that adds
   shorter (they are: 356 characters each, deterministic). Miss: any of these. Control rates are recorded but are not a pass criterion.
   If D1 does not remove repeated reunions, the next candidate is not a rule: record it and consider the plan's remaining routes (it names none for O2).
 - Twelve zero-failure samples bound a failure rate only to about 22% (one-sided 95%), and all 12 samples of an endpoint share one prompt.
+
+### Amendment 8, result (2026-11-05; replays run by Brandon from the prompt, `bench/results/richer-3a-probe/d1/{control,d1}-rows.json`)
+48 narration requests (~177.6 neurons), 0 transport errors, no retries, no replacement samples. One frozen prompt per endpoint and arm, 12 replays.
+Every narration read; counts below were also checked by pattern. "Narration" is the model's reply; the engine appends the authored delivery afterwards.
+| Item | Control c4 | D1 c4 | Control c5 | D1 c5 |
+| --- | ---: | ---: | ---: | ---: |
+| 1 repeated emotional reunion | **11/12** ("Kristin looks at Michelle with relief and concern. 'Shelly, I'm so glad I found you'") | **0/12** | 0/12 | 0/12 |
+| 2 bare approach or address (not a failure) | 1/12 (#9) | 0/12 | 12/12 ("calls out to Michelle") | 12/12 (asks her) |
+| 3 c4 heads into the medical level | 0/12 | 3/12 (#4, #5, #10) | n/a | n/a |
+| 4 c5 reintroduces Michelle as unknown or "not Michelle" | n/a | n/a | 0/12 | 0/12 |
+| 5 c5 question mentions the lemon cake | n/a | n/a | 11/12 | 10/12 (#1, #2 do not) |
+| 6a Michelle gives an invented plan answer before the proof | n/a | n/a | **12/12** ("We need to get the word out...", 4 of them "get you out of here... to safety") | 0/12 |
+| 6b invented nickname "Shelly" | 11/12 | 0/12 | 0/12 | 0/12 |
+| 6c the established statements recited as dialogue | 1/12 (A-r1 phrase) | **8/12** (Brandon: "Michelle's been coordinating the prisoners through stolen radios and coded announcements"; Kristin: "Michelle's explained that freeing this block means little without exposing the other sites"; 2 add "Supporting the uprising is the immediate priority") | 1/12 | **2/12** (#1, #2: whole reply is dialogue reciting A-r2 and the uprising line, no cake question) |
+| 6d replies that do not parse as JSON | 0/24 | **3/12** at c4 (#4, #5 degenerate repeating `item_facts` runs of 4,225 characters, #6 truncated at 859); 0/12 at c5 | | |
+- **Preregistered win rule: met.** D1 has 0/12 reunions at both endpoints, the medical lead is at least as frequent as control's (3 versus 0), 0/12 stranger/"not
+  Michelle" at c5, and the payloads are 356 characters shorter at each endpoint.
+- **What D1 fixes (larger than expected):** control c4 repeats the reunion with relief and an invented nickname in 11/12, so the O2 defect is real and strong in this
+  frozen state. At c5, control's Kristin asks "What's the plan?" and Michelle gives an invented plan answer in 12/12 before Kristin's cake question; D1 asks about the
+  cake directly in 10/12 and Michelle only reacts. That is the O3 mismatch (a wrong question answered by the proof) improving as a side effect, not a designed one.
+- **What D1 breaks:** the two new statements are short declaratives, and the speaker lines "<name> may say this aloud: <statement>" invite the narrator to voice them.
+  The recited-statement fault (richer-narration, known) goes from 1/12 to 8/12 at c4 and 0/12 to 2/12 at c5, and 3/12 c4 replies degenerate in `item_facts`
+  (the engine's decoder keeps finished segments, so those turns would survive, but 0/24 control replies did this). The recited A-r2 sentence is content from a
+  reveal the player has not earned (the path taken was A-r1).
+- **Verdict:** D1's gate is met but its cost blocks adopting it as it stands. It is not a verdict on the plan's next route: observation statements
+  (`voiceable: false`, step F) are exactly the lever for "statement is spoken", but the plan keeps A-r2's statement sayable. That exception is what lets the
+  A-r2 recitation through here. A change to that carve-out needs Brandon's decision (see below), and Amendment 4 is the warning that fewer speaker lines can change behaviour.
+- Caveat: one frozen state per endpoint, a scripted rather than live prefix, 12 replays share a prompt (a failure rate is bounded only to about 22%).
