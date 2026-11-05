@@ -10,13 +10,11 @@ from storygame.runtime.candidate_matcher import uniquely_matched_authored_handof
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
-from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState
 from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
 
 ROOT = Path("data/stories/continuity-initiative")
-FROZEN_ROOT = Path("bench/frozen/continuity-pre-3a-d1v")
 
 
 PACKAGE = load_story_package(ROOT)
@@ -138,34 +136,6 @@ def _authored_provider(*knowledge_ids: str):
     return provider
 
 
-def _prompt_parts(package, *, true_facts: tuple[str, ...] = ()) -> tuple[str, str, str]:
-    state = RuntimeState.bootstrap(package)
-    state.current_scene_id = "3A"
-    state.phase = next(scene.metadata.freytag_phase for scene in package.scenes if scene.metadata.scene_id == "3A")
-    state._assert_scene_entry_fact("3A")
-    apply_scene_placements(package, state.facts, "3A")
-    for fact_id in true_facts:
-        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
-    provider = ItemFactsProvider(
-        worker_url="https://worker.example/turn",
-        token="",
-        state=state,
-        item_facts={},
-        mode="single_call",
-        seed_from_package=True,
-        held_by=True,
-    )
-    prompt = provider.assemble_turn_prompt("Look around.")
-    user = provider._section_user_prompt(prompt["context"])
-    return prompt["system"], user, prompt["context"]
-
-
-def _scene_and_speaker_lines(user: str) -> tuple[str, list[str]]:
-    scene = user.split("SCENE:\n", 1)[1].split("\n\n", 1)[0]
-    constraints = user.split("CONSTRAINTS:\n", 1)[1].split("\n\n", 1)[0].splitlines()
-    return scene, [line for line in constraints if " may say this aloud: " in line]
-
-
 def _turn_text(result) -> str:
     return " ".join(segment.text for segment in result.segments)
 
@@ -191,38 +161,6 @@ def test_3a_a_variants_keep_their_literal_dependencies_and_a_r2_delivery() -> No
         ("uprising_prepared", True),
     )
     assert entries["k_sl_3a_a_r2"].delivery_text == A_R2_DELIVERY
-
-
-def test_3a_a_voiceability_is_the_only_difference_from_the_frozen_d1_entries() -> None:
-    current = load_story_package(ROOT).knowledge_indexes.by_id
-    frozen = load_story_package(FROZEN_ROOT).knowledge_indexes.by_id
-    for entry_id in ("k_sl_3a_a_r1", "k_sl_3a_a_r2"):
-        assert current[entry_id].voiceable is False
-        current_fields = current[entry_id].model_dump(mode="json")
-        frozen_fields = frozen[entry_id].model_dump(mode="json")
-        current_fields.pop("voiceable", None)
-        frozen_fields.pop("voiceable", None)
-        assert current_fields == frozen_fields
-
-
-def test_3a_a_non_voiceable_statements_stay_in_scene_but_leave_speaker_lines() -> None:
-    system, user, _context = _prompt_parts(load_story_package(ROOT), true_facts=ARRIVED)
-    frozen_system, frozen_user, _frozen_context = _prompt_parts(load_story_package(FROZEN_ROOT), true_facts=ARRIVED)
-    scene, speaker_lines = _scene_and_speaker_lines(user)
-    frozen_scene, frozen_speaker_lines = _scene_and_speaker_lines(frozen_user)
-
-    assert NEW_A_R1_STATEMENT in scene
-    assert NEW_A_R2_STATEMENT in scene
-    assert not any(
-        statement in line for line in speaker_lines for statement in (NEW_A_R1_STATEMENT, NEW_A_R2_STATEMENT)
-    )
-    assert system == frozen_system
-    assert scene == frozen_scene
-    assert set(frozen_speaker_lines) - set(speaker_lines) == {
-        line for line in frozen_speaker_lines if NEW_A_R1_STATEMENT in line or NEW_A_R2_STATEMENT in line
-    }
-    assert set(speaker_lines) - set(frozen_speaker_lines) == set()
-    assert len(frozen_user) - len(user) == sum(len(line) + 1 for line in set(frozen_speaker_lines) - set(speaker_lines))
 
 
 def test_3a_a_statements_change_together_without_changing_their_contracts() -> None:

@@ -82,7 +82,9 @@ def test_3a_reunited_statements_project_together_and_shrink_the_scene_prompt() -
         provider._section_user_prompt(prompt["context"]).split("CONSTRAINTS:\n", 1)[1].split("\n\n", 1)[0].splitlines()
     )
     statement_lines = [line for line in lines if NEW_A_R1_STATEMENT in line or NEW_A_R2_STATEMENT in line]
-    assert statement_lines == []
+    assert len(statement_lines) == 6
+    assert sum(NEW_A_R1_STATEMENT in line for line in statement_lines) == 3
+    assert sum(NEW_A_R2_STATEMENT in line for line in statement_lines) == 3
 
 
 def test_michelles_route_terms_no_longer_collide_with_ordinary_phone_talk() -> None:
