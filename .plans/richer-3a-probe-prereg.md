@@ -407,3 +407,18 @@ Commits `68972abb` (failing tests, `tests/test_speaker_lines.py`, replacing the 
 <statement>", for speakers who are present or named by the command; the nested header and the grouping are gone. Quick suite 4145 passed,
 32 skipped, ruff clean. The size saving of the nested header is given up (about 1,100 characters on command 5, speaker-heavy turns); the
 other Amendment 3 cuts stay. Not yet re-probed: a full 3A run (about 440 neurons) to check commands 4, 8 and 9 and the openers.
+
+## Amendment 5: defect 2, the opening look-alike (2026-11-04)
+Cause read from the recorded opening prompt: SCENE and THINGS never say where Michelle is. SCENE says "Reach Michelle and join the
+uprising" and "Reaching Michelle and supporting the uprising are immediate priorities", so the narrator searches and invents who it finds.
+The plot sentence "Michelle is beside the captives." (3A.1) reaches the player only through the authored cue, after the narration. The
+baseline and candidate prompts differ only in THINGS, so the extra THINGS lines are not the cause (baseline invented the scarred woman 4/4).
+Probe (opening only, one request per sample, 12 per arm, every narration read; ~137 neurons; scratch scripts, not in the repo):
+- A control (current candidate): invented woman 11/12 (scar 2, "determined look" 4, similar build 5 ...), "not Michelle" 8/12,
+  "mouths 'not her'" 4/12, invented warnings from Brandon and a "countdown" on the reader 2/12. Michelle recognised correctly 1/12.
+- B plot sentence added to the 3A scene frame unchanged ("... around the lower levels. Michelle is beside the captives."): Michelle
+  found 12/12, look-alike 0/12, "not Michelle" 0/12, the cue not doubled word for word 0/12. New: Kristin reaches for a pistol or gun 3/12
+  (no gun in the story), Michelle speaks an invented line ("Kristin, what took you so long?") 4/12, Michelle talks to a captive and then
+  "speaks into a stolen radio" 3/12.
+- C "immediate priorities" statement hidden from SCENE: "not Michelle" 1/12, but the invented familiar woman 12/12 (scar 4).
+Read: B fixes the defect; C does not. B's costs are small invented details to watch in the full 3A re-probe (the pistol first).
