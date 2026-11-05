@@ -496,3 +496,37 @@ prompts identical, user prompts differ in exactly the three R lines (objective, 
   Watch Brandon's whisper in step G; it is invented speech that leaves the plot unchanged.
 - **Decision:** R stays on the branch as the step B winner and the control for step C. Not a claim that O1 or O2 is solved. Adoption into a
   merge is still Brandon's word.
+
+## Amendment 7: step C of the open-issues plan, separate the opening from the earned reunion (2026-11-04, written BEFORE the candidate run and before any control narration was read)
+Plan: `.plans/richer-3a-open-issues-plan.md` step C. Code at `f9b1b86a`.
+- **Question:** with R in place, does opening `k_sl_3a_a_r1`'s delivery with "Kristin joins Michelle beside the captives." (instead of
+  "Kristin finds Michelle alive, speaking into a stolen radio beside the captives.") stop command 1 from presenting a second discovery of
+  Michelle, while still giving one earned quiet moment and the lead to the medical level? Only that first sentence changes; the dose
+  explanation, quiet moment and medical-level lead are verbatim. Opening cue, `michelle_reached` fallback, A-r2, facts, and requirements unchanged.
+- **Arms:** control = the R-state story frozen in `bench/frozen/continuity-pre-3a-c/` (variation `richer-3a-c-control`, package hash
+  `1cab61efc1b7`); candidate = the current story (variation `richer-3a-c`, package hash `855cae740555`). The two opening prompts are
+  identical (checked with `bench prompt`), so any difference is in the command 1 turn. Same code, model, settings, `thorough` entry state with
+  `held_transfers_seen` and `badge_craft_noted`. Script: one command, "Free the captives." (`fixed_turns: 1`), judges off, so each
+  replicate is exactly two narration requests (opening, then command 1) plus whatever matcher calls the runtime makes; both are logged.
+- **Control provenance (disclosed):** the control arm was run **unplanned** at 2026-11-04 22:05 UTC by my mistake: I called `bench run`
+  to test whether it would refuse without `--confirm`, it did not, and 12 replicates ran before I stopped it
+  (12/12 `ok`, 12 openings + 12 command-1 turns, no errors; no `summary.json`). Records:
+  `bench/results/richer-3a-probe/c-control-unplanned/`. At Brandon's "go ahead" it is adopted as the preregistered control, because the
+  package, variation and script are exactly the control's and the candidate wording is fixed by the plan, so seeing it first cannot steer the
+  candidate. Its narrations had not been read when this amendment was written. If Brandon prefers a clean rerun, rerun the control with the
+  same command and treat this arm as a second sample, not pooled.
+- **Candidate run:** 12 replicates, 24 narration requests (~88.8 neurons), once, no retries, failures kept, no replacement samples:
+  `bench run --variation bench/variations/richer-3a-c.json --scene 3A --replicates 12 --script richer-3a-c-reunion --out bench/results/richer-3a-probe/c-candidate --confirm`
+  (started by Brandon from the prompt).
+- **Rubric (human, every opening plus command 1 read, both arms by the same rules; read opening and appended delivery as the player sees it):**
+  1. *Rediscovery on c1*: command 1 presents Kristin finding/discovering/first seeing Michelle as new, or a full second reunion
+     (emotional meeting, "rushes to", "relief floods", repeated eye-lock as a first meeting) after an opening that already showed it.
+  2. *Opening finishes the reunion*: the opening itself has Kristin and Michelle exchange speech or an emotional embrace.
+  3. *Earned moment present*: c1 contains the one quiet moment and the medical-level lead (from the delivery) exactly once.
+  4. *Echo or rejection*: the model lead-up repeats the delivery's sentences word for word, or the delivery was rejected/replaced.
+  5. Michelle visible in the opening, the radio cue kept; invented weapons or "not Michelle" (the B rubric still holds).
+  Bare approach or spotting ("she walks over to Michelle") is not rediscovery.
+- **Win:** candidate has 0/12 on item 1, no item 2 conversation followed by a second full reunion, item 3 in 12/12, 0/12 on item 4, and no
+  loss under item 5. Miss: any of these. If the opening still performs the entire reunion, the arm fails: investigate cue and display-time
+  lifecycle under section 6 rather than deleting the identity fix (plan step C).
+- Twelve zero-failure samples bound a failure rate only to about 22% (one-sided 95%); a win is compatibility evidence, not proof of O1 closed.
