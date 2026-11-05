@@ -422,3 +422,18 @@ Probe (opening only, one request per sample, 12 per arm, every narration read; ~
   "speaks into a stolen radio" 3/12.
 - C "immediate priorities" statement hidden from SCENE: "not Michelle" 1/12, but the invented familiar woman 12/12 (scar 4).
 Read: B fixes the defect; C does not. B's costs are small invented details to watch in the full 3A re-probe (the pistol first).
+
+### Amendment 5, part 2: full 3A re-probe on the rebuilt speaker lines plus the scene-frame sentence (2026-11-04, `candidate-run4`, 4 reps, 440 neurons projected)
+Code at `7c7f1f6d`. Every turn read by hand; judge counts in brackets are run4 against run3.
+- **Defect 2 fixed in the full run:** Michelle found in 4/4 openings, no look-alike, no "not Michelle" (run3 2/4, run2 2/4, first run 3/4),
+  no scar. Invented opening line "Kristin, what took you so long?" 2/4. Gun or pistol in 1 of 40 turns (baseline 4 of 40), none in openings.
+- **Command 5 re-spotting fixed:** 0/4 (run3 4/4) after the one-line-per-speaker rebuild. Replies on command 5 still add invented Michelle
+  dialogue in reps 2 and 4 (the judge flags both as acting beyond the command).
+- **Not fixed, predates today's changes:** on command 4 ("Enter the medical level") the narrator searches for Michelle and "spots" her 4/4 (first
+  candidate 4/4, run2 4/4, baseline 2/4); judge restarts_scene on command 4 in reps 1 and 4. Command 8 spots Michelle 2/4, command 9 1/4
+  (run3: 1/4 and 1/4). Keypad invented on the reader in 2 turns (run3 1, first run 4, baseline 1).
+- **New cost of the sentence:** the opening now shows Kristin already reaching Michelle (eye contact, 2/4 a spoken line), and the command 1
+  delivery ("Kristin finds Michelle alive...") then reunites them a second time, 4/4. The judge did not flag it (restarts_scene is on
+  commands 4 and 9 only).
+- Judge: acts_beyond_command 6/36 (run3 1, run2 3, baseline 4): 3 on command 9 (takes the radio and gives the signal, authored in the
+  command 8 delivery), 2 on command 5, 1 on command 4. restarts_scene 3/36 (run3 3). contradicts_stated_fact 0/36.
