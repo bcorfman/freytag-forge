@@ -395,7 +395,7 @@ scene_frames:
   situation: "A command corridor on the command levels, closed at both ends by guards. Transfer orders for the captives are moving, and a maintenance network runs through the walls. Security activity is rising faster than Kristin can explain."
   pressure: Decide what to do before the purge begins
 - scene_id: 3A
-  situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels."
+  situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels. Michelle is beside the captives."
   pressure: Reach Michelle and join the uprising
 - scene_id: 3B
   situation: "JANUS is tracking Kristin's moves."
