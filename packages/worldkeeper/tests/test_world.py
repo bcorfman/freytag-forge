@@ -113,6 +113,26 @@ def test_refusals_and_place_effects():
     assert w.set_unplaced("lamp", "the lane").ok and w.parent("lamp") is None and w.unplaced_name("lamp") == "the lane"
 
 
+def test_place_without_text_clears_previous_authored_text():
+    w = make()
+    assert w.place("key", "village", text="by the door").ok
+    assert w.place_text("key") == "by the door"
+    assert w.place("key", "parlour").ok
+    assert w.place_text("key") is None
+    assert w.place_label("key") == "parlour"
+    assert w.place("key", "village", text="by the door").ok
+    assert w.place_text("key") == "by the door"
+    assert w.place_label("key") == "by the door"
+
+
+def test_player_move_retracts_authored_item_text():
+    w = make()
+    assert w.place("lamp", "village", text="by the door").ok
+    assert w.move("lamp", "parlour").ok
+    assert w.place_text("lamp") is None
+    assert w.place_label("lamp") == "parlour"
+
+
 def test_move_effect_text_lasts_until_holder_moves():
     w = make()
     assert w.apply_effects([{"move": "key", "parent": "ada", "text": "in Ada's pocket"}, {"reveal": "key"}])[0].ok

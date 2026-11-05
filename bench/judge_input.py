@@ -9,6 +9,13 @@ from storygame.story_package.models import ItemPlacement, StoryPackage
 
 
 def _story_text(turn: dict[str, Any], scene_transitions: list[dict[str, Any]], package: StoryPackage) -> list[str]:
+    if "authored_segments" in turn:
+        return [
+            segment["text"]
+            for segment in turn.get("authored_segments", [])
+            if isinstance(segment, dict) and isinstance(segment.get("text"), str)
+        ]
+
     authored: list[str] = []
     candidate_id = turn.get("authored_handoff_candidate_id")
     if candidate_id is not None:
@@ -74,11 +81,13 @@ def _revealed_item_names(turn: dict[str, Any], package: StoryPackage) -> set[str
     } | {item_names[item_id] for item_id in revealed_by_effect if item_id in item_names}
 
 
-def _narrator_narration(narration: str, story_text: list[str]) -> str:
+def _narrator_narration(narration: str, story_text: list[str], *, recorded: bool = False) -> str:
     remaining = narration
     for authored in reversed(story_text):
         candidate = remaining.rstrip()
         if not candidate.endswith(authored):
+            if recorded:
+                continue
             return narration
         remaining = candidate[: -len(authored)]
     return remaining.rstrip()
@@ -303,7 +312,9 @@ def judge_turns(
             else ""
         )
         copy["story_text"] = _story_text(turn, scene_transitions, package)
-        copy["narrator_narration"] = _narrator_narration(copy["narration"], copy["story_text"])
+        recorded = "authored_segments" in turn
+        copy["story_text_provenance"] = "recorded" if recorded else "reconstructed"
+        copy["narrator_narration"] = _narrator_narration(copy["narration"], copy["story_text"], recorded=recorded)
         copy["command"] = typed_input
         copy["turn_text"] = [
             *([{"by": "game", "text": copy["just_before"]}] if copy["just_before"] else []),

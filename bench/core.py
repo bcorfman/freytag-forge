@@ -47,6 +47,34 @@ from storygame.runtime.taking import take_before_put
 from storygame.runtime.validation import ProposalValidationError, predicate_matches
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import scene_entry_texts
+
+
+def _record_authored_segments(
+    proposal_segments: Iterable[Any],
+    *,
+    handoff: Any,
+    cue_texts: Iterable[str],
+    complication_text: str | None,
+    complication_verbatim: bool,
+    transition_segments: Iterable[tuple[str, str]],
+) -> list[dict[str, str]]:
+    """Record package-owned text that is present in the engine's final proposal."""
+
+    appended_texts = {segment.text for segment in proposal_segments if isinstance(getattr(segment, "text", None), str)}
+    authored: list[dict[str, str]] = []
+    handoff_text = getattr(handoff, "delivery_text", None)
+    if isinstance(handoff_text, str) and handoff_text in appended_texts:
+        authored.append({"kind": "handoff", "text": handoff_text})
+    for text in cue_texts:
+        if text in appended_texts:
+            authored.append({"kind": "cue", "text": text})
+            break
+    if complication_verbatim and complication_text and complication_text in appended_texts:
+        authored.append({"kind": "complication", "text": complication_text})
+    authored.extend({"kind": kind, "text": text} for kind, text in transition_segments if text in appended_texts)
+    return authored
+
 
 CRITERIA = (
     "canon_consistent",
@@ -1060,15 +1088,33 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 entered_scene_record = next(
                     scene for scene in package.scenes if scene.metadata.scene_id == state.current_scene_id
                 )
-                authored_texts = {
-                    entered_scene_record.metadata.entry_text.strip(),
-                    *(text.strip() for text in prior_scene_record.metadata.bridge_text.values()),
-                }
+                true_facts = {fact.predicate for fact in state.facts.asserted if str(fact.value).lower() == "true"}
+                transition_id = getattr(state.turn_records[-1], "transition_id", None) if state.turn_records else None
+                transition = next(
+                    (
+                        item
+                        for item in package.pacing.transitions
+                        if item.source_scene_id == prior_scene
+                        and item.target_scene_id == state.current_scene_id
+                        and (transition_id is None or item.id == transition_id)
+                    ),
+                    None,
+                )
+                transition_segments: list[tuple[str, str]] = []
+                if transition is not None:
+                    bridge = prior_scene_record.metadata.bridge_text.get(transition.id)
+                    if bridge is not None:
+                        transition_segments.append(("bridge", bridge))
+                    transition_segments.extend(
+                        ("entry", text) for text in scene_entry_texts(entered_scene_record.metadata, true_facts)
+                    )
+                authored_texts = {text.strip() for _, text in transition_segments}
                 end = len(proposal.segments)
                 while end and proposal.segments[end - 1].text.strip() in authored_texts:
                     end -= 1
                 segments = proposal.segments[:end] if end < len(proposal.segments) else proposal.segments[:-1]
             else:
+                transition_segments = ()
                 segments = proposal.segments
             narration = join_narration(tuple(segments)) if segments else ""
             item_facts_record: dict[str, Any] | None = None
@@ -1195,7 +1241,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                         for refusal in refusals
                     )
                 provider.prior_steps = ()
-            if narration or isinstance(provider, ItemFactsProvider):
+            if narration or proposal.segments or isinstance(provider, ItemFactsProvider):
                 delivery = state.last_turn_delivery
                 cue_fact_id = delivery.cue_fact_id
                 cue_text = next(
@@ -1207,6 +1253,30 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     None,
                 )
                 handoff = getattr(provider, "authored_handoff", None)
+                cue_delivery = next(
+                    (item for item in package.deliveries if item.fact_id == cue_fact_id),
+                    None,
+                )
+                if cue_delivery is not None:
+                    cue_texts = tuple(
+                        text
+                        for text in (
+                            getattr(cue_delivery, "escalation_text", None),
+                            getattr(cue_delivery, "cue_text", None),
+                        )
+                        if isinstance(text, str)
+                    )
+                else:
+                    cue_texts = ()
+                complication_text = getattr(delivery, "complication_text", None)
+                authored_segments = _record_authored_segments(
+                    proposal.segments,
+                    handoff=handoff,
+                    cue_texts=cue_texts,
+                    complication_text=complication_text,
+                    complication_verbatim=delivery.complication_verbatim,
+                    transition_segments=transition_segments,
+                )
                 narrated_command = engine.last_player_command
                 if narrated_command is None:
                     narrated_command = player_input
@@ -1234,6 +1304,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     "beats_projected": list(delivery.beats_projected),
                     "selected_knowledge_ids": list(getattr(proposal, "selected_knowledge_ids", ())),
                     "authored_handoff_candidate_id": handoff.candidate.id if handoff is not None else None,
+                    "authored_segments": authored_segments,
                     "model_selected_knowledge_ids": list(getattr(provider, "model_selected_knowledge_ids", ())),
                     "grounding_ids": sorted(
                         {grounding_id for segment in segments for grounding_id in segment.grounding_ids}
@@ -1247,7 +1318,7 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     else [],
                     "cue_fact_id": cue_fact_id,
                     "cue_text": cue_text,
-                    "complication_text": getattr(delivery, "complication_text", None),
+                    "complication_text": complication_text,
                     "handoff_staged": delivery.handoff_staged,
                     "refusal_handled": bool(
                         getattr(engine, "refusal_extra_calls", 0)

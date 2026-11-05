@@ -23,6 +23,15 @@ def _candidate_ids(state: RuntimeState, engine: RuntimeEngine, command: str) -> 
     return {candidate.id for candidate in engine.projector.project(state, "player", command).candidates}
 
 
+def test_1a_frame_uses_deadbolt_wording_and_keeps_outward_splinters_clue():
+    frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "1A")
+    earned_entry = PACKAGE.knowledge_indexes.by_id["k_sl_1a_a_r1"]
+
+    assert "The deadbolt is still thrown." in frame.situation
+    assert "splintered out of the wood" not in frame.situation
+    assert "splinters around the frame point outward" in earned_entry.delivery_text
+
+
 def _walk_to_the_neighbor() -> tuple[RuntimeState, RuntimeEngine]:
     state = RuntimeState.bootstrap(PACKAGE)
     count = {"n": 0}
