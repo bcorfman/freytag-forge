@@ -51,11 +51,16 @@ worktrees (all pass), patches reviewed and applied.
 * Integrated gate: `quick_suite.py` rc 0, `ruff check`/`format --check` clean, node judge tests 11/11.
   The full suite has not been run (reserved for the final pre-merge gate).
 
+**2026-11-05, D1-V prepared, uncommitted on `richer-narration-3a`; billed replay NOT yet run.** Ringer run `3a-open-issues-stepD1V` (manifest `scripts/ringer/3a-open-issues/stepD1V-manifest.json`): both tasks reported FAIL from my check bugs (the flags check outran Ringer's limit; the decode check read `records` where the report says `rows`); checks re-run by hand in the kept worktrees all pass, patches applied, `quick_suite.py` rc 0, ruff clean.
+* Change: `voiceable: false` added to `k_sl_3a_a_r1` and `k_sl_3a_a_r2` only (tests compare every other field to the frozen D1 copy `bench/frozen/continuity-pre-3a-d1v/`; one D1 test that pinned the six speaker lines now asserts they are gone, with SCENE and system unchanged). Variations `richer-3a-d1-control` / `richer-3a-d1v`.
+* Offline payloads (zero neurons): exactly six speaker lines removed; saves 896 characters from c2 onward. Totals control to candidate: c4 5,406 to 4,510; c5 5,837 to 4,941; c7 7,048 to 6,152; c8 7,208 to 6,312; c9 9,443 to 8,547. c7-c9 still exceed 6,500, so O8 stays open.
+* Offline decode of D1's saved replies (`bench/frozen_decode.py`, reports in `bench/results/richer-3a-probe/d1/decode-*.json`): the real decoder recovers segments from the three malformed c4 replies (samples 4, 5, 6) and the validator accepts all 24 rows per arm; self-custody proposals appear in 11/24 D1 rows (9/12 at c4) versus 1/24 control and are stripped, not committed. This answers the O9 D1 caveat for the offline decode only; it does not clear the narration quality of those replies.
+* Preregistration: Amendment 9 in `.plans/richer-3a-probe-prereg.md` (win: 0/12 on reunion, stranger, recitation, malformed, self-custody, plan-exchange; c4 medical 12/12; c5 cake 12/12). **Result (same day): D1-V MISSED.** 48 requests, no errors. c4 recitation fell 8/12 to 2/12 and degeneration 3/12 to 1/12, but the medical lead stays 3/12 (the narrator re-describes Michelle from SCENE in 8/12), and c5, clean under D1, regresses to 7/12 cake question, 6/12 plan exchange, 2/12 malformed and 4/12 self-custody. D1-V is rejected; C stays the accepted state; D1 stays experimental; O2 and O3 stay open; D2 does not start. Details and rubric table: Amendment 9 result. The twelve replays are close to one deterministic path per prompt (the D1 control reproduced Amendment 8), so the effective sample is small. **Next: Brandon's decision on how to diagnose the recorded replies (no narrator rule).**
+
 **Step A, still open (all spend model/judge calls; not started):** rejudge frozen artifacts with the
 corrected judge input; 1A frame replay (12+12, 88.8 neurons); c1 captives replay (12+12, 88.8 neurons,
 now expected to pass deterministically, so a live replay may be skippable); inspect the serialized
-post-transition tree for the c9 missed-change flags. **Steps B–G not started**; each needs its
-preregistration written first (this file and `.plans/richer-3a-probe-prereg.md`).
+post-transition tree for the c9 missed-change flags. **Update 2026-11-05:** B and C passed their recorded gates; D1 met its narrow gate but is not accepted. D2–G remain unrun. Each new billed experiment still needs its preregistration written first (this file and `.plans/richer-3a-probe-prereg.md`).
 
 ## Evidence checked and corrections to the supplied account
 
@@ -108,16 +113,16 @@ Judge results are descriptive observations, not truth labels.
 
 | Item | Established evidence and causal limit | Disposition and technique |
 | --- | --- | --- |
-| O1: two reunions | Run4 opening r1/r3 already exchanges speech; all four c1 deliveries begin “Kristin finds Michelle alive”. The opening cue is `handoffs.yaml:368`; the discovery-and-conversation delivery is `knowledge.yaml:2408`. Seeing Michelle and later speaking are compatible, but presenting discovery again is not. The static frame fixes missing identity; removing it would restore the look-alike risk. | Real authored repetition; block readiness until the opening and earned conversation have distinct jobs. Use the subtractive delivery fix from richer-narration “Scene 2B / Delivery repeat” and 3A Amendment 1. The exact 3A replacement in C is untested. Keep the reunion fact earned by an action; do not assert it merely because the opening model writes eye contact. |
-| O2: later re-spotting | Run4 c4 prompt repeats both A-r1 and A-r2 reunion statements in SCENE and per-speaker lines. c4 R/X failed to remove the behavior. Nested format caused the c5 wording shift in Amendment 4; that experiment does not establish the cause at c4/c8/c9. In c4-R r1/c2 the narrator literally gives another “brief, unhurried moment”; that is stronger than looking at someone. | “Spots Michelle” or walking over to her is ordinary staging under Brandon's ruling unless the passage actually redoes a discovery, reunion, or journey. Accept the bare verb; score repeated emotional meetings separately. No proven cure for this specific later-turn defect. Test a compact established-state statement (D), not SCENE deletion or a rule banning a word. |
-| O3: Michelle dialogue | Run4 r2/c5 has Kristin ask “What's happening here?” and r4/c5 asks about plans/other sites; the appended answer is Saturday/circle/lemon cake. Even r1/r3 do not clearly ask about the cake. Old per-name arms include the fabricated “cake we had at the circle”; their calls-out score did not measure answer fidelity. Opening speech is a different endpoint: c4 C 9/12 versus R 0/12. | Harmless NPC greetings alone are not a story-breaking defect or a protagonist physical action. The unrelated question/answer and invented shared memory undermine this reveal's job: block proof acceptance on that endpoint. R is supported for the opening only. Source subtraction and concrete plot material have precedents; the proof-specific candidate in E is new, unproven. |
+| O1: two reunions | Run4 opening r1/r3 already exchanges speech; all four c1 deliveries begin “Kristin finds Michelle alive”. The opening cue is `handoffs.yaml:368`; the discovery-and-conversation delivery is `knowledge.yaml:2408`. Seeing Michelle and later speaking are compatible, but presenting discovery again is not. The static frame fixes missing identity; removing it would restore the look-alike risk. | Real authored repetition; block readiness until the opening and earned conversation have distinct jobs. Use the subtractive delivery fix from richer-narration “Scene 2B / Delivery repeat” and 3A Amendment 1. The exact 3A replacement in C now has the sampled support below. Keep the reunion fact earned by an action; do not assert it merely because the opening model writes eye contact. **Update:** Amendment 7 / `c-{control-unplanned,candidate}/all-turn-records.json`: authored rediscovery 12/12 versus 0/12, quiet moment and medical lead once in 12/12, no echo/rejection; opening conversation 0/12 in each arm. C passes on the A-r1 path; A-r2-first live behavior remains untested. |
+| O2: later re-spotting | Run4 c4 prompt repeats both A-r1 and A-r2 reunion statements in SCENE and per-speaker lines. c4 R/X failed to remove the behavior. Nested format caused the c5 wording shift in Amendment 4; that experiment does not establish the cause at c4/c8/c9. In c4-R r1/c2 the narrator literally gives another “brief, unhurried moment”; that is stronger than looking at someone. | “Spots Michelle” or walking over to her is ordinary staging under Brandon's ruling unless the passage actually redoes a discovery, reunion, or journey. Accept the bare verb; score repeated emotional meetings separately. No proven cure for this specific later-turn defect. Test a compact established-state statement (D), not SCENE deletion or a rule banning a word. **Update:** D1 frozen c4: emotional reunion 11/12 control versus 0/12 D1; c5 0/12 both. This supports the statement-family intervention in this state, not a general cure. D1 replaces it with recitation and malformed replies; adoption remains blocked pending D1-V below. |
+| O3: Michelle dialogue | Run4 r2/c5 has Kristin ask “What's happening here?” and r4/c5 asks about plans/other sites; the appended answer is Saturday/circle/lemon cake. Even r1/r3 do not clearly ask about the cake. Old per-name arms include the fabricated “cake we had at the circle”; their calls-out score did not measure answer fidelity. Opening speech is a different endpoint: c4 C 9/12 versus R 0/12. | Harmless NPC greetings alone are not a story-breaking defect or a protagonist physical action. The unrelated question/answer and invented shared memory undermine this reveal's job: block proof acceptance on that endpoint. R is supported for the opening only. Source subtraction and concrete plot material have precedents; the proof-specific candidate in E is new, unproven. **Update:** B passes for opening speech (4/12 control versus 0/12 R). D1 c5 asks about cake in 10/12 versus 11/12 control; its samples 1–2 still ask about plans and supply unrelated dialogue. Ten direct cake questions are an improvement over control’s added plan exchange, not closure of O3. E remains conditional after D1-V. |
 | O4: signal repeated | Run4 r1–r3/c9 repeats the signal already delivered on c8. In r1/c9, SCENE contains both C-r1 and C-r2 signal statements and each of three speakers receives them again. No candidates are offered; this is not a second earned handoff. `_committed_for` and `_established_for` project entries whose effects are established, including alternate realizations, not only the selected realization. | Real replay of a completed action; block readiness. The source feed is established; whether shortening that feed cures generation is not. Use the short-statement technique of richer-narration “1B probe fixes”, with the one-time action kept in delivery. D tests C-r1 and C-r2 together because leaving either leaves the same causal input. |
 | O5: keypad | Run4 r2/r3 c7 invent a keypad. Current statement/delivery contains none; the old explicit gaze contradiction is absent. `world.yaml:435` declares a fixed checkpoint reader, with reader/card-reader aliases. The current placement only locates it. | Accept cosmetic keypad detail as a known item while it supplies no new code, capability, required input, or contradiction. Do not spend a blocking arm to suppress harmless nouns. No established causal explanation for the residual. Declaring a keypad or adding a prohibition would enlarge scope and could recreate the old contradiction. |
 | O6: official line | Run3 r3/c8: “We can't risk a premature uprising. We need to wait for the signal from Dr. McGehee.” It precedes the authorized signal. No such line is authored; absence in run4 is not a cure. | Conditional caution before a signal is not inherently contradictory. Accept this isolated line if it neither blocks the typed action nor delegates the signal away from Kristin. Keep it in qualification scoring; invented authority that changes the plot fails. No proven fix specific to this occurrence. |
 | O7: 1A smoke | `richer-1a-probe/smoke-trim`, c1 prompt SCENE says “The lock is splintered out of the wood.” Narration copies it. Plot 1A.1 describes outward frame splinters and a thrown deadbolt. c5's pocketing quote is in the prompt's “game will add this” delivery. Michelle is present in CHARACTERS in both prompts. | No evidence these two flags were caused by character trimming. The first is source disagreement, not proof of model regression; second is provenance misclassification. Apply the exact source correction in A and repair judge attribution before comparisons. Preserve actual authored acquisition. |
-| O8: size | System prompt is 2,527 characters in the compared rows. Per-speaker repetition, not transcript memory, drives the tail. `_speaker_constraint_lines` at cloudflare.py:1622 preserves per-name form and present-or-named filtering. `_character_lines` at 1586 keeps present/named/brought-up scene participants. | Real budget problem. Preserve those behaviors. First shorten repeated story statements, then test semantic `voiceable: false` only for observations (F). The latter has 1B/1C precedent but is unproven in 3A and may reproduce the loss of useful speaker-line density. A passing entry budget test cannot close the deep-turn problem. |
-| O9: aggregate judges/facts | Raw counts below. Run4 missed-change is r1–r3/c9; invented-change is r2/r3/c1 and r4/c8. c1/c8 prompts show captives “moving through the processing line below”, although their before-place is detention level. That exact text is the **1C** character placement at plot.md:304. r2/r3 c1 after-place becomes processing line. | Do not dismiss all flags as noise or fix to their aggregate count. The stale placement is a concrete additional source problem; trace its selection in A. Exit records mix transition prose with scoped fact snapshots, so c9 flags alone do not prove final-world travel failed. Verify authoritative post-transition facts and radio custody separately. Correct provenance and then rejudge frozen artifacts; do not silently overwrite the originals. |
-| O10: R | Exact three-line change is recorded in Amendment 5 part 3; direct R opening review confirms 0/12 Michelle speech but continuing eye contact. Its c2 still repeats reunions and spots Michelle 11/12. | Recommend R for the opening, not as an O2 cure. This was explicitly awaiting Brandon's wording decision; this plan supplies it for review, not an adoption claim. Precedent: game-reimagination Rounds 6–7 (2A source rewording). Confirm on its own in B before combining. |
+| O8: size | System prompt is 2,527 characters in the compared rows. Per-speaker repetition, not transcript memory, drives the tail. `_speaker_constraint_lines` at cloudflare.py:1622 preserves per-name form and present-or-named filtering. `_character_lines` at 1586 keeps present/named/brought-up scene participants. | Real budget problem. Preserve those behaviors. First shorten repeated story statements, then test semantic `voiceable: false` only for observations (F). The latter has 1B/1C precedent but is unproven in 3A and may reproduce the loss of useful speaker-line density. A passing entry budget test cannot close the deep-turn problem. **Update:** D1 saves 356 characters at each frozen endpoint: c4 total 5,762→5,406; c5 6,193→5,837 (system 2,527 unchanged). No c7–c9 measurement or budget closure follows, and these savings are not yet accepted. |
+| O9: aggregate judges/facts | Raw counts below. Run4 missed-change is r1–r3/c9; invented-change is r2/r3/c1 and r4/c8. c1/c8 prompts show captives “moving through the processing line below”, although their before-place is detention level. That exact text is the **1C** character placement at plot.md:304. r2/r3 c1 after-place becomes processing line. | Do not dismiss all flags as noise or fix to their aggregate count. The stale placement is a concrete additional source problem; trace its selection in A. Exit records mix transition prose with scoped fact snapshots, so c9 flags alone do not prove final-world travel failed. Verify authoritative post-transition facts and radio custody separately. Correct provenance and then rejudge frozen artifacts; do not silently overwrite the originals. **Update:** D1 c4 samples 4–6 fail strict JSON parsing (0/24 control); samples 4–5 repeat item-fact keys and sample 6 is incomplete. Several parseable replies also put a person in their own custody. These raw proposals establish neither committed bad facts nor successful engine recovery. Replay through decoding/validation offline before claiming either. |
+| O10: R | Exact three-line change is recorded in Amendment 5 part 3; direct R opening review confirms 0/12 Michelle speech but continuing eye contact. Its c2 still repeats reunions and spots Michelle 11/12. | Recommend R for the opening, not as an O2 cure. R has now been retained on the branch after B; merge adoption remains separate. Precedent: game-reimagination Rounds 6–7 (2A source rewording). B supplied the isolated opening confirmation. **Update:** Amendment 6 / `b-control.json`, `b-r.json` meet B’s gate: Michelle and cue 12/12 R, no look-alike/negative identity/weapon/reunion line. R is retained on the branch, not awaiting its initial opening test. Brandon whispers in 5/12 R openings and 13/24 C openings; panel inventions remain G watch items. |
 
 The relevant projection boundary is `knowledge.py:238` (`project`):
 `scene_hidden_ids` comes from `_effect_item_ids`, which identifies established
@@ -294,7 +299,7 @@ Tests: extend `tests/test_richer_3a.py` to verify no fact earned by cue display,
 A-r1/A-r2 still establish the same facts, the dose explanation survives, and
 consumed discovery cues do not recur after save/load/revisit. Use existing cue
 lifecycle tests in `tests/test_discovery_continuity.py` rather than new runtime
-flags. The 2B delivery-repeat technique is proven; this wording is not yet proven.
+flags. The 2B delivery-repeat technique is proven; Amendment 7 now supports this wording on the sampled A-r1 path.
 
 Probe: B winner as control versus the one-sentence change, 12 opening+c1 pairs
 per arm, **48 requests = 177.6 neurons**. Win: 0/12 rediscoveries on c1, no opening
@@ -303,13 +308,15 @@ medical-level lead in 12/12, no echo or rejection. A mere later approach is fine
 If the opening still performs the entire reunion, this arm fails: investigate
 cue/display-time lifecycle under section 6 rather than deleting the identity fix.
 
+**Result:** C passed its Amendment 7 gate (`f9b1b86a`, `aacad859`, result `41a63079`). The control was run before preregistration and accepted as the disclosed unplanned control, not a prospectively registered run. Both arms used 12 opening+c1 pairs. The mechanical removal of the authored discovery accounts for the 12→0 difference; neither arm’s lead-up independently rediscovered Michelle. Preserve the successful sentence. The candidate’s senior-official gaze in replicates 1, 4 and 6 is an attention mismatch, not a second reunion. Do not infer later-turn or alternate-path success.
+
 ## D. Shorten completed events at their source, one event family at a time
 
 Do not remove SCENE statements. Keep the per-speaker format and filtering.
 Do not change `must_convey`, `requires`, `establishes`, action evidence, delivery,
 or leak ownership in this step. These are proposed **short established summaries**,
 following 1B's short-statements/long-deliveries technique. Their 3A behavioral
-effect is unproven; they are not a demonstrated tense trick.
+effect now has narrow D1 evidence below; they are not a demonstrated tense trick or an accepted combined fix.
 
 **D1, reunion summary arm.** Replace these two `statement` values:
 
@@ -331,7 +338,23 @@ Require shorter measured payloads at both endpoints. Tests in
 `tests/test_richer_3a.py` and `tests/test_knowledge_projection.py` verify the
 alternate-realization projection and preserved grounding/reveal behavior.
 
-**D2, uprising summary arm.** On D1's accepted state, replace:
+**D1 result and decision:** Amendment 8’s preregistered gate was met: c4 reunion 11/12→0/12; c5 reunion/unknown identity 0/12 in both; c4 medical movement 0/12→3/12; both prompts shrink 356 characters. This is a weak relative movement gate, not adequate action completion: nine D1 c4 replies never head to the medical level, and two of the three that do are malformed. D1 remains experimental on the branch; do not use it as an accepted control for downstream adoption.
+
+Corrections from the raw artifacts (`d1/{control,d1}-rows.json`, sample numbers are one-based):
+
+* “Shelly” is supplied in CHARACTERS as Kristin’s authorized nickname; the 11 control c4 uses are not inventions. The repeated reunion is the defect.
+* D1 c4 recites summaries in dialogue in samples 1–3, 6–9 and 12 (8/12). Control c4 sample 9 narrates coordination, rather than reciting it as dialogue: under that same dialogue rubric the control is 0/12, not 1/12. Control c5 sample 9 voices the other-sites content (1/12); D1 c5 samples 1–2 do so (2/12). Do not conflate narrative reuse with spoken recitation.
+* D1 c5 samples 1–2 contain an invented plan exchange despite missing speaker tags; “Michelle only reacts” applies to the other ten. The control has a plan exchange in 12/12, but 11 then ask about cake: only sample 4 ends on the unrelated question. D1 therefore reduces extraneous conversation while increasing missing cake questions from 1 to 2. Control sample 10 also pauses before the authored “without a pause”; score that composed contradiction in E.
+* A-r2’s delivery was not selected, but its summary already appears as established SCENE content and explicit speech permission in both frozen arms; committed prefix facts include the shared reunion/resistance facts. This is alternate-realization content being voiced, not demonstrated leakage of protected knowledge. Whether the conversation actually occurred is a separate fidelity concern. Do not fix this by hiding facts or pretending `voiceable: false` removes SCENE content.
+* Strict JSON parsing fails for D1 c4 samples 4, 5 and 6; there are no transport errors. A replay of the wire payload does not exercise final composition, validation or committed world state. The claim that these turns “would survive” is unverified. The shortened statements are the controlled intervention; speaker permission is a plausible recitation mechanism, not yet an isolated cause of either recitation or malformed JSON.
+
+**D1-V, isolated permission follow-up (new, unproven in 3A).** Retain the exact two D1 summaries above for this experiment. In `data/stories/continuity-initiative/knowledge.yaml`, add exactly `voiceable: false` at both `k_sl_3a_a_r1` and `k_sl_3a_a_r2`; change no other field. This supersedes F’s A-r2 carve-out for the experimental arm only: both completed-event summaries can be recited, so suppressing only A-r1 leaves the observed A-r2 input. Their authored deliveries and earned actions remain intact. The existing observation mechanism has the 1B/1C precedent cited in F; its application to A-r2 is a new hypothesis, not a proven cure or a runtime permission redesign.
+
+Before spending, use tests-first Ringer tasks to pin unchanged SCENE/grounding, prerequisites, facts, deliveries and per-speaker formatting; check both alternative earned paths, and run saved malformed replies through the actual decoder and validator offline, recording rejection/recovery and fact effects. Use the existing quick-suite gate. Capture all nine prefixes to measure total payloads without a billed call.
+
+Preregister D1 versus D1-V: same scripted prefixes as Amendment 8, c4 and c5, one frozen state per endpoint, 12 samples per endpoint per arm, **48 requests = 177.6 neurons**, no retries/replacements, errors retained. Freeze hashes, model/settings, payload diffs and output paths in the next amendment before the run. Only the six A-r1/A-r2 speaker lines may disappear at these endpoints; SCENE and system must match. Read every reply and its composed delivery. Win requires 0/12 repeated reunions, stranger introductions, summary-recitation dialogue, malformed replies and invalid self-custody proposals at each endpoint; c4 must head into the medical level in 12/12; c5 must ask about cake/calendar in 12/12, without an unrelated plan exchange, invented memory, hesitation contradicting delivery, or echoed answer. Payloads must shrink. These strengthened prospective gates do not retroactively change D1’s recorded win. A miss rejects D1-V; preserve the last accepted C state as the fallback, keep O2/O3 open and return to prompt diagnosis, not another narrator rule. No general reliability claim follows from twelve repeated frozen prompts.
+
+**D2, uprising summary arm.** Only after a reunion variant clears the strengthened gate, freeze that accepted state as control and replace:
 
 * `knowledge.yaml:2609`, C-r1:
   `The prisoners have seized checkpoints. The fighting route toward the command and broadcast levels is open.`
@@ -351,7 +374,7 @@ c8 action fails. D2 is not permission to remove the uprising or its deadline.
 
 ## E. Make the proof turn ask the actual question
 
-First read D1/D2's c5 results. If the question and proof now agree in all samples,
+First read the accepted D1-V c5 results and inspect D2’s c5 payload offline; if D2 changes that payload, the paired E probe below must check the resulting state. Original D1 fails question fidelity in samples 1–2, so it cannot waive E. If the question and proof now agree in all samples,
 do not add text. If they do not, the next candidate is a delivery that concretely
 binds the answer to the asked topic, without adding another narrator rule.
 
@@ -387,8 +410,7 @@ If c7–c9 still exceed 6,500, test the existing story-level observation mechani
 add `voiceable: false` only to `k_sl_3a_a_r1`, `k_sl_3a_b_r2`,
 `k_sl_3a_c_r1`, and `k_sl_3a_c_r2` in `knowledge.yaml` at their ID blocks
 (2378, 2472, 2608, 2641 at this HEAD; resolve by ID after earlier edits).
-These narrate actions rather than words for an NPC to recite. Keep A-r2's
-other-sites explanation and D-r1's official authorization sayable. Do not
+These narrate actions rather than words for an NPC to recite. D1-V now tests A-r1 and A-r2 together before D2; carry their flags forward only if that arm wins. F then tests only the remaining listed observation flags against that accepted control, without retesting or silently reverting A-r2. Keep D-r1’s official authorization sayable. Do not
 change speaker formatting or hide any corresponding SCENE statement.
 
 Precedent: richer-narration “1B probe fixes” and “1C closeout” made observations
@@ -437,7 +459,7 @@ Final diagnostic qualification: freeze the immediate pre-fix control and combine
 candidate, both the original nine imperative commands and original thorough
 entry facts, **12 replicates each**, including opening. This is
 **240 narration requests = 888 neurons**, plus matchers/recoveries/judges.
-Read every turn. In a separate compatibility rerun, candidate-run5 uses the
+Read every turn, including Brandon’s opening whispers, invented panel readouts/countdown, C’s official-directed gaze, D1-style off-command planning, malformed output and proposed self-custody. Cosmetic staging is a watch item; invented operational information that changes player choices, omitted commanded movement, or invalid committed custody fails. Record raw parse failures separately from engine recovery. In a separate compatibility rerun, candidate-run5 uses the
 historical **four** replicates and same nine commands, **40 requests = 148
 neurons**, compared descriptively with run4, never pooled with the 12-replicate
 experiment. The two replicate counts serve different purposes and must not be
@@ -470,8 +492,8 @@ the 12-per-arm A diagnostic supplies the targeted comparison. Offline check
 1C/2B/3A-start character feeds, plus synthetic absent/named speaker cases.
 
 The maximum listed narration estimate if every optional arm is needed is
-**2,308.8 neurons**, including both A diagnostics, B–F, final 12-per-arm full
-qualification, four-replicate compatibility rerun, and 1A smoke. It is a planning
+**2,486.4 neurons**, including both A diagnostics, B–F, the added D1-V comparison (177.6), final 12-per-arm full
+qualification, four-replicate compatibility rerun, and 1A smoke. B, C and D1 account for 120 recorded narration requests, approximately **444 neurons**; the maximum remaining listed estimate is **2,042.4 neurons**, including optional A/E/F work. This excludes judge/matcher cost (C candidate recorded 12 reply-judge calls despite the intended judges-off setup). It is a planning
 sum, not a spend authorization or guaranteed bill. Stop after failed gates;
 do not pay for downstream confirmations of a rejected candidate.
 
@@ -479,20 +501,17 @@ do not pay for downstream confirmations of a rejected candidate.
 
 | Earlier fix | Why it stays safe / what must fail the next candidate |
 | --- | --- |
-| c5 per-speaker restoration (`c339081a`) | Preserve one line per speaker per statement and present-or-named limit. D/F may change contents/counts, so explicitly test c5 identity **and** actual question fidelity. Never substitute nested headers because their smaller size looks attractive. |
+| c5 per-speaker restoration (`c339081a`) | Preserve one line per speaker per statement and present-or-named limit. D1 changed contents and introduced recitation/parse failures; D1-V/F change counts, so explicitly test c4 movement, c5 identity **and** actual question fidelity, raw parsing and validated facts. Never substitute nested headers because their smaller size looks attractive. |
 | Opening identity sentence (`7c7f1f6d`) | Keep the exact plot sentence and visible radio cue through B–G; any look-alike or “not Michelle” fails. R does not authorize its deletion. |
 | Reader keypad contradiction | Keep keypad absent from statement, conveyance and delivery. Cosmetic reader detail is allowed; Brandon's action must not contradict first-pass success or create a code requirement. |
 | Tags/radio/proof echo reductions | Preserve scoped imagery in existing placements, not new global Details. Compare lead-up with appended delivery; E is rejected if its explicit answer restores echo. |
 | Proof acceptance and official/uprising handoff | Keep proof groups/prerequisites and `typed_input` tie-break. Assert exact official handoff with the runtime-appended display names. Required path and optional proof must still land on their own commands. |
 | Safe prompt cuts | Preserve no-candidate rule removal, inert placement removal, and character relevance. Do not revive transcript/history (none is currently supplied). Measure total payload, not only user text or a fresh entry. |
-| Rejected format/SCENE experiments | No named-speaker-only targeting, nested header, or generic SCENE dedup. F is an explicitly isolated semantic observation arm with regression gates, not a retry of those rejected transformations under a new name. |
+| Rejected format/SCENE experiments | No named-speaker-only targeting, nested header, or generic SCENE dedup. D1-V tests the two reunion observation flags before D2; F tests remaining observations against the accepted state with regression gates, not a retry of those rejected transformations under a new name. |
 | Cue and scene handoff lifecycle | Keep discovery distinct from conversation, and first signal distinct from active uprising. Do not remove earned knowledge/facts to silence text. No stale discovery cue after completion; no source-scene action after the destination bridge. |
 
 Order matters: A fixes measurement and stale input; B changes only opening
-pressure; C removes authored rediscovery; D removes repeated event scripts
-while retaining established knowledge; E repairs any remaining proof mismatch;
-F risks fewer speaker lines only after those contents are sound; G measures
-their combination. A short prompt that reintroduces the old defects is a loss.
+pressure (B passed); C removes authored rediscovery (C passed); D1 has narrow benefits but is not accepted. Isolate D1-V’s two reunion speech permissions before D2; only a quality-gated winner proceeds to uprising summaries. E repairs remaining proof mismatch; F then tests the remaining observation flags for size; G measures their combination. A short prompt that reintroduces the old defects is a loss.
 
 ### Shortest honest path to opening the PR
 
@@ -535,25 +554,6 @@ its payoff. None justifies adding more 3A prompt material now.
 * No treating a fresh-entry budget check, aggregate judge count, or zero in
   four/twelve samples as proof of complete continuity or general reliability.
 
-**2026-11-04, step B edit done (uncommitted until the probe is prereg-committed):** the three R lines applied via Ringer run
-`3a-open-issues-stepB` (PASS, one attempt); five tests added in `tests/test_richer_3a.py` pin the new fields and the unchanged cue,
-`must_convey`, reveal ids and requirements. The only recorded-prompt change is the three R lines. Quick gate 3802 passed, ruff clean.
-Preregistration is Amendment 6 of `.plans/richer-3a-probe-prereg.md`. Billed probe next (24 requests).
+**2026-11-05, artifact-checked status update (B–D1).** B edit/preregistration `216e526e`, result `92664699`: gate met in 24 openings; retain R on branch. C edit `f9b1b86a`, preregistration `aacad859`, result `41a63079`: gate met in 48 requests, with the unplanned control provenance disclosed. D1 edit/harness/preregistration `4fb5c2d0`, result `3255b379`: 48 frozen replays meet Amendment 8’s narrow gate but do not justify adoption. The raw-artifact corrections and stronger next gate are recorded in D. Existing deterministic test outcomes above are historical reports, not rerun or independently verified in this document update. No billed requests or implementation changes were made in this update.
 
-**2026-11-04, step B probe: WIN.** 24 requests, 0 errors. R: Michelle line 0/12 (control 4/12), look-alike/"not Michelle"/weapon 0 in both
-arms, Michelle and the radio cue kept 12/12 (control lost the cue in 2/12). Cost seen: Brandon whispers an invented "We need to move.
-Security's tightening." in 5/12 R openings (control 0/12) and #4 invents what the gate panel shows; both are noted as watch items for step G.
-The billed run was started by Brandon from the prompt (Ringer's `full_access` launch was denied by the permission classifier). R remains the
-step C control. Details: Amendment 6 in `.plans/richer-3a-probe-prereg.md`. Next: step C (48 requests, 177.6 neurons) needs a prereg first.
-
-**2026-11-04, step C: WIN.** Edit committed `f9b1b86a`, preregistered as Amendment 7 (`aacad859`). Control = the unplanned run described in the
-Amendment (my mistake: `bench run` is billed even without `--confirm`; saved as a memory), adopted at Brandon's "go ahead". Candidate
-run by Brandon. Rediscovery on c1: control 12/12, candidate 0/12; earned moment and medical lead 12/12 in both; no echo, no rejection; Michelle
-and the cue 24/24 in openings. Open watch items: Brandon's invented opening whisper (13/24 openings) and a small senior-official gaze mismatch (3/12).
-Next: step D1 (reunion summary arm, frozen c4 and c5 prompts, 48 requests, 177.6 neurons) after a preregistration.
-
-**2026-11-05, step D1: gate met, adoption blocked by a side effect.** Edit and harness committed `4fb5c2d0` (preregistered as Amendment 8, run by Brandon).
-Repeated reunion at c4: control 11/12 ("Shelly, I'm so glad I found you"), D1 0/12; c5 invented plan answer before the proof: control 12/12, D1 0/12; medical lead
-3/12 versus 0/12; payloads 356 characters shorter at both endpoints. Cost: the new short statements are recited as dialogue (c4 8/12, was 1/12; c5 2/12, was 0/12;
-the recited A-r2 sentence is an unearned reveal) and 3/12 c4 replies degenerate in `item_facts`. The D1 statements stay on the branch, flagged NOT ADOPTED, awaiting
-Brandon's choice (voiceable:false on A-r1 only, per plan; or on both, which departs from the plan's A-r2 carve-out; or revert D1).
+**Next:** keep the two D1 statements experimental, preserve accepted B/C, and preregister D1-V before any new paid work. Do not proceed with D2 on unaccepted D1 or treat F’s former A-r2 exception as settled. D2, conditional E, remaining F and G remain owed, along with A’s unrejudged artifacts, 1A replay and final-state audit. A failed D1-V returns to C as the accepted baseline and leaves the reunion/proof defects open.
