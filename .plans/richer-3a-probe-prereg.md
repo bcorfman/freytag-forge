@@ -437,3 +437,19 @@ Code at `7c7f1f6d`. Every turn read by hand; judge counts in brackets are run4 a
   commands 4 and 9 only).
 - Judge: acts_beyond_command 6/36 (run3 1, run2 3, baseline 4): 3 on command 9 (takes the radio and gives the signal, authored in the
   command 8 delivery), 2 on command 5, 1 on command 4. restarts_scene 3/36 (run3 3). contradicts_stated_fact 0/36.
+
+### Amendment 5, part 3: does the 2A rewording fix the re-spotting? (2026-11-04, `bench/results/richer-3a-probe/c4-{C,R,X}`)
+Hypothesis from the record (2A: SCENE said the phrase three times; rewording pressure, entry statement and objective took rejections from
+7/12 to 0/12): SCENE tells the narrator to "Reach Michelle" three times after the reunion, so it keeps looking for her. Probe: two-command
+script ("Free the captives." then "Enter the medical level."), 12 replicates per arm, judges off, every narration read.
+Arms: C control; R pressure "Join the uprising", entry statement "Supporting the uprising is the immediate priority.", plot objective
+"Join the uprising"; X entry statement hidden from SCENE only.
+- **Re-spotting on command 2 is not caused by those lines.** "She spots Michelle beside the captives..." C 12/12, R 11/12, X 12/12. The
+  narrator rewords the committed statement "Kristin reaches Michelle alive, ... directing prisoners through stolen radios and coded
+  announcements" and the cue "Michelle shows Kristin the medical level". Second meeting ("rushes to Michelle", relief, "unhurried moment",
+  eyes meet) C 7/12, R 8/12, X 4/12 (not a reliable difference).
+- **R does improve the opening:** invented Michelle line ("Kristin, what took you so long?" or speech) C 9/12, R 0/12, X 1/12; pistol C 0, R 0,
+  X 4/12; Brandon whispers a line that follows SCENE ("they're tightening security") R 4/12. Reunion delivered on command 1 in 12/12 of every arm.
+- Brandon's standing ruling applies to commands 4, 8 and 9: Kristin stepping up to a character she is already near is ordinary staging, not a
+  restart ([[approaching-a-nearby-character-is-not-a-restart]]); the run4 `restarts_scene` flags on those commands are that pattern.
+Not adopted yet: R (needs Brandon's go). Not fixed: the opening-plus-command-1 double meeting (authored cue and delivery both place Michelle).
