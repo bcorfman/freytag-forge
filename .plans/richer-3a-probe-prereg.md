@@ -472,3 +472,27 @@ Plan: `.plans/richer-3a-open-issues-plan.md` step B. Code at the commit that add
   report the replication failure; do not adopt X. A win does NOT claim O1 or O2 solved (the c1 double reunion and the c4 re-spotting are
   separate steps C and D); 12 zero-failure samples bound a failure rate only to about 22% (one-sided 95%).
 - Control rates are recorded for comparison but are not a pass criterion.
+
+### Amendment 6, result (2026-11-04; run by Brandon from the prompt, `bench/results/richer-3a-probe/b-control.json` and `b-r.json`)
+24 narration requests (about 88.8 neurons), 0 errors, no retries, no replacement samples. Recorded prompts: one prompt per arm, system
+prompts identical, user prompts differ in exactly the three R lines (objective, pressure, entry statement). Every narration read.
+| Rubric item | Control (12) | R (12) |
+| --- | ---: | ---: |
+| 1 Michelle visible and identified | 12 | 12 |
+| 2 look-alike or invented woman | 0 | 0 |
+| 3 "not Michelle" | 0 | 0 |
+| 4 invented weapon | 0 | 0 |
+| 5 Michelle speaks a reunion line | 4 (#0, #6, #8, #9) | **0** |
+| 6 radio cue lost / doubled word for word | lost 2 (#0, #8), doubled 0 | lost 0, doubled 0 |
+- **Win rule met:** R has 0/12 on items 2-5 and keeps Michelle and the cue 12/12. Control's invented lines are "Kristin, what took you so long?"
+  (3) and "I've been trying to reach you" / "We need to talk" (1); #0 and #8 also lose the radio cue.
+- **Other details (do not decide):** R shows eye contact in 12/12 ("Michelle's eyes meet Kristin's", allowed). R trades Michelle's invented line for
+  **Brandon's invented whisper** "We need to move, (now.) Security's tightening." in 5/12 (#1, #4, #7, #9, #10; control 0/12); it follows
+  the SCENE line "Security is tightening", adds "Kristin nods" in 3 and, in #4, an invented reading of the gate-status panel ("numbers ticking
+  up... more guards"). Control shows Michelle already reached via a "young captive" glance in 6/12 and speech/eye contact elsewhere.
+  Neither opening finishes the reunion into a conversation in R; the double reunion with the command 1 delivery (O1) is untested here.
+- **Read:** R is replicated as an opening fix (matches c4: Michelle line C 9/12 vs R 0/12 earlier; 4/12 vs 0/12 here). It does not touch O2 or O1. Control
+  rates differ from the earlier probe (4/12 vs 9/12), which is ordinary sampling spread, so the control rate is not a pass criterion.
+  Watch Brandon's whisper in step G; it is invented speech that leaves the plot unchanged.
+- **Decision:** R stays on the branch as the step B winner and the control for step C. Not a claim that O1 or O2 is solved. Adoption into a
+  merge is still Brandon's word.

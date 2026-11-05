@@ -539,3 +539,9 @@ its payoff. None justifies adding more 3A prompt material now.
 `3a-open-issues-stepB` (PASS, one attempt); five tests added in `tests/test_richer_3a.py` pin the new fields and the unchanged cue,
 `must_convey`, reveal ids and requirements. The only recorded-prompt change is the three R lines. Quick gate 3802 passed, ruff clean.
 Preregistration is Amendment 6 of `.plans/richer-3a-probe-prereg.md`. Billed probe next (24 requests).
+
+**2026-11-04, step B probe: WIN.** 24 requests, 0 errors. R: Michelle line 0/12 (control 4/12), look-alike/"not Michelle"/weapon 0 in both
+arms, Michelle and the radio cue kept 12/12 (control lost the cue in 2/12). Cost seen: Brandon whispers an invented "We need to move.
+Security's tightening." in 5/12 R openings (control 0/12) and #4 invents what the gate panel shows; both are noted as watch items for step G.
+The billed run was started by Brandon from the prompt (Ringer's `full_access` launch was denied by the permission classifier). R remains the
+step C control. Details: Amendment 6 in `.plans/richer-3a-probe-prereg.md`. Next: step C (48 requests, 177.6 neurons) needs a prereg first.
