@@ -7,8 +7,8 @@ import yaml
 
 from storygame.audit import _markdown, audit_package
 
-# The stolen-radio pairs are a real authored-versus-world mismatch awaiting an
-# author decision; the rest are to be reviewed.
+# Pairs awaiting review. The 3A stolen-radio pairs were resolved by the fact_effects
+# move on detention_uprising_started; the rest may be real missing effects or benign.
 KNOWN_UNBOUND = frozenset(
     {
         ("k_sl_1a_a_r1", "michelle_phone"),
@@ -18,8 +18,6 @@ KNOWN_UNBOUND = frozenset(
         ("k_sl_1a_g_r1", "michelle_tea_mug"),
         ("k_sl_1a_g_r1", "manuscript_pages"),
         ("k_sl_1c_c_secure_route", "transit_card"),
-        ("k_sl_3a_c_r1", "stolen_radio"),
-        ("k_sl_3a_c_r2", "stolen_radio"),
         ("k_sl_3c_a_r1", "portable_archive"),
         ("k_sl_3c_a_r2", "portable_archive"),
     }

@@ -11,7 +11,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState
-from storygame.runtime.world_model import apply_scene_placements
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 
 ROOT = Path("data/stories/continuity-initiative")
@@ -601,6 +601,16 @@ def test_the_radios_give_up_their_loop_after_arriving():
     state, engine = _engine()
     handoff = _handoff(engine, state, command)
     assert handoff is None or handoff.candidate.id != "k_sl_3a_g_r1"
+
+
+def test_the_uprising_signal_puts_the_stolen_radio_in_kristins_hands():
+    state, _ = _engine()
+    before = world_for(PACKAGE, state.facts)
+    assert before.holder("stolen_radio") is None
+    state.facts.assert_fact(Fact(predicate="detention_uprising_started", subject="story", value="true"))
+    assert apply_world_effects(PACKAGE, state.facts) == ()
+    after = world_for(PACKAGE, state.facts)
+    assert after.holder("stolen_radio") == "kristin"
 
 
 def test_michelles_proof_needs_the_medical_level_and_the_kitchen_calendar():

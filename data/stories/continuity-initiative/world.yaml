@@ -676,7 +676,9 @@ facts:
 - purge_recovery_ready
 - audit_reaches_stacks
 - purge_alarm_active
-- detention_uprising_started
+- id: detention_uprising_started
+  on_assert:
+  - {move: stolen_radio, parent: kristin, text: with Kristin}
 - park_pursuit_resolved
 - park_left_behind_read
 - stranger_knows_script

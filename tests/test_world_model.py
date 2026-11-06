@@ -323,4 +323,5 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "michelle_private_proof",
         "checkpoint_opened",
         "lemon_cake_calendar_read",
+        "detention_uprising_started",
     }
