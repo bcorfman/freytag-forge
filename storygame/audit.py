@@ -277,6 +277,122 @@ def _ambiguous_owned_item_findings(
     return findings
 
 
+def delivery_names_unbound_item(
+    knowledge: dict[str, Any], world: dict[str, Any], scenes: dict[str, str]
+) -> list[dict[str, str]]:
+    # This is deliberately lexical: it cannot read pronouns or tell a handed-over
+    # item from a merely observed one; bind the item, add a fact_effects move, or
+    # allowlist a known item when the text is intentional.
+    findings: list[dict[str, str]] = []
+
+    def _phrase_pattern(value: object) -> re.Pattern[str] | None:
+        phrase = str(value).strip()
+        return re.compile(rf"\b{re.escape(phrase)}\b", re.I) if phrase else None
+
+    def _forms(entity: dict[str, Any], *, include_scoped: bool = False) -> list[str]:
+        values = [entity.get("name"), *(entity.get("aliases") or [])]
+        if include_scoped:
+            values.extend(entity.get("scoped_aliases") or [])
+        return [str(value) for value in values if value]
+
+    characters = [entity for entity in world.get("npcs", []) if isinstance(entity, dict)]
+    protagonist = world.get("protagonist")
+    if isinstance(protagonist, dict) and protagonist not in characters:
+        characters.append(protagonist)
+
+    fact_effects: dict[str, list[dict[str, Any]]] = {}
+    for fact_id, effects in (world.get("fact_effects") or {}).items():
+        if isinstance(effects, list):
+            fact_effects[str(fact_id)] = [effect for effect in effects if isinstance(effect, dict)]
+    for fact in world.get("facts", []):
+        if not isinstance(fact, dict) or not fact.get("id"):
+            continue
+        effects = fact.get("on_assert") or []
+        if isinstance(effects, list):
+            fact_effects.setdefault(str(fact["id"]), []).extend(
+                effect for effect in effects if isinstance(effect, dict)
+            )
+
+    for entry in knowledge.get("knowledge", []):
+        delivery_text = entry.get("delivery_text") if isinstance(entry, dict) else None
+        if not isinstance(delivery_text, str) or not delivery_text.strip():
+            continue
+        available_in_scenes = [str(scene_id) for scene_id in (entry.get("available_in_scenes") or [])]
+        if not available_in_scenes:
+            continue
+        texts = [delivery_text]
+        texts.extend(
+            str(variant["text"])
+            for variant in (entry.get("delivery_variants") or [])
+            if isinstance(variant, dict) and str(variant.get("text", "")).strip()
+        )
+        scene_item_ids = {
+            item_id for scene_id in available_in_scenes for item_id in _scene_item_ids(scenes.get(scene_id, ""))
+        }
+        listed_or_revealed = {
+            str(item_id)
+            for item_id in (
+                *(entry.get("entity_ids") or []),
+                *(entry.get("reach_entity_ids") or []),
+                *((entry.get("relevance") or {}).get("entity_ids") or []),
+            )
+        }
+        asserted_facts = {
+            str(operation.get("fact_id"))
+            for operation in (entry.get("establishes") or [])
+            if isinstance(operation, dict) and operation.get("op") == "assert" and operation.get("fact_id")
+        }
+
+        for item in world.get("items", []):
+            if not isinstance(item, dict) or item.get("fixed") is True:
+                continue
+            item_id = str(item.get("id", ""))
+            if not item_id or item_id not in scene_item_ids:
+                continue
+            item_patterns = [
+                pattern for pattern in (_phrase_pattern(form) for form in _forms(item, include_scoped=True)) if pattern
+            ]
+            character_forms = [
+                (character, pattern)
+                for character in characters
+                for pattern in (_phrase_pattern(form) for form in _forms(character))
+                if pattern
+            ]
+            character_name: str | None = None
+            for text in texts:
+                if not any(pattern.search(text) for pattern in item_patterns):
+                    continue
+                matches = [
+                    (match.start(), character_index, character)
+                    for character_index, (character, pattern) in enumerate(character_forms)
+                    for match in [pattern.search(text)]
+                    if match
+                ]
+                if matches:
+                    character_name = str(min(matches, key=lambda value: (value[0], value[1]))[2].get("name", ""))
+                    break
+            if not character_name:
+                continue
+
+            has_fact_effect = any(
+                effect.get("move") == item_id or effect.get("reveal") == item_id
+                for fact_id in asserted_facts
+                for effect in fact_effects.get(fact_id, [])
+            )
+            if item_id in listed_or_revealed or has_fact_effect:
+                continue
+            findings.append(
+                _finding(
+                    "delivery_names_unbound_item",
+                    available_in_scenes[0],
+                    f"Delivery of '{entry.get('id')}' names the {item.get('name')} with {character_name} "
+                    "but the entry neither lists the item nor has a fact effect that moves it, "
+                    "so the world never records what the text says happened to it.",
+                )
+            )
+    return findings
+
+
 def audit_package(root: Path) -> dict[str, Any]:
     """Return deterministic findings for every scene in *root*.
 
@@ -359,6 +475,7 @@ def audit_package(root: Path) -> dict[str, Any]:
         for entity in [*world.get("items", []), *world.get("npcs", [])]
         if isinstance(entity, dict) and entity.get("id")
     }
+    findings.extend(delivery_names_unbound_item(knowledge, world, scenes))
     for item in knowledge.get("knowledge", []):
         delivery_text = str(item.get("delivery_text", "")).strip()
         reach_entity_ids = item.get("reach_entity_ids") or []
