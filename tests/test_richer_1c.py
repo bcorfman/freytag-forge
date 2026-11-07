@@ -149,6 +149,65 @@ def test_the_new_reveals_are_quiet_short_and_exact():
     )
 
 
+def test_michelle_glimpse_contract_is_uncertain_and_preserves_its_metadata():
+    entries = _entries()
+    entry = entries["k_sl_1c_b_r2"]
+    lead = (
+        "Kristin watches the sedated captives in the processing line. They are alive. "
+        "She spots someone in the line who looks like Michelle, but she can't be sure. "
+        "The woman goes around the corner out of sight before Kristin can be certain, "
+        "and guards standing over the prisoners block her from investigating further. "
+        "The transfer is still moving."
+    )
+    brandon = (
+        'Brandon says, "Copy the prisoner numbers if you want stronger proof. Or ask me about the transfer route. '
+        "I can help with the service entrance. That will cost us the chance to copy the full set of numbers. "
+        'There is time for one choice before the transfer leaves."'
+    )
+    assert entry.statement == (
+        "Kristin sees living captives in the processing line. She spots someone who looks like Michelle "
+        "but cannot be sure."
+    )
+    assert entry.delivery_text.startswith(lead)
+    assert entry.delivery_text.endswith(brandon)
+    assert entry.voiceable is False
+    assert entry.earn_when == "watches the processing line for Michelle"
+    assert entry.action_evidence == (
+        ("watch", "observe", "look at", "study", "inspect", "examine"),
+        ("Michelle", "woman who looks like Michelle"),
+        ("processing line", "processing area", "observation shaft"),
+    )
+    assert entry.entity_ids == ()
+    assert entry.aliases == ("captives confirmed alive", "michelle possible sighting")
+    assert (entry.audience.kind, entry.audience.character_ids, entry.audience.player_visible) == ("public", (), True)
+    assert entry.available_in_scenes == ("1C",)
+    assert {(item.fact_id, item.equals) for item in entry.requires} == {
+        ("facility_proof", True),
+        ("transfer_window_missed", False),
+    }
+    assert [(item.op, item.fact_id, item.value) for item in entry.establishes] == [
+        ("assert", "captives_confirmed_alive", True),
+        ("assert", "michelle_possible_sighting", True),
+    ]
+    assert (entry.source.kind, entry.source.storylet_id, entry.source.realization_id) == (
+        "storylet_realization",
+        "SL-1C-B",
+        "SL-1C-B-R2",
+    )
+    assert (entry.relevance.entity_ids, entry.relevance.priority) == ((), 0)
+
+    assert len(entries) == 117
+    assert len({item_id for item_id in entries}) == 117
+    uncertain_text = f"{entry.statement} {entry.delivery_text}".casefold()
+    assert not any(
+        term in uncertain_text
+        for term in ("is michelle", "was michelle", "it was her", "found michelle", "confirmed", "recogni")
+    )
+    routes_text = (ROOT / "storylet-routes.yaml").read_text(encoding="utf-8").casefold()
+    assert "michelle_confirmed" not in routes_text
+    assert "michelle_found" not in routes_text
+
+
 def test_the_water_pallets_are_earned_only_after_the_thermos_label():
     state, engine = _engine(true_facts=("emergency_water_label_read",))
     handoff = _handoff(engine, state, "Inspect the water pallets.")

@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from storygame.audit_budget import deep_turn_budget
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements
@@ -56,3 +57,9 @@ def test_every_scene_stays_inside_the_prompt_budgets(scene_id: str) -> None:
     assert thing_lines <= MATCH_THING_LINES, f"matching prompt lists {thing_lines} things"
     # Worst case: the matcher resolves every listed thing, so the narrator also sees each THINGS line.
     assert narration + things_characters <= NARRATION_WORST_CASE_CHARACTERS
+
+
+def test_1c_earned_glimpse_prompt_does_not_grow() -> None:
+    before_edit = 4961
+    after_edit = deep_turn_budget(PACKAGE, "1C")["narration_chars_all_alternates"]
+    assert after_edit <= before_edit

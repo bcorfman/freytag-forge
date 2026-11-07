@@ -347,7 +347,7 @@ Brandon points Kristin toward the observation shaft. He asks her to study the pe
 
 **Details:** observation shaft; sedated prisoners; processing line; identification numbers; woman resembling Michelle; service entrance; Brandon at the top of the stairs with his back to the processing line, watching the door
 
-Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she glimpses a woman who could be her. Her face slips from sight before Kristin can be certain. The transfer is still moving.
+Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she spots someone in the line who looks like Michelle, but she can't be sure. The woman goes around the corner out of sight before Kristin can be certain, and guards standing over the prisoners block her from investigating further. The transfer is still moving.
 
 While Kristin studies the line, Brandon stays at the top of the stairs with his back to it. He watches the door. If she looks at him, he says only, "Somebody has to watch the door." He does not say what he knows about the line.
 

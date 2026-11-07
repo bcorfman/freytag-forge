@@ -95,8 +95,8 @@ npcs:
   - Kristin
   - Kristin Schweitzer
   # plot.md gives Kristin's expertise a future role in the conspiracy's facilities.
-  # This narrator-safe bio preserves her characterisation and immediate goal without previewing that role.
-  narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.
+  # This narrator-safe bio preserves her characterisation without previewing that role. It names no goal: each scene's pressure line gives the current one.
+  narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories.
 - id: michelle
   name: Dr. Michelle McGehee
   aliases:

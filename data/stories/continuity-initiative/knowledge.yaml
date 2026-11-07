@@ -1376,7 +1376,7 @@ knowledge:
     That will cost us the chance to copy the full set of numbers.
     There is time for one choice before the transfer leaves."
 - id: k_sl_1c_b_r2
-  statement: Kristin sees living captives in the processing line. She glimpses a woman who could be Michelle before the woman's face slips from sight.
+  statement: Kristin sees living captives in the processing line. She spots someone who looks like Michelle but cannot be sure.
   voiceable: false
   earn_when: watches the processing line for Michelle
   action_evidence:
@@ -1413,7 +1413,9 @@ knowledge:
     priority: 0
   delivery_text: >-
     Kristin watches the sedated captives in the processing line. They are alive.
-    She glimpses a woman who could be Michelle. The woman's face slips from sight.
+    She spots someone in the line who looks like Michelle, but she can't be sure.
+    The woman goes around the corner out of sight before Kristin can be certain,
+    and guards standing over the prisoners block her from investigating further.
     The transfer is still moving. Brandon says, "Copy the prisoner numbers if you
     want stronger proof. Or ask me about the transfer route.
     I can help with the service entrance. That will cost us the chance to copy
