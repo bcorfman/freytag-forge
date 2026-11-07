@@ -15,6 +15,36 @@ fight each other, and that any step has a measurement that can fail.
 
 Write the plan to `.plans/richer-3a-open-issues-plan.md`. Edit it in place on later rounds; do not regenerate it.
 
+## Update 2026-11-05: work done since this prompt was written
+
+`.plans/richer-3a-open-issues-plan.md` was written from this prompt and Claude Code has been carrying it out on the same branch
+(head is now `3255b379`, not `39761567`). The plan's "Status log" and the Amendment results below are Claude Code's own record: check
+them against the artifacts rather than trusting them. Steps run so far, each with its preregistration (written before the billed run) and
+results; Brandon started every billed run from his own prompt:
+
+| Plan step | Commits | Preregistration / result text | Result files (gitignored, `bench/results/richer-3a-probe/`) |
+| --- | --- | --- | --- |
+| A: judge provenance, 1A frame sentence, stale placement text | `7f2b6ff1` | status log in the plan (no billed run) | none |
+| B: arm R on the opening | `216e526e` (edit and preregistration), `92664699` (result) | `.plans/richer-3a-probe-prereg.md` Amendment 6 | `b-control.json`, `b-r.json` |
+| C: opening and earned reunion get different jobs | `f9b1b86a` (edit), `aacad859` (preregistration), `41a63079` (result) | Amendment 7 (its control arm was run before the preregistration, by mistake; the Amendment says how it was handled) | `c-control-unplanned/`, `c-candidate/` |
+| D1: short established summaries for the reunion | `4fb5c2d0` (edit, harness, preregistration), `3255b379` (result) | Amendment 8 | `d1/frozen-control.json`, `d1/frozen-d1.json` (the frozen prompts), `d1/control-rows.json`, `d1/d1-rows.json` |
+
+New tooling used by D1: `bench/frozen_prompts.py` (capture the narrator payload of a later command from an offline scripted prefix, then
+replay it N times; its limits are written in Amendment 8), and the variations `bench/variations/richer-3a-{b,c,d}-*.json` with the frozen
+story copies under `bench/frozen/continuity-pre-3a-*`. Not yet run: steps D2, E, F and G of the plan.
+
+**This is an update round, not a new plan. To save tokens, do not redo the plan and do not repeat the reading below.** You already wrote
+`.plans/richer-3a-open-issues-plan.md` from those files. Read only: the plan itself, Amendments 6 to 8 in
+`.plans/richer-3a-probe-prereg.md`, and the result files in the table above (the narrations in them yourself, not only the counts).
+Establish what each step's results show, including whether each preregistered gate was met and anything the narrations show beyond the gate.
+
+Then **update the existing plan file in place with targeted edits**: change only the sections the results touch (the status log, the entries
+for steps C, D and later, the affected rows of O1 to O10, the interaction table and the cost sum where they changed); leave every
+section the results do not touch exactly as it is. Do not regenerate or reprint the whole plan. In your reply, give only the edits
+(old text, new text) or the changed paragraphs, plus a short statement of what to do next about the D1 statements and the remaining
+steps. Keep every constraint in this prompt. Give the exact words for any story edit and a preregistered measurement for any step that
+costs a billed run.
+
 ## What to read first
 
 - `AGENTS.md`, `docs/scene-fixing-guide.md`, `docs/narrator-writing-guide.md`, `docs/world-model-grounding.md`
